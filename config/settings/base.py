@@ -145,8 +145,7 @@ REST_FRAMEWORK = {
 }
 
 
-
-# This load the secret key and potentially other secret settings from a JSON file
+# This loads the secret key and potentially other secret settings from a JSON file
 # it must be kept here, otherwise the settings will be missing
 secrets = load_secret_settings_json_file(BASE_DIR / 'config/settings/secret_settings.json')
 for key in ("SECRET_KEY",):
