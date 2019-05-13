@@ -1,0 +1,7 @@
+-r base.txt
+pytest==4.5.0
+pytest-cov==2.7.1
+pytest-django==3.4.8
+django-webtest==1.9.4
+requests-mock==1.6.0
+pyfakefs==3.5.8

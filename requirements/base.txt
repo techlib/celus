@@ -1,0 +1,12 @@
+Django==2.2.1
+pytz==2019.1
+django-allauth==0.39.1
+psycopg2-binary==2.8.2
+celery==4.3.0
+django-celery-results==1.0.4
+redis==3.2.1
+django-redis==4.10.0
+django-anymail==6.0
+django_braces==1.13.0
+django-compressor==2.2
+djangorestframework==3.9.4
