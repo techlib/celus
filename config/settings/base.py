@@ -144,6 +144,9 @@ REST_FRAMEWORK = {
     # 'PAGE_SIZE': 10
 }
 
+# ERMS related stuff
+ERMS_API_URL = "https://erms.czechelib.cz/api/"
+
 
 # This loads the secret key and potentially other secret settings from a JSON file
 # it must be kept here, otherwise the settings will be missing
@@ -151,8 +154,8 @@ secrets = load_secret_settings_json_file(BASE_DIR / 'config/settings/secret_sett
 for key in ("SECRET_KEY",):
     locals()[key] = secrets[key]
 # optional keys
-# for key in ("MAILGUN_API_KEY", "SLACK_TOKEN"):
-#     if key in secrets:
-#         locals()[key] = secrets[key]
+for key in ("ERMS_API_URL",):
+    if key in secrets:
+        locals()[key] = secrets[key]
 
 DATABASES['default']['PASSWORD'] = secrets['DB_PASSWORD']
