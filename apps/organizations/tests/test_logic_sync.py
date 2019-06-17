@@ -82,6 +82,8 @@ class TestLogicSync(object):
         stats = syncer.sync_data(self.src_data)
         assert Organization.objects.count() == 2
         assert stats[syncer.Status.NEW] == 2
+        assert stats[syncer.Status.UNCHANGED] == 0
+        assert stats[syncer.Status.SYNCED] == 0
 
     def test_organization_sync_resync(self):
         syncer = OrganizationSyncer()
@@ -89,9 +91,28 @@ class TestLogicSync(object):
         stats = syncer.sync_data(self.src_data)
         assert Organization.objects.count() == 2
         assert stats[syncer.Status.NEW] == 2
+        assert stats[syncer.Status.UNCHANGED] == 0
+        assert stats[syncer.Status.SYNCED] == 0
         # resync
         stats = syncer.sync_data(self.src_data)
-        print(stats)
         assert Organization.objects.count() == 2
         assert stats[syncer.Status.NEW] == 0
         assert stats[syncer.Status.UNCHANGED] == 2
+
+    def test_organization_sync_resync_with_change(self):
+        syncer = OrganizationSyncer()
+        assert Organization.objects.count() == 0
+        stats = syncer.sync_data(self.src_data)
+        assert Organization.objects.count() == 2
+        assert stats[syncer.Status.NEW] == 2
+        assert stats[syncer.Status.UNCHANGED] == 0
+        assert stats[syncer.Status.SYNCED] == 0
+        # resync
+        # the following line will not cause change - we do not detect missing values
+        self.src_data[0]['vals']['ico'] = 987
+        del self.src_data[1]['vals']['ico']
+        stats = syncer.sync_data(self.src_data)
+        assert Organization.objects.count() == 2
+        assert stats[syncer.Status.NEW] == 0
+        assert stats[syncer.Status.UNCHANGED] == 1
+        assert stats[syncer.Status.SYNCED] == 1
