@@ -10,12 +10,13 @@ class Organization(MPTTModel):
     ext_id = models.PositiveIntegerField(unique=True)
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True,
                             related_name='children')
-    ico = models.CharField(max_length=20, unique=True)
+    ico = models.PositiveIntegerField(unique=True)
     internal_id = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=250)
     short_name = models.CharField(max_length=100)
-    url = models.URLField()
-    fte = models.PositiveIntegerField(help_text="Last available FTE number for organization")
+    url = models.URLField(blank=True)
+    fte = models.PositiveIntegerField(help_text="Last available FTE number for organization",
+                                      default=0)
     address = JSONField(default=dict)
 
 

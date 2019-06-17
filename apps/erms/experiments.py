@@ -81,7 +81,7 @@ if __name__ == '__main__':
     with open('../../config/settings/secret_settings.json', 'r') as infile:
         settings = json.load(infile)
     erms = ERMS(settings['ERMS_API_URL'])
-    pprint(erms.fetch_objects(object_id=(574, 575)))
+    pprint(erms.fetch_objects(object_id=(574, 575, 603)))
     # for idt in erms.fetch_endpoint(erms.EP_IDENTITY):
     #     pprint(idt)
     # ref_keys = Counter()
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     #     for key, val in org.get('vals', {}).items():
     #         if len(val) > 1:
     #             print(key, val)
-    pprint(erms.fetch_objects(cls=erms.CLS_PLATFORM))
+    # pprint(erms.fetch_objects(cls=erms.CLS_PLATFORM))
     # pprint(erms.fetch_endpoint(erms.EP_CONSORTIUM))
     # pprint(erms.fetch_endpoint(erms.EP_CONSORTIUM_MEMBER))
     # pprint(erms.fetch_endpoint(erms.EP_ACQUISITION))

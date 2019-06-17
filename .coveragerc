@@ -1,0 +1,11 @@
+[report]
+precision = 1
+show_missing = true
+skip_covered = true
+
+[run]
+omit =
+  */migrations/*
+  */management/*
+  */tests.py
+  */experiments.py
