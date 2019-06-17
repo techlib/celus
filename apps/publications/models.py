@@ -1,3 +1,27 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-# Create your models here.
+
+class Platform(models.Model):
+
+    ext_id = models.PositiveIntegerField(unique=True)
+    short_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=250)
+    provider = models.CharField(max_length=250)
+    url = models.URLField(blank=True)
+
+
+class Title(models.Model):
+
+    PUB_TYPE_BOOK = 'B'
+    PUB_TYPE_JOURNAL = 'J'
+    PUB_TYPE_CHOICES = (
+        (PUB_TYPE_BOOK, _('Book')),
+        (PUB_TYPE_JOURNAL, _('Journal')),
+    )
+
+    name = models.TextField()
+    pub_type = models.CharField(max_length=1, choices=PUB_TYPE_CHOICES)
+    isbn = models.CharField(max_length=20, blank=True)
+    issn = models.CharField(max_length=9, blank=True)
+    eissn = models.CharField(max_length=9, blank=True, help_text="ISSN of electronic version")

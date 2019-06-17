@@ -29,15 +29,19 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'modeltranslation',  # must be before admin
+    'django.contrib.admin',
     'rest_framework',
     'compressor',
     'core.apps.CoreConfig',
+    'publications.apps.PublicationsConfig',
+    'logs.apps.LogsConfig',
+    'organizations.apps.OrganizationsConfig',
 ]
 
 MIDDLEWARE = [
@@ -117,6 +121,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+
+gettext = lambda s: s
+LANGUAGES = (
+    ('en', gettext('English')),
+    ('cs', gettext('Czech')),
+)
 
 
 # Static files (CSS, JavaScript, Images)
