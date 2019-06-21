@@ -19,6 +19,9 @@ class Organization(MPTTModel):
                                       default=0)
     address = JSONField(default=dict)
 
+    def __str__(self):
+        return self.name
+
 
 class UserOrganization(models.Model):
 

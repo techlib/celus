@@ -72,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ntk_stats.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
