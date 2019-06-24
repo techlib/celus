@@ -25,3 +25,4 @@ class Title(models.Model):
     isbn = models.CharField(max_length=20, blank=True)
     issn = models.CharField(max_length=9, blank=True)
     eissn = models.CharField(max_length=9, blank=True, help_text="ISSN of electronic version")
+    doi = models.CharField(max_length=250, blank=True)

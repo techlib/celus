@@ -49,6 +49,14 @@ class Sushi5Client(object):
         }
     }
 
+    # sets of additional parameters for specific setups
+    EXTRA_PARAMS = {
+        # split data in TR report to most possible dimensions for most granular data
+        'tr_maximum_split': {
+            'attributes_to_show': 'yop|Access_Method|Access_Type|Data_Type|Section_Type'
+        }
+    }
+
     def __init__(self, url, requestor_id, customer_id=None):
         self.url = url
         self.requestor_id = requestor_id
@@ -80,7 +88,7 @@ class Sushi5Client(object):
         return self.session.get(url, params=params)
 
     def get_report(self, report_type, begin_date, end_date, params=None):
-        self.check_report_type(report_type)
+        report_type = self.check_report_type(report_type)
         url = urljoin(self.url, 'reports/'+report_type)
         params = self._construct_url_params(extra=params)
         params['begin_date'] = self._encode_date(begin_date)
@@ -88,11 +96,12 @@ class Sushi5Client(object):
         response = self._make_request(url, params)
         return response.content
 
-    def get_report_data(self, url, params):
-        content = self.get_report(url, params)
+    def get_report_data(self, report_type, begin_date, end_date, params=None):
+        content = self.get_report(report_type, begin_date, end_date, params=params)
         return json.loads(content)
 
     def check_report_type(self, report_type):
+        report_type = report_type.lower()
         if '_' in report_type:
             main_type, subtype = report_type.split('_', 1)
         else:
@@ -102,5 +111,6 @@ class Sushi5Client(object):
             raise ValueError(f'Report type {main_type} is not supported.')
         if subtype and subtype not in self.report_types[main_type]['subreports']:
             raise ValueError(f'Report subtype {subtype} is not supported for type {main_type}.')
+        return report_type
 
 

@@ -1,5 +1,6 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.timezone import now
 
 from core.models import USER_LEVEL_CHOICES, UL_ROBOT
@@ -28,6 +29,10 @@ class ReportType(models.Model):
 
     def __str__(self):
         return self.short_name
+
+    @cached_property
+    def dimension_short_names(self):
+        return [dim.short_name for dim in self.dimensions.all()]
 
 
 class Metric(models.Model):
@@ -63,6 +68,9 @@ class Dimension(models.Model):
     type = models.PositiveSmallIntegerField(choices=DIMENSION_TYPE_CHOICES)
     desc = models.TextField(blank=True)
 
+    class Meta:
+        ordering = ('reporttypetodimension', )
+
     def __str__(self):
         return '{} ({})'.format(self.short_name, self.get_type_display())
 
@@ -80,7 +88,7 @@ class ReportTypeToDimension(models.Model):
 
     class Meta:
         unique_together = (('report_type', 'dimension'), )
-        ordering = ('report_type', 'position', 'dimension')
+        ordering = ('position',)
 
     def __str__(self):
         return '{}-{} #{}'.format(self.report_type, self.dimension, self.position)

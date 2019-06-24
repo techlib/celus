@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
 
-    help = 'Loads contact info from mailchimp and synchronizes it with the database'
+    help = 'Pulls data from a Sushi server and displays some simple stats'
 
     def add_arguments(self, parser):
         parser.add_argument('url', help='URL of the SUSHI API')

@@ -20,7 +20,7 @@ class CounterRecord(object):
 class Counter5ReportBase(object):
 
     dimensions = []  # this should be redefined in subclasses
-    allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN']
+    allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']
 
     def __init__(self):
         self.records = []
