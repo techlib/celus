@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from urllib.parse import urljoin
 
@@ -86,6 +87,10 @@ class Sushi5Client(object):
         params['end_date'] = self._encode_date(end_date)
         response = self._make_request(url, params)
         return response.content
+
+    def get_report_data(self, url, params):
+        content = self.get_report(url, params)
+        return json.loads(content)
 
     def check_report_type(self, report_type):
         if '_' in report_type:

@@ -1,0 +1,171 @@
+{
+  "Report_Header": {
+  },
+  "Report_Items": [
+    {
+      "Title": "Heu, neuter pes!",
+      "Publisher": "Varius parmas ducunt ad habena.",
+      "Item_ID": [
+        {
+          "Type": "ISBN",
+          "Value": "978-1-934151-02-1"
+        },
+        {
+          "Type": "DOI",
+          "Value": "10.1234/55-66-77"
+        },
+        {
+          "Type": "Proprietary",
+          "Value": "Particulas crescere, tanquam clemens valebat."
+        }
+      ],
+      "Section_Type": "Chapter",
+      "Platform": "PlOne",
+      "Data_Type": "Book",
+      "YOP": "2009",
+      "Access_Type": "OA_Gold",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2019-05-01",
+            "End_Date": "2019-05-31"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 10
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 8
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 5
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 4
+            },
+            {
+              "Metric_Type": "Unique_Title_Investigations",
+              "Count": 10
+            },
+            {
+              "Metric_Type": "Unique_Title_Requests",
+              "Count": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "Aye there's nothing like the cloudy passion singing on the plank.",
+      "Item_ID": [
+        {
+          "Type": "ISBN",
+          "Value": "978-1-123456-22-8"
+        },
+        {
+          "Type": "DOI",
+          "Value": "10.1123/ahodfuo"
+        },
+        {
+          "Type": "Proprietary",
+          "Value": "alkdjfsak"
+        }
+      ],
+      "Section_Type": "Chapter",
+      "Platform": "BioOne",
+      "Data_Type": "Book",
+      "YOP": "2008",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2019-02-01",
+            "End_Date": "2019-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 100
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 50
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 80
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 20
+            },
+            {
+              "Metric_Type": "Unique_Title_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Title_Requests",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "Well, rainy cockroach. go to prison.",
+      "Publisher": "Admirals walk on friendship at earth!",
+      "Item_ID": [
+        {
+          "Type": "Online_ISSN",
+          "Value": "1234-5678"
+        },
+        {
+          "Type": "Print_ISSN",
+          "Value": "9876-5432"
+        },
+        {
+          "Type": "DOI",
+          "Value": "10.9876/acta"
+        }
+      ],
+      "Section_Type": "Article",
+      "Platform": "BioOne",
+      "Data_Type": "Journal",
+      "YOP": "2014",
+      "Access_Type": "OA_Gold",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2019-02-01",
+            "End_Date": "2019-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 10
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 6
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 5
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 4
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
