@@ -26,6 +26,9 @@ class ReportType(models.Model):
     dimensions = models.ManyToManyField('Dimension', related_name='report_types',
                                         through='ReportTypeToDimension')
 
+    def __str__(self):
+        return self.short_name
+
 
 class Metric(models.Model):
 
@@ -36,6 +39,9 @@ class Metric(models.Model):
     short_name = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.short_name
 
 
 class Dimension(models.Model):
@@ -57,6 +63,9 @@ class Dimension(models.Model):
     type = models.PositiveSmallIntegerField(choices=DIMENSION_TYPE_CHOICES)
     desc = models.TextField(blank=True)
 
+    def __str__(self):
+        return '{} ({})'.format(self.short_name, self.get_type_display())
+
 
 class ReportTypeToDimension(models.Model):
 
@@ -72,6 +81,9 @@ class ReportTypeToDimension(models.Model):
     class Meta:
         unique_together = (('report_type', 'dimension'), )
         ordering = ('report_type', 'position', 'dimension')
+
+    def __str__(self):
+        return '{}-{} #{}'.format(self.report_type, self.dimension, self.position)
 
 
 class AccessLog(models.Model):

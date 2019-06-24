@@ -1,0 +1,193 @@
+[
+{
+  "model": "logs.reporttype",
+  "pk": 1,
+  "fields": {
+    "short_name": "TR",
+    "name": "Counter 5 - Title report",
+    "name_en": "Counter 5 - Title report",
+    "name_cs": "Counter 5 - Title report",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": ""
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 2,
+  "fields": {
+    "short_name": "DR",
+    "name": "Counter 5 - Database report",
+    "name_en": "Counter 5 - Database report",
+    "name_cs": "Counter 5 - Database report",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": ""
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 1,
+  "fields": {
+    "short_name": "Access_Type",
+    "name": "Access Type",
+    "name_en": "Access Type",
+    "name_cs": "Typ p\u0159\u00edstupu",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": ""
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 2,
+  "fields": {
+    "short_name": "Access_Method",
+    "name": "Access Method",
+    "name_en": "Access Method",
+    "name_cs": "Metoda p\u0159\u00edstupu",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": ""
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 3,
+  "fields": {
+    "short_name": "Data_Type",
+    "name": "Data Type",
+    "name_en": "Data Type",
+    "name_cs": "Typ dat",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": ""
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 4,
+  "fields": {
+    "short_name": "Section_Type",
+    "name": "Section Type",
+    "name_en": "Section Type",
+    "name_cs": "Typ \u010d\u00e1sti",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": ""
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 5,
+  "fields": {
+    "short_name": "YOP",
+    "name": "Year of publication",
+    "name_en": "Year of publication",
+    "name_cs": "Rok vyd\u00e1n\u00ed",
+    "type": 1,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": ""
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 6,
+  "fields": {
+    "short_name": "Publisher",
+    "name": "Publisher",
+    "name_en": "Publisher",
+    "name_cs": "Vydavatel",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": ""
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 1,
+  "fields": {
+    "report_type": 1,
+    "dimension": 1,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 2,
+  "fields": {
+    "report_type": 1,
+    "dimension": 2,
+    "position": 1
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 3,
+  "fields": {
+    "report_type": 1,
+    "dimension": 3,
+    "position": 2
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 4,
+  "fields": {
+    "report_type": 1,
+    "dimension": 4,
+    "position": 3
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 5,
+  "fields": {
+    "report_type": 1,
+    "dimension": 5,
+    "position": 4
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 6,
+  "fields": {
+    "report_type": 1,
+    "dimension": 6,
+    "position": 5
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 7,
+  "fields": {
+    "report_type": 2,
+    "dimension": 2,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 8,
+  "fields": {
+    "report_type": 2,
+    "dimension": 3,
+    "position": 1
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 9,
+  "fields": {
+    "report_type": 2,
+    "dimension": 6,
+    "position": 2
+  }
+}
+]
