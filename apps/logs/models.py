@@ -34,6 +34,10 @@ class ReportType(models.Model):
     def dimension_short_names(self):
         return [dim.short_name for dim in self.dimensions.all()]
 
+    @cached_property
+    def dimensions_sorted(self):
+        return list(self.dimensions.all())
+
 
 class Metric(models.Model):
 

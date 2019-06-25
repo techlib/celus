@@ -1,6 +1,11 @@
+import logging
+
 from publications.models import Title
-from ..models import ReportType, Metric, DimensionText, OrganizationPlatform
+from ..models import ReportType, Metric, DimensionText, OrganizationPlatform, AccessLog
 from sushi.counter5 import CounterRecord
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=None):
@@ -71,7 +76,7 @@ def import_counter_records(report_type: ReportType, source: OrganizationPlatform
         text_to_int_remaps[dim_text.dimension_id][dim_text.text] = dim_text.pk
     tm = TitleManager()
     #
-    dimensions = report_type.dimension_short_names
+    dimensions = report_type.dimensions_sorted
     for record in records:  # type: CounterRecord
         # attributes that define the identity of the log
         id_attrs = {
@@ -82,5 +87,20 @@ def import_counter_records(report_type: ReportType, source: OrganizationPlatform
             'date': record.start,
         }
         for i, dim in enumerate(dimensions):
-            dim_value = record.dimension_data.get(dim)
+            dim_value = record.dimension_data.get(dim.short_name)
+            if dim.type != dim.TYPE_INT:
+                remap = text_to_int_remaps[dim.pk]
+                dim_value = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
+                                                   other_attrs={'dimension_id': dim.pk})
             id_attrs[f'dim{i+1}'] = dim_value
+        print(id_attrs)
+        al, created = AccessLog.objects.get_or_create(**id_attrs)
+        if created:
+            al.value = record.value
+            al.save()
+        else:
+            if al.value != record.value:
+                raise ValueError(f'Clashing values between import and db: '
+                                 f'{record.value} x {al.value}')
+            else:
+                logger.info('Record already present with the same value')
