@@ -5,6 +5,11 @@ from urllib.parse import urljoin
 import requests
 
 
+class SushiException(Exception):
+
+    pass
+
+
 class Sushi5Client(object):
 
     """
@@ -94,11 +99,26 @@ class Sushi5Client(object):
         params['begin_date'] = self._encode_date(begin_date)
         params['end_date'] = self._encode_date(end_date)
         response = self._make_request(url, params)
+        response.raise_for_status()
         return response.content
 
     def get_report_data(self, report_type, begin_date, end_date, params=None):
         content = self.get_report(report_type, begin_date, end_date, params=params)
-        return json.loads(content)
+        data = json.loads(content)
+        self.validate_data(data)
+        return data
+
+    @classmethod
+    def validate_data(cls, data: dict):
+        """
+        Checks that the provided data contain valid COUNTER data and not an error.
+        If the data contains an error message, it will raise SushiException
+        :param data:
+        :return:
+        """
+        if 'Exception' in data:
+            exc = data['Exception']
+            raise SushiException('{Severity} error {Code}: {Message}'.format(**exc))
 
     def check_report_type(self, report_type):
         report_type = report_type.lower()
