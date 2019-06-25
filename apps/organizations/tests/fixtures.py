@@ -1,6 +1,7 @@
 import pytest
 
 from ..models import Organization
+from .object_factories import OrganizationFactory
 
 
 @pytest.fixture()
@@ -12,3 +13,12 @@ def organizations():
     child1 = Organization.objects.create(ext_id=3, parent=parent1, internal_id='AAA1', ico='1231',
                                          name_cs='AAA1', name_en='AAA1', short_name='AA1')
     return [parent1, parent2, child1]
+
+
+@pytest.fixture()
+def organizations_random():
+    parent1 = OrganizationFactory.create()
+    parent2 = OrganizationFactory.create()
+    child1 = OrganizationFactory.create(parent=parent1)
+    return [parent1, parent2, child1]
+

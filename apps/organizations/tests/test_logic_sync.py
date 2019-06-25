@@ -4,7 +4,7 @@ import pytest
 
 from organizations.logic.sync import OrganizationSyncer
 from organizations.models import Organization
-from .fixtures import organizations
+from .fixtures import organizations, organizations_random
 
 
 @pytest.mark.django_db
@@ -68,6 +68,9 @@ class TestLogicSync(object):
 
     def test_fixture_works(self, organizations):
         assert len(organizations) == Organization.objects.count()
+
+    def test_random_fixture_works(self, organizations_random):
+        assert len(organizations_random) == Organization.objects.count()
 
     def test_organization_sync_translation(self):
         syncer = OrganizationSyncer()
