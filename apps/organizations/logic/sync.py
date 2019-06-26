@@ -12,7 +12,9 @@ class OrganizationSyncer(ERMSSyncer):
     attr_map = {
         'czechelib id': 'internal_id',
         'short name': 'short_name',
-        'address of residence': 'address'
+        'address of residence': 'address',
+        'alternative name': None,
+        'mail address': None,
     }
 
     object_class = Organization
@@ -26,5 +28,3 @@ class OrganizationSyncer(ERMSSyncer):
                 assert len(cb) == 1, 'only one parent allowed, otherwise there cannot be a tree'
                 result['parent_id'] = self.db_key_to_obj[cb[0]].pk
         return result
-
-

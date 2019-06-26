@@ -28,6 +28,7 @@ class Syncer(object):
 
     def sync_data(self, records: [dict]) -> dict:
         self.prefetch_db_objects()
+        self._screen_records(records)
         stats = Counter()
         for record in records:
             record_tr = self.translate_record(record)
@@ -39,7 +40,9 @@ class Syncer(object):
         output = {}
         for key, value in record.items():
             out_key = self.translate_key(key)
-            output[out_key] = self.translate_value(out_key, value)
+            if out_key is not None:
+                # skip values for which the key maps to None
+                output[out_key] = self.translate_value(out_key, value)
         return output
 
     def translate_value(self, key, value):
@@ -69,6 +72,15 @@ class Syncer(object):
             self.db_key_to_obj[pid] = obj
             return self.Status.NEW
 
+    def _screen_records(self, records: [dict]) -> None:
+        """
+        Is run at start of sync_data to do some potential checks on the data before they are
+        processed - can be used to collect statistics about the content, etc.
+        :param records:
+        :return:
+        """
+        pass
+
 
 class ERMSSyncer(Syncer):
 
@@ -88,5 +100,7 @@ class ERMSSyncer(Syncer):
         if '@' in key:
             start, end = key.split('@')
             start = super().translate_key(start)
+            if start is None:
+                return None  # we skip those
             return f'{start}_{end}'
         return super().translate_key(key)

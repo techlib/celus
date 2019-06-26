@@ -7,17 +7,23 @@ from mptt.models import MPTTModel
 
 class Organization(MPTTModel):
 
-    ext_id = models.PositiveIntegerField(unique=True)
+    ext_id = models.PositiveIntegerField(unique=True, help_text='object ID taken from EMRS')
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True,
                             related_name='children')
-    ico = models.PositiveIntegerField(unique=True)
-    internal_id = models.CharField(max_length=50, unique=True)
+    ico = models.PositiveIntegerField(help_text='Business registration number')
+    internal_id = models.CharField(max_length=50, unique=True, null=True,
+                                   help_text='special ID used for internal purposes')
     name = models.CharField(max_length=250)
     short_name = models.CharField(max_length=100)
     url = models.URLField(blank=True)
-    fte = models.PositiveIntegerField(help_text="Last available FTE number for organization",
+    fte = models.PositiveIntegerField(help_text='Last available FTE number for organization',
                                       default=0)
     address = JSONField(default=dict)
+
+    class Meta:
+        unique_together = (
+            ('ico', 'level'),  # duplicated ico can only be between parent and child
+        )
 
     def __str__(self):
         return self.name

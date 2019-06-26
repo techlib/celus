@@ -48,6 +48,8 @@ class ERMS(object):
             params['class'] = self._construct_query_string(cls)
         if object_id:
             params['id'] = self._construct_query_string(object_id)
+        else:
+            params['order'] = 'id'
         query = urllib.parse.urlencode(params)
         return f'{self.base_url}/{self.EP_OBJECT}?{query}'
 
