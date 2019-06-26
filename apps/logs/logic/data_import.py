@@ -28,6 +28,8 @@ class TitleManager(object):
 
     @classmethod
     def decode_pub_type(cls, pub_type: str) -> str:
+        if not pub_type:
+            raise ValueError('Empty publication type: {}'.format(pub_type))
         if pub_type in 'JB':
             return pub_type
         elif pub_type.lower() == 'journal':
@@ -94,7 +96,7 @@ def import_counter_records(report_type: ReportType, source: OrganizationPlatform
                                                    other_attrs={'dimension_id': dim.pk})
             id_attrs[f'dim{i+1}'] = dim_value
         print(id_attrs)
-        al, created = AccessLog.objects.get_or_create(**id_attrs)
+        al, created = AccessLog.objects.get_or_create(**id_attrs, defaults={'value': record.value})
         if created:
             al.value = record.value
             al.save()

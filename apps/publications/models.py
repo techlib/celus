@@ -22,7 +22,8 @@ class Title(models.Model):
 
     name = models.TextField()
     pub_type = models.CharField(max_length=1, choices=PUB_TYPE_CHOICES)
-    isbn = models.CharField(max_length=20, blank=True)
-    issn = models.CharField(max_length=9, blank=True)
-    eissn = models.CharField(max_length=9, blank=True, help_text="ISSN of electronic version")
-    doi = models.CharField(max_length=250, blank=True)
+    isbn = models.CharField(max_length=20, null=True, blank=True)
+    issn = models.CharField(max_length=9, null=True, blank=True)
+    eissn = models.CharField(max_length=9, null=True, blank=True,
+                             help_text="ISSN of electronic version")
+    doi = models.CharField(max_length=250, null=True, blank=True)
