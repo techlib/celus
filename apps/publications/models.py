@@ -21,7 +21,8 @@ class Title(models.Model):
     )
 
     name = models.TextField()
-    pub_type = models.CharField(max_length=1, choices=PUB_TYPE_CHOICES)
+    pub_type = models.CharField(max_length=1, choices=PUB_TYPE_CHOICES,
+                                verbose_name='Publication type')
     isbn = models.CharField(max_length=20, null=True, blank=True)
     issn = models.CharField(max_length=9, null=True, blank=True)
     eissn = models.CharField(max_length=9, null=True, blank=True,
