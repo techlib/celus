@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'rest_framework',
     'compressor',
+    'mptt',
     'core.apps.CoreConfig',
     'publications.apps.PublicationsConfig',
     'logs.apps.LogsConfig',
