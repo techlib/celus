@@ -10,6 +10,9 @@ class Platform(models.Model):
     provider = models.CharField(max_length=250)
     url = models.URLField(blank=True)
 
+    def __str__(self):
+        return self.short_name
+
 
 class Title(models.Model):
 
@@ -28,3 +31,6 @@ class Title(models.Model):
     eissn = models.CharField(max_length=9, null=True, blank=True,
                              help_text="ISSN of electronic version")
     doi = models.CharField(max_length=250, null=True, blank=True)
+
+    def __str__(self):
+        return self.name

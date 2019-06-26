@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 
 from publications.models import Title
 from ..models import ReportType, Metric, DimensionText, OrganizationPlatform, AccessLog
@@ -68,14 +69,15 @@ class TitleManager(object):
 
 
 def import_counter_records(report_type: ReportType, source: OrganizationPlatform,
-                           records: [CounterRecord]):
+                           records: [CounterRecord]) -> Counter:
+    stats = Counter()
     # prepare all remaps
     metrics = {metric.short_name: metric for metric in Metric.objects.all()}
     text_to_int_remaps = {}
     for dim_text in DimensionText.objects.all():
         if dim_text.dimension_id not in text_to_int_remaps:
             text_to_int_remaps[dim_text.dimension_id] = {}
-        text_to_int_remaps[dim_text.dimension_id][dim_text.text] = dim_text.pk
+        text_to_int_remaps[dim_text.dimension_id][dim_text.text] = dim_text
     tm = TitleManager()
     #
     dimensions = report_type.dimensions_sorted
@@ -99,14 +101,14 @@ def import_counter_records(report_type: ReportType, source: OrganizationPlatform
                                                       other_attrs={'dimension_id': dim.pk})
                 dim_value = dim_text_obj.pk
             id_attrs[f'dim{i+1}'] = dim_value
-        print(id_attrs)
         al, created = AccessLog.objects.get_or_create(**id_attrs, defaults={'value': record.value})
         if created:
-            al.value = record.value
-            al.save()
+            stats['new logs'] += 1
         else:
             if al.value != record.value:
                 raise ValueError(f'Clashing values between import and db: '
                                  f'{record.value} x {al.value}')
             else:
                 logger.info('Record already present with the same value')
+                stats['skipped logs'] += 1
+    return stats

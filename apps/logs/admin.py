@@ -42,4 +42,4 @@ class ReportTypeToDimensionAdmin(admin.ModelAdmin):
 @admin.register(models.AccessLog)
 class AccessLogAdmin(admin.ModelAdmin):
 
-    list_display = ['report_type', 'metric', 'source', 'target']
+    list_display = ['metric', 'report_type', 'source', 'target']

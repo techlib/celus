@@ -40,16 +40,15 @@ class Counter5ReportBase(object):
             record.title_ids = self._extract_title_ids(item.get('Item_ID'))
             record.dimension_data = self._extract_dimension_data(self.dimensions, item)
             performances = item.get('Performance')
-            assert len(performances) == 1, 'no idea what would it mean if there were more than 1'
-            performance = performances[0]
-            period = performance.get('Period', {})
-            record.start = period.get('Begin_Date')
-            record.end = period.get('End_Date')
-            for metric in performance.get('Instance', []):
-                this_rec = copy(record)
-                this_rec.metric = metric.get('Metric_Type')
-                this_rec.value = int(metric.get('Count'))
-                records.append(this_rec)
+            for performance in performances:
+                period = performance.get('Period', {})
+                record.start = period.get('Begin_Date')
+                record.end = period.get('End_Date')
+                for metric in performance.get('Instance', []):
+                    this_rec = copy(record)
+                    this_rec.metric = metric.get('Metric_Type')
+                    this_rec.value = int(metric.get('Count'))
+                    records.append(this_rec)
         return records
 
     def _extract_title_ids(self, values: list) -> dict:

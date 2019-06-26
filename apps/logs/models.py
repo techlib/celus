@@ -14,6 +14,9 @@ class OrganizationPlatform(models.Model):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     sushi_credentials = JSONField(default=list)
 
+    def __str__(self):
+        return f'{self.organization} | {self.platform}'
+
 
 class ReportType(models.Model):
 

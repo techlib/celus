@@ -102,7 +102,9 @@ class TestDataImport(object):
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
         crs = list(counter_records_nd(3, record_number=10))
-        import_counter_records(report_type_nd(3), op, crs)
+        stats = import_counter_records(report_type_nd(3), op, crs)
+        assert stats['skipped logs'] == 0
+        assert stats['new logs'] == 10
         assert AccessLog.objects.count() == 10
         assert Title.objects.count() > 0
         al = AccessLog.objects.order_by('pk')[0]
@@ -140,3 +142,17 @@ class TestDataImport(object):
         assert al1.dim3 is not None
         assert al1.dim4 is None
 
+    def test_reimport(self, counter_records_nd, organizations, report_type_nd):
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        op = OrganizationPlatform.objects.create(organization=organizations[0], platform=platform)
+        crs = list(counter_records_nd(3, record_number=1, title='Title ABC',
+                                      dim_value='one value'))
+        rt = report_type_nd(3)  # type: ReportType
+        stats = import_counter_records(rt, op, crs)
+        assert AccessLog.objects.count() == 1
+        assert Title.objects.count() == 1
+        assert stats['new logs'] == 1
+        stats = import_counter_records(rt, op, crs)
+        assert stats['new logs'] == 0
+        assert stats['skipped logs'] == 1

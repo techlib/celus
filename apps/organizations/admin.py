@@ -8,6 +8,7 @@ from . import models
 class OrganizationAdmin(MPTTModelAdmin):
 
     list_display = ['internal_id', 'short_name', 'name', 'ico']
+    search_fields = ['internal_id', 'short_name', 'name', 'ico']
 
 
 @admin.register(models.UserOrganization)
