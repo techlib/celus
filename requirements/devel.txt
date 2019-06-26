@@ -2,3 +2,4 @@
 django-debug-toolbar==1.11
 django-livereload-server==0.3.2
 jupyter==1.0.0
+django-querycount==0.7.0
