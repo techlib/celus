@@ -20,17 +20,27 @@ def counter_records_0d():
 
 @pytest.fixture
 def counter_records_nd():
-    def fn(dim_number, record_number=1):
+    def fn(dim_number, record_number=1, title=None, dim_value=None):
+        """
+        :param dim_number: number of dimensions
+        :param record_number: number of records
+        :param title: if given, used for all titles, otherwise random value will be created
+        :param dim_value: use this for all dimensions values, if None, a random word will be used
+        :return:
+        """
         fake = faker.Faker()
         for i in range(record_number):
-            dim_data = {f'dim{i}': fake.word() for i in range(dim_number)}
+            dim_data = {f'dim{i}': fake.word() if dim_value is None else dim_value
+                        for i in range(dim_number)}
+            if title is None:
+                title = f'title {fake.pyint()}'
             rec = CounterRecord(platform=f'Platform{fake.pyint()}',
                                 start='2019-01-01',
                                 end='2019-01-31',
                                 metric=f'Metric {fake.pyint()}',
                                 value=fake.pyint(),
                                 dimension_data=dim_data,
-                                title=f'title {fake.pyint()}',
+                                title=title,
                                 title_ids={'ISBN': fake.isbn13()})
             yield rec
     return fn
@@ -102,4 +112,31 @@ class TestDataImport(object):
         assert DimensionText.objects.get(pk=al.dim2).text == crs[0].dimension_data['dim1']
         assert DimensionText.objects.get(pk=al.dim3).text == crs[0].dimension_data['dim2']
         assert al.dim4 is None
+
+    def test_data_import_mutli_3d_repeating_data(self, counter_records_nd, organizations,
+                                                 report_type_nd):
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        op = OrganizationPlatform.objects.create(organization=organizations[0], platform=platform)
+        assert AccessLog.objects.count() == 0
+        assert Title.objects.count() == 0
+        crs = list(counter_records_nd(3, record_number=10, title='Title ABC',
+                                      dim_value='one value'))
+        rt = report_type_nd(3)  # type: ReportType
+        import_counter_records(rt, op, crs)
+        assert AccessLog.objects.count() == 10
+        assert Title.objects.count() > 0
+        al1, al2 = AccessLog.objects.order_by('pk')[:2]
+        assert al1.value == crs[0].value
+        # check that only one remap is created for each dimension
+        assert DimensionText.objects.filter(text='one value').count() == 3
+        dt1 = DimensionText.objects.get(text='one value', dimension=rt.dimensions_sorted[0])
+        # check that values with the same dimension use the same remap
+        assert al1.dim1 == dt1.pk
+        assert al2.dim1 == dt1.pk
+        dt2 = DimensionText.objects.get(text='one value', dimension=rt.dimensions_sorted[1])
+        assert al1.dim2 == dt2.pk
+        assert al2.dim2 == dt2.pk
+        assert al1.dim3 is not None
+        assert al1.dim4 is None
 
