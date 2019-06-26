@@ -66,6 +66,7 @@ class Syncer(object):
             return self.Status.UNCHANGED
         else:
             obj = self.object_class.objects.create(**record)
+            self.db_key_to_obj[pid] = obj
             return self.Status.NEW
 
 

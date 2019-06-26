@@ -1,3 +1,4 @@
+from copy import copy, deepcopy
 from pprint import pprint
 
 import pytest
@@ -112,10 +113,22 @@ class TestLogicSync(object):
         assert stats[syncer.Status.SYNCED] == 0
         # resync
         # the following line will not cause change - we do not detect missing values
-        self.src_data[0]['vals']['ico'] = 987
-        del self.src_data[1]['vals']['ico']
-        stats = syncer.sync_data(self.src_data)
+        src_data = deepcopy(self.src_data)
+        src_data[0]['vals']['ico'] = 987
+        del src_data[1]['vals']['ico']
+        stats = syncer.sync_data(src_data)
         assert Organization.objects.count() == 2
         assert stats[syncer.Status.NEW] == 0
         assert stats[syncer.Status.UNCHANGED] == 1
         assert stats[syncer.Status.SYNCED] == 1
+
+    def test_organization_sync_with_parental_links(self):
+        syncer = OrganizationSyncer()
+        assert Organization.objects.count() == 0
+        src_data = deepcopy(self.src_data)
+        src_data[1]['refs']['controlled by'] = [src_data[0]['id']]  # add first as parent to second
+        syncer.sync_data(src_data)
+        assert Organization.objects.count() == 2
+        org0 = Organization.objects.get(ext_id=src_data[0]['id'])
+        org1 = Organization.objects.get(ext_id=src_data[1]['id'])
+        assert org1.parent == org0
