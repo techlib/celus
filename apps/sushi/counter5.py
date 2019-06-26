@@ -6,15 +6,16 @@ from copy import copy
 
 class CounterRecord(object):
 
-    def __init__(self, platform=None, start=None, end=None, title=None, title_ids=None):
+    def __init__(self, platform=None, start=None, end=None, title=None, title_ids=None,
+                 metric=None, value=None, dimension_data=None):
         self.platform = platform
         self.start = start
         self.end = end
         self.title = title
         self.title_ids = title_ids if title_ids else {}
-        self.dimension_data = {}
-        self.metric = None
-        self.value = None
+        self.dimension_data = dimension_data if dimension_data is not None else {}
+        self.metric = metric
+        self.value = value
 
 
 class Counter5ReportBase(object):

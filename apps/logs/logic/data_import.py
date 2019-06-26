@@ -91,9 +91,10 @@ def import_counter_records(report_type: ReportType, source: OrganizationPlatform
         for i, dim in enumerate(dimensions):
             dim_value = record.dimension_data.get(dim.short_name)
             if dim.type != dim.TYPE_INT:
-                remap = text_to_int_remaps[dim.pk]
-                dim_value = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
-                                                   other_attrs={'dimension_id': dim.pk})
+                remap = text_to_int_remaps.get(dim.pk, {})
+                dim_text_obj = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
+                                                      other_attrs={'dimension_id': dim.pk})
+                dim_value = dim_text_obj.pk
             id_attrs[f'dim{i+1}'] = dim_value
         print(id_attrs)
         al, created = AccessLog.objects.get_or_create(**id_attrs, defaults={'value': record.value})
