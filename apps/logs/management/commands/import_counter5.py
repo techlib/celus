@@ -41,6 +41,6 @@ class Command(BaseCommand):
             ))
         report_type = ReportType.objects.get(short_name=options['report_type'])
         records = reader.read_report(data)
-        stats = import_counter_records(report_type, op, records)
+        stats = import_counter_records(report_type, organization, platform, records)
         self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
 
