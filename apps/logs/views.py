@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from logs.logic.remap import remap_dicts
-from logs.models import AccessLog, ReportType, Dimension
+from logs.models import AccessLog, ReportType, Dimension, DimensionText
 from logs.serializers import DimensionSerializer
 
 
@@ -44,16 +44,28 @@ class Counter5DataView(APIView):
         # decode the dimensions to find out what we need to have in the query
         prim_dim_name, prim_dim_obj = self._translate_dimension_spec(primary_dim, report_type)
         sec_dim_name, sec_dim_obj = self._translate_dimension_spec(secondary_dim, report_type)
-
+        # construct the query
         query_params = {}
+        # go over implicit dimensions and add them to the query if GET params are given for this
         for dim_name in self.implicit_dims:
             value = request.GET.get(dim_name)
             if value:
                 field = AccessLog._meta.get_field(dim_name)
                 if isinstance(field, models.ForeignKey):
                     query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
+        # now go over the extra dimensions and add them to filter if requested
+        for i, dim in enumerate(report_type.dimensions_sorted):
+            dim_name = f'dim{i+1}'
+            value = request.GET.get(dim_name)
+            if value:
+                if dim.type == dim.TYPE_TEXT:
+                    try:
+                        value = DimensionText.objects.get(text=value).pk
+                    except DimensionText.DoesNotExist:
+                        pass  # we leave the value as it is - it will probably lead to empty result
+                query_params[dim_name] = value
+        # create the base query
         query = AccessLog.objects.filter(**query_params)
-
         # get the data - we need two separate queries for 1d and 2d cases
         if sec_dim_name:
             data = query.values(prim_dim_name, sec_dim_name).annotate(count=Sum('value')).\
