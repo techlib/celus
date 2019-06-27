@@ -83,6 +83,8 @@
         return url
       },
       columns () {
+        if (this.loading)
+          return []
         if (this.secondaryDim) {
           let rows = this.rows
           return [this.primaryDim, ...Object.keys(rows[0]).filter(item => item !== this.primaryDim)]
