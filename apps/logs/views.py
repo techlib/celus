@@ -54,6 +54,8 @@ class Counter5DataView(APIView):
                 field = AccessLog._meta.get_field(dim_name)
                 if isinstance(field, models.ForeignKey):
                     query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
+                else:
+                    query_params[dim_name] = value
         # now go over the extra dimensions and add them to filter if requested
         for i, dim in enumerate(report_type.dimensions_sorted):
             dim_name = f'dim{i+1}'

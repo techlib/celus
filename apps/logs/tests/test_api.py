@@ -197,6 +197,12 @@ class TestChartDataAPI(object):
         assert recs[0]['count'] == 2*1  # platform 1 and title 1
         assert recs[1]['count'] == 1+8  # platform 2 and title 1
         assert recs[2]['count'] == 16   # platform 2 and title 2
+        # filter by date
+        recs = get_data({'date': '2018-02-01',
+                         'prim_dim': 'target'})
+        assert len(recs) == 2
+        assert recs[0]['count'] == 16
+        assert recs[1]['count'] == 32
 
 
 
