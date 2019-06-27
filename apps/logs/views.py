@@ -9,8 +9,8 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet, ReadOnlyModelViewSet
 
 from logs.logic.remap import remap_dicts
-from logs.models import AccessLog, ReportType, Dimension, DimensionText
-from logs.serializers import DimensionSerializer, ReportTypeSerializer
+from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric
+from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer
 
 
 class Counter5DataView(APIView):
@@ -92,3 +92,9 @@ class ReportTypeViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ReportTypeSerializer
     queryset = ReportType.objects.all()
+
+
+class MetricViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = MetricSerializer
+    queryset = Metric.objects.all()
