@@ -22,8 +22,8 @@ class Counter5DataView(APIView):
         secondary_dim = request.GET.get('sec_dim')
         primary_dim = request.GET.get('prim_dim', 'date')
         query = AccessLog.objects.filter(
-            source__organization=organization,
-            source__platform=platform,
+            organization=organization,
+            platform=platform,
             metric=metric,
         )
         prim_dim_obj = None

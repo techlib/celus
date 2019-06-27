@@ -105,8 +105,10 @@ class AccessLog(models.Model):
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
-    source = models.ForeignKey(OrganizationPlatform, on_delete=models.CASCADE,
-                               help_text='Oranization and platform for which this log was created')
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
+    # source = models.ForeignKey(OrganizationPlatform, on_delete=models.CASCADE,
+    #                            help_text='Oranization and platform for which this log was created')
     target = models.ForeignKey(Title, on_delete=models.CASCADE,
                                help_text='Title for which this log was created')
     dim1 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #1')

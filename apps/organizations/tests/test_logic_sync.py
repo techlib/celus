@@ -1,11 +1,10 @@
-from copy import copy, deepcopy
+from copy import deepcopy
 from pprint import pprint
 
 import pytest
 
 from organizations.logic.sync import OrganizationSyncer
 from organizations.models import Organization
-from .fixtures import organizations, organizations_random
 
 
 @pytest.mark.django_db

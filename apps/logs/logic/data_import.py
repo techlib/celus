@@ -1,7 +1,8 @@
 import logging
 from collections import Counter
 
-from publications.models import Title
+from organizations.models import Organization
+from publications.models import Title, Platform
 from ..models import ReportType, Metric, DimensionText, OrganizationPlatform, AccessLog
 from sushi.counter5 import CounterRecord
 
@@ -68,7 +69,7 @@ class TitleManager(object):
         return self.get_or_create(title, pub_type, isbn, issn, eissn, doi)
 
 
-def import_counter_records(report_type: ReportType, source: OrganizationPlatform,
+def import_counter_records(report_type: ReportType, organization: Organization, platform: Platform,
                            records: [CounterRecord]) -> Counter:
     stats = Counter()
     # prepare all remaps
@@ -86,7 +87,8 @@ def import_counter_records(report_type: ReportType, source: OrganizationPlatform
         id_attrs = {
             'report_type': report_type,
             'metric': get_or_create_with_map(Metric, metrics, 'short_name', record.metric),
-            'source': source,
+            'organization': organization,
+            'platform': platform,
             'target_id': tm.get_or_create_from_counter_record(record),
             'date': record.start,
         }
