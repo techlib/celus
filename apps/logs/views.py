@@ -79,8 +79,14 @@ class Counter5DataView(APIView):
         # remap the values if text dimensions are involved
         if prim_dim_obj and prim_dim_obj.type == Dimension.TYPE_TEXT:
             remap_dicts(prim_dim_obj, data, prim_dim_name)
+        elif prim_dim_name in self.implicit_dims:
+            # we remap the implicit dims if they are foreign key based
+            self.remap_implicit_dim(data, prim_dim_name)
         if sec_dim_obj and sec_dim_obj.type == Dimension.TYPE_TEXT:
             remap_dicts(sec_dim_obj, data, sec_dim_name)
+        elif sec_dim_name in self.implicit_dims:
+            # we remap the implicit dims if they are foreign key based
+            self.remap_implicit_dim(data, sec_dim_name)
         # prepare the data to return
         reply = {'data': data}
         if prim_dim_obj:
@@ -88,6 +94,14 @@ class Counter5DataView(APIView):
         if sec_dim_obj:
             reply[sec_dim_name] = DimensionSerializer(sec_dim_obj).data
         return Response(reply)
+
+    def remap_implicit_dim(self, data, prim_dim_name):
+        field = AccessLog._meta.get_field(prim_dim_name)
+        if isinstance(field, models.ForeignKey):
+            mapping = {obj.pk: obj for obj in field.related_model.objects.all()}
+            for rec in data:
+                if rec[prim_dim_name] in mapping:
+                    rec[prim_dim_name] = str(mapping[rec[prim_dim_name]])
 
 
 class ReportTypeViewSet(ReadOnlyModelViewSet):
