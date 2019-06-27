@@ -6,9 +6,9 @@ from copy import copy
 
 class CounterRecord(object):
 
-    def __init__(self, platform=None, start=None, end=None, title=None, title_ids=None,
+    def __init__(self, platform_name=None, start=None, end=None, title=None, title_ids=None,
                  metric=None, value=None, dimension_data=None):
-        self.platform = platform
+        self.platform_name = platform_name
         self.start = start
         self.end = end
         self.title = title
@@ -35,7 +35,7 @@ class Counter5ReportBase(object):
         records = []
         for item in report.get('Report_Items', []):
             record = CounterRecord()
-            record.platform = item.get('Platform')
+            record.platform_name = item.get('Platform')
             record.title = item.get('Title')
             record.title_ids = self._extract_title_ids(item.get('Item_ID'))
             record.dimension_data = self._extract_dimension_data(self.dimensions, item)

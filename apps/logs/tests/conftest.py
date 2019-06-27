@@ -1,3 +1,7 @@
+import calendar
+from datetime import date
+
+import dateparser
 import faker
 import pytest
 
@@ -7,7 +11,7 @@ from sushi.counter5 import CounterRecord
 
 @pytest.fixture
 def counter_records_0d():
-    rec1 = CounterRecord(platform='Platform1', start='2019-01-01', end='2019-01-31',
+    rec1 = CounterRecord(platform_name='Platform1', start='2019-01-01', end='2019-01-31',
                          metric='Metric 1', value=50, dimension_data={},
                          title='Title X', title_ids={'Print_ISSN': '1234-5678'})
     return [rec1]
@@ -15,8 +19,9 @@ def counter_records_0d():
 
 @pytest.fixture
 def counter_records_nd():
-    def fn(dim_number, record_number=1, title=None, dim_value=None):
+    def fn(dim_number, record_number=1, title=None, dim_value=None, metric=None):
         """
+        :param metric:
         :param dim_number: number of dimensions
         :param record_number: number of records
         :param title: if given, used for all titles, otherwise random value will be created
@@ -29,14 +34,48 @@ def counter_records_nd():
                         for i in range(dim_number)}
             if title is None:
                 title = f'title {fake.pyint()}'
-            rec = CounterRecord(platform=f'Platform{fake.pyint()}',
+            rec = CounterRecord(platform_name=f'Platform{fake.pyint()}',
                                 start='2019-01-01',
                                 end='2019-01-31',
-                                metric=f'Metric {fake.pyint()}',
+                                metric=metric if metric else f'Metric {fake.pyint()}',
                                 value=fake.pyint(),
                                 dimension_data=dim_data,
                                 title=title,
                                 title_ids={'ISBN': fake.isbn13()})
+            yield rec
+    return fn
+
+
+@pytest.fixture
+def counter_records():
+    def fn(datapoints, metric=None, platform=None):
+        """
+        :param platform:
+        :param metric:
+        :param datapoints: matrix of data,
+          the first column must be title (or None to generate fake),
+          the second column is date,
+          last column is the actual value,
+          columns in between are for the additional dimensions
+        :return:
+        """
+        fake = faker.Faker()
+        for row in datapoints:
+            assert len(row) >= 3
+            title = row[0] if row[0] else fake.sentence()
+            start = row[1]
+            end = dateparser.parse(start)  # type: date
+            end = end.replace(day=calendar.monthrange(end.year, end.month)[1])  # last day of month
+            dim_data = {f'dim{i}': value for i, value in enumerate(row[2:-1])}
+            value = row[-1]
+            rec = CounterRecord(platform_name=platform if platform else f'Platform{fake.pyint()}',
+                                start=start,
+                                end=end.isoformat(),
+                                metric=metric if metric else f'Metric {fake.pyint()}',
+                                value=value,
+                                dimension_data=dim_data,
+                                title=title,
+                                title_ids={'Print_ISSN': '1234-5678'})
             yield rec
     return fn
 

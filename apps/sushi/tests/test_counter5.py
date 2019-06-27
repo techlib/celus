@@ -53,7 +53,7 @@ class TestCounter5Reading(object):
         reader = Counter5ReportBase()
         records = reader.read_report(data)
         assert len(records) == 2
-        assert records[0].platform == 'PlOne'
+        assert records[0].platform_name == 'PlOne'
         assert records[0].title == 'Title1'
         assert records[0].metric == 'Total_Item_Investigations'
         assert records[0].value == 10
@@ -63,7 +63,7 @@ class TestCounter5Reading(object):
         assert records[1].value == 8
         # both records should have the same values for these attributes as they come from the
         # same item in the data
-        for attr in ('platform', 'title', 'start', 'end'):
+        for attr in ('platform_name', 'title', 'start', 'end'):
             assert getattr(records[0], attr) == getattr(records[1], attr)
 
     def test_record_simple_tr(self):
