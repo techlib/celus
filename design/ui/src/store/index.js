@@ -11,6 +11,7 @@ export default new Vuex.Store({
     snackbarContent: null,
     username: null,
     loginError: null,
+    email: null,
     selectedOrganization: {'name': 'TEST'},
   },
   getters: {

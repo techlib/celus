@@ -1,14 +1,17 @@
-let devURLBase = 'http://localhost:8019/'
+let devURLBase = 'http://localhost:8015/'
 
 module.exports = {
   runtimeCompiler: true,
 
   devServer: {
     proxy: {
-      '/logs/api': {
+      '/api/logs/': {
         target: devURLBase,
         changeOrigin: true,
-        ws: true
+        ws: true,
+        pathRewrite: {
+          '^/api/logs': '/logs' // remove base path
+        },
       },
       '/organizations/api': {
         target: devURLBase,
