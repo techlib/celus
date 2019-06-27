@@ -6,10 +6,11 @@ from django.http import Http404
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet, ReadOnlyModelViewSet
 
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText
-from logs.serializers import DimensionSerializer
+from logs.serializers import DimensionSerializer, ReportTypeSerializer
 
 
 class Counter5DataView(APIView):
@@ -85,3 +86,9 @@ class Counter5DataView(APIView):
         if sec_dim_obj:
             reply[sec_dim_name] = DimensionSerializer(sec_dim_obj).data
         return Response(reply)
+
+
+class ReportTypeViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = ReportTypeSerializer
+    queryset = ReportType.objects.all()
