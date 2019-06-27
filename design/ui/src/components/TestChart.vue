@@ -1,5 +1,20 @@
 <template>
     <v-layout row wrap>
+        <v-flex xs12>
+            <v-select
+                    v-model="selectedReportType"
+                    :items="reportTypes"
+                    label="report type"
+                    required
+            >
+                <template v-slot:item="{item}">
+                    <span>{{ item.name }}</span>
+                </template>
+                <template v-slot:selection="{item}">
+                    <span>{{ item.name }}</span>
+                </template>
+            </v-select>
+        </v-flex>
         <v-flex sm4
         >
             <v-select
@@ -33,6 +48,7 @@
   import VeBar from 'v-charts/lib/bar.common'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
+  import { mapActions } from 'vuex'
 
   export default {
     name: 'TestChart',
@@ -50,7 +66,7 @@
       },
       data_url_base: {
         type: String,
-        default: '/api/logs/chart-data/TR/',
+        default: '/api/logs/',
       },
       chart_settings: {},
       textPosition: {
@@ -72,11 +88,13 @@
         dimensions: ['date', 'platform', 'organization', 'metric', 'target'],
         primaryDim: 'date',
         secondaryDim: null,
+        reportTypes: [],
+        selectedReportType: null,
       }
     },
     computed: {
       dataURL () {
-        let url = `${this.data_url_base}?prim_dim=${this.primaryDim}`
+        let url = `${this.data_url_base}chart-data/${this.selectedReportType.short_name}/?prim_dim=${this.primaryDim}`
         if (this.secondaryDim) {
           url += `&sec_dim=${this.secondaryDim}`
         }
@@ -127,22 +145,37 @@
 
     },
     methods: {
+      ...mapActions({
+        showSnackbar: 'showSnackbar',
+      }),
       load_data() {
         this.loading = true
+        this.data_raw = []
         if (this.dataURL) {
           axios.get(this.dataURL)
             .then((response) => {
               console.log(response.data.data);
               this.data_raw = response.data.data
-              this.data_meta = response.data.meta
               this.loading = false
             }, (error) => {
-              this.$store.dispatch('showSnackbar', {content: 'Error fetching data: '+error})
+              this.showSnackbar({content: 'Error fetching data: '+error})
               console.log('Error fetching data', error)
               this.loading = false
             })
         }
-      }
+      },
+      loadReportTypes () {
+        axios.get(this.data_url_base + 'report-type/')
+          .then((response) => {
+            this.reportTypes = response.data
+            if (this.reportTypes.length) {
+              this.$set(this, 'selectedReportType', this.reportTypes[0])
+            }
+          }, (error) => {
+            this.showSnackbar({content: 'Error fetching data: '+error})
+          }
+        )
+      },
     },
     watch: {
       data_url: function () {
@@ -153,10 +186,14 @@
       },
       secondaryDim () {
         this.load_data()
+      },
+      selectedReportType () {
+        this.load_data()
       }
     },
     created() {
-      this.load_data()
+      this.loadReportTypes()
+      // this.load_data()
     }
   }
 </script>

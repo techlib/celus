@@ -46,7 +46,7 @@ class Counter5DataView(APIView):
         prim_dim_name, prim_dim_obj = self._translate_dimension_spec(primary_dim, report_type)
         sec_dim_name, sec_dim_obj = self._translate_dimension_spec(secondary_dim, report_type)
         # construct the query
-        query_params = {}
+        query_params = {'report_type': report_type}
         # go over implicit dimensions and add them to the query if GET params are given for this
         for dim_name in self.implicit_dims:
             value = request.GET.get(dim_name)
