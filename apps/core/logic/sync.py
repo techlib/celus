@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 import logging
 
 from erms.api import ERMS
-from erms.sync import ERMSSyncer
+from erms.sync import ERMSObjectSyncer, ERMSSyncer
 from ..models import User, Identity
 
 logger = logging.getLogger(__name__)
@@ -19,6 +19,7 @@ class IdentitySyncer(ERMSSyncer):
     }
 
     object_class = Identity
+    primary_id = 'identity'
 
     def __init__(self):
         super().__init__()
@@ -35,7 +36,7 @@ class IdentitySyncer(ERMSSyncer):
         return result
 
 
-class UserSyncer(ERMSSyncer):
+class UserSyncer(ERMSObjectSyncer):
 
     object_class = User
 
@@ -77,4 +78,16 @@ def sync_users(records: [dict]) -> dict:
     info = get_user_model().objects.filter(ext_id__isnull=False). \
         exclude(ext_id__in=seen_external_ids).delete()
     stats['removed'] = info
+    return stats
+
+
+def sync_identities_with_erms() -> dict:
+    erms = ERMS(base_url=settings.ERMS_API_URL)
+    erms_idents = erms.fetch_endpoint(ERMS.EP_IDENTITY)
+    return sync_users(erms_idents)
+
+
+def sync_identities(records: [dict]) -> dict:
+    syncer = IdentitySyncer()
+    stats = syncer.sync_data(records)
     return stats

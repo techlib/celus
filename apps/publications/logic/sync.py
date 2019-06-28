@@ -3,11 +3,11 @@ Stuff related to synchronization of organization data between the local database
 and an external source
 """
 
-from erms.sync import ERMSSyncer
+from erms.sync import ERMSObjectSyncer
 from ..models import Platform
 
 
-class PlaformSyncer(ERMSSyncer):
+class PlaformSyncer(ERMSObjectSyncer):
 
     attr_map = {
         'id': 'ext_id',

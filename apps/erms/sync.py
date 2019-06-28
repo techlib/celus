@@ -91,11 +91,6 @@ class ERMSSyncer(Syncer):
 
     primary_id = 'ext_id'
 
-    def translate_record(self, record: dict) -> dict:
-        output = super().translate_record(record['vals'])
-        output['ext_id'] = record['id']
-        return output
-
     def translate_value(self, key, value):
         if type(value) is list:
             return value[0]
@@ -109,3 +104,11 @@ class ERMSSyncer(Syncer):
                 return None  # we skip those
             return f'{start}_{end}'
         return super().translate_key(key)
+
+
+class ERMSObjectSyncer(ERMSSyncer):
+
+    def translate_record(self, record: dict) -> dict:
+        output = super().translate_record(record['vals'])
+        output['ext_id'] = record['id']
+        return output

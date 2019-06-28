@@ -7,13 +7,13 @@ import logging
 from django.conf import settings
 
 from erms.api import ERMS
-from erms.sync import ERMSSyncer
+from erms.sync import ERMSObjectSyncer
 from ..models import Organization
 
 logger = logging.getLogger(__name__)
 
 
-class OrganizationSyncer(ERMSSyncer):
+class OrganizationSyncer(ERMSObjectSyncer):
 
     attr_map = {
         'czechelib id': 'internal_id',

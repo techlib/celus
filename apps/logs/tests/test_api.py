@@ -118,21 +118,7 @@ class TestChartDataAPI(object):
         assert resp.status_code == 200
         data = json.loads(resp.content)
         assert 'data' in data
-        # prepare result
-        to_compare = []
-        for rec in result:
-            new_rec = {}
-            for key, val in rec.items():
-                if val == '__platform_id':
-                    new_rec[key] = platform.pk
-                elif val == '__metric_id':
-                    new_rec[key] = metric.pk
-                elif val == '__organization_id':
-                    new_rec[key] = organization.pk
-                else:
-                    new_rec[key] = val
-            to_compare.append(new_rec)
-        assert data['data'] == to_compare
+        assert data['data'] == result
 
     def test_api_filtering(self, counter_records, organizations, report_type_nd, client):
         platform1 = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
