@@ -1,5 +1,4 @@
 from copy import deepcopy
-from pprint import pprint
 
 import pytest
 
@@ -76,7 +75,6 @@ class TestLogicSync(object):
         syncer = OrganizationSyncer()
         for rec_in, rec_out in zip(self.src_data, self.trans_data):
             tr_rec = syncer.translate_record(rec_in)
-            pprint(tr_rec)
             assert tr_rec == rec_out
 
     def test_organization_sync_sync(self):

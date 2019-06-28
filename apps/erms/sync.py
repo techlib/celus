@@ -7,6 +7,11 @@ from collections import Counter
 from enum import Enum
 
 
+class SyncerError(Exception):
+
+    pass
+
+
 class Syncer(object):
 
     attr_map = {}
