@@ -1,6 +1,5 @@
 from django.contrib import auth
 from django.contrib.auth import load_backend
-from django.contrib.auth.backends import RemoteUserBackend
 from django.contrib.auth.middleware import RemoteUserMiddleware
 
 from apps.core.auth import EDUIdAuthenticationBackend
