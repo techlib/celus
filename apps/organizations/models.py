@@ -25,6 +25,8 @@ class Organization(MPTTModel):
                                related_name='defined_organizations')
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through='UserOrganization',
                                    related_name='organizations')
+    platforms = models.ManyToManyField('publications.Platform',
+                                       through='logs.OrganizationPlatform')
 
     class Meta:
         unique_together = (
