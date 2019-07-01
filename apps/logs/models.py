@@ -3,7 +3,7 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 
-from core.models import USER_LEVEL_CHOICES, UL_ROBOT
+from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource
 from organizations.models import Organization
 from publications.models import Platform, Title
 
@@ -24,11 +24,15 @@ class ReportType(models.Model):
     Represents type of report, such as 'TR' or 'DR' in Sushi
     """
 
-    short_name = models.CharField(max_length=100, unique=True)
+    short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
     dimensions = models.ManyToManyField('Dimension', related_name='report_types',
                                         through='ReportTypeToDimension')
+    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        unique_together = (('short_name', 'source'),)
 
     def __str__(self):
         return self.short_name
@@ -48,9 +52,13 @@ class Metric(models.Model):
     Type of metric, such as 'Unique_Item_Requests', etc.
     """
 
-    short_name = models.CharField(max_length=100, unique=True)
+    short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        unique_together = (('short_name', 'source'),)
 
     def __str__(self):
         return self.short_name
@@ -70,13 +78,15 @@ class Dimension(models.Model):
         (TYPE_TEXT, 'text'),
     )
 
-    short_name = models.CharField(max_length=100, unique=True)
+    short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     type = models.PositiveSmallIntegerField(choices=DIMENSION_TYPE_CHOICES)
     desc = models.TextField(blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         ordering = ('reporttypetodimension', )
+        unique_together = (('short_name', 'source'),)
 
     def __str__(self):
         return '{} ({})'.format(self.short_name, self.get_type_display())
@@ -107,8 +117,6 @@ class AccessLog(models.Model):
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
-    # source = models.ForeignKey(OrganizationPlatform, on_delete=models.CASCADE,
-    #                            help_text='Oranization and platform for which this log was created')
     target = models.ForeignKey(Title, on_delete=models.CASCADE,
                                help_text='Title for which this log was created')
     dim1 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #1')

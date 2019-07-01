@@ -4,6 +4,8 @@ from django.db import models
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
+from core.models import DataSource
+
 
 class Organization(MPTTModel):
 
@@ -19,6 +21,8 @@ class Organization(MPTTModel):
     fte = models.PositiveIntegerField(help_text='Last available FTE number for organization',
                                       default=0)
     address = JSONField(default=dict)
+    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True,
+                               related_name='defined_organizations')
 
     class Meta:
         unique_together = (
