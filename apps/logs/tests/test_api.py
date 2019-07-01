@@ -8,7 +8,7 @@ from publications.models import Platform
 
 from ..logic.data_import import import_counter_records
 from organizations.tests.conftest import organizations
-from core.tests.conftest import valid_identity
+from core.tests.conftest import valid_identity, authenticated_client
 
 
 @pytest.mark.django_db
@@ -18,8 +18,8 @@ class TestChartDataAPI(object):
     Tests functionality of the view chart-data
     """
 
-    def test_api_simple_data_0d(self, counter_records_0d, organizations, report_type_nd, client,
-                                valid_identity):
+    def test_api_simple_data_0d(self, counter_records_0d, organizations, report_type_nd,
+                                authenticated_client):
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                            provider='Provider 1')
         organization = organizations[0]
@@ -27,12 +27,12 @@ class TestChartDataAPI(object):
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
-        resp = client.get(reverse('chart_data', args=(report_type.short_name,)),
-                          {'organization': organization.pk,
-                           'metric': metric.pk,
-                           'platform': platform.pk,
-                           'prim_dim': 'date'},
-                          HTTP_X_IDENTITY=valid_identity)
+        resp = authenticated_client.get(
+            reverse('chart_data', args=(report_type.short_name,)),
+            {'organization': organization.pk,
+             'metric': metric.pk,
+             'platform': platform.pk,
+             'prim_dim': 'date'})
         assert resp.status_code == 200
         data = json.loads(resp.content)
         assert 'data' in data
@@ -46,8 +46,8 @@ class TestChartDataAPI(object):
                                  [2, 3, 4],  # four combinations of dim2 and dim3
                                  ['platform', None, 1],  # just one platform
                              ])
-    def test_api_secondary_dim(self, counter_records, organizations, report_type_nd, client,
-                               primary_dim, secondary_dim, count, valid_identity):
+    def test_api_secondary_dim(self, counter_records, organizations, report_type_nd,
+                               primary_dim, secondary_dim, count, authenticated_client):
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                            provider='Provider 1')
         data = [
@@ -71,8 +71,8 @@ class TestChartDataAPI(object):
                   }
         if secondary_dim:
             params['sec_dim'] = secondary_dim
-        resp = client.get(reverse('chart_data', args=(report_type.short_name,)), params,
-                          HTTP_X_IDENTITY=valid_identity)
+        resp = authenticated_client.get(reverse('chart_data', args=(report_type.short_name,)),
+                                        params)
         assert resp.status_code == 200
         data = json.loads(resp.content)
         assert 'data' in data
@@ -97,8 +97,8 @@ class TestChartDataAPI(object):
                                                               'metric': 'Hits',
                                                               'count': 3}]],
                              ])
-    def test_api_values(self, counter_records, organizations, report_type_nd, client,
-                        primary_dim, secondary_dim, result, valid_identity):
+    def test_api_values(self, counter_records, organizations, report_type_nd,
+                        primary_dim, secondary_dim, result, authenticated_client):
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                            provider='Provider 1')
         data = [
@@ -118,15 +118,15 @@ class TestChartDataAPI(object):
                   }
         if secondary_dim:
             params['sec_dim'] = secondary_dim
-        resp = client.get(reverse('chart_data', args=(report_type.short_name,)), params,
-                          HTTP_X_IDENTITY=valid_identity)
+        resp = authenticated_client.get(reverse('chart_data', args=(report_type.short_name,)),
+                                        params)
         assert resp.status_code == 200
         data = json.loads(resp.content)
         assert 'data' in data
         assert data['data'] == result
 
-    def test_api_filtering(self, counter_records, organizations, report_type_nd, client,
-                           valid_identity):
+    def test_api_filtering(self, counter_records, organizations, report_type_nd,
+                           authenticated_client):
         platform1 = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                             provider='Provider 1')
         platform2 = Platform.objects.create(ext_id=1235, short_name='Platform2', name='Platform 2',
@@ -153,9 +153,8 @@ class TestChartDataAPI(object):
         metric2 = Metric.objects.get(short_name='Big Hits')
 
         def get_data(params):
-            resp = client.get(reverse('chart_data', args=(report_type.short_name,)),
-                              params,
-                              HTTP_X_IDENTITY=valid_identity)
+            resp = authenticated_client.get(reverse('chart_data', args=(report_type.short_name,)),
+                                            params)
             assert resp.status_code == 200
             result = json.loads(resp.content)
             assert 'data' in result

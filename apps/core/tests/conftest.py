@@ -15,3 +15,9 @@ def valid_identity():
 @pytest.fixture
 def invalid_identity():
     yield 'invalid@user.test'
+
+
+@pytest.fixture
+def authenticated_client(client, valid_identity):
+    client.defaults['HTTP_X_IDENTITY'] = valid_identity
+    yield client
