@@ -67,6 +67,9 @@ class Identity(models.Model):
                                 help_text='External identifier of the person, usually email')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
+    class Meta:
+        verbose_name_plural = 'identities'
+
     def __str__(self):
         return self.identity
 
