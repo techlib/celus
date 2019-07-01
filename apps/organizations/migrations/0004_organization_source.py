@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0003_auto_20190701_0642'),
+        ('core', '0003_datasource'),
         ('organizations', '0003_non_unique_ico'),
     ]
 
