@@ -23,6 +23,8 @@ class Organization(MPTTModel):
     address = JSONField(default=dict)
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True,
                                related_name='defined_organizations')
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, through='UserOrganization',
+                                   related_name='organizations')
 
     class Meta:
         unique_together = (

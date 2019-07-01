@@ -21,3 +21,10 @@ def invalid_identity():
 def authenticated_client(client, valid_identity):
     client.defaults['HTTP_X_IDENTITY'] = valid_identity
     yield client
+
+
+@pytest.fixture
+def authentication_headers():
+    def fn(identity):
+        return {'HTTP_X_IDENTITY': identity}
+    return fn
