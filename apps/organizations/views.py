@@ -1,6 +1,5 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from .models import Organization
 from .serializers import OrganizationSerializer
 
 
