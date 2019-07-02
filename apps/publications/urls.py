@@ -8,7 +8,11 @@ org_sub_router.register(r'platform', views.PlatformViewSet, basename='platform')
 org_sub_router.register(r'detailed-platform', views.DetailedPlatformViewSet,
                         basename='detailed-platform')
 
+platform_sub_router = NestedSimpleRouter(org_sub_router, r'platform', lookup='platform')
+platform_sub_router.register('title', views.PlatformTitleViewSet, basename='platform-title')
+
 urlpatterns = [
 ]
 
 urlpatterns += org_sub_router.urls
+urlpatterns += platform_sub_router.urls
