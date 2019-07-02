@@ -1,5 +1,3 @@
-<i18n src="../locales/common.yaml"></i18n>
-
 <template>
     <v-app>
         <!--LoginDialog v-if="loggedIn"></LoginDialog-->

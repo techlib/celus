@@ -4,15 +4,14 @@
     <v-layout align-baseline>
         <v-flex class="sc" shrink mr-2>{{ $t('organization') }}:</v-flex>
         <v-flex>
-        <v-select
-                v-model="orgId"
-                :items="items"
-                item-text="name"
-                item-value="pk"
-                class="short"
-        >
-
-        </v-select>
+            <v-select
+                    v-model="orgId"
+                    :items="items"
+                    item-text="name"
+                    item-value="pk"
+                    class="short"
+            >
+            </v-select>
         </v-flex>
     </v-layout>
 </template>
