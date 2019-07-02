@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from core.models import Identity
@@ -19,12 +20,12 @@ def invalid_identity():
 
 @pytest.fixture
 def authenticated_client(client, valid_identity):
-    client.defaults['HTTP_X_IDENTITY'] = valid_identity
+    client.defaults[settings.EDUID_IDENTITY_HEADER] = valid_identity
     yield client
 
 
 @pytest.fixture
 def authentication_headers():
     def fn(identity):
-        return {'HTTP_X_IDENTITY': identity}
+        return {settings.EDUID_IDENTITY_HEADER: identity}
     return fn

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth import load_backend
 from django.contrib.auth.middleware import RemoteUserMiddleware
@@ -7,7 +8,7 @@ from apps.core.auth import EDUIdAuthenticationBackend
 
 class EDUIdHeaderMiddleware(RemoteUserMiddleware):
 
-    header = 'HTTP_X_IDENTITY'
+    header = settings.EDUID_IDENTITY_HEADER
 
     def _remove_invalid_user(self, request):
         """

@@ -163,6 +163,7 @@ REST_FRAMEWORK = {
 
 # ERMS related stuff
 ERMS_API_URL = "https://erms.czechelib.cz/api/"
+EDUID_IDENTITY_HEADER = 'HTTP_X_IDENTITY'
 
 
 # This loads the secret key and potentially other secret settings from a JSON file
