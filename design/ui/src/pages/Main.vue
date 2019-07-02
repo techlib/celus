@@ -16,9 +16,7 @@
                         vertical
                 ></v-divider>
 
-                <div class="org">
-                    <span class="sc">{{ $t('organization') }}</span>: <strong>{{ selectedOrganization !== null ? selectedOrganization.name : '-'}}</strong>
-                </div>
+                <OrganizationSelector />
 
                 <v-spacer></v-spacer>
                 <v-toolbar-items class="hidden-sm-and-down">
@@ -78,11 +76,13 @@
 <script>
   import SidePanel from './SidePanel'
   //import LoginDialog from '../components/LoginDialog'
-  import {mapState, mapActions, mapGetters} from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
+  import OrganizationSelector from '../components/OrganizationSelector'
 
   export default {
     name: 'Dashboard',
     components: {
+      OrganizationSelector,
       SidePanel,
       //LoginDialog
     },
@@ -101,7 +101,6 @@
         avatarText: 'avatarText',
         avatarImg: 'avatarImg',
         usernameText: 'usernameText',
-        selectedOrganization: 'selectedOrganization',
       }),
       snackbarShow: {
         get () {
@@ -135,15 +134,6 @@
 </script>
 
 <style lang="scss">
-
-    div.org {
-        display: inline-block;
-        font-size: 1.25rem;
-    }
-
-    .sc {
-        font-variant: small-caps;
-    }
 
     .v-select.v-text-field.short input {
         max-width: 0;
