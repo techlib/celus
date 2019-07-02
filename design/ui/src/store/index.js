@@ -11,8 +11,8 @@ export default new Vuex.Store({
     snackbarShow: false,
     snackbarContent: null,
     loginError: null,
-    organizations: null,
-    selectedOrganizationIndex: null,
+    organizations: {},
+    selectedOrganizationId: null,
   },
   getters: {
     avatarImg: state => {
@@ -32,8 +32,8 @@ export default new Vuex.Store({
     },
     loggedIn: state => state.user !== null,
     selectedOrganization: state => {
-      if (state.organizations && state.selectedOrganizationIndex !== null) {
-        return state.organizations[state.selectedOrganizationIndex]
+      if (state.organizations && state.selectedOrganizationId !== null) {
+        return state.organizations[state.selectedOrganizationId]
       } else {
         return null
       }
@@ -63,6 +63,9 @@ export default new Vuex.Store({
     hideSnackbar(context) {
       context.commit('setSnackbarShow', {'show': false})
     },
+    selectOrganization (context, {id}) {
+      context.commit('setSelectedOrganizationId', {id})
+    },
     loadUserData (context) {
       axios.get('/api/user/')
         .then(response => {
@@ -75,9 +78,13 @@ export default new Vuex.Store({
     loadOrganizations (context) {
       axios.get('/api/organization/')
         .then(response => {
-          context.commit('setOrganizations', response.data)
-          if (context.selectedOrganizationIndex === undefined && response.data.length > 0) {
-            context.commit('setSelectedOrganizationIndex', {index: 0})
+          let organizations = {}
+          for (let rec of response.data) {
+            organizations[rec.pk] = rec
+          }
+          context.commit('setOrganizations', organizations)
+          if (context.selectedOrganizationId === undefined && response.data.length > 0) {
+            context.commit('setSelectedOrganizationId', {id: response.data[0].pk})
           }
         })
         .catch(error => {
@@ -104,8 +111,8 @@ export default new Vuex.Store({
     setOrganizations(state, organizations) {
       state.organizations = organizations
     },
-    setSelectedOrganizationIndex(state, {index}) {
-      state.selectedOrganizationIndex = index
+    setSelectedOrganizationId(state, {id}) {
+      state.selectedOrganizationId = id
     }
   }
 })
