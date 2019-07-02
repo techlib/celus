@@ -11,7 +11,8 @@ export default new Vuex.Store({
     snackbarShow: false,
     snackbarContent: null,
     loginError: null,
-    selectedOrganization: {'name': 'TEST'},
+    organizations: null,
+    selectedOrganizationIndex: null,
   },
   getters: {
     avatarImg: state => {
@@ -29,7 +30,14 @@ export default new Vuex.Store({
       }
       return 'not logged in'
     },
-    loggedIn: state => state.user !== null
+    loggedIn: state => state.user !== null,
+    selectedOrganization: state => {
+      if (state.organizations && state.selectedOrganizationIndex !== null) {
+        return state.organizations[state.selectedOrganizationIndex]
+      } else {
+        return null
+      }
+    }
   },
   actions: {
     start () {
@@ -46,6 +54,7 @@ export default new Vuex.Store({
         return Promise.reject(error)
       })
       this.dispatch('loadUserData')
+      this.dispatch('loadOrganizations')
     },
     showSnackbar(context, {content}) {
       context.commit('setSnackbarContent', {'content': content})
@@ -60,16 +69,19 @@ export default new Vuex.Store({
           context.commit('setUserData', response.data)
         })
         .catch(error => {
-          context.commit('showSnackbar', {content: 'Error loading user data: '+error})
+          context.dispatch('showSnackbar', {content: 'Error loading user data: '+error})
         })
     },
     loadOrganizations (context) {
       axios.get('/api/organization/')
         .then(response => {
           context.commit('setOrganizations', response.data)
+          if (context.selectedOrganizationIndex === undefined && response.data.length > 0) {
+            context.commit('setSelectedOrganizationIndex', {index: 0})
+          }
         })
         .catch(error => {
-          context.commit('showSnackbar', {content: 'Error loading organizations: '+error})
+          context.dispatch('showSnackbar', {content: 'Error loading organizations: '+error})
         })
     }
   },
@@ -89,8 +101,11 @@ export default new Vuex.Store({
     setUserData(state, user) {
       state.user = user
     },
-    setSelectedOrganization(state, {organization}) {
-      state.selectedOrganization = organization
+    setOrganizations(state, organizations) {
+      state.organizations = organizations
+    },
+    setSelectedOrganizationIndex(state, {index}) {
+      state.selectedOrganizationIndex = index
     }
   }
 })

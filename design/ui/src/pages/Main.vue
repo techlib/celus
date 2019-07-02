@@ -17,7 +17,7 @@
                 ></v-divider>
 
                 <div class="org">
-                    <span class="sc">{{ $t('organization') }}</span>: <strong>{{ selectedOrganization.name }}</strong>
+                    <span class="sc">{{ $t('organization') }}</span>: <strong>{{ selectedOrganization !== null ? selectedOrganization.name : '-'}}</strong>
                 </div>
 
                 <v-spacer></v-spacer>
@@ -94,7 +94,6 @@
     },
     computed: {
       ...mapState({
-        selectedOrganization: 'selectedOrganization',
         snackbarText: state => state.snackbarContent,
       }),
       ...mapGetters({
@@ -102,6 +101,7 @@
         avatarText: 'avatarText',
         avatarImg: 'avatarImg',
         usernameText: 'usernameText',
+        selectedOrganization: 'selectedOrganization',
       }),
       snackbarShow: {
         get () {
