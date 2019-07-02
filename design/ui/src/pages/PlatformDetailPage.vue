@@ -9,7 +9,14 @@ cs:
 
 <template>
     <div>
-        <h2><span class="thin">{{ $t('platform') }}</span> {{ platform ? platform.name : '' }}</h2>
+        <h2 class="mb-4"><span class="thin">{{ $t('platform') }}</span> {{ platform ? platform.name : '' }}</h2>
+
+        <APIChart
+                primary-dimension="date"
+                report-type-name="TR"
+                secondary-dimension="metric"
+            >
+        </APIChart>
 
         <h3 class="pt-3">{{ $t('titles') }}</h3>
         <TitleList :url="titleListURL"></TitleList>
@@ -20,11 +27,13 @@ cs:
 <script>
   import { mapActions, mapGetters } from 'vuex'
   import TitleList from '../components/TitleList'
+  import APIChart from '../components/APIChart'
   import axios from 'axios'
 
   export default {
     name: 'PlatformDetailPage',
     components: {
+      APIChart,
       TitleList,
     },
     props: {
