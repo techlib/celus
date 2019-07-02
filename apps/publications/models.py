@@ -32,5 +32,8 @@ class Title(models.Model):
                              help_text="ISSN of electronic version")
     doi = models.CharField(max_length=250, null=True, blank=True)
 
+    class Meta:
+        ordering = ('name', 'pub_type')
+
     def __str__(self):
         return self.name
