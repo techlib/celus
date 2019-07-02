@@ -17,22 +17,22 @@ cs:
 <template>
     <div>
         <h2>{{ $t('pages.platforms') }}</h2>
-    <v-data-table
-            :items="platforms"
-            :headers="headers"
-            hide-actions="true"
-    >
-        <template v-slot:items="props">
-            <td class="text-xs-right">{{ props.item.pk }}</td>
-            <td>{{ props.item.name }}</td>
-            <td class="text-xs-right">{{ props.item.title_count }}</td>
-            <td>{{ props.item.provider }}</td>
-            <td>
-                <a v-if="props.item.url" :href="props.item.url" target="_blank">{{ props.item.url }}</a>
-                <span v-else>-</span>
-            </td>
-        </template>
-    </v-data-table>
+        <v-data-table
+                :items="platforms"
+                :headers="headers"
+                :hide-actions="true"
+        >
+            <template v-slot:items="props">
+                <td class="text-xs-right">{{ props.item.pk }}</td>
+                <td><router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link></td>
+                <td class="text-xs-right">{{ props.item.title_count }}</td>
+                <td>{{ props.item.provider }}</td>
+                <td>
+                    <a v-if="props.item.url" :href="props.item.url" target="_blank">{{ props.item.url }}</a>
+                    <span v-else>-</span>
+                </td>
+            </template>
+        </v-data-table>
     </div>
 </template>
 
