@@ -22,3 +22,15 @@ class EDUIdAuthenticationBackend:
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return None
+
+    def clean_username(self, username):
+        """
+        This is used by the middleware to compare currently logged in user and the
+        one that is being provided by the backend. We need to resolve the identity->user
+        mapping here
+        """
+        try:
+            identity = Identity.objects.select_related('user').get(identity=username)
+        except Identity.DoesNotExist:
+            return username
+        return identity.user.get_username()
