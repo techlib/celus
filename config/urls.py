@@ -18,10 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('logs/', include('logs.urls')),
-    path('organizations/', include('organizations.urls')),
-    path('publications/', include('publications.urls')),
-    path('admin/', admin.site.urls),
+    path('api/', include('logs.urls')),
+    path('api/', include('organizations.urls')),
+    path('api/', include('publications.urls')),
+    path('api/', include('core.urls')),
+    path('wsEc67YNV2sq/', admin.site.urls),
 ]
 
 if settings.DEBUG:

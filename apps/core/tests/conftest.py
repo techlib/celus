@@ -25,6 +25,12 @@ def authenticated_client(client, valid_identity):
 
 
 @pytest.fixture
+def unauthenticated_client(client, invalid_identity):
+    client.defaults[settings.EDUID_IDENTITY_HEADER] = invalid_identity
+    yield client
+
+
+@pytest.fixture
 def authentication_headers():
     def fn(identity):
         return {settings.EDUID_IDENTITY_HEADER: identity}

@@ -7,6 +7,7 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
+    user: null,
     snackbarShow: false,
     snackbarContent: null,
     username: null,
@@ -46,7 +47,6 @@ export default new Vuex.Store({
         }
         return Promise.reject(error);
       });
-
     },
     showSnackbar(context, {content}) {
       context.commit('setSnackbarContent', {'content': content})
