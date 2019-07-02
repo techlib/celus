@@ -5,11 +5,13 @@ en:
         id: ID
         name: Name
         provider: Provider
+        title_count: Title count
 cs:
     columns:
         id: ID
         name: Název
         provider: Poskytovatel
+        title_count: Počet titulů
 </i18n>
 
 <template>
@@ -23,6 +25,7 @@ cs:
         <template v-slot:items="props">
             <td class="text-xs-right">{{ props.item.pk }}</td>
             <td>{{ props.item.name }}</td>
+            <td class="text-xs-right">{{ props.item.title_count }}</td>
             <td>{{ props.item.provider }}</td>
             <td>
                 <a v-if="props.item.url" :href="props.item.url" target="_blank">{{ props.item.url }}</a>
@@ -52,6 +55,10 @@ cs:
             value: 'name'
           },
           {
+            text: this.$i18n.t('columns.title_count'),
+            value: 'title_count'
+          },
+          {
             text: this.$i18n.t('columns.provider'),
             value: 'provider'
           },
@@ -73,7 +80,7 @@ cs:
       }),
       loadPlatforms () {
         if (this.selectedOrganizationId) {
-          axios.get(`/api/organization/${this.selectedOrganizationId}/platform/`)
+          axios.get(`/api/organization/${this.selectedOrganizationId}/detailed-platform/`)
             .then(response => {
               this.platforms = response.data
             })

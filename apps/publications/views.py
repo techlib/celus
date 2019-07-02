@@ -1,7 +1,9 @@
+from django.db.models import Count
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from .serializers import PlatformSerializer
+from publications.models import Platform
+from .serializers import PlatformSerializer, DetailedPlatformSerializer
 
 
 class PlatformViewSet(ReadOnlyModelViewSet):
@@ -15,3 +17,18 @@ class PlatformViewSet(ReadOnlyModelViewSet):
         organization = get_object_or_404(self.request.user.organizations.all(),
                                          pk=self.kwargs['organization_pk'])
         return organization.platforms.all()
+
+
+class DetailedPlatformViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = DetailedPlatformSerializer
+
+    def get_queryset(self):
+        """
+        Should return only platforms for the requested organization.
+        Should include title_count which counts titles on the platform
+        """
+        organization = get_object_or_404(self.request.user.organizations.all(),
+                                         pk=self.kwargs['organization_pk'])
+        return organization.platforms.all().\
+            annotate(title_count=Count('accesslog__target', distinct=True))
