@@ -64,12 +64,12 @@
     computed: {
         groups () {
           return [
-          /*{
-            title: this.$i18n.t('pages.settings'),
+          {
+            title: this.$i18n.t('pages.content'),
             items: [
-              { title: this.$i18n.t('pages.settings'), icon: 'fa-cog', linkTo: 'home' },
+              { title: this.$i18n.t('pages.platforms'), icon: 'far fa-list-alt', linkTo: 'platform-list' },
               ]
-          },*/
+          },
          ]
       }
     }

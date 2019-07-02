@@ -1,11 +1,15 @@
 en:
   pages:
     settings: Settings
+    content: Content
+    platforms: Platforms
   menu: Menu
   organization: Organization
 
 cs:
   pages:
     settings: Nastavení
+    content: Obsah
+    platforms: Platformy
   menu: Menu
   organization: Organizace
