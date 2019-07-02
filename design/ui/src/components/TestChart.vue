@@ -66,7 +66,7 @@
       },
       data_url_base: {
         type: String,
-        default: '/api/logs/',
+        default: '/api/',
       },
       chart_settings: {},
       textPosition: {

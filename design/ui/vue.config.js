@@ -5,23 +5,10 @@ module.exports = {
 
   devServer: {
     proxy: {
-      '/api/logs/': {
+      '/api/': {
         target: devURLBase,
         changeOrigin: true,
         ws: true,
-        pathRewrite: {
-          '^/api/logs': '/logs' // remove base path
-        },
-      },
-      '/organizations/api': {
-        target: devURLBase,
-        changeOrigin: true,
-        ws: true
-      },
-      '/publications/api': {
-        target: devURLBase,
-        changeOrigin: true,
-        ws: true
       },
       '/static/': {
         target: devURLBase,

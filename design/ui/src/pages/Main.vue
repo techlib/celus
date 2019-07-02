@@ -2,7 +2,7 @@
 
 <template>
     <v-app>
-        <!--LoginDialog v-if="!$store.getters.loggedIn"></LoginDialog-->
+        <!--LoginDialog v-if="loggedIn"></LoginDialog-->
         <template>
             <SidePanel />
 
@@ -39,11 +39,11 @@
                             <template v-slot:activator="{ on }">
                             <span v-on="on" >
                                 <img
-                                        v-if="$store.getters.avatarImg"
+                                        v-if="avatarImg"
                                         src="https://avatars0.githubusercontent.com/u/9064066?v=4&s=460"
                                         alt="Avatar"
                                 >
-                                <span v-else-if="$store.getters.loggedIn" class="white--text headline">{{ $store.getters.avatarText }}</span>
+                                <span v-else-if="loggedIn" class="white--text headline">{{ avatarText }}</span>
                                 <v-icon
                                         v-else
                                         dark
@@ -51,7 +51,7 @@
                             </span>
                             </template>
 
-                            <span>{{ $store.getters.usernameText }}</span>
+                            <span>{{ usernameText }}</span>
                         </v-tooltip>
                     </v-avatar>
                 </v-toolbar-items>
@@ -78,7 +78,7 @@
 <script>
   import SidePanel from './SidePanel'
   //import LoginDialog from '../components/LoginDialog'
-  import {mapState, mapActions} from 'vuex'
+  import {mapState, mapActions, mapGetters} from 'vuex'
 
   export default {
     name: 'Dashboard',
@@ -96,6 +96,12 @@
       ...mapState({
         selectedOrganization: 'selectedOrganization',
         snackbarText: state => state.snackbarContent,
+      }),
+      ...mapGetters({
+        loggedIn: 'loggedIn',
+        avatarText: 'avatarText',
+        avatarImg: 'avatarImg',
+        usernameText: 'usernameText',
       }),
       snackbarShow: {
         get () {
