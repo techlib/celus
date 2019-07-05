@@ -66,8 +66,10 @@
         if (this.secondaryDimension) {
           url += `&sec_dim=${this.secondaryDimension}`
         }
-        //if (this.metric)
-        //  url += `&metric=${this.metric}`
+        if (this.platform)
+          url += `&platform=${this.platform}`
+        if (this.organization)
+          url += `&organization=${this.organization}`
         return url
       },
       columns () {

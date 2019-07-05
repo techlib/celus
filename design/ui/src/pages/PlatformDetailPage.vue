@@ -35,9 +35,11 @@ cs:
         </div>
 
         <APIChart
-                :primary-dimension="selectedChartType.primary"
                 report-type-name="TR"
+                :primary-dimension="selectedChartType.primary"
                 :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
+                :organization="selectedOrganization.pk"
+                :platform="platform.pk"
             >
         </APIChart>
 
