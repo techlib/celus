@@ -2,19 +2,42 @@
 en:
     platform: Platform
     titles: Titles
+    overview: Overview
+    chart:
+        date_metric: Metric over time
+        accesstype: Access Type
+        accessmethod: Access Method
+        datatype: Publication type
+        sectiontype: Publication part
 cs:
     platform: Platforma
     titles: Tituly
+    overview: Přehled
+    chart:
+        date_metric: Metrika v čase
+        accesstype: Typ přístupu
+        accessmethod: Způsob přístupu
+        datatype: Typ publikace
+        sectiontype: Část publikace
 </i18n>
 
 <template>
     <div>
         <h2 class="mb-4"><span class="thin">{{ $t('platform') }}</span> {{ platform ? platform.name : '' }}</h2>
 
+        <h3>{{ $t('overview') }}</h3>
+        <div class="mt-3 mb-3">
+            <v-btn-toggle v-model="chartTypeIndex" mandatory>
+              <v-btn v-for="(chartType, index) in chartTypes " flat :value="index" :key="index">
+                {{ chartType.name }}
+              </v-btn>
+            </v-btn-toggle>
+        </div>
+
         <APIChart
-                primary-dimension="date"
+                :primary-dimension="selectedChartType.primary"
                 report-type-name="TR"
-                secondary-dimension="metric"
+                :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
             >
         </APIChart>
 
@@ -42,6 +65,14 @@ cs:
     data () {
       return {
         platform: null,
+        chartTypeIndex: 0,
+        chartTypes: [
+          {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
+          {name: this.$i18n.t('chart.accesstype'), primary: 1},
+          {name: this.$i18n.t('chart.accessmethod'), primary: 2},
+          {name: this.$i18n.t('chart.datatype'), primary: 3},
+          {name: this.$i18n.t('chart.sectiontype'), primary: 4},
+        ]
       }
     },
     computed: {
@@ -53,6 +84,9 @@ cs:
           return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platform.pk}/title/`
         }
         return null
+      },
+      selectedChartType () {
+        return this.chartTypes[this.chartTypeIndex]
       }
     },
     methods: {

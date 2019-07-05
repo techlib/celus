@@ -75,9 +75,12 @@
           return []
         if (this.secondaryDimension) {
           let rows = this.rows
-          return [this.primaryDimension, ...Object.keys(rows[0]).filter(item => item !== this.primaryDimension)]
+          return [
+            this.dimensionToName(this.primaryDimension),
+            ...Object.keys(rows[0]).filter(item => item !== this.primaryDimension)
+          ]
         } else {
-          return [this.primaryDimension, 'count']
+          return [this.dimensionToName(this.primaryDimension), 'count']
         }
       },
       chartData () {
@@ -125,9 +128,23 @@
             })
         }
       },
+      dimensionToName (dim) {
+        if (typeof dim === 'number') {
+          return 'dim' + dim
+        }
+        return dim
+      }
     },
-    created() {
+    created () {
       this.loadData()
+    },
+    watch: {
+      primaryDimension () {
+        this.loadData()
+      },
+      secondaryDimension () {
+        this.loadData()
+      }
     }
   }
 </script>
