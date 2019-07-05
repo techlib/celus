@@ -9,6 +9,7 @@ en:
         accessmethod: Access Method
         datatype: Publication type
         sectiontype: Publication part
+        metric: Metrics
 cs:
     platform: Platforma
     titles: Tituly
@@ -19,6 +20,7 @@ cs:
         accessmethod: Způsob přístupu
         datatype: Typ publikace
         sectiontype: Část publikace
+        metric: Metriky
 </i18n>
 
 <template>
@@ -70,6 +72,7 @@ cs:
         chartTypeIndex: 0,
         chartTypes: [
           {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
+          {name: this.$i18n.t('chart.metric'), primary: 'metric'},
           {name: this.$i18n.t('chart.accesstype'), primary: 1},
           {name: this.$i18n.t('chart.accessmethod'), primary: 2},
           {name: this.$i18n.t('chart.datatype'), primary: 3},

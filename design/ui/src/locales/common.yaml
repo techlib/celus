@@ -5,6 +5,8 @@ en:
     platforms: Platforms
   menu: Menu
   organization: Organization
+  chart:
+    count: Count
 
 cs:
   pages:
@@ -13,3 +15,5 @@ cs:
     platforms: Platformy
   menu: Menu
   organization: Organizace
+  chart:
+    count: Počet

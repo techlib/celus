@@ -1,9 +1,9 @@
+<i18n src="../locales/common.yaml"></i18n>
 <template>
     <ve-histogram
             v-if="type === 'bar'"
             :data="chartData"
-            :settings="chart_settings_joined"
-            :series="series"
+            :settings="chartSettings"
             :extend="extend"
             :height="height"
             :loading="loading"
@@ -98,16 +98,24 @@
             {
               row: this.primaryDimension,
               column: this.secondaryDimension,
-              value: "count"
+              value: 'count'
             })
         }
         return this.data_raw
       },
-      chart_settings_joined () {
+      chartSettings () {
         let out = {}
-        Object.assign(out, this.chart_settings)
-        if (this.data_meta) {
-          Object.assign(out, this.data_meta)
+        if (!this.secondaryDimension) {
+          // count is the metric, we remap it to a different name
+          out['labelMap'] = {
+            'count': this.$i18n.t('chart.count')
+          }
+        } else {
+          if (this.rows && this.rows.length) {
+            out['stack'] = {
+              'all': [...Object.keys(this.rows[0]).filter(item => item !== this.primaryDimension)]
+            }
+          }
         }
         return out
       },

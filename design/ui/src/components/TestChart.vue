@@ -34,7 +34,7 @@
             <ve-bar
                     v-if="type === 'bar'"
                     :data="chartData"
-                    :settings="chart_settings_joined"
+                    :settings="chartSettings"
                     :series="series"
                     :extend="extend"
                     :height="height"
@@ -128,7 +128,7 @@
         }
         return this.data_raw
       },
-      chart_settings_joined () {
+      chartSettings () {
         let out = {}
         Object.assign(out, this.chart_settings)
         if (this.data_meta) {
