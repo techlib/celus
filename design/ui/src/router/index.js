@@ -4,6 +4,7 @@ import NotFoundPage from '../pages/NotFoundPage'
 import ChartTestPage from '../pages/ChartTestPage'
 import PlatformListPage from '../pages/PlatformListPage'
 import PlatformDetailPage from '../pages/PlatformDetailPage'
+import TitleDetailPage from '../pages/TitleDetailPage'
 
 Vue.use(Router)
 
@@ -24,6 +25,15 @@ export default new Router({
       name: 'platform-detail',
       component: PlatformDetailPage,
       props: route => ({platformId: Number.parseInt(route.params.platformId, 10)})
+    },
+    {
+      path: '/platforms/:platformId/title/:titleId',
+      name: 'title-detail',
+      component: TitleDetailPage,
+      props: route => ({
+        platformId: Number.parseInt(route.params.platformId, 10),
+        titleId: Number.parseInt(route.params.titleId, 10),
+      })
     },
     {
       path: '*',

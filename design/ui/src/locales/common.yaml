@@ -5,6 +5,10 @@ en:
     platforms: Platforms
   menu: Menu
   organization: Organization
+  platform: Platform
+  title: Title
+  titles: Titles
+  overview: Overview
   chart:
     count: Count
 
@@ -15,5 +19,9 @@ cs:
     platforms: Platformy
   menu: Menu
   organization: Organizace
+  platform: Platforma
+  title: Titul
+  titles: Tituly
+  overview: Přehled
   chart:
     count: Počet

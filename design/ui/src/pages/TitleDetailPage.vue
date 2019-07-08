@@ -3,9 +3,10 @@
 
 <template>
     <div>
-        <h2 class="mb-4"><span class="thin">{{ $t('platform') }}</span> {{ platform ? platform.name : '' }}</h2>
+        <h3 class="mb-4"><span class="thin">{{ $t('platform') }}</span> {{ platform ? platform.name : '' }}</h3>
+        <h2 class="mb-4"><span class="thin">{{ $t('title') }}</span> {{ title ? title.name : '' }}</h2>
 
-        <section v-if="selectedOrganization && platform">
+        <section v-if="selectedOrganization && platformId && titleId">
         <h3>{{ $t('overview') }}</h3>
         <div class="mt-3 mb-3">
             <v-btn-toggle v-model="chartTypeIndex" mandatory>
@@ -20,13 +21,11 @@
                 :primary-dimension="selectedChartType.primary"
                 :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
                 :organization="selectedOrganization.pk"
-                :platform="platform.pk"
+                :platform="platformId"
+                :title="titleId"
             >
         </APIChart>
         </section>
-
-        <h3 class="pt-3">{{ $t('titles') }}</h3>
-        <TitleList :url="titleListURL" :platform-id="platformId"></TitleList>
     </div>
 
 </template>
@@ -38,17 +37,20 @@
   import axios from 'axios'
 
   export default {
-    name: 'PlatformDetailPage',
+    name: 'TitleDetailPage',
     components: {
       APIChart,
       TitleList,
     },
     props: {
-      'platformId': {required: true},
+      'platformId': {required: true, type: Number},
+      'titleId': {required: true, type: Number},
+      'platformData': {required: false},
     },
     data () {
       return {
-        platform: null,
+        title: null,
+        platformDataLocal: null,
         chartTypeIndex: 0,
         chartTypes: [
           {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
@@ -72,17 +74,34 @@
       },
       selectedChartType () {
         return this.chartTypes[this.chartTypeIndex]
+      },
+      platform () {
+        if (this.platformData) {
+          return this.platformData
+        }
+        return this.platformDataLocal
       }
     },
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      loadTitle () {
+        if (this.selectedOrganization && this.platformId && this.titleId) {
+          axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}`)
+            .then(response => {
+              this.title = response.data
+            })
+            .catch(error => {
+              this.showSnackbar({content: 'Error loading title: '+error})
+            })
+        }
+      },
       loadPlatform () {
         if (this.selectedOrganization) {
           axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/`)
             .then(response => {
-              this.platform = response.data
+              this.platformDataLocal = response.data
             })
             .catch(error => {
               this.showSnackbar({content: 'Error loading platforms: '+error})
@@ -91,12 +110,16 @@
       }
     },
     created () {
-      this.loadPlatform()
+      if (!this.platformData) {
+        this.loadPlatform()
+      }
+      this.loadTitle()
     },
     watch: {
       selectedOrganization () {
         this.loadPlatform()
-      }
+        this.loadTitle()
+      },
     }
   }
 </script>

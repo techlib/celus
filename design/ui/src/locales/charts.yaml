@@ -1,0 +1,16 @@
+en:
+    chart:
+        date_metric: Metric over time
+        accesstype: Access Type
+        accessmethod: Access Method
+        datatype: Publication type
+        sectiontype: Publication part
+        metric: Metrics
+cs:
+    chart:
+        date_metric: Metrika v čase
+        accesstype: Typ přístupu
+        accessmethod: Způsob přístupu
+        datatype: Typ publikace
+        sectiontype: Část publikace
+        metric: Metriky

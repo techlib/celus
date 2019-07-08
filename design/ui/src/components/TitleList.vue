@@ -42,7 +42,9 @@ cs:
         >
             <template v-slot:items="props">
                 <td class="text-xs-right">{{ props.item.pk }}</td>
-                <td>{{ props.item.name }}</td>
+                <td>
+                    <router-link v-if="platformId" :to="{name: 'title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
+                </td>
                 <td>{{ props.item.pub_type }}</td>
                 <td>{{ props.item.isbn }}</td>
                 <td>{{ props.item.issn }}</td>
@@ -61,6 +63,7 @@ cs:
     name: 'TitleList',
     props: {
       url: {required: true},
+      platformId: {required: false}
     },
     data () {
       return {

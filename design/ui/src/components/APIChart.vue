@@ -11,7 +11,6 @@
     </ve-histogram>
 </template>
 <script>
-  import VeBar from 'v-charts/lib/bar.common'
   import VeHistogram from 'v-charts/lib/histogram.common'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
@@ -43,6 +42,10 @@
       metric: {
         required: false,
       },
+      title: {  // id of the title to filter on
+        type: Number,
+        required: false,
+      },
       dataURLBase: {
         type: String,
         default: '/api/',
@@ -70,10 +73,14 @@
           url += `&platform=${this.platform}`
         if (this.organization)
           url += `&organization=${this.organization}`
+        if (this.title)
+          url += `&target=${this.title}`
         return url
       },
       columns () {
         if (this.loading)
+          return []
+        if (this.data_raw.length === 0)
           return []
         if (this.secondaryDimension) {
           let rows = this.rows
