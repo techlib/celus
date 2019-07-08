@@ -66,7 +66,7 @@
       }),
       titleListURL () {
         if (this.platform !== null) {
-          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platform.pk}/title/`
+          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platform.pk}/title-count/`
         }
         return null
       },

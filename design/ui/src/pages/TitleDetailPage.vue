@@ -32,7 +32,6 @@
 
 <script>
   import { mapActions, mapGetters } from 'vuex'
-  import TitleList from '../components/TitleList'
   import APIChart from '../components/APIChart'
   import axios from 'axios'
 
@@ -40,7 +39,6 @@
     name: 'TitleDetailPage',
     components: {
       APIChart,
-      TitleList,
     },
     props: {
       'platformId': {required: true, type: Number},
@@ -66,12 +64,6 @@
       ...mapGetters({
         selectedOrganization: 'selectedOrganization',
       }),
-      titleListURL () {
-        if (this.platform !== null) {
-          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platform.pk}/title/`
-        }
-        return null
-      },
       selectedChartType () {
         return this.chartTypes[this.chartTypeIndex]
       },

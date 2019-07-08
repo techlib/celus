@@ -1,8 +1,9 @@
-from django.db.models import Count
+from django.db.models import Count, Sum
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from publications.models import Platform, Title
+from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 
 
@@ -46,4 +47,22 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
                                          pk=self.kwargs['organization_pk'])
         platform = get_object_or_404(organization.platforms.all(),
                                      pk=self.kwargs['platform_pk'])
-        return Title.objects.filter(accesslog__platform=platform).distinct()
+        return Title.objects.filter(accesslog__platform=platform,
+                                    accesslog__organization=organization).distinct()
+
+
+class PlatformTitleCountsViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = TitleCountSerializer
+
+    def get_queryset(self):
+        """
+        Should return only titles for specific organization and platform
+        """
+        organization = get_object_or_404(self.request.user.organizations.all(),
+                                         pk=self.kwargs['organization_pk'])
+        platform = get_object_or_404(organization.platforms.all(),
+                                     pk=self.kwargs['platform_pk'])
+        return Title.objects.filter(accesslog__platform=platform,
+                                    accesslog__organization=organization).\
+            distinct().annotate(count=Sum('accesslog__value'))

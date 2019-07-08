@@ -24,3 +24,12 @@ class TitleSerializer(ModelSerializer):
     class Meta:
         model = Title
         fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi')
+
+
+class TitleCountSerializer(ModelSerializer):
+
+    count = IntegerField(read_only=True)
+
+    class Meta:
+        model = Title
+        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi', 'count')

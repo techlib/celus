@@ -9,6 +9,7 @@ en:
         issn: ISSN
         eissn: eISSN
         doi: DOI
+        interest: Interest
 cs:
     search: Vyhledávání
     columns:
@@ -19,6 +20,7 @@ cs:
         issn: ISSN
         eissn: eISSN
         doi: DOI
+        interest: Zájem
 </i18n>
 
 
@@ -50,6 +52,7 @@ cs:
                 <td>{{ props.item.issn }}</td>
                 <td>{{ props.item.eissn }}</td>
                 <td>{{ props.item.doi }}</td>
+                <td class="text-xs-right">{{ props.item.count }}</td>
             </template>
         </v-data-table>
     </v-card>
@@ -101,6 +104,10 @@ cs:
           {
             text: this.$i18n.t('columns.doi'),
             value: 'doi'
+          },
+          {
+            text: this.$i18n.t('columns.interest'),
+            value: 'count'
           },
         ]
       }

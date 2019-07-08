@@ -10,6 +10,8 @@ org_sub_router.register(r'detailed-platform', views.DetailedPlatformViewSet,
 
 platform_sub_router = NestedSimpleRouter(org_sub_router, r'platform', lookup='platform')
 platform_sub_router.register('title', views.PlatformTitleViewSet, basename='platform-title')
+platform_sub_router.register('title-count', views.PlatformTitleCountsViewSet,
+                             basename='platform-title-count')
 
 urlpatterns = [
 ]
