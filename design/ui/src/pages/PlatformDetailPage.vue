@@ -27,6 +27,7 @@ cs:
     <div>
         <h2 class="mb-4"><span class="thin">{{ $t('platform') }}</span> {{ platform ? platform.name : '' }}</h2>
 
+        <section v-if="selectedOrganization && platform">
         <h3>{{ $t('overview') }}</h3>
         <div class="mt-3 mb-3">
             <v-btn-toggle v-model="chartTypeIndex" mandatory>
@@ -44,6 +45,7 @@ cs:
                 :platform="platform.pk"
             >
         </APIChart>
+        </section>
 
         <h3 class="pt-3">{{ $t('titles') }}</h3>
         <TitleList :url="titleListURL"></TitleList>

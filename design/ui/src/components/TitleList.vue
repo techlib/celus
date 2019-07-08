@@ -24,6 +24,7 @@ cs:
     <v-data-table
             :items="titles"
             :headers="headers"
+            :pagination.sync="pagination"
     >
         <template v-slot:items="props">
             <td class="text-xs-right">{{ props.item.pk }}</td>
@@ -49,6 +50,10 @@ cs:
     data () {
       return {
         titles: [],
+        pagination: {
+          sortBy: 'name',
+          rowsPerPage: 25,
+        },
         headers: [
           {
             text: this.$i18n.t('columns.id'),
