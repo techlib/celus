@@ -1,5 +1,6 @@
 <i18n>
 en:
+    search: Search
     columns:
         id: ID
         name: Name
@@ -9,6 +10,7 @@ en:
         eissn: eISSN
         doi: DOI
 cs:
+    search: Vyhledávání
     columns:
         id: ID
         name: Název
@@ -21,21 +23,34 @@ cs:
 
 
 <template>
-    <v-data-table
-            :items="titles"
-            :headers="headers"
-            :pagination.sync="pagination"
-    >
-        <template v-slot:items="props">
-            <td class="text-xs-right">{{ props.item.pk }}</td>
-            <td>{{ props.item.name }}</td>
-            <td>{{ props.item.pub_type }}</td>
-            <td>{{ props.item.isbn }}</td>
-            <td>{{ props.item.issn }}</td>
-            <td>{{ props.item.eissn }}</td>
-            <td>{{ props.item.doi }}</td>
-        </template>
-    </v-data-table>
+    <v-card>
+        <v-card-title>
+            <v-spacer></v-spacer>
+            <v-text-field
+                    v-model="search"
+                    append-icon="fa-search"
+                    :label="$t('search')"
+                    single-line
+                    hide-details
+            ></v-text-field>
+        </v-card-title>
+        <v-data-table
+                :items="titles"
+                :headers="headers"
+                :pagination.sync="pagination"
+                :search="search"
+        >
+            <template v-slot:items="props">
+                <td class="text-xs-right">{{ props.item.pk }}</td>
+                <td>{{ props.item.name }}</td>
+                <td>{{ props.item.pub_type }}</td>
+                <td>{{ props.item.isbn }}</td>
+                <td>{{ props.item.issn }}</td>
+                <td>{{ props.item.eissn }}</td>
+                <td>{{ props.item.doi }}</td>
+            </template>
+        </v-data-table>
+    </v-card>
 </template>
 
 <script>
@@ -50,6 +65,7 @@ cs:
     data () {
       return {
         titles: [],
+        search: '',
         pagination: {
           sortBy: 'name',
           rowsPerPage: 25,
