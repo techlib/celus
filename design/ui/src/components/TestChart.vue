@@ -21,12 +21,16 @@
                     v-model="primaryDim"
                     :items="dimensions"
                     label="primary dimension"
+                    item-text="text"
+                    item-value="value"
                     required
             ></v-select>
             <v-select
                     v-model="secondaryDim"
                     :items="possibleSecondaryDims"
                     label="secondary dimension"
+                    item-text="text"
+                    item-value="value"
                     required
             ></v-select>
         </v-flex>
@@ -85,7 +89,7 @@
         data_raw: [],
         data_meta: null,
         loading: true,
-        dimensions: ['date', 'platform', 'organization', 'metric', 'target'],
+        implicitDimensions: ['date', 'platform', 'organization', 'metric', 'target'],
         primaryDim: 'date',
         secondaryDim: null,
         reportTypes: [],
@@ -99,6 +103,14 @@
           url += `&sec_dim=${this.secondaryDim}`
         }
         return url
+      },
+      dimensions () {
+        let dims = this.implicitDimensions.map(item => {return {value: item, text: item}})
+        if (this.selectedReportType) {
+          dims = dims.concat(this.selectedReportType.dimensions_sorted.map(
+            item => {return {text: item.name, value: item.short_name}}))
+        }
+        return dims
       },
       columns () {
         if (this.loading)
@@ -140,7 +152,7 @@
         return this.dimensions
       },
       possibleSecondaryDims () {
-        return this.dimensions.filter(item => item !== this.primaryDim)
+        return this.dimensions.filter(item => item.value !== this.primaryDim)
       },
 
     },

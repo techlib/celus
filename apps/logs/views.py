@@ -29,14 +29,13 @@ class Counter5DataView(APIView):
             return None, None
         if dim_name in self.implicit_dims:
             return dim_name, None
-        if not dim_name.isdigit():
-            raise Http404(f'Unknown dimension specifier: {dim_name}')
-        dim_idx = int(dim_name)
         dimensions = report_type.dimensions_sorted
-        if dim_idx > len(dimensions):
-            raise Http404(f'Report type has only {len(dimensions)}, number {dim_idx} was '
-                          f'requested')
-        return f'dim{dim_idx}', dimensions[dim_idx-1]
+        for dim_idx, dimension in enumerate(dimensions):
+            if dimension.short_name == dim_name:
+                break
+        else:
+            raise Http404(f'Unknown dimension: {dim_name} for report type: {report_type}')
+        return f'dim{dim_idx+1}', dimensions[dim_idx]
 
     def get(self, request, report_name=None):
         report_type = get_object_or_404(ReportType, short_name=report_name)
@@ -57,8 +56,11 @@ class Counter5DataView(APIView):
                 else:
                     query_params[dim_name] = value
         # now go over the extra dimensions and add them to filter if requested
+        dim_raw_name_to_name = {}
         for i, dim in enumerate(report_type.dimensions_sorted):
-            dim_name = f'dim{i+1}'
+            dim_raw_name = 'dim{}'.format(i + 1)
+            dim_name = dim.short_name
+            dim_raw_name_to_name[dim_raw_name] = dim_name
             value = request.GET.get(dim_name)
             if value:
                 if dim.type == dim.TYPE_TEXT:
@@ -66,7 +68,7 @@ class Counter5DataView(APIView):
                         value = DimensionText.objects.get(text=value).pk
                     except DimensionText.DoesNotExist:
                         pass  # we leave the value as it is - it will probably lead to empty result
-                query_params[dim_name] = value
+                query_params[dim_raw_name] = value
         # create the base query
         query = AccessLog.objects.filter(**query_params)
         # get the data - we need two separate queries for 1d and 2d cases
@@ -87,6 +89,17 @@ class Counter5DataView(APIView):
         elif sec_dim_name in self.implicit_dims:
             # we remap the implicit dims if they are foreign key based
             self.remap_implicit_dim(data, sec_dim_name)
+        # remap dimension names
+        if prim_dim_name in dim_raw_name_to_name:
+            new_prim_dim_name = dim_raw_name_to_name[prim_dim_name]
+            for rec in data:
+                rec[new_prim_dim_name] = rec[prim_dim_name]
+                del rec[prim_dim_name]
+        if sec_dim_name in dim_raw_name_to_name:
+            new_sec_dim_name = dim_raw_name_to_name[sec_dim_name]
+            for rec in data:
+                rec[new_sec_dim_name] = rec[sec_dim_name]
+                del rec[sec_dim_name]
         # prepare the data to return
         reply = {'data': data}
         if prim_dim_obj:

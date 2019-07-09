@@ -65,13 +65,15 @@ class TestChartDataAPI(object):
         import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 6
         metric = Metric.objects.get(short_name='Hits')
+        if type(primary_dim) is int:
+            primary_dim = report_type.dimensions_sorted[primary_dim-1].short_name
         params = {'organization': organization.pk,
                   'metric': metric.pk,
                   'platform': platform.pk,
-                  'prim_dim': primary_dim,
+                  'prim_dim': primary_dim
                   }
         if secondary_dim:
-            params['sec_dim'] = secondary_dim
+            params['sec_dim'] = report_type.dimensions_sorted[secondary_dim-1].short_name
         resp = authenticated_client.get(reverse('chart_data', args=(report_type.short_name,)),
                                         params)
         assert resp.status_code == 200
@@ -82,9 +84,9 @@ class TestChartDataAPI(object):
     @pytest.mark.parametrize('primary_dim, secondary_dim, result',
                              [
                                  ['date', None, [{'date': '2018-01-01', 'count': 3}]],
-                                 ['date', 3, [{'date': '2018-01-01', 'dim3': '3v1', 'count': 3}]],
-                                 ['date', 1, [{'date': '2018-01-01', 'dim1': '1v1', 'count': 1},
-                                              {'date': '2018-01-01', 'dim1': '1v2', 'count': 2}]],
+                                 ['date', 3, [{'date': '2018-01-01', 'dim2': '3v1', 'count': 3}]],
+                                 ['date', 1, [{'date': '2018-01-01', 'dim0': '1v1', 'count': 1},
+                                              {'date': '2018-01-01', 'dim0': '1v2', 'count': 2}]],
                                  ['platform', None, [{'platform': 'Platform1', 'count': 3}]],
                                  ['platform', 'metric', [{'platform': 'Platform1',
                                                           'metric': 'Hits', 'count': 3}]],
@@ -118,7 +120,10 @@ class TestChartDataAPI(object):
                   'prim_dim': primary_dim,
                   }
         if secondary_dim:
-            params['sec_dim'] = secondary_dim
+            if type(secondary_dim) is int:
+                params['sec_dim'] = report_type.dimensions_sorted[secondary_dim-1].short_name
+            else:
+                params['sec_dim'] = secondary_dim
         resp = authenticated_client.get(reverse('chart_data', args=(report_type.short_name,)),
                                         params)
         assert resp.status_code == 200
@@ -177,13 +182,13 @@ class TestChartDataAPI(object):
         assert recs[0]['count'] == 1+2+4
         assert recs[1]['count'] == 8+16+32
         # filter by dim1, platform dim
-        recs = get_data({'dim1': '1v1',
+        recs = get_data({'dim0': '1v1',
                          'prim_dim': 'platform'})
         assert len(recs) == 2
         assert recs[0]['count'] == 2*1
         assert recs[1]['count'] == 1+8+16
         # filter by dim2, platform and title dim
-        recs = get_data({'dim1': '1v1',
+        recs = get_data({'dim0': '1v1',
                          'prim_dim': 'platform',
                          'sec_dim': 'target'})
         assert len(recs) == 3
