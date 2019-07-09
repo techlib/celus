@@ -18,6 +18,12 @@
         <v-flex sm4
         >
             <v-select
+                    v-model="chartType"
+                    :items="chartTypes"
+                    label="chart type"
+                    required
+            ></v-select>
+            <v-select
                     v-model="primaryDim"
                     :items="dimensions"
                     label="primary dimension"
@@ -36,7 +42,7 @@
         </v-flex>
         <v-flex xs12 sm8>
             <ve-bar
-                    v-if="type === 'bar'"
+                    v-if="chartType === 'bar'"
                     :data="chartData"
                     :settings="chartSettings"
                     :series="series"
@@ -45,18 +51,25 @@
                     :loading="loading"
                     :events="events">
             </ve-bar>
+            <ve-heatmap
+                    v-if="chartType === 'heatmap'"
+                    :data="chartData"
+                    :settings="chartSettings"
+            >
+            </ve-heatmap>
         </v-flex>
     </v-layout>
 </template>
 <script>
   import VeBar from 'v-charts/lib/bar.common'
+  import VeHeatmap from 'v-charts/lib/heatmap.common'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions } from 'vuex'
 
   export default {
     name: 'TestChart',
-    components: {VeBar},
+    components: {VeBar, VeHeatmap},
     props: {
       type: {
         type: String,
@@ -94,6 +107,8 @@
         secondaryDim: null,
         reportTypes: [],
         selectedReportType: null,
+        chartType: 'bar',
+        chartTypes: ['bar', 'heatmap']
       }
     },
     computed: {
@@ -116,8 +131,12 @@
         if (this.loading)
           return []
         if (this.secondaryDim) {
-          let rows = this.rows
-          return [this.primaryDim, ...Object.keys(rows[0]).filter(item => item !== this.primaryDim)]
+          if (this.chartType === 'bar') {
+            let rows = this.rows
+            return [this.primaryDim, ...Object.keys(rows[0]).filter(item => item !== this.primaryDim)]
+          } else {
+            return [this.primaryDim, this.secondaryDim, 'count']
+          }
         } else {
           return [this.primaryDim, 'count']
         }
@@ -129,7 +148,7 @@
         }
       },
       rows () {
-        if (this.secondaryDim) {
+        if (this.secondaryDim && this.chartType === 'bar') {
           return jsonToPivotjson(
             this.data_raw,
             {
