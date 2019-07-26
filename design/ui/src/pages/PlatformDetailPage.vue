@@ -101,7 +101,7 @@
   }
 </script>
 
-<style scoped type="scss">
+<style scoped lang="scss">
 
     .thin {
         font-weight: 300;

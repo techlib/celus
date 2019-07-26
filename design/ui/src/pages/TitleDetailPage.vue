@@ -3,8 +3,38 @@
 
 <template>
     <div>
-        <h3 class="mb-4"><span class="thin">{{ $t('platform') }}</span> {{ platform ? platform.name : '' }}</h3>
-        <h2 class="mb-4"><span class="thin">{{ $t('title') }}</span> {{ title ? title.name : '' }}</h2>
+        <v-breadcrumbs :items="breadcrumbs" class="pl-0">
+          <template v-slot:item="props">
+            <router-link
+                    v-if="props.item.linkName"
+                    :to="{name: props.item.linkName, params: props.item.linkParams}"
+                    >
+                {{ props.item.text }}
+            </router-link>
+            <span v-else>
+                {{ props.item.text }}
+            </span>
+          </template>
+        </v-breadcrumbs>
+
+        <h2 class="mb-4">{{ titleName }}</h2>
+
+        <table class="overview mb-4 elevation-2">
+            <tr>
+                <th>{{ $t('platform') }}</th>
+                <td>{{ platformName }}</td>
+            </tr>
+            <tr>
+                <th>{{ $t('title') }}</th>
+                <td>{{ titleName }}</td>
+            </tr>
+            <template v-if="title">
+                <tr v-for="(prop, index) in ['isbn', 'issn', 'eissn']" :key="index">
+                    <th>{{ $t('title_fields.'+prop) }}</th>
+                    <td>{{ title[prop] }}</td>
+                </tr>
+            </template>
+        </table>
 
         <section v-if="selectedOrganization && platformId && titleId">
         <h3>{{ $t('overview') }}</h3>
@@ -57,7 +87,7 @@
           {name: this.$i18n.t('chart.accessmethod'), primary: 2},
           {name: this.$i18n.t('chart.datatype'), primary: 3},
           {name: this.$i18n.t('chart.sectiontype'), primary: 4},
-        ]
+        ],
       }
     },
     computed: {
@@ -72,6 +102,32 @@
           return this.platformData
         }
         return this.platformDataLocal
+      },
+      platformName () {
+        if (this.platform) {
+          return this.platform.name
+        }
+        return ''
+      },
+      titleName () {
+        if (this.title) {
+          return this.title.name
+        }
+        return ''
+      },
+      breadcrumbs () {
+        return [
+          {
+            text: this.platformName,
+            linkName: 'platform-detail',
+            linkParams: {
+              platformId: this.platformId
+            }
+          },
+          {
+            text: this.titleName,
+          },
+        ]
       }
     },
     methods: {
@@ -116,10 +172,21 @@
   }
 </script>
 
-<style scoped type="scss">
+<style scoped lang="scss">
 
     .thin {
         font-weight: 300;
     }
+
+    table.overview {
+
+        padding: 1rem;
+
+        th {
+            text-align: left;
+            padding-right: 1.5rem;
+        }
+    }
+
 
 </style>

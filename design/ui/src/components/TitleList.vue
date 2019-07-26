@@ -1,25 +1,12 @@
+<i18n src="../locales/common.yaml"></i18n>
 <i18n>
 en:
     search: Search
     columns:
-        id: ID
-        name: Name
-        type: Type
-        isbn: ISBN
-        issn: ISSN
-        eissn: eISSN
-        doi: DOI
         interest: Interest
 cs:
     search: Vyhledávání
     columns:
-        id: ID
-        name: Název
-        type: Typ
-        isbn: ISBN
-        issn: ISSN
-        eissn: eISSN
-        doi: DOI
         interest: Zájem
 </i18n>
 
@@ -78,31 +65,31 @@ cs:
         },
         headers: [
           {
-            text: this.$i18n.t('columns.id'),
+            text: this.$i18n.t('title_fields.id'),
             value: 'pk'
           },
           {
-            text: this.$i18n.t('columns.name'),
+            text: this.$i18n.t('title_fields.name'),
             value: 'name'
           },
           {
-            text: this.$i18n.t('columns.type'),
+            text: this.$i18n.t('title_fields.type'),
             value: 'pub_type'
           },
           {
-            text: this.$i18n.t('columns.isbn'),
+            text: this.$i18n.t('title_fields.isbn'),
             value: 'isbn'
           },
           {
-            text: this.$i18n.t('columns.issn'),
+            text: this.$i18n.t('title_fields.issn'),
             value: 'issn'
           },
           {
-            text: this.$i18n.t('columns.eissn'),
+            text: this.$i18n.t('title_fields.eissn'),
             value: 'eissn'
           },
           {
-            text: this.$i18n.t('columns.doi'),
+            text: this.$i18n.t('title_fields.doi'),
             value: 'doi'
           },
           {

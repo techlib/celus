@@ -7,6 +7,14 @@ en:
   organization: Organization
   platform: Platform
   title: Title
+  title_fields:
+    id: ID
+    name: Name
+    type: Type
+    isbn: ISBN
+    issn: ISSN
+    eissn: eISSN
+    doi: DOI
   titles: Titles
   overview: Overview
   chart:
@@ -21,6 +29,14 @@ cs:
   organization: Organizace
   platform: Platforma
   title: Titul
+  title_fields:
+    id: ID
+    name: Název
+    type: Typ
+    isbn: ISBN
+    issn: ISSN
+    eissn: eISSN
+    doi: DOI
   titles: Tituly
   overview: Přehled
   chart:
