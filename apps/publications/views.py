@@ -1,7 +1,8 @@
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from core.logic.dates import date_filter_from_params
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
@@ -63,6 +64,11 @@ class PlatformTitleCountsViewSet(ReadOnlyModelViewSet):
                                          pk=self.kwargs['organization_pk'])
         platform = get_object_or_404(organization.platforms.all(),
                                      pk=self.kwargs['platform_pk'])
+        date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
+        if date_filter_params:
+            date_filter = Q(**date_filter_params)
+        else:
+            date_filter = None
         return Title.objects.filter(accesslog__platform=platform,
                                     accesslog__organization=organization).\
-            distinct().annotate(count=Sum('accesslog__value'))
+            distinct().annotate(count=Sum('accesslog__value', filter=date_filter))

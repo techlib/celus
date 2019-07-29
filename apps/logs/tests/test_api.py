@@ -201,3 +201,10 @@ class TestChartDataAPI(object):
         assert len(recs) == 2
         assert recs[0]['count'] == 16
         assert recs[1]['count'] == 32
+        # filter by date range
+        recs = get_data({'start': '2018-02',
+                         'end': '2018-02',
+                         'prim_dim': 'target'})
+        assert len(recs) == 2
+        assert recs[0]['count'] == 16
+        assert recs[1]['count'] == 32

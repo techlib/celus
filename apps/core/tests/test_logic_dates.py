@@ -2,8 +2,8 @@ from datetime import date
 
 import pytest
 
-from logs.logic.dates import month_end
-from ..logic.dates import parse_month
+from core.logic.dates import month_end
+from core.logic.dates import parse_month
 
 
 class TestParseMonth(object):

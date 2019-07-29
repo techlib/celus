@@ -6,9 +6,9 @@ from django.http import Http404
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from logs.logic.dates import parse_month, month_end
+from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer
@@ -39,6 +39,10 @@ class Counter5DataView(APIView):
         return f'dim{dim_idx+1}', dimensions[dim_idx]
 
     def get(self, request, report_name=None):
+        """
+
+        :type request: object
+        """
         report_type = get_object_or_404(ReportType, short_name=report_name)
         secondary_dim = request.GET.get('sec_dim')
         primary_dim = request.GET.get('prim_dim', 'date')
@@ -71,12 +75,7 @@ class Counter5DataView(APIView):
                         pass  # we leave the value as it is - it will probably lead to empty result
                 query_params[dim_raw_name] = value
         # add filter for dates
-        start_date = parse_month(request.GET.get('start'))
-        if start_date:
-            query_params['date__gte'] = start_date
-        end_date = parse_month(request.GET.get('end'))
-        if end_date:
-            query_params['date__lte'] = month_end(end_date)
+        query_params.update(date_filter_from_params(request.GET))
         # create the base query
         query = AccessLog.objects.filter(**query_params)
         # get the data - we need two separate queries for 1d and 2d cases

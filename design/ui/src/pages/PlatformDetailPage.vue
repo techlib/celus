@@ -53,20 +53,22 @@
         chartTypes: [
           {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
           {name: this.$i18n.t('chart.metric'), primary: 'metric'},
-          {name: this.$i18n.t('chart.accesstype'), primary: 1},
-          {name: this.$i18n.t('chart.accessmethod'), primary: 2},
-          {name: this.$i18n.t('chart.datatype'), primary: 3},
-          {name: this.$i18n.t('chart.sectiontype'), primary: 4},
+          {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
+          {name: this.$i18n.t('chart.accessmethod'), primary: 'Access_Method'},
+          {name: this.$i18n.t('chart.datatype'), primary: 'Data_Type'},
+          {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
         ]
       }
     },
     computed: {
       ...mapGetters({
         selectedOrganization: 'selectedOrganization',
+        dateRangeStart: 'dateRangeStartText',
+        dateRangeEnd: 'dateRangeEndText',
       }),
       titleListURL () {
         if (this.platform !== null) {
-          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platform.pk}/title-count/`
+          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platform.pk}/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         }
         return null
       },
