@@ -19,6 +19,9 @@ en:
   overview: Overview
   chart:
     count: Count
+  date_range:
+    all_available: All available
+    last_12_mo: Last 12 months
 
 cs:
   pages:
@@ -41,3 +44,6 @@ cs:
   overview: Přehled
   chart:
     count: Počet
+  date_range:
+    all_available: Vše dostupné
+    last_12_mo: Posledních 12 měsíců

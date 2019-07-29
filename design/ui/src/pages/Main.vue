@@ -15,8 +15,11 @@
                 ></v-divider>
 
                 <OrganizationSelector />
-
                 <v-spacer></v-spacer>
+
+                <SelectedDateRangeWidget />
+                <v-spacer></v-spacer>
+
                 <v-toolbar-items class="hidden-sm-and-down">
                     <v-select
                             v-model="appLang"
@@ -76,10 +79,12 @@
   //import LoginDialog from '../components/LoginDialog'
   import { mapActions, mapGetters, mapState } from 'vuex'
   import OrganizationSelector from '../components/OrganizationSelector'
+  import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
 
   export default {
     name: 'Dashboard',
     components: {
+      SelectedDateRangeWidget,
       OrganizationSelector,
       SidePanel,
       //LoginDialog

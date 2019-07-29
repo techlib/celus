@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios'
 import Cookies from 'js-cookie'
+import addMonths from 'date-fns/add_months'
 
 Vue.use(Vuex)
 
@@ -13,6 +14,14 @@ export default new Vuex.Store({
     loginError: null,
     organizations: {},
     selectedOrganizationId: null,
+    dateRangeStart: null,
+    dateRangeEnd: null,
+    dateRangeIndex: 0,
+    dateRanges: [
+          {name: 'date_range.all_available', start: null, end: null},
+          {name: 'date_range.last_12_mo', start: -12, end: 0},
+          {name: 'date_range.explicit', custom: true},
+        ],
   },
   getters: {
     avatarImg: state => {
@@ -37,7 +46,8 @@ export default new Vuex.Store({
       } else {
         return null
       }
-    }
+    },
+    selectedDateRange: state => state.dateRanges[state.dateRangeIndex],
   },
   actions: {
     start () {
@@ -55,6 +65,7 @@ export default new Vuex.Store({
       })
       this.dispatch('loadUserData')
       this.dispatch('loadOrganizations')
+      this.dispatch('changeDateRangeObject', {dateRangeIndex: 1})
     },
     showSnackbar(context, {content}) {
       context.commit('setSnackbarContent', {'content': content})
@@ -90,6 +101,23 @@ export default new Vuex.Store({
         .catch(error => {
           context.dispatch('showSnackbar', {content: 'Error loading organizations: '+error})
         })
+    },
+    changeDateRangeObject (context, {dateRangeIndex}) {
+      let drObj = context.state.dateRanges[dateRangeIndex]
+      let start = null
+      let end = null
+      if (!drObj.custom) {
+        // for custom specified, we do not do anything with the start and end
+        start = new Date()
+        if (drObj.start) {
+          start = addMonths(start, drObj.start)
+        }
+        end = new Date()
+        if (drObj.end) {
+          end = addMonths(end, drObj.end)
+        }
+      }
+      context.commit('changeDateRange', {index: dateRangeIndex, start: start, end: end})
     }
   },
   mutations: {
@@ -113,6 +141,11 @@ export default new Vuex.Store({
     },
     setSelectedOrganizationId(state, {id}) {
       state.selectedOrganizationId = id
+    },
+    changeDateRange(state, {index, start, end}) {
+      state.dateRangeIndex = index
+      state.dateRangeStart = start
+      state.dateRangeEnd = end
     }
   }
 })
