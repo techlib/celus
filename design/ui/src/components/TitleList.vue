@@ -32,7 +32,7 @@ cs:
                 <td>
                     <router-link v-if="platformId" :to="{name: 'title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
                 </td>
-                <td>{{ props.item.pub_type }}</td>
+                <td><span :class="{'fa fa-book': props.item.pub_type==='B', 'far fa-copy': props.item.pub_type==='J'}"></span></td>
                 <td>{{ props.item.isbn }}</td>
                 <td>{{ props.item.issn }}</td>
                 <td>{{ props.item.eissn }}</td>
