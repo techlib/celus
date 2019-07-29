@@ -38,8 +38,8 @@
             </template>
         </table>
         </v-flex>
-        <v-flex shrink v-if="coverUrl">
-            <img :src="coverUrl" />
+        <v-flex shrink v-if="coverImg">
+            <img :src="coverImg" class="cover-image"/>
         </v-flex>
     </v-layout>
 
@@ -95,6 +95,7 @@
           {name: this.$i18n.t('chart.datatype'), primary: 'Data_Type'},
           {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
         ],
+        coverImg: null,
       }
     },
     computed: {
@@ -136,13 +137,6 @@
           },
         ]
       },
-      coverUrl () {
-        if (this.title.isbn) {
-          let isbn = this.title.isbn.replace(/-/g, '')
-          return `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`
-        }
-        return null
-      }
     },
     methods: {
       ...mapActions({
@@ -153,9 +147,10 @@
           axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}`)
             .then(response => {
               this.title = response.data
+              this.getCoverImg()
             })
             .catch(error => {
-              this.showSnackbar({content: 'Error loading title: '+error})
+              this.showSnackbar({content: 'Error loading title: ' + error})
             })
         }
       },
@@ -166,10 +161,26 @@
               this.platformDataLocal = response.data
             })
             .catch(error => {
-              this.showSnackbar({content: 'Error loading platforms: '+error})
+              this.showSnackbar({content: 'Error loading platforms: ' + error})
             })
         }
-      }
+      },
+      getCoverImg () {
+        if (this.title.isbn) {
+          let isbn = this.title.isbn.replace(/-/g, '')
+          axios.get(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`)
+            .then(response => {
+              let items = response.data.items
+              if (items.length > 0) {
+                let item = items[0]
+                this.coverImg = item.volumeInfo.imageLinks.thumbnail
+              }
+            })
+            .catch(error => {
+              console.info('Could not load cover image: ' + error)
+            })
+        }
+      },
     },
     created () {
       if (!this.platformData) {
@@ -202,5 +213,8 @@
         }
     }
 
+    img.cover-image {
+        max-width: 300px;
+    }
 
 </style>
