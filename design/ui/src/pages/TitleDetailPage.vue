@@ -3,6 +3,8 @@
 
 <template>
     <div>
+    <v-layout>
+        <v-flex>
         <v-breadcrumbs :items="breadcrumbs" class="pl-0">
           <template v-slot:item="props">
             <router-link
@@ -35,6 +37,11 @@
                 </tr>
             </template>
         </table>
+        </v-flex>
+        <v-flex shrink v-if="coverUrl">
+            <img :src="coverUrl" />
+        </v-flex>
+    </v-layout>
 
         <section v-if="selectedOrganization && platformId && titleId">
         <h3>{{ $t('overview') }}</h3>
@@ -128,6 +135,13 @@
             text: this.titleName,
           },
         ]
+      },
+      coverUrl () {
+        if (this.title.isbn) {
+          let isbn = this.title.isbn.replace(/-/g, '')
+          return `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`
+        }
+        return null
       }
     },
     methods: {

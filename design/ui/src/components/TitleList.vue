@@ -1,11 +1,9 @@
 <i18n src="../locales/common.yaml"></i18n>
 <i18n>
 en:
-    search: Search
     columns:
         interest: Interest
 cs:
-    search: Vyhledávání
     columns:
         interest: Zájem
 </i18n>
@@ -18,7 +16,7 @@ cs:
             <v-text-field
                     v-model="search"
                     append-icon="fa-search"
-                    :label="$t('search')"
+                    :label="$t('labels.search')"
                     single-line
                     hide-details
             ></v-text-field>

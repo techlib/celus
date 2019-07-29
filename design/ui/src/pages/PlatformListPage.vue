@@ -21,13 +21,24 @@ cs:
 <template>
     <div>
         <h2>{{ $t('pages.platforms') }}</h2>
+        <v-card>
+        <v-card-title>
+            <v-spacer></v-spacer>
+            <v-text-field
+                    v-model="search"
+                    append-icon="fa-search"
+                    :label="$t('labels.search')"
+                    single-line
+                    hide-details
+            ></v-text-field>
+        </v-card-title>
         <v-data-table
                 :items="platforms"
                 :headers="headers"
                 :hide-actions="true"
+                :search="search"
         >
             <template v-slot:items="props">
-                <td class="text-xs-right">{{ props.item.pk }}</td>
                 <td><router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link></td>
                 <td class="text-xs-right">{{ props.item.title_count }}</td>
                 <td class="text-xs-right">{{ props.item.interest }}</td>
@@ -39,6 +50,7 @@ cs:
                 </td>
             </template>
         </v-data-table>
+        </v-card>
     </div>
 </template>
 
@@ -51,11 +63,8 @@ cs:
     data () {
       return {
         platforms: [],
+        search: '',
         headers: [
-          {
-            text: this.$i18n.t('columns.id'),
-            value: 'pk'
-          },
           {
             text: this.$i18n.t('columns.name'),
             value: 'name'

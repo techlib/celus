@@ -25,6 +25,7 @@ en:
     custom: Custom
   labels:
     date_range: Date range
+    search: Search
 
 cs:
   pages:
@@ -53,3 +54,4 @@ cs:
     custom: Vlastní
   labels:
     date_range: Rozmezí dat
+    search: Vyhledávání

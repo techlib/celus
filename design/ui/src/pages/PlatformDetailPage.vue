@@ -3,7 +3,7 @@
 
 <template>
     <div>
-        <h2 class="mb-4"><span class="thin">{{ $t('platform') }}</span> {{ platform ? platform.name : '' }}</h2>
+        <h2 class="mb-4"><span class="thin">{{ $t('platform') }}:</span> {{ platform ? platform.name : '' }}</h2>
 
         <section v-if="selectedOrganization && platform">
         <h3>{{ $t('overview') }}</h3>
