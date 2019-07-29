@@ -94,7 +94,7 @@ class Sushi5Client(object):
 
     def get_report(self, report_type, begin_date, end_date, params=None):
         report_type = self.check_report_type(report_type)
-        url = urljoin(self.url, 'reports/'+report_type)
+        url = '/'.join([self.url.rstrip('/'), 'reports', report_type])
         params = self._construct_url_params(extra=params)
         params['begin_date'] = self._encode_date(begin_date)
         params['end_date'] = self._encode_date(end_date)
@@ -118,7 +118,19 @@ class Sushi5Client(object):
         """
         if 'Exception' in data:
             exc = data['Exception']
-            raise SushiException('{Severity} error {Code}: {Message}'.format(**exc))
+            raise SushiException(cls._format_error(exc))
+        header = data.get('Report_Header', {})
+        exceptions = header.get('Exceptions', [])
+        if exceptions:
+            message = '; '.join(cls._format_error(exc) for exc in exceptions)
+            raise SushiException(message)
+
+    @classmethod
+    def _format_error(cls, exc: dict):
+        message = '{Severity} error {Code}: {Message}'.format(**exc)
+        if 'Data' in exc:
+            message += '; {}'.format(exc['Data'])
+        return message
 
     def check_report_type(self, report_type):
         report_type = report_type.lower()
