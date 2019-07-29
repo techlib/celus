@@ -1,4 +1,5 @@
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, F, ExpressionWrapper, FloatField
+from django.db.models.functions import Cast
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -32,8 +33,16 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         """
         organization = get_object_or_404(self.request.user.organizations.all(),
                                          pk=self.kwargs['organization_pk'])
-        return organization.platforms.all().\
-            annotate(title_count=Count('accesslog__target', distinct=True))
+        sum_filter = {'accesslog__organization': organization}
+        date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
+        if date_filter_params:
+            sum_filter.update(date_filter_params)
+        return organization.platforms.all(). \
+            annotate(title_count=Count('accesslog__target', distinct=True),
+                     interest=Sum('accesslog__value', filter=Q(**sum_filter)),
+                     rel_interest=ExpressionWrapper(
+                         (Cast('interest', FloatField()) / F('title_count')),
+                         output_field=FloatField()))  # cast to float to prevent integer division
 
 
 class PlatformTitleViewSet(ReadOnlyModelViewSet):

@@ -6,12 +6,16 @@ en:
         name: Name
         provider: Provider
         title_count: Title count
+        interest: Interest
+        rel_interest: Int. / title
 cs:
     columns:
         id: ID
         name: Název
         provider: Poskytovatel
         title_count: Počet titulů
+        interest: Zájem
+        rel_interest: Zájem / titul
 </i18n>
 
 <template>
@@ -26,6 +30,8 @@ cs:
                 <td class="text-xs-right">{{ props.item.pk }}</td>
                 <td><router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link></td>
                 <td class="text-xs-right">{{ props.item.title_count }}</td>
+                <td class="text-xs-right">{{ props.item.interest }}</td>
+                <td class="text-xs-right">{{ formatNumber(props.item.rel_interest) }}</td>
                 <td>{{ props.item.provider }}</td>
                 <td>
                     <a v-if="props.item.url" :href="props.item.url" target="_blank">{{ props.item.url }}</a>
@@ -37,7 +43,7 @@ cs:
 </template>
 
 <script>
-  import { mapActions, mapState } from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import axios  from 'axios'
 
   export default {
@@ -59,6 +65,14 @@ cs:
             value: 'title_count'
           },
           {
+            text: this.$i18n.t('columns.interest'),
+            value: 'interest'
+          },
+          {
+            text: this.$i18n.t('columns.rel_interest'),
+            value: 'rel_interest'
+          },
+          {
             text: this.$i18n.t('columns.provider'),
             value: 'provider'
           },
@@ -72,7 +86,15 @@ cs:
     computed: {
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
-      })
+      }),
+      ...mapGetters({
+        formatNumber: 'formatNumber',
+        dateRangeStart: 'dateRangeStartText',
+        dateRangeEnd: 'dateRangeEndText',
+      }),
+      platformsURL () {
+        return `/api/organization/${this.selectedOrganizationId}/detailed-platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+      }
     },
     methods: {
       ...mapActions({
@@ -80,7 +102,7 @@ cs:
       }),
       loadPlatforms () {
         if (this.selectedOrganizationId) {
-          axios.get(`/api/organization/${this.selectedOrganizationId}/detailed-platform/`)
+          axios.get(this.platformsURL)
             .then(response => {
               this.platforms = response.data
             })
@@ -95,6 +117,12 @@ cs:
     },
     watch: {
       selectedOrganizationId () {
+        this.loadPlatforms()
+      },
+      dateRangeStart () {
+        this.loadPlatforms()
+      },
+      dateRangeEnd () {
         this.loadPlatforms()
       }
     }

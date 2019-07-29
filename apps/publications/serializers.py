@@ -1,3 +1,4 @@
+from rest_framework.fields import FloatField
 from rest_framework.serializers import ModelSerializer, IntegerField
 
 from .models import Platform, Title
@@ -13,10 +14,13 @@ class PlatformSerializer(ModelSerializer):
 class DetailedPlatformSerializer(ModelSerializer):
 
     title_count = IntegerField(read_only=True)
+    interest = IntegerField(read_only=True)
+    rel_interest = FloatField(read_only=True)
 
     class Meta:
         model = Platform
-        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url', 'title_count')
+        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url',
+                  'title_count', 'interest', 'rel_interest')
 
 
 class TitleSerializer(ModelSerializer):

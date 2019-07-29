@@ -4,6 +4,7 @@ import axios from 'axios'
 import Cookies from 'js-cookie'
 import addMonths from 'date-fns/add_months'
 import { ymDateFormat } from '../libs/dates'
+import { format as formatNumber } from 'mathjs'
 
 Vue.use(Vuex)
 
@@ -23,6 +24,10 @@ export default new Vuex.Store({
           {name: 'date_range.last_12_mo', start: -12, end: 0},
           {name: 'date_range.custom', custom: true},
         ],
+    numberFormat: {
+          notation: 'fixed',
+          precision: 1,
+    },
   },
   getters: {
     avatarImg: state => {
@@ -49,8 +54,21 @@ export default new Vuex.Store({
       }
     },
     selectedDateRange: state => state.dateRanges[state.dateRangeIndex],
-    dateRangeStartText: state => ymDateFormat(state.dateRangeStart),
-    dateRangeEndText: state => ymDateFormat(state.dateRangeEnd),
+    dateRangeStartText (state) {
+      if (state.dateRangeStart) {
+        return ymDateFormat(state.dateRangeStart)
+      }
+      return ''
+    },
+    dateRangeEndText (state) {
+      if (state.dateRangeEnd) {
+        return ymDateFormat(state.dateRangeEnd)
+      }
+      return ''
+    },
+    formatNumber (state) {
+      return (number) => formatNumber(number, state.numberFormat)
+    },
   },
   actions: {
     start () {
@@ -70,11 +88,11 @@ export default new Vuex.Store({
       this.dispatch('loadOrganizations')
       this.dispatch('changeDateRangeObject', 1)
     },
-    showSnackbar(context, {content}) {
+    showSnackbar (context, {content}) {
       context.commit('setSnackbarContent', {'content': content})
       context.commit('setSnackbarShow', {'show': true})
     },
-    hideSnackbar(context) {
+    hideSnackbar (context) {
       context.commit('setSnackbarShow', {'show': false})
     },
     selectOrganization (context, {id}) {
@@ -86,7 +104,7 @@ export default new Vuex.Store({
           context.commit('setUserData', response.data)
         })
         .catch(error => {
-          context.dispatch('showSnackbar', {content: 'Error loading user data: '+error})
+          context.dispatch('showSnackbar', {content: 'Error loading user data: ' + error})
         })
     },
     loadOrganizations (context) {
@@ -102,7 +120,7 @@ export default new Vuex.Store({
           }
         })
         .catch(error => {
-          context.dispatch('showSnackbar', {content: 'Error loading organizations: '+error})
+          context.dispatch('showSnackbar', {content: 'Error loading organizations: ' + error})
         })
     },
     changeDateRangeObject (context, dateRangeIndex) {

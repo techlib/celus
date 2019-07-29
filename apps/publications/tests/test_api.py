@@ -120,6 +120,37 @@ class TestPlatformDetailedAPI(object):
         assert resp.json()[0]['pk'] == platforms[0].pk
         assert resp.json()[0]['title_count'] == 0
 
+    def test_authorized_user_accessible_platforms_with_titles(
+            self, authenticated_client, organizations, platforms, valid_identity, titles,
+            report_type_nd):
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        organization = organizations[0]
+        platform = platforms[0]
+        UserOrganization.objects.create(user=identity.user, organization=organization)
+        OrganizationPlatform.objects.create(organization=organization, platform=platform)
+        # we need to create access logs to connect the platform and title
+        rt = report_type_nd(0)
+        metric = Metric.objects.create(short_name='m1', name='Metric1')
+        AccessLog.objects.create(platform=platform, target=titles[0], value=5, date='2019-01-01',
+                                 report_type=rt, metric=metric, organization=organization)
+        AccessLog.objects.create(platform=platform, target=titles[0], value=7, date='2019-01-01',
+                                 report_type=rt, metric=metric, organization=organizations[1])
+        resp = authenticated_client.get(reverse('detailed-platform-list',
+                                                args=[organization.pk]))
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
+        assert resp.json()[0]['pk'] == platform.pk
+        assert resp.json()[0]['title_count'] == 1
+        assert resp.json()[0]['interest'] == 5
+        # try with date range outside
+        resp = authenticated_client.get(reverse('detailed-platform-list',
+                                                args=[organization.pk]) + '?start=2019-02')
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
+        assert resp.json()[0]['pk'] == platform.pk
+        assert resp.json()[0]['title_count'] == 1
+        assert resp.json()[0]['interest'] is None
+
 
 @pytest.mark.django_db
 class TestPlatformTitleAPI(object):
@@ -202,7 +233,39 @@ class TestPlatformTitleAPI(object):
         resp = authenticated_client.get(reverse('platform-title-count-list',
                                                 args=[organization.pk, platform.pk]))
         assert resp.status_code == 200
-        print(resp.json())
         assert len(resp.json()) == 1
         assert resp.json()[0]['isbn'] == titles[0].isbn
         assert resp.json()[0]['name'] == titles[0].name
+        assert resp.json()[0]['count'] == 2
+
+    def test_authorized_user_accessible_platforms_titles_count_organization_filter(
+            self, authenticated_client, organizations, platforms, valid_identity, titles,
+            report_type_nd):
+        """
+        Test that when using the API to get number of accesses to a title on a platform,
+        that data for a different organization are not counted in
+        """
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        organization = organizations[0]
+        platform = platforms[0]
+        other_organization = organizations[1]
+        UserOrganization.objects.create(user=identity.user, organization=organization)
+        OrganizationPlatform.objects.create(organization=organization, platform=platform)
+        # we need to connect some titles with the platform which is done indirectly through
+        # AccessLog instances
+        # we create 2 access logs but both for the same title so that we can check that
+        # - title is present in the output only once - distinct is used properly
+        # - second title is not present - the filtering works OK
+        rt = report_type_nd(0)
+        metric = Metric.objects.create(short_name='m1', name='Metric1')
+        AccessLog.objects.create(platform=platform, target=titles[0], value=3, date='2019-01-01',
+                                 report_type=rt, metric=metric, organization=organization)
+        AccessLog.objects.create(platform=platform, target=titles[0], value=2, date='2019-01-01',
+                                 report_type=rt, metric=metric, organization=other_organization)
+        resp = authenticated_client.get(reverse('platform-title-count-list',
+                                                args=[organization.pk, platform.pk]))
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
+        assert resp.json()[0]['isbn'] == titles[0].isbn
+        assert resp.json()[0]['name'] == titles[0].name
+        assert resp.json()[0]['count'] == 3

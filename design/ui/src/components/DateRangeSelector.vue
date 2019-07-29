@@ -1,15 +1,5 @@
 <i18n src="../locales/common.yaml"></i18n>
 
-<i18n>
-en:
-    labels:
-        date_range: Date range
-
-cs:
-    labels:
-        date_range: Rozmezí dat
-</i18n>
-
 <template>
     <v-layout column>
         <v-flex>
@@ -82,7 +72,6 @@ cs:
             </v-layout>
         </v-flex>
     </v-layout>
-
 </template>
 
 <script>
