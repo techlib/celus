@@ -26,9 +26,11 @@ cs:
                 <!-- start date selector -->
                 <v-flex>
                     <v-menu
-                            ref="menu"
+                            v-model="menuStart"
                             transition="scale-transition"
                             offset-y
+                            full-width
+                            min-width="290px"
                     >
                         <template v-slot:activator="{ on }">
                             <v-text-field
@@ -43,19 +45,19 @@ cs:
                                 v-model="start"
                                 type="month"
                                 no-title
-                                scrollable
                                 :locale="$i18n.locale"
-                        >
-                        </v-date-picker>
+                                :allowed-dates="allowedStartMonths"
+                        ></v-date-picker>
                     </v-menu>
                 </v-flex>
                 <v-spacer></v-spacer>
                 <!-- end date selector -->
                 <v-flex>
                     <v-menu
-                            ref="menu"
+                            v-model="menuEnd"
                             transition="scale-transition"
                             offset-y
+                            min-width="290px"
                     >
                         <template v-slot:activator="{ on }">
                             <v-text-field
@@ -72,6 +74,7 @@ cs:
                                 no-title
                                 scrollable
                                 :locale="$i18n.locale"
+                                :allowed-dates="allowedEndMonths"
                         >
                         </v-date-picker>
                     </v-menu>
@@ -90,6 +93,8 @@ cs:
     name: 'DateRangeSelector',
     data () {
       return {
+        menuStart: false,
+        menuEnd: false,
       }
     },
     computed: {
@@ -123,7 +128,21 @@ cs:
         setDateRangeIndex: 'changeDateRangeObject',
         setDateRangeStart: 'changeDateRangeStart',
         setDateRangeEnd: 'changeDateRangeEnd',
-        })
+        }),
+      allowedEndMonths (value) {
+        let start = this.start
+        if (start) {
+          return value > start
+        }
+        return true
+      },
+      allowedStartMonths (value) {
+        let end = this.end
+        if (end) {
+          return value < end
+        }
+        return true
+      },
     }
   }
 </script>
