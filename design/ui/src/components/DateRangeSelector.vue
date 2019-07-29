@@ -132,14 +132,14 @@ cs:
       allowedEndMonths (value) {
         let start = this.start
         if (start) {
-          return value > start
+          return value >= start
         }
         return true
       },
       allowedStartMonths (value) {
         let end = this.end
         if (end) {
-          return value < end
+          return value <= end
         }
         return true
       },

@@ -65,12 +65,11 @@
   import VeHeatmap from 'v-charts/lib/heatmap.common'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
-  import { mapActions } from 'vuex'
-  import DateRangeSelector from './DateRangeSelector'
+  import { mapActions, mapGetters, mapState } from 'vuex'
 
   export default {
     name: 'TestChart',
-    components: {DateRangeSelector, VeBar, VeHeatmap},
+    components: {VeBar, VeHeatmap},
     props: {
       type: {
         type: String,
@@ -113,8 +112,12 @@
       }
     },
     computed: {
+      ...mapGetters({
+        dateRangeStart: 'dateRangeStartText',
+        dateRangeEnd: 'dateRangeEndText',
+      }),
       dataURL () {
-        let url = `${this.data_url_base}chart-data/${this.selectedReportType.short_name}/?prim_dim=${this.primaryDim}`
+        let url = `${this.data_url_base}chart-data/${this.selectedReportType.short_name}/?prim_dim=${this.primaryDim}&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         if (this.secondaryDim) {
           url += `&sec_dim=${this.secondaryDim}`
         }

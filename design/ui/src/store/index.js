@@ -3,6 +3,7 @@ import Vuex from 'vuex'
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import addMonths from 'date-fns/add_months'
+import { ymDateFormat } from '../libs/dates'
 
 Vue.use(Vuex)
 
@@ -48,6 +49,8 @@ export default new Vuex.Store({
       }
     },
     selectedDateRange: state => state.dateRanges[state.dateRangeIndex],
+    dateRangeStartText: state => ymDateFormat(state.dateRangeStart),
+    dateRangeEndText: state => ymDateFormat(state.dateRangeEnd),
   },
   actions: {
     start () {

@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet, ReadOnlyModelViewSet
 
+from logs.logic.dates import parse_month, month_end
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer
@@ -69,6 +70,13 @@ class Counter5DataView(APIView):
                     except DimensionText.DoesNotExist:
                         pass  # we leave the value as it is - it will probably lead to empty result
                 query_params[dim_raw_name] = value
+        # add filter for dates
+        start_date = parse_month(request.GET.get('start'))
+        if start_date:
+            query_params['date__gte'] = start_date
+        end_date = parse_month(request.GET.get('end'))
+        if end_date:
+            query_params['date__lte'] = month_end(end_date)
         # create the base query
         query = AccessLog.objects.filter(**query_params)
         # get the data - we need two separate queries for 1d and 2d cases

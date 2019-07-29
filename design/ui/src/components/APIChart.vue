@@ -14,7 +14,7 @@
   import VeHistogram from 'v-charts/lib/histogram.common'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
-  import { mapActions } from 'vuex'
+  import { mapActions, mapGetters } from 'vuex'
 
   export default {
     name: 'APIChart',
@@ -64,8 +64,12 @@
       }
     },
     computed: {
+      ...mapGetters({
+        dateRangeStart: 'dateRangeStartText',
+        dateRangeEnd: 'dateRangeEndText',
+      }),
       dataURL () {
-        let url = `${this.dataURLBase}chart-data/${this.reportTypeName}/?prim_dim=${this.primaryDimension}`
+        let url = `${this.dataURLBase}chart-data/${this.reportTypeName}/?prim_dim=${this.primaryDimension}&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         if (this.secondaryDimension) {
           url += `&sec_dim=${this.secondaryDimension}`
         }
@@ -160,6 +164,12 @@
         this.loadData()
       },
       secondaryDimension () {
+        this.loadData()
+      },
+      dateRangeStart () {
+        this.loadData()
+      },
+      dateRangeEnd () {
         this.loadData()
       }
     }
