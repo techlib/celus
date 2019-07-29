@@ -4,4 +4,11 @@ function isoDateFormat (date) {
     return format(date, 'YYYY-MM-DD')
 }
 
-export {isoDateFormat}
+function ymDateFormat (date) {
+    return format(date, 'YYYY-MM')
+}
+
+export {
+  isoDateFormat,
+  ymDateFormat,
+}

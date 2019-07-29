@@ -20,7 +20,7 @@ export default new Vuex.Store({
     dateRanges: [
           {name: 'date_range.all_available', start: null, end: null},
           {name: 'date_range.last_12_mo', start: -12, end: 0},
-          {name: 'date_range.explicit', custom: true},
+          {name: 'date_range.custom', custom: true},
         ],
   },
   getters: {
@@ -65,7 +65,7 @@ export default new Vuex.Store({
       })
       this.dispatch('loadUserData')
       this.dispatch('loadOrganizations')
-      this.dispatch('changeDateRangeObject', {dateRangeIndex: 1})
+      this.dispatch('changeDateRangeObject', 1)
     },
     showSnackbar(context, {content}) {
       context.commit('setSnackbarContent', {'content': content})
@@ -102,23 +102,38 @@ export default new Vuex.Store({
           context.dispatch('showSnackbar', {content: 'Error loading organizations: '+error})
         })
     },
-    changeDateRangeObject (context, {dateRangeIndex}) {
+    changeDateRangeObject (context, dateRangeIndex) {
       let drObj = context.state.dateRanges[dateRangeIndex]
       let start = null
       let end = null
       if (!drObj.custom) {
         // for custom specified, we do not do anything with the start and end
-        start = new Date()
-        if (drObj.start) {
-          start = addMonths(start, drObj.start)
+        if (drObj.start !== null) {
+          start = addMonths(new Date(), drObj.start)
         }
-        end = new Date()
-        if (drObj.end) {
-          end = addMonths(end, drObj.end)
+        if (drObj.end !== null) {
+          end = addMonths(new Date(), drObj.end)
+        }
+        context.commit('changeDateRange', {index: dateRangeIndex, start: start, end: end})
+      } else {
+        context.commit('changeDateRange', {index: dateRangeIndex})
+        // if the end of the period is not specified, set it to current data,
+        // because 'undefined' and null states are both used for special purposes
+        // in the changeDateRange, we use the specific setters here
+        if (context.state.dateRangeEnd === null) {
+          context.commit('setDateRangeEnd', {date: new Date()})
+        }
+        if (context.state.dateRangeStart === null) {
+          context.commit('setDateRangeStart', {date: addMonths(context.state.dateRangeEnd, -24)})
         }
       }
-      context.commit('changeDateRange', {index: dateRangeIndex, start: start, end: end})
-    }
+    },
+    changeDateRangeStart (context, date) {
+      context.commit('setDateRangeStart', {date})
+    },
+    changeDateRangeEnd (context, date) {
+      context.commit('setDateRangeEnd', {date})
+    },
   },
   mutations: {
     setSnackbarShow(state, {show}) {
@@ -144,8 +159,18 @@ export default new Vuex.Store({
     },
     changeDateRange(state, {index, start, end}) {
       state.dateRangeIndex = index
-      state.dateRangeStart = start
-      state.dateRangeEnd = end
-    }
+      if (typeof start !== 'undefined') {
+        state.dateRangeStart = start
+      }
+      if (typeof end !== 'undefined') {
+        state.dateRangeEnd = end
+      }
+    },
+    setDateRangeStart(state, {date}) {
+      state.dateRangeStart = date
+    },
+    setDateRangeEnd(state, {date}) {
+      state.dateRangeEnd = date
+    },
   }
 })

@@ -22,6 +22,7 @@ en:
   date_range:
     all_available: All available
     last_12_mo: Last 12 months
+    custom: Custom
 
 cs:
   pages:
@@ -47,3 +48,4 @@ cs:
   date_range:
     all_available: Vše dostupné
     last_12_mo: Posledních 12 měsíců
+    custom: Vlastní

@@ -66,10 +66,11 @@
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions } from 'vuex'
+  import DateRangeSelector from './DateRangeSelector'
 
   export default {
     name: 'TestChart',
-    components: {VeBar, VeHeatmap},
+    components: {DateRangeSelector, VeBar, VeHeatmap},
     props: {
       type: {
         type: String,
