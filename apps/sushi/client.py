@@ -1,8 +1,13 @@
 import json
+import urllib
 from datetime import datetime
 from urllib.parse import urljoin
+import logging
 
 import requests
+
+
+logger = logging.getLogger(__name__)
 
 
 class SushiException(Exception):
@@ -67,6 +72,10 @@ class Sushi5Client(object):
         self.requestor_id = requestor_id
         self.customer_id = customer_id
         self.session = requests.Session()
+        self.session.headers.update(
+            {'User-Agent':
+                 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0'
+             })
 
     @classmethod
     def _encode_date(cls, value) -> str:
@@ -90,6 +99,7 @@ class Sushi5Client(object):
         return result
 
     def _make_request(self, url, params):
+        logger.debug('Making request to :%s?%s', url, urllib.parse.urlencode(params))
         return self.session.get(url, params=params)
 
     def get_report(self, report_type, begin_date, end_date, params=None):
@@ -104,7 +114,10 @@ class Sushi5Client(object):
 
     def get_report_data(self, report_type, begin_date, end_date, params=None):
         content = self.get_report(report_type, begin_date, end_date, params=params)
-        data = json.loads(content)
+        return self.report_to_data(content)
+
+    def report_to_data(self, report: str):
+        data = json.loads(report)
         self.validate_data(data)
         return data
 
@@ -120,9 +133,15 @@ class Sushi5Client(object):
             exc = data['Exception']
             raise SushiException(cls._format_error(exc))
         header = data.get('Report_Header', {})
-        exceptions = header.get('Exceptions', [])
-        if exceptions:
-            message = '; '.join(cls._format_error(exc) for exc in exceptions)
+        errors = []
+        for exception in header.get('Exceptions', []):
+            if exception.get('Severity') == 'Warning':
+                logging.warning("Warning Exception in COUNTER 5 report: %s",
+                                cls._format_error(exception))
+            else:
+                errors.append(exception)
+        if errors:
+            message = '; '.join(cls._format_error(error) for error in errors)
             raise SushiException(message)
 
     @classmethod

@@ -29,12 +29,15 @@ namespaces = {
 }
 
 
-def test_sushi_access_v4(url, customer_id, requestor_id, start=None, end=None, report='JR1'):
+def test_sushi_access_v4(url, customer_id, requestor_id, start=None, end=None, report='JR1',
+                         save_as=None, extra_params=None):
     kwargs = {
         'customer_reference': customer_id,
     }
     if requestor_id:
         kwargs['requestor_id'] = requestor_id
+    if extra_params:
+        kwargs.update(extra_params)
     if not start:
         start = date(2018, 1, 1)
     if not end:
@@ -45,6 +48,9 @@ def test_sushi_access_v4(url, customer_id, requestor_id, start=None, end=None, r
     except SushiException as e:
         logger.error("Error: %s", e)
         error_output += 'Error: {}'.format(e)
+        if save_as:
+            with open(save_as, 'wb') as outfile:
+                outfile.write(e.raw)
         try:
             envelope = ET.fromstring(e.raw)
             body = envelope[0]
@@ -65,10 +71,12 @@ def test_sushi_access_v4(url, customer_id, requestor_id, start=None, end=None, r
 
 
 def test_sushi_access_v5(url, customer_id, requestor_id, start=None, end=None, report='tr',
-                         extra_params=None):
+                         extra_params=None, save_as=None):
     client = Sushi5Client(url, customer_id=customer_id, requestor_id=requestor_id)
+    content = None
     try:
-        data = client.get_report_data(report, begin_date=start, end_date=end, params=extra_params)
+        content = client.get_report(report, begin_date=start, end_date=end, params=extra_params)
+        data = client.report_to_data(content)
     except requests.exceptions.ConnectionError as e:
         logger.error('Connection error: %s', e)
         return False, 'Connection error: {}'.format(e)
@@ -77,9 +85,15 @@ def test_sushi_access_v5(url, customer_id, requestor_id, start=None, end=None, r
         return False, 'Sushi error: {}'.format(e)
     except Exception as e:
         logger.error('Error: %s', e)
+        if content and save_as:
+            with open(save_as, 'wb') as outfile:
+                outfile.write(content)
         return False, 'Error: {}'.format(e)
     else:
         logger.info('Success - got {} records'.format(len(data.get('Report_Items', []))))
+        if save_as:
+            with open(save_as, 'w') as outfile:
+                json.dump(data, outfile, ensure_ascii=False, indent=2)
     return True, ''
 
 
@@ -97,7 +111,12 @@ if __name__ == '__main__':
     parser.add_argument('input_file', help='input CSV file with Sushi credentials')
     parser.add_argument('-o', dest='output_file',
                         help='file name of output CSV with processed data')
+    parser.add_argument('-r', dest='reverse_do_it', action='store_true',
+                        help='mark output records with "do_it" in the reverse way - 1 for those '
+                             'failing and 0 for those OK')
     args = parser.parse_args()
+
+    report_types_v4 = ['JR1', 'PR1', 'BR1', 'DR1']
 
     stats = Counter()
     output = StringIO()
@@ -111,7 +130,7 @@ if __name__ == '__main__':
         writer.writeheader()
         last_url = None
         last_skipped = False
-        for record in reader:
+        for i, record in enumerate(reader):
             url = record['URL']
             customer_id = record['customer_id']
             requestor_id = record['requestor_id']
@@ -129,15 +148,25 @@ if __name__ == '__main__':
                 if version == 4:
                     start = date(2018, 1, 1)
                     end = date(2018, 12, 31)
-                    ok, error = test_sushi_access_v4(url, customer_id, requestor_id,
-                                                     start=start, end=end, report='JR1')
+                    for report_type in report_types_v4:
+                        logger.info("Report type: %s", report_type)
+                        ok, error = test_sushi_access_v4(url, customer_id, requestor_id,
+                                                         start=start, end=end, report=report_type,
+                                                         extra_params=extra_params,
+                                                         save_as='_tmp_{:04d}.data'.format(i+2))
+                        if not ok and 'Report Not Supported' in error:
+                            # try again with a different report type
+                            pass
+                        else:
+                            break
                     stats[ok] += 1
                 elif version == 5:
                     start = '2019-01'
                     end = '2019-05'
                     ok, error = test_sushi_access_v5(url, customer_id, requestor_id,
                                                      start=start, end=end,
-                                                     report='tr_j1', extra_params=extra_params)
+                                                     report='tr_j1', extra_params=extra_params,
+                                                     save_as='_tmp_{:04d}.data'.format(i+2))
                     stats[ok] += 1
                 else:
                     logger.error('Unsupported version: %d', version)
@@ -146,6 +175,8 @@ if __name__ == '__main__':
                     stats[False] += 1
                 record['ok'] = 1 if ok else 0
                 record['do_it'] = record['ok']
+                if args.reverse_do_it:
+                    record['do_it'] = int(not record['do_it'])
                 record['error'] = error
                 last_skipped = False
             else:
