@@ -7,6 +7,7 @@ import logging
 
 import requests
 
+from pycounter import sushi
 
 logger = logging.getLogger(__name__)
 
@@ -195,4 +196,31 @@ class Sushi5Client(object):
             raise ValueError(f'Report subtype {subtype} is not supported for type {main_type}.')
         return report_type
 
+
+class Sushi4Client(object):
+
+    """
+    Client for SUSHI and COUNTER 5 protocol - a simple proxy for the pycounter.sushi
+    implementation
+    """
+
+    def __init__(self, url, requestor_id, customer_id=None):
+        self.url = url
+        self.requestor_id = requestor_id
+        self.customer_id = customer_id
+
+    @classmethod
+    def _encode_date(cls, value) -> str:
+        if hasattr(value, 'isoformat'):
+            return value.isoformat()[:7]
+        return value[:7]
+
+    def get_report_data(self, report_type, begin_date, end_date, params=None):
+        kwargs = {'customer_reference': self.customer_id}
+        if self.requestor_id:
+            kwargs['requestor_id'] = self.requestor_id
+        if params:
+            kwargs.update(params)
+        report = sushi.get_report(self.url, begin_date, end_date, report=report_type, **kwargs)
+        return report
 

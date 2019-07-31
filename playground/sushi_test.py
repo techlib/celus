@@ -10,10 +10,9 @@ from time import sleep
 from xml.etree import ElementTree as ET
 
 import requests
-from pycounter import sushi
 from pycounter.exceptions import SushiException
 
-from sushi.client import Sushi5Client
+from sushi.client import Sushi5Client, Sushi4Client
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -31,11 +30,7 @@ namespaces = {
 
 def test_sushi_access_v4(url, customer_id, requestor_id, start=None, end=None, report='JR1',
                          save_as=None, extra_params=None):
-    kwargs = {
-        'customer_reference': customer_id,
-    }
-    if requestor_id:
-        kwargs['requestor_id'] = requestor_id
+    kwargs = {}
     if extra_params:
         kwargs.update(extra_params)
     if not start:
@@ -43,8 +38,9 @@ def test_sushi_access_v4(url, customer_id, requestor_id, start=None, end=None, r
     if not end:
         end = date(2018, 6, 30)
     error_output = ''
+    client = Sushi4Client(url, customer_id=customer_id, requestor_id=requestor_id)
     try:
-        data = sushi.get_report(url, start, end, report=report, **kwargs)
+        data = client.get_report_data(report, start, end, params=kwargs)
     except SushiException as e:
         logger.error("Error: %s", e)
         error_output += 'Error: {}'.format(e)
