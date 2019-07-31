@@ -63,6 +63,8 @@ def test_sushi_access_v4(url, customer_id, requestor_id, start=None, end=None, r
         return False, error_output
     else:
         logger.info("Success - got: %s", data)
+        if save_as:
+            data.write_tsv(save_as)
         return True, ''
 
 
