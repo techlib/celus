@@ -75,7 +75,7 @@ def test_sushi_access_v5(url, customer_id, requestor_id, start=None, end=None, r
     client = Sushi5Client(url, customer_id=customer_id, requestor_id=requestor_id)
     content = None
     try:
-        content = client.get_report(report, begin_date=start, end_date=end, params=extra_params)
+        content = client.get_available_reports_raw(params=extra_params)
         data = client.report_to_data(content)
     except requests.exceptions.ConnectionError as e:
         logger.error('Connection error: %s', e)
@@ -90,10 +90,11 @@ def test_sushi_access_v5(url, customer_id, requestor_id, start=None, end=None, r
                 outfile.write(content)
         return False, 'Error: {}'.format(e)
     else:
-        logger.info('Success - got {} records'.format(len(data.get('Report_Items', []))))
         if save_as:
             with open(save_as, 'w') as outfile:
                 json.dump(data, outfile, ensure_ascii=False, indent=2)
+        logger.info('Success - got following reports: %s',
+                    [report.get('Report_ID') for report in data])
     return True, ''
 
 
@@ -102,7 +103,11 @@ def parse_params(text):
     for part in text.split(';'):
         if '=' in part:
             name, value = part.split('=')
-            out[name.strip()] = value.strip()
+            name = name.strip()
+            value = value.strip()
+            if name == 'auth':
+                value = tuple(value.split(','))
+            out[name] = value
     return out
 
 
@@ -126,11 +131,12 @@ if __name__ == '__main__':
         for field in ['ok', 'error']:
             if field not in fieldnames:
                 fieldnames.append(field)
-        writer = csv.DictWriter(output, fieldnames=fieldnames)
+        writer = csv.DictWriter(output, fieldnames=fieldnames, dialect='unix')
         writer.writeheader()
         last_url = None
         last_skipped = False
         for i, record in enumerate(reader):
+            logger.info('Line #%d', i+2)
             url = record['URL']
             customer_id = record['customer_id']
             requestor_id = record['requestor_id']

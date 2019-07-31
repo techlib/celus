@@ -1,6 +1,7 @@
 import json
 import urllib
 from datetime import datetime
+from typing import List, Dict, Union
 from urllib.parse import urljoin
 import logging
 
@@ -102,8 +103,32 @@ class Sushi5Client(object):
         logger.debug('Making request to :%s?%s', url, urllib.parse.urlencode(params))
         return self.session.get(url, params=params)
 
+    def get_available_reports_raw(self, params=None) -> bytes:
+        """
+        Return a list of available reports
+        :return:
+        """
+        url = '/'.join([self.url.rstrip('/'), 'reports/'])
+        params = self._construct_url_params(extra=params)
+        response = self._make_request(url, params)
+        response.raise_for_status()
+        return response.content
+
+    def get_available_reports(self, params=None) -> list:
+        content = self.get_available_reports_raw(params=params)
+        reports = self.report_to_data(content)
+        return reports
+
     def get_report(self, report_type, begin_date, end_date, params=None):
-        report_type = self.check_report_type(report_type)
+        """
+        Return a SUSHI report based on the provided params
+        :param report_type:
+        :param begin_date:
+        :param end_date:
+        :param params:
+        :return:
+        """
+        report_type = self._check_report_type(report_type)
         url = '/'.join([self.url.rstrip('/'), 'reports', report_type])
         params = self._construct_url_params(extra=params)
         params['begin_date'] = self._encode_date(begin_date)
@@ -116,22 +141,28 @@ class Sushi5Client(object):
         content = self.get_report(report_type, begin_date, end_date, params=params)
         return self.report_to_data(content)
 
-    def report_to_data(self, report: str):
+    def report_to_data(self, report: bytes, validate=True):
         data = json.loads(report)
-        self.validate_data(data)
+        if validate:
+            self.validate_data(data)
         return data
 
     @classmethod
-    def validate_data(cls, data: dict):
+    def validate_data(cls, data: Union[Dict, List]):
         """
         Checks that the provided data contain valid COUNTER data and not an error.
         If the data contains an error message, it will raise SushiException
         :param data:
         :return:
         """
+        if type(data) is list:
+            # we do not do any validation for lists
+            return
         if 'Exception' in data:
             exc = data['Exception']
             raise SushiException(cls._format_error(exc))
+        if 'Severity' in data and data['Severity'] == 'Error':
+            raise SushiException(cls._format_error(data))
         header = data.get('Report_Header', {})
         errors = []
         for exception in header.get('Exceptions', []):
@@ -151,7 +182,7 @@ class Sushi5Client(object):
             message += '; {}'.format(exc['Data'])
         return message
 
-    def check_report_type(self, report_type):
+    def _check_report_type(self, report_type):
         report_type = report_type.lower()
         if '_' in report_type:
             main_type, subtype = report_type.split('_', 1)
