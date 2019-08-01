@@ -1,4 +1,5 @@
 -r test.txt
+-e pycounter  # we use local version in development
 django-debug-toolbar==1.11
 django-livereload-server==0.3.2
 jupyter==1.0.0

@@ -15,7 +15,7 @@ from pycounter.exceptions import SushiException
 from sushi.client import Sushi5Client, Sushi4Client
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 ns_soap = 'http://schemas.xmlsoap.org/soap/envelope/'
 ns_sushi = 'http://www.niso.org/schemas/sushi'
@@ -91,6 +91,10 @@ def test_sushi_access_v5(url, customer_id, requestor_id, start=None, end=None, r
         if save_as:
             with open(save_as, 'w') as outfile:
                 json.dump(data, outfile, ensure_ascii=False, indent=2)
+        if type(data) is dict and 'Report_Items' in data:
+            # for some strange reason, some servers return the list directly and some
+            # return a dict with Report_Items and Report_Header
+            data = data['Report_Items']
         logger.info('Success - got following reports: %s',
                     [report.get('Report_ID') for report in data])
     return True, ''

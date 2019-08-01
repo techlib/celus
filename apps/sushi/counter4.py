@@ -20,6 +20,7 @@ class Counter4ReportBase(object):
         'Print_ISSN': 'issn',
         'Online_ISSN': 'eissn',
         'ISBN': 'isbn',
+        'DOI': 'doi',
     }
 
     def __init__(self):
