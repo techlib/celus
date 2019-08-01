@@ -64,7 +64,22 @@ cs:
       return {
         platforms: [],
         search: '',
-        headers: [
+      }
+    },
+    computed: {
+      ...mapState({
+        selectedOrganizationId: 'selectedOrganizationId',
+      }),
+      ...mapGetters({
+        formatNumber: 'formatNumber',
+        dateRangeStart: 'dateRangeStartText',
+        dateRangeEnd: 'dateRangeEndText',
+      }),
+      platformsURL () {
+        return `/api/organization/${this.selectedOrganizationId}/detailed-platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+      },
+      headers () {
+        return [
           {
             text: this.$i18n.t('columns.name'),
             value: 'name'
@@ -90,19 +105,6 @@ cs:
             value: 'url'
           },
         ]
-      }
-    },
-    computed: {
-      ...mapState({
-        selectedOrganizationId: 'selectedOrganizationId',
-      }),
-      ...mapGetters({
-        formatNumber: 'formatNumber',
-        dateRangeStart: 'dateRangeStartText',
-        dateRangeEnd: 'dateRangeEndText',
-      }),
-      platformsURL () {
-        return `/api/organization/${this.selectedOrganizationId}/detailed-platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
       }
     },
     methods: {
