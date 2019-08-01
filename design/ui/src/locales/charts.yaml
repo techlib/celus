@@ -6,6 +6,7 @@ en:
         datatype: Publication type
         sectiontype: Publication part
         metric: Metrics
+        yop: Year of publication
 cs:
     chart:
         date_metric: Metrika v čase
@@ -14,3 +15,4 @@ cs:
         datatype: Typ publikace
         sectiontype: Část publikace
         metric: Metriky
+        yop: Rok vydání

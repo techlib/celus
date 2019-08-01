@@ -169,6 +169,9 @@
         if (this.data_meta) {
           Object.assign(out, this.data_meta)
         }
+        if (this.chartType === 'heatmap' && this.secondaryDim) {
+          out['yAxisList'] = [...new Set(this.data_raw.map(item => item[this.secondaryDim]))].sort()
+        }
         return out
       },
       possiblePrimaryDims () {

@@ -45,6 +45,18 @@
 
         <section v-if="selectedOrganization && platformId && titleId">
         <h3>{{ $t('overview') }}</h3>
+
+            <div>
+                <v-select
+                    :items="reportTypes"
+                    item-text="name"
+                    item-value="short_name"
+                    v-model="selectedReportType"
+                    label="Report type"
+                >
+                </v-select>
+            </div>
+
         <div class="mt-3 mb-3">
             <v-btn-toggle v-model="chartTypeIndex" mandatory>
               <v-btn v-for="(chartType, index) in chartTypes " flat :value="index" :key="index">
@@ -54,7 +66,8 @@
         </div>
 
         <APIChart
-                report-type-name="TR"
+                v-if="selectedReportType"
+                :report-type-name="selectedReportType"
                 :primary-dimension="selectedChartType.primary"
                 :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
                 :organization="selectedOrganization.pk"
@@ -62,6 +75,9 @@
                 :title="titleId"
             >
         </APIChart>
+            <div v-else>
+                No reports available for this title.
+            </div>
         </section>
     </div>
 
@@ -87,21 +103,45 @@
         title: null,
         platformDataLocal: null,
         chartTypeIndex: 0,
-        chartTypes: [
-          {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
-          {name: this.$i18n.t('chart.metric'), primary: 'metric'},
-          {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
-          {name: this.$i18n.t('chart.accessmethod'), primary: 'Access_Method'},
-          {name: this.$i18n.t('chart.datatype'), primary: 'Data_Type'},
-          {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
-        ],
         coverImg: null,
+        reportTypes: [], // report types available for this title
+        selectedReportType: null,
       }
     },
     computed: {
       ...mapGetters({
         selectedOrganization: 'selectedOrganization',
       }),
+      chartTypes () {
+        let base = [
+          {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
+          {name: this.$i18n.t('chart.metric'), primary: 'metric'},
+        ]
+        let extra = [
+          {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
+          {name: this.$i18n.t('chart.accessmethod'), primary: 'Access_Method'},
+          {name: this.$i18n.t('chart.datatype'), primary: 'Data_Type'},
+          {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
+          {name: this.$i18n.t('chart.yop'), primary: 'YOP'},
+        ]
+        let reportType = this.selectedReportTypeObject
+        if (reportType) {
+          let dimNames = reportType.dimensions_sorted.map(dim => dim.short_name)
+          for (let option of extra) {
+            if (dimNames.indexOf(option.primary) >= 0) {
+              base.push(option)
+            }
+          }
+        }
+        return base
+      },
+      selectedReportTypeObject () {
+        for (let rt of this.reportTypes) {
+          if (rt.short_name === this.selectedReportType)
+            return rt
+        }
+        return null
+      },
       selectedChartType () {
         return this.chartTypes[this.chartTypeIndex]
       },
@@ -165,6 +205,21 @@
             })
         }
       },
+      async loadReportTypes () {
+        if (this.selectedOrganization && this.platformId && this.titleId) {
+          try {
+            const response = await axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/reports`)
+            this.reportTypes = response.data
+            if (this.reportTypes.length > 0) {
+              this.selectedReportType = this.reportTypes[0].short_name
+            } else {
+              this.selectedReportType = null
+            }
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading title: ' + error})
+          }
+        }
+      },
       getCoverImg () {
         if (this.title.isbn) {
           let isbn = this.title.isbn.replace(/-/g, '')
@@ -187,11 +242,13 @@
         this.loadPlatform()
       }
       this.loadTitle()
+      this.loadReportTypes()
     },
     watch: {
       selectedOrganization () {
         this.loadPlatform()
         this.loadTitle()
+        this.loadReportTypes()
       },
     }
   }
