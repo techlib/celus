@@ -67,7 +67,7 @@ export default new Vuex.Store({
       return ''
     },
     formatNumber (state) {
-      return (number) => formatNumber(number, state.numberFormat)
+      return (number) => (number === null) ? '-' : formatNumber(number, state.numberFormat)
     },
   },
   actions: {
