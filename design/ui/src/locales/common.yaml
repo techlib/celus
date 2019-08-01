@@ -26,6 +26,8 @@ en:
   labels:
     date_range: Date range
     search: Search
+  no_reports_available_for_title: No reports available for this title
+  available_report_types: Available report types
 
 cs:
   pages:
@@ -55,3 +57,5 @@ cs:
   labels:
     date_range: Rozmezí dat
     search: Vyhledávání
+  no_reports_available_for_title: Pro tento titul nejsou dostupné žádné zprávy
+  available_report_types: Dostupné typy zpráv

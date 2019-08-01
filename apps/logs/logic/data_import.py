@@ -66,6 +66,11 @@ class TitleManager(object):
             elif key == 'ISBN':
                 isbn = value
         pub_type = 'B' if isbn else 'J' if issn or eissn else None
+        if not pub_type:
+            if isbn is None and issn is not None:
+                pub_type = 'J'
+            elif isbn is not None and issn is None:
+                pub_type = 'B'
         return self.get_or_create(title, pub_type, isbn, issn, eissn, doi)
 
 

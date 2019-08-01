@@ -3,80 +3,80 @@
 
 <template>
     <div>
-    <v-layout>
-        <v-flex>
-        <v-breadcrumbs :items="breadcrumbs" class="pl-0">
-          <template v-slot:item="props">
-            <router-link
-                    v-if="props.item.linkName"
-                    :to="{name: props.item.linkName, params: props.item.linkParams}"
-                    >
-                {{ props.item.text }}
-            </router-link>
-            <span v-else>
+        <v-layout>
+            <v-flex>
+                <v-breadcrumbs :items="breadcrumbs" class="pl-0">
+                    <template v-slot:item="props">
+                        <router-link
+                                v-if="props.item.linkName"
+                                :to="{name: props.item.linkName, params: props.item.linkParams}"
+                        >
+                            {{ props.item.text }}
+                        </router-link>
+                        <span v-else>
                 {{ props.item.text }}
             </span>
-          </template>
-        </v-breadcrumbs>
+                    </template>
+                </v-breadcrumbs>
 
-        <h2 class="mb-4">{{ titleName }}</h2>
+                <h2 class="mb-4">{{ titleName }}</h2>
 
-        <table class="overview mb-4 elevation-2">
-            <tr>
-                <th>{{ $t('platform') }}</th>
-                <td>{{ platformName }}</td>
-            </tr>
-            <tr>
-                <th>{{ $t('title') }}</th>
-                <td>{{ titleName }}</td>
-            </tr>
-            <template v-if="title">
-                <tr v-for="(prop, index) in ['isbn', 'issn', 'eissn']" :key="index">
-                    <th>{{ $t('title_fields.'+prop) }}</th>
-                    <td>{{ title[prop] }}</td>
-                </tr>
-            </template>
-        </table>
-        </v-flex>
-        <v-flex shrink v-if="coverImg">
-            <img :src="coverImg" class="cover-image"/>
-        </v-flex>
-    </v-layout>
+                <table class="overview mb-4 elevation-2">
+                    <tr>
+                        <th>{{ $t('platform') }}</th>
+                        <td>{{ platformName }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ $t('title') }}</th>
+                        <td>{{ titleName }}</td>
+                    </tr>
+                    <template v-if="title">
+                        <tr v-for="(prop, index) in ['isbn', 'issn', 'eissn']" :key="index">
+                            <th>{{ $t('title_fields.'+prop) }}</th>
+                            <td>{{ title[prop] }}</td>
+                        </tr>
+                    </template>
+                </table>
+            </v-flex>
+            <v-flex shrink v-if="coverImg">
+                <img :src="coverImg" class="cover-image"/>
+            </v-flex>
+        </v-layout>
 
         <section v-if="selectedOrganization && platformId && titleId">
-        <h3>{{ $t('overview') }}</h3>
+            <h3>{{ $t('overview') }}</h3>
 
             <div>
                 <v-select
-                    :items="reportTypes"
-                    item-text="name"
-                    item-value="short_name"
-                    v-model="selectedReportType"
-                    label="Report type"
+                        :items="reportTypes"
+                        item-text="name"
+                        item-value="short_name"
+                        v-model="selectedReportType"
+                        :label="$t('available_report_types')"
                 >
                 </v-select>
             </div>
 
-        <div class="mt-3 mb-3">
-            <v-btn-toggle v-model="chartTypeIndex" mandatory>
-              <v-btn v-for="(chartType, index) in chartTypes " flat :value="index" :key="index">
-                {{ chartType.name }}
-              </v-btn>
-            </v-btn-toggle>
-        </div>
+            <div class="mt-3 mb-3">
+                <v-btn-toggle v-model="chartTypeIndex" mandatory>
+                    <v-btn v-for="(chartType, index) in chartTypes " flat :value="index" :key="index">
+                        {{ chartType.name }}
+                    </v-btn>
+                </v-btn-toggle>
+            </div>
 
-        <APIChart
-                v-if="selectedReportType"
-                :report-type-name="selectedReportType"
-                :primary-dimension="selectedChartType.primary"
-                :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
-                :organization="selectedOrganization.pk"
-                :platform="platformId"
-                :title="titleId"
+            <APIChart
+                    v-if="selectedReportType"
+                    :report-type-name="selectedReportType"
+                    :primary-dimension="selectedChartType.primary"
+                    :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
+                    :organization="selectedOrganization.pk"
+                    :platform="platformId"
+                    :title="titleId"
             >
-        </APIChart>
+            </APIChart>
             <div v-else>
-                No reports available for this title.
+                {{ $t('no_reports_available_for_title') }}
             </div>
         </section>
     </div>
