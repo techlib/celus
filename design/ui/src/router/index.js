@@ -34,13 +34,23 @@ export default new Router({
     },
     {
       path: '/platforms/:platformId/title/:titleId',
-      name: 'title-detail',
+      name: 'platform-title-detail',
       component: TitleDetailPage,
       props: route => ({
         platformId: Number.parseInt(route.params.platformId, 10),
         titleId: Number.parseInt(route.params.titleId, 10),
+      }),
+    },
+    {
+      path: '/titles/:titleId',
+      name: 'title-detail',
+      component: TitleDetailPage,
+      props: route => ({
+        platformId: null,
+        titleId: Number.parseInt(route.params.titleId, 10),
       })
     },
+
     {
       path: '*',
       component: NotFoundPage,

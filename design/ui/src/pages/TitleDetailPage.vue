@@ -22,7 +22,7 @@
                 <h2 class="mb-4">{{ titleName }}</h2>
 
                 <table class="overview mb-4 elevation-2">
-                    <tr>
+                    <tr v-if="this.platformId">
                         <th>{{ $t('platform') }}</th>
                         <td>{{ platformName }}</td>
                     </tr>
@@ -43,7 +43,7 @@
             </v-flex>
         </v-layout>
 
-        <section v-if="selectedOrganization && platformId && titleId">
+        <section v-if="isReady">
             <h3>{{ $t('overview') }}</h3>
 
             <div>
@@ -94,14 +94,13 @@
       APIChart,
     },
     props: {
-      'platformId': {required: true, type: Number},
+      'platformId': {required: false, type: Number},
       'titleId': {required: true, type: Number},
-      'platformData': {required: false},
     },
     data () {
       return {
         title: null,
-        platformDataLocal: null,
+        platformData: null,
         chartTypeIndex: 0,
         coverImg: null,
         reportTypes: [], // report types available for this title
@@ -145,11 +144,11 @@
       selectedChartType () {
         return this.chartTypes[this.chartTypeIndex]
       },
+      isReady () {
+        return this.selectedOrganization && this.titleId
+      },
       platform () {
-        if (this.platformData) {
-          return this.platformData
-        }
-        return this.platformDataLocal
+        return this.platformData
       },
       platformName () {
         if (this.platform) {
@@ -164,41 +163,65 @@
         return ''
       },
       breadcrumbs () {
-        return [
-          {
-            text: this.platformName,
-            linkName: 'platform-detail',
-            linkParams: {
-              platformId: this.platformId
-            }
-          },
-          {
-            text: this.titleName,
-          },
-        ]
+        if (this.platformId) {
+          return [
+            {
+              text: this.platformName,
+              linkName: 'platform-detail',
+              linkParams: {
+                platformId: this.platformId
+              }
+            },
+            {
+              text: this.titleName,
+            },
+          ]
+        }
+        return [{text: this.titleName}]
+      },
+      titleUrl () {
+        if (this.selectedOrganization && this.titleId) {
+          if (this.platformId) {
+            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}`
+          } else {
+            // this is the case when no platform is specified
+            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}`
+          }
+        }
+        return null
+      },
+      reportTypesUrl () {
+        if (this.selectedOrganization && this.titleId) {
+          if (this.platformId) {
+            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/reports`
+          } else {
+            // this is the case when no platform is specified
+            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/reports`
+          }
+        }
+        return null
       },
     },
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      loadTitle () {
-        if (this.selectedOrganization && this.platformId && this.titleId) {
-          axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}`)
-            .then(response => {
-              this.title = response.data
-              this.getCoverImg()
-            })
-            .catch(error => {
-              this.showSnackbar({content: 'Error loading title: ' + error})
-            })
+      async loadTitle () {
+        if (this.selectedOrganization && this.titleId) {
+          try {
+            const response = await axios.get(this.titleUrl)
+            this.title = response.data
+            this.getCoverImg()
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading title: ' + error})
+          }
         }
       },
       loadPlatform () {
         if (this.selectedOrganization) {
           axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/`)
             .then(response => {
-              this.platformDataLocal = response.data
+              this.platformData = response.data
             })
             .catch(error => {
               this.showSnackbar({content: 'Error loading platforms: ' + error})
@@ -206,9 +229,9 @@
         }
       },
       async loadReportTypes () {
-        if (this.selectedOrganization && this.platformId && this.titleId) {
+        if (this.selectedOrganization && this.titleId) {
           try {
-            const response = await axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/reports`)
+            const response = await axios.get(this.reportTypesUrl)
             this.reportTypes = response.data
             if (this.reportTypes.length > 0) {
               this.selectedReportType = this.reportTypes[0].short_name
@@ -237,8 +260,8 @@
         }
       },
     },
-    created () {
-      if (!this.platformData) {
+    mounted () {
+      if (this.platformId) {
         this.loadPlatform()
       }
       this.loadTitle()
@@ -246,7 +269,9 @@
     },
     watch: {
       selectedOrganization () {
-        this.loadPlatform()
+        if (this.platformId) {
+          this.loadPlatform()
+        }
         this.loadTitle()
         this.loadReportTypes()
       },

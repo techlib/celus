@@ -30,10 +30,8 @@ cs:
             <template v-slot:items="props">
                 <td class="text-xs-right">{{ props.item.pk }}</td>
                 <td>
-                    <router-link v-if="platformId" :to="{name: 'title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
-                    <span v-else>
-                        {{ props.item.name }}
-                    </span>
+                    <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
+                    <router-link v-else :to="{name: 'title-detail', params: {platformId: null, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
                 </td>
                 <td><span :class="{'fa fa-book': props.item.pub_type==='B', 'far fa-copy': props.item.pub_type==='J'}"></span></td>
                 <td>{{ props.item.isbn }}</td>

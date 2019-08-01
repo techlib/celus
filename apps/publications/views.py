@@ -85,9 +85,9 @@ class PlatformTitleCountsViewSet(ReadOnlyModelViewSet):
             distinct().annotate(count=Sum('accesslog__value', filter=date_filter))
 
 
-class OrganizationTitleReportTypeViewSet(ReadOnlyModelViewSet):
+class PlatformTitleReportTypeViewSet(ReadOnlyModelViewSet):
     """
-    Provides a list of report types for specific title for specific organization
+    Provides a list of report types for specific title for specific organization and platform
     """
 
     serializer_class = ReportTypeSerializer
@@ -104,6 +104,38 @@ class OrganizationTitleReportTypeViewSet(ReadOnlyModelViewSet):
                      newest_log=Max('accesslog__date', filter=access_log_filter)).\
             filter(log_count__gt=0).order_by('-newest_log')
         return report_types
+
+
+class TitleReportTypeViewSet(ReadOnlyModelViewSet):
+    """
+    Provides a list of report types for specific title for specific organization
+    """
+
+    serializer_class = ReportTypeSerializer
+
+    def get_queryset(self):
+        organization = get_object_or_404(self.request.user.organizations.all(),
+                                         pk=self.kwargs['organization_pk'])
+        title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
+        access_log_filter = Q(accesslog__organization=organization)
+        report_types = ReportType.objects.filter(accesslog__target=title).\
+            annotate(log_count=Count('accesslog__value', filter=access_log_filter),
+                     newest_log=Max('accesslog__date', filter=access_log_filter)).\
+            filter(log_count__gt=0).order_by('-newest_log')
+        return report_types
+
+
+class TitleViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = TitleSerializer
+
+    def get_queryset(self):
+        """
+        Should return only titles for specific organization but all platforms
+        """
+        organization = get_object_or_404(self.request.user.organizations.all(),
+                                         pk=self.kwargs['organization_pk'])
+        return Title.objects.filter(accesslog__organization=organization).distinct()
 
 
 class TitleCountsViewSet(ReadOnlyModelViewSet):
