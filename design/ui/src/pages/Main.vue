@@ -14,7 +14,7 @@
                     vertical
             ></v-divider>
 
-            <OrganizationSelector />
+            <OrganizationSelector :lang="appLang" />
             <v-spacer></v-spacer>
 
             <SelectedDateRangeWidget />

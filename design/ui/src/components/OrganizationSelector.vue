@@ -7,7 +7,7 @@
             <v-select
                     v-model="orgId"
                     :items="items"
-                    item-text="name"
+                    :item-text="lang ? 'name_'+lang : 'name'"
                     item-value="pk"
                     class="short"
             >
@@ -20,6 +20,9 @@
 
   export default {
     name: 'OrganizationSelector',
+    props: {
+      'lang': {required: false, default: null},
+    },
     computed: {
       ...mapGetters({
         selectedOrganization: 'selectedOrganization',
