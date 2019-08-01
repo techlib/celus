@@ -142,7 +142,7 @@
     watch: {
       appLang () {
         this.$i18n.locale = this.appLang
-      }
+      },
     }
 
   }

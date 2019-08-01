@@ -40,6 +40,7 @@
         },
         set (value) {
           this.selectOrganization({id: value})
+          this.$router.push({name: 'platform-list'})
         }
       }
     },
@@ -49,9 +50,6 @@
       })
     },
     watch: {
-      orgPK () {
-        this.selectOrganization({pk: this.orgId})
-      }
     }
   }
 </script>
