@@ -3,6 +3,7 @@ en:
     settings: Settings
     content: Content
     platforms: Platforms
+    all_titles: All titles
   menu: Menu
   organization: Organization
   platform: Platform
@@ -34,6 +35,7 @@ cs:
     settings: Nastavení
     content: Obsah
     platforms: Platformy
+    all_titles: Všechny tituly
   menu: Menu
   organization: Organizace
   platform: Platforma

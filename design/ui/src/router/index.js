@@ -5,6 +5,7 @@ import ChartTestPage from '../pages/ChartTestPage'
 import PlatformListPage from '../pages/PlatformListPage'
 import PlatformDetailPage from '../pages/PlatformDetailPage'
 import TitleDetailPage from '../pages/TitleDetailPage'
+import AllTitlesListPage from '../pages/AllTitlesListPage'
 
 Vue.use(Router)
 
@@ -19,6 +20,11 @@ export default new Router({
       path: '/platforms/',
       name: 'platform-list',
       component: PlatformListPage
+    },
+    {
+      path: '/titles/',
+      name: 'title-list',
+      component: AllTitlesListPage
     },
     {
       path: '/platforms/:platformId',

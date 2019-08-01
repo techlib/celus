@@ -7,6 +7,7 @@ org_sub_router = NestedSimpleRouter(organization_router, r'organization', lookup
 org_sub_router.register(r'platform', views.PlatformViewSet, basename='platform')
 org_sub_router.register(r'detailed-platform', views.DetailedPlatformViewSet,
                         basename='detailed-platform')
+org_sub_router.register(r'title-count', views.TitleCountsViewSet, basename='title-count')
 
 platform_sub_router = NestedSimpleRouter(org_sub_router, r'platform', lookup='platform')
 platform_sub_router.register('title', views.PlatformTitleViewSet, basename='platform-title')

@@ -104,3 +104,26 @@ class OrganizationTitleReportTypeViewSet(ReadOnlyModelViewSet):
                      newest_log=Max('accesslog__date', filter=access_log_filter)).\
             filter(log_count__gt=0).order_by('-newest_log')
         return report_types
+
+
+class TitleCountsViewSet(ReadOnlyModelViewSet):
+    """
+    View for all titles for selected organization
+    """
+
+    serializer_class = TitleCountSerializer
+
+    def get_queryset(self):
+        """
+        Should return only titles for specific organization but all platforms
+        """
+        organization = get_object_or_404(self.request.user.organizations.all(),
+                                         pk=self.kwargs['organization_pk'])
+        date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
+        if date_filter_params:
+            date_filter = Q(**date_filter_params)
+        else:
+            date_filter = None
+        return Title.objects.filter(accesslog__organization=organization).\
+            distinct().annotate(count=Sum('accesslog__value', filter=date_filter))
+

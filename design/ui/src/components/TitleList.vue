@@ -31,6 +31,9 @@ cs:
                 <td class="text-xs-right">{{ props.item.pk }}</td>
                 <td>
                     <router-link v-if="platformId" :to="{name: 'title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
+                    <span v-else>
+                        {{ props.item.name }}
+                    </span>
                 </td>
                 <td><span :class="{'fa fa-book': props.item.pub_type==='B', 'far fa-copy': props.item.pub_type==='J'}"></span></td>
                 <td>{{ props.item.isbn }}</td>
@@ -117,6 +120,9 @@ cs:
       url () {
         this.loadData()
       }
+    },
+    mounted() {
+      this.loadData()
     }
   }
 </script>
