@@ -1,10 +1,12 @@
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from django.db import models
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 from core.models import DataSource
+from publications.models import Platform
 
 
 class Organization(MPTTModel):
@@ -45,3 +47,30 @@ class UserOrganization(models.Model):
 
     def __str__(self):
         return f'{self.organization} / {self.user}'
+
+
+def validate_counter_version(number):
+    if number > 5 or number < 4:
+        raise ValidationError('Invalid COUNTER version: {}'.format(number))
+
+
+class SushiCredentials(models.Model):
+
+    VERSION_CHOICES = (
+        (4, 'COUNTER 4'),
+        (5, 'COUNTER 5'),
+    )
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+    url = models.URLField()
+    version = models.PositiveSmallIntegerField(choices=VERSION_CHOICES)
+    requestor_id = models.CharField(max_length=128)
+    client_id = models.CharField(max_length=128, blank=True)
+    http_username = models.CharField(max_length=128, blank=True)
+    http_password = models.CharField(max_length=128, blank=True)
+    api_key = models.CharField(max_length=128, blank=True)
+    extra_params = JSONField(default=dict)
+
+    def __str__(self):
+        return f'{self.organization} - {self.platform}, {self.get_version_display()}'
