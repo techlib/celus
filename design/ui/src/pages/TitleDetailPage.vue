@@ -132,6 +132,10 @@
             }
           }
         }
+        // if platform is not specified for the title, then we can show the split by platform
+        if (this.platformId === null) {
+          base.push({name: this.$i18n.t('chart.platform'), primary: 'platform'})
+        }
         return base
       },
       selectedReportTypeObject () {
@@ -207,9 +211,10 @@
         showSnackbar: 'showSnackbar',
       }),
       async loadTitle () {
-        if (this.selectedOrganization && this.titleId) {
+        let url = this.titleUrl
+        if (url) {
           try {
-            const response = await axios.get(this.titleUrl)
+            const response = await axios.get(url)
             this.title = response.data
             this.getCoverImg()
           } catch (error) {
@@ -229,9 +234,10 @@
         }
       },
       async loadReportTypes () {
-        if (this.selectedOrganization && this.titleId) {
+        let url = this.reportTypesUrl
+        if (url) {
           try {
-            const response = await axios.get(this.reportTypesUrl)
+            const response = await axios.get(url)
             this.reportTypes = response.data
             if (this.reportTypes.length > 0) {
               this.selectedReportType = this.reportTypes[0].short_name

@@ -7,6 +7,7 @@ en:
         sectiontype: Publication part
         metric: Metrics
         yop: Year of publication
+        platform: Platform
 cs:
     chart:
         date_metric: Metrika v čase
@@ -16,3 +17,4 @@ cs:
         sectiontype: Část publikace
         metric: Metriky
         yop: Rok vydání
+        platform: Platforma
