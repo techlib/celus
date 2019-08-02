@@ -171,6 +171,9 @@
       },
       dateRangeEnd () {
         this.loadData()
+      },
+      reportTypeName () {
+        this.loadData()
       }
     }
   }
