@@ -39,10 +39,6 @@ class Counter5DataView(APIView):
         return f'dim{dim_idx+1}', dimensions[dim_idx]
 
     def get(self, request, report_name=None):
-        """
-
-        :type request: object
-        """
         report_type = get_object_or_404(ReportType, short_name=report_name)
         secondary_dim = request.GET.get('sec_dim')
         primary_dim = request.GET.get('prim_dim', 'date')
@@ -117,7 +113,8 @@ class Counter5DataView(APIView):
             reply[sec_dim_name] = DimensionSerializer(sec_dim_obj).data
         return Response(reply)
 
-    def remap_implicit_dim(self, data, prim_dim_name):
+    @classmethod
+    def remap_implicit_dim(cls, data, prim_dim_name):
         """
         Remaps foreign keys to the corresponding values
         :param data: values
@@ -131,7 +128,8 @@ class Counter5DataView(APIView):
                 if rec[prim_dim_name] in mapping:
                     rec[prim_dim_name] = str(mapping[rec[prim_dim_name]])
 
-    def clean_organization_names(self, user, data):
+    @classmethod
+    def clean_organization_names(cls, user, data):
         """
         If organization is present in the data, we need to anonymize the data for those
         organizations that the user does not have access to.
