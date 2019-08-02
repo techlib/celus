@@ -1,23 +1,62 @@
+import csv
 import json
 import urllib
 from datetime import datetime
+from io import StringIO
 from typing import List, Dict, Union
 from urllib.parse import urljoin
 import logging
+from xml.etree import ElementTree as ET
 
 import requests
 
 from pycounter import sushi
+from pycounter.csvhelper import UnicodeWriter
 
 logger = logging.getLogger(__name__)
 
 
+ns_soap = 'http://schemas.xmlsoap.org/soap/envelope/'
+ns_sushi = 'http://www.niso.org/schemas/sushi'
+ns_counter = 'http://www.niso.org/schemas/sushi/counter'
+
+namespaces = {
+    's': ns_soap,
+    'sushi': ns_sushi,
+    'counter': ns_counter
+}
+
+
 class SushiException(Exception):
 
-    pass
+    def __init__(self, text, content=None):
+        self.text = text
+        self.content = content
+
+    def __str__(self):
+        return 'Sushi exception: {}'.format(self.text)
 
 
-class Sushi5Client(object):
+class SushiClientBase(object):
+
+    def __init__(self, url, requestor_id, customer_id=None, extra_params=None, auth=None):
+        self.url = url
+        self.requestor_id = requestor_id
+        self.customer_id = customer_id
+        self.extra_params = extra_params
+        self.auth = auth
+
+    def extract_errors_from_data(self, report_data):
+        raise NotImplementedError()
+
+    def report_to_string(self, report_data):
+        raise NotImplementedError()
+
+    def get_report_data(self, report_type, begin_date, end_date, params=None):
+        raise NotImplementedError()
+
+
+class Sushi5Client(SushiClientBase):
 
     """
     Client for SUSHI and COUNTER 5 protocol
@@ -69,10 +108,8 @@ class Sushi5Client(object):
         }
     }
 
-    def __init__(self, url, requestor_id, customer_id=None):
-        self.url = url
-        self.requestor_id = requestor_id
-        self.customer_id = customer_id
+    def __init__(self, url, requestor_id, customer_id=None, extra_params=None, auth=None):
+        super().__init__(url, requestor_id, customer_id, extra_params, auth)
         self.session = requests.Session()
         self.session.headers.update(
             {'User-Agent':
@@ -96,13 +133,18 @@ class Sushi5Client(object):
             self.REQUESTOR_ID_PARAM: self.requestor_id,
             self.CUSTOMER_ID_PARAM: self.customer_id if self.customer_id else self.requestor_id,
         }
+        if self.extra_params:
+            result.update(self.extra_params)
         if extra:
             result.update(extra)
         return result
 
     def _make_request(self, url, params):
         logger.debug('Making request to :%s?%s', url, urllib.parse.urlencode(params))
-        return self.session.get(url, params=params)
+        kwargs = {}
+        if self.auth:
+            kwargs['auth'] = self.auth
+        return self.session.get(url, params=params, **kwargs)
 
     def get_available_reports_raw(self, params=None) -> bytes:
         """
@@ -143,7 +185,10 @@ class Sushi5Client(object):
         return self.report_to_data(content)
 
     def report_to_data(self, report: bytes, validate=True):
-        data = json.loads(report)
+        try:
+            data = json.loads(report)
+        except ValueError as e:
+            raise SushiException(str(e), content=report)
         if validate:
             self.validate_data(data)
         return data
@@ -161,9 +206,9 @@ class Sushi5Client(object):
             return
         if 'Exception' in data:
             exc = data['Exception']
-            raise SushiException(cls._format_error(exc))
+            raise SushiException(cls._format_error(exc), content=data)
         if 'Severity' in data and data['Severity'] == 'Error':
-            raise SushiException(cls._format_error(data))
+            raise SushiException(cls._format_error(data), content=data)
         header = data.get('Report_Header', {})
         errors = []
         for exception in header.get('Exceptions', []):
@@ -174,7 +219,23 @@ class Sushi5Client(object):
                 errors.append(exception)
         if errors:
             message = '; '.join(cls._format_error(error) for error in errors)
-            raise SushiException(message)
+            raise SushiException(message, content=data)
+
+    def extract_errors_from_data(self, report_data):
+        if 'Exception' in report_data:
+            exc = report_data['Exception']
+            return self._format_error(exc)
+        if 'Severity' in report_data and report_data['Severity'] == 'Error':
+            return self._format_error(report_data)
+        header = report_data.get('Report_Header', {})
+        errors = []
+        for exception in header.get('Exceptions', []):
+            if exception.get('Severity') == 'Warning':
+                logging.warning("Warning Exception in COUNTER 5 report: %s",
+                                self._format_error(exception))
+            else:
+                errors.append(self._format_error(exception))
+        return errors
 
     @classmethod
     def _format_error(cls, exc: dict):
@@ -196,18 +257,19 @@ class Sushi5Client(object):
             raise ValueError(f'Report subtype {subtype} is not supported for type {main_type}.')
         return report_type
 
+    def report_to_string(self, report_data):
+        return json.dumps(report_data, ensure_ascii=False, indent=2)
 
-class Sushi4Client(object):
+
+class Sushi4Client(SushiClientBase):
 
     """
-    Client for SUSHI and COUNTER 5 protocol - a simple proxy for the pycounter.sushi
+    Client for SUSHI and COUNTER 4 protocol - a simple proxy for the pycounter.sushi
     implementation
     """
 
-    def __init__(self, url, requestor_id, customer_id=None):
-        self.url = url
-        self.requestor_id = requestor_id
-        self.customer_id = customer_id
+    def __init__(self, url, requestor_id, customer_id=None, extra_params=None, auth=None):
+        super().__init__(url, requestor_id, customer_id, extra_params, auth)
 
     @classmethod
     def _encode_date(cls, value) -> str:
@@ -221,6 +283,31 @@ class Sushi4Client(object):
             kwargs['requestor_id'] = self.requestor_id
         if params:
             kwargs.update(params)
+        if self.auth:
+            kwargs['auth'] = self.auth
         report = sushi.get_report(self.url, begin_date, end_date, report=report_type, **kwargs)
         return report
+
+    def extract_errors_from_data(self, report_data):
+        try:
+            envelope = ET.fromstring(report_data)
+            body = envelope[0]
+            response = body[0]
+        except Exception as e:
+            return [str(e)]
+        else:
+            errors = []
+            if response is not None:
+                for exception in response.findall('sushi:Exception', namespaces):
+                    message = exception.find('sushi:Message', namespaces)
+                    if message is not None:
+                        errors.append(message.text)
+            return errors
+
+    def report_to_string(self, report_data):
+        lines = report_data.as_generic()
+        out = StringIO()
+        writer = csv.writer(out, dialect='excel', delimiter="\t")
+        writer.writerows(lines)
+        return out.getvalue()
 
