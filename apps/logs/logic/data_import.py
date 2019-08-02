@@ -71,6 +71,11 @@ class TitleManager(object):
                 pub_type = 'J'
             elif isbn is not None and issn is None:
                 pub_type = 'B'
+        # convert None values for the following attrs to empty strings
+        isbn = '' if isbn is None else isbn
+        issn = '' if issn is None else issn
+        eissn = '' if eissn is None else eissn
+        doi = '' if doi is None else doi
         return self.get_or_create(title, pub_type, isbn, issn, eissn, doi)
 
 
