@@ -1,8 +1,7 @@
 import pytest
 
 from organizations.logic.data_import import import_sushi_credentials
-from organizations.logic.sync import OrganizationSyncer
-from organizations.models import Organization, SushiCredentials
+from organizations.models import SushiCredentials
 from publications.models import Platform
 
 
