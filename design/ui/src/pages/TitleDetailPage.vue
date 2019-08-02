@@ -70,7 +70,7 @@
                     :report-type-name="selectedReportType"
                     :primary-dimension="selectedChartType.primary"
                     :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
-                    :organization="selectedOrganization.pk"
+                    :organization="organizationForChart"
                     :platform="platformId"
                     :title="titleId"
             >
@@ -115,6 +115,7 @@
         let base = [
           {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
           {name: this.$i18n.t('chart.metric'), primary: 'metric'},
+          {name: this.$i18n.t('chart.organization'), primary: 'organization'},
         ]
         let extra = [
           {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
@@ -137,6 +138,15 @@
           base.push({name: this.$i18n.t('chart.platform'), primary: 'platform'})
         }
         return base
+      },
+      organizationForChart () {
+        /* which organization should be reported to the APIChart component
+        * - in case we want to compare organizations, we should not add organization to
+        * the filter */
+        if (this.selectedChartType.primary === 'organization') {
+          return this.selectedOrganization.pk
+        }
+        return null
       },
       selectedReportTypeObject () {
         for (let rt of this.reportTypes) {

@@ -8,6 +8,7 @@ en:
         metric: Metrics
         yop: Year of publication
         platform: Platform
+        organization: Organization
 cs:
     chart:
         date_metric: Metrika v čase
@@ -18,3 +19,4 @@ cs:
         metric: Metriky
         yop: Rok vydání
         platform: Platforma
+        organization: Organizace
