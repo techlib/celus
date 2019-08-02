@@ -28,4 +28,4 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
 
     list_display = ['credentials', 'counter_report', 'timestamp', 'start_date', 'end_date',
                     'success']
-    list_filter = ['success']
+    list_filter = ['success', 'counter_report']

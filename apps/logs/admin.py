@@ -12,7 +12,12 @@ class OrganizationPlatformAdmin(admin.ModelAdmin):
 @admin.register(models.ReportType)
 class ReportTypeAdmin(admin.ModelAdmin):
 
-    list_display = ['short_name', 'name', 'desc']
+    list_display = ['short_name', 'name', 'desc', 'dimension_list']
+    ordering = ['short_name']
+
+    @classmethod
+    def dimension_list(cls, obj: models.ReportType):
+        return ', '.join(obj.dimension_short_names)
 
 
 @admin.register(models.Metric)
@@ -25,6 +30,7 @@ class MetricAdmin(admin.ModelAdmin):
 class DimensionAdmin(admin.ModelAdmin):
 
     list_display = ['short_name', 'name', 'type', 'desc']
+    ordering = ['short_name']
 
 
 @admin.register(models.DimensionText)
@@ -37,6 +43,7 @@ class DimensionTextAdmin(admin.ModelAdmin):
 class ReportTypeToDimensionAdmin(admin.ModelAdmin):
 
     list_display = ['report_type', 'dimension', 'position']
+    ordering = ['report_type__short_name', 'position']
 
 
 @admin.register(models.AccessLog)

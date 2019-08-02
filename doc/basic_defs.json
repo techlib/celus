@@ -1,0 +1,807 @@
+[
+{
+  "model": "sushi.counterreporttype",
+  "pk": 1,
+  "fields": {
+    "code": "JR1",
+    "name": "Journal report 1",
+    "counter_version": 4,
+    "report_type": 3
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 2,
+  "fields": {
+    "code": "tr",
+    "name": "Title report",
+    "counter_version": 5,
+    "report_type": 1
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 3,
+  "fields": {
+    "code": "JR1GOA",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 4
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 4,
+  "fields": {
+    "code": "JR1a",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 7
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 5,
+  "fields": {
+    "code": "BR1",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 8
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 6,
+  "fields": {
+    "code": "BR2",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 9
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 7,
+  "fields": {
+    "code": "BR3",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 10
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 8,
+  "fields": {
+    "code": "DR1",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 11
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 9,
+  "fields": {
+    "code": "JR5",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 6
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 10,
+  "fields": {
+    "code": "JR2",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 5
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 11,
+  "fields": {
+    "code": "dr",
+    "name": "",
+    "counter_version": 5,
+    "report_type": 2
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 1,
+  "fields": {
+    "short_name": "TR",
+    "name": "Counter 5 - Title report",
+    "name_en": "Counter 5 - Title report",
+    "name_cs": "Counter 5 - Title report",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 2,
+  "fields": {
+    "short_name": "DR",
+    "name": "Counter 5 - Database report",
+    "name_en": "Counter 5 - Database report",
+    "name_cs": "Counter 5 - Database report",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 3,
+  "fields": {
+    "short_name": "JR1",
+    "name": "Counter 4 - Journal Report 1",
+    "name_en": "Counter 4 - Journal Report 1",
+    "name_cs": "Counter 4 - Journal Report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 4,
+  "fields": {
+    "short_name": "JR1GOA",
+    "name": "Counter 4 - Journal Report 1 Gold Open Access",
+    "name_en": "Counter 4 - Journal Report 1 Gold Open Access",
+    "name_cs": "Counter 4 - Journal Report 1 Gold Open Access",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 5,
+  "fields": {
+    "short_name": "JR2",
+    "name": "Counter 4 - Journal Report 2",
+    "name_en": "Counter 4 - Journal Report 2",
+    "name_cs": null,
+    "desc": "Access denied",
+    "desc_en": "Access denied",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 6,
+  "fields": {
+    "short_name": "JR5",
+    "name": "Counter 4 - Journal Report 5",
+    "name_en": "Counter 4 - Journal Report 5",
+    "name_cs": "Counter 4 - Journal Report 5",
+    "desc": "Access by year of publication",
+    "desc_en": "Access by year of publication",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 7,
+  "fields": {
+    "short_name": "JR1a",
+    "name": "Counter 4 - Journal Report 1 - Archive access",
+    "name_en": "Counter 4 - Journal Report 1 - Archive access",
+    "name_cs": "Counter 4 - Journal Report 1 - Archive access",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 8,
+  "fields": {
+    "short_name": "BR1",
+    "name": "Counter 4 - Book Report 1",
+    "name_en": "Counter 4 - Book Report 1",
+    "name_cs": "Counter 4 - Book Report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 9,
+  "fields": {
+    "short_name": "BR2",
+    "name": "Counter 4 - Book Report 2",
+    "name_en": "Counter 4 - Book Report 2",
+    "name_cs": "Counter 4 - Book Report 2",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 10,
+  "fields": {
+    "short_name": "BR3",
+    "name": "Counter 4 - Book Report 3",
+    "name_en": "Counter 4 - Book Report 3",
+    "name_cs": "Counter 4 - Book Report 3",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 11,
+  "fields": {
+    "short_name": "DR1",
+    "name": "Counter 4 - Database Report 1",
+    "name_en": "Counter 4 - Database Report 1",
+    "name_cs": "Counter 4 - Database Report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 12,
+  "fields": {
+    "short_name": "DR2",
+    "name": "Counter 4 - Database Report 2",
+    "name_en": "Counter 4 - Database Report 2",
+    "name_cs": "Counter 4 - Database Report 2",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 1,
+  "fields": {
+    "short_name": "Unique_Item_Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 2,
+  "fields": {
+    "short_name": "Total_Item_Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 3,
+  "fields": {
+    "short_name": "Unique_Item_Investigations",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 4,
+  "fields": {
+    "short_name": "Total_Item_Investigations",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 5,
+  "fields": {
+    "short_name": "No_License",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 6,
+  "fields": {
+    "short_name": "Unique_Title_Investigations",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 7,
+  "fields": {
+    "short_name": "Unique_Title_Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 8,
+  "fields": {
+    "short_name": "FT Article Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 1,
+  "fields": {
+    "short_name": "Access_Type",
+    "name": "Access Type",
+    "name_en": "Access Type",
+    "name_cs": "Typ p\u0159\u00edstupu",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 2,
+  "fields": {
+    "short_name": "Access_Method",
+    "name": "Access Method",
+    "name_en": "Access Method",
+    "name_cs": "Metoda p\u0159\u00edstupu",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 3,
+  "fields": {
+    "short_name": "Data_Type",
+    "name": "Data Type",
+    "name_en": "Data Type",
+    "name_cs": "Typ dat",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 4,
+  "fields": {
+    "short_name": "Section_Type",
+    "name": "Section Type",
+    "name_en": "Section Type",
+    "name_cs": "Typ \u010d\u00e1sti",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 5,
+  "fields": {
+    "short_name": "YOP",
+    "name": "Year of publication",
+    "name_en": "Year of publication",
+    "name_cs": "Rok vyd\u00e1n\u00ed",
+    "type": 1,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 6,
+  "fields": {
+    "short_name": "Publisher",
+    "name": "Publisher",
+    "name_en": "Publisher",
+    "name_cs": "Vydavatel",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 1,
+  "fields": {
+    "report_type": 1,
+    "dimension": 1,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 2,
+  "fields": {
+    "report_type": 1,
+    "dimension": 2,
+    "position": 1
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 3,
+  "fields": {
+    "report_type": 1,
+    "dimension": 3,
+    "position": 2
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 4,
+  "fields": {
+    "report_type": 1,
+    "dimension": 4,
+    "position": 3
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 5,
+  "fields": {
+    "report_type": 1,
+    "dimension": 5,
+    "position": 4
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 6,
+  "fields": {
+    "report_type": 1,
+    "dimension": 6,
+    "position": 5
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 7,
+  "fields": {
+    "report_type": 2,
+    "dimension": 2,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 8,
+  "fields": {
+    "report_type": 2,
+    "dimension": 3,
+    "position": 1
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 9,
+  "fields": {
+    "report_type": 2,
+    "dimension": 6,
+    "position": 2
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 10,
+  "fields": {
+    "report_type": 3,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 11,
+  "fields": {
+    "report_type": 4,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 12,
+  "fields": {
+    "report_type": 5,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 13,
+  "fields": {
+    "report_type": 6,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 14,
+  "fields": {
+    "report_type": 7,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 15,
+  "fields": {
+    "report_type": 8,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 16,
+  "fields": {
+    "report_type": 9,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 17,
+  "fields": {
+    "report_type": 10,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 18,
+  "fields": {
+    "report_type": 11,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 19,
+  "fields": {
+    "report_type": 12,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 1,
+  "fields": {
+    "dimension": 1,
+    "text": "Controlled",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 2,
+  "fields": {
+    "dimension": 2,
+    "text": "Regular",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 3,
+  "fields": {
+    "dimension": 3,
+    "text": "Journal",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 4,
+  "fields": {
+    "dimension": 4,
+    "text": "Article",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 5,
+  "fields": {
+    "dimension": 6,
+    "text": "SAGE Publications",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 6,
+  "fields": {
+    "dimension": 1,
+    "text": "OA_Gold",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 7,
+  "fields": {
+    "dimension": 6,
+    "text": "SAGE Publications Inc",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 8,
+  "fields": {
+    "dimension": 6,
+    "text": "SAGE Publications Ltd",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 9,
+  "fields": {
+    "dimension": 6,
+    "text": "SAGE Publications Ltd STM",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 10,
+  "fields": {
+    "dimension": 6,
+    "text": "Emerald",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 11,
+  "fields": {
+    "dimension": 3,
+    "text": "Book",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 12,
+  "fields": {
+    "dimension": 4,
+    "text": "Book",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 13,
+  "fields": {
+    "dimension": 4,
+    "text": "Chapter",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 14,
+  "fields": {
+    "dimension": 6,
+    "text": "Massachusetts Medical Society",
+    "text_local": "",
+    "text_local_en": null,
+    "text_local_cs": null
+  }
+}
+]

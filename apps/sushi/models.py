@@ -28,6 +28,9 @@ class CounterReportType(models.Model):
     name = models.CharField(max_length=128, blank=True)
     counter_version = models.PositiveSmallIntegerField(choices=COUNTER_VERSIONS)
     report_type = models.ForeignKey('logs.ReportType', on_delete=models.CASCADE)
+    active = models.BooleanField(default=True,
+                                 help_text='When turned off, this type of report will not be '
+                                           'automatically downloaded')
 
     class Meta:
         unique_together = (('code', 'counter_version'),)
@@ -160,7 +163,7 @@ class SushiCredentials(models.Model):
 
 def where_to_store(instance: 'SushiFetchAttempt', filename):
     root, ext = os.path.splitext(filename)
-    ts = now().strftime('%Y%m%d-%H%M%S')
+    ts = now().strftime('%Y%m%d-%H%M%S.%f')
     return f'counter/{instance.credentials.organization.internal_id}/' \
            f'{instance.credentials.platform.short_name}/' \
            f'{instance.credentials.counter_version}_{ts}{ext}'
