@@ -85,6 +85,8 @@ class Counter5DataView(APIView):
         else:
             data = query.values(prim_dim_name).annotate(count=Sum('value')).\
                 values(prim_dim_name, 'count').order_by(prim_dim_name)
+        # clean names of organizations
+        self.clean_organization_names(request.user, data)
         # remap the values if text dimensions are involved
         if prim_dim_obj and prim_dim_obj.type == Dimension.TYPE_TEXT:
             remap_dicts(prim_dim_obj, data, prim_dim_name)
@@ -116,12 +118,31 @@ class Counter5DataView(APIView):
         return Response(reply)
 
     def remap_implicit_dim(self, data, prim_dim_name):
+        """
+        Remaps foreign keys to the corresponding values
+        :param data: values
+        :param prim_dim_name: name of the AccessLog attribute of this dimension
+        :return:
+        """
         field = AccessLog._meta.get_field(prim_dim_name)
         if isinstance(field, models.ForeignKey):
             mapping = {obj.pk: obj for obj in field.related_model.objects.all()}
             for rec in data:
                 if rec[prim_dim_name] in mapping:
                     rec[prim_dim_name] = str(mapping[rec[prim_dim_name]])
+
+    def clean_organization_names(self, user, data):
+        """
+        If organization is present in the data, we need to anonymize the data for those
+        organizations that the user does not have access to.
+        :param user: instance of the current user
+        :param data: records to be cleaned - organizations should be passed as their primary key
+        :return:
+        """
+        user_organizations = {org.pk for org in user.accessible_organizations()}
+        for rec in data:
+            if 'organization' in rec and rec['organization'] not in user_organizations:
+                rec['organization'] = 'Anonym'
 
 
 class ReportTypeViewSet(ReadOnlyModelViewSet):

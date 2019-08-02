@@ -4,8 +4,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.apps import apps
 
-#Organization = apps.get_model(app_label='organizations', model_name='Organization')
-
 UL_NORMAL = 100
 UL_ROBOT = 200
 UL_ORG_ADMIN = 300
@@ -58,6 +56,13 @@ class User(AbstractUser):
         if self.first_name or self.last_name:
             return "{0} {1}".format(self.first_name, self.last_name)
         return self.email
+
+    def accessible_organizations(self):
+        Organization = apps.get_model(app_label='organizations', model_name='Organization')
+        if self.organizations.filter(internal_id__in=settings.MASTER_ORGANIZATIONS).exists():
+            # user is part of one of the master organizations - he should have access to all orgs
+            return Organization.objects.all()
+        return self.organizations.all()
 
 
 class Identity(models.Model):
