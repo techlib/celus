@@ -3,7 +3,7 @@ import logging
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 
-from ...logic.data_import import import_sushi_credentials_from_csv
+from sushi.logic.data_import import import_sushi_credentials_from_csv
 
 logger = logging.getLogger(__name__)
 

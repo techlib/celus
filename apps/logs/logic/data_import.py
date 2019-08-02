@@ -4,7 +4,7 @@ from collections import Counter
 from organizations.models import Organization
 from publications.models import Title, Platform
 from ..models import ReportType, Metric, DimensionText, OrganizationPlatform, AccessLog
-from sushi.counter5 import CounterRecord
+from nigiri.counter5 import CounterRecord
 
 
 logger = logging.getLogger(__name__)

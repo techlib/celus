@@ -1,8 +1,9 @@
 import pytest
 
-from organizations.logic.data_import import import_sushi_credentials
-from organizations.models import SushiCredentials
+from sushi.logic.data_import import import_sushi_credentials
+from ..models import SushiCredentials
 from publications.models import Platform
+from organizations.tests.conftest import organizations
 
 
 @pytest.mark.django_db

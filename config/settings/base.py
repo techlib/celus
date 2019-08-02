@@ -37,12 +37,14 @@ INSTALLED_APPS = [
     'modeltranslation',  # must be before admin
     'django.contrib.admin',
     'rest_framework',
+    'django_celery_results',
     'compressor',
     'mptt',
     'core.apps.CoreConfig',
     'publications.apps.PublicationsConfig',
     'logs.apps.LogsConfig',
     'organizations.apps.OrganizationsConfig',
+    'sushi.apps.SushiConfig',
 ]
 
 MIDDLEWARE = [
@@ -160,6 +162,11 @@ REST_FRAMEWORK = {
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
 }
+
+# Celery
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_BROKER_URL = 'redis://localhost'
+CELERY_TIMEZONE = TIME_ZONE
 
 # ERMS related stuff
 ERMS_API_URL = "https://erms.czechelib.cz/api/"

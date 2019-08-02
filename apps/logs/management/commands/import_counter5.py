@@ -8,7 +8,7 @@ from publications.models import Platform
 from ...logic.data_import import import_counter_records
 from ...models import ReportType, OrganizationPlatform
 from organizations.models import Organization
-from sushi.counter5 import Counter5TRReport
+from nigiri.counter5 import Counter5TRReport
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,7 @@ from xml.etree import ElementTree as ET
 import requests
 from pycounter.exceptions import SushiException
 
-from sushi.client import Sushi5Client, Sushi4Client
+from nigiri.client import Sushi5Client, Sushi4Client
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)

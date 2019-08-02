@@ -1,7 +1,8 @@
 import csv
 from collections import Counter
 
-from organizations.models import SushiCredentials, Organization
+from ..models import SushiCredentials
+from organizations.models import Organization
 from publications.models import Platform
 
 

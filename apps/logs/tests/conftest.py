@@ -6,7 +6,7 @@ import faker
 import pytest
 
 from logs.models import ReportType, Dimension, ReportTypeToDimension
-from sushi.counter5 import CounterRecord
+from nigiri.counter5 import CounterRecord
 
 
 @pytest.fixture
