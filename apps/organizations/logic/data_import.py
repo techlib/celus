@@ -32,9 +32,12 @@ def import_sushi_credentials(records: [dict]) -> dict:
         if extra_attrs:
             extra_attrs = parse_params(extra_attrs)
         optional = {}
-        if "auth" in extra_attrs:
+        if 'auth' in extra_attrs:
             optional['http_username'], optional['http_password'] = extra_attrs['auth']
             del extra_attrs['auth']
+        if 'api_key' in extra_attrs:
+            optional['api_key'] = extra_attrs['api_key']
+            del extra_attrs['api_key']
         if key in db_credentials:
             # we update it
             pass

@@ -9,7 +9,7 @@ from publications.models import Platform
 from ..logic.data_import import import_counter_records
 from organizations.tests.conftest import organizations
 from core.tests.conftest import valid_identity, authenticated_client, authentication_headers,\
-    invalid_identity
+    invalid_identity, master_identity, master_client
 
 
 @pytest.mark.django_db
@@ -101,7 +101,7 @@ class TestChartDataAPI(object):
                                                               'count': 3}]],
                              ])
     def test_api_values(self, counter_records, organizations, report_type_nd,
-                        primary_dim, secondary_dim, result, authenticated_client):
+                        primary_dim, secondary_dim, result, master_client):
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                            provider='Provider 1')
         data = [
@@ -124,8 +124,8 @@ class TestChartDataAPI(object):
                 params['sec_dim'] = report_type.dimensions_sorted[secondary_dim-1].short_name
             else:
                 params['sec_dim'] = secondary_dim
-        resp = authenticated_client.get(reverse('chart_data', args=(report_type.short_name,)),
-                                        params)
+        resp = master_client.get(reverse('chart_data', args=(report_type.short_name,)),
+                                 params)
         assert resp.status_code == 200
         data = json.loads(resp.content)
         assert 'data' in data
