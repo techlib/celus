@@ -13,3 +13,4 @@ class PlatformAdmin(admin.ModelAdmin):
 class TitleAdmin(admin.ModelAdmin):
 
     list_display = ['name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi']
+    search_fields = ['name', 'isbn', 'issn', 'eissn', 'doi']

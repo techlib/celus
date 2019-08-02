@@ -127,8 +127,13 @@ class SushiCredentials(models.Model):
         data_file = None
         filename = 'foo.json'
         errors = []
+        params = {}
+        if counter_report.code == 'tr':
+            # we want extra split data from the title report
+            params = client.EXTRA_PARAMS['tr_maximum_split']
         try:
-            report = client.get_report_data(counter_report.code, start_date, end_date)
+            report = client.get_report_data(counter_report.code, start_date, end_date,
+                                            params=params)
         except requests.exceptions.ConnectionError as e:
             logger.error('Connection error: %s', e)
             errors = [str(e)]
@@ -179,7 +184,16 @@ class SushiFetchAttempt(models.Model):
     success = models.BooleanField()
     data_file = models.FileField(upload_to=where_to_store)
     log = models.TextField(blank=True)
+    is_processed = models.BooleanField(default=False,
+                                       help_text='Was the data converted into logs?')
+    when_processed = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         status = 'SUCCESS' if self.success else 'FAILURE'
         return f'{status}: {self.credentials}, {self.counter_report}'
+
+    def mark_processed(self):
+        if not self.is_processed:
+            self.is_processed = True
+            self.when_processed = now()
+            self.save()
