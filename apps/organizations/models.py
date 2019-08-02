@@ -70,11 +70,12 @@ class SushiCredentials(models.Model):
     http_username = models.CharField(max_length=128, blank=True)
     http_password = models.CharField(max_length=128, blank=True)
     api_key = models.CharField(max_length=128, blank=True)
-    extra_params = JSONField(default=dict)
+    extra_params = JSONField(default=dict, blank=True)
     enabled = models.BooleanField(default=True)
 
     class Meta:
         unique_together = (('organization', 'platform', 'version'),)
+        verbose_name_plural = 'Sushi credentials'
 
     def __str__(self):
         return f'{self.organization} - {self.platform}, {self.get_version_display()}'
