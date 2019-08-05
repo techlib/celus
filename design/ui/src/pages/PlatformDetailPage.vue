@@ -6,23 +6,14 @@
         <h2 class="mb-4"><span class="thin">{{ $t('platform') }}:</span> {{ platform ? platform.name : '' }}</h2>
 
         <section v-if="selectedOrganization && platform">
-        <h3>{{ $t('overview') }}</h3>
-        <div class="mt-3 mb-3">
-            <v-btn-toggle v-model="chartTypeIndex" mandatory>
-              <v-btn v-for="(chartType, index) in chartTypes " flat :value="index" :key="index">
-                {{ chartType.name }}
-              </v-btn>
-            </v-btn-toggle>
-        </div>
+            <h3>{{ $t('overview') }}</h3>
 
-        <APIChart
-                report-type-name="TR"
-                :primary-dimension="selectedChartType.primary"
-                :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
-                :organization="selectedOrganization.pk"
-                :platform="platform.pk"
+            <CounterChartSet
+                    :platform-id="platformId"
+                    :title-id="null"
+                    :report-types-url="reportTypesUrl"
             >
-        </APIChart>
+            </CounterChartSet>
         </section>
 
         <h3 class="pt-3">{{ $t('titles') }}</h3>
@@ -34,14 +25,14 @@
 <script>
   import { mapActions, mapGetters } from 'vuex'
   import TitleList from '../components/TitleList'
-  import APIChart from '../components/APIChart'
   import axios from 'axios'
+  import CounterChartSet from './CounterChartSet'
 
   export default {
     name: 'PlatformDetailPage',
     components: {
-      APIChart,
       TitleList,
+      CounterChartSet,
     },
     props: {
       'platformId': {required: true},
@@ -49,15 +40,6 @@
     data () {
       return {
         platform: null,
-        chartTypeIndex: 0,
-        chartTypes: [
-          {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
-          {name: this.$i18n.t('chart.metric'), primary: 'metric'},
-          {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
-          {name: this.$i18n.t('chart.accessmethod'), primary: 'Access_Method'},
-          {name: this.$i18n.t('chart.datatype'), primary: 'Data_Type'},
-          {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
-        ]
       }
     },
     computed: {
@@ -72,9 +54,12 @@
         }
         return null
       },
-      selectedChartType () {
-        return this.chartTypes[this.chartTypeIndex]
-      }
+      reportTypesUrl () {
+        if (this.selectedOrganization && this.platformId) {
+            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/reports`
+        }
+        return null
+      },
     },
     methods: {
       ...mapActions({

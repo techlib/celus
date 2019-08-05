@@ -40,11 +40,12 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         if date_filter_params:
             sum_filter.update(date_filter_params)
         return organization.platforms.all(). \
-            annotate(title_count=Count('accesslog__target', distinct=True),
+            annotate(title_count=Count('accesslog__target', distinct=True, filter=Q(**sum_filter)),
                      interest=Sum('accesslog__value', filter=Q(**sum_filter)),
                      rel_interest=ExpressionWrapper(
                          (Cast('interest', FloatField()) / F('title_count')),
-                         output_field=FloatField()))  # cast to float to prevent integer division
+                         output_field=FloatField())).\
+            filter(title_count__gt=0)   # cast to float to prevent integer division
 
 
 class PlatformTitleViewSet(ReadOnlyModelViewSet):
@@ -83,6 +84,26 @@ class PlatformTitleCountsViewSet(ReadOnlyModelViewSet):
         return Title.objects.filter(accesslog__platform=platform,
                                     accesslog__organization=organization).\
             distinct().annotate(count=Sum('accesslog__value', filter=date_filter))
+
+
+class PlatformReportTypeViewSet(ReadOnlyModelViewSet):
+    """
+    Provides a list of report types for specific title for specific organization and platform
+    """
+
+    serializer_class = ReportTypeSerializer
+
+    def get_queryset(self):
+        organization = get_object_or_404(self.request.user.organizations.all(),
+                                         pk=self.kwargs['organization_pk'])
+        platform = get_object_or_404(organization.platforms.all(),
+                                     pk=self.kwargs['platform_pk'])
+        access_log_filter = Q(accesslog__platform=platform, accesslog__organization=organization)
+        report_types = ReportType.objects.filter(access_log_filter).\
+            annotate(log_count=Count('accesslog__value', filter=access_log_filter),
+                     newest_log=Max('accesslog__date', filter=access_log_filter)).\
+            filter(log_count__gt=0).order_by('-newest_log')
+        return report_types
 
 
 class PlatformTitleReportTypeViewSet(ReadOnlyModelViewSet):
