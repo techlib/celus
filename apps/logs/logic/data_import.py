@@ -128,6 +128,7 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
         if title_id is None:
             # the title could not be found or created (probably missing required field like title)
             stats['error'] += 1
+            continue
         id_attrs = {
             'report_type': report_type,
             'metric': get_or_create_with_map(Metric, metrics, 'short_name', record.metric),

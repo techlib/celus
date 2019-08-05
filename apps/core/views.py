@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
+from django.utils import translation
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,6 +12,8 @@ class UserView(GenericAPIView):
 
     def get(self, request):
         if request.user:
+            translation.activate(request.user.language)
+            request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
             return Response(UserSerializer(request.user).data)
         return HttpResponseForbidden('user is not logged in')
 
@@ -36,6 +39,8 @@ class UserLanguageView(APIView):
             except ValidationError as e:
                 return HttpResponseBadRequest(str(e))
             else:
+                translation.activate(request.user.language)
+                request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
                 return Response({'ok': True})
         return HttpResponseForbidden('user is not logged in')
 

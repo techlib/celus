@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth import load_backend
-from django.contrib.auth.middleware import RemoteUserMiddleware
+from django.contrib.auth.middleware import RemoteUserMiddleware, MiddlewareMixin
 
 from apps.core.auth import EDUIdAuthenticationBackend
 
