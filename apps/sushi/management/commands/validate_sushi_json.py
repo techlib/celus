@@ -1,12 +1,7 @@
 import json
 import logging
 
-from dateparser import parse as parse_date
-
 from django.core.management.base import BaseCommand
-
-from sushi.models import SushiCredentials, CounterReportType, SushiFetchAttempt
-
 
 logger = logging.getLogger(__name__)
 
