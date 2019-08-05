@@ -5,10 +5,22 @@ import Cookies from 'js-cookie'
 import addMonths from 'date-fns/add_months'
 import { ymDateFormat } from '../libs/dates'
 import { format as formatNumber } from 'mathjs'
+import VuexPersistence from 'vuex-persist'
 
 Vue.use(Vuex)
 
+const vuexLocal = new VuexPersistence({
+  storage: window.localStorage,
+  reducer: state => ({
+    selectedOrganizationId: state.selectedOrganizationId,
+    dateRangeIndex: state.dateRangeIndex,
+    dateRangeStart: state.dateRangeStart,
+    dateRangeEnd: state.dateRangeEnd,
+  })
+})
+
 export default new Vuex.Store({
+  plugins: [vuexLocal.plugin],
   state: {
     user: null,
     snackbarShow: false,
@@ -73,7 +85,7 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    start () {
+    start (context) {
       let that = this
       axios.interceptors.response.use(function (response) {
         // Do something with response data
@@ -88,7 +100,7 @@ export default new Vuex.Store({
       })
       this.dispatch('loadUserData')
       this.dispatch('loadOrganizations')
-      this.dispatch('changeDateRangeObject', 1)
+      this.dispatch('changeDateRangeObject', context.state.dateRangeIndex)
     },
     showSnackbar (context, {content}) {
       context.commit('setSnackbarContent', {'content': content})
@@ -118,7 +130,7 @@ export default new Vuex.Store({
             organizations[rec.pk] = rec
           }
           context.commit('setOrganizations', organizations)
-          if (context.selectedOrganizationId === undefined && response.data.length > 0) {
+          if (!(context.state.selectedOrganizationId in organizations) && response.data.length > 0) {
             context.commit('setSelectedOrganizationId', {id: response.data[0].pk})
           }
         })
