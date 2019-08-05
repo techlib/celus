@@ -7,4 +7,4 @@ class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('pk', 'username', 'ext_id', 'first_name', 'last_name', 'email')
+        fields = ('pk', 'username', 'ext_id', 'first_name', 'last_name', 'email', 'language')

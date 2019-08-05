@@ -29,6 +29,7 @@ export default new Vuex.Store({
           precision: 1,
     },
     showLoginDialog: false,
+    appLanguage: 'en',
   },
   getters: {
     avatarImg: state => {
@@ -103,6 +104,7 @@ export default new Vuex.Store({
       axios.get('/api/user/')
         .then(response => {
           context.commit('setUserData', response.data)
+          context.commit('setAppLanguage', {lang: response.data.language})
         })
         .catch(error => {
           context.dispatch('showSnackbar', {content: 'Error loading user data: ' + error})
@@ -158,6 +160,19 @@ export default new Vuex.Store({
     },
     setShowLoginDialog (context, {show}) {
       context.commit('setShowLoginDialog', {show})
+    },
+    async setAppLanguage(context, {lang}) {
+      context.commit('setAppLanguage', {lang})
+      try {
+        let csrftoken = Cookies.get('csrftoken')
+        await axios.put(
+          '/api/user/language',
+          {language: lang},
+          {headers: {'X-CSRFToken': csrftoken}}
+          )
+      } catch (error) {
+        // ignore this error - it is not crucial
+      }
     }
   },
   mutations: {
@@ -199,6 +214,9 @@ export default new Vuex.Store({
     },
     setShowLoginDialog (state, {show}) {
       state.showLoginDialog = show
+    },
+    setAppLanguage(state, {lang}) {
+      state.appLanguage = lang
     }
   }
 })

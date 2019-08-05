@@ -14,7 +14,7 @@
                     vertical
             ></v-divider>
 
-            <OrganizationSelector :lang="appLang" />
+            <OrganizationSelector :lang="appLanguage" />
             <v-spacer></v-spacer>
 
             <SelectedDateRangeWidget />
@@ -22,7 +22,7 @@
 
             <v-toolbar-items class="hidden-sm-and-down">
                 <v-select
-                        v-model="appLang"
+                        v-model="appLanguage"
                         :items="['cs','en']"
                         prepend-icon="fa-globe"
                         class="short"
@@ -117,7 +117,6 @@
     data () {
       return {
         navbarExpanded: false,
-        appLang: 'cs',
       }
     },
     computed: {
@@ -147,6 +146,14 @@
           this.$store.dispatch('setShowLoginDialog', {show: newValue})
         }
       },
+      appLanguage: {
+        get () {
+          return this.$store.state.appLanguage
+        },
+        set (newValue) {
+          this.$store.dispatch('setAppLanguage', {lang: newValue})
+        }
+      },
     },
     methods: {
       ...mapActions({
@@ -157,12 +164,14 @@
         this.navbarExpanded = !this.navbarExpanded
       },
     },
-    created () {
+    mounted () {
       this.start()
+      this.$i18n.locale = this.appLanguage
     },
     watch: {
-      appLang () {
-        this.$i18n.locale = this.appLang
+      appLanguage () {
+        console.info("Switching language to:", this.appLanguage)
+        this.$i18n.locale = this.appLanguage
       },
     }
 

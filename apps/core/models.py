@@ -45,9 +45,12 @@ class DataSource(models.Model):
 
 class User(AbstractUser):
 
-    ext_id = models.PositiveIntegerField(null=True,
+    ext_id = models.PositiveIntegerField(null=True, blank=True,
                                          help_text='ID used in original source of this user data')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    language = models.CharField(max_length=2, choices=settings.LANGUAGES,
+                                default=settings.LANGUAGES[-1][0],
+                                help_text='User\'s preferred language')
 
     def __str__(self) -> str:
         return self.get_usable_name()

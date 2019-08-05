@@ -7,7 +7,16 @@ from .models import User, Identity, DataSource
 @admin.register(User)
 class MyUserAdmin(UserAdmin):
 
-    pass
+    list_display = UserAdmin.list_display + ('language',)
+
+    custom_fields = ('ext_id', 'source', 'language')
+
+    fieldsets = UserAdmin.fieldsets + (
+        (None, {'fields': custom_fields}),
+    )
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        (None, {'fields': custom_fields}),
+    )
 
 
 @admin.register(Identity)
