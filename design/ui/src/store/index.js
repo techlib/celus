@@ -28,6 +28,7 @@ export default new Vuex.Store({
           notation: 'fixed',
           precision: 1,
     },
+    showLoginDialog: false,
   },
   getters: {
     avatarImg: state => {
@@ -78,9 +79,9 @@ export default new Vuex.Store({
         return response;
       }, function (error) {
         // Do something with response error
-        if (error.response && error.response.status >= 400 && error.response.status < 500) {
-          // if there is 40x error, try to reauthenticate
-          that.dispatch('showSnackbar', {content: 'not logged in - you need to reauthenticate'})
+        if (error.response && error.response.status === 403) {
+          // if there is 403 error, try to reauthenticate
+          that.dispatch('setShowLoginDialog', {show: true})
         }
         return Promise.reject(error)
       })
@@ -155,6 +156,9 @@ export default new Vuex.Store({
     changeDateRangeEnd (context, date) {
       context.commit('setDateRangeEnd', {date})
     },
+    setShowLoginDialog (context, {show}) {
+      context.commit('setShowLoginDialog', {show})
+    }
   },
   mutations: {
     setSnackbarShow(state, {show}) {
@@ -193,5 +197,8 @@ export default new Vuex.Store({
     setDateRangeEnd(state, {date}) {
       state.dateRangeEnd = date
     },
+    setShowLoginDialog (state, {show}) {
+      state.showLoginDialog = show
+    }
   }
 })

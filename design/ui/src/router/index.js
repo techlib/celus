@@ -6,6 +6,7 @@ import PlatformListPage from '../pages/PlatformListPage'
 import PlatformDetailPage from '../pages/PlatformDetailPage'
 import TitleDetailPage from '../pages/TitleDetailPage'
 import AllTitlesListPage from '../pages/AllTitlesListPage'
+import AfterLoginPage from '../pages/AfterLoginPage'
 
 Vue.use(Router)
 
@@ -49,6 +50,11 @@ export default new Router({
         platformId: null,
         titleId: Number.parseInt(route.params.titleId, 10),
       })
+    },
+    {
+      path: '/secure',
+      name: 'after-login-page',
+      component: AfterLoginPage,
     },
 
     {

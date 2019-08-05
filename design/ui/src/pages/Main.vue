@@ -83,6 +83,19 @@
                 </v-flex>
             </v-layout>
         </v-footer>
+
+        <v-layout justify-center>
+            <v-dialog v-model="showLoginDialog" persistent max-width="290">
+                <v-card>
+                    <v-card-title class="headline">Not logged in</v-card-title>
+                    <v-card-text>You are not logged in. Please click Login to be redirected to login page.</v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="primary" text href="/secure">Login</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+        </v-layout>
     </v-app>
 </template>
 
@@ -109,7 +122,7 @@
     },
     computed: {
       ...mapState({
-        snackbarText: state => state.snackbarContent,
+        snackbarText: 'snackbarContent',
       }),
       ...mapGetters({
         loggedIn: 'loggedIn',
@@ -124,6 +137,14 @@
         set (newValue) {
           if (newValue === false)
             this.hideSnackbar()
+        }
+      },
+      showLoginDialog: {
+        get () {
+          return this.$store.state.showLoginDialog
+        },
+        set (newValue) {
+          this.$store.dispatch('setShowLoginDialog', {show: newValue})
         }
       },
     },
