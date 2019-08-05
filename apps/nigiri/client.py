@@ -13,6 +13,9 @@ import requests
 from pycounter import sushi
 from pycounter.csvhelper import UnicodeWriter
 
+from .counter5 import Counter5TRReport, Counter5DRReport, Counter5ReportBase
+from .exceptions import SushiException
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,16 +28,6 @@ namespaces = {
     'sushi': ns_sushi,
     'counter': ns_counter
 }
-
-
-class SushiException(Exception):
-
-    def __init__(self, text, content=None):
-        self.text = text
-        self.content = content
-
-    def __str__(self):
-        return 'Sushi exception: {}'.format(self.text)
 
 
 class SushiClientBase(object):
@@ -180,9 +173,17 @@ class Sushi5Client(SushiClientBase):
         response.raise_for_status()
         return response.content
 
-    def get_report_data(self, report_type, begin_date, end_date, params=None):
+    def get_report_data(self, report_type, begin_date, end_date, params=None) -> \
+            Counter5ReportBase:
         content = self.get_report(report_type, begin_date, end_date, params=params)
-        return self.report_to_data(content)
+        if report_type.lower() == 'tr':
+            report_class = Counter5TRReport
+        elif report_type.lower() == 'dr':
+            report_class = Counter5DRReport
+        else:
+            report_class = Counter5ReportBase
+        data = json.loads(content)
+        return report_class(data)
 
     def report_to_data(self, report: bytes, validate=True):
         try:

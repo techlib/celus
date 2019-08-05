@@ -3,6 +3,8 @@ import logging
 
 from django.core.management.base import BaseCommand
 
+from nigiri.counter5 import Counter5TRReport
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,9 +29,32 @@ class Command(BaseCommand):
         if not items:
             logger.error('No Report_Items key!')
         else:
+            seen_data = {}
             for i, item in enumerate(items):
                 if 'Title' not in item:
                     logger.error('Missing title in item #%s: %s', i, item)
+                item_key = self.item_to_key(item)
+                if item_key in seen_data:
+                    logger.warning('Clashing data for key %s in record #%d',
+                                   item_key, seen_data[item_key])
+                    logger.info('  #%d: %s', seen_data[item_key], items[seen_data[item_key]])
+                    logger.info('  #%d: %s', i, item)
+                else:
+                    seen_data[item_key] = i
+            logger.info('Found %d records', i+1)
+
+    @classmethod
+    def item_to_key(cls, item):
+        key_keys = ['Title', 'Platform']
+        item_key = [item.get(key) for key in key_keys]
+        item_ids = item.get('Item_ID', [])
+        for key in Counter5TRReport.allowed_item_ids:
+            for item_id in item_ids:
+                if item_id.get('Type') == key:
+                    item_key.append(item_id.get('Value'))
+                    break
+        item_key += [item.get(key) for key in Counter5TRReport.dimensions]
+        return tuple(item_key)
 
 
 

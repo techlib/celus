@@ -135,6 +135,7 @@ class SushiCredentials(models.Model):
         filename = 'foo.json'
         errors = []
         params = {}
+        queued = False
         if counter_report.code == 'tr':
             # we want extra split data from the title report
             params = client.EXTRA_PARAMS['tr_maximum_split']
@@ -145,19 +146,22 @@ class SushiCredentials(models.Model):
             logger.error('Connection error: %s', e)
             errors = [str(e)]
             success = False
-        except SushiExceptionNigiri as e:
-            logger.error('Sushi error: %s', e)
-            errors = [str(e)]
-            success = False
-            file_data = e.content
-            if type(file_data) is dict:
-                file_data = json.dumps(file_data)
         except Exception as e:
             logger.error('Error: %s', e)
             errors = [str(e)]
             success = False
         else:
-            file_data = client.report_to_string(report)
+            # check for errors
+            if report.errors:
+                logger.error('Found errors: %s', report.errors)
+                errors = [str(e) for e in report.errors]
+                success = False
+                if type(file_data) is dict:
+                    file_data = json.dumps(file_data)
+            else:
+                success = True
+                queued = report.queued
+                file_data = client.report_to_string(report.raw_data)
         # now create the attempt instance
         log = '\n'.join(errors)
         if file_data:
@@ -170,6 +174,7 @@ class SushiCredentials(models.Model):
             end_date=end_date,
             success=success,
             data_file=data_file,
+            queued=queued,
             log=log,
         )
         return attempt
@@ -191,11 +196,15 @@ class SushiFetchAttempt(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     success = models.BooleanField()
+    queued = models.BooleanField(default=False,
+                                 help_text='Was the attempt queued by the provider and should be '
+                                           'refetched?')
     data_file = models.FileField(upload_to=where_to_store)
     log = models.TextField(blank=True)
     is_processed = models.BooleanField(default=False,
                                        help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
+    when_queued = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         status = 'SUCCESS' if self.success else 'FAILURE'
