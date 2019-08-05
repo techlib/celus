@@ -202,7 +202,9 @@ class Sushi5Client(SushiClientBase):
         :return:
         """
         if type(data) is list:
-            # we do not do any validation for lists
+            # for list, we validate the whole list
+            for item in data:
+                cls.validate_data(item)
             return
         if 'Exception' in data:
             exc = data['Exception']

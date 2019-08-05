@@ -18,10 +18,21 @@ class Title(models.Model):
 
     PUB_TYPE_BOOK = 'B'
     PUB_TYPE_JOURNAL = 'J'
+    PUB_TYPE_UNKNOWN = 'U'
+    PUB_TYPE_DATABASE = 'D'
+    PUB_TYPE_OTHER = 'O'
+    PUB_TYPE_REPORT = 'R'
+    PUB_TYPE_NEWSPAPER = 'N'
     PUB_TYPE_CHOICES = (
         (PUB_TYPE_BOOK, _('Book')),
         (PUB_TYPE_JOURNAL, _('Journal')),
+        (PUB_TYPE_UNKNOWN, _('Unknown')),
+        (PUB_TYPE_DATABASE, _('Database')),
+        (PUB_TYPE_OTHER, _('Other')),
+        (PUB_TYPE_REPORT, _('Report')),
+        (PUB_TYPE_NEWSPAPER, _('Newspaper')),
     )
+    PUB_TYPE_MAP = dict(PUB_TYPE_CHOICES)
 
     name = models.TextField()
     pub_type = models.CharField(max_length=1, choices=PUB_TYPE_CHOICES,

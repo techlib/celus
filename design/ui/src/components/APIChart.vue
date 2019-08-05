@@ -1,7 +1,7 @@
 <i18n src="../locales/common.yaml"></i18n>
 <template>
     <ve-histogram
-            v-if="type === 'bar'"
+            v-if="type === 'histogram'"
             :data="chartData"
             :settings="chartSettings"
             :extend="extend"
@@ -9,20 +9,40 @@
             :loading="loading"
             >
     </ve-histogram>
+    <ve-bar
+            v-else-if="type === 'bar'"
+            :data="chartData"
+            :settings="chartSettings"
+            :extend="extend"
+            :height="height"
+            :loading="loading"
+        >
+    </ve-bar>
+    <ve-line
+            v-else-if="type === 'line'"
+            :data="chartData"
+            :settings="chartSettings"
+            :extend="extend"
+            :height="height"
+            :loading="loading"
+        >
+    </ve-line>
 </template>
 <script>
   import VeHistogram from 'v-charts/lib/histogram.common'
+  import VeBar from 'v-charts/lib/bar.common'
+  import VeLine from 'v-charts/lib/line.common'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions, mapGetters } from 'vuex'
 
   export default {
     name: 'APIChart',
-    components: {VeHistogram},
+    components: {VeHistogram, VeBar, VeLine},
     props: {
       type: {
         type: String,
-        default: 'bar',
+        default: 'histogram',
       },
       organization: {
         required: false,
@@ -53,6 +73,10 @@
       extend: {
         type: Object,
         default: ret => {},
+      },
+      stack: {
+        type: Boolean,
+        default: true,
       },
       height: {},
     },
@@ -109,7 +133,7 @@
             {
               row: this.primaryDimension,
               column: this.secondaryDimension,
-              value: 'count'
+              value: 'count',
             })
         }
         return this.data_raw
@@ -122,7 +146,7 @@
             'count': this.$i18n.t('chart.count')
           }
         } else {
-          if (this.rows && this.rows.length) {
+          if (this.rows && this.rows.length && this.stack) {
             out['stack'] = {
               'all': [...Object.keys(this.rows[0]).filter(item => item !== this.primaryDimension)]
             }

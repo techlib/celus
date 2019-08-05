@@ -67,12 +67,15 @@
 
             <APIChart
                     v-if="selectedReportType"
+                    :type="selectedChartType.type === undefined ? 'histogram' : selectedChartType.type"
                     :report-type-name="selectedReportType"
                     :primary-dimension="selectedChartType.primary"
                     :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
                     :organization="organizationForChart"
                     :platform="platformId"
                     :title="titleId"
+                    :extend="chartExtend"
+                    :stack="this.selectedChartType.stack === undefined ? true : this.selectedChartType.stack"
             >
             </APIChart>
             <div v-else>
@@ -113,9 +116,9 @@
       }),
       chartTypes () {
         let base = [
-          {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric'},
+          {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric', type: 'line', stack: false},
           {name: this.$i18n.t('chart.metric'), primary: 'metric'},
-          {name: this.$i18n.t('chart.organization'), primary: 'organization'},
+          {name: this.$i18n.t('chart.organization'), primary: 'organization', type: 'bar'},
         ]
         let extra = [
           {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
@@ -144,9 +147,9 @@
         * - in case we want to compare organizations, we should not add organization to
         * the filter */
         if (this.selectedChartType.primary === 'organization') {
-          return this.selectedOrganization.pk
+          return null
         }
-        return null
+        return this.selectedOrganization.pk
       },
       selectedReportTypeObject () {
         for (let rt of this.reportTypes) {
@@ -214,6 +217,18 @@
           }
         }
         return null
+      },
+      chartExtend () {
+        return {}
+        /* return {
+          series (item) {
+            item[0].data = item[0].data.map((v, index) => ({
+              value: v,
+              itemStyle: { color: '#f00' }
+            }))
+            return item
+          }
+        } */
       },
     },
     methods: {

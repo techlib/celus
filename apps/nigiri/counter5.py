@@ -37,7 +37,7 @@ class Counter5ReportBase(object):
             record = CounterRecord()
             record.platform_name = item.get('Platform')
             record.title = item.get('Title')
-            record.title_ids = self._extract_title_ids(item.get('Item_ID'))
+            record.title_ids = self._extract_title_ids(item.get('Item_ID', []))
             record.dimension_data = self._extract_dimension_data(self.dimensions, item)
             performances = item.get('Performance')
             for performance in performances:
