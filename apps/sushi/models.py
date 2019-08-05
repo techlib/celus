@@ -1,3 +1,4 @@
+import json
 import os
 import logging
 from xml.etree import ElementTree as ET
@@ -76,7 +77,7 @@ class SushiCredentials(models.Model):
         if self.counter_version == 4:
             return Sushi4Client(**attrs)
         else:
-            return Sushi5Client(**attrs)
+            return Sushi5Client(extra_params=extra, **attrs)
 
     def fetch_report(self, counter_report: CounterReportType, start_date, end_date) -> \
             'SushiFetchAttempt':
@@ -101,6 +102,12 @@ class SushiCredentials(models.Model):
             file_data = e.raw
             success = False
             errors = client.extract_errors_from_data(file_data)
+            log = '\n'.join(errors)
+            filename = 'foo.xml'  # we just need the extension
+        except Exception as e:
+            logger.error("Error: %s", e)
+            success = False
+            errors = [str(e)]
             log = '\n'.join(errors)
             filename = 'foo.xml'  # we just need the extension
         else:
@@ -143,6 +150,8 @@ class SushiCredentials(models.Model):
             errors = [str(e)]
             success = False
             file_data = e.content
+            if type(file_data) is dict:
+                file_data = json.dumps(file_data)
         except Exception as e:
             logger.error('Error: %s', e)
             errors = [str(e)]

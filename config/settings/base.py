@@ -173,6 +173,25 @@ ERMS_API_URL = "https://erms.czechelib.cz/api/"
 EDUID_IDENTITY_HEADER = 'HTTP_X_IDENTITY'
 MASTER_ORGANIZATIONS = ['NTK-61387142']  # organizations whose users should have access to all
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db': {
+            'level': 'INFO',
+        },
+    },
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['console'],
+    }
+}
 
 # This loads the secret key and potentially other secret settings from a JSON file
 # it must be kept here, otherwise the settings will be missing

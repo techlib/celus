@@ -1,9 +1,13 @@
 import csv
 from collections import Counter
+import logging
 
 from ..models import SushiCredentials
 from organizations.models import Organization
 from publications.models import Platform
+
+
+logger = logging.getLogger(__name__)
 
 
 def import_sushi_credentials_from_csv(filename) -> dict:
@@ -20,13 +24,22 @@ def import_sushi_credentials(records: [dict]) -> dict:
     :return:
     """
     stats = Counter()
-    db_credentials = {(cr.organization_id, cr.platform_id, cr.version): cr
+    db_credentials = {(cr.organization_id, cr.platform_id, cr.counter_version): cr
                       for cr in SushiCredentials.objects.all()}
     platforms = {pl.short_name: pl for pl in Platform.objects.all()}
     organizations = {org.internal_id: org for org in Organization.objects.all()}
     for record in records:
         organization = organizations.get(record.get('organization'))
+        if not organization:
+            logger.error('Unknown organization: "%s" in "%s"',
+                         record.get('organization'), record.get('organization_name'))
+            stats['error'] += 1
+            continue
         platform = platforms.get(record.get('platform'))
+        if not platform:
+            logger.error('Unknown platform: "%s"', record.get('platform'))
+            stats['error'] += 1
+            continue
         version = int(record.get('version'))
         key = (organization.pk, platform.pk, version)
         extra_attrs = record.get('extra_attrs', {})
@@ -36,18 +49,40 @@ def import_sushi_credentials(records: [dict]) -> dict:
         if 'auth' in extra_attrs:
             optional['http_username'], optional['http_password'] = extra_attrs['auth']
             del extra_attrs['auth']
+        else:
+            optional['http_username'] = ''
+            optional['http_password'] = ''
         if 'api_key' in extra_attrs:
             optional['api_key'] = extra_attrs['api_key']
             del extra_attrs['api_key']
+        else:
+            optional['api_key'] = ''
         if key in db_credentials:
             # we update it
-            pass
+            cr = db_credentials[key]
+            to_sync = dict(
+                customer_id=record.get('customer_id'),
+                requestor_id=record.get('requestor_id'),
+                url=record.get('URL'),
+                extra_params=extra_attrs,
+                **optional,
+            )
+            save = False
+            for key, value in to_sync.items():
+                if value != getattr(cr, key):
+                    setattr(cr, key, value)
+                    save = True
+            if save:
+                cr.save()
+                stats['synced'] += 1
+            else:
+                stats['skipped'] += 1
         else:
             cr = SushiCredentials.objects.create(
                 organization=organization,
                 platform=platform,
-                version=version,
-                client_id=record.get('client_id'),
+                counter_version=version,
+                customer_id=record.get('customer_id'),
                 requestor_id=record.get('requestor_id'),
                 url=record.get('URL'),
                 extra_params=extra_attrs,
