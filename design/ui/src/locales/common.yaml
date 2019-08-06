@@ -24,6 +24,7 @@ en:
     all_available: All available
     last_12_mo: Last 12 months
     custom: Custom
+    previous_year: Previous year
   labels:
     date_range: Date range
     search: Search
@@ -56,6 +57,7 @@ cs:
     all_available: Vše dostupné
     last_12_mo: Posledních 12 měsíců
     custom: Vlastní
+    previous_year: Poslední kalendářní rok
   labels:
     date_range: Rozmezí dat
     search: Vyhledávání

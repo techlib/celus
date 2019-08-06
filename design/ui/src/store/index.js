@@ -3,6 +3,9 @@ import Vuex from 'vuex'
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import addMonths from 'date-fns/add_months'
+import addYears from 'date-fns/add_years'
+import endOfYear from 'date-fns/end_of_year'
+import startOfYear from 'date-fns/start_of_year'
 import { ymDateFormat } from '../libs/dates'
 import { format as formatNumber } from 'mathjs'
 import VuexPersistence from 'vuex-persist'
@@ -34,6 +37,8 @@ export default new Vuex.Store({
     dateRanges: [
           {name: 'date_range.all_available', start: null, end: null},
           {name: 'date_range.last_12_mo', start: -12, end: 0},
+          {name: 'date_range.previous_year', start: startOfYear(addYears(new Date(), -1)),
+           end: endOfYear(addYears(new Date(), -1))},
           {name: 'date_range.custom', custom: true},
         ],
     numberFormat: {
@@ -145,10 +150,18 @@ export default new Vuex.Store({
       if (!drObj.custom) {
         // for custom specified, we do not do anything with the start and end
         if (drObj.start !== null) {
-          start = addMonths(new Date(), drObj.start)
+          if (typeof drObj.start === 'number') {
+            start = addMonths(new Date(), drObj.start)
+          } else {
+            start = drObj.start
+          }
         }
         if (drObj.end !== null) {
-          end = addMonths(new Date(), drObj.end)
+          if (typeof drObj.end === 'number') {
+            end = addMonths(new Date(), drObj.end)
+          } else {
+            end = drObj.end
+          }
         }
         context.commit('changeDateRange', {index: dateRangeIndex, start: start, end: end})
       } else {
