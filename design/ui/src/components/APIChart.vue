@@ -87,6 +87,10 @@
         default: true,
       },
       height: {},
+      zoom: {
+        type: Boolean,
+        default: true,
+      }
     },
     data () {
       return {
@@ -163,30 +167,37 @@
         return out
       },
       chartToolbox () {
-        return {
+        let toolbox = {
           feature: {
             saveAsImage: {
               show: true,
               title: this.$t('chart.toolbox.save_as_image'),
             },
-            dataZoom : {
+          }
+        }
+        if (this.zoom) {
+          toolbox.feature['dataZoom'] = {
               show : true,
               title : {
                 zoom : this.$t('chart.toolbox.zoom'),
                 back : this.$t('chart.toolbox.zoom_back'),
               }
-            },
           }
         }
+        return toolbox
       },
       dataZoom () {
-        return [{
-          type: 'slider',
-          start: 0,
-          end: 100,
-          //height: 20,
-          //handleSize: 20,
-        }]
+        if (this.zoom) {
+          return [{
+            type: 'slider',
+            start: 0,
+            end: 100,
+            //height: 20,
+            //handleSize: 20,
+          }]
+        } else {
+          return []
+        }
       },
     },
     methods: {
