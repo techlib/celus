@@ -135,8 +135,8 @@
         // select the freshest from those that overlap with current date selection
         for (let rt of this.reportTypes) {
           if ((bestReportType === null || rt.newest_log > bestReportType.newest_log) &&
-              rt.oldest_log < this.dateRangeEndText
-              && rt.newest_log > this.dateRangeStartText) {
+              rt.oldest_log < this.dateRangeEndText &&
+              rt.newest_log > this.dateRangeStartText) {
             bestReportType = rt
           }
         }

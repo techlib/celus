@@ -126,7 +126,7 @@ class Counter5DataView(APIView):
             mapping = {obj.pk: obj for obj in field.related_model.objects.all()}
             for rec in data:
                 if rec[prim_dim_name] in mapping:
-                    rec[prim_dim_name] = str(mapping[rec[prim_dim_name]])
+                    rec[prim_dim_name] = str(mapping[rec[prim_dim_name]]).replace('_', ' ')
 
     @classmethod
     def clean_organization_names(cls, user, data):
