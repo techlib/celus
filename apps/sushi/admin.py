@@ -31,3 +31,4 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
     list_filter = ['success', 'is_processed', 'queued', 'counter_report']
     readonly_fields = ['credentials', 'counter_report', 'timestamp', 'start_date', 'end_date',
                        'success', 'data_file']
+    search_fields = ['credentials__organization__name', 'credentials__platform__name']

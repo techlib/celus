@@ -14,8 +14,8 @@
                             {{ props.item.text }}
                         </router-link>
                         <span v-else>
-                {{ props.item.text }}
-            </span>
+                            {{ props.item.text }}
+                        </span>
                     </template>
                 </v-breadcrumbs>
 
@@ -115,6 +115,10 @@
         if (this.platformId) {
           return [
             {
+              text: this.$t('pages.platforms'),
+              linkName: 'platform-list',
+            },
+            {
               text: this.platformName,
               linkName: 'platform-detail',
               linkParams: {
@@ -126,7 +130,15 @@
             },
           ]
         }
-        return [{text: this.titleName}]
+        return [
+          {
+              text: this.$t('titles'),
+              linkName: 'title-list',
+          },
+          {
+            text: this.titleName
+          },
+        ]
       },
       titleUrl () {
         if (this.selectedOrganization && this.titleId) {

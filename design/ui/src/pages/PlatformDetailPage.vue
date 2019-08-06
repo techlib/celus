@@ -3,7 +3,21 @@
 
 <template>
     <div>
-        <h2 class="mb-4"><span class="thin">{{ $t('platform') }}:</span> {{ platform ? platform.name : '' }}</h2>
+        <v-breadcrumbs :items="breadcrumbs" class="pl-0">
+            <template v-slot:item="props">
+                <router-link
+                        v-if="props.item.linkName"
+                        :to="{name: props.item.linkName, params: props.item.linkParams}"
+                >
+                    {{ props.item.text }}
+                </router-link>
+                <span v-else>
+                    {{ props.item.text }}
+                </span>
+            </template>
+        </v-breadcrumbs>
+
+        <h2 class="mb-4">{{ platform ? platform.name : '' }}</h2>
 
         <section v-if="selectedOrganization && platform">
             <h3>{{ $t('overview') }}</h3>
@@ -59,6 +73,18 @@
             return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/reports`
         }
         return null
+      },
+      breadcrumbs () {
+
+          return [
+            {
+              text: this.$t('pages.platforms'),
+              linkName: 'platform-list',
+            },
+            {
+              text: this.platform === null ? '' : this.platform.name,
+            }
+        ]
       },
     },
     methods: {

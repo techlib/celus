@@ -14,7 +14,7 @@ cs:
         <v-card-title>
             <v-spacer></v-spacer>
             <v-text-field
-                    v-model="search"
+                    v-model="searchDebounced"
                     append-icon="fa-search"
                     :label="$t('labels.search')"
                     single-line
@@ -47,6 +47,7 @@ cs:
 <script>
   import axios from 'axios'
   import { mapActions } from 'vuex'
+  import debounce from 'lodash/debounce'
 
   export default {
     name: 'TitleList',
@@ -96,6 +97,16 @@ cs:
             value: 'count'
           },
         ]
+      }
+    },
+    computed: {
+      searchDebounced: {
+        get () {
+          return this.search
+        },
+        set: debounce(function (value) {
+          this.search = value
+        }, 500)
       }
     },
     methods: {
