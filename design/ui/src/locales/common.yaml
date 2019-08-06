@@ -57,7 +57,7 @@ cs:
     all_available: Vše dostupné
     last_12_mo: Posledních 12 měsíců
     custom: Vlastní
-    previous_year: Poslední kalendářní rok
+    previous_year: Předchozí kalendářní rok
   labels:
     date_range: Rozmezí dat
     search: Vyhledávání

@@ -19,6 +19,7 @@ cs:
 
                 <v-dialog
                         v-model="showDialog"
+                        max-width="520px"
                 >
                     <v-card>
                         <v-card-title>{{ $t('select_date_range') }}</v-card-title>

@@ -66,6 +66,8 @@
     computed: {
       ...mapGetters({
         selectedOrganization: 'selectedOrganization',
+        dateRangeStartText: 'dateRangeStartText',
+        dateRangeEndText: 'dateRangeEndText',
       }),
       chartTypes () {
         let base = [
@@ -119,16 +121,35 @@
           try {
             const response = await axios.get(url)
             this.reportTypes = response.data
-            if (this.reportTypes.length > 0) {
-              this.selectedReportType = this.reportTypes[0].short_name
-            } else {
-              this.selectedReportType = null
-            }
+            this.selectFreshestReportType()
           } catch (error) {
             this.showSnackbar({content: 'Error loading title: ' + error})
           }
         }
       },
+      selectFreshestReportType () {
+        // selects the reportType that has the newest data but at the same time
+        // is contained within the selected time period, so that it would not happen
+        // that we would show an empty chart
+        let bestReportType = null
+        // select the freshest from those that overlap with current date selection
+        for (let rt of this.reportTypes) {
+          if ((bestReportType === null || rt.newest_log > bestReportType.newest_log) &&
+              rt.oldest_log < this.dateRangeEndText
+              && rt.newest_log > this.dateRangeStartText) {
+            bestReportType = rt
+          }
+        }
+        // if nothing was selected and there are some reports, select the first one
+        if (bestReportType === null && this.reportTypes.length > 0) {
+          bestReportType = this.reportTypes[0]
+        }
+        if (bestReportType) {
+          this.selectedReportType = bestReportType.short_name
+        } else {
+          this.selectedReportType = null
+        }
+      }
     },
     mounted () {
       this.loadReportTypes()

@@ -25,9 +25,10 @@ class ReportTypeSerializer(ModelSerializer):
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
     log_count = IntegerField(read_only=True)
     newest_log = DateField(read_only=True)
+    oldest_log = DateField(read_only=True)
 
     class Meta:
         model = ReportType
         fields = ('pk', 'short_name', 'name', 'desc', 'dimensions_sorted', 'log_count',
-                  'newest_log')
+                  'newest_log', 'oldest_log')
 

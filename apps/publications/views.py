@@ -1,4 +1,4 @@
-from django.db.models import Count, Sum, Q, F, ExpressionWrapper, FloatField, Max
+from django.db.models import Count, Sum, Q, F, ExpressionWrapper, FloatField, Max, Min
 from django.db.models.functions import Cast
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -101,7 +101,9 @@ class PlatformReportTypeViewSet(ReadOnlyModelViewSet):
         access_log_filter = Q(accesslog__platform=platform, accesslog__organization=organization)
         report_types = ReportType.objects.filter(access_log_filter).\
             annotate(log_count=Count('accesslog__value', filter=access_log_filter),
-                     newest_log=Max('accesslog__date', filter=access_log_filter)).\
+                     newest_log=Max('accesslog__date', filter=access_log_filter),
+                     oldest_log=Min('accesslog__date', filter=access_log_filter),
+                     ).\
             filter(log_count__gt=0).order_by('-newest_log')
         return report_types
 
@@ -122,7 +124,9 @@ class PlatformTitleReportTypeViewSet(ReadOnlyModelViewSet):
         access_log_filter = Q(accesslog__platform=platform, accesslog__organization=organization)
         report_types = ReportType.objects.filter(accesslog__target=title).\
             annotate(log_count=Count('accesslog__value', filter=access_log_filter),
-                     newest_log=Max('accesslog__date', filter=access_log_filter)).\
+                     newest_log=Max('accesslog__date', filter=access_log_filter),
+                     oldest_log=Min('accesslog__date', filter=access_log_filter),
+                     ).\
             filter(log_count__gt=0).order_by('-newest_log')
         return report_types
 
@@ -141,7 +145,9 @@ class TitleReportTypeViewSet(ReadOnlyModelViewSet):
         access_log_filter = Q(accesslog__organization=organization)
         report_types = ReportType.objects.filter(accesslog__target=title).\
             annotate(log_count=Count('accesslog__value', filter=access_log_filter),
-                     newest_log=Max('accesslog__date', filter=access_log_filter)).\
+                     newest_log=Max('accesslog__date', filter=access_log_filter),
+                     oldest_log=Min('accesslog__date', filter=access_log_filter),
+                     ).\
             filter(log_count__gt=0).order_by('-newest_log')
         return report_types
 
