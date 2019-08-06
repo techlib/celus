@@ -1,4 +1,6 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n src="../locales/charts.yaml"></i18n>
+
 <template>
     <ve-histogram
             v-if="type === 'histogram'"
@@ -7,6 +9,8 @@
             :extend="extend"
             :height="height"
             :loading="loading"
+            :toolbox="chartToolbox"
+            :data-zoom="dataZoom"
             >
     </ve-histogram>
     <ve-bar
@@ -16,6 +20,8 @@
             :extend="extend"
             :height="height"
             :loading="loading"
+            :toolbox="chartToolbox"
+            :data-zoom="dataZoom"
         >
     </ve-bar>
     <ve-line
@@ -25,6 +31,8 @@
             :extend="extend"
             :height="height"
             :loading="loading"
+            :toolbox="chartToolbox"
+            :data-zoom="dataZoom"
         >
     </ve-line>
 </template>
@@ -153,6 +161,32 @@
           }
         }
         return out
+      },
+      chartToolbox () {
+        return {
+          feature: {
+            saveAsImage: {
+              show: true,
+              title: this.$t('chart.toolbox.save_as_image'),
+            },
+            dataZoom : {
+              show : true,
+              title : {
+                zoom : this.$t('chart.toolbox.zoom'),
+                back : this.$t('chart.toolbox.zoom_back'),
+              }
+            },
+          }
+        }
+      },
+      dataZoom () {
+        return [{
+          type: 'slider',
+          start: 0,
+          end: 100,
+          //height: 20,
+          //handleSize: 20,
+        }]
       },
     },
     methods: {

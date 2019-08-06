@@ -9,6 +9,10 @@ en:
         yop: Year of publication
         platform: Platform
         organization: Organization
+        toolbox:
+            save_as_image: Save as image
+            zoom: Zoom
+            zoom_back: Back
 cs:
     chart:
         date_metric: Metrika v čase
@@ -20,3 +24,7 @@ cs:
         yop: Rok vydání
         platform: Platforma
         organization: Organizace
+        toolbox:
+            save_as_image: Uložit jako obrázek
+            zoom: Zoomovat
+            zoom_back: Zpět
