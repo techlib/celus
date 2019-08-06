@@ -35,12 +35,16 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         """
         organization = get_object_or_404(self.request.user.organizations.all(),
                                          pk=self.kwargs['organization_pk'])
-        sum_filter = {'accesslog__organization': organization}
+        count_filter = {'accesslog__organization': organization}   # for counting titles
+        sum_filter = {'accesslog__organization': organization,     # for counting interest TODO: x
+                      'accesslog__metric__active': True}
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
+            count_filter.update(date_filter_params)
             sum_filter.update(date_filter_params)
         return organization.platforms.all(). \
-            annotate(title_count=Count('accesslog__target', distinct=True, filter=Q(**sum_filter)),
+            annotate(title_count=Count('accesslog__target', distinct=True,
+                                       filter=Q(**count_filter)),
                      interest=Sum('accesslog__value', filter=Q(**sum_filter)),
                      rel_interest=ExpressionWrapper(
                          (Cast('interest', FloatField()) / F('title_count')),
@@ -78,12 +82,12 @@ class PlatformTitleCountsViewSet(ReadOnlyModelViewSet):
                                      pk=self.kwargs['platform_pk'])
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
-            date_filter = Q(**date_filter_params)
+            sum_filter = Q(accesslog__metric__active=True, **date_filter_params)  # TODO: x
         else:
-            date_filter = None
+            sum_filter = Q(accesslog__metric__active=True)
         return Title.objects.filter(accesslog__platform=platform,
                                     accesslog__organization=organization).\
-            distinct().annotate(count=Sum('accesslog__value', filter=date_filter))
+            distinct().annotate(count=Sum('accesslog__value', filter=sum_filter))
 
 
 class PlatformReportTypeViewSet(ReadOnlyModelViewSet):
@@ -142,7 +146,8 @@ class TitleReportTypeViewSet(ReadOnlyModelViewSet):
         organization = get_object_or_404(self.request.user.organizations.all(),
                                          pk=self.kwargs['organization_pk'])
         title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
-        access_log_filter = Q(accesslog__organization=organization)
+        access_log_filter = Q(accesslog__organization=organization,
+                              accesslog__metric__active=True)    # TODO: x
         report_types = ReportType.objects.filter(accesslog__target=title).\
             annotate(log_count=Count('accesslog__value', filter=access_log_filter),
                      newest_log=Max('accesslog__date', filter=access_log_filter),
@@ -180,9 +185,9 @@ class TitleCountsViewSet(ReadOnlyModelViewSet):
                                          pk=self.kwargs['organization_pk'])
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
-            date_filter = Q(**date_filter_params)
+            sum_filter = Q(accesslog__metric__active=True, **date_filter_params)   # TODO: x
         else:
-            date_filter = None
+            sum_filter = Q(accesslog__metric__active=True)
         return Title.objects.filter(accesslog__organization=organization).\
-            distinct().annotate(count=Sum('accesslog__value', filter=date_filter))
+            distinct().annotate(count=Sum('accesslog__value', filter=sum_filter))
 

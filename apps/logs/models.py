@@ -55,6 +55,8 @@ class Metric(models.Model):
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
+    active = models.BooleanField(default=True,
+                                 help_text='Only active metrics are reported to users')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:

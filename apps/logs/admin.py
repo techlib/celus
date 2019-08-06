@@ -23,7 +23,8 @@ class ReportTypeAdmin(admin.ModelAdmin):
 @admin.register(models.Metric)
 class MetricAdmin(admin.ModelAdmin):
 
-    list_display = ['short_name', 'name', 'desc']
+    list_display = ['short_name', 'active', 'name', 'desc']
+    list_editable = ['active']
 
 
 @admin.register(models.Dimension)
