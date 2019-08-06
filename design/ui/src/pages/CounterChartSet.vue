@@ -80,14 +80,15 @@
           {name: this.$i18n.t('chart.accessmethod'), primary: 'Access_Method'},
           {name: this.$i18n.t('chart.datatype'), primary: 'Data_Type'},
           {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
-          {name: this.$i18n.t('chart.yop'), primary: 'YOP'},
+          {name: this.$i18n.t('chart.yop'), primary: 'YOP', secondary: 'Data_Type', stack: true},
         ]
         let reportType = this.selectedReportTypeObject
         if (reportType) {
           let dimNames = reportType.dimensions_sorted.map(dim => dim.short_name)
           for (let option of extra) {
             if (dimNames.indexOf(option.primary) >= 0) {
-              base.push(option)
+              if (!option.secondary || dimNames.indexOf(option.secondary) >= 0)
+                base.push(option)
             }
           }
         }

@@ -172,10 +172,11 @@
             saveAsImage: {
               show: true,
               title: this.$t('chart.toolbox.save_as_image'),
+              excludeComponents: ['toolbox', 'dataZoom'],
             },
           }
         }
-        if (this.zoom) {
+        if (this.zoom && false) {  // temporarily disabled, there is bug in echarts - https://github.com/apache/incubator-echarts/issues/10972
           toolbox.feature['dataZoom'] = {
               show : true,
               title : {
