@@ -57,6 +57,9 @@ class Metric(models.Model):
     desc = models.TextField(blank=True)
     active = models.BooleanField(default=True,
                                  help_text='Only active metrics are reported to users')
+    interest_group = models.CharField(max_length=120, null=True, blank=True,
+                                      help_text='If given, it marks the metric as representing '
+                                                'interest of the specified type')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:

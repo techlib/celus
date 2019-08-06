@@ -16,11 +16,12 @@ class DetailedPlatformSerializer(ModelSerializer):
     title_count = IntegerField(read_only=True)
     interest = IntegerField(read_only=True)
     rel_interest = FloatField(read_only=True)
+    title_interest = IntegerField(read_only=True)
 
     class Meta:
         model = Platform
         fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url',
-                  'title_count', 'interest', 'rel_interest')
+                  'title_count', 'interest', 'rel_interest', 'title_interest')
 
 
 class TitleSerializer(ModelSerializer):

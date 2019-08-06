@@ -42,10 +42,12 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         if date_filter_params:
             count_filter.update(date_filter_params)
             sum_filter.update(date_filter_params)
-        return organization.platforms.all(). \
+        return organization.platforms.all().filter(**count_filter).\
             annotate(title_count=Count('accesslog__target', distinct=True,
                                        filter=Q(**count_filter)),
                      interest=Sum('accesslog__value', filter=Q(**sum_filter)),
+                     title_interest=Sum('accesslog__value',
+                                        filter=Q(accesslog__metric__interest_group='title', **sum_filter)),
                      rel_interest=ExpressionWrapper(
                          (Cast('interest', FloatField()) / F('title_count')),
                          output_field=FloatField())).\
