@@ -9,13 +9,13 @@ import logging
 from core.models import DataSource
 from erms.api import ERMS
 from erms.sync import ERMSObjectSyncer, ERMSSyncer
+from organizations.models import UserOrganization, Organization
 from ..models import User, Identity
 
 logger = logging.getLogger(__name__)
 
 
 class IdentitySyncer(ERMSSyncer):
-
     attr_map = {
     }
 
@@ -38,19 +38,16 @@ class IdentitySyncer(ERMSSyncer):
 
 
 class UserSyncer(ERMSObjectSyncer):
-
     object_class = User
 
     allowed_attrs = ['username', 'first_name', 'last_name', 'ext_id', 'email']
 
     attr_map = {
-        'name_en': None,  # none is removed
-        'description_en': None,
-        'description_cs': None,
-        'system administrator': None,
-        'mobile': None,
-        'note': None,
     }
+
+    def __init__(self, data_source: DataSource):
+        self._org_user_status = {}
+        super().__init__(data_source)
 
     def translate_record(self, record: dict) -> dict:
         result = super().translate_record(record)
@@ -70,7 +67,55 @@ class UserSyncer(ERMSObjectSyncer):
         new_result = {}
         for key in self.allowed_attrs:
             new_result[key] = result.get(key)
+        # before we go, we process the relationships and store them in self._org_user_status
+        # to be processed later after all records were synced
+        ref = record.get('refs', {})
+        for employer in ref.get('employee of', []):
+            self._org_user_status[(employer, record['id'])] = False
+        for admin_of in ref.get('administrator of', []):
+            self._org_user_status[(admin_of, record['id'])] = True
         return new_result
+
+    def sync_data(self, records: [dict]) -> dict:
+        """
+        we want to sync the relationships between organizations and users after syncing users
+        :param records:
+        :return:
+        """
+        stats = super().sync_data(records)
+        # the following deals with user-organization link syncing
+        org_user_to_db_obj = {(uo.organization.ext_id, uo.user.ext_id): uo
+                              for uo in UserOrganization.objects.filter(source=self.data_source).
+                              select_related('organization', 'user')}
+        org_ext_id_to_db_obj = {org.ext_id: org for org in Organization.objects.all()}
+        for (org_ext_id, user_ext_id), is_admin in self._org_user_status.items():
+            uo = org_user_to_db_obj.get((org_ext_id, user_ext_id))
+            if not uo:
+                user = self.db_key_to_obj.get(user_ext_id)
+                if not user:
+                    logger.warning('User with ext_id %s not found even though present in data',
+                                   user_ext_id)
+                    stats['User-Org no user'] += 1
+                    continue
+                organization = org_ext_id_to_db_obj.get(org_ext_id)
+                if not organization:
+                    logger.warning('Organization with ext_id %s not found in db',
+                                   org_ext_id)
+                    stats['User-Org no org'] += 1
+                    continue
+                uo = UserOrganization.objects.create(user=user, organization=organization,
+                                                     is_admin=is_admin, source=self.data_source)
+                org_user_to_db_obj[(org_ext_id, user_ext_id)] = uo
+                stats['User-Org created'] += 1
+            else:
+                if uo.is_admin != is_admin:
+                    uo.is_admin = is_admin
+                    uo.save()
+                    stats['User-Org synced'] += 1
+                else:
+                    stats['User-Org unchanged'] += 1
+        return stats
+
 
 
 def sync_users_with_erms(data_source: DataSource) -> dict:
