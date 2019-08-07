@@ -6,6 +6,8 @@ and an external source
 from collections import Counter
 from enum import Enum
 
+from core.models import DataSource
+
 
 class SyncerError(Exception):
 
@@ -23,13 +25,15 @@ class Syncer(object):
         SYNCED = 1
         NEW = 2
 
-    def __init__(self):
+    def __init__(self, data_source: DataSource):
+        self.data_source = data_source
         self.db_key_to_obj = {}
 
     def prefetch_db_objects(self):
         if self.object_class:
             self.db_key_to_obj = {getattr(obj, self.primary_id): obj
-                                  for obj in self.object_class.objects.all()}
+                                  for obj in
+                                  self.object_class.objects.filter(source=self.data_source)}
 
     def sync_data(self, records: [dict]) -> dict:
         self.prefetch_db_objects()
@@ -73,7 +77,7 @@ class Syncer(object):
                 return self.Status.SYNCED
             return self.Status.UNCHANGED
         else:
-            obj = self.object_class.objects.create(**record)
+            obj = self.object_class.objects.create(source=self.data_source, **record)
             self.db_key_to_obj[pid] = obj
             return self.Status.NEW
 
@@ -102,7 +106,7 @@ class ERMSSyncer(Syncer):
             start = super().translate_key(start)
             if start is None:
                 return None  # we skip those
-            return f'{start}_{end}'
+            key = f'{start}_{end}'
         return super().translate_key(key)
 
 

@@ -23,6 +23,8 @@ class MyUserAdmin(UserAdmin):
 class IdentityAdmin(admin.ModelAdmin):
 
     list_display = ['identity', 'user', 'source']
+    list_filter = ['source']
+    list_select_related = ['user', 'source']
 
 
 @admin.register(DataSource)

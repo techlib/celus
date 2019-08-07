@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth import load_backend
-from django.contrib.auth.middleware import RemoteUserMiddleware, MiddlewareMixin
+from django.contrib.auth.middleware import RemoteUserMiddleware
 
 from apps.core.auth import EDUIdAuthenticationBackend
 
@@ -9,6 +9,9 @@ from apps.core.auth import EDUIdAuthenticationBackend
 class EDUIdHeaderMiddleware(RemoteUserMiddleware):
 
     header = settings.EDUID_IDENTITY_HEADER
+
+    def process_request(self, request):
+        super().process_request(request)
 
     def _remove_invalid_user(self, request):
         """

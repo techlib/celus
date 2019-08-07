@@ -6,6 +6,7 @@ import logging
 
 from django.conf import settings
 
+from core.models import DataSource
 from erms.api import ERMS
 from erms.sync import ERMSObjectSyncer
 from ..models import Organization
@@ -36,13 +37,13 @@ class OrganizationSyncer(ERMSObjectSyncer):
         return result
 
 
-def sync_organizations_with_erms() -> dict:
+def sync_organizations_with_erms(data_source: DataSource) -> dict:
     erms = ERMS(base_url=settings.ERMS_API_URL)
     erms_orgs = erms.fetch_objects(ERMS.CLS_ORGANIZATION)
     parent_ids = set()
     internal_ids = set()
     clean_records = []
-    # we first do through the records, generate list of parents and also remove
+    # we first go through the records, generate list of parents and also remove
     # records with duplicated internal_id
     for record in erms_orgs:
         internal_id = record['vals'].get('czechelib id')
@@ -63,6 +64,6 @@ def sync_organizations_with_erms() -> dict:
     clean_records = [org for org in clean_records
                      if (org['vals'].get('ico') and org['vals'].get('czechelib id')) or
                      org['id'] in parent_ids]
-    syncer = OrganizationSyncer()
+    syncer = OrganizationSyncer(data_source)
     stats = syncer.sync_data(clean_records)
     return stats

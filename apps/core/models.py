@@ -42,6 +42,9 @@ class DataSource(models.Model):
                                         help_text='Used to define data sources private to an '
                                                   'organization')
 
+    def __str__(self):
+        return f'{self.short_name}: {self.get_type_display()}'
+
 
 class User(AbstractUser):
 
@@ -51,6 +54,8 @@ class User(AbstractUser):
     language = models.CharField(max_length=2, choices=settings.LANGUAGES,
                                 default=settings.LANGUAGES[-1][0],
                                 help_text='User\'s preferred language')
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
         return self.get_usable_name()
@@ -74,6 +79,8 @@ class Identity(models.Model):
     identity = models.CharField(max_length=100, unique=True, db_index=True,
                                 help_text='External identifier of the person, usually email')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name_plural = 'identities'

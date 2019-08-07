@@ -3,6 +3,7 @@ import logging
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 
+from core.models import DataSource
 from ...logic.sync import sync_organizations_with_erms
 
 logger = logging.getLogger(__name__)
@@ -17,5 +18,7 @@ class Command(BaseCommand):
 
     @atomic
     def handle(self, *args, **options):
-        stats = sync_organizations_with_erms()
+        data_source, _created = DataSource.objects.get_or_create(short_name='ERMS',
+                                                                 type=DataSource.TYPE_API)
+        stats = sync_organizations_with_erms(data_source)
         self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
