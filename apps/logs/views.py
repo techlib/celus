@@ -18,7 +18,16 @@ class Counter5DataView(APIView):
 
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target']
 
-    def _translate_dimension_spec(self, dim_name: str, report_type: ReportType) -> \
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prim_dim_name = None
+        self.prim_dim_obj = None
+        self.sec_dim_name = None
+        self.sec_dim_obj = None
+        self.dim_raw_name_to_name = {}
+
+    @classmethod
+    def _translate_dimension_spec(cls, dim_name: str, report_type: ReportType) -> \
             (str, Optional[Dimension]):
         """
         Translate the value which is used to specify the dimension in request to the actual
@@ -28,7 +37,7 @@ class Counter5DataView(APIView):
         """
         if dim_name is None:
             return None, None
-        if dim_name in self.implicit_dims:
+        if dim_name in cls.implicit_dims:
             return dim_name, None
         dimensions = report_type.dimensions_sorted
         for dim_idx, dimension in enumerate(dimensions):
@@ -38,14 +47,75 @@ class Counter5DataView(APIView):
             raise Http404(f'Unknown dimension: {dim_name} for report type: {report_type}')
         return f'dim{dim_idx+1}', dimensions[dim_idx]
 
-    def get(self, request, report_name=None):
-        report_type = get_object_or_404(ReportType, short_name=report_name)
+    def _extract_dimension_specs(self, request, report_type):
+        """
+        Here we get the primary and secondary dimension name and corresponding objects from the
+        request based on the report_type
+        :param request:
+        :param report_type:
+        :return:
+        """
         secondary_dim = request.GET.get('sec_dim')
         primary_dim = request.GET.get('prim_dim', 'date')
         # decode the dimensions to find out what we need to have in the query
-        prim_dim_name, prim_dim_obj = self._translate_dimension_spec(primary_dim, report_type)
-        sec_dim_name, sec_dim_obj = self._translate_dimension_spec(secondary_dim, report_type)
+        self.prim_dim_name, self.prim_dim_obj = \
+            self._translate_dimension_spec(primary_dim, report_type)
+        self.sec_dim_name, self.sec_dim_obj = \
+            self._translate_dimension_spec(secondary_dim, report_type)
+
+    def get(self, request, report_name=None):
+        report_type = get_object_or_404(ReportType, short_name=report_name)
+        self._extract_dimension_specs(request, report_type)
         # construct the query
+        query, self.dim_raw_name_to_name = self.construct_query(report_type, request)
+        # get the data - we need two separate queries for 1d and 2d cases
+        if self.sec_dim_name:
+            data = query\
+                .values(self.prim_dim_name, self.sec_dim_name)\
+                .annotate(count=Sum('value'))\
+                .values(self.prim_dim_name, 'count', self.sec_dim_name)\
+                .order_by(self.prim_dim_name, self.sec_dim_name)
+        else:
+            data = query.values(self.prim_dim_name)\
+                .annotate(count=Sum('value'))\
+                .values(self.prim_dim_name, 'count')\
+                .order_by(self.prim_dim_name)
+        self.post_process_data(data, request)
+        # prepare the data to return
+        reply = {'data': data}
+        if self.prim_dim_obj:
+            reply[self.prim_dim_name] = DimensionSerializer(self.prim_dim_obj).data
+        if self.sec_dim_obj:
+            reply[self.sec_dim_name] = DimensionSerializer(self.sec_dim_obj).data
+        return Response(reply)
+
+    def post_process_data(self, data, request):
+        # clean names of organizations
+        self.clean_organization_names(request.user, data)
+        # remap the values if text dimensions are involved
+        if self.prim_dim_obj and self.prim_dim_obj.type == Dimension.TYPE_TEXT:
+            remap_dicts(self.prim_dim_obj, data, self.prim_dim_name)
+        elif self.prim_dim_name in self.implicit_dims:
+            # we remap the implicit dims if they are foreign key based
+            self.remap_implicit_dim(data, self.prim_dim_name)
+        if self.sec_dim_obj and self.sec_dim_obj.type == Dimension.TYPE_TEXT:
+            remap_dicts(self.sec_dim_obj, data, self.sec_dim_name)
+        elif self.sec_dim_name in self.implicit_dims:
+            # we remap the implicit dims if they are foreign key based
+            self.remap_implicit_dim(data, self.sec_dim_name)
+        # remap dimension names
+        if self.prim_dim_name in self.dim_raw_name_to_name:
+            new_prim_dim_name = self.dim_raw_name_to_name[self.prim_dim_name]
+            for rec in data:
+                rec[new_prim_dim_name] = rec[self.prim_dim_name]
+                del rec[self.prim_dim_name]
+        if self.sec_dim_name in self.dim_raw_name_to_name:
+            new_sec_dim_name = self.dim_raw_name_to_name[self.sec_dim_name]
+            for rec in data:
+                rec[new_sec_dim_name] = rec[self.sec_dim_name]
+                del rec[self.sec_dim_name]
+
+    def construct_query(self, report_type, request):
         query_params = {'report_type': report_type, 'metric__active': True}
         # go over implicit dimensions and add them to the query if GET params are given for this
         for dim_name in self.implicit_dims:
@@ -74,44 +144,7 @@ class Counter5DataView(APIView):
         query_params.update(date_filter_from_params(request.GET))
         # create the base query
         query = AccessLog.objects.filter(**query_params)
-        # get the data - we need two separate queries for 1d and 2d cases
-        if sec_dim_name:
-            data = query.values(prim_dim_name, sec_dim_name).annotate(count=Sum('value')).\
-                values(prim_dim_name, 'count', sec_dim_name).order_by(prim_dim_name, sec_dim_name)
-        else:
-            data = query.values(prim_dim_name).annotate(count=Sum('value')).\
-                values(prim_dim_name, 'count').order_by(prim_dim_name)
-        # clean names of organizations
-        self.clean_organization_names(request.user, data)
-        # remap the values if text dimensions are involved
-        if prim_dim_obj and prim_dim_obj.type == Dimension.TYPE_TEXT:
-            remap_dicts(prim_dim_obj, data, prim_dim_name)
-        elif prim_dim_name in self.implicit_dims:
-            # we remap the implicit dims if they are foreign key based
-            self.remap_implicit_dim(data, prim_dim_name)
-        if sec_dim_obj and sec_dim_obj.type == Dimension.TYPE_TEXT:
-            remap_dicts(sec_dim_obj, data, sec_dim_name)
-        elif sec_dim_name in self.implicit_dims:
-            # we remap the implicit dims if they are foreign key based
-            self.remap_implicit_dim(data, sec_dim_name)
-        # remap dimension names
-        if prim_dim_name in dim_raw_name_to_name:
-            new_prim_dim_name = dim_raw_name_to_name[prim_dim_name]
-            for rec in data:
-                rec[new_prim_dim_name] = rec[prim_dim_name]
-                del rec[prim_dim_name]
-        if sec_dim_name in dim_raw_name_to_name:
-            new_sec_dim_name = dim_raw_name_to_name[sec_dim_name]
-            for rec in data:
-                rec[new_sec_dim_name] = rec[sec_dim_name]
-                del rec[sec_dim_name]
-        # prepare the data to return
-        reply = {'data': data}
-        if prim_dim_obj:
-            reply[prim_dim_name] = DimensionSerializer(prim_dim_obj).data
-        if sec_dim_obj:
-            reply[sec_dim_name] = DimensionSerializer(sec_dim_obj).data
-        return Response(reply)
+        return query, dim_raw_name_to_name
 
     @classmethod
     def remap_implicit_dim(cls, data, prim_dim_name):
