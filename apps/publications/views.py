@@ -85,15 +85,12 @@ class PlatformTitleCountsViewSet(ReadOnlyModelViewSet):
         platform = get_object_or_404(organization.platforms.all(),
                                      pk=self.kwargs['platform_pk'])
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
-        if date_filter_params:
-            sum_filter = date_filter_params
-        else:
-            sum_filter = {}
         # when calculating interest in Titles, we do not distinguish between different types
         # of interest, because one title should have only one valid interest group
         result = Title.objects.filter(accesslog__platform=platform,
                                       accesslog__organization=organization,
-                                      accesslog__metric__interest_group__isnull=False).\
+                                      accesslog__metric__interest_group__isnull=False,
+                                      **date_filter_params).\
             distinct().annotate(interest=Sum('accesslog__value'))
         return result
 
@@ -192,10 +189,8 @@ class TitleCountsViewSet(ReadOnlyModelViewSet):
         organization = get_object_or_404(self.request.user.organizations.all(),
                                          pk=self.kwargs['organization_pk'])
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
-        if date_filter_params:
-            sum_filter = Q(accesslog__metric__active=True, **date_filter_params)   # TODO: x
-        else:
-            sum_filter = Q(accesslog__metric__active=True)
-        return Title.objects.filter(accesslog__organization=organization).\
-            distinct().annotate(count=Sum('accesslog__value', filter=sum_filter))
+        return Title.objects.filter(accesslog__organization=organization,
+                                    accesslog__metric__interest_group__isnull=False,
+                                    **date_filter_params).\
+            distinct().annotate(interest=Sum('accesslog__value'))
 
