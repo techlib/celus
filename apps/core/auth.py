@@ -1,4 +1,8 @@
+import logging
 from core.models import Identity, User
+
+
+logger = logging.getLogger(__name__)
 
 
 class EDUIdAuthenticationBackend:
@@ -9,6 +13,7 @@ class EDUIdAuthenticationBackend:
     """
 
     def authenticate(self, request, remote_user=None):
+        logger.error('Remote user: %s', remote_user)
         if not remote_user:
             return None
         try:
