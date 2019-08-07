@@ -42,6 +42,9 @@ class DataSource(models.Model):
                                         help_text='Used to define data sources private to an '
                                                   'organization')
 
+    def __str__(self):
+        return f'{self.short_name}: {self.get_type_display()}'
+
 
 class User(AbstractUser):
 
