@@ -152,6 +152,11 @@
         }
       }
     },
+    watch: {
+      selectedReportType () {
+        this.chartTypeIndex = 0
+      }
+    },
     mounted () {
       this.loadReportTypes()
     }
