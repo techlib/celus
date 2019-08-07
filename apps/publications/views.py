@@ -4,7 +4,8 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from core.logic.dates import date_filter_from_params
-from logs.models import ReportType
+from logs.logic.queries import interest_group_annotation_params, extract_interests_from_objects
+from logs.models import ReportType, InterestGroup
 from logs.serializers import ReportTypeSerializer
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer
@@ -35,23 +36,26 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         """
         organization = get_object_or_404(self.request.user.organizations.all(),
                                          pk=self.kwargs['organization_pk'])
+        # filters for the suitable access logs
         count_filter = {'accesslog__organization': organization}   # for counting titles
         sum_filter = {'accesslog__organization': organization,     # for counting interest TODO: x
                       'accesslog__metric__active': True}
+        # parameters for annotation defining an annotation for each of the interest groups
+        interests = InterestGroup.objects.all()
+        interest_annot_params = interest_group_annotation_params(interests, count_filter)
+        # add more filters for dates
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
             count_filter.update(date_filter_params)
             sum_filter.update(date_filter_params)
-        return organization.platforms.all().filter(**count_filter).\
+        result = organization.platforms.all().filter(**count_filter).\
             annotate(title_count=Count('accesslog__target', distinct=True,
                                        filter=Q(**count_filter)),
-                     interest=Sum('accesslog__value', filter=Q(**sum_filter)),
-                     title_interest=Sum('accesslog__value',
-                                        filter=Q(accesslog__metric__interest_group='title', **sum_filter)),
-                     rel_interest=ExpressionWrapper(
-                         (Cast('interest', FloatField()) / F('title_count')),
-                         output_field=FloatField())).\
+                     **interest_annot_params).\
             filter(title_count__gt=0)   # cast to float to prevent integer division
+        extract_interests_from_objects(interests, result)
+        return result
+
 
 
 class PlatformTitleViewSet(ReadOnlyModelViewSet):

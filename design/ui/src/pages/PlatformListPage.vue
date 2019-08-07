@@ -5,7 +5,7 @@ en:
         id: ID
         name: Name
         provider: Provider
-        title_count: Title count
+        title_count: Title / database count
         interest: Interest
         rel_interest: Int. / title
 cs:
@@ -13,7 +13,7 @@ cs:
         id: ID
         name: Název
         provider: Poskytovatel
-        title_count: Počet titulů
+        title_count: Počet titulů a databází
         interest: Zájem
         rel_interest: Zájem / titul
 </i18n>
@@ -41,8 +41,8 @@ cs:
             <template v-slot:items="props">
                 <td><router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link></td>
                 <td class="text-xs-right">{{ props.item.title_count }}</td>
-                <td class="text-xs-right">{{ props.item.interest }}</td>
-                <td class="text-xs-right">{{ formatNumber(props.item.rel_interest) }}</td>
+                <td class="text-xs-right">{{ props.item.interests.title ? props.item.interests.title.value : '-' }}</td>
+                <td class="text-xs-right">{{ props.item.interests.database ? props.item.interests.database.value : '-'}}</td>
                 <td>{{ props.item.provider }}</td>
                 <td>
                     <a v-if="props.item.url" :href="props.item.url" target="_blank">{{ props.item.url }}</a>
@@ -86,15 +86,18 @@ cs:
           },
           {
             text: this.$i18n.t('columns.title_count'),
-            value: 'title_count'
+            value: 'title_count',
+            class: 'wrap text-xs-right',
           },
           {
-            text: this.$i18n.t('columns.interest'),
-            value: 'interest'
+            text: this.$i18n.t('interests.title'),
+            value: 'interests.title',
+            class: 'wrap text-xs-right',
           },
           {
-            text: this.$i18n.t('columns.rel_interest'),
-            value: 'rel_interest'
+            text: this.$i18n.t('interests.database'),
+            value: 'interests.database',
+            class: 'wrap text-xs-right',
           },
           {
             text: this.$i18n.t('columns.provider'),
@@ -140,6 +143,13 @@ cs:
   }
 </script>
 
-<style scoped>
+<style lang="scss">
+    table.v-table {
+        thead {
+            th.wrap {
+                white-space: normal;
+            }
+        }
+    }
 
 </style>

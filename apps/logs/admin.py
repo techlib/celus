@@ -51,3 +51,9 @@ class ReportTypeToDimensionAdmin(admin.ModelAdmin):
 class AccessLogAdmin(admin.ModelAdmin):
 
     list_display = ['metric', 'report_type', 'organization', 'platform', 'target']
+
+
+@admin.register(models.InterestGroup)
+class InterestGroupAdmin(admin.ModelAdmin):
+
+    list_display = ['short_name', 'name']

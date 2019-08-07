@@ -46,6 +46,22 @@ class ReportType(models.Model):
         return list(self.dimensions.all())
 
 
+class InterestGroup(models.Model):
+
+    """
+    Describes a measure of interest of users. It is assigned to Metrics which are
+    deemed as interest-defining. If more metrics refer to the same InterestGroup
+    they are treated as describing the same interest.
+    There will for instance be interest in books which would be described by different
+    metrics in COUNTER 4 and 5, then there will be the interest in databases, etc.
+    """
+    short_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=250)
+
+    def __str__(self):
+        return self.name
+
+
 class Metric(models.Model):
 
     """
@@ -57,9 +73,10 @@ class Metric(models.Model):
     desc = models.TextField(blank=True)
     active = models.BooleanField(default=True,
                                  help_text='Only active metrics are reported to users')
-    interest_group = models.CharField(max_length=120, null=True, blank=True,
-                                      help_text='If given, it marks the metric as representing '
-                                                'interest of the specified type')
+    interest_group = models.ForeignKey(InterestGroup, null=True, blank=True,
+                                       on_delete=models.SET_NULL,
+                                       help_text='If given, it marks the metric as representing '
+                                                 'interest of the specified type')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:

@@ -28,7 +28,6 @@ cs:
                 :search="search"
         >
             <template v-slot:items="props">
-                <td class="text-xs-right">{{ props.item.pk }}</td>
                 <td>
                     <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
                     <router-link v-else :to="{name: 'title-detail', params: {platformId: null, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
@@ -64,10 +63,6 @@ cs:
           rowsPerPage: 25,
         },
         headers: [
-          {
-            text: this.$i18n.t('title_fields.id'),
-            value: 'pk'
-          },
           {
             text: this.$i18n.t('title_fields.name'),
             value: 'name'

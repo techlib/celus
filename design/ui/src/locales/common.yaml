@@ -30,6 +30,9 @@ en:
     search: Search
   no_reports_available_for_title: No reports available for this title
   available_report_types: Available report types
+  interests:
+    title: Interest in titles
+    database: Interest in databases
 
 cs:
   pages:
@@ -63,3 +66,6 @@ cs:
     search: Vyhledávání
   no_reports_available_for_title: Pro tento titul nejsou dostupné žádné zprávy
   available_report_types: Dostupné typy zpráv
+  interests:
+    title: Zájem o tituly
+    database: Zájem o databáze
