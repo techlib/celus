@@ -37,7 +37,7 @@ cs:
                 <td>{{ props.item.issn }}</td>
                 <td>{{ props.item.eissn }}</td>
                 <td>{{ props.item.doi }}</td>
-                <td class="text-xs-right">{{ props.item.count }}</td>
+                <td class="text-xs-right">{{ props.item.interest }}</td>
             </template>
         </v-data-table>
     </v-card>
@@ -89,7 +89,7 @@ cs:
           },
           {
             text: this.$i18n.t('columns.interest'),
-            value: 'count'
+            value: 'interest'
           },
         ]
       }

@@ -37,9 +37,8 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         organization = get_object_or_404(self.request.user.organizations.all(),
                                          pk=self.kwargs['organization_pk'])
         # filters for the suitable access logs
-        count_filter = {'accesslog__organization': organization}   # for counting titles
-        sum_filter = {'accesslog__organization': organization,     # for counting interest TODO: x
-                      'accesslog__metric__active': True}
+        count_filter = {'accesslog__organization': organization,
+                        'accesslog__metric__interest_group__isnull': False}   # for counting titles
         # parameters for annotation defining an annotation for each of the interest groups
         interests = InterestGroup.objects.all()
         interest_annot_params = interest_group_annotation_params(interests, count_filter)
@@ -47,15 +46,14 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
             count_filter.update(date_filter_params)
-            sum_filter.update(date_filter_params)
         result = organization.platforms.all().filter(**count_filter).\
             annotate(title_count=Count('accesslog__target', distinct=True,
                                        filter=Q(**count_filter)),
                      **interest_annot_params).\
-            filter(title_count__gt=0)   # cast to float to prevent integer division
+            filter(title_count__gt=0)
+        # the following creates the interest dict attr from the interest annotations
         extract_interests_from_objects(interests, result)
         return result
-
 
 
 class PlatformTitleViewSet(ReadOnlyModelViewSet):
@@ -88,12 +86,16 @@ class PlatformTitleCountsViewSet(ReadOnlyModelViewSet):
                                      pk=self.kwargs['platform_pk'])
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
-            sum_filter = Q(accesslog__metric__active=True, **date_filter_params)  # TODO: x
+            sum_filter = date_filter_params
         else:
-            sum_filter = Q(accesslog__metric__active=True)
-        return Title.objects.filter(accesslog__platform=platform,
-                                    accesslog__organization=organization).\
-            distinct().annotate(count=Sum('accesslog__value', filter=sum_filter))
+            sum_filter = {}
+        # when calculating interest in Titles, we do not distinguish between different types
+        # of interest, because one title should have only one valid interest group
+        result = Title.objects.filter(accesslog__platform=platform,
+                                      accesslog__organization=organization,
+                                      accesslog__metric__interest_group__isnull=False).\
+            distinct().annotate(interest=Sum('accesslog__value'))
+        return result
 
 
 class PlatformReportTypeViewSet(ReadOnlyModelViewSet):

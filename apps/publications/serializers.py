@@ -33,8 +33,8 @@ class TitleSerializer(ModelSerializer):
 
 class TitleCountSerializer(ModelSerializer):
 
-    count = IntegerField(read_only=True)
+    interest = IntegerField(read_only=True)
 
     class Meta:
         model = Title
-        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi', 'count')
+        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi', 'interest')

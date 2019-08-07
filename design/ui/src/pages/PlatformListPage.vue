@@ -91,12 +91,12 @@ cs:
           },
           {
             text: this.$i18n.t('interests.title'),
-            value: 'interests.title',
+            value: 'interests.title.value',
             class: 'wrap text-xs-right',
           },
           {
             text: this.$i18n.t('interests.database'),
-            value: 'interests.database',
+            value: 'interests.database.value',
             class: 'wrap text-xs-right',
           },
           {

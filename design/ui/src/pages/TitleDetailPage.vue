@@ -31,7 +31,7 @@
                         <td>{{ titleName }}</td>
                     </tr>
                     <template v-if="title">
-                        <tr v-for="(prop, index) in ['isbn', 'issn', 'eissn']" :key="index">
+                        <tr v-for="(prop, index) in ['isbn', 'issn', 'eissn', 'doi']" :key="index">
                             <th>{{ $t('title_fields.'+prop) }}</th>
                             <td>{{ title[prop] }}</td>
                         </tr>
