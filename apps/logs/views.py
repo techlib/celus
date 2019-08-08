@@ -3,10 +3,13 @@ from typing import Optional
 from django.db import models
 from django.db.models import Sum
 from django.http import Http404
+from django.views import View
+from pandas import DataFrame
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_pandas import PandasMixin
 
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
@@ -72,6 +75,39 @@ class Counter5DataView(APIView):
             self._translate_dimension_spec(secondary_dim, report_type)
 
     def get(self, request, report_name=None):
+        data = self.get_data(report_name, request)
+        data_format = request.GET.get('format')
+        if data_format in ('csv', 'xlsx'):
+            # for the bare result, we do not add any extra information, just output the list
+            data = DataFrame(data)
+            new_keys = [self.io_prim_dim_name]
+            if self.io_sec_dim_name:
+                new_keys.append(self.io_sec_dim_name)
+            # we set the queried dimensions as index so that the default integer index is not
+            # added to the result
+            data.set_index(new_keys, drop=True, inplace=True)
+            return Response(data,
+                            headers={
+                                'Content-Disposition':
+                                    f'attachment; filename="export.{data_format}"'
+                            })
+        # prepare the data to return
+        reply = {'data': data}
+        if self.prim_dim_obj:
+            reply[self.prim_dim_name] = DimensionSerializer(self.prim_dim_obj).data
+        if self.sec_dim_obj:
+            reply[self.sec_dim_name] = DimensionSerializer(self.sec_dim_obj).data
+        return Response(reply)
+
+    def get_data(self, report_name, request):
+        """
+        This method encapsulates most of the stuff that is done by this view.
+        Based on report_name and the request object, it loads, post-processes, etc. the data
+        and returns it
+        :param report_name:
+        :param request:
+        :return:
+        """
         if report_name:
             report_type = get_object_or_404(ReportType, short_name=report_name)
         else:
@@ -81,24 +117,18 @@ class Counter5DataView(APIView):
         query, self.dim_raw_name_to_name = self.construct_query(report_type, request)
         # get the data - we need two separate queries for 1d and 2d cases
         if self.sec_dim_name:
-            data = query\
-                .values(self.prim_dim_name, self.sec_dim_name)\
-                .annotate(count=Sum('value'))\
-                .values(self.prim_dim_name, 'count', self.sec_dim_name)\
+            data = query \
+                .values(self.prim_dim_name, self.sec_dim_name) \
+                .annotate(count=Sum('value')) \
+                .values(self.prim_dim_name, 'count', self.sec_dim_name) \
                 .order_by(self.prim_dim_name, self.sec_dim_name)
         else:
-            data = query.values(self.prim_dim_name)\
-                .annotate(count=Sum('value'))\
-                .values(self.prim_dim_name, 'count')\
+            data = query.values(self.prim_dim_name) \
+                .annotate(count=Sum('value')) \
+                .values(self.prim_dim_name, 'count') \
                 .order_by(self.prim_dim_name)
         self.post_process_data(data, request)
-        # prepare the data to return
-        reply = {'data': data}
-        if self.prim_dim_obj:
-            reply[self.prim_dim_name] = DimensionSerializer(self.prim_dim_obj).data
-        if self.sec_dim_obj:
-            reply[self.sec_dim_name] = DimensionSerializer(self.sec_dim_obj).data
-        return Response(reply)
+        return data
 
     def post_process_data(self, data, request):
         # clean names of organizations
@@ -214,3 +244,8 @@ class MetricViewSet(ReadOnlyModelViewSet):
 
     serializer_class = MetricSerializer
     queryset = Metric.objects.all()
+
+
+class RawDataExportView(View):
+
+    pass

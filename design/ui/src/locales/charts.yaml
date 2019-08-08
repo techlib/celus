@@ -14,6 +14,7 @@ en:
             save_as_image: Save as image
             zoom: Zoom
             zoom_back: Back
+            export_csv: Export CSV
 cs:
     chart:
         date_metric: Metrika v čase
@@ -30,3 +31,4 @@ cs:
             save_as_image: Uložit jako obrázek
             zoom: Zoomovat
             zoom_back: Zpět
+            export_csv: Export CSV

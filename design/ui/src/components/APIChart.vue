@@ -178,6 +178,16 @@
               title: this.$t('chart.toolbox.save_as_image'),
               excludeComponents: ['toolbox', 'dataZoom'],
             },
+            myExportData: {
+              show: true,
+              title: this.$t('chart.toolbox.export_csv'),
+              icon: 'path://m 434.57178,114.29929 -83.882,-83.882005 c -9.00169,-9.001761 -21.21063,-14.058933 -33.941,-14.059 H 48.630782 c -26.51,0 -47.9999996,21.49 -47.9999996,48 V 416.35829 c 0,26.51 21.4899996,48 47.9999996,48 H 400.63078 c 26.51,0 48,-21.49 48,-48 v -268.118 c -7e-5,-12.73037 -5.05724,-24.93931 -14.059,-33.941 z m -161.941,-49.941005 v 80.000005 h -128 V 64.358285 Z m -48,152.000005 c -48.523,0 -88,39.477 -88,88 0,48.523 39.477,88 88,88 48.523,0 88,-39.477 88,-88 0,-48.523 -39.477,-88 -88,-88 z',
+              onclick: function (that) {
+                return function () {
+                  window.open(that.dataURL + '&format=csv')
+                }
+              }(this)
+            }
           }
         }
         if (this.zoom && false) {  // temporarily disabled, there is bug in echarts - https://github.com/apache/incubator-echarts/issues/10972
