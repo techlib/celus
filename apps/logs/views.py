@@ -110,7 +110,7 @@ class Counter5DataView(APIView):
         elif self.prim_dim_name in self.implicit_dims:
             # we remap the implicit dims if they are foreign key based
             to_text_fn = self.implicit_dim_to_text_fn.get(self.io_prim_dim_name, str)
-            self.remap_implicit_dim(data, self.prim_dim_name)
+            self.remap_implicit_dim(data, self.prim_dim_name, to_text_fn=to_text_fn)
         # secondary dimension
         if self.sec_dim_obj and self.sec_dim_obj.type == Dimension.TYPE_TEXT:
             remap_dicts(self.sec_dim_obj, data, self.sec_dim_name)

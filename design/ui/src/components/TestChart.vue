@@ -102,7 +102,7 @@
         data_raw: [],
         data_meta: null,
         loading: true,
-        implicitDimensions: ['date', 'platform', 'organization', 'metric', 'target'],
+        implicitDimensions: ['date', 'platform', 'organization', 'metric', 'target', 'interest'],
         primaryDim: 'date',
         secondaryDim: null,
         reportTypes: [],
