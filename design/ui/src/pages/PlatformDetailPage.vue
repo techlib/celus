@@ -3,21 +3,29 @@
 
 <template>
     <div>
-        <v-breadcrumbs :items="breadcrumbs" class="pl-0">
-            <template v-slot:item="props">
-                <router-link
-                        v-if="props.item.linkName"
-                        :to="{name: props.item.linkName, params: props.item.linkParams}"
-                >
-                    {{ props.item.text }}
-                </router-link>
-                <span v-else>
+        <v-layout>
+            <v-flex>
+                <v-breadcrumbs :items="breadcrumbs" class="pl-0">
+                    <template v-slot:item="props">
+                        <router-link
+                                v-if="props.item.linkName"
+                                :to="{name: props.item.linkName, params: props.item.linkParams}"
+                        >
+                            {{ props.item.text }}
+                        </router-link>
+                        <span v-else>
                     {{ props.item.text }}
                 </span>
-            </template>
-        </v-breadcrumbs>
+                    </template>
+                </v-breadcrumbs>
 
-        <h2 class="mb-4">{{ platform ? platform.name : '' }}</h2>
+                <h2 class="mb-4">{{ platform ? platform.name : '' }}</h2>
+            </v-flex>
+
+            <v-flex shrink>
+                <data-export-widget :platform="platformId"></data-export-widget>
+            </v-flex>
+        </v-layout>
 
         <section v-if="selectedOrganization && platform">
             <h3>{{ $t('overview') }}</h3>
@@ -31,6 +39,7 @@
         </section>
 
         <h3 class="pt-3">{{ $t('titles') }}</h3>
+
         <TitleList :url="titleListURL" :platform-id="platformId"></TitleList>
     </div>
 
@@ -41,10 +50,12 @@
   import TitleList from '../components/TitleList'
   import axios from 'axios'
   import CounterChartSet from './CounterChartSet'
+  import DataExportWidget from '../components/DataExportWidget'
 
   export default {
     name: 'PlatformDetailPage',
     components: {
+      DataExportWidget,
       TitleList,
       CounterChartSet,
     },

@@ -1,0 +1,60 @@
+<template>
+    <v-menu offset-y>
+        <template v-slot:activator="{ on }">
+            <v-btn color="primary" dark v-on="on" class="elevation-2">
+                <v-icon left>fa-download</v-icon>
+                Export
+            </v-btn>
+        </template>
+        <v-list>
+            <v-list-tile :href="url+'&format=xlsx'">
+                <v-list-tile-title>Raw data Excel</v-list-tile-title>
+            </v-list-tile>
+            <v-list-tile :href="url+'&format=csv'">
+                <v-list-tile-title>Raw data CSV</v-list-tile-title>
+            </v-list-tile>
+        </v-list>
+    </v-menu>
+</template>
+
+<script>
+  import {mapGetters, mapState} from 'vuex'
+
+  export default {
+    name: "DataExportWidget",
+    props: {
+      title: {},
+      platform: {},
+      reportType: {},
+    },
+    computed: {
+      ...mapState({
+        organization: 'selectedOrganizationId',
+      }),
+      ...mapGetters({
+        dateStart: 'dateRangeStartText',
+        dateEnd: 'dateRangeEndText',
+      }),
+      url () {
+        let url = `/api/raw-data/?start=${this.dateStart}&end=${this.dateEnd}`
+        if (this.organization) {
+          url += `&organization=${this.organization}`
+        }
+        if (this.title) {
+          url += `&target=${this.title}`
+        }
+        if (this.platform) {
+          url += `&platform=${this.platform}`
+        }
+        if (this.reportType) {
+          url += `&report_type=${this.reportType}`
+        }
+        return url
+      }
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

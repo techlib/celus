@@ -38,8 +38,13 @@
                     </template>
                 </table>
             </v-flex>
-            <v-flex shrink v-if="coverImg">
-                <img :src="coverImg" class="cover-image"/>
+            <v-flex shrink>
+                <data-export-widget
+                        :title="titleId"
+                        :platform="platformId"
+                >
+                </data-export-widget>
+                <img  v-if="coverImg" :alt="$t('cover-image')" :src="coverImg" class="cover-image"/>
             </v-flex>
         </v-layout>
 
@@ -63,10 +68,12 @@
   import { mapActions, mapGetters } from 'vuex'
   import axios from 'axios'
   import CounterChartSet from './CounterChartSet'
+  import DataExportWidget from '../components/DataExportWidget'
 
   export default {
     name: 'TitleDetailPage',
     components: {
+      DataExportWidget,
       CounterChartSet,
 
     },
