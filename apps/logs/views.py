@@ -3,17 +3,19 @@ from typing import Optional
 from django.db import models
 from django.db.models import Sum
 from django.http import Http404
-from django.views import View
 from pandas import DataFrame
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_pandas import PandasView
 
 from core.logic.dates import date_filter_from_params
+from logs.logic.queries import extract_accesslog_attr_query_params
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric
-from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer
+from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
+    AccessLogSerializer
 
 
 class Counter5DataView(APIView):
@@ -165,14 +167,8 @@ class Counter5DataView(APIView):
         else:
             query_params = {'metric__active': True}
         # go over implicit dimensions and add them to the query if GET params are given for this
-        for dim_name in self.implicit_dims:
-            value = request.GET.get(dim_name)
-            if value:
-                field = AccessLog._meta.get_field(dim_name)
-                if isinstance(field, models.ForeignKey):
-                    query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
-                else:
-                    query_params[dim_name] = value
+        query_params.update(
+            extract_accesslog_attr_query_params(request.GET, dimensions=self.implicit_dims))
         # now go over the extra dimensions and add them to filter if requested
         dim_raw_name_to_name = {}
         if report_type:
@@ -245,6 +241,33 @@ class MetricViewSet(ReadOnlyModelViewSet):
     queryset = Metric.objects.all()
 
 
-class RawDataExportView(View):
+class RawDataExportView(PandasView):
 
-    pass
+    serializer_class = AccessLogSerializer
+    implicit_dims = ['platform', 'metric', 'organization', 'target', 'report_type']
+    export_size_limit = 50000  # limit the number of records in output to this number
+
+    def get_queryset(self):
+        query_params = self.extract_query_filter_params(self.request)
+        data = AccessLog.objects.filter(**query_params)\
+            .select_related(*self.implicit_dims)[:self.export_size_limit]
+        text_id_to_text = {dt['id']: dt['text']
+                           for dt in DimensionText.objects.all().values('id', 'text')}
+        tr_to_dimensions = {rt.pk: rt.dimensions_sorted for rt in ReportType.objects.all()}
+        for al in data:
+            al.mapped_dim_values_ = {}
+            for i, dim in enumerate(tr_to_dimensions[al.report_type_id]):
+                value = getattr(al, f'dim{i+1}')
+                if dim.type == dim.TYPE_TEXT:
+                    al.mapped_dim_values_[dim.short_name] = text_id_to_text.get(value, value)
+                else:
+                    al.mapped_dim_values_[dim.short_name] = value
+        return data
+
+    @classmethod
+    def extract_query_filter_params(cls, request) -> dict:
+        query_params = date_filter_from_params(request.GET)
+        query_params.update(
+            extract_accesslog_attr_query_params(request.GET, dimensions=cls.implicit_dims))
+        return query_params
+

@@ -1,6 +1,8 @@
 from rest_framework.fields import CharField, IntegerField, DateField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.relations import StringRelatedField
+from rest_framework.serializers import ModelSerializer, BaseSerializer
 
+from logs.models import AccessLog
 from .models import Metric, Dimension, ReportType
 
 
@@ -32,3 +34,30 @@ class ReportTypeSerializer(ModelSerializer):
         fields = ('pk', 'short_name', 'name', 'desc', 'dimensions_sorted', 'log_count',
                   'newest_log', 'oldest_log')
 
+
+class AccessLogSerializer(BaseSerializer):
+
+    report_type = StringRelatedField()
+    organization = StringRelatedField()
+    platform = StringRelatedField()
+    metric = StringRelatedField()
+    target = StringRelatedField()
+
+    class Meta:
+        model = AccessLog
+        # fields = ('date', 'report_type', 'organization', 'platform', 'target', 'value')
+
+    def to_representation(self, obj: AccessLog):
+        data = {
+            'date': obj.date.isoformat(),
+            'report_type': str(obj.report_type),
+            'platform': str(obj.platform),
+            'organization': str(obj.organization),
+            'target': str(obj.target),
+            'value': obj.value
+        }
+        data.update(getattr(obj, 'mapped_dim_values_', {}))
+        return data
+
+    def get_fields(self):
+        return []

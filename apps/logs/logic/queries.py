@@ -3,13 +3,16 @@ Functions that help in constructing django queries
 """
 from typing import Iterable
 
+from django.db import models
 from django.db.models import Sum, Q
+from django.shortcuts import get_object_or_404
 
-from logs.models import InterestGroup
+from logs.models import InterestGroup, AccessLog
 
 
 def interest_group_to_annot_name(ig: InterestGroup) -> str:
     return f'interest_{ig.pk}'
+
 
 def interest_group_annotation_params(interest_groups: Iterable[InterestGroup],
                                      accesslog_filter: dict) -> dict:
@@ -46,3 +49,17 @@ def extract_interests_from_objects(interest_groups: Iterable[InterestGroup], obj
                     'name': ig.name,
                 }
         obj.interests = interests
+
+
+def extract_accesslog_attr_query_params(
+        params, dimensions=('date', 'platform', 'metric', 'organization', 'target')):
+    query_params = {}
+    for dim_name in dimensions:
+        value = params.get(dim_name)
+        if value:
+            field = AccessLog._meta.get_field(dim_name)
+            if isinstance(field, models.ForeignKey):
+                query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
+            else:
+                query_params[dim_name] = value
+    return query_params
