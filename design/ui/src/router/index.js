@@ -7,6 +7,7 @@ import PlatformDetailPage from '../pages/PlatformDetailPage'
 import TitleDetailPage from '../pages/TitleDetailPage'
 import AllTitlesListPage from '../pages/AllTitlesListPage'
 import AfterLoginPage from '../pages/AfterLoginPage'
+import SushiCredentialsManagementPage from '../pages/SushiCredentialsManagementPage'
 
 Vue.use(Router)
 
@@ -50,6 +51,11 @@ export default new Router({
         platformId: null,
         titleId: Number.parseInt(route.params.titleId, 10),
       })
+    },
+    {
+      path: '/admin/sushi-credentials/',
+      name: 'sushi-credentials-list',
+      component: SushiCredentialsManagementPage,
     },
     {
       path: '/secure',

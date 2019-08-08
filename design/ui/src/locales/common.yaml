@@ -4,6 +4,7 @@ en:
     content: Content
     platforms: Platforms
     all_titles: All titles
+    sushi_management: SUSHI management
   menu: Menu
   organization: Organization
   platform: Platform
@@ -16,6 +17,7 @@ en:
     issn: ISSN
     eissn: eISSN
     doi: DOI
+    actions: Actions
   titles: Titles
   overview: Overview
   chart:
@@ -40,6 +42,7 @@ cs:
     content: Obsah
     platforms: Platformy
     all_titles: Všechny tituly
+    sushi_management: Správa SUSHI
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -52,6 +55,7 @@ cs:
     issn: ISSN
     eissn: eISSN
     doi: DOI
+    actions: Akce
   titles: Tituly
   overview: Přehled
   chart:

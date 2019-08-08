@@ -71,6 +71,14 @@
               { title: this.$i18n.t('pages.all_titles'), icon: 'far fa-copy', linkTo: 'title-list' },
               ]
           },
+            {
+              title: this.$i18n.t('pages.admin'),
+              items: [
+                { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list' },
+
+              ]
+
+            }
          ]
       }
     }

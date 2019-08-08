@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'logs.apps.LogsConfig',
     'organizations.apps.OrganizationsConfig',
     'sushi.apps.SushiConfig',
+    'rest_pandas',
 ]
 
 MIDDLEWARE = [

@@ -1,3 +1,18 @@
-from django.shortcuts import render
+from rest_framework.viewsets import ModelViewSet
 
-# Create your views here.
+from .models import SushiCredentials
+from .serializers import SushiCredentialsSerializer
+
+
+class SushiCredentialsViewSet(ModelViewSet):
+
+    serializer_class = SushiCredentialsSerializer
+
+    def get_queryset(self):
+        user_organizations = self.request.user.accessible_organizations()
+        qs = SushiCredentials.objects.filter(organization__in=user_organizations).\
+            select_related('organization', 'platform').prefetch_related('active_counter_reports')
+        return qs
+
+
+

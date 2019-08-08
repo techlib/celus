@@ -55,6 +55,7 @@ class SushiCredentials(models.Model):
     api_key = models.CharField(max_length=128, blank=True)
     extra_params = JSONField(default=dict, blank=True)
     enabled = models.BooleanField(default=True)
+    active_counter_reports = models.ManyToManyField(CounterReportType)
 
     class Meta:
         unique_together = (('organization', 'platform', 'counter_version'),)

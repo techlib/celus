@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/', include('organizations.urls')),
     path('api/', include('publications.urls')),
     path('api/', include('core.urls')),
+    path('api/', include('sushi.urls')),
     path('wsEc67YNV2sq/', admin.site.urls),
 ]
 

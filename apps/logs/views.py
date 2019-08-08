@@ -4,11 +4,11 @@ from django.db import models
 from django.db.models import Sum
 from django.http import Http404
 from pandas import DataFrame
+from rest_pandas import PandasView
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_pandas import PandasView
 
 from core.logic.dates import date_filter_from_params
 from logs.logic.queries import extract_accesslog_attr_query_params
