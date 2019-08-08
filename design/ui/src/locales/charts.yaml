@@ -9,6 +9,7 @@ en:
         yop: Year of publication
         platform: Platform
         organization: Organization
+        interest_in_time: Interest in time
         toolbox:
             save_as_image: Save as image
             zoom: Zoom
@@ -24,6 +25,7 @@ cs:
         yop: Rok vydání
         platform: Platforma
         organization: Organizace
+        interest_in_time: Zájem v čase
         toolbox:
             save_as_image: Uložit jako obrázek
             zoom: Zoomovat

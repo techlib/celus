@@ -24,7 +24,7 @@
         <APIChart
                 v-if="selectedReportType"
                 :type="selectedChartType.type === undefined ? 'histogram' : selectedChartType.type"
-                :report-type-name="selectedReportType"
+                :report-type-name="selectedChartType.reportType === null ? null : selectedReportType"
                 :primary-dimension="selectedChartType.primary"
                 :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
                 :organization="organizationForChart"
@@ -71,7 +71,7 @@
       }),
       chartTypes () {
         let base = [
-          {name: this.$i18n.t('chart.interest_in_time'), primary: 'date', secondary: 'interest', type: 'histogram', stack: false},
+          {name: this.$i18n.t('chart.interest_in_time'), primary: 'date', secondary: 'interest', type: 'histogram', stack: false, reportType: null},
           {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric', type: 'histogram', stack: false},
           {name: this.$i18n.t('chart.metric'), primary: 'metric'},
           {name: this.$i18n.t('chart.organization'), primary: 'organization', type: 'bar'},

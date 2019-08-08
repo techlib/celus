@@ -69,14 +69,18 @@ class Metric(models.Model):
     """
 
     short_name = models.CharField(max_length=100)
-    name = models.CharField(max_length=250)
+    name = models.CharField(max_length=250, blank=True)
     desc = models.TextField(blank=True)
     active = models.BooleanField(default=True,
                                  help_text='Only active metrics are reported to users')
-    interest_group = models.ForeignKey(InterestGroup, null=True, blank=True,
-                                       on_delete=models.SET_NULL,
-                                       help_text='If given, it marks the metric as representing '
-                                                 'interest of the specified type')
+    interest_group = models.ForeignKey(
+        InterestGroup, null=True, blank=True, on_delete=models.SET_NULL,
+        help_text='If given, it marks the metric as representing interest of the specified type'
+    )
+    name_in_interest_group = models.CharField(
+        max_length=250, blank=True,
+        help_text='How is the metric called when interest sub-series are shown'
+    )
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:

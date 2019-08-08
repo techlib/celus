@@ -16,36 +16,44 @@ from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSe
 
 class Counter5DataView(APIView):
 
-    implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'interest']
+    implicit_dims = ['date', 'platform', 'metric', 'organization', 'target']
+    input_dim_to_query_dim = {'interest': 'metric'}
+    extra_query_params = {'interest': {'metric__interest_group__isnull': False}}
+    implicit_dim_to_text_fn = {'interest': lambda x: x.name_in_interest_group}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.io_prim_dim_name = None  # name of dimension that was requested and will be outputed
         self.prim_dim_name = None
         self.prim_dim_obj = None
+        self.io_sec_dim_name = None  # name of dimension that was requested and will be outputed
         self.sec_dim_name = None
         self.sec_dim_obj = None
         self.dim_raw_name_to_name = {}
 
     @classmethod
     def _translate_dimension_spec(cls, dim_name: str, report_type: ReportType) -> \
-            (str, Optional[Dimension]):
+            (str, str, Optional[Dimension]):
         """
         Translate the value which is used to specify the dimension in request to the actual
         dimension for querying
         :param dim_name:
-        :return: name of dimension attr on AccessLog model, Dimension instance if not implicit
+        :return: (output name of the dimension, name of dimension attr on AccessLog model,
+                  Dimension instance if not implicit)
         """
         if dim_name is None:
-            return None, None
+            return None, None, None
+        if dim_name in cls.input_dim_to_query_dim:
+            return dim_name, cls.input_dim_to_query_dim[dim_name], None
         if dim_name in cls.implicit_dims:
-            return dim_name, None
+            return dim_name, dim_name, None
         dimensions = report_type.dimensions_sorted
         for dim_idx, dimension in enumerate(dimensions):
             if dimension.short_name == dim_name:
                 break
         else:
             raise Http404(f'Unknown dimension: {dim_name} for report type: {report_type}')
-        return f'dim{dim_idx+1}', dimensions[dim_idx]
+        return dimension.short_name, f'dim{dim_idx+1}', dimension
 
     def _extract_dimension_specs(self, request, report_type):
         """
@@ -58,33 +66,26 @@ class Counter5DataView(APIView):
         secondary_dim = request.GET.get('sec_dim')
         primary_dim = request.GET.get('prim_dim', 'date')
         # decode the dimensions to find out what we need to have in the query
-        self.prim_dim_name, self.prim_dim_obj = \
+        self.io_prim_dim_name, self.prim_dim_name, self.prim_dim_obj = \
             self._translate_dimension_spec(primary_dim, report_type)
-        self.sec_dim_name, self.sec_dim_obj = \
+        self.io_sec_dim_name, self.sec_dim_name, self.sec_dim_obj = \
             self._translate_dimension_spec(secondary_dim, report_type)
 
     def get(self, request, report_name=None):
-        report_type = get_object_or_404(ReportType, short_name=report_name)
+        if report_name:
+            report_type = get_object_or_404(ReportType, short_name=report_name)
+        else:
+            report_type = None
         self._extract_dimension_specs(request, report_type)
         # construct the query
-        rt = report_type if self.sec_dim_name != 'interest' else None
-        query, self.dim_raw_name_to_name = self.construct_query(rt, request)
+        query, self.dim_raw_name_to_name = self.construct_query(report_type, request)
         # get the data - we need two separate queries for 1d and 2d cases
         if self.sec_dim_name:
-            # we must treat interest separately
-            if self.sec_dim_name == 'interest':
-                data = query\
-                    .filter(metric__interest_group__isnull=False)\
-                    .values(self.prim_dim_name, 'metric')\
-                    .annotate(count=Sum('value'))\
-                    .values(self.prim_dim_name, 'count', 'metric')\
-                    .order_by(self.prim_dim_name, 'metric')
-            else:
-                data = query\
-                    .values(self.prim_dim_name, self.sec_dim_name)\
-                    .annotate(count=Sum('value'))\
-                    .values(self.prim_dim_name, 'count', self.sec_dim_name)\
-                    .order_by(self.prim_dim_name, self.sec_dim_name)
+            data = query\
+                .values(self.prim_dim_name, self.sec_dim_name)\
+                .annotate(count=Sum('value'))\
+                .values(self.prim_dim_name, 'count', self.sec_dim_name)\
+                .order_by(self.prim_dim_name, self.sec_dim_name)
         else:
             data = query.values(self.prim_dim_name)\
                 .annotate(count=Sum('value'))\
@@ -103,28 +104,31 @@ class Counter5DataView(APIView):
         # clean names of organizations
         self.clean_organization_names(request.user, data)
         # remap the values if text dimensions are involved
+        # primary dimension
         if self.prim_dim_obj and self.prim_dim_obj.type == Dimension.TYPE_TEXT:
             remap_dicts(self.prim_dim_obj, data, self.prim_dim_name)
         elif self.prim_dim_name in self.implicit_dims:
             # we remap the implicit dims if they are foreign key based
+            to_text_fn = self.implicit_dim_to_text_fn.get(self.io_prim_dim_name, str)
             self.remap_implicit_dim(data, self.prim_dim_name)
+        # secondary dimension
         if self.sec_dim_obj and self.sec_dim_obj.type == Dimension.TYPE_TEXT:
             remap_dicts(self.sec_dim_obj, data, self.sec_dim_name)
         elif self.sec_dim_name in self.implicit_dims:
             # we remap the implicit dims if they are foreign key based
-            self.remap_implicit_dim(data, self.sec_dim_name if self.sec_dim_name != 'interest' else 'metric')
+            to_text_fn = self.implicit_dim_to_text_fn.get(self.io_sec_dim_name, str)
+            self.remap_implicit_dim(data, self.sec_dim_name, to_text_fn=to_text_fn)
         # remap dimension names
         if self.prim_dim_name in self.dim_raw_name_to_name:
             new_prim_dim_name = self.dim_raw_name_to_name[self.prim_dim_name]
             for rec in data:
                 rec[new_prim_dim_name] = rec[self.prim_dim_name]
                 del rec[self.prim_dim_name]
-        if self.sec_dim_name in self.dim_raw_name_to_name or self.sec_dim_name == 'interest':
-            old_sec_dim_name = self.sec_dim_name if self.sec_dim_name != 'interest' else 'metric'
-            new_sec_dim_name = self.dim_raw_name_to_name[old_sec_dim_name]
+        if self.sec_dim_name in self.dim_raw_name_to_name:
+            new_sec_dim_name = self.dim_raw_name_to_name[self.sec_dim_name]
             for rec in data:
-                rec[new_sec_dim_name] = rec[old_sec_dim_name]
-                del rec[old_sec_dim_name]
+                rec[new_sec_dim_name] = rec[self.sec_dim_name]
+                del rec[self.sec_dim_name]
 
     def construct_query(self, report_type, request):
         if report_type:
@@ -155,8 +159,14 @@ class Counter5DataView(APIView):
                         except DimensionText.DoesNotExist:
                             pass  # we leave the value as it is - it will probably lead to empty result
                     query_params[dim_raw_name] = value
-        if self.sec_dim_name == 'interest':
-            dim_raw_name_to_name['metric'] = 'interest'
+        # remap dimension names if the query dim name is different from the i/o one
+        if self.prim_dim_name != self.io_prim_dim_name:
+            dim_raw_name_to_name[self.prim_dim_name] = self.io_prim_dim_name
+        if self.sec_dim_name != self.io_sec_dim_name:
+            dim_raw_name_to_name[self.sec_dim_name] = self.io_sec_dim_name
+        # add extra filters if requested
+        query_params.update(self.extra_query_params.get(self.io_prim_dim_name, {}))
+        query_params.update(self.extra_query_params.get(self.io_sec_dim_name, {}))
         # add filter for dates
         query_params.update(date_filter_from_params(request.GET))
         # create the base query
@@ -164,19 +174,20 @@ class Counter5DataView(APIView):
         return query, dim_raw_name_to_name
 
     @classmethod
-    def remap_implicit_dim(cls, data, prim_dim_name):
+    def remap_implicit_dim(cls, data, dim_name, to_text_fn=str):
         """
         Remaps foreign keys to the corresponding values
+        :param to_text_fn: function applied to the resolved object to extract text from it
         :param data: values
-        :param prim_dim_name: name of the AccessLog attribute of this dimension
+        :param dim_name: name of the AccessLog attribute of this dimension
         :return:
         """
-        field = AccessLog._meta.get_field(prim_dim_name)
+        field = AccessLog._meta.get_field(dim_name)
         if isinstance(field, models.ForeignKey):
             mapping = {obj.pk: obj for obj in field.related_model.objects.all()}
             for rec in data:
-                if rec[prim_dim_name] in mapping:
-                    rec[prim_dim_name] = str(mapping[rec[prim_dim_name]]).replace('_', ' ')
+                if rec[dim_name] in mapping:
+                    rec[dim_name] = to_text_fn(mapping[rec[dim_name]]).replace('_', ' ')
 
     @classmethod
     def clean_organization_names(cls, user, data):

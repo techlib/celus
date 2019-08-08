@@ -9,6 +9,8 @@ router.register(r'metric', views.MetricViewSet)
 
 urlpatterns = [
     path('chart-data/<report_name>/', views.Counter5DataView.as_view(), name='chart_data'),
+    path('chart-data/', views.Counter5DataView.as_view(), {'report_name': None},
+         name='chart_data'),
 ]
 
 urlpatterns += router.urls

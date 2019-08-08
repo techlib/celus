@@ -11,7 +11,7 @@ class InterestGroupTranslationOptions(TranslationOptions):
 
 
 class MetricTranslationOptions(TranslationOptions):
-    fields = ('name', 'desc')
+    fields = ('name', 'desc', 'name_in_interest_group')
 
 
 class DimensionTextTranslationOptions(TranslationOptions):
