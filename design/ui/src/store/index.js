@@ -104,7 +104,7 @@ export default new Vuex.Store({
           // we are getting redirected to the EduID login page - let's go there
           that.dispatch('setShowLoginDialog', {show: true})
         }
-        return Promise.reject(error)
+        // return Promise.reject(error)
       })
       this.dispatch('loadUserData')
       this.dispatch('loadOrganizations')
