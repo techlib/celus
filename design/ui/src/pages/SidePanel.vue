@@ -10,45 +10,45 @@
     >
         <v-toolbar flat class="transparent">
             <v-list class="pa-0">
-                <v-list-tile avatar>
-                    <v-list-tile-action>
+                <v-list-item avatar>
+                    <v-list-item-action>
                         <v-icon>fa-th</v-icon>
-                    </v-list-tile-action>
+                    </v-list-item-action>
 
-                    <v-list-tile-content>
+                    <v-list-item-content>
                         {{ $t('menu') }}
-                    </v-list-tile-content>
+                    </v-list-item-content>
 
-                    <v-list-tile-action>
+                    <v-list-item-action>
                         <v-btn
                                 icon
                                 @click.stop="mini = !mini"
                         >
                             <v-icon>fa-chevron-left</v-icon>
                         </v-btn>
-                    </v-list-tile-action>
-                </v-list-tile>
+                    </v-list-item-action>
+                </v-list-item>
             </v-list>
         </v-toolbar>
 
         <v-list class="pt-0" dense v-for="(group, index) in groups" :key="index" subheader>
             <v-subheader>{{ group.title }}</v-subheader>
 
-            <v-list-tile
+            <v-list-item
                     v-for="item in group.items"
                     :key="item.title"
                     :to="{name: item.linkTo}"
             >
                <!-- exact - use this attr on v-list-tile to prevent matching / -->
 
-                <v-list-tile-action>
+                <v-list-item-action>
                     <v-icon>{{ item.icon }}</v-icon>
-                </v-list-tile-action>
+                </v-list-item-action>
 
-                <v-list-tile-content>
-                    <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-                </v-list-tile-content>
-            </v-list-tile>
+                <v-list-item-content>
+                    <v-list-item-title>{{ item.title }}</v-list-item-title>
+                </v-list-item-content>
+            </v-list-item>
         </v-list>
     </v-navigation-drawer>
 </template>

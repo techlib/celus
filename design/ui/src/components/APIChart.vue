@@ -244,21 +244,9 @@
       this.loadData()
     },
     watch: {
-      primaryDimension () {
+      dataURL () {
         this.loadData()
       },
-      secondaryDimension () {
-        this.loadData()
-      },
-      dateRangeStart () {
-        this.loadData()
-      },
-      dateRangeEnd () {
-        this.loadData()
-      },
-      reportTypeName () {
-        this.loadData()
-      }
     }
   }
 </script>

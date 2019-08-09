@@ -67,7 +67,7 @@
 <script>
   import { mapActions, mapGetters } from 'vuex'
   import axios from 'axios'
-  import CounterChartSet from './CounterChartSet'
+  import CounterChartSet from '../components/CounterChartSet'
   import DataExportWidget from '../components/DataExportWidget'
 
   export default {

@@ -2,8 +2,7 @@
     <v-app>
         <SidePanel />
 
-        <v-toolbar app clipped-left>
-            <!--v-toolbar-side-icon></v-toolbar-side-icon-->
+        <v-app-bar app clipped-left>
             <v-toolbar-title>
                 <img src="../assets/czechelib-stats-64.svg" alt="CzechELib stats">
             </v-toolbar-title>
@@ -20,14 +19,15 @@
             <SelectedDateRangeWidget />
             <v-spacer></v-spacer>
 
+            <v-select
+                    v-model="appLanguage"
+                    :items="['cs','en']"
+                    prepend-icon="fa-globe"
+                    class="short"
+                    shrink
+            >
+            </v-select>
             <v-toolbar-items class="hidden-sm-and-down">
-                <v-select
-                        v-model="appLanguage"
-                        :items="['cs','en']"
-                        prepend-icon="fa-globe"
-                        class="short"
-                >
-                </v-select>
                 <v-divider
                         class="mx-3"
                         inset
@@ -55,7 +55,7 @@
                 </v-avatar>
             </v-toolbar-items>
 
-        </v-toolbar>
+        </v-app-bar>
 
         <v-content>
             <v-container fluid>
@@ -194,6 +194,22 @@
 
     footer.v-footer {
         // bottom: -100px;
+    }
+
+    div.v-input {
+
+        &.short {
+            flex-grow: 0;
+        }
+
+        div.v-input__control {
+            div.v-text-field__details {
+                min-height: 1px;
+                .v-messages {
+                    min-height: 1px;
+                }
+            }
+        }
     }
 
 </style>

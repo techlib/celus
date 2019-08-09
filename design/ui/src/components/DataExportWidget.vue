@@ -7,12 +7,12 @@
             </v-btn>
         </template>
         <v-list>
-            <v-list-tile :href="url+'&format=xlsx'">
-                <v-list-tile-title>Raw data Excel</v-list-tile-title>
-            </v-list-tile>
-            <v-list-tile :href="url+'&format=csv'">
-                <v-list-tile-title>Raw data CSV</v-list-tile-title>
-            </v-list-tile>
+            <v-list-item :href="url+'&format=xlsx'">
+                <v-list-item-title>Raw data Excel</v-list-item-title>
+            </v-list-item>
+            <v-list-item :href="url+'&format=csv'">
+                <v-list-item-title>Raw data CSV</v-list-item-title>
+            </v-list-item>
         </v-list>
     </v-menu>
 </template>

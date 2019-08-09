@@ -24,20 +24,15 @@ cs:
         <v-data-table
                 :items="titles"
                 :headers="headers"
-                :pagination.sync="pagination"
+                :items-per-page.sync="itemsPerPage"
                 :search="search"
         >
-            <template v-slot:items="props">
-                <td>
-                    <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
+            <template v-slot:item.name="props">
+                <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
                     <router-link v-else :to="{name: 'title-detail', params: {platformId: null, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
-                </td>
-                <td><span :class="{'fa fa-book': props.item.pub_type==='B', 'far fa-copy': props.item.pub_type==='J'}"></span></td>
-                <td>{{ props.item.isbn }}</td>
-                <td>{{ props.item.issn }}</td>
-                <td>{{ props.item.eissn }}</td>
-                <td>{{ props.item.doi }}</td>
-                <td class="text-xs-right">{{ props.item.interest }}</td>
+            </template>
+            <template v-slot:item.pub_type="props">
+                <span :class="{'fa fa-book': props.item.pub_type==='B', 'far fa-copy': props.item.pub_type==='J'}"></span>
             </template>
         </v-data-table>
     </v-card>
@@ -58,10 +53,7 @@ cs:
       return {
         titles: [],
         search: '',
-        pagination: {
-          sortBy: 'name',
-          rowsPerPage: 25,
-        },
+        itemsPerPage: 25,
         headers: [
           {
             text: this.$i18n.t('title_fields.name'),
@@ -89,7 +81,8 @@ cs:
           },
           {
             text: this.$i18n.t('columns.interest'),
-            value: 'interest'
+            value: 'interest',
+            align: 'end',
           },
         ]
       }

@@ -35,19 +35,22 @@ cs:
         <v-data-table
                 :items="platforms"
                 :headers="headers"
-                :hide-actions="true"
+                :hide-default-footer="true"
+                :items-per-page="-1"
                 :search="search"
         >
-            <template v-slot:items="props">
-                <td><router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link></td>
-                <td class="text-xs-right">{{ props.item.title_count }}</td>
-                <td class="text-xs-right">{{ props.item.interests.title ? props.item.interests.title.value : '-' }}</td>
-                <td class="text-xs-right">{{ props.item.interests.database ? props.item.interests.database.value : '-'}}</td>
-                <td>{{ props.item.provider }}</td>
-                <td>
-                    <a v-if="props.item.url" :href="props.item.url" target="_blank">{{ props.item.url }}</a>
-                    <span v-else>-</span>
-                </td>
+            <template v-slot:item.name="props">
+                <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
+            </template>
+            <template v-slot:item.interests.title="props">
+                {{ props.item.interests.title ? props.item.interests.title.value : '-' }}
+            </template>
+              <template v-slot:item.interests.database.value="props">
+                {{ props.item.interests.database ? props.item.interests.database.value : '-' }}
+            </template>
+            <template v-slot:item.url="props">
+                <a v-if="props.item.url" :href="props.item.url" target="_blank">{{ props.item.url }}</a>
+                <span v-else>-</span>
             </template>
         </v-data-table>
         </v-card>
@@ -87,17 +90,20 @@ cs:
           {
             text: this.$i18n.t('columns.title_count'),
             value: 'title_count',
-            class: 'wrap text-xs-right',
+            class: 'wrap',
+            align: 'right',
           },
           {
             text: this.$i18n.t('interests.title'),
             value: 'interests.title.value',
             class: 'wrap text-xs-right',
+            align: 'right',
           },
           {
             text: this.$i18n.t('interests.database'),
             value: 'interests.database.value',
             class: 'wrap text-xs-right',
+            align: 'right',
           },
           {
             text: this.$i18n.t('columns.provider'),

@@ -15,8 +15,8 @@
         </v-flex>
 
         <v-flex class="mt-3 mb-3">
-            <v-btn-toggle v-model="chartTypeIndex" mandatory>
-                <v-btn v-for="(chartType, index) in chartTypes " flat :value="index" :key="index">
+            <v-btn-toggle v-model="chartTypeIndex" mandatory class="flex-sm-wrap">
+                <v-btn v-for="(chartType, index) in chartTypes " text :value="index" :key="index">
                     {{ chartType.name }}
                 </v-btn>
             </v-btn-toggle>
@@ -40,7 +40,7 @@
     </v-layout>
 </template>
 <script>
-  import APIChart from '../components/APIChart'
+  import APIChart from './APIChart'
   import { mapGetters } from 'vuex'
   import axios from 'axios'
 

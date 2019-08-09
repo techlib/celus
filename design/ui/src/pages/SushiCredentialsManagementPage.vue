@@ -19,31 +19,36 @@
                     :items="sushiCredentialsList"
                     :headers="headers"
                     :search="search"
-                    :pagination.sync="pagination"
+                    :items-per-page.sync="itemsPerPage"
             >
-                <template v-slot:items="props">
-                    <td>{{ props.item.organization.name }}</td>
-                    <td>{{ props.item.platform.name }}</td>
-                    <td>
-                        <v-chip
-                                v-for="(report, index) in props.item.active_counter_reports"
-                                class="ma-1"
-                                color="teal"
-                                text-color="white"
-                                :key="index"
-                        >
-                            <v-avatar left color="white">
-                                <span class="teal--text">{{ report.counter_version }}</span>
-                            </v-avatar>
-                            {{ report.code }}
-                        </v-chip>
-                    </td>
-                    <td>
-                        <v-btn flat small color="secondary">
-                            <v-icon left>fa-edit</v-icon>
-                            {{ $t('edit') }}
-                        </v-btn>
-                    </td>
+                <template v-slot:item.active_counter_reports="props">
+                    <v-tooltip
+                            bottom
+                            v-for="(report, index) in props.item.active_counter_reports"
+                            :key="index"
+                    >
+                        <template v-slot:activator="{ on }">
+                            <v-chip
+                                    class="mr-1"
+                                    color="teal"
+                                    outlined
+                                    label
+                                    v-on="on"
+                            >
+                                {{ report.code }}
+                            </v-chip>
+                        </template>
+                        <span>
+                            <span v-if="report.name">{{ report.name }}</span>
+                            <span v-else>{{ report.code }}</span>
+                        </span>
+                    </v-tooltip>
+                </template>
+                <template v-slot:item.actions="props">
+                    <v-btn text small color="secondary">
+                        <v-icon left>fa-edit</v-icon>
+                        {{ $t('edit') }}
+                    </v-btn>
                 </template>
             </v-data-table>
         </v-card>
@@ -61,10 +66,7 @@
       return {
         sushiCredentialsList: [],
         search: '',
-        pagination: {
-          sortBy: 'name',
-          rowsPerPage: 25,
-        },
+        itemsPerPage: 25,
       }
     },
     computed: {
@@ -79,13 +81,19 @@
             value: 'platform.name'
           },
           {
+            text: this.$i18n.t('title_fields.counter_version'),
+            value: 'counter_version',
+            align: 'end',
+
+          },
+          {
             text: this.$i18n.t('title_fields.active_reports'),
-            value: '',
+            value: 'active_counter_reports',
             sortable: false,
           },
           {
             text: this.$i18n.t('title_fields.actions'),
-            value: '',
+            value: 'actions',
             sortable: false,
           },
         ]
@@ -125,9 +133,9 @@
         i.fa {
             font-size: 100%;
 
-            &.v-icon--left {
-                margin-right: 8px
-            }
+            /*&.v-icon--left {*/
+            /*    margin-right: 8px*/
+            /*}*/
         }
     }
 
