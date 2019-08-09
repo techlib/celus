@@ -18,6 +18,8 @@ en:
     eissn: eISSN
     doi: DOI
     actions: Actions
+    reports: Reports
+    active_reports: Active reports
   titles: Titles
   overview: Overview
   chart:
@@ -56,6 +58,8 @@ cs:
     eissn: eISSN
     doi: DOI
     actions: Akce
+    reports: Reporty
+    active_reports: Aktivní reporty
   titles: Tituly
   overview: Přehled
   chart:
