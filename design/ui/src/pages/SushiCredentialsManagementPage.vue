@@ -1,4 +1,14 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n>
+en:
+    title:
+        edit_sushi_credentials: Edit SUSHI credentials
+
+cs:
+    title:
+        edit_sushi_credentials: Přihlašovací údaje SUSHI
+</i18n>
+
 
 <template>
     <v-layout>
@@ -45,7 +55,7 @@
                     </v-tooltip>
                 </template>
                 <template v-slot:item.actions="props">
-                    <v-btn text small color="secondary">
+                    <v-btn text small color="secondary" @click.stop="selectedCredentials = props.item; showEditDialog = true">
                         <v-icon left x-small>fa-edit</v-icon>
                         {{ $t('actions.edit') }}
                     </v-btn>
@@ -55,6 +65,22 @@
                 </template>
             </v-data-table>
         </v-card>
+        <v-dialog v-model="showEditDialog">
+            <v-card>
+                <v-card-title class="headline">{{ $t('title.edit_sushi_credentials') }}</v-card-title>
+                <v-card-text>
+                    <SushiCredentialsEditDialog
+                            :credentials-object="selectedCredentials"
+                    ></SushiCredentialsEditDialog>
+                </v-card-text>
+                <v-card-actions>
+                    <v-layout pb-3 pr-5 justify-end>
+                    <v-btn color="secondary" @click="showEditDialog = false">Close</v-btn>
+                    <v-btn color="primary" @click="showEditDialog = false">Save</v-btn>
+                    </v-layout>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-layout>
 </template>
 
@@ -62,14 +88,18 @@
   import axios from 'axios'
   import {mapActions} from 'vuex'
   import { debounce } from 'lodash'
+  import SushiCredentialsEditDialog from '../components/SushiCredentialsEditDialog'
 
   export default {
     name: "SushiCredentialsManagementPage",
+    components: {SushiCredentialsEditDialog},
     data () {
       return {
         sushiCredentialsList: [],
         search: '',
         itemsPerPage: 25,
+        selectedCredentials: null,
+        showEditDialog: false,
       }
     },
     computed: {

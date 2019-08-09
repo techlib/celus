@@ -22,6 +22,7 @@ en:
     reports: Reports
     active_reports: Active reports
     counter_version: COUNTER version
+    enabled: Enabled
   titles: Titles
   overview: Overview
   chart:
@@ -34,6 +35,17 @@ en:
   labels:
     date_range: Date range
     search: Search
+    requestor_id: Requestor ID
+    customer_id: Customer ID
+    counter_version: COUNTER version
+    url: URL
+    http_authentication: HTTP authentication
+    http_username: Username
+    http_password: Password
+    extra_params: Extra parameters
+    api_key: API key
+    variable: Parameter name
+    value: Parameter value
   no_reports_available_for_title: No reports available for this title
   available_report_types: Available report types
   interests:
@@ -66,6 +78,7 @@ cs:
     reports: Reporty
     active_reports: Aktivní reporty
     counter_version: Verze COUNTER
+    enabled: Zapnuto
   titles: Tituly
   overview: Přehled
   chart:
@@ -78,6 +91,17 @@ cs:
   labels:
     date_range: Rozmezí dat
     search: Vyhledávání
+    requestor_id: Requestor ID
+    customer_id: Customer ID
+    counter_version: Verze COUNTER
+    url: URL
+    http_authentication: HTTP autentizace
+    http_username: Uživatelské jméno
+    http_password: Heslo
+    extra_params: Další parametry
+    api_key: API key
+    variable: Název parametru
+    value: Hodnota parametru
   no_reports_available_for_title: Pro tento titul nejsou dostupné žádné zprávy
   available_report_types: Dostupné typy zpráv
   interests:

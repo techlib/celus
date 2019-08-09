@@ -1,5 +1,7 @@
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from sushi.models import CounterReportType
+from sushi.serializers import CounterReportTypeSerializer
 from .models import SushiCredentials
 from .serializers import SushiCredentialsSerializer
 
@@ -15,4 +17,8 @@ class SushiCredentialsViewSet(ModelViewSet):
         return qs
 
 
+class CounterReportTypeViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = CounterReportTypeSerializer
+    queryset = CounterReportType.objects.all()
 
