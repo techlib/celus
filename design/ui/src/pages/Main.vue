@@ -64,7 +64,7 @@
 
                 <v-snackbar v-model="snackbarShow">
                     {{ snackbarText }}
-                    <v-btn dark flat @click="hideSnackbar">
+                    <v-btn dark text @click="hideSnackbar">
                         Close
                     </v-btn>
                 </v-snackbar>
@@ -85,34 +85,25 @@
         </v-footer>
 
         <v-layout justify-center>
-            <v-dialog v-model="showLoginDialog" persistent max-width="290">
-                <v-card>
-                    <v-card-title class="headline">Not logged in</v-card-title>
-                    <v-card-text>You are not logged in. Please click Login to be redirected to login page.</v-card-text>
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn color="primary" text href="/secure">Login</v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
+            <LoginDialog />
         </v-layout>
     </v-app>
 </template>
 
 <script>
   import SidePanel from './SidePanel'
-  //import LoginDialog from '../components/LoginDialog'
   import { mapActions, mapGetters, mapState } from 'vuex'
   import OrganizationSelector from '../components/OrganizationSelector'
   import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
+  import LoginDialog from '../components/LoginDialog'
 
   export default {
     name: 'Dashboard',
     components: {
+      LoginDialog,
       SelectedDateRangeWidget,
       OrganizationSelector,
       SidePanel,
-      //LoginDialog
     },
     data () {
       return {
@@ -136,14 +127,6 @@
         set (newValue) {
           if (newValue === false)
             this.hideSnackbar()
-        }
-      },
-      showLoginDialog: {
-        get () {
-          return this.$store.state.showLoginDialog
-        },
-        set (newValue) {
-          this.$store.dispatch('setShowLoginDialog', {show: newValue})
         }
       },
       appLanguage: {
