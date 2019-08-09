@@ -100,10 +100,12 @@ export default new Vuex.Store({
         if (error.response && error.response.status === 403) {
           // if there is 403 error, try to reauthenticate
           that.dispatch('setShowLoginDialog', {show: true})
-        } else if (error.reponse && error.reponse.status === 0) {
+        } else if (error.response && error.response.status === 0) {
           // we are getting redirected to the EduID login page - let's go there
           that.dispatch('setShowLoginDialog', {show: true})
+          console.log('EEEEROR', error)
         }
+        console.log('EEEERORX', error)
         // return Promise.reject(error)
       })
       this.dispatch('loadUserData')
