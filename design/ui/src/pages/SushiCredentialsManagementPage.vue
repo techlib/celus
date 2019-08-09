@@ -47,7 +47,7 @@
                 <template v-slot:item.actions="props">
                     <v-btn text small color="secondary">
                         <v-icon left>fa-edit</v-icon>
-                        {{ $t('edit') }}
+                        {{ $t('actions.edit') }}
                     </v-btn>
                 </template>
             </v-data-table>
@@ -74,7 +74,8 @@
         return [
           {
             text: this.$i18n.t('organization'),
-            value: 'organization.name'
+            value: 'organization.name',
+            class: 'wrap',
           },
           {
             text: this.$i18n.t('platform'),
@@ -84,7 +85,6 @@
             text: this.$i18n.t('title_fields.counter_version'),
             value: 'counter_version',
             align: 'end',
-
           },
           {
             text: this.$i18n.t('title_fields.active_reports'),

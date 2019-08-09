@@ -10,7 +10,7 @@
     >
         <v-toolbar flat class="transparent">
             <v-list class="pa-0">
-                <v-list-item avatar>
+                <v-list-item>
                     <v-list-item-action>
                         <v-icon>fa-th</v-icon>
                     </v-list-item-action>

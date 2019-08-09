@@ -5,6 +5,7 @@ en:
     platforms: Platforms
     all_titles: All titles
     sushi_management: SUSHI management
+    admin: Administration
   menu: Menu
   organization: Organization
   platform: Platform
@@ -20,6 +21,7 @@ en:
     actions: Actions
     reports: Reports
     active_reports: Active reports
+    counter_version: COUNTER version
   titles: Titles
   overview: Overview
   chart:
@@ -37,6 +39,8 @@ en:
   interests:
     title: Interest in titles
     database: Interest in databases
+  actions:
+    edit: Edit
 
 cs:
   pages:
@@ -45,6 +49,7 @@ cs:
     platforms: Platformy
     all_titles: Všechny tituly
     sushi_management: Správa SUSHI
+    admin: Administrace
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -60,6 +65,7 @@ cs:
     actions: Akce
     reports: Reporty
     active_reports: Aktivní reporty
+    counter_version: Verze COUNTER
   titles: Tituly
   overview: Přehled
   chart:
@@ -77,3 +83,5 @@ cs:
   interests:
     title: Zájem o tituly
     database: Zájem o databáze
+  actions:
+    edit: Editovat
