@@ -63,6 +63,7 @@ cs:
                                     v-model="counterVersion"
                                     :label="$t('labels.counter_version')"
                                     :items="[4, 5]"
+                                    disabled
                             >
                             </v-select>
                         </v-flex>
