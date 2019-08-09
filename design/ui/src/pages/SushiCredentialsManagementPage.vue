@@ -26,7 +26,7 @@
                 <template v-slot:item.active_counter_reports="props">
                     <v-tooltip
                             bottom
-                            v-for="(report, index) in props.item.active_counter_reports"
+                            v-for="(report, index) in props.item.active_counter_reports_long"
                             :key="index"
                     >
                         <template v-slot:activator="{ on }">

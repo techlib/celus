@@ -146,7 +146,7 @@ cs:
                         </v-flex>
                         <v-flex xs12 pt-2>
                             <v-btn-toggle multiple v-model="selectedReportTypes">
-                                <v-btn v-for="report in reportTypes" :value="report.code" :key="report.code">
+                                <v-btn v-for="report in reportTypes" :value="report.id" :key="report.id" outlined color="primary">
                                     {{ report.code }}
                                 </v-btn>
                             </v-btn-toggle>
@@ -179,7 +179,7 @@ cs:
     },
     data () {
       return {
-        reportTypes: null,
+        allReportTypes: [],
         organizationId: null,
         organization: '',
         platformId: null,
@@ -212,7 +212,11 @@ cs:
           http_username: this.httpUsername,
           http_password: this.httpPassword,
           extra_params: extraParams,
+          active_counter_reports: this.selectedReportTypes,
         }
+      },
+      reportTypes () {
+        return this.allReportTypes.filter(item => item.counter_version === this.counterVersion)
       }
     },
     methods: {
@@ -224,10 +228,6 @@ cs:
         let extraParams = []
         for (let [key, value] in Object.entries(credentials.extra_params)) {
           extraParams.push({key: key, value: value})
-        }
-        let selectedReportTypes = []
-        for (let reportType of credentials.active_counter_reports) {
-          selectedReportTypes.push(reportType.code)
         }
         this.organizationId = credentials.organization.id
         this.organization = credentials.organization.name
@@ -241,14 +241,14 @@ cs:
         this.httpPassword = credentials.http_password
         this.apiKey = credentials.api_key
         this.extraParams = extraParams
-        this.selectedReportTypes = selectedReportTypes
+        this.selectedReportTypes = [...credentials.active_counter_reports]
         this.credentialsId = credentials.id
 
       },
       async loadReportTypes () {
         try {
           let result = await axios.get('/api/counter-report-type/')
-          this.reportTypes = result.data.filter(item => item.counter_version === this.counterVersion)
+          this.allReportTypes = result.data
         } catch (error) {
           this.showSnackbar({content: 'Error loading report types: ' + error})
         }

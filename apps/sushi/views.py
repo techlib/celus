@@ -22,4 +22,3 @@ class CounterReportTypeViewSet(ReadOnlyModelViewSet):
 
     serializer_class = CounterReportTypeSerializer
     queryset = CounterReportType.objects.all()
-
