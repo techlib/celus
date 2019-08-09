@@ -20,6 +20,6 @@ class SushiCredentialsSerializer(ModelSerializer):
 
     class Meta:
         model = SushiCredentials
-        fields = ('id', 'organization', 'platform', 'url', 'counter_version', 'requestor_id',
-                  'customer_id', 'http_username', 'http_password', 'api_key', 'extra_params',
-                  'active_counter_reports')
+        fields = ('id', 'organization', 'platform', 'enabled', 'url', 'counter_version',
+                  'requestor_id', 'customer_id', 'http_username', 'http_password', 'api_key',
+                  'extra_params', 'active_counter_reports')

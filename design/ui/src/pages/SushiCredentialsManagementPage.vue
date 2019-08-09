@@ -46,9 +46,12 @@
                 </template>
                 <template v-slot:item.actions="props">
                     <v-btn text small color="secondary">
-                        <v-icon left>fa-edit</v-icon>
+                        <v-icon left x-small>fa-edit</v-icon>
                         {{ $t('actions.edit') }}
                     </v-btn>
+                </template>
+                <template v-slot:item.enabled="props">
+                    <v-icon x-small>{{ props.item.enabled ? 'fa-check' : 'fa-times' }}</v-icon>
                 </template>
             </v-data-table>
         </v-card>
@@ -92,6 +95,10 @@
             sortable: false,
           },
           {
+            text: this.$i18n.t('title_fields.enabled'),
+            value: 'enabled',
+          },
+          {
             text: this.$i18n.t('title_fields.actions'),
             value: 'actions',
             sortable: false,
@@ -128,15 +135,4 @@
 </script>
 
 <style lang="scss">
-
-    button.v-btn {
-        i.fa {
-            font-size: 100%;
-
-            /*&.v-icon--left {*/
-            /*    margin-right: 8px*/
-            /*}*/
-        }
-    }
-
 </style>
