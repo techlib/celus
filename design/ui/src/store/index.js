@@ -106,6 +106,7 @@ export default new Vuex.Store({
           console.log('EEEEROR', error)
         }
         console.log('EEEERORX', error)
+        console.dir(error)
         // return Promise.reject(error)
       })
       this.dispatch('loadUserData')
