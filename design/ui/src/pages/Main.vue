@@ -62,7 +62,7 @@
 
                 <router-view/>
 
-                <v-snackbar v-model="snackbarShow">
+                <v-snackbar v-model="snackbarShow" :color="snackbarColor">
                     {{ snackbarText }}
                     <v-btn dark text @click="hideSnackbar">
                         Close
@@ -113,6 +113,7 @@
     computed: {
       ...mapState({
         snackbarText: 'snackbarContent',
+        snackbarColor: 'snackbarColor',
       }),
       ...mapGetters({
         loggedIn: 'loggedIn',

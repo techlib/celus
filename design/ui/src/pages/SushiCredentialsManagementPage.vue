@@ -1,14 +1,4 @@
 <i18n src="../locales/common.yaml"></i18n>
-<i18n>
-en:
-    title:
-        edit_sushi_credentials: Edit SUSHI credentials
-
-cs:
-    title:
-        edit_sushi_credentials: Přihlašovací údaje SUSHI
-</i18n>
-
 
 <template>
     <v-layout>
@@ -30,6 +20,8 @@ cs:
                     :headers="headers"
                     :search="search"
                     :items-per-page.sync="itemsPerPage"
+                    :sort-by="orderBy"
+                    multi-sort
             >
                 <template v-slot:item.active_counter_reports="props">
                     <v-tooltip
@@ -66,20 +58,11 @@ cs:
             </v-data-table>
         </v-card>
         <v-dialog v-model="showEditDialog">
-            <v-card>
-                <v-card-title class="headline">{{ $t('title.edit_sushi_credentials') }}</v-card-title>
-                <v-card-text>
-                    <SushiCredentialsEditDialog
-                            :credentials-object="selectedCredentials"
-                    ></SushiCredentialsEditDialog>
-                </v-card-text>
-                <v-card-actions>
-                    <v-layout pb-3 pr-5 justify-end>
-                    <v-btn color="secondary" @click="showEditDialog = false">Close</v-btn>
-                    <v-btn color="primary" @click="showEditDialog = false">Save</v-btn>
-                    </v-layout>
-                </v-card-actions>
-            </v-card>
+            <SushiCredentialsEditDialog
+                    :credentials-object="selectedCredentials"
+                    v-model="showEditDialog"
+                    @update-credentials="updateCredentials"
+            ></SushiCredentialsEditDialog>
         </v-dialog>
     </v-layout>
 </template>
@@ -100,6 +83,7 @@ cs:
         itemsPerPage: 25,
         selectedCredentials: null,
         showEditDialog: false,
+        orderBy: ['organization.name', 'platform.name', 'counter_version']
       }
     },
     computed: {
@@ -156,6 +140,16 @@ cs:
           this.showSnackbar({content: 'Error loading credentials list: '+error})
         }
 
+      },
+      updateCredentials (credentials) {
+        // the new credentials as returned by the edit dialog
+        // we put them at the right place in the list of credentials
+        for (let i=0; i < this.sushiCredentialsList.length; i++) {
+          if (this.sushiCredentialsList[i].id === credentials.id) {
+            this.$set(this.sushiCredentialsList, i, credentials)
+            break
+          }
+        }
       }
     },
     mounted() {

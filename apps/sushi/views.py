@@ -9,6 +9,7 @@ from .serializers import SushiCredentialsSerializer
 class SushiCredentialsViewSet(ModelViewSet):
 
     serializer_class = SushiCredentialsSerializer
+    queryset = SushiCredentials.objects.none()
 
     def get_queryset(self):
         user_organizations = self.request.user.accessible_organizations()

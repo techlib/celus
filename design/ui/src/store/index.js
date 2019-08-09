@@ -28,6 +28,7 @@ export default new Vuex.Store({
     user: null,
     snackbarShow: false,
     snackbarContent: null,
+    snackbarColor: null,
     loginError: null,
     organizations: {},
     selectedOrganizationId: null,
@@ -112,9 +113,9 @@ export default new Vuex.Store({
       this.dispatch('loadOrganizations')
       this.dispatch('changeDateRangeObject', context.state.dateRangeIndex)
     },
-    showSnackbar (context, {content}) {
+    showSnackbar (context, {content, color}) {
       context.commit('setSnackbarContent', {'content': content})
-      context.commit('setSnackbarShow', {'show': true})
+      context.commit('setSnackbarShow', {'show': true, 'color': color})
     },
     hideSnackbar (context) {
       context.commit('setSnackbarShow', {'show': false})
@@ -206,7 +207,8 @@ export default new Vuex.Store({
     }
   },
   mutations: {
-    setSnackbarShow(state, {show}) {
+    setSnackbarShow(state, {show, color}) {
+      Vue.set(state, 'snackbarColor', color)
       Vue.set(state, 'snackbarShow', show)
     },
     setSnackbarContent(state, {content}) {
