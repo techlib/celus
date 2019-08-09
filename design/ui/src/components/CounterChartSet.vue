@@ -125,6 +125,7 @@
             this.reportTypes = response.data
             this.selectFreshestReportType()
           } catch (error) {
+            console.log("ERROR: ", error)
             this.showSnackbar({content: 'Error loading title: ' + error})
           }
         }
