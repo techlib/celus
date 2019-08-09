@@ -3,9 +3,11 @@ import App from './pages/Main'
 import store from './store'
 import router from './router'
 import Vuetify from 'vuetify'
-import 'vuetify/dist/vuetify.min.css'
+// import 'vuetify/dist/vuetify.min.css'
 import i18n from './i18n'
 import colors from 'vuetify/es5/util/colors'
+import vuetify from './plugins/vuetify';
+
 
 Vue.config.productionTip = false
 Vue.use(Vuetify, {
@@ -23,4 +25,5 @@ new Vue({
   store,
   i18n,
   router,
+  vuetify
 })
