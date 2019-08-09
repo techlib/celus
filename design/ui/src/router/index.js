@@ -16,12 +16,14 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      component: ChartTestPage
+      component: ChartTestPage,
+      // meta: {title: 'Home'}
     },
     {
       path: '/platforms/',
       name: 'platform-list',
-      component: PlatformListPage
+      component: PlatformListPage,
+      // meta: {title: 'pages.platforms'}
     },
     {
       path: '/titles/',
