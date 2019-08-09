@@ -98,13 +98,13 @@ export default new Vuex.Store({
       }, function (error) {
         // Do something with response error
         if (error.response && (error.response.status === 403 || error.response.status === 401)) {
-          // if there is 403 error, try to reauthenticate
+          // if there is 403 or 401 error, try to reauthenticate
           that.dispatch('setShowLoginDialog', {show: true})
-          console.log('CAuGHT 1', error)
         } else if (typeof error.response === 'undefined') {
-          // we are getting redirected to the EduID login page - let's go there
+          // we are getting redirected to the EduID login page, but 302 is transparent for us
+          // (the browser handles it on its own) and the error we get does not have any response
+          // because it is caused by CORS violation when we try to get the eduid login page
           that.dispatch('setShowLoginDialog', {show: true})
-          console.log('CAuGHT 2', error)
         }
         return Promise.reject(error)
       })
