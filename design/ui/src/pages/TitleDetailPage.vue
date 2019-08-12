@@ -49,12 +49,11 @@
                     <h3>{{ $t('overview') }}</h3>
                 </v-flex>
                 <v-flex shrink>
-                <data-export-widget
-                        :title="titleId"
-                        :platform="platformId"
-                >
-                </data-export-widget>
-                    
+                    <data-export-widget
+                            :title="titleId"
+                            :platform="platformId"
+                    >
+                    </data-export-widget>
                 </v-flex>
             </v-layout>
 

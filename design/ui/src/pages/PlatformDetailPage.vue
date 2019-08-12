@@ -22,14 +22,15 @@
                 <h2 class="mb-4">{{ platform ? platform.name : '' }}</h2>
             </v-flex>
 
-            <v-flex shrink>
-                <data-export-widget :platform="platformId"></data-export-widget>
-            </v-flex>
         </v-layout>
 
         <section v-if="selectedOrganization && platform">
-            <h3>{{ $t('overview') }}</h3>
-
+            <v-layout>
+                <v-flex><h3>{{ $t('overview') }}</h3></v-flex>
+                <v-flex shrink>
+                    <data-export-widget :platform="platformId"></data-export-widget>
+                </v-flex>
+            </v-layout>
             <CounterChartSet
                     :platform-id="platformId"
                     :title-id="null"
