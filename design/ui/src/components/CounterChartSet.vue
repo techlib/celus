@@ -41,7 +41,7 @@
 </template>
 <script>
   import APIChart from './APIChart'
-  import { mapGetters } from 'vuex'
+  import { mapGetters, mapState } from 'vuex'
   import axios from 'axios'
 
   export default {
@@ -65,9 +65,11 @@
     },
     computed: {
       ...mapGetters({
-        selectedOrganization: 'selectedOrganization',
         dateRangeStartText: 'dateRangeStartText',
         dateRangeEndText: 'dateRangeEndText',
+      }),
+      ...mapState({
+        selectedOrganizationId: 'selectedOrganizationId',
       }),
       chartTypes () {
         let base = [
@@ -103,7 +105,10 @@
         if (this.selectedChartType.primary === 'organization') {
           return null
         }
-        return this.selectedOrganization.pk
+        if (this.selectedOrganizationId === -1) {
+          return null  // we want data for all organizations
+        }
+        return this.selectedOrganizationId
       },
       selectedReportTypeObject () {
         for (let rt of this.reportTypes) {

@@ -24,18 +24,20 @@
       'lang': {required: false, default: null},
     },
     computed: {
-      ...mapGetters({
-        selectedOrganization: 'selectedOrganization',
-      }),
       ...mapState({
         organizations: 'organizations',
-        selectedOrganizationId: 'selectedOrganizationId'
+        selectedOrganizationId: 'selectedOrganizationId',
+        user: 'user',
       }),
       items () {
         if (!this.organizations) {
           return []
         }
-        return Object.values(this.organizations)
+        let out = Object.values(this.organizations)
+        if (this.user && this.user.is_from_master_organization) {
+          out.push({name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1})
+        }
+        return out
       },
       orgId: {
         get () {

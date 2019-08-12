@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.apps import apps
 
@@ -67,10 +68,14 @@ class User(AbstractUser):
 
     def accessible_organizations(self):
         Organization = apps.get_model(app_label='organizations', model_name='Organization')
-        if self.organizations.filter(internal_id__in=settings.MASTER_ORGANIZATIONS).exists():
+        if self.is_from_master_organization:
             # user is part of one of the master organizations - he should have access to all orgs
             return Organization.objects.all()
         return self.organizations.all()
+
+    @cached_property
+    def is_from_master_organization(self):
+        return self.organizations.filter(internal_id__in=settings.MASTER_ORGANIZATIONS).exists()
 
 
 class Identity(models.Model):

@@ -24,7 +24,7 @@
 
         </v-layout>
 
-        <section v-if="selectedOrganization && platform">
+        <section v-if="selectedOrganizationId && platform">
             <v-layout>
                 <v-flex><h3>{{ $t('overview') }}</h3></v-flex>
                 <v-flex shrink>
@@ -47,7 +47,7 @@
 </template>
 
 <script>
-  import { mapActions, mapGetters } from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import TitleList from '../components/TitleList'
   import axios from 'axios'
   import CounterChartSet from '../components/CounterChartSet'
@@ -70,19 +70,21 @@
     },
     computed: {
       ...mapGetters({
-        selectedOrganization: 'selectedOrganization',
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
       }),
+      ...mapState({
+        selectedOrganizationId: 'selectedOrganizationId',
+      }),
       titleListURL () {
         if (this.platform !== null) {
-          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platform.pk}/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+          return `/api/organization/${this.selectedOrganizationId}/platform/${this.platform.pk}/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         }
         return null
       },
       reportTypesUrl () {
-        if (this.selectedOrganization && this.platformId) {
-            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/reports`
+        if (this.selectedOrganizationId && this.platformId) {
+            return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/reports`
         }
         return null
       },
@@ -104,8 +106,8 @@
         showSnackbar: 'showSnackbar',
       }),
       loadPlatform () {
-        if (this.selectedOrganization) {
-          axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/`)
+        if (this.selectedOrganizationId) {
+          axios.get(`/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/`)
             .then(response => {
               this.platform = response.data
             })
@@ -119,7 +121,7 @@
       this.loadPlatform()
     },
     watch: {
-      selectedOrganization () {
+      selectedOrganizationId () {
         this.loadPlatform()
       }
     }
