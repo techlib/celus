@@ -39,17 +39,24 @@
                 </table>
             </v-flex>
             <v-flex shrink>
-                <data-export-widget
-                        :title="titleId"
-                        :platform="platformId"
-                >
-                </data-export-widget>
                 <img  v-if="coverImg" :alt="$t('cover-image')" :src="coverImg" class="cover-image"/>
             </v-flex>
         </v-layout>
 
         <section v-if="isReady">
-            <h3>{{ $t('overview') }}</h3>
+            <v-layout>
+                <v-flex>
+                    <h3>{{ $t('overview') }}</h3>
+                </v-flex>
+                <v-flex shrink>
+                <data-export-widget
+                        :title="titleId"
+                        :platform="platformId"
+                >
+                </data-export-widget>
+                    
+                </v-flex>
+            </v-layout>
 
             <CounterChartSet
                     :chart-extend="chartExtend"
