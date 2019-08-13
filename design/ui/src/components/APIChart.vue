@@ -17,7 +17,7 @@
             v-else-if="type === 'bar'"
             :data="chartData"
             :settings="chartSettings"
-            :extend="extend"
+            :extend="chartExtend"
             :height="height"
             :loading="loading"
             :toolbox="chartToolbox"
@@ -104,6 +104,7 @@
       ...mapGetters({
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
+        selectedOrganization: 'selectedOrganization',
       }),
       dataURL () {
         let reportTypePart = ''  // used do decide if report type should be part of the URL
@@ -143,6 +144,30 @@
             rows: this.rows,
         }
       },
+      chartExtend () {
+        let colors = ['#ff0000', '#ff8844', '#ff4488', '#ff4444']
+        if (this.primaryDimension === 'organization') {
+          let that = this
+          return {
+            series(item) {
+              let organizationRowNum = that.organizationRow
+              console.log(item, organizationRowNum)
+              if (organizationRowNum) {
+                let serIdx = 0
+                for (let ser of item) {
+                  ser.data = ser.data.map((v, index) => ({
+                    value: v,
+                    itemStyle: {color: index === organizationRowNum ? colors[serIdx % 4] : null}
+                  }))
+                  serIdx++
+                }
+              }
+              return item
+            }
+          }
+        }
+        return {}
+      },
       rows () {
         // no secondary dimension
         if (this.secondaryDimension) {
@@ -173,6 +198,17 @@
           }
           return this.dataRaw
         }
+      },
+      organizationRow () {
+        let i = 0
+        for (let row of this.rows) {
+          console.log('ss', row.organization, this.selectedOrganization.name)
+          if (row.organization === this.selectedOrganization.name) {
+            return i
+          }
+          i++
+        }
+        return null
       },
       chartSettings () {
         let out = {}

@@ -176,16 +176,8 @@
         return null
       },
       chartExtend () {
-        return {}
-        /* return {
-          series (item) {
-            item[0].data = item[0].data.map((v, index) => ({
-              value: v,
-              itemStyle: { color: '#f00' }
-            }))
-            return item
-          }
-        } */
+        return {
+        }
       },
     },
     methods: {
