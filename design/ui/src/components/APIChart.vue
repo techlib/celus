@@ -246,7 +246,8 @@
         if (this.dataURL) {
           axios.get(this.dataURL)
             .then((response) => {
-              this.dataRaw = response.data.data
+              // reformat date value to exclude the day component
+              this.dataRaw = response.data.data.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
               this.loading = false
             }, (error) => {
               this.showSnackbar({content: 'Error fetching data: '+error})
