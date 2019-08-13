@@ -32,15 +32,9 @@
         if (!this.organizations) {
           return []
         }
-        let out = [] // [...Object.values(this.organizations)]
-        for (let [name, value] of Object.entries(this.organizations)) {
-          out.push(value)
-        }
+        let out = Object.values(this.organizations)
         if (out.length === 0)
           return []
-        console.log(typeof out)
-        console.log(out)
-        console.log(out[0])
         if (this.user && this.user.is_from_master_organization) {
           // the following is disabled for now until the performance is thoroughly tested
           // out.push({name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1})
