@@ -21,8 +21,8 @@
 
                 <h2 class="mb-4">{{ platform ? platform.name : '' }}</h2>
 
-                <v-layout>
-                    <v-flex shrink mr-4>
+                <v-layout row>
+                    <v-flex shrink mr-sm-4>
                         <table v-if="platform" class="overview mb-4 elevation-2">
                             <tr>
                                 <th>{{ $t('labels.provider') }}</th>

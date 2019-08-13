@@ -4,14 +4,13 @@
     <v-layout align-baseline>
         <v-flex class="sc" shrink mr-2>{{ $t('organization') }}:</v-flex>
         <v-flex>
-            <v-select
+            <v-autocomplete
                     v-model="orgId"
                     :items="items"
                     :item-text="lang ? 'name_'+lang : 'name'"
                     item-value="pk"
-                    class="short"
             >
-            </v-select>
+            </v-autocomplete>
         </v-flex>
     </v-layout>
 </template>
