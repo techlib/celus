@@ -12,6 +12,4 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         Should return only organizations associated with the current user
         :return:
         """
-        user = self.request.user
-        return user.organizations.all()
-
+        return self.request.user.accessible_organizations()

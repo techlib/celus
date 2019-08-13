@@ -59,7 +59,11 @@ def extract_accesslog_attr_query_params(
         if value:
             field = AccessLog._meta.get_field(dim_name)
             if isinstance(field, models.ForeignKey):
-                query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
+                if value not in (-1, '-1'):
+                    query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
+                else:
+                    # we ignore foreign keys with value -1
+                    pass
             else:
                 query_params[dim_name] = value
     return query_params

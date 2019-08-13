@@ -67,9 +67,9 @@ class User(AbstractUser):
         return self.email
 
     def accessible_organizations(self):
-        Organization = apps.get_model(app_label='organizations', model_name='Organization')
         if self.is_from_master_organization:
             # user is part of one of the master organizations - he should have access to all orgs
+            Organization = apps.get_model(app_label='organizations', model_name='Organization')
             return Organization.objects.all()
         return self.organizations.all()
 
