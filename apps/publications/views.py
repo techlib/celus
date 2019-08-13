@@ -52,8 +52,19 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
                      **interest_annot_params).\
             filter(title_count__gt=0)
         # the following creates the interest dict attr from the interest annotations
-        extract_interests_from_objects(interests, result)
+        if self.lookup_field not in self.kwargs:
+            # we are not filtering by id, so we are getting a list and thus adding interest here
+            # otherwise we will do it in get_object
+            extract_interests_from_objects(interests, result)
         return result
+
+    def get_object(self):
+        # we need to enrich the result here as the interests added in get_queryset would not
+        # survive the filtering done super().get_object()
+        obj = super().get_object()
+        interests = InterestGroup.objects.all()
+        extract_interests_from_objects(interests, [obj])
+        return obj
 
 
 class PlatformTitleViewSet(ReadOnlyModelViewSet):

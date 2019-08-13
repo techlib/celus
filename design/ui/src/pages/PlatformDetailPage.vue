@@ -20,6 +20,37 @@
                 </v-breadcrumbs>
 
                 <h2 class="mb-4">{{ platform ? platform.name : '' }}</h2>
+
+                <v-layout>
+                    <v-flex shrink mr-4>
+                        <table v-if="platform" class="overview mb-4 elevation-2">
+                            <tr>
+                                <th>{{ $t('labels.provider') }}</th>
+                                <td>{{ platform.provider }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ $t('labels.url') }}</th>
+                                <td><a :href="platform.url">{{ platform.url }}</a></td>
+                            </tr>
+                        </table>
+                    </v-flex>
+                    <v-flex>
+                        <table v-if="platform" class="overview mb-4 elevation-2">
+                            <tr>
+                                <th>{{ $t('labels.title_count') }}</th>
+                                <td class="text-right">{{ platform.title_count ? platform.title_count : '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ $t('interests.title') }}</th>
+                                <td class="text-right">{{ platform.interests.title.value ? platform.interests.title.value : '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ $t('interests.database') }}</th>
+                                <td class="text-right">{{ platform.interests.database.value ? platform.interests.database.value : '-' }}</td>
+                            </tr>
+                        </table>
+                    </v-flex>
+                </v-layout>
             </v-flex>
 
         </v-layout>
@@ -107,7 +138,7 @@
       }),
       loadPlatform () {
         if (this.selectedOrganizationId) {
-          axios.get(`/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/`)
+          axios.get(`/api/organization/${this.selectedOrganizationId}/detailed-platform/${this.platformId}/`)
             .then(response => {
               this.platform = response.data
             })
@@ -132,6 +163,17 @@
 
     .thin {
         font-weight: 300;
+    }
+
+
+    table.overview {
+
+        padding: 1rem;
+
+        th {
+            text-align: left;
+            padding-right: 1.5rem;
+        }
     }
 
 </style>

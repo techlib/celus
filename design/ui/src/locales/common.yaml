@@ -46,6 +46,8 @@ en:
     api_key: API key
     variable: Parameter name
     value: Parameter value
+    provider: Provider
+    title_count: Title count
   no_reports_available_for_title: No reports available for this title
   available_report_types: Available report types
   interests:
@@ -102,6 +104,8 @@ cs:
     api_key: API key
     variable: Název parametru
     value: Hodnota parametru
+    provider: Poskytovatel
+    title_count: Počet titulů a databází
   no_reports_available_for_title: Pro tento titul nejsou dostupné žádné zprávy
   available_report_types: Dostupné typy zpráv
   interests:
