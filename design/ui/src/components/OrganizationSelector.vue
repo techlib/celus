@@ -35,7 +35,8 @@
         }
         let out = Object.values(this.organizations)
         if (this.user && this.user.is_from_master_organization) {
-          out.push({name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1})
+          // the following is disabled for now until the performance is thoroughly tested
+          // out.push({name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1})
         }
         return out
       },
