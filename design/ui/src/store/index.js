@@ -138,6 +138,9 @@ export default new Vuex.Store({
         .then(response => {
           let organizations = {}
           for (let rec of response.data) {
+            if (rec['name_cs'] === null) {
+              rec['name_cs'] = rec['name']
+            }
             organizations[rec.pk] = rec
           }
           context.commit('setOrganizations', organizations)

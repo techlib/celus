@@ -32,11 +32,21 @@
         if (!this.organizations) {
           return []
         }
-        let out = Object.values(this.organizations)
+        let out = [] // [...Object.values(this.organizations)]
+        for (let [name, value] of Object.entries(this.organizations)) {
+          out.push(value)
+        }
+        if (out.length === 0)
+          return []
+        console.log(typeof out)
+        console.log(out)
+        console.log(out[0])
         if (this.user && this.user.is_from_master_organization) {
           // the following is disabled for now until the performance is thoroughly tested
           // out.push({name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1})
         }
+        let loc_name = this.lang ? `name_${this.lang}` : 'name'
+        out.sort((a, b) => ((a[loc_name] ? a[loc_name] : a['name']).localeCompare((b[loc_name] ? b[loc_name] : b['name']))))
         return out
       },
       orgId: {
