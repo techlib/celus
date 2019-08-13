@@ -151,7 +151,6 @@
           return {
             series(item) {
               let organizationRowNum = that.organizationRow
-              console.log(item, organizationRowNum)
               if (organizationRowNum) {
                 let serIdx = 0
                 for (let ser of item) {
@@ -202,7 +201,6 @@
       organizationRow () {
         let i = 0
         for (let row of this.rows) {
-          console.log('ss', row.organization, this.selectedOrganization.name)
           if (row.organization === this.selectedOrganization.name) {
             return i
           }
