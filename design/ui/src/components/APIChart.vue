@@ -90,11 +90,12 @@
       zoom: {
         type: Boolean,
         default: true,
-      }
+      },
+      orderBy: {},
     },
     data () {
       return {
-        data_raw: [],
+        dataRaw: [],
         data_meta: null,
         loading: true,
       }
@@ -124,7 +125,7 @@
       columns () {
         if (this.loading)
           return []
-        if (this.data_raw.length === 0)
+        if (this.dataRaw.length === 0)
           return []
         if (this.secondaryDimension) {
           let rows = this.rows
@@ -145,14 +146,17 @@
       rows () {
         if (this.secondaryDimension) {
           return jsonToPivotjson(
-            this.data_raw,
+            this.dataRaw,
             {
               row: this.primaryDimension,
               column: this.secondaryDimension,
               value: 'count',
             })
         }
-        return this.data_raw
+        if (this.orderBy) {
+          this.dataRaw.sort((a, b) => {return a[this.orderBy] - b[this.orderBy]})
+        }
+        return this.dataRaw
       },
       chartSettings () {
         let out = {}
@@ -222,11 +226,11 @@
       }),
       loadData() {
         this.loading = true
-        this.data_raw = []
+        this.dataRaw = []
         if (this.dataURL) {
           axios.get(this.dataURL)
             .then((response) => {
-              this.data_raw = response.data.data
+              this.dataRaw = response.data.data
               this.loading = false
             }, (error) => {
               this.showSnackbar({content: 'Error fetching data: '+error})

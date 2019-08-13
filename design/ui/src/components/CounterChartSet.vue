@@ -32,6 +32,7 @@
                 :title="titleId"
                 :extend="chartExtend"
                 :stack="this.selectedChartType.stack === undefined ? true : this.selectedChartType.stack"
+                :order-by="this.selectedChartType.orderBy === undefined ? null : this.selectedChartType.orderBy"
         >
         </APIChart>
         <div v-else>
@@ -76,7 +77,7 @@
           {name: this.$i18n.t('chart.interest_in_time'), primary: 'date', secondary: 'interest', type: 'histogram', stack: false, reportType: null},
           {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric', type: 'histogram', stack: false},
           {name: this.$i18n.t('chart.metric'), primary: 'metric'},
-          {name: this.$i18n.t('chart.organization'), primary: 'organization', type: 'bar'},
+          {name: this.$i18n.t('chart.organization'), primary: 'organization', type: 'bar', orderBy: 'count'},
         ]
         let extra = [
           {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
