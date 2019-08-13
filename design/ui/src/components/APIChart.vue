@@ -144,19 +144,35 @@
         }
       },
       rows () {
+        // no secondary dimension
         if (this.secondaryDimension) {
-          return jsonToPivotjson(
+          let out = jsonToPivotjson(
             this.dataRaw,
             {
               row: this.primaryDimension,
               column: this.secondaryDimension,
               value: 'count',
             })
+          if (this.orderBy) {
+            // NOTE: order by sum of values - it does not matter how is the orderBy called
+            function sumNonPrimary (rec) {
+              // remove value of primary dimension, sum the rest
+              return Object.entries(rec).filter(([a, b]) => a !== this.primaryDimension).map(([a, b]) => b).reduce((x, y) => x + y)
+            }
+            let sum = sumNonPrimary.bind(this)
+            out.sort((a, b) => (sum(a) - sum(b)))
+          }
+          return out
+        } else {
+          // secondary dimension
+          if (this.orderBy) {
+            // order by
+            this.dataRaw.sort((a, b) => {
+              return a[this.orderBy] - b[this.orderBy]
+            })
+          }
+          return this.dataRaw
         }
-        if (this.orderBy) {
-          this.dataRaw.sort((a, b) => {return a[this.orderBy] - b[this.orderBy]})
-        }
-        return this.dataRaw
       },
       chartSettings () {
         let out = {}
