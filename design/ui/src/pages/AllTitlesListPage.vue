@@ -3,7 +3,7 @@
 
 <template>
     <div>
-        <section v-if="selectedOrganization">
+        <section v-if="selectedOrganizationId">
 
             <h3 class="pt-3">{{ $t('titles') }}</h3>
             <TitleList :url="titleListURL"></TitleList>
@@ -12,7 +12,7 @@
 </template>
 
 <script>
-  import { mapActions, mapGetters } from 'vuex'
+  import {mapActions, mapGetters, mapState} from 'vuex'
   import TitleList from '../components/TitleList'
 
   export default {
@@ -28,12 +28,14 @@
     },
     computed: {
       ...mapGetters({
-        selectedOrganization: 'selectedOrganization',
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
       }),
+      ...mapState({
+        selectedOrganizationId: 'selectedOrganizationId',
+      }),
       titleListURL () {
-        return `/api/organization/${this.selectedOrganization.pk}/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        return `/api/organization/${this.selectedOrganizationId}/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
       },
     },
     methods: {

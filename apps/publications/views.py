@@ -1,6 +1,4 @@
-from django.db.models import Count, Sum, Q, F, ExpressionWrapper, FloatField, Max, Min
-from django.db.models.functions import Cast
-from django.http import Http404
+from django.db.models import Count, Sum, Q, Max, Min
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -107,17 +105,14 @@ class BaseReportTypeViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ReportTypeSerializer
 
-    def _extra_filters(self):
+    def _extra_filters(self, org_filter):
         return {}
 
     def get_queryset(self):
         org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
                                                      self.request.user)
-        platform = get_object_or_404(Platform.objects.filter(**org_filter),
-                                     pk=self.kwargs['platform_pk'])
-        access_log_filter = Q(accesslog__platform=platform,
-                              **extend_query_filter(org_filter, 'accesslog__'),
-                              **self._extra_filters())
+        access_log_filter = Q(**extend_query_filter(org_filter, 'accesslog__'),
+                              **self._extra_filters(org_filter))
         report_types = ReportType.objects.filter(access_log_filter).\
             annotate(log_count=Count('accesslog__value', filter=access_log_filter),
                      newest_log=Max('accesslog__date', filter=access_log_filter),
@@ -132,7 +127,10 @@ class PlatformReportTypeViewSet(BaseReportTypeViewSet):
     Provides a list of report types for specific organization and platform
     """
 
-    pass
+    def _extra_filters(self, org_filter):
+        platform = get_object_or_404(Platform.objects.filter(**org_filter),
+                                     pk=self.kwargs['platform_pk'])
+        return {'accesslog__platform': platform}
 
 
 class PlatformTitleReportTypeViewSet(BaseReportTypeViewSet):
@@ -142,31 +140,23 @@ class PlatformTitleReportTypeViewSet(BaseReportTypeViewSet):
 
     serializer_class = ReportTypeSerializer
 
-    def _extra_filters(self):
+    def _extra_filters(self, org_filter):
+        platform = get_object_or_404(Platform.objects.filter(**org_filter),
+                                     pk=self.kwargs['platform_pk'])
         title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
-        return {'accesslog__target': title}
+        return {'accesslog__target': title, 'accesslog__platform': platform}
 
 
-class TitleReportTypeViewSet(ReadOnlyModelViewSet):
+class TitleReportTypeViewSet(BaseReportTypeViewSet):
     """
     Provides a list of report types for specific title for specific organization
     """
 
     serializer_class = ReportTypeSerializer
 
-    def get_queryset(self):
-        organization = get_object_or_404(self.request.user.organizations.all(),
-                                         pk=self.kwargs['organization_pk'])
+    def _extra_filters(self, org_filter):
         title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
-        access_log_filter = Q(accesslog__organization=organization,
-                              accesslog__metric__active=True)    # TODO: x
-        report_types = ReportType.objects.filter(accesslog__target=title).\
-            annotate(log_count=Count('accesslog__value', filter=access_log_filter),
-                     newest_log=Max('accesslog__date', filter=access_log_filter),
-                     oldest_log=Min('accesslog__date', filter=access_log_filter),
-                     ).\
-            filter(log_count__gt=0).order_by('-newest_log')
-        return report_types
+        return {'accesslog__target': title}
 
 
 class TitleViewSet(ReadOnlyModelViewSet):
@@ -177,9 +167,10 @@ class TitleViewSet(ReadOnlyModelViewSet):
         """
         Should return only titles for specific organization but all platforms
         """
-        organization = get_object_or_404(self.request.user.organizations.all(),
-                                         pk=self.kwargs['organization_pk'])
-        return Title.objects.filter(accesslog__organization=organization).distinct()
+        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
+                                                     self.request.user,
+                                                     prefix='accesslog__')
+        return Title.objects.filter(**org_filter).distinct()
 
 
 class TitleCountsViewSet(ReadOnlyModelViewSet):
@@ -193,11 +184,11 @@ class TitleCountsViewSet(ReadOnlyModelViewSet):
         """
         Should return only titles for specific organization but all platforms
         """
-        organization = get_object_or_404(self.request.user.organizations.all(),
-                                         pk=self.kwargs['organization_pk'])
+        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
+                                                     self.request.user)
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
-        return Title.objects.filter(accesslog__organization=organization,
-                                    accesslog__metric__interest_group__isnull=False,
+        return Title.objects.filter(accesslog__metric__interest_group__isnull=False,
+                                    **extend_query_filter(org_filter, 'accesslog__'),
                                     **date_filter_params).\
             distinct().annotate(interest=Sum('accesslog__value'))
 
