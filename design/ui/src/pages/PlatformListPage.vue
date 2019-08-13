@@ -38,6 +38,7 @@ cs:
                 :hide-default-footer="true"
                 :items-per-page="-1"
                 :search="search"
+                sort-by="name"
         >
             <template v-slot:item.name="props">
                 <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
@@ -47,10 +48,6 @@ cs:
             </template>
               <template v-slot:item.interests.database.value="props">
                 {{ props.item.interests.database ? props.item.interests.database.value : '-' }}
-            </template>
-            <template v-slot:item.url="props">
-                <a v-if="props.item.url" :href="props.item.url" target="_blank">{{ props.item.url }}</a>
-                <span v-else>-</span>
             </template>
         </v-data-table>
         </v-card>
@@ -108,10 +105,6 @@ cs:
           {
             text: this.$i18n.t('columns.provider'),
             value: 'provider'
-          },
-          {
-            text: 'URL',
-            value: 'url'
           },
         ]
       }
