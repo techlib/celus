@@ -203,13 +203,14 @@
       },
       dataZoom () {
         if (this.zoom) {
-          return [{
-            type: 'slider',
-            start: 0,
-            end: 100,
-            //height: 20,
-            //handleSize: 20,
-          }]
+          return [
+            {
+              type: 'slider',
+              start: 0,
+              end: 100,
+              yAxisIndex: this.type === 'bar' ? 0 : null,
+            },
+          ]
         } else {
           return []
         }
