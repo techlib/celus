@@ -145,14 +145,17 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
         }
         for i, dim in enumerate(dimensions):
             dim_value = record.dimension_data.get(dim.short_name)
-            if dim.type != dim.TYPE_INT and dim_value is not None:
-                remap = text_to_int_remaps.get(dim.pk)
-                if not remap:
-                    remap = {}
-                    text_to_int_remaps[dim.pk] = remap
-                dim_text_obj = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
-                                                      other_attrs={'dimension_id': dim.pk})
-                dim_value = dim_text_obj.pk
+            if dim.type != dim.TYPE_INT:
+                if dim_value is not None:
+                    remap = text_to_int_remaps.get(dim.pk)
+                    if not remap:
+                        remap = {}
+                        text_to_int_remaps[dim.pk] = remap
+                    dim_text_obj = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
+                                                          other_attrs={'dimension_id': dim.pk})
+                    dim_value = dim_text_obj.pk
+            else:
+                dim_value = int(dim_value)
             id_attrs[f'dim{i+1}'] = dim_value
         key = tuple(sorted(id_attrs.items()))
         if key in to_insert:
@@ -167,10 +170,11 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
                                         date__gte=min(seen_dates))
     to_compare = {}
     for al_rec in to_check.values('pk', 'organization_id', 'platform_id', 'report_type_id',
-                                  'date', 'value',
+                                  'date', 'value', 'target_id', 'metric_id',
                                   *[f'dim{i+1}' for i, d in enumerate(dimensions)]):
         pk = al_rec.pop('pk')
         value = al_rec.pop('value')
+        al_rec['date'] = al_rec['date'].isoformat()
         key = tuple(sorted(al_rec.items()))
         to_compare[key] = (pk, value)
     # make the comparison
