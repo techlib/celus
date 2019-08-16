@@ -2,7 +2,8 @@ from rest_framework.fields import CharField, IntegerField, DateField
 from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import ModelSerializer, BaseSerializer
 
-from logs.models import AccessLog
+from core.serializers import UserSerializer
+from logs.models import AccessLog, ImportBatch
 from .models import Metric, Dimension, ReportType
 
 
@@ -61,3 +62,12 @@ class AccessLogSerializer(BaseSerializer):
 
     def get_fields(self):
         return []
+
+
+class ImportBatchSerializer(ModelSerializer):
+
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = ImportBatch
+        fields = ('pk', 'created', 'user', 'owner_level', 'accesslog_count')

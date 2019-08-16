@@ -13,9 +13,9 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from core.logic.dates import date_filter_from_params
 from logs.logic.queries import extract_accesslog_attr_query_params
 from logs.logic.remap import remap_dicts
-from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric
+from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
-    AccessLogSerializer
+    AccessLogSerializer, ImportBatchSerializer
 
 
 class Counter5DataView(APIView):
@@ -271,3 +271,13 @@ class RawDataExportView(PandasView):
             extract_accesslog_attr_query_params(request.GET, dimensions=cls.implicit_dims))
         return query_params
 
+
+class ImportBatchViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = ImportBatchSerializer
+    queryset = ImportBatch.objects.none()
+
+    def get_queryset(self):
+        if self.request.user.is_from_master_organization:
+            return ImportBatch.objects.all()
+        return ImportBatch.objects.filter(user=self.request.user)

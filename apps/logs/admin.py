@@ -57,3 +57,13 @@ class AccessLogAdmin(admin.ModelAdmin):
 class InterestGroupAdmin(admin.ModelAdmin):
 
     list_display = ['short_name', 'name']
+
+
+@admin.register(models.ImportBatch)
+class ImportBatchAdmin(admin.ModelAdmin):
+
+    list_display = ['created', 'user', 'owner_level', 'log_count']
+
+    @classmethod
+    def log_count(cls, obj: models.ImportBatch):
+        return obj.accesslog_set.count()

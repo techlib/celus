@@ -1,4 +1,7 @@
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -137,6 +140,36 @@ class ReportTypeToDimension(models.Model):
         return '{}-{} #{}'.format(self.report_type, self.dimension, self.position)
 
 
+class ImportBatch(models.Model):
+
+    """
+    Represents one batch of imported data. Such data share common source, such as a file
+    and the user who created them.
+    """
+
+    created = models.DateTimeField(default=now)
+    system_created = models.BooleanField(default=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                             on_delete=models.SET_NULL)
+    owner_level = models.PositiveSmallIntegerField(
+        choices=USER_LEVEL_CHOICES,
+        default=UL_ROBOT,
+        help_text='Level of user who created this record - used to determine who can modify it'
+    )
+
+    class Meta:
+        verbose_name_plural = "Import batches"
+
+    def clean(self):
+        super().clean()
+        if not self.system_created and not self.user:
+            raise ValidationError('When system_created is False, user must be filled in')
+
+    @cached_property
+    def accesslog_count(self):
+        return self.accesslog_set.count()
+
+
 class AccessLog(models.Model):
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
@@ -161,6 +194,7 @@ class AccessLog(models.Model):
         default=UL_ROBOT,
         help_text='Level of user who created this record - used to determine who can modify it'
     )
+    import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE)
 
 
 class DimensionText(models.Model):

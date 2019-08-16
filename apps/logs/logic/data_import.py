@@ -1,6 +1,9 @@
 import logging
 from collections import Counter
 
+from django.db.models import F
+
+from logs.models import ImportBatch
 from organizations.models import Organization
 from publications.models import Title, Platform
 from ..models import ReportType, Metric, DimensionText, OrganizationPlatform, AccessLog
@@ -31,6 +34,7 @@ class TitleManager(object):
         'other': Title.PUB_TYPE_OTHER,
         'report': Title.PUB_TYPE_REPORT,
         'newspaper or newsletter': Title.PUB_TYPE_NEWSPAPER,
+        'multimedia': Title.PUB_TYPE_MULTIMEDIA,
     }
 
     def __init__(self):
@@ -110,7 +114,7 @@ class TitleManager(object):
 
 
 def import_counter_records(report_type: ReportType, organization: Organization, platform: Platform,
-                           records: [CounterRecord]) -> Counter:
+                           records: [CounterRecord], import_batch: ImportBatch) -> Counter:
     stats = Counter()
     # prepare all remaps
     metrics = {metric.short_name: metric for metric in Metric.objects.all()}
@@ -148,15 +152,32 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
                                                       other_attrs={'dimension_id': dim.pk})
                 dim_value = dim_text_obj.pk
             id_attrs[f'dim{i+1}'] = dim_value
-        al, created = AccessLog.objects.get_or_create(**id_attrs, defaults={'value': record.value})
+        al, created = AccessLog.objects.get_or_create(**id_attrs,
+                                                      defaults={'value': record.value,
+                                                                'import_batch': import_batch})
         if created:
             stats['new logs'] += 1
         else:
-            if al.value != record.value:
-                logger.warning(f'Clashing values between import and db: '
-                               f'{record.value} x {al.value}')
-                stats['update logs'] += 1
+            # let's check if the two values come from the same file
+            # (then we should sum them) or from different once - then we replace
+            if al.import_batch_id != import_batch.pk:
+                if al.value != record.value:
+                    logger.warning(f'Clashing values between import and db: '
+                                   f'{record.value} x {al.value}')
+                    al.value = record.value
+                    al.save()
+                    stats['updated logs'] += 1
+                else:
+                    logger.info('Record already present with the same value from other import')
+                    stats['skipped logs'] += 1
             else:
-                logger.info('Record already present with the same value')
-                stats['skipped logs'] += 1
+                # we need to merge these
+                logger.warning(f'Merging duplicated values in the same import batch: '
+                               f'{record.value} x {al.value}')
+                if record.value != 0:
+                    # do not add zero ;)
+                    al.value = F('value') + record.value
+                    al.save()
+                stats['merged logs'] += 1
+
     return stats

@@ -10,6 +10,7 @@ from django.db import models
 from django.utils.timezone import now
 from pycounter.exceptions import SushiException
 
+from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri
 from organizations.models import Organization
 from publications.models import Platform
@@ -206,6 +207,7 @@ class SushiFetchAttempt(models.Model):
                                        help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     when_queued = models.DateTimeField(null=True, blank=True)
+    import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         status = 'SUCCESS' if self.success else 'FAILURE'

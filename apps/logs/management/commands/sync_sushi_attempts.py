@@ -8,6 +8,7 @@ from django.conf import settings
 
 from pycounter import report
 
+from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, SushiException
 from sushi.models import SushiFetchAttempt
 from ...logic.data_import import import_counter_records
@@ -74,15 +75,20 @@ class Command(BaseCommand):
                 f'and {op.platform}'
             ))
         # now read the data and import it
-
         records = reader.read_report(data)
-        stats = import_counter_records(
-            attempt.counter_report.report_type,
-            attempt.credentials.organization,
-            attempt.credentials.platform,
-            records)
+        if records:
+            import_batch = ImportBatch.objects.create()
+            stats = import_counter_records(
+                attempt.counter_report.report_type,
+                attempt.credentials.organization,
+                attempt.credentials.platform,
+                records,
+                import_batch)
+            attempt.import_batch = import_batch
+            self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
+        else:
+            self.stderr.write(self.style.ERROR(f'No records found!'))
         attempt.mark_processed()
-        self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
 
     def get_reader_v4(self, attempt: SushiFetchAttempt):
         if attempt.counter_report.report_type.short_name == 'JR1':

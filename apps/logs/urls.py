@@ -6,12 +6,13 @@ from . import views
 router = DefaultRouter()
 router.register(r'report-type', views.ReportTypeViewSet, basename='report-type')
 router.register(r'metric', views.MetricViewSet)
+router.register(r'import-batch', views.ImportBatchViewSet)
 
 urlpatterns = [
     path('chart-data/<report_name>/', views.Counter5DataView.as_view(), name='chart_data'),
     path('chart-data/', views.Counter5DataView.as_view(), {'report_name': None},
          name='chart_data'),
-    path('raw-data/', views.RawDataExportView.as_view())
+    path('raw-data/', views.RawDataExportView.as_view()),
 ]
 
 urlpatterns += router.urls

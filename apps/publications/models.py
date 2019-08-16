@@ -23,6 +23,7 @@ class Title(models.Model):
     PUB_TYPE_OTHER = 'O'
     PUB_TYPE_REPORT = 'R'
     PUB_TYPE_NEWSPAPER = 'N'
+    PUB_TYPE_MULTIMEDIA = 'M'
     PUB_TYPE_CHOICES = (
         (PUB_TYPE_BOOK, _('Book')),
         (PUB_TYPE_JOURNAL, _('Journal')),
@@ -31,6 +32,7 @@ class Title(models.Model):
         (PUB_TYPE_OTHER, _('Other')),
         (PUB_TYPE_REPORT, _('Report')),
         (PUB_TYPE_NEWSPAPER, _('Newspaper')),
+        (PUB_TYPE_MULTIMEDIA, _('Multimedia')),
     )
     PUB_TYPE_MAP = dict(PUB_TYPE_CHOICES)
 
