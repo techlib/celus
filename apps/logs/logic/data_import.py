@@ -124,8 +124,10 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
             text_to_int_remaps[dim_text.dimension_id] = {}
         text_to_int_remaps[dim_text.dimension_id][dim_text.text] = dim_text
     tm = TitleManager()
-    #
+    # prepare raw data to be inserted into the database
     dimensions = report_type.dimensions_sorted
+    to_insert = {}
+    seen_dates = set()
     for record in records:  # type: CounterRecord
         # attributes that define the identity of the log
         title_id = tm.get_or_create_from_counter_record(record)
@@ -134,10 +136,10 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
             stats['error'] += 1
             continue
         id_attrs = {
-            'report_type': report_type,
-            'metric': get_or_create_with_map(Metric, metrics, 'short_name', record.metric),
-            'organization': organization,
-            'platform': platform,
+            'report_type_id': report_type.pk,
+            'metric_id': get_or_create_with_map(Metric, metrics, 'short_name', record.metric).pk,
+            'organization_id': organization.pk,
+            'platform_id': platform.pk,
             'target_id': title_id,
             'date': record.start,
         }
@@ -152,32 +154,42 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
                                                       other_attrs={'dimension_id': dim.pk})
                 dim_value = dim_text_obj.pk
             id_attrs[f'dim{i+1}'] = dim_value
-        al, created = AccessLog.objects.get_or_create(**id_attrs,
-                                                      defaults={'value': record.value,
-                                                                'import_batch': import_batch})
-        if created:
-            stats['new logs'] += 1
+        key = tuple(sorted(id_attrs.items()))
+        if key in to_insert:
+            to_insert[key] += record.value
         else:
-            # let's check if the two values come from the same file
-            # (then we should sum them) or from different once - then we replace
-            if al.import_batch_id != import_batch.pk:
-                if al.value != record.value:
-                    logger.warning(f'Clashing values between import and db: '
-                                   f'{record.value} x {al.value}')
-                    al.value = record.value
-                    al.save()
-                    stats['updated logs'] += 1
-                else:
-                    logger.info('Record already present with the same value from other import')
-                    stats['skipped logs'] += 1
+            to_insert[key] = record.value
+        seen_dates.add(record.start)
+    # compare the prepared data with current database content
+    # get the candidates
+    to_check = AccessLog.objects.filter(organization=organization, platform=platform,
+                                        report_type=report_type, date__lte=max(seen_dates),
+                                        date__gte=min(seen_dates))
+    to_compare = {}
+    for al_rec in to_check.values('pk', 'organization_id', 'platform_id', 'report_type_id',
+                                  'date', 'value',
+                                  *[f'dim{i+1}' for i, d in enumerate(dimensions)]):
+        pk = al_rec.pop('pk')
+        value = al_rec.pop('value')
+        key = tuple(sorted(al_rec.items()))
+        to_compare[key] = (pk, value)
+    # make the comparison
+    dicts_to_insert = []
+    for key, value in to_insert.items():
+        db_pk, db_value = to_compare.get(key, (None, None))
+        if db_pk:
+            if value != db_value:
+                logger.warning(f'Clashing values between import and db: {db_value} x {value}')
+                stats['updated logs'] += 1
             else:
-                # we need to merge these
-                logger.warning(f'Merging duplicated values in the same import batch: '
-                               f'{record.value} x {al.value}')
-                if record.value != 0:
-                    # do not add zero ;)
-                    al.value = F('value') + record.value
-                    al.save()
-                stats['merged logs'] += 1
-
+                logger.info('Record already present with the same value from other import')
+                stats['skipped logs'] += 1
+        else:
+            rec = dict(key)
+            rec['value'] = value
+            dicts_to_insert.append(rec)
+    # now insert the records that are clean to be inserted
+    AccessLog.objects.bulk_create([AccessLog(import_batch=import_batch, **rec)
+                                   for rec in dicts_to_insert])
+    stats['new'] += len(dicts_to_insert)
     return stats
