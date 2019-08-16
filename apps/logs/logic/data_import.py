@@ -155,7 +155,7 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
                                                           other_attrs={'dimension_id': dim.pk})
                     dim_value = dim_text_obj.pk
             else:
-                dim_value = int(dim_value)
+                dim_value = int(dim_value) if dim_value is not None else None
             id_attrs[f'dim{i+1}'] = dim_value
         key = tuple(sorted(id_attrs.items()))
         if key in to_insert:
