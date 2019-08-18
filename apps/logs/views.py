@@ -1,7 +1,7 @@
 from typing import Optional
 
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.http import Http404
 from pandas import DataFrame
 from rest_pandas import PandasView
@@ -279,5 +279,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_from_master_organization:
-            return ImportBatch.objects.all()
-        return ImportBatch.objects.filter(user=self.request.user)
+            return ImportBatch.objects.all().annotate(accesslog_count=Count('accesslog'))
+        return ImportBatch.objects.filter(user=self.request.user).\
+            annotate(accesslog_count=Count('accesslog'))
