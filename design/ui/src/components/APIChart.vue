@@ -151,7 +151,7 @@
           return {
             series(item) {
               let organizationRowNum = that.organizationRow
-              if (organizationRowNum) {
+              if (organizationRowNum !== null) {
                 let serIdx = 0
                 for (let ser of item) {
                   ser.data = ser.data.map((v, index) => ({
@@ -296,7 +296,7 @@
         return dim
       }
     },
-    created () {
+    mounted () {
       this.loadData()
     },
     watch: {

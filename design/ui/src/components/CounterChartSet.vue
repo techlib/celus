@@ -15,14 +15,13 @@
         </v-flex>
 
         <v-flex class="mt-3 mb-3">
-            <v-btn-toggle v-model="chartTypeIndex" mandatory class="flex-sm-wrap">
-                <v-btn v-for="(chartType, index) in chartTypes " text :value="index" :key="index">
-                    {{ chartType.name }}
-                </v-btn>
-            </v-btn-toggle>
+            <ChartTypeSelector
+                    :extra-chart-types="extraChartTypes"
+                    :report-type="selectedReportTypeObject"
+                    v-model="selectedChartType"/>
         </v-flex>
         <APIChart
-                v-if="selectedReportType"
+                v-if="selectedReportType && selectedChartType"
                 :type="selectedChartType.type === undefined ? 'histogram' : selectedChartType.type"
                 :report-type-name="selectedChartType.reportType === null ? null : selectedReportType"
                 :primary-dimension="selectedChartType.primary"
@@ -44,10 +43,11 @@
   import APIChart from './APIChart'
   import { mapGetters, mapState } from 'vuex'
   import axios from 'axios'
+  import ChartTypeSelector from './ChartTypeSelector'
 
   export default {
     name: 'CounterChartSet',
-    components: {APIChart},
+    components: {APIChart, ChartTypeSelector},
     props: {
       chartExtend: {},
       platformId: {},
@@ -62,6 +62,7 @@
         chartTypeIndex: 0,
         reportTypes: [], // report types available for this title
         selectedReportType: null,
+        selectedChartType: null,
       }
     },
     computed: {
@@ -72,33 +73,6 @@
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
       }),
-      chartTypes () {
-        let base = [
-          {name: this.$i18n.t('chart.interest_in_time'), primary: 'date', secondary: 'interest', type: 'histogram', stack: false, reportType: null},
-          {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric', type: 'histogram', stack: false},
-          {name: this.$i18n.t('chart.metric'), primary: 'metric'},
-          {name: this.$i18n.t('chart.organization'), primary: 'organization', secondary: 'interest', type: 'bar', orderBy: 'count'},
-        ]
-        let extra = [
-          {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
-          {name: this.$i18n.t('chart.accessmethod'), primary: 'Access_Method'},
-          {name: this.$i18n.t('chart.datatype'), primary: 'Data_Type'},
-          {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
-          {name: this.$i18n.t('chart.yop'), primary: 'YOP', secondary: 'Data_Type', stack: true},
-        ]
-        let reportType = this.selectedReportTypeObject
-        if (reportType) {
-          let dimNames = reportType.dimensions_sorted.map(dim => dim.short_name)
-          for (let option of extra) {
-            if (dimNames.indexOf(option.primary) >= 0) {
-              if (!option.secondary || dimNames.indexOf(option.secondary) >= 0)
-                base.push(option)
-            }
-          }
-        }
-        this.extraChartTypes.map(item => base.push(item))
-        return base
-      },
       organizationForChart () {
         /* which organization should be reported to the APIChart component
         * - in case we want to compare organizations, we should not add organization to
@@ -117,9 +91,6 @@
             return rt
         }
         return null
-      },
-      selectedChartType () {
-        return this.chartTypes[this.chartTypeIndex]
       },
     },
     methods: {
@@ -163,7 +134,7 @@
     watch: {
       selectedReportType () {
         this.chartTypeIndex = 0
-      }
+      },
     },
     mounted () {
       this.loadReportTypes()

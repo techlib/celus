@@ -115,7 +115,7 @@
       },
       reportTypesUrl () {
         if (this.selectedOrganizationId && this.platformId) {
-            return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/reports`
+            return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/reports/`
         }
         return null
       },

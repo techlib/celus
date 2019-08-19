@@ -167,10 +167,10 @@
       reportTypesUrl () {
         if (this.selectedOrganization && this.titleId) {
           if (this.platformId) {
-            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/reports`
+            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/reports/`
           } else {
             // this is the case when no platform is specified
-            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/reports`
+            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/reports/`
           }
         }
         return null
