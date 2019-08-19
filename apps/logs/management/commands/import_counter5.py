@@ -48,7 +48,8 @@ class Command(BaseCommand):
         records = reader.read_report(data)
         self.stderr.write(f'Time #2: {time() - t2}\n')
         t3 = time()
-        import_batch = ImportBatch.objects.create()
+        import_batch = ImportBatch.objects.create(organization=organization, platform=platform,
+                                                  report_type=report_type)
         stats = import_counter_records(report_type, organization, platform, records, import_batch)
         self.stderr.write(f'Time #3: {time() - t3}\n')
         self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))

@@ -147,6 +147,9 @@ class ImportBatch(models.Model):
     and the user who created them.
     """
 
+    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
     created = models.DateTimeField(default=now)
     system_created = models.BooleanField(default=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
@@ -156,6 +159,7 @@ class ImportBatch(models.Model):
         default=UL_ROBOT,
         help_text='Level of user who created this record - used to determine who can modify it'
     )
+    log = models.TextField(blank=True)
 
     class Meta:
         verbose_name_plural = "Import batches"

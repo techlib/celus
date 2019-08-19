@@ -77,7 +77,11 @@ class Command(BaseCommand):
         # now read the data and import it
         records = reader.read_report(data)
         if records:
-            import_batch = ImportBatch.objects.create()
+            import_batch = ImportBatch.objects.create(
+                platform=attempt.credentials.platform,
+                organization=attempt.credentials.organization,
+                report_type=attempt.counter_report.report_type,
+            )
             stats = import_counter_records(
                 attempt.counter_report.report_type,
                 attempt.credentials.organization,

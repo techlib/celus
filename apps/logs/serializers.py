@@ -4,6 +4,8 @@ from rest_framework.serializers import ModelSerializer, BaseSerializer
 
 from core.serializers import UserSerializer
 from logs.models import AccessLog, ImportBatch
+from organizations.serializers import OrganizationSerializer
+from publications.serializers import PlatformSerializer
 from .models import Metric, Dimension, ReportType
 
 
@@ -67,7 +69,24 @@ class AccessLogSerializer(BaseSerializer):
 class ImportBatchSerializer(ModelSerializer):
 
     user = UserSerializer(read_only=True)
+    report_type = StringRelatedField()
+    organization = StringRelatedField()
+    platform = StringRelatedField()
 
     class Meta:
         model = ImportBatch
-        fields = ('pk', 'created', 'user', 'owner_level', 'accesslog_count')
+        fields = ('pk', 'created', 'organization', 'platform', 'report_type', 'system_created',
+                  'user', 'owner_level')
+
+
+class ImportBatchVerboseSerializer(ModelSerializer):
+
+    user = UserSerializer(read_only=True)
+    organization = OrganizationSerializer(read_only=True)
+    platform = PlatformSerializer(read_only=True)
+    report_type = ReportTypeSerializer(read_only=True)
+
+    class Meta:
+        model = ImportBatch
+        fields = ('pk', 'created', 'organization', 'platform', 'report_type', 'system_created',
+                  'user', 'owner_level', 'accesslog_count')

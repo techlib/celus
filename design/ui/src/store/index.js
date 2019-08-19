@@ -55,13 +55,23 @@ export default new Vuex.Store({
     },
     avatarText: state => {
       if (state.user) {
-        return state.user.email[0].toUpperCase()
+        if (state.user.email) {
+          return state.user.email[0].toUpperCase()
+        } else {
+          return state.user.username[0].toUpperCase()
+        }
       }
       return 'A'
     },
     usernameText: state => {
       if (state.user) {
-        return state.user.email
+        if (state.user.first_name && state.user.last_name) {
+          return `${state.user.first_name} ${state.user.last_name}`
+        } else if (state.user.email) {
+          return state.user.email
+        } else {
+          return state.user.username
+        }
       }
       return 'not logged in'
     },

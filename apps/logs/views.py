@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Sum, Count
 from django.http import Http404
 from pandas import DataFrame
+from rest_framework.pagination import PageNumberPagination
 from rest_pandas import PandasView
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -15,7 +16,13 @@ from logs.logic.queries import extract_accesslog_attr_query_params
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
-    AccessLogSerializer, ImportBatchSerializer
+    AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 
 class Counter5DataView(APIView):
@@ -276,9 +283,31 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ImportBatchSerializer
     queryset = ImportBatch.objects.none()
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         if self.request.user.is_from_master_organization:
-            return ImportBatch.objects.all().annotate(accesslog_count=Count('accesslog'))
-        return ImportBatch.objects.filter(user=self.request.user).\
-            annotate(accesslog_count=Count('accesslog'))
+            qs = ImportBatch.objects.all()
+        else:
+            qs = ImportBatch.objects.filter(user=self.request.user)
+        # make it possible to limit result to only specific user
+        if 'user' in self.request.GET:
+            qs = qs.filter(user_id=self.request.GET['user'])
+        if 'pk' in self.kwargs:
+            # we only add accesslog_count if only one object was requested
+            qs = qs.annotate(accesslog_count=Count('accesslog'))
+        order_by = self.request.GET.get('order_by', 'created')
+        # ensure that .created is always part of ordering because it is the only value we can
+        # be reasonably sure is different between instances
+        if order_by != 'created':
+            order_by = [order_by, 'created']
+        else:
+            order_by = [order_by]
+        return qs.order_by(*order_by)
+
+    def get_serializer_class(self):
+        if 'pk' in self.kwargs:
+            # for one result, we can use the verbose serializer
+            return ImportBatchVerboseSerializer
+        return super().get_serializer_class()
+

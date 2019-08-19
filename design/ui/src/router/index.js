@@ -8,6 +8,7 @@ import TitleDetailPage from '../pages/TitleDetailPage'
 import AllTitlesListPage from '../pages/AllTitlesListPage'
 import AfterLoginPage from '../pages/AfterLoginPage'
 import SushiCredentialsManagementPage from '../pages/SushiCredentialsManagementPage'
+import ImportBatchesPage from '../pages/ImportBatchesPage'
 
 Vue.use(Router)
 
@@ -58,6 +59,11 @@ export default new Router({
       path: '/admin/sushi-credentials/',
       name: 'sushi-credentials-list',
       component: SushiCredentialsManagementPage,
+    },
+    {
+      path: '/admin/import-batches/',
+      name: 'import-batch-list',
+      component: ImportBatchesPage,
     },
     {
       path: '/secure',
