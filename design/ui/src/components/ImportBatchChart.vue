@@ -1,0 +1,67 @@
+<template>
+    <v-layout v-if="importBatch !== null" column>
+        <v-flex pb-4>
+            <ChartTypeSelector
+                    :report-type="importBatch.report_type"
+                    :allow-interest-charts="false"
+                    v-model="selectedChartType"/>
+        </v-flex>
+        <v-flex>
+            <APIChart
+                v-if="selectedChartType"
+                :type="selectedChartType.type === undefined ? 'histogram' : selectedChartType.type"
+                :report-type-name="selectedChartType.reportType === null ? null : importBatch.report_type.short_name"
+                :primary-dimension="selectedChartType.primary"
+                :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
+                :platform="importBatch.platform.pk"
+                :stack="this.selectedChartType.stack === undefined ? true : this.selectedChartType.stack"
+                :order-by="this.selectedChartType.orderBy === undefined ? null : this.selectedChartType.orderBy"
+            />
+        </v-flex>
+</v-layout>
+</template>
+
+<script>
+  import ChartTypeSelector from './ChartTypeSelector'
+  import APIChart from './APIChart'
+  import axios from 'axios'
+  import {mapActions} from 'vuex'
+  export default {
+    name: "ImportBatchChart",
+    components: {APIChart, ChartTypeSelector},
+    props: {
+      importBatchId: {required: true},
+    },
+    data () {
+      return {
+        selectedChartType: null,
+        importBatch: null,
+      }
+    },
+    methods: {
+      ...mapActions({
+        showSnackbar: 'showSnackbar',
+      }),
+      async loadImportBatch () {
+        try {
+          let response = await axios.get(`/api/import-batch/${this.importBatchId}/`)
+          this.importBatch = response.data
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading batch details: ' + error})
+        }
+      }
+    },
+    watch: {
+      importBatchId () {
+        this.loadImportBatch()
+      }
+    },
+    mounted () {
+      this.loadImportBatch()
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

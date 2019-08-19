@@ -1,3 +1,5 @@
+<i18n src="../locales/common.yaml"></i18n>
+
 <template>
     <v-data-table
             :items="accessLogs"
@@ -39,7 +41,7 @@
           },
           ...this.dynamicHeaders,
           {
-            text: this.$i18n.t('metric'),
+            text: this.$i18n.t('labels.metric'),
             value: 'metric'
           },
           {
@@ -54,7 +56,7 @@
           for (let key of Object.keys(this.accessLogs[0])) {
             if (key !== 'date' && key !== 'metric' && key !== 'value' && key !== 'organization' &&
                 key !== 'platform' && key !== 'report_type' && key !== 'target' && key !== 'row') {
-              headers.push({text: key, value: key})
+              headers.push({text: key.replace(/_/g, ' '), value: key})
             }
           }
         }
@@ -84,7 +86,7 @@
           let response = await axios.get('/api/raw-data/', {params: params})
           this.accessLogs = response.data
         } catch (error) {
-          this.showSnackbar({content: 'Error loading title: ' + error})
+          this.showSnackbar({content: 'Error loading data: ' + error})
         } finally {
           this.loading = false
         }

@@ -122,7 +122,7 @@ cs:
                                     <v-flex xs12 sm6 px-5>
                                         <v-text-field
                                                 v-model="param.value"
-                                                :label="$t('labels.value')"
+                                                :label="$t('labels.variable_value')"
                                         >
                                         </v-text-field>
                                     </v-flex>

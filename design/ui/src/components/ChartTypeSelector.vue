@@ -16,6 +16,8 @@
     props: {
       reportType: {required: true},
       value: {required: false, default: null},
+      allowCrossReportCharts: {default: true},  // if chart types which do not have one specific report type are allowed
+      allowInterestCharts: {default: true},  // should charts with interest in secondary dimension be allowed?
       extraChartTypes: {
         default: () => [],
       }
@@ -57,7 +59,8 @@
           }
         }
         this.extraChartTypes.map(item => base.push(item))
-        return base
+        return base.filter(item => this.allowCrossReportCharts || !('reportType' in item && item.reportType === null)).
+          filter(item => this.allowInterestCharts || item.secondary !== 'interest')
       },
       selectedChartType () {
         return this.chartTypes[this.chartTypeIndex]

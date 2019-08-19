@@ -45,12 +45,15 @@ en:
     extra_params: Extra parameters
     api_key: API key
     variable: Parameter name
-    value: Parameter value
+    variable_value: Parameter value
+    value: Value
     provider: Provider
     title_count: Title count
     date: Date
     user: User
     report_type: Report type
+    title: Title / database
+    metric: Metric
   no_reports_available_for_title: No reports available for this title
   available_report_types: Available report types
   interests:
@@ -58,6 +61,7 @@ en:
     database: Interest in databases
   actions:
     edit: Edit
+    close: Close
 
 cs:
   pages:
@@ -106,12 +110,15 @@ cs:
     extra_params: Další parametry
     api_key: API key
     variable: Název parametru
-    value: Hodnota parametru
+    variable_value: Hodnota parametru
+    value: Hodnota
     provider: Poskytovatel
     title_count: Počet titulů a databází
     date: Datum
     user: Uživatel
     report_type: Typ reportu
+    title: Titul / databáze
+    metric: Metrika
   no_reports_available_for_title: Pro tento titul nejsou dostupné žádné zprávy
   available_report_types: Dostupné typy zpráv
   interests:
@@ -119,3 +126,4 @@ cs:
     database: Zájem o databáze
   actions:
     edit: Editovat
+    close: Zavřít
