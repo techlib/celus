@@ -54,6 +54,7 @@ en:
     report_type: Report type
     title: Title / database
     metric: Metric
+    accesslog_count: Log count
   no_reports_available_for_title: No reports available for this title
   available_report_types: Available report types
   interests:
@@ -119,6 +120,7 @@ cs:
     report_type: Typ reportu
     title: Titul / databáze
     metric: Metrika
+    accesslog_count: Počet záznamů
   no_reports_available_for_title: Pro tento titul nejsou dostupné žádné zprávy
   available_report_types: Dostupné typy zpráv
   interests:

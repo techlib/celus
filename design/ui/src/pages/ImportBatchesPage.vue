@@ -11,14 +11,27 @@ cs:
 
 <template>
     <div>
-    <v-data-table
-            :items="batches"
-            :headers="headers"
-            :loading="loading"
-    >
-        <!--template v-slot:item.created="props">
-            <span>{{ props.item.created }}</span>
-        </template-->
+        <v-card>
+        <v-card-title>
+        <v-text-field
+                v-model="searchDebounced"
+                append-icon="fa-search"
+                :label="$t('labels.search')"
+                single-line
+                hide-details
+        ></v-text-field>
+        </v-card-title>
+        <v-data-table
+                :items="batches"
+                :headers="headers"
+                :loading="loading"
+                :search="search"
+        >
+            <!--:server-items-length="totalCount"
+            :items-per-page.sync="pageSize"
+            :page.sync="page"
+            :sort-by.sync="orderBy"
+            :sort-desc.sync="orderDesc"-->
         <template v-slot:item.actions="props">
             <v-tooltip bottom>
                 <template v-slot:activator="{ on }">
@@ -38,6 +51,7 @@ cs:
             </v-tooltip>
         </template>
     </v-data-table>
+        </v-card>
 
     <v-dialog
             v-model="showDialog"
@@ -64,6 +78,7 @@ cs:
   import AccessLogList from '../components/AccessLogList'
   import ImportBatchChart from '../components/ImportBatchChart'
   import {isoDateTimeFormat, parseDateTime} from '../libs/dates'
+  import {debounce} from 'lodash'
 
   export default {
     name: "ImportBatchesPage",
@@ -75,6 +90,12 @@ cs:
         selectedBatch: null,
         loading: false,
         dialogType: 'data',
+        totalCount: 0,
+        pageSize: 10,
+        page: 1,
+        orderBy: 'created',
+        orderDesc: false,
+        search: '',
       }
     },
     computed: {
@@ -104,12 +125,25 @@ cs:
             text: this.$i18n.t('labels.user'),
             value: 'user',
           },
+          /*{
+            text: this.$i18n.t('labels.accesslog_count'),
+            value: 'accesslog_count',
+            sortable: false,
+          },*/
           {
             text: this.$i18n.t('title_fields.actions'),
             value: 'actions',
             sortable: false,
           },
         ]
+      },
+      searchDebounced: {
+        get () {
+          return this.search
+        },
+        set: debounce(function (value) {
+          this.search = value
+        }, 500)
       }
     },
     methods: {
@@ -118,9 +152,14 @@ cs:
       }),
       async loadImportBatches () {
         this.loading = true
+        let url = `/api/import-batch/?page_size=${this.pageSize}&page=${this.page}`
+        if (this.orderBy) {
+          url += `&order_by=${this.orderBy}&desc=${this.orderDesc}`
+        }
         try {
-          let response = await axios.get('/api/import-batch/')
-          this.batches = response.data.results
+          let response = await axios.get(url)
+          // this.totalCount = response.data.count
+          this.batches = response.data //.results
           this.batches = this.batches.map(item => {item.created = isoDateTimeFormat(parseDateTime(item.created)); return item})
         } catch (error) {
           this.showSnackbar({content: 'Error loading title: ' + error})
@@ -128,6 +167,20 @@ cs:
           this.loading = false
         }
       },
+    },
+    watch: {
+      page () {
+        this.loadImportBatches()
+      },
+      pageSize () {
+        this.loadImportBatches()
+      },
+      orderBy () {
+        this.loadImportBatches()
+      },
+      orderDesc () {
+        this.loadImportBatches()
+      }
     },
     mounted () {
       this.loadImportBatches()

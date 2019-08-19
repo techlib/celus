@@ -283,7 +283,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ImportBatchSerializer
     queryset = ImportBatch.objects.none()
-    pagination_class = StandardResultsSetPagination
+    # pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         if self.request.user.is_from_master_organization:
@@ -296,7 +296,10 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         if 'pk' in self.kwargs:
             # we only add accesslog_count if only one object was requested
             qs = qs.annotate(accesslog_count=Count('accesslog'))
+        qs = qs.select_related('organization', 'platform', 'report_type')
         order_by = self.request.GET.get('order_by', 'created')
+        if self.request.GET.get('desc') in ('true', 1):
+            order_by = '-' + order_by
         # ensure that .created is always part of ordering because it is the only value we can
         # be reasonably sure is different between instances
         if order_by != 'created':
