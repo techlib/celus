@@ -27,7 +27,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class Counter5DataView(APIView):
 
-    implicit_dims = ['date', 'platform', 'metric', 'organization', 'target']
+    implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'import_batch']
     input_dim_to_query_dim = {'interest': 'metric'}
     extra_query_params = {'interest': {'metric__interest_group__isnull': False}}
     implicit_dim_to_text_fn = {'interest': lambda x: x.name_in_interest_group}
