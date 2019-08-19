@@ -46,7 +46,8 @@
                         </span>
                     </v-tooltip>
                 </template>
-                <template v-slot:item.actions="props">
+                <template v-slot:item.actions="props
+">
                     <v-btn text small color="secondary" @click.stop="selectedCredentials = props.item; showEditDialog = true">
                         <v-icon left x-small>fa-edit</v-icon>
                         {{ $t('actions.edit') }}

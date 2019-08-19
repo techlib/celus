@@ -1,23 +1,74 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n>
+en:
+    show_raw_data: Show raw data
+
+cs:
+    show_raw_data: Zobrazit data
+
+</i18n>
 
 <template>
+    <div>
     <v-data-table
             :items="batches"
             :headers="headers"
+            :loading="loading"
     >
+        <template v-slot:item.actions="props">
+            <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                    <v-btn text small color="secondary" @click.stop="selectedBatch = props.item.pk; dialogType = 'data'; showDialog = true" v-on="on">
+                        <v-icon left small>fa-microscope</v-icon>
+                    </v-btn>
+                </template>
+                <span>{{ $t('show_raw_data') }}</span>
+            </v-tooltip>
+            <!--v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                    <v-btn text small color="secondary" @click.stop="selectedBatch = props.item.pk; dialogType = 'chart'; showDialog = true" v-on="on">
+                        <v-icon left small>fa-chart-bar</v-icon>
+                    </v-btn>
+                </template>
+                <span>{{ $t('show_chart') }}</span>
+            </v-tooltip-->
+        </template>
     </v-data-table>
 
+    <v-dialog
+            v-model="showDialog"
+    >
+        <v-card>
+            <v-card-text>
+                <AccessLogList v-if="dialogType === 'data'" :import-batch="this.selectedBatch" />
+
+            </v-card-text>
+            <v-card-actions>
+                <v-layout pb-3 pr-5 justify-end>
+                    <v-btn @click="showDialog = false">{{ $t('close') }}</v-btn>
+                </v-layout>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
+    </div>
 </template>
 
 <script>
 
   import axios from 'axios'
+  import {mapActions} from 'vuex'
+  import AccessLogList from '../components/AccessLogList'
 
   export default {
     name: "ImportBatchesPage",
+    components: {AccessLogList},
     data () {
       return {
         batches: [],
+        showDialog: false,
+        selectedBatch: null,
+        loading: false,
+        dialogType: 'data',
       }
     },
     computed: {
@@ -40,16 +91,40 @@
             value: 'platform'
           },
           {
+            text: this.$i18n.t('labels.report_type'),
+            value: 'report_type'
+          },
+          {
             text: this.$i18n.t('labels.user'),
             value: 'user',
+          },
+          {
+            text: this.$i18n.t('labels.actions'),
+            value: 'actions',
+            sortable: false,
           },
         ]
       }
     },
     methods: {
+      ...mapActions({
+        showSnackbar: 'showSnackbar',
+      }),
       async loadImportBatches () {
-        let response = await axios.get('/api/import-batch/')
-        this.batches = response.data.results
+        this.loading = true
+        try {
+          let response = await axios.get('/api/import-batch/')
+          this.batches = response.data.results
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading title: ' + error})
+        } finally {
+          this.loading = false
+        }
+      },
+    },
+    watch: {
+      selectedBatch (value) {
+        console.log('AAAAA', value)
       }
     },
     mounted () {

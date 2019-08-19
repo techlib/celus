@@ -251,7 +251,7 @@ class MetricViewSet(ReadOnlyModelViewSet):
 class RawDataExportView(PandasView):
 
     serializer_class = AccessLogSerializer
-    implicit_dims = ['platform', 'metric', 'organization', 'target', 'report_type']
+    implicit_dims = ['platform', 'metric', 'organization', 'target', 'report_type', 'import_batch']
     export_size_limit = 50000  # limit the number of records in output to this number
 
     def get_queryset(self):

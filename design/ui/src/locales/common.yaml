@@ -50,6 +50,7 @@ en:
     title_count: Title count
     date: Date
     user: User
+    report_type: Report type
   no_reports_available_for_title: No reports available for this title
   available_report_types: Available report types
   interests:
@@ -110,6 +111,7 @@ cs:
     title_count: Počet titulů a databází
     date: Datum
     user: Uživatel
+    report_type: Typ reportu
   no_reports_available_for_title: Pro tento titul nejsou dostupné žádné zprávy
   available_report_types: Dostupné typy zpráv
   interests:

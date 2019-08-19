@@ -57,6 +57,7 @@ class AccessLogSerializer(BaseSerializer):
             'platform': str(obj.platform),
             'organization': str(obj.organization),
             'target': str(obj.target),
+            'metric': str(obj.metric),
             'value': obj.value
         }
         data.update(getattr(obj, 'mapped_dim_values_', {}))
