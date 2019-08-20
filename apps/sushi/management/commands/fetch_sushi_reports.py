@@ -1,3 +1,5 @@
+from time import sleep
+
 from dateparser import parse as parse_date
 
 from django.core.management.base import BaseCommand
@@ -16,6 +18,8 @@ class Command(BaseCommand):
         parser.add_argument('-r', dest='report', help='code of the counter report to fetch')
         parser.add_argument('-s', dest='start_date', default='2019-01-01')
         parser.add_argument('-e', dest='end_date', default='2019-06-30')
+        parser.add_argument('--sleep', dest='sleep', type=int, default=0,
+                            help='Time to sleep between requests in ms')
 
     def handle(self, *args, **options):
         args = {}
@@ -58,6 +62,7 @@ class Command(BaseCommand):
                             style = self.style.ERROR
                         self.stderr.write(style(attemp))
                     i += 1
+                    sleep(options['sleep'] / 1000)
         if i == 0:
             self.stderr.write(self.style.WARNING('No matching reports found!'))
 
