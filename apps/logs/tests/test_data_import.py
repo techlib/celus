@@ -1,6 +1,6 @@
 import pytest
 
-from logs.models import ReportType, AccessLog, DimensionText
+from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 from publications.models import Platform, Title
 
 from ..logic.data_import import import_counter_records
@@ -19,7 +19,11 @@ class TestDataImport(object):
                                            provider='Provider 1')
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
-        import_counter_records(report_type_nd(0), organizations[0], platform, counter_records_0d)
+        report_type = report_type_nd(0)
+        import_counter_records(report_type, organizations[0], platform, counter_records_0d,
+                               ImportBatch.objects.create(organization=organizations[0],
+                                                          platform=platform,
+                                                          report_type=report_type))
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
         al = AccessLog.objects.get()
@@ -32,7 +36,11 @@ class TestDataImport(object):
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
         crs = list(counter_records_nd(1))
-        import_counter_records(report_type_nd(1), organizations[0], platform, crs)
+        report_type = report_type_nd(1)
+        import_counter_records(report_type, organizations[0], platform, crs,
+                               ImportBatch.objects.create(organization=organizations[0],
+                                                          platform=platform,
+                                                          report_type=report_type))
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
         al = AccessLog.objects.get()
@@ -47,7 +55,11 @@ class TestDataImport(object):
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
         crs = list(counter_records_nd(3, record_number=10))
-        stats = import_counter_records(report_type_nd(3), organizations[0], platform, crs)
+        report_type = report_type_nd(3)
+        stats = import_counter_records(report_type, organizations[0], platform, crs,
+                                       ImportBatch.objects.create(organization=organizations[0],
+                                                                  platform=platform,
+                                                                  report_type=report_type))
         assert stats['skipped logs'] == 0
         assert stats['new logs'] == 10
         assert AccessLog.objects.count() == 10
@@ -69,7 +81,10 @@ class TestDataImport(object):
         crs = list(counter_records_nd(3, record_number=10, title='Title ABC',
                                       dim_value='one value'))
         rt = report_type_nd(3)  # type: ReportType
-        import_counter_records(rt, organizations[0], platform, crs)
+        import_counter_records(rt, organizations[0], platform, crs,
+                               ImportBatch.objects.create(organization=organizations[0],
+                                                          platform=platform,
+                                                          report_type=rt))
         assert AccessLog.objects.count() == 10
         assert Title.objects.count() > 0
         al1, al2 = AccessLog.objects.order_by('pk')[:2]
@@ -92,10 +107,16 @@ class TestDataImport(object):
         crs = list(counter_records_nd(3, record_number=1, title='Title ABC',
                                       dim_value='one value'))
         rt = report_type_nd(3)  # type: ReportType
-        stats = import_counter_records(rt, organizations[0], platform, crs)
+        stats = import_counter_records(rt, organizations[0], platform, crs,
+                                       ImportBatch.objects.create(organization=organizations[0],
+                                                                  platform=platform,
+                                                                  report_type=rt))
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
         assert stats['new logs'] == 1
-        stats = import_counter_records(rt, organizations[0], platform, crs)
+        stats = import_counter_records(rt, organizations[0], platform, crs,
+                                       ImportBatch.objects.create(organization=organizations[0],
+                                                                  platform=platform,
+                                                                  report_type=rt))
         assert stats['new logs'] == 0
         assert stats['skipped logs'] == 1

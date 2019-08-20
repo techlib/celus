@@ -180,6 +180,8 @@ CELERY_TIMEZONE = TIME_ZONE
 ERMS_API_URL = "https://erms.czechelib.cz/api/"
 EDUID_IDENTITY_HEADER = 'HTTP_X_IDENTITY'
 MASTER_ORGANIZATIONS = ['NTK-61387142']  # organizations whose users should have access to all
+# should we try to authenticate against ERMS before trying local data?
+LIVE_ERMS_AUTHENTICATION = False
 
 LOGGING = {
     'version': 1,

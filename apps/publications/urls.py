@@ -12,7 +12,7 @@ org_sub_router.register(r'title-count', views.TitleCountsViewSet, basename='titl
 
 title_sub_router = NestedSimpleRouter(org_sub_router, r'title', lookup='title')
 title_sub_router.register('reports', views.TitleReportTypeViewSet,
-                          base_name='title-reports')
+                          basename='title-reports')
 
 
 platform_sub_router = NestedSimpleRouter(org_sub_router, r'platform', lookup='platform')
@@ -24,7 +24,7 @@ platform_sub_router.register('reports', views.PlatformReportTypeViewSet,
 
 platform_title_sub_router = NestedSimpleRouter(platform_sub_router, r'title', lookup='title')
 platform_title_sub_router.register('reports', views.PlatformTitleReportTypeViewSet,
-                                   base_name='platform-title-reports')
+                                   basename='platform-title-reports')
 
 urlpatterns = [
 ]

@@ -195,5 +195,5 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
     # now insert the records that are clean to be inserted
     AccessLog.objects.bulk_create([AccessLog(import_batch=import_batch, **rec)
                                    for rec in dicts_to_insert])
-    stats['new'] += len(dicts_to_insert)
+    stats['new logs'] += len(dicts_to_insert)
     return stats

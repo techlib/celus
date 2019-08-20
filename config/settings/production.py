@@ -1,6 +1,7 @@
 from .base import *
 
 ALLOWED_HOSTS = ['stats.czechelib.cz']
+LIVE_ERMS_AUTHENTICATION = True
 
 DEBUG = False
 

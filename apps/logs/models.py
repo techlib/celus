@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
@@ -218,3 +220,37 @@ class DimensionText(models.Model):
         if self.text_local:
             return self.text_local
         return self.text
+
+
+def where_to_store(instance: 'ManualDataUpload', filename):
+    root, ext = os.path.splitext(filename)
+    ts = now().strftime('%Y%m%d-%H%M%S.%f')
+    return f'custom/{instance.user_id}/{instance.report_type.short_name}-' \
+           f'{instance.platform.short_name}_{ts}{ext}'
+
+
+class ManualDataUpload(models.Model):
+
+    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                             on_delete=models.SET_NULL)
+    created = models.DateTimeField(auto_now_add=True)
+    data_file = models.FileField(upload_to=where_to_store)
+    log = models.TextField(blank=True)
+    is_processed = models.BooleanField(default=False,
+                                       help_text='Was the data converted into logs?')
+    when_processed = models.DateTimeField(null=True, blank=True)
+    import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
+    extra = JSONField(default=dict, blank=True,
+                      help_text='Internal data related to processing of the upload')
+
+    def __str__(self):
+        return f'{self.user.username}: {self.report_type}, {self.platform}'
+
+    def mark_processed(self):
+        if not self.is_processed:
+            self.is_processed = True
+            self.when_processed = now()
+            self.save()

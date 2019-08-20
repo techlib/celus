@@ -9,14 +9,16 @@ from rest_pandas import PandasView
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from core.logic.dates import date_filter_from_params
 from logs.logic.queries import extract_accesslog_attr_query_params
 from logs.logic.remap import remap_dicts
-from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch
+from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
+    ManualDataUpload
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
-    AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer
+    AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
+    ManualDataUploadSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -313,4 +315,14 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             # for one result, we can use the verbose serializer
             return ImportBatchVerboseSerializer
         return super().get_serializer_class()
+
+
+class ManualDataUploadViewSet(ModelViewSet):
+
+    serializer_class = ManualDataUploadSerializer
+    queryset = ManualDataUpload.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        print(args, kwargs)
+        return super().create(request, *args, **kwargs)
 

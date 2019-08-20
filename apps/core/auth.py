@@ -37,10 +37,11 @@ class EDUIdAuthenticationBackend:
     def authenticate(self, request, remote_user=None):
         if not remote_user:
             return None
-        try:
-            sync_user_with_erms(remote_user)
-        except Exception as e:
-            logger.error('ERMS sync error:', e)
+        if settings.LIVE_ERMS_AUTHENTICATION:
+            try:
+                sync_user_with_erms(remote_user)
+            except Exception as e:
+                logger.error('ERMS sync error: %s', e)
         try:
             identity = Identity.objects.select_related('user').get(identity=remote_user)
         except Identity.DoesNotExist:

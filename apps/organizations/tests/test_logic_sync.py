@@ -2,6 +2,7 @@ from copy import deepcopy
 
 import pytest
 
+from core.tests.test_sync import data_source
 from organizations.logic.sync import OrganizationSyncer
 from organizations.models import Organization
 
@@ -71,14 +72,14 @@ class TestLogicSync(object):
     def test_random_fixture_works(self, organizations_random):
         assert len(organizations_random) == Organization.objects.count()
 
-    def test_organization_sync_translation(self):
-        syncer = OrganizationSyncer()
+    def test_organization_sync_translation(self, data_source):
+        syncer = OrganizationSyncer(data_source)
         for rec_in, rec_out in zip(self.src_data, self.trans_data):
             tr_rec = syncer.translate_record(rec_in)
             assert tr_rec == rec_out
 
-    def test_organization_sync_sync(self):
-        syncer = OrganizationSyncer()
+    def test_organization_sync_sync(self, data_source):
+        syncer = OrganizationSyncer(data_source)
         assert Organization.objects.count() == 0
         stats = syncer.sync_data(self.src_data)
         assert Organization.objects.count() == 2
@@ -86,8 +87,8 @@ class TestLogicSync(object):
         assert stats[syncer.Status.UNCHANGED] == 0
         assert stats[syncer.Status.SYNCED] == 0
 
-    def test_organization_sync_resync(self):
-        syncer = OrganizationSyncer()
+    def test_organization_sync_resync(self, data_source):
+        syncer = OrganizationSyncer(data_source)
         assert Organization.objects.count() == 0
         stats = syncer.sync_data(self.src_data)
         assert Organization.objects.count() == 2
@@ -100,8 +101,8 @@ class TestLogicSync(object):
         assert stats[syncer.Status.NEW] == 0
         assert stats[syncer.Status.UNCHANGED] == 2
 
-    def test_organization_sync_resync_with_change(self):
-        syncer = OrganizationSyncer()
+    def test_organization_sync_resync_with_change(self, data_source):
+        syncer = OrganizationSyncer(data_source)
         assert Organization.objects.count() == 0
         stats = syncer.sync_data(self.src_data)
         assert Organization.objects.count() == 2
@@ -119,8 +120,8 @@ class TestLogicSync(object):
         assert stats[syncer.Status.UNCHANGED] == 1
         assert stats[syncer.Status.SYNCED] == 1
 
-    def test_organization_sync_with_parental_links(self):
-        syncer = OrganizationSyncer()
+    def test_organization_sync_with_parental_links(self, data_source):
+        syncer = OrganizationSyncer(data_source)
         assert Organization.objects.count() == 0
         src_data = deepcopy(self.src_data)
         src_data[1]['refs']['controlled by'] = [src_data[0]['id']]  # add first as parent to second

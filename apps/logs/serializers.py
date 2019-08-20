@@ -1,12 +1,13 @@
 from rest_framework.fields import CharField, IntegerField, DateField
 from rest_framework.relations import StringRelatedField
-from rest_framework.serializers import ModelSerializer, BaseSerializer
+from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenField, \
+    CurrentUserDefault
 
 from core.serializers import UserSerializer
 from logs.models import AccessLog, ImportBatch
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer
-from .models import Metric, Dimension, ReportType
+from .models import Metric, Dimension, ReportType, ManualDataUpload
 
 
 class MetricSerializer(ModelSerializer):
@@ -91,3 +92,14 @@ class ImportBatchVerboseSerializer(ModelSerializer):
         model = ImportBatch
         fields = ('pk', 'created', 'organization', 'platform', 'report_type', 'system_created',
                   'user', 'owner_level', 'accesslog_count')
+
+
+class ManualDataUploadSerializer(ModelSerializer):
+
+    user = HiddenField(default=CurrentUserDefault())
+
+    class Meta:
+        model = ManualDataUpload
+        fields = ('pk', 'report_type', 'organization', 'platform', 'data_file',
+                  'user', 'created', 'is_processed', 'log', 'import_batch', 'extra')
+

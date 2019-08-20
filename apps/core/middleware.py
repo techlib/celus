@@ -15,7 +15,7 @@ class EDUIdHeaderMiddleware(RemoteUserMiddleware):
     header = settings.EDUID_IDENTITY_HEADER
 
     def process_request(self, request):
-        logger.warning('Identity: %s', request.META[self.header])
+        logger.warning('Identity: %s', request.META.get(self.header))
         super().process_request(request)
 
     def _remove_invalid_user(self, request):

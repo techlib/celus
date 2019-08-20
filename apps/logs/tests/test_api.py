@@ -1,9 +1,10 @@
 import json
+from io import StringIO
 
 import pytest
 from django.urls import reverse
 
-from logs.models import ReportType, AccessLog, Metric
+from logs.models import ReportType, AccessLog, Metric, ImportBatch
 from publications.models import Platform
 
 from ..logic.data_import import import_counter_records
@@ -25,7 +26,10 @@ class TestChartDataAPI(object):
                                            provider='Provider 1')
         organization = organizations[0]
         report_type = report_type_nd(0)  # type: ReportType
-        import_counter_records(report_type, organization, platform, counter_records_0d)
+        import_batch = ImportBatch.objects.create(organization=organization, platform=platform,
+                                                  report_type=report_type)
+        import_counter_records(report_type, organization, platform, counter_records_0d,
+                               import_batch)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
         resp = authenticated_client.get(
@@ -62,7 +66,9 @@ class TestChartDataAPI(object):
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
         organization = organizations[0]
         report_type = report_type_nd(3)
-        import_counter_records(report_type, organization, platform, crs)
+        import_batch = ImportBatch.objects.create(organization=organization, platform=platform,
+                                                  report_type=report_type)
+        import_counter_records(report_type, organization, platform, crs, import_batch)
         assert AccessLog.objects.count() == 6
         metric = Metric.objects.get(short_name='Hits')
         if type(primary_dim) is int:
@@ -111,7 +117,9 @@ class TestChartDataAPI(object):
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
         organization = organizations[0]
         report_type = report_type_nd(3)
-        import_counter_records(report_type, organization, platform, crs)
+        import_batch = ImportBatch.objects.create(organization=organization, platform=platform,
+                                                  report_type=report_type)
+        import_counter_records(report_type, organization, platform, crs, import_batch)
         assert AccessLog.objects.count() == 2
         metric = Metric.objects.get(short_name='Hits')
         params = {'organization': organization.pk,
@@ -150,10 +158,22 @@ class TestChartDataAPI(object):
         crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
         crs2 = list(counter_records(data2, metric='Big Hits', platform='Platform2'))
         report_type = report_type_nd(3)
-        import_counter_records(report_type, organizations[0], platform1, crs1)
-        import_counter_records(report_type, organizations[0], platform2, crs1)
-        import_counter_records(report_type, organizations[1], platform1, crs1)
-        import_counter_records(report_type, organizations[1], platform2, crs2)
+        import_counter_records(report_type, organizations[0], platform1, crs1,
+                               ImportBatch.objects.create(organization=organizations[0],
+                                                          platform=platform1,
+                                                          report_type=report_type))
+        import_counter_records(report_type, organizations[0], platform2, crs1,
+                               ImportBatch.objects.create(organization=organizations[0],
+                                                          platform=platform2,
+                                                          report_type=report_type))
+        import_counter_records(report_type, organizations[1], platform1, crs1,
+                               ImportBatch.objects.create(organization=organizations[1],
+                                                          platform=platform1,
+                                                          report_type=report_type))
+        import_counter_records(report_type, organizations[1], platform2, crs2,
+                               ImportBatch.objects.create(organization=organizations[1],
+                                                          platform=platform2,
+                                                          report_type=report_type))
         assert AccessLog.objects.count() == 12
         metric1 = Metric.objects.get(short_name='Hits')
         metric2 = Metric.objects.get(short_name='Big Hits')
@@ -208,3 +228,24 @@ class TestChartDataAPI(object):
         assert len(recs) == 2
         assert recs[0]['count'] == 16
         assert recs[1]['count'] == 32
+
+
+@pytest.mark.django_db
+class TestManualDataUpload(object):
+
+    def test_can_create_manual_data_upload(self, organizations, authenticated_client,
+                                           report_type_nd, tmp_path, settings):
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        report_type = report_type_nd(0)
+        file = StringIO('this is test data')
+        settings.MEDIA_ROOT = tmp_path
+        response = authenticated_client.post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organizations[0].pk,
+                'report_type': report_type.pk,
+                'data_file': file,
+            })
+        assert response.status_code == 201

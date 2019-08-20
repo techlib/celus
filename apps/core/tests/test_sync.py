@@ -4,9 +4,14 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from core.logic.sync import sync_identities
-from core.models import Identity
+from core.models import Identity, DataSource
 from erms.sync import ERMSObjectSyncer
 from ..logic.sync import sync_users
+
+
+@pytest.fixture
+def data_source():
+    return DataSource.objects.create(type=DataSource.TYPE_API, short_name='test source')
 
 
 @pytest.mark.django_db
@@ -39,10 +44,10 @@ class TestUserSync(object):
         },
     ]
 
-    def test_sync_users(self):
+    def test_sync_users(self, data_source):
         User = get_user_model()
         assert User.objects.count() == 0
-        stats = sync_users(self.user_data)
+        stats = sync_users(data_source, self.user_data)
         assert stats['removed'][0] == 0
         assert stats[ERMSObjectSyncer.Status.NEW] == 3
         assert User.objects.count() == 3
@@ -56,27 +61,27 @@ class TestUserSync(object):
         assert u3.last_name == ''
         assert u3.username == '333'
 
-    def test_sync_users_resync(self):
+    def test_sync_users_resync(self, data_source):
         User = get_user_model()
         assert User.objects.count() == 0
-        stats = sync_users(self.user_data)
+        stats = sync_users(data_source, self.user_data)
         assert stats['removed'][0] == 0
         assert stats[ERMSObjectSyncer.Status.NEW] == 3
         assert User.objects.count() == 3
-        stats = sync_users(self.user_data)
+        stats = sync_users(data_source, self.user_data)
         assert stats['removed'][0] == 0
         assert stats[ERMSObjectSyncer.Status.NEW] == 0
         assert stats[ERMSObjectSyncer.Status.UNCHANGED] == 3
         assert User.objects.count() == 3
 
-    def test_sync_users_with_removal(self):
+    def test_sync_users_with_removal(self, data_source):
         User = get_user_model()
         assert User.objects.count() == 0
-        stats = sync_users(self.user_data)
+        stats = sync_users(data_source, self.user_data)
         assert stats['removed'][0] == 0
         assert stats[ERMSObjectSyncer.Status.NEW] == 3
         assert User.objects.count() == 3
-        stats = sync_users(self.user_data[:2])  # exclude the last record
+        stats = sync_users(data_source, self.user_data[:2])  # exclude the last record
         assert stats[ERMSObjectSyncer.Status.NEW] == 0
         assert stats[ERMSObjectSyncer.Status.UNCHANGED] == 2
         assert stats['removed'][0] == 1
@@ -101,13 +106,13 @@ class TestIdentitySync(object):
         },
     ]
 
-    def test_sync_identities(self):
+    def test_sync_identities(self, data_source):
         User = get_user_model()
         assert User.objects.count() == 0
         u1 = User.objects.create(ext_id=1, username='Foo Bar')
         u2 = User.objects.create(ext_id=22, username='XX')
         assert Identity.objects.count() == 0
-        stats = sync_identities(self.identity_data)
+        stats = sync_identities(data_source, self.identity_data)
         assert Identity.objects.count() == 3
         u1.refresh_from_db()
         u2.refresh_from_db()
@@ -115,15 +120,15 @@ class TestIdentitySync(object):
         assert u2.identity_set.count() == 1
         assert stats[ERMSObjectSyncer.Status.NEW] == 3
 
-    def test_sync_identities_resync(self):
+    def test_sync_identities_resync(self, data_source):
         User = get_user_model()
         assert User.objects.count() == 0
         u1 = User.objects.create(ext_id=1, username='Foo Bar')
         u2 = User.objects.create(ext_id=22, username='XX')
         assert Identity.objects.count() == 0
-        sync_identities(self.identity_data)
+        sync_identities(data_source, self.identity_data)
         assert Identity.objects.count() == 3
-        stats = sync_identities(self.identity_data)
+        stats = sync_identities(data_source, self.identity_data)
         assert Identity.objects.count() == 3
         assert stats[ERMSObjectSyncer.Status.NEW] == 0
         assert stats[ERMSObjectSyncer.Status.UNCHANGED] == 3
