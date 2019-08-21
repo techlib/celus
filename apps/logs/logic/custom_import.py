@@ -1,11 +1,14 @@
+import codecs
+import csv
 from datetime import date, datetime
 import dateparser
 
 from django.utils.translation import gettext as _
 
+from nigiri.counter5 import CounterRecord
+
 # en_month_matcher = re.compile(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})')
 # iso_month_matcher = re.compile(r'(\d{4})-(\d{1,2})')
-from nigiri.counter5 import CounterRecord
 
 
 def col_name_to_month(row_name: str) -> date:
@@ -90,3 +93,16 @@ def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, in
         for month, value in monthly_values.items():
             result.append(CounterRecord(value=value, start=month, **dimensions))
     return result
+
+
+def custom_import_preflight_check(mdu: 'ManualDataUpload'):
+    reader = csv.DictReader(codecs.iterdecode(mdu.data_file.file, 'utf-8'))
+    data = list(reader)
+    records = custom_data_to_records(data,
+                                     extra_dims=mdu.report_type.dimension_short_names,
+                                     initial_data={'platform_name': mdu.platform.name})
+    return {
+        'data_row_count': len(data),
+        'log_count': len(records),
+        'months': list(sorted({record.start for record in records}))
+    }

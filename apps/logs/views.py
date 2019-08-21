@@ -12,7 +12,8 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from core.logic.dates import date_filter_from_params
-from logs.logic.custom_import import custom_data_import_precheck
+from logs.logic.custom_import import custom_data_import_precheck, custom_data_to_records, \
+    custom_import_preflight_check
 from logs.logic.queries import extract_accesslog_attr_query_params
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
@@ -324,11 +325,10 @@ class ManualDataUploadViewSet(ModelViewSet):
     queryset = ManualDataUpload.objects.all()
 
 
-class ManualDataUploadPrecheckView(APIView):
+class ManualDataUploadPreflightCheckView(APIView):
 
     def get(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
-        custom_data_import_precheck()
-        result = {}
-        return Response(result)
+        stats = custom_import_preflight_check(mdu)
+        return Response(stats)
 

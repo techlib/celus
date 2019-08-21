@@ -73,6 +73,15 @@ export default new Router({
       props: route => ({platformId: Number.parseInt(route.params.platformId, 10)})
     },
     {
+      path: '/platforms/:platformId/upload-data/:uploadObjectId',
+      name: 'platform-upload-data-step2',
+      component: CustomDataUploadPage,
+      props: route => ({
+        platformId: Number.parseInt(route.params.platformId, 10),
+        uploadObjectId: Number.parseInt(route.params.uploadObjectId, 10),
+      })
+    },
+    {
       path: '/secure',
       name: 'after-login-page',
       component: AfterLoginPage,

@@ -8,6 +8,10 @@ en:
     step1: Data upload
     step2: Check before data import
     step3: Imported data view
+    input_rows: Read input data rows
+    output_logs: Generated logs
+    imported_months: Data found for months
+    overview: Overview
 
 cs:
     data_file: Datový soubor k nahrání
@@ -17,6 +21,10 @@ cs:
     step1: Nahrání dat
     step2: Kontrola před načtením
     step3: Zobrazení importovaných dat
+    input_rows: Načtené datové řádky
+    output_logs: Vygenerované záznamy
+    imported_months: Data nalezena pro měsíce
+    overview: Přehled
 </i18n>
 
 <template>
@@ -90,7 +98,27 @@ cs:
             </v-stepper-step>
             <v-stepper-content step="2">
                 <v-card>
-                    <v-card-title>Overview</v-card-title>
+                    <v-card-title>{{ $t('overview') }}</v-card-title>
+                    <v-card-text>
+                        <table v-if="preflightData">
+                            <tr>
+                                <th class="text-left">{{ $t('input_rows') }}</th>
+                                <td class="text-right">{{ preflightData.data_row_count }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-left">{{ $t('output_logs') }}</th>
+                                <td class="text-right">{{ preflightData.log_count }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-left">{{ $t('imported_months') }}</th>
+                                <td>
+                                    <ul class="no-decoration">
+                                        <li v-for="month in preflightData.months" :key="month">{{ month.substring(0, 7) }}</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </table>
+                    </v-card-text>
                     <v-card-actions>
                         <v-btn @click="step = 3">{{ $t('import') }}</v-btn>
                     </v-card-actions>
@@ -139,6 +167,7 @@ cs:
     name: 'CustomDataUploadPage',
     props: {
       platformId: {required: true},
+      uploadObjectId: {required: false},
     },
     data () {
       return {
@@ -151,6 +180,7 @@ cs:
         errors: [],
         step: 1,
         uploadObject: null,
+        preflightData: null,
       }
     },
     computed: {
@@ -195,6 +225,14 @@ cs:
           this.showSnackbar({content: 'Data successfully sent', color: 'success'})
           this.uploadObject = response.data
           this.step = 2
+          await this.$router.push({
+            name: 'platform-upload-data-step2',
+            params: {
+              uploadObjectId: this.uploadObject.pk,
+              platformId: this.platformId,
+            }
+          })
+          this.loadPreflightData()
         } catch (error) {
           if (error.response && error.response.status === 400) {
             let info = error.response.data
@@ -232,6 +270,29 @@ cs:
           }
         }
       },
+      async loadPreflightData () {
+        if (this.uploadObject) {
+          let url = `/api/manual-data-upload/${this.uploadObject.pk}/preflight`
+          try {
+            const response = await axios.get(url)
+            this.preflightData = response.data
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading preflight data: ' + error})
+          }
+        }
+      },
+      async loadUploadObject () {
+        if (this.uploadObjectId) {
+          try {
+            let response = await axios.get(`/api/manual-data-upload/${this.uploadObjectId}`)
+            this.uploadObject = response.data
+            this.step = 2
+            this.loadPreflightData()
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading upload data: ' + error})
+          }
+        }
+      },
       filledIn (v) {
         if (v === null)
           return 'File must be filled in'
@@ -241,10 +302,17 @@ cs:
     mounted () {
       this.loadReportTypes()
       this.loadPlatform()
+      if (this.uploadObjectId) {
+        this.loadUploadObject()
+      }
     }
   }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+    ul.no-decoration {
+        list-style: none;
+    }
 
 </style>
