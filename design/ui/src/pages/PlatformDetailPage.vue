@@ -21,7 +21,7 @@
 
                 <h2 class="mb-4">{{ platform ? platform.name : '' }}</h2>
 
-                <v-layout row>
+                <v-layout row ma-2 mb-4>
                     <v-flex shrink mr-sm-4>
                         <table v-if="platform" class="overview mb-4 elevation-2">
                             <tr>
@@ -34,7 +34,7 @@
                             </tr>
                         </table>
                     </v-flex>
-                    <v-flex>
+                    <v-flex shrink mr-sm-4>
                         <table v-if="platform" class="overview mb-4 elevation-2">
                             <tr>
                                 <th>{{ $t('labels.title_count') }}</th>
@@ -49,6 +49,22 @@
                                 <td class="text-right">{{ platform.interests.database.value ? platform.interests.database.value : '-' }}</td>
                             </tr>
                         </table>
+                    </v-flex>
+                    <v-spacer></v-spacer>
+                    <v-flex shrink>
+                        <v-card>
+                            <v-card-title>
+                                {{ $t('title_fields.actions') }}
+                            </v-card-title>
+                            <v-card-text>
+                                <v-layout>
+                                    <v-flex>
+                                        <v-icon small class="mr-2">fa-upload</v-icon>
+                                        <router-link :to="{name: 'platform-upload-data', params: {platformId: platformId}}">{{ $t('actions.upload_custom_data') }}</router-link>
+                                    </v-flex>
+                                </v-layout>
+                            </v-card-text>
+                        </v-card>
                     </v-flex>
                 </v-layout>
             </v-flex>
@@ -73,6 +89,7 @@
         <h3 class="pt-3">{{ $t('titles') }}</h3>
 
         <TitleList :url="titleListURL" :platform-id="platformId"></TitleList>
+
     </div>
 
 </template>
@@ -120,7 +137,6 @@
         return null
       },
       breadcrumbs () {
-
           return [
             {
               text: this.$t('pages.platforms'),

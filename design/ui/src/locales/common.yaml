@@ -63,6 +63,7 @@ en:
   actions:
     edit: Edit
     close: Close
+    upload_custom_data: Upload custom data
 
 cs:
   pages:
@@ -129,3 +130,4 @@ cs:
   actions:
     edit: Editovat
     close: Zavřít
+    upload_custom_data: Nahrát vlastní data

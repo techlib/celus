@@ -103,6 +103,8 @@ export default new Vuex.Store({
   actions: {
     start (context) {
       let that = this
+      axios.defaults.xsrfCookieName = 'csrftoken'
+      axios.defaults.xsrfHeaderName = 'X-CSRFToken'
       axios.interceptors.response.use(function (response) {
         // Do something with response data
         return response;

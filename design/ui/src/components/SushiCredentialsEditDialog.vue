@@ -169,7 +169,6 @@ cs:
 <script>
   import axios from 'axios'
   import { mapActions } from 'vuex'
-  import Cookies from 'js-cookie'
 
   export default {
     name: 'SushiCredentialsEditDialog',
@@ -258,11 +257,9 @@ cs:
       },
       async saveData () {
         try {
-          let csrftoken = Cookies.get('csrftoken')
           let result = await axios.patch(
             `/api/sushi-credentials/${this.credentialsId}/`,
             this.apiData,
-            {headers: {'X-CSRFToken': csrftoken}}
             )
           this.showSnackbar({content: 'Successfully saved SUSHI credentials', color: 'success'})
           this.$emit('update-credentials', result.data)

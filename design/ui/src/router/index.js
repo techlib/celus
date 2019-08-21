@@ -9,6 +9,7 @@ import AllTitlesListPage from '../pages/AllTitlesListPage'
 import AfterLoginPage from '../pages/AfterLoginPage'
 import SushiCredentialsManagementPage from '../pages/SushiCredentialsManagementPage'
 import ImportBatchesPage from '../pages/ImportBatchesPage'
+import CustomDataUploadPage from '../pages/CustomDataUploadPage'
 
 Vue.use(Router)
 
@@ -64,6 +65,12 @@ export default new Router({
       path: '/admin/import-batches/',
       name: 'import-batch-list',
       component: ImportBatchesPage,
+    },
+    {
+      path: '/platforms/:platformId/upload-data/',
+      name: 'platform-upload-data',
+      component: CustomDataUploadPage,
+      props: route => ({platformId: Number.parseInt(route.params.platformId, 10)})
     },
     {
       path: '/secure',
