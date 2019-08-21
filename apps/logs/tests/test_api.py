@@ -238,7 +238,7 @@ class TestManualDataUpload(object):
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                            provider='Provider 1')
         report_type = report_type_nd(0)
-        file = StringIO('this is test data')
+        file = StringIO('Source,2019-01\naaaa,9\n')
         settings.MEDIA_ROOT = tmp_path
         response = authenticated_client.post(
             reverse('manual-data-upload-list'),
@@ -248,4 +248,5 @@ class TestManualDataUpload(object):
                 'report_type': report_type.pk,
                 'data_file': file,
             })
+        print(response.content)
         assert response.status_code == 201

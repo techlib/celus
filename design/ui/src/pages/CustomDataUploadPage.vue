@@ -3,71 +3,131 @@
 en:
     data_file: Data file to upload
     data_file_placeholder: Upload a file with tabular data in CSV format
+    error: Error
+    dismiss: Dismiss
+    step1: Data upload
+    step2: Check before data import
+    step3: Imported data view
 
 cs:
     data_file: Datový soubor k nahrání
     data_file_placeholder: Nahrajte soubor s tabulkovými daty ve formátu CSV
+    error: Chyba
+    dismiss: Zavřít
+    step1: Nahrání dat
+    step2: Kontrola před načtením
+    step3: Zobrazení importovaných dat
 </i18n>
 
 <template>
     <div>
-    <v-container fluid>
-        <v-row>
-            <v-breadcrumbs :items="breadcrumbs" class="pl-0">
-                <template v-slot:item="props">
-                    <router-link
-                            v-if="props.item.linkName"
-                            :to="{name: props.item.linkName, params: props.item.linkParams}"
-                    >
-                        {{ props.item.text }}
-                    </router-link>
-                    <span v-else>
-                    {{ props.item.text }}
-                </span>
-                </template>
-            </v-breadcrumbs>
-        </v-row>
-        <v-row>
-            <h2 v-if="platform">{{ platform.name }}</h2>
-        </v-row>
-    </v-container>
-    <v-form
-            ref="form"
-            v-model="valid"
-    >
-        <v-container fluid elevation-3 pa-5>
+        <v-container fluid>
             <v-row>
-                <v-col cols="12" md="6">
-                    <v-select
-                            v-model="selectedReportTypeId"
-                            :items="reportTypes"
-                            item-text="name"
-                            item-value="pk"
-                            required
-                            :label="$t('labels.report_type')"
-                    >
-                    </v-select>
-                </v-col>
-                <v-col cols="12" md="6">
-                    <v-file-input
-                            v-model="dataFile"
-                            prepend-icon="fa-table"
-                            show-size
-                            :label="$t('data_file')"
-                            :placeholder="$t('data_file_placeholder')"
-                            required
-                            :rules="[filledIn]"
-                    >
-                    </v-file-input>
-                </v-col>
+                <v-breadcrumbs :items="breadcrumbs" class="pl-0">
+                    <template v-slot:item="props">
+                        <router-link
+                                v-if="props.item.linkName"
+                                :to="{name: props.item.linkName, params: props.item.linkParams}"
+                        >
+                            {{ props.item.text }}
+                        </router-link>
+                        <span v-else>
+                        {{ props.item.text }}
+                    </span>
+                    </template>
+                </v-breadcrumbs>
             </v-row>
             <v-row>
-                <v-col>
-                    <v-btn @click="postData" :disabled="!valid">Send</v-btn>
-                </v-col>
+                <h2 v-if="platform">{{ platform.name }}</h2>
             </v-row>
         </v-container>
-    </v-form>
+        <v-stepper v-model="step" vertical>
+            <v-stepper-step step="1" :complete="step > 1">
+                {{ $t('step1') }}
+            </v-stepper-step>
+            <v-stepper-content step="1">
+                <v-form
+                        ref="form"
+                        v-model="valid"
+                >
+                    <v-container fluid elevation-3 pa-5>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <v-select
+                                        v-model="selectedReportTypeId"
+                                        :items="reportTypes"
+                                        item-text="name"
+                                        item-value="pk"
+                                        required
+                                        :label="$t('labels.report_type')"
+                                >
+                                </v-select>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <v-file-input
+                                        v-model="dataFile"
+                                        prepend-icon="fa-table"
+                                        show-size
+                                        :label="$t('data_file')"
+                                        :placeholder="$t('data_file_placeholder')"
+                                        required
+                                        :rules="[filledIn]"
+                                >
+                                </v-file-input>
+                            </v-col>
+                        </v-row>
+                        <v-row>
+                            <v-col>
+                                <v-btn @click="postData" :disabled="!valid">Send</v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </v-form>
+            </v-stepper-content>
+
+            <v-stepper-step step="2" :complete="step > 2">
+                {{ $t('step2') }}
+            </v-stepper-step>
+            <v-stepper-content step="2">
+                <v-card>
+                    <v-card-title>Overview</v-card-title>
+                    <v-card-actions>
+                        <v-btn @click="step = 3">{{ $t('import') }}</v-btn>
+                    </v-card-actions>
+                </v-card>
+
+            </v-stepper-content>
+
+            <v-stepper-step step="3" :complete="step > 3">
+                {{ $t('step3') }}
+            </v-stepper-step>
+            <v-stepper-content step="3">
+                <v-card>Data</v-card>
+            </v-stepper-content>
+
+        </v-stepper>
+        <v-dialog
+                v-model="showErrorDialog"
+                max-width="640px"
+        >
+            <v-card class="pa-3">
+                <v-card-title>{{ $t('error') }}</v-card-title>
+                <v-card-text>
+                    <v-list>
+                        <v-list-item v-for="(error, index) in errors" :key="index">
+                            <v-list-item-avatar>
+                                <v-icon color="error">fa-exclamation-circle</v-icon>
+                            </v-list-item-avatar>
+                            <v-list-item-content>{{ error }}</v-list-item-content>
+                        </v-list-item>
+                    </v-list>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="showErrorDialog = false">{{ $t('dismiss') }}</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
@@ -87,6 +147,10 @@ cs:
         platform: null,
         reportTypes: [],
         selectedReportTypeId: null,
+        showErrorDialog: false,
+        errors: [],
+        step: 1,
+        uploadObject: null,
       }
     },
     computed: {
@@ -129,8 +193,19 @@ cs:
             {headers: {'Content-Type': 'multipart/form-data'}}
           )
           this.showSnackbar({content: 'Data successfully sent', color: 'success'})
+          this.uploadObject = response.data
+          this.step = 2
         } catch (error) {
-          this.showSnackbar({content: 'Error sending data: ' + error})
+          if (error.response && error.response.status === 400) {
+            let info = error.response.data
+            if ('data_file' in info) {
+              // this.showSnackbar({content: 'Data file error: ' + info.data_file[0], color: 'error'})
+              this.showErrorDialog = true
+              this.errors = info.data_file
+            }
+          } else {
+            this.showSnackbar({content: 'Error sending data: ' + error})
+          }
         }
       },
       async loadPlatform () {

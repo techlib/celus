@@ -9,6 +9,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 
 from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource
+from logs.validators import CSVValidator
 from organizations.models import Organization
 from publications.models import Platform, Title
 
@@ -237,7 +238,7 @@ class ManualDataUpload(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
                              on_delete=models.SET_NULL)
     created = models.DateTimeField(auto_now_add=True)
-    data_file = models.FileField(upload_to=where_to_store)
+    data_file = models.FileField(upload_to=where_to_store, validators=[CSVValidator()])
     log = models.TextField(blank=True)
     is_processed = models.BooleanField(default=False,
                                        help_text='Was the data converted into logs?')

@@ -5,6 +5,7 @@ from django.utils.translation import gettext as _
 
 # en_month_matcher = re.compile(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})')
 # iso_month_matcher = re.compile(r'(\d{4})-(\d{1,2})')
+from nigiri.counter5 import CounterRecord
 
 
 def col_name_to_month(row_name: str) -> date:
@@ -22,7 +23,8 @@ def col_name_to_month(row_name: str) -> date:
     return dt.date().replace(day=1)
 
 
-def custom_data_import_precheck(header, rows, expected_dimensions=('Institution',)) -> list:
+def custom_data_import_precheck(
+        header, rows, expected_dimensions=('Institution', 'Source', 'Title', 'Metric')) -> list:
     problems = []
     month_columns = []
     # check that we understand all the column names
@@ -47,3 +49,44 @@ def custom_data_import_precheck(header, rows, expected_dimensions=('Institution'
                                 format(row=i+1, column=header[j], value=cell))
     return problems
 
+
+DEFAULT_COLUMN_MAP = {
+    'Metric': 'metric',
+    'Organization': 'organization',
+    'Source': 'title',
+    'Platform': 'platform_name',
+}
+
+
+def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, initial_data=None) \
+        -> [CounterRecord]:
+    # prepare the keyword arguments
+    if initial_data is None:
+        initial_data = {}
+    if column_map is None:
+        column_map = DEFAULT_COLUMN_MAP
+    if extra_dims is None:
+        extra_dims = {}
+    # process the records
+    result = []
+    for record in records:
+        dimensions = {}
+        monthly_values = {}
+        for key, value in record.items():
+            month = col_name_to_month(key)
+            if month:
+                monthly_values[month] = int(value)
+            else:
+                if key in column_map:
+                    dimensions[column_map[key]] = value
+                elif key in extra_dims:
+                    dimensions[extra_dims[key]] = value
+                else:
+                    raise KeyError(_('We don\'t know how to interpret the column "{column}"').
+                                   format(column=key))
+        # we put initial data into the data we read - these are usually dimensions that are fixed
+        # for the whole import and are not part of the data itself
+        dimensions.update(initial_data)
+        for month, value in monthly_values.items():
+            result.append(CounterRecord(value=value, start=month, **dimensions))
+    return result

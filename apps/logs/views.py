@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from core.logic.dates import date_filter_from_params
+from logs.logic.custom_import import custom_data_import_precheck
 from logs.logic.queries import extract_accesslog_attr_query_params
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
@@ -322,7 +323,12 @@ class ManualDataUploadViewSet(ModelViewSet):
     serializer_class = ManualDataUploadSerializer
     queryset = ManualDataUpload.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        print(args, kwargs)
-        return super().create(request, *args, **kwargs)
+
+class ManualDataUploadPrecheckView(APIView):
+
+    def get(self, request, pk):
+        mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
+        custom_data_import_precheck()
+        result = {}
+        return Response(result)
 
