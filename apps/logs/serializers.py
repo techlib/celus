@@ -97,6 +97,7 @@ class ImportBatchVerboseSerializer(ModelSerializer):
 class ManualDataUploadSerializer(ModelSerializer):
 
     user = HiddenField(default=CurrentUserDefault())
+    import_batch = ImportBatchSerializer(read_only=True)
 
     class Meta:
         model = ManualDataUpload

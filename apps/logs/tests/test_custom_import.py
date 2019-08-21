@@ -52,3 +52,20 @@ class TestCustomImport(object):
                     assert record.value == 10
             else:
                 assert record.metric == 'M2'
+
+    def test_custom_data_to_records_no_metric(self):
+        data = [
+            {'Jan 2019': 10, 'Feb 2019': 7, 'Mar 2019': 11},
+            {'Jan 2019':  1, 'Feb 2019': 2, 'Mar 2019':  3, 'Metric': 'MX'},
+        ]
+        records = custom_data_to_records(data,
+                                         initial_data={'platform_name': 'PLA1', 'metric': 'MD'})
+        assert len(records) == 6
+        for record in records:
+            assert record.value in (1, 2, 3, 7, 10, 11)
+            assert record.platform_name == 'PLA1'
+            assert record.start in (date(2019, 1, 1), date(2019, 2, 1), date(2019, 3, 1))
+            if record.value in (10, 7, 11):
+                assert record.metric == 'MD'
+            else:
+                assert record.metric == 'MX'

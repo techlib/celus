@@ -14,8 +14,9 @@
                 :primary-dimension="selectedChartType.primary"
                 :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
                 :platform="importBatch.platform.pk"
-                :stack="this.selectedChartType.stack === undefined ? true : this.selectedChartType.stack"
-                :order-by="this.selectedChartType.orderBy === undefined ? null : this.selectedChartType.orderBy"
+                :stack="selectedChartType.stack === undefined ? true : selectedChartType.stack"
+                :order-by="selectedChartType.orderBy === undefined ? null : selectedChartType.orderBy"
+                :import-batch="importBatch.pk"
             />
         </v-flex>
 </v-layout>

@@ -1,11 +1,13 @@
-import codecs
-import csv
 from datetime import date, datetime
 import dateparser
 
 from django.utils.translation import gettext as _
 
+from core.models import UL_ORG_ADMIN
+from logs.logic.data_import import import_counter_records
 from nigiri.counter5 import CounterRecord
+from logs.models import ImportBatch, ManualDataUpload, Metric
+
 
 # en_month_matcher = re.compile(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})')
 # iso_month_matcher = re.compile(r'(\d{4})-(\d{1,2})')
@@ -89,15 +91,16 @@ def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, in
                                    format(column=key))
         # we put initial data into the data we read - these are usually dimensions that are fixed
         # for the whole import and are not part of the data itself
-        dimensions.update(initial_data)
+        for key, value in initial_data.items():
+            if key not in dimensions:
+                dimensions[key] = value  # only update if the value is not present
         for month, value in monthly_values.items():
             result.append(CounterRecord(value=value, start=month, **dimensions))
     return result
 
 
-def custom_import_preflight_check(mdu: 'ManualDataUpload'):
-    reader = csv.DictReader(codecs.iterdecode(mdu.data_file.file, 'utf-8'))
-    data = list(reader)
+def custom_import_preflight_check(mdu: ManualDataUpload):
+    data = mdu.to_record_dicts()
     records = custom_data_to_records(data,
                                      extra_dims=mdu.report_type.dimension_short_names,
                                      initial_data={'platform_name': mdu.platform.name})
@@ -106,3 +109,23 @@ def custom_import_preflight_check(mdu: 'ManualDataUpload'):
         'log_count': len(records),
         'months': list(sorted({record.start for record in records}))
     }
+
+
+def import_custom_data(mdu: ManualDataUpload, user) -> dict:
+    data = mdu.to_record_dicts()
+    default_metric, _created = Metric.objects.get_or_create(
+        short_name='visits', name_en='Visits', name_cs='Návštěvy', source=mdu.report_type.source)
+    records = custom_data_to_records(data,
+                                     extra_dims=mdu.report_type.dimension_short_names,
+                                     initial_data={'platform_name': mdu.platform.name,
+                                                   'metric': default_metric.pk})
+    # TODO: the owner level should be derived from the user and the organization at hand
+    import_batch = ImportBatch.objects.create(platform=mdu.platform, organization=mdu.organization,
+                                              report_type=mdu.report_type, user=user,
+                                              system_created=False, owner_level=UL_ORG_ADMIN)
+    stats = import_counter_records(mdu.report_type, mdu.organization, mdu.platform, records,
+                                   import_batch=import_batch)
+    mdu.import_batch = import_batch
+    mdu.is_processed = True
+    mdu.save()
+    return stats

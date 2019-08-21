@@ -12,6 +12,7 @@ en:
     output_logs: Generated logs
     imported_months: Data found for months
     overview: Overview
+    upload: Upload
 
 cs:
     data_file: Datový soubor k nahrání
@@ -19,12 +20,13 @@ cs:
     error: Chyba
     dismiss: Zavřít
     step1: Nahrání dat
-    step2: Kontrola před načtením
+    step2: Kontrola před importem
     step3: Zobrazení importovaných dat
     input_rows: Načtené datové řádky
     output_logs: Vygenerované záznamy
     imported_months: Data nalezena pro měsíce
     overview: Přehled
+    upload: Nahrát
 </i18n>
 
 <template>
@@ -86,7 +88,7 @@ cs:
                         </v-row>
                         <v-row>
                             <v-col>
-                                <v-btn @click="postData" :disabled="!valid">Send</v-btn>
+                                <v-btn @click="postData" :disabled="!valid">{{ $t('upload' )}}</v-btn>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -120,7 +122,7 @@ cs:
                         </table>
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn @click="step = 3">{{ $t('import') }}</v-btn>
+                        <v-btn @click="processUploadObject()">{{ $t('import') }}</v-btn>
                     </v-card-actions>
                 </v-card>
 
@@ -131,6 +133,7 @@ cs:
             </v-stepper-step>
             <v-stepper-content step="3">
                 <v-card>Data</v-card>
+                <ImportBatchChart v-if="importBatch" :import-batch-id="importBatch.pk" />
             </v-stepper-content>
 
         </v-stepper>
@@ -162,9 +165,11 @@ cs:
 <script>
   import axios from 'axios'
   import { mapActions, mapState } from 'vuex'
+  import ImportBatchChart from '../components/ImportBatchChart'
 
   export default {
     name: 'CustomDataUploadPage',
+    components: {ImportBatchChart},
     props: {
       platformId: {required: true},
       uploadObjectId: {required: false},
@@ -181,6 +186,8 @@ cs:
         step: 1,
         uploadObject: null,
         preflightData: null,
+        importStats: null,
+        importBatch: null,
       }
     },
     computed: {
@@ -281,13 +288,31 @@ cs:
           }
         }
       },
+      async processUploadObject () {
+        if (this.uploadObject) {
+          let url = `/api/manual-data-upload/${this.uploadObject.pk}/process`
+          try {
+            const response = await axios.post(url, {})
+            this.importStats = response.data.stats
+            this.importBatch = response.data.import_batch
+            this.step = 3
+          } catch (error) {
+            this.showSnackbar({content: 'Error processing data: ' + error})
+          }
+        }
+      },
       async loadUploadObject () {
         if (this.uploadObjectId) {
           try {
             let response = await axios.get(`/api/manual-data-upload/${this.uploadObjectId}`)
             this.uploadObject = response.data
-            this.step = 2
-            this.loadPreflightData()
+            if (this.uploadObject.import_batch) {
+              this.importBatch = this.uploadObject.import_batch
+              this.step = 3
+            } else {
+              this.step = 2
+              this.loadPreflightData()
+            }
           } catch (error) {
             this.showSnackbar({content: 'Error loading upload data: ' + error})
           }

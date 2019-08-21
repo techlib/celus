@@ -74,6 +74,10 @@
         type: Number,
         required: false,
       },
+      importBatch: {  // id of the Batch
+        required: false,
+        type: Number,
+      },
       dataURLBase: {
         type: String,
         default: '/api/',
@@ -121,6 +125,8 @@
           url += `&organization=${this.organization}`
         if (this.title)
           url += `&target=${this.title}`
+        if (this.importBatch)
+          url += `&import_batch=${this.importBatch}`
         return url
       },
       columns () {

@@ -1,12 +1,10 @@
 import logging
 from collections import Counter
 
-from django.db.models import F
-
 from logs.models import ImportBatch
 from organizations.models import Organization
 from publications.models import Title, Platform
-from ..models import ReportType, Metric, DimensionText, OrganizationPlatform, AccessLog
+from ..models import ReportType, Metric, DimensionText, AccessLog
 from nigiri.counter5 import CounterRecord
 
 
@@ -135,9 +133,14 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
             # the title could not be found or created (probably missing required field like title)
             stats['error'] += 1
             continue
+        if type(record.metric) is int:
+            # we can pass a specific metric by numeric ID
+            metric_id = record.metric
+        else:
+            metric_id = get_or_create_with_map(Metric, metrics, 'short_name', record.metric).pk
         id_attrs = {
             'report_type_id': report_type.pk,
-            'metric_id': get_or_create_with_map(Metric, metrics, 'short_name', record.metric).pk,
+            'metric_id': metric_id,
             'organization_id': organization.pk,
             'platform_id': platform.pk,
             'target_id': title_id,

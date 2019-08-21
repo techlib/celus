@@ -13,7 +13,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from core.logic.dates import date_filter_from_params
 from logs.logic.custom_import import custom_data_import_precheck, custom_data_to_records, \
-    custom_import_preflight_check
+    custom_import_preflight_check, import_custom_data
 from logs.logic.queries import extract_accesslog_attr_query_params
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
@@ -332,3 +332,16 @@ class ManualDataUploadPreflightCheckView(APIView):
         stats = custom_import_preflight_check(mdu)
         return Response(stats)
 
+
+class ManualDataUploadProcessView(APIView):
+
+    def post(self, request, pk):
+        mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)  # type: ManualDataUpload
+        if mdu.is_processed or mdu.import_batch:
+            stats = {'existing logs': mdu.import_batch.accesslog_count}
+        else:
+            stats = import_custom_data(mdu, request.user)
+        return Response({
+            'stats': stats,
+            'import_batch': ImportBatchSerializer(mdu.import_batch).data
+        })

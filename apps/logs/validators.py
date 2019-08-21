@@ -6,8 +6,6 @@ import magic
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ValidationError
 
-from logs.logic.custom_import import custom_data_import_precheck
-
 
 class CSVValidator(object):
 
@@ -27,6 +25,7 @@ class CSVValidator(object):
 
     @classmethod
     def check_can_parse(cls, fileobj):
+        from logs.logic.custom_import import custom_data_import_precheck
         reader = csv.reader(codecs.iterdecode(fileobj, 'utf-8'))
         first_row = next(reader)
         try:
