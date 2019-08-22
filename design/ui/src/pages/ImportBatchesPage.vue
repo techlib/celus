@@ -58,8 +58,8 @@ cs:
     >
         <v-card>
             <v-card-text>
-                <AccessLogList v-if="dialogType === 'data'" :import-batch="this.selectedBatch" />
-                <ImportBatchChart v-else-if="dialogType === 'chart'" :import-batch-id="this.selectedBatch" />
+                <AccessLogList v-if="dialogType === 'data'" :import-batch="selectedBatch" />
+                <ImportBatchChart v-else-if="dialogType === 'chart'" :import-batch-id="selectedBatch" />
             </v-card-text>
             <v-card-actions>
                 <v-layout pb-3 pr-5 justify-end>

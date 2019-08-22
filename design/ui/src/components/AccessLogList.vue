@@ -6,6 +6,7 @@
             :headers="headers"
             :sort-by.sync="orderBy"
             :loading="loading"
+            dense
     >
     </v-data-table>
 </template>

@@ -14,6 +14,8 @@ en:
     overview: Overview
     upload: Upload
     add_report_type: Add new report type
+    tab_chart: Chart
+    tab_data: Data
 
 cs:
     data_file: Datový soubor k nahrání
@@ -29,6 +31,8 @@ cs:
     overview: Přehled
     upload: Nahrát
     add_report_type: Vytvořit nový typ reportu
+    tab_chart: Graf
+    tab_data: Data
 </i18n>
 
 <template>
@@ -138,6 +142,7 @@ cs:
                                 </td>
                             </tr>
                         </table>
+                        <!-- TODO: add spinner -->
                     </v-card-text>
                     <v-card-actions>
                         <v-btn @click="processUploadObject()">{{ $t('import') }}</v-btn>
@@ -150,8 +155,23 @@ cs:
                 {{ $t('step3') }}
             </v-stepper-step>
             <v-stepper-content step="3">
-                <v-card>Data</v-card>
-                <ImportBatchChart v-if="importBatch" :import-batch-id="importBatch.pk" />
+                <v-card>
+                    <v-card-text>
+                        <v-tabs v-model="tab" dark background-color="primary" fixed-tabs>
+                            <v-tab href="#chart">{{ $t('tab_chart') }}</v-tab>
+                            <v-tab href="#data">{{ $t('tab_data') }}</v-tab>
+                        </v-tabs>
+                        <v-tabs-items v-model="tab">
+                            <v-tab-item value="chart">
+                                <ImportBatchChart :import-batch-id="importBatch.pk" />
+                            </v-tab-item>
+                            <v-tab-item value="data">
+                                <AccessLogList :import-batch="importBatch.pk" />
+                            </v-tab-item>
+                        </v-tabs-items>
+
+                    </v-card-text>
+                </v-card>
             </v-stepper-content>
 
         </v-stepper>
@@ -199,11 +219,12 @@ cs:
   import axios from 'axios'
   import { mapActions, mapState } from 'vuex'
   import ImportBatchChart from '../components/ImportBatchChart'
+  import AccessLogList from '../components/AccessLogList'
   import ReportTypeCreateWidget from '../components/ReportTypeCreateWidget'
 
   export default {
     name: 'CustomDataUploadPage',
-    components: {ReportTypeCreateWidget, ImportBatchChart},
+    components: {ReportTypeCreateWidget, ImportBatchChart, AccessLogList},
     props: {
       platformId: {required: true},
       uploadObjectId: {required: false},
@@ -223,6 +244,7 @@ cs:
         importStats: null,
         importBatch: null,
         showAddReportTypeDialog: false,
+        tab: 'chart',
       }
     },
     computed: {
