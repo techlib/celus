@@ -10,7 +10,7 @@
             <APIChart
                 v-if="selectedChartType"
                 :type="selectedChartType.type === undefined ? 'histogram' : selectedChartType.type"
-                :report-type-name="selectedChartType.reportType === null ? null : importBatch.report_type.short_name"
+                :report-type-id="selectedChartType.reportType === null ? null : importBatch.report_type.pk"
                 :primary-dimension="selectedChartType.primary"
                 :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
                 :platform="importBatch.platform.pk"

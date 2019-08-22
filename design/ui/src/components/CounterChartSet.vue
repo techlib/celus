@@ -7,7 +7,7 @@
             <v-select
                     :items="reportTypes"
                     item-text="name"
-                    item-value="short_name"
+                    item-value="pk"
                     v-model="selectedReportType"
                     :label="$t('available_report_types')"
             >
@@ -23,7 +23,7 @@
         <APIChart
                 v-if="selectedReportType && selectedChartType"
                 :type="selectedChartType.type === undefined ? 'histogram' : selectedChartType.type"
-                :report-type-name="selectedChartType.reportType === null ? null : selectedReportType"
+                :report-type-id="selectedChartType.reportType === null ? null : selectedReportType"
                 :primary-dimension="selectedChartType.primary"
                 :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
                 :organization="organizationForChart"
@@ -87,7 +87,7 @@
       },
       selectedReportTypeObject () {
         for (let rt of this.reportTypes) {
-          if (rt.short_name === this.selectedReportType)
+          if (rt.pk === this.selectedReportType)
             return rt
         }
         return null
@@ -125,7 +125,7 @@
           bestReportType = this.reportTypes[0]
         }
         if (bestReportType) {
-          this.selectedReportType = bestReportType.short_name
+          this.selectedReportType = bestReportType.pk
         } else {
           this.selectedReportType = null
         }

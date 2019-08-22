@@ -88,8 +88,8 @@ class Counter5DataView(APIView):
         self.io_sec_dim_name, self.sec_dim_name, self.sec_dim_obj = \
             self._translate_dimension_spec(secondary_dim, report_type)
 
-    def get(self, request, report_name=None):
-        data = self.get_data(report_name, request)
+    def get(self, request, report_type_id=None):
+        data = self.get_data(report_type_id, request)
         data_format = request.GET.get('format')
         if data_format in ('csv', 'xlsx'):
             # for the bare result, we do not add any extra information, just output the list
@@ -113,17 +113,17 @@ class Counter5DataView(APIView):
             reply[self.sec_dim_name] = DimensionSerializer(self.sec_dim_obj).data
         return Response(reply)
 
-    def get_data(self, report_name, request):
+    def get_data(self, report_type_id, request):
         """
         This method encapsulates most of the stuff that is done by this view.
-        Based on report_name and the request object, it loads, post-processes, etc. the data
+        Based on report_type_id and the request object, it loads, post-processes, etc. the data
         and returns it
-        :param report_name:
+        :param report_type_id:
         :param request:
         :return:
         """
-        if report_name:
-            report_type = get_object_or_404(ReportType, short_name=report_name)
+        if report_type_id:
+            report_type = get_object_or_404(ReportType, pk=report_type_id)
         else:
             report_type = None
         self._extract_dimension_specs(request, report_type)

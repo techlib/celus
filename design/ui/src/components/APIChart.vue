@@ -64,7 +64,7 @@
       secondaryDimension: {
         required: false,
       },
-      reportTypeName: {
+      reportTypeId: {
         required: true,
       },
       metric: {
@@ -112,8 +112,8 @@
       }),
       dataURL () {
         let reportTypePart = ''  // used do decide if report type should be part of the URL
-        if (this.reportTypeName) {
-            reportTypePart = `${this.reportTypeName}/`
+        if (this.reportTypeId) {
+            reportTypePart = `${this.reportTypeId}/`
           }
         let url = `${this.dataURLBase}chart-data/${reportTypePart}?prim_dim=${this.primaryDimension}&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         if (this.secondaryDimension) {
