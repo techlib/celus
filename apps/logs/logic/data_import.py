@@ -1,5 +1,6 @@
 import logging
 from collections import Counter
+from datetime import date
 
 from logs.models import ImportBatch
 from organizations.models import Organization
@@ -54,9 +55,9 @@ class TitleManager(object):
 
     def get_or_create(self, name, pub_type, isbn, issn, eissn, doi) -> int:
         if not name:
-            logger.error('Record is missing or has empty title, skipping: '
-                         'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s', isbn, issn, eissn, doi)
-            return
+            logger.warning('Record is missing or has empty title, skipping: '
+                           'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s', isbn, issn, eissn, doi)
+            return None
         pub_type = self.decode_pub_type(pub_type)
         key = (name, isbn, issn, eissn, doi)
         if key in self.key_to_title_id_and_pub_type:
@@ -131,20 +132,20 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
         title_id = tm.get_or_create_from_counter_record(record)
         if title_id is None:
             # the title could not be found or created (probably missing required field like title)
-            stats['error'] += 1
-            continue
+            stats['warn missing title'] += 1
         if type(record.metric) is int:
             # we can pass a specific metric by numeric ID
             metric_id = record.metric
         else:
             metric_id = get_or_create_with_map(Metric, metrics, 'short_name', record.metric).pk
+        start = record.start if not isinstance(record.start, date) else record.start.isoformat()
         id_attrs = {
             'report_type_id': report_type.pk,
             'metric_id': metric_id,
             'organization_id': organization.pk,
             'platform_id': platform.pk,
             'target_id': title_id,
-            'date': record.start,
+            'date': start,
         }
         for i, dim in enumerate(dimensions):
             dim_value = record.dimension_data.get(dim.short_name)

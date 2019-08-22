@@ -2,6 +2,7 @@ import codecs
 import csv
 import os
 
+import magic
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
@@ -9,9 +10,9 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
+from django.utils.translation import ugettext as _
 
 from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource
-from logs.validators import CSVValidator
 from organizations.models import Organization
 from publications.models import Platform, Title
 
@@ -185,7 +186,7 @@ class AccessLog(models.Model):
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
-    target = models.ForeignKey(Title, on_delete=models.CASCADE,
+    target = models.ForeignKey(Title, on_delete=models.CASCADE, null=True,
                                help_text='Title for which this log was created')
     dim1 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #1')
     dim2 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #2')
@@ -232,6 +233,32 @@ def where_to_store(instance: 'ManualDataUpload', filename):
            f'{instance.platform.short_name}_{ts}{ext}'
 
 
+def validate_mime_type(fileobj):
+    detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
+    fileobj.seek(0)
+    if detected_type not in ('text/csv', 'text/plain', 'application/csv'):
+        raise ValidationError(_("The uploaded file is not a CSV file or is corrupted. "
+                                "The file type seems to be '{detected_type}'. "
+                                "Please upload a CSV file.").
+                              format(detected_type=detected_type))
+
+
+def check_can_parse(fileobj):
+    from logs.logic.custom_import import custom_data_import_precheck
+    reader = csv.reader(codecs.iterdecode(fileobj, 'utf-8'))
+    first_row = next(reader)
+    try:
+        second_row = next(reader)
+    except StopIteration:
+        raise ValidationError(_('Only one row in the uploaded file, there is not data to '
+                                'import'))
+    fileobj.seek(0)
+    problems = custom_data_import_precheck(first_row, [second_row])
+    if problems:
+        raise ValidationError(_('Errors understanding uploaded data: {}').
+                              format('; '.join(problems)))
+
+
 class ManualDataUpload(models.Model):
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
@@ -240,7 +267,8 @@ class ManualDataUpload(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
                              on_delete=models.SET_NULL)
     created = models.DateTimeField(auto_now_add=True)
-    data_file = models.FileField(upload_to=where_to_store, validators=[CSVValidator()])
+    data_file = models.FileField(upload_to=where_to_store,
+                                 validators=[validate_mime_type, check_can_parse])
     log = models.TextField(blank=True)
     is_processed = models.BooleanField(default=False,
                                        help_text='Was the data converted into logs?')

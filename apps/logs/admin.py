@@ -50,7 +50,9 @@ class ReportTypeToDimensionAdmin(admin.ModelAdmin):
 @admin.register(models.AccessLog)
 class AccessLogAdmin(admin.ModelAdmin):
 
-    list_display = ['metric', 'report_type', 'organization', 'platform', 'target']
+    list_display = ['metric', 'report_type', 'organization', 'platform', 'target', 'created']
+    list_select_related = ['organization', 'platform', 'target', 'metric', 'report_type']
+    readonly_fields = ['target', 'import_batch', 'organization', 'platform']
 
 
 @admin.register(models.InterestGroup)
