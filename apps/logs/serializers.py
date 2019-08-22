@@ -1,8 +1,10 @@
-from rest_framework.fields import CharField, IntegerField, DateField
+from rest_framework.exceptions import NotAuthenticated
+from rest_framework.fields import CharField, IntegerField, DateField, BooleanField
 from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenField, \
     CurrentUserDefault
 
+from core.models import DataSource
 from core.serializers import UserSerializer
 from logs.models import AccessLog, ImportBatch
 from organizations.serializers import OrganizationSerializer
@@ -19,11 +21,11 @@ class MetricSerializer(ModelSerializer):
 
 class DimensionSerializer(ModelSerializer):
 
-    type = CharField(source='get_type_display')
+    # type = CharField(source='get_type_display')
 
     class Meta:
         model = Dimension
-        fields = ('pk', 'short_name', 'name', 'type')
+        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'type')
 
 
 class ReportTypeSerializer(ModelSerializer):
@@ -32,11 +34,25 @@ class ReportTypeSerializer(ModelSerializer):
     log_count = IntegerField(read_only=True)
     newest_log = DateField(read_only=True)
     oldest_log = DateField(read_only=True)
+    public = BooleanField(write_only=True)
 
     class Meta:
         model = ReportType
         fields = ('pk', 'short_name', 'name', 'desc', 'dimensions_sorted', 'log_count',
-                  'newest_log', 'oldest_log')
+                  'newest_log', 'oldest_log', 'public')
+
+    def create(self, validated_data):
+        if not validated_data['public']:
+            # this is not public, we need to get the correct source
+            organization_id = self.context['view'].kwargs.get('organization_pk')
+            if self.context['request'].user.accessible_organizations().filter(pk=organization_id).exists():
+                data_source, _crated = DataSource.objects.get_or_create(
+                    organization_id=organization_id, type=DataSource.TYPE_ORGANIZATION)
+            else:
+                raise NotAuthenticated('user cannot access selected organization')
+            validated_data['source'] = data_source
+        validated_data.pop('public')
+        return super().create(validated_data)
 
 
 class AccessLogSerializer(BaseSerializer):

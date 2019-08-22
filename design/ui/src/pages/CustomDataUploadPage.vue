@@ -13,6 +13,7 @@ en:
     imported_months: Data found for months
     overview: Overview
     upload: Upload
+    add_report_type: Add new report type
 
 cs:
     data_file: Datový soubor k nahrání
@@ -27,6 +28,7 @@ cs:
     imported_months: Data nalezena pro měsíce
     overview: Přehled
     upload: Nahrát
+    add_report_type: Vytvořit nový typ reportu
 </i18n>
 
 <template>
@@ -71,6 +73,18 @@ cs:
                                         required
                                         :label="$t('labels.report_type')"
                                 >
+                                    <template v-slot:append-outer>
+                                        <v-tooltip bottom>
+                                            <template v-slot:activator="{ on }">
+                                                <span v-on="on">
+                                                    <v-btn fab x-small elevation="1" @click="showAddReportTypeDialog = true">
+                                                        <v-icon small>fa-plus</v-icon>
+                                                    </v-btn>
+                                                </span>
+                                            </template>
+                                            <span>{{ $t('add_report_type') }}</span>
+                                        </v-tooltip>
+                                    </template>
                                 </v-select>
                             </v-col>
                             <v-col cols="12" md="6">
@@ -159,6 +173,21 @@ cs:
                 </v-card-actions>
             </v-card>
         </v-dialog>
+                <v-dialog
+                v-model="showAddReportTypeDialog"
+                max-width="880px"
+        >
+            <v-card class="pa-3">
+                <v-card-title>{{ $t('add_report_type') }}</v-card-title>
+                <v-card-text>
+                    <ReportTypeCreateWidget>
+                        <template v-slot:extra="props">
+                            <v-btn @click="showAddReportTypeDialog = false">{{ $t('dismiss') }}</v-btn>
+                        </template>
+                    </ReportTypeCreateWidget>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
@@ -166,10 +195,11 @@ cs:
   import axios from 'axios'
   import { mapActions, mapState } from 'vuex'
   import ImportBatchChart from '../components/ImportBatchChart'
+  import ReportTypeCreateWidget from '../components/ReportTypeCreateWidget'
 
   export default {
     name: 'CustomDataUploadPage',
-    components: {ImportBatchChart},
+    components: {ReportTypeCreateWidget, ImportBatchChart},
     props: {
       platformId: {required: true},
       uploadObjectId: {required: false},
@@ -188,6 +218,7 @@ cs:
         preflightData: null,
         importStats: null,
         importBatch: null,
+        showAddReportTypeDialog: false,
       }
     },
     computed: {
@@ -264,7 +295,7 @@ cs:
         }
       },
       async loadReportTypes () {
-        let url = `/api/organization/${this.organizationId}/platform/${this.platformId}/reports/`
+        let url = `/api/organization/${this.organizationId}/report-types/`
         if (url) {
           try {
             const response = await axios.get(url)

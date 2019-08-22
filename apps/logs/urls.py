@@ -10,7 +10,6 @@ router.register(r'import-batch', views.ImportBatchViewSet)
 router.register(r'manual-data-upload', views.ManualDataUploadViewSet,
                 basename='manual-data-upload')
 
-
 urlpatterns = [
     path('chart-data/<report_name>/', views.Counter5DataView.as_view(), name='chart_data'),
     path('chart-data/', views.Counter5DataView.as_view(), {'report_name': None},

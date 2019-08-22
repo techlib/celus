@@ -54,6 +54,12 @@ class ReportType(models.Model):
     def dimensions_sorted(self):
         return list(self.dimensions.all())
 
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if ReportType.objects.exclude(pk=self.pk).filter(short_name=self.short_name,
+                                                         source__isnull=True).exists():
+            raise ValidationError("Attribute 'short_name' should be unique for each data source")
+
 
 class InterestGroup(models.Model):
 
@@ -115,7 +121,7 @@ class Dimension(models.Model):
 
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
-    type = models.PositiveSmallIntegerField(choices=DIMENSION_TYPE_CHOICES)
+    type = models.PositiveSmallIntegerField(choices=DIMENSION_TYPE_CHOICES, default=TYPE_TEXT)
     desc = models.TextField(blank=True)
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 

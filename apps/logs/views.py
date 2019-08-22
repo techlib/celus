@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from core.logic.dates import date_filter_from_params
+from core.models import DataSource
 from logs.logic.custom_import import custom_data_import_precheck, custom_data_to_records, \
     custom_import_preflight_check, import_custom_data
 from logs.logic.queries import extract_accesslog_attr_query_params
@@ -21,6 +22,7 @@ from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric,
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
     ManualDataUploadSerializer
+from organizations.models import Organization
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -345,3 +347,33 @@ class ManualDataUploadProcessView(APIView):
             'stats': stats,
             'import_batch': ImportBatchSerializer(mdu.import_batch).data
         })
+
+
+class CustomDimensionsViewSet(ModelViewSet):
+
+    queryset = Dimension.objects.all().order_by('pk')
+    serializer_class = DimensionSerializer
+
+    def get_queryset(self):
+        organization = get_object_or_404(self.request.user.accessible_organizations(),
+                                         pk=self.kwargs.get('organization_pk'))
+        try:
+            source = organization.private_data_source
+        except DataSource.DoesNotExist:
+            return Dimension.objects.none()
+        return source.dimension_set.all().order_by('pk')
+
+
+class OrganizationReportTypesViewSet(ModelViewSet):
+
+    queryset = ReportType.objects.all()
+    serializer_class = ReportTypeSerializer
+
+    def get_queryset(self):
+        organization = get_object_or_404(self.request.user.accessible_organizations(),
+                                         pk=self.kwargs.get('organization_pk'))
+        try:
+            source = organization.private_data_source
+        except DataSource.DoesNotExist:
+            return ReportType.objects.filter(source__isnull=True)
+        return source.reporttype_set.all() | ReportType.objects.filter(source__isnull=True)
