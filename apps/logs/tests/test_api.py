@@ -229,6 +229,54 @@ class TestChartDataAPI(object):
         assert recs[0]['count'] == 16
         assert recs[1]['count'] == 32
 
+    @pytest.mark.parametrize('primary_dim, secondary_dim, count',
+                             [
+                                 ['date', None, 3],  # three months
+                                 ['date', 1, 4],  # two values in first month
+                                 [1, None, 2],  # two values in first dim
+                                 [2, None, 3],  # three values in first dim
+                                 [2, 3, 4],  # four combinations of dim2 and dim3
+                                 ['platform', None, 1],  # just one platform
+                             ])
+    def test_api_secondary_dim_no_title(self, counter_records, organizations, report_type_nd,
+                                        primary_dim, secondary_dim, count, authenticated_client):
+        """
+        Copy of the same test as test_api_secondary_dim but with title set to None
+        """
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        data = [
+            [None, '2018-01-01', '1v1', '2v1', '3v1', 1],
+            [None, '2018-01-01', '1v2', '2v1', '3v1', 2],
+            [None, '2018-01-01', '1v2', '2v2', '3v1', 4],
+            [None, '2018-02-01', '1v1', '2v1', '3v1', 8],
+            [None, '2018-02-01', '1v1', '2v2', '3v2', 16],
+            [None, '2018-03-01', '1v1', '2v3', '3v2', 32],
+        ]
+        crs = list(counter_records(data, metric='Hits', platform='Platform1'))
+        organization = organizations[0]
+        report_type = report_type_nd(3)
+        import_batch = ImportBatch.objects.create(organization=organization, platform=platform,
+                                                  report_type=report_type)
+        import_counter_records(report_type, organization, platform, crs, import_batch)
+        assert AccessLog.objects.count() == 6
+        metric = Metric.objects.get(short_name='Hits')
+        if type(primary_dim) is int:
+            primary_dim = report_type.dimensions_sorted[primary_dim-1].short_name
+        params = {'organization': organization.pk,
+                  'metric': metric.pk,
+                  'platform': platform.pk,
+                  'prim_dim': primary_dim
+                  }
+        if secondary_dim:
+            params['sec_dim'] = report_type.dimensions_sorted[secondary_dim-1].short_name
+        resp = authenticated_client.get(reverse('chart_data', args=(report_type.short_name,)),
+                                        params)
+        assert resp.status_code == 200
+        data = json.loads(resp.content)
+        assert 'data' in data
+        assert len(data['data']) == count
+
 
 @pytest.mark.django_db
 class TestManualDataUpload(object):
