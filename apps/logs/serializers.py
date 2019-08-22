@@ -1,4 +1,4 @@
-from rest_framework.exceptions import NotAuthenticated
+from rest_framework.exceptions import NotAuthenticated, ValidationError
 from rest_framework.fields import CharField, IntegerField, DateField, BooleanField
 from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenField, \
@@ -49,7 +49,7 @@ class ReportTypeSerializer(ModelSerializer):
                 data_source, _crated = DataSource.objects.get_or_create(
                     organization_id=organization_id, type=DataSource.TYPE_ORGANIZATION)
             else:
-                raise NotAuthenticated('user cannot access selected organization')
+                raise ValidationError('user cannot access selected organization')
             validated_data['source'] = data_source
         validated_data.pop('public')
         return super().create(validated_data)
