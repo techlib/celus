@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+
 from rest_framework.exceptions import NotAuthenticated, ValidationError
 from rest_framework.fields import CharField, IntegerField, DateField, BooleanField
 from rest_framework.relations import StringRelatedField
@@ -7,6 +9,7 @@ from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenFi
 from core.models import DataSource
 from core.serializers import UserSerializer
 from logs.models import AccessLog, ImportBatch
+from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer
 from .models import Metric, Dimension, ReportType, ManualDataUpload
@@ -34,12 +37,12 @@ class ReportTypeSerializer(ModelSerializer):
     log_count = IntegerField(read_only=True)
     newest_log = DateField(read_only=True)
     oldest_log = DateField(read_only=True)
-    public = BooleanField(write_only=True)
+    public = BooleanField()
 
     class Meta:
         model = ReportType
-        fields = ('pk', 'short_name', 'name', 'desc', 'dimensions_sorted', 'log_count',
-                  'newest_log', 'oldest_log', 'public')
+        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'desc', 'dimensions_sorted',
+                  'log_count', 'newest_log', 'oldest_log', 'public')
 
     def create(self, validated_data):
         if not validated_data['public']:
@@ -53,6 +56,25 @@ class ReportTypeSerializer(ModelSerializer):
             validated_data['source'] = data_source
         validated_data.pop('public')
         return super().create(validated_data)
+
+    def validate(self, attrs):
+        result = super().validate(attrs)
+        if 'pk' not in attrs:
+            if attrs.get('public'):
+                if ReportType.objects.filter(source__isnull=True,
+                                             short_name=attrs.get('short_name')).exists():
+                    raise ValidationError(
+                        _('Public report type with this code name already exists'))
+            else:
+                organization_id = self.context['view'].kwargs.get('organization_pk')
+                if ReportType.objects.filter(source__organization_id=organization_id,
+                                             short_name=attrs.get('short_name')).exists():
+                    raise ValidationError(
+                        _('Report type with this code name already exists for organization '
+                          '"{organization}"').
+                        format(organization=Organization.objects.get(pk=organization_id))
+                    )
+        return result
 
 
 class AccessLogSerializer(BaseSerializer):

@@ -222,7 +222,20 @@ cs:
             })
           this.savedReportType = response.data
         } catch (error) {
-          this.showSnackbar({content: 'Error saving report type: ' + error, color: 'error'})
+          if (error.response && error.response.status === 400) {
+            let info = error.response.data
+            let error_msg = ''
+            if ('non_field_errors' in info) {
+              error_msg = info.non_field_errors
+            } else {
+              for (let [key, value] in Object.entries(info)) {
+                error_msg += `${key}: ${value}; `
+              }
+            }
+            this.showSnackbar({content: 'Error saving report type: ' + error_msg, color: 'error'})
+          } else {
+            this.showSnackbar({content: 'Error saving report type: ' + error, color: 'error'})
+          }
         }
       },
       required (v) {

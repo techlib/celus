@@ -12,7 +12,7 @@ class OrganizationPlatformAdmin(admin.ModelAdmin):
 @admin.register(models.ReportType)
 class ReportTypeAdmin(admin.ModelAdmin):
 
-    list_display = ['short_name', 'name', 'desc', 'dimension_list']
+    list_display = ['short_name', 'name', 'desc', 'dimension_list', 'source']
     ordering = ['short_name']
 
     @classmethod

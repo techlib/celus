@@ -85,6 +85,10 @@ cs:
                                             <span>{{ $t('add_report_type') }}</span>
                                         </v-tooltip>
                                     </template>
+                                    <template v-slot:item="props">
+                                        <span v-if="props.item.public">{{ props.item.name }}</span>
+                                        <i v-else>{{ props.item.name }} <span class="font-weight-light">(private)</span></i>
+                                    </template>
                                 </v-select>
                             </v-col>
                             <v-col cols="12" md="6">

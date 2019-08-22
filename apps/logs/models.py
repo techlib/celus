@@ -60,6 +60,10 @@ class ReportType(models.Model):
                                                          source__isnull=True).exists():
             raise ValidationError("Attribute 'short_name' should be unique for each data source")
 
+    @property
+    def public(self):
+        return self.source is None
+
 
 class InterestGroup(models.Model):
 

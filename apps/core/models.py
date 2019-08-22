@@ -44,6 +44,8 @@ class DataSource(models.Model):
                                                   'organization')
 
     def __str__(self):
+        if self.organization and self.type == self.TYPE_ORGANIZATION:
+            return f'Org: {self.organization}'
         return f'{self.short_name}: {self.get_type_display()}'
 
 
