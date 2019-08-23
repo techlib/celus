@@ -102,7 +102,7 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    start (context) {
+    async start (context) {
       let that = this
       axios.defaults.xsrfCookieName = 'csrftoken'
       axios.defaults.xsrfHeaderName = 'X-CSRFToken'
@@ -122,9 +122,9 @@ export default new Vuex.Store({
         }
         return Promise.reject(error)
       })
-      this.dispatch('loadUserData')
-      this.dispatch('loadOrganizations')
-      this.dispatch('changeDateRangeObject', context.state.dateRangeIndex)
+      await context.dispatch('loadUserData')  // we need user data first
+      context.dispatch('loadOrganizations')
+      context.dispatch('changeDateRangeObject', context.state.dateRangeIndex)
     },
     showSnackbar (context, {content, color}) {
       context.commit('setSnackbarContent', {'content': content})
@@ -160,6 +160,9 @@ export default new Vuex.Store({
               rec['name_cs'] = rec['name']
             }
             organizations[rec.pk] = rec
+          }
+          if (context.state.user && context.state.user.is_from_master_organization) {
+            organizations[-1] = {name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1, extra: true}
           }
           context.commit('setOrganizations', organizations)
           if (!(context.state.selectedOrganizationId in organizations) && response.data.length > 0) {

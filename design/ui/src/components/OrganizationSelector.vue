@@ -10,12 +10,15 @@
                     :item-text="lang ? 'name_'+lang : 'name'"
                     item-value="pk"
             >
+                <template v-slot:item="props">
+                    <span :class="{bold: props.item.extra}">{{ lang ? props.item['name_'+lang] : props.item['name'] }}</span>
+                </template>
             </v-autocomplete>
         </v-flex>
     </v-layout>
 </template>
 <script>
-  import { mapActions, mapGetters, mapState } from 'vuex'
+  import { mapActions, mapState } from 'vuex'
 
   export default {
     name: 'OrganizationSelector',
@@ -35,11 +38,16 @@
         let out = Object.values(this.organizations)
         if (out.length === 0)
           return []
-        if (this.user && this.user.is_from_master_organization) {
-          out.push({name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1})
-        }
         let loc_name = this.lang ? `name_${this.lang}` : 'name'
-        out.sort((a, b) => ((a[loc_name] ? a[loc_name] : a['name']).localeCompare((b[loc_name] ? b[loc_name] : b['name']))))
+        out.sort((a, b) => {
+          if ('extra' in a) {
+            return -1
+          }
+          if ('extra' in b) {
+            return 1
+          }
+          return ((a[loc_name] ? a[loc_name] : a['name']).localeCompare((b[loc_name] ? b[loc_name] : b['name'])))
+        })
         return out
       },
       orgId: {
@@ -48,7 +56,8 @@
         },
         set (value) {
           this.selectOrganization({id: value})
-          this.$router.push({name: 'platform-list'})
+          this.$router.push({name: 'platform-list'}).catch(() => {}) // catch but ignore -
+          // it is harmless (https://github.com/vuejs/vue-router/issues/2873)
         }
       }
     },
@@ -71,4 +80,7 @@
         max-width: 0;
     }
 
+    .bold {
+        font-weight: bold;
+    }
 </style>

@@ -39,6 +39,7 @@ cs:
                 :items-per-page="-1"
                 :search="search"
                 sort-by="name"
+                :loading="loading"
         >
             <template v-slot:item.name="props">
                 <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
@@ -64,6 +65,7 @@ cs:
       return {
         platforms: [],
         search: '',
+        loading: false,
       }
     },
     computed: {
@@ -113,15 +115,17 @@ cs:
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      loadPlatforms () {
+      async loadPlatforms () {
         if (this.selectedOrganizationId) {
-          axios.get(this.platformsURL)
-            .then(response => {
-              this.platforms = response.data
-            })
-            .catch(error => {
+          this.loading = true
+          try {
+            let response = await axios.get(this.platformsURL)
+            this.platforms = response.data
+          } catch (error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})
-            })
+          } finally {
+            this.loading = false
+          }
         }
       }
     },
