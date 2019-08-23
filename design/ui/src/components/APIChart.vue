@@ -205,6 +205,9 @@
         }
       },
       organizationRow () {
+        if (!this.selectedOrganization) {
+          return null
+        }
         let i = 0
         for (let row of this.rows) {
           if (row.organization === this.selectedOrganization.name) {
