@@ -37,11 +37,20 @@
       }),
       chartTypes () {
         let base = [
-          {name: this.$i18n.t('chart.interest_in_time'), primary: 'date', secondary: 'interest', type: 'histogram', stack: false, reportType: null},
           {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric', type: 'histogram', stack: false},
           {name: this.$i18n.t('chart.metric'), primary: 'metric'},
           {name: this.$i18n.t('chart.organization'), primary: 'organization', secondary: 'interest', type: 'bar', orderBy: 'count'},
         ]
+        if (this.reportType && this.reportType.pk === -1) {
+          // only add interest_in_time in case no specific report type was selected
+          base.unshift({name: this.$i18n.t('chart.interest_in_time'), primary: 'date', secondary: 'interest', type: 'histogram', stack: false, reportType: null})
+        }
+
+        if (this.reportType && this.reportType.interest_only) {
+          // shortcut for interest-only report types
+          return base.filter(item => item.secondary === 'interest')
+        }
+
         let extra = [
           {name: this.$i18n.t('chart.accesstype'), primary: 'Access_Type'},
           {name: this.$i18n.t('chart.accessmethod'), primary: 'Access_Method'},
@@ -49,6 +58,7 @@
           {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
           {name: this.$i18n.t('chart.yop'), primary: 'YOP', secondary: 'Data_Type', stack: true},
         ]
+        let reportTypeSupportsInterest = false
         if (this.reportType) {
           let dimNames = this.reportType.dimensions_sorted.map(dim => dim.short_name)
           for (let option of extra) {
@@ -57,10 +67,12 @@
                 base.push(option)
             }
           }
+          reportTypeSupportsInterest = this.reportType.interest_groups
         }
         this.extraChartTypes.map(item => base.push(item))
+
         return base.filter(item => this.allowCrossReportCharts || !('reportType' in item && item.reportType === null)).
-          filter(item => this.allowInterestCharts || item.secondary !== 'interest')
+          filter(item => (this.allowInterestCharts && reportTypeSupportsInterest || item.secondary !== 'interest'))
       },
       selectedChartType () {
         return this.chartTypes[this.chartTypeIndex]
@@ -69,6 +81,12 @@
     watch: {
       chartTypeIndex () {
         this.$emit('input', this.selectedChartType)
+      },
+      reportType (value) {
+        if (value !== null) {
+          this.chartTypeIndex = 0
+        }
+        this.chartTypeIndex = null
       }
     },
     mounted () {

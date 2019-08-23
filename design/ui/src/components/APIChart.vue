@@ -116,9 +116,9 @@
       }),
       dataURL () {
         let reportTypePart = ''  // used do decide if report type should be part of the URL
-        if (this.reportTypeId) {
+        if (this.reportTypeId && this.reportTypeId !== -1) {
             reportTypePart = `${this.reportTypeId}/`
-          }
+        }
         let url = `${this.dataURLBase}chart-data/${reportTypePart}?prim_dim=${this.primaryDimension}`
         if (!this.ignoreDateRange) {
           url += `&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`

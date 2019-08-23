@@ -72,6 +72,7 @@
       }),
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
+        lang: 'appLanguage',
       }),
       organizationForChart () {
         /* which organization should be reported to the APIChart component
@@ -100,7 +101,19 @@
           try {
             const response = await axios.get(url)
             this.reportTypes = response.data
-            this.selectFreshestReportType()
+            if (this.reportTypes.filter(item => item.interest_groups).length > 1) {
+              // there is at least one report defining interest, we add the 'Interest' option
+              // and select it
+              this.reportTypes.unshift({
+                name: this.lang === 'cs' ? 'Souhrnný zájem' : 'Aggregated interest',
+                pk: -1,
+                dimensions_sorted: [],
+                interest_only: true
+              })
+              this.selectedReportType = this.reportTypes[0].pk
+            } else {
+              this.selectFreshestReportType()
+            }
           } catch (error) {
             console.log("ERROR: ", error)
             this.showSnackbar({content: 'Error loading title: ' + error})

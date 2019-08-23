@@ -149,6 +149,8 @@ class BaseReportTypeViewSet(ReadOnlyModelViewSet):
             annotate(log_count=Count('accesslog__value', filter=access_log_filter),
                      newest_log=Max('accesslog__date', filter=access_log_filter),
                      oldest_log=Min('accesslog__date', filter=access_log_filter),
+                     interest_groups=Count('accesslog__metric__interest_group', distinct=True,
+                                           filter=access_log_filter),
                      ).\
             filter(log_count__gt=0).order_by('-newest_log')
         return report_types
