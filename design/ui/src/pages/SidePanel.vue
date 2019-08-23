@@ -69,6 +69,7 @@
         }),
         ...mapGetters({
           organization: 'selectedOrganization',
+          showAdminStuff: 'showAdminStuff',
         }),
         groups () {
           return [
@@ -83,17 +84,13 @@
             {
               title: this.$i18n.t('pages.admin'),
               items: [
-                { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list', condition: this.showAdmin },
+                { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list', show: this.showAdminStuff },
 
               ],
-              show: this.showAdmin,
+              show: this.showAdminStuff,
 
             }
          ]
-      },
-      showAdmin () {
-          return ((this.user && this.user.is_from_master_organization) ||
-            (this.organization && this.organization.is_admin))
       },
       activeGroups () {
         return this.groups.filter(item => item.show)

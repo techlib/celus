@@ -100,6 +100,10 @@ export default new Vuex.Store({
     formatNumber (state) {
       return (number) => (number === null) ? '-' : formatNumber(number, state.numberFormat)
     },
+    showAdminStuff (state, getters) {
+      return ((state.user && state.user.is_from_master_organization) ||
+        (getters.selectedOrganization && getters.selectedOrganization.is_admin))
+    },
   },
   actions: {
     async start (context) {

@@ -51,7 +51,7 @@
                         </table>
                     </v-flex>
                     <v-spacer></v-spacer>
-                    <v-flex shrink>
+                    <v-flex shrink v-if="showAdminStuff">
                         <v-card>
                             <v-card-title>
                                 {{ $t('title_fields.actions') }}
@@ -120,6 +120,7 @@
       ...mapGetters({
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
+        showAdminStuff: 'showAdminStuff',
       }),
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
