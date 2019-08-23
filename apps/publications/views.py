@@ -46,16 +46,26 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
             count_filter.update(date_filter_params)
-        result = Platform.objects.filter(**org_filter).filter(**count_filter).\
-            annotate(title_count=Count('accesslog__target', distinct=True,
-                                       filter=Q(**count_filter)),
-                     **interest_annot_params).\
-            filter(title_count__gt=0)
+
         # the following creates the interest dict attr from the interest annotations
         if self.lookup_field not in self.kwargs:
             # we are not filtering by id, so we are getting a list and thus adding interest here
             # otherwise we will do it in get_object
+            # also we filter only platforms that have some data for the organization at hand
+            result = Platform.objects.filter(**org_filter).filter(**count_filter). \
+                annotate(title_count=Count('accesslog__target', distinct=True,
+                                           filter=Q(**count_filter)),
+                         **interest_annot_params). \
+                filter(title_count__gt=0)
             extract_interests_from_objects(interests, result)
+        else:
+            # we are filtering by ID and thus getting only one object
+            # in this case we drop the count_filter so that it is possible to get data
+            # for platforms that are not connected to the organization
+            result = Platform.objects.all().\
+                annotate(title_count=Count('accesslog__target', distinct=True,
+                                           filter=Q(**count_filter)),
+                         **interest_annot_params)
         return result
 
     def get_object(self):
