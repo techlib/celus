@@ -174,6 +174,9 @@
         return {}
       },
       rows () {
+        if (this.loading) {
+          return []
+        }
         // no secondary dimension
         if (this.secondaryDimension) {
           let out = jsonToPivotjson(
@@ -283,19 +286,19 @@
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      loadData() {
+      async loadData() {
         this.loading = true
         this.dataRaw = []
         if (this.dataURL) {
-          axios.get(this.dataURL)
-            .then((response) => {
-              // reformat date value to exclude the day component
-              this.dataRaw = response.data.data.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
-              this.loading = false
-            }, (error) => {
-              this.showSnackbar({content: 'Error fetching data: '+error})
-              this.loading = false
-            })
+          try {
+            let response = await axios.get(this.dataURL)
+            // reformat date value to exclude the day component
+            this.dataRaw = response.data.data.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
+          } catch (error) {
+            this.showSnackbar({content: 'Error fetching data: '+error})
+          } finally {
+            this.loading = false
+          }
         }
       },
       dimensionToName (dim) {

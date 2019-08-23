@@ -26,6 +26,8 @@ cs:
                 :headers="headers"
                 :items-per-page.sync="itemsPerPage"
                 :search="search"
+                :loading="loading"
+                :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
         >
             <template v-slot:item.name="props">
                 <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
@@ -54,6 +56,7 @@ cs:
         titles: [],
         search: '',
         itemsPerPage: 25,
+        loading: false,
         headers: [
           {
             text: this.$i18n.t('title_fields.name'),
@@ -101,15 +104,17 @@ cs:
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      loadData () {
+      async loadData () {
         if (this.url) {
-          axios.get(this.url)
-            .then(response => {
-              this.titles = response.data
-            })
-            .catch(error => {
-              this.showSnackbar({content: 'Error loading platforms: ' + error})
-            })
+          this.loading = true
+          try {
+            let response = await axios.get(this.url)
+            this.titles = response.data
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading platforms: ' + error})
+          } finally {
+            this.loading = false
+          }
         }
       }
     },

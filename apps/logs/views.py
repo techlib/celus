@@ -1,3 +1,4 @@
+from time import sleep
 from typing import Optional
 
 from django.db import models
