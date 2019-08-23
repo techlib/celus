@@ -95,6 +95,10 @@
         type: Boolean,
         default: true,
       },
+      ignoreDateRange: {
+        type: Boolean,
+        default: false,
+      },
       orderBy: {},
     },
     data () {
@@ -115,7 +119,10 @@
         if (this.reportTypeId) {
             reportTypePart = `${this.reportTypeId}/`
           }
-        let url = `${this.dataURLBase}chart-data/${reportTypePart}?prim_dim=${this.primaryDimension}&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        let url = `${this.dataURLBase}chart-data/${reportTypePart}?prim_dim=${this.primaryDimension}`
+        if (!this.ignoreDateRange) {
+          url += `&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        }
         if (this.secondaryDimension) {
           url += `&sec_dim=${this.secondaryDimension}`
         }

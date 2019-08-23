@@ -20,20 +20,21 @@ en:
     public_report_type: Publicly available report type
     public_report_type_tooltip: Public report types may be used by all users in all organizations.
         The opposite are organization private report types. Only admins may create public report types.
+    save: Save
+    add_dimension: Add dimension
+    only_6_dimensions: Only up to 6 dimensions are supported
 
 cs:
     short_name: Kódové označení
     short_name_placeholder: Krátké kódové označení reportu, např. UR
     name_en: Název reportu (anglicky)
     name_cs: Název reportu (česky)
-    intro: Report type describes what kind of data is present in uploaded files.
-    intro2: Reports differ significantly in the amount of detail they contain, that is the number
-            of dimension (columns) the report data has. By default all reports contain support
-            for the
-            Title (e.g. name of the publication or database) and
-            Metric (what is measured, e.g. number of visits, number of searches) columns.
-            If your report data has more than these dimensions (e.g. the publisher name, etc.),
-            you can add extra dimensions bellow.
+    intro: Typ reportu popisuje strukturu dat a typ dat v nahrávaných souborech.
+    intro2: Reporty se výrazně liší svou detailností, tedy počtem rozměrů (sloupců), které obsahují.
+            Každý typ reportu má ve výchozím stavu podporu pro Titul (např. jméno publikace nebo
+            databáze) a Metriku (co je měřeno, např. počet návštěv, počet vyhledávání, atp.).
+            Pokud vaše data obsahují více než tyto rozměry (např. jméno vydavatele, atp.)
+            můžete přidat další rozměry níže.
     dim_short_name: Název sloupce v souboru
     dim_name_en: Zobrazované jméno (anglicky)
     dim_name_cs: Zobrazované jméno (česky)
@@ -43,6 +44,9 @@ cs:
     public_report_type_tooltip: Veřejné typy reportů mohou být využity uživateli ve všech organizacích.
         Opakem jsou soukromé typy reportů dostupné pouze pro danou organizaci. Veřejné typy reportů
         mohou vytvářet pouze administrátoři.
+    save: Uložit
+    add_dimension: Přidat rozměr
+    only_6_dimensions: Maximální podporovaný počet rozměrů je 6
 </i18n>
 
 <template>
@@ -135,8 +139,8 @@ cs:
                         <v-row>
                             <v-col>
                                 <v-btn @click="addDimension">
-                                    <v-icon>fa-plus-circle</v-icon>
-                                    Add dimension
+                                    <v-icon class="mr-2">fa-plus-circle</v-icon>
+                                    {{ $t('add_dimension') }}
                                 </v-btn>
                             </v-col>
                         </v-row>

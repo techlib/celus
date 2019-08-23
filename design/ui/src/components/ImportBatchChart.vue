@@ -17,6 +17,7 @@
                 :stack="selectedChartType.stack === undefined ? true : selectedChartType.stack"
                 :order-by="selectedChartType.orderBy === undefined ? null : selectedChartType.orderBy"
                 :import-batch="importBatch.pk"
+                :ignore-date-range="true"
             />
         </v-flex>
 </v-layout>

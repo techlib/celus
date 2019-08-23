@@ -16,6 +16,7 @@ en:
     add_report_type: Add new report type
     tab_chart: Chart
     tab_data: Data
+    import: Import
 
 cs:
     data_file: Datový soubor k nahrání
@@ -33,6 +34,7 @@ cs:
     add_report_type: Vytvořit nový typ reportu
     tab_chart: Graf
     tab_data: Data
+    import: Importovat
 </i18n>
 
 <template>
@@ -389,6 +391,11 @@ cs:
       this.loadPlatform()
       if (this.uploadObjectId) {
         this.loadUploadObject()
+      }
+    },
+    watch: {
+      showAddReportTypeDialog () {
+        this.loadReportTypes()
       }
     }
   }
