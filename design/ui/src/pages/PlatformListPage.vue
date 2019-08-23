@@ -19,53 +19,78 @@ cs:
 </i18n>
 
 <template>
-    <div>
-        <h2>{{ $t('pages.platforms') }}</h2>
-        <v-card>
-        <v-card-title>
+    <v-container>
+        <v-row>
+            <v-col>
+                <h2>{{ $t('pages.platforms') }}</h2>
+            </v-col>
             <v-spacer></v-spacer>
-            <v-text-field
-                    v-model="search"
-                    append-icon="fa-search"
-                    :label="$t('labels.search')"
-                    single-line
-                    hide-details
-            ></v-text-field>
-        </v-card-title>
-        <v-data-table
-                :items="platforms"
-                :headers="headers"
-                :hide-default-footer="true"
-                :items-per-page="-1"
-                :search="search"
-                sort-by="name"
-                :loading="loading"
-        >
-            <template v-slot:item.name="props">
-                <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
-            </template>
-            <template v-slot:item.interests.title="props">
-                {{ props.item.interests.title ? props.item.interests.title.value : '-' }}
-            </template>
-              <template v-slot:item.interests.database.value="props">
-                {{ props.item.interests.database ? props.item.interests.database.value : '-' }}
-            </template>
-        </v-data-table>
-        </v-card>
-    </div>
+            <v-col v-if="showAdminStuff" cols="auto">
+                <v-btn @click="showUploadDataDialog = true">
+                    <v-icon class="mr-2" small>fa-upload</v-icon>
+                    {{ $t('actions.upload_data') }}
+                </v-btn>
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col>
+                <v-card>
+                    <v-card-title>
+                        <v-spacer></v-spacer>
+                        <v-text-field
+                                v-model="search"
+                                append-icon="fa-search"
+                                :label="$t('labels.search')"
+                                single-line
+                                hide-details
+                        ></v-text-field>
+                    </v-card-title>
+                    <v-data-table
+                            :items="platforms"
+                            :headers="headers"
+                            :hide-default-footer="true"
+                            :items-per-page="-1"
+                            :search="search"
+                            sort-by="name"
+                            :loading="loading"
+                    >
+                        <template v-slot:item.name="props">
+                            <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
+                        </template>
+                        <template v-slot:item.interests.title="props">
+                            {{ props.item.interests.title ? props.item.interests.title.value : '-' }}
+                        </template>
+                        <template v-slot:item.interests.database.value="props">
+                            {{ props.item.interests.database ? props.item.interests.database.value : '-' }}
+                        </template>
+                    </v-data-table>
+                </v-card>
+            </v-col>
+        </v-row>
+        <v-dialog v-model="showUploadDataDialog" max-width="640px">
+            <PlatformSelectionWidget>
+                <template v-slot:actions>
+                    <v-btn @click="showUploadDataDialog = false">{{ $t('actions.cancel') }}</v-btn>
+                </template>
+            </PlatformSelectionWidget>
+        </v-dialog>
+    </v-container>
 </template>
 
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import axios  from 'axios'
+  import axios from 'axios'
+  import PlatformSelectionWidget from './PlatformSelectionWidget'
 
   export default {
     name: 'PlatformListPage',
+    components: {PlatformSelectionWidget},
     data () {
       return {
         platforms: [],
         search: '',
         loading: false,
+        showUploadDataDialog: false,
       }
     },
     computed: {
@@ -76,6 +101,7 @@ cs:
         formatNumber: 'formatNumber',
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
+        showAdminStuff: 'showAdminStuff',
       }),
       platformsURL () {
         return `/api/organization/${this.selectedOrganizationId}/detailed-platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`

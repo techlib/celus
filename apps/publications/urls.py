@@ -1,8 +1,12 @@
+from rest_framework.routers import SimpleRouter
 from rest_framework_nested.routers import NestedSimpleRouter
 
 from logs.views import CustomDimensionsViewSet, OrganizationReportTypesViewSet
 from organizations.urls import router as organization_router
 from . import views
+
+root_router = SimpleRouter()
+root_router.register(r'platform', views.AllPlatformsViewSet, basename='all-platforms')
 
 org_sub_router = NestedSimpleRouter(organization_router, r'organization', lookup='organization')
 org_sub_router.register(r'platform', views.PlatformViewSet, basename='platform')
@@ -36,6 +40,7 @@ platform_title_sub_router.register('reports', views.PlatformTitleReportTypeViewS
 urlpatterns = [
 ]
 
+urlpatterns += root_router.urls
 urlpatterns += org_sub_router.urls
 urlpatterns += platform_sub_router.urls
 urlpatterns += title_sub_router.urls

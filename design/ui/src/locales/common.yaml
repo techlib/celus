@@ -64,6 +64,8 @@ en:
     edit: Edit
     close: Close
     upload_custom_data: Upload custom data
+    upload_data: Upload data
+    cancel: Cancel
 
 cs:
   pages:
@@ -131,3 +133,5 @@ cs:
     edit: Editovat
     close: Zavřít
     upload_custom_data: Nahrát vlastní data
+    upload_data: Nahrát data
+    cancel: Zrušit

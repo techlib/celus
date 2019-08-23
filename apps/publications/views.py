@@ -13,6 +13,12 @@ from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 
 
+class AllPlatformsViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = PlatformSerializer
+    queryset = Platform.objects.all().order_by('name')
+
+
 class PlatformViewSet(ReadOnlyModelViewSet):
 
     serializer_class = PlatformSerializer
