@@ -6,7 +6,7 @@ from django.utils.translation import gettext as _
 from core.models import UL_ORG_ADMIN
 from logs.logic.data_import import import_counter_records
 from nigiri.counter5 import CounterRecord
-from logs.models import ImportBatch, ManualDataUpload, Metric
+from logs.models import ImportBatch, ManualDataUpload, Metric, OrganizationPlatform
 
 
 # en_month_matcher = re.compile(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})')
@@ -125,7 +125,9 @@ def import_custom_data(mdu: ManualDataUpload, user) -> dict:
                                               system_created=False, owner_level=UL_ORG_ADMIN)
     stats = import_counter_records(mdu.report_type, mdu.organization, mdu.platform, records,
                                    import_batch=import_batch)
+    # explicitly connect the organization and the platform
+    OrganizationPlatform.objects.get_or_create(platform=mdu.platform,
+                                               organization=mdu.organization)
     mdu.import_batch = import_batch
-    mdu.is_processed = True
-    mdu.save()
+    mdu.mark_processed()
     return stats

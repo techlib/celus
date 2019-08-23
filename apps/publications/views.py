@@ -45,6 +45,9 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
                                                      self.request.user)
         # filters for the suitable access logs
         count_filter = extend_query_filter(org_filter, 'accesslog__')
+        # we prefilter using the same filter as for count annotation
+        # but without the interest_group filter
+        prefilter = dict(count_filter)
         count_filter['accesslog__metric__interest_group__isnull'] = False   # for counting titles
         # parameters for annotation defining an annotation for each of the interest groups
         interests = InterestGroup.objects.all()
@@ -53,17 +56,17 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
             count_filter.update(date_filter_params)
+            prefilter.update(date_filter_params)
 
         # the following creates the interest dict attr from the interest annotations
         if self.lookup_field not in self.kwargs:
             # we are not filtering by id, so we are getting a list and thus adding interest here
             # otherwise we will do it in get_object
             # also we filter only platforms that have some data for the organization at hand
-            result = Platform.objects.filter(**org_filter).filter(**count_filter). \
+            result = Platform.objects.filter(**org_filter).filter(**prefilter). \
                 annotate(title_count=Count('accesslog__target', distinct=True,
                                            filter=Q(**count_filter)),
-                         **interest_annot_params). \
-                filter(title_count__gt=0)
+                         **interest_annot_params)
             extract_interests_from_objects(interests, result)
         else:
             # we are filtering by ID and thus getting only one object
