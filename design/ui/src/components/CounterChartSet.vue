@@ -101,7 +101,7 @@
           try {
             const response = await axios.get(url)
             this.reportTypes = response.data
-            if (this.reportTypes.filter(item => item.interest_groups).length > 1) {
+            if (this.reportTypes.filter(item => item.interest_groups).length > 0) {
               // there is at least one report defining interest, we add the 'Interest' option
               // and select it
               this.reportTypes.unshift({
