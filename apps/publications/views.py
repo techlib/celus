@@ -6,6 +6,7 @@ from core.logic.dates import date_filter_from_params
 from logs.logic.queries import interest_group_annotation_params, extract_interests_from_objects
 from logs.models import ReportType, InterestGroup
 from logs.serializers import ReportTypeSerializer
+from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer
@@ -80,6 +81,7 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
 class PlatformTitleViewSet(ReadOnlyModelViewSet):
 
     serializer_class = TitleSerializer
+    # pagination_class = StandardResultsSetPagination
 
     def _extra_filters(self):
         return {}
@@ -183,6 +185,7 @@ class TitleReportTypeViewSet(BaseReportTypeViewSet):
 class TitleViewSet(ReadOnlyModelViewSet):
 
     serializer_class = TitleSerializer
+    # pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         """
@@ -200,6 +203,7 @@ class TitleCountsViewSet(ReadOnlyModelViewSet):
     """
 
     serializer_class = TitleCountSerializer
+    # pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         """
