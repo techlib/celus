@@ -22,6 +22,7 @@
                     :items-per-page.sync="itemsPerPage"
                     :sort-by="orderBy"
                     multi-sort
+                    :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
             >
                 <template v-slot:item.active_counter_reports="props">
                     <v-tooltip
@@ -70,7 +71,7 @@
 
 <script>
   import axios from 'axios'
-  import {mapActions} from 'vuex'
+  import { mapActions, mapState } from 'vuex'
   import { debounce } from 'lodash'
   import SushiCredentialsEditDialog from '../components/SushiCredentialsEditDialog'
 
@@ -88,6 +89,9 @@
       }
     },
     computed: {
+      ...mapState({
+        organizationId: 'selectedOrganizationId',
+      }),
       headers () {
         return [
           {
@@ -135,7 +139,7 @@
       }),
       async loadSushiCredentialsList () {
         try {
-          let response = await axios.get('/api/sushi-credentials/')
+          let response = await axios.get(`/api/sushi-credentials/?organization=${this.organizationId}`)
           this.sushiCredentialsList = response.data
         } catch (error) {
           this.showSnackbar({content: 'Error loading credentials list: '+error})
