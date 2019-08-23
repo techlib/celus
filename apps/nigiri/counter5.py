@@ -135,3 +135,13 @@ class Counter5DRReport(Counter5ReportBase):
 class Counter5TRReport(Counter5ReportBase):
 
     dimensions = ['Access_Type', 'Access_Method', 'Data_Type', 'Section_Type', 'YOP', 'Publisher']
+
+
+class Counter5PRReport(Counter5ReportBase):
+
+    dimensions = ['Access_Method', 'Data_Type']
+
+    @classmethod
+    def _item_get_title(cls, item):
+        # there are not titles in the platform report
+        return None

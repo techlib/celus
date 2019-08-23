@@ -136,11 +136,9 @@ class SushiCredentials(models.Model):
         data_file = None
         filename = 'foo.json'
         errors = []
-        params = {}
         queued = False
-        if counter_report.code == 'tr':
-            # we want extra split data from the title report
-            params = client.EXTRA_PARAMS['tr_maximum_split']
+        # we want extra split data from the report
+        params = client.EXTRA_PARAMS['maximum_split'].get(counter_report.code.lower(), {})
         try:
             report = client.get_report_data(counter_report.code, start_date, end_date,
                                             params=params)

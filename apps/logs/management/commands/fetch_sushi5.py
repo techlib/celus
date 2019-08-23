@@ -37,10 +37,8 @@ class Command(BaseCommand):
         begin_date = options['begin_date'] if options['begin_date'] else f'{today.year}-01'
         end_date = options['end_date'] if options['end_date'] else \
             (today - timedelta(days=today.day)).strftime('%Y-%m')  # previous month
-        params = {}
-        if report_type.lower() == 'tr':
-            # add extra options to TR
-            params = client.EXTRA_PARAMS['tr_maximum_split']
+        # add params to ensure maximum split (most granular) data
+        params = client.EXTRA_PARAMS['maximum_split'].get(report_type.lower(), {})
         # fetch it
         self.stderr.write(self.style.WARNING(
             f'Getting {report_type} report from {begin_date} to {end_date}')

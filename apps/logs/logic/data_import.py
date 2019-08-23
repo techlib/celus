@@ -55,7 +55,7 @@ class TitleManager(object):
 
     def get_or_create(self, name, pub_type, isbn, issn, eissn, doi) -> int:
         if not name:
-            logger.warning('Record is missing or has empty title, skipping: '
+            logger.warning('Record is missing or has empty title: '
                            'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s', isbn, issn, eissn, doi)
             return None
         pub_type = self.decode_pub_type(pub_type)

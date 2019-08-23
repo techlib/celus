@@ -96,8 +96,10 @@ class Sushi5Client(SushiClientBase):
     # sets of additional parameters for specific setups
     EXTRA_PARAMS = {
         # split data in TR report to most possible dimensions for most granular data
-        'tr_maximum_split': {
-            'attributes_to_show': 'yop|Access_Method|Access_Type|Data_Type|Section_Type'
+        'maximum_split': {
+            'tr': {'attributes_to_show': 'yop|Access_Method|Access_Type|Data_Type|Section_Type'},
+            'pr': {'attributes_to_show': 'Access_Method|Data_Type'},
+            'dr': {'attributes_to_show': 'Access_Method|Data_Type'},
         }
     }
 
