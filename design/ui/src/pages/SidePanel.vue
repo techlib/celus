@@ -31,7 +31,7 @@
             </v-list>
         </v-toolbar>
 
-        <v-list class="pt-0" dense v-for="(group, index) in groups" :key="index" subheader>
+        <v-list class="pt-0" dense v-for="(group, index) in activeGroups" :key="index" subheader>
             <v-subheader>{{ group.title }}</v-subheader>
 
             <v-list-item
@@ -53,6 +53,8 @@
     </v-navigation-drawer>
 </template>
 <script>
+  import { mapGetters, mapState } from 'vuex'
+
   export default {
     name: 'SidePanel',
     data () {
@@ -62,6 +64,12 @@
       }
     },
     computed: {
+        ...mapState({
+          user: 'user',
+        }),
+        ...mapGetters({
+          organization: 'selectedOrganization',
+        }),
         groups () {
           return [
           {
@@ -69,17 +77,26 @@
             items: [
               { title: this.$i18n.t('pages.platforms'), icon: 'far fa-list-alt', linkTo: 'platform-list' },
               { title: this.$i18n.t('pages.all_titles'), icon: 'far fa-copy', linkTo: 'title-list' },
-              ]
+              ],
+            show: true,
           },
             {
               title: this.$i18n.t('pages.admin'),
               items: [
-                { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list' },
+                { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list', condition: this.showAdmin },
 
-              ]
+              ],
+              show: this.showAdmin,
 
             }
          ]
+      },
+      showAdmin () {
+          return ((this.user && this.user.is_from_master_organization) ||
+            (this.organization && this.organization.is_admin))
+      },
+      activeGroups () {
+        return this.groups.filter(item => item.show)
       }
     }
   }

@@ -19,9 +19,10 @@ def organization_filter_from_org_id(org_id, user: User, prefix='') -> dict:
         else:
             raise Http404()
     else:
-        if not (user.organizations.filter(pk=org_id).exists() or user.is_from_master_organization):
-            raise Http404()
-        return {f'{prefix}organization__pk': org_id}
+        if user.is_from_master_organization or \
+                user.accessible_organizations().filter(pk=org_id).exists():
+            return {f'{prefix}organization__pk': org_id}
+        raise Http404()
 
 
 def extend_query_filter(filter_dict: dict, prefix: str) -> dict:

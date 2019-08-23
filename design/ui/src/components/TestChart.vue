@@ -117,7 +117,7 @@
         dateRangeEnd: 'dateRangeEndText',
       }),
       dataURL () {
-        let url = `${this.data_url_base}chart-data/${this.selectedReportType.short_name}/?prim_dim=${this.primaryDim}&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        let url = `${this.data_url_base}chart-data/${this.selectedReportType.pk}/?prim_dim=${this.primaryDim}&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         if (this.secondaryDim) {
           url += `&sec_dim=${this.secondaryDim}`
         }
