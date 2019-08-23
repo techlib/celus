@@ -1,5 +1,5 @@
 <template>
-    <v-app>
+    <v-app v-if="!invalidUser">
         <SidePanel />
 
         <v-app-bar app clipped-left>
@@ -88,6 +88,8 @@
             <LoginDialog />
         </v-layout>
     </v-app>
+    <!-- invalid user state -->
+    <InvalidUserPage v-else />
 </template>
 
 <script>
@@ -96,10 +98,12 @@
   import OrganizationSelector from '../components/OrganizationSelector'
   import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
   import LoginDialog from '../components/LoginDialog'
+  import InvalidUserPage from './InvalidUserPage'
 
   export default {
     name: 'Dashboard',
     components: {
+      InvalidUserPage,
       LoginDialog,
       SelectedDateRangeWidget,
       OrganizationSelector,
@@ -114,6 +118,7 @@
       ...mapState({
         snackbarText: 'snackbarContent',
         snackbarColor: 'snackbarColor',
+        invalidUser: 'invalidUser',
       }),
       ...mapGetters({
         loggedIn: 'loggedIn',

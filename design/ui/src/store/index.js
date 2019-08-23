@@ -26,6 +26,7 @@ export default new Vuex.Store({
   plugins: [vuexLocal.plugin],
   state: {
     user: null,
+    invalidUser: false,
     snackbarShow: false,
     snackbarContent: null,
     snackbarColor: null,
@@ -110,8 +111,8 @@ export default new Vuex.Store({
         return response;
       }, function (error) {
         // Do something with response error
-        if (error.response && (error.response.status === 403 || error.response.status === 401)) {
-          // if there is 403 or 401 error, try to reauthenticate
+        if (error.response && error.response.status === 401) {
+          // if there is 401 error, try to (re)authenticate
           that.dispatch('setShowLoginDialog', {show: true})
         } else if (typeof error.response === 'undefined') {
           // we are getting redirected to the EduID login page, but 302 is transparent for us
@@ -135,15 +136,20 @@ export default new Vuex.Store({
     selectOrganization (context, {id}) {
       context.commit('setSelectedOrganizationId', {id})
     },
-    loadUserData (context) {
-      axios.get('/api/user/')
-        .then(response => {
-          context.commit('setUserData', response.data)
-          context.commit('setAppLanguage', {lang: response.data.language})
-        })
-        .catch(error => {
+    async loadUserData (context) {
+      try {
+        let response = await axios.get('/api/user/')
+        context.commit('setUserData', response.data)
+        context.commit('setAppLanguage', {lang: response.data.language})
+      } catch(error) {
+        if (error.response && error.response.status === 403) {
+          // we could not get user data because of 403 Forbidden error
+          // thus we must inform the user that he will not see anything
+          context.commit('setInvalidUser', {value: true})
+        } else {
           context.dispatch('showSnackbar', {content: 'Error loading user data: ' + error})
-        })
+        }
+      }
     },
     loadOrganizations (context) {
       axios.get('/api/organization/')
@@ -264,6 +270,9 @@ export default new Vuex.Store({
     },
     setAppLanguage(state, {lang}) {
       state.appLanguage = lang
-    }
+    },
+    setInvalidUser(state, {value}) {
+      state.invalidUser = value
+    },
   }
 })
