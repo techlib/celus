@@ -2,7 +2,7 @@ from django.utils.translation import gettext as _
 
 from rest_framework.exceptions import NotAuthenticated, ValidationError
 from rest_framework.fields import CharField, IntegerField, DateField, BooleanField
-from rest_framework.relations import StringRelatedField
+from rest_framework.relations import StringRelatedField, PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenField, \
     CurrentUserDefault
 
@@ -15,6 +15,19 @@ from publications.serializers import PlatformSerializer
 from .models import Metric, Dimension, ReportType, ManualDataUpload
 
 
+class OrganizationSourceExtractingMixin(object):
+
+    def _get_organization_data_source(self):
+        organization_id = self.context['view'].kwargs.get('organization_pk')
+        if self.context['request'].user.accessible_organizations().\
+                filter(pk=organization_id).exists():
+            data_source, _created = DataSource.objects.get_or_create(
+                organization_id=organization_id, type=DataSource.TYPE_ORGANIZATION)
+            return data_source
+        else:
+            raise ValidationError('user cannot access selected organization')
+
+
 class MetricSerializer(ModelSerializer):
 
     class Meta:
@@ -22,47 +35,76 @@ class MetricSerializer(ModelSerializer):
         fields = ('pk', 'short_name', 'name')
 
 
-class DimensionSerializer(ModelSerializer):
+class DimensionSerializer(OrganizationSourceExtractingMixin, ModelSerializer):
 
-    # type = CharField(source='get_type_display')
+    public = BooleanField(default=False)
 
     class Meta:
         model = Dimension
-        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'type')
+        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'type', 'source', 'public')
+        validators = []  # this removes the implicit required validation on source
+
+    def validate(self, attrs):
+        result = super().validate(attrs)
+        # extra validation for short_name in combination with source=NULL
+        exclude = {'pk': attrs['pk']} if 'pk' in attrs else {}
+        short_name = attrs.get('short_name')
+        if attrs.get('public'):
+            if Dimension.objects.exclude(**exclude).\
+                    filter(source__isnull=True, short_name=short_name).exists():
+                raise ValidationError(_('Public dimension with this code name already exists'))
+        else:
+            source = self._get_organization_data_source()
+            if Dimension.objects.exclude(**exclude).\
+                    filter(source=source, short_name=short_name).exists():
+                raise ValidationError(_('Dimension with this code name already exists'))
+        return result
+
+    def create(self, validated_data):
+        # we need to make sure source is properly assigned for non-public dimensions
+        if not validated_data.get('source') and not validated_data['public']:
+            validated_data['source'] = self._get_organization_data_source()
+        validated_data.pop('public')
+        return super().create(validated_data)
 
 
 class ReportTypeSerializer(ModelSerializer):
 
-    dimensions_sorted = DimensionSerializer(many=True, required=False)
+    dimensions_sorted = DimensionSerializer(many=True, read_only=True)
     log_count = IntegerField(read_only=True)
     newest_log = DateField(read_only=True)
     oldest_log = DateField(read_only=True)
     interest_groups = BooleanField(read_only=True)
     public = BooleanField(default=False)
+    dimensions = PrimaryKeyRelatedField(read_only=False, queryset=Dimension.objects.all(),
+                                        many=True, write_only=True)
 
     class Meta:
         model = ReportType
         fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'desc', 'dimensions_sorted',
-                  'log_count', 'newest_log', 'oldest_log', 'public', 'interest_groups')
+                  'log_count', 'newest_log', 'oldest_log', 'public', 'interest_groups',
+                  'dimensions')
 
     def create(self, validated_data):
         if not validated_data['public']:
             # this is not public, we need to get the correct source
             organization_id = self.context['view'].kwargs.get('organization_pk')
-            if self.context['request'].user.accessible_organizations().filter(pk=organization_id).exists():
-                data_source, _crated = DataSource.objects.get_or_create(
+            if self.context['request'].user.accessible_organizations().\
+                    filter(pk=organization_id).exists():
+                data_source, _created = DataSource.objects.get_or_create(
                     organization_id=organization_id, type=DataSource.TYPE_ORGANIZATION)
             else:
                 raise ValidationError('user cannot access selected organization')
             validated_data['source'] = data_source
         validated_data.pop('public')
-        dimensions = []
-        if 'dimensions_sorted' in validated_data:
-            dimensions = validated_data.pop('dimensions_sorted')
+        dimensions = validated_data.pop('dimensions')
         obj = super().create(validated_data)
         for i, dimension in enumerate(dimensions):
-            dim = DimensionSerializer().create(dimension)
-            ReportTypeToDimension.objects.create(dimension=dim, position=i, report_type=obj)
+            ReportTypeToDimension.objects.update_or_create(report_type=obj, position=i,
+                                                           defaults={'dimension': dimension})
+        # remove any dimensions previously associated and now unwanted
+        obj.reporttypetodimension_set.filter(position__gte=len(dimensions)).delete()
+        # TODO: ADD TEST FOR THIS
         return obj
 
     def validate(self, attrs):

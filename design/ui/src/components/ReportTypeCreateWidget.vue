@@ -12,10 +12,6 @@ en:
             Metric (what is measured, e.g. number of visits, number of searches) columns.
             If your report data has more than these dimensions (e.g. the publisher name, etc.),
             you can add extra dimensions bellow.
-    dim_short_name: Column name in file
-    dim_name_en: Name to display (English)
-    dim_name_cs: Name to display (Czech)
-    dim_name_placeholder: How should this dimension be named in charts
     value_required: Item is required
     public_report_type: Publicly available report type
     public_report_type_tooltip: Public report types may be used by all users in all organizations.
@@ -23,6 +19,7 @@ en:
     save: Save
     add_dimension: Add dimension
     only_6_dimensions: Only up to 6 dimensions are supported
+    select_dimension: Select dimension
 
 cs:
     short_name: Kódové označení
@@ -35,10 +32,6 @@ cs:
             databáze) a Metriku (co je měřeno, např. počet návštěv, počet vyhledávání, atp.).
             Pokud vaše data obsahují více než tyto rozměry (např. jméno vydavatele, atp.)
             můžete přidat další rozměry níže.
-    dim_short_name: Název sloupce v souboru
-    dim_name_en: Zobrazované jméno (anglicky)
-    dim_name_cs: Zobrazované jméno (česky)
-    dim_name_placeholder: Jak se má rozměr jmenovat v grafech
     value_required: Toto pole je povinné
     public_report_type: Veřejně dostupný typ reportu
     public_report_type_tooltip: Veřejné typy reportů mohou být využity uživateli ve všech organizacích.
@@ -47,6 +40,7 @@ cs:
     save: Uložit
     add_dimension: Přidat rozměr
     only_6_dimensions: Maximální podporovaný počet rozměrů je 6
+    select_dimension: Vyberte rozměr
 </i18n>
 
 <template>
@@ -99,36 +93,27 @@ cs:
                         >
                             <v-col>
                                 <v-select
-                                        v-if="dimension.pk"
                                         v-model="selectedDimensions[index]"
                                         :items="availableDimensions"
-                                        return-object
+                                        item-text="short_name"
+                                        item-value="pk"
+                                        :label="$t('select_dimension')+' #'+(index+1)"
                                 >
+                                    <template v-slot:item="props">
+                                        {{ props.item.short_name }}: {{ props.item.name }}
+                                    </template>
+                                    <template v-slot:prepend-item>
+                                        <v-list-item @click="addNewDimension()">
+                                            <v-list-item-content>
+                                                <v-list-item-title>
+                                                    <v-icon small class="mr-2">fa-plus</v-icon>
+                                                    {{ $t('create_new_dim') }}
+                                                </v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                        <v-divider class="mt-2"></v-divider>
+                                    </template>
                                 </v-select>
-                                <v-text-field
-                                        v-else
-                                        v-model="selectedDimensions[index]['name']"
-                                        :label="$t('dim_short_name')"
-                                >
-                                </v-text-field>
-                            </v-col>
-                            <v-col>
-                                <v-text-field
-                                    v-model="selectedDimensions[index]['name_cs']"
-                                    :label="$t('dim_name_cs')"
-                                    :readonly="!!dimension.pk"
-                                    :placeholder="$t('dim_name_placeholder')"
-                                >
-                                </v-text-field>
-                            </v-col>
-                            <v-col>
-                                <v-text-field
-                                    v-model="selectedDimensions[index]['name_en']"
-                                    :label="$t('dim_name_en')"
-                                    :readonly="!!dimension.pk"
-                                    :placeholder="$t('dim_name_placeholder')"
-                                >
-                                </v-text-field>
                             </v-col>
                             <v-col cols="auto">
                                 <v-btn color="error" fab elevation="1" x-small @click="selectedDimensions.splice(index, 1)">
@@ -163,31 +148,52 @@ cs:
                 </v-col>
             </v-row>
         </v-container>
+        <v-dialog
+                v-model="showAddDimensionDialog"
+                max-width="640px"
+        >
+            <v-card>
+                <v-card-title>{{ $t('Create dimension') }}</v-card-title>
+                <v-card-text>
+                    <DimensionCreateWidget
+                            :public="publicReportType"
+                            @input="newDimensionCreated(value)"
+                    >
+                    </DimensionCreateWidget>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
     </v-form>
 </template>
 
 <script>
   import axios from 'axios'
   import { mapActions, mapState } from 'vuex'
+  import DimensionCreateWidget from './DimensionCreateWidget'
 
   export default {
     name: 'ReportTypeCreateWidget',
+    components: {DimensionCreateWidget},
     data () {
       return {
         shortName: '',
         name_cs: '',
         name_en: '',
-        availableDimensions: [],
+        allDimensions: [],
         selectedDimensions: [],
         savedReportType: null,
         formValid: false,
         publicReportType: false,
+        showAddDimensionDialog: false,
       }
     },
     computed: {
       ...mapState({
         organizationId: 'selectedOrganizationId',
       }),
+      availableDimensions () {
+        return this.allDimensions.filter(item => item.public === this.publicReportType)
+      }
     },
     methods: {
       ...mapActions({
@@ -195,15 +201,15 @@ cs:
       }),
       async loadAvailableDimensions () {
         try {
-          let response = await axios.get(`/api/organization/${this.organizationId}/custom-dimensions/`)
-          this.availableDimensions = response.data
+          let response = await axios.get(`/api/organization/${this.organizationId}/dimensions/`)
+          this.allDimensions = response.data
         } catch (error) {
           this.showSnackbar({content: 'Error fetching dimensions: ' + error})
         }
       },
       addDimension () {
         if (this.selectedDimensions.length < 6) {
-          this.selectedDimensions.push({name: '', name_cs: '', name_en: ''})
+          this.selectedDimensions.push({short_name: '', name_cs: '', name_en: ''})
         } else {
           alert(this.$t('only_6_dimensions'))
         }
@@ -223,6 +229,7 @@ cs:
               type: 2,  // text
               name: this.name_en || this.name_cs || this.shortName,
               public: this.publicReportType,
+              dimensions: this.selectedDimensions,
             })
           this.savedReportType = response.data
         } catch (error) {
@@ -244,6 +251,14 @@ cs:
       },
       required (v) {
         return !!v || this.$t('value_required')
+      },
+      addNewDimension () {
+        this.showAddDimensionDialog = true
+      },
+      async newDimensionCreated (value) {
+        console.log(value)
+        this.showAddDimensionDialog = false
+        this.loadAvailableDimensions()
       }
     },
     mounted () {

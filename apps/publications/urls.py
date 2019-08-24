@@ -15,8 +15,8 @@ org_sub_router.register(r'detailed-platform', views.DetailedPlatformViewSet,
 org_sub_router.register('title', views.TitleViewSet, basename='title')
 org_sub_router.register(r'title-count', views.TitleCountsViewSet, basename='title-count')
 
-org_sub_router.register(r'custom-dimensions', CustomDimensionsViewSet,
-                        basename='custom-dimensions')
+org_sub_router.register(r'dimensions', CustomDimensionsViewSet,
+                        basename='organization-dimensions')
 org_sub_router.register(r'report-types', OrganizationReportTypesViewSet,
                         basename='organization-report-types')
 

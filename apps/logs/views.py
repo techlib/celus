@@ -361,8 +361,9 @@ class CustomDimensionsViewSet(ModelViewSet):
         try:
             source = organization.private_data_source
         except DataSource.DoesNotExist:
-            return Dimension.objects.none()
-        return source.dimension_set.all().order_by('pk')
+            return Dimension.objects.filter(source__isnull=True)
+        return source.dimension_set.all().order_by('pk') | \
+            Dimension.objects.filter(source__isnull=True)
 
 
 class OrganizationReportTypesViewSet(ModelViewSet):

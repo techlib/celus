@@ -31,8 +31,9 @@ class MetricAdmin(admin.ModelAdmin):
 @admin.register(models.Dimension)
 class DimensionAdmin(admin.ModelAdmin):
 
-    list_display = ['short_name', 'name', 'type', 'desc']
+    list_display = ['short_name', 'name', 'type', 'desc', 'source']
     ordering = ['short_name']
+    list_filter = ['source']
 
 
 @admin.register(models.DimensionText)

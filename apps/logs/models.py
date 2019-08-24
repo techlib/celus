@@ -136,6 +136,10 @@ class Dimension(models.Model):
     def __str__(self):
         return '{} ({})'.format(self.short_name, self.get_type_display())
 
+    @property
+    def public(self):
+        return self.source is None
+
 
 class ReportTypeToDimension(models.Model):
 
