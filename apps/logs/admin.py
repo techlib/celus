@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 
 from . import models
 
@@ -50,9 +51,12 @@ class ReportTypeToDimensionAdmin(admin.ModelAdmin):
 @admin.register(models.AccessLog)
 class AccessLogAdmin(admin.ModelAdmin):
 
-    list_display = ['metric', 'report_type', 'organization', 'platform', 'target', 'created']
+    list_display = ['metric', 'report_type', 'organization', 'platform', 'target', 'created',
+                    'date', 'value']
     list_select_related = ['organization', 'platform', 'target', 'metric', 'report_type']
     readonly_fields = ['target', 'import_batch', 'organization', 'platform']
+    search_fields = ['platform__name', 'target__name', 'organization__name']
+    list_filter = ['report_type', 'organization', 'platform']
 
 
 @admin.register(models.InterestGroup)
@@ -64,8 +68,16 @@ class InterestGroupAdmin(admin.ModelAdmin):
 @admin.register(models.ImportBatch)
 class ImportBatchAdmin(admin.ModelAdmin):
 
-    list_display = ['created', 'user', 'owner_level', 'log_count']
+    list_display = ['created', 'report_type', 'organization', 'platform', 'user', 'log_count']
+    list_filter = ['report_type', 'organization', 'platform']
+    list_select_related = ['report_type', 'organization', 'platform']
 
     @classmethod
     def log_count(cls, obj: models.ImportBatch):
         return obj.accesslog_set.count()
+
+    # the following is actually much slower than doing a separate query for each import batch
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     return qs.annotate(log_count=Count('accesslog'))
+

@@ -7,6 +7,7 @@ import pytest
 
 from logs.models import ReportType, Dimension, ReportTypeToDimension
 from nigiri.counter5 import CounterRecord
+from publications.models import Platform
 
 
 @pytest.fixture
@@ -82,12 +83,23 @@ def counter_records():
 
 @pytest.fixture
 def report_type_nd():
-    def fn(dim_number):
+    def fn(dim_number, dimension_names=None):
         rt = ReportType.objects.create(short_name=f'{dim_number}d',
                                        name=f'{dim_number} dimensional report')
         for i in range(dim_number):
-            dim = Dimension.objects.create(short_name=f'dim{i}', name=f'dimension-{i}',
+            if dimension_names and i < len(dimension_names):
+                dim_short_name = dimension_names[i]
+            else:
+                dim_short_name = f'dim{i}'
+            dim = Dimension.objects.create(short_name=dim_short_name, name=f'dimension-{i}',
                                            type=Dimension.TYPE_TEXT)
             ReportTypeToDimension.objects.create(report_type=rt, dimension=dim, position=i)
         return rt
     return fn
+
+
+@pytest.fixture
+def platform():
+    platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                       provider='Provider 1')
+    return platform

@@ -4,6 +4,7 @@ from dateparser import parse as parse_date
 
 from django.core.management.base import BaseCommand
 
+from core.logic.dates import month_start, month_end
 from sushi.models import SushiCredentials, CounterReportType, SushiFetchAttempt
 
 
@@ -29,17 +30,17 @@ class Command(BaseCommand):
             args['platform__short_name'] = options['platform']
         if options['version']:
             args['counter_version'] = int(options['version'])
-        credentials = SushiCredentials.objects.filter(**args)
+        credentials = list(SushiCredentials.objects.filter(**args))
         cr_args = {'active': True}
         if options['version']:
             cr_args['counter_version'] = int(options['version'])
         if options['report']:
             cr_args['code'] = options['report']
-        crs = CounterReportType.objects.filter(**cr_args)
+        crs = list(CounterReportType.objects.filter(**cr_args))
         # now fetch all possible combinations
         i = 0
-        start_date = parse_date(options['start_date'])
-        end_date = parse_date(options['end_date'])
+        start_date = month_start(parse_date(options['start_date']))
+        end_date = month_end(parse_date(options['end_date']))
         for cred in credentials:
             for cr in crs:
                 if cr.counter_version == cred.counter_version:
@@ -62,7 +63,9 @@ class Command(BaseCommand):
                             style = self.style.ERROR
                         self.stderr.write(style(attemp))
                     i += 1
-                    sleep(options['sleep'] / 1000)
+                    if cr != crs[-1] and cred != credentials[-1]:
+                        # do not sleep after the last fetch
+                        sleep(options['sleep'] / 1000)
         if i == 0:
             self.stderr.write(self.style.WARNING('No matching reports found!'))
 

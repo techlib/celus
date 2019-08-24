@@ -34,6 +34,10 @@ def month_end(date: datetime.date) -> datetime.date:
     return datetime.date(date.year, date.month, last)
 
 
+def month_start(date: datetime.date) -> datetime.date:
+    return date.replace(day=1)
+
+
 def date_range_from_params(params: dict) -> (datetime.date, datetime.date):
     """
     Returns start and end dates based on data provided in the params dict.

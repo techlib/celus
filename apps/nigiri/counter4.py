@@ -67,3 +67,8 @@ class Counter4ReportBase(object):
 class Counter4JR1Report(Counter4ReportBase):
 
     dimensions = ['Publisher']
+
+
+class Counter4BR2Report(Counter4ReportBase):
+
+    dimensions = ['Publisher']

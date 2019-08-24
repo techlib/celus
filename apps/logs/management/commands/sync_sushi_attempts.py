@@ -14,7 +14,7 @@ from sushi.models import SushiFetchAttempt
 from ...logic.data_import import import_counter_records
 from ...models import ReportType, OrganizationPlatform
 from nigiri.counter5 import Counter5TRReport, Counter5DRReport, Counter5PRReport
-from nigiri.counter4 import Counter4JR1Report
+from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +97,8 @@ class Command(BaseCommand):
     def get_reader_v4(self, attempt: SushiFetchAttempt):
         if attempt.counter_report.report_type.short_name == 'JR1':
             return Counter4JR1Report()
+        elif attempt.counter_report.report_type.short_name == 'BR2':
+            return Counter4BR2Report()
         else:
             self.stderr.write(self.style.NOTICE(
                 f'Unsupported report type {attempt.counter_report.report_type}'))

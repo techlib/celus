@@ -98,7 +98,8 @@ class SushiCredentials(models.Model):
         data_file = None
         filename = None
         try:
-            report = client.get_report_data(counter_report.code, start_date, end_date)
+            report = client.get_report_data(counter_report.code, start_date, end_date,
+                                            params={'sushi_dump': True})
         except SushiException as e:
             logger.error("Error: %s", e)
             file_data = e.raw
@@ -185,7 +186,7 @@ def where_to_store(instance: 'SushiFetchAttempt', filename):
     ts = now().strftime('%Y%m%d-%H%M%S.%f')
     return f'counter/{instance.credentials.organization.internal_id}/' \
            f'{instance.credentials.platform.short_name}/' \
-           f'{instance.credentials.counter_version}_{ts}{ext}'
+           f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
 
 
 class SushiFetchAttempt(models.Model):
