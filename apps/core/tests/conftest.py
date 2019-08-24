@@ -41,6 +41,7 @@ def master_identity():
 @pytest.fixture
 def authenticated_client(client, valid_identity):
     client.defaults[settings.EDUID_IDENTITY_HEADER] = valid_identity
+    client.user = Identity.objects.get(identity=valid_identity).user
     yield client
 
 

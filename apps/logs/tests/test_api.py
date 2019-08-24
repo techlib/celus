@@ -5,6 +5,7 @@ import pytest
 from django.urls import reverse
 
 from logs.models import ReportType, AccessLog, Metric, ImportBatch
+from organizations.models import UserOrganization
 from publications.models import Platform
 
 from ..logic.data_import import import_counter_records
@@ -296,5 +297,91 @@ class TestManualDataUpload(object):
                 'report_type': report_type.pk,
                 'data_file': file,
             })
+        assert response.status_code == 201
+
+
+@pytest.mark.django_db
+class TestReportTypeAPI(object):
+
+    def test_create_report_type_400(self, organizations, authenticated_client):
+        organization = organizations[0]
+        assert ReportType.objects.count() == 0
+        response = authenticated_client.post(
+            reverse('organization-report-types-list', kwargs={'organization_pk': organization.pk}),
+            {
+                'short_name': 'TEST',
+                'name_cs': 'Test report',
+                'name_en': 'Test report',
+                'name': 'Test report',
+            },
+            content_type='application/json')
+        assert response.status_code == 400
+        assert b'cannot access' in response.content
+        assert ReportType.objects.count() == 0, 'no new ReportType was created'
+
+    def test_create_report_type(self, organizations, authenticated_client):
+        organization = organizations[0]
+        # bind the user to the organization
+        UserOrganization.objects.create(user=authenticated_client.user, organization=organization)
+        assert ReportType.objects.count() == 0
+        response = authenticated_client.post(
+            reverse('organization-report-types-list', kwargs={'organization_pk': organization.pk}),
+            {
+                'short_name': 'TEST',
+                'name_cs': 'Test report',
+                'name_en': 'Test report',
+                'name': 'Test report',
+            },
+            content_type='application/json')
         print(response.content)
         assert response.status_code == 201
+        assert ReportType.objects.count() == 1, 'a new ReportType was created'
+        rt = ReportType.objects.get()
+        assert len(rt.dimensions_sorted) == 0, 'no extra dimensions for ReportType'
+
+    def test_create_report_type_with_dimension(self, organizations, authenticated_client):
+        organization = organizations[0]
+        # bind the user to the organization
+        UserOrganization.objects.create(user=authenticated_client.user, organization=organization)
+        assert ReportType.objects.count() == 0
+        response = authenticated_client.post(
+            reverse('organization-report-types-list', kwargs={'organization_pk': organization.pk}),
+            {
+                'short_name': 'TEST',
+                'name_cs': 'Test report',
+                'name_en': 'Test report',
+                'name': 'Test report',
+                'dimensions_sorted': [
+                    {'short_name': 'dim1', 'name': 'Dimension 1'},
+                    {'short_name': 'dim2', 'name': 'Dimension 2'},
+                ],
+                'public': False,
+            },
+            content_type='application/json')
+        print(response.content)
+        assert response.status_code == 201
+        assert ReportType.objects.count() == 1, 'a new ReportType was created'
+        rt = ReportType.objects.get()
+        assert len(rt.dimensions_sorted) == 2
+
+    def test_create_report_type_with_invalid_dimension(self, organizations, authenticated_client):
+        organization = organizations[0]
+        # bind the user to the organization
+        UserOrganization.objects.create(user=authenticated_client.user, organization=organization)
+        assert ReportType.objects.count() == 0
+        response = authenticated_client.post(
+            reverse('organization-report-types-list', kwargs={'organization_pk': organization.pk}),
+            {
+                'short_name': 'TEST',
+                'name_cs': 'Test report',
+                'name_en': 'Test report',
+                'name': 'Test report',
+                'dimensions_sorted': [
+                    {'short_name': 'dim1', 'name': 'Dimension 1', 'foo': 'bar'},
+                    {'short_name': 'dim2'},
+                ],
+            },
+            content_type='application/json')
+        assert response.status_code == 400
+        assert ReportType.objects.count() == 0
+        assert response.json()['dimensions_sorted'][1]['name'][0] == 'This field is required.'

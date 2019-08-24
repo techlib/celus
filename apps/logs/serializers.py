@@ -8,7 +8,7 @@ from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenFi
 
 from core.models import DataSource
 from core.serializers import UserSerializer
-from logs.models import AccessLog, ImportBatch
+from logs.models import AccessLog, ImportBatch, ReportTypeToDimension
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer
@@ -33,12 +33,12 @@ class DimensionSerializer(ModelSerializer):
 
 class ReportTypeSerializer(ModelSerializer):
 
-    dimensions_sorted = DimensionSerializer(many=True, read_only=True)
+    dimensions_sorted = DimensionSerializer(many=True, required=False)
     log_count = IntegerField(read_only=True)
     newest_log = DateField(read_only=True)
     oldest_log = DateField(read_only=True)
     interest_groups = BooleanField(read_only=True)
-    public = BooleanField()
+    public = BooleanField(default=False)
 
     class Meta:
         model = ReportType
@@ -56,7 +56,14 @@ class ReportTypeSerializer(ModelSerializer):
                 raise ValidationError('user cannot access selected organization')
             validated_data['source'] = data_source
         validated_data.pop('public')
-        return super().create(validated_data)
+        dimensions = []
+        if 'dimensions_sorted' in validated_data:
+            dimensions = validated_data.pop('dimensions_sorted')
+        obj = super().create(validated_data)
+        for i, dimension in enumerate(dimensions):
+            dim = DimensionSerializer().create(dimension)
+            ReportTypeToDimension.objects.create(dimension=dim, position=i, report_type=obj)
+        return obj
 
     def validate(self, attrs):
         result = super().validate(attrs)

@@ -63,7 +63,7 @@ class Command(BaseCommand):
                             style = self.style.ERROR
                         self.stderr.write(style(attemp))
                     i += 1
-                    if cr != crs[-1] and cred != credentials[-1]:
+                    if cr != crs[-1] or cred != credentials[-1]:
                         # do not sleep after the last fetch
                         sleep(options['sleep'] / 1000)
         if i == 0:
