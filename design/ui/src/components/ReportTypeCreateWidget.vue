@@ -137,6 +137,15 @@ cs:
                 <v-spacer></v-spacer>
                 <v-col cols="auto">
                     <v-btn
+                            @click="showHelpDialog = true"
+                            color="secondary"
+                            >
+                        <v-icon small class="mr-2">far fa-question-circle</v-icon>
+                        {{ $t('help') }}
+                    </v-btn>
+                </v-col>
+                <v-col cols="auto">
+                    <v-btn
                             @click="saveReportType()"
                             color="primary"
                             :disabled="!formValid">
@@ -166,6 +175,12 @@ cs:
                 </v-card-text>
             </v-card>
         </v-dialog>
+        <v-dialog
+                v-model="showHelpDialog"
+                max-width="800px"
+        >
+            <ReportTypeExamples @close="showHelpDialog = false"/>
+        </v-dialog>
     </v-form>
 </template>
 
@@ -173,10 +188,11 @@ cs:
   import axios from 'axios'
   import { mapActions, mapState } from 'vuex'
   import DimensionCreateWidget from './DimensionCreateWidget'
+  import ReportTypeExamples from './ReportTypeExamples'
 
   export default {
     name: 'ReportTypeCreateWidget',
-    components: {DimensionCreateWidget},
+    components: {DimensionCreateWidget, ReportTypeExamples},
     data () {
       return {
         shortName: '',
@@ -188,6 +204,7 @@ cs:
         formValid: false,
         publicReportType: false,
         showAddDimensionDialog: false,
+        showHelpDialog: false,
       }
     },
     computed: {
