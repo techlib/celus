@@ -1,3 +1,4 @@
+<i18n src="../locales/dialog.yaml"></i18n>
 <i18n>
 en:
     short_name: Code name
@@ -12,7 +13,6 @@ en:
             Metric (what is measured, e.g. number of visits, number of searches) columns.
             If your report data has more than these dimensions (e.g. the publisher name, etc.),
             you can add extra dimensions bellow.
-    value_required: Item is required
     public_report_type: Publicly available report type
     public_report_type_tooltip: Public report types may be used by all users in all organizations.
         The opposite are organization private report types. Only admins may create public report types.
@@ -20,6 +20,7 @@ en:
     add_dimension: Add dimension
     only_6_dimensions: Only up to 6 dimensions are supported
     select_dimension: Select dimension
+    create_new_dim: Create new rozměr
 
 cs:
     short_name: Kódové označení
@@ -32,7 +33,6 @@ cs:
             databáze) a Metriku (co je měřeno, např. počet návštěv, počet vyhledávání, atp.).
             Pokud vaše data obsahují více než tyto rozměry (např. jméno vydavatele, atp.)
             můžete přidat další rozměry níže.
-    value_required: Toto pole je povinné
     public_report_type: Veřejně dostupný typ reportu
     public_report_type_tooltip: Veřejné typy reportů mohou být využity uživateli ve všech organizacích.
         Opakem jsou soukromé typy reportů dostupné pouze pro danou organizaci. Veřejné typy reportů
@@ -41,6 +41,7 @@ cs:
     add_dimension: Přidat rozměr
     only_6_dimensions: Maximální podporovaný počet rozměrů je 6
     select_dimension: Vyberte rozměr
+    create_new_dim: Vytvořit nový rozměr
 </i18n>
 
 <template>
@@ -153,11 +154,13 @@ cs:
                 max-width="640px"
         >
             <v-card>
-                <v-card-title>{{ $t('Create dimension') }}</v-card-title>
+                <v-card-title>{{ $t('create_new_dim') }}</v-card-title>
                 <v-card-text>
                     <DimensionCreateWidget
                             :public="publicReportType"
                             @input="newDimensionCreated(value)"
+                            @cancel="showAddDimensionDialog = false"
+                            ref="dimWidget"
                     >
                     </DimensionCreateWidget>
                 </v-card-text>
@@ -253,6 +256,8 @@ cs:
         return !!v || this.$t('value_required')
       },
       addNewDimension () {
+        if (this.$refs.dimWidget)
+          this.$refs.dimWidget.clearDialog()
         this.showAddDimensionDialog = true
       },
       async newDimensionCreated (value) {

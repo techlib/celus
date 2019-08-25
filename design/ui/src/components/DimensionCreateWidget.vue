@@ -1,3 +1,4 @@
+<i18n src="../locales/dialog.yaml"></i18n>
 <i18n>
 en:
     short_name: Column name in file
@@ -11,13 +12,15 @@ cs:
     name_placeholder: Jak se má rozměr jmenovat v grafech
 </i18n>
 <template>
-    <v-form>
+    <v-form v-model="valid" ref="form">
     <v-container>
         <v-row wrap>
             <v-col cols="12" sm="6">
                 <v-text-field
                         v-model="shortName"
                         :label="$t('short_name')"
+                        required
+                        :rules="[required]"
                 ></v-text-field>
             </v-col>
         </v-row>
@@ -27,6 +30,7 @@ cs:
                         v-model="name_cs"
                         :label="$t('name_cs')"
                         :placeholder="$t('name_placeholder')"
+                        :rules="[required]"
                 ></v-text-field>
             </v-col>
             <v-col cols="12" sm="6">
@@ -34,12 +38,27 @@ cs:
                         v-model="name_en"
                         :label="$t('name_en')"
                         :placeholder="$t('name_placeholder')"
+                        :rules="[required]"
                 ></v-text-field>
             </v-col>
         </v-row>
         <v-row>
-            <v-col>
-                <v-btn @click="saveDimension()">{{ $t('create') }}</v-btn>
+            <v-spacer></v-spacer>
+            <v-col cols="auto">
+                <v-btn
+                        @click="saveDimension()"
+                        :disabled="!valid"
+                        color="primary"
+                >
+                    {{ $t('create') }}
+                </v-btn>
+            </v-col>
+            <v-col cols="auto">
+                <v-btn
+                        @click="$emit('cancel')"
+                >
+                    {{ $t('cancel') }}
+                </v-btn>
             </v-col>
         </v-row>
     </v-container>
@@ -62,6 +81,7 @@ cs:
         shortName: '',
         name_cs: '',
         name_en: '',
+        valid: false,
       }
     },
     computed: {
@@ -88,8 +108,17 @@ cs:
         } catch (error) {
           this.showSnackbar({content: 'Error saving dimension ' + error, color: 'error'})
         }
-      }
-    }
+      },
+      clearDialog () {
+        this.$refs.form.reset()
+        /*this.shortName = ''
+        this.name_cs = ''
+        this.name_en = ''*/
+      },
+      required (v) {
+        return !!v || this.$t('value_required')
+      },
+    },
 
   }
 </script>

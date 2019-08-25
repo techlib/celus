@@ -1,0 +1,11 @@
+en:
+  value_required: This field is mandatory
+  create: Create
+  close: Close
+  cancel: Cancel
+
+cs:
+  value_required: Toto pole je povinné
+  create: Vytvořit
+  close: Zavřít
+  cancel: Zrušit
