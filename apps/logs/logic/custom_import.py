@@ -100,25 +100,15 @@ def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, in
 
 
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    data = mdu.to_record_dicts()
-    records = custom_data_to_records(data,
-                                     extra_dims=mdu.report_type.dimension_short_names,
-                                     initial_data={'platform_name': mdu.platform.name})
+    records = mdu.data_to_records()
     return {
-        'data_row_count': len(data),
         'log_count': len(records),
         'months': list(sorted({record.start for record in records}))
     }
 
 
 def import_custom_data(mdu: ManualDataUpload, user) -> dict:
-    data = mdu.to_record_dicts()
-    default_metric, _created = Metric.objects.get_or_create(
-        short_name='visits', name_en='Visits', name_cs='Návštěvy', source=mdu.report_type.source)
-    records = custom_data_to_records(data,
-                                     extra_dims=mdu.report_type.dimension_short_names,
-                                     initial_data={'platform_name': mdu.platform.name,
-                                                   'metric': default_metric.pk})
+    records = mdu.data_to_records()
     # TODO: the owner level should be derived from the user and the organization at hand
     import_batch = ImportBatch.objects.create(platform=mdu.platform, organization=mdu.organization,
                                               report_type=mdu.report_type, user=user,

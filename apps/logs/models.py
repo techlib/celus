@@ -6,13 +6,14 @@ import magic
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 
 from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource
+from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Platform, Title
 
@@ -282,7 +283,7 @@ class ManualDataUpload(models.Model):
                              on_delete=models.SET_NULL)
     created = models.DateTimeField(auto_now_add=True)
     data_file = models.FileField(upload_to=where_to_store,
-                                 validators=[validate_mime_type, check_can_parse])
+                                 validators=[validate_mime_type])
     log = models.TextField(blank=True)
     is_processed = models.BooleanField(default=False,
                                        help_text='Was the data converted into logs?')
@@ -304,3 +305,27 @@ class ManualDataUpload(models.Model):
         reader = csv.DictReader(codecs.iterdecode(self.data_file.file, 'utf-8'))
         data = list(reader)
         return data
+
+    def data_to_records(self) -> [CounterRecord]:
+        try:
+            crt = self.report_type.counterreporttype
+        except ObjectDoesNotExist:
+            crt = None
+        if not crt:
+            # this is really custom data - there is no special counter report type associated
+            from logs.logic.custom_import import custom_data_to_records
+            data = self.to_record_dicts()
+            default_metric, _created = Metric.objects.get_or_create(
+                short_name='visits', name_en='Visits', name_cs='Návštěvy',
+                source=self.report_type.source
+            )
+            records = custom_data_to_records(data,
+                                             extra_dims=self.report_type.dimension_short_names,
+                                             initial_data={'platform_name': self.platform.name,
+                                                           'metric': default_metric.pk})
+        else:
+            reader = crt.get_reader_class()()
+            print(self.data_file)
+            records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT,
+                                                          self.data_file.name))
+        return records

@@ -1,6 +1,7 @@
 """
 Module dealing with data in the COUNTER5 format.
 """
+import json
 from copy import copy
 
 from .exceptions import SushiException
@@ -102,6 +103,15 @@ class Counter5ReportBase(object):
                         self.queued = True
                 else:
                     self.errors.append(error)
+
+    def file_to_records(self, filename: str):
+        data = self.file_to_input(filename)
+        return self.read_report(data)
+
+    @classmethod
+    def file_to_input(cls, filename: str):
+        with open(filename, 'r') as infile:
+            return json.load(infile)
 
     @classmethod
     def _item_get_title(cls, item):

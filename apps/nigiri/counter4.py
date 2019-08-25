@@ -4,6 +4,7 @@ Module dealing with data in the COUNTER4 format as provided by the pycounter lib
 
 from copy import copy
 
+from pycounter import report
 from pycounter.report import CounterReport, CounterEresource
 from .counter5 import CounterRecord
 
@@ -45,6 +46,14 @@ class Counter4ReportBase(object):
                 record.value = value
                 records.append(record)
         return records
+
+    def file_to_records(self, filename: str):
+        data = self.file_to_input(filename)
+        return self.read_report(data)
+
+    @classmethod
+    def file_to_input(cls, filename: str):
+        return report.parse(filename)
 
     def _extract_title_ids(self, record) -> dict:
         ret = {}

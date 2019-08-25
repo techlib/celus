@@ -128,10 +128,6 @@ cs:
                     <v-card-text>
                         <table v-if="preflightData">
                             <tr>
-                                <th class="text-left">{{ $t('input_rows') }}</th>
-                                <td class="text-right">{{ preflightData.data_row_count }}</td>
-                            </tr>
-                            <tr>
                                 <th class="text-left">{{ $t('output_logs') }}</th>
                                 <td class="text-right">{{ preflightData.log_count }}</td>
                             </tr>

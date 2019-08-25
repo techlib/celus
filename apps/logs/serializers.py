@@ -192,3 +192,7 @@ class ManualDataUploadSerializer(ModelSerializer):
         fields = ('pk', 'report_type', 'organization', 'platform', 'data_file',
                   'user', 'created', 'is_processed', 'log', 'import_batch', 'extra')
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        print(attrs)
+        return attrs

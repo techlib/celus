@@ -6,15 +6,11 @@ from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from django.conf import settings
 
-from pycounter import report
-
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, SushiException
 from sushi.models import SushiFetchAttempt
 from ...logic.data_import import import_counter_records
-from ...models import ReportType, OrganizationPlatform
-from nigiri.counter5 import Counter5TRReport, Counter5DRReport, Counter5PRReport
-from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report
+from ...models import OrganizationPlatform
 
 logger = logging.getLogger(__name__)
 
@@ -41,15 +37,15 @@ class Command(BaseCommand):
             self.process_one_attempt(attempt)
 
     @atomic
-    def process_one_attempt(self, attempt):
+    def process_one_attempt(self, attempt: SushiFetchAttempt):
         counter_version = attempt.credentials.counter_version
-        get_reader = getattr(self, f'get_reader_v{counter_version}')
-        reader = get_reader(attempt)
+        reader = attempt.counter_report.get_reader_class()
         if not reader:
+            self.stderr.write(self.style.NOTICE(
+                f'Unsupported report type {attempt.counter_report.report_type}'))
             return
         self.stderr.write(self.style.NOTICE(f'Processing file: {attempt.data_file.name}'))
-        file_to_data = getattr(self, f'file_to_data_v{counter_version}')
-        data = file_to_data(attempt.data_file)
+        data = reader.file_to_input(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
         validator = getattr(self, f'validate_data_v{counter_version}')
         try:
             validator(data)
@@ -93,36 +89,6 @@ class Command(BaseCommand):
         else:
             self.stderr.write(self.style.ERROR(f'No records found!'))
         attempt.mark_processed()
-
-    def get_reader_v4(self, attempt: SushiFetchAttempt):
-        if attempt.counter_report.report_type.short_name == 'JR1':
-            return Counter4JR1Report()
-        elif attempt.counter_report.report_type.short_name == 'BR2':
-            return Counter4BR2Report()
-        else:
-            self.stderr.write(self.style.NOTICE(
-                f'Unsupported report type {attempt.counter_report.report_type}'))
-            return None
-
-    def get_reader_v5(self, attempt: SushiFetchAttempt):
-        if attempt.counter_report.report_type.short_name == 'TR':
-            return Counter5TRReport()
-        elif attempt.counter_report.report_type.short_name == 'DR':
-            return Counter5DRReport()
-        elif attempt.counter_report.report_type.short_name == 'PR':
-            return Counter5PRReport()
-        else:
-            self.stderr.write(self.style.NOTICE(
-                f'Unsupported report type {attempt.counter_report.report_type}'))
-            return None
-
-    @classmethod
-    def file_to_data_v4(cls, file):
-        return report.parse(os.path.join(settings.MEDIA_ROOT, file.name))
-
-    @classmethod
-    def file_to_data_v5(cls, file):
-        return json.load(file)
 
     @classmethod
     def validate_data_v5(cls, data):

@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+from typing import Optional
 from xml.etree import ElementTree as ET
 
 import requests
@@ -12,6 +13,8 @@ from pycounter.exceptions import SushiException
 
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri
+from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report
+from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
 from organizations.models import Organization
 from publications.models import Platform
 
@@ -23,13 +26,34 @@ COUNTER_VERSIONS = (
     (5, 'COUNTER 5'),
 )
 
+COUNTER_REPORTS = (
+    # version 4
+    ('JR1', 4, Counter4JR1Report),
+    ('JR1a', 4, None),
+    ('JR1GOA', 4, None),
+    ('JR2', 4, None),
+    ('JR5', 4, None),
+    ('BR1', 4, None),
+    ('BR2', 4, Counter4BR2Report),
+    ('BR3', 4, None),
+    ('DB1', 4, None),
+    ('DB2', 4, None),
+    ('PR1', 4, None),
+    # version 5
+    ('TR', 5, Counter5TRReport),
+    ('PR', 5, Counter5PRReport),
+    ('DR', 5, Counter5DRReport),
+)
+
 
 class CounterReportType(models.Model):
 
-    code = models.CharField(max_length=20)
+    CODE_CHOICES = [(cr[0], cr[0]) for cr in COUNTER_REPORTS]
+
+    code = models.CharField(max_length=10, choices=CODE_CHOICES)
     name = models.CharField(max_length=128, blank=True)
     counter_version = models.PositiveSmallIntegerField(choices=COUNTER_VERSIONS)
-    report_type = models.ForeignKey('logs.ReportType', on_delete=models.CASCADE)
+    report_type = models.OneToOneField('logs.ReportType', on_delete=models.CASCADE)
     active = models.BooleanField(default=True,
                                  help_text='When turned off, this type of report will not be '
                                            'automatically downloaded')
@@ -41,6 +65,12 @@ class CounterReportType(models.Model):
 
     def __str__(self):
         return f'{self.code} ({self.counter_version}) - {self.name}'
+
+    def get_reader_class(self):
+        for code, version, reader in COUNTER_REPORTS:
+            if code == self.code and version == self.counter_version:
+                return reader
+        return None
 
 
 class SushiCredentials(models.Model):
