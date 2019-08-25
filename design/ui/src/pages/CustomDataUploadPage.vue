@@ -17,6 +17,8 @@ en:
     tab_chart: Chart
     tab_data: Data
     import: Import
+    thats_all: That is all. The data were imported.
+    return_to_platform: Go to platform page
 
 cs:
     data_file: Datový soubor k nahrání
@@ -35,6 +37,8 @@ cs:
     tab_chart: Graf
     tab_data: Data
     import: Importovat
+    thats_all: To je vše. Data byla úspěšně importována.
+    return_to_platform: Přejít na stránku platformy
 </i18n>
 
 <template>
@@ -167,6 +171,22 @@ cs:
                                 <AccessLogList :import-batch="importBatch.pk" />
                             </v-tab-item>
                         </v-tabs-items>
+                        <v-container>
+                            <v-row>
+                                <v-col cols="auto">
+                                    {{ $t('thats_all') }}
+                                </v-col>
+                                <v-spacer></v-spacer>
+                                <v-col cols="auto">
+                                    <v-btn
+                                            :to="{name: 'platform-detail', params: {platformId: platformId}}"
+                                            color="secondary"
+                                            >
+                                        {{ $t('return_to_platform') }}
+                                    </v-btn>
+                                </v-col>
+                            </v-row>
+                        </v-container>
                     </v-card-text>
                     <v-card-text v-else>
                         <LargeSpinner />
