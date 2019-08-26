@@ -6,12 +6,16 @@ en:
     timestamp: Time of attempt
     show_success: Show successful
     show_failure: Show failures
+    show_raw_data: Show raw data
+    show_chart: Show charts
 
 cs:
     sushi_fetch_attempts: Pokusy o stažení Sushi
     timestamp: Čas pokusu
     show_success: Zobrazit úspěšné
     show_failure: Zobrazit neúspěšné
+    show_raw_data: Zobrazit data
+    show_chart: Zobrazit grafy
 </i18n>
 
 <template>
@@ -65,12 +69,35 @@ cs:
                                     {{ props.item.success ? 'fa-check' : 'fa-times' }}
                                 </v-icon>
                             </template>
+                            <template v-slot:item.is_processed="props">
+                                <v-icon small :color="props.item.is_processed ? 'success' : 'error'">
+                                    {{ props.item.is_processed ? 'fa-check' : 'fa-times' }}
+                                </v-icon>
+                            </template>
                             <template v-slot:expanded-item="{item, headers}">
                                 <th colspan="2">Log</th>
                                 <td :colspan="headers.length-2" class="pre">{{ item.log }}</td>
                             </template>
                             <template v-slot:item.data-table-expand="{isExpanded, expand}">
                                 <v-icon @click="expand(!isExpanded)" small>{{ isExpanded  ? 'fa-angle-down' : 'fa-angle-right' }}</v-icon>
+                            </template>
+                            <template v-slot:item.actions="{item}">
+                                <v-tooltip bottom v-if="item.import_batch">
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn text small color="secondary" @click.stop="selectedBatch = item.import_batch; dialogType = 'data'; showBatchDialog = true" v-on="on">
+                                            <v-icon left small>fa-microscope</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>{{ $t('show_raw_data') }}</span>
+                                </v-tooltip>
+                                <v-tooltip bottom v-if="item.import_batch">
+                                    <template v-slot:activator="{ on }">
+                                        <v-btn text small color="secondary" @click.stop="selectedBatch = item.import_batch; dialogType = 'chart'; showBatchDialog = true" v-on="on">
+                                            <v-icon left small>fa-chart-bar</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <span>{{ $t('show_chart') }}</span>
+                                </v-tooltip>
                             </template>
                         </v-data-table>
                     </v-col>
@@ -81,15 +108,34 @@ cs:
             <v-spacer></v-spacer>
             <v-btn @click="$emit('close')">{{ $t('close') }}</v-btn>
         </v-card-actions>
+
+        <v-dialog
+                v-model="showBatchDialog"
+        >
+            <v-card>
+                <v-card-text>
+                    <AccessLogList v-if="dialogType === 'data'" :import-batch="selectedBatch" />
+                    <ImportBatchChart v-else-if="dialogType === 'chart'" :import-batch-id="selectedBatch" />
+                </v-card-text>
+                <v-card-actions>
+                    <v-layout pb-3 pr-5 justify-end>
+                        <v-btn @click="showBatchDialog = false">{{ $t('actions.close') }}</v-btn>
+                    </v-layout>
+                </v-card-actions>
+            </v-card>
+    </v-dialog>
     </v-card>
 </template>
 
 <script>
   import {mapActions} from 'vuex'
   import axios from 'axios'
+  import AccessLogList from './AccessLogList'
+  import ImportBatchChart from './ImportBatchChart'
 
   export default {
     name: "SushiAttemptListWidget",
+    components: {AccessLogList, ImportBatchChart},
     props: {
       organization: {required: false},
       platform: {required: false},
@@ -104,6 +150,8 @@ cs:
         showFailure: true,
         orderBy: 'timestamp',
         orderDesc: true,
+        showBatchDialog: false,
+        selectedBatch: null,
       }
     },
     computed: {
@@ -144,6 +192,10 @@ cs:
             text: this.$t('title_fields.end_date'),
             value: 'end_date'
           },
+          {
+            text: this.$t('title_fields.processed'),
+            value: 'is_processed'
+          },
         ]
         if (!this.organization) {
           ret.push({text: this.$t('organization'), value: 'organization.name'})
@@ -151,6 +203,7 @@ cs:
         if (!this.report) {
           ret.push({text: this.$t('report'), value: 'counter_report.code'})
         }
+        ret.push({text: this.$t('title_fields.actions'), value: 'actions'})
 
         return ret
       },

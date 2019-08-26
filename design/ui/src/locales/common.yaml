@@ -28,6 +28,7 @@ en:
     success: Success
     start_date: Start date
     end_date: End date
+    processed: Processed
   titles: Titles
   overview: Overview
   chart:
@@ -102,6 +103,7 @@ cs:
     success: Úspěch
     start_date: Počáteční datum
     end_date: Koncové datum
+    processed: Zpracováno
   titles: Tituly
   overview: Přehled
   chart:
