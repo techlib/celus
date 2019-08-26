@@ -39,12 +39,13 @@ class Command(BaseCommand):
     @atomic
     def process_one_attempt(self, attempt: SushiFetchAttempt):
         counter_version = attempt.credentials.counter_version
-        reader = attempt.counter_report.get_reader_class()
-        if not reader:
+        reader_cls = attempt.counter_report.get_reader_class()
+        if not reader_cls:
             self.stderr.write(self.style.NOTICE(
                 f'Unsupported report type {attempt.counter_report.report_type}'))
             return
         self.stderr.write(self.style.NOTICE(f'Processing file: {attempt.data_file.name}'))
+        reader = reader_cls()
         data = reader.file_to_input(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
         validator = getattr(self, f'validate_data_v{counter_version}')
         try:
