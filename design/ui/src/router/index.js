@@ -10,6 +10,7 @@ import AfterLoginPage from '../pages/AfterLoginPage'
 import SushiCredentialsManagementPage from '../pages/SushiCredentialsManagementPage'
 import ImportBatchesPage from '../pages/ImportBatchesPage'
 import CustomDataUploadPage from '../pages/CustomDataUploadPage'
+import SushiFetchAttemptsPage from '../pages/SushiFetchAttemptsPage'
 
 Vue.use(Router)
 
@@ -65,6 +66,11 @@ export default new Router({
       path: '/admin/import-batches/',
       name: 'import-batch-list',
       component: ImportBatchesPage,
+    },
+    {
+      path: '/admin/sushi-fetch-attempts/',
+      name: 'sushi-fetch-attempts',
+      component: SushiFetchAttemptsPage,
     },
     {
       path: '/platforms/:platformId/upload-data/',

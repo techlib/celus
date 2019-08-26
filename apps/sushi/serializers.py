@@ -2,7 +2,7 @@ from rest_framework.serializers import ModelSerializer
 
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer
-from .models import SushiCredentials, CounterReportType
+from .models import SushiCredentials, CounterReportType, SushiFetchAttempt
 
 
 class CounterReportTypeSerializer(ModelSerializer):
@@ -30,3 +30,13 @@ class SushiCredentialsSerializer(ModelSerializer):
         result = super().update(instance, validated_data)  # type: SushiCredentials
         result.active_counter_reports.set(active_reports)
         return result
+
+
+class SushiFetchAttemptSerializer(ModelSerializer):
+
+    counter_report = CounterReportTypeSerializer(read_only=True)
+
+    class Meta:
+        model = SushiFetchAttempt
+        fields = ('timestamp', 'start_date', 'end_date', 'success', 'queued', 'is_processed',
+                  'when_processed', 'when_queued', 'counter_report')
