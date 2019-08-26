@@ -3,15 +3,18 @@
 en:
     columns:
         interest: Interest
+    show_doi: Show DOI
 cs:
     columns:
         interest: Zájem
+    show_doi: Zobrazit DOI
 </i18n>
 
 
 <template>
     <v-card>
         <v-card-title>
+            <v-switch v-model="showDOI" :label="$t('show_doi')"></v-switch>
             <v-spacer></v-spacer>
             <v-text-field
                     v-model="searchDebounced"
@@ -57,7 +60,20 @@ cs:
         search: '',
         itemsPerPage: 25,
         loading: false,
-        headers: [
+        showDOI: false,
+      }
+    },
+    computed: {
+      searchDebounced: {
+        get () {
+          return this.search
+        },
+        set: debounce(function (value) {
+          this.search = value
+        }, 500)
+      },
+      headers () {
+        let base = [
           {
             text: this.$i18n.t('title_fields.name'),
             value: 'name'
@@ -78,26 +94,19 @@ cs:
             text: this.$i18n.t('title_fields.eissn'),
             value: 'eissn'
           },
-          {
+        ]
+        if (this.showDOI) {
+          base.push({
             text: this.$i18n.t('title_fields.doi'),
             value: 'doi'
-          },
-          {
+          })
+        }
+        base.push({
             text: this.$i18n.t('columns.interest'),
             value: 'interest',
             align: 'end',
-          },
-        ]
-      }
-    },
-    computed: {
-      searchDebounced: {
-        get () {
-          return this.search
-        },
-        set: debounce(function (value) {
-          this.search = value
-        }, 500)
+          })
+        return base
       }
     },
     methods: {
