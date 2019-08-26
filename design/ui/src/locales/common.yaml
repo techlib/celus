@@ -23,6 +23,9 @@ en:
     active_reports: Active reports
     counter_version: COUNTER version
     enabled: Enabled
+    success: Success
+    start_date: Start date
+    end_date: End date
   titles: Titles
   overview: Overview
   chart:
@@ -92,6 +95,9 @@ cs:
     active_reports: Aktivní reporty
     counter_version: Verze COUNTER
     enabled: Zapnuto
+    success: Úspěch
+    start_date: Počáteční datum
+    end_date: Koncové datum
   titles: Tituly
   overview: Přehled
   chart:

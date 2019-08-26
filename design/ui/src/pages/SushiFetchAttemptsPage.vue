@@ -4,12 +4,16 @@ en:
         report: Report
         organization: Organization
         platform: Platform
+    rows: Rows
+    columns: Columns
 
 cs:
     dim:
         report: Report
         organization: Organizace
         platform: Platforma
+    rows: Řádky
+    columns: Sloupce
 </i18n>
 
 <template>
@@ -19,14 +23,14 @@ cs:
         <v-select
                 :items="xDimensions"
                 v-model="x"
-                label="X"
+                :label="$t('columns')"
         ></v-select>
             </v-col>
             <v-col>
         <v-select
                 :items="yDimensions"
                 v-model="y"
-                label="Y"
+                :label="$t('rows')"
         ></v-select>
             </v-col>
         </v-row>
@@ -35,14 +39,18 @@ cs:
                 <thead>
                 <tr>
                     <td></td>
-                    <th v-for="col in columns" :key="col">{{ col }}</th>
+                    <th v-for="col in columns" :key="col.pk">{{ col.name }}</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="(row, index) in rows" :key="row">
-                    <th>{{ row }}</th>
+                <tr v-for="(row, index) in rows" :key="row.pk">
+                    <th>{{ row.name }}</th>
                     <td v-for="(rec, index2) in tableData[index]"
-                        :class="rec.total === 0 ? '' : rec.success === 0 ? 'bad' : rec.success === rec.total ? 'great': 'partial'" class="text-center">
+                        :class="rec.total === 0 ? '' : rec.success === 0 ? 'bad' : rec.success === rec.total ? 'great': 'partial'" class="text-center link"
+                        @click="showDetails(index2, index)"
+                        :key="index + '-' + index2"
+                    >
+
                         {{ rec.total ? rec.success || '-' : ''}}
                         {{ rec.total ? '/' : '' }}
                         {{ rec.total ? rec.failure || '-' : ''}}
@@ -51,7 +59,17 @@ cs:
                 </tbody>
             </v-simple-table>
         </v-row>
-
+        <v-dialog
+                v-model="showDetailDialog"
+        >
+            <SushiAttemptListWidget
+                    :organization="selectedItem.organization"
+                    :platform="selectedItem.platform"
+                    :report="selectedItem.report"
+                    @close="showDetailDialog = false"
+            >
+            </SushiAttemptListWidget>
+        </v-dialog>
     </v-container>
 </template>
 
@@ -59,9 +77,11 @@ cs:
 
   import axios from 'axios'
   import {mapActions} from 'vuex'
+  import SushiAttemptListWidget from '../components/SushiAttemptListWidget'
 
   export default {
     name: "SushiFetchAttemptsPage",
+    components: {SushiAttemptListWidget},
     data () {
       return {
         statsData: [],
@@ -71,6 +91,8 @@ cs:
         columns: [],
         rows: [],
         tableData: {},
+        showDetailDialog: false,
+        selectedItem: {},
       }
     },
     computed: {
@@ -104,14 +126,24 @@ cs:
       dataToTable () {
         let columns = new Set()
         let rows = new Set()
+        let col_to_name = {}
+        let row_to_name = {}
         for (let rec of this.statsData) {
-          columns.add(rec[this.x])
-          rows.add(rec[this.y])
+          let col_id = rec[this.x+'_id']
+          let row_id = rec[this.y+'_id']
+          columns.add(col_id)
+          rows.add(row_id)
+          if (!(col_id in col_to_name))
+            col_to_name[col_id] = rec[this.x]
+          if (!(row_id in row_to_name))
+            row_to_name[row_id] = rec[this.y]
         }
-        this.columns = [...columns]
-        this.columns.sort((a, b) => a.localeCompare(b))
-        this.rows = [...rows]
-        this.rows.sort((a, b) => a.localeCompare(b))
+        console.log(columns)
+
+        this.columns = [...columns].map(item => {return {name: col_to_name[item], pk: item}})
+        this.columns.sort((a, b) => a.name.localeCompare(b.name))
+        this.rows = [...rows].map(item => {return {name: row_to_name[item], pk: item}})
+        this.rows.sort((a, b) => a.name.localeCompare(b.name))
         // create an empty matrix
         let out = []
         for (let col in this.rows) {
@@ -122,9 +154,11 @@ cs:
           out.push(rowRec)
         }
         // fill it
+        let col_idxs = this.columns.map(item => item.pk)
+        let row_idxs = this.rows.map(item => item.pk)
         for (let rec of this.statsData) {
-          let x = this.columns.indexOf(rec[this.x])
-          let y = this.rows.indexOf(rec[this.y])
+          let x = col_idxs.indexOf(rec[this.x+'_id'])
+          let y = row_idxs.indexOf(rec[this.y+'_id'])
           out[y][x] = {
             success: rec.success_count,
             failure: rec.failure_count,
@@ -132,10 +166,16 @@ cs:
           }
         }
         this.tableData = out
+      },
+      showDetails (colIndex, rowIndex) {
+        this.selectedItem[this.x] = this.columns[colIndex]
+        this.selectedItem[this.y] = this.rows[rowIndex]
+        this.showDetailDialog = true
       }
     },
     watch: {
       statsUrl () {
+        this.selectedItem = {}
         this.loadAttemptStats()
       },
     },
@@ -156,6 +196,9 @@ cs:
     }
     td.great {
         background-color: #b7e2b1;
+    }
+    td.link {
+        cursor: pointer;
     }
 
 </style>

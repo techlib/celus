@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from pandas import DataFrame
 from rest_framework.response import Response
@@ -49,17 +50,21 @@ class SushiFetchAttemptViewSet(ReadOnlyModelViewSet):
             filter_params['credentials__organization__in'] = organizations
         if 'platform' in self.request.query_params:
             filter_params['credentials__platform_id'] = self.request.query_params['platform']
-        return SushiFetchAttempt.objects.filter(**filter_params).select_related('counter_report')
+        if 'report' in self.request.query_params:
+            filter_params['counter_report_id'] = self.request.query_params['report']
+        return SushiFetchAttempt.objects.filter(**filter_params).\
+            select_related('counter_report', 'credentials__organization')
 
 
 class SushiFetchAttemptStatsView(APIView):
 
     attr_to_query_param_map = {
-        'report': 'counter_report__code',
-        'platform': 'credentials__platform__name',
-        'organization': 'credentials__organization__name',
+        'report': ('counter_report', 'counter_report__code'),
+        'platform': ('credentials__platform', 'credentials__platform__name'),
+        'organization': ('credentials__organization', 'credentials__organization__name'),
     }
-    key_to_attr_map = {value: key for key, value in attr_to_query_param_map.items()}
+    key_to_attr_map = {value[1]: key for key, value in attr_to_query_param_map.items()}
+    key_to_attr_map.update({value[0]: key+'_id' for key, value in attr_to_query_param_map.items()})
 
     def get(self, request):
         organizations = request.user.accessible_organizations()
@@ -74,10 +79,17 @@ class SushiFetchAttemptStatsView(APIView):
         # what should be in the result?
         x = request.query_params.get('x', 'report')
         y = request.query_params.get('y', 'platform')
-        x_remap = self.attr_to_query_param_map.get(x, x)
-        y_remap = self.attr_to_query_param_map.get(y, y)
+        if x not in self.attr_to_query_param_map:
+            return HttpResponseBadRequest('unsupported x dimension: "{}"'.format(x))
+        if y not in self.attr_to_query_param_map:
+            return HttpResponseBadRequest('unsupported y dimension: "{}"'.format(y))
+        # we use 2 separate fields for both x and y in order to preserve both the ID of the
+        # related field and its text value
+        values = []
+        values.extend(self.attr_to_query_param_map[x])
+        values.extend(self.attr_to_query_param_map[y])
         # now get the output
-        qs = SushiFetchAttempt.objects.filter(**filter_params).values(x_remap, y_remap).annotate(
+        qs = SushiFetchAttempt.objects.filter(**filter_params).values(*values).annotate(
             success_count=Count('pk', filter=Q(success=True)),
             failure_count=Count('pk', filter=Q(success=False)),
         )
@@ -86,7 +98,4 @@ class SushiFetchAttemptStatsView(APIView):
         for obj in qs:
             out.append({self.key_to_attr_map.get(key, key): value for key, value in obj.items()})
         return Response(out)
-        out = DataFrame(out, columns=[x, y, 'success_count', 'failure_count'])
-        print(out)
-        print(out.pivot(columns=x, index=y))
-        return Response(out.pivot(columns=x, index=y))
+

@@ -35,8 +35,9 @@ class SushiCredentialsSerializer(ModelSerializer):
 class SushiFetchAttemptSerializer(ModelSerializer):
 
     counter_report = CounterReportTypeSerializer(read_only=True)
+    organization = OrganizationSerializer(read_only=True, source='credentials.organization')
 
     class Meta:
         model = SushiFetchAttempt
         fields = ('timestamp', 'start_date', 'end_date', 'success', 'queued', 'is_processed',
-                  'when_processed', 'when_queued', 'counter_report')
+                  'when_processed', 'when_queued', 'counter_report', 'organization', 'log')
