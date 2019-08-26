@@ -1,3 +1,4 @@
+import dateparser
 from django.db.models import Count, Q
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
@@ -52,6 +53,10 @@ class SushiFetchAttemptViewSet(ReadOnlyModelViewSet):
             filter_params['credentials__platform_id'] = self.request.query_params['platform']
         if 'report' in self.request.query_params:
             filter_params['counter_report_id'] = self.request.query_params['report']
+        if 'date_from' in self.request.query_params:
+            date_from = dateparser.parse(self.request.query_params['date_from'])
+            if date_from:
+                filter_params['timestamp__date__gte'] = date_from
         return SushiFetchAttempt.objects.filter(**filter_params).\
             select_related('counter_report', 'credentials__organization')
 
@@ -76,6 +81,10 @@ class SushiFetchAttemptStatsView(APIView):
             filter_params['credentials__organization__in'] = organizations
         if 'platform' in request.query_params:
             filter_params['credentials__platform_id'] = request.query_params['platform']
+        if 'date_from' in self.request.query_params:
+            date_from = dateparser.parse(self.request.query_params['date_from'])
+            if date_from:
+                filter_params['timestamp__date__gte'] = date_from
         # what should be in the result?
         x = request.query_params.get('x', 'report')
         y = request.query_params.get('y', 'platform')

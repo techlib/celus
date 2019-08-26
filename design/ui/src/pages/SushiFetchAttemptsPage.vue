@@ -6,6 +6,7 @@ en:
         platform: Platform
     rows: Rows
     columns: Columns
+    start_date: Not older than
 
 cs:
     dim:
@@ -14,24 +15,58 @@ cs:
         platform: Platforma
     rows: Řádky
     columns: Sloupce
+    start_date: Ne starší než
 </i18n>
 
 <template>
     <v-container>
         <v-row>
             <v-col>
-        <v-select
-                :items="xDimensions"
-                v-model="x"
-                :label="$t('columns')"
-        ></v-select>
+                <v-select
+                        :items="xDimensions"
+                        v-model="x"
+                        :label="$t('columns')"
+                ></v-select>
             </v-col>
             <v-col>
-        <v-select
-                :items="yDimensions"
-                v-model="y"
-                :label="$t('rows')"
-        ></v-select>
+                <v-select
+                        :items="yDimensions"
+                        v-model="y"
+                        :label="$t('rows')"
+                ></v-select>
+            </v-col>
+            <v-col>
+                <v-menu
+                        v-model="dateMenu"
+                        :close-on-content-click="false"
+                        :nudge-right="40"
+                        transition="scale-transition"
+                        offset-y
+                        full-width
+                        min-width="290px"
+                >
+                    <template v-slot:activator="{ on }">
+                        <v-text-field
+                                v-model="startDate"
+                                :label="$t('start_date')"
+                                prepend-icon="fa-calendar"
+                                readonly
+                                v-on="on"
+                                clearable
+                        ></v-text-field>
+                    </template>
+                    <v-date-picker
+                            v-model="startDate"
+                            @input="dateMenu = false"
+                            :allowed-dates="val => val <= (new Date()).toISOString()"
+                    >
+                    </v-date-picker>
+                </v-menu>
+            </v-col>
+            <v-col cols="auto">
+                <v-btn @click="loadAttemptStats()" color="primary">
+                    <v-icon small>fa-sync-alt</v-icon>
+                </v-btn>
             </v-col>
         </v-row>
         <v-row>
@@ -50,7 +85,6 @@ cs:
                         @click="showDetails(index2, index)"
                         :key="index + '-' + index2"
                     >
-
                         {{ rec.total ? rec.success || '-' : ''}}
                         {{ rec.total ? '/' : '' }}
                         {{ rec.total ? rec.failure || '-' : ''}}
@@ -66,6 +100,7 @@ cs:
                     :organization="selectedItem.organization"
                     :platform="selectedItem.platform"
                     :report="selectedItem.report"
+                    :from-date="startDate"
                     @close="showDetailDialog = false"
             >
             </SushiAttemptListWidget>
@@ -93,11 +128,17 @@ cs:
         tableData: {},
         showDetailDialog: false,
         selectedItem: {},
+        startDate: null,
+        dateMenu: null,
       }
     },
     computed: {
       statsUrl () {
-        return `/api/sushi-fetch-attempt-stats/?x=${this.x}&y=${this.y}`
+        let base = `/api/sushi-fetch-attempt-stats/?x=${this.x}&y=${this.y}`
+        if (this.startDate) {
+          base += `&date_from=${this.startDate}`
+        }
+        return base
       },
       dimensions () {
         return this.dimensionsRaw.map(item => {return {value: item, text: this.$t('dim.'+item)}})
@@ -138,8 +179,6 @@ cs:
           if (!(row_id in row_to_name))
             row_to_name[row_id] = rec[this.y]
         }
-        console.log(columns)
-
         this.columns = [...columns].map(item => {return {name: col_to_name[item], pk: item}})
         this.columns.sort((a, b) => a.name.localeCompare(b.name))
         this.rows = [...rows].map(item => {return {name: row_to_name[item], pk: item}})

@@ -34,6 +34,10 @@ cs:
                                 <th class="text-left">{{ $t('labels.report_type') }}:</th>
                                 <td>{{ report.name }}</td>
                             </tr>
+                            <tr v-if="fromDate">
+                                <th class="text-left">{{ $t('not_older_than') }}:</th>
+                                <td>{{ fromDate }}</td>
+                            </tr>
                         </table>
                     </v-col>
                 </v-row>
@@ -53,6 +57,8 @@ cs:
                                 show-expand
                                 :expanded.sync="expandedRows"
                                 item-key="timestamp"
+                                :sort-by="orderBy"
+                                :sort-desc="orderDesc"
                         >
                             <template v-slot:item.success="props">
                                 <v-icon small :color="props.item.success ? 'success' : 'error'">
@@ -88,6 +94,7 @@ cs:
       organization: {required: false},
       platform: {required: false},
       report: {required: false},
+      fromDate: {required: false},
     },
     data () {
       return {
@@ -95,10 +102,15 @@ cs:
         expandedRows: [],
         showSuccess: true,
         showFailure: true,
+        orderBy: 'timestamp',
+        orderDesc: true,
       }
     },
     computed: {
       listUrl () {
+        if (!(this.organization || this.platform || this.report)) {
+          return ''
+        }
         let base = `/api/sushi-fetch-attempt/?format=json`
         if (this.organization) {
           base += `&organization=${this.organization.pk}`
@@ -108,6 +120,9 @@ cs:
         }
         if (this.report) {
           base += `&report=${this.report.pk}`
+        }
+        if (this.fromDate) {
+          base += `&date_from=${this.fromDate}`
         }
         return base
       },
@@ -155,6 +170,9 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       async loadAttempts () {
+        if (!this.listUrl) {
+          return
+        }
         this.attempts = []
         try {
           let response = await axios.get(this.listUrl)
