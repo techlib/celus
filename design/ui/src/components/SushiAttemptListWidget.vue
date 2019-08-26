@@ -8,6 +8,7 @@ en:
     show_failure: Show failures
     show_raw_data: Show raw data
     show_chart: Show charts
+    not_older_than: Not older than
 
 cs:
     sushi_fetch_attempts: Pokusy o stažení Sushi
@@ -16,6 +17,7 @@ cs:
     show_failure: Zobrazit neúspěšné
     show_raw_data: Zobrazit data
     show_chart: Zobrazit grafy
+    not_older_than: Ne starší než
 </i18n>
 
 <template>
