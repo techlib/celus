@@ -42,7 +42,7 @@ class Command(BaseCommand):
         reader_cls = attempt.counter_report.get_reader_class()
         if not reader_cls:
             self.stderr.write(self.style.NOTICE(
-                f'Unsupported report type {attempt.counter_report.report_type}'))
+                f'Unsupported report type {attempt.counter_report.code}'))
             return
         self.stderr.write(self.style.NOTICE(f'Processing file: {attempt.data_file.name}'))
         reader = reader_cls()

@@ -13,7 +13,7 @@ from pycounter.exceptions import SushiException
 
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri
-from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report
+from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report, Counter4DB1Report
 from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
 from organizations.models import Organization
 from publications.models import Platform
@@ -36,7 +36,7 @@ COUNTER_REPORTS = (
     ('BR1', 4, None),
     ('BR2', 4, Counter4BR2Report),
     ('BR3', 4, None),
-    ('DB1', 4, None),
+    ('DB1', 4, Counter4DB1Report),
     ('DB2', 4, None),
     ('PR1', 4, None),
     # version 5
