@@ -15,6 +15,7 @@ class ReportTypeAdmin(admin.ModelAdmin):
 
     list_display = ['short_name', 'name', 'desc', 'dimension_list', 'source']
     ordering = ['short_name']
+    list_filter = ['source']
 
     @classmethod
     def dimension_list(cls, obj: models.ReportType):
