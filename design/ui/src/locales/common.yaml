@@ -6,6 +6,7 @@ en:
     all_titles: All titles
     sushi_management: SUSHI management
     admin: Administration
+    sushi_fetch_attempts: SUSHI downloads
   menu: Menu
   organization: Organization
   platform: Platform
@@ -78,6 +79,7 @@ cs:
     all_titles: Všechny tituly
     sushi_management: Správa SUSHI
     admin: Administrace
+    sushi_fetch_attempts: Stahování SUSHI
   menu: Menu
   organization: Organizace
   platform: Platforma

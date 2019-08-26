@@ -85,7 +85,7 @@
               title: this.$i18n.t('pages.admin'),
               items: [
                 { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list', show: this.showAdminStuff },
-
+                { title: this.$t('pages.sushi_fetch_attempts'), icon: 'fa-retweet', linkTo: 'sushi-fetch-attempts', show: this.showAdminStuff },
               ],
               show: this.showAdminStuff,
 
