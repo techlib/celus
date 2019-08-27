@@ -19,8 +19,7 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      component: ChartTestPage,
-      // meta: {title: 'Home'}
+      redirect: {name: 'platform-list'},
     },
     {
       path: '/platforms/',
