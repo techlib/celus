@@ -9,7 +9,7 @@ from logs.serializers import ReportTypeSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
-from publications.serializers import TitleCountSerializer
+from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 
 
@@ -85,6 +85,20 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         interests = InterestGroup.objects.all()
         extract_interests_from_objects(interests, [obj])
         return obj
+
+
+class PlatformSushiCredentialsViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = PlatformSushiCredentialsSerializer
+
+    def get_queryset(self):
+        """
+        Should return only platforms for the requested organization.
+        """
+        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
+                                                     self.request.user)
+        return Platform.objects.filter(**org_filter). \
+            annotate(sushi_credentials_count=Count('sushicredentials', distinct=True))
 
 
 class PlatformTitleViewSet(ReadOnlyModelViewSet):

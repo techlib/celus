@@ -8,6 +8,10 @@ en:
         title_count: Title / database count
         interest: Interest
         rel_interest: Int. / title
+        sushi_available: SUSHI active
+    sushi_present: SUSHI is available and active for this platform
+    no_sushi: SUSHI is not activated for this platform and selected organization
+
 cs:
     columns:
         id: ID
@@ -16,6 +20,9 @@ cs:
         title_count: Počet titulů a databází
         interest: Zájem
         rel_interest: Zájem / titul
+        sushi_available: Aktivní SUSHI
+    sushi_present: SUSHI je pro tuto platformu aktivní
+    no_sushi: SUSHI není pro tuto platformu a vybranou organizaci aktivní
 </i18n>
 
 <template>
@@ -62,6 +69,18 @@ cs:
                         </template>
                         <template v-slot:item.interests.database.value="props">
                             {{ props.item.interests.database ? props.item.interests.database.value : '-' }}
+                        </template>
+                        <template v-slot:item.sushi_credentials_count="{item}">
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on }">
+                                    <v-icon x-small v-on="on">{{ item.sushi_credentials_count ? 'fa-check' : typeof item.sushi_credentials_count === 'undefined' ? '': 'fa-times' }}</v-icon>
+                                </template>
+                                <template>
+                                    <span v-if="typeof item.sushi_credentials_count === 'undefined'"></span>
+                                    <span v-else-if="item.sushi_credentials_count > 0">{{ $t('sushi_present') }}</span>
+                                    <span v-else>{{ $t('no_sushi') }}</span>
+                                </template>
+                            </v-tooltip>
                         </template>
                     </v-data-table>
                 </v-card>
@@ -135,6 +154,11 @@ cs:
             text: this.$i18n.t('columns.provider'),
             value: 'provider'
           },
+          {
+            text: this.$i18n.t('columns.sushi_available'),
+            value: 'sushi_credentials_count',
+            sortable: false,
+          },
         ]
       }
     },
@@ -148,13 +172,32 @@ cs:
           try {
             let response = await axios.get(this.platformsURL)
             this.platforms = response.data
+            this.loadPlatformSushiCounts()
           } catch (error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})
           } finally {
             this.loading = false
           }
         }
-      }
+      },
+      async loadPlatformSushiCounts () {
+        if (this.selectedOrganizationId) {
+          try {
+            let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/sushi-credentials-count/`)
+            let pkToCount = {}
+            for (let rec of response.data) {
+              pkToCount[rec.pk] = rec.count
+            }
+            for (let platform of this.platforms) {
+              this.$set(platform, 'sushi_credentials_count', pkToCount[platform.pk])
+            }
+          } catch (error) {
+              this.showSnackbar({content: 'Error loading platforms: '+error})
+          } finally {
+            this.loading = false
+          }
+        }
+      },
     },
     created () {
       this.loadPlatforms()

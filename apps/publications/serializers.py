@@ -24,6 +24,15 @@ class DetailedPlatformSerializer(ModelSerializer):
                   'title_count', 'interests', 'rel_interest', 'interest_title')
 
 
+class PlatformSushiCredentialsSerializer(ModelSerializer):
+
+    count = IntegerField(read_only=True, source='sushi_credentials_count')
+
+    class Meta:
+        model = Platform
+        fields = ('pk', 'count')
+
+
 class TitleSerializer(ModelSerializer):
 
     class Meta:
