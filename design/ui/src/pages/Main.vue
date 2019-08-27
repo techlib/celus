@@ -71,17 +71,19 @@
             </v-container>
         </v-content>
         <v-footer app absolute inset height="128px">
-            <v-layout>
-                <v-flex>
-                    <img src="../assets/eu_fond.svg" alt="Logo ESI fondu" >
-                </v-flex>
-                <v-flex>
-                    <img src="../assets/MSMT_cz.svg" alt="Logo MŠMT" >
-                </v-flex>
-                <v-flex>
-                    <img src="../assets/ntk-96.svg" alt="Logo NTK" >
-                </v-flex>
-            </v-layout>
+            <v-container fluid>
+                <v-row no-gutters wrap>
+                <v-col cols="auto">
+                    <img src="../assets/eu_fond.svg" alt="Logo ESI fondu" class="logow">
+                </v-col>
+                <v-col cols="auto">
+                    <img src="../assets/MSMT_cz.svg" alt="Logo MŠMT" class="logow">
+                </v-col>
+                <v-col cols="auto">
+                    <img src="../assets/ntk-96.svg" alt="Logo NTK" class="logow">
+                </v-col>
+                </v-row>
+            </v-container>
         </v-footer>
 
         <v-layout justify-center>
@@ -199,6 +201,14 @@
                 }
             }
         }
+    }
+
+    img.logo {
+        max-width: 20vw;
+    }
+
+    img.logow {
+        max-height: 10vw;
     }
 
 </style>
