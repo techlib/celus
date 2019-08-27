@@ -25,7 +25,7 @@ cs:
                 <h2>{{ $t('pages.platforms') }}</h2>
             </v-col>
             <v-spacer></v-spacer>
-            <v-col v-if="showAdminStuff" cols="auto">
+            <v-col v-if="showAdminStuff && organizationSelected" cols="auto">
                 <v-btn @click="showUploadDataDialog = true">
                     <v-icon class="mr-2" small>fa-upload</v-icon>
                     {{ $t('actions.upload_data') }}
@@ -102,6 +102,7 @@ cs:
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
         showAdminStuff: 'showAdminStuff',
+        organizationSelected: 'organizationSelected',
       }),
       platformsURL () {
         return `/api/organization/${this.selectedOrganizationId}/detailed-platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`

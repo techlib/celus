@@ -104,6 +104,9 @@ export default new Vuex.Store({
       return ((state.user && state.user.is_from_master_organization) ||
         (getters.selectedOrganization && getters.selectedOrganization.is_admin))
     },
+    organizationSelected (state) {
+      return state.selectedOrganizationId && state.selectedOrganizationId > 0
+    }
   },
   actions: {
     async start (context) {
