@@ -78,7 +78,7 @@ cs:
   import AccessLogList from '../components/AccessLogList'
   import ImportBatchChart from '../components/ImportBatchChart'
   import {isoDateTimeFormat, parseDateTime} from '../libs/dates'
-  import {debounce} from 'lodash'
+  import debounce from 'lodash/debounce'
 
   export default {
     name: "ImportBatchesPage",

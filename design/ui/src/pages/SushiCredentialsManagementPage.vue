@@ -72,7 +72,7 @@
 <script>
   import axios from 'axios'
   import { mapActions, mapState } from 'vuex'
-  import { debounce } from 'lodash'
+  import debounce from 'lodash/debounce'
   import SushiCredentialsEditDialog from '../components/SushiCredentialsEditDialog'
 
   export default {

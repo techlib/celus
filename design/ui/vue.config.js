@@ -1,5 +1,8 @@
 let devURLBase = 'http://localhost:8015/'
 
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+
 module.exports = {
   runtimeCompiler: true,
 
@@ -28,6 +31,10 @@ module.exports = {
       localeDir: 'locales',
       enableInSFC: true
     }
+  },
+
+  configureWebpack: {
+    plugins: [new BundleAnalyzerPlugin()]
   },
 
   chainWebpack: config => {
