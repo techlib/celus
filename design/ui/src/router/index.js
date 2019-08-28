@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import NotFoundPage from '../pages/NotFoundPage'
-import ChartTestPage from '../pages/ChartTestPage'
+// import ChartTestPage from '../pages/ChartTestPage'
 import PlatformListPage from '../pages/PlatformListPage'
 import PlatformDetailPage from '../pages/PlatformDetailPage'
 import TitleDetailPage from '../pages/TitleDetailPage'
