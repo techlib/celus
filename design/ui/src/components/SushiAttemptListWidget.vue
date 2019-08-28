@@ -24,7 +24,7 @@ cs:
     <v-card>
         <v-card-title>{{ $t('sushi_fetch_attempts') }}</v-card-title>
         <v-card-text>
-            <v-container>
+            <v-container fluid>
                 <v-row>
                     <v-col>
                         <table class="overview">
@@ -78,7 +78,8 @@ cs:
                             </template>
                             <template v-slot:expanded-item="{item, headers}">
                                 <th colspan="2">Log</th>
-                                <td :colspan="headers.length-2" class="pre">{{ item.log }}</td>
+                                <td :colspan="headers.length-3" class="pre">{{ item.log }}</td>
+                                <td v-if="item.data_file"><a :href="item.data_file" target="_blank">Data file</a></td>
                             </template>
                             <template v-slot:item.data-table-expand="{isExpanded, expand}">
                                 <v-icon @click="expand(!isExpanded)" small>{{ isExpanded  ? 'fa-angle-down' : 'fa-angle-right' }}</v-icon>
@@ -154,6 +155,7 @@ cs:
         orderDesc: true,
         showBatchDialog: false,
         selectedBatch: null,
+        dialogType: '',
       }
     },
     computed: {
@@ -259,5 +261,6 @@ cs:
     td.pre {
         font-family: Courier, monospace;
         color: #666666;
+        white-space: pre-wrap;
     }
 </style>

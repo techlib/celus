@@ -39,6 +39,6 @@ class SushiFetchAttemptSerializer(ModelSerializer):
 
     class Meta:
         model = SushiFetchAttempt
-        fields = ('timestamp', 'start_date', 'end_date', 'success', 'queued', 'is_processed',
-                  'when_processed', 'when_queued', 'counter_report', 'organization', 'log',
-                  'import_batch')
+        fields = ('timestamp', 'start_date', 'end_date', 'success', 'error_code', 'contains_data',
+                  'queued', 'is_processed', 'when_processed', 'when_queued', 'counter_report',
+                  'organization', 'log', 'import_batch', 'data_file')

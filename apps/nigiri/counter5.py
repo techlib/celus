@@ -63,6 +63,9 @@ class Counter5ReportBase(object):
         :return:
         """
         self.raw_data = report
+        if type(report) is list:
+            self.extract_errors(report)
+            return []
         self.header = report.get('Report_Header')
         if not self.header:
             self.extract_errors(report)

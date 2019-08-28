@@ -27,8 +27,8 @@ class CounterReportTypeAdmin(admin.ModelAdmin):
 class SushiFetchAttemptAdmin(admin.ModelAdmin):
 
     list_display = ['credentials', 'counter_report', 'timestamp', 'start_date', 'end_date',
-                    'queued', 'success', 'is_processed']
-    list_filter = ['success', 'is_processed', 'queued', 'counter_report']
+                    'queued', 'success', 'is_processed', 'contains_data']
+    list_filter = ['success', 'is_processed', 'queued', 'contains_data', 'counter_report']
     readonly_fields = ['credentials', 'counter_report', 'timestamp', 'start_date', 'end_date',
                        'success', 'data_file']
     search_fields = ['credentials__organization__name', 'credentials__platform__name']

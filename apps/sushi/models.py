@@ -1,8 +1,7 @@
 import json
 import os
 import logging
-from typing import Optional
-from xml.etree import ElementTree as ET
+import traceback
 
 import requests
 from django.contrib.postgres.fields import JSONField
@@ -127,6 +126,7 @@ class SushiCredentials(models.Model):
         log = ''
         data_file = None
         filename = None
+        error_code = ''
         try:
             report = client.get_report_data(counter_report.code, start_date, end_date,
                                             params={'sushi_dump': True})
@@ -135,13 +135,13 @@ class SushiCredentials(models.Model):
             file_data = e.raw
             success = False
             errors = client.extract_errors_from_data(file_data)
-            log = '\n'.join(errors)
+            log = '\n'.join(error.full_log for error in errors)
             filename = 'foo.xml'  # we just need the extension
         except Exception as e:
             logger.error("Error: %s", e)
             success = False
-            errors = [str(e)]
-            log = '\n'.join(errors)
+            error_code = 'non-sushi'
+            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             filename = 'foo.xml'  # we just need the extension
         else:
             file_data = client.report_to_string(report)
@@ -157,17 +157,19 @@ class SushiCredentials(models.Model):
             success=success,
             data_file=data_file,
             log=log,
+            error_code=error_code,
         )
         return attempt
 
     def _fetch_report_v5(self, client, counter_report, start_date, end_date) -> \
             'SushiFetchAttempt':
         file_data = None
+        contains_data = True
         success = True
         data_file = None
         filename = 'foo.json'
-        errors = []
         queued = False
+        error_code = ''
         # we want extra split data from the report
         params = client.EXTRA_PARAMS['maximum_split'].get(counter_report.code.lower(), {})
         try:
@@ -175,26 +177,43 @@ class SushiCredentials(models.Model):
                                             params=params)
         except requests.exceptions.ConnectionError as e:
             logger.error('Connection error: %s', e)
-            errors = [str(e)]
+            error_code = 'connection'
+            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            contains_data = False
             success = False
         except Exception as e:
             logger.error('Error: %s', e)
-            errors = [str(e)]
+            error_code = 'non-sushi'
+            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            contains_data = False
             success = False
         else:
             # check for errors
             if report.errors:
                 logger.error('Found errors: %s', report.errors)
-                errors = [str(e) for e in report.errors]
-                success = False
+                log = '; '.join(str(e) for e in report.errors)
+                error_code = str(report.errors[0].code)
+                contains_data = False
+                if error_code in ['3000', '3010']:
+                    # report is not supported, so it was successful, but no data
+                    success = True
+                elif error_code == '3030':
+                    # no usage data for the requested period, it is success, but again no data
+                    success = True
+                elif error_code in ['1010', '1011', '1020']:
+                    # some forms of 'try it later' errors
+                    queued = True
+                    success = False
+                else:
+                    success = False
                 if type(file_data) is dict:
                     file_data = json.dumps(file_data)
             else:
-                success = True
+                contains_data = True
                 queued = report.queued
                 file_data = client.report_to_string(report.raw_data)
+                log = ''
         # now create the attempt instance
-        log = '\n'.join(errors)
         if file_data:
             data_file = ContentFile(file_data)
             data_file.name = filename
@@ -207,6 +226,8 @@ class SushiCredentials(models.Model):
             data_file=data_file,
             queued=queued,
             log=log,
+            error_code=error_code,
+            contains_data=contains_data,
         )
         return attempt
 
@@ -227,11 +248,15 @@ class SushiFetchAttempt(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     success = models.BooleanField()
+    contains_data = models.BooleanField(default=False,
+                                        help_text='Does the report actually contain data for '
+                                                  'import')
     queued = models.BooleanField(default=False,
                                  help_text='Was the attempt queued by the provider and should be '
                                            'refetched?')
     data_file = models.FileField(upload_to=where_to_store)
     log = models.TextField(blank=True)
+    error_code = models.CharField(max_length=12, blank=True)
     is_processed = models.BooleanField(default=False,
                                        help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)

@@ -12,6 +12,7 @@ en:
   organization: Organization
   platform: Platform
   title: Title
+  report: Report
   title_fields:
     id: ID
     name: Name
@@ -87,6 +88,7 @@ cs:
   organization: Organizace
   platform: Platforma
   title: Titul
+  report: Report
   title_fields:
     id: ID
     name: Název

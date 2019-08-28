@@ -7,6 +7,7 @@ from typing import List, Dict, Union
 from urllib.parse import urljoin
 import logging
 from xml.etree import ElementTree as ET
+import traceback
 
 import requests
 
@@ -30,6 +31,16 @@ namespaces = {
 }
 
 
+class SushiError(object):
+
+    def __init__(self, code='', text='', full_log='', raw_data=None, severity=None):
+        self.code = code
+        self.severity = severity
+        self.text = text
+        self.full_log = full_log
+        self.raw_data = raw_data
+
+
 class SushiClientBase(object):
 
     def __init__(self, url, requestor_id, customer_id=None, extra_params=None, auth=None):
@@ -39,7 +50,7 @@ class SushiClientBase(object):
         self.extra_params = extra_params
         self.auth = auth
 
-    def extract_errors_from_data(self, report_data):
+    def extract_errors_from_data(self, report_data) -> [SushiError]:
         raise NotImplementedError()
 
     def report_to_string(self, report_data):
@@ -223,7 +234,7 @@ class Sushi5Client(SushiClientBase):
             else:
                 errors.append(exception)
         if errors:
-            message = '; '.join(cls._format_error(error) for error in errors)
+            message = '; '.join(cls._format_error(error).full_log for error in errors)
             raise SushiException(message, content=data)
 
     def extract_errors_from_data(self, report_data):
@@ -247,7 +258,14 @@ class Sushi5Client(SushiClientBase):
         message = '{Severity} error {Code}: {Message}'.format(**exc)
         if 'Data' in exc:
             message += '; {}'.format(exc['Data'])
-        return message
+        error = SushiError(
+            code=exc.get('Code', ''),
+            text=exc.get('Message' ''),
+            full_log=message,
+            severity=exc.get('Severity'),
+            raw_data=exc,
+        )
+        return error
 
     def _check_report_type(self, report_type):
         report_type = report_type.lower()
@@ -299,14 +317,32 @@ class Sushi4Client(SushiClientBase):
             body = envelope[0]
             response = body[0]
         except Exception as e:
-            return [str(e)]
+            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            return [SushiError(
+                code='non-sushi',
+                text=str(e),
+                full_log=log,
+                severity='Exception',
+            )]
         else:
             errors = []
             if response is not None:
                 for exception in response.findall('sushi:Exception', namespaces):
+                    print(exception, exception.find('sushi:Number', namespaces))
+                    code = exception.find('sushi:Number', namespaces)
+                    code = code.text if code is not None else ''
                     message = exception.find('sushi:Message', namespaces)
-                    if message is not None:
-                        errors.append(message.text)
+                    message = message.text if message is not None else ''
+                    severity = exception.find('sushi:Severity', namespaces)
+                    severity = severity.text if severity is not None else 'Unknown'
+                    full_log = f'{severity}: #{code}; {message}'
+                    errors.append(SushiError(
+                        code=code,
+                        text=message,
+                        severity=severity,
+                        full_log=full_log,
+                        raw_data=str(exception),
+                    ))
             return errors
 
     def report_to_string(self, report_data):
