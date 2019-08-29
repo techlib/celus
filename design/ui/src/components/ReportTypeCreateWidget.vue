@@ -259,7 +259,7 @@ cs:
             if ('non_field_errors' in info) {
               error_msg = info.non_field_errors
             } else {
-              for (let [key, value] in Object.entries(info)) {
+              for (let [key, value] of Object.entries(info)) {
                 error_msg += `${key}: ${value}; `
               }
             }

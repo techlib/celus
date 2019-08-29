@@ -199,7 +199,8 @@ cs:
       apiData () {
         let extraParams = {}
         for (let rec of this.extraParams) {
-          extraParams[rec.key] = rec.value
+          if (rec.key.trim())
+            extraParams[rec.key] = rec.value
         }
         return {
           id: this.credentialsId,
@@ -225,7 +226,7 @@ cs:
       credentialsPropToData () {
         let credentials = this.credentialsObject
         let extraParams = []
-        for (let [key, value] in Object.entries(credentials.extra_params)) {
+        for (let [key, value] of Object.entries(credentials.extra_params)) {
           extraParams.push({key: key, value: value})
         }
         this.organizationId = credentials.organization.id
