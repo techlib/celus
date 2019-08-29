@@ -3,7 +3,7 @@ import json
 import urllib
 from datetime import datetime
 from io import StringIO
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from urllib.parse import urljoin
 import logging
 from xml.etree import ElementTree as ET
@@ -41,6 +41,29 @@ class SushiError(object):
         self.raw_data = raw_data
 
 
+class SushiErrorMeaning(object):
+
+    RETRY_IN_MINUTES = 1
+    RETRY_IN_HOURS = 2
+    RETRY_IN_DAYS = 3
+    RETRY_IN_WEEKS = 4
+    RETRY_IN_MONTHS = 5
+    RETRY_AFTER_CHECKUP = 100
+
+    def __init__(self, should_retry=False, needs_checking=True,
+                 retry_interval=RETRY_AFTER_CHECKUP):
+        """
+
+        :param should_retry:
+        :param needs_checking: the credentials or the whole setup should be checked - no sense
+            in retrying before changing something
+        :param retry_interval: how fast should be retry
+        """
+        self.should_retry = should_retry
+        self.needs_checking = needs_checking
+        self.retry_interval = retry_interval
+
+
 class SushiClientBase(object):
 
     def __init__(self, url, requestor_id, customer_id=None, extra_params=None, auth=None):
@@ -58,6 +81,30 @@ class SushiClientBase(object):
 
     def get_report_data(self, report_type, begin_date, end_date, params=None):
         raise NotImplementedError()
+
+    @classmethod
+    def explain_error_code(cls, error_code) -> Optional[SushiErrorMeaning]:
+        try:
+            error_code = int(error_code)
+        except ValueError:
+            return None
+
+        if error_code in (3000, 3010):
+            # report is not supported, so it was successful, but no data
+            return SushiErrorMeaning(should_retry=False, needs_checking=False)
+        elif error_code in (3030,):
+            # no usage data for the requested period, it is success, but again no data
+            return SushiErrorMeaning(should_retry=False, needs_checking=False)
+        elif error_code in (1010, 1011, 1020):
+            # some forms of 'try it later' errors
+            return SushiErrorMeaning(should_retry=True, needs_checking=False,
+                                     retry_interval=SushiErrorMeaning.RETRY_IN_MINUTES)
+        elif error_code in (3031,):
+            # the data is not yet available - usually some months are missing
+            return SushiErrorMeaning(should_retry=True, needs_checking=False,
+                                     retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS)
+        else:
+            return SushiErrorMeaning(should_retry=True, needs_checking=True)
 
 
 class Sushi5Client(SushiClientBase):

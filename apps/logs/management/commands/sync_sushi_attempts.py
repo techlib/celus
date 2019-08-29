@@ -25,7 +25,7 @@ class Command(BaseCommand):
                             help='number of attempts to process')
 
     def handle(self, *args, **options):
-        queryset = SushiFetchAttempt.objects.filter(is_processed=False, success=True)
+        queryset = SushiFetchAttempt.objects.filter(is_processed=False, download_success=True)
         if options['report_type']:
             queryset = queryset.filter(counter_report__code=options['report_type'])
         count = queryset.count()
@@ -54,7 +54,7 @@ class Command(BaseCommand):
             # if we find validation error on data revalidation, we switch the report success attr
             logger.error('Validation error: %s', e)
             logger.info('Marking the attempt as unsuccessful')
-            attempt.success = False
+            attempt.download_success = False
             if attempt.log:
                 attempt.log += '\n'
             attempt.log += str(e)

@@ -66,8 +66,8 @@ cs:
                                 :sort-desc="orderDesc"
                         >
                             <template v-slot:item.success="props">
-                                <v-icon small :color="props.item.success ? 'success' : 'error'">
-                                    {{ props.item.success ? 'fa-check' : 'fa-times' }}
+                                <v-icon small :color="props.item.download_success ? 'success' : 'error'">
+                                    {{ props.item.download_success ? 'fa-check' : 'fa-times' }}
                                 </v-icon>
                             </template>
                             <template v-slot:item.is_processed="props">
@@ -213,10 +213,10 @@ cs:
       filteredAttempts () {
         let out = this.attempts
         if (!this.showSuccess) {
-          out = out.filter(item => !item.success)
+          out = out.filter(item => !item.download_success)
         }
         if (!this.showFailure) {
-          out = out.filter(item => item.success)
+          out = out.filter(item => item.download_success)
         }
         return out
       }

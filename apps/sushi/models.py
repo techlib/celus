@@ -122,30 +122,40 @@ class SushiCredentials(models.Model):
     def _fetch_report_v4(self, client, counter_report, start_date, end_date) -> \
             'SushiFetchAttempt':
         file_data = None
-        success = True
+        contains_data = False
+        download_success = False
+        processing_success = False
         log = ''
         data_file = None
-        filename = None
         error_code = ''
+        queued = False
         try:
             report = client.get_report_data(counter_report.code, start_date, end_date,
                                             params={'sushi_dump': True})
         except SushiException as e:
             logger.error("Error: %s", e)
             file_data = e.raw
-            success = False
             errors = client.extract_errors_from_data(file_data)
+            if errors:
+                error_code = errors[0].code
+                error_explanation = client.explain_error_code(error_code)
+                queued = error_explanation.should_retry if error_explanation else False
+                download_success = not (error_explanation.needs_checking
+                                        if error_explanation else True)
+                processing_success = download_success
             log = '\n'.join(error.full_log for error in errors)
             filename = 'foo.xml'  # we just need the extension
         except Exception as e:
             logger.error("Error: %s", e)
-            success = False
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             filename = 'foo.xml'  # we just need the extension
         else:
             file_data = client.report_to_string(report)
             filename = 'foo.tsv'  # we just need the extension
+            contains_data = True
+            download_success = True
+            processing_success = True
         if file_data:
             data_file = ContentFile(file_data)
             data_file.name = filename
@@ -154,18 +164,22 @@ class SushiCredentials(models.Model):
             counter_report=counter_report,
             start_date=start_date,
             end_date=end_date,
-            success=success,
+            download_success=download_success,
+            processing_success=processing_success,
             data_file=data_file,
             log=log,
             error_code=error_code,
+            contains_data=contains_data,
+            queued=queued,
         )
         return attempt
 
     def _fetch_report_v5(self, client, counter_report, start_date, end_date) -> \
             'SushiFetchAttempt':
         file_data = None
-        contains_data = True
-        success = True
+        contains_data = False
+        download_success = False
+        processing_success = False
         data_file = None
         filename = 'foo.json'
         queued = False
@@ -179,37 +193,25 @@ class SushiCredentials(models.Model):
             logger.error('Connection error: %s', e)
             error_code = 'connection'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
-            contains_data = False
-            success = False
         except Exception as e:
             logger.error('Error: %s', e)
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
-            contains_data = False
-            success = False
         else:
+            download_success = True
             # check for errors
             if report.errors:
                 logger.error('Found errors: %s', report.errors)
                 log = '; '.join(str(e) for e in report.errors)
-                error_code = str(report.errors[0].code)
+                error_code = report.errors[0].code
                 contains_data = False
-                if error_code in ['3000', '3010']:
-                    # report is not supported, so it was successful, but no data
-                    success = True
-                elif error_code == '3030':
-                    # no usage data for the requested period, it is success, but again no data
-                    success = True
-                elif error_code in ['1010', '1011', '1020']:
-                    # some forms of 'try it later' errors
-                    queued = True
-                    success = False
-                else:
-                    success = False
-                if type(file_data) is dict:
-                    file_data = json.dumps(file_data)
+                error_explanation = client.explain_error_code(error_code)
+                queued = error_explanation.should_retry if error_explanation else False
+                processing_success = not (error_explanation.needs_checking
+                                          if error_explanation else True)
             else:
                 contains_data = True
+                processing_success = True
                 queued = report.queued
                 file_data = client.report_to_string(report.raw_data)
                 log = ''
@@ -222,12 +224,13 @@ class SushiCredentials(models.Model):
             counter_report=counter_report,
             start_date=start_date,
             end_date=end_date,
-            success=success,
+            download_success=download_success,
             data_file=data_file,
             queued=queued,
             log=log,
             error_code=error_code,
             contains_data=contains_data,
+            processing_success=processing_success,
         )
         return attempt
 
@@ -247,24 +250,28 @@ class SushiFetchAttempt(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    success = models.BooleanField()
+    download_success = models.BooleanField(help_text="True if there was no error downloading data")
+    processing_success = models.BooleanField(help_text="True if there was no error extracting "
+                                                       "data from the downloaded material")
     contains_data = models.BooleanField(default=False,
                                         help_text='Does the report actually contain data for '
                                                   'import')
     queued = models.BooleanField(default=False,
                                  help_text='Was the attempt queued by the provider and should be '
                                            'refetched?')
+    when_queued = models.DateTimeField(null=True, blank=True)
+    queue_previous = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
+                                       related_query_name='queue_following')
     data_file = models.FileField(upload_to=where_to_store)
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
     is_processed = models.BooleanField(default=False,
                                        help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
-    when_queued = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        status = 'SUCCESS' if self.success else 'FAILURE'
+        status = 'SUCCESS' if self.download_success else 'FAILURE'
         return f'{status}: {self.credentials}, {self.counter_report}'
 
     def mark_processed(self):
@@ -272,3 +279,7 @@ class SushiFetchAttempt(models.Model):
             self.is_processed = True
             self.when_processed = now()
             self.save()
+
+    @property
+    def ok(self):
+        return self.download_success and self.processing_success

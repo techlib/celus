@@ -50,18 +50,18 @@ class Command(BaseCommand):
                             counter_report=cr,
                             start_date=start_date,
                             end_date=end_date,
-                            success=True).exists():
+                            download_success=True).exists():
                         self.stderr.write(self.style.SUCCESS(f'Skipping existing {cred}, {cr}'))
                     else:
                         self.stderr.write(self.style.NOTICE(f'Fetching {cred}, {cr}'))
-                        attemp = cred.fetch_report(counter_report=cr,
-                                                   start_date=start_date,
-                                                   end_date=end_date)
-                        if attemp.success:
+                        attempt = cred.fetch_report(counter_report=cr,
+                                                    start_date=start_date,
+                                                    end_date=end_date)
+                        if attempt.download_success:
                             style = self.style.SUCCESS
                         else:
                             style = self.style.ERROR
-                        self.stderr.write(style(attemp))
+                        self.stderr.write(style(attempt))
                         if cr != crs[-1] or cred != credentials[-1]:
                             # do not sleep after the last fetch
                             sleep(options['sleep'] / 1000)
