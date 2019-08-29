@@ -101,7 +101,8 @@ cs:
                     :platform="selectedItem.platform"
                     :report="selectedItem.report"
                     :from-date="startDate"
-                    @close="showDetailDialog = false"
+                    @close="closeDetails"
+                    ref="attemptList"
             >
             </SushiAttemptListWidget>
         </v-dialog>
@@ -210,6 +211,10 @@ cs:
         this.selectedItem[this.x] = this.columns[colIndex]
         this.selectedItem[this.y] = this.rows[rowIndex]
         this.showDetailDialog = true
+      },
+      closeDetails () {
+        this.selectedItem = {}
+        this.showDetailDialog = false
       }
     },
     watch: {

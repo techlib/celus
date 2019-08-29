@@ -46,8 +46,7 @@ cs:
                             </tr>
                         </table>
                     </v-col>
-                </v-row>
-                <v-row>
+                    <v-spacer></v-spacer>
                     <v-col cols="auto">
                         <v-switch v-model="showSuccess" :label="$t('show_success')" color="success"></v-switch>
                     </v-col>
