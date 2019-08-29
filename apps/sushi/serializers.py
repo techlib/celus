@@ -41,4 +41,5 @@ class SushiFetchAttemptSerializer(ModelSerializer):
         model = SushiFetchAttempt
         fields = ('timestamp', 'start_date', 'end_date', 'download_success', 'error_code',
                   'contains_data', 'queued', 'is_processed', 'when_processed', 'when_queued',
-                  'counter_report', 'organization', 'log', 'import_batch', 'data_file')
+                  'counter_report', 'organization', 'log', 'import_batch', 'data_file',
+                  'processing_success')

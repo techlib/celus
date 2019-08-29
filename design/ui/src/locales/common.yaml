@@ -29,7 +29,9 @@ en:
     success: Success
     start_date: Start date
     end_date: End date
-    processed: Processed
+    processed: Imported
+    download_success: Download successful
+    processing_success: Processing successful
   titles: Titles
   overview: Overview
   chart:
@@ -105,7 +107,9 @@ cs:
     success: Úspěch
     start_date: Počáteční datum
     end_date: Koncové datum
-    processed: Zpracováno
+    processed: Importováno
+    download_success: Úspěšné stažení
+    processing_success: Úspěšné zpracování
   titles: Tituly
   overview: Přehled
   chart:

@@ -362,7 +362,7 @@ class Sushi4Client(SushiClientBase):
         try:
             envelope = ET.fromstring(report_data)
             body = envelope[0]
-            response = body[0]
+            response = body[0] if len(body) > 0 else None
         except Exception as e:
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             return [SushiError(
@@ -375,7 +375,6 @@ class Sushi4Client(SushiClientBase):
             errors = []
             if response is not None:
                 for exception in response.findall('sushi:Exception', namespaces):
-                    print(exception, exception.find('sushi:Number', namespaces))
                     code = exception.find('sushi:Number', namespaces)
                     code = code.text if code is not None else ''
                     message = exception.find('sushi:Message', namespaces)
@@ -390,6 +389,13 @@ class Sushi4Client(SushiClientBase):
                         full_log=full_log,
                         raw_data=str(exception),
                     ))
+            if not errors:
+                errors.append(SushiError(
+                    code='non-sushi',
+                    text='Could not find Exception data in XML, probably wrong format',
+                    full_log='Could not find Exception data in XML, probably wrong format',
+                    severity='Exception',)
+                )
             return errors
 
     def report_to_string(self, report_data):

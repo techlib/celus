@@ -99,8 +99,8 @@ class SushiFetchAttemptStatsView(APIView):
         values.extend(self.attr_to_query_param_map[y])
         # now get the output
         qs = SushiFetchAttempt.objects.filter(**filter_params).values(*values).annotate(
-            success_count=Count('pk', filter=Q(download_success=True)),
-            failure_count=Count('pk', filter=Q(download_success=False)),
+            success_count=Count('pk', filter=Q(processing_success=True)),
+            failure_count=Count('pk', filter=Q(processing_success=False)),
         )
         # rename the fields back to what was asked for
         out = []

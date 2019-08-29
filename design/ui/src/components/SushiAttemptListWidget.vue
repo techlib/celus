@@ -65,9 +65,14 @@ cs:
                                 :sort-by="orderBy"
                                 :sort-desc="orderDesc"
                         >
-                            <template v-slot:item.success="props">
+                            <template v-slot:item.download_success="props">
                                 <v-icon small :color="props.item.download_success ? 'success' : 'error'">
                                     {{ props.item.download_success ? 'fa-check' : 'fa-times' }}
+                                </v-icon>
+                            </template>
+                            <template v-slot:item.processing_success="props">
+                                <v-icon small :color="props.item.processing_success ? 'success' : 'error'">
+                                    {{ props.item.processing_success ? 'fa-check' : 'fa-times' }}
                                 </v-icon>
                             </template>
                             <template v-slot:item.is_processed="props">
@@ -180,8 +185,12 @@ cs:
       headers () {
         let ret = [
           {
-            text: this.$t('title_fields.success'),
-            value: 'success'
+            text: this.$t('title_fields.download_success'),
+            value: 'download_success'
+          },
+          {
+            text: this.$t('title_fields.processing_success'),
+            value: 'processing_success'
           },
           {
             text: this.$t('timestamp'),

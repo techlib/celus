@@ -19,7 +19,7 @@ class SushiCredentialsAdmin(admin.ModelAdmin):
 @admin.register(models.CounterReportType)
 class CounterReportTypeAdmin(admin.ModelAdmin):
 
-    list_display = ['code', 'name', 'counter_version', 'report_type']
+    list_display = ['code', 'name', 'counter_version', 'report_type', 'active']
     list_filter = ['counter_version']
 
 
