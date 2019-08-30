@@ -40,6 +40,10 @@ cs:
                                 <th class="text-left">{{ $t('labels.report_type') }}:</th>
                                 <td>{{ report.name }}</td>
                             </tr>
+                            <tr v-if="month">
+                                <th class="text-left">{{ $t('month') }}:</th>
+                                <td>{{ month.name }}</td>
+                            </tr>
                             <tr v-if="fromDate">
                                 <th class="text-left">{{ $t('not_older_than') }}:</th>
                                 <td>{{ fromDate }}</td>
@@ -148,6 +152,7 @@ cs:
       platform: {required: false},
       report: {required: false},
       fromDate: {required: false},
+      month: {required: false},
     },
     data () {
       return {
@@ -180,6 +185,9 @@ cs:
         if (this.fromDate) {
           base += `&date_from=${this.fromDate}`
         }
+        if (this.month) {
+          base += `&month=${this.month.pk}`
+        }
         return base
       },
       headers () {
@@ -205,6 +213,10 @@ cs:
             value: 'end_date'
           },
           {
+            text: this.$t('title_fields.error_code'),
+            value: 'error_code'
+          },
+          {
             text: this.$t('title_fields.processed'),
             value: 'is_processed'
           },
@@ -222,10 +234,10 @@ cs:
       filteredAttempts () {
         let out = this.attempts
         if (!this.showSuccess) {
-          out = out.filter(item => !item.download_success)
+          out = out.filter(item => !item.processing_success)
         }
         if (!this.showFailure) {
-          out = out.filter(item => item.download_success)
+          out = out.filter(item => item.processing_success)
         }
         return out
       }

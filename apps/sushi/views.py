@@ -1,5 +1,7 @@
+from datetime import timedelta
+
 import dateparser
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Max, Min
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from pandas import DataFrame
@@ -7,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from core.logic.dates import month_start, month_end
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.models import Organization
 from sushi.models import CounterReportType, SushiFetchAttempt
@@ -57,6 +60,10 @@ class SushiFetchAttemptViewSet(ReadOnlyModelViewSet):
             date_from = dateparser.parse(self.request.query_params['date_from'])
             if date_from:
                 filter_params['timestamp__date__gte'] = date_from
+        if 'month' in self.request.query_params:
+            month = self.request.query_params['month']
+            filter_params['start_date__lte'] = dateparser.parse(month)
+            filter_params['end_date__gte'] = dateparser.parse(month)
         return SushiFetchAttempt.objects.filter(**filter_params).\
             select_related('counter_report', 'credentials__organization')
 
@@ -68,6 +75,7 @@ class SushiFetchAttemptStatsView(APIView):
         'platform': ('credentials__platform', 'credentials__platform__name'),
         'organization': ('credentials__organization', 'credentials__organization__name'),
     }
+
     key_to_attr_map = {value[1]: key for key, value in attr_to_query_param_map.items()}
     key_to_attr_map.update({value[0]: key+'_id' for key, value in attr_to_query_param_map.items()})
 
@@ -88,6 +96,18 @@ class SushiFetchAttemptStatsView(APIView):
         # what should be in the result?
         x = request.query_params.get('x', 'report')
         y = request.query_params.get('y', 'platform')
+        if x != 'month' and y != 'month':
+            data = self.get_data_no_months(x, y, filter_params)
+        else:
+            dim = x if y == 'month' else y
+            data = self.get_data_with_months(dim, filter_params)
+        # rename the fields back to what was asked for
+        out = []
+        for obj in data:
+            out.append({self.key_to_attr_map.get(key, key): value for key, value in obj.items()})
+        return Response(out)
+
+    def get_data_no_months(self, x, y, filter_params):
         if x not in self.attr_to_query_param_map:
             return HttpResponseBadRequest('unsupported x dimension: "{}"'.format(x))
         if y not in self.attr_to_query_param_map:
@@ -102,9 +122,29 @@ class SushiFetchAttemptStatsView(APIView):
             success_count=Count('pk', filter=Q(processing_success=True)),
             failure_count=Count('pk', filter=Q(processing_success=False)),
         )
-        # rename the fields back to what was asked for
-        out = []
-        for obj in qs:
-            out.append({self.key_to_attr_map.get(key, key): value for key, value in obj.items()})
-        return Response(out)
+        return qs
 
+    def get_data_with_months(self, dim, filter_params):
+        if dim not in self.attr_to_query_param_map:
+            return HttpResponseBadRequest('unsupported dimension: "{}"'.format(dim))
+        # we use 2 separate fields for dim in order to preserve both the ID of the
+        # related field and its text value
+        values = self.attr_to_query_param_map[dim]
+        months = SushiFetchAttempt.objects.aggregate(start=Min('start_date'), end=Max('end_date'))
+        start = month_start(months['start'])
+        end = month_end(months['end'])
+        cur_date = start
+        output = []
+        while cur_date < end:
+            # now get the output
+            for rec in SushiFetchAttempt.objects.filter(**filter_params).\
+                filter(start_date__lte=cur_date, end_date__gte=cur_date).values(*values).annotate(
+                success_count=Count('pk', filter=Q(processing_success=True)),
+                failure_count=Count('pk', filter=Q(processing_success=False)),
+            ):
+                cur_date_str = '-'.join(str(cur_date).split('-')[:2])
+                rec['month'] = cur_date_str[2:]
+                rec['month_id'] = cur_date_str
+                output.append(rec)
+            cur_date = month_start(cur_date + timedelta(days=32))
+        return output

@@ -13,6 +13,7 @@ en:
   platform: Platform
   title: Title
   report: Report
+  month: Month
   title_fields:
     id: ID
     name: Name
@@ -32,6 +33,7 @@ en:
     processed: Imported
     download_success: Download successful
     processing_success: Processing successful
+    error_code: Error code
   titles: Titles
   overview: Overview
   chart:
@@ -91,6 +93,7 @@ cs:
   platform: Platforma
   title: Titul
   report: Report
+  month: Měsíc
   title_fields:
     id: ID
     name: Název
@@ -110,6 +113,7 @@ cs:
     processed: Importováno
     download_success: Úspěšné stažení
     processing_success: Úspěšné zpracování
+    error_code: Kód chyby
   titles: Tituly
   overview: Přehled
   chart:

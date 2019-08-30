@@ -40,21 +40,21 @@ class Command(BaseCommand):
         i = 0
         start_date = month_start(parse_date(options['start_date']))
         end_date = month_end(parse_date(options['end_date']))
+        last_platform_id = None
         for cred in credentials:
             crs = list(cred.active_counter_reports.filter(**cr_args))
             for cr in crs:
                 # check if we have a successful attempt already and skip it if yes
-                try:
-                    existing = SushiFetchAttempt.objects.get(
+                existing = SushiFetchAttempt.objects.filter(
                         credentials=cred,
                         counter_report=cr,
                         start_date=start_date,
                         end_date=end_date,
-                    )
-                except SushiFetchAttempt.DoesNotExist:
-                    existing = None
+                        download_success=True,
+                        processing_success=True,
+                    ).exists()
 
-                if existing and existing.download_success and existing.processing_success:
+                if existing:
                     self.stderr.write(self.style.SUCCESS(f'Skipping existing {cred}, {cr}'))
                 else:
                     self.stderr.write(self.style.NOTICE(f'Fetching {cred}, {cr}'))
@@ -66,9 +66,10 @@ class Command(BaseCommand):
                     else:
                         style = self.style.ERROR
                     self.stderr.write(style(attempt))
-                    if cr != crs[-1]:
+                    if cred.platform_id == last_platform_id:
                         # do not sleep after the last fetch
                         sleep(options['sleep'] / 1000)
+                    last_platform_id = cred.platform_id
 
                 i += 1
         if i == 0:

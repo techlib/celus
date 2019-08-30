@@ -4,6 +4,7 @@ en:
         report: Report
         organization: Organization
         platform: Platform
+        month: Month
     rows: Rows
     columns: Columns
     start_date: Not older than
@@ -13,6 +14,7 @@ cs:
         report: Report
         organization: Organizace
         platform: Platforma
+        month: Měsíc
     rows: Řádky
     columns: Sloupce
     start_date: Ne starší než
@@ -70,7 +72,7 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <v-simple-table dense>
+            <v-simple-table dense id="table" fixed-header height="75vh">
                 <thead>
                 <tr>
                     <td></td>
@@ -101,6 +103,7 @@ cs:
                     :platform="selectedItem.platform"
                     :report="selectedItem.report"
                     :from-date="startDate"
+                    :month="selectedItem.month"
                     @close="closeDetails"
                     ref="attemptList"
             >
@@ -123,7 +126,7 @@ cs:
         statsData: [],
         x: 'report',
         y: 'platform',
-        dimensionsRaw: ['organization', 'report', 'platform'],
+        dimensionsRaw: ['organization', 'report', 'platform', 'month'],
         columns: [],
         rows: [],
         tableData: {},
@@ -243,6 +246,10 @@ cs:
     }
     td.link {
         cursor: pointer;
+    }
+
+    #table {
+        overflow-x: auto;
     }
 
 </style>
