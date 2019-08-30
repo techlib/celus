@@ -9,6 +9,7 @@ en:
     show_raw_data: Show raw data
     show_chart: Show charts
     not_older_than: Not older than
+    counter_version: Counter version
 
 cs:
     sushi_fetch_attempts: Pokusy o stažení Sushi
@@ -18,6 +19,7 @@ cs:
     show_raw_data: Zobrazit data
     show_chart: Zobrazit grafy
     not_older_than: Ne starší než
+    counter_version: Verze Counter
 </i18n>
 
 <template>
@@ -39,6 +41,10 @@ cs:
                             <tr v-if="report">
                                 <th class="text-left">{{ $t('labels.report_type') }}:</th>
                                 <td>{{ report.name }}</td>
+                            </tr>
+                            <tr v-if="counterVersion">
+                                <th class="text-left">{{ $t('labels.counter_version') }}:</th>
+                                <td>{{ counterVersion }}</td>
                             </tr>
                             <tr v-if="month">
                                 <th class="text-left">{{ $t('month') }}:</th>
@@ -153,6 +159,7 @@ cs:
       report: {required: false},
       fromDate: {required: false},
       month: {required: false},
+      counterVersion: {required: false},
     },
     data () {
       return {
@@ -187,6 +194,9 @@ cs:
         }
         if (this.month) {
           base += `&month=${this.month.pk}`
+        }
+        if (this.counterVersion) {
+          base += `&counter_version=${this.counterVersion}`
         }
         return base
       },

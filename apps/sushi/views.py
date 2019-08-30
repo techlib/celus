@@ -64,6 +64,9 @@ class SushiFetchAttemptViewSet(ReadOnlyModelViewSet):
             month = self.request.query_params['month']
             filter_params['start_date__lte'] = dateparser.parse(month)
             filter_params['end_date__gte'] = dateparser.parse(month)
+        if 'counter_version' in self.request.query_params:
+            counter_version = self.request.query_params['counter_version']
+            filter_params['credentials__counter_version'] = counter_version
         return SushiFetchAttempt.objects.filter(**filter_params).\
             select_related('counter_report', 'credentials__organization')
 
@@ -89,10 +92,13 @@ class SushiFetchAttemptStatsView(APIView):
             filter_params['credentials__organization__in'] = organizations
         if 'platform' in request.query_params:
             filter_params['credentials__platform_id'] = request.query_params['platform']
-        if 'date_from' in self.request.query_params:
-            date_from = dateparser.parse(self.request.query_params['date_from'])
+        if 'date_from' in request.query_params:
+            date_from = dateparser.parse(request.query_params['date_from'])
             if date_from:
                 filter_params['timestamp__date__gte'] = date_from
+        if 'counter_version' in request.query_params:
+            counter_version = request.query_params['counter_version']
+            filter_params['credentials__counter_version'] = counter_version
         # what should be in the result?
         x = request.query_params.get('x', 'report')
         y = request.query_params.get('y', 'platform')

@@ -161,7 +161,6 @@
     },
     watch: {
       appLanguage () {
-        console.info("Switching language to:", this.appLanguage)
         this.$i18n.locale = this.appLanguage
       },
     }
@@ -173,6 +172,7 @@
 
     .v-select.v-text-field.short input {
         max-width: 0;
+        min-width: 3rem;
     }
 
     section.header {

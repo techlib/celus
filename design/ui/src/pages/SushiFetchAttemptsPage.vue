@@ -8,6 +8,7 @@ en:
     rows: Rows
     columns: Columns
     start_date: Not older than
+    counter_version: Counter version
 
 cs:
     dim:
@@ -18,6 +19,7 @@ cs:
     rows: Řádky
     columns: Sloupce
     start_date: Ne starší než
+    counter_version: Verze Counter
 </i18n>
 
 <template>
@@ -66,6 +68,14 @@ cs:
                 </v-menu>
             </v-col>
             <v-col cols="auto">
+                <v-select
+                        :items="[{text: '-', value: null}, {text: '4', value: 4}, {text: '5', value: 5}]"
+                        v-model="counterVersion"
+                        :label="$t('counter_version')"
+                        class="short"
+                ></v-select>
+            </v-col>
+            <v-col cols="auto">
                 <v-btn @click="loadAttemptStats()" color="primary">
                     <v-icon small>fa-sync-alt</v-icon>
                 </v-btn>
@@ -104,6 +114,7 @@ cs:
                     :report="selectedItem.report"
                     :from-date="startDate"
                     :month="selectedItem.month"
+                    :counter-version="counterVersion"
                     @close="closeDetails"
                     ref="attemptList"
             >
@@ -134,6 +145,7 @@ cs:
         selectedItem: {},
         startDate: null,
         dateMenu: null,
+        counterVersion: null,
       }
     },
     computed: {
@@ -141,6 +153,9 @@ cs:
         let base = `/api/sushi-fetch-attempt-stats/?x=${this.x}&y=${this.y}`
         if (this.startDate) {
           base += `&date_from=${this.startDate}`
+        }
+        if (this.counterVersion) {
+          base += `&counter_version=${this.counterVersion}`
         }
         return base
       },

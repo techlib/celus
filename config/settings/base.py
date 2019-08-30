@@ -196,6 +196,12 @@ LOGGING = {
         'django.db': {
             'level': 'INFO',
         },
+        'pycounter': {
+            'level': 'INFO',
+        },
+        'requests': {
+            'level': 'INFO',
+        }
     },
     'root': {
         'level': 'DEBUG',
