@@ -25,7 +25,8 @@ class Command(BaseCommand):
                             help='number of attempts to process')
 
     def handle(self, *args, **options):
-        queryset = SushiFetchAttempt.objects.filter(is_processed=False, download_success=True)
+        queryset = SushiFetchAttempt.objects.filter(is_processed=False, download_success=True,
+                                                    contains_data=True)
         if options['report_type']:
             queryset = queryset.filter(counter_report__code=options['report_type'])
         count = queryset.count()

@@ -2,6 +2,7 @@ import logging
 from collections import Counter
 from datetime import date
 
+from logs.logic.validation import clean_and_validate_issn, ValidationError
 from logs.models import ImportBatch
 from organizations.models import Organization
 from publications.models import Title, Platform
@@ -58,6 +59,20 @@ class TitleManager(object):
             logger.warning('Record is missing or has empty title: '
                            'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s', isbn, issn, eissn, doi)
             return None
+        # normalize issn, eissn and isbn - the are sometimes malformed by whitespace in the data
+        if issn:
+            try:
+                issn = clean_and_validate_issn(issn)
+            except ValidationError as e:
+                logger.error(f'Error: {e}')
+                issn = ''
+        if eissn:
+            try:
+                eissn = clean_and_validate_issn(eissn)
+            except ValidationError as e:
+                logger.error(f'Error: {e}')
+                eissn = ''
+        isbn = isbn.replace(' ', '') if isbn else isbn
         pub_type = self.decode_pub_type(pub_type)
         key = (name, isbn, issn, eissn, doi)
         if key in self.key_to_title_id_and_pub_type:
