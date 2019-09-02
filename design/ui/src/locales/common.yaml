@@ -34,6 +34,7 @@ en:
     download_success: Download successful
     processing_success: Processing successful
     error_code: Error code
+    contains_data: Contains data
   titles: Titles
   overview: Overview
   chart:
@@ -114,6 +115,7 @@ cs:
     download_success: Úspěšné stažení
     processing_success: Úspěšné zpracování
     error_code: Kód chyby
+    contains_data: Obsahuje data
   titles: Tituly
   overview: Přehled
   chart:

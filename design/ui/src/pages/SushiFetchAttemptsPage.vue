@@ -1,3 +1,5 @@
+<i18n src="../locales/common.yaml"></i18n>
+
 <i18n>
 en:
     dim:
@@ -9,6 +11,7 @@ en:
     columns: Columns
     start_date: Not older than
     counter_version: Counter version
+    success_metric: Success metric
 
 cs:
     dim:
@@ -20,6 +23,7 @@ cs:
     columns: Sloupce
     start_date: Ne starší než
     counter_version: Verze Counter
+    success_metric: Měřítko úspěchu
 </i18n>
 
 <template>
@@ -40,6 +44,13 @@ cs:
                 ></v-select>
             </v-col>
             <v-col>
+                <v-select
+                        :items="successMetricList"
+                        v-model="successMetric"
+                        :label="$t('success_metric')"
+                ></v-select>
+            </v-col>
+            <v-col cols="auto">
                 <v-menu
                         v-model="dateMenu"
                         :close-on-content-click="false"
@@ -146,11 +157,12 @@ cs:
         startDate: null,
         dateMenu: null,
         counterVersion: null,
+        successMetric: 'download_success',
       }
     },
     computed: {
       statsUrl () {
-        let base = `/api/sushi-fetch-attempt-stats/?x=${this.x}&y=${this.y}`
+        let base = `/api/sushi-fetch-attempt-stats/?x=${this.x}&y=${this.y}&success_metric=${this.successMetric}`
         if (this.startDate) {
           base += `&date_from=${this.startDate}`
         }
@@ -169,6 +181,13 @@ cs:
         let x = this.x
         return this.dimensions.filter(item => item.value !== x)
       },
+      successMetricList () {
+        return [
+          {value: 'download_success', text: this.$t('title_fields.download_success')},
+          {value: 'processing_success', text: this.$t('title_fields.processing_success')},
+          {value: 'contains_data', text: this.$t('title_fields.contains_data')},
+        ]
+      }
     },
     methods:{
       ...mapActions({

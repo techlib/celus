@@ -85,6 +85,11 @@ cs:
                                     {{ props.item.processing_success ? 'fa-check' : 'fa-times' }}
                                 </v-icon>
                             </template>
+                            <template v-slot:item.contains_data="props">
+                                <v-icon small :color="props.item.contains_data ? 'success' : 'error'">
+                                    {{ props.item.contains_data ? 'fa-check' : 'fa-times' }}
+                                </v-icon>
+                            </template>
                             <template v-slot:item.is_processed="props">
                                 <v-icon small :color="props.item.is_processed ? 'success' : 'error'">
                                     {{ props.item.is_processed ? 'fa-check' : 'fa-times' }}
@@ -211,6 +216,14 @@ cs:
             value: 'processing_success'
           },
           {
+            text: this.$t('title_fields.contains_data'),
+            value: 'contains_data'
+          },
+          {
+            text: this.$t('title_fields.processed'),
+            value: 'is_processed'
+          },
+          {
             text: this.$t('timestamp'),
             value: 'timestamp'
           },
@@ -225,10 +238,6 @@ cs:
           {
             text: this.$t('title_fields.error_code'),
             value: 'error_code'
-          },
-          {
-            text: this.$t('title_fields.processed'),
-            value: 'is_processed'
           },
         ]
         if (!this.organization) {

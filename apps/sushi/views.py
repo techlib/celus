@@ -81,6 +81,7 @@ class SushiFetchAttemptStatsView(APIView):
 
     key_to_attr_map = {value[1]: key for key, value in attr_to_query_param_map.items()}
     key_to_attr_map.update({value[0]: key+'_id' for key, value in attr_to_query_param_map.items()})
+    success_metrics = ['download_success', 'processing_success', 'contains_data']
 
     def get(self, request):
         organizations = request.user.accessible_organizations()
@@ -102,18 +103,22 @@ class SushiFetchAttemptStatsView(APIView):
         # what should be in the result?
         x = request.query_params.get('x', 'report')
         y = request.query_params.get('y', 'platform')
+        # what attr on sushi attempt defines success
+        success_metric = request.query_params.get('success_metric', self.success_metrics[-1])
+        if success_metric not in self.success_metrics:
+            success_metric = self.success_metrics[-1]
         if x != 'month' and y != 'month':
-            data = self.get_data_no_months(x, y, filter_params)
+            data = self.get_data_no_months(x, y, filter_params, success_metric)
         else:
             dim = x if y == 'month' else y
-            data = self.get_data_with_months(dim, filter_params)
+            data = self.get_data_with_months(dim, filter_params, success_metric)
         # rename the fields back to what was asked for
         out = []
         for obj in data:
             out.append({self.key_to_attr_map.get(key, key): value for key, value in obj.items()})
         return Response(out)
 
-    def get_data_no_months(self, x, y, filter_params):
+    def get_data_no_months(self, x, y, filter_params, success_metric):
         if x not in self.attr_to_query_param_map:
             return HttpResponseBadRequest('unsupported x dimension: "{}"'.format(x))
         if y not in self.attr_to_query_param_map:
@@ -125,12 +130,12 @@ class SushiFetchAttemptStatsView(APIView):
         values.extend(self.attr_to_query_param_map[y])
         # now get the output
         qs = SushiFetchAttempt.objects.filter(**filter_params).values(*values).annotate(
-            success_count=Count('pk', filter=Q(processing_success=True)),
-            failure_count=Count('pk', filter=Q(processing_success=False)),
+            success_count=Count('pk', filter=Q(**{success_metric: True})),
+            failure_count=Count('pk', filter=Q(**{success_metric: False})),
         )
         return qs
 
-    def get_data_with_months(self, dim, filter_params):
+    def get_data_with_months(self, dim, filter_params, success_metric):
         if dim not in self.attr_to_query_param_map:
             return HttpResponseBadRequest('unsupported dimension: "{}"'.format(dim))
         # we use 2 separate fields for dim in order to preserve both the ID of the
@@ -145,8 +150,8 @@ class SushiFetchAttemptStatsView(APIView):
             # now get the output
             for rec in SushiFetchAttempt.objects.filter(**filter_params).\
                 filter(start_date__lte=cur_date, end_date__gte=cur_date).values(*values).annotate(
-                success_count=Count('pk', filter=Q(processing_success=True)),
-                failure_count=Count('pk', filter=Q(processing_success=False)),
+                success_count=Count('pk', filter=Q(**{success_metric: True})),
+                failure_count=Count('pk', filter=Q(**{success_metric: False})),
             ):
                 cur_date_str = '-'.join(str(cur_date).split('-')[:2])
                 rec['month'] = cur_date_str[2:]
