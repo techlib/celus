@@ -9,6 +9,7 @@ class Platform(models.Model):
     name = models.CharField(max_length=250)
     provider = models.CharField(max_length=250)
     url = models.URLField(blank=True)
+    interest_reports = models.ManyToManyField('logs.ReportType')
 
     def __str__(self):
         return self.short_name

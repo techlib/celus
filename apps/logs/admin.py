@@ -29,6 +29,14 @@ class MetricAdmin(admin.ModelAdmin):
     list_editable = ['active']
 
 
+@admin.register(models.ReportInterestMetric)
+class ReportInterestMetricAdmin(admin.ModelAdmin):
+
+    list_display = ['report_type', 'metric', 'name']
+    list_filter = ['report_type', 'metric']
+    search_fields = ['report_type__short_name', 'report_type__name', 'metric__name']
+
+
 @admin.register(models.Dimension)
 class DimensionAdmin(admin.ModelAdmin):
 

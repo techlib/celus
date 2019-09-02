@@ -40,6 +40,7 @@ class ReportType(models.Model):
     dimensions = models.ManyToManyField('Dimension', related_name='report_types',
                                         through='ReportTypeToDimension')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    interest_metrics = models.ManyToManyField('Metric', through='ReportInterestMetric')
 
     class Meta:
         unique_together = (('short_name', 'source'),)
@@ -105,9 +106,18 @@ class Metric(models.Model):
 
     class Meta:
         unique_together = (('short_name', 'source'),)
+        ordering = ('short_name', 'name')
 
     def __str__(self):
         return self.short_name
+
+
+class ReportInterestMetric(models.Model):
+
+    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+    metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, blank=True,
+                            help_text='How is the metric called in context of interest')
 
 
 class Dimension(models.Model):
