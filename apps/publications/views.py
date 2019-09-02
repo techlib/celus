@@ -49,42 +49,15 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         # but without the interest_group filter
         prefilter = dict(count_filter)
         count_filter['accesslog__metric__interest_group__isnull'] = False   # for counting titles
-        # parameters for annotation defining an annotation for each of the interest groups
-        interests = InterestGroup.objects.all()
-        interest_annot_params = interest_group_annotation_params(interests, count_filter)
         # add more filters for dates
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         if date_filter_params:
             count_filter.update(date_filter_params)
             prefilter.update(date_filter_params)
-
-        # the following creates the interest dict attr from the interest annotations
-        if self.lookup_field not in self.kwargs:
-            # we are not filtering by id, so we are getting a list and thus adding interest here
-            # otherwise we will do it in get_object
-            # also we filter only platforms that have some data for the organization at hand
-            result = Platform.objects.filter(**org_filter).filter(**prefilter). \
-                annotate(title_count=Count('accesslog__target', distinct=True,
-                                           filter=Q(**count_filter)),
-                         **interest_annot_params)
-            extract_interests_from_objects(interests, result)
-        else:
-            # we are filtering by ID and thus getting only one object
-            # in this case we drop the count_filter so that it is possible to get data
-            # for platforms that are not connected to the organization
-            result = Platform.objects.all().\
-                annotate(title_count=Count('accesslog__target', distinct=True,
-                                           filter=Q(**count_filter)),
-                         **interest_annot_params)
+        result = Platform.objects.filter(**org_filter).filter(**prefilter). \
+            annotate(title_count=Count('accesslog__target', distinct=True,
+                                       filter=Q(**count_filter)))
         return result
-
-    def get_object(self):
-        # we need to enrich the result here as the interests added in get_queryset would not
-        # survive the filtering done super().get_object()
-        obj = super().get_object()
-        interests = InterestGroup.objects.all()
-        extract_interests_from_objects(interests, [obj])
-        return obj
 
 
 class PlatformSushiCredentialsViewSet(ReadOnlyModelViewSet):

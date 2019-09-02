@@ -6,8 +6,6 @@ en:
         name: Name
         provider: Provider
         title_count: Title / database count
-        interest: Interest
-        rel_interest: Int. / title
         sushi_available: SUSHI active
     sushi_present: SUSHI is available and active for this platform
     no_sushi: SUSHI is not activated for this platform and selected organization
@@ -18,8 +16,6 @@ cs:
         name: Název
         provider: Poskytovatel
         title_count: Počet titulů a databází
-        interest: Zájem
-        rel_interest: Zájem / titul
         sushi_available: Aktivní SUSHI
     sushi_present: SUSHI je pro tuto platformu aktivní
     no_sushi: SUSHI není pro tuto platformu a vybranou organizaci aktivní
@@ -63,12 +59,6 @@ cs:
                     >
                         <template v-slot:item.name="props">
                             <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
-                        </template>
-                        <template v-slot:item.interests.title="props">
-                            {{ props.item.interests.title ? props.item.interests.title.value : '-' }}
-                        </template>
-                        <template v-slot:item.interests.database.value="props">
-                            {{ props.item.interests.database ? props.item.interests.database.value : '-' }}
                         </template>
                         <template v-slot:item.sushi_credentials_count="{item}">
                             <v-tooltip bottom>
@@ -133,26 +123,14 @@ cs:
             value: 'name'
           },
           {
+            text: this.$i18n.t('columns.provider'),
+            value: 'provider'
+          },
+          {
             text: this.$i18n.t('columns.title_count'),
             value: 'title_count',
             class: 'wrap',
             align: 'right',
-          },
-          {
-            text: this.$i18n.t('interests.title'),
-            value: 'interests.title.value',
-            class: 'wrap text-xs-right',
-            align: 'right',
-          },
-          {
-            text: this.$i18n.t('interests.database'),
-            value: 'interests.database.value',
-            class: 'wrap text-xs-right',
-            align: 'right',
-          },
-          {
-            text: this.$i18n.t('columns.provider'),
-            value: 'provider'
           },
           {
             text: this.$i18n.t('columns.sushi_available'),
@@ -193,8 +171,6 @@ cs:
             }
           } catch (error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})
-          } finally {
-            this.loading = false
           }
         }
       },

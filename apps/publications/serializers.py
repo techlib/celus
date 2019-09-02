@@ -14,14 +14,11 @@ class PlatformSerializer(ModelSerializer):
 class DetailedPlatformSerializer(ModelSerializer):
 
     title_count = IntegerField(read_only=True)
-    interests = JSONField(read_only=True)
-    rel_interest = FloatField(read_only=True)
-    interest_title = IntegerField(read_only=True)
 
     class Meta:
         model = Platform
         fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url',
-                  'title_count', 'interests', 'rel_interest', 'interest_title')
+                  'title_count')
 
 
 class PlatformSushiCredentialsSerializer(ModelSerializer):
