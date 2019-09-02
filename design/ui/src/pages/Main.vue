@@ -60,7 +60,10 @@
         <v-content>
             <v-container fluid>
 
-                <router-view/>
+                <router-view :key="$route.fullPath"/>
+                <!--keep-alive max="5">
+                    <router-view :key="$route.fullPath"/>
+                </keep-alive-->
 
                 <v-snackbar v-model="snackbarShow" :color="snackbarColor">
                     {{ snackbarText }}
