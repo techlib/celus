@@ -2,6 +2,7 @@ from .base import *
 
 INSTALLED_APPS += ['debug_toolbar']
 INSTALLED_APPS.insert(4, 'livereload')  # it must be before staticfiles
+# LIVE_ERMS_AUTHENTICATION = True
 
 MIDDLEWARE += [
     'debug_toolbar.middleware.DebugToolbarMiddleware',

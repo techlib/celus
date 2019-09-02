@@ -40,14 +40,14 @@
                                 <th>{{ $t('labels.title_count') }}</th>
                                 <td class="text-right">{{ platform.title_count ? platform.title_count : '-' }}</td>
                             </tr>
-                            <tr>
+                            <!--tr>
                                 <th>{{ $t('interests.title') }}</th>
                                 <td class="text-right">{{ platform.interests.title.value ? platform.interests.title.value : '-' }}</td>
                             </tr>
                             <tr>
                                 <th>{{ $t('interests.database') }}</th>
                                 <td class="text-right">{{ platform.interests.database.value ? platform.interests.database.value : '-' }}</td>
-                            </tr>
+                            </tr-->
                         </table>
                     </v-flex>
                     <v-spacer></v-spacer>

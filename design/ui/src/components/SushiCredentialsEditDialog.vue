@@ -145,7 +145,7 @@ cs:
                             <h4>Active report types</h4>
                         </v-flex>
                         <v-flex xs12 pt-2>
-                            <v-btn-toggle multiple v-model="selectedReportTypes">
+                            <v-btn-toggle multiple v-model="selectedReportTypes" >
                                 <v-btn v-for="report in reportTypes" :value="report.id" :key="report.id" outlined color="primary">
                                     {{ report.code }}
                                 </v-btn>
@@ -159,7 +159,7 @@ cs:
         <v-card-actions>
             <v-layout pb-3 pr-5 justify-end>
                 <v-btn color="secondary" @click="closeDialog()">Close</v-btn>
-                <v-btn color="primary" @click="saveAndClose()">Save</v-btn>
+                <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">Save</v-btn>
             </v-layout>
         </v-card-actions>
     </v-card>
@@ -217,6 +217,9 @@ cs:
       },
       reportTypes () {
         return this.allReportTypes.filter(item => item.counter_version === this.counterVersion)
+      },
+      valid () {
+        return (this.selectedReportTypes.length > 0 && this.url && this.requestorId)
       }
     },
     methods: {
@@ -225,6 +228,9 @@ cs:
       }),
       credentialsPropToData () {
         let credentials = this.credentialsObject
+        if (!credentials) {
+          return
+        }
         let extraParams = []
         for (let [key, value] of Object.entries(credentials.extra_params)) {
           extraParams.push({key: key, value: value})
@@ -263,14 +269,18 @@ cs:
             this.apiData,
             )
           this.showSnackbar({content: 'Successfully saved SUSHI credentials', color: 'success'})
-          this.$emit('update-credentials', result.data)
+          this.$emit('updte-credentials', result.data)
+          return true
         } catch (error) {
-          this.showSnackbar({content: 'Error saving SUSHI credentials: ' + error})
+          this.showSnackbar({content: 'Error saving SUSHI credentials: ' + error, color: 'error'})
+          return false
         }
       },
-      saveAndClose () {
-        this.saveData()
-        this.$emit('input', false)
+      async saveAndClose () {
+        let ok = await this.saveData()
+        if (ok) {
+          this.$emit('input', false)
+        }
       }
     },
     mounted () {

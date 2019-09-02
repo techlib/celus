@@ -157,6 +157,13 @@
         }
       }
     },
+    watch: {
+      showEditDialog (value) {
+        if (!value) {
+          this.selectedCredentials = null
+        }
+      }
+    },
     mounted() {
       this.loadSushiCredentialsList()
     }
