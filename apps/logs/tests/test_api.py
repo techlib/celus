@@ -4,7 +4,7 @@ from io import StringIO
 import pytest
 from django.urls import reverse
 
-from logs.models import ReportType, AccessLog, Metric, ImportBatch
+from logs.models import ReportType, AccessLog, Metric, ImportBatch, Dimension
 from organizations.models import UserOrganization
 from publications.models import Platform
 
@@ -313,6 +313,7 @@ class TestReportTypeAPI(object):
                 'name_cs': 'Test report',
                 'name_en': 'Test report',
                 'name': 'Test report',
+                'dimensions': [],
             },
             content_type='application/json')
         assert response.status_code == 400
@@ -331,6 +332,7 @@ class TestReportTypeAPI(object):
                 'name_cs': 'Test report',
                 'name_en': 'Test report',
                 'name': 'Test report',
+                'dimensions': [],
             },
             content_type='application/json')
         print(response.content)
@@ -344,6 +346,8 @@ class TestReportTypeAPI(object):
         # bind the user to the organization
         UserOrganization.objects.create(user=authenticated_client.user, organization=organization)
         assert ReportType.objects.count() == 0
+        dim1 = Dimension.objects.create(short_name='dim1', name='Dimension 1')
+        dim2 = Dimension.objects.create(short_name='dim2', name='Dimension 2')
         response = authenticated_client.post(
             reverse('organization-report-types-list', kwargs={'organization_pk': organization.pk}),
             {
@@ -351,10 +355,7 @@ class TestReportTypeAPI(object):
                 'name_cs': 'Test report',
                 'name_en': 'Test report',
                 'name': 'Test report',
-                'dimensions_sorted': [
-                    {'short_name': 'dim1', 'name': 'Dimension 1'},
-                    {'short_name': 'dim2', 'name': 'Dimension 2'},
-                ],
+                'dimensions': [dim1.pk, dim2.pk],
                 'public': False,
             },
             content_type='application/json')
@@ -369,6 +370,7 @@ class TestReportTypeAPI(object):
         # bind the user to the organization
         UserOrganization.objects.create(user=authenticated_client.user, organization=organization)
         assert ReportType.objects.count() == 0
+        dim1 = Dimension.objects.create(short_name='dim1', name='Dimension 1')
         response = authenticated_client.post(
             reverse('organization-report-types-list', kwargs={'organization_pk': organization.pk}),
             {
@@ -376,12 +378,9 @@ class TestReportTypeAPI(object):
                 'name_cs': 'Test report',
                 'name_en': 'Test report',
                 'name': 'Test report',
-                'dimensions_sorted': [
-                    {'short_name': 'dim1', 'name': 'Dimension 1', 'foo': 'bar'},
-                    {'short_name': 'dim2'},
-                ],
+                'dimensions': [dim1.pk, dim1.pk + 1],
             },
             content_type='application/json')
         assert response.status_code == 400
         assert ReportType.objects.count() == 0
-        assert response.json()['dimensions_sorted'][1]['name'][0] == 'This field is required.'
+        assert 'object does not exist' in response.json()['dimensions'][0]
