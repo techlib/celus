@@ -3,7 +3,7 @@ from typing import Optional
 
 from django.db import models
 from django.db.models import Sum, Count
-from django.http import Http404
+from django.http import Http404, HttpResponseBadRequest
 from pandas import DataFrame
 from rest_framework.pagination import PageNumberPagination
 from rest_pandas import PandasView
@@ -24,6 +24,7 @@ from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSe
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
     ManualDataUploadSerializer
 from organizations.models import Organization
+from publications.models import Platform
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -39,8 +40,29 @@ class Counter5DataView(APIView):
             report_type = get_object_or_404(ReportType, pk=report_type_id)
         else:
             report_type = None
-        computer = StatsComputer()
-        data = computer.get_data(report_type, request.GET, request.user)
+        # check for interest in query params
+        if not report_type and (request.GET.get('prim_dim') == 'interest' or
+                                request.GET.get('sec_dim') == 'interest'):
+            # we are dealing with interest based view
+            if 'platform' not in request.GET:
+                return HttpResponseBadRequest('cannot use interest dimension without specifying '
+                                              'platform - interest is platform specific')
+            platform = get_object_or_404(Platform.objects.all(), pk=request.GET['platform'])
+            data = []
+            found_something = False
+            for report_type in platform.interest_reports.all():
+                computer = StatsComputer()
+                data += computer.get_data(report_type, request.GET, request.user)
+                found_something = True
+            if not found_something:
+                # use a default set of reports
+                for report_type in ReportType.objects.filter(short_name__in=['TR', 'DR', 'JR1',
+                                                                             'DB1']):
+                    computer = StatsComputer()
+                    data += computer.get_data(report_type, request.GET, request.user)
+        else:
+            computer = StatsComputer()
+            data = computer.get_data(report_type, request.GET, request.user)
         data_format = request.GET.get('format')
         if data_format in ('csv', 'xlsx'):
             # for the bare result, we do not add any extra information, just output the list

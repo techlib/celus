@@ -75,8 +75,8 @@ class StatsComputer(object):
 
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'import_batch']
     input_dim_to_query_dim = {'interest': 'metric'}
-    extra_query_params = {'interest': {'metric__interest_group__isnull': False}}
-    implicit_dim_to_text_fn = {'interest': lambda x: x.name_in_interest_group}
+    extra_query_params = {'interest': lambda rt: {'metric__reportinterestmetric__report_type': rt}}
+    implicit_dim_to_text_fn = {'interest': lambda x: str(x)}
 
     def __init__(self):
         self.io_prim_dim_name = None  # name of dimension that was requested and will be outputed
@@ -216,8 +216,12 @@ class StatsComputer(object):
         if self.sec_dim_name != self.io_sec_dim_name:
             dim_raw_name_to_name[self.sec_dim_name] = self.io_sec_dim_name
         # add extra filters if requested
-        query_params.update(self.extra_query_params.get(self.io_prim_dim_name, {}))
-        query_params.update(self.extra_query_params.get(self.io_sec_dim_name, {}))
+        prim_extra = self.extra_query_params.get(self.io_prim_dim_name)
+        if prim_extra:
+            query_params.update(prim_extra(report_type))
+        sec_extra = self.extra_query_params.get(self.io_sec_dim_name)
+        if sec_extra:
+            query_params.update(sec_extra(report_type))
         # add filter for dates
         query_params.update(date_filter_from_params(params))
         # create the base query
