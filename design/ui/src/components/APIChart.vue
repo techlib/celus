@@ -43,6 +43,7 @@
   // the following two imports are here to ensure the components at hand will be bundled
   import _dataZoom from 'echarts/lib/component/dataZoom'
   import _toolBox from 'echarts/lib/component/toolbox'
+  import _loading from 'echarts/lib/loading/default'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions, mapGetters } from 'vuex'
@@ -328,7 +329,7 @@
     }
   }
 </script>
-<style scoped lang="scss">
+<style lang="scss">
 
     .accomp-text {
         font-size: 125%;
@@ -345,6 +346,26 @@
 
     .chart {
         margin: 1rem;
+    }
+
+    .v-charts-component-loading {
+
+        &::before {
+            content: '\f110';
+            font-size: 60px;
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            animation: fa-spin 2s infinite linear;
+        }
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: white;
+        height: 100%;
+        width: 100%;
+        content: 'XXX';
+        font-size: 60px;
+        color: red;
     }
 
 </style>
