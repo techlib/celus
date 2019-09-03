@@ -7,7 +7,7 @@ import addYears from 'date-fns/add_years'
 import endOfYear from 'date-fns/end_of_year'
 import startOfYear from 'date-fns/start_of_year'
 import { ymDateFormat } from '../libs/dates'
-import { format as formatNumber } from 'mathjs'
+import { format as formatNumber } from 'mathjs/lib/function/string/format'
 import VuexPersistence from 'vuex-persist'
 
 Vue.use(Vuex)

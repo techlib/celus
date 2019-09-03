@@ -40,6 +40,9 @@
   import VeHistogram from 'v-charts/lib/histogram.common'
   import VeBar from 'v-charts/lib/bar.common'
   import VeLine from 'v-charts/lib/line.common'
+  // the following two imports are here to ensure the components at hand will be bundled
+  import _dataZoom from 'echarts/lib/component/dataZoom'
+  import _toolBox from 'echarts/lib/component/toolbox'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions, mapGetters } from 'vuex'
