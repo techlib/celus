@@ -91,3 +91,21 @@ class ImportBatchAdmin(admin.ModelAdmin):
     #     qs = super().get_queryset(request)
     #     return qs.annotate(log_count=Count('accesslog'))
 
+
+@admin.register(models.VirtualReportType)
+class VirtualReportTypeAdmin(admin.ModelAdmin):
+
+    list_display = ['short_name', 'name', 'desc', 'source', 'filters']
+    ordering = ['short_name']
+    list_filter = ['source']
+
+    @classmethod
+    def filters(cls, obj: models.VirtualReportType):
+        return '; '.join(f'{df.dimension.short_name}: {df.allowed_values}'
+                         for df in obj.dimension_filters.all())
+
+
+@admin.register(models.DimensionFilter)
+class DimensionFilterAdmin(admin.ModelAdmin):
+
+    list_display = ['virtual_report_type', 'dimension', 'allowed_values']

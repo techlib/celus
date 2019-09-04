@@ -9,7 +9,8 @@ from django.shortcuts import get_object_or_404
 
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
-from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText
+from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText, \
+    VirtualReportType
 
 
 def interest_group_to_annot_name(ig: InterestGroup) -> str:
@@ -189,7 +190,10 @@ class StatsComputer(object):
 
     def construct_query(self, report_type, params):
         if report_type:
-            query_params = {'report_type': report_type, 'metric__active': True}
+            if isinstance(report_type, ReportType):
+                query_params = {'report_type': report_type, 'metric__active': True}
+            else:
+                query_params = {}
         else:
             query_params = {'metric__active': True}
         # go over implicit dimensions and add them to the query if GET params are given for this
@@ -225,7 +229,10 @@ class StatsComputer(object):
         # add filter for dates
         query_params.update(date_filter_from_params(params))
         # create the base query
-        query = AccessLog.objects.filter(**query_params)
+        if report_type and isinstance(report_type, VirtualReportType):
+            query = report_type.logdata_qs().filter(**query_params)
+        else:
+            query = AccessLog.objects.filter(**query_params)
         return query, dim_raw_name_to_name
 
     @classmethod

@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
+from django.db.models import Sum
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
@@ -65,6 +66,51 @@ class ReportType(models.Model):
     @property
     def public(self):
         return self.source is None
+
+
+class VirtualReportType(models.Model):
+
+    base_report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+    short_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=250)
+    desc = models.TextField(blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    metric_allowed_values = JSONField(default=list, blank=True)
+
+    def __str__(self):
+        return self.short_name
+
+    @property
+    def dimensions_sorted(self):
+        return []
+
+    def logdata_qs(self):
+        filters = {}
+        if self.metric_allowed_values:
+            filters['metric__in'] = [metric.pk for metric in
+                                     Metric.objects.filter(
+                                         short_name__in=self.metric_allowed_values)]
+        dim_filters = {df.dimension.pk: df.allowed_values for df in self.dimension_filters.all()}
+        for i, dim in enumerate(self.base_report_type.dimensions_sorted):
+            if dim.pk in dim_filters:
+                allowed_values = dim_filters[dim.pk]
+                if dim.type == dim.TYPE_TEXT:
+                    values = [dt.pk for dt in
+                              DimensionText.objects.filter(dimension=dim, text__in=allowed_values)]
+                else:
+                    values = allowed_values
+                filters[f'dim{i+1}__in'] = values
+        return AccessLog.objects.filter(report_type_id=self.base_report_type_id, **filters).\
+            values('organization', 'metric', 'platform', 'target', 'date')
+            # annotate(value=Sum('value'))
+
+
+class DimensionFilter(models.Model):
+
+    virtual_report_type = models.ForeignKey(VirtualReportType, on_delete=models.CASCADE,
+                                            related_name='dimension_filters')
+    dimension = models.ForeignKey('Dimension', on_delete=models.CASCADE)
+    allowed_values = JSONField(default=list, blank=True)
 
 
 class InterestGroup(models.Model):

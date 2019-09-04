@@ -19,7 +19,7 @@ from logs.logic.custom_import import custom_data_import_precheck, custom_data_to
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
-    ManualDataUpload
+    ManualDataUpload, VirtualReportType
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
     ManualDataUploadSerializer
@@ -37,7 +37,10 @@ class Counter5DataView(APIView):
 
     def get(self, request, report_type_id=None):
         if report_type_id:
-            report_type = get_object_or_404(ReportType, pk=report_type_id)
+            if 'virtual' in request.GET:
+                report_type = get_object_or_404(VirtualReportType, pk=report_type_id)
+            else:
+                report_type = get_object_or_404(ReportType, pk=report_type_id)
         else:
             report_type = None
         # check for interest in query params
