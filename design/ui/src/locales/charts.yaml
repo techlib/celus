@@ -15,6 +15,7 @@ en:
             zoom: Zoom
             zoom_back: Back
             export_csv: Export CSV
+        no_data: Sorry, no data available
 cs:
     chart:
         date_metric: Metrika v čase
@@ -32,3 +33,4 @@ cs:
             zoom: Zoomovat
             zoom_back: Zpět
             export_csv: Export CSV
+        no_data: Je nám líto, ale nemáme data k zobrazení

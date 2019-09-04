@@ -63,6 +63,7 @@
                     :title-id="titleId"
                     :report-types-url="reportTypesUrl"
                     :extra-chart-types="extraChartTypes"
+                    :virtual-report-types-url="virtualReportTypesUrl"
             >
             </CounterChartSet>
         </section>
@@ -171,6 +172,17 @@
           } else {
             // this is the case when no platform is specified
             return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/reports/`
+          }
+        }
+        return null
+      },
+      virtualReportTypesUrl () {
+        if (this.selectedOrganization && this.titleId) {
+          if (this.platformId) {
+            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/virtual-reports/`
+          } else {
+            // this is the case when no platform is specified
+            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/virtual-reports/`
           }
         }
         return null

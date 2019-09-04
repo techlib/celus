@@ -39,6 +39,8 @@ platform_sub_router.register('virtual-reports', views.PlatformVirtualReportTypeV
                              basename='platform-virtual-reports')
 
 platform_title_sub_router = NestedSimpleRouter(platform_sub_router, r'title', lookup='title')
+platform_title_sub_router.register('reports', views.PlatformTitleReportTypeViewSet,
+                                   basename='platform-title-reports')
 platform_title_sub_router.register('virtual-reports', views.PlatformTitleVirtualReportTypeViewSet,
                                    basename='platform-title-virtual-reports')
 

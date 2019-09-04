@@ -43,7 +43,7 @@
 </template>
 <script>
   import APIChart from './APIChart'
-  import { mapGetters, mapState } from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import axios from 'axios'
   import ChartTypeSelector from './ChartTypeSelector'
 
@@ -96,6 +96,9 @@
       },
     },
     methods: {
+      ...mapActions({
+        showSnackbar: 'showSnackbar',
+      }),
       async loadReportTypes () {
         let url = this.reportTypesUrl
         if (url) {

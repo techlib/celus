@@ -2,8 +2,12 @@
 <i18n src="../locales/charts.yaml"></i18n>
 
 <template>
-    <div v-if="loading" :style="{'height': height}" id="loading">
-        <i class="fas fa-cog fa-spin"></i>
+    <div v-if="loading || dataRaw.length === 0" :style="{'height': height}" id="loading">
+        <i v-if="loading" class="fas fa-cog fa-spin"></i>
+        <div v-else>
+            <i class="far fa-frown"></i>
+            <div class="infotext">{{ $t('chart.no_data') }}</div>
+        </div>
     </div>
     <component v-else
             :is="chartComponent"
@@ -11,7 +15,6 @@
             :settings="chartSettings"
             :extend="chartExtend"
             :height="height"
-            :loading="loading"
             :toolbox="chartToolbox"
             :data-zoom="dataZoom"
             >
@@ -350,6 +353,10 @@
 
         i {
             margin-top: 160px;
+        }
+
+        div.infotext {
+            font-size: 26px;
         }
 
     }
