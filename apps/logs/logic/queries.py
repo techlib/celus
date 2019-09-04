@@ -210,7 +210,7 @@ class StatsComputer(object):
                 if value:
                     if dim.type == dim.TYPE_TEXT:
                         try:
-                            value = DimensionText.objects.get(text=value).pk
+                            value = DimensionText.objects.get(dimension=dim, text=value).pk
                         except DimensionText.DoesNotExist:
                             pass  # we leave the value as it is - it will probably lead to empty result
                     query_params[dim_raw_name] = value

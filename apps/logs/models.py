@@ -102,7 +102,6 @@ class VirtualReportType(models.Model):
                 filters[f'dim{i+1}__in'] = values
         return AccessLog.objects.filter(report_type_id=self.base_report_type_id, **filters).\
             values('organization', 'metric', 'platform', 'target', 'date')
-            # annotate(value=Sum('value'))
 
 
 class DimensionFilter(models.Model):

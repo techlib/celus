@@ -95,7 +95,7 @@ class ImportBatchAdmin(admin.ModelAdmin):
 @admin.register(models.VirtualReportType)
 class VirtualReportTypeAdmin(admin.ModelAdmin):
 
-    list_display = ['short_name', 'name', 'desc', 'source', 'filters']
+    list_display = ['short_name', 'name', 'desc', 'source', 'filters', 'metric_allowed_values']
     ordering = ['short_name']
     list_filter = ['source']
 
