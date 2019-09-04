@@ -2,19 +2,11 @@
 <i18n src="../locales/charts.yaml"></i18n>
 
 <template>
-    <ve-histogram
-            v-if="type === 'histogram'"
-            :data="chartData"
-            :settings="chartSettings"
-            :extend="extend"
-            :height="height"
-            :loading="loading"
-            :toolbox="chartToolbox"
-            :data-zoom="dataZoom"
-            >
-    </ve-histogram>
-    <ve-bar
-            v-else-if="type === 'bar'"
+    <div v-if="loading" :style="{'height': height}" id="loading">
+        <i class="fas fa-cog fa-spin"></i>
+    </div>
+    <component v-else
+            :is="chartComponent"
             :data="chartData"
             :settings="chartSettings"
             :extend="chartExtend"
@@ -22,19 +14,8 @@
             :loading="loading"
             :toolbox="chartToolbox"
             :data-zoom="dataZoom"
-        >
-    </ve-bar>
-    <ve-line
-            v-else-if="type === 'line'"
-            :data="chartData"
-            :settings="chartSettings"
-            :extend="extend"
-            :height="height"
-            :loading="loading"
-            :toolbox="chartToolbox"
-            :data-zoom="dataZoom"
-        >
-    </ve-line>
+            >
+    </component>
 </template>
 <script>
   import VeHistogram from 'v-charts/lib/histogram.common'
@@ -43,7 +24,6 @@
   // the following two imports are here to ensure the components at hand will be bundled
   import _dataZoom from 'echarts/lib/component/dataZoom'
   import _toolBox from 'echarts/lib/component/toolbox'
-  import _loading from 'echarts/lib/loading/default'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions, mapGetters } from 'vuex'
@@ -94,7 +74,7 @@
         type: Boolean,
         default: true,
       },
-      height: {},
+      height: {default: '400px'},
       zoom: {
         type: Boolean,
         default: true,
@@ -292,6 +272,15 @@
           return []
         }
       },
+      chartComponent () {
+        if (this.type === 'bar') {
+          return VeBar
+        } else if (this.type === 'histogram') {
+          return VeHistogram
+        } else {
+          return VeLine
+        }
+      }
     },
     methods: {
       ...mapActions({
@@ -329,7 +318,7 @@
     }
   }
 </script>
-<style lang="scss">
+<style scoped lang="scss">
 
     .accomp-text {
         font-size: 125%;
@@ -348,24 +337,16 @@
         margin: 1rem;
     }
 
-    .v-charts-component-loading {
-
-        &::before {
-            content: '\f110';
-            font-size: 60px;
-            font-family: 'Font Awesome 5 Free';
-            font-weight: 900;
-            animation: fa-spin 2s infinite linear;
-        }
-        position: absolute;
-        top: 0;
-        left: 0;
-        background-color: white;
-        height: 100%;
-        width: 100%;
-        content: 'XXX';
+    #loading {
+        //background-color: white;
         font-size: 60px;
-        color: red;
+        color: #1db79a88;
+        text-align: center;
+
+        i {
+            margin-top: 160px;
+        }
+
     }
 
 </style>
