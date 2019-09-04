@@ -4,8 +4,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from core.logic.dates import date_filter_from_params
 from logs.logic.queries import interest_group_annotation_params, extract_interests_from_objects
-from logs.models import ReportType, InterestGroup
-from logs.serializers import ReportTypeSerializer
+from logs.models import ReportType, InterestGroup, VirtualReportType
+from logs.serializers import ReportTypeSerializer, VirtualReportTypeSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
@@ -143,6 +143,16 @@ class BaseReportTypeViewSet(ReadOnlyModelViewSet):
         return report_types
 
 
+class TitleReportTypeViewSet(BaseReportTypeViewSet):
+    """
+    Provides a list of report types for specific title for specific organization
+    """
+
+    def _extra_filters(self, org_filter):
+        title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
+        return {'accesslog__target': title}
+
+
 class PlatformReportTypeViewSet(BaseReportTypeViewSet):
     """
     Provides a list of report types for specific organization and platform
@@ -159,8 +169,6 @@ class PlatformTitleReportTypeViewSet(BaseReportTypeViewSet):
     Provides a list of report types for specific title for specific organization and platform
     """
 
-    serializer_class = ReportTypeSerializer
-
     def _extra_filters(self, org_filter):
         platform = get_object_or_404(Platform.objects.filter(**org_filter),
                                      pk=self.kwargs['platform_pk'])
@@ -168,16 +176,60 @@ class PlatformTitleReportTypeViewSet(BaseReportTypeViewSet):
         return {'accesslog__target': title, 'accesslog__platform': platform}
 
 
-class TitleReportTypeViewSet(BaseReportTypeViewSet):
+class BaseVirtualReportTypeViewSet(ReadOnlyModelViewSet):
+    """
+    Provides a list of virtual report types
+    """
+
+    serializer_class = VirtualReportTypeSerializer
+
+    def _extra_filters(self, org_filter):
+        return {}
+
+    def get_queryset(self):
+        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
+                                                     self.request.user)
+        access_log_filter = Q(**extend_query_filter(org_filter, 'base_report_type__accesslog__'),
+                              **self._extra_filters(org_filter))
+        report_types = VirtualReportType.objects.filter(access_log_filter).\
+            annotate(log_count=Count('base_report_type__accesslog__value',
+                                     filter=access_log_filter)
+                     ) # .filter(log_count__gt=0)
+        return report_types
+
+
+class TitleVirtualReportTypeViewSet(BaseVirtualReportTypeViewSet):
     """
     Provides a list of report types for specific title for specific organization
     """
 
-    serializer_class = ReportTypeSerializer
-
     def _extra_filters(self, org_filter):
         title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
-        return {'accesslog__target': title}
+        return {'base_report_type__accesslog__target': title}
+
+
+class PlatformVirtualReportTypeViewSet(BaseVirtualReportTypeViewSet):
+    """
+    Provides a list of report types for specific organization and platform
+    """
+
+    def _extra_filters(self, org_filter):
+        platform = get_object_or_404(Platform.objects.filter(**org_filter),
+                                     pk=self.kwargs['platform_pk'])
+        return {'base_report_type__accesslog__platform': platform}
+
+
+class PlatformTitleVirtualReportTypeViewSet(BaseVirtualReportTypeViewSet):
+    """
+    Provides a list of report types for specific title for specific organization and platform
+    """
+
+    def _extra_filters(self, org_filter):
+        platform = get_object_or_404(Platform.objects.filter(**org_filter),
+                                     pk=self.kwargs['platform_pk'])
+        title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
+        return {'base_report_type__accesslog__target': title,
+                'base_report_type__accesslog__platform': platform}
 
 
 class TitleViewSet(ReadOnlyModelViewSet):

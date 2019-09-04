@@ -7,9 +7,10 @@
             <v-select
                     :items="reportTypes"
                     item-text="name"
-                    item-value="pk"
-                    v-model="selectedReportType"
+
+                    v-model="selectedReportTypeObject"
                     :label="$t('available_report_types')"
+                    :return-object="true"
             >
             </v-select>
         </v-flex>
@@ -32,6 +33,7 @@
                 :extend="chartExtend"
                 :stack="this.selectedChartType.stack === undefined ? true : this.selectedChartType.stack"
                 :order-by="this.selectedChartType.orderBy === undefined ? null : this.selectedChartType.orderBy"
+                :virtual="selectedReportTypeObject.virtual"
         >
         </APIChart>
         <div v-else>
@@ -53,6 +55,7 @@
       platformId: {},
       titleId: {},
       reportTypesUrl: {},
+      virtualReportTypesUrl: {},
       extraChartTypes: {
         default: () => [],
       }
@@ -61,7 +64,7 @@
       return {
         chartTypeIndex: 0,
         reportTypes: [], // report types available for this title
-        selectedReportType: null,
+        selectedReportTypeObject: null,
         selectedChartType: null,
       }
     },
@@ -86,11 +89,9 @@
         }
         return this.selectedOrganizationId
       },
-      selectedReportTypeObject () {
-        for (let rt of this.reportTypes) {
-          if (rt.pk === this.selectedReportType)
-            return rt
-        }
+      selectedReportType () {
+        if (this.selectedReportTypeObject)
+          return this.selectedReportTypeObject.pk
         return null
       },
     },
@@ -110,9 +111,26 @@
                 dimensions_sorted: [],
                 interest_only: true
               })
-              this.selectedReportType = this.reportTypes[0].pk
+              this.selectedReportTypeObject = this.reportTypes[0]
             } else {
               this.selectFreshestReportType()
+            }
+            this.loadVirtualReportTypes()
+          } catch (error) {
+            console.log("ERROR: ", error)
+            this.showSnackbar({content: 'Error loading title: ' + error})
+          }
+        }
+      },
+      async loadVirtualReportTypes () {
+        let url = this.virtualReportTypesUrl
+        if (url) {
+          try {
+            const response = await axios.get(url)
+            for (let rt of response.data) {
+              rt['virtual'] = true
+              rt['dimensions_sorted'] = []
+              this.reportTypes.push(rt)
             }
           } catch (error) {
             console.log("ERROR: ", error)
@@ -138,14 +156,14 @@
           bestReportType = this.reportTypes[0]
         }
         if (bestReportType) {
-          this.selectedReportType = bestReportType.pk
+          this.selectedReportTypeObject = bestReportType
         } else {
-          this.selectedReportType = null
+          this.selectedReportTypeObject = null
         }
       }
     },
     watch: {
-      selectedReportType () {
+      selectedReportTypeObject () {
         this.chartTypeIndex = 0
       },
     },

@@ -76,6 +76,8 @@ class VirtualReportType(models.Model):
     desc = models.TextField(blank=True)
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
     metric_allowed_values = JSONField(default=list, blank=True)
+    primary_dimension = models.ForeignKey('Dimension', null=True, on_delete=models.SET_NULL,
+                                          blank=True)
 
     def __str__(self):
         return self.short_name
@@ -84,7 +86,8 @@ class VirtualReportType(models.Model):
     def dimensions_sorted(self):
         return []
 
-    def logdata_qs(self):
+    @cached_property
+    def accesslog_filters(self):
         filters = {}
         if self.metric_allowed_values:
             filters['metric__in'] = [metric.pk for metric in
@@ -100,8 +103,16 @@ class VirtualReportType(models.Model):
                 else:
                     values = allowed_values
                 filters[f'dim{i+1}__in'] = values
-        return AccessLog.objects.filter(report_type_id=self.base_report_type_id, **filters).\
+        return filters
+
+    def logdata_qs(self):
+        return AccessLog.objects.\
+            filter(report_type_id=self.base_report_type_id, **self.accesslog_filters).\
             values('organization', 'metric', 'platform', 'target', 'date')
+
+    @property
+    def public(self):
+        return self.source is None
 
 
 class DimensionFilter(models.Model):

@@ -36,13 +36,20 @@
         selectedOrganizationId: 'selectedOrganizationId',
       }),
       chartTypes () {
+        // check if the report type has a primary dimension
+        if (this.reportType && this.reportType.primary_dimension) {
+          let dim = this.reportType.primary_dimension
+          return [
+            {name: dim.name, primary: 'date', secondary: dim.short_name, type: 'histogram'},
+          ]
+        }
         let base = [
           {name: this.$i18n.t('chart.date_metric'), primary: 'date', secondary: 'metric', type: 'histogram', stack: false},
           {name: this.$i18n.t('chart.metric'), primary: 'metric'},
           {name: this.$i18n.t('chart.organization'), primary: 'organization', secondary: 'interest', type: 'bar', orderBy: 'count'},
         ]
+        // only add interest_in_time in case no specific report type was selected
         if (this.reportType && this.reportType.pk === -1) {
-          // only add interest_in_time in case no specific report type was selected
           base.unshift({name: this.$i18n.t('chart.interest_in_time'), primary: 'date', secondary: 'interest', type: 'histogram', stack: false, reportType: null})
         }
 

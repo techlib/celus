@@ -104,6 +104,8 @@ class StatsComputer(object):
             return dim_name, cls.input_dim_to_query_dim[dim_name], None
         if dim_name in cls.implicit_dims:
             return dim_name, dim_name, None
+        if isinstance(report_type, VirtualReportType):
+            report_type = report_type.base_report_type
         dimensions = report_type.dimensions_sorted
         for dim_idx, dimension in enumerate(dimensions):
             if dimension.short_name == dim_name:
