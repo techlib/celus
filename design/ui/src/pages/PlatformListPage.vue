@@ -60,6 +60,12 @@ cs:
                         <template v-slot:item.name="props">
                             <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
                         </template>
+                        <template v-slot:item.interests.title="props">
+                            {{ props.item.interests.title ? props.item.interests.title.value : '-' }}
+                        </template>
+                        <template v-slot:item.interests.database.value="props">
+                            {{ props.item.interests.database ? props.item.interests.database.value : '-' }}
+                        </template>
                         <template v-slot:item.sushi_credentials_count="{item}">
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on }">
@@ -130,6 +136,18 @@ cs:
             text: this.$i18n.t('columns.title_count'),
             value: 'title_count',
             class: 'wrap',
+            align: 'right',
+          },
+          {
+            text: this.$i18n.t('interests.title'),
+            value: 'interests.title.value',
+            class: 'wrap text-xs-right',
+            align: 'right',
+          },
+          {
+            text: this.$i18n.t('interests.database'),
+            value: 'interests.database.value',
+            class: 'wrap text-xs-right',
             align: 'right',
           },
           {

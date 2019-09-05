@@ -33,23 +33,47 @@ def interest_group_annotation_params(interest_groups: Iterable[InterestGroup],
     return interest_annot_params
 
 
-def extract_interests_from_objects(interest_groups: Iterable[InterestGroup], objects: Iterable):
+def interest_value_to_annot_name(dt: DimensionText) -> str:
+    return f'interest_{dt.pk}'
+
+
+def interest_annotation_params(accesslog_filter: dict, interest_rt: ReportType) -> dict:
+    """
+    :param interest_rt: report type 'interest'
+    :param accesslog_filter: filter to apply to all access logs in the summation
+    :return:
+    """
+    interest_type_dim = interest_rt.dimensions_sorted[0]
+    interest_annot_params = {
+        interest_value_to_annot_name(interest_type):
+            Sum('accesslog__value',
+                filter=Q(accesslog__dim1=interest_type.pk,
+                         accesslog__report_type=interest_rt,
+                         **accesslog_filter))
+        for interest_type in interest_type_dim.dimensiontext_set.all()
+    }
+    return interest_annot_params
+
+
+def extract_interests_from_objects(interest_rt: ReportType, objects: Iterable):
     """
     Goes over all objects in the list of objects and extracts all attributes that were created
-    by first using the `interest_group_annotation_params` function to a separate attribute on
+    by first using the `interest_annotation_params` function to a separate attribute on
     the object called `interests`
-    :param interest_groups: list or queryset of interest groups
+    :param interest_rt: report type 'interest' instance
     :param objects: objects of extraction
     :return:
     """
-    ig_param_name_to_ig = {interest_group_to_annot_name(ig): ig for ig in interest_groups}
+    interest_type_dim = interest_rt.dimensions_sorted[0]
+    int_param_name_to_interest_type = {interest_value_to_annot_name(dt): dt
+                                       for dt in interest_type_dim.dimensiontext_set.all()}
     for obj in objects:
         interests = {}
-        for ig_param_name, ig in ig_param_name_to_ig.items():
-            if hasattr(obj, ig_param_name):
-                interests[ig.short_name] = {
-                    'value': getattr(obj, ig_param_name),
-                    'name': ig.name,
+        for int_param_name, dt in int_param_name_to_interest_type.items():
+            if hasattr(obj, int_param_name):
+                interests[dt.text] = {
+                    'value': getattr(obj, int_param_name),
+                    'name': dt.text_local,
                 }
         obj.interests = interests
 

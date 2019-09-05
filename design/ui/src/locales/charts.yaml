@@ -10,6 +10,8 @@ en:
         platform: Platform
         organization: Organization
         interest_in_time: Interest in time
+        interest_type: Interest type
+        interest_type_in_time: Interest type in time
         toolbox:
             save_as_image: Save as image
             zoom: Zoom
@@ -28,6 +30,8 @@ cs:
         platform: Platforma
         organization: Organizace
         interest_in_time: Zájem v čase
+        interest_type: Typ zájmu
+        interest_type_in_time: Typ zájmu v čase
         toolbox:
             save_as_image: Uložit jako obrázek
             zoom: Zoomovat
