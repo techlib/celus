@@ -3,7 +3,7 @@ from .models import Platform
 
 
 class PlatformTranslationOptions(TranslationOptions):
-    fields = ('name', 'short_name', 'provider')
+    fields = ('name', 'provider')
 
 
 translator.register(Platform, PlatformTranslationOptions)

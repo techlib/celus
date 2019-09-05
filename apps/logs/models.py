@@ -41,7 +41,8 @@ class ReportType(models.Model):
     dimensions = models.ManyToManyField('Dimension', related_name='report_types',
                                         through='ReportTypeToDimension')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
-    interest_metrics = models.ManyToManyField('Metric', through='ReportInterestMetric')
+    interest_metrics = models.ManyToManyField('Metric', through='ReportInterestMetric',
+                                              through_fields=('report_type', 'metric'))
 
     class Meta:
         unique_together = (('short_name', 'source'),)
@@ -117,6 +118,10 @@ class VirtualReportType(models.Model):
 
 class DimensionFilter(models.Model):
 
+    """
+    Used to specify how data from one dimension in VirtualReportType should be filtered
+    """
+
     virtual_report_type = models.ForeignKey(VirtualReportType, on_delete=models.CASCADE,
                                             related_name='dimension_filters')
     dimension = models.ForeignKey('Dimension', on_delete=models.CASCADE)
@@ -170,8 +175,18 @@ class Metric(models.Model):
 
 class ReportInterestMetric(models.Model):
 
+    """
+    Links a report type to metric which signifies interest for that report type.
+    If it is desired that in the outcome, the metric appears as a different one,
+    it may be remapped by using target_metric
+    """
+
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
+    target_metric = models.ForeignKey(Metric, on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name='source_report_interest_metrics')
+    interest_group = models.ForeignKey(InterestGroup, null=True, blank=True,
+                                       on_delete=models.SET_NULL)
     name = models.CharField(max_length=100, blank=True,
                             help_text='How is the metric called in context of interest')
 

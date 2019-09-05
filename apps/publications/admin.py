@@ -7,6 +7,7 @@ from . import models
 class PlatformAdmin(admin.ModelAdmin):
 
     list_display = ['short_name', 'name', 'provider', 'url']
+    ordering = ['short_name']
 
 
 @admin.register(models.Title)

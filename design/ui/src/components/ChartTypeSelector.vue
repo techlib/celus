@@ -64,12 +64,14 @@
           {name: this.$i18n.t('chart.datatype'), primary: 'Data_Type'},
           {name: this.$i18n.t('chart.sectiontype'), primary: 'Section_Type'},
           {name: this.$i18n.t('chart.yop'), primary: 'YOP', secondary: 'Data_Type', stack: true},
+          {name: this.$i18n.t('chart.interest_type'), primary: 'Interest_Type'},
+          {name: this.$i18n.t('chart.interest_type_in_time'), primary: 'date', secondary: 'Interest_Type'},
         ]
         let reportTypeSupportsInterest = false
         if (this.reportType) {
           let dimNames = this.reportType.dimensions_sorted.map(dim => dim.short_name)
           for (let option of extra) {
-            if (dimNames.indexOf(option.primary) >= 0) {
+            if (dimNames.indexOf(option.primary) >= 0 || option.primary === 'date') {
               if (!option.secondary || dimNames.indexOf(option.secondary) >= 0)
                 base.push(option)
             }

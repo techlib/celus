@@ -11,6 +11,9 @@ class Platform(models.Model):
     url = models.URLField(blank=True)
     interest_reports = models.ManyToManyField('logs.ReportType')
 
+    class Meta:
+        ordering = ('short_name',)
+
     def __str__(self):
         return self.short_name
 
