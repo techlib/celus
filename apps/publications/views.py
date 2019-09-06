@@ -168,7 +168,7 @@ class PlatformTitleCountsViewSet(PlatformTitleViewSet):
     serializer_class = TitleCountSerializer
 
     def _extra_filters(self):
-        return {'accesslog__metric__interest_group__isnull': False}
+        return {'accesslog__report_type__short_name': 'interest'}
 
     def _annotations(self):
         return {'interest': Sum('accesslog__value')}
