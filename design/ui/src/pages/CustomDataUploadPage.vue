@@ -334,7 +334,7 @@ cs:
       async loadPlatform () {
         if (this.organizationId) {
           try {
-            let response = await axios.get(`/api/organization/${this.organizationId}/detailed-platform/${this.platformId}/`)
+            let response = await axios.get(`/api/organization/${this.organizationId}/platform/${this.platformId}/`)
             this.platform = response.data
           } catch(error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})

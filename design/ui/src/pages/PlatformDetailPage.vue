@@ -38,16 +38,31 @@
                         <table v-if="platform" class="overview mb-4 elevation-2">
                             <tr>
                                 <th>{{ $t('labels.title_count') }}</th>
-                                <td class="text-right">{{ platform.title_count ? platform.title_count : '-' }}</td>
+                                <td class="text-right">
+                                    <span v-if="platform.title_count === 'loading'" class="fas fa-spinner fa-spin subdued"></span>
+                                    <span v-else>
+                                        {{ platform.title_count ? platform.title_count : '-' }}
+                                    </span>
+                                </td>
                             </tr>
-                            <!--tr>
+                            <tr>
                                 <th>{{ $t('interests.title') }}</th>
-                                <td class="text-right">{{ platform.interests.title.value ? platform.interests.title.value : '-' }}</td>
+                                <td class="text-right">
+                                    <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                                    <span v-else>
+                                        {{ platform.interests.title.value ? platform.interests.title.value : '-' }}
+                                    </span>
+                                </td>
                             </tr>
                             <tr>
                                 <th>{{ $t('interests.database') }}</th>
-                                <td class="text-right">{{ platform.interests.database.value ? platform.interests.database.value : '-' }}</td>
-                            </tr-->
+                                <td class="text-right">
+                                    <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                                    <span v-else>
+                                      {{ platform.interests.database.value ? platform.interests.database.value : '-' }}
+                                    </span>
+                                </td>
+                            </tr>
                         </table>
                     </v-flex>
                     <v-spacer></v-spacer>
@@ -161,17 +176,30 @@
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      loadPlatform () {
+      async loadPlatform () {
         if (this.selectedOrganizationId) {
-          axios.get(`/api/organization/${this.selectedOrganizationId}/detailed-platform/${this.platformId}/`)
-            .then(response => {
-              this.platform = response.data
-            })
-            .catch(error => {
+          try {
+            let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/`)
+            this.platform = response.data
+            this.$set(this.platform, 'interests', {loading: true})
+            this.$set(this.platform, 'title_count', 'loading')
+            this.loadPlatformDetails()
+          } catch(error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})
-            })
+          }
         }
-      }
+      },
+      async loadPlatformDetails () {
+        if (this.selectedOrganizationId) {
+          try {
+            let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/detailed-platform/${this.platformId}/`)
+            this.$set(this.platform, 'interests', response.data.interests)
+            this.$set(this.platform, 'title_count', response.data.title_count)
+          } catch(error) {
+              this.showSnackbar({content: 'Error loading platforms: '+error})
+          }
+        }
+      },
     },
     created () {
       this.loadPlatform()
