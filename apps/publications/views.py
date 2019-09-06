@@ -1,15 +1,12 @@
 from django.db.models import Count, Sum, Q, Max, Min
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 
 from core.logic.dates import date_filter_from_params
-from logs.logic.queries import interest_group_annotation_params, extract_interests_from_objects, \
-    interest_annotation_params
-from logs.models import ReportType, InterestGroup, VirtualReportType, AccessLog
+from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
+from logs.models import ReportType, VirtualReportType, AccessLog
 from logs.serializers import ReportTypeSerializer, VirtualReportTypeSerializer
-from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer

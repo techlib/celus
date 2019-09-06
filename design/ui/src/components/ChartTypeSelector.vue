@@ -15,7 +15,7 @@
     name: "ChartTypeSelector",
     props: {
       reportType: {required: true},
-      value: {required: false, default: null},
+      value: {required: false, default: null},  // the selected chart type
       allowCrossReportCharts: {default: true},  // if chart types which do not have one specific report type are allowed
       allowInterestCharts: {default: true},  // should charts with interest in secondary dimension be allowed?
       extraChartTypes: {
