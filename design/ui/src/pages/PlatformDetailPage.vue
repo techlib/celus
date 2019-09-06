@@ -50,7 +50,7 @@
                                 <td class="text-right">
                                     <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                                     <span v-else>
-                                        {{ platform.interests.title.value ? platform.interests.title.value : '-' }}
+                                        {{ platform.interests.title ? formatInteger(platform.interests.title) : '-' }}
                                     </span>
                                 </td>
                             </tr>
@@ -59,7 +59,7 @@
                                 <td class="text-right">
                                     <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                                     <span v-else>
-                                      {{ platform.interests.database.value ? platform.interests.database.value : '-' }}
+                                      {{ platform.interests.database ? platform.interests.database : '-' }}
                                     </span>
                                 </td>
                             </tr>
@@ -116,6 +116,7 @@
   import axios from 'axios'
   import CounterChartSet from '../components/CounterChartSet'
   import DataExportWidget from '../components/DataExportWidget'
+  import {formatInteger} from '../libs/numbers'
 
   export default {
     name: 'PlatformDetailPage',
@@ -176,6 +177,7 @@
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      formatInteger: formatInteger,
       async loadPlatform () {
         if (this.selectedOrganizationId) {
           try {
@@ -192,8 +194,8 @@
       async loadPlatformDetails () {
         if (this.selectedOrganizationId) {
           try {
-            let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/detailed-platform/${this.platformId}/`)
-            this.$set(this.platform, 'interests', response.data.interests)
+            let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform-interest/${this.platformId}/`)
+            this.$set(this.platform, 'interests', response.data)
             this.$set(this.platform, 'title_count', response.data.title_count)
           } catch(error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})

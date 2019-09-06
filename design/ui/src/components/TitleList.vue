@@ -39,6 +39,9 @@ cs:
             <template v-slot:item.pub_type="props">
                 <span :class="{'fa fa-book': props.item.pub_type==='B', 'far fa-copy': props.item.pub_type==='J'}"></span>
             </template>
+            <template v-slot:item.interest="{item}">
+                {{ formatInteger(item.interest) }}
+            </template>
         </v-data-table>
     </v-card>
 </template>
@@ -47,6 +50,7 @@ cs:
   import axios from 'axios'
   import { mapActions } from 'vuex'
   import debounce from 'lodash/debounce'
+  import {formatInteger} from '../libs/numbers'
 
   export default {
     name: 'TitleList',
@@ -105,6 +109,7 @@ cs:
             text: this.$i18n.t('columns.interest'),
             value: 'interest',
             align: 'end',
+
           })
         return base
       }
@@ -113,6 +118,7 @@ cs:
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      formatInteger: formatInteger,
       async loadData () {
         if (this.url) {
           this.loading = true
