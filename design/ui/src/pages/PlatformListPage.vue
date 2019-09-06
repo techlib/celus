@@ -60,11 +60,17 @@ cs:
                         <template v-slot:item.name="props">
                             <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
                         </template>
-                        <template v-slot:item.interests.title="props">
-                            {{ props.item.interests.title ? props.item.interests.title.value : '-' }}
+                        <template v-slot:item.interests.title.value="{item}">
+                            <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                            <span v-else>
+                                {{ item.interests.title ? item.interests.title.value : '-' }}
+                            </span>
                         </template>
-                        <template v-slot:item.interests.database.value="props">
-                            {{ props.item.interests.database ? props.item.interests.database.value : '-' }}
+                        <template v-slot:item.interests.database.value="{item}">
+                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                            <span v-else>
+                                {{ item.interests.database ? item.interests.database.value : '-' }}
+                            </span>
                         </template>
                         <template v-slot:item.sushi_credentials_count="{item}">
                             <v-tooltip bottom>
@@ -119,9 +125,6 @@ cs:
         showAdminStuff: 'showAdminStuff',
         organizationSelected: 'organizationSelected',
       }),
-      platformsURL () {
-        return `/api/organization/${this.selectedOrganizationId}/detailed-platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
-      },
       headers () {
         return [
           {
@@ -162,18 +165,42 @@ cs:
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      platformsURL (detail = false) {
+        let subUrl = detail ? 'detailed-platform' : 'platform'
+        return `/api/organization/${this.selectedOrganizationId}/${subUrl}/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+      },
       async loadPlatforms () {
         if (this.selectedOrganizationId) {
           this.loading = true
           try {
-            let response = await axios.get(this.platformsURL)
-            this.platforms = response.data
+            let response = await axios.get(this.platformsURL())
+            this.platforms = response.data.map(item => {item.interests = {title: null, database: null, loading: true}; return item})
+            this.loadPlatformDetails()
             this.loadPlatformSushiCounts()
           } catch (error) {
-              this.showSnackbar({content: 'Error loading platforms: '+error})
+              this.showSnackbar({content: 'Error loading platforms: '+error, color: 'error'})
           } finally {
             this.loading = false
           }
+        }
+      },
+      async loadPlatformDetails () {
+        try {
+          let response = await axios.get(this.platformsURL(true))
+          let pkToRow = {}
+          for (let row of response.data) {
+            pkToRow[row.pk] = row
+          }
+          for (let platform of this.platforms) {
+            let newData = pkToRow[platform.pk]
+            if (newData) {
+              platform.interests = newData.interests
+            } else {
+              platform.interests = {title: null, database: null}
+            }
+          }
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading platform details: '+error, color: 'warning'})
         }
       },
       async loadPlatformSushiCounts () {
@@ -218,4 +245,9 @@ cs:
             }
         }
     }
+
+    .subdued {
+        color: #888888;
+    }
+
 </style>
