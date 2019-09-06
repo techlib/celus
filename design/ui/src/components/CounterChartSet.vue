@@ -1,17 +1,34 @@
 <i18n src="../locales/charts.yaml"></i18n>
 <i18n src="../locales/common.yaml"></i18n>
+<i18n>
+en:
+    standard_views: Standard views
+    customizable_views: Customizable views
+
+cs:
+    standard_views: Standardní pohledy
+    customizable_views: Nastavitelné pohledy
+</i18n>
 
 <template>
     <v-layout column>
         <v-flex>
             <v-select
-                    :items="reportTypes"
+                    :items="reportTypesForSelect"
                     item-text="name"
-
                     v-model="selectedReportTypeObject"
                     :label="$t('available_report_types')"
                     :return-object="true"
             >
+                <template v-slot:item="{item}">
+                    <v-list-item-content v-if="item.header" v-text="item.header">
+                        <v-list-item-title v-html="item.header"></v-list-item-title>
+                    </v-list-item-content>
+                    <v-list-item-content v-else>
+                        <v-list-item-title v-html="item.name"></v-list-item-title>
+                        <v-list-item-subtitle v-if="item.desc" v-html="item.desc"></v-list-item-subtitle>
+                    </v-list-item-content>
+                </template>
             </v-select>
         </v-flex>
 
@@ -64,6 +81,7 @@
       return {
         chartTypeIndex: 0,
         reportTypes: [], // report types available for this title
+        virtualReportTypes: [],
         selectedReportTypeObject: null,
         selectedChartType: null,
       }
@@ -94,6 +112,18 @@
           return this.selectedReportTypeObject.pk
         return null
       },
+      reportTypesForSelect () {
+        let out = []
+        if (this.virtualReportTypes.length > 0) {
+          out.push({'header': this.$t('standard_views')})
+          out = out.concat(this.virtualReportTypes)
+        }
+        if (this.reportTypes.length > 0) {
+          out.push({'header': this.$t('customizable_views')})
+          out = out.concat(this.reportTypes)
+        }
+        return out
+      }
     },
     methods: {
       ...mapActions({
@@ -118,7 +148,6 @@
             } else {
               this.selectFreshestReportType()
             }
-            this.loadVirtualReportTypes()
           } catch (error) {
             console.log("ERROR: ", error)
             this.showSnackbar({content: 'Error loading title: ' + error})
@@ -130,11 +159,7 @@
         if (url) {
           try {
             const response = await axios.get(url)
-            for (let rt of response.data) {
-              rt['virtual'] = true
-              rt['dimensions_sorted'] = []
-              this.reportTypes.push(rt)
-            }
+            this.virtualReportTypes = response.data.map(item => {item.dimensions_sorted = []; return item})
           } catch (error) {
             console.log("ERROR: ", error)
             this.showSnackbar({content: 'Error loading title: ' + error})
@@ -172,6 +197,7 @@
     },
     mounted () {
       this.loadReportTypes()
+      this.loadVirtualReportTypes()
     }
   }
 </script>

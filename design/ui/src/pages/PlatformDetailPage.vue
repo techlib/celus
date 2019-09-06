@@ -59,7 +59,7 @@
                                 <td class="text-right">
                                     <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                                     <span v-else>
-                                      {{ platform.interests.database ? platform.interests.database : '-' }}
+                                      {{ platform.interests.database ? formatInteger(platform.interests.database) : '-' }}
                                     </span>
                                 </td>
                             </tr>
