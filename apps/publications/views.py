@@ -1,11 +1,13 @@
 from django.db.models import Count, Sum, Q, Max, Min
 from rest_framework.generics import get_object_or_404
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 
 from core.logic.dates import date_filter_from_params
 from logs.logic.queries import interest_group_annotation_params, extract_interests_from_objects, \
     interest_annotation_params
-from logs.models import ReportType, InterestGroup, VirtualReportType
+from logs.models import ReportType, InterestGroup, VirtualReportType, AccessLog
 from logs.serializers import ReportTypeSerializer, VirtualReportTypeSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
@@ -86,6 +88,33 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
         extract_interests_from_objects(interest_rt, [obj])
         return obj
+
+
+class PlatformInterestViewSet(ViewSet):
+
+    def get_queryset(self, request, organization_pk):
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+
+        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        date_filter_params = date_filter_from_params(request.GET)
+        # parameters for annotation defining an annotation for each of the interest groups
+        interest_type_dim = interest_rt.dimensions_sorted[0]
+        interest_annot_params = {interest_type.text: Sum('value', filter=Q(dim1=interest_type.pk))
+                                 for interest_type in interest_type_dim.dimensiontext_set.all()}
+        result = AccessLog.objects\
+            .filter(report_type=interest_rt, **org_filter, **date_filter_params)\
+            .values('platform')\
+            .annotate(**interest_annot_params, title_count=Count('target_id', distinct=True))
+        return result
+
+    def list(self, request, organization_pk):
+        qs = self.get_queryset(request, organization_pk)
+        return Response(qs)
+
+    def retrieve(self, request, organization_pk, pk):
+        qs = self.get_queryset(request, organization_pk)
+        data = qs.filter(platform_id=pk)
+        return Response(data[0])
 
 
 class PlatformSushiCredentialsViewSet(ReadOnlyModelViewSet):

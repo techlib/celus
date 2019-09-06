@@ -60,16 +60,22 @@ cs:
                         <template v-slot:item.name="props">
                             <router-link :to="{name: 'platform-detail', params: {platformId: props.item.pk}}">{{ props.item.name }}</router-link>
                         </template>
-                        <template v-slot:item.interests.title.value="{item}">
-                            <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                        <template v-slot:item.title_count="{item}">
+                            <span v-if="item.title_count === 'loading'" class="fas fa-spinner fa-spin subdued"></span>
                             <span v-else>
-                                {{ item.interests.title ? item.interests.title.value : '-' }}
+                                {{ item.title_count ? formatInteger(item.title_count) : '-' }}
                             </span>
                         </template>
-                        <template v-slot:item.interests.database.value="{item}">
+                        <template v-slot:item.interests.title="{item}">
+                            <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                            <span v-else>
+                                {{ item.interests.title ? formatInteger(item.interests.title) : '-' }}
+                            </span>
+                        </template>
+                        <template v-slot:item.interests.database="{item}">
                              <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                             <span v-else>
-                                {{ item.interests.database ? item.interests.database.value : '-' }}
+                                {{ item.interests.database ? formatInteger(item.interests.database) : '-' }}
                             </span>
                         </template>
                         <template v-slot:item.sushi_credentials_count="{item}">
@@ -102,6 +108,7 @@ cs:
   import { mapActions, mapGetters, mapState } from 'vuex'
   import axios from 'axios'
   import PlatformSelectionWidget from './PlatformSelectionWidget'
+  import {formatInteger} from '../libs/numbers'
 
   export default {
     name: 'PlatformListPage',
@@ -143,13 +150,13 @@ cs:
           },
           {
             text: this.$i18n.t('interests.title'),
-            value: 'interests.title.value',
+            value: 'interests.title',
             class: 'wrap text-xs-right',
             align: 'right',
           },
           {
             text: this.$i18n.t('interests.database'),
-            value: 'interests.database.value',
+            value: 'interests.database',
             class: 'wrap text-xs-right',
             align: 'right',
           },
@@ -159,22 +166,25 @@ cs:
             sortable: false,
           },
         ]
+      },
+      platformsURL () {
+        return `/api/organization/${this.selectedOrganizationId}/platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+      },
+      platformInterestURL () {
+        return `/api/organization/${this.selectedOrganizationId}/platform-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
       }
     },
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      platformsURL (detail = false) {
-        let subUrl = detail ? 'detailed-platform' : 'platform'
-        return `/api/organization/${this.selectedOrganizationId}/${subUrl}/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
-      },
+      formatInteger: formatInteger,
       async loadPlatforms () {
         if (this.selectedOrganizationId) {
           this.loading = true
           try {
-            let response = await axios.get(this.platformsURL())
-            this.platforms = response.data.map(item => {item.interests = {title: null, database: null, loading: true}; return item})
+            let response = await axios.get(this.platformsURL)
+            this.platforms = response.data.map(item => {item.interests = {title: null, database: null, loading: true}; item.title_count = 'loading'; return item})
             this.loadPlatformDetails()
             this.loadPlatformSushiCounts()
           } catch (error) {
@@ -186,17 +196,19 @@ cs:
       },
       async loadPlatformDetails () {
         try {
-          let response = await axios.get(this.platformsURL(true))
+          let response = await axios.get(this.platformInterestURL)
           let pkToRow = {}
           for (let row of response.data) {
-            pkToRow[row.pk] = row
+            pkToRow[row.platform] = row
           }
           for (let platform of this.platforms) {
             let newData = pkToRow[platform.pk]
             if (newData) {
-              platform.interests = newData.interests
+              this.$set(platform, 'interests', newData)
+              platform.title_count = newData.title_count
             } else {
               platform.interests = {title: null, database: null}
+              platform.title_count = null
             }
           }
         } catch (error) {
