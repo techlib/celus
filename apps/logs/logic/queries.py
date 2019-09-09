@@ -199,7 +199,7 @@ class StatsComputer(object):
             if isinstance(report_type, ReportType):
                 query_params = {'report_type': report_type, 'metric__active': True}
             else:
-                query_params = {}
+                query_params = {'metric__active': True}
         else:
             query_params = {'metric__active': True}
         # go over implicit dimensions and add them to the query if GET params are given for this

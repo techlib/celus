@@ -75,7 +75,7 @@
       },
       stack: {
         type: Boolean,
-        default: true,
+        default: false,
       },
       height: {default: '400px'},
       zoom: {

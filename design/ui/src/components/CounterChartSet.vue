@@ -44,7 +44,7 @@ cs:
                 :platform="platformId"
                 :title="titleId"
                 :extend="chartExtend"
-                :stack="this.selectedChartType.stack === undefined ? true : this.selectedChartType.stack"
+                :stack="this.selectedChartType.stack === undefined ? this.selectedChartType.chart_type === 'h-bar' : this.selectedChartType.stack"
                 :order-by="this.selectedChartType.ordering"
         >
         </APIChart>
