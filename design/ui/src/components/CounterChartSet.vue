@@ -159,7 +159,7 @@ cs:
         if (url) {
           try {
             const response = await axios.get(url)
-            this.virtualReportTypes = response.data.map(item => {item.dimensions_sorted = []; return item})
+            this.virtualReportTypes = response.data.map(item => {item.dimensions_sorted = []; item.virtual=true; return item})
           } catch (error) {
             console.log("ERROR: ", error)
             this.showSnackbar({content: 'Error loading title: ' + error})
