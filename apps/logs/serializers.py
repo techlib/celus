@@ -74,7 +74,6 @@ class ReportTypeSerializer(ModelSerializer):
     log_count = IntegerField(read_only=True)
     newest_log = DateField(read_only=True)
     oldest_log = DateField(read_only=True)
-    interest_groups = BooleanField(read_only=True)
     public = BooleanField(default=False)
     dimensions = PrimaryKeyRelatedField(read_only=False, queryset=Dimension.objects.all(),
                                         many=True, write_only=True)
@@ -82,8 +81,7 @@ class ReportTypeSerializer(ModelSerializer):
     class Meta:
         model = ReportType
         fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'desc', 'dimensions_sorted',
-                  'log_count', 'newest_log', 'oldest_log', 'public', 'interest_groups',
-                  'dimensions')
+                  'log_count', 'newest_log', 'oldest_log', 'public', 'dimensions')
 
     def create(self, validated_data):
         if not validated_data['public']:

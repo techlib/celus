@@ -190,8 +190,6 @@ class BaseReportTypeViewSet(ReadOnlyModelViewSet):
             annotate(log_count=Count('accesslog__value', filter=access_log_filter),
                      newest_log=Max('accesslog__date', filter=access_log_filter),
                      oldest_log=Min('accesslog__date', filter=access_log_filter),
-                     interest_groups=Count('accesslog__metric__interest_group', distinct=True,
-                                           filter=access_log_filter),
                      ).\
             filter(log_count__gt=0).order_by('-newest_log')
         return report_types
@@ -316,8 +314,7 @@ class TitleCountsViewSet(ReadOnlyModelViewSet):
         org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
                                                      self.request.user)
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
-        return Title.objects.filter(accesslog__metric__interest_group__isnull=False,
-                                    **extend_query_filter(org_filter, 'accesslog__'),
+        return Title.objects.filter(**extend_query_filter(org_filter, 'accesslog__'),
                                     **date_filter_params).\
             distinct().annotate(interest=Sum('accesslog__value'))
 

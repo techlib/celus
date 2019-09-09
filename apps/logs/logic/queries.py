@@ -13,26 +13,6 @@ from logs.models import InterestGroup, AccessLog, ReportType, Dimension, Dimensi
     ReportDataView
 
 
-def interest_group_to_annot_name(ig: InterestGroup) -> str:
-    return f'interest_{ig.pk}'
-
-
-def interest_group_annotation_params(interest_groups: Iterable[InterestGroup],
-                                     accesslog_filter: dict) -> dict:
-    """
-    :param interest_groups: list or queryset of interest groups
-    :param accesslog_filter: filter to apply to all access logs in the summation
-    :return:
-    """
-    interest_annot_params = {
-        interest_group_to_annot_name(interest):
-            Sum('accesslog__value',
-                filter=Q(accesslog__metric__interest_group_id=interest.pk, **accesslog_filter))
-        for interest in interest_groups
-    }
-    return interest_annot_params
-
-
 def interest_value_to_annot_name(dt: DimensionText) -> str:
     return f'interest_{dt.pk}'
 
