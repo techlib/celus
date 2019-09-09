@@ -87,9 +87,6 @@
         default: false,
       },
       orderBy: {},
-      virtual: {
-        type: Boolean,  // is the report type virtual?
-      }
     },
     data () {
       return {
@@ -124,8 +121,6 @@
           url += `&target=${this.title}`
         if (this.importBatch)
           url += `&import_batch=${this.importBatch}`
-        if (this.virtual)
-          url += `&virtual=true`
         return url
       },
       columns () {

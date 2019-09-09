@@ -6,10 +6,11 @@ from . import models
 @admin.register(models.ReportDataView)
 class ReportDataViewAdmin(admin.ModelAdmin):
 
-    list_display = ['short_name', 'name', 'source', 'primary_dimension', 'filters',
-                    'metric_allowed_values']
-    ordering = ['short_name']
+    list_display = ['short_name', 'name', 'position', 'is_standard_view', 'source',
+                    'primary_dimension', 'filters', 'metric_allowed_values']
+    ordering = ['position']
     list_filter = ['source']
+    list_editable = ['position', 'is_standard_view']
 
     @classmethod
     def filters(cls, obj: models.ReportDataView):
@@ -21,3 +22,18 @@ class ReportDataViewAdmin(admin.ModelAdmin):
 class DimensionFilterAdmin(admin.ModelAdmin):
 
     list_display = ['report_data_view', 'dimension', 'allowed_values']
+
+
+@admin.register(models.ChartDefinition)
+class ChartDefinitionAdmin(admin.ModelAdmin):
+
+    list_display = ['name', 'desc', 'primary_dimension', 'primary_implicit_dimension',
+                    'secondary_dimension', 'secondary_implicit_dimension', 'chart_type']
+
+
+@admin.register(models.ReportViewToChartType)
+class ReportViewToChartTypeAdmin(admin.ModelAdmin):
+
+    list_display = ['report_data_view', 'chart_definition', 'position']
+    list_editable = ['position']
+

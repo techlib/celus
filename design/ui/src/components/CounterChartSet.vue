@@ -14,17 +14,14 @@ cs:
     <v-layout column>
         <v-flex>
             <v-select
-                    :items="reportTypesForSelect"
+                    :items="reportViewsForSelect"
                     item-text="name"
-                    v-model="selectedReportTypeObject"
+                    v-model="selectedReportView"
                     :label="$t('available_report_types')"
                     :return-object="true"
             >
                 <template v-slot:item="{item}">
-                    <v-list-item-content v-if="item.header" v-text="item.header">
-                        <v-list-item-title v-html="item.header"></v-list-item-title>
-                    </v-list-item-content>
-                    <v-list-item-content v-else>
+                    <v-list-item-content>
                         <v-list-item-title v-html="item.name"></v-list-item-title>
                         <v-list-item-subtitle v-if="item.desc" v-html="item.desc"></v-list-item-subtitle>
                     </v-list-item-content>
@@ -34,28 +31,29 @@ cs:
 
         <v-flex class="mt-3 mb-3">
             <ChartTypeSelector
-                    :extra-chart-types="extraChartTypes"
-                    :report-type="selectedReportTypeObject"
+                    :report-type="selectedReportView"
                     v-model="selectedChartType"/>
         </v-flex>
         <APIChart
-                v-if="selectedReportType && selectedChartType"
-                :type="selectedChartType.type === undefined ? 'histogram' : selectedChartType.type"
-                :report-type-id="selectedChartType.reportType === null ? null : selectedReportType"
-                :primary-dimension="selectedChartType.primary"
-                :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
+                v-if="selectedReportView && selectedChartType"
+                :type="typeOfChart"
+                :report-type-id="selectedChartType.reportType === null ? null : selectedReportView.pk"
+                :primary-dimension="primaryDimension"
+                :secondary-dimension="secondaryDimension"
                 :organization="organizationForChart"
                 :platform="platformId"
                 :title="titleId"
                 :extend="chartExtend"
                 :stack="this.selectedChartType.stack === undefined ? true : this.selectedChartType.stack"
-                :order-by="this.selectedChartType.orderBy === undefined ? null : this.selectedChartType.orderBy"
-                :virtual="selectedReportTypeObject.virtual"
+                :order-by="this.selectedChartType.ordering"
         >
         </APIChart>
-        <div v-else>
-                {{ $t('no_reports_available_for_title') }}
-        </div>
+        <v-alert v-else-if="selectedReportView" type="warning" border="right" colored-border>
+            {{ $t('no_chart_types_available') }}
+        </v-alert>
+        <v-alert v-else type="warning" border="right" colored-border>
+            {{ $t('no_reports_available_for_title') }}
+        </v-alert>
     </v-layout>
 </template>
 <script>
@@ -71,18 +69,12 @@ cs:
       chartExtend: {},
       platformId: {},
       titleId: {},
-      reportTypesUrl: {},
-      virtualReportTypesUrl: {},
-      extraChartTypes: {
-        default: () => [],
-      }
+      reportViewsUrl: {},
     },
     data () {
       return {
-        chartTypeIndex: 0,
-        reportTypes: [], // report types available for this title
-        virtualReportTypes: [],
-        selectedReportTypeObject: null,
+        reportViews: [],
+        selectedReportView: null,
         selectedChartType: null,
       }
     },
@@ -99,7 +91,7 @@ cs:
         /* which organization should be reported to the APIChart component
         * - in case we want to compare organizations, we should not add organization to
         * the filter */
-        if (this.selectedChartType.primary === 'organization') {
+        if (this.selectedChartType && this.selectedChartType.ignore_organization) {
           return null
         }
         if (this.selectedOrganizationId === -1) {
@@ -107,46 +99,69 @@ cs:
         }
         return this.selectedOrganizationId
       },
-      selectedReportType () {
-        if (this.selectedReportTypeObject)
-          return this.selectedReportTypeObject.pk
-        return null
-      },
-      reportTypesForSelect () {
+      reportViewsForSelect () {
         let out = []
-        if (this.virtualReportTypes.length > 0) {
-          out.push({'header': this.$t('standard_views')})
-          out = out.concat(this.virtualReportTypes)
+        let standard = this.reportViews.filter(item => item.is_standard_view)
+        let other = this.reportViews.filter(item => !item.is_standard_view)
+        if (standard.length) {
+          out.push({'header': this.$t('standard_views'), backgroundColor: 'blue'})
+          out = out.concat(standard)
         }
-        if (this.reportTypes.length > 0) {
+        if (other.length) {
+          if (out.length) {
+            out.push({'divider': true})  // add divider between standard and custom
+          }
           out.push({'header': this.$t('customizable_views')})
-          out = out.concat(this.reportTypes)
+          out = out.concat(other)
         }
         return out
+      },
+      primaryDimension () {
+        if (this.selectedChartType) {
+          if (this.selectedChartType.primary_implicit_dimension) {
+            return this.selectedChartType.primary_implicit_dimension
+          } else if (this.selectedChartType.primary_dimension) {
+            return this.selectedChartType.primary_dimension.short_name
+          }
+        }
+        return null
+      },
+      secondaryDimension () {
+        if (this.selectedChartType) {
+          if (this.selectedChartType.secondary_implicit_dimension) {
+            return this.selectedChartType.secondary_implicit_dimension
+          } else if (this.selectedChartType.secondary_dimension) {
+            return this.selectedChartType.secondary_dimension.short_name
+          }
+        }
+        return null
+      },
+      typeOfChart () {
+        if (this.selectedChartType) {
+          if (this.selectedChartType.chart_type === 'v-bar')
+            return 'histogram'
+          else if (this.selectedChartType.chart_type === 'h-bar')
+            return 'bar'
+          else
+            return 'line'
+        }
+        return null
       }
+
     },
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      async loadReportTypes () {
-        let url = this.reportTypesUrl
+      async loadReportViews () {
+        let url = this.reportViewsUrl
         if (url) {
           try {
             const response = await axios.get(url)
-            this.reportTypes = response.data
-            if (this.reportTypes.filter(item => item.interest_groups).length > 0) {
-              // there is at least one report defining interest, we add the 'Interest' option
-              // and select it
-              this.reportTypes.unshift({
-                name: this.lang === 'cs' ? 'Souhrnný zájem' : 'Aggregated interest',
-                pk: -1,
-                dimensions_sorted: [],
-                interest_only: true
-              })
-              this.selectedReportTypeObject = this.reportTypes[0]
-            } else {
-              this.selectFreshestReportType()
+            this.reportViews = response.data
+            if (this.reportViewsForSelect.length > 1) {
+              // if there is something, [0] is header, [1] is actuall reportView
+              this.selectedReportView = this.reportViewsForSelect[1]
             }
           } catch (error) {
             console.log("ERROR: ", error)
@@ -154,50 +169,19 @@ cs:
           }
         }
       },
-      async loadVirtualReportTypes () {
-        let url = this.virtualReportTypesUrl
-        if (url) {
-          try {
-            const response = await axios.get(url)
-            this.virtualReportTypes = response.data.map(item => {item.dimensions_sorted = []; item.virtual=true; return item})
-          } catch (error) {
-            console.log("ERROR: ", error)
-            this.showSnackbar({content: 'Error loading title: ' + error})
-          }
-        }
-      },
-      selectFreshestReportType () {
-        // selects the reportType that has the newest data but at the same time
-        // is contained within the selected time period, so that it would not happen
-        // that we would show an empty chart
-        let bestReportType = null
-        // select the freshest from those that overlap with current date selection
-        for (let rt of this.reportTypes) {
-          if ((bestReportType === null || rt.newest_log > bestReportType.newest_log) &&
-              rt.oldest_log < this.dateRangeEndText &&
-              rt.newest_log > this.dateRangeStartText) {
-            bestReportType = rt
-          }
-        }
-        // if nothing was selected and there are some reports, select the first one
-        if (bestReportType === null && this.reportTypes.length > 0) {
-          bestReportType = this.reportTypes[0]
-        }
-        if (bestReportType) {
-          this.selectedReportTypeObject = bestReportType
-        } else {
-          this.selectedReportTypeObject = null
-        }
-      }
-    },
-    watch: {
-      selectedReportTypeObject () {
-        this.chartTypeIndex = 0
-      },
     },
     mounted () {
-      this.loadReportTypes()
-      this.loadVirtualReportTypes()
+      this.loadReportViews()
     }
   }
 </script>
+
+<style lang="scss">
+
+    .v-select-list {
+        .v-subheader {
+            background-color: #ededed;
+        }
+    }
+
+</style>

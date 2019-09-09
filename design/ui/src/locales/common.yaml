@@ -67,7 +67,8 @@ en:
     title: Title / database
     metric: Metric
     accesslog_count: Log count
-  no_reports_available_for_title: No reports available for this title
+  no_reports_available_for_title: No reports are available
+  no_chart_types_available: There are no charts available for this report type
   available_report_types: Available report types
   interests:
     title: Interest in titles
@@ -148,7 +149,8 @@ cs:
     title: Titul / databáze
     metric: Metrika
     accesslog_count: Počet záznamů
-  no_reports_available_for_title: Pro tento titul nejsou dostupné žádné zprávy
+  no_reports_available_for_title: Nejsou dostupné žádné zprávy
+  no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Dostupné typy zpráv
   interests:
     title: Zájem o tituly

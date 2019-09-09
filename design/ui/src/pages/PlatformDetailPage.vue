@@ -96,8 +96,7 @@
             <CounterChartSet
                     :platform-id="platformId"
                     :title-id="null"
-                    :report-types-url="reportTypesUrl"
-                    :virtual-report-types-url="virtualReportTypesUrl"
+                    :report-views-url="reportViewsUrl"
             >
             </CounterChartSet>
         </section>
@@ -149,13 +148,7 @@
         }
         return null
       },
-      reportTypesUrl () {
-        if (this.selectedOrganizationId && this.platformId) {
-            return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/reports/`
-        }
-        return null
-      },
-      virtualReportTypesUrl () {
+      reportViewsUrl () {
         if (this.selectedOrganizationId && this.platformId) {
             return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/report-views/`
         }
