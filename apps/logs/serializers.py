@@ -8,7 +8,7 @@ from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenFi
 
 from core.models import DataSource
 from core.serializers import UserSerializer
-from logs.models import AccessLog, ImportBatch, ReportTypeToDimension, VirtualReportType
+from logs.models import AccessLog, ImportBatch, ReportTypeToDimension, ReportDataView
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer
@@ -127,13 +127,13 @@ class ReportTypeSerializer(ModelSerializer):
         return result
 
 
-class VirtualReportTypeSerializer(ModelSerializer):
+class ReportDataViewSerializer(ModelSerializer):
 
     public = BooleanField(default=False)
     primary_dimension = DimensionSerializer(read_only=True)
 
     class Meta:
-        model = VirtualReportType
+        model = ReportDataView
         fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'desc', 'public',
                   'primary_dimension')
 

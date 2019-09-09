@@ -69,7 +69,15 @@ class ReportType(models.Model):
         return self.source is None
 
 
-class VirtualReportType(models.Model):
+class ReportDataView(models.Model):
+
+    """
+    A view of the report type - it is used to expose a report type filtered in some way.
+    This is the default object to be used to obtain data for charts.
+    In the most trivial case, it does not do anything, just proxies the underlying report
+    data.
+    It is also the point which is used to attach chart params to the report
+    """
 
     base_report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     short_name = models.CharField(max_length=100)
@@ -119,10 +127,10 @@ class VirtualReportType(models.Model):
 class DimensionFilter(models.Model):
 
     """
-    Used to specify how data from one dimension in VirtualReportType should be filtered
+    Used to specify how data from one dimension in ReportDataView should be filtered
     """
 
-    virtual_report_type = models.ForeignKey(VirtualReportType, on_delete=models.CASCADE,
+    virtual_report_type = models.ForeignKey(ReportDataView, on_delete=models.CASCADE,
                                             related_name='dimension_filters')
     dimension = models.ForeignKey('Dimension', on_delete=models.CASCADE)
     allowed_values = JSONField(default=list, blank=True)
@@ -155,14 +163,6 @@ class Metric(models.Model):
     desc = models.TextField(blank=True)
     active = models.BooleanField(default=True,
                                  help_text='Only active metrics are reported to users')
-    interest_group = models.ForeignKey(
-        InterestGroup, null=True, blank=True, on_delete=models.SET_NULL,
-        help_text='If given, it marks the metric as representing interest of the specified type'
-    )
-    name_in_interest_group = models.CharField(
-        max_length=250, blank=True,
-        help_text='How is the metric called when interest sub-series are shown'
-    )
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:

@@ -25,7 +25,7 @@ class ReportTypeAdmin(admin.ModelAdmin):
 @admin.register(models.Metric)
 class MetricAdmin(admin.ModelAdmin):
 
-    list_display = ['short_name', 'active', 'name', 'interest_group', 'name_in_interest_group']
+    list_display = ['short_name', 'active', 'name']
     list_editable = ['active']
 
 
@@ -93,7 +93,7 @@ class ImportBatchAdmin(admin.ModelAdmin):
     #     return qs.annotate(log_count=Count('accesslog'))
 
 
-@admin.register(models.VirtualReportType)
+@admin.register(models.ReportDataView)
 class VirtualReportTypeAdmin(admin.ModelAdmin):
 
     list_display = ['short_name', 'name', 'source', 'primary_dimension', 'filters',
@@ -102,7 +102,7 @@ class VirtualReportTypeAdmin(admin.ModelAdmin):
     list_filter = ['source']
 
     @classmethod
-    def filters(cls, obj: models.VirtualReportType):
+    def filters(cls, obj: models.ReportDataView):
         return '; '.join(f'{df.dimension.short_name}: {df.allowed_values}'
                          for df in obj.dimension_filters.all())
 

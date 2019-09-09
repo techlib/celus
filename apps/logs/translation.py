@@ -1,6 +1,6 @@
 from modeltranslation.translator import translator, TranslationOptions
 from .models import DimensionText, Metric, ReportType, Dimension, InterestGroup, \
-    ReportInterestMetric, VirtualReportType
+    ReportInterestMetric, ReportDataView
 
 
 class ReportTypeTranslationOptions(TranslationOptions):
@@ -16,8 +16,7 @@ class InterestGroupTranslationOptions(TranslationOptions):
 
 
 class MetricTranslationOptions(TranslationOptions):
-    fields = ('name', 'desc', 'name_in_interest_group')
-
+    fields = ('name', 'desc')
 
 class ReportInterestMetricTranslationOptions(TranslationOptions):
     fields = ('name',)
@@ -37,4 +36,4 @@ translator.register(DimensionText, DimensionTextTranslationOptions)
 translator.register(InterestGroup, InterestGroupTranslationOptions)
 translator.register(Metric, MetricTranslationOptions)
 translator.register(ReportInterestMetric, ReportInterestMetricTranslationOptions)
-translator.register(VirtualReportType, VirtualReportTypeTranslationOptions)
+translator.register(ReportDataView, VirtualReportTypeTranslationOptions)

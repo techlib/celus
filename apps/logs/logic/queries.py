@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
 from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText, \
-    VirtualReportType
+    ReportDataView
 
 
 def interest_group_to_annot_name(ig: InterestGroup) -> str:
@@ -128,7 +128,7 @@ class StatsComputer(object):
             return dim_name, cls.input_dim_to_query_dim[dim_name], None
         if dim_name in cls.implicit_dims:
             return dim_name, dim_name, None
-        if isinstance(report_type, VirtualReportType):
+        if isinstance(report_type, ReportDataView):
             report_type = report_type.base_report_type
         dimensions = report_type.dimensions_sorted
         for dim_idx, dimension in enumerate(dimensions):
@@ -255,7 +255,7 @@ class StatsComputer(object):
         # add filter for dates
         query_params.update(date_filter_from_params(params))
         # create the base query
-        if report_type and isinstance(report_type, VirtualReportType):
+        if report_type and isinstance(report_type, ReportDataView):
             query = report_type.logdata_qs().filter(**query_params)
         else:
             query = AccessLog.objects.filter(**query_params)

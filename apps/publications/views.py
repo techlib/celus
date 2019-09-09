@@ -5,8 +5,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 
 from core.logic.dates import date_filter_from_params
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
-from logs.models import ReportType, VirtualReportType, AccessLog
-from logs.serializers import ReportTypeSerializer, VirtualReportTypeSerializer
+from logs.models import ReportType, ReportDataView, AccessLog
+from logs.serializers import ReportTypeSerializer, ReportDataViewSerializer
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer
@@ -230,12 +230,12 @@ class PlatformTitleReportTypeViewSet(BaseReportTypeViewSet):
         return {'accesslog__target': title, 'accesslog__platform': platform}
 
 
-class BaseVirtualReportTypeViewSet(ReadOnlyModelViewSet):
+class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
     """
     Provides a list of virtual report types
     """
 
-    serializer_class = VirtualReportTypeSerializer
+    serializer_class = ReportDataViewSerializer
 
     def _extra_filters(self, org_filter):
         return {}
@@ -245,14 +245,14 @@ class BaseVirtualReportTypeViewSet(ReadOnlyModelViewSet):
                                                      self.request.user)
         access_log_filter = Q(**extend_query_filter(org_filter, 'base_report_type__accesslog__'),
                               **self._extra_filters(org_filter))
-        report_types = VirtualReportType.objects.filter(access_log_filter).\
+        report_types = ReportDataView.objects.filter(access_log_filter).\
             annotate(log_count=Count('base_report_type__accesslog__value',
                                      filter=access_log_filter)
                      ) # .filter(log_count__gt=0)
         return report_types
 
 
-class TitleVirtualReportTypeViewSet(BaseVirtualReportTypeViewSet):
+class TitleReportDataViewViewSet(BaseReportDataViewViewSet):
     """
     Provides a list of report types for specific title for specific organization
     """
@@ -262,7 +262,7 @@ class TitleVirtualReportTypeViewSet(BaseVirtualReportTypeViewSet):
         return {'base_report_type__accesslog__target': title}
 
 
-class PlatformVirtualReportTypeViewSet(BaseVirtualReportTypeViewSet):
+class PlatformReportDateViewViewSet(BaseReportDataViewViewSet):
     """
     Provides a list of report types for specific organization and platform
     """
@@ -273,7 +273,7 @@ class PlatformVirtualReportTypeViewSet(BaseVirtualReportTypeViewSet):
         return {'base_report_type__accesslog__platform': platform}
 
 
-class PlatformTitleVirtualReportTypeViewSet(BaseVirtualReportTypeViewSet):
+class PlatformTitleReportDataViewViewSet(BaseReportDataViewViewSet):
     """
     Provides a list of report types for specific title for specific organization and platform
     """

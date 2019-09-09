@@ -157,7 +157,7 @@
       },
       virtualReportTypesUrl () {
         if (this.selectedOrganizationId && this.platformId) {
-            return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/virtual-reports/`
+            return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/report-views/`
         }
         return null
       },

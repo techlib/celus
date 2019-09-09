@@ -179,11 +179,10 @@
       virtualReportTypesUrl () {
         if (this.selectedOrganization && this.titleId) {
           if (this.platformId) {
-            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/virtual-reports/`
+            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/report-views/`
           } else {
             // this is the case when no platform is specified
-            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/virtual-reports/`
-          }
+            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/report-views/`          }
         }
         return null
       },
