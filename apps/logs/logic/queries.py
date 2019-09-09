@@ -7,10 +7,10 @@ from django.db import models
 from django.db.models import Sum, Q
 from django.shortcuts import get_object_or_404
 
+from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
-from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText, \
-    ReportDataView
+from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText
 
 
 def interest_value_to_annot_name(dt: DimensionText) -> str:

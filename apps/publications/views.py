@@ -3,10 +3,12 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 
+from charts.models import ReportDataView
+from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
-from logs.models import ReportType, ReportDataView, AccessLog
-from logs.serializers import ReportTypeSerializer, ReportDataViewSerializer
+from logs.models import ReportType, AccessLog
+from logs.serializers import ReportTypeSerializer
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer

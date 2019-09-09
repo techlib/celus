@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
+from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from core.models import DataSource
 from logs.logic.custom_import import custom_data_import_precheck, custom_data_to_records, \
@@ -19,7 +20,7 @@ from logs.logic.custom_import import custom_data_import_precheck, custom_data_to
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
-    ManualDataUpload, ReportDataView
+    ManualDataUpload
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
     ManualDataUploadSerializer

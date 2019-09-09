@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'logs.apps.LogsConfig',
     'organizations.apps.OrganizationsConfig',
     'sushi.apps.SushiConfig',
+    'charts.apps.ChartsConfig',
     'rest_pandas',
 ]
 
