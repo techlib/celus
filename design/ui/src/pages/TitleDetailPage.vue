@@ -61,9 +61,7 @@
                     :chart-extend="chartExtend"
                     :platform-id="platformId"
                     :title-id="titleId"
-                    :report-types-url="reportTypesUrl"
-                    :extra-chart-types="extraChartTypes"
-                    :virtual-report-types-url="virtualReportTypesUrl"
+                    :report-views-url="reportViewsUrl"
             >
             </CounterChartSet>
         </section>
@@ -157,32 +155,22 @@
       titleUrl () {
         if (this.selectedOrganization && this.titleId) {
           if (this.platformId) {
-            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}`
+            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/`
           } else {
             // this is the case when no platform is specified
-            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}`
+            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/`
           }
         }
         return null
       },
-      reportTypesUrl () {
-        if (this.selectedOrganization && this.titleId) {
-          if (this.platformId) {
-            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/reports/`
-          } else {
-            // this is the case when no platform is specified
-            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/reports/`
-          }
-        }
-        return null
-      },
-      virtualReportTypesUrl () {
+      reportViewsUrl () {
         if (this.selectedOrganization && this.titleId) {
           if (this.platformId) {
             return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/report-views/`
           } else {
             // this is the case when no platform is specified
-            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/report-views/`          }
+            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/report-views/`
+          }
         }
         return null
       },
