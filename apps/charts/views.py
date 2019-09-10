@@ -7,7 +7,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from charts.models import ChartDefinition
 from charts.models import ReportDataView
-from charts.serializers import ChartDefinitionSerializer
+from charts.serializers import ChartDefinitionSerializer, ReportDataViewSerializer
 from logs.logic.queries import StatsComputer
 from logs.models import ReportType
 from logs.serializers import DimensionSerializer
@@ -18,6 +18,13 @@ class ChartDefinitionViewSet(ReadOnlyModelViewSet):
 
     queryset = ChartDefinition.objects.all()
     serializer_class = ChartDefinitionSerializer
+
+
+class ReportTypeToReportDataViewView(APIView):
+
+    def get(self, request, report_type_pk):
+        rdvs = ReportDataView.objects.filter(base_report_type_id=report_type_pk)
+        return Response(ReportDataViewSerializer(rdvs, many=True).data)
 
 
 class ReportDataViewChartDefinitions(APIView):

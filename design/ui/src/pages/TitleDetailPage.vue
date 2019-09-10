@@ -58,7 +58,6 @@
             </v-layout>
 
             <CounterChartSet
-                    :chart-extend="chartExtend"
                     :platform-id="platformId"
                     :title-id="titleId"
                     :report-views-url="reportViewsUrl"
@@ -97,14 +96,6 @@
       ...mapGetters({
         selectedOrganization: 'selectedOrganization',
       }),
-      extraChartTypes () {
-        let base = []
-        // if platform is not specified for the title, then we can show the split by platform
-        if (this.platformId === null) {
-          base.push({name: this.$i18n.t('chart.platform'), primary: 'platform'})
-        }
-        return base
-      },
       isReady () {
         return this.selectedOrganization && this.titleId
       },
@@ -173,10 +164,6 @@
           }
         }
         return null
-      },
-      chartExtend () {
-        return {
-        }
       },
     },
     methods: {

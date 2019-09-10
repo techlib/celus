@@ -1,36 +1,28 @@
 <template>
-    <v-layout v-if="importBatch !== null" column>
-        <v-flex pb-4>
-            <ChartTypeSelector
-                    :report-type="importBatch.report_type"
-                    :allow-interest-charts="false"
-                    v-model="selectedChartType"/>
-        </v-flex>
-        <v-flex>
-            <APIChart
-                v-if="selectedChartType"
-                :type="selectedChartType.type === undefined ? 'histogram' : selectedChartType.type"
-                :report-type-id="selectedChartType.reportType === null ? null : importBatch.report_type.pk"
-                :primary-dimension="selectedChartType.primary"
-                :secondary-dimension="selectedChartType.secondary ? selectedChartType.secondary : null"
-                :platform="importBatch.platform.pk"
-                :stack="selectedChartType.stack === undefined ? true : selectedChartType.stack"
-                :order-by="selectedChartType.orderBy === undefined ? null : selectedChartType.orderBy"
-                :import-batch="importBatch.pk"
-                :ignore-date-range="true"
+<v-container>
+    <v-row>
+        <v-col>
+            <CounterChartSet
+                    v-if="importBatch"
+                    :platform-id="importBatch.platform.pk"
+                    :import-batch-id="importBatchId"
+                    :report-views-url="reportViewsUrl"
+                    ignore-organization
             />
-        </v-flex>
-</v-layout>
+        </v-col>
+    </v-row>
+</v-container>
 </template>
 
 <script>
   import ChartTypeSelector from './ChartTypeSelector'
   import APIChart from './APIChart'
+  import CounterChartSet from './CounterChartSet'
   import axios from 'axios'
   import {mapActions} from 'vuex'
   export default {
     name: "ImportBatchChart",
-    components: {APIChart, ChartTypeSelector},
+    components: {APIChart, ChartTypeSelector, CounterChartSet},
     props: {
       importBatchId: {required: true},
     },
@@ -38,6 +30,14 @@
       return {
         selectedChartType: null,
         importBatch: null,
+      }
+    },
+    computed: {
+      reportViewsUrl () {
+        if (this.importBatch) {
+          return `/api/report-type/${this.importBatch.report_type.pk}/report-views/`
+        }
+        return null
       }
     },
     methods: {
@@ -51,7 +51,7 @@
         } catch (error) {
           this.showSnackbar({content: 'Error loading batch details: ' + error})
         }
-      }
+      },
     },
     watch: {
       importBatchId () {

@@ -37,15 +37,16 @@ cs:
         <APIChart
                 v-if="selectedReportView && selectedChartType"
                 :type="typeOfChart"
-                :report-type-id="selectedChartType.reportType === null ? null : selectedReportView.pk"
+                :report-type-id="selectedReportView.pk"
                 :primary-dimension="primaryDimension"
                 :secondary-dimension="secondaryDimension"
                 :organization="organizationForChart"
                 :platform="platformId"
                 :title="titleId"
-                :extend="chartExtend"
+                :import-batch="importBatchId"
                 :stack="this.selectedChartType.stack === undefined ? this.selectedChartType.chart_type === 'h-bar' : this.selectedChartType.stack"
                 :order-by="this.selectedChartType.ordering"
+                :ignore-date-range="importBatchId !== null"
         >
         </APIChart>
         <v-alert v-else-if="selectedReportView" type="warning" border="right" colored-border>
@@ -66,10 +67,11 @@ cs:
     name: 'CounterChartSet',
     components: {APIChart, ChartTypeSelector},
     props: {
-      chartExtend: {},
       platformId: {},
       titleId: {},
       reportViewsUrl: {},
+      importBatchId: {},
+      ignoreOrganization: {type: Boolean, default: false}
     },
     data () {
       return {
@@ -91,6 +93,9 @@ cs:
         /* which organization should be reported to the APIChart component
         * - in case we want to compare organizations, we should not add organization to
         * the filter */
+        if (this.ignoreOrganization) {
+          return null
+        }
         if (this.selectedChartType && this.selectedChartType.ignore_organization) {
           return null
         }
