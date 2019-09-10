@@ -43,9 +43,7 @@ class ReportDataView(models.Model):
     def accesslog_filters(self):
         filters = {}
         if self.metric_allowed_values:
-            filters['metric__in'] = [metric.pk for metric in
-                                     Metric.objects.filter(
-                                         short_name__in=self.metric_allowed_values)]
+            filters['metric__short_name__in'] = self.metric_allowed_values
         dim_filters = {df.dimension.pk: df.allowed_values for df in self.dimension_filters.all()}
         for i, dim in enumerate(self.base_report_type.dimensions_sorted):
             if dim.pk in dim_filters:

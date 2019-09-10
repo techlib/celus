@@ -236,6 +236,8 @@ class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
     """
 
     serializer_class = ReportDataViewSerializer
+    # if we should do extra queries to ensure report views are really relevant
+    more_precise_results = True
 
     def _extra_filters(self, org_filter):
         return {}
@@ -243,13 +245,22 @@ class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
                                                      self.request.user)
+        extra_filters = self._extra_filters(org_filter)
         access_log_filter = Q(**extend_query_filter(org_filter, 'base_report_type__accesslog__'),
-                              **self._extra_filters(org_filter))
+                              **extend_query_filter(extra_filters, 'base_report_type__accesslog__')
+                              )
         report_types = ReportDataView.objects.filter(access_log_filter).\
             annotate(log_count=Count('base_report_type__accesslog__value',
                                      filter=access_log_filter)
-                     ) # .filter(log_count__gt=0)
-        return report_types
+                     ).filter(log_count__gt=0)
+        if self.more_precise_results:
+            report_types_clean = []
+            for rt in report_types:
+                if rt.logdata_qs().filter(**org_filter, **extra_filters).exists():
+                    report_types_clean.append(rt)
+            return report_types_clean
+        else:
+            return report_types
 
 
 class TitleReportDataViewViewSet(BaseReportDataViewViewSet):
@@ -259,7 +270,7 @@ class TitleReportDataViewViewSet(BaseReportDataViewViewSet):
 
     def _extra_filters(self, org_filter):
         title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
-        return {'base_report_type__accesslog__target': title}
+        return {'target': title}
 
 
 class PlatformReportDateViewViewSet(BaseReportDataViewViewSet):
@@ -270,7 +281,7 @@ class PlatformReportDateViewViewSet(BaseReportDataViewViewSet):
     def _extra_filters(self, org_filter):
         platform = get_object_or_404(Platform.objects.filter(**org_filter),
                                      pk=self.kwargs['platform_pk'])
-        return {'base_report_type__accesslog__platform': platform}
+        return {'platform': platform}
 
 
 class PlatformTitleReportDataViewViewSet(BaseReportDataViewViewSet):
@@ -282,8 +293,7 @@ class PlatformTitleReportDataViewViewSet(BaseReportDataViewViewSet):
         platform = get_object_or_404(Platform.objects.filter(**org_filter),
                                      pk=self.kwargs['platform_pk'])
         title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
-        return {'base_report_type__accesslog__target': title,
-                'base_report_type__accesslog__platform': platform}
+        return {'target': title, 'platform': platform}
 
 
 class TitleViewSet(ReadOnlyModelViewSet):
