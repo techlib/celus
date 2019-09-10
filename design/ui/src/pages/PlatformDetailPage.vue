@@ -144,7 +144,7 @@
       }),
       titleListURL () {
         if (this.platform !== null) {
-          return `/api/organization/${this.selectedOrganizationId}/platform/${this.platform.pk}/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+          return `/api/organization/${this.selectedOrganizationId}/platform/${this.platform.pk}/title-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         }
         return null
       },

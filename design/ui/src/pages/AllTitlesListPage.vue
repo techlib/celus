@@ -35,7 +35,7 @@
         selectedOrganizationId: 'selectedOrganizationId',
       }),
       titleListURL () {
-        return `/api/organization/${this.selectedOrganizationId}/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        return `/api/organization/${this.selectedOrganizationId}/title-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
       },
     },
     methods: {

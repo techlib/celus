@@ -15,7 +15,7 @@ org_sub_router.register(r'detailed-platform', views.DetailedPlatformViewSet,
 org_sub_router.register(r'platform-interest', views.PlatformInterestViewSet,
                         basename='platform-interest')
 org_sub_router.register('title', views.TitleViewSet, basename='title')
-org_sub_router.register(r'title-count', views.TitleCountsViewSet, basename='title-count')
+org_sub_router.register(r'title-interest', views.TitleInterestViewSet, basename='title-interest')
 
 org_sub_router.register(r'dimensions', CustomDimensionsViewSet,
                         basename='organization-dimensions')
@@ -33,8 +33,8 @@ title_sub_router.register('report-views', views.TitleReportDataViewViewSet,
 
 platform_sub_router = NestedSimpleRouter(org_sub_router, r'platform', lookup='platform')
 platform_sub_router.register('title', views.PlatformTitleViewSet, basename='platform-title')
-platform_sub_router.register('title-count', views.PlatformTitleCountsViewSet,
-                             basename='platform-title-count')
+platform_sub_router.register('title-interest', views.PlatformTitleInterestViewSet,
+                             basename='platform-title-interest')
 platform_sub_router.register('reports', views.PlatformReportTypeViewSet,
                              basename='platform-reports')
 platform_sub_router.register('report-views', views.PlatformReportDateViewViewSet,

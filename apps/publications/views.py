@@ -164,7 +164,7 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
         return result
 
 
-class PlatformTitleCountsViewSet(PlatformTitleViewSet):
+class PlatformTitleInterestViewSet(PlatformTitleViewSet):
 
     serializer_class = TitleCountSerializer
 
@@ -313,7 +313,7 @@ class TitleViewSet(ReadOnlyModelViewSet):
         return Title.objects.filter(**org_filter).distinct()
 
 
-class TitleCountsViewSet(ReadOnlyModelViewSet):
+class TitleInterestViewSet(ReadOnlyModelViewSet):
     """
     View for all titles for selected organization
     """
@@ -328,7 +328,8 @@ class TitleCountsViewSet(ReadOnlyModelViewSet):
         org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
                                                      self.request.user)
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
-        return Title.objects.filter(**extend_query_filter(org_filter, 'accesslog__'),
+        return Title.objects.filter(accesslog__report_type__short_name='interest',
+                                    **extend_query_filter(org_filter, 'accesslog__'),
                                     **date_filter_params).\
             distinct().annotate(interest=Sum('accesslog__value'))
 
