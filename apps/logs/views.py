@@ -180,8 +180,11 @@ class ManualDataUploadPreflightCheckView(APIView):
 
     def get(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
-        stats = custom_import_preflight_check(mdu)
-        return Response(stats)
+        try:
+            stats = custom_import_preflight_check(mdu)
+            return Response(stats)
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
 
 
 class ManualDataUploadProcessView(APIView):

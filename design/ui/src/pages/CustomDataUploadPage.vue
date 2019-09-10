@@ -19,6 +19,8 @@ en:
     import: Import
     thats_all: That is all. The data were imported.
     return_to_platform: Go to platform page
+    following_error_found: The following error was found when checking the imported data
+    back_to_start: Back to data upload
 
 cs:
     data_file: Datový soubor k nahrání
@@ -39,6 +41,8 @@ cs:
     import: Importovat
     thats_all: To je vše. Data byla úspěšně importována.
     return_to_platform: Přejít na stránku platformy
+    following_error_found: Při kontrole dat byla nalezena následující chyba
+    back_to_start: Zpět na nahrání dat
 </i18n>
 
 <template>
@@ -144,10 +148,15 @@ cs:
                                 </td>
                             </tr>
                         </table>
+                        <v-alert v-else-if="preflightError" type="error">
+                            <strong v-text="$t('following_error_found')"></strong>:
+                            <span v-text="preflightError"></span>
+                        </v-alert>
                         <LargeSpinner v-else />
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn @click="processUploadObject()">{{ $t('import') }}</v-btn>
+                        <v-btn v-if="preflightData && !preflightError" @click="processUploadObject()" color="primary">{{ $t('import') }}</v-btn>
+                        <v-btn @click="backToStart()" v-text="$t('back_to_start')" color="secondary"></v-btn>
                     </v-card-actions>
                 </v-card>
 
@@ -262,6 +271,7 @@ cs:
         step: 1,
         uploadObject: null,
         preflightData: null,
+        preflightError: null,
         importStats: null,
         importBatch: null,
         showAddReportTypeDialog: false,
@@ -334,7 +344,7 @@ cs:
       async loadPlatform () {
         if (this.organizationId) {
           try {
-            let response = await axios.get(`/api/organization/${this.organizationId}/platform/${this.platformId}/`)
+            let response = await axios.get(`/api/platform/${this.platformId}/`)
             this.platform = response.data
           } catch(error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})
@@ -361,8 +371,13 @@ cs:
           try {
             const response = await axios.get(url)
             this.preflightData = response.data
+            this.preflightError = null
           } catch (error) {
-            this.showSnackbar({content: 'Error loading preflight data: ' + error})
+            if (error.response && error.response.status === 400 && 'error' in error.response.data) {
+              this.preflightError = error.response.data.error
+            } else {
+              this.showSnackbar({content: 'Error loading preflight data: ' + error})
+            }
           }
         }
       },
@@ -400,6 +415,15 @@ cs:
         if (v === null)
           return 'File must be filled in'
         return true
+      },
+      async backToStart () {
+        this.uploadObject = null
+        await this.$router.replace({
+            name: 'platform-upload-data',
+            params: {
+              platformId: this.platformId,
+            }
+          })
       }
     },
     mounted () {

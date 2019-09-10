@@ -192,5 +192,4 @@ class ManualDataUploadSerializer(ModelSerializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        print(attrs)
         return attrs

@@ -49,10 +49,10 @@ cs:
                 :ignore-date-range="importBatchId !== null"
         >
         </APIChart>
-        <v-alert v-else-if="selectedReportView" type="warning" border="right" colored-border>
+        <v-alert v-else-if="selectedReportView" type="warning" border="right" colored-border elevation="2">
             {{ $t('no_chart_types_available') }}
         </v-alert>
-        <v-alert v-else type="warning" border="right" colored-border>
+        <v-alert v-else type="warning" border="right" colored-border elevation="2">
             {{ $t('no_reports_available_for_title') }}
         </v-alert>
     </v-layout>
