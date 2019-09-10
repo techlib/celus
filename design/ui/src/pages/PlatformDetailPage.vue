@@ -191,7 +191,9 @@
             this.$set(this.platform, 'interests', response.data)
             this.$set(this.platform, 'title_count', response.data.title_count)
           } catch(error) {
-              this.showSnackbar({content: 'Error loading platforms: '+error})
+            this.showSnackbar({content: 'Error loading platforms: '+error, color: 'error'})
+            this.$set(this.platform, 'interests', {loading: false})
+            this.$set(this.platform, 'title_count', null)
           }
         }
       },

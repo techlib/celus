@@ -11,8 +11,11 @@ cs:
 </i18n>
 
 <template>
-    <div v-if="loading" :style="{'height': '400px'}" id="loading">
-        <span class="fa fa-cog fa-spin fa-4x"></span>
+    <div v-if="loading" class="pt-2">
+        <v-progress-linear
+                indeterminate
+                color="secondary"
+        ></v-progress-linear>
     </div>
     <v-layout column v-else>
         <v-flex>
@@ -193,21 +196,6 @@ cs:
     .v-select-list {
         .v-subheader {
             background-color: #ededed;
-        }
-    }
-
-</style>
-
-<style scoped lang="scss">
-
-    #loading {
-        //background-color: white;
-        font-size: 32px;
-        color: #1db79a88;
-        text-align: center;
-
-        span {
-            margin-top: 160px;
         }
     }
 

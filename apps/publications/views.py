@@ -113,7 +113,9 @@ class PlatformInterestViewSet(ViewSet):
     def retrieve(self, request, organization_pk, pk):
         qs = self.get_queryset(request, organization_pk)
         data = qs.filter(platform_id=pk)
-        return Response(data[0])
+        if data:
+            return Response(data[0])
+        return Response({})
 
 
 class PlatformSushiCredentialsViewSet(ReadOnlyModelViewSet):
