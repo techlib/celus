@@ -73,8 +73,11 @@ class User(AbstractUser):
         if self.is_from_master_organization:
             # user is part of one of the master organizations - he should have access to all orgs
             return Organization.objects.all()
-        return Organization.objects.filter(
-            tree_id__in=self.organizations.all().values('tree_id').distinct())
+        return self.organizations.all() | Organization.objects.filter(
+            tree_id__in=self.organizations.all().filter(level=0).values('tree_id').distinct())
+        # the following is an old version where siblings could see each other
+        # return Organization.objects.filter(
+        #     tree_id__in=self.organizations.all().values('tree_id').distinct())
 
     @cached_property
     def is_from_master_organization(self):
