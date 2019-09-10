@@ -52,7 +52,7 @@ cs:
                 :import-batch="importBatchId"
                 :stack="this.selectedChartType.stack === undefined ? this.selectedChartType.chart_type === 'h-bar' : this.selectedChartType.stack"
                 :order-by="this.selectedChartType.ordering"
-                :ignore-date-range="importBatchId !== null"
+                :ignore-date-range="!!importBatchId"
         >
         </APIChart>
         <v-alert v-else-if="selectedReportView" type="warning" border="right" colored-border elevation="2">
