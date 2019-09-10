@@ -11,7 +11,10 @@ cs:
 </i18n>
 
 <template>
-    <v-layout column>
+    <div v-if="loading" :style="{'height': '400px'}" id="loading">
+        <span class="fa fa-cog fa-spin fa-4x"></span>
+    </div>
+    <v-layout column v-else>
         <v-flex>
             <v-select
                     :items="reportViewsForSelect"
@@ -78,6 +81,7 @@ cs:
         reportViews: [],
         selectedReportView: null,
         selectedChartType: null,
+        loading: false,
       }
     },
     computed: {
@@ -161,6 +165,7 @@ cs:
       async loadReportViews () {
         let url = this.reportViewsUrl
         if (url) {
+          this.loading = true
           try {
             const response = await axios.get(url)
             this.reportViews = response.data
@@ -171,6 +176,8 @@ cs:
           } catch (error) {
             console.log("ERROR: ", error)
             this.showSnackbar({content: 'Error loading title: ' + error})
+          } finally {
+            this.loading = false
           }
         }
       },
@@ -186,6 +193,21 @@ cs:
     .v-select-list {
         .v-subheader {
             background-color: #ededed;
+        }
+    }
+
+</style>
+
+<style scoped lang="scss">
+
+    #loading {
+        //background-color: white;
+        font-size: 32px;
+        color: #1db79a88;
+        text-align: center;
+
+        span {
+            margin-top: 160px;
         }
     }
 
