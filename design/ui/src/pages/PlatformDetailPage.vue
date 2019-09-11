@@ -1,5 +1,12 @@
 <i18n src="../locales/charts.yaml"></i18n>
 <i18n src="../locales/common.yaml"></i18n>
+<i18n>
+en:
+    no_info: Unfortunately there are no data available for this platform.
+
+cs:
+    no_info: Pro tuto platformu bohužel nejsou dostupná žádná data.
+</i18n>
 
 <template>
     <div>
@@ -86,7 +93,7 @@
 
         </v-layout>
 
-        <section v-if="selectedOrganizationId && platform">
+        <section v-if="selectedOrganizationId && platform && platform.title_count">
             <v-layout>
                 <v-flex><h3>{{ $t('overview') }}</h3></v-flex>
                 <v-flex shrink>
@@ -101,10 +108,16 @@
             </CounterChartSet>
         </section>
 
-        <h3 class="pt-3">{{ $t('titles') }}</h3>
+        <section v-if="platform && platform.title_count">
+            <h3 class="pt-3">{{ $t('titles') }}</h3>
 
-        <TitleList :url="titleListURL" :platform-id="platformId"></TitleList>
-
+            <TitleList :url="titleListURL" :platform-id="platformId"></TitleList>
+        </section>
+        <section v-if="platform && !platform.title_count">
+            <v-container fluid>
+                <v-alert elevation="2" colored-border border="right" type="warning">{{ $t('no_info') }}</v-alert>
+            </v-container>
+        </section>
     </div>
 
 </template>
