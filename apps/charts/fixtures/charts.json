@@ -685,6 +685,44 @@
   }
 },
 {
+  "model": "charts.chartdefinition",
+  "pk": 13,
+  "fields": {
+    "name": "Interest type",
+    "name_en": "Interest type",
+    "name_cs": "Typ z\u00e1jmu",
+    "desc": "Interest split into groups by its type (title, database, ...)",
+    "desc_en": "Interest split into groups by its type (title, database, ...)",
+    "desc_cs": "Z\u00e1jem rozd\u011blen\u00fd do skupin podle typu (title, database, ...)",
+    "primary_dimension": 29,
+    "primary_implicit_dimension": null,
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": "metric",
+    "chart_type": "h-bar",
+    "ordering": "",
+    "ignore_organization": false
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 14,
+  "fields": {
+    "name": "Interest type in time",
+    "name_en": "Interest type in time",
+    "name_cs": "Typ z\u00e1jmu v \u010dase",
+    "desc": "Development of different interest types in time",
+    "desc_en": "Development of different interest types in time",
+    "desc_cs": "V\u00fdvoj typ\u016f z\u00e1jmu v \u010dase",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "date",
+    "secondary_dimension": 29,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false
+  }
+},
+{
   "model": "charts.reportviewtocharttype",
   "pk": 1,
   "fields": {
@@ -934,6 +972,24 @@
     "report_data_view": 6,
     "chart_definition": 4,
     "position": 4
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 31,
+  "fields": {
+    "report_data_view": 8,
+    "chart_definition": 13,
+    "position": 4
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 32,
+  "fields": {
+    "report_data_view": 8,
+    "chart_definition": 14,
+    "position": 3
   }
 }
 ]
