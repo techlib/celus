@@ -223,9 +223,9 @@ cs:
         this.rows.sort((a, b) => a.name.localeCompare(b.name))
         // create an empty matrix
         let out = []
-        for (let col in this.rows) {
+        for (let col of this.rows) {
           let rowRec = []
-          for (let row in this.columns) {
+          for (let row of this.columns) {
             rowRec.push({total: 0})
           }
           out.push(rowRec)

@@ -1,0 +1,126 @@
+import concurrent.futures
+from collections import namedtuple
+from datetime import timedelta
+from time import sleep
+import logging
+
+from dateparser import parse as parse_date
+
+from django.core.management.base import BaseCommand
+
+from core.logic.dates import month_start, month_end
+from organizations.models import Organization
+from publications.models import Platform
+from sushi.models import SushiCredentials, CounterReportType, SushiFetchAttempt
+
+
+logger = logging.getLogger(__name__)
+
+
+class FetchUnit(object):
+
+    """
+    Represents one combination of platform, organization and report type which should
+    start at some point in time and continue down the line to fetch older and older data
+    """
+
+    def __init__(self, credentials: SushiCredentials, report_type: CounterReportType):
+        self.credentials = credentials
+        self.report_type = report_type
+        self.last_attempt = None
+
+    def download(self, start_date, end_date):
+        logger.info('Fetching %s, %s for %s', self.credentials, self.report_type, start_date)
+        attempt = self.credentials.fetch_report(counter_report=self.report_type,
+                                                start_date=start_date,
+                                                end_date=end_date)
+        logger.info('Result: %s', attempt)
+        self.last_attempt = attempt
+        return attempt
+
+    def split(self):
+        """
+        If there are credentials for the same platform and organization and an older superseeded
+        report type than the one associated with this object, return a list of corresponding
+        FetchUnits
+        """
+        out = []
+        for rt in self.report_type.superseeds.all():
+            for cred in SushiCredentials.objects.filter(
+                    active_counter_reports=rt, organization_id=self.credentials.organization_id,
+                    platform_id=self.credentials.platform_id):
+                out.append(FetchUnit(cred, rt))
+        return out
+
+
+class Command(BaseCommand):
+
+    help = 'Creates an attempt to fetch SUSHI data'
+
+    def add_arguments(self, parser):
+        parser.add_argument('-o', dest='organization', help='internal_id of the organization')
+        parser.add_argument('-p', dest='platform', help='short_name of the platform')
+        parser.add_argument('-r', dest='report', help='code of the counter report to fetch')
+        parser.add_argument('-s', dest='start_date')
+        parser.add_argument('-e', dest='end_date', default='2018-01-01')
+        parser.add_argument('--sleep', dest='sleep', type=int, default=0,
+                            help='Time to sleep between requests in ms')
+        parser.add_argument('-u', action='store_true', dest='skip_on_unsuccess',
+                            help='do not attempt new fetching if even an unsuccessful attempt '
+                                 'exists')
+
+    def handle(self, *args, **options):
+        self.sleep_time = options['sleep'] / 1000
+        rt_args = {'active': True}
+        if options['report']:
+            rt_args['code'] = options['report']
+        cred_args = {}
+        if options['organization']:
+            cred_args['organization__internal_id'] = options['organization']
+        if options['platform']:
+            cred_args['platform__short_name'] = options['platform']
+        start_date = month_start(parse_date(options['start_date']))
+        end_date = month_start(parse_date(options['end_date']))
+        # prepare the fetch units - lines for which we will try to fetch data month by month
+        fetch_units = []
+        seen_units = set()  # org_id, plat_id, rt_id for unsuperseeded report type
+        # get all credentials that are connected to a unsuperseeded report type
+        for rt in CounterReportType.objects.filter(superseeded_by__isnull=True, **rt_args):
+            for credentials in rt.sushicredentials_set.filter(**cred_args):
+                fetch_units.append(FetchUnit(credentials, rt))
+                seen_units.add((credentials.organization_id, credentials.platform_id, rt.pk))
+        # go over the superseeded report types and see if we should add some
+        # for example because newer version of the report type is not supported on that platform
+        for rt in CounterReportType.objects.filter(superseeded_by__isnull=False, **rt_args):
+            for credentials in rt.sushicredentials_set.filter(**cred_args):
+                key = (credentials.organization_id, credentials.platform_id, rt.superseeded_by_id)
+                if key not in seen_units:
+                    fetch_units.append(FetchUnit(credentials, rt))
+                    seen_units.add(key)
+        # now process the fetch units
+        while fetch_units and start_date >= end_date:
+            last_platform = None
+            new_fetch_units = []
+            self.stderr.write(self.style.NOTICE(
+                f'Processing {len(fetch_units)} fetch units for {start_date}'))
+            for fetch_unit in fetch_units:
+                end = month_end(start_date)
+                if last_platform == fetch_unit.credentials.platform:
+                    sleep(self.sleep_time)
+                last_platform = fetch_unit.credentials.platform
+                attempt = fetch_unit.download(start_date, end)
+                if attempt.contains_data:
+                    new_fetch_units.append(fetch_unit)
+                else:
+                    # no data in this attempt, we split or end (when split return nothing)
+                    split_units = fetch_unit.split()
+                    # the the new units on the same dates
+                    for unit in split_units:
+                        if last_platform == fetch_unit.credentials.platform:
+                            sleep(self.sleep_time)
+                        last_platform = fetch_unit.credentials.platform
+                        attempt = unit.download(start_date, end)
+                        if attempt.contains_data:
+                            new_fetch_units.append(unit)
+            fetch_units = new_fetch_units
+            start_date = month_start(start_date - timedelta(days=20))
