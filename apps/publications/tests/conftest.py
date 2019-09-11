@@ -1,5 +1,6 @@
 import pytest
 
+from logs.models import ReportType, Dimension, ReportTypeToDimension
 from ..models import Platform, Title
 
 
@@ -17,3 +18,11 @@ def titles():
     t2 = Title.objects.create(name='Title 2', pub_type='J', issn='1234-5678', eissn='2345-6789',
                               doi='10.1234/y')
     yield [t1, t2]
+
+
+@pytest.fixture
+def interest_rt():
+    irt = ReportType.objects.create(short_name='interest')
+    interest_type_dim = Dimension.objects.create(short_name='Interest_Type')
+    ReportTypeToDimension.objects.create(report_type=irt, dimension=interest_type_dim, position=0)
+    return irt

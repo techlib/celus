@@ -1,4 +1,5 @@
 from django.db.models import Count, Sum, Q, Max, Min
+from django.http import HttpResponseServerError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
@@ -43,7 +44,10 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         Should return only platforms for the requested organization.
         Should include title_count which counts titles on the platform
         """
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        try:
+            interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        except ReportType.DoesNotExist:
+            raise ValueError('No interest report type exists')
         org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
                                                      self.request.user)
         # filters for the suitable access logs

@@ -34,7 +34,7 @@ class TestChartDataAPI(object):
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
         resp = authenticated_client.get(
-            reverse('chart_data', args=(report_type.pk,)),
+            reverse('chart_data_raw', args=(report_type.pk,)),
             {'organization': organization.pk,
              'metric': metric.pk,
              'platform': platform.pk,
@@ -81,7 +81,7 @@ class TestChartDataAPI(object):
                   }
         if secondary_dim:
             params['sec_dim'] = report_type.dimensions_sorted[secondary_dim-1].short_name
-        resp = authenticated_client.get(reverse('chart_data', args=(report_type.pk,)),
+        resp = authenticated_client.get(reverse('chart_data_raw', args=(report_type.pk,)),
                                         params)
         assert resp.status_code == 200
         data = json.loads(resp.content)
@@ -133,7 +133,7 @@ class TestChartDataAPI(object):
                 params['sec_dim'] = report_type.dimensions_sorted[secondary_dim-1].short_name
             else:
                 params['sec_dim'] = secondary_dim
-        resp = master_client.get(reverse('chart_data', args=(report_type.pk,)),
+        resp = master_client.get(reverse('chart_data_raw', args=(report_type.pk,)),
                                  params)
         assert resp.status_code == 200
         data = json.loads(resp.content)
@@ -180,7 +180,7 @@ class TestChartDataAPI(object):
         metric2 = Metric.objects.get(short_name='Big Hits')
 
         def get_data(params):
-            resp = authenticated_client.get(reverse('chart_data', args=(report_type.pk,)),
+            resp = authenticated_client.get(reverse('chart_data_raw', args=(report_type.pk,)),
                                             params)
             assert resp.status_code == 200
             result = json.loads(resp.content)
@@ -271,7 +271,7 @@ class TestChartDataAPI(object):
                   }
         if secondary_dim:
             params['sec_dim'] = report_type.dimensions_sorted[secondary_dim-1].short_name
-        resp = authenticated_client.get(reverse('chart_data', args=(report_type.pk,)),
+        resp = authenticated_client.get(reverse('chart_data_raw', args=(report_type.pk,)),
                                         params)
         assert resp.status_code == 200
         data = json.loads(resp.content)

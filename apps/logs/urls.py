@@ -11,9 +11,10 @@ router.register(r'manual-data-upload', views.ManualDataUploadViewSet,
                 basename='manual-data-upload')
 
 urlpatterns = [
-    path('chart-data-raw/<report_type_id>/', views.Counter5DataView.as_view(), name='chart_data'),
+    path('chart-data-raw/<report_type_id>/', views.Counter5DataView.as_view(),
+         name='chart_data_raw'),
     path('chart-data-raw/', views.Counter5DataView.as_view(), {'report_type_id': None},
-         name='chart_data'),
+         name='chart_data_raw'),
     path('raw-data/', views.RawDataExportView.as_view()),
     path('manual-data-upload/<pk>/preflight', views.ManualDataUploadPreflightCheckView.as_view(),
          name='manual_data_upload_preflight'),
