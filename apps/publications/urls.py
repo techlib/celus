@@ -26,8 +26,6 @@ org_sub_router.register(r'sushi-credentials-count', views.PlatformSushiCredentia
 
 
 title_sub_router = NestedSimpleRouter(org_sub_router, r'title', lookup='title')
-title_sub_router.register('reports', views.TitleReportTypeViewSet,
-                          basename='title-reports')
 title_sub_router.register('report-views', views.TitleReportDataViewViewSet,
                           basename='title-report-data-views')
 
@@ -35,14 +33,10 @@ platform_sub_router = NestedSimpleRouter(org_sub_router, r'platform', lookup='pl
 platform_sub_router.register('title', views.PlatformTitleViewSet, basename='platform-title')
 platform_sub_router.register('title-interest', views.PlatformTitleInterestViewSet,
                              basename='platform-title-interest')
-platform_sub_router.register('reports', views.PlatformReportTypeViewSet,
-                             basename='platform-reports')
 platform_sub_router.register('report-views', views.PlatformReportDateViewViewSet,
                              basename='platform-report-data-views')
 
 platform_title_sub_router = NestedSimpleRouter(platform_sub_router, r'title', lookup='title')
-platform_title_sub_router.register('reports', views.PlatformTitleReportTypeViewSet,
-                                   basename='platform-title-reports')
 platform_title_sub_router.register('report-views', views.PlatformTitleReportDataViewViewSet,
                                    basename='platform-title-report-data-views')
 

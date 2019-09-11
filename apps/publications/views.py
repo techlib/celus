@@ -175,63 +175,6 @@ class PlatformTitleInterestViewSet(PlatformTitleViewSet):
         return {'interest': Sum('accesslog__value')}
 
 
-class BaseReportTypeViewSet(ReadOnlyModelViewSet):
-    """
-    Provides a list of report types
-    """
-
-    serializer_class = ReportTypeSerializer
-
-    def _extra_filters(self, org_filter):
-        return {}
-
-    def get_queryset(self):
-        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                     self.request.user)
-        access_log_filter = Q(**extend_query_filter(org_filter, 'accesslog__'),
-                              **self._extra_filters(org_filter))
-        report_types = ReportType.objects.filter(access_log_filter).\
-            annotate(log_count=Count('accesslog__value', filter=access_log_filter),
-                     newest_log=Max('accesslog__date', filter=access_log_filter),
-                     oldest_log=Min('accesslog__date', filter=access_log_filter),
-                     ).\
-            filter(log_count__gt=0).order_by('-newest_log')
-        return report_types
-
-
-class TitleReportTypeViewSet(BaseReportTypeViewSet):
-    """
-    Provides a list of report types for specific title for specific organization
-    """
-
-    def _extra_filters(self, org_filter):
-        title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
-        return {'accesslog__target': title}
-
-
-class PlatformReportTypeViewSet(BaseReportTypeViewSet):
-    """
-    Provides a list of report types for specific organization and platform
-    """
-
-    def _extra_filters(self, org_filter):
-        platform = get_object_or_404(Platform.objects.filter(**org_filter),
-                                     pk=self.kwargs['platform_pk'])
-        return {'accesslog__platform': platform}
-
-
-class PlatformTitleReportTypeViewSet(BaseReportTypeViewSet):
-    """
-    Provides a list of report types for specific title for specific organization and platform
-    """
-
-    def _extra_filters(self, org_filter):
-        platform = get_object_or_404(Platform.objects.filter(**org_filter),
-                                     pk=self.kwargs['platform_pk'])
-        title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
-        return {'accesslog__target': title, 'accesslog__platform': platform}
-
-
 class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
     """
     Provides a list of virtual report types
