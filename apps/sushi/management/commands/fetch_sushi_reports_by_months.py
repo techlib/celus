@@ -1,6 +1,6 @@
 import concurrent.futures
 from collections import namedtuple
-from datetime import timedelta
+from datetime import timedelta, date
 from time import sleep
 import logging
 
@@ -97,17 +97,31 @@ class Command(BaseCommand):
                 if key not in seen_units:
                     fetch_units.append(FetchUnit(credentials, rt))
                     seen_units.add(key)
+        # split the fetch units by platform so that we can process each platform in separate
+        # thread
+        platform_to_fetch_units = {}
+        for fetch_unit in fetch_units:
+            platform_id = fetch_unit.credentials.platform_id
+            if platform_id not in platform_to_fetch_units:
+                platform_to_fetch_units[platform_id] = []
+            platform_to_fetch_units[platform_id].append(fetch_unit)
         # now process the fetch units
+        args = [(fus, start_date, end_date) for fus in platform_to_fetch_units.values()]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+            for result in executor.map(self.process_fetch_units, args):
+                pass
+        # self.process_fetch_units(fetch_units, start_date, end_date)
+
+    def process_fetch_units(self, args):
+        fetch_units, start_date, end_date = args  # type: [FetchUnit], date, date
         while fetch_units and start_date >= end_date:
-            last_platform = None
             new_fetch_units = []
+            platform = fetch_units[0].credentials.platform
             self.stderr.write(self.style.NOTICE(
-                f'Processing {len(fetch_units)} fetch units for {start_date}'))
+                f'Processing {len(fetch_units)} fetch units for platform {platform}, {start_date}')
+            )
             for fetch_unit in fetch_units:
                 end = month_end(start_date)
-                if last_platform == fetch_unit.credentials.platform:
-                    sleep(self.sleep_time)
-                last_platform = fetch_unit.credentials.platform
                 attempt = fetch_unit.download(start_date, end)
                 if attempt.contains_data:
                     new_fetch_units.append(fetch_unit)
@@ -115,12 +129,13 @@ class Command(BaseCommand):
                     # no data in this attempt, we split or end (when split return nothing)
                     split_units = fetch_unit.split()
                     # the the new units on the same dates
-                    for unit in split_units:
-                        if last_platform == fetch_unit.credentials.platform:
+                    for i, unit in enumerate(split_units):
+                        if i != 0:
                             sleep(self.sleep_time)
-                        last_platform = fetch_unit.credentials.platform
                         attempt = unit.download(start_date, end)
                         if attempt.contains_data:
                             new_fetch_units.append(unit)
+                if fetch_unit != fetch_units[-1]:
+                    sleep(self.sleep_time)
             fetch_units = new_fetch_units
             start_date = month_start(start_date - timedelta(days=20))
