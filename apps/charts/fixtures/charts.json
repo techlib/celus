@@ -889,7 +889,7 @@
   "pk": 20,
   "fields": {
     "report_data_view": 5,
-    "chart_definition": 1,
+    "chart_definition": 6,
     "position": 0
   }
 },
@@ -990,6 +990,15 @@
     "report_data_view": 8,
     "chart_definition": 14,
     "position": 3
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 33,
+  "fields": {
+    "report_data_view": 2,
+    "chart_definition": 1,
+    "position": 0
   }
 }
 ]
