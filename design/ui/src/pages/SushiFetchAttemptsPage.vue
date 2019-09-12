@@ -12,6 +12,7 @@ en:
     start_date: Not older than
     counter_version: Counter version
     success_metric: Success metric
+    all_orgs: Show all organizations
 
 cs:
     dim:
@@ -24,6 +25,7 @@ cs:
     start_date: Ne starší než
     counter_version: Verze Counter
     success_metric: Měřítko úspěchu
+    all_orgs: Všechny organizace
 </i18n>
 
 <template>
@@ -49,6 +51,9 @@ cs:
                         v-model="successMetric"
                         :label="$t('success_metric')"
                 ></v-select>
+            </v-col>
+            <v-col cols="auto">
+                <v-switch v-model="allOrganizations" :label="$t('all_orgs')"></v-switch>
             </v-col>
             <v-col cols="auto">
                 <v-menu
@@ -120,7 +125,7 @@ cs:
                 v-model="showDetailDialog"
         >
             <SushiAttemptListWidget
-                    :organization="selectedItem.organization"
+                    :organization="selectedItem.organization || organizationObjParam"
                     :platform="selectedItem.platform"
                     :report="selectedItem.report"
                     :from-date="startDate"
@@ -137,7 +142,7 @@ cs:
 <script>
 
   import axios from 'axios'
-  import {mapActions} from 'vuex'
+  import {mapActions, mapGetters, mapState} from 'vuex'
   import SushiAttemptListWidget from '../components/SushiAttemptListWidget'
 
   export default {
@@ -157,10 +162,15 @@ cs:
         startDate: null,
         dateMenu: null,
         counterVersion: null,
-        successMetric: 'download_success',
+        successMetric: 'contains_data',
+        allOrganizations: false,
       }
     },
     computed: {
+      ...mapGetters({
+        organizationSelected: 'organizationSelected',
+        selectedOrganization: 'selectedOrganization',
+      }),
       statsUrl () {
         let base = `/api/sushi-fetch-attempt-stats/?x=${this.x}&y=${this.y}&success_metric=${this.successMetric}`
         if (this.startDate) {
@@ -169,7 +179,7 @@ cs:
         if (this.counterVersion) {
           base += `&counter_version=${this.counterVersion}`
         }
-        return base
+        return base + this.organizationUrlParam
       },
       dimensions () {
         return this.dimensionsRaw.map(item => {return {value: item, text: this.$t('dim.'+item)}})
@@ -187,7 +197,20 @@ cs:
           {value: 'processing_success', text: this.$t('title_fields.processing_success')},
           {value: 'contains_data', text: this.$t('title_fields.contains_data')},
         ]
-      }
+      },
+      organizationUrlParam () {
+        let organizationObj = this.organizationObjParam
+        if (organizationObj) {
+          return '&organization=' + organizationObj.pk
+        }
+        return ''
+      },
+      organizationObjParam () {
+        if (!this.allOrganizations && this.organizationSelected) {
+          return this.selectedOrganization
+        }
+        return null
+      },
     },
     methods:{
       ...mapActions({

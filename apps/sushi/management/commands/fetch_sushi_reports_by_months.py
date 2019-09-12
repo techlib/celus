@@ -38,6 +38,25 @@ class FetchUnit(object):
         self.last_attempt = attempt
         return attempt
 
+    def find_conflicting(self, start_date, end_date):
+        """
+        Find SushiFetch attempt corresponding to our credentials and report type and the dates
+        at hand. If found, it selected the one that has the best result and returns it
+        :param start_date:
+        :param end_date:
+        :return:
+        """
+        attempts = SushiFetchAttempt.objects.filter(
+            credentials=self.credentials, counter_report=self.report_type, start_date=start_date,
+            end_date=end_date
+        )
+        successes = ['contains_data', 'processing_success', 'download_success']
+        for success_type in successes:
+            matching = [attempt for attempt in attempts if getattr(attempt, success_type) is True]
+            if matching:
+                return matching[0]
+        return attempts[0] if attempts else None
+
     def split(self):
         """
         If there are credentials for the same platform and organization and an older superseeded
@@ -56,6 +75,7 @@ class FetchUnit(object):
 class Command(BaseCommand):
 
     help = 'Creates an attempt to fetch SUSHI data'
+    conflict_strategies = ['continue', 'skip', 'stop']
 
     def add_arguments(self, parser):
         parser.add_argument('-o', dest='organization', help='internal_id of the organization')
@@ -63,6 +83,10 @@ class Command(BaseCommand):
         parser.add_argument('-r', dest='report', help='code of the counter report to fetch')
         parser.add_argument('-s', dest='start_date')
         parser.add_argument('-e', dest='end_date', default='2018-01-01')
+        parser.add_argument('--conflict-error', dest='conflict_error',
+                            default='continue', choices=self.conflict_strategies)
+        parser.add_argument('--conflict-ok', dest='conflict_ok',
+                            default='skip', choices=self.conflict_strategies)
         parser.add_argument('--sleep', dest='sleep', type=int, default=0,
                             help='Time to sleep between requests in ms')
         parser.add_argument('-u', action='store_true', dest='skip_on_unsuccess',
@@ -71,12 +95,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.sleep_time = options['sleep'] / 1000
+        self.conflict_error = options['conflict_error']
+        self.conflict_ok = options['conflict_ok']
         rt_args = {'active': True}
         if options['report']:
             rt_args['code'] = options['report']
         cred_args = {}
         if options['organization']:
-            cred_args['organization__internal_id'] = options['organization']
+            cred_args['organization__internal_id__startswith'] = options['organization']
         if options['platform']:
             cred_args['platform__short_name'] = options['platform']
         start_date = month_start(parse_date(options['start_date']))
@@ -112,6 +138,12 @@ class Command(BaseCommand):
                 pass
         # self.process_fetch_units(fetch_units, start_date, end_date)
 
+    def decide_conflict(self, previous: SushiFetchAttempt):
+        if previous.contains_data:
+            return self.conflict_ok
+        else:
+            return self.conflict_error
+
     def process_fetch_units(self, args):
         fetch_units, start_date, end_date = args  # type: [FetchUnit], date, date
         while fetch_units and start_date >= end_date:
@@ -120,10 +152,27 @@ class Command(BaseCommand):
             self.stderr.write(self.style.NOTICE(
                 f'Processing {len(fetch_units)} fetch units for platform {platform}, {start_date}')
             )
-            for fetch_unit in fetch_units:
+            for fetch_unit in fetch_units:  # type: FetchUnit
                 end = month_end(start_date)
+                # deal with possible conflict
+                conflict = fetch_unit.find_conflicting(start_date, end)
+                if conflict:
+                    action = self.decide_conflict(conflict)
+                    if action == 'stop':
+                        logger.debug('Skipping on existing data: %s, %s: %s',
+                                     platform, fetch_unit.credentials.organization, start_date)
+                        continue
+                    elif action == 'skip':
+                        logger.debug('Skipping on existing data: %s, %s: %s',
+                                     platform, fetch_unit.credentials.organization, start_date)
+                        new_fetch_units.append(fetch_unit)
+                        continue
+                    else:
+                        logger.debug('Continuing regardless of existing data: %s, %s: %s',
+                                     platform, fetch_unit.credentials.organization, start_date)
+                # download the data
                 attempt = fetch_unit.download(start_date, end)
-                if attempt.contains_data:
+                if attempt.contains_data or attempt.queued:
                     new_fetch_units.append(fetch_unit)
                 else:
                     # no data in this attempt, we split or end (when split return nothing)
@@ -135,7 +184,9 @@ class Command(BaseCommand):
                         attempt = unit.download(start_date, end)
                         if attempt.contains_data:
                             new_fetch_units.append(unit)
-                if fetch_unit != fetch_units[-1]:
+                if fetch_unit is not fetch_units[-1]:
                     sleep(self.sleep_time)
             fetch_units = new_fetch_units
+            if fetch_units:
+                sleep(self.sleep_time)  # we will do one more round, we need to sleep
             start_date = month_start(start_date - timedelta(days=20))
