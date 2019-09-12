@@ -3,10 +3,11 @@ Stuff related to fetching data from SUSHI servers.
 """
 import logging
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import timedelta
 from time import sleep
 
 from django.db.models import Count
+from django.utils.timezone import now
 
 from nigiri.client import SushiClientBase
 from sushi.models import SushiFetchAttempt
@@ -32,7 +33,7 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
     for i, attempt in enumerate(qs):
         exp = SushiClientBase.explain_error_code(attempt.error_code)
         delta = exp.retry_interval_timedelta if exp else timedelta(days=30)
-        if attempt.when_queued is None or (attempt.when_queued + delta > datetime.now()):
+        if attempt.when_queued is None or (delta and attempt.when_queued + delta < now()):
             # we are ready to retry
             logger.debug('Retrying attempt: %s', attempt)
             new = attempt.retry()
@@ -43,9 +44,13 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
             last_platform = attempt.credentials.platform_id
         else:
             # not yet time to retry
-            remaining = datetime.now() - attempt.when_queued - delta
-            logger.debug('Too soon to retry - need %s', remaining)
-            stats['too soon'] += 1
+            if delta:
+                remaining = attempt.when_queued + delta - now()
+                logger.debug('Too soon to retry - need %s', remaining)
+                stats['too soon'] += 1
+            else:
+                logger.debug('Should not retry automatically')
+                stats['no auto'] += 1
         if number and i >= number - 1:
             break
     return stats
