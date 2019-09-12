@@ -98,7 +98,7 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <v-simple-table dense id="table" fixed-header height="75vh">
+            <v-simple-table dense id="table" fixed-header height="68vh">
                 <thead>
                 <tr>
                     <td></td>
