@@ -277,10 +277,14 @@ class SushiFetchAttempt(models.Model):
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
+        return f'{self.status}: {self.credentials}, {self.counter_report}'
+
+    @property
+    def status(self):
         status = 'SUCCESS' if self.download_success else 'FAILURE'
         if self.queued:
             status = 'QUEUED'
-        return f'{status}: {self.credentials}, {self.counter_report}'
+        return status
 
     def mark_processed(self):
         if not self.is_processed:

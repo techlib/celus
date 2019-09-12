@@ -2,7 +2,9 @@
 Stuff related to fetching data from SUSHI servers.
 """
 import logging
-from datetime import datetime
+from collections import Counter
+from datetime import datetime, timedelta
+from time import sleep
 
 from django.db.models import Count
 
@@ -13,7 +15,7 @@ from sushi.models import SushiFetchAttempt
 logger = logging.getLogger(__name__)
 
 
-def retry_queued(number=0):
+def retry_queued(number=0, sleep_interval=0) -> Counter:
     """
     Goes over the queued SushiFetchAttempts and decides if it makes sense to redownload them.
     If yes, it does so.
@@ -25,17 +27,25 @@ def retry_queued(number=0):
         annotate(following_count=Count('queue_following')).filter(following_count=0).\
         order_by('-when_queued')
     logger.debug('Found %s attempts to retry', qs.count())
+    last_platform = None
+    stats = Counter()
     for i, attempt in enumerate(qs):
         exp = SushiClientBase.explain_error_code(attempt.error_code)
-        delta = exp.retry_interval_timedelta
+        delta = exp.retry_interval_timedelta if exp else timedelta(days=30)
         if attempt.when_queued is None or (attempt.when_queued + delta > datetime.now()):
             # we are ready to retry
             logger.debug('Retrying attempt: %s', attempt)
             new = attempt.retry()
             logger.debug('Result: %s', new)
+            stats[f'retry_{new.status}'] += 1
+            if attempt.credentials.platform_id == last_platform:
+                sleep(sleep_interval)
+            last_platform = attempt.credentials.platform_id
         else:
             # not yet time to retry
             remaining = datetime.now() - attempt.when_queued - delta
             logger.debug('Too soon to retry - need %s', remaining)
+            stats['too soon'] += 1
         if number and i >= number - 1:
             break
+    return stats

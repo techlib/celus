@@ -27,4 +27,4 @@ class Command(BaseCommand):
                             help='number of attempts to process')
 
     def handle(self, *args, **options):
-        retry_queued(number=options['number'])
+        retry_queued(number=options['number'], sleep_interval=2)
