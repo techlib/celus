@@ -1,7 +1,7 @@
 import csv
 import json
 import urllib
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import StringIO
 from typing import List, Dict, Union, Optional
 from urllib.parse import urljoin
@@ -50,6 +50,14 @@ class SushiErrorMeaning(object):
     RETRY_IN_MONTHS = 5
     RETRY_AFTER_CHECKUP = 100
 
+    RETRY_INTERVAL_TO_TIMEDELTA = {
+        RETRY_IN_MINUTES: timedelta(minutes=3),
+        RETRY_IN_HOURS: timedelta(hours=3),
+        RETRY_IN_DAYS: timedelta(days=3),
+        RETRY_IN_WEEKS: timedelta(weeks=3),
+        RETRY_IN_MONTHS: timedelta(days=90),
+    }
+
     def __init__(self, should_retry=False, needs_checking=True,
                  retry_interval=RETRY_AFTER_CHECKUP):
         """
@@ -62,6 +70,10 @@ class SushiErrorMeaning(object):
         self.should_retry = should_retry
         self.needs_checking = needs_checking
         self.retry_interval = retry_interval
+
+    @property
+    def retry_interval_timedelta(self):
+        return self.RETRY_INTERVAL_TO_TIMEDELTA.get(self.retry_interval)
 
 
 class SushiClientBase(object):

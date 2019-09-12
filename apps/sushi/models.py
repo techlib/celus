@@ -161,6 +161,7 @@ class SushiCredentials(models.Model):
         if file_data:
             data_file = ContentFile(file_data)
             data_file.name = filename
+        when_queued = now() if queued else None
         attempt = SushiFetchAttempt.objects.create(
             credentials=self,
             counter_report=counter_report,
@@ -173,6 +174,7 @@ class SushiCredentials(models.Model):
             error_code=error_code,
             contains_data=contains_data,
             queued=queued,
+            when_queued=when_queued,
         )
         return attempt
 
@@ -221,6 +223,7 @@ class SushiCredentials(models.Model):
         if file_data:
             data_file = ContentFile(file_data)
             data_file.name = filename
+        when_queued = now() if queued else None
         attempt = SushiFetchAttempt.objects.create(
             credentials=self,
             counter_report=counter_report,
@@ -233,6 +236,7 @@ class SushiCredentials(models.Model):
             error_code=error_code,
             contains_data=contains_data,
             processing_success=processing_success,
+            when_queued=when_queued,
         )
         return attempt
 
@@ -274,6 +278,8 @@ class SushiFetchAttempt(models.Model):
 
     def __str__(self):
         status = 'SUCCESS' if self.download_success else 'FAILURE'
+        if self.queued:
+            status = 'QUEUED'
         return f'{status}: {self.credentials}, {self.counter_report}'
 
     def mark_processed(self):
@@ -285,3 +291,11 @@ class SushiFetchAttempt(models.Model):
     @property
     def ok(self):
         return self.download_success and self.processing_success
+
+    def retry(self):
+        attempt = self.credentials.fetch_report(counter_report=self.counter_report,
+                                                start_date=self.start_date,
+                                                end_date=self.end_date)
+        attempt.queue_previous = self
+        attempt.save()
+        return attempt
