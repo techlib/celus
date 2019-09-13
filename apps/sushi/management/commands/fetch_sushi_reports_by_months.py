@@ -47,8 +47,8 @@ class FetchUnit(object):
         :return:
         """
         attempts = SushiFetchAttempt.objects.filter(
-            credentials=self.credentials, counter_report=self.report_type, start_date=start_date,
-            end_date=end_date
+            credentials=self.credentials, counter_report=self.report_type,
+            start_date__lte=start_date, end_date__gte=end_date
         )
         successes = ['contains_data', 'processing_success', 'download_success']
         for success_type in successes:
