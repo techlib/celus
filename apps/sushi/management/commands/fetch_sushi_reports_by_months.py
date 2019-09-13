@@ -176,7 +176,10 @@ class Command(BaseCommand):
                     new_fetch_units.append(fetch_unit)
                 else:
                     # no data in this attempt, we split or end (when split return nothing)
+                    logger.info('Unsuccessful fetch, downgrading: %s, %s: %s',
+                                platform, fetch_unit.credentials.organization, start_date)
                     split_units = fetch_unit.split()
+                    logger.info('Downgraded %s to %s', fetch_unit.report_type.code, split_units)
                     # the the new units on the same dates
                     for i, unit in enumerate(split_units):
                         if i != 0:

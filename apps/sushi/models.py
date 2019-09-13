@@ -2,6 +2,8 @@ import json
 import os
 import logging
 import traceback
+from datetime import timedelta, datetime
+from typing import Optional
 
 import requests
 from django.contrib.postgres.fields import JSONField
@@ -11,7 +13,8 @@ from django.utils.timezone import now
 from pycounter.exceptions import SushiException
 
 from logs.models import ImportBatch
-from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri
+from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
+    SushiClientBase
 from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report, Counter4DB1Report
 from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
 from organizations.models import Organization
@@ -275,13 +278,20 @@ class SushiFetchAttempt(models.Model):
                                        help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
+    processing_info = JSONField(default=dict, help_text='Internal info')
 
     def __str__(self):
         return f'{self.status}: {self.credentials}, {self.counter_report}'
 
     @property
     def status(self):
-        status = 'SUCCESS' if self.download_success else 'FAILURE'
+        status = 'SUCCESS'
+        if not self.download_success:
+            status = 'FAILURE'
+        elif not self.processing_success:
+            status = 'BROKEN'
+        elif not self.contains_data:
+            status = 'NO_DATA'
         if self.queued:
             status = 'QUEUED'
         return status
@@ -303,3 +313,48 @@ class SushiFetchAttempt(models.Model):
         attempt.queue_previous = self
         attempt.save()
         return attempt
+
+    def previous_attempt_count(self):
+        """
+        Goes through the possible linked list of queue_previous and counts the how long the list
+        is.
+        """
+        count = 0
+        current = self
+        while current.queue_previous:
+            count += 1
+            current = current.queue_previous
+        return count
+
+    def retry_interval_simple(self) -> Optional[timedelta]:
+        """
+        Return the time interval after which it makes sense to retry. If None, it means no retry
+        should be made unless something is changes - there was no error or the error was permanent
+        """
+        if not self.error_code:
+            return None
+        exp = SushiClientBase.explain_error_code(self.error_code)
+        delta = exp.retry_interval_timedelta if exp else timedelta(days=30)
+        return delta
+
+    def retry_interval(self) -> Optional[timedelta]:
+        """
+        Retry interval taking into account how many previous attempts there already were
+        by using exponential back-off
+        """
+        prev_count = self.previous_attempt_count()
+        interval = self.retry_interval_simple()
+        if not interval:
+            return None
+        return interval * (2**prev_count)
+
+    def when_to_retry(self) -> Optional[datetime]:
+        """
+        Uses the information about error (by using self.retry_interval) and self.when_queued to
+        guess when (in absolute terms) it makes sense to retry
+        """
+        interval = self.retry_interval()
+        if not interval:
+            return now()
+        ref_time = self.when_queued or self.timestamp
+        return ref_time + interval

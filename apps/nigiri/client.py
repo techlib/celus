@@ -51,11 +51,11 @@ class SushiErrorMeaning(object):
     RETRY_AFTER_CHECKUP = 100
 
     RETRY_INTERVAL_TO_TIMEDELTA = {
-        RETRY_IN_MINUTES: timedelta(minutes=3),
-        RETRY_IN_HOURS: timedelta(hours=3),
-        RETRY_IN_DAYS: timedelta(days=3),
-        RETRY_IN_WEEKS: timedelta(weeks=3),
-        RETRY_IN_MONTHS: timedelta(days=90),
+        RETRY_IN_MINUTES: timedelta(minutes=1),
+        RETRY_IN_HOURS: timedelta(hours=1),
+        RETRY_IN_DAYS: timedelta(days=1),
+        RETRY_IN_WEEKS: timedelta(weeks=1),
+        RETRY_IN_MONTHS: timedelta(days=30),
     }
 
     def __init__(self, should_retry=False, needs_checking=True,

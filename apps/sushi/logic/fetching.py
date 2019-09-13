@@ -31,9 +31,8 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
     last_platform = None
     stats = Counter()
     for i, attempt in enumerate(qs):
-        exp = SushiClientBase.explain_error_code(attempt.error_code)
-        delta = exp.retry_interval_timedelta if exp else timedelta(days=30)
-        if attempt.when_queued is None or (delta and attempt.when_queued + delta < now()):
+        when_retry = attempt.when_to_retry()
+        if when_retry and when_retry < now():
             # we are ready to retry
             logger.debug('Retrying attempt: %s', attempt)
             new = attempt.retry()
@@ -44,9 +43,8 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
             last_platform = attempt.credentials.platform_id
         else:
             # not yet time to retry
-            if delta:
-                remaining = attempt.when_queued + delta - now()
-                logger.debug('Too soon to retry - need %s', remaining)
+            if when_retry:
+                logger.debug('Too soon to retry - need %s', when_retry - now())
                 stats['too soon'] += 1
             else:
                 logger.debug('Should not retry automatically')

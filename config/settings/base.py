@@ -183,6 +183,7 @@ EDUID_IDENTITY_HEADER = 'HTTP_X_IDENTITY'
 MASTER_ORGANIZATIONS = ['NTK-61387142']  # organizations whose users should have access to all
 # should we try to authenticate against ERMS before trying local data?
 LIVE_ERMS_AUTHENTICATION = False
+QUEUED_SUSHI_MAX_RETRY_COUNT = 5  # how many times max should we retry queued attempts
 
 LOGGING = {
     'version': 1,
