@@ -9,9 +9,11 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
-
+from datetime import timedelta
 from pathlib import Path
 import sys
+
+from celery.schedules import schedule
 
 from .json_settings import load_secret_settings_json_file
 
@@ -172,10 +174,33 @@ REST_FRAMEWORK = {
     # 'PAGE_SIZE': 10
 }
 
+# CACHE
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "VERSION": 1,
+    }
+}
+
 # Celery
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BROKER_URL = 'redis://localhost'
 CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'long'},
+                      }
+
+CELERY_BEAT_SCHEDULE = {
+    'sync_interest_task': {
+        'task': 'logs.tasks.sync_interest_task',
+        'schedule': schedule(run_every=timedelta(minutes=5)),
+    },
+}
+
 
 # ERMS related stuff
 ERMS_API_URL = "https://erms.czechelib.cz/api/"

@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 
 from core.models import Identity
-from logs.logic.materialized_interest import sync_interest_for_platform_and_report_type
+from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import OrganizationPlatform, AccessLog, Metric, ImportBatch, InterestGroup, \
     ReportInterestMetric
 from logs.tests.conftest import report_type_nd
@@ -143,7 +143,7 @@ class TestPlatformDetailedAPI(object):
         AccessLog.objects.create(platform=platform, target=titles[0], value=7, date='2019-01-01',
                                  report_type=rt, metric=metric, organization=organizations[1],
                                  import_batch=import_batch2)
-        sync_interest_for_platform_and_report_type(platform, rt, interest_rt, None)
+        sync_interest_by_import_batches()
         resp = authenticated_client.get(reverse('detailed-platform-list', args=[organization.pk]))
         assert resp.status_code == 200
         print(resp.content)
@@ -246,7 +246,7 @@ class TestPlatformTitleAPI(object):
         AccessLog.objects.create(platform=platform, target=titles[0], value=1, date='2019-02-01',
                                  report_type=rt, metric=metric, organization=organization,
                                  import_batch=import_batch)
-        sync_interest_for_platform_and_report_type(platform, rt, interest_rt, None)
+        sync_interest_by_import_batches()
         resp = authenticated_client.get(reverse('platform-title-interest-list',
                                                 args=[organization.pk, platform.pk]))
         assert resp.status_code == 200
@@ -287,7 +287,7 @@ class TestPlatformTitleAPI(object):
         AccessLog.objects.create(platform=platform, target=titles[0], value=2, date='2019-01-01',
                                  report_type=rt, metric=metric, organization=other_organization,
                                  import_batch=import_batch2)
-        sync_interest_for_platform_and_report_type(platform, rt, interest_rt, None)
+        sync_interest_by_import_batches()
         resp = authenticated_client.get(reverse('platform-title-interest-list',
                                                 args=[organization.pk, platform.pk]))
         assert resp.status_code == 200

@@ -195,6 +195,8 @@ class ImportBatch(models.Model):
         help_text='Level of user who created this record - used to determine who can modify it'
     )
     log = models.TextField(blank=True)
+    interest_processed = models.BooleanField(
+        default=False, help_text='Was interest already calculated for this import batch')
 
     class Meta:
         verbose_name_plural = "Import batches"

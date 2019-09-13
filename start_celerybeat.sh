@@ -1,1 +1,1 @@
-celery beat -A ntk-stats -l DEBUG
+celery beat -A config -l DEBUG
