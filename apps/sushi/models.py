@@ -116,17 +116,30 @@ class SushiCredentials(models.Model):
         else:
             return Sushi5Client(extra_params=extra, **attrs)
 
-    def fetch_report(self, counter_report: CounterReportType, start_date, end_date) -> \
-            'SushiFetchAttempt':
+    def fetch_report(self, counter_report: CounterReportType, start_date, end_date,
+                     fetch_attempt: 'SushiFetchAttempt' = None) -> 'SushiFetchAttempt':
+        """
+        :param counter_report:
+        :param start_date:
+        :param end_date:
+        :param fetch_attempt: when provides, new SushiFetchAttempt will not be created but rather
+                              the given one updated
+        :return:
+        """
         client = self.create_sushi_client()
         if self.counter_version == 4:
-            attempt = self._fetch_report_v4(client, counter_report, start_date, end_date)
+            attempt_params = self._fetch_report_v4(client, counter_report, start_date, end_date)
         else:
-            attempt = self._fetch_report_v5(client, counter_report, start_date, end_date)
-        return attempt
+            attempt_params = self._fetch_report_v5(client, counter_report, start_date, end_date)
+        if fetch_attempt:
+            SushiFetchAttempt.objects.filter(pk=fetch_attempt.pk).update(**attempt_params)
+            fetch_attempt.refresh_from_db()
+            return fetch_attempt
+        else:
+            attempt = SushiFetchAttempt.objects.create(**attempt_params)
+            return attempt
 
-    def _fetch_report_v4(self, client, counter_report, start_date, end_date) -> \
-            'SushiFetchAttempt':
+    def _fetch_report_v4(self, client, counter_report, start_date, end_date) -> dict:
         file_data = None
         contains_data = False
         download_success = False
@@ -166,7 +179,7 @@ class SushiCredentials(models.Model):
             data_file = ContentFile(file_data)
             data_file.name = filename
         when_queued = now() if queued else None
-        attempt = SushiFetchAttempt.objects.create(
+        return dict(
             credentials=self,
             counter_report=counter_report,
             start_date=start_date,
@@ -180,10 +193,8 @@ class SushiCredentials(models.Model):
             queued=queued,
             when_queued=when_queued,
         )
-        return attempt
 
-    def _fetch_report_v5(self, client, counter_report, start_date, end_date) -> \
-            'SushiFetchAttempt':
+    def _fetch_report_v5(self, client, counter_report, start_date, end_date) -> dict:
         file_data = None
         contains_data = False
         download_success = False
@@ -228,7 +239,7 @@ class SushiCredentials(models.Model):
             data_file = ContentFile(file_data)
             data_file.name = filename
         when_queued = now() if queued else None
-        attempt = SushiFetchAttempt.objects.create(
+        return dict(
             credentials=self,
             counter_report=counter_report,
             start_date=start_date,
@@ -242,7 +253,6 @@ class SushiCredentials(models.Model):
             processing_success=processing_success,
             when_queued=when_queued,
         )
-        return attempt
 
 
 def where_to_store(instance: 'SushiFetchAttempt', filename):
