@@ -1,3 +1,4 @@
+<i18n src="../locales/common.yaml"></i18n>
 <i18n>
 en:
     in_progress: Fetching data
@@ -19,22 +20,32 @@ cs:
         <v-row
                 v-else-if="attemptData.in_progress"
         >
+                <v-col cols="auto">
+                    <strong v-text="attemptData.counter_report_verbose.code"></strong>
+                </v-col>
+                <v-col>
+                    <v-progress-linear
+
+                            height="1.5rem"
+                            indeterminate
+                    >
+                        <span>{{ $t('in_progress') }}, {{ elapsedTime }} s</span>
+                    </v-progress-linear>
+                </v-col>
+            </v-row>
+        <v-row v-else>
             <v-col cols="auto">
-                <span v-text="attemptData.counter_report_verbose.code"></span>
+                <strong v-text="attemptData.counter_report_verbose.code"></strong>
             </v-col>
             <v-col>
-            <v-progress-linear
-
-                    height="1.5rem"
-                    indeterminate
-            >
-                <span>{{ $t('in_progress') }}, {{ elapsedTime }} s</span>
-            </v-progress-linear>
+                {{ $t('title_fields.download_success') }}:
+                <span class="fa fa-fw pr-3" :class="attemptData.download_success ? 'fa-check' : 'fa-times'"></span>
+                {{ $t('title_fields.processing_success') }}:
+                <span class="fa fa-fw pr-3" :class="attemptData.processing_success ? 'fa-check' : 'fa-times'"></span>
+                {{ $t('title_fields.contains_data') }}:
+                <span class="fa fa-fw pr-3" :class="attemptData.contains_data ? 'fa-check' : 'fa-times'"></span>
             </v-col>
-            </v-row>
-        <div v-else>
-            <span v-text="attemptData.counter_report_verbose.code"></span>: <span v-text="attemptData.download_success"></span>
-        </div>
+        </v-row>
     </div>
 </template>
 
