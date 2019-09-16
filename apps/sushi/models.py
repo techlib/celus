@@ -131,6 +131,7 @@ class SushiCredentials(models.Model):
             attempt_params = self._fetch_report_v4(client, counter_report, start_date, end_date)
         else:
             attempt_params = self._fetch_report_v5(client, counter_report, start_date, end_date)
+        attempt_params['in_progress'] = False
         if fetch_attempt:
             SushiFetchAttempt.objects.filter(pk=fetch_attempt.pk).update(**attempt_params)
             fetch_attempt.refresh_from_db()
@@ -270,8 +271,12 @@ class SushiFetchAttempt(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    download_success = models.BooleanField(help_text="True if there was no error downloading data")
-    processing_success = models.BooleanField(help_text="True if there was no error extracting "
+    in_progress = models.BooleanField(default=False,
+                                      help_text='True if the data is still downloading')
+    download_success = models.BooleanField(default=False,
+                                           help_text="True if there was no error downloading data")
+    processing_success = models.BooleanField(default=False,
+                                             help_text="True if there was no error extracting "
                                                        "data from the downloaded material")
     contains_data = models.BooleanField(default=False,
                                         help_text='Does the report actually contain data for '
@@ -282,7 +287,7 @@ class SushiFetchAttempt(models.Model):
     when_queued = models.DateTimeField(null=True, blank=True)
     queue_previous = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
                                        related_query_name='queue_following')
-    data_file = models.FileField(upload_to=where_to_store)
+    data_file = models.FileField(upload_to=where_to_store, blank=True, null=True)
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
     is_processed = models.BooleanField(default=False,

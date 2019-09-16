@@ -1,4 +1,5 @@
 from datetime import timedelta
+from time import sleep
 
 import dateparser
 from django.db.models import Count, Q, Max, Min
@@ -14,6 +15,7 @@ from organizations.logic.queries import organization_filter_from_org_id
 from organizations.models import Organization
 from sushi.models import CounterReportType, SushiFetchAttempt
 from sushi.serializers import CounterReportTypeSerializer, SushiFetchAttemptSerializer
+from sushi.tasks import run_sushi_fetch_attempt_task
 from .models import SushiCredentials
 from .serializers import SushiCredentialsSerializer
 
@@ -39,10 +41,11 @@ class CounterReportTypeViewSet(ReadOnlyModelViewSet):
     queryset = CounterReportType.objects.all()
 
 
-class SushiFetchAttemptViewSet(ReadOnlyModelViewSet):
+class SushiFetchAttemptViewSet(ModelViewSet):
 
     serializer_class = SushiFetchAttemptSerializer
     queryset = SushiFetchAttempt.objects.none()
+    http_method_names = ['get', 'post', 'options', 'head']
 
     def get_queryset(self):
         organizations = self.request.user.accessible_organizations()
@@ -69,6 +72,12 @@ class SushiFetchAttemptViewSet(ReadOnlyModelViewSet):
             filter_params['credentials__counter_version'] = counter_version
         return SushiFetchAttempt.objects.filter(**filter_params).\
             select_related('counter_report', 'credentials__organization')
+
+    def perform_create(self, serializer: SushiFetchAttemptSerializer):
+        serializer.validated_data['in_progress'] = True
+        super().perform_create(serializer)
+        attempt = serializer.instance
+        run_sushi_fetch_attempt_task.apply_async(args=(attempt.pk,), countdown=1)
 
 
 class SushiFetchAttemptStatsView(APIView):

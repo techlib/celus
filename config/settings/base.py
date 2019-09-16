@@ -191,6 +191,7 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BROKER_URL = 'redis://localhost'
 CELERY_TIMEZONE = TIME_ZONE
 
+
 CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'long'},
                       }
 

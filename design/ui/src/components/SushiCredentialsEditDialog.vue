@@ -1,4 +1,5 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n src="../locales/dialog.yaml"></i18n>
 <i18n>
 en:
     add_custom_param: Add custom parameter
@@ -158,10 +159,33 @@ cs:
         </v-card-text>
         <v-card-actions>
             <v-layout pb-3 pr-5 justify-end>
-                <v-btn color="secondary" @click="closeDialog()">Close</v-btn>
-                <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">Save</v-btn>
+                <v-btn color="warning" @click="startTestDialog()">{{ $t('test') }}</v-btn>
+                <v-btn color="secondary" @click="closeDialog()">{{ $t('close') }}</v-btn>
+                <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">{{ $t('save') }}</v-btn>
             </v-layout>
         </v-card-actions>
+
+        <v-dialog
+                v-model="showTestDialog"
+        >
+            <v-card>
+                <v-card-title>{{ $t('test_dialog') }}</v-card-title>
+                <v-card-text>
+                    <SushiCredentialsTestWidget
+                            :credentials="credentialsObject"
+                            :report-types="selectedReportTypes"
+                            ref="testWidget"
+
+                    >
+
+                    </SushiCredentialsTestWidget>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="secondary" @click="stopTestDialog()">{{ $t('close') }}</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-card>
 
 </template>
@@ -169,9 +193,13 @@ cs:
 <script>
   import axios from 'axios'
   import { mapActions } from 'vuex'
+  import SushiCredentialsTestWidget from './SushiCredentialsTestWidget'
 
   export default {
     name: 'SushiCredentialsEditDialog',
+    components: {
+      SushiCredentialsTestWidget,
+    },
     props: {
       credentialsObject: {},
       value: {default: false},
@@ -193,6 +221,7 @@ cs:
         extraParams: [],
         selectedReportTypes: [],
         credentialsId: null,
+        showTestDialog: false,
       }
     },
     computed: {
@@ -281,6 +310,18 @@ cs:
         if (ok) {
           this.$emit('input', false)
         }
+      },
+      startTestDialog () {
+        if (this.$refs.testWidget) {
+          this.$refs.testWidget.clean()
+        }
+        this.showTestDialog = true
+      },
+      stopTestDialog () {
+        if (this.$refs.testWidget) {
+          this.$refs.testWidget.clean()
+        }
+        this.showTestDialog = false
       }
     },
     mounted () {

@@ -244,7 +244,7 @@ cs:
           ret.push({text: this.$t('organization'), value: 'organization.name'})
         }
         if (!this.report) {
-          ret.push({text: this.$t('report'), value: 'counter_report.code'})
+          ret.push({text: this.$t('report'), value: 'counter_report_verbose.code'})
         }
         ret.push({text: this.$t('title_fields.actions'), value: 'actions'})
 

@@ -3,9 +3,13 @@ en:
   create: Create
   close: Close
   cancel: Cancel
+  save: Save
+  test: Test
 
 cs:
   value_required: Toto pole je povinné
   create: Vytvořit
   close: Zavřít
   cancel: Zrušit
+  save: Uložit
+  test: Otestovat
