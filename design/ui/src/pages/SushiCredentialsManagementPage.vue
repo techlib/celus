@@ -1,9 +1,23 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n>
+en:
+    add_new: Add new SUSHI
+
+cs:
+    add_new: Přidat nové SUSHI
+</i18n>
 
 <template>
     <v-layout>
         <v-card>
             <v-card-title>
+                <v-btn
+                        @click="activateCreateDialog()"
+                        color="warning"
+                >
+                    <v-icon small class="mr-2">fa-plus</v-icon>
+                    {{ $t('add_new') }}
+                </v-btn>
                 <v-spacer></v-spacer>
                 <v-text-field
                         v-model="searchDebounced"
@@ -62,6 +76,14 @@
                     :credentials-object="selectedCredentials"
                     v-model="showEditDialog"
                     @update-credentials="updateCredentials"
+                    key="edit"
+            ></SushiCredentialsEditDialog>
+        </v-dialog>
+        <v-dialog v-model="showCreateDialog">
+            <SushiCredentialsEditDialog
+                    v-model="showCreateDialog"
+                    @update-credentials="updateCredentials"
+                    key="create"
             ></SushiCredentialsEditDialog>
         </v-dialog>
         <v-dialog v-model="showDetailsDialog">
@@ -95,6 +117,7 @@
         selectedCredentials: null,
         showEditDialog: false,
         showDetailsDialog: false,
+        showCreateDialog: false,
         orderBy: ['organization.name', 'platform.name', 'counter_version']
       }
     },
@@ -159,16 +182,25 @@
       updateCredentials (credentials) {
         // the new credentials as returned by the edit dialog
         // we put them at the right place in the list of credentials
+        let found = false
         for (let i=0; i < this.sushiCredentialsList.length; i++) {
           if (this.sushiCredentialsList[i].id === credentials.id) {
             this.$set(this.sushiCredentialsList, i, credentials)
+            found = true
             break
           }
+        }
+        if (!found) {
+          // we did not find the corresponding record - we add it at the end
+          this.sushiCredentialsList.push(credentials)
         }
       },
       closeDetailsDialog () {
         this.selectedCredentials = null
         this.showDetailsDialog = false
+      },
+      activateCreateDialog () {
+        this.showCreateDialog = true
       }
     },
     watch: {

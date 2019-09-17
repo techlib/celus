@@ -25,19 +25,38 @@ cs:
                     <v-layout row>
                         <v-flex xs12 md6 px-5>
                             <v-text-field
+                                    v-if="credentialsObject"
                                     v-model="organization"
                                     :label="$t('organization')"
                                     disabled
                             >
                             </v-text-field>
+                            <v-select v-else
+                                      v-model="organization"
+                                      :items="organizations"
+                                      item-text="name"
+                                      :label="$t('organization')"
+                                      return-object
+                                      :disabled="organizationSelected"
+                            >
+                            </v-select>
                         </v-flex>
                         <v-flex xs12 md6 px-5>
                             <v-text-field
+                                    v-if="credentialsObject"
                                     v-model="platform"
                                     :label="$t('platform')"
                                     disabled
                             >
                             </v-text-field>
+                            <v-select v-else
+                                      v-model="platform"
+                                      :items="platforms"
+                                      item-text="short_name"
+                                      :label="$t('platform')"
+                                      return-object
+                            >
+                            </v-select>
                         </v-flex>
                     </v-layout>
                 </v-flex>
@@ -66,7 +85,7 @@ cs:
                                     v-model="counterVersion"
                                     :label="$t('labels.counter_version')"
                                     :items="[4, 5]"
-                                    disabled
+                                    :disabled="!!credentialsObject"
                             >
                             </v-select>
                         </v-flex>
@@ -74,6 +93,7 @@ cs:
                             <v-text-field
                                     v-model="url"
                                     :label="$t('labels.url')"
+                                    :error-messages="errors.url"
                             >
                             </v-text-field>
                         </v-flex>
@@ -179,7 +199,6 @@ cs:
                             ref="testWidget"
 
                     >
-
                     </SushiCredentialsTestWidget>
                 </v-card-text>
                 <v-card-actions>
@@ -194,7 +213,7 @@ cs:
 
 <script>
   import axios from 'axios'
-  import { mapActions } from 'vuex'
+  import { mapActions, mapGetters } from 'vuex'
   import SushiCredentialsTestWidget from './SushiCredentialsTestWidget'
 
   export default {
@@ -224,17 +243,23 @@ cs:
         selectedReportTypes: [],
         credentialsId: null,
         showTestDialog: false,
+        organizations: [],
+        platforms: [],
+        errors: {},
       }
     },
     computed: {
+      ...mapGetters({
+        selectedOrganization: 'selectedOrganization',
+        organizationSelected: 'organizationSelected',
+      }),
       apiData () {
         let extraParams = {}
         for (let rec of this.extraParams) {
           if (rec.key.trim())
             extraParams[rec.key] = rec.value
         }
-        return {
-          id: this.credentialsId,
+        let data = {
           customer_id: this.customerId,
           requestor_id: this.requestorId,
           api_key: this.api_key,
@@ -245,12 +270,25 @@ cs:
           extra_params: extraParams,
           active_counter_reports: this.selectedReportTypes,
         }
+        if (this.credentialsObject) {
+          data['id'] = this.credentialsId
+        } else {
+          data['platform_id'] = this.platform.pk
+          data['organization_id'] = this.organization.pk
+        }
+        return data
       },
       reportTypes () {
         return this.allReportTypes.filter(item => item.counter_version === this.counterVersion)
       },
       valid () {
-        return (this.selectedReportTypes.length > 0 && this.url && this.requestorId)
+        if (this.credentialsObject) {
+          return (this.selectedReportTypes.length > 0 && this.url && this.requestorId)
+        } else {
+          return (this.selectedReportTypes.length > 0 && this.url && this.requestorId &&
+            this.platform !== null && this.counterVersion)
+        }
+
       }
     },
     methods: {
@@ -290,22 +328,63 @@ cs:
           this.showSnackbar({content: 'Error loading report types: ' + error})
         }
       },
+      async loadOrganizations () {
+        if (this.organizationSelected) {
+          // we have a specific organization selected - we use it
+          this.organizations = [this.selectedOrganization]
+          this.organization = this.selectedOrganization
+        } else {
+          try {
+            let result = await axios.get('/api/organization/')
+            this.organizations = result.data
+            this.organization = this.organizations[0]
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading organizations: ' + error})
+          }
+        }
+      },
+      async loadPlatforms () {
+        try {
+          let result = await axios.get('/api/platform/')
+          this.platforms = result.data
+          this.platform = this.platforms[0]
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading platforms: ' + error})
+        }
+      },
       closeDialog () {
         this.$emit('input', false)
       },
       async saveData () {
+        this.errors = {}
         try {
-          let result = await axios.patch(
-            `/api/sushi-credentials/${this.credentialsId}/`,
-            this.apiData,
+          let result = null
+          if (this.credentialsObject) {
+            // we have existing credentials - we patch it
+            result = await axios.patch(
+              `/api/sushi-credentials/${this.credentialsId}/`,
+              this.apiData,
             )
+          } else {
+            // we create new credentials
+            result = await axios.post(
+              `/api/sushi-credentials/`,
+              this.apiData,
+            )
+          }
           this.showSnackbar({content: 'Successfully saved SUSHI credentials', color: 'success'})
-          this.$emit('updte-credentials', result.data)
+          this.$emit('update-credentials', result.data)
           return true
         } catch (error) {
           this.showSnackbar({content: 'Error saving SUSHI credentials: ' + error, color: 'error'})
+          if (error.response != null) {
+            this.processErrors(error.response.data)
+          }
           return false
         }
+      },
+      processErrors (errors) {
+        this.errors = errors
       },
       async saveAndClose () {
         let ok = await this.saveData()
@@ -324,15 +403,26 @@ cs:
           this.$refs.testWidget.clean()
         }
         this.showTestDialog = false
+      },
+      init () {
+        if (this.credentialsObject == null) {
+          this.loadOrganizations()
+          this.loadPlatforms()
+        }
+        this.credentialsPropToData()
       }
     },
     mounted () {
-      this.credentialsPropToData()
       this.loadReportTypes()
+      this.init()
     },
     watch: {
       credentialsObject () {
-        this.credentialsPropToData()
+        this.init()
+      },
+      value (value) {
+        if (value)
+          this.init()
       }
     }
 
