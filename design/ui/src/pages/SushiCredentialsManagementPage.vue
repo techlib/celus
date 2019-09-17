@@ -31,13 +31,7 @@
                             :key="index"
                     >
                         <template v-slot:activator="{ on }">
-                            <v-chip
-                                    class="mr-1"
-                                    color="teal"
-                                    outlined
-                                    label
-                                    v-on="on"
-                            >
+                            <v-chip class="mr-1" color="teal" outlined label v-on="on">
                                 {{ report.code }}
                             </v-chip>
                         </template>
