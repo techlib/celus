@@ -3,11 +3,13 @@
 <i18n>
 en:
     add_custom_param: Add custom parameter
+    test_dialog: Test SUSHI credentials
     title:
         edit_sushi_credentials: Edit SUSHI credentials
 
 cs:
     add_custom_param: Přidat vlastní parametr
+    test_dialog: Test přihlašovacích údajů SUSHI
     title:
         edit_sushi_credentials: Přihlašovací údaje SUSHI
 </i18n>

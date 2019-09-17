@@ -133,8 +133,9 @@ class SushiCredentials(models.Model):
             attempt_params = self._fetch_report_v5(client, counter_report, start_date, end_date)
         attempt_params['in_progress'] = False
         if fetch_attempt:
-            SushiFetchAttempt.objects.filter(pk=fetch_attempt.pk).update(**attempt_params)
-            fetch_attempt.refresh_from_db()
+            for key, value in attempt_params.items():
+                setattr(fetch_attempt, key, value)
+            fetch_attempt.save()
             return fetch_attempt
         else:
             attempt = SushiFetchAttempt.objects.create(**attempt_params)

@@ -26,15 +26,15 @@
             </v-col>
         </v-row>
         <v-row v-else no-gutters>
-            <v-col v-for="attemptId in attemptIds" :key="attemptId" cols="12">
+            <v-expansion-panels>
                 <SushiCredentialsStatusWidget
+                        v-for="attemptId in attemptIds"
                         :attempt-id="attemptId"
                         :key="attemptId"
                         ref="attemptStatus"
                 >
                 </SushiCredentialsStatusWidget>
-
-            </v-col>
+            </v-expansion-panels>
 
         </v-row>
     </v-container>
