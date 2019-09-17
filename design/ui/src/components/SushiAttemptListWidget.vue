@@ -76,24 +76,16 @@ cs:
                                 :sort-desc="orderDesc"
                         >
                             <template v-slot:item.download_success="props">
-                                <v-icon small :color="props.item.download_success ? 'success' : 'error'">
-                                    {{ props.item.download_success ? 'fa-check' : 'fa-times' }}
-                                </v-icon>
+                                <CheckMark :value="props.item.download_success" />
                             </template>
                             <template v-slot:item.processing_success="props">
-                                <v-icon small :color="props.item.processing_success ? 'success' : 'error'">
-                                    {{ props.item.processing_success ? 'fa-check' : 'fa-times' }}
-                                </v-icon>
+                                <CheckMark :value="props.item.processing_success" />
                             </template>
                             <template v-slot:item.contains_data="props">
-                                <v-icon small :color="props.item.contains_data ? 'success' : 'error'">
-                                    {{ props.item.contains_data ? 'fa-check' : 'fa-times' }}
-                                </v-icon>
+                                <CheckMark :value="props.item.contains_data" />
                             </template>
                             <template v-slot:item.is_processed="props">
-                                <v-icon small :color="props.item.is_processed ? 'success' : 'error'">
-                                    {{ props.item.is_processed ? 'fa-check' : 'fa-times' }}
-                                </v-icon>
+                                <CheckMark :value="props.item.is_processed" />
                             </template>
                             <template v-slot:expanded-item="{item, headers}">
                                 <th colspan="2">Log</th>
@@ -154,10 +146,11 @@ cs:
   import axios from 'axios'
   import AccessLogList from './AccessLogList'
   import ImportBatchChart from './ImportBatchChart'
+  import CheckMark from './CheckMark'
 
   export default {
     name: "SushiAttemptListWidget",
-    components: {AccessLogList, ImportBatchChart},
+    components: {AccessLogList, ImportBatchChart, CheckMark},
     props: {
       organization: {required: false},
       platform: {required: false},
