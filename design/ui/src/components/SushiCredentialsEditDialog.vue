@@ -4,12 +4,14 @@
 en:
     add_custom_param: Add custom parameter
     test_dialog: Test SUSHI credentials
+    all_versions_used: All versions already defined for this organization and platform - to make changes, edit the corresponding record
     title:
         edit_sushi_credentials: Edit SUSHI credentials
 
 cs:
     add_custom_param: Přidat vlastní parametr
     test_dialog: Test přihlašovacích údajů SUSHI
+    all_versions_used: Pro tuto platformu a organizaci jsou již všechny verze použity - pro změnu editujte příslušný záznam
     title:
         edit_sushi_credentials: Přihlašovací údaje SUSHI
 </i18n>
@@ -51,7 +53,7 @@ cs:
                             </v-text-field>
                             <v-select v-else
                                       v-model="platform"
-                                      :items="platforms"
+                                      :items="allowedPlatforms"
                                       item-text="short_name"
                                       :label="$t('platform')"
                                       return-object
@@ -84,8 +86,9 @@ cs:
                             <v-select
                                     v-model="counterVersion"
                                     :label="$t('labels.counter_version')"
-                                    :items="[4, 5]"
+                                    :items="allowedCounterVersions"
                                     :disabled="!!credentialsObject"
+                                    :no-data-text="$t('all_versions_used')"
                             >
                             </v-select>
                         </v-flex>
@@ -224,6 +227,7 @@ cs:
     props: {
       credentialsObject: {},
       value: {default: false},
+      existingCredentials: {required: false, type: Array}
     },
     data () {
       return {
@@ -288,7 +292,24 @@ cs:
           return (this.selectedReportTypes.length > 0 && this.url && this.requestorId &&
             this.platform !== null && this.counterVersion)
         }
-
+      },
+      allowedPlatforms () {
+        return this.platforms
+      },
+      allowedCounterVersions () {
+        let versions = [4, 5]
+        if (!this.existingCredentials) {
+          return versions
+        }
+        // we have a list of existing credentials - we will filter the possibilities according
+        // to what is already defined
+        let existing = []
+        for (let cred of this.existingCredentials) {
+          if (cred.organization.pk === this.organization.pk && cred.platform.pk === this.platform.pk) {
+            existing.push(cred.counter_version)
+          }
+        }
+        return versions.filter(item => existing.indexOf(item) < 0)
       }
     },
     methods: {

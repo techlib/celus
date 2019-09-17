@@ -83,6 +83,7 @@ cs:
             <SushiCredentialsEditDialog
                     v-model="showCreateDialog"
                     @update-credentials="updateCredentials"
+                    :existing-credentials="sushiCredentialsList"
                     key="create"
             ></SushiCredentialsEditDialog>
         </v-dialog>
