@@ -6,6 +6,8 @@ en:
     test_dialog: Test SUSHI credentials
     all_versions_used: All versions already defined for this organization and platform - to make changes, edit the corresponding record
     save_and_test: Save and start test
+    enabled: Enabled
+    enabled_tooltip: Data for enabled credentials get automatically downloaded. To prevent downloads, disable the credentials.
     title:
         edit_sushi_credentials: Edit SUSHI credentials
 
@@ -14,6 +16,8 @@ cs:
     test_dialog: Test přihlašovacích údajů SUSHI
     all_versions_used: Pro tuto platformu a organizaci jsou již všechny verze použity - pro změnu editujte příslušný záznam
     save_and_test: Uložit a spustit test
+    enabled: Aktivní
+    enabled_tooltip: Pro aktivní přístupové údaje se budou pravidelně stahovat data. Vypnutím toto stahování zrušíte.
     title:
         edit_sushi_credentials: Přihlašovací údaje SUSHI
 </i18n>
@@ -167,7 +171,7 @@ cs:
                         </v-expansion-panel>
                     </v-expansion-panels>
                 </v-flex>
-                <v-flex pa-5 pt-6>
+                <v-flex px-5 pt-6>
                     <v-layout row>
                         <v-flex xs12>
                             <h4>Active report types</h4>
@@ -185,11 +189,30 @@ cs:
 
         </v-card-text>
         <v-card-actions>
-            <v-layout pb-3 pr-5 justify-end>
-                <v-btn color="secondary" @click="closeDialog()">{{ $t('close') }}</v-btn>
-                <v-btn color="warning" @click="saveAndTest()" :disabled="!valid">{{ $t('save_and_test') }}</v-btn>
-                <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">{{ $t('save') }}</v-btn>
-            </v-layout>
+            <v-container>
+                <v-row no-gutters>
+                    <v-col cols="auto">
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on }">
+                                <span v-on="on">
+                                    <v-switch
+                                            v-model="enabled"
+                                            :label="$t('enabled')"
+                                            class="pl-2 my-0"
+                                    ></v-switch>
+                                </span>
+                            </template>
+                            <span>{{ $t('enabled_tooltip') }}</span>
+                        </v-tooltip>
+                    </v-col>
+                    <v-spacer></v-spacer>
+                    <v-col cols="auto">
+                        <v-btn color="secondary" @click="closeDialog()">{{ $t('close') }}</v-btn>
+                        <v-btn color="warning" @click="saveAndTest()" :disabled="!valid">{{ $t('save_and_test') }}</v-btn>
+                        <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">{{ $t('save') }}</v-btn>
+                    </v-col>
+                </v-row>
+            </v-container>
         </v-card-actions>
 
         <v-dialog
@@ -253,6 +276,7 @@ cs:
         platforms: [],
         errors: {},
         savedCredentials: null,
+        enabled: false,
       }
     },
     computed: {
@@ -285,6 +309,7 @@ cs:
           http_password: this.httpPassword,
           extra_params: extraParams,
           active_counter_reports: this.selectedReportTypes,
+          enabled: this.enabled,
         }
         if (this.credentials) {
           data['id'] = this.credentialsId
@@ -351,6 +376,7 @@ cs:
         this.extraParams = extraParams
         this.selectedReportTypes = [...credentials.active_counter_reports]
         this.credentialsId = credentials.id
+        this.enabled = credentials.enabled
 
       },
       async loadReportTypes () {

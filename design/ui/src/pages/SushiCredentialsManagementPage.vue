@@ -67,7 +67,7 @@ cs:
                     </v-btn>
                 </template>
                 <template v-slot:item.enabled="props">
-                    <v-icon x-small>{{ props.item.enabled ? 'fa-check' : 'fa-times' }}</v-icon>
+                    <CheckMark :value="props.item.enabled" />
                 </template>
             </v-data-table>
         </v-card>
@@ -106,10 +106,11 @@ cs:
   import debounce from 'lodash/debounce'
   import SushiCredentialsEditDialog from '../components/SushiCredentialsEditDialog'
   import SushiAttemptListWidget from '../components/SushiAttemptListWidget'
+  import CheckMark from '../components/CheckMark'
 
   export default {
     name: "SushiCredentialsManagementPage",
-    components: {SushiCredentialsEditDialog, SushiAttemptListWidget},
+    components: {SushiCredentialsEditDialog, SushiAttemptListWidget, CheckMark},
     data () {
       return {
         sushiCredentialsList: [],
