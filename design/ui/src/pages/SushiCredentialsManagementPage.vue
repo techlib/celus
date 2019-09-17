@@ -53,6 +53,10 @@
                         <v-icon left x-small>fa-edit</v-icon>
                         {{ $t('actions.edit') }}
                     </v-btn>
+                    <v-btn text small color="secondary" @click.stop="selectedCredentials = props.item; showDetailsDialog = true">
+                        <v-icon left x-small>fa-list</v-icon>
+                        {{ $t('actions.show_attempts') }}
+                    </v-btn>
                 </template>
                 <template v-slot:item.enabled="props">
                     <v-icon x-small>{{ props.item.enabled ? 'fa-check' : 'fa-times' }}</v-icon>
@@ -66,6 +70,16 @@
                     @update-credentials="updateCredentials"
             ></SushiCredentialsEditDialog>
         </v-dialog>
+        <v-dialog v-model="showDetailsDialog">
+            <SushiAttemptListWidget
+                    v-if="selectedCredentials"
+                    :organization="selectedCredentials.organization"
+                    :platform="selectedCredentials.platform"
+                    :counter-version="selectedCredentials.counter_version"
+                    @close="closeDetailsDialog"
+            >
+            </SushiAttemptListWidget>
+        </v-dialog>
     </v-layout>
 </template>
 
@@ -74,10 +88,11 @@
   import { mapActions, mapState } from 'vuex'
   import debounce from 'lodash/debounce'
   import SushiCredentialsEditDialog from '../components/SushiCredentialsEditDialog'
+  import SushiAttemptListWidget from '../components/SushiAttemptListWidget'
 
   export default {
     name: "SushiCredentialsManagementPage",
-    components: {SushiCredentialsEditDialog},
+    components: {SushiCredentialsEditDialog, SushiAttemptListWidget},
     data () {
       return {
         sushiCredentialsList: [],
@@ -85,6 +100,7 @@
         itemsPerPage: 25,
         selectedCredentials: null,
         showEditDialog: false,
+        showDetailsDialog: false,
         orderBy: ['organization.name', 'platform.name', 'counter_version']
       }
     },
@@ -155,6 +171,10 @@
             break
           }
         }
+      },
+      closeDetailsDialog () {
+        this.selectedCredentials = null
+        this.showDetailsDialog = false
       }
     },
     watch: {
