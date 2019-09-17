@@ -209,6 +209,11 @@ cs:
         if (!value) {
           this.selectedCredentials = null
         }
+      },
+      showCreateDialog (value) {
+        if (!value) {
+          this.selectedCredentials = null
+        }
       }
     },
     mounted() {

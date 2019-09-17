@@ -5,6 +5,7 @@ en:
     add_custom_param: Add custom parameter
     test_dialog: Test SUSHI credentials
     all_versions_used: All versions already defined for this organization and platform - to make changes, edit the corresponding record
+    save_and_test: Save and start test
     title:
         edit_sushi_credentials: Edit SUSHI credentials
 
@@ -12,6 +13,7 @@ cs:
     add_custom_param: Přidat vlastní parametr
     test_dialog: Test přihlašovacích údajů SUSHI
     all_versions_used: Pro tuto platformu a organizaci jsou již všechny verze použity - pro změnu editujte příslušný záznam
+    save_and_test: Uložit a spustit test
     title:
         edit_sushi_credentials: Přihlašovací údaje SUSHI
 </i18n>
@@ -27,7 +29,7 @@ cs:
                     <v-layout row>
                         <v-flex xs12 md6 px-5>
                             <v-text-field
-                                    v-if="credentialsObject"
+                                    v-if="credentials"
                                     v-model="organization"
                                     :label="$t('organization')"
                                     disabled
@@ -45,7 +47,7 @@ cs:
                         </v-flex>
                         <v-flex xs12 md6 px-5>
                             <v-text-field
-                                    v-if="credentialsObject"
+                                    v-if="credentials"
                                     v-model="platform"
                                     :label="$t('platform')"
                                     disabled
@@ -87,7 +89,7 @@ cs:
                                     v-model="counterVersion"
                                     :label="$t('labels.counter_version')"
                                     :items="allowedCounterVersions"
-                                    :disabled="!!credentialsObject"
+                                    :disabled="!!credentials"
                                     :no-data-text="$t('all_versions_used')"
                             >
                             </v-select>
@@ -184,8 +186,8 @@ cs:
         </v-card-text>
         <v-card-actions>
             <v-layout pb-3 pr-5 justify-end>
-                <v-btn color="warning" @click="startTestDialog()">{{ $t('test') }}</v-btn>
                 <v-btn color="secondary" @click="closeDialog()">{{ $t('close') }}</v-btn>
+                <v-btn color="warning" @click="saveAndTest()" :disabled="!valid">{{ $t('save_and_test') }}</v-btn>
                 <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">{{ $t('save') }}</v-btn>
             </v-layout>
         </v-card-actions>
@@ -197,7 +199,7 @@ cs:
                 <v-card-title>{{ $t('test_dialog') }}</v-card-title>
                 <v-card-text>
                     <SushiCredentialsTestWidget
-                            :credentials="credentialsObject"
+                            :credentials="credentials"
                             :report-types="selectedReportTypes"
                             ref="testWidget"
 
@@ -250,6 +252,7 @@ cs:
         organizations: [],
         platforms: [],
         errors: {},
+        savedCredentials: null,
       }
     },
     computed: {
@@ -257,6 +260,15 @@ cs:
         selectedOrganization: 'selectedOrganization',
         organizationSelected: 'organizationSelected',
       }),
+      credentials () {
+        if (this.credentialsObject != null) {
+          return this.credentialsObject
+        }
+        if (this.savedCredentials != null) {
+          return this.savedCredentials
+        }
+        return null
+      },
       apiData () {
         let extraParams = {}
         for (let rec of this.extraParams) {
@@ -274,7 +286,7 @@ cs:
           extra_params: extraParams,
           active_counter_reports: this.selectedReportTypes,
         }
-        if (this.credentialsObject) {
+        if (this.credentials) {
           data['id'] = this.credentialsId
         } else {
           data['platform_id'] = this.platform.pk
@@ -286,7 +298,7 @@ cs:
         return this.allReportTypes.filter(item => item.counter_version === this.counterVersion)
       },
       valid () {
-        if (this.credentialsObject) {
+        if (this.credentials) {
           return (this.selectedReportTypes.length > 0 && this.url && this.requestorId)
         } else {
           return (this.selectedReportTypes.length > 0 && this.url && this.requestorId &&
@@ -310,14 +322,14 @@ cs:
           }
         }
         return versions.filter(item => existing.indexOf(item) < 0)
-      }
+      },
     },
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
       credentialsPropToData () {
-        let credentials = this.credentialsObject
+        let credentials = this.credentials
         if (!credentials) {
           return
         }
@@ -379,22 +391,23 @@ cs:
       async saveData () {
         this.errors = {}
         try {
-          let result = null
-          if (this.credentialsObject) {
+          let response = null
+          if (this.credentials) {
             // we have existing credentials - we patch it
-            result = await axios.patch(
+            response = await axios.patch(
               `/api/sushi-credentials/${this.credentialsId}/`,
               this.apiData,
             )
           } else {
             // we create new credentials
-            result = await axios.post(
+            response = await axios.post(
               `/api/sushi-credentials/`,
               this.apiData,
             )
           }
+          this.savedCredentials = response.data
           this.showSnackbar({content: 'Successfully saved SUSHI credentials', color: 'success'})
-          this.$emit('update-credentials', result.data)
+          this.$emit('update-credentials', response.data)
           return true
         } catch (error) {
           this.showSnackbar({content: 'Error saving SUSHI credentials: ' + error, color: 'error'})
@@ -413,11 +426,14 @@ cs:
           this.$emit('input', false)
         }
       },
-      startTestDialog () {
-        if (this.$refs.testWidget) {
-          this.$refs.testWidget.clean()
+      async saveAndTest () {
+        let ok = await this.saveData()
+        if (ok) {
+          if (this.$refs.testWidget) {
+            this.$refs.testWidget.clean()
+          }
+          this.showTestDialog = true
         }
-        this.showTestDialog = true
       },
       stopTestDialog () {
         if (this.$refs.testWidget) {
@@ -426,7 +442,7 @@ cs:
         this.showTestDialog = false
       },
       init () {
-        if (this.credentialsObject == null) {
+        if (this.credentials == null) {
           this.loadOrganizations()
           this.loadPlatforms()
         }
@@ -442,7 +458,7 @@ cs:
         this.init()
       },
       value (value) {
-        if (value)
+        if (value === true)
           this.init()
       }
     }
