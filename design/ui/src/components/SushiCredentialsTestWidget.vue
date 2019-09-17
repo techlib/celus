@@ -1,28 +1,80 @@
+<i18n src="../locales/common.yaml"></i18n>
+<i18n>
+en:
+    select_dates_text: Select date range for SUSHI credentials test. A shorter period usually takes
+                       less time to process, so using only one month is advisable.
+
+cs:
+    select_dates_text: Vyberte rozsah měsíců pro test přihlašovacích údajů. Kratší období je většinou
+                       rychleji zpracováno, takže je vhodné vybrat jen jeden měsíc.
+</i18n>
+
 <template>
     <v-container>
         <v-row>
+            <v-col>{{ $t('select_dates_text') }}</v-col>
+        </v-row>
+        <v-row>
             <v-col>
-                <v-date-picker
-                        v-model="startDate"
-                        type="month"
-                        no-title
-                        :locale="$i18n.locale"
-                        :allowed-dates="allowedStartMonths"
-                ></v-date-picker>
+                <v-menu
+                        v-model="startDateMenu"
+                        :close-on-content-click="false"
+                        :nudge-right="40"
+                        transition="scale-transition"
+                        offset-y
+                        full-width
+                        min-width="290px"
+                >
+                    <template v-slot:activator="{ on }">
+                        <v-text-field
+                                v-model="startDate"
+                                :label="$t('title_fields.start_date')"
+                                prepend-icon="fa-calendar"
+                                readonly
+                                v-on="on"
+                        ></v-text-field>
+                    </template>
+                    <v-date-picker
+                            v-model="startDate"
+                            type="month"
+                            no-title
+                            :locale="$i18n.locale"
+                            :allowed-dates="allowedStartMonths"
+                    ></v-date-picker>
+                </v-menu>
             </v-col>
             <v-col>
-                <v-date-picker
-                        v-model="endDate"
-                        type="month"
-                        no-title
-                        :locale="$i18n.locale"
-                        :allowed-dates="allowedEndMonths"
-                ></v-date-picker>
+                <v-menu
+                        v-model="endDateMenu"
+                        :close-on-content-click="false"
+                        :nudge-right="40"
+                        transition="scale-transition"
+                        offset-y
+                        full-width
+                        min-width="290px"
+                >
+                    <template v-slot:activator="{ on }">
+                        <v-text-field
+                                v-model="startDate"
+                                :label="$t('title_fields.end_date')"
+                                prepend-icon="fa-calendar"
+                                readonly
+                                v-on="on"
+                        ></v-text-field>
+                    </template>
+                    <v-date-picker
+                            v-model="endDate"
+                            type="month"
+                            no-title
+                            :locale="$i18n.locale"
+                            :allowed-dates="allowedEndMonths"
+                    ></v-date-picker>
+                </v-menu>
             </v-col>
         </v-row>
         <v-row v-if="!started">
             <v-col>
-                <v-btn @click="createAttempts()" v-text="$t('start_test')"></v-btn>
+                <v-btn @click="createAttempts()" v-text="$t('actions.start_test')"></v-btn>
             </v-col>
         </v-row>
         <v-row v-else no-gutters>
@@ -60,6 +112,8 @@
         startDate: null,
         endDate: null,
         started: false,
+        startDateMenu: null,
+        endDateMenu: null,
       }
     },
     methods: {

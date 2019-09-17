@@ -81,6 +81,7 @@ en:
     upload_data: Upload data
     cancel: Cancel
     show_attempts: Downloads
+    start_test: Start test
 
 cs:
   pages:
@@ -165,3 +166,4 @@ cs:
     upload_data: Nahrát data
     cancel: Zrušit
     show_attempts: Stažení
+    start_test: Spustit test
