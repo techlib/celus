@@ -192,12 +192,22 @@ CELERY_BROKER_URL = 'redis://localhost'
 CELERY_TIMEZONE = TIME_ZONE
 
 
-CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'long'},
+CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
+                      'logs.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
+                      'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
                       }
 
 CELERY_BEAT_SCHEDULE = {
     'sync_interest_task': {
         'task': 'logs.tasks.sync_interest_task',
+        'schedule': schedule(run_every=timedelta(minutes=5)),
+    },
+    'retry_queued_attempts_task': {
+        'task': 'logs.tasks.retry_queued_attempts_task',
+        'schedule': schedule(run_every=timedelta(minutes=5)),
+    },
+    'import_new_sushi_attempts_task': {
+        'task': 'logs.tasks.import_new_sushi_attempts_task',
         'schedule': schedule(run_every=timedelta(minutes=5)),
     },
 }

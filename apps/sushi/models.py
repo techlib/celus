@@ -1,4 +1,3 @@
-import json
 import os
 import logging
 import traceback
@@ -12,6 +11,7 @@ from django.db import models
 from django.utils.timezone import now
 from pycounter.exceptions import SushiException
 
+from django.conf import settings
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
     SushiClientBase
@@ -362,6 +362,9 @@ class SushiFetchAttempt(models.Model):
         prev_count = self.previous_attempt_count()
         interval = self.retry_interval_simple()
         if not interval:
+            return None
+        if prev_count > settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
+            # we reached the maximum number of retries, we do not continue
             return None
         return interval * (2**prev_count)
 
