@@ -1,6 +1,7 @@
 import os
 import logging
 import traceback
+from hashlib import blake2b
 from datetime import timedelta, datetime
 from typing import Optional
 
@@ -12,6 +13,8 @@ from django.utils.timezone import now
 from pycounter.exceptions import SushiException
 
 from django.conf import settings
+
+from core.task_support import cache_based_lock
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
     SushiClientBase
@@ -116,21 +119,35 @@ class SushiCredentials(models.Model):
         else:
             return Sushi5Client(extra_params=extra, **attrs)
 
+    @property
+    def url_lock_name(self):
+        """
+        Creates a name for lock which should be used to ensure only one attempt to fetch data
+        from a specific URL at a time.
+        """
+        url_hash = blake2b(self.url.encode('utf-8'), digest_size=16).hexdigest()
+        return f'url-lock-{url_hash}'
+
     def fetch_report(self, counter_report: CounterReportType, start_date, end_date,
-                     fetch_attempt: 'SushiFetchAttempt' = None) -> 'SushiFetchAttempt':
+                     fetch_attempt: 'SushiFetchAttempt' = None, use_url_lock=True) -> \
+            'SushiFetchAttempt':
         """
         :param counter_report:
         :param start_date:
         :param end_date:
         :param fetch_attempt: when provides, new SushiFetchAttempt will not be created but rather
                               the given one updated
+        :param use_url_lock: if True, a cache based lock will be used to ensure exclusive access
+                             to one URL
         :return:
         """
         client = self.create_sushi_client()
-        if self.counter_version == 4:
-            attempt_params = self._fetch_report_v4(client, counter_report, start_date, end_date)
+        fetch_m = self._fetch_report_v4 if self.counter_version == 4 else self._fetch_report_v5
+        if use_url_lock:
+            with cache_based_lock(self.url_lock_name):
+                attempt_params = fetch_m(client, counter_report, start_date, end_date)
         else:
-            attempt_params = self._fetch_report_v5(client, counter_report, start_date, end_date)
+            attempt_params = fetch_m(client, counter_report, start_date, end_date)
         attempt_params['in_progress'] = False
         if fetch_attempt:
             for key, value in attempt_params.items():

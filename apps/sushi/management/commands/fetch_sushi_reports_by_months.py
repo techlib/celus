@@ -1,18 +1,13 @@
 import concurrent.futures
-from collections import namedtuple
+import logging
 from datetime import timedelta, date
 from time import sleep
-import logging
 
 from dateparser import parse as parse_date
-
 from django.core.management.base import BaseCommand
 
 from core.logic.dates import month_start, month_end
-from organizations.models import Organization
-from publications.models import Platform
 from sushi.models import SushiCredentials, CounterReportType, SushiFetchAttempt
-
 
 logger = logging.getLogger(__name__)
 

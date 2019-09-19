@@ -65,8 +65,8 @@ class SushiFetchAttemptViewSet(ModelViewSet):
                 filter_params['timestamp__date__gte'] = date_from
         if 'month' in self.request.query_params:
             month = self.request.query_params['month']
-            filter_params['start_date__lte'] = dateparser.parse(month)
-            filter_params['end_date__gte'] = dateparser.parse(month)
+            filter_params['start_date__lte'] = month_start(dateparser.parse(month))
+            filter_params['end_date__gte'] = month_start(dateparser.parse(month))
         if 'counter_version' in self.request.query_params:
             counter_version = self.request.query_params['counter_version']
             filter_params['credentials__counter_version'] = counter_version

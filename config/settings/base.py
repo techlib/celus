@@ -195,6 +195,7 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
                       'sushi.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
                       'sushi.tasks.run_sushi_fetch_attempt_task': {'queue': 'sushi'},
+                      'sushi.tasks.fetch_new_sushi_data_task': {'queue': 'sushi'},
                       'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
                       }
 
@@ -211,6 +212,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'logs.tasks.import_new_sushi_attempts_task',
         'schedule': schedule(run_every=timedelta(minutes=5)),
     },
+    'fetch_new_sushi_data_task': {
+        'task': 'sushi.tasks.fetch_new_sushi_data_task',
+        'schedule': schedule(run_every=timedelta(minutes=3)),
+    },
 }
 
 
@@ -221,6 +226,7 @@ MASTER_ORGANIZATIONS = ['NTK-61387142']  # organizations whose users should have
 # should we try to authenticate against ERMS before trying local data?
 LIVE_ERMS_AUTHENTICATION = False
 QUEUED_SUSHI_MAX_RETRY_COUNT = 5  # how many times max should we retry queued attempts
+SUSHI_ATTEMPT_LAST_DATE = '2017-01'  # default date where to end fetching sushi data
 
 LOGGING = {
     'version': 1,

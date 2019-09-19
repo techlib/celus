@@ -35,6 +35,8 @@ def month_end(date: datetime.date) -> datetime.date:
 
 
 def month_start(date: datetime.date) -> datetime.date:
+    if isinstance(date, datetime.datetime):
+        return date.replace(day=1).date()
     return date.replace(day=1)
 
 

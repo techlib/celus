@@ -4,7 +4,7 @@ Celery tasks related to SUSHI fetching
 import celery
 
 from core.task_support import cache_based_lock
-from .logic.fetching import retry_queued
+from .logic.fetching import retry_queued, fetch_new_sushi_data
 from sushi.models import SushiFetchAttempt
 
 
@@ -27,11 +27,11 @@ def retry_queued_attempts_task():
     with cache_based_lock('retry_queued_attempts_task'):
         retry_queued(sleep_interval=5)
 
-#
-# @celery.task
-# def fetch_new_sushi_data_task():
-#     """
-#     Fetch sushi data for dates and platforms where they are not available
-#     """
-#     with cache_based_lock('retry_queued_attempts_task'):
-#         retry_queued(sleep_interval=5)
+
+@celery.task
+def fetch_new_sushi_data_task():
+    """
+    Fetch sushi data for dates and platforms where they are not available
+    """
+    with cache_based_lock('fetch_new_sushi_data_task'):
+        fetch_new_sushi_data()
