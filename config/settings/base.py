@@ -214,7 +214,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'fetch_new_sushi_data_task': {
         'task': 'sushi.tasks.fetch_new_sushi_data_task',
-        'schedule': schedule(run_every=timedelta(minutes=3)),
+        'schedule': schedule(run_every=timedelta(days=1)),
     },
 }
 
