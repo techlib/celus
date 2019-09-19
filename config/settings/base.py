@@ -193,7 +193,8 @@ CELERY_TIMEZONE = TIME_ZONE
 
 
 CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
-                      'logs.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
+                      'sushi.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
+                      'sushi.tasks.run_sushi_fetch_attempt_task': {'queue': 'sushi'},
                       'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
                       }
 
@@ -203,7 +204,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': schedule(run_every=timedelta(minutes=5)),
     },
     'retry_queued_attempts_task': {
-        'task': 'logs.tasks.retry_queued_attempts_task',
+        'task': 'sushi.tasks.retry_queued_attempts_task',
         'schedule': schedule(run_every=timedelta(minutes=5)),
     },
     'import_new_sushi_attempts_task': {
