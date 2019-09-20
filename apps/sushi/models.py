@@ -19,7 +19,7 @@ from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
     SushiClientBase
 from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report, Counter4DB1Report, \
-    Counter4PR1Report
+    Counter4PR1Report, Counter4BR1Report, Counter4JR2Report, Counter4DB2Report, Counter4BR3Report
 from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
 from organizations.models import Organization
 from publications.models import Platform
@@ -35,15 +35,15 @@ COUNTER_VERSIONS = (
 COUNTER_REPORTS = (
     # version 4
     ('JR1', 4, Counter4JR1Report),
-    ('JR1a', 4, None),
-    ('JR1GOA', 4, None),
-    ('JR2', 4, None),
-    ('JR5', 4, None),
-    ('BR1', 4, None),
+    ('JR1a', 4, Counter4JR1Report),
+    ('JR1GOA', 4, Counter4JR1Report),
+    ('JR2', 4, Counter4JR2Report),
+    # ('JR5', 4, None),
+    ('BR1', 4, Counter4BR1Report),
     ('BR2', 4, Counter4BR2Report),
-    ('BR3', 4, None),
+    ('BR3', 4, Counter4BR3Report),
     ('DB1', 4, Counter4DB1Report),
-    ('DB2', 4, None),
+    ('DB2', 4, Counter4DB2Report),
     ('PR1', 4, Counter4PR1Report),
     # version 5
     ('TR', 5, Counter5TRReport),
@@ -299,6 +299,10 @@ class SushiFetchAttempt(models.Model):
     contains_data = models.BooleanField(default=False,
                                         help_text='Does the report actually contain data for '
                                                   'import')
+    import_crashed = models.BooleanField(default=False,
+                                         help_text='Set to true if there was an error during '
+                                                   'data import. Details in log and '
+                                                   'processing_info')
     queued = models.BooleanField(default=False,
                                  help_text='Was the attempt queued by the provider and should be '
                                            'refetched?')
@@ -395,3 +399,11 @@ class SushiFetchAttempt(models.Model):
             return now()
         ref_time = self.when_queued or self.timestamp
         return ref_time + interval
+
+    def mark_crashed(self, exception):
+        if self.log:
+            self.log += '\n'
+        self.log += str(exception)
+        self.import_crashed = True
+        self.processing_info['import_crash_traceback'] = traceback.format_exc()
+        self.save()

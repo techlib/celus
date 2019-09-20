@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 
 from django.conf import settings
 from django.db.transaction import atomic
@@ -15,12 +16,17 @@ logger = logging.getLogger(__name__)
 
 def import_new_sushi_attempts():
     queryset = SushiFetchAttempt.objects.filter(is_processed=False, download_success=True,
-                                                contains_data=True)
+                                                contains_data=True, import_crashed=False)
     count = queryset.count()
     logger.info('Found %d unprocessed successful download attempts matching criteria', count)
     for i, attempt in enumerate(queryset):
         logger.info('----- Downloading attempt #%d -----', i)
-        import_one_sushi_attempt(attempt)
+        try:
+            import_one_sushi_attempt(attempt)
+        except Exception as e:
+            # we catch any kind of error to make sure that the loop does not die
+            logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
+            attempt.mark_crashed(e)
 
 
 def validate_data_v5(data):
@@ -40,7 +46,12 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         return
     logger.debug('Processing file: %s', attempt.data_file.name)
     reader = reader_cls()
-    data = reader.file_to_input(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
+    try:
+        data = reader.file_to_input(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
+    except FileNotFoundError as e:
+        logger.error('Cannot find the referenced file - probably deleted?: %s', e)
+        attempt.mark_processed(e)
+        return
     validator = validate_data_v4 if counter_version == 4 else validate_data_v5
     try:
         validator(data)

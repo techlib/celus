@@ -74,6 +74,7 @@ cs:
                                 item-key="timestamp"
                                 :sort-by="orderBy"
                                 :sort-desc="orderDesc"
+                                :items-per-page="5"
                         >
                             <template v-slot:item.download_success="props">
                                 <CheckMark :value="props.item.download_success" />

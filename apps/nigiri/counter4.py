@@ -78,7 +78,22 @@ class Counter4JR1Report(Counter4ReportBase):
     dimensions = ['Publisher']
 
 
+class Counter4JR2Report(Counter4ReportBase):
+
+    dimensions = ['Publisher']
+
+
+class Counter4BR1Report(Counter4ReportBase):
+
+    dimensions = ['Publisher']
+
+
 class Counter4BR2Report(Counter4ReportBase):
+
+    dimensions = ['Publisher']
+
+
+class Counter4BR3Report(Counter4ReportBase):
 
     dimensions = ['Publisher']
 
@@ -86,6 +101,11 @@ class Counter4BR2Report(Counter4ReportBase):
 class Counter4DB1Report(Counter4ReportBase):
 
     dimensions = ['Publisher']
+
+
+class Counter4DB2Report(Counter4ReportBase):
+
+    dimensions = ['Publisher', 'Access Denied Category']
 
 
 class Counter4PR1Report(Counter4ReportBase):
