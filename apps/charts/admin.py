@@ -1,10 +1,12 @@
 from django.contrib import admin
+from modeltranslation.admin import TranslationAdmin
+
 
 from . import models
 
 
 @admin.register(models.ReportDataView)
-class ReportDataViewAdmin(admin.ModelAdmin):
+class ReportDataViewAdmin(TranslationAdmin):
 
     list_display = ['short_name', 'name', 'position', 'is_standard_view', 'source',
                     'primary_dimension', 'filters', 'metric_allowed_values']

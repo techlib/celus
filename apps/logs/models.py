@@ -103,7 +103,7 @@ class Metric(models.Model):
         ordering = ('short_name', 'name')
 
     def __str__(self):
-        return self.short_name
+        return self.name or self.short_name
 
 
 class ReportInterestMetric(models.Model):
@@ -120,8 +120,6 @@ class ReportInterestMetric(models.Model):
                                       related_name='source_report_interest_metrics')
     interest_group = models.ForeignKey(InterestGroup, null=True, blank=True,
                                        on_delete=models.SET_NULL)
-    name = models.CharField(max_length=100, blank=True,
-                            help_text='How is the metric called in context of interest')
 
 
 class Dimension(models.Model):

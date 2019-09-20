@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.db.models import Count
+from modeltranslation.admin import TranslationAdmin
 
 from . import models
 
@@ -11,7 +11,7 @@ class OrganizationPlatformAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.ReportType)
-class ReportTypeAdmin(admin.ModelAdmin):
+class ReportTypeAdmin(TranslationAdmin):
 
     list_display = ['short_name', 'name', 'desc', 'dimension_list', 'source']
     ordering = ['short_name']
@@ -23,14 +23,14 @@ class ReportTypeAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.Metric)
-class MetricAdmin(admin.ModelAdmin):
+class MetricAdmin(TranslationAdmin):
 
     list_display = ['short_name', 'active', 'name']
     list_editable = ['active']
 
 
 @admin.register(models.ReportInterestMetric)
-class ReportInterestMetricAdmin(admin.ModelAdmin):
+class ReportInterestMetricAdmin(TranslationAdmin):
 
     list_display = ['report_type', 'metric', 'interest_group', 'target_metric']
     list_filter = ['report_type', 'metric', 'interest_group']
@@ -71,7 +71,7 @@ class AccessLogAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.InterestGroup)
-class InterestGroupAdmin(admin.ModelAdmin):
+class InterestGroupAdmin(TranslationAdmin):
 
     list_display = ['short_name', 'name']
 

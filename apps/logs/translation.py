@@ -6,6 +6,7 @@ from .models import DimensionText, Metric, ReportType, Dimension, InterestGroup,
 class ReportTypeTranslationOptions(TranslationOptions):
     fields = ('name', 'desc')
 
+
 class InterestGroupTranslationOptions(TranslationOptions):
     fields = ('name',)
 
@@ -15,7 +16,7 @@ class MetricTranslationOptions(TranslationOptions):
 
 
 class ReportInterestMetricTranslationOptions(TranslationOptions):
-    fields = ('name',)
+    fields = ()
 
 
 class DimensionTextTranslationOptions(TranslationOptions):

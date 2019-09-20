@@ -123,7 +123,7 @@ cs:
           },
           {
             text: this.$i18n.t('labels.user'),
-            value: 'user',
+            value: 'user.username',
           },
           /*{
             text: this.$i18n.t('labels.accesslog_count'),

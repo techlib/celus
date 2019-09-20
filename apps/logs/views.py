@@ -45,6 +45,7 @@ class Counter5DataView(APIView):
         else:
             report_type = None
         # check for interest in query params
+        # TODO: remove this - it is no longer used
         if not report_type and (request.GET.get('prim_dim') == 'interest' or
                                 request.GET.get('sec_dim') == 'interest'):
             # we are dealing with interest based view
@@ -144,7 +145,8 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         if self.request.user.is_from_master_organization:
             qs = ImportBatch.objects.all()
         else:
-            qs = ImportBatch.objects.filter(user=self.request.user)
+            qs = ImportBatch.objects.filter(
+                organization__in=self.request.user.accessible_organizations())
         # make it possible to limit result to only specific user
         if 'user' in self.request.GET:
             qs = qs.filter(user_id=self.request.GET['user'])
@@ -180,11 +182,11 @@ class ManualDataUploadPreflightCheckView(APIView):
 
     def get(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
-        try:
-            stats = custom_import_preflight_check(mdu)
-            return Response(stats)
-        except Exception as e:
-            return Response({'error': str(e)}, status=400)
+        # try:
+        stats = custom_import_preflight_check(mdu)
+        return Response(stats)
+        # except Exception as e:
+        #     return Response({'error': str(e)}, status=400)
 
 
 class ManualDataUploadProcessView(APIView):
