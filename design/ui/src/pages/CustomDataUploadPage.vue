@@ -87,18 +87,6 @@ cs:
                                         required
                                         :label="$t('labels.report_type')"
                                 >
-                                    <template v-slot:append-outer>
-                                        <v-tooltip bottom>
-                                            <template v-slot:activator="{ on }">
-                                                <span v-on="on">
-                                                    <v-btn fab x-small elevation="1" @click="showAddReportTypeDialog = true">
-                                                        <v-icon small>fa-plus</v-icon>
-                                                    </v-btn>
-                                                </span>
-                                            </template>
-                                            <span>{{ $t('add_report_type') }}</span>
-                                        </v-tooltip>
-                                    </template>
                                     <template v-slot:item="props">
                                         <span v-if="props.item.public">{{ props.item.name }}</span>
                                         <i v-else>{{ props.item.name }} <span class="font-weight-light">(private)</span></i>
