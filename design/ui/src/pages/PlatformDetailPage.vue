@@ -167,6 +167,12 @@ cs:
         }
         return null
       },
+      platformInterestUrl () {
+        if (this.selectedOrganizationId) {
+          return `/api/organization/${this.selectedOrganizationId}/platform-interest/${this.platformId}/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        }
+        return null
+      },
       breadcrumbs () {
           return [
             {
@@ -189,8 +195,6 @@ cs:
           try {
             let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/`)
             this.platform = response.data
-            this.$set(this.platform, 'interests', {loading: true})
-            this.$set(this.platform, 'title_count', 'loading')
             this.loadPlatformDetails()
           } catch(error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})
@@ -199,8 +203,10 @@ cs:
       },
       async loadPlatformDetails () {
         if (this.selectedOrganizationId) {
+          this.$set(this.platform, 'interests', {loading: true})
+          this.$set(this.platform, 'title_count', 'loading')
           try {
-            let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform-interest/${this.platformId}/`)
+            let response = await axios.get(this.platformInterestUrl)
             this.$set(this.platform, 'interests', response.data)
             this.$set(this.platform, 'title_count', response.data.title_count)
           } catch(error) {
@@ -217,6 +223,9 @@ cs:
     watch: {
       selectedOrganizationId () {
         this.loadPlatform()
+      },
+      platformInterestUrl () {
+        this.loadPlatformDetails()
       }
     }
   }
