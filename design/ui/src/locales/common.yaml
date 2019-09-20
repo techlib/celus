@@ -36,6 +36,7 @@ en:
     error_code: Error code
     contains_data: Contains data
     log: Log
+    data_file: Data file
   titles: Titles
   overview: Overview
   chart:
@@ -121,6 +122,7 @@ cs:
     error_code: Kód chyby
     contains_data: Obsahuje data
     log: Log
+    data_file: Datový soubor
   titles: Tituly
   overview: Přehled
   chart:
