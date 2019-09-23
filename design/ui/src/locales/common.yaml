@@ -75,6 +75,8 @@ en:
   interests:
     title: Interest in titles
     database: Interest in databases
+    other: Other interest types
+  interest_types: Types of interest to show
   actions:
     edit: Edit
     close: Close
@@ -161,6 +163,8 @@ cs:
   interests:
     title: Zájem o tituly
     database: Zájem o databáze
+    other: Další typy zájmu
+  interest_types: Zobrazené typy zájmu
   actions:
     edit: Editovat
     close: Zavřít

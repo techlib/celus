@@ -38,16 +38,35 @@ cs:
         <v-row>
             <v-col>
                 <v-card>
-                    <v-card-title>
-                        <v-spacer></v-spacer>
-                        <v-text-field
-                                v-model="search"
-                                append-icon="fa-search"
-                                :label="$t('labels.search')"
-                                single-line
-                                hide-details
-                        ></v-text-field>
-                    </v-card-title>
+                    <v-card-text>
+                        <v-container>
+                        <v-row dense align-content="baseline">
+                            <v-col cols="12">
+                                <strong>{{ $t('interest_types') }}</strong>:
+                            </v-col>
+                            <v-col cols="auto">
+                                <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.title')" value="title"></v-checkbox>
+                            </v-col>
+                            <v-col cols="auto">
+                                <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.database')" value="database"></v-checkbox>
+                            </v-col>
+                            <v-col cols="auto">
+                                <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.other')" value="other"></v-checkbox>
+                            </v-col>
+                        </v-row>
+                        <v-row>
+                            <v-spacer></v-spacer>
+                            <v-col class="pt-0">
+                                <v-text-field
+                                        v-model="search"
+                                        append-icon="fa-search"
+                                        :label="$t('labels.search')"
+                                        single-line
+                                        hide-details
+                                ></v-text-field>
+                            </v-col>
+                        </v-row>
+                        </v-container>
                     <v-data-table
                             :items="platforms"
                             :headers="headers"
@@ -78,6 +97,12 @@ cs:
                                 {{ formatInteger(item.interests.database) }}
                             </span>
                         </template>
+                        <template v-slot:item.interests.other="{item}">
+                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                            <span v-else>
+                                {{ formatInteger(item.interests.other) }}
+                            </span>
+                        </template>
                         <template v-slot:item.sushi_credentials_count="{item}">
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on }">
@@ -91,6 +116,8 @@ cs:
                             </v-tooltip>
                         </template>
                     </v-data-table>
+                    </v-card-text>
+
                 </v-card>
             </v-col>
         </v-row>
@@ -124,6 +151,7 @@ cs:
         search: '',
         loading: false,
         showUploadDataDialog: false,
+        activeInterestTypes: ['title', 'database'],
       }
     },
     computed: {
@@ -138,7 +166,7 @@ cs:
         organizationSelected: 'organizationSelected',
       }),
       headers () {
-        return [
+        let base = [
           {
             text: this.$i18n.t('columns.name'),
             value: 'name'
@@ -153,24 +181,37 @@ cs:
             class: 'wrap',
             align: 'right',
           },
-          {
+        ]
+        if (this.activeInterestTypes.indexOf('title') >= 0) {
+          base.push({
             text: this.$i18n.t('interests.title'),
             value: 'interests.title',
             class: 'wrap text-xs-right',
             align: 'right',
-          },
-          {
+          })
+        }
+        if (this.activeInterestTypes.indexOf('database') >= 0) {
+          base.push({
             text: this.$i18n.t('interests.database'),
             value: 'interests.database',
             class: 'wrap text-xs-right',
             align: 'right',
-          },
-          {
+          })
+        }
+        if (this.activeInterestTypes.indexOf('other') >= 0) {
+          base.push({
+            text: this.$i18n.t('interests.other'),
+            value: 'interests.other',
+            class: 'wrap text-xs-right',
+            align: 'right',
+          })
+        }
+        base.push({
             text: this.$i18n.t('columns.sushi_available'),
             value: 'sushi_credentials_count',
             sortable: false,
-          },
-        ]
+          })
+        return base
       },
       platformsURL () {
         return `/api/organization/${this.selectedOrganizationId}/platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
@@ -265,6 +306,18 @@ cs:
 
     .subdued {
         color: #888888;
+    }
+
+    .v-input.small-checkbox {
+        margin-top: 0;
+
+        .v-input__slot {
+            margin-bottom: 0 !important;
+        }
+
+        label {
+            font-size: 0.875rem;
+        }
     }
 
 </style>
