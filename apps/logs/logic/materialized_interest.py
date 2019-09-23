@@ -8,6 +8,7 @@ from time import time
 from django.db.models import Sum, Count
 from django.db.transaction import atomic
 
+from core.task_support import cache_based_lock
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 
 logger = logging.getLogger(__name__)
@@ -107,3 +108,19 @@ def remove_interest_from_import_batch(import_batch: ImportBatch, interest_rt: Re
     import_batch.save()
     return Counter({'deleted_accesslogs': deleted[0]})
 
+
+def recompute_interest_by_batch(queryset=None):
+    with cache_based_lock('sync_interest_task'):
+        # we share the lock with sync_interest_task because there two could compete for the
+        # same data
+        if not queryset:
+            queryset = ImportBatch.objects.all()
+        queryset = queryset.filter(interest_processed=True)
+        interest_rt = ReportType.objects.get(short_name='interest')
+        total_count = queryset.count()
+        logger.info('Going to recompute interest for %d batches', total_count)
+        for i, import_batch in enumerate(queryset.iterator()):
+            remove_interest_from_import_batch(import_batch, interest_rt)
+            sync_interest_for_import_batch(import_batch, interest_rt)
+            if i % 20 == 0:
+                logger.debug('Recomputed interest for %d out of %d batches', i, total_count)
