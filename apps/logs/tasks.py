@@ -14,7 +14,7 @@ def sync_interest_task():
     """
     Synchronizes computed interest for import batches that were not processed yet
     """
-    with cache_based_lock('sync_interest_task', timeout=60):
+    with cache_based_lock('sync_interest_task'):
         sync_interest_by_import_batches()
 
 
@@ -23,7 +23,7 @@ def import_new_sushi_attempts_task():
     """
     Go over new sushi attempts that contain data and import them
     """
-    with cache_based_lock('import_new_sushi_attempts_task', timeout=60):
+    with cache_based_lock('import_new_sushi_attempts_task'):
         import_new_sushi_attempts()
 
 

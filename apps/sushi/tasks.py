@@ -24,7 +24,7 @@ def retry_queued_attempts_task():
     """
     Retry downloading data for attempts that were queued
     """
-    with cache_based_lock('retry_queued_attempts_task', timeout=60):
+    with cache_based_lock('retry_queued_attempts_task'):
         retry_queued(sleep_interval=5)
 
 
@@ -33,5 +33,5 @@ def fetch_new_sushi_data_task():
     """
     Fetch sushi data for dates and platforms where they are not available
     """
-    with cache_based_lock('fetch_new_sushi_data_task', timeout=60):
+    with cache_based_lock('fetch_new_sushi_data_task'):
         fetch_new_sushi_data()
