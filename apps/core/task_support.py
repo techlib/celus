@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def cache_based_lock(lock_name, timeout=3600):
+def cache_based_lock(lock_name, timeout=3600, blocking_timeout=None):
     if hasattr(cache, 'lock'):
-        with cache.lock(lock_name, timeout=timeout):
+        with cache.lock(lock_name, timeout=timeout, blocking_timeout=blocking_timeout):
             yield None
     else:
         # cache does not support locking, we use a poor mans solution
