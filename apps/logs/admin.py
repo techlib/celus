@@ -50,6 +50,7 @@ class DimensionAdmin(admin.ModelAdmin):
 class DimensionTextAdmin(admin.ModelAdmin):
 
     list_display = ['id', 'dimension', 'text', 'text_local']
+    list_filter = ['dimension']
 
 
 @admin.register(models.ReportTypeToDimension)
