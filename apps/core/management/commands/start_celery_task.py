@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 
+from logs.tasks import sync_interest_task
 from sushi.tasks import fetch_new_sushi_data_task
 
 
@@ -9,6 +10,7 @@ class Command(BaseCommand):
 
     tasks = {
         'fetch_new_sushi_data_task': fetch_new_sushi_data_task,
+        'sync_interest_task': sync_interest_task,
     }
 
     def add_arguments(self, parser):
