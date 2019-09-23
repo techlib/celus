@@ -17,7 +17,7 @@ def cache_based_lock(lock_name, timeout=3600, blocking_timeout=None):
         except LockError as e:
             # we ignore error about not blocking timeout
             if e.args == ('Unable to acquire lock within the time specified',):
-                pass
+                yield None
             else:
                 raise e
     else:
