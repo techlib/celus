@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from core.models import DataSource
+
 
 class Platform(models.Model):
 
@@ -10,6 +12,7 @@ class Platform(models.Model):
     provider = models.CharField(max_length=250)
     url = models.URLField(blank=True)
     interest_reports = models.ManyToManyField('logs.ReportType')
+    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         ordering = ('short_name',)
