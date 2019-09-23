@@ -20,7 +20,7 @@ def import_new_sushi_attempts():
     count = queryset.count()
     logger.info('Found %d unprocessed successful download attempts matching criteria', count)
     for i, attempt in enumerate(queryset):
-        logger.info('----- Downloading attempt #%d -----', i)
+        logger.info('----- Importing attempt #%d -----', i)
         try:
             import_one_sushi_attempt(attempt)
         except Exception as e:
