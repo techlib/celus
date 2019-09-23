@@ -57,7 +57,7 @@ cs:
                                 <td class="text-right">
                                     <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                                     <span v-else>
-                                        {{ platform.interests.title ? formatInteger(platform.interests.title) : '-' }}
+                                        {{ formatInteger(platform.interests.title) }}
                                     </span>
                                 </td>
                             </tr>
@@ -66,7 +66,7 @@ cs:
                                 <td class="text-right">
                                     <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                                     <span v-else>
-                                      {{ platform.interests.database ? formatInteger(platform.interests.database) : '-' }}
+                                      {{ formatInteger(platform.interests.database) }}
                                     </span>
                                 </td>
                             </tr>

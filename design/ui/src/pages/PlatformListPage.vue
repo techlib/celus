@@ -63,19 +63,19 @@ cs:
                         <template v-slot:item.title_count="{item}">
                             <span v-if="item.title_count === 'loading'" class="fas fa-spinner fa-spin subdued"></span>
                             <span v-else>
-                                {{ item.title_count ? formatInteger(item.title_count) : '-' }}
+                                {{ formatInteger(item.title_count) }}
                             </span>
                         </template>
                         <template v-slot:item.interests.title="{item}">
                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                             <span v-else>
-                                {{ item.interests.title ? formatInteger(item.interests.title) : '-' }}
+                                {{ formatInteger(item.interests.title) }}
                             </span>
                         </template>
                         <template v-slot:item.interests.database="{item}">
                              <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                             <span v-else>
-                                {{ item.interests.database ? formatInteger(item.interests.database) : '-' }}
+                                {{ formatInteger(item.interests.database) }}
                             </span>
                         </template>
                         <template v-slot:item.sushi_credentials_count="{item}">
