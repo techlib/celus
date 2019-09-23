@@ -216,6 +216,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'sushi.tasks.fetch_new_sushi_data_task',
         'schedule': schedule(run_every=timedelta(days=1)),
     },
+    'erms_sync_platforms_task': {
+        'task': 'publications.tasks.erms_sync_platforms_task',
+        'schedule': schedule(run_every=timedelta(days=1)),
+    },
+    'erms_sync_organizations_task': {
+        'task': 'organizations.tasks.erms_sync_organizations_task',
+        'schedule': schedule(run_every=timedelta(days=1)),
+    },
 }
 
 
