@@ -206,7 +206,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'retry_queued_attempts_task': {
         'task': 'sushi.tasks.retry_queued_attempts_task',
-        'schedule': schedule(run_every=timedelta(minutes=5)),
+        'schedule': schedule(run_every=timedelta(hours=5)),
     },
     'import_new_sushi_attempts_task': {
         'task': 'logs.tasks.import_new_sushi_attempts_task',
