@@ -129,6 +129,7 @@ cs:
   import CounterChartSet from '../components/CounterChartSet'
   import DataExportWidget from '../components/DataExportWidget'
   import {formatInteger} from '../libs/numbers'
+  import { remapInterestRecord } from '../libs/interest'
 
   export default {
     name: 'PlatformDetailPage',
@@ -207,7 +208,7 @@ cs:
           this.$set(this.platform, 'title_count', 'loading')
           try {
             let response = await axios.get(this.platformInterestUrl)
-            this.$set(this.platform, 'interests', response.data)
+            this.$set(this.platform, 'interests', remapInterestRecord(response.data))
             this.$set(this.platform, 'title_count', response.data.title_count)
           } catch(error) {
             this.showSnackbar({content: 'Error loading platforms: '+error, color: 'error'})

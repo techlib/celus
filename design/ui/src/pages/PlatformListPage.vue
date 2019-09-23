@@ -109,6 +109,11 @@ cs:
   import axios from 'axios'
   import PlatformSelectionWidget from './PlatformSelectionWidget'
   import {formatInteger} from '../libs/numbers'
+  import {
+    createEmptyInterestRecord,
+    createLoadingInterestRecord,
+    remapInterestRecord
+  } from '../libs/interest'
 
   export default {
     name: 'PlatformListPage',
@@ -184,7 +189,7 @@ cs:
           this.loading = true
           try {
             let response = await axios.get(this.platformsURL)
-            this.platforms = response.data.map(item => {item.interests = {title: null, database: null, loading: true}; item.title_count = 'loading'; return item})
+            this.platforms = response.data.map(item => {item.interests = createLoadingInterestRecord(); item.title_count = 'loading'; return item})
             this.loadPlatformDetails()
             this.loadPlatformSushiCounts()
           } catch (error) {
@@ -204,10 +209,10 @@ cs:
           for (let platform of this.platforms) {
             let newData = pkToRow[platform.pk]
             if (newData) {
-              this.$set(platform, 'interests', newData)
+              this.$set(platform, 'interests', remapInterestRecord(newData))
               platform.title_count = newData.title_count
             } else {
-              platform.interests = {title: null, database: null}
+              platform.interests = createEmptyInterestRecord()
               platform.title_count = null
             }
           }
