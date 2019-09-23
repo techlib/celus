@@ -15,14 +15,12 @@
 </template>
 
 <script>
-  import ChartTypeSelector from './ChartTypeSelector'
-  import APIChart from './APIChart'
   import CounterChartSet from './CounterChartSet'
   import axios from 'axios'
   import {mapActions} from 'vuex'
   export default {
     name: "ImportBatchChart",
-    components: {APIChart, ChartTypeSelector, CounterChartSet},
+    components: {CounterChartSet},
     props: {
       importBatchId: {required: true},
     },

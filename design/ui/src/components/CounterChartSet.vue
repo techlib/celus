@@ -166,6 +166,7 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       async loadReportViews () {
+        this.reportViews = []
         let url = this.reportViewsUrl
         if (url) {
           this.loading = true
@@ -187,7 +188,14 @@ cs:
     },
     mounted () {
       this.loadReportViews()
+    },
+    watch: {
+      reportViewsUrl () {
+        this.loadReportViews()
+      },
+
     }
+
   }
 </script>
 
