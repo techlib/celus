@@ -68,6 +68,13 @@ class DimensionSerializer(OrganizationSourceExtractingMixin, ModelSerializer):
         return super().create(validated_data)
 
 
+class ReportTypeSimpleSerializer(ModelSerializer):
+
+    class Meta:
+        model = ReportType
+        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'desc')
+
+
 class ReportTypeSerializer(ModelSerializer):
 
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
