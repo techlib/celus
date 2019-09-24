@@ -204,10 +204,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'logs.tasks.sync_interest_task',
         'schedule': schedule(run_every=timedelta(minutes=5)),
     },
-    # 'retry_queued_attempts_task': {
-    #     'task': 'sushi.tasks.retry_queued_attempts_task',
-    #     'schedule': schedule(run_every=timedelta(hours=5)),
-    # },
+    'retry_queued_attempts_task': {
+        'task': 'sushi.tasks.retry_queued_attempts_task',
+        'schedule': schedule(run_every=timedelta(minutes=30)),
+    },
     'import_new_sushi_attempts_task': {
         'task': 'logs.tasks.import_new_sushi_attempts_task',
         'schedule': schedule(run_every=timedelta(minutes=5)),
