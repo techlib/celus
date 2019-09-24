@@ -38,8 +38,9 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
     last_platform = None
     stats = Counter()
     for i, attempt in enumerate(qs):
-        when_retry = attempt.when_to_retry()
-        if when_retry and when_retry < now():
+        when_retry = max(attempt.when_to_retry(),
+                         now() + timedelta(seconds=attempt.credentials.when_can_access()))
+        if when_retry and when_retry <= now():
             # we are ready to retry
             logger.debug('Retrying attempt: %s', attempt)
             new = attempt.retry()
@@ -105,6 +106,16 @@ class FetchUnit(object):
         logger.info('Result: %s', attempt)
         self.last_attempt = attempt
         return attempt
+
+    def sleep(self):
+        """
+        Sleep for the time it is required for the credentials to allow new attempt
+        :return:
+        """
+        time_to_sleep = self.credentials.when_can_access()
+        if time_to_sleep:
+            logger.info('Fetch unit is going to sleep for %.1f seconds', time_to_sleep)
+            sleep(time_to_sleep)
 
     def find_conflicting(self, start_date, end_date):
         """
@@ -217,6 +228,7 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
                     logger.debug('Continuing regardless of existing data: %s, %s: %s',
                                  platform, fetch_unit.credentials.organization, start_date)
             # download the data
+            fetch_unit.sleep()
             attempt = fetch_unit.download(start_date, end, use_lock=use_lock)
             if attempt.contains_data or attempt.queued:
                 new_fetch_units.append(fetch_unit)
@@ -226,10 +238,11 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
                             platform, fetch_unit.credentials.organization, start_date)
                 split_units = fetch_unit.split()
                 logger.info('Downgraded %s to %s', fetch_unit.report_type.code, split_units)
-                # the the new units on the same dates
+                # the new units on the same dates
                 for i, unit in enumerate(split_units):
                     if i != 0:
                         sleep(sleep_time)
+                    unit.sleep()
                     attempt = unit.download(start_date, end, use_lock=use_lock)
                     if attempt.contains_data:
                         new_fetch_units.append(unit)

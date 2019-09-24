@@ -7,64 +7,10 @@ from dateparser import parse as parse_date
 from django.core.management.base import BaseCommand
 
 from core.logic.dates import month_start, month_end
-from sushi.models import SushiCredentials, CounterReportType, SushiFetchAttempt
+from sushi.logic.fetching import FetchUnit
+from sushi.models import CounterReportType, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
-
-
-class FetchUnit(object):
-
-    """
-    Represents one combination of platform, organization and report type which should
-    start at some point in time and continue down the line to fetch older and older data
-    """
-
-    def __init__(self, credentials: SushiCredentials, report_type: CounterReportType):
-        self.credentials = credentials
-        self.report_type = report_type
-        self.last_attempt = None
-
-    def download(self, start_date, end_date):
-        logger.info('Fetching %s, %s for %s', self.credentials, self.report_type, start_date)
-        attempt = self.credentials.fetch_report(counter_report=self.report_type,
-                                                start_date=start_date,
-                                                end_date=end_date)
-        logger.info('Result: %s', attempt)
-        self.last_attempt = attempt
-        return attempt
-
-    def find_conflicting(self, start_date, end_date):
-        """
-        Find SushiFetch attempt corresponding to our credentials and report type and the dates
-        at hand. If found, it selected the one that has the best result and returns it
-        :param start_date:
-        :param end_date:
-        :return:
-        """
-        attempts = SushiFetchAttempt.objects.filter(
-            credentials=self.credentials, counter_report=self.report_type,
-            start_date__lte=start_date, end_date__gte=end_date
-        )
-        successes = ['contains_data', 'processing_success', 'download_success']
-        for success_type in successes:
-            matching = [attempt for attempt in attempts if getattr(attempt, success_type) is True]
-            if matching:
-                return matching[0]
-        return attempts[0] if attempts else None
-
-    def split(self):
-        """
-        If there are credentials for the same platform and organization and an older superseeded
-        report type than the one associated with this object, return a list of corresponding
-        FetchUnits
-        """
-        out = []
-        for rt in self.report_type.superseeds.all():
-            for cred in SushiCredentials.objects.filter(
-                    active_counter_reports=rt, organization_id=self.credentials.organization_id,
-                    platform_id=self.credentials.platform_id):
-                out.append(FetchUnit(cred, rt))
-        return out
 
 
 class Command(BaseCommand):
@@ -88,6 +34,7 @@ class Command(BaseCommand):
                             help='do not attempt new fetching if even an unsuccessful attempt '
                                  'exists')
 
+    # TODO: This is now mostly handled in .logic.fetching, this should be removed one day
     def handle(self, *args, **options):
         self.sleep_time = options['sleep'] / 1000
         self.conflict_error = options['conflict_error']
