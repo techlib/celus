@@ -315,7 +315,6 @@ cs:
               platformId: this.platformId,
             }
           })
-          this.loadPreflightData()
         } catch (error) {
           if (error.response && error.response.status === 400) {
             let info = error.response.data
@@ -385,7 +384,7 @@ cs:
       async loadUploadObject () {
         if (this.uploadObjectId) {
           try {
-            let response = await axios.get(`/api/manual-data-upload/${this.uploadObjectId}`)
+            let response = await axios.get(`/api/manual-data-upload/${this.uploadObjectId}/`)
             this.uploadObject = response.data
             if (this.uploadObject.import_batch) {
               this.importBatch = this.uploadObject.import_batch
