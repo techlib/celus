@@ -129,7 +129,7 @@ class SushiCredentials(models.Model):
         url_hash = blake2b(self.url.encode('utf-8'), digest_size=16).hexdigest()
         return f'url-lock-{url_hash}'
 
-    def when_can_access(self, base_wait_unit=1) -> float:
+    def when_can_access(self, base_wait_unit=5) -> float:
         """
         Computes the number of seconds required to wait before we can download data
         using the current credentials.
@@ -137,10 +137,15 @@ class SushiCredentials(models.Model):
         per unit of time
         :return:
         """
-        last_attempts = self.sushifetchattempt_set.order_by('-timestamp').values('error_code')[:16]
+        last_attempts = self.sushifetchattempt_set.order_by('-timestamp').\
+            values('error_code', 'timestamp')[:16]
         too_many_attempts = list(takewhile(lambda x: x['error_code'] == '1020', last_attempts))
         if too_many_attempts:
-            return base_wait_unit * 2**len(too_many_attempts)
+            seconds = base_wait_unit * 2**len(too_many_attempts)
+            last_timestamp = too_many_attempts[0]['timestamp']
+            diff = (last_timestamp + timedelta(seconds=seconds) - now()).seconds
+            if diff > 0:
+                return diff
         return 0
 
     def fetch_report(self, counter_report: CounterReportType, start_date, end_date,
