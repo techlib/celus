@@ -15,5 +15,5 @@ class AnnotationSerializer(ModelSerializer):
 
     class Meta:
         model = Annotation
-        fields = ('subject', 'short_message', 'start_date', 'end_date', 'organization',
-                  'platform', 'report_type', 'title')
+        fields = ('pk', 'subject', 'short_message', 'message', 'start_date', 'end_date',
+                  'organization', 'platform', 'report_type', 'title')

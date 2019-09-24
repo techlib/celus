@@ -93,6 +93,10 @@ cs:
 
         </v-layout>
 
+        <section class="mb-5">
+            <AnnotationsWidget :platform="platformId"></AnnotationsWidget>
+        </section>
+
         <section v-if="selectedOrganizationId && platform && platform.title_count">
             <v-layout>
                 <v-flex><h3>{{ $t('overview') }}</h3></v-flex>
@@ -130,6 +134,7 @@ cs:
   import DataExportWidget from '../components/DataExportWidget'
   import {formatInteger} from '../libs/numbers'
   import { remapInterestRecord } from '../libs/interest'
+  import AnnotationsWidget from '../components/AnnotationsWidget'
 
   export default {
     name: 'PlatformDetailPage',
@@ -137,6 +142,7 @@ cs:
       DataExportWidget,
       TitleList,
       CounterChartSet,
+      AnnotationsWidget,
     },
     props: {
       'platformId': {required: true},

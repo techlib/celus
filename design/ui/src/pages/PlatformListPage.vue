@@ -40,7 +40,7 @@ cs:
                 <v-card>
                     <v-card-text>
                         <v-container>
-                        <v-row dense align-content="baseline">
+                        <v-row dense>
                             <v-col cols="12">
                                 <strong>{{ $t('interest_types') }}</strong>:
                             </v-col>
