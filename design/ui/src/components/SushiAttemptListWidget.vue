@@ -75,6 +75,7 @@ cs:
                                 :sort-by="orderBy"
                                 :sort-desc="orderDesc"
                                 :items-per-page="5"
+                                :loading="loading"
                         >
                             <template v-slot:item.download_success="props">
                                 <CheckMark :value="props.item.download_success" />
@@ -171,6 +172,7 @@ cs:
         showBatchDialog: false,
         selectedBatch: null,
         dialogType: '',
+        loading: false,
       }
     },
     computed: {
@@ -263,12 +265,15 @@ cs:
         if (!this.listUrl) {
           return
         }
+        this.loading = true
         this.attempts = []
         try {
           let response = await axios.get(this.listUrl)
           this.attempts = response.data
         } catch (error) {
           this.showSnackbar({content: 'Error fetching SUSHI attempt data: ' + error, color: 'error'})
+        } finally {
+          this.loading = false
         }
       },
     },
