@@ -130,7 +130,7 @@ class FetchUnit(object):
             credentials=self.credentials, counter_report=self.report_type,
             start_date__lte=start_date, end_date__gte=end_date
         )
-        successes = ['contains_data', 'processing_success', 'download_success']
+        successes = ['contains_data', 'queued', 'processing_success', 'download_success']
         for success_type in successes:
             matching = [attempt for attempt in attempts if getattr(attempt, success_type) is True]
             if matching:
@@ -215,7 +215,8 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
             # deal with possible conflict
             conflict = fetch_unit.find_conflicting(start_date, end)
             if conflict:
-                action = conflict_ok if conflict.contains_data else conflict_error
+                action = conflict_ok if (conflict.contains_data or conflict.queued)\
+                    else conflict_error
                 if action == 'stop':
                     logger.debug('Skipping on existing data: %s, %s: %s',
                                  platform, fetch_unit.credentials.organization, start_date)
