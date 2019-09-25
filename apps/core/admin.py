@@ -7,7 +7,7 @@ from .models import User, Identity, DataSource
 @admin.register(User)
 class MyUserAdmin(UserAdmin):
 
-    list_display = UserAdmin.list_display + ('language',)
+    list_display = UserAdmin.list_display + ('language', 'source')
 
     custom_fields = ('ext_id', 'source', 'language')
 
@@ -18,6 +18,8 @@ class MyUserAdmin(UserAdmin):
         (None, {'fields': custom_fields}),
     )
 
+    list_filter = ('source',) + UserAdmin.list_filter
+
 
 @admin.register(Identity)
 class IdentityAdmin(admin.ModelAdmin):
@@ -25,6 +27,7 @@ class IdentityAdmin(admin.ModelAdmin):
     list_display = ['identity', 'user', 'source']
     list_filter = ['source']
     list_select_related = ['user', 'source']
+    search_fields = ['identity', 'user__email', 'user__username']
 
 
 @admin.register(DataSource)
