@@ -44,6 +44,7 @@
                 </v-expansion-panel>
             </v-expansion-panels>
         </div>
+        <AddAnnotationWidget :platform="platform" />
     </div>
 
 </template>
@@ -51,9 +52,11 @@
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
   import axios from 'axios'
+  import AddAnnotationWidget from './AddAnnotationWidget'
 
   export default {
     name: 'AnnotationsWidget',
+    components: {AddAnnotationWidget},
     props: {
       platform: {required: false},
     },
