@@ -70,7 +70,7 @@ def fetch_new_sushi_data():
     end_date = month_start(parse_date(settings.SUSHI_ATTEMPT_LAST_DATE))
     # do not use lock, we lock the whole queue with same URL
     processing_fn = partial(process_fetch_units_wrapper,
-                            conflict_ok='stop', conflict_error='continue', sleep_time=2,
+                            conflict_ok='skip', conflict_error='continue', sleep_time=2,
                             use_lock=False)
     args = [(lock_name, fus, start_date, end_date)
             for lock_name, fus in lock_name_to_units.items()]
