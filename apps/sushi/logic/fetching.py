@@ -8,15 +8,13 @@ from datetime import timedelta, date
 from functools import partial
 from time import sleep
 
+from dateparser import parse as parse_date
 from django.conf import settings
 from django.db.models import Count
 from django.utils.timezone import now
 
-from dateparser import parse as parse_date
-
 from core.logic.dates import month_start, month_end
 from core.task_support import cache_based_lock
-from nigiri.client import SushiClientBase
 from sushi.models import SushiFetchAttempt, SushiCredentials, CounterReportType
 
 logger = logging.getLogger(__name__)
