@@ -21,10 +21,6 @@
                                 <td v-text="$t('organization')+':'" class="pr-2"></td>
                                 <th v-text="annot.organization.name"></th>
                             </tr>
-                            <tr v-if="annot.report_type">
-                                <td v-text="$t('labels.report_type')+':'" class="pr-2"></td>
-                                <th v-text="annot.report_type.name"></th>
-                            </tr>
                             <tr v-if="annot.start_date">
                                 <td v-text="$t('title_fields.start_date')+':'" class="pr-2"></td>
                                 <th v-text="annot.start_date"></th>
@@ -54,8 +50,6 @@
     name: 'AnnotationsWidget',
     props: {
       platform: {required: false},
-      reportType: {required: false},
-      title: {required: false},
     },
     data () {
       return {
@@ -79,12 +73,6 @@
         }
         if (this.platform) {
           url += `&platform=${this.platform}`
-        }
-        if (this.title) {
-          url += `&title=${this.title}`
-        }
-        if (this.reportType) {
-          url += `&report_type=${this.reportType}`
         }
         return url
       }

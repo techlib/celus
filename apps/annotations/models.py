@@ -17,10 +17,6 @@ class Annotation(models.Model):
                                      on_delete=models.CASCADE)
     platform = models.ForeignKey('publications.Platform', on_delete=models.CASCADE, null=True,
                                  blank=True)
-    report_type = models.ForeignKey('logs.ReportType', null=True, on_delete=models.CASCADE,
-                                    blank=True)
-    title = models.ForeignKey('publications.Title', null=True, on_delete=models.CASCADE,
-                              blank=True)
     created = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL,
                                blank=True)

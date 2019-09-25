@@ -17,7 +17,7 @@ class AnnotationsViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         query_args = []
         exclude_args = []
-        for param in ('platform', 'report_type', 'organization', 'title'):
+        for param in ('platform', 'organization'):
             value = self.request.query_params.get(param)
             if value:
                 # we filter to include those with specified value or with this value null
@@ -25,12 +25,12 @@ class AnnotationsViewSet(ReadOnlyModelViewSet):
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         if start_date:
-            exclude_args.append(Q(end_date__lte = parse_month(start_date)))
+            exclude_args.append(Q(end_date__lte=parse_month(start_date)))
         if end_date:
-            exclude_args.append(Q(start_date__gte = month_end(parse_month(end_date))))
+            exclude_args.append(Q(start_date__gte=month_end(parse_month(end_date))))
         if len(exclude_args) > 1:
             # we have more args, we need to "OR" them
             exclude_args = [reduce(operator.or_, exclude_args)]
         return Annotation.objects.filter(*query_args).exclude(*exclude_args).\
-            select_related('organization', 'platform', 'report_type', 'title')
+            select_related('organization', 'platform')
 
