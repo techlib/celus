@@ -267,6 +267,13 @@ class StatsComputer(object):
         :return:
         """
         user_organizations = {org.pk for org in user.accessible_organizations()}
+        org_nums = []
         for rec in data:
             if 'organization' in rec and rec['organization'] not in user_organizations:
-                rec['organization'] = 'Anonym'
+                org = rec['organization']
+                try:
+                    num = org_nums.index(org) + 1
+                except ValueError:
+                    org_nums.append(org)
+                    num = len(org_nums)
+                rec['organization'] = 'Anonym-{}'.format(num)
