@@ -10,7 +10,13 @@
                     accordion
             >
                 <v-expansion-panel v-for="annot in annotations" :key="annot.pk">
-                    <v-expansion-panel-header><strong>{{ annot.subject }}</strong></v-expansion-panel-header>
+                    <v-expansion-panel-header>
+                        <span>
+                            <v-icon v-if="annot.level === 'important'" color="warning" class="mr-3" small>fa-exclamation-triangle</v-icon>
+                            <v-icon v-else color="info" class="mr-3" small>fa-info-circle</v-icon>
+                            <span>{{ annot.subject }}</span>
+                        </span>
+                    </v-expansion-panel-header>
                     <v-expansion-panel-content>
                         <table class="overview">
                             <tr v-if="annot.platform">
