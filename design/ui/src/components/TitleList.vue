@@ -37,7 +37,13 @@ cs:
                     <router-link v-else :to="{name: 'title-detail', params: {platformId: null, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
             </template>
             <template v-slot:item.pub_type="props">
-                <span :class="{'fa fa-book': props.item.pub_type==='B', 'far fa-copy': props.item.pub_type==='J'}"></span>
+                <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                        <v-icon small v-on="on">{{ iconForPubType(props.item.pub_type) }}</v-icon>
+                    </template>
+
+                    <span>{{ props.item.pub_type_name }}</span>
+                </v-tooltip>
             </template>
             <template v-slot:item.interest="{item}">
                 {{ formatInteger(item.interest) }}
@@ -51,6 +57,7 @@ cs:
   import { mapActions } from 'vuex'
   import debounce from 'lodash/debounce'
   import {formatInteger} from '../libs/numbers'
+  import {iconForPubType} from '../libs/pub-types'
 
   export default {
     name: 'TitleList',
@@ -119,6 +126,7 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       formatInteger: formatInteger,
+      iconForPubType: iconForPubType,
       async loadData () {
         if (this.url) {
           this.loading = true
@@ -131,7 +139,7 @@ cs:
             this.loading = false
           }
         }
-      }
+      },
     },
     watch: {
       url () {
