@@ -149,9 +149,13 @@ cs:
       },
       pubTypes () {
         let all = {text: this.$t('pub_type.all'), value: null, icon: 'fa-expand'}
+        let usedTypes = new Set()
+        this.titles.map(title => usedTypes.add(title.pub_type))
         return [
           all,
-          ...pubTypes.map(item => {return {text: this.$t(item.title), icon: item.icon, value: item.code}})
+          ...pubTypes
+            .filter(item => usedTypes.has(item.code))
+            .map(item => {return {text: this.$t(item.title), icon: item.icon, value: item.code}})
         ]
       },
       filteredTitles () {
