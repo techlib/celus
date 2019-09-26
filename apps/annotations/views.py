@@ -1,15 +1,15 @@
-from functools import reduce
 import operator
+from functools import reduce
 
 from django.db.models import Q
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ModelViewSet
 
 from annotations.models import Annotation
 from annotations.serializers import AnnotationSerializer
 from core.logic.dates import parse_month, month_end
 
 
-class AnnotationsViewSet(ReadOnlyModelViewSet):
+class AnnotationsViewSet(ModelViewSet):
 
     queryset = Annotation.objects.all()
     serializer_class = AnnotationSerializer
