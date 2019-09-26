@@ -1,4 +1,4 @@
-from rest_framework.fields import FloatField, JSONField
+from rest_framework.fields import FloatField, JSONField, ChoiceField, SerializerMethodField
 from rest_framework.serializers import ModelSerializer, IntegerField
 
 from .models import Platform, Title
@@ -33,15 +33,25 @@ class PlatformSushiCredentialsSerializer(ModelSerializer):
 
 class TitleSerializer(ModelSerializer):
 
+    pub_type_name = SerializerMethodField()
+
     class Meta:
         model = Title
-        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi')
+        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi', 'pub_type_name')
+
+    def get_pub_type_name(self, obj: Title):
+        return obj.get_pub_type_display()
 
 
 class TitleCountSerializer(ModelSerializer):
 
     interest = IntegerField(read_only=True)
+    pub_type_name = SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi', 'interest')
+        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi', 'interest',
+                  'pub_type_name')
+
+    def get_pub_type_name(self, obj: Title):
+        return obj.get_pub_type_display()

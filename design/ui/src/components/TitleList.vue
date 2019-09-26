@@ -1,31 +1,57 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n src="../locales/pub-types.yaml"></i18n>
 <i18n>
 en:
     columns:
         interest: Interest
     show_doi: Show DOI
+    pub_type_filter: Publication type filter
 cs:
     columns:
         interest: Zájem
     show_doi: Zobrazit DOI
+    pub_type_filter: Filtr typu publikace
 </i18n>
 
 
 <template>
     <v-card>
         <v-card-title>
-            <v-switch v-model="showDOI" :label="$t('show_doi')"></v-switch>
-            <v-spacer></v-spacer>
-            <v-text-field
-                    v-model="searchDebounced"
-                    append-icon="fa-search"
-                    :label="$t('labels.search')"
-                    single-line
-                    hide-details
-            ></v-text-field>
+            <v-row>
+                <v-col cols="auto">
+                    <v-select
+                            :label="$t('pub_type_filter')"
+                            :items="pubTypes"
+                            v-model="selectedPubType"
+                    >
+                        <template v-slot:item="{item}">
+                            <v-icon small v-text="item.icon + ' fa-fw'" class="mr-2"></v-icon>
+                            {{ item.text }}
+                        </template>
+                        <template v-slot:selection="{item}">
+                            <v-icon small v-text="item.icon + ' fa-fw'" class="mr-2"></v-icon>
+                            {{ item.text }}
+                        </template>
+                    </v-select>
+                </v-col>
+                <v-col cols="auto">
+                    <v-switch v-model="showDOI" :label="$t('show_doi')"></v-switch>
+                </v-col>
+
+                <v-spacer></v-spacer>
+                <v-col cols="auto">
+                    <v-text-field
+                            v-model="searchDebounced"
+                            append-icon="fa-search"
+                            :label="$t('labels.search')"
+                            single-line
+                            hide-details
+                    ></v-text-field>
+                </v-col>
+            </v-row>
         </v-card-title>
         <v-data-table
-                :items="titles"
+                :items="filteredTitles"
                 :headers="headers"
                 :items-per-page.sync="itemsPerPage"
                 :search="search"
@@ -36,8 +62,14 @@ cs:
                 <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
                     <router-link v-else :to="{name: 'title-detail', params: {platformId: null, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
             </template>
-            <template v-slot:item.pub_type="props">
-                <span :class="{'fa fa-book': props.item.pub_type==='B', 'far fa-copy': props.item.pub_type==='J'}"></span>
+            <template v-slot:item.pub_type="{item}">
+                <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                        <v-icon small v-on="on">{{ iconForPubType(item.pub_type) }}</v-icon>
+                    </template>
+
+                    <span>{{ $t(titleForPubType(item.pub_type)) }}</span>
+                </v-tooltip>
             </template>
             <template v-slot:item.interest="{item}">
                 {{ formatInteger(item.interest) }}
@@ -51,6 +83,7 @@ cs:
   import { mapActions } from 'vuex'
   import debounce from 'lodash/debounce'
   import {formatInteger} from '../libs/numbers'
+  import {iconForPubType, pubTypes, titleForPubType} from '../libs/pub-types'
 
   export default {
     name: 'TitleList',
@@ -65,6 +98,7 @@ cs:
         itemsPerPage: 25,
         loading: false,
         showDOI: false,
+        selectedPubType: null,
       }
     },
     computed: {
@@ -112,6 +146,24 @@ cs:
 
           })
         return base
+      },
+      pubTypes () {
+        let all = {text: this.$t('pub_type.all'), value: null, icon: 'fa-expand'}
+        let usedTypes = new Set()
+        this.titles.map(title => usedTypes.add(title.pub_type))
+        return [
+          all,
+          ...pubTypes
+            .filter(item => usedTypes.has(item.code))
+            .map(item => {return {text: this.$t(item.title), icon: item.icon, value: item.code}})
+        ]
+      },
+      filteredTitles () {
+        if (this.selectedPubType === null) {
+          return this.titles
+        }
+        return this.titles.filter(item => item.pub_type === this.selectedPubType)
+
       }
     },
     methods: {
@@ -119,6 +171,8 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       formatInteger: formatInteger,
+      iconForPubType: iconForPubType,
+      titleForPubType: titleForPubType,
       async loadData () {
         if (this.url) {
           this.loading = true
@@ -131,7 +185,7 @@ cs:
             this.loading = false
           }
         }
-      }
+      },
     },
     watch: {
       url () {
