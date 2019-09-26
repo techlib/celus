@@ -1,0 +1,23 @@
+en:
+  pub_type:
+    all: All
+    book: Book
+    journal: Journal
+    database: Database
+    report: Report
+    newspaper: Newspaper
+    multimedia: Multimedia
+    unknown: Unknown
+    other: Other
+
+cs:
+  pub_type:
+    all: Všechny
+    book: Kniha
+    journal: Časopis
+    database: Databáze
+    report: Zpráva
+    newspaper: Noviny
+    multimedia: Multimedia
+    unknown: Neznámý
+    other: Jiný
