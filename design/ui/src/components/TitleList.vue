@@ -62,13 +62,13 @@ cs:
                 <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
                     <router-link v-else :to="{name: 'title-detail', params: {platformId: null, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
             </template>
-            <template v-slot:item.pub_type="props">
+            <template v-slot:item.pub_type="{item}">
                 <v-tooltip bottom>
                     <template v-slot:activator="{ on }">
-                        <v-icon small v-on="on">{{ iconForPubType(props.item.pub_type) }}</v-icon>
+                        <v-icon small v-on="on">{{ iconForPubType(item.pub_type) }}</v-icon>
                     </template>
 
-                    <span>{{ props.item.pub_type_name }}</span>
+                    <span>{{ $t(titleForPubType(item.pub_type)) }}</span>
                 </v-tooltip>
             </template>
             <template v-slot:item.interest="{item}">
@@ -83,7 +83,7 @@ cs:
   import { mapActions } from 'vuex'
   import debounce from 'lodash/debounce'
   import {formatInteger} from '../libs/numbers'
-  import {iconForPubType, pubTypes} from '../libs/pub-types'
+  import {iconForPubType, pubTypes, titleForPubType} from '../libs/pub-types'
 
   export default {
     name: 'TitleList',
@@ -172,6 +172,7 @@ cs:
       }),
       formatInteger: formatInteger,
       iconForPubType: iconForPubType,
+      titleForPubType: titleForPubType,
       async loadData () {
         if (this.url) {
           this.loading = true

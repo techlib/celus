@@ -14,6 +14,12 @@ for (let item of pubTypes) {
   pubTypeToIcon[item.code] = item.icon
 }
 
+let codeToPubType = {}
+for (let item of pubTypes) {
+  codeToPubType[item.code] = item
+}
+
+
 function iconForPubType(pubType) {
   if (pubType in pubTypeToIcon) {
     return pubTypeToIcon[pubType]
@@ -21,8 +27,16 @@ function iconForPubType(pubType) {
   return pubTypeToIcon['U']
 }
 
+function titleForPubType(pubType) {
+  if (pubType in codeToPubType) {
+    return codeToPubType[pubType].title
+  }
+  return codeToPubType['U'].title
+}
+
 export {
   pubTypes,
   pubTypeToIcon,
   iconForPubType,
+  titleForPubType,
 }

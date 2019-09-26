@@ -37,7 +37,7 @@ class TitleSerializer(ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi')
+        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi', 'pub_type_name')
 
     def get_pub_type_name(self, obj: Title):
         return obj.get_pub_type_display()
