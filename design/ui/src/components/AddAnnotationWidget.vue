@@ -23,10 +23,7 @@ cs:
 <template>
     <v-container>
         <v-row>
-            <v-col>{{ $t('select_dates_text') }}</v-col>
-        </v-row>
-        <v-row>
-            <v-col cols="auto">
+            <v-col>
                 <v-text-field
                         disabled
                         :value="selectedOrganization ? selectedOrganization.name : ''"
@@ -34,7 +31,7 @@ cs:
                 >
                 </v-text-field>
             </v-col>
-            <v-col cols="auto" v-if="platform">
+            <v-col v-if="platform">
                 <v-text-field
                         disabled
                         :value="platform.name"
@@ -42,7 +39,8 @@ cs:
                 >
                 </v-text-field>
             </v-col>
-            <v-spacer></v-spacer>
+        </v-row>
+        <v-row>
             <v-col cols="auto">
                 <v-menu
                         v-model="startDateMenu"
@@ -97,18 +95,7 @@ cs:
                     ></v-date-picker>
                 </v-menu>
             </v-col>
-        </v-row>
-        <v-row>
-            <v-col>
-                <v-text-field
-                        v-model="subject"
-                        :label="$t('labels.subject') + ' *'"
-                        :rules="[required]"
-                        maxlength="200"
-                        counter
-                >
-                </v-text-field>
-            </v-col>
+            <v-spacer></v-spacer>
             <v-col cols="auto">
                 <v-select
                         :items="importanceLevels"
@@ -116,11 +103,11 @@ cs:
                         v-model="level"
                 >
                     <template v-slot:item="{item}">
-                        <v-icon small class="mr-2">{{ item.icon }}</v-icon>
+                        <v-icon small class="mr-2" :color="item.color">{{ item.icon }}</v-icon>
                         {{ item.text }}
                     </template>
                     <template v-slot:selection="{item}">
-                        <v-icon small class="mr-2">{{ item.icon }}</v-icon>
+                        <v-icon small class="mr-2" :color="item.color">{{ item.icon }}</v-icon>
                         {{ item.text }}
                     </template>
                 </v-select>
@@ -128,10 +115,42 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <v-col>
+            <v-col cols="12" md="6">
+                <v-text-field
+                        v-model="subjectCs"
+                        :label="$t('labels.subject') + ' (' + $t('in_czech') + ') *'"
+                        :rules="[required]"
+                        maxlength="200"
+                        counter
+                >
+                </v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+                <v-text-field
+                        v-model="subjectEn"
+                        :label="$t('labels.subject') + ' (' + $t('in_english') + ') *'"
+                        :rules="[required]"
+                        maxlength="200"
+                        counter
+                >
+                </v-text-field>
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col cols="12" md="6">
                 <v-textarea
-                        v-model="shortMessage"
-                        :label="$t('labels.short_message')"
+                        v-model="shortMessageCs"
+                        :label="$t('labels.short_message') + ' (' + $t('in_czech') + ')'"
+                        rows="2"
+                        outlined
+                        auto-grow
+                >
+                </v-textarea>
+            </v-col>
+            <v-col cols="12" md="6">
+                <v-textarea
+                        v-model="shortMessageEn"
+                        :label="$t('labels.short_message') + ' (' + $t('in_english') + ')'"
                         rows="2"
                         outlined
                         auto-grow
@@ -140,10 +159,20 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <v-col>
+            <v-col cols="12" md="6">
                 <v-textarea
-                        v-model="message"
-                        :label="$t('labels.message')"
+                        v-model="messageCs"
+                        :label="$t('labels.message') + ' (' + $t('in_czech') + ')'"
+                        rows="4"
+                        outlined
+                        auto-grow
+                >
+                </v-textarea>
+            </v-col>
+            <v-col cols="12" md="6">
+                <v-textarea
+                        v-model="messageEn"
+                        :label="$t('labels.message') + ' (' + $t('in_english') + ')'"
                         rows="4"
                         outlined
                         auto-grow
@@ -152,7 +181,8 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <v-col>
+            <v-spacer></v-spacer>
+            <v-col cols="auto">
                 <v-btn :disables="saving" @click="save()" v-text="$t('save')"></v-btn>
             </v-col>
         </v-row>
@@ -173,9 +203,12 @@ cs:
         startDate: null,
         endDate: null,
         annotation: null,
-        subject: '',
-        shortMessage: '',
-        message: '',
+        subjectCs: '',
+        subjectEn: '',
+        shortMessageCs: '',
+        shortMessageEn: '',
+        messageCs: '',
+        messageEn: '',
         level: 'info',
         endDateMenu: null,
         startDateMenu: null,
@@ -192,17 +225,30 @@ cs:
       }),
       importanceLevels () {
         return [
-          {value: 'info', text: this.$t('level_info'), icon: 'fa-info-circle'},
-          {value: 'important', text: this.$t('level_important'), icon: 'fa-exclamation-triangle'},
+          {
+            value: 'info',
+            text: this.$t('level_info'),
+            icon: 'fa-info-circle',
+            color: 'info'
+          },
+          {
+            value: 'important',
+            text: this.$t('level_important'),
+            icon: 'fa-exclamation-triangle',
+            color: 'warning'
+          },
         ]
       },
       annotationData () {
         let data = {
           'start_date': this.startDate ? this.startDate + '-01' : this.startDate,
           'end_date': this.endDate ? this.endDate + '-01' : this.endDate,
-          'subject': this.subject,
-          'short_message': this.shortMessage,
-          'message': this.message,
+          'subject_cs': this.subjectCs,
+          'subject_en': this.subjectEn,
+          'short_message_cs': this.shortMessageCs,
+          'short_message_en': this.shortMessageEn,
+          'message_en': this.messageEn,
+          'message_cs': this.messageCs,
           'level': this.level,
         }
         if (this.organizationSelected) {
