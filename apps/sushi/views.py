@@ -75,6 +75,7 @@ class SushiFetchAttemptViewSet(ModelViewSet):
 
     def perform_create(self, serializer: SushiFetchAttemptSerializer):
         serializer.validated_data['in_progress'] = True
+        serializer.validated_data['end_date'] = month_end(serializer.validated_data['end_date'])
         super().perform_create(serializer)
         attempt = serializer.instance
         run_sushi_fetch_attempt_task.apply_async(args=(attempt.pk,), countdown=1)
