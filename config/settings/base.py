@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'rest_framework',
     'django_celery_results',
-    'compressor',
     'mptt',
     'core.apps.CoreConfig',
     'publications.apps.PublicationsConfig',
@@ -154,7 +153,6 @@ MEDIA_ROOT = str(BASE_DIR / 'media/')
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'compressor.finders.CompressorFinder',
 )
 STATIC_ROOT = BASE_DIR / "static_compiled"
 
