@@ -16,8 +16,8 @@ class AnnotationSerializer(ModelSerializer):
     platform = PlatformSerializer(read_only=True)
     subject = ReadOnlyField()
     organization_id = PrimaryKeyRelatedField(source='organization', write_only=True,
-                                             queryset=Organization.objects.all())
-    platform_id = PrimaryKeyRelatedField(source='platform', write_only=True,
+                                             allow_null=True, queryset=Organization.objects.all())
+    platform_id = PrimaryKeyRelatedField(source='platform', write_only=True, allow_null=True,
                                          queryset=Platform.objects.all())
 
     class Meta:

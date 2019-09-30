@@ -5,6 +5,8 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.apps import apps
 
+from core.logic.url import extract_organization_id_from_request
+
 UL_NORMAL = 100
 UL_ROBOT = 200
 UL_ORG_ADMIN = 300
@@ -18,6 +20,14 @@ USER_LEVEL_CHOICES = (
     (UL_CONS_STAFF, _('Consortium staff')),
     (UL_CONS_ADMIN, _('Consortium admin')),
 )
+
+# relationship between user and accessed resource
+REL_SUPERUSER = 1000   # superuser
+REL_MASTER_ORG = 400   # user from master organization
+REL_ORG_ADMIN = 300    # admin of related organization
+REL_ORG_USER = 200     # user from related organization
+REL_UNREL_USER = 100   # unrelated user - not from this organization
+REL_NO_USER = 0        # no user
 
 
 class DataSource(models.Model):
@@ -70,7 +80,7 @@ class User(AbstractUser):
 
     def accessible_organizations(self):
         Organization = apps.get_model(app_label='organizations', model_name='Organization')
-        if self.is_from_master_organization:
+        if self.is_superuser or self.is_from_master_organization:
             # user is part of one of the master organizations - he should have access to all orgs
             return Organization.objects.all()
         return (self.organizations.all() |
@@ -85,6 +95,35 @@ class User(AbstractUser):
     @cached_property
     def is_from_master_organization(self):
         return self.organizations.filter(internal_id__in=settings.MASTER_ORGANIZATIONS).exists()
+
+    def request_relationship(self, request):
+        """
+        Returns the highest ownership level that this user has in relation to request
+        :param request:
+        :return:
+        """
+        from organizations.models import UserOrganization, Organization
+        if self.is_superuser:
+            return REL_SUPERUSER
+        elif self.is_from_master_organization:
+            return REL_MASTER_ORG
+        else:
+            org_id = extract_organization_id_from_request(request)
+            if org_id:
+                try:
+                    # admin must be from the explicitly associated organizations
+                    UserOrganization.objects.get(user=self, organization_id=org_id, is_admin=True)
+                except UserOrganization.DoesNotExist:
+                    try:
+                        # user may be from other related organizations
+                        self.accessible_organizations().get(pk=org_id)
+                    except Organization.DoesNotExist:
+                        return REL_UNREL_USER
+                    else:
+                        return REL_ORG_USER
+                else:
+                    return REL_ORG_ADMIN
+            return REL_UNREL_USER
 
 
 class Identity(models.Model):

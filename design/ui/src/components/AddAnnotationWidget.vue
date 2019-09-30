@@ -183,7 +183,7 @@ cs:
         <v-row>
             <v-spacer></v-spacer>
             <v-col cols="auto">
-                <v-btn :disables="saving" @click="save()" v-text="$t('save')"></v-btn>
+                <v-btn :disabled="saving || !valid" @click="save()" v-text="$t('save')"></v-btn>
             </v-col>
         </v-row>
     </v-container>
@@ -261,6 +261,12 @@ cs:
           data['pk'] = this.annotation.pk
         }
         return data
+      },
+      valid () {
+        if (!this.subjectCs || !this.subjectEn) {
+          return false
+        }
+        return true
       }
     },
     methods: {

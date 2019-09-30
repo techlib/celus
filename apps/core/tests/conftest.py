@@ -39,6 +39,14 @@ def master_identity():
 
 
 @pytest.fixture
+def admin_identity():
+    id_string = 'admin@user.test'
+    user = get_user_model().objects.create(username='admin', is_superuser=True)
+    Identity.objects.create(user=user, identity=id_string)
+    yield id_string
+
+
+@pytest.fixture
 def authenticated_client(client, valid_identity):
     client.defaults[settings.EDUID_IDENTITY_HEADER] = valid_identity
     client.user = Identity.objects.get(identity=valid_identity).user
