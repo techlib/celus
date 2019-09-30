@@ -223,6 +223,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'organizations.tasks.erms_sync_organizations_task',
         'schedule': schedule(run_every=timedelta(days=1)),
     },
+    'erms_sync_users_and_identities_task': {
+        'task': 'core.tasks.erms_sync_users_and_identities_task',
+        'schedule': schedule(run_every=timedelta(minutes=30)),
+    }
 }
 
 
