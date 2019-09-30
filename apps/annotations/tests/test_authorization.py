@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from annotations.models import Annotation
 from core.tests.conftest import *
+from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF
 from organizations.tests.conftest import organizations
 
 
@@ -83,3 +84,39 @@ class TestAuthorization(object):
                            **authentication_headers(identity))
         expected_status_code = 201 if can_create_noorg else 403
         assert resp.status_code == expected_status_code
+
+
+    @pytest.mark.parametrize(['user_type', 'can_delete_rel_org_admin',
+                              'can_delete_unrel_org_admin', 'can_delete_master',
+                              'can_delete_superadmin'],
+                             [['no_user', False, False, False, False],
+                              ['invalid', False, False, False, False],
+                              ['unrelated', False, False, False, False],
+                              ['related_user', False, False, False, False],
+                              ['related_admin', True, False, False, False],
+                              ['master_user', True, True, True, False],
+                              ['superuser', True, True, True, True]])
+    def test_annotation_modify_api_access(self, user_type,
+                                          can_delete_rel_org_admin, can_delete_unrel_org_admin,
+                                          can_delete_master, can_delete_superadmin,
+                                          identity_by_user_type, client, organizations,
+                                          authentication_headers):
+        identity, org = identity_by_user_type(user_type)
+        # test creation of related record
+        annot_rel_admin = Annotation.objects.create(subject='foo2', organization=org,
+                                                    owner_level=UL_ORG_ADMIN)
+        annot_unrel_admin = Annotation.objects.create(subject='foo', organization=organizations[1],
+                                                      owner_level=UL_ORG_ADMIN)
+        annot_master = Annotation.objects.create(subject='bar', organization=org,
+                                                 owner_level=UL_CONS_STAFF)
+        annot_super = Annotation.objects.create(subject='baz', organization=org,
+                                                owner_level=UL_CONS_ADMIN)
+        for annot, can in (
+                (annot_rel_admin, can_delete_rel_org_admin),
+                (annot_unrel_admin, can_delete_unrel_org_admin),
+                (annot_master, can_delete_master),
+                (annot_super, can_delete_superadmin)):
+            url = reverse('annotations-detail', args=(annot.pk,))
+            resp = client.delete(url, **authentication_headers(identity))
+            expected_status_code = 204 if can else 403
+            assert resp.status_code == expected_status_code

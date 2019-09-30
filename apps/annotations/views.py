@@ -44,6 +44,8 @@ class CanAccessOrganizationPermission(IsAuthenticated):
 
     PERMIT_NO_ORG_IN_SAFE_REQUEST = False  # allow safe access when no organization is specified?
     PERMIT_NO_ORG_IN_UNSAFE_REQUEST = False  # allow write access when no org is specified?
+    PERMIT_NO_ORG_IN_SAFE_OBJECT_REQUEST = False  # same as above but on object level
+    PERMIT_NO_ORG_IN_UNSAFE_OBJECT_REQUEST = False  # allow write access when no org is specified?
 
     def has_permission(self, request, view):
         parent = super().has_permission(request, view)
@@ -63,6 +65,18 @@ class CanAccessOrganizationPermission(IsAuthenticated):
                 return self.has_org_admin(request.user, org_id)
             else:
                 return self.PERMIT_NO_ORG_IN_UNSAFE_REQUEST
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            if hasattr(obj, 'organization_id'):
+                return self.has_org_admin(request.user, obj.organization_id)
+            else:
+                return self.PERMIT_NO_ORG_IN_SAFE_OBJECT_REQUEST
+        else:
+            if hasattr(obj, 'organization_id'):
+                return self.has_org_access(request.user, obj.organization_id)
+            else:
+                return self.PERMIT_NO_ORG_IN_UNSAFE_OBJECT_REQUEST
 
     def has_org_admin(self, user, org_id):
         if org_id:
