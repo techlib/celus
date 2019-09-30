@@ -8,31 +8,25 @@ from rest_framework.viewsets import ModelViewSet
 from annotations.models import Annotation
 from annotations.serializers import AnnotationSerializer
 from core.logic.dates import parse_month, month_end
-from core.logic.url import extract_organization_id_from_request
+from core.logic.url import extract_organization_id_from_request_query, \
+    extract_organization_id_from_request_data
 from core.models import REL_ORG_ADMIN, REL_UNREL_USER
 from organizations.models import UserOrganization
 
 
-class OwnerLevelBasedPermissions(IsAuthenticated):
+class OwnerLevelBasedPermissions(BasePermission):
 
     READ_PERMISSION_LEVEL = REL_UNREL_USER
     WRITE_PERMISSION_LEVEL = REL_ORG_ADMIN
 
     def has_permission(self, request, view):
-        parent = super().has_permission(request, view)
-        if not parent:
-            # if the parent check was unsuccessful, we just pass it
-            return False
         rel = request.user.request_relationship(request)
         if rel >= self.READ_PERMISSION_LEVEL:
             return True
         return False
 
     def has_object_permission(self, request, view, obj):
-        parent = super().has_object_permission(request, view, obj)
-        if not parent:
-            return False
-        rel = request.user.request_relationship(request)
+        rel = request.user.organization_relationship(obj.organization_id)
         if rel >= self.WRITE_PERMISSION_LEVEL:
             if hasattr(obj, 'owner_level'):
                 return rel >= obj.owner_level
@@ -40,21 +34,33 @@ class OwnerLevelBasedPermissions(IsAuthenticated):
         return False
 
 
-class CanAccessOrganizationPermission(IsAuthenticated):
+class OrganizationRelatedPermissionMixin(object):
 
-    PERMIT_NO_ORG_IN_SAFE_REQUEST = False  # allow safe access when no organization is specified?
+    NO_DATA_METHODS = ('DELETE',)
+
+    def has_org_admin(self, user, org_id):
+        if user.is_superuser or user.is_from_master_organization:
+            return True
+        if org_id:
+            return UserOrganization.objects.\
+                filter(user=user, organization_id=org_id, is_admin=True).exists()
+        return False
+
+    def has_org_access(self, user, org_id):
+        return user.accessible_organizations().filter(pk=org_id).exists()
+
+
+class CanPostOrganizationDataPermission(OrganizationRelatedPermissionMixin, BasePermission):
+
+    PERMIT_NO_ORG_IN_SAFE_REQUEST = True  # allow safe access when no organization is specified?
     PERMIT_NO_ORG_IN_UNSAFE_REQUEST = False  # allow write access when no org is specified?
-    PERMIT_NO_ORG_IN_SAFE_OBJECT_REQUEST = False  # same as above but on object level
-    PERMIT_NO_ORG_IN_UNSAFE_OBJECT_REQUEST = False  # allow write access when no org is specified?
 
     def has_permission(self, request, view):
-        parent = super().has_permission(request, view)
-        if not parent:
-            # if the parent check was unsuccessful, we just pass it
-            return False
         if request.user.is_superuser or request.user.is_from_master_organization:
             return True
-        org_id = extract_organization_id_from_request(request)
+        if request.method in self.NO_DATA_METHODS:
+            return True  # we have nothing to check here
+        org_id = extract_organization_id_from_request_data(request)
         if request.method in SAFE_METHODS:
             if org_id:
                 return self.has_org_access(request.user, org_id)
@@ -66,39 +72,27 @@ class CanAccessOrganizationPermission(IsAuthenticated):
             else:
                 return self.PERMIT_NO_ORG_IN_UNSAFE_REQUEST
 
+
+class CanAccessOrganizationRelatedObjectPermission(OrganizationRelatedPermissionMixin,
+                                                   BasePermission):
     def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser or request.user.is_from_master_organization:
+            return True
+        print(obj, obj.organization_id,self.has_org_access(request.user, obj.organization_id), self.has_org_admin(request.user, obj.organization_id) )
         if request.method in SAFE_METHODS:
-            if hasattr(obj, 'organization_id'):
-                return self.has_org_admin(request.user, obj.organization_id)
-            else:
-                return self.PERMIT_NO_ORG_IN_SAFE_OBJECT_REQUEST
+            return self.has_org_access(request.user, obj.organization_id)
         else:
-            if hasattr(obj, 'organization_id'):
-                return self.has_org_access(request.user, obj.organization_id)
-            else:
-                return self.PERMIT_NO_ORG_IN_UNSAFE_OBJECT_REQUEST
-
-    def has_org_admin(self, user, org_id):
-        if org_id:
-            return UserOrganization.objects.\
-                filter(user=user, organization_id=org_id, is_admin=True).exists()
-        return False
-
-    def has_org_access(self, user, org_id):
-        return user.accessible_organizations().filter(pk=org_id).exists()
-
-
-class CanAccessOrganizationPermissiveSafePermission(CanAccessOrganizationPermission):
-
-    PERMIT_NO_ORG_IN_SAFE_REQUEST = True
+            return self.has_org_admin(request.user, obj.organization_id)
 
 
 class AnnotationsViewSet(ModelViewSet):
 
     queryset = Annotation.objects.all()
     serializer_class = AnnotationSerializer
-    permission_classes = [OwnerLevelBasedPermissions,
-                          CanAccessOrganizationPermissiveSafePermission]
+    permission_classes = [IsAuthenticated &
+                          OwnerLevelBasedPermissions &
+                          CanPostOrganizationDataPermission &
+                          CanAccessOrganizationRelatedObjectPermission]
 
     def get_queryset(self):
         org_perm_args = (Q(organization__in=self.request.user.accessible_organizations()) |

@@ -111,12 +111,12 @@ class TestAuthorization(object):
                                                  owner_level=UL_CONS_STAFF)
         annot_super = Annotation.objects.create(subject='baz', organization=org,
                                                 owner_level=UL_CONS_ADMIN)
-        for annot, can in (
-                (annot_rel_admin, can_delete_rel_org_admin),
-                (annot_unrel_admin, can_delete_unrel_org_admin),
-                (annot_master, can_delete_master),
-                (annot_super, can_delete_superadmin)):
+        for i, (annot, can) in enumerate(
+                ((annot_rel_admin, can_delete_rel_org_admin),
+                 (annot_unrel_admin, can_delete_unrel_org_admin),
+                 (annot_master, can_delete_master),
+                 (annot_super, can_delete_superadmin))):
             url = reverse('annotations-detail', args=(annot.pk,))
             resp = client.delete(url, **authentication_headers(identity))
-            expected_status_code = 204 if can else 403
-            assert resp.status_code == expected_status_code
+            expected_status_codes = (204,) if can else (403, 404)
+            assert resp.status_code in expected_status_codes, f'i = {i}'

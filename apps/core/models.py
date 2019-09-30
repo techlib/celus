@@ -5,7 +5,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.apps import apps
 
-from core.logic.url import extract_organization_id_from_request
+from core.logic.url import extract_organization_id_from_request_query
 
 UL_NORMAL = 100
 UL_ROBOT = 200
@@ -108,7 +108,16 @@ class User(AbstractUser):
         elif self.is_from_master_organization:
             return REL_MASTER_ORG
         else:
-            org_id = extract_organization_id_from_request(request)
+            org_id = extract_organization_id_from_request_query(request)
+            return self.organization_relationship(org_id)
+
+    def organization_relationship(self, org_id: int):
+        from organizations.models import UserOrganization, Organization
+        if self.is_superuser:
+            return REL_SUPERUSER
+        elif self.is_from_master_organization:
+            return REL_MASTER_ORG
+        else:
             if org_id:
                 try:
                     # admin must be from the explicitly associated organizations
