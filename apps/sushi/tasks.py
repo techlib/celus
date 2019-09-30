@@ -8,7 +8,7 @@ from .logic.fetching import retry_queued, fetch_new_sushi_data
 from sushi.models import SushiFetchAttempt
 
 
-@celery.task
+@celery.shared_task
 def run_sushi_fetch_attempt_task(attempt_id: int):
     attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
     attempt.credentials.fetch_report(
@@ -19,7 +19,7 @@ def run_sushi_fetch_attempt_task(attempt_id: int):
     )
 
 
-@celery.task
+@celery.shared_task
 def retry_queued_attempts_task():
     """
     Retry downloading data for attempts that were queued
@@ -28,7 +28,7 @@ def retry_queued_attempts_task():
         retry_queued(sleep_interval=5)
 
 
-@celery.task
+@celery.shared_task
 def fetch_new_sushi_data_task():
     """
     Fetch sushi data for dates and platforms where they are not available

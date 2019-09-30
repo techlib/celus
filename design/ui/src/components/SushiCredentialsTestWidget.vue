@@ -55,7 +55,7 @@ cs:
                 >
                     <template v-slot:activator="{ on }">
                         <v-text-field
-                                v-model="startDate"
+                                v-model="endDate"
                                 :label="$t('title_fields.end_date')"
                                 prepend-icon="fa-calendar"
                                 readonly

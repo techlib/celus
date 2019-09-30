@@ -15,6 +15,7 @@ from pycounter.exceptions import SushiException
 
 from django.conf import settings
 
+from core.logic.dates import month_end
 from core.task_support import cache_based_lock
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
@@ -187,9 +188,11 @@ class SushiCredentials(models.Model):
         data_file = None
         error_code = ''
         queued = False
+        params = self.extra_params or {}
+        params['sushi_dump'] = True
         try:
             report = client.get_report_data(counter_report.code, start_date, end_date,
-                                            params={'sushi_dump': True})
+                                            params=params)
         except SushiException as e:
             logger.error("Error: %s", e)
             file_data = e.raw
@@ -244,6 +247,8 @@ class SushiCredentials(models.Model):
         error_code = ''
         # we want extra split data from the report
         params = client.EXTRA_PARAMS['maximum_split'].get(counter_report.code.lower(), {})
+        extra = self.extra_params or {}
+        params.update(extra)
         try:
             report = client.get_report_data(counter_report.code, start_date, end_date,
                                             params=params)
@@ -367,7 +372,7 @@ class SushiFetchAttempt(models.Model):
     def retry(self):
         attempt = self.credentials.fetch_report(counter_report=self.counter_report,
                                                 start_date=self.start_date,
-                                                end_date=self.end_date)
+                                                end_date=month_end(self.end_date))
         attempt.queue_previous = self
         attempt.save()
         return attempt
