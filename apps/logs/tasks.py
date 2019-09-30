@@ -9,7 +9,7 @@ from logs.logic.materialized_interest import sync_interest_by_import_batches, \
     recompute_interest_by_batch
 
 
-@celery.task
+@celery.shared_task
 def sync_interest_task():
     """
     Synchronizes computed interest for import batches that were not processed yet
@@ -18,7 +18,7 @@ def sync_interest_task():
         sync_interest_by_import_batches()
 
 
-@celery.task
+@celery.shared_task
 def import_new_sushi_attempts_task():
     """
     Go over new sushi attempts that contain data and import them
@@ -27,7 +27,7 @@ def import_new_sushi_attempts_task():
         import_new_sushi_attempts()
 
 
-@celery.task
+@celery.shared_task
 def recompute_interest_by_batch_task(queryset=None):
     """
     Run recompute_interest_by_batch to reconstruct interest for all batches.
