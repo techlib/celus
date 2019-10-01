@@ -1,7 +1,6 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from core.logic.url import extract_organization_id_from_request_data
-from core.models import REL_ORG_ADMIN, REL_UNREL_USER
 from organizations.models import UserOrganization
 
 
@@ -49,19 +48,15 @@ class CanPostOrganizationDataPermission(OrganizationRelatedPermissionMixin, Base
     Checks that organization sent in POST (and PUT and PATCH) data is accessible by the user
     """
 
-    PERMIT_NO_ORG_IN_SAFE_REQUEST = True  # allow safe access when no organization is specified?
-    PERMIT_NO_ORG_IN_UNSAFE_REQUEST = False  # allow write access when no org is specified?
-
     def has_permission(self, request, view):
         if request.user.is_superuser or request.user.is_from_master_organization:
             return True
         if request.method in self.NO_DATA_METHODS + SAFE_METHODS:
             return True  # we have nothing to check here
-        org_id = extract_organization_id_from_request_data(request)
+        org_id, key_present = extract_organization_id_from_request_data(request)
         if org_id:
             return self.has_org_admin(request.user, org_id)
-        else:
-            return self.PERMIT_NO_ORG_IN_UNSAFE_REQUEST
+        return True
 
 
 class CanAccessOrganizationRelatedObjectPermission(OrganizationRelatedPermissionMixin,
@@ -78,3 +73,21 @@ class CanAccessOrganizationRelatedObjectPermission(OrganizationRelatedPermission
             return self.has_org_access(request.user, obj.organization_id)
         else:
             return self.has_org_admin(request.user, obj.organization_id)
+
+
+class OrganizationRequiredInDataForNonSuperusers(BasePermission):
+
+    FULL_DATA_METHODS = ('POST', 'PUT')
+
+    def has_permission(self, request, view):
+        if request.user.is_superuser or request.user.is_from_master_organization:
+            return True
+        ord_id, key_present = extract_organization_id_from_request_data(request)
+        if request.method in self.FULL_DATA_METHODS:
+            if not ord_id:
+                return False
+        elif key_present and not ord_id:
+            # e.g. for PATCH if the key is present, it must hold a value
+            # if it is not in the data, we do not care
+            return False
+        return True

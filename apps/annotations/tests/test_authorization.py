@@ -124,7 +124,7 @@ class TestAuthorization(object):
                               ['related_admin', True, False, False, False],
                               ['master_user', True, True, True, False],
                               ['superuser', True, True, True, True]])
-    def test_annotation_modify_api_access(self, user_type,
+    def test_annotation_delete_api_access(self, user_type,
                                           can_delete_rel_org_admin, can_delete_unrel_org_admin,
                                           can_delete_master, can_delete_superadmin,
                                           identity_by_user_type, client, organizations,
@@ -147,4 +147,62 @@ class TestAuthorization(object):
             url = reverse('annotations-detail', args=(annot.pk,))
             resp = client.delete(url, **authentication_headers(identity))
             expected_status_codes = (204,) if can else (403, 404)
+            assert resp.status_code in expected_status_codes, f'i = {i}'
+
+    @pytest.mark.parametrize(['user_type', 'can_modify_rel_org_admin',
+                              'can_modify_unrel_org_admin', 'can_modify_master',
+                              'can_modify_superadmin'],
+                             [['no_user', False, False, False, False],
+                              ['invalid', False, False, False, False],
+                              ['unrelated', False, False, False, False],
+                              ['related_user', False, False, False, False],
+                              ['related_admin', True, False, False, False],
+                              ['master_user', True, True, True, False],
+                              ['superuser', True, True, True, True]])
+    def test_annotation_modify_api_access(
+            self, user_type, can_modify_rel_org_admin, can_modify_unrel_org_admin,
+            can_modify_master, can_modify_superadmin, identity_by_user_type, client, organizations,
+            authentication_headers):
+        identity, org = identity_by_user_type(user_type)
+        # test creation of related record
+        annot_rel_admin = Annotation.objects.create(subject='foo2', organization=org,
+                                                    owner_level=UL_ORG_ADMIN)
+        annot_unrel_admin = Annotation.objects.create(subject='foo', organization=organizations[1],
+                                                      owner_level=UL_ORG_ADMIN)
+        annot_master = Annotation.objects.create(subject='bar', organization=org,
+                                                 owner_level=UL_CONS_STAFF)
+        annot_super = Annotation.objects.create(subject='baz', organization=org,
+                                                owner_level=UL_CONS_ADMIN)
+        for i, (annot, can) in enumerate(
+                ((annot_rel_admin, can_modify_rel_org_admin),
+                 (annot_unrel_admin, can_modify_unrel_org_admin),
+                 (annot_master, can_modify_master),
+                 (annot_super, can_modify_superadmin))):
+            url = reverse('annotations-detail', args=(annot.pk,))
+            resp = client.patch(url, {'subject': 'XXX'}, content_type='application/json',
+                                **authentication_headers(identity))
+            expected_status_codes = (200,) if can else (403, 404)
+            assert resp.status_code in expected_status_codes, f'i = {i}'
+
+    @pytest.mark.parametrize(['user_type', 'can_set_rel_org', 'can_set_unrel_org',
+                              'can_set_noorg'],
+                             [['related_admin', True, False, False],
+                              ['master_user', True, True, True],
+                              ['superuser', True, True, True]])
+    def test_annotation_modify_organization_api_access(
+            self, user_type, can_set_rel_org, can_set_unrel_org, can_set_noorg,
+            identity_by_user_type, client, organizations, authentication_headers):
+        identity, org = identity_by_user_type(user_type)
+        # test creation of related record
+        annot = Annotation.objects.create(subject='foo', organization=org,
+                                          owner_level=UL_ORG_ADMIN)
+        for i, (can, org_obj) in enumerate(
+                ((can_set_rel_org, org),
+                 (can_set_unrel_org, organizations[1]),
+                 (can_set_noorg, None))):
+            url = reverse('annotations-detail', args=(annot.pk,))
+            resp = client.patch(url, {'organization_id': org_obj.id if org_obj else None},
+                                content_type='application/json',
+                                **authentication_headers(identity))
+            expected_status_codes = (200,) if can else (403, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
