@@ -85,6 +85,34 @@ class TestAuthorization(object):
         expected_status_code = 201 if can_create_noorg else 403
         assert resp.status_code == expected_status_code
 
+    @pytest.mark.parametrize(['user_type', 'can_access_unrel', 'can_access_rel',
+                              'can_access_noorg'],
+                             [['no_user', False, False, False],
+                              ['invalid', False, False, False],
+                              ['unrelated', False, False, True],
+                              ['related_user', False, True, True],
+                              ['related_admin', False, True, True],
+                              ['master_user', True, True, True],
+                              ['superuser', True, True, True]])
+    def test_annotation_get_object_api_access(
+            self, user_type, can_access_unrel, can_access_rel, can_access_noorg,
+            identity_by_user_type, client, organizations, authentication_headers):
+        identity, org = identity_by_user_type(user_type)
+        # test creation of related record
+        annot_rel = Annotation.objects.create(subject='foo2', organization=org,
+                                              owner_level=UL_ORG_ADMIN)
+        annot_unrel = Annotation.objects.create(subject='foo', organization=organizations[1],
+                                                owner_level=UL_ORG_ADMIN)
+        annot_noorg = Annotation.objects.create(subject='bar', organization=None,
+                                                owner_level=UL_CONS_ADMIN)
+        for i, (annot, can) in enumerate(
+                ((annot_unrel, can_access_unrel),
+                 (annot_rel, can_access_rel),
+                 (annot_noorg, can_access_noorg),)):
+            url = reverse('annotations-detail', args=(annot.pk,))
+            resp = client.get(url, **authentication_headers(identity))
+            expected_status_codes = (200,) if can else (403, 404)
+            assert resp.status_code in expected_status_codes, f'i = {i}'
 
     @pytest.mark.parametrize(['user_type', 'can_delete_rel_org_admin',
                               'can_delete_unrel_org_admin', 'can_delete_master',
