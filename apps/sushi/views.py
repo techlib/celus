@@ -1,21 +1,19 @@
 from datetime import timedelta
-from time import sleep
 
 import dateparser
 from django.db.models import Count, Q, Max, Min
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-from pandas import DataFrame
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from core.logic.dates import month_start, month_end
+from core.permissions import SuperuserOrAdminPermission
 from organizations.logic.queries import organization_filter_from_org_id
-from organizations.models import Organization
 from sushi.models import CounterReportType, SushiFetchAttempt
 from sushi.serializers import CounterReportTypeSerializer, SushiFetchAttemptSerializer
-from sushi.tasks import run_sushi_fetch_attempt_task
+from sushi.tasks import run_sushi_fetch_attempt_task, fetch_new_sushi_data_task
 from .models import SushiCredentials
 from .serializers import SushiCredentialsSerializer
 
@@ -169,3 +167,14 @@ class SushiFetchAttemptStatsView(APIView):
                 output.append(rec)
             cur_date = month_start(cur_date + timedelta(days=32))
         return output
+
+
+class StartFetchNewSushiDataTask(APIView):
+
+    permission_classes = [SuperuserOrAdminPermission]
+
+    def post(self, request):
+        task = fetch_new_sushi_data_task.delay()
+        return Response({
+            'id': task.id,
+        })

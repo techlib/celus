@@ -91,3 +91,11 @@ class OrganizationRequiredInDataForNonSuperusers(BasePermission):
             # if it is not in the data, we do not care
             return False
         return True
+
+
+class SuperuserOrAdminPermission(BasePermission):
+
+    def has_permission(self, request, view):
+        if request.user.is_superuser or request.user.is_from_master_organization:
+            return True
+        return False
