@@ -421,7 +421,7 @@ class SushiFetchAttempt(models.Model):
         """
         interval = self.retry_interval()
         if not interval:
-            return now()
+            return None
         ref_time = self.when_queued or self.timestamp
         return ref_time + interval
 

@@ -38,7 +38,11 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
     for i, attempt in enumerate(qs):
         cred_based_delay = attempt.credentials.when_can_access()
         logger.debug('Credentials based delay is %d s', cred_based_delay)
-        when_retry = max(attempt.when_to_retry(), now() + timedelta(seconds=cred_based_delay))
+        attempt_retry = attempt.when_to_retry()
+        if not attempt_retry:
+            when_retry = None
+        else:
+            when_retry = max(attempt_retry, now() + timedelta(seconds=cred_based_delay))
         if when_retry and when_retry <= now():
             # we are ready to retry
             logger.debug('Retrying attempt: %s', attempt)
