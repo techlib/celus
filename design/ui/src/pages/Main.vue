@@ -33,26 +33,30 @@
                         inset
                         vertical
                 ></v-divider>
-                <v-avatar size="36px" color="primary" class="mt-2">
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{ on }">
-                        <span v-on="on" >
-                            <img
-                                    v-if="avatarImg"
-                                    src="https://avatars0.githubusercontent.com/u/9064066?v=4&s=460"
-                                    alt="Avatar"
-                            >
-                            <span v-else-if="loggedIn" class="white--text headline">{{ avatarText }}</span>
-                            <v-icon
-                                    v-else
-                                    dark
-                            >fa-user</v-icon>
-                        </span>
-                        </template>
 
-                        <span>{{ usernameText }}</span>
-                    </v-tooltip>
-                </v-avatar>
+                <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                        <span v-on="on" >
+                            <router-link :to="{name: 'user-page'}">
+                                <v-avatar color="primary" class="mt-2">
+                                    <v-gravatar
+                                            v-if="loggedIn && user"
+                                            :email="user.email"
+                                            :alt="avatarText"
+                                            default-img="mp"
+                                    >
+                                    </v-gravatar>
+                                    <v-icon
+                                            v-else
+                                            dark
+                                    >fa-user</v-icon>
+                                </v-avatar>
+                            </router-link>
+                        </span>
+                    </template>
+
+                    <span>{{ usernameText }}</span>
+                </v-tooltip>
             </v-toolbar-items>
 
         </v-app-bar>
@@ -104,6 +108,7 @@
   import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
   import LoginDialog from '../components/LoginDialog'
   import InvalidUserPage from './InvalidUserPage'
+  import VGravatar from 'vue-gravatar'
 
   export default {
     name: 'Dashboard',
@@ -113,6 +118,7 @@
       SelectedDateRangeWidget,
       OrganizationSelector,
       SidePanel,
+      VGravatar,
     },
     data () {
       return {
@@ -124,6 +130,7 @@
         snackbarText: 'snackbarContent',
         snackbarColor: 'snackbarColor',
         invalidUser: 'invalidUser',
+        user: 'user',
       }),
       ...mapGetters({
         loggedIn: 'loggedIn',
@@ -176,6 +183,10 @@
     .v-select.v-text-field.short input {
         max-width: 0;
         min-width: 3rem;
+    }
+
+    img.avatar {
+        font-size: 1.25rem;
     }
 
     section.header {

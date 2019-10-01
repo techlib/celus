@@ -16,5 +16,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         return self.request.user.accessible_organizations().annotate(
             is_admin=Count('userorganization',
                            filter=Q(userorganization__is_admin=True,
-                                    userorganization__user=self.request.user))
+                                    userorganization__user=self.request.user)),
+            is_member=Count('userorganization',
+                            filter=Q(userorganization__user=self.request.user))
             ).order_by('name')

@@ -11,6 +11,7 @@ import SushiCredentialsManagementPage from '../pages/SushiCredentialsManagementP
 import ImportBatchesPage from '../pages/ImportBatchesPage'
 import CustomDataUploadPage from '../pages/CustomDataUploadPage'
 import SushiFetchAttemptsPage from '../pages/SushiFetchAttemptsPage'
+import UserPage from '../pages/UserPage'
 
 Vue.use(Router)
 
@@ -20,6 +21,11 @@ export default new Router({
       path: '/',
       name: 'home',
       redirect: {name: 'platform-list'},
+    },
+    {
+      path: '/user/',
+      name: 'user-page',
+      component: UserPage,
     },
     {
       path: '/platforms/',
