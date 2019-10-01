@@ -29,8 +29,6 @@ class OrganizationRelatedPermissionMixin(object):
     NO_DATA_METHODS = ('DELETE',)
 
     def has_org_admin(self, user, org_id):
-        if user.is_superuser or user.is_from_master_organization:
-            return True
         if org_id:
             return UserOrganization.objects.\
                 filter(user=user, organization_id=org_id, is_admin=True).exists()
@@ -49,8 +47,6 @@ class CanPostOrganizationDataPermission(OrganizationRelatedPermissionMixin, Base
     """
 
     def has_permission(self, request, view):
-        if request.user.is_superuser or request.user.is_from_master_organization:
-            return True
         if request.method in self.NO_DATA_METHODS + SAFE_METHODS:
             return True  # we have nothing to check here
         org_id, key_present = extract_organization_id_from_request_data(request)
@@ -67,8 +63,6 @@ class CanAccessOrganizationRelatedObjectPermission(OrganizationRelatedPermission
     """
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser or request.user.is_from_master_organization:
-            return True
         if request.method in SAFE_METHODS:
             return self.has_org_access(request.user, obj.organization_id)
         else:
@@ -80,8 +74,6 @@ class OrganizationRequiredInDataForNonSuperusers(BasePermission):
     FULL_DATA_METHODS = ('POST', 'PUT')
 
     def has_permission(self, request, view):
-        if request.user.is_superuser or request.user.is_from_master_organization:
-            return True
         ord_id, key_present = extract_organization_id_from_request_data(request)
         if request.method in self.FULL_DATA_METHODS:
             if not ord_id:
@@ -96,6 +88,11 @@ class OrganizationRequiredInDataForNonSuperusers(BasePermission):
 class SuperuserOrAdminPermission(BasePermission):
 
     def has_permission(self, request, view):
+        if request.user.is_superuser or request.user.is_from_master_organization:
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
         if request.user.is_superuser or request.user.is_from_master_organization:
             return True
         return False
