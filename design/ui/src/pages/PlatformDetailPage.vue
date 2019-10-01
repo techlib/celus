@@ -95,7 +95,7 @@ cs:
 
         <section class="mb-5">
             <AnnotationsWidget :platform="platformId"></AnnotationsWidget>
-            <AnnotationCreateModifyWidget :platform="platform" />
+            <!--AnnotationCreateModifyWidget :platform="platform" /-->
 
         </section>
 
