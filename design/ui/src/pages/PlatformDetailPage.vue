@@ -95,7 +95,7 @@ cs:
 
         <section class="mb-5">
             <AnnotationsWidget :platform="platformId"></AnnotationsWidget>
-            <AddAnnotationWidget :platform="platform" />
+            <AnnotationCreateModifyWidget :platform="platform" />
 
         </section>
 
@@ -137,7 +137,7 @@ cs:
   import {formatInteger} from '../libs/numbers'
   import { remapInterestRecord } from '../libs/interest'
   import AnnotationsWidget from '../components/AnnotationsWidget'
-  import AddAnnotationWidget from '../components/AddAnnotationWidget'
+  import AnnotationCreateModifyWidget from '../components/AnnotationCreateModifyWidget'
 
   export default {
     name: 'PlatformDetailPage',
@@ -146,7 +146,7 @@ cs:
       TitleList,
       CounterChartSet,
       AnnotationsWidget,
-      AddAnnotationWidget,
+      AnnotationCreateModifyWidget,
     },
     props: {
       'platformId': {required: true},

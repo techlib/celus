@@ -194,7 +194,7 @@ cs:
   import axios from 'axios'
 
   export default {
-    name: 'AddAnnotationWidget',
+    name: 'AnnotationCreateModifyWidget',
     props: {
       platform: {required: false, type: Object},
     },
