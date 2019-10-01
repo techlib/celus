@@ -5,7 +5,6 @@ from django.db import models
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from core.models import DataSource
 from publications.models import Platform
 
 
@@ -23,7 +22,7 @@ class Organization(MPTTModel):
     fte = models.PositiveIntegerField(help_text='Last available FTE number for organization',
                                       default=0)
     address = JSONField(default=dict)
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True,
+    source = models.ForeignKey('core.DataSource', on_delete=models.CASCADE, null=True, blank=True,
                                related_name='defined_organizations')
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through='UserOrganization',
                                    related_name='organizations')
@@ -46,7 +45,7 @@ class UserOrganization(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     is_admin = models.BooleanField(default=False)
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey('core.DataSource', on_delete=models.CASCADE, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 

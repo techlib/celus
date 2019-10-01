@@ -95,6 +95,8 @@ cs:
 
         <section class="mb-5">
             <AnnotationsWidget :platform="platformId"></AnnotationsWidget>
+            <AnnotationCreateModifyWidget :platform="platform" />
+
         </section>
 
         <section v-if="selectedOrganizationId && platform && platform.title_count">
@@ -135,6 +137,7 @@ cs:
   import {formatInteger} from '../libs/numbers'
   import { remapInterestRecord } from '../libs/interest'
   import AnnotationsWidget from '../components/AnnotationsWidget'
+  import AnnotationCreateModifyWidget from '../components/AnnotationCreateModifyWidget'
 
   export default {
     name: 'PlatformDetailPage',
@@ -143,6 +146,7 @@ cs:
       TitleList,
       CounterChartSet,
       AnnotationsWidget,
+      AnnotationCreateModifyWidget,
     },
     props: {
       'platformId': {required: true},

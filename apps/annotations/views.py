@@ -1,20 +1,30 @@
-from functools import reduce
 import operator
+from functools import reduce
 
 from django.db.models import Q
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
 
 from annotations.models import Annotation
 from annotations.serializers import AnnotationSerializer
 from core.logic.dates import parse_month, month_end
+from core.permissions import OwnerLevelBasedPermissions, CanPostOrganizationDataPermission, \
+    CanAccessOrganizationRelatedObjectPermission, OrganizationRequiredInDataForNonSuperusers
 
 
-class AnnotationsViewSet(ReadOnlyModelViewSet):
+class AnnotationsViewSet(ModelViewSet):
 
     queryset = Annotation.objects.all()
     serializer_class = AnnotationSerializer
+    permission_classes = [IsAuthenticated &
+                          OwnerLevelBasedPermissions &
+                          CanPostOrganizationDataPermission &
+                          CanAccessOrganizationRelatedObjectPermission &
+                          OrganizationRequiredInDataForNonSuperusers]
 
     def get_queryset(self):
+        org_perm_args = (Q(organization__in=self.request.user.accessible_organizations()) |
+                         Q(organization__isnull=True))
         query_args = []
         exclude_args = []
         for param in ('platform', 'organization'):
@@ -31,6 +41,6 @@ class AnnotationsViewSet(ReadOnlyModelViewSet):
         if len(exclude_args) > 1:
             # we have more args, we need to "OR" them
             exclude_args = [reduce(operator.or_, exclude_args)]
-        return Annotation.objects.filter(*query_args).exclude(*exclude_args).\
-            select_related('organization', 'platform')
+        return Annotation.objects.filter(org_perm_args).filter(*query_args).\
+            exclude(*exclude_args).select_related('organization', 'platform')
 

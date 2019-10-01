@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from core.models import USER_LEVEL_CHOICES, UL_ORG_ADMIN
+
 
 class Annotation(models.Model):
     """
@@ -29,6 +31,11 @@ class Annotation(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL,
                                blank=True)
+    owner_level = models.PositiveSmallIntegerField(
+        choices=USER_LEVEL_CHOICES,
+        default=UL_ORG_ADMIN,
+        help_text='Level of user who created this record - used to determine who can modify it'
+    )
 
 
 
