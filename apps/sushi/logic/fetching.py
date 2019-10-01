@@ -68,7 +68,7 @@ def fetch_new_sushi_data():
     end_date = month_start(parse_date(settings.SUSHI_ATTEMPT_LAST_DATE))
     # do not use lock, we lock the whole queue with same URL
     processing_fn = partial(process_fetch_units_wrapper,
-                            conflict_ok='skip', conflict_error='continue', sleep_time=2,
+                            conflict_ok='skip', conflict_error='smart', sleep_time=2,
                             use_lock=False)
     args = [(lock_name, fus, start_date, end_date)
             for lock_name, fus in lock_name_to_units.items()]
@@ -201,7 +201,7 @@ def split_fetch_units_by_url_lock_name(fetch_units) -> dict:
 
 
 def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: date,
-                        conflict_ok='skip', conflict_error='continue', sleep_time=0,
+                        conflict_ok='skip', conflict_error='smart', sleep_time=0,
                         use_lock=True):
     while fetch_units and start_date >= end_date:
         new_fetch_units = []
@@ -215,6 +215,10 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
             if conflict:
                 action = conflict_ok if (conflict.contains_data or conflict.queued)\
                     else conflict_error
+                if action == 'smart':
+                    # smart means that we use the retry timeout of the conflicting attempt
+                    # to decide on what to do
+                    action = smart_decide_conflict_action(conflict)
                 if action == 'stop':
                     logger.debug('Skipping on existing data: %s, %s: %s',
                                  platform, fetch_unit.credentials.organization, start_date)
@@ -252,3 +256,17 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
         if fetch_units:
             sleep(sleep_time)  # we will do one more round, we need to sleep
         start_date = month_start(start_date - timedelta(days=20))
+
+
+def smart_decide_conflict_action(conflict):
+    when_retry = conflict.when_to_retry()
+    if not when_retry:
+        action = 'skip'  # there should be no retry
+        logger.debug('Smart deciding to skip attempt - retry makes no sense')
+    elif when_retry <= now():
+        action = 'continue'  # it is time to retry
+        logger.debug('Smart deciding to retry attempt')
+    else:
+        action = 'skip'  # it is too soon to retry
+        logger.debug('Smart deciding to skip attempt - it is too soon to retry')
+    return action

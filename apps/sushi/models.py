@@ -392,7 +392,7 @@ class SushiFetchAttempt(models.Model):
     def retry_interval_simple(self) -> Optional[timedelta]:
         """
         Return the time interval after which it makes sense to retry. If None, it means no retry
-        should be made unless something is changes - there was no error or the error was permanent
+        should be made unless something is changed - there was no error or the error was permanent
         """
         if not self.error_code:
             return None
