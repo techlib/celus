@@ -7,7 +7,7 @@ router = DefaultRouter()
 router.register(r'organization', views.OrganizationViewSet, basename='organization')
 
 urlpatterns = [
-    path('run-task/erms-sync-organizations/', views.StartERMSSyncOrganizationsTask.as_view())
+    path('run-task/erms-sync-organizations', views.StartERMSSyncOrganizationsTask.as_view())
 ]
 
 urlpatterns += router.urls

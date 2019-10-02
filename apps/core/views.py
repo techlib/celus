@@ -5,7 +5,10 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.permissions import SuperuserOrAdminPermission
 from core.serializers import UserSerializer
+
+from .tasks import erms_sync_users_and_identities_task
 
 
 class UserView(GenericAPIView):
@@ -45,3 +48,12 @@ class UserLanguageView(APIView):
         return HttpResponseForbidden('user is not logged in')
 
 
+class StartERMSSyncUsersAndIdentitiesTask(APIView):
+
+    permission_classes = [SuperuserOrAdminPermission]
+
+    def post(self, request):
+        task = erms_sync_users_and_identities_task.delay()
+        return Response({
+            'id': task.id,
+        })
