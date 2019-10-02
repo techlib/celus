@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from reversion.admin import VersionAdmin
+
 from . import models
 
 
 @admin.register(models.SushiCredentials)
-class SushiCredentialsAdmin(admin.ModelAdmin):
+class SushiCredentialsAdmin(VersionAdmin):
 
     list_display = ['organization', 'organization_internal_id', 'platform', 'counter_version',
                     'customer_id', 'requestor_id',

@@ -2,13 +2,16 @@ import json
 from datetime import timedelta
 
 import dateparser
+import reversion
 from django.db.models import Count, Q, Max, Min
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from reversion.views import create_revision
 
 from core.logic.dates import month_start, month_end
 from core.permissions import SuperuserOrAdminPermission, OrganizationRelatedPermissionMixin
@@ -34,6 +37,16 @@ class SushiCredentialsViewSet(ModelViewSet):
         if organization_id:
             qs = qs.filter(**organization_filter_from_org_id(organization_id, self.request.user))
         return qs
+
+    @method_decorator(create_revision())
+    def update(self, request, *args, **kwargs):
+        reversion.set_comment('Updated through API')
+        return super().update(request, *args, **kwargs)
+
+    @method_decorator(create_revision())
+    def create(self, request, *args, **kwargs):
+        reversion.set_comment('Created through API')
+        return super().create(request, *args, **kwargs)
 
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):

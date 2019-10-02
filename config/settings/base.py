@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_celery_results',
     'mptt',
+    'reversion',
     'core.apps.CoreConfig',
     'publications.apps.PublicationsConfig',
     'logs.apps.LogsConfig',
