@@ -6,8 +6,12 @@ en:
        other tasks, it is not possible to observe their progress in real time.
     erms_sync_organizations: Sync organizations with ERMS
     erms_sync_users_and_identities: Sync user accounts with ERMS
+    fetch_new_sushi_data: Check for new SUSHI data
     task_success: Task was successfully submitted
     task_error: An error occurred during task submission
+    management_page: Management page
+    django_admin: Django admin
+    django_admin_text: You can use <a href="/wsEc67YNV2sq/" target="_blank">Django admin</a> for low-level management.
 
 cs:
     background_tasks: Úlohy na pozadí
@@ -15,23 +19,34 @@ cs:
         je můžete spustit okamžitě. Vzhledem k tomu, že úlohy mohou být zařazeny do fronty a nebo
         blokovány jinými úlohami, není možné sledovat průběh úlohy v reálném čase.
     erms_sync_organizations: Synchronizace organizací s ERMS
-    erms_sync_users_and_identities: Synchronizace uživatelských účetů s ERMS
+    erms_sync_users_and_identities: Synchronizace uživatelských účtů s ERMS
+    fetch_new_sushi_data: Spustit stahování nových dat přes SUSHI
     task_success: Úloha byla úspěšně zadána
     task_error: Při zadávání úlohy došlo k chybě
+    management_page: Správa systému
+    django_admin: Django admin
+    django_admin_text: Pro nízkoúrovňový přístup ke správě systému můžete využít rozhraní <a href="/wsEc67YNV2sq/" target="_blank">Django admin</a>.
 </i18n>
 
 <template>
-    <div>
-        <h1 class="display-2 mb-4">
-            Management page
-        </h1>
+    <v-container>
+        <!--h1 class="display-2 mb-4">{{ $t('management_page') }}</h1-->
+
+        <section v-if="user.is_superuser || user.is_staff">
+            <h2 class="display-1 mb-3">{{ $t('django_admin') }}</h2>
+
+            <p v-html="$t('django_admin_text')" class="font-weight-light"></p>
+        </section>
+
+        <h2 class="display-1 mb-3">{{ $t('background_tasks') }}</h2>
+        <p class="font-weight-light" v-text="$t('background_tasks_info')"></p>
+
 
         <v-alert
                 v-if="lastTask"
                 :type="lastTask.success ? 'success' : 'error'"
                 dismissible
                 elevation="1"
-
         >
             <h4 class="heading-2" v-text="lastTask.task.title"></h4>
 
@@ -43,25 +58,24 @@ cs:
             <div class="font-weight-light" v-text="lastTask.time"></div>
         </v-alert>
 
-        <h2 class="display-1 mb-3">{{ $t('background_tasks') }}</h2>
-        <p class="font-weight-light" v-text="$t('background_tasks_info')"></p>
         <table>
             <tr v-for="task in celeryTasks" :key="task.taskName">
-                <th v-text="task.title" class="text-left pr-2"></th>
-                <td>
+                <th v-text="task.title" class="text-left pr-2 pb-3"></th>
+                <td class="pb-3">
                     <v-btn @click="runCeleryTask(task)" color="primary">
-                        <v-icon small class="fa-fw" v-text="task.icon ? task.icon : 'fas fa-running'"></v-icon>
+                        <v-icon small class="fa-fw" v-text="task.icon ? task.icon : 'fas fa-sync-alt'"></v-icon>
                     </v-btn>
                 </td>
             </tr>
 
         </table>
-    </div>
+    </v-container>
 </template>
 
 <script>
   import axios from 'axios'
   import {isoDateTimeFormat} from '../libs/dates'
+  import {mapState} from 'vuex'
 
   export default {
     name: "ManagementPage",
@@ -71,16 +85,23 @@ cs:
       }
     },
     computed: {
+      ...mapState({
+        user: 'user',
+      }),
       celeryTasks () {
         return [
           {
             title: this.$t('erms_sync_organizations'),
             taskName: 'erms-sync-organizations',
-            icon: 'fas fa-sync'
           },
            {
             title: this.$t('erms_sync_users_and_identities'),
             taskName: 'erms-sync-users-and-identities',
+          },
+          {
+            title: this.$t('fetch_new_sushi_data'),
+            taskName: 'fetch-new-sushi-data',
+            icon: 'fas fa-running',
           },
         ]
       },
