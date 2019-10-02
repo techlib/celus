@@ -7,8 +7,11 @@ en:
         provider: Provider
         title_count: Title / database count
         sushi_available: SUSHI active
+        notes: " "
     sushi_present: SUSHI is available and active for this platform
     no_sushi: SUSHI is not activated for this platform and selected organization
+    annotations_available: There are annotations for this platform and the current date range. Go to the
+        platform page for details.
 
 cs:
     columns:
@@ -17,8 +20,11 @@ cs:
         provider: Poskytovatel
         title_count: Počet titulů a databází
         sushi_available: Aktivní SUSHI
+        notes: " "
     sushi_present: SUSHI je pro tuto platformu aktivní
     no_sushi: SUSHI není pro tuto platformu a vybranou organizaci aktivní
+    annotations_available: Pro tuto platformu a vybrané časové období byly uloženy poznámky.
+        Na stránce platformy zjistíte detaily.
 </i18n>
 
 <template>
@@ -115,6 +121,17 @@ cs:
                                 </template>
                             </v-tooltip>
                         </template>
+                        <template v-slot:item.annotations="{item}">
+                            <v-tooltip bottom v-if="item.annotations">
+                                <template v-slot:activator="{ on }">
+                                    <v-icon x-small v-on="on">fa-exclamation-triangle</v-icon>
+                                </template>
+                                <template>
+                                    {{ $t('annotations_available') }}
+                                </template>
+                            </v-tooltip>
+                        </template>
+
                     </v-data-table>
                     </v-card-text>
 
@@ -152,6 +169,7 @@ cs:
         loading: false,
         showUploadDataDialog: false,
         activeInterestTypes: ['title', 'database'],
+        annotations: {},
       }
     },
     computed: {
@@ -170,6 +188,11 @@ cs:
           {
             text: this.$i18n.t('columns.name'),
             value: 'name'
+          },
+          {
+          text: this.$t('columns.notes'),
+          value: 'annotations',
+          sortable: false,
           },
           {
             text: this.$i18n.t('columns.provider'),
@@ -218,6 +241,13 @@ cs:
       },
       platformInterestURL () {
         return `/api/organization/${this.selectedOrganizationId}/platform-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+      },
+      annotationsUrl () {
+        let url = `/api/annotations/?start_date=${this.dateRangeStart}&end_date=${this.dateRangeEnd}`
+        if (this.organizationSelected) {
+          url += `&organization=${this.selectedOrganizationId}`
+        }
+        return url
       }
     },
     methods: {
@@ -233,6 +263,7 @@ cs:
             this.platforms = response.data.map(item => {item.interests = createLoadingInterestRecord(); item.title_count = 'loading'; return item})
             this.loadPlatformDetails()
             this.loadPlatformSushiCounts()
+            this.loadAnnotations()
           } catch (error) {
               this.showSnackbar({content: 'Error loading platforms: '+error, color: 'error'})
           } finally {
@@ -277,6 +308,28 @@ cs:
           }
         }
       },
+      async loadAnnotations () {
+        this.annotations = {}
+        try {
+          let response = await axios.get(this.annotationsUrl)
+          this.annotations = {}
+          // populate the this.annotations object
+          for (let annot of response.data.filter(item => item.platform != null)) {
+            if (!(annot.platform.pk in this.annotations)) {
+              this.annotations[annot.platform.pk] = []
+            }
+            this.annotations[annot.platform.pk].push(annot)
+          }
+          // assign annotations to individual platform
+          for (let platform of this.platforms) {
+            if (platform.pk in this.annotations) {
+              this.$set(platform, 'annotations', this.annotations[platform.pk])
+            }
+          }
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading annotations: ' + error, color: 'error'})
+        }
+      }
     },
     created () {
       this.loadPlatforms()
