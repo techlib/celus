@@ -195,6 +195,7 @@ CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
                       'sushi.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
                       'sushi.tasks.run_sushi_fetch_attempt_task': {'queue': 'sushi'},
                       'sushi.tasks.fetch_new_sushi_data_task': {'queue': 'sushi'},
+                      'sushi.tasks.fetch_new_sushi_data_for_credentials_task': {'queue': 'sushi'},
                       'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
                       }
 
