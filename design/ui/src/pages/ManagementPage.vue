@@ -6,6 +6,7 @@ en:
        other tasks, it is not possible to observe their progress in real time.
     erms_sync_organizations: Sync organizations with ERMS
     erms_sync_users_and_identities: Sync user accounts with ERMS
+    erms_sync_platforms: Sync platforms with ERMS
     fetch_new_sushi_data: Check for new SUSHI data
     task_success: Task was successfully submitted
     task_error: An error occurred during task submission
@@ -20,6 +21,7 @@ cs:
         blokovány jinými úlohami, není možné sledovat průběh úlohy v reálném čase.
     erms_sync_organizations: Synchronizace organizací s ERMS
     erms_sync_users_and_identities: Synchronizace uživatelských účtů s ERMS
+    erms_sync_platforms: Synchronizace platforem s ERMS
     fetch_new_sushi_data: Spustit stahování nových dat přes SUSHI
     task_success: Úloha byla úspěšně zadána
     task_error: Při zadávání úlohy došlo k chybě
@@ -91,10 +93,14 @@ cs:
       celeryTasks () {
         return [
           {
+            title: this.$t('erms_sync_platforms'),
+            taskName: 'erms-sync-platforms',
+          },
+          {
             title: this.$t('erms_sync_organizations'),
             taskName: 'erms-sync-organizations',
           },
-           {
+          {
             title: this.$t('erms_sync_users_and_identities'),
             taskName: 'erms-sync-users-and-identities',
           },

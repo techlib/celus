@@ -1,3 +1,4 @@
+from django.urls import path
 from rest_framework.routers import SimpleRouter
 from rest_framework_nested.routers import NestedSimpleRouter
 
@@ -41,6 +42,7 @@ platform_title_sub_router.register('report-views', views.PlatformTitleReportData
                                    basename='platform-title-report-data-views')
 
 urlpatterns = [
+    path('run-task/erms-sync-platforms', views.StartERMSSyncPlatformsTask.as_view())
 ]
 
 urlpatterns += root_router.urls

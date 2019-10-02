@@ -1,19 +1,20 @@
-from django.db.models import Count, Sum, Q, Max, Min
-from django.http import HttpResponseServerError
+from django.db.models import Count, Sum, Q
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 
 from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
+from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
 from logs.models import ReportType, AccessLog
-from logs.serializers import ReportTypeSerializer
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
+from .tasks import erms_sync_platforms_task
 
 
 class AllPlatformsViewSet(ReadOnlyModelViewSet):
@@ -280,3 +281,13 @@ class TitleInterestViewSet(ReadOnlyModelViewSet):
                                     **date_filter_params).\
             distinct().annotate(interest=Sum('accesslog__value'))
 
+
+class StartERMSSyncPlatformsTask(APIView):
+
+    permission_classes = [SuperuserOrAdminPermission]
+
+    def post(self, request):
+        task = erms_sync_platforms_task.delay()
+        return Response({
+            'id': task.id,
+        })
