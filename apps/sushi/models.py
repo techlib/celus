@@ -16,6 +16,7 @@ from pycounter.exceptions import SushiException
 from django.conf import settings
 
 from core.logic.dates import month_end
+from core.models import USER_LEVEL_CHOICES, UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF
 from core.task_support import cache_based_lock
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
@@ -85,6 +86,15 @@ class CounterReportType(models.Model):
 
 class SushiCredentials(models.Model):
 
+    UNLOCKED = 0
+
+    LOCK_LEVEL_CHOICES = (
+        (UNLOCKED, 'Unlocked'),
+        (UL_ORG_ADMIN, 'Organization admin'),
+        (UL_CONS_STAFF, 'Consortium staff'),
+        (UL_CONS_ADMIN, 'Superuser'),
+    )
+
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     url = models.URLField()
@@ -97,6 +107,18 @@ class SushiCredentials(models.Model):
     extra_params = JSONField(default=dict, blank=True)
     enabled = models.BooleanField(default=True)
     active_counter_reports = models.ManyToManyField(CounterReportType)
+    outside_consortium = models.BooleanField(
+        default=False,
+        help_text='True if these credentials belong to access bought outside of the consortium - '
+                  'necessary for proper cost calculation'
+    )
+    # meta info
+    created = models.DateTimeField(default=now)
+    last_updated = models.DateTimeField(auto_now=True)
+    lock_level = models.PositiveSmallIntegerField(
+        choices=LOCK_LEVEL_CHOICES, default=UNLOCKED,
+        help_text='Only user with the same or higher level can unlock it and/or edit it'
+    )
 
     class Meta:
         unique_together = (('organization', 'platform', 'counter_version'),)
