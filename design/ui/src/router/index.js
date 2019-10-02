@@ -12,6 +12,7 @@ import ImportBatchesPage from '../pages/ImportBatchesPage'
 import CustomDataUploadPage from '../pages/CustomDataUploadPage'
 import SushiFetchAttemptsPage from '../pages/SushiFetchAttemptsPage'
 import UserPage from '../pages/UserPage'
+import ManagementPage from '../pages/ManagementPage'
 
 Vue.use(Router)
 
@@ -61,6 +62,11 @@ export default new Router({
         platformId: null,
         titleId: Number.parseInt(route.params.titleId, 10),
       })
+    },
+    {
+      path: '/admin/management/',
+      name: 'management',
+      component: ManagementPage,
     },
     {
       path: '/admin/sushi-credentials/',

@@ -35,14 +35,14 @@
             <v-subheader>{{ group.title }}</v-subheader>
 
             <v-list-item
-                    v-for="item in group.items"
+                    v-for="item in group.items.filter(item => item.show == null ? true : item.show)"
                     :key="item.title"
                     :to="{name: item.linkTo}"
             >
                <!-- exact - use this attr on v-list-tile to prevent matching / -->
 
                 <v-list-item-action>
-                    <v-icon>{{ item.icon }}</v-icon>
+                    <v-icon class="fa-fw">{{ item.icon }}</v-icon>
                 </v-list-item-action>
 
                 <v-list-item-content>
@@ -70,6 +70,7 @@
         ...mapGetters({
           organization: 'selectedOrganization',
           showAdminStuff: 'showAdminStuff',
+          showManagementStuff: 'showManagementStuff',
         }),
         groups () {
           return [
@@ -84,6 +85,7 @@
             {
               title: this.$i18n.t('pages.admin'),
               items: [
+                { title: this.$i18n.t('pages.management'), icon: 'fas fa-tools', linkTo: 'management', show: this.showManagementStuff },
                 { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list', show: this.showAdminStuff },
                 { title: this.$t('pages.sushi_fetch_attempts'), icon: 'fa-retweet', linkTo: 'sushi-fetch-attempts', show: this.showAdminStuff },
                 { title: this.$t('pages.import_batches'), icon: 'fa-file-import', linkTo: 'import-batch-list', show: this.showAdminStuff },
@@ -94,7 +96,7 @@
          ]
       },
       activeGroups () {
-        return this.groups.filter(item => item.show)
+        return this.groups.filter(group => group.show)
       }
     }
   }

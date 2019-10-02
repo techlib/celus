@@ -101,8 +101,13 @@ export default new Vuex.Store({
       return (number) => (number === null) ? '-' : formatNumber(number, state.numberFormat)
     },
     showAdminStuff (state, getters) {
-      return ((state.user && state.user.is_from_master_organization) ||
-        (getters.selectedOrganization && getters.selectedOrganization.is_admin))
+      return (
+        (state.user && (state.user.is_from_master_organization || state.user.is_superuser)) ||
+        (getters.selectedOrganization && getters.selectedOrganization.is_admin)
+        )
+    },
+    showManagementStuff (state) {
+      return (state.user && (state.user.is_from_master_organization || state.user.is_superuser))
     },
     organizationSelected (state) {
       return state.selectedOrganizationId && state.selectedOrganizationId > 0
