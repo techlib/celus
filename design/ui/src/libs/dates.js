@@ -14,7 +14,7 @@ function parseDateTime (text) {
 }
 
 function isoDateTimeFormat (date) {
-    return format(date, 'YYYY-MM-DD hh:mm:ss')
+    return format(date, 'YYYY-MM-DD HH:mm:ss')
 }
 
 export {
