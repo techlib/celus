@@ -28,13 +28,15 @@ class OrganizationRelatedPermissionMixin(object):
 
     NO_DATA_METHODS = ('DELETE',)
 
-    def has_org_admin(self, user, org_id):
+    @classmethod
+    def has_org_admin(cls, user, org_id):
         if org_id:
             return UserOrganization.objects.\
                 filter(user=user, organization_id=org_id, is_admin=True).exists()
         return False
 
-    def has_org_access(self, user, org_id):
+    @classmethod
+    def has_org_access(cls, user, org_id):
         if not org_id:
             return True
         return user.accessible_organizations().filter(pk=org_id).exists()

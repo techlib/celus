@@ -1,19 +1,22 @@
+import json
 from datetime import timedelta
 
 import dateparser
 from django.db.models import Count, Q, Max, Min
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from core.logic.dates import month_start, month_end
-from core.permissions import SuperuserOrAdminPermission
+from core.permissions import SuperuserOrAdminPermission, OrganizationRelatedPermissionMixin
 from organizations.logic.queries import organization_filter_from_org_id
 from sushi.models import CounterReportType, SushiFetchAttempt
 from sushi.serializers import CounterReportTypeSerializer, SushiFetchAttemptSerializer
-from sushi.tasks import run_sushi_fetch_attempt_task, fetch_new_sushi_data_task
+from sushi.tasks import run_sushi_fetch_attempt_task, fetch_new_sushi_data_task, \
+    fetch_new_sushi_data_for_credentials_task
 from .models import SushiCredentials
 from .serializers import SushiCredentialsSerializer
 
@@ -175,6 +178,31 @@ class StartFetchNewSushiDataTask(APIView):
 
     def post(self, request):
         task = fetch_new_sushi_data_task.delay()
+        return Response({
+            'id': task.id,
+        })
+
+
+class StartFetchNewSushiDataForCredentialsTask(APIView):
+
+    def post(self, request, credentials_pk):
+        try:
+            credentials = SushiCredentials.objects.get(pk=credentials_pk)
+        except SushiCredentials.DoesNotExist:
+            return HttpResponseBadRequest(
+                json.dumps(
+                    {'error': f'Credentials object with id={credentials_pk} does not exist'}
+                )
+            )
+        # let's check authorization
+        if request.user.is_superuser or request.user.is_from_master_organization:
+            pass
+        elif OrganizationRelatedPermissionMixin.\
+                has_org_access(request.user, credentials.organization_id):
+            pass
+        else:
+            raise PermissionDenied('User is neither manager nor admin of related organization')
+        task = fetch_new_sushi_data_for_credentials_task.delay(credentials.pk)
         return Response({
             'id': task.id,
         })

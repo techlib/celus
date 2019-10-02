@@ -7,6 +7,7 @@ from collections import Counter
 from datetime import timedelta, date
 from functools import partial
 from time import sleep
+from typing import Optional
 
 from dateparser import parse as parse_date
 from django.conf import settings
@@ -65,8 +66,17 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
     return stats
 
 
-def fetch_new_sushi_data():
+def fetch_new_sushi_data(credentials: Optional[SushiCredentials] = None):
+    """
+    Goes over all the report types and credentials in the database and tries to fetch
+    new sushi data where it makes sense
+    :param credentials: if given, only report_types related to credentials organization and
+                        platform will be processed
+    :return:
+    """
     fetch_units = create_fetch_units()
+    if credentials:
+        fetch_units = filter_fetch_units_by_credentials(fetch_units, credentials)
     lock_name_to_units = split_fetch_units_by_url_lock_name(fetch_units)
     start_date = month_start(month_start(now().date()) - timedelta(days=15))  # start of prev month
     end_date = month_start(parse_date(settings.SUSHI_ATTEMPT_LAST_DATE))
@@ -154,8 +164,10 @@ class FetchUnit(object):
         return out
 
 
-def create_fetch_units():
-    # prepare the fetch units - lines for which we will try to fetch data month by month
+def create_fetch_units() -> [FetchUnit]:
+    """
+    prepare the fetch units - lines for which we will try to fetch data month by month
+    """
     fetch_units = []
     seen_units = set()  # org_id, plat_id, rt_id for unsuperseeded report type
     # get all credentials that are connected to a unsuperseeded report type
@@ -172,6 +184,19 @@ def create_fetch_units():
                 fetch_units.append(FetchUnit(credentials, rt))
                 seen_units.add(key)
     return fetch_units
+
+
+def filter_fetch_units_by_credentials(fetch_units: [FetchUnit], credentials: SushiCredentials) ->\
+        [FetchUnit]:
+    """
+    Takes a list of FetchUnits and filters them so that only those that are related to
+    platform and organization from `credentials` remain.
+    It is used to get FetchUnits for credentials but to use credentials for newer COUNTER
+    versions where desired (which naive approach based simply on `credentials` cannot do)
+    """
+    return [fu for fu in fetch_units
+            if fu.credentials.organization_id == credentials.organization_id and
+            fu.credentials.platform_id == credentials.platform_id]
 
 
 def split_fetch_units_by_platform(fetch_units) -> dict:
