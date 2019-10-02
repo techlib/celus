@@ -1,10 +1,18 @@
 <i18n src="../locales/charts.yaml"></i18n>
 <i18n src="../locales/common.yaml"></i18n>
 
+<i18n>
+en:
+    has_annotations: There are some annotations which might be related to this title. Click to scroll to them.
+
+cs:
+    has_annotations: Jsou dostupné poznámky, které mohou být relevantní pro tento titul. Klikněte pro zobrazení.
+</i18n>
+
 <template>
-    <div>
-        <v-layout>
-            <v-flex>
+    <v-container>
+        <v-row no-gutters>
+            <v-col>
                 <v-breadcrumbs :items="breadcrumbs" class="pl-0">
                     <template v-slot:item="props">
                         <router-link
@@ -18,7 +26,10 @@
                         </span>
                     </template>
                 </v-breadcrumbs>
-
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col>
                 <h2 class="mb-4">{{ titleName }}</h2>
 
                 <table class="overview mb-4 elevation-2">
@@ -37,25 +48,35 @@
                         </tr>
                     </template>
                 </table>
-            </v-flex>
-            <v-flex shrink>
-                <img  v-if="coverImg" :alt="$t('cover-image')" :src="coverImg" class="cover-image"/>
-            </v-flex>
-        </v-layout>
+            </v-col>
+            <v-col cols="auto">
+                <img  v-if="coverImg" :alt="$t('cover_image')" :src="coverImg" class="cover-image"/>
+            </v-col>
+        </v-row>
 
         <section v-if="isReady">
-            <v-layout>
-                <v-flex>
+            <v-row>
+                <v-col>
                     <h3>{{ $t('overview') }}</h3>
-                </v-flex>
-                <v-flex shrink>
+                </v-col>
+                <v-col cols="auto" v-if="annotationsCount">
+                    <v-btn @click="goTo('#annotations')" fab dark small color="warning">
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on }">
+                                <v-icon small v-on="on">fa-exclamation-triangle</v-icon>
+                            </template>
+                            <span v-text="$t('has_annotations')"></span>
+                        </v-tooltip>
+                    </v-btn>
+                </v-col>
+                <v-col cols="auto">
                     <data-export-widget
                             :title="titleId"
                             :platform="platformId"
                     >
                     </data-export-widget>
-                </v-flex>
-            </v-layout>
+                </v-col>
+            </v-row>
 
             <CounterChartSet
                     :platform-id="platformId"
@@ -64,7 +85,11 @@
             >
             </CounterChartSet>
         </section>
-    </div>
+
+        <section class="mt-8" id="annotations">
+            <AnnotationsWidget :platform="platformId" @loaded="annotationsLoaded"></AnnotationsWidget>
+        </section>
+    </v-container>
 
 </template>
 
@@ -73,12 +98,15 @@
   import axios from 'axios'
   import CounterChartSet from '../components/CounterChartSet'
   import DataExportWidget from '../components/DataExportWidget'
+  import AnnotationsWidget from '../components/AnnotationsWidget'
+  import goTo from 'vuetify/es5/services/goto'
 
   export default {
     name: 'TitleDetailPage',
     components: {
       DataExportWidget,
       CounterChartSet,
+      AnnotationsWidget,
 
     },
     props: {
@@ -90,6 +118,7 @@
         title: null,
         platformData: null,
         coverImg: null,
+        annotationsCount: 0,
       }
     },
     computed: {
@@ -165,11 +194,21 @@
         }
         return null
       },
+      hasAnnotations () {
+        if (this.$refs.annotationsWidget) {
+          let annots = this.$refs.annotationsWidget.annotations
+          if (annots.length) {
+            return true
+          }
+        }
+        return false
+      }
     },
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      goTo: goTo,
       async loadTitle () {
         let url = this.titleUrl
         if (url) {
@@ -209,6 +248,9 @@
             })
         }
       },
+      annotationsLoaded ({count}) {
+        this.annotationsCount = count
+      }
     },
     mounted () {
       if (this.platformId) {

@@ -92,6 +92,7 @@
         try {
           let response = await axios.get(this.annotationsUrl)
           this.annotations = response.data
+          this.$emit('loaded', {count: this.annotations.length})
         } catch (error) {
           this.showSnackbar({content: 'Error loading annotations: ' + error, color: 'error'})
         }

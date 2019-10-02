@@ -89,6 +89,7 @@ en:
     start_test: Start test
   in_czech: Czech
   in_english: English
+  cover_image: Cover image
 
 cs:
   pages:
@@ -181,3 +182,4 @@ cs:
     start_test: Spustit test
   in_czech: česky
   in_english: anglicky
+  cover_image: Obrázek obálky
