@@ -99,7 +99,7 @@ class Counter5ReportBase(object):
         else:
             if 'Code' in data or 'Severity' in data:
                 error = CounterError.from_sushi_dict(data)
-                if error.severity == 'Warning':
+                if error.severity in ('Warning', 'Info'):
                     self.warnings.append(error)
                     if error.code and int(error.code) == 1011:
                         # special warning telling us we should retry later

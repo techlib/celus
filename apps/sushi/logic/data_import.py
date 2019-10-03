@@ -1,6 +1,9 @@
 import csv
 from collections import Counter
 import logging
+from typing import Optional
+
+import reversion
 
 from ..models import SushiCredentials
 from organizations.models import Organization
@@ -10,16 +13,18 @@ from publications.models import Platform
 logger = logging.getLogger(__name__)
 
 
-def import_sushi_credentials_from_csv(filename) -> dict:
+def import_sushi_credentials_from_csv(filename, reversion_comment: Optional[str] = None) -> dict:
     with open(filename, 'r') as infile:
         reader = csv.DictReader(infile)
         records = list(reader)  # read all records from the reader
-    return import_sushi_credentials(records)
+    return import_sushi_credentials(records, reversion_comment=reversion_comment)
 
 
-def import_sushi_credentials(records: [dict]) -> dict:
+def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] = None) -> dict:
     """
     Imports SUSHI credentials from a list of dicts describing the data
+    :param reversion_comment: comment that will be passed to the reversion version, if None a
+         default will be provided.
     :param records:
     :return:
     """
@@ -73,22 +78,32 @@ def import_sushi_credentials(records: [dict]) -> dict:
                     setattr(cr, key, value)
                     save = True
             if save:
-                cr.save()
+                with reversion.create_revision():
+                    cr.save()
+                    reversion.set_comment(
+                        reversion_comment or
+                        'Updated from logic.data_import.import_sushi_credentials'
+                    )
                 stats['synced'] += 1
             else:
                 stats['skipped'] += 1
         else:
-            cr = SushiCredentials.objects.create(
-                organization=organization,
-                platform=platform,
-                counter_version=version,
-                customer_id=record.get('customer_id'),
-                requestor_id=record.get('requestor_id'),
-                url=record.get('URL'),
-                extra_params=extra_attrs,
-                **optional,
-            )
-            db_credentials[key] = cr
+            with reversion.create_revision():
+                cr = SushiCredentials.objects.create(
+                    organization=organization,
+                    platform=platform,
+                    counter_version=version,
+                    customer_id=record.get('customer_id'),
+                    requestor_id=record.get('requestor_id'),
+                    url=record.get('URL'),
+                    extra_params=extra_attrs,
+                    **optional,
+                )
+                reversion.set_comment(
+                    reversion_comment or
+                    'Created by logic.data_import.import_sushi_credentials'
+                )
+                db_credentials[key] = cr
             stats['added'] += 1
     return stats
 

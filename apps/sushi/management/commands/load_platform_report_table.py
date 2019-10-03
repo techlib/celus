@@ -1,5 +1,6 @@
 import csv
 
+import reversion
 from django.core.management import CommandError
 
 from django.core.management.base import BaseCommand
@@ -96,7 +97,10 @@ class Command(BaseCommand):
                         sc_count = 0
                         for sc in platform.sushicredentials_set.\
                                 filter(counter_version=counter_ver):
-                            sc.active_counter_reports.set(report_objs)
+                            with reversion.create_revision():
+                                sc.active_counter_reports.set(report_objs)
+                                reversion.set_comment('Active reports synced by load_platform_'
+                                                      'report_table command')
                             sc_count += 1
                         rep_names = ', '.join(rep.code for rep in report_objs)
                         self.stderr.write(self.style.SUCCESS(
