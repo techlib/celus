@@ -97,6 +97,8 @@ class Counter5ReportBase(object):
         if type(data) is list:
             [self.extract_errors(item) for item in data]
         else:
+            if 'Exceptions' in data:
+                return self.extract_errors(data['Exceptions'])
             if 'Code' in data or 'Severity' in data:
                 error = CounterError.from_sushi_dict(data)
                 if error.severity in ('Warning', 'Info'):

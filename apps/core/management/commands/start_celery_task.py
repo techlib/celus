@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 
-from logs.tasks import sync_interest_task, recompute_interest_by_batch_task
+from logs.tasks import sync_interest_task, recompute_interest_by_batch_task, \
+    import_new_sushi_attempts_task
 from sushi.tasks import fetch_new_sushi_data_task, retry_queued_attempts_task
 
 
@@ -13,6 +14,8 @@ class Command(BaseCommand):
         'sync_interest_task': sync_interest_task,
         'recompute_interest_by_batch_task': recompute_interest_by_batch_task,
         'retry_queued_attempts_task': retry_queued_attempts_task,
+        'import_new_sushi_attempts_task': import_new_sushi_attempts_task,
+
     }
 
     def add_arguments(self, parser):

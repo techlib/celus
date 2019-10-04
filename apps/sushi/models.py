@@ -10,6 +10,7 @@ import requests
 from django.contrib.postgres.fields import JSONField
 from django.core.files.base import ContentFile
 from django.db import models
+from django.db.transaction import atomic
 from django.utils.timezone import now
 from pycounter.exceptions import SushiException
 
@@ -454,3 +455,22 @@ class SushiFetchAttempt(models.Model):
         self.import_crashed = True
         self.processing_info['import_crash_traceback'] = traceback.format_exc()
         self.save()
+
+    @atomic
+    def unprocess(self) -> dict:
+        """
+        Changes the sushi attempt to undo changes of it being processed. This includes:
+        * deleting any data related to the import_batch
+        * deleting the import_batch itself
+        * changing is_processed to False
+        """
+        stats = {}
+        if self.import_batch:
+            stats = self.import_batch.delete()  # deletes the access logs as well
+        self.is_processed = False
+        self.import_crashed = False
+        self.log = ''
+        if 'import_crash_traceback' in self.processing_info:
+            del self.processing_info['import_crash_traceback']
+        self.save()
+        return stats

@@ -3,6 +3,7 @@ Stuff related to fetching data from SUSHI servers.
 """
 import concurrent.futures
 import logging
+import traceback
 from collections import Counter
 from datetime import timedelta, date
 from functools import partial
@@ -94,8 +95,17 @@ def fetch_new_sushi_data(credentials: Optional[SushiCredentials] = None):
 
 def process_fetch_units_wrapper(args, **kwargs):
     lock_name, fetch_units, start_date, end_date = args
+    logger.debug('Going to lock fetching of %d fetch units with lock %s',
+                 len(fetch_units), lock_name)
     with cache_based_lock(lock_name):
-        process_fetch_units(fetch_units, start_date, end_date, **kwargs)
+        logger.debug('Locked %s', lock_name)
+        try:
+            process_fetch_units(fetch_units, start_date, end_date, **kwargs)
+        except Exception as exc:
+            logger.error('Exception: %s', exc)
+            logger.error('Traceback: %s', traceback.format_exc())
+            raise exc
+        logger.debug('Unlocked %s', lock_name)
 
 
 class FetchUnit(object):
@@ -224,6 +234,8 @@ def split_fetch_units_by_url_lock_name(fetch_units) -> dict:
     for fetch_unit in fetch_units:
         url_lock_name = fetch_unit.credentials.url_lock_name
         if url_lock_name not in lock_name_to_fetch_units:
+            logger.debug('Assigning lock name %s to URL %s',
+                         url_lock_name, fetch_unit.credentials.url)
             lock_name_to_fetch_units[url_lock_name] = []
         lock_name_to_fetch_units[url_lock_name].append(fetch_unit)
     return lock_name_to_fetch_units
@@ -285,6 +297,7 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
         if fetch_units:
             sleep(sleep_time)  # we will do one more round, we need to sleep
         start_date = month_start(start_date - timedelta(days=20))
+    logger.debug('Finished processing')
 
 
 def smart_decide_conflict_action(conflict):

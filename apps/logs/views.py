@@ -1,30 +1,23 @@
-from time import sleep
-from typing import Optional
-
-from django.db import models
-from django.db.models import Sum, Count
-from django.http import Http404, HttpResponseBadRequest
+from django.db.models import Count
+from django.http import HttpResponseBadRequest
 from pandas import DataFrame
-from rest_framework.pagination import PageNumberPagination
-from rest_pandas import PandasView
 from rest_framework.generics import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_pandas import PandasView
 
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from core.models import DataSource
-from logs.logic.custom_import import custom_data_import_precheck, custom_data_to_records, \
-    custom_import_preflight_check, import_custom_data
+from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
-from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
     ManualDataUpload
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
     ManualDataUploadSerializer
-from organizations.models import Organization
 from publications.models import Platform
 
 

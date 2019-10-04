@@ -287,7 +287,7 @@ class Sushi5Client(SushiClientBase):
         header = data.get('Report_Header', {})
         errors = []
         for exception in header.get('Exceptions', []):
-            if exception.get('Severity') == 'Warning':
+            if exception.get('Severity') in ('Info', 'Warning'):
                 logging.warning("Warning Exception in COUNTER 5 report: %s",
                                 cls._format_error(exception))
             else:
@@ -305,7 +305,7 @@ class Sushi5Client(SushiClientBase):
         header = report_data.get('Report_Header', {})
         errors = []
         for exception in header.get('Exceptions', []):
-            if exception.get('Severity') == 'Warning':
+            if exception.get('Severity') in ('Info', 'Warning'):
                 logging.warning("Warning Exception in COUNTER 5 report: %s",
                                 self._format_error(exception))
             else:

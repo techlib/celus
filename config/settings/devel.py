@@ -10,7 +10,7 @@ MIDDLEWARE += [
     'querycount.middleware.QueryCountMiddleware',
 ]
 
-DATABASES['default']['NAME'] = 'ntk_stats3'
+DATABASES['default']['NAME'] = 'ntk_stats'
 
 # livereload
 LIVERELOAD_PORT = 35563

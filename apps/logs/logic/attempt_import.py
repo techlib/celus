@@ -50,7 +50,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         data = reader.file_to_input(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
     except FileNotFoundError as e:
         logger.error('Cannot find the referenced file - probably deleted?: %s', e)
-        attempt.mark_processed(e)
+        attempt.mark_crashed(e)
         return
     validator = validate_data_v4 if counter_version == 4 else validate_data_v5
     try:
@@ -92,3 +92,10 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     else:
         logger.warning('No records found!')
     attempt.mark_processed()
+
+
+def reprocess_attempt(attempt: SushiFetchAttempt) -> SushiFetchAttempt:
+    if attempt.is_processed:
+        attempt.unprocess()
+    import_one_sushi_attempt(attempt)
+    return attempt
