@@ -7,6 +7,7 @@ from django.db.models import Count, Q, Max, Min
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -47,6 +48,26 @@ class SushiCredentialsViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         reversion.set_comment('Created through API')
         return super().create(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'], permission_classes=[SuperuserOrAdminPermission])
+    def lock(self, request, pk=None):
+        """
+        Custom action to lock the SushiCredentials
+        """
+        credentials = get_object_or_404(SushiCredentials, pk=pk)
+        owner_level = request.user.organization_relationship(credentials.organization_id)
+        requested_level = request.query_params.get('lock_level', owner_level)
+        if credentials.lock_level > credentials.UNLOCKED:
+            # we want to relock with different privileges
+            if owner_level < credentials.lock_level:
+                raise PermissionDenied(f'User {request.user} does not have high enough privileges '
+                                       f'to lock {credentials}')
+        if owner_level < requested_level:
+            raise PermissionDenied(f'User {request.user} does not have high enough privileges '
+                                   f'to lock {credentials}')
+
+
+
 
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):

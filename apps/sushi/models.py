@@ -7,6 +7,7 @@ from itertools import takewhile
 from typing import Optional
 
 import requests
+import reversion
 from django.contrib.postgres.fields import JSONField
 from django.core.files.base import ContentFile
 from django.db import models
@@ -15,9 +16,10 @@ from django.utils.timezone import now
 from pycounter.exceptions import SushiException
 
 from django.conf import settings
+from rest_framework.exceptions import PermissionDenied
 
 from core.logic.dates import month_end
-from core.models import USER_LEVEL_CHOICES, UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF
+from core.models import USER_LEVEL_CHOICES, UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, User
 from core.task_support import cache_based_lock
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
@@ -127,6 +129,24 @@ class SushiCredentials(models.Model):
 
     def __str__(self):
         return f'{self.organization} - {self.platform}, {self.get_counter_version_display()}'
+
+    def change_lock(self, user: User, level: int):
+        """
+        Set the lock_level on this object
+        """
+        owner_level = user.organization_relationship(self.organization_id)
+        if self.lock_level > self.UNLOCKED:
+            # we want to relock with different privileges
+            if owner_level < self.lock_level:
+                raise PermissionDenied(f'User {user} does not have high enough privileges '
+                                       f'to lock {self}')
+        if owner_level < level:
+            raise PermissionDenied(f'User {user} does not have high enough privileges '
+                                   f'to lock {self} to level {level}')
+        with reversion.create_revision():
+            self.lock_level = level
+            self.save()
+            reversion.set_comment('Lock changed')
 
     def create_sushi_client(self):
         attrs = {
