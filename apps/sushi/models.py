@@ -23,7 +23,7 @@ from core.models import USER_LEVEL_CHOICES, UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS
 from core.task_support import cache_based_lock
 from logs.models import ImportBatch
 from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
-    SushiClientBase
+    SushiClientBase, SushiErrorMeaning
 from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report, Counter4DB1Report, \
     Counter4PR1Report, Counter4BR1Report, Counter4JR2Report, Counter4DB2Report, Counter4BR3Report
 from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
@@ -439,9 +439,13 @@ class SushiFetchAttempt(models.Model):
         """
         if not self.error_code:
             return None
-        exp = SushiClientBase.explain_error_code(self.error_code)
+        exp = self.error_explanation()
         delta = exp.retry_interval_timedelta if exp else timedelta(days=30)
         return delta
+
+    def error_explanation(self) -> SushiErrorMeaning:
+        exp = SushiClientBase.explain_error_code(self.error_code)
+        return exp
 
     def retry_interval(self) -> Optional[timedelta]:
         """

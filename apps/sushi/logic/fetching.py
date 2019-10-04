@@ -278,19 +278,29 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
             if attempt.contains_data or attempt.queued:
                 new_fetch_units.append(fetch_unit)
             else:
-                # no data in this attempt, we split or end (when split return nothing)
-                logger.info('Unsuccessful fetch, downgrading: %s, %s: %s',
-                            platform, fetch_unit.credentials.organization, start_date)
-                split_units = fetch_unit.split()
-                logger.info('Downgraded %s to %s', fetch_unit.report_type.code, split_units)
-                # the new units on the same dates
-                for i, unit in enumerate(split_units):
-                    if i != 0:
-                        sleep(sleep_time)
-                    unit.sleep()
-                    attempt = unit.download(start_date, end, use_lock=use_lock)
-                    if attempt.contains_data:
-                        new_fetch_units.append(unit)
+                go_on = False
+                # no data in this attempt, we must analyze it further
+                if attempt.error_code:
+                    error_meaning = attempt.error_explanation()
+                    if error_meaning.setup_ok:
+                        # this means we can process - the credentials, etc. are OK
+                        go_on = True
+                if go_on:
+                    new_fetch_units.append(fetch_unit)
+                else:
+                    # split or end (when split return nothing)
+                    logger.info('Unsuccessful fetch, downgrading: %s, %s: %s',
+                                platform, fetch_unit.credentials.organization, start_date)
+                    split_units = fetch_unit.split()
+                    logger.info('Downgraded %s to %s', fetch_unit.report_type.code, split_units)
+                    # the new units on the same dates
+                    for i, unit in enumerate(split_units):
+                        if i != 0:
+                            sleep(sleep_time)
+                        unit.sleep()
+                        attempt = unit.download(start_date, end, use_lock=use_lock)
+                        if attempt.contains_data:
+                            new_fetch_units.append(unit)
             if fetch_unit is not fetch_units[-1]:
                 sleep(sleep_time)
         fetch_units = new_fetch_units
