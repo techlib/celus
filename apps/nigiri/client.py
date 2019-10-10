@@ -98,11 +98,11 @@ class SushiClientBase(object):
         raise NotImplementedError()
 
     @classmethod
-    def explain_error_code(cls, error_code) -> Optional[SushiErrorMeaning]:
+    def explain_error_code(cls, error_code) -> SushiErrorMeaning:
         try:
             error_code = int(error_code)
         except ValueError:
-            return None
+            return SushiErrorMeaning(should_retry=True, needs_checking=True, setup_ok=False)
 
         if error_code in (3000, 3010):
             # report is not supported, so it was successful, but no data

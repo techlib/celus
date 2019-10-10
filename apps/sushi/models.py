@@ -243,9 +243,9 @@ class SushiCredentials(models.Model):
             if errors:
                 error_code = errors[0].code
                 error_explanation = client.explain_error_code(error_code)
-                queued = error_explanation.should_retry if error_explanation else False
+                queued = error_explanation.should_retry and error_explanation.setup_ok
                 download_success = not (error_explanation.needs_checking
-                                        if error_explanation else True)
+                                        and error_explanation.setup_ok)
                 processing_success = download_success
             log = '\n'.join(error.full_log for error in errors)
             filename = 'foo.xml'  # we just need the extension
@@ -312,9 +312,9 @@ class SushiCredentials(models.Model):
                 error_code = report.errors[0].code
                 contains_data = False
                 error_explanation = client.explain_error_code(error_code)
-                queued = error_explanation.should_retry if error_explanation else False
+                queued = error_explanation.should_retry and error_explanation.setup_ok
                 processing_success = not (error_explanation.needs_checking
-                                          if error_explanation else True)
+                                          and error_explanation.setup_ok)
             else:
                 contains_data = True
                 processing_success = True
