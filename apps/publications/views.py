@@ -13,6 +13,7 @@ from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer
+from sushi.models import SushiCredentials
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
 
@@ -121,20 +122,6 @@ class PlatformInterestViewSet(ViewSet):
         if data:
             return Response(data[0])
         return Response({})
-
-
-class PlatformSushiCredentialsViewSet(ReadOnlyModelViewSet):
-
-    serializer_class = PlatformSushiCredentialsSerializer
-
-    def get_queryset(self):
-        """
-        Should return only platforms for the requested organization.
-        """
-        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                     self.request.user)
-        return Platform.objects.filter(**org_filter). \
-            annotate(sushi_credentials_count=Count('sushicredentials', distinct=True))
 
 
 class PlatformTitleViewSet(ReadOnlyModelViewSet):

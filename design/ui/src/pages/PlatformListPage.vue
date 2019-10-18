@@ -12,6 +12,8 @@ en:
     no_sushi: SUSHI is not activated for this platform and selected organization
     annotations_available: There are annotations for this platform and the current date range. Go to the
         platform page for details.
+    sushi_for_version: "SUSHI for COUNTER version {version} is available"
+    sushi_for_version_outside: "SUSHI not managed by consortium for COUNTER version {version} is available"
 
 cs:
     columns:
@@ -25,6 +27,8 @@ cs:
     no_sushi: SUSHI není pro tuto platformu a vybranou organizaci aktivní
     annotations_available: Pro tuto platformu a vybrané časové období byly uloženy poznámky.
         Na stránce platformy zjistíte detaily.
+    sushi_for_version: "SUSHI pro verzi {version} COUNTERu je k dispozici"
+    sushi_for_version_outside: "SUSHI nespravované konsorciem pro verzi {version} COUNTERu je k dispozici"
 </i18n>
 
 <template>
@@ -109,15 +113,24 @@ cs:
                                 {{ formatInteger(item.interests.other) }}
                             </span>
                         </template>
-                        <template v-slot:item.sushi_credentials_count="{item}">
-                            <v-tooltip bottom>
+                        <template v-slot:item.sushi_credentials_versions="{item}">
+                            <v-tooltip bottom v-for="record in item.sushi_credentials_versions" :key="record.version">
                                 <template v-slot:activator="{ on }">
-                                    <v-icon x-small v-on="on">{{ item.sushi_credentials_count ? 'fa-check' : typeof item.sushi_credentials_count === 'undefined' ? '': 'fa-times' }}</v-icon>
+                                    <span v-on="on" class="mr-3 subdued">{{ record.version }}{{ record.outside_consortium ? '*' : '' }}</span>
                                 </template>
-                                <template>
-                                    <span v-if="typeof item.sushi_credentials_count === 'undefined'"></span>
-                                    <span v-else-if="item.sushi_credentials_count > 0">{{ $t('sushi_present') }}</span>
-                                    <span v-else>{{ $t('no_sushi') }}</span>
+                                <template v-if="record.outside_consortium">
+                                    <i18n path="sushi_for_version_outside" tag="span">
+                                        <template v-slot:version>
+                                            {{ record.version }}
+                                        </template>
+                                    </i18n>
+                                </template>
+                                <template v-else>
+                                    <i18n path="sushi_for_version" tag="span">
+                                        <template v-slot:version>
+                                            {{ record.version }}
+                                        </template>
+                                    </i18n>
                                 </template>
                             </v-tooltip>
                         </template>
@@ -231,7 +244,7 @@ cs:
         }
         base.push({
             text: this.$i18n.t('columns.sushi_available'),
-            value: 'sushi_credentials_count',
+            value: 'sushi_credentials_versions',
             sortable: false,
           })
         return base
@@ -295,13 +308,14 @@ cs:
       async loadPlatformSushiCounts () {
         if (this.selectedOrganizationId) {
           try {
-            let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/sushi-credentials-count/`)
-            let pkToCount = {}
-            for (let rec of response.data) {
-              pkToCount[rec.pk] = rec.count
-            }
+            let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/sushi-credentials-versions/`)
             for (let platform of this.platforms) {
-              this.$set(platform, 'sushi_credentials_count', pkToCount[platform.pk])
+              let key = platform.pk.toString()
+              if (key in response.data) {
+                this.$set(platform, 'sushi_credentials_versions', response.data[key])
+              } else {
+                this.$set(platform, 'sushi_credentials_versions', {})
+              }
             }
           } catch (error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})

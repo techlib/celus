@@ -22,8 +22,6 @@ org_sub_router.register(r'dimensions', CustomDimensionsViewSet,
                         basename='organization-dimensions')
 org_sub_router.register(r'report-types', OrganizationReportTypesViewSet,
                         basename='organization-report-types')
-org_sub_router.register(r'sushi-credentials-count', views.PlatformSushiCredentialsViewSet,
-                        basename='organization-sushi-credentials-count')
 
 
 title_sub_router = NestedSimpleRouter(org_sub_router, r'title', lookup='title')
