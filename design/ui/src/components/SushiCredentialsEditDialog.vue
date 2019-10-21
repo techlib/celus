@@ -375,7 +375,7 @@ cs:
         this.apiKey = credentials.api_key
         this.extraParams = extraParams
         this.selectedReportTypes = [...credentials.active_counter_reports]
-        this.credentialsId = credentials.id
+        this.credentialsId = credentials.pk
         this.enabled = credentials.enabled
 
       },

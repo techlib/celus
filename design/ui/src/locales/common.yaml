@@ -38,6 +38,7 @@ en:
     contains_data: Contains data
     log: Log
     data_file: Data file
+    lock: Lock
   titles: Titles
   overview: Overview
   chart:
@@ -131,6 +132,7 @@ cs:
     contains_data: Obsahuje data
     log: Log
     data_file: Datový soubor
+    lock: Zámek
   titles: Tituly
   overview: Přehled
   chart:

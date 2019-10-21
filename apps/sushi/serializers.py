@@ -1,8 +1,10 @@
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import HiddenField, CurrentUserDefault
+from rest_framework.fields import HiddenField, CurrentUserDefault, BooleanField, \
+    SerializerMethodField
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer
 
+from core.models import UL_CONS_STAFF
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
@@ -27,19 +29,26 @@ class SushiCredentialsSerializer(ModelSerializer):
                                              queryset=Organization.objects.all())
     platform_id = PrimaryKeyRelatedField(source='platform', write_only=True,
                                          queryset=Platform.objects.all())
+    locked_for_me = BooleanField(read_only=True)
+    can_lock = BooleanField(read_only=True)
     submitter = HiddenField(default=CurrentUserDefault())
+    locked = SerializerMethodField()
 
     class Meta:
         model = SushiCredentials
-        fields = ('id', 'organization', 'platform', 'enabled', 'url', 'counter_version',
+        fields = ('pk', 'organization', 'platform', 'enabled', 'url', 'counter_version',
                   'requestor_id', 'customer_id', 'http_username', 'http_password', 'api_key',
                   'extra_params', 'active_counter_reports', 'active_counter_reports_long',
-                  'organization_id', 'platform_id', 'submitter')
+                  'organization_id', 'platform_id', 'submitter', 'locked_for_me', 'lock_level',
+                  'can_lock', 'locked')
+
+    def get_locked(self, obj: SushiCredentials):
+        return obj.lock_level >= UL_CONS_STAFF
 
     def update(self, instance: SushiCredentials, validated_data):
         submitter = validated_data.pop('submitter', None) or self.context['request'].user
         if not instance.can_edit(submitter):
-            raise PermissionDenied('User is not allowed to edit this object')
+            raise PermissionDenied('User is not allowed to edit this object - it is locked.')
         result = super().update(instance, validated_data)  # type: SushiCredentials
         result.last_updated_by = submitter
         result.save()
@@ -51,7 +60,6 @@ class SushiCredentialsSerializer(ModelSerializer):
         result.last_updated_by = submitter
         result.save()
         return result
-
 
 
 class SushiFetchAttemptSerializer(ModelSerializer):

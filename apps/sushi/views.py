@@ -15,6 +15,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from reversion.views import create_revision
 
 from core.logic.dates import month_start, month_end
+from core.models import UL_CONS_STAFF
 from core.permissions import SuperuserOrAdminPermission, OrganizationRelatedPermissionMixin
 from organizations.logic.queries import organization_filter_from_org_id
 from sushi.models import CounterReportType, SushiFetchAttempt
@@ -37,6 +38,18 @@ class SushiCredentialsViewSet(ModelViewSet):
         organization_id = self.request.query_params.get('organization')
         if organization_id:
             qs = qs.filter(**organization_filter_from_org_id(organization_id, self.request.user))
+            # if we have only credentials for one organization, we can easily add info about
+            # locked status for current user
+            user_org_level = self.request.user.organization_relationship(organization_id)
+            for sc in qs:  # type: SushiCredentials
+                if user_org_level >= sc.lock_level:
+                    sc.locked_for_me = False
+                else:
+                    sc.locked_for_me = True
+                if user_org_level >= UL_CONS_STAFF:
+                    sc.can_lock = True
+                else:
+                    sc.can_lock = False
         return qs
 
     @method_decorator(create_revision())
@@ -56,9 +69,13 @@ class SushiCredentialsViewSet(ModelViewSet):
         """
         credentials = get_object_or_404(SushiCredentials, pk=pk)
         owner_level = request.user.organization_relationship(credentials.organization_id)
-        requested_level = request.query_params.get('lock_level', owner_level)
+        requested_level = request.data.get('lock_level', owner_level)
         credentials.change_lock(request.user, requested_level)
-        return Response({'ok': True, 'lock_level': credentials.lock_level})
+        return Response({
+            'ok': True,
+            'lock_level': credentials.lock_level,
+            'locked': credentials.lock_level >= UL_CONS_STAFF
+        })
 
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):

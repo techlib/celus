@@ -2,9 +2,18 @@
 <i18n>
 en:
     add_new: Add new SUSHI
-
+    is_locked: These credentials are locked.
+    is_unlocked: These credentials are not locked, you may edit them.
+    cannot_edit: You cannot edit them.
+    can_edit: Because of your priviledges, you can still edit them.
+    can_lock: You may lock/unlock these credentials - click to do so.
 cs:
     add_new: Přidat nové SUSHI
+    is_locked: Tyto přístupové údaje jsou uzamčené.
+    is_unlocked: Tyto přístupové údaje nejsou uzamčené, můžete je editovat
+    cannot_edit: Nemůžete je editovat.
+    can_edit: Vaše oprávnění Vám umožňují je přesto editovat.
+    can_lock: Kliknutím můžete tyto údaje uzamknout/odemknout.
 </i18n>
 
 <template>
@@ -38,10 +47,10 @@ cs:
                     multi-sort
                     :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
             >
-                <template v-slot:item.active_counter_reports="props">
+                <template v-slot:item.active_counter_reports="{item}">
                     <v-tooltip
                             bottom
-                            v-for="(report, index) in props.item.active_counter_reports_long"
+                            v-for="(report, index) in item.active_counter_reports_long"
                             :key="index"
                     >
                         <template v-slot:activator="{ on }">
@@ -55,19 +64,48 @@ cs:
                         </span>
                     </v-tooltip>
                 </template>
-                <template v-slot:item.actions="props
-">
-                    <v-btn text small color="secondary" @click.stop="selectedCredentials = props.item; showEditDialog = true">
+                <template v-slot:item.actions="{item}">
+                    <v-btn v-if="!item.locked_for_me" text small color="secondary" @click.stop="selectedCredentials = item; showEditDialog = true">
                         <v-icon left x-small>fa-edit</v-icon>
                         {{ $t('actions.edit') }}
                     </v-btn>
-                    <v-btn text small color="secondary" @click.stop="selectedCredentials = props.item; showDetailsDialog = true">
+                    <v-btn text small color="secondary" @click.stop="selectedCredentials = item; showDetailsDialog = true">
                         <v-icon left x-small>fa-list</v-icon>
                         {{ $t('actions.show_attempts') }}
                     </v-btn>
                 </template>
-                <template v-slot:item.enabled="props">
-                    <CheckMark :value="props.item.enabled" />
+                <template v-slot:item.enabled="{item}">
+                    <CheckMark :value="item.enabled" />
+                </template>
+                <template v-slot:item.locked="{item}">
+                    <!-- locked for me -->
+                    <v-tooltip bottom v-if="item.locked && item.locked_for_me">
+                        <template v-slot:activator="{ on }">
+                            <v-icon small v-on="on" color="red">fa-fw fa-lock</v-icon>
+                        </template>
+                        {{ $t('is_locked') }} {{ $t('cannot_edit') }}
+                    </v-tooltip>
+                    <!-- locked, but I can edit -->
+                    <v-tooltip bottom v-else-if="item.locked">
+                        <template v-slot:activator="{ on }">
+                            <v-icon small v-on="on" color="red">fa-fw fa-lock</v-icon>
+                        </template>
+                        {{ $t('is_locked') }} {{ $t('can_edit') }}
+                    </v-tooltip>
+                    <!-- not locked at all -->
+                    <v-tooltip bottom v-else>
+                        <template v-slot:activator="{ on }">
+                            <v-icon small v-on="on" color="green">fa-fw fa-lock-open</v-icon>
+                        </template>
+                        {{ $t('is_unlocked') }}
+                    </v-tooltip>
+
+                    <v-tooltip bottom v-if="item.can_lock">
+                        <template v-slot:activator="{ on }">
+                            <v-btn text icon @click="toggleLock(item)" v-on="on"><v-icon small>fa-key</v-icon></v-btn>
+                        </template>
+                        {{ $t('can_lock') }}
+                    </v-tooltip>
                 </template>
             </v-data-table>
         </v-card>
@@ -153,6 +191,10 @@ cs:
             value: 'enabled',
           },
           {
+            text: this.$i18n.t('title_fields.lock'),
+            value: 'locked',
+          },
+          {
             text: this.$i18n.t('title_fields.actions'),
             value: 'actions',
             sortable: false,
@@ -197,13 +239,27 @@ cs:
           this.sushiCredentialsList.push(credentials)
         }
       },
+      async toggleLock (credentials) {
+        let newLockLevel = 400
+        if (credentials.locked) {
+          newLockLevel = 300
+        }
+        try {
+          let response = await axios.post(`/api/sushi-credentials/${credentials.pk}/lock/`,
+            {lock_level: newLockLevel})
+          credentials.lock_level = response.data.lock_level
+          credentials.locked = response.data.locked
+        } catch (error) {
+          this.showSnackbar({content: 'Error (un)locking credentials: '+error, color: 'error'})
+        }
+      },
       closeDetailsDialog () {
         this.selectedCredentials = null
         this.showDetailsDialog = false
       },
       activateCreateDialog () {
         this.showCreateDialog = true
-      }
+      },
     },
     watch: {
       showEditDialog (value) {
