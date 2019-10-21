@@ -38,18 +38,21 @@ class SushiCredentialsViewSet(ModelViewSet):
         organization_id = self.request.query_params.get('organization')
         if organization_id:
             qs = qs.filter(**organization_filter_from_org_id(organization_id, self.request.user))
-            # if we have only credentials for one organization, we can easily add info about
-            # locked status for current user
-            user_org_level = self.request.user.organization_relationship(organization_id)
-            for sc in qs:  # type: SushiCredentials
-                if user_org_level >= sc.lock_level:
-                    sc.locked_for_me = False
-                else:
-                    sc.locked_for_me = True
-                if user_org_level >= UL_CONS_STAFF:
-                    sc.can_lock = True
-                else:
-                    sc.can_lock = False
+        # we add info about locked status for current user
+        org_to_level = {}
+        for sc in qs:  # type: SushiCredentials
+            if sc.organization_id not in org_to_level:
+                org_to_level[sc.organization_id] = \
+                    self.request.user.organization_relationship(sc.organization_id)
+            user_org_level = org_to_level[sc.organization_id]
+            if user_org_level >= sc.lock_level:
+                sc.locked_for_me = False
+            else:
+                sc.locked_for_me = True
+            if user_org_level >= UL_CONS_STAFF:
+                sc.can_lock = True
+            else:
+                sc.can_lock = False
         return qs
 
     @method_decorator(create_revision())

@@ -52,6 +52,9 @@ class SushiCredentialsSerializer(ModelSerializer):
         result = super().update(instance, validated_data)  # type: SushiCredentials
         result.last_updated_by = submitter
         result.save()
+        submitter_level = submitter.organization_relationship(result.organization_id)
+        result.can_lock = submitter_level >= UL_CONS_STAFF
+        result.locked_for_me = submitter_level < result.lock_level
         return result
 
     def create(self, validated_data):
@@ -59,6 +62,9 @@ class SushiCredentialsSerializer(ModelSerializer):
         result = super().create(validated_data)
         result.last_updated_by = submitter
         result.save()
+        submitter_level = submitter.organization_relationship(result.organization_id)
+        result.can_lock = submitter_level >= UL_CONS_STAFF
+        result.locked_for_me = submitter_level < result.lock_level
         return result
 
 

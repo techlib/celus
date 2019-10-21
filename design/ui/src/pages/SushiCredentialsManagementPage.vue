@@ -228,7 +228,7 @@ cs:
         // we put them at the right place in the list of credentials
         let found = false
         for (let i=0; i < this.sushiCredentialsList.length; i++) {
-          if (this.sushiCredentialsList[i].id === credentials.id) {
+          if (this.sushiCredentialsList[i].pk === credentials.pk) {
             this.$set(this.sushiCredentialsList, i, credentials)
             found = true
             break
