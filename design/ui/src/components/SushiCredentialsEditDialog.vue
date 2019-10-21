@@ -8,6 +8,8 @@ en:
     save_and_test: Save and start test
     enabled: Enabled
     enabled_tooltip: Data for enabled credentials get automatically downloaded. To prevent downloads, disable the credentials.
+    outside: Purchased outside of consortium
+    outside_tooltip: Marks if access to this resource was purchased outside the consortium
     title:
         edit_sushi_credentials: Edit SUSHI credentials
 
@@ -189,7 +191,7 @@ cs:
 
         </v-card-text>
         <v-card-actions>
-            <v-container>
+            <v-container fluid mx-2>
                 <v-row no-gutters>
                     <v-col cols="auto">
                         <v-tooltip bottom>
@@ -203,6 +205,20 @@ cs:
                                 </span>
                             </template>
                             <span>{{ $t('enabled_tooltip') }}</span>
+                        </v-tooltip>
+                    </v-col>
+                    <v-col cols="auto" class="ml-6">
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ on }">
+                                <span v-on="on">
+                                    <v-switch
+                                            v-model="outsideConsortium"
+                                            :label="$t('outside')"
+                                            class="pl-2 my-0"
+                                    ></v-switch>
+                                </span>
+                            </template>
+                            <span>{{ $t('outside_tooltip') }}</span>
                         </v-tooltip>
                     </v-col>
                     <v-spacer></v-spacer>
@@ -277,6 +293,7 @@ cs:
         errors: {},
         savedCredentials: null,
         enabled: false,
+        outsideConsortium: false,
       }
     },
     computed: {
@@ -310,6 +327,7 @@ cs:
           extra_params: extraParams,
           active_counter_reports: this.selectedReportTypes,
           enabled: this.enabled,
+          outside_consortium: this.outsideConsortium,
         }
         if (this.credentials) {
           data['id'] = this.credentialsId
@@ -377,6 +395,7 @@ cs:
         this.selectedReportTypes = [...credentials.active_counter_reports]
         this.credentialsId = credentials.pk
         this.enabled = credentials.enabled
+        this.outsideConsortium = credentials.outside_consortium
 
       },
       async loadReportTypes () {

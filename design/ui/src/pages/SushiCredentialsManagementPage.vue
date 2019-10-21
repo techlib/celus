@@ -77,6 +77,9 @@ cs:
                 <template v-slot:item.enabled="{item}">
                     <CheckMark :value="item.enabled" />
                 </template>
+                <template v-slot:item.outside_consortium="{item}">
+                    <CheckMark :value="item.outside_consortium" />
+                </template>
                 <template v-slot:item.locked="{item}">
                     <!-- locked for me -->
                     <v-tooltip bottom v-if="item.locked && item.locked_for_me">
@@ -185,6 +188,10 @@ cs:
             text: this.$i18n.t('title_fields.active_reports'),
             value: 'active_counter_reports',
             sortable: false,
+          },
+          {
+            text: this.$i18n.t('title_fields.outside_consortium'),
+            value: 'outside_consortium',
           },
           {
             text: this.$i18n.t('title_fields.enabled'),

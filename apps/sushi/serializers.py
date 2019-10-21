@@ -40,7 +40,7 @@ class SushiCredentialsSerializer(ModelSerializer):
                   'requestor_id', 'customer_id', 'http_username', 'http_password', 'api_key',
                   'extra_params', 'active_counter_reports', 'active_counter_reports_long',
                   'organization_id', 'platform_id', 'submitter', 'locked_for_me', 'lock_level',
-                  'can_lock', 'locked')
+                  'can_lock', 'locked', 'outside_consortium')
 
     def get_locked(self, obj: SushiCredentials):
         return obj.lock_level >= UL_CONS_STAFF

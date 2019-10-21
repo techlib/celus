@@ -39,6 +39,7 @@ en:
     log: Log
     data_file: Data file
     lock: Lock
+    outside_consortium: Outside consortium
   titles: Titles
   overview: Overview
   chart:
@@ -133,6 +134,7 @@ cs:
     log: Log
     data_file: Datový soubor
     lock: Zámek
+    outside_consortium: Mimo konzorcium
   titles: Tituly
   overview: Přehled
   chart:
