@@ -339,7 +339,7 @@ cs:
         }
       },
       async loadReportTypes () {
-        let url = `/api/organization/${this.organizationId}/report-types/`
+        let url = `/api/platform/${this.platformId}/report-types/`
         if (url) {
           try {
             const response = await axios.get(url)

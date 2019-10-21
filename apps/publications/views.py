@@ -1,4 +1,5 @@
 from django.db.models import Count, Sum, Q
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,6 +11,7 @@ from core.logic.dates import date_filter_from_params
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
 from logs.models import ReportType, AccessLog
+from logs.serializers import ReportTypeSerializer
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer
@@ -22,6 +24,15 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
 
     serializer_class = PlatformSerializer
     queryset = Platform.objects.all().order_by('name')
+
+    @action(detail=True, url_path='report-types')
+    def get_report_types(self, request, pk):
+        """
+        Provides a list of report types associated with this platform
+        """
+        platform = get_object_or_404(Platform.objects.all(), pk=pk)
+        report_types = ReportType.objects.filter(platform=platform)
+        return Response(ReportTypeSerializer(report_types, many=True).data)
 
 
 class PlatformViewSet(ReadOnlyModelViewSet):
@@ -210,7 +221,7 @@ class TitleReportDataViewViewSet(BaseReportDataViewViewSet):
         return {'target': title}
 
 
-class PlatformReportDateViewViewSet(BaseReportDataViewViewSet):
+class PlatformReportDataViewViewSet(BaseReportDataViewViewSet):
     """
     Provides a list of report types for specific organization and platform
     """

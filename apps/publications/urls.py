@@ -32,7 +32,7 @@ platform_sub_router = NestedSimpleRouter(org_sub_router, r'platform', lookup='pl
 platform_sub_router.register('title', views.PlatformTitleViewSet, basename='platform-title')
 platform_sub_router.register('title-interest', views.PlatformTitleInterestViewSet,
                              basename='platform-title-interest')
-platform_sub_router.register('report-views', views.PlatformReportDateViewViewSet,
+platform_sub_router.register('report-views', views.PlatformReportDataViewViewSet,
                              basename='platform-report-data-views')
 
 platform_title_sub_router = NestedSimpleRouter(platform_sub_router, r'title', lookup='title')
