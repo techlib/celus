@@ -11,7 +11,6 @@ from publications.tests.conftest import platforms
 from core.tests.conftest import master_identity, valid_identity
 
 
-@pytest.mark.now
 @pytest.mark.django_db
 class TestLocking(object):
 

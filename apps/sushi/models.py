@@ -118,8 +118,9 @@ class SushiCredentials(models.Model):
     # meta info
     created = models.DateTimeField(default=now)
     last_updated = models.DateTimeField(auto_now=True)
+    last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     lock_level = models.PositiveSmallIntegerField(
-        choices=LOCK_LEVEL_CHOICES, default=UNLOCKED,
+        choices=LOCK_LEVEL_CHOICES, default=UL_ORG_ADMIN,
         help_text='Only user with the same or higher level can unlock it and/or edit it'
     )
 
@@ -147,6 +148,12 @@ class SushiCredentials(models.Model):
             self.lock_level = level
             self.save()
             reversion.set_comment('Lock changed')
+
+    def can_edit(self, user: User):
+        owner_level = user.organization_relationship(self.organization_id)
+        if owner_level >= self.lock_level:
+            return True
+        return False
 
     def create_sushi_client(self):
         attrs = {

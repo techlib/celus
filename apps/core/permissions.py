@@ -90,7 +90,8 @@ class OrganizationRequiredInDataForNonSuperusers(BasePermission):
 class SuperuserOrAdminPermission(BasePermission):
 
     def has_permission(self, request, view):
-        if request.user.is_superuser or request.user.is_from_master_organization:
+        if request.user.is_superuser or (hasattr(request.user, 'is_from_master_organization') and
+                                         request.user.is_from_master_organization):
             return True
         return False
 

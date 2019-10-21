@@ -57,17 +57,8 @@ class SushiCredentialsViewSet(ModelViewSet):
         credentials = get_object_or_404(SushiCredentials, pk=pk)
         owner_level = request.user.organization_relationship(credentials.organization_id)
         requested_level = request.query_params.get('lock_level', owner_level)
-        if credentials.lock_level > credentials.UNLOCKED:
-            # we want to relock with different privileges
-            if owner_level < credentials.lock_level:
-                raise PermissionDenied(f'User {request.user} does not have high enough privileges '
-                                       f'to lock {credentials}')
-        if owner_level < requested_level:
-            raise PermissionDenied(f'User {request.user} does not have high enough privileges '
-                                   f'to lock {credentials}')
-
-
-
+        credentials.change_lock(request.user, requested_level)
+        return Response({'ok': True, 'lock_level': credentials.lock_level})
 
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):

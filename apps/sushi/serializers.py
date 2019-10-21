@@ -1,3 +1,5 @@
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.fields import HiddenField, CurrentUserDefault
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer
 
@@ -25,22 +27,31 @@ class SushiCredentialsSerializer(ModelSerializer):
                                              queryset=Organization.objects.all())
     platform_id = PrimaryKeyRelatedField(source='platform', write_only=True,
                                          queryset=Platform.objects.all())
+    submitter = HiddenField(default=CurrentUserDefault())
 
     class Meta:
         model = SushiCredentials
         fields = ('id', 'organization', 'platform', 'enabled', 'url', 'counter_version',
                   'requestor_id', 'customer_id', 'http_username', 'http_password', 'api_key',
                   'extra_params', 'active_counter_reports', 'active_counter_reports_long',
-                  'organization_id', 'platform_id')
+                  'organization_id', 'platform_id', 'submitter')
 
-    def update(self, instance, validated_data):
-        active_reports = validated_data.pop('active_counter_reports')
+    def update(self, instance: SushiCredentials, validated_data):
+        submitter = validated_data.pop('submitter', None) or self.context['request'].user
+        if not instance.can_edit(submitter):
+            raise PermissionDenied('User is not allowed to edit this object')
         result = super().update(instance, validated_data)  # type: SushiCredentials
-        result.active_counter_reports.set(active_reports)
+        result.last_updated_by = submitter
+        result.save()
         return result
 
     def create(self, validated_data):
-        return super().create(validated_data)
+        submitter = validated_data.pop('submitter')
+        result = super().create(validated_data)
+        result.last_updated_by = submitter
+        result.save()
+        return result
+
 
 
 class SushiFetchAttemptSerializer(ModelSerializer):

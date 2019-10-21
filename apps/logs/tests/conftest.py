@@ -83,8 +83,8 @@ def counter_records():
 
 @pytest.fixture
 def report_type_nd():
-    def fn(dim_number, dimension_names=None):
-        rt = ReportType.objects.create(short_name=f'{dim_number}d',
+    def fn(dim_number, dimension_names=None, short_name=None):
+        rt = ReportType.objects.create(short_name=short_name or f'{dim_number}d',
                                        name=f'{dim_number} dimensional report')
         for i in range(dim_number):
             if dimension_names and i < len(dimension_names):
