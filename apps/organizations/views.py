@@ -34,20 +34,19 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
     def sushi_credentials_versions(self, request, pk):
         org_filter = organization_filter_from_org_id(pk, request.user)
         data = SushiCredentials.objects.filter(**org_filter).annotate(count=Count('pk')).\
-            values('platform', 'counter_version', 'outside_consortium', 'count').filter(count__gt=0)
-        print(data)
+            values('platform', 'counter_version', 'outside_consortium', 'count').\
+            filter(count__gt=0).distinct()
         result = {}
         for rec in data:
             if rec['platform'] not in result:
                 result[rec['platform']] = []
             result[rec['platform']].append({
                 'version': rec['counter_version'],
-                 'outside_consortium': rec['outside_consortium']
+                'outside_consortium': rec['outside_consortium']
             })
         for key, value in result.items():
             value.sort(key=lambda x: x['version'])
         return Response(result)
-
 
 
 class StartERMSSyncOrganizationsTask(APIView):
