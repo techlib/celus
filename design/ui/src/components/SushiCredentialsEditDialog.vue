@@ -9,7 +9,8 @@ en:
     enabled: Enabled
     enabled_tooltip: Data for enabled credentials get automatically downloaded. To prevent downloads, disable the credentials.
     outside: Purchased outside of consortium
-    outside_tooltip: Marks if access to this resource was purchased outside the consortium
+    outside_tooltip: Marks if access to this resource was purchased outside the consortium.
+    only_managers_can_change: Only managers may change this option.
     title:
         edit_sushi_credentials: Edit SUSHI credentials
 
@@ -20,6 +21,9 @@ cs:
     save_and_test: Uložit a spustit test
     enabled: Aktivní
     enabled_tooltip: Pro aktivní přístupové údaje se budou pravidelně stahovat data. Vypnutím toto stahování zrušíte.
+    outside: Nákup mimo konzorcium
+    outside_tooltip: Označuje přístupové údaje k nákupům mimo konzorcium.
+    only_managers_can_change: Jen správci mohou měnit tuto hodnotu.
     title:
         edit_sushi_credentials: Přihlašovací údaje SUSHI
 </i18n>
@@ -215,10 +219,14 @@ cs:
                                             v-model="outsideConsortium"
                                             :label="$t('outside')"
                                             class="pl-2 my-0"
+                                            :disabled="!userIsManager"
                                     ></v-switch>
                                 </span>
                             </template>
-                            <span>{{ $t('outside_tooltip') }}</span>
+                            <span>
+                                {{ $t('outside_tooltip') }}
+                                {{ userIsManager ? '' : $t('only_managers_can_change') }}
+                            </span>
                         </v-tooltip>
                     </v-col>
                     <v-spacer></v-spacer>
@@ -293,13 +301,14 @@ cs:
         errors: {},
         savedCredentials: null,
         enabled: false,
-        outsideConsortium: false,
+        outsideConsortium: true,
       }
     },
     computed: {
       ...mapGetters({
         selectedOrganization: 'selectedOrganization',
         organizationSelected: 'organizationSelected',
+        userIsManager: 'showManagementStuff',
       }),
       credentials () {
         if (this.credentialsObject != null) {
