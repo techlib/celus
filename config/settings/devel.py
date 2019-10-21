@@ -11,6 +11,8 @@ MIDDLEWARE += [
 ]
 
 DATABASES['default']['NAME'] = 'ntk_stats'
+CACHE_MIDDLEWARE_SECONDS = 1
+
 
 # livereload
 LIVERELOAD_PORT = 35563
