@@ -1,4 +1,16 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n>
+en:
+    add: Add annotation
+    edit: Edit annotation
+    cannot_edit: Your privileges do not allow editing of this annotation
+
+cs:
+    add: Přidat poznámku
+    edit: Upravit poznámku
+    cannot_edit: Vaše oprávnění neumožňují editaci této poznámky
+
+</i18n>
 
 <template>
     <v-container v-if="annotations.length" fluid>
@@ -8,7 +20,13 @@
             </v-col>
             <v-spacer></v-spacer>
             <v-col cols="auto" v-if="allowAdd">
-                <v-btn @click="showAddDialog = true" small dark fab color="primary"><v-icon small>fa-plus</v-icon></v-btn>
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on}">
+                        <v-btn @click="showAddDialog = true" small dark fab color="primary" v-on="on"><v-icon small>fa-plus</v-icon></v-btn>
+                    </template>
+                    {{ $t('add') }}
+                </v-tooltip>
+
             </v-col>
         </v-row>
         <div>
@@ -26,6 +44,8 @@
                         </span>
                     </v-expansion-panel-header>
                     <v-expansion-panel-content>
+                        <v-row>
+                            <v-col>
                         <table class="overview">
                             <tr v-if="annot.platform">
                                 <td v-text="$t('platform')+':'" class="pr-2"></td>
@@ -48,6 +68,24 @@
                             {{ annot.short_message }}
                         </p>
                         <p v-text="annot.message" v-if="annot.message"></p>
+                            </v-col>
+                            <v-col cols="auto" v-if="allowAdd">
+                                <v-tooltip bottom v-if="annot.can_edit">
+                                    <template v-slot:activator="{on}">
+                                        <v-btn color="blue" fab dark small v-on="on" @click="startEditAnnotation(annot)"><v-icon small>fa-edit</v-icon></v-btn>
+                                    </template>
+                                    {{ $t('edit') }}
+                                </v-tooltip>
+                                <v-tooltip bottom v-else>
+                                    <template v-slot:activator="{on}">
+                                        <span v-on="on">
+                                            <v-btn disabled fab small><v-icon small>fa-edit</v-icon></v-btn>
+                                        </span>
+                                    </template>
+                                    {{ $t('cannot_edit') }}
+                                </v-tooltip>
+                            </v-col>
+                        </v-row>
                     </v-expansion-panel-content>
                 </v-expansion-panel>
             </v-expansion-panels>
@@ -61,7 +99,9 @@
                     <v-card-text>
                         <AnnotationCreateModifyWidget
                                 :platform="platform"
+                                :annotation="selectedAnnotation"
                                 @saved="annotationSaved()"
+                                @cancel="cancelEdit()"
                         />
                     </v-card-text>
                 </v-card>
@@ -90,6 +130,7 @@
         annotations: [],
         panel: [],
         showAddDialog: false,
+        selectedAnnotation: null,
       }
     },
     computed: {
@@ -128,7 +169,16 @@
       },
       annotationSaved () {
         this.showAddDialog = false
+        this.selectedAnnotation = null
         this.fetchAnnotations()
+      },
+      cancelEdit () {
+        this.showAddDialog = false
+        this.selectedAnnotation = null
+      },
+      startEditAnnotation (annot) {
+        this.selectedAnnotation = annot
+        this.showAddDialog = true
       }
     },
     mounted () {

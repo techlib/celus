@@ -24,12 +24,13 @@ cs:
     <v-container>
         <v-row>
             <v-col>
-                <v-text-field
-                        disabled
-                        :value="selectedOrganization ? selectedOrganization.name : ''"
-                        :label="$t('organization')"
+                <v-select
+                        :items="organizations"
+                        v-model="organizationId"
+                        item-value="pk"
+                        item-text="name"
                 >
-                </v-text-field>
+                </v-select>
             </v-col>
             <v-col v-if="platform">
                 <v-text-field
@@ -181,6 +182,9 @@ cs:
         <v-row>
             <v-spacer></v-spacer>
             <v-col cols="auto">
+                <v-btn @click="$emit('cancel')" v-text="$t('cancel')"></v-btn>
+            </v-col>
+            <v-col cols="auto">
                 <v-btn :disabled="saving || !valid" @click="save()" color="primary">
                     <v-icon small class="mr-2">fa-save</v-icon>
                     {{ $t('save') }}
@@ -198,12 +202,13 @@ cs:
     name: 'AnnotationCreateModifyWidget',
     props: {
       platform: {required: false, type: Object},
+      annotation: {required: false, type: Object},
     },
     data () {
       return {
         startDate: null,
         endDate: null,
-        annotation: null,
+        annotationId: null,
         subjectCs: '',
         subjectEn: '',
         shortMessageCs: '',
@@ -214,11 +219,14 @@ cs:
         endDateMenu: null,
         startDateMenu: null,
         saving: false,
+        platformId:  null,
+        organizationId: null,
       }
     },
     computed: {
       ...mapState({
-        selectedOrganizationId: 'selectedOrganizationId',
+        appSelectedOrganizationId: 'selectedOrganizationId',
+        organizationsMap: 'organizations',
       }),
       ...mapGetters({
         organizationSelected: 'organizationSelected',
@@ -252,14 +260,14 @@ cs:
           'message_cs': this.messageCs,
           'level': this.level,
         }
-        if (this.organizationSelected) {
-          data['organization_id'] = this.selectedOrganizationId
+        if (this.organizationId) {
+          data['organization_id'] = this.organizationId
         }
-        if (this.platform) {
-          data['platform_id'] = this.platform.pk
+        if (this.platformId) {
+          data['platform_id'] = this.platformId
         }
-        if (this.annotation) {
-          data['pk'] = this.annotation.pk
+        if (this.annotationId) {
+          data['pk'] = this.annotationId
         }
         return data
       },
@@ -268,6 +276,9 @@ cs:
           return false
         }
         return true
+      },
+      organizations () {
+        return Object.values(this.organizationsMap).sort((a, b) => (a.name > b.name))
       }
     },
     methods: {
@@ -275,7 +286,7 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       save () {
-        if (this.annotation) {
+        if (this.annotationId) {
           this.putData()
         } else {
           this.postData()
@@ -285,7 +296,7 @@ cs:
         this.saving = true
         try {
           let response = await axios.post('/api/annotations/', this.annotationData)
-          this.annotation = response.data
+          this.annotationId = response.data.pk
           this.$emit('saved', {annotation: response.data})
         } catch (error) {
           this.showSnackbar({content: 'Error creating annotation: ' + error, color: 'error'})
@@ -296,8 +307,8 @@ cs:
       async putData () {
         this.saving = true
         try {
-          let response = await axios.put(`/api/annotations/${this.annotation.pk}/`, this.annotationData)
-          this.annotation = response.data
+          let response = await axios.put(`/api/annotations/${this.annotationId}/`, this.annotationData)
+          this.annotationId = response.data.pk
           this.$emit('saved', {annotation: response.data})
         } catch (error) {
           this.showSnackbar({content: 'Error saving annotation: ' + error, color: 'error'})
@@ -305,10 +316,43 @@ cs:
           this.saving = false
         }
       },
+      annotationObjectToData () {
+        if (this.annotation) {
+          this.annotationId = this.annotation.pk
+          this.startDate = this.annotation.start_date
+          this.endDate = this.annotation.end_date
+          this.subjectCs = this.annotation.subject_cs
+          this.subjectEn = this.annotation.subject_en
+          this.shortMessageCs = this.annotation.short_message_cs
+          this.shortMessageEn = this.annotation.short_message_en
+          this.messageEn = this.annotation.message_en
+          this.messageCs = this.annotation.message_cs
+          this.level = this.annotation.level
+          if (this.annotation.organization) {
+            this.organizationId = this.annotation.organization.pk
+          }
+          if (this.annotation.platform) {
+            this.platformId = this.annotation.platform.pk
+          }
+        }
+      },
       required (v) {
         return !!v || this.$t('value_required')
       },
     },
+    watch: {
+      annotation () {
+        this.annotationObjectToData()
+      }
+    },
+    created () {
+      this.annotationObjectToData()
+    },
+    mounted() {
+      this.platformId = this.platform ? this.platform.pk : null
+      this.organizationId = this.appSelectedOrganizationId
+      this.annotationId = this.annotation ? this.annotation.pk : null
+    }
 
   }
 </script>

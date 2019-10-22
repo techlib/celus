@@ -8,6 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from annotations.models import Annotation
 from annotations.serializers import AnnotationSerializer
 from core.logic.dates import parse_month, month_end
+from core.models import UL_CONS_STAFF
 from core.permissions import OwnerLevelBasedPermissions, CanPostOrganizationDataPermission, \
     CanAccessOrganizationRelatedObjectPermission, OrganizationRequiredInDataForNonSuperusers, \
     SuperuserOrAdminPermission
@@ -46,6 +47,18 @@ class AnnotationsViewSet(ModelViewSet):
         if len(exclude_args) > 1:
             # we have more args, we need to "OR" them
             exclude_args = [reduce(operator.or_, exclude_args)]
-        return Annotation.objects.filter(org_perm_args).filter(*query_args).\
+        qs = Annotation.objects.filter(org_perm_args).filter(*query_args).\
             exclude(*exclude_args).select_related('organization', 'platform')
+        # add access level stuff
+        org_to_level = {}
+        for annot in qs:  # type: Annotation
+            if not annot.organization_id:
+                user_org_level = UL_CONS_STAFF
+            else:
+                if annot.organization_id not in org_to_level:
+                    org_to_level[annot.organization_id] = \
+                        self.request.user.organization_relationship(annot.organization_id)
+                user_org_level = org_to_level[annot.organization_id]
+            annot.can_edit = user_org_level >= annot.owner_level
+        return qs
 

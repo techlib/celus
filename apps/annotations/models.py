@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from core.models import USER_LEVEL_CHOICES, UL_ORG_ADMIN
+from core.models import USER_LEVEL_CHOICES, UL_ORG_ADMIN, User, UL_CONS_STAFF
 
 
 class Annotation(models.Model):
@@ -37,5 +37,12 @@ class Annotation(models.Model):
         help_text='Level of user who created this record - used to determine who can modify it'
     )
 
-
+    def can_edit(self, user: User):
+        if self.organization_id is None:
+            owner_level = UL_CONS_STAFF
+        else:
+            owner_level = user.organization_relationship(self.organization_id)
+        if owner_level >= self.owner_level:
+            return True
+        return False
 
