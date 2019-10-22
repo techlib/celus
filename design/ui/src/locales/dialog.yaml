@@ -5,6 +5,7 @@ en:
   cancel: Cancel
   save: Save
   test: Test
+  delete: Delete
 
 cs:
   value_required: Toto pole je povinné
@@ -13,3 +14,4 @@ cs:
   cancel: Zrušit
   save: Uložit
   test: Otestovat
+  delete: Smazat

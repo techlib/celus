@@ -7,18 +7,18 @@
             <v-autocomplete
                     v-model="orgId"
                     :items="items"
-                    :item-text="lang ? 'name_'+lang : 'name'"
+                    item-text="name"
                     item-value="pk"
             >
-                <template v-slot:item="props">
-                    <span :class="{bold: props.item.extra}">{{ lang ? props.item['name_'+lang] : props.item['name'] }}</span>
+                <template v-slot:item="{item}">
+                    <span :class="{bold: item.extra}">{{ item.name }}</span>
                 </template>
             </v-autocomplete>
         </v-flex>
     </v-layout>
 </template>
 <script>
-  import { mapActions, mapState } from 'vuex'
+  import {mapActions, mapGetters, mapState} from 'vuex'
 
   export default {
     name: 'OrganizationSelector',
@@ -27,29 +27,11 @@
     },
     computed: {
       ...mapState({
-        organizations: 'organizations',
         selectedOrganizationId: 'selectedOrganizationId',
-        user: 'user',
       }),
-      items () {
-        if (!this.organizations) {
-          return []
-        }
-        let out = Object.values(this.organizations)
-        if (out.length === 0)
-          return []
-        let loc_name = this.lang ? `name_${this.lang}` : 'name'
-        out.sort((a, b) => {
-          if ('extra' in a) {
-            return -1
-          }
-          if ('extra' in b) {
-            return 1
-          }
-          return ((a[loc_name] ? a[loc_name] : a['name']).localeCompare((b[loc_name] ? b[loc_name] : b['name'])))
-        })
-        return out
-      },
+      ...mapGetters({
+        items: 'organizationItems',
+      }),
       orgId: {
         get () {
           return this.selectedOrganizationId

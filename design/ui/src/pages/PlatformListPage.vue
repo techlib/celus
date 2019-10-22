@@ -114,7 +114,7 @@ cs:
                             </span>
                         </template>
                         <template v-slot:item.sushi_credentials_versions="{item}">
-                            <v-tooltip bottom v-for="record in item.sushi_credentials_versions" :key="record.version">
+                            <v-tooltip bottom v-for="record in item.sushi_credentials_versions" :key="10*record.version+record.outside_consortium">
                                 <template v-slot:activator="{ on }">
                                     <span v-on="on" class="mr-3 subdued">{{ record.version }}{{ record.outside_consortium ? '*' : '' }}</span>
                                 </template>

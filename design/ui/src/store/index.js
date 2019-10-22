@@ -9,6 +9,7 @@ import startOfYear from 'date-fns/start_of_year'
 import { ymDateFormat } from '../libs/dates'
 import { format as formatNumber } from 'mathjs/lib/function/string/format'
 import VuexPersistence from 'vuex-persist'
+import { sortOrganizations } from '../libs/organizations'
 
 Vue.use(Vuex)
 
@@ -77,6 +78,7 @@ export default new Vuex.Store({
       return 'not logged in'
     },
     loggedIn: state => state.user !== null,
+    organizationItems: state => sortOrganizations(state.organizations, state.appLanguage),
     selectedOrganization: state => {
       if (state.organizations && state.selectedOrganizationId !== null) {
         return state.organizations[state.selectedOrganizationId]

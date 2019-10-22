@@ -9,7 +9,9 @@ en:
     level: Importance
     level_info: Info
     level_important: Important
-
+    annotation_created: Annotation was successfully created
+    annotation_updated: Annotation was successfully updated
+    annotation_deleted: Annotation was successfully deleted
 cs:
     labels:
         short_message: Krátký úvod zprávy
@@ -18,19 +20,25 @@ cs:
     level: Důležitost
     level_info: Informační
     level_important: Důležité
+    annotation_created: Poznámka byla úspěšně vytvořena
+    annotation_updated: Poznámka byla úspěšně upravena
+    annotation_deleted: Poznámka byla úspěšně smazána
 </i18n>
 
 <template>
     <v-container>
         <v-row>
             <v-col>
-                <v-select
-                        :items="organizations"
-                        v-model="organizationId"
-                        item-value="pk"
-                        item-text="name"
+                <v-autocomplete
+                    v-model="organizationId"
+                    :items="organizations"
+                    item-text="name"
+                    item-value="pk"
                 >
-                </v-select>
+                    <template v-slot:item="{item}">
+                        <span :class="{bold: item.extra}">{{ item.name }}</span>
+                    </template>
+                </v-autocomplete>
             </v-col>
             <v-col v-if="platform">
                 <v-text-field
@@ -62,7 +70,6 @@ cs:
                     </template>
                     <v-date-picker
                             v-model="startDate"
-                            type="month"
                             no-title
                             :locale="$i18n.locale"
                     ></v-date-picker>
@@ -88,7 +95,6 @@ cs:
                     </template>
                     <v-date-picker
                             v-model="endDate"
-                            type="month"
                             no-title
                             :locale="$i18n.locale"
                     ></v-date-picker>
@@ -184,6 +190,12 @@ cs:
             <v-col cols="auto">
                 <v-btn @click="$emit('cancel')" v-text="$t('cancel')"></v-btn>
             </v-col>
+            <v-col cols="auto" v-if="annotationId">
+                <v-btn @click="deleteAnnotation()" color="error">
+                    <v-icon small class="mr-2">fa-trash</v-icon>
+                    {{ $t('delete') }}
+                </v-btn>
+            </v-col>
             <v-col cols="auto">
                 <v-btn :disabled="saving || !valid" @click="save()" color="primary">
                     <v-icon small class="mr-2">fa-save</v-icon>
@@ -226,11 +238,11 @@ cs:
     computed: {
       ...mapState({
         appSelectedOrganizationId: 'selectedOrganizationId',
-        organizationsMap: 'organizations',
       }),
       ...mapGetters({
         organizationSelected: 'organizationSelected',
         selectedOrganization: 'selectedOrganization',
+        organizations: 'organizationItems',
       }),
       importanceLevels () {
         return [
@@ -250,8 +262,8 @@ cs:
       },
       annotationData () {
         let data = {
-          'start_date': this.startDate ? this.startDate + '-01' : this.startDate,
-          'end_date': this.endDate ? this.endDate + '-01' : this.endDate,
+          'start_date': this.startDate,
+          'end_date': this.endDate,
           'subject_cs': this.subjectCs,
           'subject_en': this.subjectEn,
           'short_message_cs': this.shortMessageCs,
@@ -261,7 +273,7 @@ cs:
           'level': this.level,
         }
         if (this.organizationId) {
-          data['organization_id'] = this.organizationId
+          data['organization_id'] = this.organizationId === -1 ? null : this.organizationId
         }
         if (this.platformId) {
           data['platform_id'] = this.platformId
@@ -277,9 +289,6 @@ cs:
         }
         return true
       },
-      organizations () {
-        return Object.values(this.organizationsMap).sort((a, b) => (a.name > b.name))
-      }
     },
     methods: {
       ...mapActions({
@@ -298,6 +307,7 @@ cs:
           let response = await axios.post('/api/annotations/', this.annotationData)
           this.annotationId = response.data.pk
           this.$emit('saved', {annotation: response.data})
+          this.showSnackbar({content: this.$t('annotation_created'), color: 'success'})
         } catch (error) {
           this.showSnackbar({content: 'Error creating annotation: ' + error, color: 'error'})
         } finally {
@@ -310,6 +320,7 @@ cs:
           let response = await axios.put(`/api/annotations/${this.annotationId}/`, this.annotationData)
           this.annotationId = response.data.pk
           this.$emit('saved', {annotation: response.data})
+          this.showSnackbar({content: this.$t('annotation_updated'), color: 'success'})
         } catch (error) {
           this.showSnackbar({content: 'Error saving annotation: ' + error, color: 'error'})
         } finally {
@@ -333,6 +344,17 @@ cs:
           }
           if (this.annotation.platform) {
             this.platformId = this.annotation.platform.pk
+          }
+        }
+      },
+      async deleteAnnotation () {
+        if (this.annotationId) {
+          try {
+            let response = await axios.delete(`/api/annotations/${this.annotationId}/`)
+            this.showSnackbar({content: this.$t('annotation_deleted'), color: 'success'})
+            this.$emit('deleted')
+          } catch (error) {
+            this.showSnackbar({content: 'Error deleting annotation: ' + error, color: 'error'})
           }
         }
       },

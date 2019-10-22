@@ -102,6 +102,7 @@ cs:
                                 :annotation="selectedAnnotation"
                                 @saved="annotationSaved()"
                                 @cancel="cancelEdit()"
+                                @deleted="annotationSaved()"
                         />
                     </v-card-text>
                 </v-card>
