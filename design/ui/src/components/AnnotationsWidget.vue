@@ -22,7 +22,9 @@ cs:
             <v-col cols="auto" v-if="allowAdd">
                 <v-tooltip bottom>
                     <template v-slot:activator="{on}">
-                        <v-btn @click="showAddDialog = true" small dark fab color="primary" v-on="on"><v-icon small>fa-plus</v-icon></v-btn>
+                        <v-btn @click="showAddDialog = true" small dark fab color="primary" v-on="on">
+                            <v-icon small>fa-plus</v-icon>
+                        </v-btn>
                     </template>
                     {{ $t('add') }}
                 </v-tooltip>
