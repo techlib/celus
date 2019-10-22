@@ -94,8 +94,7 @@ cs:
         </v-layout>
 
         <section class="mb-5">
-            <AnnotationsWidget :platform="platformId"></AnnotationsWidget>
-            <!--AnnotationCreateModifyWidget :platform="platform" /-->
+            <AnnotationsWidget v-if="platform" :platform="platform" allow-add></AnnotationsWidget>
 
         </section>
 

@@ -87,7 +87,7 @@ cs:
         </section>
 
         <section class="mt-8" id="annotations">
-            <AnnotationsWidget :platform="platformId" @loaded="annotationsLoaded"></AnnotationsWidget>
+            <AnnotationsWidget v-if="platformData" :platform="platformData" @loaded="annotationsLoaded"></AnnotationsWidget>
         </section>
     </v-container>
 

@@ -1,8 +1,16 @@
 <i18n src="../locales/common.yaml"></i18n>
 
 <template>
-    <div v-if="annotations.length">
-        <h3 v-text="$t('labels.annotations')"></h3>
+    <v-container v-if="annotations.length" fluid>
+        <v-row>
+            <v-col cols="auto">
+                <h3 v-text="$t('labels.annotations')"></h3>
+            </v-col>
+            <v-spacer></v-spacer>
+            <v-col cols="auto" v-if="allowAdd">
+                <v-btn @click="showAddDialog = true" small dark fab color="primary"><v-icon small>fa-plus</v-icon></v-btn>
+            </v-col>
+        </v-row>
         <div>
             <v-expansion-panels
                     v-model="panel"
@@ -44,23 +52,44 @@
                 </v-expansion-panel>
             </v-expansion-panels>
         </div>
-    </div>
+        <div v-if="allowAdd">
+            <v-dialog
+                    v-model="showAddDialog"
+            >
+                <v-card>
+                    <v-card-title v-text="$t('add_annotation')"></v-card-title>
+                    <v-card-text>
+                        <AnnotationCreateModifyWidget
+                                :platform="platform"
+                                @saved="annotationSaved()"
+                        />
+                    </v-card-text>
+                </v-card>
+            </v-dialog>
+        </div>
+    </v-container>
 
 </template>
 
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
   import axios from 'axios'
+  import AnnotationCreateModifyWidget from './AnnotationCreateModifyWidget'
 
   export default {
     name: 'AnnotationsWidget',
+    components: {
+      AnnotationCreateModifyWidget,
+    },
     props: {
-      platform: {required: false},
+      platform: {required: false, type: Object},
+      allowAdd: {required: false, default: false, type: Boolean},
     },
     data () {
       return {
         annotations: [],
         panel: [],
+        showAddDialog: false,
       }
     },
     computed: {
@@ -78,7 +107,7 @@
           url += `&organization=${this.selectedOrganizationId}`
         }
         if (this.platform) {
-          url += `&platform=${this.platform}`
+          url += `&platform=${this.platform.pk}`
         }
         return url
       }
@@ -96,6 +125,10 @@
         } catch (error) {
           this.showSnackbar({content: 'Error loading annotations: ' + error, color: 'error'})
         }
+      },
+      annotationSaved () {
+        this.showAddDialog = false
+        this.fetchAnnotations()
       }
     },
     mounted () {

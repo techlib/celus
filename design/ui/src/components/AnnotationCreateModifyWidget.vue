@@ -181,7 +181,10 @@ cs:
         <v-row>
             <v-spacer></v-spacer>
             <v-col cols="auto">
-                <v-btn :disabled="saving || !valid" @click="save()" v-text="$t('save')"></v-btn>
+                <v-btn :disabled="saving || !valid" @click="save()" color="primary">
+                    <v-icon small class="mr-2">fa-save</v-icon>
+                    {{ $t('save') }}
+                </v-btn>
             </v-col>
         </v-row>
     </v-container>
@@ -283,6 +286,7 @@ cs:
         try {
           let response = await axios.post('/api/annotations/', this.annotationData)
           this.annotation = response.data
+          this.$emit('saved', {annotation: response.data})
         } catch (error) {
           this.showSnackbar({content: 'Error creating annotation: ' + error, color: 'error'})
         } finally {
@@ -294,6 +298,7 @@ cs:
         try {
           let response = await axios.put(`/api/annotations/${this.annotation.pk}/`, this.annotationData)
           this.annotation = response.data
+          this.$emit('saved', {annotation: response.data})
         } catch (error) {
           this.showSnackbar({content: 'Error saving annotation: ' + error, color: 'error'})
         } finally {
