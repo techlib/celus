@@ -94,7 +94,7 @@ cs:
         </v-layout>
 
         <section class="mb-5">
-            <AnnotationsWidget v-if="platform" :platform="platform" allow-add></AnnotationsWidget>
+            <AnnotationsWidget v-if="platform" :platform="platform" :allow-add="showAdminStuff"></AnnotationsWidget>
 
         </section>
 
