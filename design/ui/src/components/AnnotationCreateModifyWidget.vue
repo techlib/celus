@@ -12,6 +12,7 @@ en:
     annotation_created: Annotation was successfully created
     annotation_updated: Annotation was successfully updated
     annotation_deleted: Annotation was successfully deleted
+    all: All
 cs:
     labels:
         short_message: Krátký úvod zprávy
@@ -23,6 +24,7 @@ cs:
     annotation_created: Poznámka byla úspěšně vytvořena
     annotation_updated: Poznámka byla úspěšně upravena
     annotation_deleted: Poznámka byla úspěšně smazána
+    all: Všechny
 </i18n>
 
 <template>
@@ -40,13 +42,17 @@ cs:
                     </template>
                 </v-autocomplete>
             </v-col>
-            <v-col v-if="platform">
-                <v-text-field
-                        disabled
-                        :value="platform.name"
-                        :label="$t('platform')"
+            <v-col>
+                <v-autocomplete
+                    v-model="platformId"
+                    :items="platforms"
+                    item-text="name"
+                    item-value="pk"
                 >
-                </v-text-field>
+                    <template v-slot:item="{item}">
+                        <span :class="{bold: item.extra}">{{ item.name }}</span>
+                    </template>
+                </v-autocomplete>
             </v-col>
         </v-row>
         <v-row>
@@ -233,6 +239,7 @@ cs:
         saving: false,
         platformId:  null,
         organizationId: null,
+        platforms: [],
       }
     },
     computed: {
@@ -271,12 +278,8 @@ cs:
           'message_en': this.messageEn,
           'message_cs': this.messageCs,
           'level': this.level,
-        }
-        if (this.organizationId) {
-          data['organization_id'] = this.organizationId === -1 ? null : this.organizationId
-        }
-        if (this.platformId) {
-          data['platform_id'] = this.platformId
+          'platform_id': this.platformId === -1 ? null :  this.platformId,
+          'organization_id': this.organizationId === -1 ? null : this.organizationId
         }
         if (this.annotationId) {
           data['pk'] = this.annotationId
@@ -327,6 +330,15 @@ cs:
           this.saving = false
         }
       },
+      async fetchPlatforms () {
+        try {
+          let response = await axios.get('/api/platform/')
+          this.platforms = response.data
+          this.platforms.unshift({name: this.$t('all'), pk: null, extra: true})
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading platform list: ' + error, color: 'error'})
+        }
+      },
       annotationObjectToData () {
         if (this.annotation) {
           this.annotationId = this.annotation.pk
@@ -368,6 +380,7 @@ cs:
       }
     },
     created () {
+      this.fetchPlatforms()
       this.annotationObjectToData()
     },
     mounted() {

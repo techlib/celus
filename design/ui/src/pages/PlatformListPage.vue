@@ -46,6 +46,10 @@ cs:
             </v-col>
         </v-row>
         <v-row>
+            <v-spacer></v-spacer>
+            <AnnotationsWidget allow-add="showAdminStuff" />
+        </v-row>
+        <v-row>
             <v-col>
                 <v-card>
                     <v-card-text>
@@ -171,10 +175,14 @@ cs:
     createLoadingInterestRecord,
     remapInterestRecord
   } from '../libs/interest'
+  import AnnotationsWidget from '../components/AnnotationsWidget'
 
   export default {
     name: 'PlatformListPage',
-    components: {PlatformSelectionWidget},
+    components: {
+      PlatformSelectionWidget,
+      AnnotationsWidget,
+    },
     data () {
       return {
         platforms: [],

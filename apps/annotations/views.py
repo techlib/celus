@@ -36,8 +36,12 @@ class AnnotationsViewSet(ModelViewSet):
         for param in ('platform', 'organization'):
             value = self.request.query_params.get(param)
             if value:
-                # we filter to include those with specified value or with this value null
-                query_args.append(Q(**{param+'_id': value}) | Q(**{param+'__isnull': True}))
+                if value == 'null':
+                    # only those with the value equal to None are requested
+                    query_args.append(Q(**{param + '__isnull': True}))
+                else:
+                    # we filter to include those with specified value or with this value null
+                    query_args.append(Q(**{param+'_id': value}) | Q(**{param+'__isnull': True}))
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         if start_date:
