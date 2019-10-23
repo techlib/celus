@@ -111,35 +111,6 @@ cs:
         </div>
         </div>
     </v-container>
-    <div v-else-if="allowAdd" class="mx-2">
-        <v-tooltip bottom>
-            <template v-slot:activator="{on}">
-                <v-btn @click="showAddDialog = true" small dark rounded color="primary" v-on="on">
-                    <v-icon small class="mr-2">fa-plus</v-icon>
-                    {{ $t('add') }}
-                </v-btn>
-            </template>
-            {{ $t('add') }}
-        </v-tooltip>
-        <div v-if="allowAdd">
-            <v-dialog
-                    v-model="showAddDialog"
-            >
-                <v-card>
-                    <v-card-title v-text="$t('add')"></v-card-title>
-                    <v-card-text>
-                        <AnnotationCreateModifyWidget
-                                :platform="platform"
-                                :annotation="selectedAnnotation"
-                                @saved="annotationSaved()"
-                                @cancel="cancelEdit()"
-                                @deleted="annotationSaved()"
-                        />
-                    </v-card-text>
-                </v-card>
-            </v-dialog>
-        </div>
-    </div>
 </template>
 
 <script>

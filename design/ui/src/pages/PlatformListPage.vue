@@ -43,11 +43,11 @@ cs:
                     <v-icon class="mr-2" small>fa-upload</v-icon>
                     {{ $t('actions.upload_data') }}
                 </v-btn>
+                <AddAnnotationButton @update="refreshAnnotations()" class="ml-2"/>
             </v-col>
         </v-row>
         <v-row>
-            <v-spacer></v-spacer>
-            <AnnotationsWidget allow-add="showAdminStuff" />
+            <AnnotationsWidget :allow-add="showAdminStuff" ref="annotWidget"/>
         </v-row>
         <v-row>
             <v-col>
@@ -176,12 +176,14 @@ cs:
     remapInterestRecord
   } from '../libs/interest'
   import AnnotationsWidget from '../components/AnnotationsWidget'
+  import AddAnnotationButton from '../components/AddAnnotationButton'
 
   export default {
     name: 'PlatformListPage',
     components: {
       PlatformSelectionWidget,
       AnnotationsWidget,
+      AddAnnotationButton,
     },
     data () {
       return {
@@ -351,6 +353,10 @@ cs:
         } catch (error) {
           this.showSnackbar({content: 'Error loading annotations: ' + error, color: 'error'})
         }
+      },
+      refreshAnnotations () {
+        this.$refs.annotWidget.fetchAnnotations()
+        this.loadAnnotations()
       }
     },
     created () {
