@@ -168,7 +168,7 @@ cs:
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
   import axios from 'axios'
-  import PlatformSelectionWidget from './PlatformSelectionWidget'
+  import PlatformSelectionWidget from '../components/PlatformSelectionWidget'
   import {formatInteger} from '../libs/numbers'
   import {
     createEmptyInterestRecord,
