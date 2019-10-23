@@ -197,6 +197,7 @@ CELERY_TIMEZONE = TIME_ZONE
 
 
 CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
+                      'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
                       'sushi.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
                       'sushi.tasks.run_sushi_fetch_attempt_task': {'queue': 'sushi'},
                       'sushi.tasks.fetch_new_sushi_data_task': {'queue': 'sushi'},
