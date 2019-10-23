@@ -106,7 +106,7 @@ cs:
         </v-layout>
 
         <section class="mb-5">
-            <AnnotationsWidget v-if="platform" :platform="platform" :allow-add="showAdminStuff"></AnnotationsWidget>
+            <AnnotationsWidget v-if="platform" :platform="platform" :allow-add="showAdminStuff" ref="annotWidget"></AnnotationsWidget>
 
         </section>
 
@@ -238,6 +238,9 @@ cs:
           }
         }
       },
+      refreshAnnotations () {
+        this.$refs.annotWidget.fetchAnnotations()
+      }
     },
     created () {
       this.loadPlatform()

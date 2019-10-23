@@ -27,6 +27,7 @@ cs:
                 <v-card-title v-text="$t('add')"></v-card-title>
                 <v-card-text>
                     <AnnotationCreateModifyWidget
+                            ref="widget"
                             :platform="platform"
                             @saved="annotationSaved"
                             @cancel="cancelEdit"
@@ -56,9 +57,11 @@ cs:
     methods: {
       cancelEdit () {
         this.showDialog = false
+        // this.$refs.widget.clean()
       },
       annotationSaved () {
         this.showDialog = false
+        this.$refs.widget.clean()
         this.$emit('update')
       }
     }

@@ -28,6 +28,9 @@ cs:
 </i18n>
 
 <template>
+    <v-form
+            ref="form"
+    >
     <v-container>
         <v-row>
             <v-col>
@@ -210,6 +213,7 @@ cs:
             </v-col>
         </v-row>
     </v-container>
+    </v-form>
 </template>
 
 <script>
@@ -373,6 +377,19 @@ cs:
       required (v) {
         return !!v || this.$t('value_required')
       },
+      clean () {
+        this.annotationId = null
+        this.startDate = null
+        this.endDate = null
+        this.subjectCs = ''
+        this.subjectEn = ''
+        this.shortMessageCs = ''
+        this.shortMessageEn = ''
+        this.messageEn = ''
+        this.messageCs = ''
+        this.level = 'info'
+        this.$refs.form.resetValidation()
+      }
     },
     watch: {
       annotation () {
