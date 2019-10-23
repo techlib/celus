@@ -120,6 +120,8 @@ class ReportInterestMetric(models.Model):
                                       related_name='source_report_interest_metrics')
     interest_group = models.ForeignKey(InterestGroup, null=True, blank=True,
                                        on_delete=models.SET_NULL)
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
 
 class Dimension(models.Model):

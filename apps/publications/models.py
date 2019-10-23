@@ -4,6 +4,14 @@ from django.utils.translation import gettext_lazy as _
 from core.models import DataSource
 
 
+class PlatformInterestReport(models.Model):
+
+    report_type = models.ForeignKey('logs.ReportType', on_delete=models.CASCADE)
+    platform = models.ForeignKey('Platform', on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+
 class Platform(models.Model):
 
     ext_id = models.PositiveIntegerField(unique=True)
@@ -11,8 +19,11 @@ class Platform(models.Model):
     name = models.CharField(max_length=250)
     provider = models.CharField(max_length=250)
     url = models.URLField(blank=True)
-    interest_reports = models.ManyToManyField('logs.ReportType')
+    interest_reports = models.ManyToManyField('logs.ReportType', through=PlatformInterestReport,
+                                              related_name='interest_platforms')
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ('short_name',)
