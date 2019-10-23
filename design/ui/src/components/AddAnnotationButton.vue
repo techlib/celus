@@ -10,7 +10,7 @@ cs:
     <span>
         <v-tooltip bottom>
             <template v-slot:activator="{on}">
-                <v-btn @click="showDialog = true" v-on="on">
+                <v-btn @click="showDialog = true" v-on="on" :text="text" :small="small">
                     <slot>
                         <v-icon small class="mr-2">far fa-sticky-note</v-icon>
                         {{ $t('add') }}
@@ -21,6 +21,7 @@ cs:
         </v-tooltip>
         <v-dialog
                 v-model="showDialog"
+                max-width="1240px"
         >
             <v-card>
                 <v-card-title v-text="$t('add')"></v-card-title>
@@ -44,6 +45,8 @@ cs:
     components: {AnnotationCreateModifyWidget},
     props: {
       platform: {},
+      text: {type: Boolean, default: false},
+      small: {type: Boolean, default: false},
     },
     data () {
       return {

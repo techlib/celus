@@ -75,16 +75,28 @@ cs:
                     <v-spacer></v-spacer>
                     <v-flex shrink v-if="showAdminStuff && organizationSelected">
                         <v-card>
-                            <v-card-title>
+                            <!--v-card-title>
                                 {{ $t('title_fields.actions') }}
-                            </v-card-title>
+                            </v-card-title-->
                             <v-card-text>
-                                <v-layout>
-                                    <v-flex>
+                                <div>
+                                    <v-btn
+                                            text small
+                                            :to="{name: 'platform-upload-data', params: {platformId: platformId}}"
+                                    >
                                         <v-icon small class="mr-2">fa-upload</v-icon>
-                                        <router-link :to="{name: 'platform-upload-data', params: {platformId: platformId}}">{{ $t('actions.upload_custom_data') }}</router-link>
-                                    </v-flex>
-                                </v-layout>
+                                        {{ $t('actions.upload_custom_data') }}
+                                    </v-btn>
+
+                                </div>
+                                <div>
+                                    <AddAnnotationButton
+                                            :platform="platform"
+                                            @update="refreshAnnotations()"
+                                            text
+                                            small
+                                    />
+                                </div>
                             </v-card-text>
                         </v-card>
                     </v-flex>
@@ -136,7 +148,7 @@ cs:
   import {formatInteger} from '../libs/numbers'
   import { remapInterestRecord } from '../libs/interest'
   import AnnotationsWidget from '../components/AnnotationsWidget'
-  import AnnotationCreateModifyWidget from '../components/AnnotationCreateModifyWidget'
+  import AddAnnotationButton from '../components/AddAnnotationButton'
 
   export default {
     name: 'PlatformDetailPage',
@@ -145,7 +157,7 @@ cs:
       TitleList,
       CounterChartSet,
       AnnotationsWidget,
-      AnnotationCreateModifyWidget,
+      AddAnnotationButton,
     },
     props: {
       'platformId': {required: true},

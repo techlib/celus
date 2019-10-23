@@ -94,6 +94,7 @@ cs:
             <div v-if="allowAdd">
             <v-dialog
                     v-model="showAddDialog"
+                    max-width="1240px"
             >
                 <v-card>
                     <v-card-title v-text="$t('add')"></v-card-title>
