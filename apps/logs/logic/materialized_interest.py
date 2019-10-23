@@ -111,7 +111,7 @@ def remove_interest_from_import_batch(import_batch: ImportBatch, interest_rt: Re
 
 def recompute_interest_by_batch(queryset=None):
     with cache_based_lock('sync_interest_task'):
-        # we share the lock with sync_interest_task because there two could compete for the
+        # we share the lock with sync_interest_task because the two could compete for the
         # same data
         if not queryset:
             queryset = ImportBatch.objects.all()
