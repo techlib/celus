@@ -28,7 +28,7 @@ class DimensionFilterAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.ChartDefinition)
-class ChartDefinitionAdmin(admin.ModelAdmin):
+class ChartDefinitionAdmin(TranslationAdmin):
 
     list_display = ['name', 'desc', 'primary_dimension', 'primary_implicit_dimension',
                     'secondary_dimension', 'secondary_implicit_dimension', 'chart_type']
