@@ -9,6 +9,7 @@ let interest_remap = {
   'search': 'database',
   'full_text': 'title',
   'other': 'other',
+  'denial': 'denial',
 }
 
 function createEmptyInterestRecord () {

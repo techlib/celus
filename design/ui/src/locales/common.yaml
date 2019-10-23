@@ -80,6 +80,7 @@ en:
     title: Interest in titles
     database: Interest in databases
     other: Other interest types
+    denial: Denied interest
   interest_types: Types of interest to show
   actions:
     edit: Edit
@@ -175,6 +176,7 @@ cs:
     title: Zájem o tituly
     database: Zájem o databáze
     other: Další typy zájmu
+    denial: Odepřený zájem
   interest_types: Zobrazené typy zájmu
   actions:
     edit: Editovat

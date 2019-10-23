@@ -70,6 +70,15 @@ cs:
                                     </span>
                                 </td>
                             </tr>
+                            <tr>
+                                <th>{{ $t('interests.denial') }}</th>
+                                <td class="text-right">
+                                    <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                                    <span v-else>
+                                      {{ formatInteger(platform.interests.denial) }}
+                                    </span>
+                                </td>
+                            </tr>
                         </table>
                     </v-flex>
                     <v-spacer></v-spacer>

@@ -65,6 +65,9 @@ cs:
                                 <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.database')" value="database"></v-checkbox>
                             </v-col>
                             <v-col cols="auto">
+                                <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.denial')" value="denial"></v-checkbox>
+                            </v-col>
+                            <v-col cols="auto">
                                 <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.other')" value="other"></v-checkbox>
                             </v-col>
                         </v-row>
@@ -240,6 +243,14 @@ cs:
           base.push({
             text: this.$i18n.t('interests.database'),
             value: 'interests.database',
+            class: 'wrap text-xs-right',
+            align: 'right',
+          })
+        }
+        if (this.activeInterestTypes.indexOf('denial') >= 0) {
+          base.push({
+            text: this.$i18n.t('interests.denial'),
+            value: 'interests.denial',
             class: 'wrap text-xs-right',
             align: 'right',
           })
