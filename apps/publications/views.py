@@ -1,4 +1,4 @@
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, OuterRef, Exists
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -194,19 +194,26 @@ class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
         org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
                                                      self.request.user)
         extra_filters = self._extra_filters(org_filter)
-        access_log_filter = Q(**extend_query_filter(org_filter, 'base_report_type__accesslog__'),
-                              **extend_query_filter(extra_filters, 'base_report_type__accesslog__')
-                              )
-        report_types = ReportDataView.objects.filter(access_log_filter).\
-            annotate(log_count=Count('base_report_type__accesslog__value',
-                                     filter=access_log_filter)
-                     ).filter(log_count__gt=0)
+        access_log_filter = Q(**org_filter, **extra_filters)
+        distinct_rts = AccessLog.objects.filter(access_log_filter).\
+            values('report_type_id').distinct()
+        report_types = ReportDataView.objects.filter(base_report_type_id__in=distinct_rts)
+        # the following is a alternative approach which uses Exists subquery
+        # it might be faster in some cases but seems to be somewhat slower in others
+        # access_log_query = AccessLog.objects.\
+        #     filter(access_log_filter,
+        #            report_type_id=OuterRef('base_report_type_id')).values('pk')
+        # report_types = ReportDataView.objects.annotate(has_al=Exists(access_log_query)).\
+        #     filter(has_al=True)
         if self.more_precise_results:
-            report_types_clean = []
-            for rt in report_types:
-                if rt.logdata_qs().filter(**org_filter, **extra_filters).exists():
-                    report_types_clean.append(rt)
-            return report_types_clean
+            return report_types
+            # the following is commented out as it is not clear if it is still required
+            # after a change in the query that gets the report_types
+            # report_types_clean = []
+            # for rt in report_types:
+            #     if rt.logdata_qs().filter(**org_filter, **extra_filters).exists():
+            #         report_types_clean.append(rt)
+            # return report_types_clean
         else:
             return report_types
 
