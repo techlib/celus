@@ -48,7 +48,7 @@ cs:
                                 <td class="text-right">
                                     <span v-if="platform.title_count === 'loading'" class="fas fa-spinner fa-spin subdued"></span>
                                     <span v-else>
-                                        {{ platform.title_count ? platform.title_count : '-' }}
+                                        {{ formatInteger(platform.title_count) }}
                                     </span>
                                 </td>
                             </tr>

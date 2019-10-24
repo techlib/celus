@@ -58,9 +58,13 @@ cs:
                 :loading="loading"
                 :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
         >
-            <template v-slot:item.name="props">
-                <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
-                    <router-link v-else :to="{name: 'title-detail', params: {platformId: null, titleId: props.item.pk}}">{{ props.item.name }}</router-link>
+            <template v-slot:item.name="{item}">
+                <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: item.pk}}">
+                    <ShortenText :text="item.name" :length="50"/>
+                </router-link>
+                <router-link v-else :to="{name: 'title-detail', params: {platformId: null, titleId: item.pk}}">
+                    <ShortenText :text="item.name" />
+                </router-link>
             </template>
             <template v-slot:item.pub_type="{item}">
                 <v-tooltip bottom>
@@ -84,9 +88,11 @@ cs:
   import debounce from 'lodash/debounce'
   import {formatInteger} from '../libs/numbers'
   import {iconForPubType, pubTypes, titleForPubType} from '../libs/pub-types'
+  import ShortenText from './ShortenText'
 
   export default {
     name: 'TitleList',
+    components: {ShortenText},
     props: {
       url: {required: true},
       platformId: {required: false}
