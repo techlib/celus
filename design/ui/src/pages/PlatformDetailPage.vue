@@ -116,7 +116,6 @@ cs:
 
         <section class="mb-5">
             <AnnotationsWidget v-if="platform" :platform="platform" :allow-add="showAdminStuff" ref="annotWidget"></AnnotationsWidget>
-
         </section>
 
         <section v-if="selectedOrganizationId && platform && platform.title_count">
