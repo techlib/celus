@@ -9,9 +9,12 @@
                     :items="items"
                     item-text="name"
                     item-value="pk"
+                    clearable
+                    eager
+                    :menu-props="{width: '800px'}"
             >
                 <template v-slot:item="{item}">
-                    <span :class="{bold: item.extra}">{{ item.name }}</span>
+                    <span :class="{bold: item.extra, org: true}" v-text="item.name"></span>
                 </template>
             </v-autocomplete>
         </v-flex>
@@ -64,5 +67,9 @@
 
     .bold {
         font-weight: bold;
+    }
+
+    span.org {
+        min-width: 600px;
     }
 </style>
