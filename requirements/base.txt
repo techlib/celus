@@ -1,3 +1,4 @@
+django-cachalot
 Django==2.2.5
 pytz==2019.2
 django-allauth==0.40.0

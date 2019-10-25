@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'charts.apps.ChartsConfig',
     'annotations.apps.AnnotationsConfig',
     'rest_pandas',
+    'cachalot',
 ]
 
 MIDDLEWARE = [
@@ -267,6 +268,9 @@ LOGGING = {
         'handlers': ['console'],
     }
 }
+
+# hopefully temporary hacks
+SILENCED_SYSTEM_CHECKS = ["cachalot.E003"]
 
 # This loads the secret key and potentially other secret settings from a JSON file
 # it must be kept here, otherwise the settings will be missing
