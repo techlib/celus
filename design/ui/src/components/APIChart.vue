@@ -17,6 +17,7 @@
             :height="height"
             :toolbox="chartToolbox"
             :data-zoom="dataZoom"
+            :mark-line="markLine"
             >
     </component>
 </template>
@@ -30,6 +31,7 @@
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions, mapGetters } from 'vuex'
+  import 'echarts/lib/component/markLine'
 
   export default {
     name: 'APIChart',
@@ -87,6 +89,7 @@
         default: false,
       },
       orderBy: {},
+      showMarkLine: {default: true},
     },
     data () {
       return {
@@ -163,6 +166,32 @@
               }
               return item
             }
+          }
+        }
+        return {}
+      },
+      markLine () {
+        if (this.primaryDimension === 'organization' && this.showMarkLine) {
+          return {
+            silent: true,
+            symbol: ['none', 'none'],
+            data: [
+              {
+                name: 'me',
+                yAxis: this.organizationRow,
+                lineStyle: {
+                  normal: {
+                    color: '#aa0010',
+                    type: 'solid',
+                    width: 1,
+                  }
+                },
+                label: {
+                  formatter: this.$t('chart.my_org'),
+                  position: 'middle',
+                }
+              },
+            ]
           }
         }
         return {}

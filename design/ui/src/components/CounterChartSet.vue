@@ -4,10 +4,12 @@
 en:
     standard_views: Standard views
     customizable_views: Customizable views
+    mark_my_org: Highlight my organization
 
 cs:
     standard_views: Standardní pohledy
     customizable_views: Nastavitelné pohledy
+    mark_my_org: Zvýrazni mou organizaci
 </i18n>
 
 <template>
@@ -17,8 +19,8 @@ cs:
                 color="secondary"
         ></v-progress-linear>
     </div>
-    <v-layout column v-else>
-        <v-flex>
+    <v-container fluid v-else>
+        <v-row>
             <v-select
                     :items="reportViewsForSelect"
                     item-text="name"
@@ -33,13 +35,20 @@ cs:
                     </v-list-item-content>
                 </template>
             </v-select>
-        </v-flex>
+        </v-row>
 
-        <v-flex class="mt-3 mb-3">
+        <v-row class="mt-3 mb-3">
+            <v-col>
             <ChartTypeSelector
                     :report-type="selectedReportView"
                     v-model="selectedChartType"/>
-        </v-flex>
+            </v-col>
+            <v-col cols="auto" v-if="primaryDimension === 'organization'">
+                <v-switch v-model="showMarkLine" :label="$t('mark_my_org')"></v-switch>
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col>
         <APIChart
                 v-if="selectedReportView && selectedChartType"
                 :type="typeOfChart"
@@ -53,6 +62,7 @@ cs:
                 :stack="this.selectedChartType.stack === undefined ? this.selectedChartType.chart_type === 'h-bar' : this.selectedChartType.stack"
                 :order-by="this.selectedChartType.ordering"
                 :ignore-date-range="!!importBatchId"
+                :show-mark-line="showMarkLine"
         >
         </APIChart>
         <v-alert v-else-if="selectedReportView" type="warning" border="right" colored-border elevation="2">
@@ -61,7 +71,9 @@ cs:
         <v-alert v-else type="warning" border="right" colored-border elevation="2">
             {{ $t('no_reports_available_for_title') }}
         </v-alert>
-    </v-layout>
+            </v-col>
+        </v-row>
+    </v-container>
 </template>
 <script>
   import APIChart from './APIChart'
@@ -85,6 +97,7 @@ cs:
         selectedReportView: null,
         selectedChartType: null,
         loading: false,
+        showMarkLine: true,
       }
     },
     computed: {

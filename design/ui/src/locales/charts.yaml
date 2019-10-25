@@ -18,6 +18,7 @@ en:
             zoom_back: Back
             export_csv: Export CSV
         no_data: Sorry, no data available
+        my_org: My organization
 cs:
     chart:
         date_metric: Metrika v čase
@@ -38,3 +39,4 @@ cs:
             zoom_back: Zpět
             export_csv: Export CSV
         no_data: Je nám líto, ale nemáme data k zobrazení
+        my_org: Moje organizace
