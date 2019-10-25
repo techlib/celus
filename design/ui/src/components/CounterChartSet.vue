@@ -43,7 +43,7 @@ cs:
                     :report-type="selectedReportView"
                     v-model="selectedChartType"/>
             </v-col>
-            <v-col cols="auto" v-if="primaryDimension === 'organization'">
+            <v-col cols="auto" v-if="primaryDimension === 'organization' && this.organizationSelected">
                 <v-switch v-model="showMarkLine" :label="$t('mark_my_org')"></v-switch>
             </v-col>
         </v-row>
@@ -104,6 +104,7 @@ cs:
       ...mapGetters({
         dateRangeStartText: 'dateRangeStartText',
         dateRangeEndText: 'dateRangeEndText',
+        organizationSelected: 'organizationSelected',
       }),
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',

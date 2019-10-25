@@ -171,7 +171,7 @@
         return {}
       },
       markLine () {
-        if (this.primaryDimension === 'organization' && this.showMarkLine) {
+        if (this.primaryDimension === 'organization' && this.showMarkLine && this.organizationRow !== null) {
           return {
             silent: true,
             symbol: ['none', 'none'],
