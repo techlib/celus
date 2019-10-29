@@ -53,24 +53,8 @@ cs:
             <v-col>
                 <v-card>
                     <v-card-text>
+                        <InterestGroupSelector v-model="activeInterestTypes" ref="IGroups"/>
                         <v-container>
-                        <v-row dense>
-                            <v-col cols="12">
-                                <strong>{{ $t('interest_types') }}</strong>:
-                            </v-col>
-                            <v-col cols="auto">
-                                <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.title')" value="title"></v-checkbox>
-                            </v-col>
-                            <v-col cols="auto">
-                                <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.database')" value="database"></v-checkbox>
-                            </v-col>
-                            <v-col cols="auto">
-                                <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.denial')" value="denial"></v-checkbox>
-                            </v-col>
-                            <v-col cols="auto">
-                                <v-checkbox v-model="activeInterestTypes" class="small-checkbox" :label="$t('interests.other')" value="other"></v-checkbox>
-                            </v-col>
-                        </v-row>
                         <v-row>
                             <v-spacer></v-spacer>
                             <v-col class="pt-0">
@@ -102,22 +86,10 @@ cs:
                                 {{ formatInteger(item.title_count) }}
                             </span>
                         </template>
-                        <template v-slot:item.interests.title="{item}">
+                        <template v-for="ig in activeInterestTypes" v-slot:[slotName(ig)]="{item}">
                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                             <span v-else>
-                                {{ formatInteger(item.interests.title) }}
-                            </span>
-                        </template>
-                        <template v-slot:item.interests.database="{item}">
-                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
-                            <span v-else>
-                                {{ formatInteger(item.interests.database) }}
-                            </span>
-                        </template>
-                        <template v-slot:item.interests.other="{item}">
-                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
-                            <span v-else>
-                                {{ formatInteger(item.interests.other) }}
+                                {{ formatInteger(item.interests[ig]) }}
                             </span>
                         </template>
                         <template v-slot:item.sushi_credentials_versions="{item}">
@@ -180,6 +152,7 @@ cs:
   } from '../libs/interest'
   import AnnotationsWidget from '../components/AnnotationsWidget'
   import AddAnnotationButton from '../components/AddAnnotationButton'
+  import InterestGroupSelector from '../components/InterestGroupSelector'
 
   export default {
     name: 'PlatformListPage',
@@ -187,6 +160,7 @@ cs:
       PlatformSelectionWidget,
       AnnotationsWidget,
       AddAnnotationButton,
+      InterestGroupSelector,
     },
     data () {
       return {
@@ -231,37 +205,17 @@ cs:
             align: 'right',
           },
         ]
-        if (this.activeInterestTypes.indexOf('title') >= 0) {
-          base.push({
-            text: this.$i18n.t('interests.title'),
-            value: 'interests.title',
-            class: 'wrap text-xs-right',
-            align: 'right',
-          })
-        }
-        if (this.activeInterestTypes.indexOf('database') >= 0) {
-          base.push({
-            text: this.$i18n.t('interests.database'),
-            value: 'interests.database',
-            class: 'wrap text-xs-right',
-            align: 'right',
-          })
-        }
-        if (this.activeInterestTypes.indexOf('denial') >= 0) {
-          base.push({
-            text: this.$i18n.t('interests.denial'),
-            value: 'interests.denial',
-            class: 'wrap text-xs-right',
-            align: 'right',
-          })
-        }
-        if (this.activeInterestTypes.indexOf('other') >= 0) {
-          base.push({
-            text: this.$i18n.t('interests.other'),
-            value: 'interests.other',
-            class: 'wrap text-xs-right',
-            align: 'right',
-          })
+        if (this.$refs.IGroups) {
+          for (let ig of this.$refs.IGroups.interestGroups) {
+            if (this.activeInterestTypes.indexOf(ig.short_name) >= 0) {
+              base.push({
+                text: ig.name,
+                value: 'interests.' + ig.short_name,
+                class: 'wrap text-xs-right',
+                align: 'right',
+              })
+            }
+          }
         }
         base.push({
             text: this.$i18n.t('columns.sushi_available'),
@@ -368,7 +322,10 @@ cs:
       refreshAnnotations () {
         this.$refs.annotWidget.fetchAnnotations()
         this.loadAnnotations()
-      }
+      },
+      slotName (name) {
+        return 'item.interests.' + name
+      },
     },
     created () {
       this.loadPlatforms()

@@ -9,6 +9,7 @@ router.register(r'metric', views.MetricViewSet)
 router.register(r'import-batch', views.ImportBatchViewSet)
 router.register(r'manual-data-upload', views.ManualDataUploadViewSet,
                 basename='manual-data-upload')
+router.register(r'interest-groups', views.InterestGroupViewSet)
 
 urlpatterns = [
     path('chart-data-raw/<report_type_id>/', views.Counter5DataView.as_view(),

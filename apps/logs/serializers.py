@@ -8,11 +8,11 @@ from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenFi
 
 from core.models import DataSource
 from core.serializers import UserSerializer
-from logs.models import AccessLog, ImportBatch, ReportTypeToDimension
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer
-from .models import Metric, Dimension, ReportType, ManualDataUpload
+from .models import Metric, Dimension, ReportType, ManualDataUpload, InterestGroup, AccessLog, \
+    ImportBatch, ReportTypeToDimension
 
 
 class OrganizationSourceExtractingMixin(object):
@@ -200,3 +200,10 @@ class ManualDataUploadSerializer(ModelSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
         return attrs
+
+
+class InterestGroupSerializer(ModelSerializer):
+
+    class Meta:
+        model = InterestGroup
+        fields = ('pk', 'short_name', 'name')

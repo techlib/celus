@@ -14,10 +14,10 @@ from core.models import DataSource
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
-    ManualDataUpload
+    ManualDataUpload, InterestGroup
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
-    ManualDataUploadSerializer
+    ManualDataUploadSerializer, InterestGroupSerializer
 from publications.models import Platform
 
 
@@ -225,3 +225,10 @@ class OrganizationReportTypesViewSet(ModelViewSet):
         except DataSource.DoesNotExist:
             return ReportType.objects.filter(source__isnull=True)
         return source.reporttype_set.all() | ReportType.objects.filter(source__isnull=True)
+
+
+class InterestGroupViewSet(ReadOnlyModelViewSet):
+
+    queryset = InterestGroup.objects.all()
+    serializer_class = InterestGroupSerializer
+

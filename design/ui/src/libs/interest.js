@@ -14,9 +14,9 @@ let interest_remap = {
 
 function createEmptyInterestRecord () {
   let out = {}
-  for (let value of Object.values(interest_remap)) {
-    out[value] = null
-  }
+  // for (let value of Object.values(interest_remap)) {
+  //   out[value] = null
+  // }
   return out
 }
 
@@ -27,6 +27,7 @@ function createLoadingInterestRecord () {
 }
 
 function remapInterestRecord(input) {
+  return input
   let out = {}
   for (let [key, value] of Object.entries(input)) {
     if (key in interest_remap) {
