@@ -10,7 +10,7 @@ from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
-from logs.models import ReportType, AccessLog
+from logs.models import ReportType, AccessLog, InterestGroup
 from logs.serializers import ReportTypeSerializer
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
@@ -115,8 +115,12 @@ class PlatformInterestViewSet(ViewSet):
         date_filter_params = date_filter_from_params(request.GET)
         # parameters for annotation defining an annotation for each of the interest groups
         interest_type_dim = interest_rt.dimensions_sorted[0]
+        # we get active InterestGroups in order to filter out unused InterestGroups
+        # for which the dimension text mapping still exists
+        ig_names = {x['short_name'] for x in InterestGroup.objects.all().values('short_name')}
         interest_annot_params = {interest_type.text: Sum('value', filter=Q(dim1=interest_type.pk))
-                                 for interest_type in interest_type_dim.dimensiontext_set.all()}
+                                 for interest_type in
+                                 interest_type_dim.dimensiontext_set.filter(text__in=ig_names)}
         result = AccessLog.objects\
             .filter(report_type=interest_rt, **org_filter, **date_filter_params)\
             .values('platform')\
