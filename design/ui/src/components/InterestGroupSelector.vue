@@ -16,45 +16,31 @@
 </template>
 
 <script>
-  import {mapActions} from 'vuex'
-  import axios from 'axios'
+  import {mapActions, mapState} from 'vuex'
 
   export default {
     name: "InterestGroupSelector",
-    props: {
-      value: {default: []}
-    },
     data () {
       return {
-        interestGroups: [],
-        selectedGroups: this.value,
         loading: false,
+      }
+    },
+    computed: {
+      ...mapState({
+        interestGroups: state => state.interest.interestGroups,
+        selectedGroupsStore: state => state.interest.selectedGroups,
+      }),
+      selectedGroups: {
+        get: function () {return this.selectedGroupsStore},
+        set: function (value) {
+          this.changeSelectedGroups(value)
+        }
       }
     },
     methods: {
       ...mapActions({
-        showSnackbar: 'showSnackbar',
-      }),
-      async fetchInterestGroups() {
-        this.loading = true
-        try {
-          let response = await axios.get('/api/interest-groups/')
-          this.interestGroups = response.data
-          this.selectedGroups = response.data.filter(item => item.important).map(item => item.short_name)
-        } catch (error) {
-          this.showSnackbar({content: 'Error loading interest groups: ' + error, color: 'error'})
-        } finally {
-          this.loading = false
-        }
-      },
-    },
-    created () {
-      this.fetchInterestGroups()
-    },
-    watch: {
-      selectedGroups () {
-        this.$emit('input', this.selectedGroups)
-      }
+        changeSelectedGroups: 'changeSelectedGroups',
+      })
     }
   }
 </script>

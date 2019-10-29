@@ -10,6 +10,7 @@ import { ymDateFormat } from '../libs/dates'
 import { format as formatNumber } from 'mathjs/lib/function/string/format'
 import VuexPersistence from 'vuex-persist'
 import { sortOrganizations } from '../libs/organizations'
+import interest from './modules/interest'
 
 Vue.use(Vuex)
 
@@ -25,6 +26,9 @@ const vuexLocal = new VuexPersistence({
 
 export default new Vuex.Store({
   plugins: [vuexLocal.plugin],
+  modules: {
+    interest,
+  },
   state: {
     user: null,
     invalidUser: false,
@@ -139,6 +143,7 @@ export default new Vuex.Store({
       await context.dispatch('loadUserData')  // we need user data first
       context.dispatch('loadOrganizations')
       context.dispatch('changeDateRangeObject', context.state.dateRangeIndex)
+      context.dispatch('fetchInterestGroups')
     },
     showSnackbar (context, {content, color}) {
       context.commit('setSnackbarContent', {'content': content})

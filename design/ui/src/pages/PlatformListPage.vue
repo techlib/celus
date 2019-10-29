@@ -53,7 +53,7 @@ cs:
             <v-col>
                 <v-card>
                     <v-card-text>
-                        <InterestGroupSelector v-model="activeInterestTypes" ref="IGroups"/>
+                        <InterestGroupSelector />
                         <v-container>
                         <v-row>
                             <v-spacer></v-spacer>
@@ -86,7 +86,7 @@ cs:
                                 {{ formatInteger(item.title_count) }}
                             </span>
                         </template>
-                        <template v-for="ig in activeInterestTypes" v-slot:[slotName(ig)]="{item}">
+                        <template v-for="ig in activeInterestGroups" v-slot:[slotName(ig)]="{item}">
                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                             <span v-else>
                                 {{ formatInteger(item.interests[ig]) }}
@@ -167,13 +167,14 @@ cs:
         search: '',
         loading: false,
         showUploadDataDialog: false,
-        activeInterestTypes: ['title', 'database'],
         annotations: {},
       }
     },
     computed: {
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
+        interestGroups: state => state.interest.interestGroups,
+        activeInterestGroups: state => state.interest.selectedGroups,
       }),
       ...mapGetters({
         formatNumber: 'formatNumber',
@@ -204,16 +205,14 @@ cs:
             align: 'right',
           },
         ]
-        if (this.$refs.IGroups) {
-          for (let ig of this.$refs.IGroups.interestGroups) {
-            if (this.activeInterestTypes.indexOf(ig.short_name) >= 0) {
-              base.push({
-                text: ig.name,
-                value: 'interests.' + ig.short_name,
-                class: 'wrap text-xs-right',
-                align: 'right',
-              })
-            }
+        for (let ig of this.interestGroups) {
+          if (this.activeInterestGroups.indexOf(ig.short_name) >= 0) {
+            base.push({
+              text: ig.name,
+              value: 'interests.' + ig.short_name,
+              class: 'wrap text-xs-right',
+              align: 'right',
+            })
           }
         }
         base.push({
