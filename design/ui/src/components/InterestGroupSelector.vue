@@ -40,6 +40,7 @@
         try {
           let response = await axios.get('/api/interest-groups/')
           this.interestGroups = response.data
+          this.selectedGroups = response.data.filter(item => item.important).map(item => item.short_name)
         } catch (error) {
           this.showSnackbar({content: 'Error loading interest groups: ' + error, color: 'error'})
         } finally {

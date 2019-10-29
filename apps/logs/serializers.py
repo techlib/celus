@@ -206,4 +206,4 @@ class InterestGroupSerializer(ModelSerializer):
 
     class Meta:
         model = InterestGroup
-        fields = ('pk', 'short_name', 'name')
+        fields = ('pk', 'short_name', 'name', 'important', 'position')

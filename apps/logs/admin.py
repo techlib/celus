@@ -74,7 +74,8 @@ class AccessLogAdmin(admin.ModelAdmin):
 @admin.register(models.InterestGroup)
 class InterestGroupAdmin(TranslationAdmin):
 
-    list_display = ['short_name', 'name']
+    list_display = ['short_name', 'important', 'position', 'name']
+    list_editable = ['important', 'position']
 
 
 @admin.register(models.ImportBatch)

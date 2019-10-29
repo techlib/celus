@@ -148,7 +148,6 @@ cs:
   import {
     createEmptyInterestRecord,
     createLoadingInterestRecord,
-    remapInterestRecord
   } from '../libs/interest'
   import AnnotationsWidget from '../components/AnnotationsWidget'
   import AddAnnotationButton from '../components/AddAnnotationButton'
@@ -269,7 +268,7 @@ cs:
           for (let platform of this.platforms) {
             let newData = pkToRow[platform.pk]
             if (newData) {
-              this.$set(platform, 'interests', remapInterestRecord(newData))
+              this.$set(platform, 'interests', newData)
               platform.title_count = newData.title_count
             } else {
               platform.interests = createEmptyInterestRecord()

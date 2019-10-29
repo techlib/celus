@@ -80,6 +80,14 @@ class InterestGroup(models.Model):
     """
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
+    important = models.BooleanField(
+        default=False,
+        help_text='Important interest groups should be shown preferentially to users'
+    )
+    position = models.PositiveSmallIntegerField(help_text='Used for sorting')
+
+    class Meta:
+        ordering = ('position', 'important')
 
     def __str__(self):
         return self.name
