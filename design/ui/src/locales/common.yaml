@@ -93,6 +93,7 @@ en:
   in_czech: Czech
   in_english: English
   cover_image: Cover image
+  interest: Interest
 
 cs:
   pages:
@@ -189,3 +190,4 @@ cs:
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky
+  interest: Zájem

@@ -52,30 +52,15 @@ cs:
                                     </span>
                                 </td>
                             </tr>
-                            <tr>
-                                <th>{{ $t('interests.title') }}</th>
-                                <td class="text-right">
-                                    <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
-                                    <span v-else>
-                                        {{ formatInteger(platform.interests.title) }}
-                                    </span>
-                                </td>
+                            <tr class="header">
+                                <th colspan="2" v-text="$t('interest')"></th>
                             </tr>
-                            <tr>
-                                <th>{{ $t('interests.database') }}</th>
+                            <tr v-for="ig in interestGroups">
+                                <th v-text="ig.name"></th>
                                 <td class="text-right">
                                     <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                                     <span v-else>
-                                      {{ formatInteger(platform.interests.database) }}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>{{ $t('interests.denial') }}</th>
-                                <td class="text-right">
-                                    <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
-                                    <span v-else>
-                                      {{ formatInteger(platform.interests.denial) }}
+                                        {{ formatInteger(platform.interests[ig.short_name]) }}
                                     </span>
                                 </td>
                             </tr>
@@ -183,6 +168,7 @@ cs:
       }),
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
+        interestGroups: state => state.interest.interestGroups,
       }),
       titleListURL () {
         if (this.platform !== null) {
@@ -273,6 +259,16 @@ cs:
     table.overview {
 
         padding: 1rem;
+
+        tr.header {
+            th {
+                font-variant: small-caps;
+                font-weight: 300;
+                font-size: 82.5%;
+                border-bottom: solid 1px #dddddd;
+                padding-top: 0.5rem;
+            }
+        }
 
         th {
             text-align: left;

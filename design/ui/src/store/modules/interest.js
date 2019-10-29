@@ -7,6 +7,10 @@ export default {
     selectedGroups: [],
   },
 
+  getters: {
+    selectedGroupObjects: state => state.interestGroups.filter(item => state.selectedGroups.indexOf(item.short_name) > -1)
+  },
+
   actions: {
     async fetchInterestGroups({commit, dispatch}) {
       try {

@@ -89,7 +89,7 @@ cs:
                         <template v-for="ig in activeInterestGroups" v-slot:[slotName(ig)]="{item}">
                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
                             <span v-else>
-                                {{ formatInteger(item.interests[ig]) }}
+                                {{ formatInteger(item.interests[ig.short_name]) }}
                             </span>
                         </template>
                         <template v-slot:item.sushi_credentials_versions="{item}">
@@ -173,8 +173,6 @@ cs:
     computed: {
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
-        interestGroups: state => state.interest.interestGroups,
-        activeInterestGroups: state => state.interest.selectedGroups,
       }),
       ...mapGetters({
         formatNumber: 'formatNumber',
@@ -182,6 +180,7 @@ cs:
         dateRangeEnd: 'dateRangeEndText',
         showAdminStuff: 'showAdminStuff',
         organizationSelected: 'organizationSelected',
+        activeInterestGroups: 'selectedGroupObjects',
       }),
       headers () {
         let base = [
@@ -205,15 +204,13 @@ cs:
             align: 'right',
           },
         ]
-        for (let ig of this.interestGroups) {
-          if (this.activeInterestGroups.indexOf(ig.short_name) >= 0) {
-            base.push({
-              text: ig.name,
-              value: 'interests.' + ig.short_name,
-              class: 'wrap text-xs-right',
-              align: 'right',
-            })
-          }
+        for (let ig of this.activeInterestGroups) {
+          base.push({
+            text: ig.name,
+            value: 'interests.' + ig.short_name,
+            class: 'wrap text-xs-right',
+            align: 'right',
+          })
         }
         base.push({
             text: this.$i18n.t('columns.sushi_available'),
@@ -321,8 +318,8 @@ cs:
         this.$refs.annotWidget.fetchAnnotations()
         this.loadAnnotations()
       },
-      slotName (name) {
-        return 'item.interests.' + name
+      slotName (ig) {
+        return 'item.interests.' + ig.short_name
       },
     },
     created () {
