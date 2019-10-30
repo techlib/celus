@@ -2,6 +2,10 @@ from .base import *
 
 INSTALLED_APPS += ['debug_toolbar']
 INSTALLED_APPS.insert(4, 'livereload')  # it must be before staticfiles
+
+DISABLE_CACHALOT = True
+if DISABLE_CACHALOT and 'cachalot' in INSTALLED_APPS:
+    INSTALLED_APPS.remove('cachalot')
 LIVE_ERMS_AUTHENTICATION = True
 
 MIDDLEWARE += [
@@ -21,7 +25,12 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.headers.HeadersPanel',
     'debug_toolbar.panels.request.RequestPanel',
     'debug_toolbar.panels.sql.SQLPanel',
-    'cachalot.panels.CachalotPanel',
+]
+
+if not DISABLE_CACHALOT:
+    DEBUG_TOOLBAR_PANELS.append('cachalot.panels.CachalotPanel')
+
+DEBUG_TOOLBAR_PANELS += [
     'debug_toolbar.panels.staticfiles.StaticFilesPanel',
     'debug_toolbar.panels.templates.TemplatesPanel',
     'debug_toolbar.panels.cache.CachePanel',

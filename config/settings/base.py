@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'charts.apps.ChartsConfig',
     'annotations.apps.AnnotationsConfig',
     'rest_pandas',
-    'cachalot',
+    # 'cachalot',
 ]
 
 MIDDLEWARE = [

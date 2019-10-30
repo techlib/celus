@@ -150,6 +150,9 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
     def _annotations(self):
         return {}
 
+    def _postprocess(self, result):
+        return result
+
     def get_queryset(self):
         """
         Should return only titles for specific organization and platform
@@ -168,6 +171,7 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
         annot = self._annotations()
         if annot:
             result = result.annotate(**annot)
+        result = self._postprocess(result)
         return result
 
 
@@ -176,10 +180,31 @@ class PlatformTitleInterestViewSet(PlatformTitleViewSet):
     serializer_class = TitleCountSerializer
 
     def _extra_filters(self):
-        return {'accesslog__report_type__short_name': 'interest'}
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        return {'accesslog__report_type_id': interest_rt.pk}
 
     def _annotations(self):
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_type_dim = interest_rt.dimensions_sorted[0]
+        ig_names = {x['short_name'] for x in InterestGroup.objects.all().values('short_name')}
+        interest_annot_params = {interest_type.text: Sum('accesslog__value',
+                                                         filter=Q(accesslog__dim1=interest_type.pk))
+                                 for interest_type in
+                                 interest_type_dim.dimensiontext_set.filter(text__in=ig_names)}
+        print(interest_annot_params)
+        return interest_annot_params
+
         return {'interest': Sum('accesslog__value')}
+
+    def _postprocess(self, result):
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_type_dim = interest_rt.dimensions_sorted[0]
+        ig_names = {x['short_name'] for x in InterestGroup.objects.all().values('short_name')}
+        interest_types = {interest_type.text for interest_type in
+                          interest_type_dim.dimensiontext_set.filter(text__in=ig_names)}
+        for record in result:
+            record.interest = {it: getattr(record, it) for it in interest_types}
+        return result
 
 
 class BaseReportDataViewViewSet(ReadOnlyModelViewSet):

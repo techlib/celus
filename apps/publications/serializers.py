@@ -45,7 +45,7 @@ class TitleSerializer(ModelSerializer):
 
 class TitleCountSerializer(ModelSerializer):
 
-    interest = IntegerField(read_only=True)
+    interest = JSONField(read_only=True)
     pub_type_name = SerializerMethodField()
 
     class Meta:
