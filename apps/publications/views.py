@@ -1,4 +1,7 @@
+from time import time
+
 from django.db.models import Count, Sum, Q, OuterRef, Exists
+from django.db.models.functions import Coalesce
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -12,6 +15,7 @@ from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
 from logs.models import ReportType, AccessLog, InterestGroup
 from logs.serializers import ReportTypeSerializer
+from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
 from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer
@@ -153,6 +157,12 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
     def _postprocess(self, result):
         return result
 
+    def _postprocess_paginated(self, result):
+        return result
+
+    def _before_queryset(self):
+        pass
+
     def get_queryset(self):
         """
         Should return only titles for specific organization and platform
@@ -163,6 +173,7 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
                                      pk=self.kwargs['platform_pk'])
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
 
+        self._before_queryset()
         result = Title.objects.filter(accesslog__platform=platform,
                                       **date_filter_params,
                                       **extend_query_filter(org_filter, 'accesslog__'),
@@ -174,36 +185,53 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
         result = self._postprocess(result)
         return result
 
+    def paginate_queryset(self, queryset):
+        qs = super().paginate_queryset(queryset)
+        return self._postprocess_paginated(qs)
+
 
 class PlatformTitleInterestViewSet(PlatformTitleViewSet):
 
     serializer_class = TitleCountSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.interest_rt = None
+        self.interest_type_dim = None
+        self.interest_groups_names = set()
+
+    def _before_queryset(self):
+        self.interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        self.interest_type_dim = self.interest_rt.dimensions_sorted[0]
+        self.interest_groups_names = {x['short_name']
+                                      for x in InterestGroup.objects.all().values('short_name')}
 
     def _extra_filters(self):
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
-        return {'accesslog__report_type_id': interest_rt.pk}
+        return {'accesslog__report_type_id': self.interest_rt.pk}
 
     def _annotations(self):
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
-        interest_type_dim = interest_rt.dimensions_sorted[0]
-        ig_names = {x['short_name'] for x in InterestGroup.objects.all().values('short_name')}
-        interest_annot_params = {interest_type.text: Sum('accesslog__value',
-                                                         filter=Q(accesslog__dim1=interest_type.pk))
-                                 for interest_type in
-                                 interest_type_dim.dimensiontext_set.filter(text__in=ig_names)}
-        print(interest_annot_params)
+        interest_annot_params = {
+            interest_type.text:
+                Coalesce(Sum('accesslog__value', filter=Q(accesslog__dim1=interest_type.pk)), 0)
+            for interest_type in
+            self.interest_type_dim.dimensiontext_set.filter(text__in=self.interest_groups_names)
+        }
         return interest_annot_params
 
-        return {'interest': Sum('accesslog__value')}
-
-    def _postprocess(self, result):
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
-        interest_type_dim = interest_rt.dimensions_sorted[0]
-        ig_names = {x['short_name'] for x in InterestGroup.objects.all().values('short_name')}
-        interest_types = {interest_type.text for interest_type in
-                          interest_type_dim.dimensiontext_set.filter(text__in=ig_names)}
+    def _postprocess_paginated(self, result):
+        interest_types = {
+            interest_type.text for interest_type in
+            self.interest_type_dim.dimensiontext_set.filter(text__in=self.interest_groups_names)
+        }
         for record in result:
             record.interests = {it: getattr(record, it) for it in interest_types}
+        return result
+
+    def _postprocess(self, result):
+        order_by = self.request.query_params.get('order_by')
+        if order_by:
+            result = result.order_by('-' + order_by)
         return result
 
 

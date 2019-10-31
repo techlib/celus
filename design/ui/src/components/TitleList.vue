@@ -53,10 +53,13 @@ cs:
         <v-data-table
                 :items="filteredTitles"
                 :headers="headers"
-                :items-per-page.sync="itemsPerPage"
                 :search="search"
                 :loading="loading"
+                :items-per-page.sync="itemsPerPage"
                 :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
+                :server-items-length="totalTitleCount"
+                :sort-by.sync="sortBy"
+                :page.sync="pageNum"
         >
             <template v-slot:item.name="{item}">
                 <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: item.pk}}">
@@ -105,9 +108,12 @@ cs:
         titles: [],
         search: '',
         itemsPerPage: 25,
+        totalTitleCount: 0,
         loading: false,
         showDOI: false,
         selectedPubType: null,
+        sortBy: '',
+        pageNum: 1,
       }
     },
     computed: {
@@ -178,6 +184,16 @@ cs:
         }
         return this.titles.filter(item => item.pub_type === this.selectedPubType)
 
+      },
+      fullUrl () {
+        if (this.url) {
+          let sortBy = this.sortBy
+          if (sortBy.startsWith('interests.')) {
+            sortBy = sortBy.replace('interests\.', '')
+          }
+          return this.url + `&page_size=${this.itemsPerPage}&order_by=${sortBy}&page=${this.pageNum}`
+        }
+        return this.url
       }
     },
     methods: {
@@ -188,11 +204,12 @@ cs:
       iconForPubType: iconForPubType,
       titleForPubType: titleForPubType,
       async loadData () {
-        if (this.url) {
+        if (this.fullUrl) {
           this.loading = true
           try {
-            let response = await axios.get(this.url)
-            this.titles = response.data
+            let response = await axios.get(this.fullUrl)
+            this.titles = response.data.results
+            this.totalTitleCount = response.data.count
           } catch (error) {
             this.showSnackbar({content: 'Error loading platforms: ' + error})
           } finally {
@@ -203,7 +220,7 @@ cs:
       slotName: ig =>  'item.interests.' + ig.short_name,
     },
     watch: {
-      url () {
+      fullUrl () {
         this.loadData()
       }
     },
