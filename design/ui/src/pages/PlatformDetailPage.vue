@@ -121,6 +121,7 @@ cs:
         <section v-if="platform && platform.title_count">
             <h3 class="pt-3">{{ $t('titles') }}</h3>
 
+            <InterestGroupSelector />
             <TitleList :url="titleListURL" :platform-id="platformId"></TitleList>
         </section>
         <section v-if="platform && !platform.title_count">
@@ -141,6 +142,7 @@ cs:
   import {formatInteger} from '../libs/numbers'
   import AnnotationsWidget from '../components/AnnotationsWidget'
   import AddAnnotationButton from '../components/AddAnnotationButton'
+  import InterestGroupSelector from '../components/InterestGroupSelector'
 
   export default {
     name: 'PlatformDetailPage',
@@ -150,6 +152,7 @@ cs:
       CounterChartSet,
       AnnotationsWidget,
       AddAnnotationButton,
+      InterestGroupSelector,
     },
     props: {
       'platformId': {required: true},

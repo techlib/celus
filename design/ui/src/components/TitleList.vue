@@ -75,8 +75,11 @@ cs:
                     <span>{{ $t(titleForPubType(item.pub_type)) }}</span>
                 </v-tooltip>
             </template>
-            <template v-slot:item.interest="{item}">
-                {{ formatInteger(item.interest) }}
+            <template v-for="ig in activeInterestGroups" v-slot:[slotName(ig)]="{item}">
+                <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                <span v-else>
+                    {{ formatInteger(item.interests[ig.short_name]) }}
+                </span>
             </template>
         </v-data-table>
     </v-card>
@@ -84,7 +87,7 @@ cs:
 
 <script>
   import axios from 'axios'
-  import { mapActions } from 'vuex'
+  import {mapActions, mapGetters} from 'vuex'
   import debounce from 'lodash/debounce'
   import {formatInteger} from '../libs/numbers'
   import {iconForPubType, pubTypes, titleForPubType} from '../libs/pub-types'
@@ -108,6 +111,9 @@ cs:
       }
     },
     computed: {
+      ...mapGetters({
+        activeInterestGroups: 'selectedGroupObjects',
+      }),
       searchDebounced: {
         get () {
           return this.search
@@ -145,12 +151,14 @@ cs:
             value: 'doi'
           })
         }
-        base.push({
-            text: this.$i18n.t('columns.interest'),
-            value: 'interest',
-            align: 'end',
-
+        for (let ig of this.activeInterestGroups) {
+          base.push({
+            text: ig.name,
+            value: 'interests.' + ig.short_name,
+            class: 'wrap text-xs-right',
+            align: 'right',
           })
+        }
         return base
       },
       pubTypes () {
@@ -192,6 +200,7 @@ cs:
           }
         }
       },
+      slotName: ig =>  'item.interests.' + ig.short_name,
     },
     watch: {
       url () {

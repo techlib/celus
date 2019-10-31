@@ -203,7 +203,7 @@ class PlatformTitleInterestViewSet(PlatformTitleViewSet):
         interest_types = {interest_type.text for interest_type in
                           interest_type_dim.dimensiontext_set.filter(text__in=ig_names)}
         for record in result:
-            record.interest = {it: getattr(record, it) for it in interest_types}
+            record.interests = {it: getattr(record, it) for it in interest_types}
         return result
 
 
