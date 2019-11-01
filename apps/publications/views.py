@@ -230,8 +230,10 @@ class PlatformTitleInterestViewSet(PlatformTitleViewSet):
 
     def _postprocess(self, result):
         order_by = self.request.query_params.get('order_by')
+        desc = self.request.query_params.get('desc', 'true')
         if order_by:
-            result = result.order_by('-' + order_by)
+            prefix = '-' if desc == 'true' else ''
+            result = result.order_by(prefix + order_by)
         return result
 
 

@@ -59,7 +59,9 @@ cs:
                 :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
                 :server-items-length="totalTitleCount"
                 :sort-by.sync="sortBy"
+                :sort-desc.sync="sortDesc"
                 :page.sync="pageNum"
+                :must-sort="true"
         >
             <template v-slot:item.name="{item}">
                 <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: item.pk}}">
@@ -79,8 +81,8 @@ cs:
                 </v-tooltip>
             </template>
             <template v-for="ig in activeInterestGroups" v-slot:[slotName(ig)]="{item}">
-                <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
-                <span v-else>
+                <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued" :key="ig.pk"></span>
+                <span v-else :key="ig.pk">
                     {{ formatInteger(item.interests[ig.short_name]) }}
                 </span>
             </template>
@@ -112,7 +114,8 @@ cs:
         loading: false,
         showDOI: false,
         selectedPubType: null,
-        sortBy: '',
+        sortBy: 'name',
+        sortDesc: true,
         pageNum: 1,
       }
     },
@@ -188,10 +191,12 @@ cs:
       fullUrl () {
         if (this.url) {
           let sortBy = this.sortBy
-          if (sortBy.startsWith('interests.')) {
-            sortBy = sortBy.replace('interests\.', '')
+          if (!sortBy) {
+            sortBy = ''
+          } else if (sortBy.startsWith('interests.')) {
+            sortBy = sortBy.replace('interests.', '')
           }
-          return this.url + `&page_size=${this.itemsPerPage}&order_by=${sortBy}&page=${this.pageNum}`
+          return this.url + `&page_size=${this.itemsPerPage}&order_by=${sortBy}&desc=${this.sortDesc}&page=${this.pageNum}`
         }
         return this.url
       }
