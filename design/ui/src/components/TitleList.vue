@@ -53,7 +53,6 @@ cs:
         <v-data-table
                 :items="filteredTitles"
                 :headers="headers"
-                :search="search"
                 :loading="loading"
                 :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
                 :server-items-length="totalTitleCount"
@@ -114,6 +113,7 @@ cs:
         loading: false,
         showDOI: false,
         selectedPubType: null,
+        searchString: '',
         options: {
         }
       }
@@ -203,7 +203,7 @@ cs:
           if (Array.isArray(sortDesc)) {
             sortDesc = sortDesc[0]
           }
-          return this.url + `&page_size=${itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}&page=${page}`
+          return this.url + `&page_size=${itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}&page=${page}&q=${this.search}`
         }
         return this.url
       }
