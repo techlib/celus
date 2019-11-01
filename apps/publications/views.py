@@ -143,12 +143,12 @@ class PlatformInterestViewSet(ViewSet):
         return Response({})
 
 
-class PlatformTitleViewSet(ReadOnlyModelViewSet):
+class BaseTitleViewSet(ReadOnlyModelViewSet):
 
     serializer_class = TitleSerializer
     # pagination_class = StandardResultsSetPagination
 
-    def _extra_filters(self):
+    def _extra_filters(self, org_filter):
         return {}
 
     def _annotations(self):
@@ -169,15 +169,12 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
         """
         org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
                                                      self.request.user)
-        platform = get_object_or_404(Platform.objects.filter(**org_filter),
-                                     pk=self.kwargs['platform_pk'])
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
-
         self._before_queryset()
-        result = Title.objects.filter(accesslog__platform=platform,
+        result = Title.objects.filter(
                                       **date_filter_params,
                                       **extend_query_filter(org_filter, 'accesslog__'),
-                                      **self._extra_filters(),
+                                      **self._extra_filters(org_filter),
                                       ).distinct()
         annot = self._annotations()
         if annot:
@@ -190,10 +187,17 @@ class PlatformTitleViewSet(ReadOnlyModelViewSet):
         return self._postprocess_paginated(qs)
 
 
-class PlatformTitleInterestViewSet(PlatformTitleViewSet):
+class PlatformTitleViewSet(BaseTitleViewSet):
 
-    serializer_class = TitleCountSerializer
-    pagination_class = StandardResultsSetPagination
+    def _extra_filters(self, org_filter):
+        filters = super()._extra_filters(org_filter)
+        platform = get_object_or_404(Platform.objects.filter(**org_filter),
+                                     pk=self.kwargs['platform_pk'])
+        filters['accesslog__platform'] = platform
+        return filters
+
+
+class TitleInterestMixin(object):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -207,17 +211,21 @@ class PlatformTitleInterestViewSet(PlatformTitleViewSet):
         self.interest_groups_names = {x['short_name']
                                       for x in InterestGroup.objects.all().values('short_name')}
 
-    def _extra_filters(self):
-        return {'accesslog__report_type_id': self.interest_rt.pk}
+    def _extra_filters(self, org_filter):
+        filters = super()._extra_filters(org_filter)
+        filters['accesslog__report_type_id'] = self.interest_rt.pk
+        return filters
 
     def _annotations(self):
+        annotations = super()._annotations()
         interest_annot_params = {
             interest_type.text:
                 Coalesce(Sum('accesslog__value', filter=Q(accesslog__dim1=interest_type.pk)), 0)
             for interest_type in
             self.interest_type_dim.dimensiontext_set.filter(text__in=self.interest_groups_names)
         }
-        return interest_annot_params
+        annotations.update(interest_annot_params)
+        return annotations
 
     def _postprocess_paginated(self, result):
         interest_types = {
@@ -235,6 +243,12 @@ class PlatformTitleInterestViewSet(PlatformTitleViewSet):
             prefix = '-' if desc == 'true' else ''
             result = result.order_by(prefix + order_by)
         return result
+
+
+class PlatformTitleInterestViewSet(TitleInterestMixin, PlatformTitleViewSet):
+
+    serializer_class = TitleCountSerializer
+    pagination_class = StandardResultsSetPagination
 
 
 class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
@@ -310,40 +324,18 @@ class PlatformTitleReportDataViewViewSet(BaseReportDataViewViewSet):
         return {'target': title, 'platform': platform}
 
 
-class TitleViewSet(ReadOnlyModelViewSet):
+class TitleViewSet(BaseTitleViewSet):
 
     serializer_class = TitleSerializer
-    # pagination_class = StandardResultsSetPagination
-
-    def get_queryset(self):
-        """
-        Should return only titles for specific organization but all platforms
-        """
-        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                     self.request.user,
-                                                     prefix='accesslog__')
-        return Title.objects.filter(**org_filter).distinct()
 
 
-class TitleInterestViewSet(ReadOnlyModelViewSet):
+class TitleInterestViewSet(TitleInterestMixin, BaseTitleViewSet):
     """
     View for all titles for selected organization
     """
 
     serializer_class = TitleCountSerializer
-    # pagination_class = StandardResultsSetPagination
-
-    def get_queryset(self):
-        """
-        Should return only titles for specific organization but all platforms
-        """
-        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                     self.request.user)
-        date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
-        return Title.objects.filter(accesslog__report_type__short_name='interest',
-                                    **extend_query_filter(org_filter, 'accesslog__'),
-                                    **date_filter_params).\
-            distinct().annotate(interest=Sum('accesslog__value'))
+    pagination_class = StandardResultsSetPagination
 
 
 class StartERMSSyncPlatformsTask(APIView):
