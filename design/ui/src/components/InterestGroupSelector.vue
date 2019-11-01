@@ -4,12 +4,12 @@
     <v-container fluid>
         <v-row dense>
             <v-col cols="12">
-                <strong>{{ $t('interest_types') }}</strong>:
+                <span :class="titleClass">{{ $t('interest_types') }}</span>:
             </v-col>
         </v-row>
         <v-row>
             <v-col cols="auto" v-for="ig in interestGroups" :key="ig.pk">
-                <v-checkbox v-model="selectedGroups" class="small-checkbox" :label="ig.name" :value="ig.short_name"></v-checkbox>
+                <v-checkbox v-model="selectedGroups" class="small-checkbox" :label="ig.name" :value="ig.short_name" dense></v-checkbox>
             </v-col>
         </v-row>
     </v-container>
@@ -20,6 +20,9 @@
 
   export default {
     name: "InterestGroupSelector",
+    props: {
+      titleClass: {default: 'font-weight-bold', type: String},
+    },
     data () {
       return {
         loading: false,

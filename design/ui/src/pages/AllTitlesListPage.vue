@@ -6,6 +6,9 @@
         <section v-if="selectedOrganizationId">
 
             <h3 class="pt-3">{{ $t('titles') }}</h3>
+
+            <InterestGroupSelector />
+
             <TitleList :url="titleListURL"></TitleList>
         </section>
     </div>
@@ -14,11 +17,13 @@
 <script>
   import {mapActions, mapGetters, mapState} from 'vuex'
   import TitleList from '../components/TitleList'
+  import InterestGroupSelector from '../components/InterestGroupSelector'
 
   export default {
     name: 'AllTitlesListPage',
     components: {
       TitleList,
+      InterestGroupSelector,
     },
     props: {
     },

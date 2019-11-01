@@ -237,7 +237,8 @@ cs:
       }
     },
     mounted() {
-      this.loadData()
+      // it seems that watching fullUrl is enough
+      //this.loadData()
     }
   }
 </script>
