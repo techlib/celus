@@ -55,13 +55,14 @@ cs:
                 :headers="headers"
                 :search="search"
                 :loading="loading"
-                :items-per-page.sync="itemsPerPage"
                 :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
                 :server-items-length="totalTitleCount"
-                :sort-by.sync="sortBy"
-                :sort-desc.sync="sortDesc"
-                :page.sync="pageNum"
                 :must-sort="true"
+                :items-per-page="25"
+                :sort-desc="true"
+                sort-by="name"
+                :page="1"
+                :options.sync="options"
         >
             <template v-slot:item.name="{item}">
                 <router-link v-if="platformId" :to="{name: 'platform-title-detail', params: {platformId: platformId, titleId: item.pk}}">
@@ -109,14 +110,12 @@ cs:
       return {
         titles: [],
         search: '',
-        itemsPerPage: 25,
         totalTitleCount: 0,
         loading: false,
         showDOI: false,
         selectedPubType: null,
-        sortBy: 'name',
-        sortDesc: true,
-        pageNum: 1,
+        options: {
+        }
       }
     },
     computed: {
@@ -189,14 +188,22 @@ cs:
 
       },
       fullUrl () {
+        let { sortBy, sortDesc, page, itemsPerPage } = this.options
         if (this.url) {
-          let sortBy = this.sortBy
           if (!sortBy) {
             sortBy = ''
-          } else if (sortBy.startsWith('interests.')) {
-            sortBy = sortBy.replace('interests.', '')
+          } else {
+            if (Array.isArray(sortBy)) {
+              sortBy = sortBy[0]
+            }
+            if (sortBy.startsWith('interests.')) {
+              sortBy = sortBy.replace('interests.', '')
+            }
           }
-          return this.url + `&page_size=${this.itemsPerPage}&order_by=${sortBy}&desc=${this.sortDesc}&page=${this.pageNum}`
+          if (Array.isArray(sortDesc)) {
+            sortDesc = sortDesc[0]
+          }
+          return this.url + `&page_size=${itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}&page=${page}`
         }
         return this.url
       }
