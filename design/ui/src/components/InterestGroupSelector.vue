@@ -7,7 +7,7 @@
                 <span :class="titleClass">{{ $t('interest_types') }}</span>:
             </v-col>
         </v-row>
-        <v-row>
+        <v-row dense>
             <v-col cols="auto" v-for="ig in interestGroups" :key="ig.pk">
                 <v-checkbox v-model="selectedGroups" class="small-checkbox" :label="ig.name" :value="ig.short_name" dense></v-checkbox>
             </v-col>
@@ -48,6 +48,22 @@
   }
 </script>
 
-<style scoped>
+<style lang="scss">
 
+.v-input.small-checkbox {
+    margin-top: 0;
+
+    .v-input__slot {
+        margin-bottom: 0 !important;
+        margin-right: 0.5rem;
+
+        .v-input--selection-controls__input {
+            margin-right: 0;
+        }
+    }
+
+    label {
+        font-size: 0.875rem;
+    }
+}
 </style>
