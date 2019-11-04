@@ -54,6 +54,12 @@ cs:
                 <v-card>
                     <v-card-text>
                         <InterestGroupSelector />
+                        <v-switch v-model="showChart" label="showChart" />
+
+                        <PlatformInterestChart v-if="showChart" :platforms="platforms" />
+
+
+
                         <v-container>
                         <v-row>
                             <v-spacer></v-spacer>
@@ -68,6 +74,7 @@ cs:
                             </v-col>
                         </v-row>
                         </v-container>
+
                     <v-data-table
                             :items="platforms"
                             :headers="headers"
@@ -152,6 +159,7 @@ cs:
   import AnnotationsWidget from '../components/AnnotationsWidget'
   import AddAnnotationButton from '../components/AddAnnotationButton'
   import InterestGroupSelector from '../components/InterestGroupSelector'
+  import PlatformInterestChart from '../components/PlatformInterestChart'
 
   export default {
     name: 'PlatformListPage',
@@ -160,6 +168,7 @@ cs:
       AnnotationsWidget,
       AddAnnotationButton,
       InterestGroupSelector,
+      PlatformInterestChart,
     },
     data () {
       return {
@@ -168,6 +177,7 @@ cs:
         loading: false,
         showUploadDataDialog: false,
         annotations: {},
+        showChart: false,
       }
     },
     computed: {
