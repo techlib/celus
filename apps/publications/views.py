@@ -171,13 +171,13 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
                                                      self.request.user)
         date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
         self._before_queryset()
-        search_filter = Q()
+        search_filters = []
         q = self.request.query_params.get('q')
         if q:
-            search_filter = Q(name__icontains=q) | Q(isbn__contains=q) | Q(issn__contains=q) |\
-                            Q(doi__contains=q)
+            search_filters = [Q(name__icontains=p) | Q(isbn__contains=p) | Q(issn__contains=p) |\
+                              Q(doi__contains=p) for p in q.split()]
         result = Title.objects.filter(
-            search_filter,
+            *search_filters,
             **date_filter_params,
             **extend_query_filter(org_filter, 'accesslog__'),
             **self._extra_filters(org_filter),
