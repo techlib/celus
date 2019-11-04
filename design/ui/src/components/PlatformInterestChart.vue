@@ -1,14 +1,19 @@
+<i18n src="../locales/charts.yaml"></i18n>
+
 <template>
     <VeBar
             :data="chartData"
             :settings="chartSettings"
             :height="height"
+            :toolbox="chartToolbox"
     />
 </template>
 
 <script>
   import { mapState } from 'vuex'
   import VeBar from 'v-charts/lib/bar.common'
+  // the following import is here to ensure the component at hand will be bundled
+  import _toolBox from 'echarts/lib/component/toolbox'
 
   export default {
     name: 'PlatformInterestChart',
@@ -44,7 +49,18 @@
       },
       height () {
         return 160 + this.platforms.length * 18 + 'px'
-      }
+      },
+      chartToolbox () {
+        return {
+          feature: {
+            saveAsImage: {
+              show: true,
+              title: this.$t('chart.toolbox.save_as_image'),
+              excludeComponents: ['toolbox'],
+            },
+          }
+        }
+      },
     }
   }
 </script>
