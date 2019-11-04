@@ -383,29 +383,47 @@ cs:
       credentialsPropToData () {
         let credentials = this.credentials
         if (!credentials) {
-          return
+          // no credentials - we init to the initial state
+          this.organizationId = null
+          this.organization = ''
+          this.platformId = null
+          this.platform = ''
+          this.requestorId = ''
+          this.customerId = ''
+          this.counterVersion = null
+          this.url = ''
+          this.httpUsername = ''
+          this.httpPassword = ''
+          this.apiKey = ''
+          this.extraParams = []
+          this.selectedReportTypes = []
+          this.credentialsId = null
+          this.errors = {}
+          this.savedCredentials = null
+          this.enabled = false
+          this.outsideConsortium = true
+        } else {
+          let extraParams = []
+          for (let [key, value] of Object.entries(credentials.extra_params)) {
+            extraParams.push({key: key, value: value})
+          }
+          this.organizationId = credentials.organization.id
+          this.organization = credentials.organization.name
+          this.platformId = credentials.platform.id
+          this.platform = credentials.platform.name
+          this.requestorId = credentials.requestor_id
+          this.customerId = credentials.customer_id
+          this.counterVersion = credentials.counter_version
+          this.url = credentials.url
+          this.httpUsername = credentials.http_username
+          this.httpPassword = credentials.http_password
+          this.apiKey = credentials.api_key
+          this.extraParams = extraParams
+          this.selectedReportTypes = [...credentials.active_counter_reports]
+          this.credentialsId = credentials.pk
+          this.enabled = credentials.enabled
+          this.outsideConsortium = credentials.outside_consortium
         }
-        let extraParams = []
-        for (let [key, value] of Object.entries(credentials.extra_params)) {
-          extraParams.push({key: key, value: value})
-        }
-        this.organizationId = credentials.organization.id
-        this.organization = credentials.organization.name
-        this.platformId = credentials.platform.id
-        this.platform = credentials.platform.name
-        this.requestorId = credentials.requestor_id
-        this.customerId = credentials.customer_id
-        this.counterVersion = credentials.counter_version
-        this.url = credentials.url
-        this.httpUsername = credentials.http_username
-        this.httpPassword = credentials.http_password
-        this.apiKey = credentials.api_key
-        this.extraParams = extraParams
-        this.selectedReportTypes = [...credentials.active_counter_reports]
-        this.credentialsId = credentials.pk
-        this.enabled = credentials.enabled
-        this.outsideConsortium = credentials.outside_consortium
-
       },
       async loadReportTypes () {
         try {
@@ -496,11 +514,12 @@ cs:
         this.showTestDialog = false
       },
       init () {
+        this.savedCredentials = null
+        this.credentialsPropToData()
         if (this.credentials == null) {
           this.loadOrganizations()
           this.loadPlatforms()
         }
-        this.credentialsPropToData()
       }
     },
     mounted () {

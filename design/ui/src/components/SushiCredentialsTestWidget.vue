@@ -131,7 +131,7 @@ cs:
             {
               start_date: this.startDate + '-01',
               end_date: this.endDate + '-01',
-              credentials: this.credentials.id,
+              credentials: this.credentials.pk,
               counter_report: reportType,
             }
           )
