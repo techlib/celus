@@ -19,6 +19,7 @@ en:
             export_csv: Export CSV
         no_data: Sorry, no data available
         my_org: My organization
+        log_scale: Logarithmic scale
 cs:
     chart:
         date_metric: Metrika v čase
@@ -40,3 +41,4 @@ cs:
             export_csv: Export CSV
         no_data: Je nám líto, ale nemáme data k zobrazení
         my_org: Moje organizace
+        log_scale: Logaritmická škála
