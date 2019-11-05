@@ -221,7 +221,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'erms_sync_platforms_task': {
         'task': 'publications.tasks.erms_sync_platforms_task',
-        'schedule': schedule(run_every=timedelta(days=1)),
+        'schedule': schedule(run_every=timedelta(minutes=30)),
     },
     'erms_sync_organizations_task': {
         'task': 'organizations.tasks.erms_sync_organizations_task',
