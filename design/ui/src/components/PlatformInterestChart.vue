@@ -10,14 +10,14 @@
         </v-row>
         <v-row no-gutters>
             <v-col>
-            <VeBar
-                    :data="chartData"
-                    :settings="chartSettings"
-                    :height="height"
-                    :toolbox="chartToolbox"
-                    :xAxis="{type: this.logScale ? 'log' : 'value'}"
-                    :data-zoom="dataZoom"
-            />
+                <VeBar
+                        :data="chartData"
+                        :settings="chartSettings"
+                        :height="height"
+                        :toolbox="chartToolbox"
+                        :xAxis="{type: this.logScale ? 'log' : 'value'}"
+                        :data-zoom="dataZoom"
+                />
             </v-col>
         </v-row>
     </v-container>
