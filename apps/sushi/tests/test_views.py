@@ -10,7 +10,6 @@ from core.tests.conftest import master_client, master_identity, valid_identity, 
     authenticated_client
 
 
-@pytest.mark.now()
 @pytest.mark.django_db()
 class TestSushiCredentialsViewSet(object):
 

@@ -7,6 +7,7 @@ from time import time
 
 from django.db.models import Sum, Count
 from django.db.transaction import atomic
+from django.utils.timezone import now
 
 from core.task_support import cache_based_lock
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
@@ -48,6 +49,7 @@ def sync_interest_for_import_batch(
     if import_batch.report_type not in import_batch.platform.interest_reports.all():
         # the report_type does not represent interest for this platform, we can skip it
         import_batch.interest_processed = True
+        import_batch.interest_timestamp = now()
         import_batch.save()
         logger.debug('Import batch report type not in platform interest: %s - %s',
                      import_batch.report_type.short_name, import_batch.platform)
@@ -68,7 +70,19 @@ def sync_interest_for_import_batch(
         metric_to_dim1[metric_id] = dim_text.pk
     # get source data for the new logs
     new_logs = []
+    # for the following dates, there are data for a superseeding report type, so we do not
+    # want to created interest records for them
+    clashing_dates = {}
+    if import_batch.report_type.superseeded_by:
+        clashing_dates = {
+            x['date'] for x in
+            import_batch.report_type.superseeded_by.accesslog_set.
+            filter(platform_id=import_batch.platform_id,
+                   organization_id=import_batch.organization_id).
+            values('date')
+        }
     for new_log_dict in import_batch.accesslog_set.filter(metric_id__in=interest_metrics).\
+            exclude(date__in=clashing_dates).\
             values('organization_id', 'metric_id', 'platform_id', 'target_id', 'date').\
             annotate(value=Sum('value')).iterator():
         # deal with stuff related to the metric
@@ -82,6 +96,7 @@ def sync_interest_for_import_batch(
         AccessLog(report_type=interest_rt, import_batch=import_batch, **new_log)
         for new_log in new_logs)
     import_batch.interest_processed = True
+    import_batch.interest_timestamp = now()
     import_batch.save()
     stats['new_logs'] += len(new_logs)
     logger.debug('Import took: %.2f s; Stats: %s', time()-start, stats)
@@ -105,6 +120,7 @@ def remove_interest_from_import_batch(import_batch: ImportBatch, interest_rt: Re
         Counter:
     deleted = import_batch.accesslog_set.filter(report_type=interest_rt).delete()
     import_batch.interest_processed = False
+    import_batch.interest_timestamp = None
     import_batch.save()
     return Counter({'deleted_accesslogs': deleted[0]})
 
