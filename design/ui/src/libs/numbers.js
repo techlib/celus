@@ -4,7 +4,7 @@ function formatInteger(integer) {
   if (integer == null) {
     return '-'
   }
-  return numeral(integer).format('0,0').replace(/,/g, ' ')
+  return numeral(integer).format('0,0').replace(/,/g, '\xa0')
 }
 
 export {
