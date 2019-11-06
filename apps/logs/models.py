@@ -205,6 +205,8 @@ class ImportBatch(models.Model):
     log = models.TextField(blank=True)
     interest_processed = models.BooleanField(
         default=False, help_text='Was interest already calculated for this import batch')
+    interest_timestamp = models.DateTimeField(
+        null=True, blank=True, help_text='When was interest procesed for this batch')
 
     class Meta:
         verbose_name_plural = "Import batches"
