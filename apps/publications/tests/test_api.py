@@ -10,6 +10,7 @@ from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations
 from core.tests.conftest import valid_identity, authenticated_client, authentication_headers,\
     invalid_identity
+from publications.models import PlatformInterestReport
 
 
 @pytest.mark.django_db
@@ -130,9 +131,10 @@ class TestPlatformDetailedAPI(object):
         OrganizationPlatform.objects.create(organization=organization, platform=platform)
         # we need to create access logs to connect the platform and title
         rt = report_type_nd(0)
-        ig = InterestGroup.objects.create(short_name='interest1')
+        ig = InterestGroup.objects.create(short_name='interest1', position=1)
         metric = Metric.objects.create(short_name='m1', name='Metric1')
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
+        PlatformInterestReport.objects.create(report_type=rt, platform=platform)
         import_batch1 = ImportBatch.objects.create(platform=platform, organization=organization,
                                                    report_type=rt)
         import_batch2 = ImportBatch.objects.create(platform=platform,
@@ -235,9 +237,10 @@ class TestPlatformTitleAPI(object):
         # - title is present in the output only once - distinct is used properly
         # - second title is not present - the filtering works OK
         rt = report_type_nd(0)
-        ig = InterestGroup.objects.create(short_name='interest1')
+        ig = InterestGroup.objects.create(short_name='interest1', position=1)
         metric = Metric.objects.create(short_name='m1', name='Metric1')
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
+        PlatformInterestReport.objects.create(report_type=rt, platform=platform)
         import_batch = ImportBatch.objects.create(platform=platform, organization=organization,
                                                   report_type=rt)
         AccessLog.objects.create(platform=platform, target=titles[0], value=1, date='2019-01-01',
@@ -250,10 +253,12 @@ class TestPlatformTitleAPI(object):
         resp = authenticated_client.get(reverse('platform-title-interest-list',
                                                 args=[organization.pk, platform.pk]))
         assert resp.status_code == 200
-        assert len(resp.json()) == 1
-        assert resp.json()[0]['isbn'] == titles[0].isbn
-        assert resp.json()[0]['name'] == titles[0].name
-        assert resp.json()[0]['interest'] == 2
+        assert 'results' in resp.json()
+        data = resp.json()['results']
+        assert len(data) == 1
+        assert data[0]['isbn'] == titles[0].isbn
+        assert data[0]['name'] == titles[0].name
+        assert data[0]['interests']['interest1'] == 2
 
     def test_authorized_user_accessible_platforms_titles_count_organization_filter(
             self, authenticated_client, organizations, platforms, valid_identity, titles,
@@ -274,9 +279,10 @@ class TestPlatformTitleAPI(object):
         # - title is present in the output only once - distinct is used properly
         # - second title is not present - the filtering works OK
         rt = report_type_nd(0)
-        ig = InterestGroup.objects.create(short_name='interest1')
+        ig = InterestGroup.objects.create(short_name='interest1', position=1)
         metric = Metric.objects.create(short_name='m1', name='Metric1')
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
+        PlatformInterestReport.objects.create(report_type=rt, platform=platform)
         import_batch1 = ImportBatch.objects.create(platform=platform, organization=organization,
                                                    report_type=rt)
         import_batch2 = ImportBatch.objects.create(platform=platform, report_type=rt,
@@ -291,7 +297,9 @@ class TestPlatformTitleAPI(object):
         resp = authenticated_client.get(reverse('platform-title-interest-list',
                                                 args=[organization.pk, platform.pk]))
         assert resp.status_code == 200
-        assert len(resp.json()) == 1
-        assert resp.json()[0]['isbn'] == titles[0].isbn
-        assert resp.json()[0]['name'] == titles[0].name
-        assert resp.json()[0]['interest'] == 3
+        assert 'results' in resp.json()
+        data = resp.json()['results']
+        assert len(data) == 1
+        assert data[0]['isbn'] == titles[0].isbn
+        assert data[0]['name'] == titles[0].name
+        assert data[0]['interests']['interest1'] == 3

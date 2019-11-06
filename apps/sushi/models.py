@@ -69,8 +69,6 @@ class CounterReportType(models.Model):
     active = models.BooleanField(default=True,
                                  help_text='When turned off, this type of report will not be '
                                            'automatically downloaded')
-    superseeded_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
-                                       related_name='superseeds')
 
     class Meta:
         unique_together = (('code', 'counter_version'),)

@@ -22,8 +22,9 @@ class SushiCredentialsAdmin(VersionAdmin):
 @admin.register(models.CounterReportType)
 class CounterReportTypeAdmin(admin.ModelAdmin):
 
-    list_display = ['code', 'name', 'counter_version', 'report_type', 'active', 'superseeded_by']
+    list_display = ['code', 'name', 'counter_version', 'report_type', 'active']
     list_filter = ['counter_version']
+    ordering = ['code']
 
 
 def reimport(modeladmin, request, queryset):

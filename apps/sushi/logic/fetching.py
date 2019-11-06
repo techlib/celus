@@ -166,11 +166,12 @@ class FetchUnit(object):
         FetchUnits
         """
         out = []
-        for rt in self.report_type.superseeds.all():
+        for rt in self.report_type.report_type.superseeds.all():  # type: ReportType
             for cred in SushiCredentials.objects.filter(
-                    active_counter_reports=rt, organization_id=self.credentials.organization_id,
+                    active_counter_reports=rt.counterreporttype,
+                    organization_id=self.credentials.organization_id,
                     platform_id=self.credentials.platform_id):
-                out.append(FetchUnit(cred, rt))
+                out.append(FetchUnit(cred, rt.counterreporttype))
         return out
 
 
@@ -181,15 +182,18 @@ def create_fetch_units() -> [FetchUnit]:
     fetch_units = []
     seen_units = set()  # org_id, plat_id, rt_id for unsuperseeded report type
     # get all credentials that are connected to a unsuperseeded report type
-    for rt in CounterReportType.objects.filter(superseeded_by__isnull=True, active=True):
+    for rt in CounterReportType.objects.filter(report_type__superseeded_by__isnull=True,
+                                               active=True):
         for credentials in rt.sushicredentials_set.filter(enabled=True):
             fetch_units.append(FetchUnit(credentials, rt))
             seen_units.add((credentials.organization_id, credentials.platform_id, rt.pk))
     # go over the superseeded report types and see if we should add some
     # for example because newer version of the report type is not supported on that platform
-    for rt in CounterReportType.objects.filter(superseeded_by__isnull=False, active=True):
+    for rt in CounterReportType.objects.filter(report_type__superseeded_by__isnull=False,
+                                               active=True):
         for credentials in rt.sushicredentials_set.filter(enabled=True):
-            key = (credentials.organization_id, credentials.platform_id, rt.superseeded_by_id)
+            key = (credentials.organization_id, credentials.platform_id,
+                   rt.report_type.superseeded_by.counterreporttype.pk)
             if key not in seen_units:
                 fetch_units.append(FetchUnit(credentials, rt))
                 seen_units.add(key)

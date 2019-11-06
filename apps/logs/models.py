@@ -43,6 +43,8 @@ class ReportType(models.Model):
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
     interest_metrics = models.ManyToManyField('Metric', through='ReportInterestMetric',
                                               through_fields=('report_type', 'metric'))
+    superseeded_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
+                                       related_name='superseeds')
 
     class Meta:
         unique_together = (('short_name', 'source'),)

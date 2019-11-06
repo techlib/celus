@@ -13,7 +13,7 @@ class OrganizationPlatformAdmin(admin.ModelAdmin):
 @admin.register(models.ReportType)
 class ReportTypeAdmin(TranslationAdmin):
 
-    list_display = ['short_name', 'name', 'desc', 'dimension_list', 'source']
+    list_display = ['short_name', 'name', 'desc', 'dimension_list', 'source', 'superseeded_by']
     ordering = ['short_name']
     list_filter = ['source']
 
