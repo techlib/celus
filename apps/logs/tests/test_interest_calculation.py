@@ -234,12 +234,12 @@ class TestInterestRecomputationDetection(object):
                                  metric=hit_metric)
         stats = sync_interest_for_import_batch(ib1, interest_rt)
         assert stats['new_logs'] == 1
-        # let's test the function
-        qs = _find_report_type_metric_disconnect()
+        # let's test the function - this time it is generator as there are more queries returned
+        qs = next(_find_report_type_metric_disconnect())
         assert {obj.pk for obj in qs} == set()
         # let's do the disconnect and retry
         rim.delete()
-        qs = _find_report_type_metric_disconnect()
+        qs = next(_find_report_type_metric_disconnect())
         assert {obj.pk for obj in qs} == {ib1.pk}
 
 

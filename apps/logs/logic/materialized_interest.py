@@ -11,7 +11,8 @@ from django.db.transaction import atomic
 from django.utils.timezone import now
 
 from core.task_support import cache_based_lock
-from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
+from logs.models import ReportType, AccessLog, DimensionText, ImportBatch, Metric, \
+    ReportInterestMetric
 from publications.models import Platform
 
 logger = logging.getLogger(__name__)
@@ -200,6 +201,7 @@ def find_batches_that_need_interest_sync():
     yield _find_unprocessed_batches()
     yield _find_platform_interest_changes()
     yield _find_metric_interest_changes()
+    yield _find_platform_report_type_disconnect()
 
 
 def _find_unprocessed_batches():
@@ -235,7 +237,7 @@ def _find_platform_report_type_disconnect():
     PlatformInterestReport, but there are some interest data anyway
     """
     interest_rt = interest_report_type()
-    # platforms connected to a report_type refereced by its ID
+    # platforms connected to a report_type referenced by its ID
     pir_platforms = Platform.objects.filter(
         platforminterestreport__report_type_id=OuterRef('report_type_id')).values('pk')
     # access logs from one import batch and the interest report type
@@ -257,17 +259,21 @@ def _find_report_type_metric_disconnect():
     ReportInterestMetric, but there are some interest data anyway
     """
     interest_rt = interest_report_type()
-    # platforms connected to a report_type refereced by its ID
-    pir_platforms = Platform.objects.filter(
-        platforminterestreport__report_type_id=OuterRef('report_type_id')).values('pk')
-    # access logs from one import batch and the interest report type
-    access_log_query = AccessLog.objects.\
-        filter(report_type=interest_rt, import_batch=OuterRef('pk')).values('pk')
-    # only batches where platform is not amongst platforms that are referenced through
-    # the report_type's PlatformInterestReport
-    # limit to only those that do have interest stored
-    query = ImportBatch.objects.\
-        exclude(platform__in=Subquery(pir_platforms)).\
-        annotate(has_al=Exists(access_log_query)).\
-        filter(has_al=True)
-    return query
+    access_log_metric_query = AccessLog.objects.\
+        filter(report_type=interest_rt, import_batch=OuterRef('pk')).values('metric_id').\
+        distinct()
+    # I could not find a way how to put this into one query as combining queries (such as union,
+    # difference, etc.) are not supported in subqueries by Django (as of 2.2).
+    # See this bug - https://code.djangoproject.com/ticket/29338
+    for report_type in ReportType.objects.exclude(pk=interest_rt.pk):
+        interest_metrics = Metric.objects.\
+            filter(reportinterestmetric__report_type=report_type).\
+            union(Metric.objects.
+                  filter(source_report_interest_metrics__report_type=report_type)).\
+            values('id')
+        query = ImportBatch.objects.filter(report_type=report_type).\
+            annotate(has_extra_metrics=Exists(access_log_metric_query.
+                                              exclude(metric_id__in=interest_metrics))).\
+            filter(has_extra_metrics=True)
+        yield query
+
