@@ -6,7 +6,7 @@ from collections import Counter
 from time import time
 from typing import List, Dict, Iterable, Set
 
-from django.db.models import Sum, Count, Max, F, Q, OuterRef, Subquery
+from django.db.models import Sum, Count, Max, F, Q, OuterRef, Subquery, Exists
 from django.db.transaction import atomic
 from django.utils.timezone import now
 
@@ -235,17 +235,17 @@ def _find_platform_report_type_disconnect():
     PlatformInterestReport, but there are some interest data anyway
     """
     interest_rt = interest_report_type()
-
-    # access_log_query = AccessLog.objects.\
-    #     filter(access_log_filter,
-    #            report_type_id=OuterRef('base_report_type_id')).values('pk')
-    # report_types = ReportDataView.objects.annotate(has_al=Exists(access_log_query)).\
-    #     filter(has_al=True)
+    # platforms connected to a report_type refereced by its ID
     pir_platforms = Platform.objects.filter(
         platforminterestreport__report_type_id=OuterRef('report_type_id')).values('pk')
+    # access logs from one import batch and the interest report type
+    access_log_query = AccessLog.objects.\
+        filter(report_type=interest_rt, import_batch=OuterRef('pk')).values('pk')
+    # only batches where platform is not amongst platforms that are referenced through
+    # the report_type's PlatformInterestReport
+    # limit to only those that do have interest stored
     query = ImportBatch.objects.\
         exclude(platform__in=Subquery(pir_platforms)).\
-        annotate(interest_count=Count('accesslog', filter=Q(accesslog__report_type=interest_rt))).\
-        filter(interest_count__gt=0)
-    print(query.query)
+        annotate(has_al=Exists(access_log_query)).\
+        filter(has_al=True)
     return query
