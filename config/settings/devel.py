@@ -6,7 +6,7 @@ INSTALLED_APPS.insert(4, 'livereload')  # it must be before staticfiles
 DISABLE_CACHALOT = True
 if DISABLE_CACHALOT and 'cachalot' in INSTALLED_APPS:
     INSTALLED_APPS.remove('cachalot')
-LIVE_ERMS_AUTHENTICATION = True
+LIVE_ERMS_AUTHENTICATION = False
 
 MIDDLEWARE += [
     'debug_toolbar.middleware.DebugToolbarMiddleware',

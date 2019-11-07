@@ -6,7 +6,15 @@ function sortOrganizations (organizations, lang) {
   if (out.length === 0)
     return []
   let loc_name = lang ? `name_${lang}` : 'name'
-  out.forEach(item => item['name'] = item[loc_name])
+  out.forEach(item => item['name'] =
+    (item[loc_name] ? item[loc_name] :
+        (item.name_cs ? item.name_cs :
+            (item.internal_id ? item.internal_id :
+                (item.short_name ? item.short_name : '-')
+            )
+        )
+    )
+  )
   out.sort((a, b) => {
     if ('extra' in a) {
       return -1
