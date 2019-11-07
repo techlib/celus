@@ -190,13 +190,34 @@ def recompute_interest_by_batch(queryset=None):
 
 
 def find_batches_that_need_interest_sync():
-    # batches that do not have interest processed
-    yield ImportBatch.objects.filter(interest_processed=False)
-    yield ImportBatch.objects.filter(interest_timestamp__isnull=True)  # not likely, but may be
-    # batches where interest definition changed after interest_timestamp
-    yield ImportBatch.objects.all().\
+    """
+    Generator that returns querysets for different cases where ImportBatches may be out of
+    sync with their interest data
+    """
+    yield _find_unprocessed_batches()
+    yield _find_platform_interest_changes()
+    yield
+
+
+def _find_unprocessed_batches():
+    """batches that do not have interest processed"""
+    return (ImportBatch.objects.filter(interest_processed=False) |
+            ImportBatch.objects.filter(interest_timestamp__isnull=True))
+
+
+def _find_platform_interest_changes():
+    """
+    batches where interest definition changed after interest_timestamp - platforminterest change
+    """
+    return ImportBatch.objects.all().\
         annotate(last_interest_change=Max('report_type__platforminterestreport__created')).\
         filter(last_interest_change__gte=F('interest_timestamp'))
-    yield ImportBatch.objects.all().\
+
+
+def _find_metric_interest_changes():
+    """
+    batches where interest definition changed after interest_timestamp - interestmetric change
+    """
+    return ImportBatch.objects.all().\
         annotate(last_interest_change=Max('report_type__reportinterestmetric__created')).\
         filter(last_interest_change__gte=F('interest_timestamp'))

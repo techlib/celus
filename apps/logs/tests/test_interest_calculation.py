@@ -1,8 +1,9 @@
 import pytest
+from django.utils.timezone import now
 
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch, \
-    fast_compare_existing_and_new_records
+    fast_compare_existing_and_new_records, _find_unprocessed_batches
 from logs.models import ImportBatch, AccessLog, ReportInterestMetric, Metric, InterestGroup
 from logs.models import ReportType
 from publications.models import Platform, PlatformInterestReport
@@ -12,7 +13,6 @@ from organizations.tests.conftest import organizations
 @pytest.mark.django_db()
 class TestInterestCalculation(object):
 
-    @pytest.mark.now()
     def test_simple(self, counter_records, organizations, report_type_nd):
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                             provider='Provider 1')
@@ -42,7 +42,6 @@ class TestInterestCalculation(object):
         sync_interest_for_import_batch(ib, interest_rt)
         assert interest_rt.accesslog_set.count() == 3, 'now it should work'
 
-    @pytest.mark.now()
     def test_superseeded_report_types(self, counter_records, organizations, report_type_nd):
         """
         Test that when there are data for two report types from which one obsoletest the other,
@@ -94,9 +93,42 @@ class TestInterestCalculation(object):
         assert interest_rt.accesslog_set.count() == 4, '3 of 3 should make it to interest'
 
 
-class TestSupportCode(object):
+@pytest.mark.django_db()
+class TestInterestRecomputationDetection(object):
+    """
+    Tests that code to detect ImportBatches that need to have their interest recomputed
+    works properly
+    """
 
     @pytest.mark.now()
+    def test_find_unprocessed_batches(self, counter_records, organizations, report_type_nd):
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        report_type = report_type_nd(1)  # type: ReportType
+        ib1 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type)
+        ib2 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_processed=True)
+        ib3 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now())
+        ib4 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now(),
+                                         interest_processed=True)
+        # now define the interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        hit_metric = Metric.objects.create(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(report_type=report_type, metric=hit_metric,
+                                            interest_group=ig)
+        # let's test the function
+        qs = _find_unprocessed_batches()
+        assert {obj.pk for obj in qs} == {ib1.pk, ib2.pk, ib3.pk}
+
+
+class TestSupportCode(object):
+
     def test_fast_compare_existing_and_new_records(self):
         old_records = [
             {'a': 10, 'b': 20, 'pk': 1},
@@ -110,7 +142,6 @@ class TestSupportCode(object):
             {'a': 40, 'b': 70},
         ]
         add, remove, same = fast_compare_existing_and_new_records(old_records, new_records, 'ab')
-        print(add, remove, same)
         assert same == 2
         assert add == [{'a': 50, 'b': 60}, {'a': 40, 'b': 70}]
         assert remove == {3}
