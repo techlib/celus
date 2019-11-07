@@ -1,7 +1,8 @@
 import pytest
 
 from logs.logic.data_import import import_counter_records
-from logs.logic.materialized_interest import sync_interest_for_import_batch
+from logs.logic.materialized_interest import sync_interest_for_import_batch, \
+    fast_compare_existing_and_new_records
 from logs.models import ImportBatch, AccessLog, ReportInterestMetric, Metric, InterestGroup
 from logs.models import ReportType
 from publications.models import Platform, PlatformInterestReport
@@ -91,3 +92,25 @@ class TestInterestCalculation(object):
         assert interest_rt.accesslog_set.count() == 1, '1 of 3 should make it to interest'
         sync_interest_for_import_batch(ib_new, interest_rt)
         assert interest_rt.accesslog_set.count() == 4, '3 of 3 should make it to interest'
+
+
+class TestSupportCode(object):
+
+    @pytest.mark.now()
+    def test_fast_compare_existing_and_new_records(self):
+        old_records = [
+            {'a': 10, 'b': 20, 'pk': 1},
+            {'a': 20, 'b': 30, 'pk': 2},
+            {'a': 40, 'b': 60, 'pk': 3},
+        ]
+        new_records = [
+            {'a': 10, 'b': 20},
+            {'a': 20, 'b': 30},
+            {'a': 50, 'b': 60},
+            {'a': 40, 'b': 70},
+        ]
+        add, remove, same = fast_compare_existing_and_new_records(old_records, new_records, 'ab')
+        print(add, remove, same)
+        assert same == 2
+        assert add == [{'a': 50, 'b': 60}, {'a': 40, 'b': 70}]
+        assert remove == {3}
