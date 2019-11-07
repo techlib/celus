@@ -205,8 +205,6 @@ class ImportBatch(models.Model):
         help_text='Level of user who created this record - used to determine who can modify it'
     )
     log = models.TextField(blank=True)
-    interest_processed = models.BooleanField(
-        default=False, help_text='Was interest already calculated for this import batch')
     interest_timestamp = models.DateTimeField(
         null=True, blank=True, help_text='When was interest procesed for this batch')
 

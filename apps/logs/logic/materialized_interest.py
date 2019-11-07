@@ -23,7 +23,7 @@ def sync_interest_by_import_batches(queryset=None) -> Counter:
     interest_rt = ReportType.objects.get(short_name='interest')
     # we want to make sure that the ImportBatch has some accesslogs because otherwise it might
     # be that we caught it just after creation before any AccessLogs are added to it
-    queryset = queryset.filter(interest_processed=False).\
+    queryset = queryset.filter(interest_timestamp__isnull=True).\
         annotate(accesslog_count=Count('accesslog')).filter(accesslog_count__gt=0)
     total_count = queryset.count()
     logger.info('Found %d unprocessed import batches', total_count)
@@ -56,7 +56,6 @@ def sync_interest_for_import_batch(
         for log_dict in really_new)
     AccessLog.objects.filter(pk__in=to_delete_pks).delete()
     # update the import batch
-    import_batch.interest_processed = True
     import_batch.interest_timestamp = now()
     import_batch.save()
     stats['new_logs'] = len(really_new)
@@ -154,7 +153,7 @@ def remove_interest(queryset=None) -> Counter:
         queryset = ImportBatch.objects.all()
     stats = Counter()
     interest_rt = ReportType.objects.get(short_name='interest')
-    for import_batch in queryset.filter(interest_processed=True):
+    for import_batch in queryset.filter(interest_timestamp__isnull=False):
         cur_stats = remove_interest_from_import_batch(import_batch, interest_rt)
         stats += cur_stats
         stats['import_batches'] += 1
@@ -165,7 +164,6 @@ def remove_interest(queryset=None) -> Counter:
 def remove_interest_from_import_batch(import_batch: ImportBatch, interest_rt: ReportType) ->\
         Counter:
     deleted = import_batch.accesslog_set.filter(report_type=interest_rt).delete()
-    import_batch.interest_processed = False
     import_batch.interest_timestamp = None
     import_batch.save()
     return Counter({'deleted_accesslogs': deleted[0]})
@@ -177,7 +175,7 @@ def recompute_interest_by_batch(queryset=None):
         # same data
         if not queryset:
             queryset = ImportBatch.objects.all()
-        queryset = queryset.filter(interest_processed=True)
+        queryset = queryset.filter(interest_timestamp__isnull=False)
         interest_rt = ReportType.objects.get(short_name='interest')
         total_count = queryset.count()
         logger.info('Going to recompute interest for %d batches', total_count)
@@ -201,8 +199,7 @@ def find_batches_that_need_interest_sync():
 
 def _find_unprocessed_batches():
     """batches that do not have interest processed"""
-    return (ImportBatch.objects.filter(interest_processed=False) |
-            ImportBatch.objects.filter(interest_timestamp__isnull=True))
+    return ImportBatch.objects.filter(interest_timestamp__isnull=True)
 
 
 def _find_platform_interest_changes():

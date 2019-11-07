@@ -109,12 +109,7 @@ class TestInterestRecomputationDetection(object):
         ib1 = ImportBatch.objects.create(organization=organization, platform=platform,
                                          report_type=report_type)
         ib2 = ImportBatch.objects.create(organization=organization, platform=platform,
-                                         report_type=report_type, interest_processed=True)
-        ib3 = ImportBatch.objects.create(organization=organization, platform=platform,
                                          report_type=report_type, interest_timestamp=now())
-        ib4 = ImportBatch.objects.create(organization=organization, platform=platform,
-                                         report_type=report_type, interest_timestamp=now(),
-                                         interest_processed=True)
         # now define the interest
         interest_rt = report_type_nd(1, short_name='interest')
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
@@ -124,7 +119,7 @@ class TestInterestRecomputationDetection(object):
                                             interest_group=ig)
         # let's test the function
         qs = _find_unprocessed_batches()
-        assert {obj.pk for obj in qs} == {ib1.pk, ib2.pk, ib3.pk}
+        assert {obj.pk for obj in qs} == {ib1.pk}
 
 
 class TestSupportCode(object):
