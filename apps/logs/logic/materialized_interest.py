@@ -6,7 +6,7 @@ from collections import Counter
 from time import time
 from typing import List, Dict, Iterable, Set
 
-from django.db.models import Sum, Count, Max, F
+from django.db.models import Sum, Count, Max, F, Q
 from django.db.transaction import atomic
 from django.utils.timezone import now
 
@@ -194,7 +194,7 @@ def find_batches_that_need_interest_sync():
     """
     yield _find_unprocessed_batches()
     yield _find_platform_interest_changes()
-    yield
+    yield _find_metric_interest_changes()
 
 
 def _find_unprocessed_batches():
@@ -206,9 +206,13 @@ def _find_platform_interest_changes():
     """
     batches where interest definition changed after interest_timestamp - platforminterest change
     """
+    # we must take into account both the PlatformInterestReport object that is connected through
+    # platform and the one that is connected through report_type
     return ImportBatch.objects.all().\
-        annotate(last_interest_change=Max('report_type__platforminterestreport__created')).\
-        filter(last_interest_change__gte=F('interest_timestamp'))
+        annotate(last_interest_change1=Max('platform__platforminterestreport__last_modified'),
+                 last_interest_change2=Max('report_type__platforminterestreport__last_modified')).\
+        filter(Q(last_interest_change1__gte=F('interest_timestamp')) |
+               Q(last_interest_change2__gte=F('interest_timestamp')))
 
 
 def _find_metric_interest_changes():
@@ -216,5 +220,5 @@ def _find_metric_interest_changes():
     batches where interest definition changed after interest_timestamp - interestmetric change
     """
     return ImportBatch.objects.all().\
-        annotate(last_interest_change=Max('report_type__reportinterestmetric__created')).\
+        annotate(last_interest_change=Max('report_type__reportinterestmetric__last_modified')).\
         filter(last_interest_change__gte=F('interest_timestamp'))

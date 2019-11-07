@@ -3,7 +3,8 @@ from django.utils.timezone import now
 
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch, \
-    fast_compare_existing_and_new_records, _find_unprocessed_batches
+    fast_compare_existing_and_new_records, _find_unprocessed_batches, \
+    _find_platform_interest_changes, _find_metric_interest_changes
 from logs.models import ImportBatch, AccessLog, ReportInterestMetric, Metric, InterestGroup
 from logs.models import ReportType
 from publications.models import Platform, PlatformInterestReport
@@ -101,7 +102,7 @@ class TestInterestRecomputationDetection(object):
     """
 
     @pytest.mark.now()
-    def test_find_unprocessed_batches(self, counter_records, organizations, report_type_nd):
+    def test_find_unprocessed_batches(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                            provider='Provider 1')
@@ -111,7 +112,6 @@ class TestInterestRecomputationDetection(object):
         ib2 = ImportBatch.objects.create(organization=organization, platform=platform,
                                          report_type=report_type, interest_timestamp=now())
         # now define the interest
-        interest_rt = report_type_nd(1, short_name='interest')
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         hit_metric = Metric.objects.create(short_name='Hits')
         ig = InterestGroup.objects.create(short_name='ig1', position=1)
@@ -119,6 +119,76 @@ class TestInterestRecomputationDetection(object):
                                             interest_group=ig)
         # let's test the function
         qs = _find_unprocessed_batches()
+        assert {obj.pk for obj in qs} == {ib1.pk}
+
+    @pytest.mark.now()
+    def test_find_platform_interest_changes(self, organizations, report_type_nd):
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        report_type = report_type_nd(1)  # type: ReportType
+        ib1 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now())
+        # now define the interest
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        # now create the second one - this one is newer than PlatformInterestReport, so its ok
+        ib2 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now())
+        hit_metric = Metric.objects.create(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(report_type=report_type, metric=hit_metric,
+                                            interest_group=ig)
+        # let's test the function
+        qs = _find_platform_interest_changes()
+        assert {obj.pk for obj in qs} == {ib1.pk}
+
+    @pytest.mark.now()
+    def test_find_platform_interest_changes2(self, organizations, report_type_nd):
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        report_type = report_type_nd(1)  # type: ReportType
+        report_type2 = report_type_nd(1)  # type: ReportType
+        assert report_type.pk != report_type2.pk
+        # now define the interest
+        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        ib1 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now())
+        # update pir - it should invalidate ib1
+        pir.report_type = report_type2
+        pir.save()
+        assert pir.last_modified > ib1.interest_timestamp
+        # now create the second one - this one is newer than PlatformInterestReport, so its ok
+        ib2 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now())
+        hit_metric = Metric.objects.create(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(report_type=report_type, metric=hit_metric,
+                                            interest_group=ig)
+        # let's test the function
+        qs = _find_platform_interest_changes()
+        assert {obj.pk for obj in qs} == {ib1.pk}
+
+    @pytest.mark.now()
+    def test_find_metric_interest_changes(self, organizations, report_type_nd):
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        report_type = report_type_nd(1)  # type: ReportType
+        report_type2 = report_type_nd(1)  # type: ReportType
+        assert report_type.pk != report_type2.pk
+        # now define the interest
+        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        ib1 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now())
+        hit_metric = Metric.objects.create(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(report_type=report_type, metric=hit_metric,
+                                            interest_group=ig)
+        ib2 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now())
+        # let's test the function
+        qs = _find_metric_interest_changes()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
 
