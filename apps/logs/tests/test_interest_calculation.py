@@ -4,7 +4,8 @@ from django.utils.timezone import now
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch, \
     fast_compare_existing_and_new_records, _find_unprocessed_batches, \
-    _find_platform_interest_changes, _find_metric_interest_changes
+    _find_platform_interest_changes, _find_metric_interest_changes, \
+    _find_platform_report_type_disconnect
 from logs.models import ImportBatch, AccessLog, ReportInterestMetric, Metric, InterestGroup
 from logs.models import ReportType
 from publications.models import Platform, PlatformInterestReport
@@ -101,7 +102,6 @@ class TestInterestRecomputationDetection(object):
     works properly
     """
 
-    @pytest.mark.now()
     def test_find_unprocessed_batches(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
@@ -121,7 +121,6 @@ class TestInterestRecomputationDetection(object):
         qs = _find_unprocessed_batches()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    @pytest.mark.now()
     def test_find_platform_interest_changes(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
@@ -142,7 +141,6 @@ class TestInterestRecomputationDetection(object):
         qs = _find_platform_interest_changes()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    @pytest.mark.now()
     def test_find_platform_interest_changes2(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
@@ -169,7 +167,6 @@ class TestInterestRecomputationDetection(object):
         qs = _find_platform_interest_changes()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    @pytest.mark.now()
     def test_find_metric_interest_changes(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
@@ -189,6 +186,32 @@ class TestInterestRecomputationDetection(object):
                                          report_type=report_type, interest_timestamp=now())
         # let's test the function
         qs = _find_metric_interest_changes()
+        assert {obj.pk for obj in qs} == {ib1.pk}
+
+    @pytest.mark.now()
+    def test_find_platform_report_type_disconnect(self, organizations, report_type_nd):
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        report_type = report_type_nd(1)  # type: ReportType
+        interest_rt = report_type_nd(1, short_name='interest')
+        # now define the interest
+        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        ib1 = ImportBatch.objects.create(organization=organization, platform=platform,
+                                         report_type=report_type, interest_timestamp=now())
+        hit_metric = Metric.objects.create(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(report_type=report_type, metric=hit_metric,
+                                            interest_group=ig)
+        AccessLog.objects.create(report_type=interest_rt, platform=platform, import_batch=ib1,
+                                 organization=organization, value=10, date='2019-01-01',
+                                 metric=hit_metric)
+        # let's test the function
+        qs = _find_platform_report_type_disconnect()
+        assert {obj.pk for obj in qs} == set()
+        # let's do the disconnect and retry
+        pir.delete()
+        qs = _find_platform_report_type_disconnect()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
 

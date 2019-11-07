@@ -6,21 +6,26 @@ from collections import Counter
 from time import time
 from typing import List, Dict, Iterable, Set
 
-from django.db.models import Sum, Count, Max, F, Q
+from django.db.models import Sum, Count, Max, F, Q, OuterRef, Subquery
 from django.db.transaction import atomic
 from django.utils.timezone import now
 
 from core.task_support import cache_based_lock
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
+from publications.models import Platform
 
 logger = logging.getLogger(__name__)
+
+
+def interest_report_type():
+    return ReportType.objects.get(short_name='interest')
 
 
 def sync_interest_by_import_batches(queryset=None) -> Counter:
     if not queryset:
         queryset = ImportBatch.objects.all()
     stats = Counter()
-    interest_rt = ReportType.objects.get(short_name='interest')
+    interest_rt = interest_report_type()
     # we want to make sure that the ImportBatch has some accesslogs because otherwise it might
     # be that we caught it just after creation before any AccessLogs are added to it
     queryset = queryset.filter(interest_timestamp__isnull=True).\
@@ -152,7 +157,7 @@ def remove_interest(queryset=None) -> Counter:
     if not queryset:
         queryset = ImportBatch.objects.all()
     stats = Counter()
-    interest_rt = ReportType.objects.get(short_name='interest')
+    interest_rt = interest_report_type()
     for import_batch in queryset.filter(interest_timestamp__isnull=False):
         cur_stats = remove_interest_from_import_batch(import_batch, interest_rt)
         stats += cur_stats
@@ -176,7 +181,7 @@ def recompute_interest_by_batch(queryset=None):
         if not queryset:
             queryset = ImportBatch.objects.all()
         queryset = queryset.filter(interest_timestamp__isnull=False)
-        interest_rt = ReportType.objects.get(short_name='interest')
+        interest_rt = interest_report_type()
         total_count = queryset.count()
         logger.info('Going to recompute interest for %d batches', total_count)
         stats = Counter()
@@ -222,3 +227,25 @@ def _find_metric_interest_changes():
     return ImportBatch.objects.all().\
         annotate(last_interest_change=Max('report_type__reportinterestmetric__last_modified')).\
         filter(last_interest_change__gte=F('interest_timestamp'))
+
+
+def _find_platform_report_type_disconnect():
+    """
+    batches where the platform and report_type are not (no longer) connected by
+    PlatformInterestReport, but there are some interest data anyway
+    """
+    interest_rt = interest_report_type()
+
+    # access_log_query = AccessLog.objects.\
+    #     filter(access_log_filter,
+    #            report_type_id=OuterRef('base_report_type_id')).values('pk')
+    # report_types = ReportDataView.objects.annotate(has_al=Exists(access_log_query)).\
+    #     filter(has_al=True)
+    pir_platforms = Platform.objects.filter(
+        platforminterestreport__report_type_id=OuterRef('report_type_id')).values('pk')
+    query = ImportBatch.objects.\
+        exclude(platform__in=Subquery(pir_platforms)).\
+        annotate(interest_count=Count('accesslog', filter=Q(accesslog__report_type=interest_rt))).\
+        filter(interest_count__gt=0)
+    print(query.query)
+    return query
