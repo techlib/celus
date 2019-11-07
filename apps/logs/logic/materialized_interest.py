@@ -249,3 +249,25 @@ def _find_platform_report_type_disconnect():
         annotate(has_al=Exists(access_log_query)).\
         filter(has_al=True)
     return query
+
+
+def _find_report_type_metric_disconnect():
+    """
+    batches where the report_type and metric are not (no longer) connected by
+    ReportInterestMetric, but there are some interest data anyway
+    """
+    interest_rt = interest_report_type()
+    # platforms connected to a report_type refereced by its ID
+    pir_platforms = Platform.objects.filter(
+        platforminterestreport__report_type_id=OuterRef('report_type_id')).values('pk')
+    # access logs from one import batch and the interest report type
+    access_log_query = AccessLog.objects.\
+        filter(report_type=interest_rt, import_batch=OuterRef('pk')).values('pk')
+    # only batches where platform is not amongst platforms that are referenced through
+    # the report_type's PlatformInterestReport
+    # limit to only those that do have interest stored
+    query = ImportBatch.objects.\
+        exclude(platform__in=Subquery(pir_platforms)).\
+        annotate(has_al=Exists(access_log_query)).\
+        filter(has_al=True)
+    return query
