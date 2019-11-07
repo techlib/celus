@@ -5,7 +5,7 @@ import logging
 from collections import Counter
 from time import time
 
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Max, F
 from django.db.transaction import atomic
 from django.utils.timezone import now
 
@@ -140,3 +140,13 @@ def recompute_interest_by_batch(queryset=None):
             sync_interest_for_import_batch(import_batch, interest_rt)
             if i % 20 == 0:
                 logger.debug('Recomputed interest for %d out of %d batches', i, total_count)
+
+
+def find_batches_that_need_interest_sync():
+    # batches that do not have interest processed
+    yield ImportBatch.objects.filter(interest_processed=False)
+    yield ImportBatch.objects.filter(interest_timestamp__isnull=True)  # not likely, but may be
+    # batches where interest definition changed after interest_timestamp
+    yield ImportBatch.objects.all().\
+        annotate(last_interest_change=Max('report_type__platforminterestreport__created')).\
+        filter(last_interest_change__gte=F('interest_timestamp'))
