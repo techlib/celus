@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'charts.apps.ChartsConfig',
     'annotations.apps.AnnotationsConfig',
     'rest_pandas',
-    # 'cachalot',
+    'error_report',
+    'cachalot',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'error_report.middleware.ExceptionProcessor',
 ]
 
 AUTHENTICATION_BACKENDS = [

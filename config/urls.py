@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/', include('charts.urls')),
     path('api/', include('annotations.urls')),
     path('wsEc67YNV2sq/', admin.site.urls),
+    path('error/', include('error_report.urls')),
 ]
 
 if settings.DEBUG:
