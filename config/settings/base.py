@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'annotations.apps.AnnotationsConfig',
     'rest_pandas',
     'error_report',
-    # 'cachalot',
+    'cachalot',
 ]
 
 MIDDLEWARE = [
