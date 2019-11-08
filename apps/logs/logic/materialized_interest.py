@@ -179,9 +179,8 @@ def recompute_interest_by_batch(queryset=None):
     with cache_based_lock('sync_interest_task'):
         # we share the lock with sync_interest_task because the two could compete for the
         # same data
-        if not queryset:
-            queryset = ImportBatch.objects.all()
-        queryset = queryset.filter(interest_timestamp__isnull=False)
+        if queryset is None:
+            queryset = ImportBatch.objects.filter(interest_timestamp__isnull=False)
         interest_rt = interest_report_type()
         total_count = queryset.count()
         logger.info('Going to recompute interest for %d batches', total_count)
@@ -193,15 +192,28 @@ def recompute_interest_by_batch(queryset=None):
                              i, total_count, stats)
 
 
+def smart_interest_sync():
+    """
+    Computes or recomputes interest for all import batches that need it - either are not
+    processed yet or are out of sync
+    """
+    logger.debug('Smart syncing interest')
+    for qs in find_batches_that_need_interest_sync():
+        recompute_interest_by_batch(queryset=qs)
+
+
 def find_batches_that_need_interest_sync():
     """
     Generator that returns querysets for different cases where ImportBatches may be out of
     sync with their interest data
     """
-    yield _find_unprocessed_batches()
-    yield _find_platform_interest_changes()
-    yield _find_metric_interest_changes()
-    yield _find_platform_report_type_disconnect()
+    for fn in (_find_unprocessed_batches,
+               _find_platform_interest_changes,
+               _find_metric_interest_changes,
+               _find_platform_report_type_disconnect):
+        yield fn()
+    for qs in _find_report_type_metric_disconnect():  # this is a generator itself
+        yield qs
 
 
 def _find_unprocessed_batches():

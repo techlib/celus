@@ -203,8 +203,8 @@ CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
                       }
 
 CELERY_BEAT_SCHEDULE = {
-    'sync_interest_task': {
-        'task': 'logs.tasks.sync_interest_task',
+    'smart_interest_sync_task': {
+        'task': 'logs.tasks.smart_interest_sync_task',
         'schedule': schedule(run_every=timedelta(minutes=5)),
     },
     'retry_queued_attempts_task': {
