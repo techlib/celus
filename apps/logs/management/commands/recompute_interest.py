@@ -27,4 +27,4 @@ class Command(BaseCommand):
         logger.info('Duration: %s, Stats: %s', time() - start, stats)
         logger.info('Query count: %d', len(connection.queries))
         for query in connection.queries:
-            print(query)
+            print('{sql}\t{time}'.format(**query))
