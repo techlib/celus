@@ -108,6 +108,8 @@ def extract_interest_from_import_batch(
     interest_metrics = []
     metric_remap = {}
     metric_to_ig = {}
+    # TODO: if we preselected the import_batches before submitting them here
+    #       we could remove the whole test here, which create a query for each import batch
     if import_batch.report_type not in import_batch.platform.interest_reports.all():
         # the report_type does not represent interest for this platform, we can skip it
         logger.debug('Import batch report type not in platform interest: %s - %s',
@@ -123,9 +125,15 @@ def extract_interest_from_import_batch(
     metric_to_dim1 = {}
     dim1 = interest_rt.dimensions_sorted[0]
     for metric_id, ig in metric_to_ig.items():
-        dim_text, _created = DimensionText.objects.update_or_create(
+        # we do not use update_or_create here, because it creates one select and one update
+        # even if nothing has changed
+        dim_text, _created = DimensionText.objects.get_or_create(
             dimension=dim1, text=ig.short_name,
             defaults={'text_local_en': ig.name_en, 'text_local_cs': ig.name_cs})
+        if dim_text.text_local_en != ig.name_en or dim_text.text_local_cs != ig.name_cs:
+            dim_text.text_local_en = ig.name_en
+            dim_text.text_local_cs = ig.name_cs
+            dim_text.save()
         metric_to_dim1[metric_id] = dim_text.pk
     # get source data for the new logs
     new_logs = []
@@ -133,11 +141,22 @@ def extract_interest_from_import_batch(
     # want to created interest records for them
     clashing_dates = {}
     if import_batch.report_type.superseeded_by:
+        if hasattr(import_batch, 'min_date') and hasattr(import_batch, 'max_date'):
+            # check if we have an annotated queryset and do not need to compute the min-max dates
+            min_date = import_batch.min_date
+            max_date = import_batch.max_date
+        else:
+            date_range = import_batch.accesslog_set.aggregate(min_date=Min('date'),
+                                                              max_date=Max('date'))
+            min_date = date_range['min_date']
+            max_date = date_range['max_date']
         clashing_dates = {
             x['date'] for x in
             import_batch.report_type.superseeded_by.accesslog_set.
             filter(platform_id=import_batch.platform_id,
-                   organization_id=import_batch.organization_id).
+                   organization_id=import_batch.organization_id,
+                   date__lte=max_date,
+                   date__gte=min_date).
             values('date')
         }
     for new_log_dict in import_batch.accesslog_set.filter(metric_id__in=interest_metrics).\
@@ -181,6 +200,11 @@ def recompute_interest_by_batch(queryset=None):
         # same data
         if queryset is None:
             queryset = ImportBatch.objects.filter(interest_timestamp__isnull=False)
+        # report_type.superseeded_by is needed later on, so we select it here to reduce the
+        # query count
+        queryset = queryset.select_related('report_type__superseeded_by', 'platform').\
+            annotate(min_date=Min('accesslog__date'), max_date=Max('accesslog__date'))
+
         interest_rt = interest_report_type()
         total_count = queryset.count()
         logger.info('Going to recompute interest for %d batches', total_count)
@@ -190,6 +214,7 @@ def recompute_interest_by_batch(queryset=None):
             if i % 20 == 0:
                 logger.debug('Recomputed interest for %d out of %d batches, stats: %s',
                              i, total_count, stats)
+        return stats
 
 
 def smart_interest_sync():
