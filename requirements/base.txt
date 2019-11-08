@@ -16,6 +16,7 @@ dateparser==0.7.2
 rest-pandas==1.1.0
 python-magic==0.4.15
 django-reversion==3.0.4
+django-error-report==0.2.0
 # pycounter==1.1.1
 # -e git+https://github.com/beda42/pycounter.git#egg=pycounter
 # -e pycounter
