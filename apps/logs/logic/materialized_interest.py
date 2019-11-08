@@ -202,8 +202,8 @@ def recompute_interest_by_batch(queryset=None):
             queryset = ImportBatch.objects.filter(interest_timestamp__isnull=False)
         # report_type.superseeded_by is needed later on, so we select it here to reduce the
         # query count
-        queryset = queryset.select_related('report_type__superseeded_by', 'platform').\
-            annotate(min_date=Min('accesslog__date'), max_date=Max('accesslog__date'))
+        # queryset = queryset.select_related('report_type__superseeded_by', 'platform').\
+        #     annotate(min_date=Min('accesslog__date'), max_date=Max('accesslog__date'))
 
         interest_rt = interest_report_type()
         total_count = queryset.count()
