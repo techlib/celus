@@ -5,7 +5,8 @@ from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch, \
     fast_compare_existing_and_new_records, _find_unprocessed_batches, \
     _find_platform_interest_changes, _find_metric_interest_changes, \
-    _find_platform_report_type_disconnect, _find_report_type_metric_disconnect
+    _find_platform_report_type_disconnect, _find_report_type_metric_disconnect, \
+    _find_superseeded_import_batches
 from logs.models import ImportBatch, AccessLog, ReportInterestMetric, Metric, InterestGroup
 from logs.models import ReportType
 from publications.models import Platform, PlatformInterestReport
@@ -213,8 +214,6 @@ class TestInterestRecomputationDetection(object):
         qs = _find_platform_report_type_disconnect()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-
-    @pytest.mark.now()
     def test_find_report_type_metric_disconnect(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
@@ -241,6 +240,53 @@ class TestInterestRecomputationDetection(object):
         rim.delete()
         qs = next(_find_report_type_metric_disconnect())
         assert {obj.pk for obj in qs} == {ib1.pk}
+
+    @pytest.mark.now()
+    def test_find_superseeded_import_batches(self, organizations, report_type_nd):
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        rt_old = report_type_nd(1, short_name='old')  # type: ReportType
+        interest_rt = report_type_nd(1, short_name='interest')
+        # now define the interest
+        PlatformInterestReport.objects.create(platform=platform, report_type=rt_old)
+        ib_old = ImportBatch.objects.create(organization=organization, platform=platform,
+                                            report_type=rt_old, interest_timestamp=now())
+        hit_metric = Metric.objects.create(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(report_type=rt_old, metric=hit_metric,
+                                            interest_group=ig)
+        AccessLog.objects.create(report_type=rt_old, platform=platform, import_batch=ib_old,
+                                 organization=organization, value=10, date='2019-01-01',
+                                 metric=hit_metric)
+        ib_old_unrel = ImportBatch.objects.create(organization=organization, platform=platform,
+                                                  report_type=rt_old, interest_timestamp=now())
+        AccessLog.objects.create(report_type=rt_old, platform=platform, import_batch=ib_old_unrel,
+                                 organization=organization, value=20, date='2019-02-01',
+                                 metric=hit_metric)
+        stats = sync_interest_for_import_batch(ib_old, interest_rt)
+        assert stats['new_logs'] == 1
+        stats = sync_interest_for_import_batch(ib_old_unrel, interest_rt)
+        assert stats['new_logs'] == 1
+        # now nothing should be returned
+        qs = _find_superseeded_import_batches()
+        assert {obj.pk for obj in qs} == set()
+        # let's add a newer data and check that we detect it
+        rt_new = report_type_nd(1, short_name='new')  # type: ReportType
+        rt_old.superseeded_by = rt_new
+        rt_old.save()
+        PlatformInterestReport.objects.create(platform=platform, report_type=rt_new)
+        ReportInterestMetric.objects.create(report_type=rt_new, metric=hit_metric,
+                                            interest_group=ig)
+        ib_new = ImportBatch.objects.create(organization=organization, platform=platform,
+                                            report_type=rt_new, interest_timestamp=now())
+        AccessLog.objects.create(report_type=rt_new, platform=platform, import_batch=ib_new,
+                                 organization=organization, value=20, date='2019-01-01',
+                                 metric=hit_metric)
+        stats = sync_interest_for_import_batch(ib_new, interest_rt)
+        assert stats['new_logs'] == 1
+        qs = _find_superseeded_import_batches()
+        assert {obj.pk for obj in qs} == {ib_old.pk}
 
 
 class TestSupportCode(object):

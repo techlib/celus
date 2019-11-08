@@ -6,7 +6,7 @@ from collections import Counter
 from time import time
 from typing import List, Dict, Iterable, Set
 
-from django.db.models import Sum, Count, Max, F, Q, OuterRef, Subquery, Exists
+from django.db.models import Sum, Count, Max, F, Q, OuterRef, Subquery, Exists, Min
 from django.db.transaction import atomic
 from django.utils.timezone import now
 
@@ -288,4 +288,29 @@ def _find_report_type_metric_disconnect():
                                               exclude(metric_id__in=interest_metrics))).\
             filter(has_extra_metrics=True)
         yield query
+
+
+def _find_superseeded_import_batches():
+    """
+    Find import batches that have interest computed for superseeded report_type and clashing
+    data appeared with the superseeding report_type
+
+    WARNING: This works, but is incredibly slow as it does full scan of the AccessLog table;
+             DO NOT USE IT!
+    """
+    logger.warning('This code is slooooow - do not use it')
+    superseeding_al = AccessLog.objects.\
+        filter(platform=OuterRef('platform'), organization=OuterRef('organization'),
+               report_type=OuterRef('report_type__superseeded_by'), date=OuterRef('date'))
+    al_query = AccessLog.objects.\
+        filter(report_type__superseeded_by__isnull=False). \
+        annotate(has_clash=Exists(superseeding_al)).\
+        filter(has_clash=True).values('import_batch').distinct()
+    interest_al = AccessLog.objects.filter(import_batch=OuterRef('pk'),
+                                           report_type=interest_report_type())
+    query = ImportBatch.objects.filter(report_type__superseeded_by__isnull=False).\
+        annotate(has_interest=Exists(interest_al)).\
+        filter(has_interest=True, pk__in=al_query)
+    # print(query.query)
+    return query
 
