@@ -200,6 +200,7 @@ CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
                       'sushi.tasks.fetch_new_sushi_data_task': {'queue': 'sushi'},
                       'sushi.tasks.fetch_new_sushi_data_for_credentials_task': {'queue': 'sushi'},
                       'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
+                      'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
                       }
 
 CELERY_BEAT_SCHEDULE = {
