@@ -152,7 +152,20 @@ class PlatformInterestViewSet(ViewSet):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         result = AccessLog.objects\
             .filter(report_type=interest_rt, **org_filter, platform_id=pk)\
-            .values('date__year').distinct()\
+            .values('date__year')\
+            .annotate(**interest_annot_params)
+        return Response(result)
+
+    @action(detail=False, url_path='by-year')
+    def list_by_year(self, request, organization_pk):
+        """
+        Provides a list of report types associated with this platform
+        """
+        interest_rt, interest_annot_params = self.get_report_type_and_filters()
+        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        result = AccessLog.objects\
+            .filter(report_type=interest_rt, **org_filter)\
+            .values('platform', 'date__year')\
             .annotate(**interest_annot_params)
         return Response(result)
 

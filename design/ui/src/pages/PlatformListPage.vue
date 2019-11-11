@@ -57,7 +57,7 @@
   import AddAnnotationButton from '../components/AddAnnotationButton'
   import InterestGroupSelector from '../components/InterestGroupSelector'
   import PlatformInterestChart from '../components/PlatformInterestChart'
-  import PlatformList from '../components/PlatformList'
+  import PlatformList from '../components/PlatformCostList'
 
   export default {
     name: 'PlatformListPage',

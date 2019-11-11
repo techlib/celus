@@ -1,12 +1,11 @@
-from itertools import groupby
-
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from core.permissions import SuperuserOrAdminPermission
+from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
 from sushi.models import SushiCredentials
@@ -46,6 +45,21 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             })
         for key, value in result.items():
             value.sort(key=lambda x: x['version'])
+        return Response(result)
+
+    @action(detail=True, url_path='year-interest')
+    def year_interest(self, request, pk):
+        org_filter = organization_filter_from_org_id(pk, request.user)
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        result = []
+        for rec in AccessLog.objects \
+                .filter(report_type=interest_rt, **org_filter) \
+                .values('date__year').distinct() \
+                .annotate(interest_sum=Sum('value'))\
+                .order_by('date__year'):
+            # this is here purely to facilitate renaming of the keys
+            result.append({'year': rec['date__year'], 'interest': rec['interest_sum']})
+
         return Response(result)
 
 
