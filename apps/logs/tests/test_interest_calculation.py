@@ -241,7 +241,6 @@ class TestInterestRecomputationDetection(object):
         qs = next(_find_report_type_metric_disconnect())
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    @pytest.mark.now()
     def test_find_superseeded_import_batches(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',

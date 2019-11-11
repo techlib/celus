@@ -152,3 +152,50 @@ class TestSushiCredentialsViewSet(object):
         assert credentials.active_counter_reports.count() == 2
         assert {cr.pk for cr in credentials.active_counter_reports.all()} == \
                {new_rt1.pk, new_rt2.pk}
+
+    @pytest.mark.now()
+    def test_destroy_locked_higher(self, organizations, platforms, valid_identity,
+                                   authenticated_client):
+        """
+        The object is locked with consortium staff level lock, so the organization admin cannot
+        remove it
+        """
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        UserOrganization.objects.create(user=identity.user, organization=organizations[0],
+                                        is_admin=True)
+        credentials = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platforms[0],
+            counter_version=5,
+            lock_level=UL_CONS_STAFF,
+            url='http://a.b.c/',
+        )
+        url = reverse('sushi-credentials-detail', args=(credentials.pk,))
+        assert SushiCredentials.objects.count() == 1
+        resp = authenticated_client.delete(url)
+        assert resp.status_code == 403
+        assert SushiCredentials.objects.count() == 1
+
+    @pytest.mark.now()
+    def test_destroy_locked_lower(self, organizations, platforms, valid_identity,
+                                  authenticated_client):
+        """
+        The object is locked with consortium staff level lock, so the organization admin cannot
+        remove it
+        """
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        UserOrganization.objects.create(user=identity.user, organization=organizations[0],
+                                        is_admin=True)
+        credentials = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platforms[0],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url='http://a.b.c/',
+        )
+        url = reverse('sushi-credentials-detail', args=(credentials.pk,))
+        assert SushiCredentials.objects.count() == 1
+        resp = authenticated_client.delete(url)
+        assert resp.status_code == 204
+        assert SushiCredentials.objects.count() == 0
+

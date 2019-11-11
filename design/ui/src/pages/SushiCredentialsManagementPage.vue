@@ -46,6 +46,7 @@ cs:
                     :sort-by="orderBy"
                     multi-sort
                     :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
+                    :loading="loading"
             >
                 <template v-slot:item.active_counter_reports="{item}">
                     <v-tooltip
@@ -117,6 +118,7 @@ cs:
                     :credentials-object="selectedCredentials"
                     v-model="showEditDialog"
                     @update-credentials="updateCredentials"
+                    @deleted="deleteCredentials"
                     key="edit"
             ></SushiCredentialsEditDialog>
         </v-dialog>
@@ -161,7 +163,8 @@ cs:
         showEditDialog: false,
         showDetailsDialog: false,
         showCreateDialog: false,
-        orderBy: ['organization.name', 'platform.name', 'counter_version']
+        orderBy: ['organization.name', 'platform.name', 'counter_version'],
+        loading: false,
       }
     },
     computed: {
@@ -222,11 +225,14 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       async loadSushiCredentialsList () {
+        this.loading = true
         try {
           let response = await axios.get(`/api/sushi-credentials/?organization=${this.organizationId}`)
           this.sushiCredentialsList = response.data
         } catch (error) {
           this.showSnackbar({content: 'Error loading credentials list: '+error})
+        } finally {
+          this.loading = false
         }
 
       },
@@ -245,6 +251,9 @@ cs:
           // we did not find the corresponding record - we add it at the end
           this.sushiCredentialsList.push(credentials)
         }
+      },
+      deleteCredentials ({id}) {
+        this.sushiCredentialsList = this.sushiCredentialsList.filter(item => item.pk !== id)
       },
       async toggleLock (credentials) {
         let newLockLevel = 400

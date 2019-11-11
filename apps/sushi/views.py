@@ -65,6 +65,15 @@ class SushiCredentialsViewSet(ModelViewSet):
         reversion.set_comment('Created through API')
         return super().create(request, *args, **kwargs)
 
+    @method_decorator(create_revision())
+    def destroy(self, request, *args, **kwargs):
+        credentials = self.get_object()  # type: SushiCredentials
+        if credentials.can_edit(request.user):
+            reversion.set_comment('Deleted through API')
+            return super().destroy(request, *args, **kwargs)
+        else:
+            raise PermissionDenied('User is not allowed to delete this object')
+
     @action(detail=True, methods=['post'], permission_classes=[SuperuserOrAdminPermission])
     def lock(self, request, pk=None):
         """

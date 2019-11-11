@@ -13,6 +13,7 @@ en:
     only_managers_can_change: Only managers may change this option.
     title:
         edit_sushi_credentials: Edit SUSHI credentials
+    delete_success: Sushi credentials were successfully removed
 
 cs:
     add_custom_param: Přidat vlastní parametr
@@ -26,6 +27,7 @@ cs:
     only_managers_can_change: Jen správci mohou měnit tuto hodnotu.
     title:
         edit_sushi_credentials: Přihlašovací údaje SUSHI
+    delete_success: Přihlašovací údaje byly úspěšně odstraněny
 </i18n>
 
 
@@ -231,9 +233,22 @@ cs:
                     </v-col>
                     <v-spacer></v-spacer>
                     <v-col cols="auto">
-                        <v-btn color="secondary" @click="closeDialog()">{{ $t('close') }}</v-btn>
-                        <v-btn color="warning" @click="saveAndTest()" :disabled="!valid">{{ $t('save_and_test') }}</v-btn>
-                        <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">{{ $t('save') }}</v-btn>
+                        <v-btn color="error" @click="deleteObject()" class="mr-8">
+                            <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
+                            {{ $t('delete') }}
+                        </v-btn>
+                        <v-btn color="secondary" @click="closeDialog()">
+                            <v-icon small class="mr-1">fa fa-times</v-icon>
+                            {{ $t('close') }}
+                        </v-btn>
+                        <v-btn color="warning" @click="saveAndTest()" :disabled="!valid">
+                            <v-icon small class="mr-1">fa fa-play</v-icon>
+                            {{ $t('save_and_test') }}
+                        </v-btn>
+                        <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">
+                            <v-icon small class="mr-1">fa fa-save</v-icon>
+                            {{ $t('save') }}
+                        </v-btn>
                     </v-col>
                 </v-row>
             </v-container>
@@ -488,6 +503,19 @@ cs:
             this.processErrors(error.response.data)
           }
           return false
+        }
+      },
+      async deleteObject () {
+        if (this.credentials) {
+          // we have existing credentials - we patch it
+          try {
+            await axios.delete(`/api/sushi-credentials/${this.credentialsId}/`)
+            this.$emit('deleted', {id: this.credentialsId})
+            this.$emit('input', false)
+            this.showSnackbar({content: this.$t('delete_success'), color: 'success'})
+          } catch (error) {
+            this.showSnackbar({content: 'Error deleting SUSHI credentials: ' + error, color: 'error'})
+          }
         }
       },
       processErrors (errors) {
