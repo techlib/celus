@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'sushi.apps.SushiConfig',
     'charts.apps.ChartsConfig',
     'annotations.apps.AnnotationsConfig',
+    'cost.apps.CostConfig',
     'rest_pandas',
     'error_report',
     'cachalot',
@@ -249,6 +250,7 @@ MASTER_ORGANIZATIONS = ['NTK-61387142']  # organizations whose users should have
 LIVE_ERMS_AUTHENTICATION = False
 QUEUED_SUSHI_MAX_RETRY_COUNT = 5  # how many times max should we retry queued attempts
 SUSHI_ATTEMPT_LAST_DATE = '2017-01'  # default date where to end fetching sushi data
+REFERENCE_CURRENCY = 'CZK'  # this is the currency used for price calculation
 
 LOGGING = {
     'version': 1,
