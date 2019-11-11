@@ -13,7 +13,7 @@ from datetime import timedelta
 from pathlib import Path
 import sys
 
-from celery.schedules import schedule
+from celery.schedules import schedule, crontab
 
 from .json_settings import load_secret_settings_json_file
 
@@ -208,7 +208,11 @@ CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
 CELERY_BEAT_SCHEDULE = {
     'smart_interest_sync_task': {
         'task': 'logs.tasks.smart_interest_sync_task',
-        'schedule': schedule(run_every=timedelta(minutes=5)),
+        'schedule': schedule(run_every=timedelta(minutes=10)),
+    },
+    'recompute_interest_by_batch_task': {
+        'task': 'logs.tasks.recompute_interest_by_batch_task',
+        'schedule': crontab(minute=15, hour=1),  # every day at 1:15
     },
     'retry_queued_attempts_task': {
         'task': 'sushi.tasks.retry_queued_attempts_task',
@@ -220,7 +224,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'fetch_new_sushi_data_task': {
         'task': 'sushi.tasks.fetch_new_sushi_data_task',
-        'schedule': schedule(run_every=timedelta(days=1)),
+        'schedule': crontab(minute=13, hour=3),  # every day at 3:13
     },
     'erms_sync_platforms_task': {
         'task': 'publications.tasks.erms_sync_platforms_task',
