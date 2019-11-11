@@ -1,6 +1,4 @@
-from time import time
-
-from django.db.models import Count, Sum, Q, OuterRef, Exists
+from django.db.models import Count, Sum, Q
 from django.db.models.functions import Coalesce
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -18,8 +16,7 @@ from logs.serializers import ReportTypeSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
-from publications.serializers import TitleCountSerializer, PlatformSushiCredentialsSerializer
-from sushi.models import SushiCredentials
+from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
 
@@ -112,11 +109,9 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
 
 class PlatformInterestViewSet(ViewSet):
 
-    def get_queryset(self, request, organization_pk):
+    @classmethod
+    def get_report_type_and_filters(cls):
         interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
-
-        org_filter = organization_filter_from_org_id(organization_pk, request.user)
-        date_filter_params = date_filter_from_params(request.GET)
         # parameters for annotation defining an annotation for each of the interest groups
         interest_type_dim = interest_rt.dimensions_sorted[0]
         # we get active InterestGroups in order to filter out unused InterestGroups
@@ -125,6 +120,12 @@ class PlatformInterestViewSet(ViewSet):
         interest_annot_params = {interest_type.text: Sum('value', filter=Q(dim1=interest_type.pk))
                                  for interest_type in
                                  interest_type_dim.dimensiontext_set.filter(text__in=ig_names)}
+        return interest_rt, interest_annot_params
+
+    def get_queryset(self, request, organization_pk):
+        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        date_filter_params = date_filter_from_params(request.GET)
+        interest_rt, interest_annot_params = self.get_report_type_and_filters()
         result = AccessLog.objects\
             .filter(report_type=interest_rt, **org_filter, **date_filter_params)\
             .values('platform')\
@@ -141,6 +142,19 @@ class PlatformInterestViewSet(ViewSet):
         if data:
             return Response(data[0])
         return Response({})
+
+    @action(detail=True, url_path='by-year')
+    def by_year(self, request, pk, organization_pk):
+        """
+        Provides a list of report types associated with this platform
+        """
+        interest_rt, interest_annot_params = self.get_report_type_and_filters()
+        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        result = AccessLog.objects\
+            .filter(report_type=interest_rt, **org_filter, platform_id=pk)\
+            .values('date__year').distinct()\
+            .annotate(**interest_annot_params)
+        return Response(result)
 
 
 class BaseTitleViewSet(ReadOnlyModelViewSet):
