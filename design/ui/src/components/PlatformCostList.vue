@@ -6,14 +6,8 @@ en:
     columns:
         id: ID
         name: Name
-        provider: Provider
-        title_count: Title / database count
-        sushi_available: SUSHI active
-        notes: " "
-    sushi_present: SUSHI is available and active for this platform
-    no_sushi: SUSHI is not activated for this platform and selected organization
-    sushi_for_version: "SUSHI for COUNTER version {version} is available"
-    sushi_for_version_outside: "SUSHI not managed by consortium for COUNTER version {version} is available"
+        price: Price
+        price_per_unit: Price per unit
     annotations_available: There are annotations for this platform and the current date range. Go to the
         platform page for details.
 
@@ -22,14 +16,8 @@ cs:
     columns:
         id: ID
         name: Název
-        provider: Poskytovatel
-        title_count: Počet titulů a databází
-        sushi_available: Aktivní SUSHI
-        notes: " "
-    sushi_present: SUSHI je pro tuto platformu aktivní
-    no_sushi: SUSHI není pro tuto platformu a vybranou organizaci aktivní
-    sushi_for_version: "SUSHI pro verzi {version} COUNTERu je k dispozici"
-    sushi_for_version_outside: "SUSHI nespravované konsorciem pro verzi {version} COUNTERu je k dispozici"
+        price: Cena
+        price_per_unit: Cena za jednotku
     annotations_available: Pro tuto platformu a vybrané časové období byly uloženy poznámky.
         Na stránce platformy zjistíte detaily.
 
@@ -37,22 +25,24 @@ cs:
 <template>
     <v-container fluid class="pt-0">
         <v-row>
-            <v-select
+            <v-col cols="auto">
+                <v-select
                     v-model="selectedYear"
                     :items="availableYears"
                     item-value="year"
                     item-text="year"
                     :label="$t('year')"
-            >
-            </v-select>
+                    class="short"
+                >
+                </v-select>
+            </v-col>
             <v-spacer></v-spacer>
-            <v-col class="pt-0">
+            <v-col>
                 <v-text-field
                         v-model="search"
                         append-icon="fa-search"
                         :label="$t('labels.search')"
-                        single-line
-                        hide-details
+
                 ></v-text-field>
             </v-col>
         </v-row>
@@ -73,17 +63,23 @@ cs:
                         </router-link>
                     </template>
                     <template v-slot:item.title_count="{item}">
-            <span v-if="item.title_count === 'loading'"
-                  class="fas fa-spinner fa-spin subdued"></span>
+                        <span v-if="item.title_count === 'loading'"
+                              class="fas fa-spinner fa-spin subdued"></span>
                         <span v-else>
-                                {{ formatInteger(item.title_count) }}
-                            </span>
+                            {{ formatInteger(item.title_count) }}
+                        </span>
                     </template>
                     <template v-for="ig in activeInterestGroups" v-slot:[slotName(ig)]="{item}">
                         <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued" :key="ig.pk"></span>
                         <span v-else :key="ig.pk">
                                 {{ formatInteger(item.interests[ig.short_name]) }}
                             </span>
+                    </template>
+                    <template v-slot:item.price="{item}">
+                        {{ formatInteger(item.price) }}
+                    </template>
+                    <template v-slot:item.pricePerUnit="{item}">
+                        {{ item.pricePerUnit | smartFormatFloat }}
                     </template>
                 </v-data-table>
             </v-col>
@@ -92,7 +88,7 @@ cs:
 </template>
 <script>
   import {mapActions, mapGetters, mapState} from 'vuex'
-  import { formatInteger } from '../libs/numbers'
+  import { formatInteger, smartFormatFloat } from '../libs/numbers'
   import axios from 'axios'
 
   export default {
@@ -104,7 +100,7 @@ cs:
     data () {
       return {
         search: '',
-        paymentData: {},
+        paymentData: [],
         availableYears: [],
         selectedYear: null,
         interestData: [],
@@ -133,6 +129,16 @@ cs:
             align: 'right',
           })
         }
+        base.push({
+          text: this.$t('columns.price'),
+          value: 'price',
+          align: 'right',
+        })
+        base.push({
+          text: this.$t('columns.price_per_unit'),
+          value: 'pricePerUnit',
+          align: 'right',
+        })
         return base
       },
       platformToInterest () {
@@ -141,11 +147,27 @@ cs:
         return platformIdToInterest
 
       },
+      platformToPayment () {
+        let platformToPayment = {}
+        this.paymentData.filter(item => item.year == this.selectedYear).forEach(item => platformToPayment[item.platform] = item.price)
+        return platformToPayment
+      },
       platformData () {
         let data = [...this.platforms]
         let platformToInterest = this.platformToInterest
-        data.forEach(item => item.payment = this.paymentData.price)
-        data.forEach(item => item.yearInterest = platformToInterest[item.pk])
+        let platformToPayment = this.platformToPayment
+        data.forEach(item => {
+          item.price = platformToPayment[item.pk]
+          item.yearInterest = platformToInterest[item.pk]
+          let totalInterest = 0
+          if (item.yearInterest) {
+            for (let ig of this.activeInterestGroups) {
+              totalInterest += (ig.short_name in item.yearInterest) ? item.yearInterest[ig.short_name] : 0
+            }
+          }
+          item.totalInterest = totalInterest
+          item.pricePerUnit = (item.price && totalInterest) ? item.price / totalInterest : null
+        })
         return data
       }
     },
@@ -176,10 +198,22 @@ cs:
           this.showSnackbar({content: 'Error loading available years: '+error, color: 'error'})
         }
       },
+      async fetchPayments () {
+        try {
+          const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/payments/`)
+          this.paymentData = response.data
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading payment data: '+error, color: 'error'})
+        }
+      },
+    },
+    filters: {
+      smartFormatFloat,
     },
     mounted() {
       this.fetchYears()
       this.fetchInterest()
+      this.fetchPayments()
     }
   }
 </script>

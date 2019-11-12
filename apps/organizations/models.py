@@ -32,6 +32,7 @@ class Organization(MPTTModel):
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ('name',)
         unique_together = (
             ('ico', 'level'),  # duplicated ico can only be between parent and child
         )
