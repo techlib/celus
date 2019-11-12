@@ -29,8 +29,6 @@ cs:
                 <v-select
                     v-model="selectedYear"
                     :items="availableYears"
-                    item-value="year"
-                    item-text="year"
                     :label="$t('year')"
                     class="short"
                 >
@@ -70,16 +68,23 @@ cs:
                         </span>
                     </template>
                     <template v-for="ig in activeInterestGroups" v-slot:[slotName(ig)]="{item}">
-                        <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued" :key="ig.pk"></span>
-                        <span v-else :key="ig.pk">
-                                {{ formatInteger(item.interests[ig.short_name]) }}
+                        <v-fade-transition :key="ig.pk" leave-absolute>
+                            <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued" :key="ig.pk+'-'+selectedYear"></span>
+                            <span v-else-if="item.yearInterest" :key="ig.pk+'-'+selectedYear">
+                                {{ formatInteger(item.yearInterest[ig.short_name]) }}
                             </span>
+                            <span v-else :key="ig.pk+'-'+selectedYear">-</span>
+                        </v-fade-transition>
                     </template>
                     <template v-slot:item.price="{item}">
-                        {{ formatInteger(item.price) }}
+                        <v-fade-transition leave-absolute>
+                            <span :key="selectedYear">{{ formatInteger(item.price) }}</span>
+                        </v-fade-transition>
                     </template>
                     <template v-slot:item.pricePerUnit="{item}">
-                        {{ item.pricePerUnit | smartFormatFloat }}
+                        <v-fade-transition leave-absolute>
+                            <span :key="selectedYear">{{ item.pricePerUnit | smartFormatFloat }}</span>
+                        </v-fade-transition>
                     </template>
                 </v-data-table>
             </v-col>
@@ -101,7 +106,7 @@ cs:
       return {
         search: '',
         paymentData: [],
-        availableYears: [],
+        availableYears: [],  // will be computed from payment data
         selectedYear: null,
         interestData: [],
       }
@@ -179,17 +184,6 @@ cs:
       slotName (ig) {
         return 'item.interests.' + ig.short_name
       },
-      async fetchYears () {
-        try {
-          const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/year-interest/`)
-          this.availableYears = response.data
-          if (this.availableYears && this.availableYears.length > 0) {
-            this.selectedYear = this.availableYears[this.availableYears.length - 1].year
-          }
-        } catch (error) {
-          this.showSnackbar({content: 'Error loading available years: '+error, color: 'error'})
-        }
-      },
       async fetchInterest () {
         try {
           const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform-interest/by-year`)
@@ -200,8 +194,13 @@ cs:
       },
       async fetchPayments () {
         try {
-          const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/payments/`)
+          const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/payments/by-year/`)
           this.paymentData = response.data
+          this.availableYears = [...new Set(this.paymentData.map(item => item.year))].sort()
+          if (this.availableYears && this.availableYears.length > 0) {
+            this.selectedYear = this.availableYears[this.availableYears.length - 1]
+          }
+
         } catch (error) {
           this.showSnackbar({content: 'Error loading payment data: '+error, color: 'error'})
         }
@@ -211,9 +210,14 @@ cs:
       smartFormatFloat,
     },
     mounted() {
-      this.fetchYears()
       this.fetchInterest()
       this.fetchPayments()
+    },
+    watch: {
+      selectedOrganizationId () {
+        this.fetchInterest()
+        this.fetchPayments()
+      }
     }
   }
 </script>
