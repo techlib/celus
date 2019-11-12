@@ -26,13 +26,14 @@ cs:
     <v-container fluid class="pt-0">
         <v-row>
             <v-col cols="auto">
-                <v-select
-                    v-model="selectedYear"
-                    :items="availableYears"
-                    :label="$t('year')"
-                    class="short"
+                <span v-text="$t('year') + ':'" class="mr-2"></span>
+                <v-btn-toggle
+                        v-model="selectedYear"
+                        mandatory
+                        dense
                 >
-                </v-select>
+                    <v-btn v-for="year in availableYears" :key="year" :value="year" v-text="year"></v-btn>
+                </v-btn-toggle>
             </v-col>
             <v-spacer></v-spacer>
             <v-col>
@@ -40,7 +41,7 @@ cs:
                         v-model="search"
                         append-icon="fa-search"
                         :label="$t('labels.search')"
-
+                        class="pt-0"
                 ></v-text-field>
             </v-col>
         </v-row>
