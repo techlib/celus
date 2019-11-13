@@ -121,22 +121,38 @@ cs:
                         </v-fade-transition>
                     </template>
                     <template v-slot:item.price="{item}">
+                        <span @click="editPrice(item)">
+                        <span v-if="canEdit" class="float-left"><v-icon x-small color="grey">fa fa-edit</v-icon></span>
                         <v-fade-transition leave-absolute>
                             <span :key="selectedYear">{{ formatInteger(item.price) }}</span>
                         </v-fade-transition>
+                        </span>
                     </template>
                 </v-data-table>
             </v-col>
         </v-row>
+        <v-dialog
+                v-model="showEditDialog"
+                max-width="320px"
+        >
+            <EditPriceDialog
+                    :price="editedItem ? editedItem.price : 0"
+                    @close="showEditDialog = false"
+                    @save="savePrice"
+            />
+
+        </v-dialog>
     </v-container>
 </template>
 <script>
-  import {mapActions, mapGetters, mapState} from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import { formatInteger, smartFormatFloat } from '../libs/numbers'
   import axios from 'axios'
+  import EditPriceDialog from './EditPriceDialog'
 
   export default {
     name: 'PlatformCostList',
+    components: {EditPriceDialog},
     props: {
       loading: {},
       platforms: {},
@@ -150,6 +166,8 @@ cs:
         interestData: [],
         interestWeights: {},
         onlyWithPrice: false,
+        showEditDialog: false,
+        editedItem: null,
       }
     },
     computed: {
@@ -159,6 +177,8 @@ cs:
       ...mapGetters({
         formatNumber: 'formatNumber',
         activeInterestGroups: 'selectedGroupObjects',
+        showAdminStuff: 'showAdminStuff',
+        organizationSelected: 'organizationSelected',
       }),
       headers () {
         let base = [
@@ -238,6 +258,9 @@ cs:
           data = data.filter(item => item.price && item.price > 0)
         }
         return data
+      },
+      canEdit () {
+        return this.showAdminStuff && this.organizationSelected
       }
     },
     methods: {
@@ -281,6 +304,15 @@ cs:
             this.$set(this.interestWeights, item.short_name, "1")
           }
         })
+      },
+      editPrice (item) {
+        if (this.canEdit) {
+          this.editedItem = item
+          this.showEditDialog = true
+        }
+      },
+      savePrice ({price}) {
+        console.log('new price', price)
       }
     },
     filters: {
