@@ -122,10 +122,12 @@ cs:
                     </template>
                     <template v-slot:item.price="{item}">
                         <span @click="editPrice(item)">
-                        <span v-if="canEdit" class="float-left"><v-icon x-small color="grey">fa fa-edit</v-icon></span>
-                        <v-fade-transition leave-absolute>
-                            <span :key="selectedYear">{{ formatInteger(item.price) }}</span>
-                        </v-fade-transition>
+                            <v-fade-transition leave-absolute>
+                                <span :key="selectedYear">{{ formatInteger(item.price) }}</span>
+                            </v-fade-transition>
+                            <span v-if="canEdit" class="align-top ml-1">
+                                <v-icon x-small color="grey">fa fa-edit</v-icon>
+                            </span>
                         </span>
                     </template>
                 </v-data-table>
@@ -133,11 +135,14 @@ cs:
         </v-row>
         <v-dialog
                 v-model="showEditDialog"
-                max-width="320px"
+                max-width="400px"
         >
             <EditPriceDialog
+                    :platform="editedItem ? editedItem.name : ''"
                     :price="editedItem ? editedItem.price : 0"
-                    @close="showEditDialog = false"
+                    :organization="selectedOrganization ? selectedOrganization.name : ''"
+                    :year="selectedYear"
+                    @close="closeDialog"
                     @save="savePrice"
             />
 
@@ -161,7 +166,7 @@ cs:
       return {
         search: '',
         paymentData: [],
-        availableYears: [],  // will be computed from payment data
+        availableYears: [],  // will be computed from platform data
         selectedYear: null,
         interestData: [],
         interestWeights: {},
@@ -179,6 +184,7 @@ cs:
         activeInterestGroups: 'selectedGroupObjects',
         showAdminStuff: 'showAdminStuff',
         organizationSelected: 'organizationSelected',
+        selectedOrganization: 'selectedOrganization',
       }),
       headers () {
         let base = [
@@ -278,24 +284,34 @@ cs:
         return 'item.pricePerInterest.' + ig.short_name
       },
       async fetchInterest () {
-        try {
-          const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform-interest/by-year`)
-          this.interestData = response.data
-        } catch (error) {
-          this.showSnackbar({content: 'Error loading available years: '+error, color: 'error'})
+        if (this.selectedOrganizationId) {
+          try {
+            const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform-interest/by-year`)
+            this.interestData = response.data
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading available years: ' + error, color: 'error'})
+          }
         }
       },
       async fetchPayments () {
-        try {
-          const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/payments/by-year/`)
-          this.paymentData = response.data
-          this.availableYears = [...new Set(this.paymentData.map(item => item.year))].sort()
-          if (this.availableYears && this.availableYears.length > 0) {
-            this.selectedYear = this.availableYears[this.availableYears.length - 1]
+        if (this.selectedOrganizationId) {
+          let url = `/api/organization/${this.selectedOrganizationId}/payments/`
+          if (!this.organizationSelected) {
+            // if organization is not selected, we need to aggregate data by year,
+            // so we use a different endpoint
+            url += 'by-year/'
           }
+          try {
+            const response = await axios.get(url)
+            this.paymentData = response.data
+            this.availableYears = [...new Set(this.paymentData.map(item => item.year))].sort()
+            if (this.availableYears && this.availableYears.length > 0) {
+              this.selectedYear = this.availableYears[this.availableYears.length - 1]
+            }
 
-        } catch (error) {
-          this.showSnackbar({content: 'Error loading payment data: '+error, color: 'error'})
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading platform data: ' + error, color: 'error'})
+          }
         }
       },
       syncInterestWeights () {
@@ -311,8 +327,46 @@ cs:
           this.showEditDialog = true
         }
       },
-      savePrice ({price}) {
-        console.log('new price', price)
+      async savePrice ({price}) {
+        // find the right payment object
+        let paymentObject = null
+        for (let payment of this.paymentData) {
+          if (payment.organization === this.selectedOrganizationId &&
+              payment.platform === this.editedItem.pk &&
+              payment.year === this.selectedYear) {
+            paymentObject = payment
+            break
+          }
+        }
+        const baseUrl = `/api/organization/${this.selectedOrganizationId}/payments/`
+        if (paymentObject) {
+          try {
+            await axios.patch(`${baseUrl}${paymentObject.pk}/`, {price: price})
+            // update the price locally
+            paymentObject.price = price
+          } catch (error) {
+            this.showSnackbar({content: 'Error saving new price: ' + error, color: 'error'})
+          }
+        } else {
+          try {
+            let response = await axios.post(baseUrl,
+              {
+                organization: this.selectedOrganizationId,
+                platform: this.editedItem.pk,
+                year: this.selectedYear,
+                price: price,
+              }
+            )
+            this.paymentData.push(response.data)
+          } catch (error) {
+            this.showSnackbar({content: 'Error saving new price: ' + error, color: 'error'})
+          }
+        }
+        this.closeDialog()
+      },
+      closeDialog () {
+        this.editedItem = null
+        this.showEditDialog = false
       }
     },
     filters: {
@@ -338,6 +392,10 @@ cs:
 
     .subdued {
         color: #888888;
+    }
+
+    span.align-top .v-icon {
+        vertical-align: baseline;
     }
 
 </style>

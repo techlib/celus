@@ -7,4 +7,4 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = ['organization', 'platform', 'year', 'price']
+        fields = ['pk', 'organization', 'platform', 'year', 'price']
