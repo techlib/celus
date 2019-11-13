@@ -83,8 +83,7 @@
         loading: false,
         showUploadDataDialog: false,
         annotations: {},
-        showChart: false,
-        viewType: 'interest'
+        viewType: 'cost'
       }
     },
     computed: {

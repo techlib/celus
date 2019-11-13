@@ -95,13 +95,6 @@ cs:
                             props.item.name }}
                         </router-link>
                     </template>
-                    <template v-slot:item.title_count="{item}">
-                        <span v-if="item.title_count === 'loading'"
-                              class="fas fa-spinner fa-spin subdued"></span>
-                        <span v-else>
-                            {{ formatInteger(item.title_count) }}
-                        </span>
-                    </template>
                     <template v-for="ig in activeInterestGroups" v-slot:[slotName(ig)]="{item}">
                         <v-fade-transition :key="ig.pk" leave-absolute>
                             <span v-if="item.interests.loading" class="fas fa-spinner fa-spin subdued" :key="ig.pk+'-'+selectedYear"></span>
@@ -130,11 +123,6 @@ cs:
                     <template v-slot:item.price="{item}">
                         <v-fade-transition leave-absolute>
                             <span :key="selectedYear">{{ formatInteger(item.price) }}</span>
-                        </v-fade-transition>
-                    </template>
-                    <template v-slot:item.pricePerUnit="{item}">
-                        <v-fade-transition leave-absolute>
-                            <span :key="selectedYear">{{ item.pricePerUnit | smartFormatFloat }}</span>
                         </v-fade-transition>
                     </template>
                 </v-data-table>
@@ -187,21 +175,11 @@ cs:
             align: 'right',
           })
         }
-        /*base.push({
-          text: this.$t('columns.total_interest'),
-          value: 'totalInterest',
-          align: 'right',
-        })*/
         base.push({
           text: this.$t('columns.price'),
           value: 'price',
           align: 'right',
         })
-        /*base.push({
-          text: this.$t('columns.price_per_unit'),
-          value: 'pricePerUnit',
-          align: 'right',
-        })*/
         for (let ig of this.activeInterestGroups) {
           base.push({
             text: this.$t('columns.price_per_unit') + ": " + ig.name,
