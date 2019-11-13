@@ -1,7 +1,7 @@
 <i18n src="../locales/common.yaml"></i18n>
 
 <template>
-    <v-container>
+    <v-container fluid>
         <v-row>
             <v-col>
                 <h2>{{ $t('pages.platforms') }}</h2>

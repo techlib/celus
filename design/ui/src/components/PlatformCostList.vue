@@ -8,6 +8,7 @@ en:
         name: Name
         price: Price
         price_per_unit: Price per unit
+        price_for_interest: Price for
     only_with_price: Show only platforms with price
     weights: Interest weights
     weights_tooltip: When more than one interest is defined for a platform, you can use the
@@ -20,6 +21,7 @@ cs:
         name: Název
         price: Cena
         price_per_unit: Cena za jednotku
+        price_for_interest: Cena za
     only_with_price: Zobraz jen platformy s cenou
     weights: Váhy typů zájmů
     weights_tooltip: Pokud je pro platformu definováno více druhů zájmu, můžete použít následující
@@ -59,7 +61,10 @@ cs:
             <v-col cols="auto">
                 <v-tooltip bottom>
                     <template v-slot:activator="{on}">
-                        <span v-text="$t('weights') + ':'" v-on="on"></span>
+                        <span v-on="on">
+                            {{ $t('weights') }}
+                            <v-icon small color="blue">fa fa-info-circle</v-icon>:
+                        </span>
                     </template>
                     <span v-text="$t('weights_tooltip')"></span>
                 </v-tooltip>
@@ -110,6 +115,14 @@ cs:
                         <v-fade-transition :key="ig.pk" leave-absolute>
                             <span v-if="item.price && item.yearInterest && item.yearInterest[ig.short_name]" :key="ig.pk+'-'+selectedYear">
                                 {{ item.pricePerUnitInterest[ig.short_name] | smartFormatFloat }}
+                            </span>
+                            <span v-else :key="ig.pk+'-'+selectedYear">-</span>
+                        </v-fade-transition>
+                    </template>
+                    <template v-for="ig in activeInterestGroups" v-slot:[slotName3(ig)]="{item}">
+                        <v-fade-transition :key="ig.pk" leave-absolute>
+                            <span v-if="item.price && item.yearInterest && item.yearInterest[ig.short_name]" :key="ig.pk+'-'+selectedYear">
+                                {{ formatInteger(item.pricePerUnitInterest[ig.short_name] * item.yearInterest[ig.short_name]) }}
                             </span>
                             <span v-else :key="ig.pk+'-'+selectedYear">-</span>
                         </v-fade-transition>
@@ -197,6 +210,14 @@ cs:
             align: 'right',
           })
         }
+        for (let ig of this.activeInterestGroups) {
+          base.push({
+            text: this.$t('columns.price_for_interest') + ": " + ig.name,
+            value: 'pricePerInterest.' + ig.short_name,
+            class: 'wrap text-xs-right',
+            align: 'right',
+          })
+        }
         return base
       },
       platformToInterest () {
@@ -251,6 +272,9 @@ cs:
       },
       slotName2 (ig) {
         return 'item.pricePerUnitInterest.' + ig.short_name
+      },
+      slotName3 (ig) {
+        return 'item.pricePerInterest.' + ig.short_name
       },
       async fetchInterest () {
         try {
