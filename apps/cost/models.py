@@ -16,3 +16,5 @@ class Payment(models.Model):
     last_updated = models.DateTimeField(default=now)
     last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, blank=True)
 
+    class Meta:
+        unique_together = (('organization', 'platform', 'year'),)
