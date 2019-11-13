@@ -288,6 +288,10 @@ cs:
           try {
             const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform-interest/by-year`)
             this.interestData = response.data
+            this.availableYears = [...new Set(this.interestData.map(item => item.date__year))].sort()
+            if (this.availableYears && this.availableYears.length > 0) {
+              this.selectedYear = this.availableYears[this.availableYears.length - 1]
+            }
           } catch (error) {
             this.showSnackbar({content: 'Error loading available years: ' + error, color: 'error'})
           }
@@ -307,17 +311,6 @@ cs:
           } catch (error) {
             this.showSnackbar({content: 'Error loading platform data: ' + error, color: 'error'})
           }
-        }
-      },
-      async fetchYears () {
-        try {
-          const response = await axios.get(`/api/organization/${this.selectedOrganizationId}/year-interest/`)
-          this.availableYears = response.data.map(item => item.year)
-          if (this.availableYears && this.availableYears.length > 0) {
-            this.selectedYear = this.availableYears[this.availableYears.length - 1]
-          }
-        } catch (error) {
-          this.showSnackbar({content: 'Error loading available years: '+error, color: 'error'})
         }
       },
       syncInterestWeights () {
@@ -379,14 +372,12 @@ cs:
       smartFormatFloat,
     },
     mounted() {
-      this.fetchYears()
       this.fetchInterest()
       this.fetchPayments()
       this.syncInterestWeights()
     },
     watch: {
       selectedOrganizationId () {
-        this.fetchYears()
         this.fetchInterest()
         this.fetchPayments()
       },
