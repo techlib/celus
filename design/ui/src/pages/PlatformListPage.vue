@@ -22,17 +22,22 @@
             <v-col>
                 <v-card>
                     <v-card-text>
-                        <v-btn-toggle v-model="showChart" label="showChart" class="float-right">
-                            <v-btn :value="false" small><v-icon small>fa fa-list</v-icon></v-btn>
-                            <v-btn :value="true" small><v-icon small>fa fa-chart-bar</v-icon></v-btn>
+                        <v-btn-toggle v-model="viewType" class="float-right">
+                            <v-btn value="interest" small><v-icon small>fa fa-list</v-icon></v-btn>
+                            <v-btn value="chart" small><v-icon small>fa fa-chart-bar</v-icon></v-btn>
+                            <v-btn value="cost" small><v-icon small>fa fa-dollar-sign</v-icon></v-btn>
                         </v-btn-toggle>
 
-                        <div v-if="showChart" class="pt-10">
+                        <div v-if="viewType === 'chart'" class="pt-10">
                             <PlatformInterestChart :platforms="platforms" />
+                        </div>
+                        <div v-else-if="viewType === 'cost'">
+                            <InterestGroupSelector />
+                            <PlatformCostList :loading="loading" :platforms="platforms" />
                         </div>
                         <div v-else>
                             <InterestGroupSelector />
-                            <PlatformList :loading="loading" :platforms="platforms" />                                          </div>
+                            <PlatformList :loading="loading" :platforms="platforms" />                                         </div>
                      </v-card-text>
                 </v-card>
             </v-col>
@@ -57,12 +62,14 @@
   import AddAnnotationButton from '../components/AddAnnotationButton'
   import InterestGroupSelector from '../components/InterestGroupSelector'
   import PlatformInterestChart from '../components/PlatformInterestChart'
-  import PlatformList from '../components/PlatformCostList'
+  import PlatformCostList from '../components/PlatformCostList'
+  import PlatformList from '../components/PlatformList'
 
   export default {
     name: 'PlatformListPage',
     components: {
       PlatformList,
+      PlatformCostList,
       PlatformSelectionWidget,
       AnnotationsWidget,
       AddAnnotationButton,
@@ -77,6 +84,7 @@
         showUploadDataDialog: false,
         annotations: {},
         showChart: false,
+        viewType: 'interest'
       }
     },
     computed: {

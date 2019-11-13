@@ -148,7 +148,7 @@ cs:
   import axios from 'axios'
 
   export default {
-    name: 'PlatformList',
+    name: 'PlatformCostList',
     props: {
       loading: {},
       platforms: {},
