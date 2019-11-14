@@ -11,6 +11,7 @@ import { format as formatNumber } from 'mathjs/lib/function/string/format'
 import VuexPersistence from 'vuex-persist'
 import { sortOrganizations } from '../libs/organizations'
 import interest from './modules/interest'
+import maintenance from './modules/maintenance'
 
 Vue.use(Vuex)
 
@@ -28,6 +29,7 @@ export default new Vuex.Store({
   plugins: [vuexLocal.plugin],
   modules: {
     interest,
+    maintenance,
   },
   state: {
     user: null,
@@ -107,12 +109,14 @@ export default new Vuex.Store({
       return (number) => (number === null) ? '-' : formatNumber(number, state.numberFormat)
     },
     showAdminStuff (state, getters) {
+      // can the user admin the organization that is selected?
       return (
         (state.user && (state.user.is_from_master_organization || state.user.is_superuser)) ||
         (getters.selectedOrganization && getters.selectedOrganization.is_admin)
         )
     },
     showManagementStuff (state) {
+      // can the user manage the system?
       return (state.user && (state.user.is_from_master_organization || state.user.is_superuser))
     },
     organizationSelected (state) {
@@ -144,6 +148,9 @@ export default new Vuex.Store({
       context.dispatch('loadOrganizations')
       context.dispatch('changeDateRangeObject', context.state.dateRangeIndex)
       context.dispatch('fetchInterestGroups')
+      if (context.getters.showManagementStuff) {
+        context.dispatch('fetchNoInterestPlatforms')
+      }
     },
     showSnackbar (context, {content, color}) {
       context.commit('setSnackbarContent', {'content': content})

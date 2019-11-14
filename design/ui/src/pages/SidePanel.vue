@@ -1,4 +1,5 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n src="../locales/notifications.yaml"></i18n>
 
 <template>
     <v-navigation-drawer
@@ -46,7 +47,23 @@
                 </v-list-item-action>
 
                 <v-list-item-content>
-                    <v-list-item-title>{{ item.title }}</v-list-item-title>
+                    <v-list-item-title>
+                        {{ item.title }}
+                        <v-tooltip bottom v-if="item.linkTo in notifications">
+                            <template v-slot:activator="{on}">
+                                <v-icon
+                                        v-on="on"
+                                        x-small
+                                        :color="notifications[item.linkTo].level"
+                                        class="float-right"
+                                >
+                                    fa
+                                    {{ notifications[item.linkTo].level === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle' }}
+                                </v-icon>
+                            </template>
+                            <span v-text="$t('notifications.'+notifications[item.linkTo].tooltip)"></span>
+                        </v-tooltip>
+                    </v-list-item-title>
                 </v-list-item-content>
             </v-list-item>
         </v-list>
@@ -71,6 +88,7 @@
           organization: 'selectedOrganization',
           showAdminStuff: 'showAdminStuff',
           showManagementStuff: 'showManagementStuff',
+          notifications: 'getNotifications',
         }),
         groups () {
           return [

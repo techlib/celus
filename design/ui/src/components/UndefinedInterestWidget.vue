@@ -23,13 +23,12 @@ cs:
             <span v-text="item.name" :class="{bold: item.has_data}"></span>
         </template>
         <template v-slot:item.has_data="{item}">
-            <CheckMark :value="item.has_data" />
+            <CheckMark :value="item.has_data" true-color="warning" false-color="grey" />
         </template>
     </v-data-table>
 </template>
 
 <script>
-  import axios from 'axios'
   import { mapActions, mapState } from 'vuex'
   import CheckMark from './CheckMark'
 
@@ -64,19 +63,13 @@ cs:
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
+        fetchNoInterestPlatforms: 'fetchNoInterestPlatforms',
       }),
       async fetchPlatforms () {
         if (this.organizationId) {
-          const url = `/api/organization/${this.organizationId}/platform/no-interest-defined/`
           this.loading = true
-          try {
-            const response = await axios.get(url)
-            this.platforms = response.data
-          } catch (error) {
-            this.showSnackbar({content: 'Error fetching data: ' + error, color: 'error'})
-          } finally {
-            this.loading = false
-          }
+          this.platforms = await this.fetchNoInterestPlatforms()
+          this.loading = false
         }
       }
     },

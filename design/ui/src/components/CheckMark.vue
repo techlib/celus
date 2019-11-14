@@ -1,5 +1,5 @@
 <template>
-    <v-icon small :color="value ? 'success' : 'error'" :class="extraClasses">
+    <v-icon small :color="value ? trueColor : falseColor" :class="extraClasses">
         {{ value ? 'fa-check' : 'fa-times' }}
     </v-icon>
 </template>
@@ -10,6 +10,8 @@
     props: {
       value: {required: true, type: Boolean},
       extraClasses: {required: false, type: String},
+      trueColor: {default: 'success'},
+      falseColor: {default: 'error'},
     }
   }
 </script>
