@@ -34,7 +34,9 @@ cs:
         </v-row>
         <v-row no-gutters>
             <v-col :cols="12">
+                <LoaderWidget v-if="loading"/>
                 <ve-heatmap
+                        v-else
                         :data="chartData"
                         :settings="chartSettings"
                         :height="heightString"
@@ -50,10 +52,12 @@ cs:
   import VeHeatmap from 'v-charts/lib/heatmap.common'
   import { mapActions, mapGetters } from 'vuex'
   import axios from 'axios'
+  import LoaderWidget from './LoaderWidget'
 
   export default {
     name: 'OrganizationPlatformInterestHeatmap',
     components: {
+      LoaderWidget,
       VeHeatmap,
     },
     data () {
@@ -111,7 +115,7 @@ cs:
       },
       autoHeight () {
         const primDimUniqueValues = new Set(this.dataRaw.map(item => item[this.secondaryDim]))
-        return this.dataRaw ? primDimUniqueValues.size * 18 + 100 : 200
+        return this.dataRaw.length > 0 ? primDimUniqueValues.size * 18 + 100 : 600
       },
       minHeight () {
         return 200
@@ -166,6 +170,3 @@ cs:
   }
 </script>
 
-<style scoped>
-
-</style>

@@ -2,9 +2,9 @@
 <i18n src="../locales/charts.yaml"></i18n>
 
 <template>
-    <div v-if="loading || dataRaw.length === 0" :style="{'height': height}" id="loading">
-        <i v-if="loading" class="fas fa-cog fa-spin"></i>
-        <div v-else>
+    <LoaderWidget v-if="loading" :height="height" />
+    <div v-else-if="dataRaw.length === 0" :style="{'height': height}" id="loading">
+        <div>
             <i class="far fa-frown"></i>
             <div class="infotext">{{ $t('chart.no_data') }}</div>
         </div>
@@ -32,10 +32,11 @@
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions, mapGetters } from 'vuex'
   import 'echarts/lib/component/markLine'
+  import LoaderWidget from './LoaderWidget'
 
   export default {
     name: 'APIChart',
-    components: {VeHistogram, VeBar, VeLine},
+    components: {VeHistogram, VeBar, VeLine, LoaderWidget},
     props: {
       type: {
         type: String,
@@ -370,7 +371,6 @@
     }
 
     #loading {
-        //background-color: white;
         font-size: 60px;
         color: #1db79a88;
         text-align: center;
@@ -382,7 +382,6 @@
         div.infotext {
             font-size: 26px;
         }
-
     }
 
 </style>
