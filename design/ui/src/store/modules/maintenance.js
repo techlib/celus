@@ -28,16 +28,14 @@ export default {
 
   actions: {
     async fetchNoInterestPlatforms ({commit, dispatch, rootState}) {
-      if (rootState.selectedOrganizationId) {
-        const url = `/api/organization/${rootState.selectedOrganizationId}/platform/no-interest-defined/`
-        try {
-          const response = await axios.get(url)
-          commit('setNoInterestPlatformsCount', {count: response.data.length})
-          commit('setNoInterestPlatformsWithDataCount', {count: response.data.filter(item => item.has_data).length})
-          return response.data
-        } catch (error) {
-          dispatch('showSnackbar', {content: 'Error fetching data: ' + error, color: 'error'})
-        }
+      const url = `/api/organization/-1/platform/no-interest-defined/`
+      try {
+        const response = await axios.get(url)
+        commit('setNoInterestPlatformsCount', {count: response.data.length})
+        commit('setNoInterestPlatformsWithDataCount', {count: response.data.filter(item => item.has_data).length})
+        return response.data
+      } catch (error) {
+        dispatch('showSnackbar', {content: 'Error fetching data: ' + error, color: 'error'})
       }
       return []
     }
