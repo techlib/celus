@@ -1,4 +1,4 @@
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, OuterRef, Exists
 from django.db.models.functions import Coalesce
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -11,7 +11,7 @@ from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
-from logs.models import ReportType, AccessLog, InterestGroup
+from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch
 from logs.serializers import ReportTypeSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
@@ -32,7 +32,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         Provides a list of report types associated with this platform
         """
         platform = get_object_or_404(Platform.objects.all(), pk=pk)
-        report_types = ReportType.objects.filter(platform=platform)
+        report_types = ReportType.objects.filter(interest_platforms=platform)
         return Response(ReportTypeSerializer(report_types, many=True).data)
 
 
@@ -47,6 +47,15 @@ class PlatformViewSet(ReadOnlyModelViewSet):
         org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
                                                      self.request.user)
         return Platform.objects.filter(**org_filter)
+
+    @action(methods=['GET'], url_path='no-interest-defined', detail=False)
+    def without_interest_definition(self, request, organization_pk):
+        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        import_batch_query = ImportBatch.objects.filter(platform_id=OuterRef('pk'))
+        qs = Platform.objects.\
+            filter(**org_filter, interest_reports__isnull=True).\
+            annotate(has_data=Exists(import_batch_query))
+        return Response(DetailedPlatformSerializer(qs, many=True).data)
 
 
 class DetailedPlatformViewSet(ReadOnlyModelViewSet):

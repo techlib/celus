@@ -13,6 +13,7 @@ import CustomDataUploadPage from '../pages/CustomDataUploadPage'
 import SushiFetchAttemptsPage from '../pages/SushiFetchAttemptsPage'
 import UserPage from '../pages/UserPage'
 import ManagementPage from '../pages/ManagementPage'
+import MaintenancePage from '../pages/MaintenancePage'
 
 Vue.use(Router)
 
@@ -82,6 +83,11 @@ export default new Router({
       path: '/admin/sushi-fetch-attempts/',
       name: 'sushi-fetch-attempts',
       component: SushiFetchAttemptsPage,
+    },
+    {
+      path: '/admin/maintenance/',
+      name: 'maintenance',
+      component: MaintenancePage,
     },
     {
       path: '/platforms/:platformId/upload-data/',

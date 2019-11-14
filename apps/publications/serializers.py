@@ -1,4 +1,5 @@
-from rest_framework.fields import FloatField, JSONField, ChoiceField, SerializerMethodField
+from rest_framework.fields import FloatField, JSONField, ChoiceField, SerializerMethodField, \
+    BooleanField
 from rest_framework.serializers import ModelSerializer, IntegerField
 
 from .models import Platform, Title
@@ -15,11 +16,12 @@ class DetailedPlatformSerializer(ModelSerializer):
 
     title_count = IntegerField(read_only=True)
     interests = JSONField(read_only=True)
+    has_data = BooleanField(read_only=True)
 
     class Meta:
         model = Platform
         fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url',
-                  'title_count', 'interests')
+                  'title_count', 'interests', 'has_data')
 
 
 class PlatformSushiCredentialsSerializer(ModelSerializer):
