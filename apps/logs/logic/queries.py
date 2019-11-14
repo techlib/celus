@@ -276,4 +276,4 @@ class StatsComputer(object):
                 except ValueError:
                     org_nums.append(org)
                     num = len(org_nums)
-                rec['organization'] = 'Anonym-{}'.format(num)
+                rec['organization'] = 'Anonym-{:03d}'.format(num)

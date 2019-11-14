@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import NotFoundPage from '../pages/NotFoundPage'
-// import ChartTestPage from '../pages/ChartTestPage'
+import ChartTestPage from '../pages/ChartTestPage'
 import PlatformListPage from '../pages/PlatformListPage'
 import PlatformDetailPage from '../pages/PlatformDetailPage'
 import TitleDetailPage from '../pages/TitleDetailPage'
@@ -14,11 +14,23 @@ import SushiFetchAttemptsPage from '../pages/SushiFetchAttemptsPage'
 import UserPage from '../pages/UserPage'
 import ManagementPage from '../pages/ManagementPage'
 import MaintenancePage from '../pages/MaintenancePage'
+import OrganizationPlatformInterestOverviewPage
+  from '../pages/OrganizationPlatformInterestOverviewPage'
 
 Vue.use(Router)
 
 export default new Router({
   routes: [
+    {
+      path: '/chart-test',
+      name: 'chart-test',
+      component: ChartTestPage,
+    },
+    {
+      path: '/heatmap',
+      name: 'heatmap',
+      component: OrganizationPlatformInterestOverviewPage,
+    },
     {
       path: '/',
       name: 'home',
