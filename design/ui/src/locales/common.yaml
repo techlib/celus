@@ -9,6 +9,7 @@ en:
     sushi_fetch_attempts: SUSHI downloads
     import_batches: Import batches
     management: Management
+    maintenance: Maintenance
   menu: Menu
   organization: Organization
   platform: Platform
@@ -106,6 +107,7 @@ cs:
     sushi_fetch_attempts: Stahování SUSHI
     import_batches: Importované dávky
     management: Management
+    maintenance: Údržba
   menu: Menu
   organization: Organizace
   platform: Platforma

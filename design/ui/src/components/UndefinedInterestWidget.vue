@@ -17,6 +17,7 @@ cs:
             :items-per-page="-1"
             sort-by="has_data"
             :sort-desc="true"
+            :hide-default-footer="true"
     >
         <template v-slot:item.name="{item}">
             <span v-text="item.name" :class="{bold: item.has_data}"></span>

@@ -1,8 +1,10 @@
 <i18n>
 en:
     maintenance: Maintenance
+    no_interest: Platforms without interest definition
 cs:
     maintenance: Údržba
+    no_interest: Platformy bez definice zájmu
 </i18n>
 
 <template>
@@ -13,7 +15,22 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <UndefinedInterestWidget />
+            <v-col :cols="12">
+                <v-card>
+                    <v-card-text>
+                        <v-tabs v-model="tab">
+                            <v-tab
+                                    href="#no-interest"
+                                    v-text="$t('no_interest')"
+                            >
+                            </v-tab>
+                            <v-tab-item value="no-interest">
+                                <UndefinedInterestWidget />
+                            </v-tab-item>
+                        </v-tabs>
+                    </v-card-text>
+                </v-card>
+            </v-col>
         </v-row>
     </v-container>
 </template>
@@ -25,6 +42,11 @@ cs:
     name: 'MaintenancePage',
     components: {
       UndefinedInterestWidget,
+    },
+    data () {
+      return {
+        tab: 'no-interest'
+      }
     }
   }
 </script>
