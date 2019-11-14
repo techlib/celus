@@ -10,6 +10,7 @@ en:
     import_batches: Import batches
     management: Management
     maintenance: Maintenance
+    heatmap: Interest heatmap
   menu: Menu
   organization: Organization
   platform: Platform
@@ -108,6 +109,7 @@ cs:
     import_batches: Importované dávky
     management: Management
     maintenance: Údržba
+    heatmap: Heatmapa zájmu
   menu: Menu
   organization: Organizace
   platform: Platforma

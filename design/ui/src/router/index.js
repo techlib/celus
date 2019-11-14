@@ -22,16 +22,6 @@ Vue.use(Router)
 export default new Router({
   routes: [
     {
-      path: '/chart-test',
-      name: 'chart-test',
-      component: ChartTestPage,
-    },
-    {
-      path: '/heatmap',
-      name: 'heatmap',
-      component: OrganizationPlatformInterestOverviewPage,
-    },
-    {
       path: '/',
       name: 'home',
       redirect: {name: 'platform-list'},
@@ -75,6 +65,11 @@ export default new Router({
         platformId: null,
         titleId: Number.parseInt(route.params.titleId, 10),
       })
+    },
+    {
+      path: '/heatmap',
+      name: 'heatmap',
+      component: OrganizationPlatformInterestOverviewPage,
     },
     {
       path: '/admin/management/',

@@ -1,5 +1,20 @@
+<i18n>
+en:
+    heatmap: Interest heatmap
+cs:
+    heatmap: Heatmapa zájmu
+</i18n>
+
 <template>
-    <OrganizationPlatformInterestHeatmap />
+    <v-container fluid>
+        <v-row>
+            <v-col :cols="12">
+                <OrganizationPlatformInterestHeatmap>
+                    <h2 v-text="$t('heatmap')"></h2>
+                </OrganizationPlatformInterestHeatmap>
+            </v-col>
+        </v-row>
+    </v-container>
 </template>
 
 <script>
