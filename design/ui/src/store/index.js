@@ -124,8 +124,7 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    async start (context) {
-      let that = this
+    async start ({dispatch, getters, state}) {
       axios.defaults.xsrfCookieName = 'csrftoken'
       axios.defaults.xsrfHeaderName = 'X-CSRFToken'
       axios.interceptors.response.use(function (response) {
@@ -135,21 +134,21 @@ export default new Vuex.Store({
         // Do something with response error
         if (error.response && error.response.status === 401) {
           // if there is 401 error, try to (re)authenticate
-          that.dispatch('setShowLoginDialog', {show: true})
+          dispatch('setShowLoginDialog', {show: true})
         } else if (typeof error.response === 'undefined') {
           // we are getting redirected to the EduID login page, but 302 is transparent for us
           // (the browser handles it on its own) and the error we get does not have any response
           // because it is caused by CORS violation when we try to get the eduid login page
-          that.dispatch('setShowLoginDialog', {show: true})
+          dispatch('setShowLoginDialog', {show: true})
         }
         return Promise.reject(error)
       })
-      await context.dispatch('loadUserData')  // we need user data first
-      context.dispatch('loadOrganizations')
-      context.dispatch('changeDateRangeObject', context.state.dateRangeIndex)
-      context.dispatch('fetchInterestGroups')
-      if (context.getters.showManagementStuff) {
-        context.dispatch('fetchNoInterestPlatforms')
+      await dispatch('loadUserData')  // we need user data first
+      dispatch('loadOrganizations')
+      dispatch('changeDateRangeObject', state.dateRangeIndex)
+      dispatch('fetchInterestGroups')
+      if (getters.showManagementStuff) {
+        dispatch('fetchNoInterestPlatforms')
       }
     },
     showSnackbar (context, {content, color}) {
