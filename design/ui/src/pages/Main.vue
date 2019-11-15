@@ -153,6 +153,7 @@
         },
         set (newValue) {
           this.$store.dispatch('setAppLanguage', {lang: newValue})
+          this.$router.go()
         }
       },
     },
