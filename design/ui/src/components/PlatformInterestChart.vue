@@ -3,9 +3,16 @@
 <template>
     <v-container>
         <v-row>
+            <v-col cols="auto">
+                <v-checkbox
+                        v-model="logScale"
+                        :label="$t('chart.log_scale')"
+                        class="mt-1 ml-4"
+                ></v-checkbox>
+            </v-col>
             <v-spacer></v-spacer>
             <v-col cols="auto">
-                <v-checkbox v-model="logScale" :label="$t('chart.log_scale')"></v-checkbox>
+                <slot></slot>
             </v-col>
         </v-row>
         <v-row no-gutters>

@@ -29,7 +29,15 @@
                         </v-btn-toggle>
 
                         <div v-if="viewType === 'chart'" class="pt-10">
-                            <PlatformInterestChart :platforms="platforms" />
+                            <PlatformInterestChart :platforms="platforms">
+                                <v-btn
+                                        :href="platformInterestURL+'&format=csv'"
+                                        color="secondary"
+                                >
+                                    <v-icon left small>fa-download</v-icon>
+                                    Export
+                                </v-btn>
+                            </PlatformInterestChart>
                         </div>
                         <div v-else-if="viewType === 'cost'">
                             <InterestGroupSelector />

@@ -1,5 +1,6 @@
 from django.db.models import Count, Sum, Q, OuterRef, Exists
 from django.db.models.functions import Coalesce
+from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -11,7 +12,7 @@ from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
-from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch
+from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metric
 from logs.serializers import ReportTypeSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
@@ -143,6 +144,23 @@ class PlatformInterestViewSet(ViewSet):
 
     def list(self, request, organization_pk):
         qs = self.get_queryset(request, organization_pk)
+        data_format = request.GET.get('format')
+        if data_format in ('csv', 'xlsx'):
+            # when exporting, we want to rename the columns and rows
+            data = DataFrame(qs)
+            platform_names = {pl['pk']: pl['short_name']
+                              for pl in Platform.objects.all().values('pk', 'short_name')}
+            metric_names = {m['short_name']: m['name']
+                            for m in InterestGroup.objects.all().values('short_name', 'name')}
+            data['platform'] = [platform_names[pk] for pk in data['platform']]
+            data.set_index('platform', drop=True, inplace=True)
+            data.rename(columns=metric_names, inplace=True)
+            data.drop(columns='title_count', inplace=True)
+            return Response(data,
+                            headers={
+                                'Content-Disposition':
+                                    f'attachment; filename="export.{data_format}"'
+                            })
         return Response(qs)
 
     def retrieve(self, request, organization_pk, pk):
