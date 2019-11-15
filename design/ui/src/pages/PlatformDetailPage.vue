@@ -2,10 +2,10 @@
 <i18n src="../locales/common.yaml"></i18n>
 <i18n>
 en:
-    no_info: Unfortunately there are no data available for this platform.
+    no_info: Unfortunately there are no data about titles available for this platform.
 
 cs:
-    no_info: Pro tuto platformu bohužel nejsou dostupná žádná data.
+    no_info: Pro tuto platformu bohužel nejsou dostupná žádná data o titulech.
 </i18n>
 
 <template>
@@ -103,7 +103,7 @@ cs:
             <AnnotationsWidget v-if="platform" :platform="platform" :allow-add="showAdminStuff" ref="annotWidget"></AnnotationsWidget>
         </section>
 
-        <section v-if="selectedOrganizationId && platform && platform.title_count">
+        <section v-if="selectedOrganizationId && platform">
             <v-layout>
                 <v-flex><h3>{{ $t('overview') }}</h3></v-flex>
                 <v-flex shrink>
