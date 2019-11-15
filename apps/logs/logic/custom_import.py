@@ -1,5 +1,7 @@
 from datetime import date, datetime
 import dateparser
+from django.db import connection
+from django.db.transaction import atomic
 
 from django.utils.translation import gettext as _
 
@@ -108,6 +110,7 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
     }
 
 
+@atomic
 def import_custom_data(mdu: ManualDataUpload, user) -> dict:
     records = mdu.data_to_records()
     # TODO: the owner level should be derived from the user and the organization at hand
@@ -121,4 +124,9 @@ def import_custom_data(mdu: ManualDataUpload, user) -> dict:
                                                organization=mdu.organization)
     mdu.import_batch = import_batch
     mdu.mark_processed()
+    # the following could be used to debug the speed of this code chunk
+    # qs = connection.queries
+    # qs.sort(key=lambda x: -float(x['time']))
+    # for q in qs[:3]:
+    #     print(q['time'], q)
     return stats
