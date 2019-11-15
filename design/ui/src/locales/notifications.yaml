@@ -1,5 +1,5 @@
 en:
-  notification:
+  notifications:
     no_interest_platforms_present: There are platforms without interest defined
     no_interest_platforms_with_data_present: There are platforms with data but without interest defined
 
