@@ -143,7 +143,7 @@ cs:
                         <LargeSpinner v-else />
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn v-if="preflightData && !preflightError" @click="processUploadObject()" color="primary">{{ $t('import') }}</v-btn>
+                        <v-btn v-if="preflightData && !preflightError" @click="processUploadObject()" color="primary" :loading="uploadObjectProcessing">{{ $t('import') }}</v-btn>
                         <v-btn @click="backToStart()" v-text="$t('back_to_start')" color="secondary"></v-btn>
                     </v-card-actions>
                 </v-card>
@@ -264,6 +264,7 @@ cs:
         importBatch: null,
         showAddReportTypeDialog: false,
         tab: 'chart',
+        uploadObjectProcessing: false,
       }
     },
     computed: {
@@ -305,7 +306,7 @@ cs:
             formData,
             {headers: {'Content-Type': 'multipart/form-data'}}
           )
-          this.showSnackbar({content: 'Data successfully sent', color: 'success'})
+          // this.showSnackbar({content: 'Data successfully sent', color: 'success'})
           this.uploadObject = response.data
           this.step = 2
           await this.$router.push({
@@ -369,6 +370,7 @@ cs:
         }
       },
       async processUploadObject () {
+        this.uploadObjectProcessing = true
         if (this.uploadObject) {
           let url = `/api/manual-data-upload/${this.uploadObject.pk}/process`
           try {
@@ -378,6 +380,8 @@ cs:
             this.step = 3
           } catch (error) {
             this.showSnackbar({content: 'Error processing data: ' + error})
+          } finally {
+            this.uploadObjectProcessing = false
           }
         }
       },
