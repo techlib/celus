@@ -31,7 +31,7 @@ class Command(BaseCommand):
     @atomic
     def handle(self, *args, **options):
         t1 = time()
-        with open(options['file'], 'r') as infile:
+        with open(options['file'], 'r', encoding='utf-8') as infile:
             data = json.load(infile)
         reader = Counter5TRReport()
         organization = Organization.objects.get(internal_id=options['organization'])

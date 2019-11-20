@@ -16,7 +16,7 @@ class Command(BaseCommand):
         parser.add_argument('file', help='JSON file to process')
 
     def handle(self, *args, **options):
-        with open(options['file'], 'r') as infile:
+        with open(options['file'], 'r', encoding='utf-8') as infile:
             data = json.load(infile)
         header = data.get('Report_Header')
         if not header:

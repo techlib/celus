@@ -115,7 +115,7 @@ class Counter5ReportBase(object):
 
     @classmethod
     def file_to_input(cls, filename: str):
-        with open(filename, 'r') as infile:
+        with open(filename, 'r', encoding='utf-8') as infile:
             return json.load(infile)
 
     @classmethod
