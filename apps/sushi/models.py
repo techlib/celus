@@ -496,6 +496,7 @@ class SushiFetchAttempt(models.Model):
         stats = {}
         if self.import_batch:
             stats = self.import_batch.delete()  # deletes the access logs as well
+            self.import_batch = None
         self.is_processed = False
         self.import_crashed = False
         self.log = ''

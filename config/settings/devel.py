@@ -14,7 +14,7 @@ MIDDLEWARE += [
     'querycount.middleware.QueryCountMiddleware',
 ]
 
-DATABASES['default']['NAME'] = 'ntk_stats'
+DATABASES['default']['NAME'] = 'ntk_stats2'
 CACHE_MIDDLEWARE_SECONDS = 1
 
 

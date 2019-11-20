@@ -46,11 +46,10 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
                     'queued', 'import_crashed', 'download_success', 'processing_success',
                     'is_processed', 'contains_data', 'error_code']
     list_filter = ['download_success',  'processing_success', 'is_processed', 'queued',
-                   'error_code',
-                   'contains_data', 'counter_report']
+                   'import_crashed', 'error_code', 'contains_data', 'counter_report']
     readonly_fields = ['credentials', 'counter_report', 'timestamp', 'start_date', 'end_date',
                        'download_success', 'data_file', 'import_batch', 'queue_previous']
-    search_fields = ['credentials__organization__name', 'credentials__platform__name']
+    search_fields = ['credentials__organization__name', 'credentials__platform__name', 'pk']
     actions = [reimport]
     list_select_related = ['credentials__platform', 'credentials__organization', 'credentials',
                            'counter_report']

@@ -95,7 +95,11 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
 
 
 def reprocess_attempt(attempt: SushiFetchAttempt) -> SushiFetchAttempt:
-    if attempt.is_processed:
-        attempt.unprocess()
-    import_one_sushi_attempt(attempt)
+    attempt.unprocess()
+    try:
+        import_one_sushi_attempt(attempt)
+    except Exception as e:
+        # we catch any kind of error to make sure that there is no crash
+        logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
+        attempt.mark_crashed(e)
     return attempt
