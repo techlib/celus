@@ -17,7 +17,7 @@ cs:
             <v-card-text>{{ $t('not_logged_in_text') }}</v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text :href="$route.path">{{ $t('login') }}</v-btn>
+                <v-btn color="primary" text :href="$route.path + '?t=' + currentTimestamp">{{ $t('login') }}</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -37,6 +37,11 @@ cs:
           this.$store.dispatch('setShowLoginDialog', {show: newValue})
         }
       },
+      currentTimestamp () {
+        // we add the current timestamp param to the URL in order to unsure the
+        // page will not be fetched from cache by the browser
+        return new Date().getTime()
+      }
     }
   }
 </script>
