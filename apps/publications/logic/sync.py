@@ -18,6 +18,7 @@ class PlaformSyncer(ERMSObjectSyncer):
     attr_map = {
         'id': 'ext_id',
         'short name_en': 'short_name',
+        'alternative name_en': None,
     }
 
     object_class = Platform
