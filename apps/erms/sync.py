@@ -58,7 +58,7 @@ class Syncer(object):
         return value
 
     def translate_key(self, key):
-        return self.attr_map.get(key, key)
+        return self.attr_map.get(key)
 
     def sync_record(self, record: dict) -> Status:
         pid = record[self.primary_id]

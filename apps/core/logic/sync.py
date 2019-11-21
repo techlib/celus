@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 class IdentitySyncer(ERMSSyncer):
     attr_map = {
+        'identity': 'identity',
+        # 'user': 'user',   # this syncer does not use the mapping anyway, so this is for doc...
     }
 
     object_class = Identity
@@ -43,6 +45,10 @@ class UserSyncer(ERMSObjectSyncer):
     allowed_attrs = ['username', 'first_name', 'last_name', 'ext_id', 'email']
 
     attr_map = {
+        'name': 'name',
+        'name_cs': 'name_cs',
+        'name_en': 'name_en',
+        'email': 'email',
     }
 
     def __init__(self, data_source: DataSource):
@@ -115,7 +121,6 @@ class UserSyncer(ERMSObjectSyncer):
                 else:
                     stats['User-Org unchanged'] += 1
         return stats
-
 
 
 def sync_users_with_erms(data_source: DataSource) -> dict:

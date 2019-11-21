@@ -22,8 +22,9 @@ class OrganizationSyncer(ERMSObjectSyncer):
         'czechelib id': 'internal_id',
         'short name': 'short_name',
         'address of residence': 'address',
-        'alternative name': None,
-        'mail address': None,
+        'ico': 'ico',
+        'url': 'url',
+        'fte': 'fte',
     }
 
     object_class = Organization
