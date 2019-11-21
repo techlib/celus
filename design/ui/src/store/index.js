@@ -6,10 +6,10 @@ import addMonths from 'date-fns/add_months'
 import addYears from 'date-fns/add_years'
 import endOfYear from 'date-fns/end_of_year'
 import startOfYear from 'date-fns/start_of_year'
-import { ymDateFormat } from '../libs/dates'
-import { format as formatNumber } from 'mathjs/lib/function/string/format'
+import {ymDateFormat} from '../libs/dates'
+import {format as formatNumber} from 'mathjs/lib/function/string/format'
 import VuexPersistence from 'vuex-persist'
-import { sortOrganizations } from '../libs/organizations'
+import {sortOrganizations} from '../libs/organizations'
 import interest from './modules/interest'
 import maintenance from './modules/maintenance'
 
@@ -56,6 +56,7 @@ export default new Vuex.Store({
     },
     showLoginDialog: false,
     appLanguage: 'en',
+    basicInfo: {},
   },
   getters: {
     avatarImg: state => {
@@ -121,6 +122,12 @@ export default new Vuex.Store({
     },
     organizationSelected (state) {
       return state.selectedOrganizationId && state.selectedOrganizationId > 0
+    },
+    referenceCurrency (state) {
+      if ('REFERENCE_CURRENCY' in state.basicInfo) {
+        return state.basicInfo['REFERENCE_CURRENCY']
+      }
+      return null
     }
   },
   actions: {
@@ -144,6 +151,7 @@ export default new Vuex.Store({
         return Promise.reject(error)
       })
       await dispatch('loadUserData')  // we need user data first
+      dispatch('loadBasicInfo')
       dispatch('loadOrganizations')
       dispatch('changeDateRangeObject', state.dateRangeIndex)
       dispatch('fetchInterestGroups')
@@ -197,6 +205,14 @@ export default new Vuex.Store({
         .catch(error => {
           context.dispatch('showSnackbar', {content: 'Error loading organizations: ' + error})
         })
+    },
+    async loadBasicInfo ({dispatch, commit}) {
+      try {
+        commit('setBasicInfo', (await axios.get('/api/info/')).data)
+      } catch (error) {
+        dispatch('showSnackbar', {content: 'Error loading basic info: ' + error, color: 'error'})
+      }
+
     },
     changeDateRangeObject (context, dateRangeIndex) {
       let drObj = context.state.dateRanges[dateRangeIndex]
@@ -302,5 +318,8 @@ export default new Vuex.Store({
     setInvalidUser(state, {value}) {
       state.invalidUser = value
     },
+    setBasicInfo(state, data) {
+      state.basicInfo = data
+    }
   }
 })

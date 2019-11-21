@@ -13,6 +13,7 @@ en:
     weights: Interest weights
     weights_tooltip: When more than one interest is defined for a platform, you can use the
         following weights to influence relative price of units of each interest
+    without_vat: Without VAT
 
 cs:
     year: Vyberte rok
@@ -26,6 +27,7 @@ cs:
     weights: Váhy typů zájmů
     weights_tooltip: Pokud je pro platformu definováno více druhů zájmu, můžete použít následující
         váhy k nastavení relativní ceny jednotek jednotlivých druhů zájmu.
+    without_vat: Bez DPH
 </i18n>
 <template>
     <v-container fluid class="pt-0">
@@ -130,6 +132,17 @@ cs:
                             </span>
                         </span>
                     </template>
+                    <template v-slot:header.price="{header}">
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{on}">
+                                <span v-on="on">
+                                    {{ header.text }}
+                                    <v-icon small color="grey">fa fa-info-circle</v-icon>
+                                </span>
+                            </template>
+                            {{ $t('without_vat') }}
+                        </v-tooltip>
+                    </template>
                 </v-data-table>
             </v-col>
         </v-row>
@@ -185,6 +198,7 @@ cs:
         showAdminStuff: 'showAdminStuff',
         organizationSelected: 'organizationSelected',
         selectedOrganization: 'selectedOrganization',
+        currency: 'referenceCurrency',
       }),
       headers () {
         let base = [
@@ -202,7 +216,7 @@ cs:
           })
         }
         base.push({
-          text: this.$t('columns.price'),
+          text: this.$t('columns.price') + ` [${this.currency}]`,
           value: 'price',
           align: 'right',
         })

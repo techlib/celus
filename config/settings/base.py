@@ -292,3 +292,5 @@ for key in ("ERMS_API_URL",):
         locals()[key] = secrets[key]
 
 DATABASES['default']['PASSWORD'] = secrets['DB_PASSWORD']
+
+EXPORTED_SETTINGS = ['REFERENCE_CURRENCY']

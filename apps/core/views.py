@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import translation
@@ -19,6 +20,13 @@ class UserView(GenericAPIView):
             request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
             return Response(UserSerializer(request.user).data)
         return HttpResponseForbidden('user is not logged in')
+
+
+class SystemInfoView(GenericAPIView):
+
+    def get(self, request):
+        data = {name: getattr(settings, name) for name in settings.EXPORTED_SETTINGS}
+        return Response(data)
 
 
 class UserLanguageView(APIView):
