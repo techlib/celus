@@ -1,5 +1,7 @@
 from .base import *
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 INSTALLED_APPS += ['debug_toolbar']
 INSTALLED_APPS.insert(4, 'livereload')  # it must be before staticfiles
 

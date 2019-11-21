@@ -161,6 +161,12 @@ STATICFILES_FINDERS = (
 )
 STATIC_ROOT = BASE_DIR / "static_compiled"
 
+# Email
+ADMINS = (
+    ("Beda Kosata", "beda@bigdigdata.com"),
+)
+EMAIL_SUBJECT_PREFIX = '[Stats] '
+
 # REST framework
 
 REST_FRAMEWORK = {
