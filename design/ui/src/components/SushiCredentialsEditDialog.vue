@@ -344,7 +344,7 @@ cs:
         let data = {
           customer_id: this.customerId,
           requestor_id: this.requestorId,
-          api_key: this.api_key,
+          api_key: this.apiKey,
           url: this.url,
           counter_version: this.counterVersion,
           http_username: this.httpUsername,
