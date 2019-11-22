@@ -77,9 +77,9 @@ class TestAuthorization(object):
     | no user       | N            | N                 |  N   |
     | unrelated     | N            | N                 |  N   |
     | related user  | N            | N                 |  Y   |
-    | related admin | Y /fixed org | Y /only own level |  Y   |
-    | master user   | Y /all       | Y /not superuser  |  Y   |
-    | superuser     | Y /all       | Y /all            |  Y   |
+    | related admin | Y            | Y /only own level |  Y   |
+    | master user   | Y            | Y /not superuser  |  Y   |
+    | superuser     | Y            | Y /all            |  Y   |
 
     """
 
@@ -98,6 +98,18 @@ class TestAuthorization(object):
             assert resp.status_code == 201
         else:
             assert resp.status_code == 403
+
+    @pytest.mark.parametrize(['user_type', 'owner_level'],
+                             [['related_admin', UL_ORG_ADMIN],
+                              ['master_user', UL_CONS_STAFF],
+                              ['superuser', UL_CONS_STAFF]])
+    def test_mdu_create_owner_level(self, mdu_api_post, user_type, owner_level,
+                                    identity_by_user_type):
+        identity, org = identity_by_user_type(user_type)
+        resp = mdu_api_post(org, identity)
+        assert resp.status_code == 201
+        obj = ManualDataUpload.objects.get(pk=resp.json()['pk'])
+        assert obj.owner_level == owner_level
 
     @pytest.mark.parametrize(['user_type', 'can_access_unrel', 'can_access_rel'],
                              [['no_user', False, False],

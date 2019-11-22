@@ -1,12 +1,12 @@
 from django.utils.translation import gettext as _
 
-from rest_framework.exceptions import NotAuthenticated, ValidationError
+from rest_framework.exceptions import NotAuthenticated, ValidationError, PermissionDenied
 from rest_framework.fields import CharField, IntegerField, DateField, BooleanField
 from rest_framework.relations import StringRelatedField, PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenField, \
     CurrentUserDefault
 
-from core.models import DataSource
+from core.models import DataSource, UL_CONS_STAFF
 from core.serializers import UserSerializer
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
@@ -191,15 +191,34 @@ class ManualDataUploadSerializer(ModelSerializer):
 
     user = HiddenField(default=CurrentUserDefault())
     import_batch = ImportBatchSerializer(read_only=True)
+    can_edit = BooleanField(read_only=True)
 
     class Meta:
         model = ManualDataUpload
         fields = ('pk', 'report_type', 'organization', 'platform', 'data_file',
-                  'user', 'created', 'is_processed', 'log', 'import_batch', 'extra')
+                  'user', 'created', 'is_processed', 'log', 'import_batch', 'extra',
+                  'can_edit', 'owner_level')
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
         return attrs
+
+    def update(self, instance: ManualDataUpload, validated_data):
+        result = super().update(instance, validated_data)  # type: Annotation
+        return self._adjust_permissions(result)
+
+    def create(self, validated_data):
+        result = super().create(validated_data)
+        return self._adjust_permissions(result)
+
+    @classmethod
+    def _adjust_permissions(cls, instance: ManualDataUpload):
+        instance.owner_level = instance.user.organization_relationship(instance.organization_id)
+        # we do not want to set the level too high in order for the staff to be able to edit it
+        if instance.owner_level > UL_CONS_STAFF:
+            instance.owner_level = UL_CONS_STAFF
+        instance.save()
+        return instance
 
 
 class InterestGroupSerializer(ModelSerializer):

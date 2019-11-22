@@ -2,7 +2,8 @@ from django.urls import path
 from rest_framework.routers import SimpleRouter
 from rest_framework_nested.routers import NestedSimpleRouter
 
-from logs.views import CustomDimensionsViewSet, OrganizationReportTypesViewSet
+from logs.views import CustomDimensionsViewSet, OrganizationReportTypesViewSet, \
+    OrganizationManualDataUploadViewSet
 from organizations.urls import router as organization_router
 from . import views
 
@@ -22,6 +23,8 @@ org_sub_router.register(r'dimensions', CustomDimensionsViewSet,
                         basename='organization-dimensions')
 org_sub_router.register(r'report-types', OrganizationReportTypesViewSet,
                         basename='organization-report-types')
+org_sub_router.register(r'manual-data-upload', OrganizationManualDataUploadViewSet,
+                        basename='organization-manual-data-upload')
 
 
 title_sub_router = NestedSimpleRouter(org_sub_router, r'title', lookup='title')

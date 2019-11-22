@@ -206,6 +206,31 @@ class ManualDataUploadViewSet(ModelViewSet):
         })
 
 
+class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = ManualDataUploadSerializer
+    queryset = ManualDataUpload.objects.all()
+    permission_classes = [IsAuthenticated &
+                          ((SuperuserOrAdminPermission &
+                            OwnerLevelBasedPermissions) |
+                           (OwnerLevelBasedPermissions &
+                            CanAccessOrganizationRelatedObjectPermission
+                            )
+                           )]
+
+    def get_queryset(self):
+        organization = get_object_or_404(self.request.user.accessible_organizations(),
+                                         pk=self.kwargs.get('organization_pk'))
+        qs = ManualDataUpload.objects.filter(organization=organization).\
+            select_related('import_batch', 'import_batch__user')
+        # add access level stuff
+        access_level = self.request.user.organization_relationship(organization.pk)
+        for mdu in qs:  # type: ManualDataUpload
+            mdu.can_edit = access_level >= mdu.owner_level
+        return qs
+
+
+
 class CustomDimensionsViewSet(ModelViewSet):
 
     queryset = Dimension.objects.all().order_by('pk')
