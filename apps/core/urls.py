@@ -11,4 +11,5 @@ urlpatterns = [
          views.StartERMSSyncUsersAndIdentitiesTask.as_view()),
 
     path('test-email/', views.TestEmailView.as_view(), name='test_email_api_view'),
+    path('test-error/', views.TestErrorView.as_view(), name='test_error_api_view'),
 ]

@@ -75,3 +75,11 @@ class TestEmailView(APIView):
     def post(self, request):
         mail_admins('Email test', 'This is a test message.')
         return Response({'ok': True})
+
+
+class TestErrorView(APIView):
+
+    permission_classes = [SuperuserPermission]
+
+    def get(self, request):
+        raise Exception('test error')
