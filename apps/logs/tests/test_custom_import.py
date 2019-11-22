@@ -11,7 +11,8 @@ from publications.models import Platform, Title
 
 from ..logic.data_import import import_counter_records
 from organizations.tests.conftest import organizations
-from core.tests.conftest import authenticated_client, valid_identity
+from core.tests.conftest import authenticated_client, valid_identity, master_identity, \
+    master_client
 
 
 @pytest.mark.django_db
@@ -75,7 +76,7 @@ class TestCustomImport(object):
                 assert record.metric == 'MX'
 
     def test_custom_data_import_process(self, organizations, report_type_nd, tmp_path, settings,
-                                        authenticated_client, valid_identity):
+                                        master_client, master_identity):
         """
         Complex text
           - upload data to create ManualDataUpload object using the API
@@ -91,7 +92,7 @@ class TestCustomImport(object):
         csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
         file = StringIO(csv_content)
         settings.MEDIA_ROOT = tmp_path
-        response = authenticated_client.post(
+        response = master_client.post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -104,19 +105,19 @@ class TestCustomImport(object):
         assert mdu.organization == organization
         # let's process the mdu
         assert AccessLog.objects.count() == 0
-        response = authenticated_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
+        response = master_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
         assert response.status_code == 200
         mdu.refresh_from_db()
         assert mdu.is_processed
-        assert mdu.user_id == Identity.objects.get(identity=valid_identity).user_id
+        assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
         assert AccessLog.objects.count() == 6
         # reprocess
-        response = authenticated_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
+        response = master_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
         assert response.status_code == 200
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
         # the whole thing once again
         file.seek(0)
-        response = authenticated_client.post(
+        response = master_client.post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -126,6 +127,6 @@ class TestCustomImport(object):
             })
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
-        response = authenticated_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
+        response = master_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
         assert response.status_code == 200
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'

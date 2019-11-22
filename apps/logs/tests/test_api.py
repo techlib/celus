@@ -282,14 +282,14 @@ class TestChartDataAPI(object):
 @pytest.mark.django_db
 class TestManualDataUpload(object):
 
-    def test_can_create_manual_data_upload(self, organizations, authenticated_client,
+    def test_can_create_manual_data_upload(self, organizations, master_client,
                                            report_type_nd, tmp_path, settings):
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
                                            provider='Provider 1')
         report_type = report_type_nd(0)
         file = StringIO('Source,2019-01\naaaa,9\n')
         settings.MEDIA_ROOT = tmp_path
-        response = authenticated_client.post(
+        response = master_client.post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,

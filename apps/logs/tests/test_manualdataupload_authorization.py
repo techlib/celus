@@ -83,7 +83,6 @@ class TestAuthorization(object):
 
     """
 
-    @pytest.mark.now()
     @pytest.mark.parametrize(['user_type', 'has_access'],
                              [['no_user', False],
                               ['invalid', False],
@@ -100,7 +99,6 @@ class TestAuthorization(object):
         else:
             assert resp.status_code == 403
 
-    @pytest.mark.now
     @pytest.mark.parametrize(['user_type', 'can_access_unrel', 'can_access_rel'],
                              [['no_user', False, False],
                               ['invalid', False, False],
@@ -134,7 +132,6 @@ class TestAuthorization(object):
             expected_status_codes = (200,) if can else (403, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
-    @pytest.mark.now
     @pytest.mark.parametrize(['user_type', 'can_delete_rel_org_admin',
                               'can_delete_unrel_org_admin', 'can_delete_master',
                               'can_delete_superadmin'],
@@ -162,7 +159,6 @@ class TestAuthorization(object):
             expected_status_codes = (204,) if can else (403, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
-    @pytest.mark.now
     @pytest.mark.parametrize(['user_type', 'can_modify_rel_org_admin',
                               'can_modify_unrel_org_admin', 'can_modify_master',
                               'can_modify_superadmin'],
@@ -192,7 +188,6 @@ class TestAuthorization(object):
             expected_status_codes = (200,) if can else (403, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
-    @pytest.mark.now
     @pytest.mark.parametrize(['user_type', 'can_set_rel_org', 'can_set_unrel_org'],
                              [['related_admin', True, False],
                               ['master_user', True, True],

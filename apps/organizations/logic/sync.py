@@ -21,10 +21,15 @@ class OrganizationSyncer(ERMSObjectSyncer):
     attr_map = {
         'czechelib id': 'internal_id',
         'short name': 'short_name',
+        'short_name_cs': 'short_name_cs',
+        'short_name_en': 'short_name_en',
         'address of residence': 'address',
         'ico': 'ico',
         'url': 'url',
         'fte': 'fte',
+        'name': 'name',
+        'name_cs': 'name_cs',
+        'name_en': 'name_en',
     }
 
     object_class = Organization
