@@ -11,6 +11,7 @@ en:
     management: Management
     maintenance: Maintenance
     heatmap: Interest heatmap
+    manual_data_uploads: Manual data uploads
   menu: Menu
   organization: Organization
   platform: Platform
@@ -110,6 +111,7 @@ cs:
     management: Management
     maintenance: Údržba
     heatmap: Heatmapa zájmu
+    manual_data_uploads: Ručně nahraná data
   menu: Menu
   organization: Organizace
   platform: Platforma

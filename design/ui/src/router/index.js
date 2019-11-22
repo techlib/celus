@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import NotFoundPage from '../pages/NotFoundPage'
-import ChartTestPage from '../pages/ChartTestPage'
+// import ChartTestPage from '../pages/ChartTestPage'
 import PlatformListPage from '../pages/PlatformListPage'
 import PlatformDetailPage from '../pages/PlatformDetailPage'
 import TitleDetailPage from '../pages/TitleDetailPage'
@@ -16,6 +16,7 @@ import ManagementPage from '../pages/ManagementPage'
 import MaintenancePage from '../pages/MaintenancePage'
 import OrganizationPlatformInterestOverviewPage
   from '../pages/OrganizationPlatformInterestOverviewPage'
+import ManualUploadListPage from '../pages/ManualUploadListPage'
 
 Vue.use(Router)
 
@@ -85,6 +86,11 @@ export default new Router({
       path: '/admin/import-batches/',
       name: 'import-batch-list',
       component: ImportBatchesPage,
+    },
+    {
+      path: '/admin/mdu/',
+      name: 'manual-data-upload-list',
+      component: ManualUploadListPage,
     },
     {
       path: '/admin/sushi-fetch-attempts/',
