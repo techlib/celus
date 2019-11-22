@@ -17,10 +17,6 @@ urlpatterns = [
     path('chart-data-raw/', views.Counter5DataView.as_view(), {'report_type_id': None},
          name='chart_data_raw'),
     path('raw-data/', views.RawDataExportView.as_view()),
-    path('manual-data-upload/<pk>/preflight', views.ManualDataUploadPreflightCheckView.as_view(),
-         name='manual_data_upload_preflight'),
-    path('manual-data-upload/<pk>/process', views.ManualDataUploadProcessView.as_view(),
-         name='manual_data_upload_process'),
 ]
 
 urlpatterns += router.urls

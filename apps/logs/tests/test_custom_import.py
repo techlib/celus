@@ -105,14 +105,14 @@ class TestCustomImport(object):
         assert mdu.organization == organization
         # let's process the mdu
         assert AccessLog.objects.count() == 0
-        response = master_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
+        response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
         assert response.status_code == 200
         mdu.refresh_from_db()
         assert mdu.is_processed
         assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
         assert AccessLog.objects.count() == 6
         # reprocess
-        response = master_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
+        response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
         assert response.status_code == 200
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
         # the whole thing once again
@@ -127,6 +127,6 @@ class TestCustomImport(object):
             })
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
-        response = master_client.post(reverse('manual_data_upload_process', args=(mdu.pk,)))
+        response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
         assert response.status_code == 200
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'

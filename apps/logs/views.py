@@ -1,6 +1,7 @@
 from django.db.models import Count
 from django.http import HttpResponseBadRequest
 from pandas import DataFrame
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -183,10 +184,8 @@ class ManualDataUploadViewSet(ModelViewSet):
                             )
                            )]
 
-
-class ManualDataUploadPreflightCheckView(APIView):
-
-    def get(self, request, pk):
+    @action(methods=['GET'], detail=True, url_path='preflight')
+    def preflight_check(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
         # try:
         stats = custom_import_preflight_check(mdu)
@@ -194,10 +193,8 @@ class ManualDataUploadPreflightCheckView(APIView):
         # except Exception as e:
         #     return Response({'error': str(e)}, status=400)
 
-
-class ManualDataUploadProcessView(APIView):
-
-    def post(self, request, pk):
+    @action(methods=['POST'], detail=True, url_path='process')
+    def process(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)  # type: ManualDataUpload
         if mdu.is_processed or mdu.import_batch:
             stats = {'existing logs': mdu.import_batch.accesslog_count}
