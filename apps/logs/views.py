@@ -3,6 +3,7 @@ from django.http import HttpResponseBadRequest
 from pandas import DataFrame
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
@@ -11,6 +12,9 @@ from rest_pandas import PandasView
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from core.models import DataSource
+from core.permissions import OrganizationRequiredInDataForNonSuperusers, \
+    SuperuserOrAdminPermission, OwnerLevelBasedPermissions, CanPostOrganizationDataPermission, \
+    CanAccessOrganizationRelatedObjectPermission
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
@@ -169,6 +173,15 @@ class ManualDataUploadViewSet(ModelViewSet):
 
     serializer_class = ManualDataUploadSerializer
     queryset = ManualDataUpload.objects.all()
+    permission_classes = [IsAuthenticated &
+                          ((SuperuserOrAdminPermission &
+                            OwnerLevelBasedPermissions) |
+                           (OwnerLevelBasedPermissions &
+                            CanPostOrganizationDataPermission &
+                            CanAccessOrganizationRelatedObjectPermission &
+                            OrganizationRequiredInDataForNonSuperusers
+                            )
+                           )]
 
 
 class ManualDataUploadPreflightCheckView(APIView):

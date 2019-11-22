@@ -6,7 +6,6 @@ from core.tests.conftest import *
 from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF
 from organizations.tests.conftest import organizations
 
-
 @pytest.mark.django_db
 class TestAuthorization(object):
 

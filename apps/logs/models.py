@@ -307,6 +307,11 @@ class ManualDataUpload(models.Model):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
                              on_delete=models.SET_NULL)
+    owner_level = models.PositiveSmallIntegerField(
+        choices=USER_LEVEL_CHOICES,
+        default=UL_ROBOT,
+        help_text='Level of user who created this record - used to determine who can modify it'
+    )
     created = models.DateTimeField(auto_now_add=True)
     data_file = models.FileField(upload_to=where_to_store,
                                  validators=[validate_mime_type])

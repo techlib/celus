@@ -153,7 +153,6 @@ class TestSushiCredentialsViewSet(object):
         assert {cr.pk for cr in credentials.active_counter_reports.all()} == \
                {new_rt1.pk, new_rt2.pk}
 
-    @pytest.mark.now()
     def test_destroy_locked_higher(self, organizations, platforms, valid_identity,
                                    authenticated_client):
         """
@@ -176,7 +175,6 @@ class TestSushiCredentialsViewSet(object):
         assert resp.status_code == 403
         assert SushiCredentials.objects.count() == 1
 
-    @pytest.mark.now()
     def test_destroy_locked_lower(self, organizations, platforms, valid_identity,
                                   authenticated_client):
         """
