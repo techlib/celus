@@ -355,7 +355,7 @@ cs:
       },
       async loadPreflightData () {
         if (this.uploadObject) {
-          let url = `/api/manual-data-upload/${this.uploadObject.pk}/preflight`
+          let url = `/api/manual-data-upload/${this.uploadObject.pk}/preflight/`
           try {
             const response = await axios.get(url)
             this.preflightData = response.data
@@ -372,7 +372,7 @@ cs:
       async processUploadObject () {
         this.uploadObjectProcessing = true
         if (this.uploadObject) {
-          let url = `/api/manual-data-upload/${this.uploadObject.pk}/process`
+          let url = `/api/manual-data-upload/${this.uploadObject.pk}/process/`
           try {
             const response = await axios.post(url, {})
             this.importStats = response.data.stats
