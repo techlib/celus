@@ -51,7 +51,7 @@
       ...mapActions({
         selectOrganization: 'selectOrganization',
       }),
-      filter (item, queryText, itemText) {
+      filter (item, queryText) {
         const words = queryText.toLowerCase().split(/ /)
         for (let word of words) {
           if (item.name.toLowerCase().indexOf(word) < 0)
