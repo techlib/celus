@@ -130,3 +130,45 @@ class TestCustomImport(object):
         response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
         assert response.status_code == 200
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
+
+    @pytest.mark.now
+    def test_manual_data_upload_api_delete(self, organizations, report_type_nd, tmp_path, settings,
+                                           master_client, master_identity):
+        """
+        When deleting manual data upload, we need to delete the import_batch as well.
+        """
+        report_type = report_type_nd(0)
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
+        file = StringIO(csv_content)
+        settings.MEDIA_ROOT = tmp_path
+        response = master_client.post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organization.pk,
+                'report_type': report_type.pk,
+                'data_file': file,
+            })
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+        assert mdu.import_batch is None
+        # let's process the mdu
+        assert AccessLog.objects.count() == 0
+        response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
+        assert response.status_code == 200
+        mdu.refresh_from_db()
+        assert mdu.is_processed
+        assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
+        assert AccessLog.objects.count() == 6
+        assert mdu.import_batch is not None
+        assert mdu.import_batch.accesslog_count == 6
+        assert ImportBatch.objects.count() == 1
+        # let's delete the object
+        response = master_client.delete(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 204
+        assert ManualDataUpload.objects.filter(pk=mdu.pk).count() == 0
+        assert ImportBatch.objects.count() == 0
+        assert AccessLog.objects.count() == 0

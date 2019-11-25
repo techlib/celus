@@ -326,6 +326,11 @@ class ManualDataUpload(models.Model):
     def __str__(self):
         return f'{self.user.username}: {self.report_type}, {self.platform}'
 
+    def delete(self, using=None, keep_parents=False):
+        if self.import_batch:
+            self.import_batch.delete()
+        super().delete(using=using, keep_parents=keep_parents)
+
     def mark_processed(self):
         if not self.is_processed:
             self.is_processed = True
