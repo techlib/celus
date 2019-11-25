@@ -154,22 +154,26 @@ cs:
                         </v-row>
                         <v-row>
                             <v-col cols="12" class="pb-0">
-                                <table v-if="this.selectedMDU" class="overview">
+                                <table v-if="selectedMDU" class="overview">
                                     <tr>
                                         <th v-text="$t('platform')"></th>
-                                        <td>{{ this.selectedMDU.platform.name }}</td>
+                                        <td>{{ selectedMDU.platform.name }}</td>
                                     </tr>
                                     <tr>
                                         <th v-text="$t('organization')"></th>
-                                        <td>{{ this.selectedMDU.organization.name }}</td>
+                                        <td>{{ selectedMDU.organization.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th v-text="$t('labels.report_type')"></th>
+                                        <td>{{ selectedMDU.report_type.short_name }} &ndash; {{ selectedMDU.report_type.name }}</td>
                                     </tr>
                                     <tr>
                                         <th v-text="$t('labels.user')"></th>
-                                        <td>{{ this.selectedMDU.user.first_name }}, {{ this.selectedMDU.user.last_name }}</td>
+                                        <td>{{ selectedMDU.user.first_name }}, {{ selectedMDU.user.last_name }}</td>
                                     </tr>
                                     <tr>
                                         <th v-text="$t('title_fields.uploaded')"></th>
-                                        <td>{{ isoDateTimeFormat(this.selectedMDU.created) }}</td>
+                                        <td>{{ isoDateTimeFormat(selectedMDU.created) }}</td>
                                     </tr>
                                 </table>
                             </v-col>
@@ -247,7 +251,7 @@ cs:
             value: 'platform.name',
           },
           {
-            text: this.$t('report_type'),
+            text: this.$t('labels.report_type'),
             value: 'report_type.short_name',
           },
           {
