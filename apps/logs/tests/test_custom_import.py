@@ -2,15 +2,17 @@ from datetime import date
 from io import StringIO
 
 import pytest
+from django.core.files import File
 from django.urls import reverse
 
-from core.models import User, Identity
-from logs.logic.custom_import import custom_data_to_records
+from core.models import User, Identity, UL_ORG_ADMIN, UL_CONS_STAFF
+from logs.logic.custom_import import custom_data_to_records, import_custom_data
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch, ManualDataUpload
 from publications.models import Platform, Title
 
 from ..logic.data_import import import_counter_records
-from organizations.tests.conftest import organizations
+from organizations.tests.conftest import *
+from publications.tests.conftest import *
 from core.tests.conftest import authenticated_client, valid_identity, master_identity, \
     master_client
 
@@ -131,7 +133,6 @@ class TestCustomImport(object):
         assert response.status_code == 200
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
 
-    @pytest.mark.now
     def test_manual_data_upload_api_delete(self, organizations, report_type_nd, tmp_path, settings,
                                            master_client, master_identity):
         """
@@ -172,3 +173,30 @@ class TestCustomImport(object):
         assert ManualDataUpload.objects.filter(pk=mdu.pk).count() == 0
         assert ImportBatch.objects.count() == 0
         assert AccessLog.objects.count() == 0
+
+    @pytest.mark.now
+    @pytest.mark.parametrize(['user_type', 'owner_level'],
+                             [['related_admin', UL_ORG_ADMIN],
+                              ['master_user', UL_CONS_STAFF],
+                              ['superuser', UL_CONS_STAFF]])
+    def test_custom_data_import_owner_level(
+            self, user_type, owner_level, settings, tmp_path,
+            identity_by_user_type, client, organizations, report_type_nd, platforms):
+        identity, org = identity_by_user_type(user_type)
+        rt = report_type_nd(0)
+        settings.MEDIA_ROOT = tmp_path
+        file = File(StringIO('Source,2019-01\naaaa,9\n'))
+        mdu = ManualDataUpload.objects.create(
+            organization=org,
+            platform=platforms[0],
+            report_type=rt,
+            owner_level=owner_level,
+        )
+        mdu.data_file.save('xxx', file)
+        assert mdu.import_batch is None
+        user = Identity.objects.get(identity=identity).user
+        import_custom_data(mdu, user)
+        mdu.refresh_from_db()
+        assert mdu.import_batch is not None
+        assert mdu.import_batch.owner_level == mdu.owner_level
+

@@ -116,7 +116,7 @@ def import_custom_data(mdu: ManualDataUpload, user) -> dict:
     # TODO: the owner level should be derived from the user and the organization at hand
     import_batch = ImportBatch.objects.create(platform=mdu.platform, organization=mdu.organization,
                                               report_type=mdu.report_type, user=user,
-                                              system_created=False, owner_level=UL_ORG_ADMIN)
+                                              system_created=False, owner_level=mdu.owner_level)
     stats = import_counter_records(mdu.report_type, mdu.organization, mdu.platform, records,
                                    import_batch=import_batch)
     # explicitly connect the organization and the platform

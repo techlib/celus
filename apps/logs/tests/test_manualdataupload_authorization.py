@@ -33,6 +33,7 @@ def mdu_api_post(platforms, report_type_nd, tmp_path, settings, client, authenti
 
 MDUSet = namedtuple('MDUSet', ['rel_admin', 'unrel_admin', 'master', 'super'])
 
+
 @pytest.fixture()
 def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organizations):
     def do_it(org):
