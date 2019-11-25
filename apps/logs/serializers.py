@@ -7,7 +7,7 @@ from rest_framework.serializers import ModelSerializer, BaseSerializer, HiddenFi
     CurrentUserDefault
 
 from core.models import DataSource, UL_CONS_STAFF
-from core.serializers import UserSerializer
+from core.serializers import UserSerializer, UserSimpleSerializer
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer
@@ -219,6 +219,22 @@ class ManualDataUploadSerializer(ModelSerializer):
             instance.owner_level = UL_CONS_STAFF
         instance.save()
         return instance
+
+
+class ManualDataUploadVerboseSerializer(ModelSerializer):
+
+    user = UserSimpleSerializer(read_only=True)
+    import_batch = ImportBatchSerializer(read_only=True)
+    platform = PlatformSerializer(read_only=True)
+    organization = OrganizationSerializer(read_only=True)
+    report_type = ReportTypeSimpleSerializer(read_only=True)
+    can_edit = BooleanField(read_only=True)
+
+    class Meta:
+        model = ManualDataUpload
+        fields = ('pk', 'report_type', 'organization', 'platform', 'data_file',
+                  'user', 'created', 'is_processed', 'log', 'import_batch', 'extra',
+                  'can_edit', 'owner_level')
 
 
 class InterestGroupSerializer(ModelSerializer):

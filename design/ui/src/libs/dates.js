@@ -17,9 +17,14 @@ function isoDateTimeFormat (date) {
     return format(date, 'YYYY-MM-DD HH:mm:ss')
 }
 
+function isoDateTimeFormatSpans (date) {
+    return `<span class="date">${format(date, 'YYYY-MM-DD')}</span> <span class="time">${format(date, 'HH:mm:ss')}</span>`
+}
+
 export {
   isoDateFormat,
   ymDateFormat,
   parseDateTime,
   isoDateTimeFormat,
+  isoDateTimeFormatSpans,
 }

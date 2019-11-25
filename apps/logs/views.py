@@ -22,7 +22,7 @@ from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric,
     ManualDataUpload, InterestGroup
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
-    ManualDataUploadSerializer, InterestGroupSerializer
+    ManualDataUploadSerializer, InterestGroupSerializer, ManualDataUploadVerboseSerializer
 from publications.models import Platform
 
 
@@ -208,7 +208,7 @@ class ManualDataUploadViewSet(ModelViewSet):
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
 
-    serializer_class = ManualDataUploadSerializer
+    serializer_class = ManualDataUploadVerboseSerializer
     queryset = ManualDataUpload.objects.all()
     permission_classes = [IsAuthenticated &
                           ((SuperuserOrAdminPermission &
@@ -222,13 +222,13 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
         organization = get_object_or_404(self.request.user.accessible_organizations(),
                                          pk=self.kwargs.get('organization_pk'))
         qs = ManualDataUpload.objects.filter(organization=organization).\
-            select_related('import_batch', 'import_batch__user')
+            select_related('import_batch', 'import_batch__user', 'organization', 'platform',
+                           'report_type', 'user')
         # add access level stuff
         access_level = self.request.user.organization_relationship(organization.pk)
         for mdu in qs:  # type: ManualDataUpload
             mdu.can_edit = access_level >= mdu.owner_level
         return qs
-
 
 
 class CustomDimensionsViewSet(ModelViewSet):

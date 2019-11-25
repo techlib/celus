@@ -4,12 +4,18 @@
             :items="mdus"
             :headers="headers"
     >
+        <template #item.user.last_name="{item}">
+            {{ item.user.last_name }}, {{ item.user.first_name }}
+        </template>
+
+        <template #item.created="{item}">
+            <span v-html="isoDateTimeFormatSpans(item.created)"></span>
+        </template>
+
         <template #item.actions="{item}">
             <v-btn v-if="item.can_edit" small color="error" icon>
                 <v-icon small>fa fa-trash-alt</v-icon>
             </v-btn>
-
-
             <v-tooltip bottom v-if="item.import_batch">
                 <template v-slot:activator="{ on }">
                     <v-btn text small color="secondary" @click.stop="selectedBatch = item.import_batch.pk; dialogType = 'data'; showBatchDialog = true" v-on="on">
@@ -53,6 +59,7 @@
   import axios from 'axios'
   import AccessLogList from './AccessLogList'
   import ImportBatchChart from './ImportBatchChart'
+  import {isoDateTimeFormat, isoDateTimeFormatSpans} from '../libs/dates'
 
   export default {
     name: "ManualUploadListTable",
@@ -79,12 +86,16 @@
       headers () {
         return [
           {
-            text: 'pk',
-            value: 'pk',
+            text: 'uploaded',
+            value: 'created',
           },
           {
             text: 'platform',
-            value: 'platform',
+            value: 'platform.name',
+          },
+          {
+            text: 'user',
+            value: 'user.last_name',
           },
           {
             text: 'actions',
@@ -105,6 +116,8 @@
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      isoDateTimeFormat: isoDateTimeFormat,
+      isoDateTimeFormatSpans: isoDateTimeFormatSpans,
       async fetchMDUs () {
         if (this.url) {
           this.loading = true
@@ -133,6 +146,11 @@
   }
 </script>
 
-<style scoped>
+<style lang="scss">
+
+    span.time {
+        font-weight: 300;
+        font-size: 87.5%;
+    }
 
 </style>
