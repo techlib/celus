@@ -8,10 +8,7 @@
             </v-col>
             <v-spacer></v-spacer>
             <v-col v-if="showAdminStuff && organizationSelected" cols="auto">
-                <v-btn @click="showUploadDataDialog = true">
-                    <v-icon class="mr-2" small>fa-upload</v-icon>
-                    {{ $t('actions.upload_data') }}
-                </v-btn>
+                <ManualUploadButton />
                 <AddAnnotationButton @update="refreshAnnotations()" class="ml-2"/>
             </v-col>
         </v-row>
@@ -50,20 +47,12 @@
                 </v-card>
             </v-col>
         </v-row>
-        <v-dialog v-model="showUploadDataDialog" max-width="640px">
-            <PlatformSelectionWidget>
-                <template v-slot:actions>
-                    <v-btn @click="showUploadDataDialog = false">{{ $t('actions.cancel') }}</v-btn>
-                </template>
-            </PlatformSelectionWidget>
-        </v-dialog>
     </v-container>
 </template>
 
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
   import axios from 'axios'
-  import PlatformSelectionWidget from '../components/PlatformSelectionWidget'
   import { formatInteger } from '../libs/numbers'
   import { createEmptyInterestRecord, createLoadingInterestRecord, } from '../libs/interest'
   import AnnotationsWidget from '../components/AnnotationsWidget'
@@ -72,13 +61,14 @@
   import PlatformInterestChart from '../components/PlatformInterestChart'
   import PlatformCostList from '../components/PlatformCostList'
   import PlatformList from '../components/PlatformList'
+  import ManualUploadButton from '../components/ManualUploadButton'
 
   export default {
     name: 'PlatformListPage',
     components: {
       PlatformList,
       PlatformCostList,
-      PlatformSelectionWidget,
+      ManualUploadButton,
       AnnotationsWidget,
       AddAnnotationButton,
       InterestGroupSelector,

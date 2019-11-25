@@ -7,6 +7,7 @@ en:
                     Please confirm this action.
     delete_success: Successfully deleted selected manually uploaded data
     mdu_page: To processing page
+    no_data: There are no manually uploaded data yet
 
 cs:
     really_delete: Opravdu smazat?
@@ -14,6 +15,7 @@ cs:
     delete_warning: Prosím potvrďte, že chcete smazat z databáze tato ručně nahraná data.
     delete_success: Vybraná ručně nahraná data byla úspěšně smazána
     mdu_page: Na stránku zpracování
+    no_data: Zatím nebyla ručně nahrána žádná data
 </i18n>
 
 <template>
@@ -21,6 +23,8 @@ cs:
     <v-data-table
             :items="mdus"
             :headers="headers"
+            :no-data-text="$t('no_data')"
+            :loading="loading"
     >
         <template #item.user.last_name="{item}">
             {{ item.user.last_name }}, {{ item.user.first_name }}
