@@ -19,7 +19,7 @@ cs:
                 color="secondary"
         ></v-progress-linear>
     </div>
-    <v-container fluid v-else>
+    <v-container fluid v-else class="pb-0">
         <v-row>
             <v-select
                     :items="reportViewsForSelect"

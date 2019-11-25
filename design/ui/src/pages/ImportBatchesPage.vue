@@ -1,13 +1,4 @@
 <i18n src="../locales/common.yaml"></i18n>
-<i18n>
-en:
-    show_raw_data: Show raw data
-    show_chart: Show charts
-
-cs:
-    show_raw_data: Zobrazit data
-    show_chart: Zobrazit grafy
-</i18n>
 
 <template>
     <div>
@@ -35,19 +26,19 @@ cs:
         <template v-slot:item.actions="props">
             <v-tooltip bottom>
                 <template v-slot:activator="{ on }">
-                    <v-btn text small color="secondary" @click.stop="selectedBatch = props.item.pk; dialogType = 'data'; showDialog = true" v-on="on">
-                        <v-icon left small>fa-microscope</v-icon>
+                    <v-btn icon small color="secondary" @click.stop="selectedBatch = props.item.pk; dialogType = 'data'; showDialog = true" v-on="on">
+                        <v-icon small>fa-microscope</v-icon>
                     </v-btn>
                 </template>
-                <span>{{ $t('show_raw_data') }}</span>
+                <span>{{ $t('actions.show_raw_data') }}</span>
             </v-tooltip>
             <v-tooltip bottom>
                 <template v-slot:activator="{ on }">
-                    <v-btn text small color="secondary" @click.stop="selectedBatch = props.item.pk; dialogType = 'chart'; showDialog = true" v-on="on">
-                        <v-icon left small>fa-chart-bar</v-icon>
+                    <v-btn icon small color="secondary" @click.stop="selectedBatch = props.item.pk; dialogType = 'chart'; showDialog = true" v-on="on">
+                        <v-icon small>fa-chart-bar</v-icon>
                     </v-btn>
                 </template>
-                <span>{{ $t('show_chart') }}</span>
+                <span>{{ $t('actions.show_chart') }}</span>
             </v-tooltip>
         </template>
     </v-data-table>

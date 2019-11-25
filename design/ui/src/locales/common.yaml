@@ -93,6 +93,9 @@ en:
     cancel: Cancel
     show_attempts: Downloads
     start_test: Start test
+    show_raw_data: Show raw data
+    show_chart: Show charts
+    delete: Delete
   in_czech: Czech
   in_english: English
   cover_image: Cover image
@@ -193,6 +196,9 @@ cs:
     cancel: Zrušit
     show_attempts: Stažení
     start_test: Spustit test
+    show_raw_data: Zobrazit data
+    show_chart: Zobrazit grafy
+    delete: Smazat
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky

@@ -1,3 +1,5 @@
+<i18n src="../locales/common.yaml"></i18n>
+
 <template>
 <div>
     <v-data-table
@@ -13,24 +15,46 @@
         </template>
 
         <template #item.actions="{item}">
-            <v-btn v-if="item.can_edit" small color="error" icon>
-                <v-icon small>fa fa-trash-alt</v-icon>
-            </v-btn>
             <v-tooltip bottom v-if="item.import_batch">
                 <template v-slot:activator="{ on }">
-                    <v-btn text small color="secondary" @click.stop="selectedBatch = item.import_batch.pk; dialogType = 'data'; showBatchDialog = true" v-on="on">
-                        <v-icon left small>fa-microscope</v-icon>
+                    <v-btn
+                            icon
+                            small
+                            color="secondary"
+                            @click.stop="selectedBatch = item.import_batch.pk; dialogType = 'data'; showBatchDialog = true"
+                            v-on="on"
+                    >
+                        <v-icon small>fa-microscope</v-icon>
                     </v-btn>
                 </template>
-                <span>{{ $t('show_raw_data') }}</span>
+                <span>{{ $t('actions.show_raw_data') }}</span>
             </v-tooltip>
             <v-tooltip bottom v-if="item.import_batch">
                 <template v-slot:activator="{ on }">
-                    <v-btn text small color="secondary" @click.stop="selectedBatch = item.import_batch.pk; dialogType = 'chart'; showBatchDialog = true" v-on="on">
-                        <v-icon left small>fa-chart-bar</v-icon>
+                    <v-btn
+                            icon
+                            small
+                            color="secondary"
+                            @click.stop="selectedBatch = item.import_batch.pk; dialogType = 'chart'; showBatchDialog = true"
+                            v-on="on"
+                    >
+                        <v-icon small>fa-chart-bar</v-icon>
                     </v-btn>
                 </template>
-                <span>{{ $t('show_chart') }}</span>
+                <span>{{ $t('actions.show_chart') }}</span>
+            </v-tooltip>
+            <v-tooltip bottom v-if="item.can_edit">
+                <template v-slot:activator="{ on }">
+                    <v-btn
+                            icon
+                            small
+                            color="error"
+                            v-on="on"
+                    >
+                        <v-icon small>fa fa-trash-alt</v-icon>
+                    </v-btn>
+                </template>
+                <span>{{ $t('actions.delete') }}</span>
             </v-tooltip>
         </template>
 
@@ -41,13 +65,29 @@
         >
             <v-card>
                 <v-card-text>
-                    <AccessLogList v-if="dialogType === 'data'" :import-batch="selectedBatch" />
-                    <ImportBatchChart v-else-if="dialogType === 'chart'" :import-batch-id="selectedBatch" />
+                    <v-container
+                            v-if="dialogType === 'data'"
+                            fluid
+                            class="pb-0"
+                    >
+                        <v-row class="pb-0">
+                            <v-col cols="12" class="pb-0">
+                                <AccessLogList :import-batch="selectedBatch" />
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                    <ImportBatchChart
+                            v-else-if="dialogType === 'chart'"
+                            :import-batch-id="selectedBatch" />
                 </v-card-text>
                 <v-card-actions>
-                    <v-layout pb-3 pr-5 justify-end>
-                        <v-btn @click="showBatchDialog = false">{{ $t('actions.close') }}</v-btn>
-                    </v-layout>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                            @click="showBatchDialog = false"
+                            class="mr-2 mb-2"
+                    >
+                        {{ $t('actions.close') }}
+                    </v-btn>
                 </v-card-actions>
             </v-card>
     </v-dialog>

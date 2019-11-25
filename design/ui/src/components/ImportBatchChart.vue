@@ -1,7 +1,7 @@
 <template>
-<v-container>
-    <v-row>
-        <v-col>
+<v-container fluid class="pb-0">
+    <v-row class="pb-0">
+        <v-col class="pb-0">
             <CounterChartSet
                     v-if="importBatch"
                     :platform-id="importBatch.platform.pk"
