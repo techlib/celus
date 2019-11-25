@@ -230,6 +230,9 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         if q:
             search_filters = [Q(name__icontains=p) | Q(isbn__contains=p) | Q(issn__contains=p) |\
                               Q(doi__contains=p) for p in q.split()]
+        pub_type_arg = self.request.query_params.get('pub_type')
+        if pub_type_arg:
+            search_filters.append(Q(pub_type=pub_type_arg))
         result = Title.objects.filter(
             *search_filters,
             **date_filter_params,

@@ -114,6 +114,7 @@ cs:
         showDOI: false,
         selectedPubType: null,
         searchString: '',
+        pubTypes: [],
         options: {
         }
       }
@@ -169,23 +170,8 @@ cs:
         }
         return base
       },
-      pubTypes () {
-        let all = {text: this.$t('pub_type.all'), value: null, icon: 'fa-expand'}
-        let usedTypes = new Set()
-        this.titles.map(title => usedTypes.add(title.pub_type))
-        return [
-          all,
-          ...pubTypes
-            .filter(item => usedTypes.has(item.code))
-            .map(item => {return {text: this.$t(item.title), icon: item.icon, value: item.code}})
-        ]
-      },
       filteredTitles () {
-        if (this.selectedPubType === null) {
-          return this.titles
-        }
-        return this.titles.filter(item => item.pub_type === this.selectedPubType)
-
+        return this.titles
       },
       fullUrl () {
         let { sortBy, sortDesc, page, itemsPerPage } = this.options
@@ -203,7 +189,7 @@ cs:
           if (Array.isArray(sortDesc)) {
             sortDesc = sortDesc[0]
           }
-          return this.url + `&page_size=${itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}&page=${page}&q=${this.search}`
+          return this.url + `&page_size=${itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}&page=${page}&q=${this.search}&pub_type=${this.selectedPubType || ''}`
         }
         return this.url
       }
@@ -222,12 +208,27 @@ cs:
             let response = await axios.get(this.fullUrl)
             this.titles = response.data.results
             this.totalTitleCount = response.data.count
+            if (!this.selectedPubType) {
+              // if we do not filter by pubType, we extract the available pub types here
+              this.pubTypes = this.extractPubTypes()
+            }
           } catch (error) {
             this.showSnackbar({content: 'Error loading platforms: ' + error})
           } finally {
             this.loading = false
           }
         }
+      },
+      extractPubTypes () {
+        let all = {text: this.$t('pub_type.all'), value: null, icon: 'fa-expand'}
+        let usedTypes = new Set()
+        this.titles.forEach(title => usedTypes.add(title.pub_type))
+        return [
+          all,
+          ...pubTypes
+            .filter(item => usedTypes.has(item.code))
+            .map(item => {return {text: this.$t(item.title), icon: item.icon, value: item.code}})
+        ]
       },
       slotName: ig =>  'item.interests.' + ig.short_name,
     },
