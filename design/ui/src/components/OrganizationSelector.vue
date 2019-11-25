@@ -12,6 +12,7 @@
                     clearable
                     eager
                     :menu-props="{width: '800px'}"
+                    :filter="filter"
             >
                 <template v-slot:item="{item}">
                     <span :class="{bold: item.extra, org: true}" v-text="item.name"></span>
@@ -49,7 +50,15 @@
     methods: {
       ...mapActions({
         selectOrganization: 'selectOrganization',
-      })
+      }),
+      filter (item, queryText, itemText) {
+        const words = queryText.toLowerCase().split(/ /)
+        for (let word of words) {
+          if (item.name.toLowerCase().indexOf(word) < 0)
+            return false
+        }
+        return true
+      }
     },
     watch: {
     }
