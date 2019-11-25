@@ -6,12 +6,14 @@ en:
     delete_warning: You are about to delete this manually uploaded data from the database.
                     Please confirm this action.
     delete_success: Successfully deleted selected manually uploaded data
+    mdu_page: To processing page
 
 cs:
     really_delete: Opravdu smazat?
     is_processed: Importováno
     delete_warning: Prosím potvrďte, že chcete smazat z databáze tato ručně nahraná data.
     delete_success: Vybraná ručně nahraná data byla úspěšně smazána
+    mdu_page: Na stránku zpracování
 </i18n>
 
 <template>
@@ -26,6 +28,15 @@ cs:
 
         <template #item.created="{item}">
             <span v-html="isoDateTimeFormatSpans(item.created)"></span>
+        </template>
+
+        <template #item.report_type.short_name="{item}">
+            <v-tooltip bottom v-if="item.can_edit">
+                <template v-slot:activator="{ on }">
+                    <span v-on="on" v-text="item.report_type.short_name"></span>
+                </template>
+                <span v-text="item.report_type.name"></span>
+            </v-tooltip>
         </template>
 
         <template #item.actions="{item}">
@@ -70,6 +81,20 @@ cs:
                     </v-btn>
                 </template>
                 <span>{{ $t('actions.show_chart') }}</span>
+            </v-tooltip>
+            <v-tooltip bottom v-if="!item.import_batch">
+                <template v-slot:activator="{ on }">
+                    <v-btn
+                            icon
+                            small
+                            color="secondary"
+                            v-on="on"
+                            :to="{name: 'platform-upload-data-step2', params: {platformId: item.platform.pk, uploadObjectId: item.pk}}"
+                    >
+                        <v-icon small>fa-external-link-alt</v-icon>
+                    </v-btn>
+                </template>
+                <span>{{ $t('mdu_page') }}</span>
             </v-tooltip>
         </template>
 
@@ -220,6 +245,10 @@ cs:
           {
             text: this.$t('platform'),
             value: 'platform.name',
+          },
+          {
+            text: this.$t('report_type'),
+            value: 'report_type.short_name',
           },
           {
             text: this.$t('labels.user'),
