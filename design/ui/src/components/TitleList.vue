@@ -202,32 +202,37 @@ cs:
       iconForPubType: iconForPubType,
       titleForPubType: titleForPubType,
       async loadData () {
+        // it seems there is an issue in i18n that makes this.$i18n undefined after the
+        // await call later on. To make i18n work, we store it here and then pass it on
+        // to the extractPubTypes method
+        const i18n = this.$i18n
         if (this.fullUrl) {
           this.loading = true
           try {
             let response = await axios.get(this.fullUrl)
             this.titles = response.data.results
             this.totalTitleCount = response.data.count
-            if (!this.selectedPubType) {
-              // if we do not filter by pubType, we extract the available pub types here
-              this.pubTypes = this.extractPubTypes()
-            }
           } catch (error) {
-            this.showSnackbar({content: 'Error loading platforms: ' + error})
+            this.showSnackbar({content: 'Error loading title list: ' + error})
           } finally {
             this.loading = false
           }
+
+          if (!this.selectedPubType) {
+              // if we do not filter by pubType, we extract the available pub types here
+              this.pubTypes = this.extractPubTypes(i18n)
+            }
         }
       },
-      extractPubTypes () {
-        let all = {text: this.$t('pub_type.all'), value: null, icon: 'fa-expand'}
+      extractPubTypes (i18n) {
+        let all = {text: i18n.t('pub_type.all'), value: null, icon: 'fa-expand'}
         let usedTypes = new Set()
         this.titles.forEach(title => usedTypes.add(title.pub_type))
         return [
           all,
           ...pubTypes
             .filter(item => usedTypes.has(item.code))
-            .map(item => {return {text: this.$t(item.title), icon: item.icon, value: item.code}})
+            .map(item => {return {text: i18n.t(item.title), icon: item.icon, value: item.code}})
         ]
       },
       slotName: ig =>  'item.interests.' + ig.short_name,

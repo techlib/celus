@@ -228,7 +228,7 @@ cs:
               this.platformData = response.data
             })
             .catch(error => {
-              this.showSnackbar({content: 'Error loading platforms: ' + error})
+              this.showSnackbar({content: 'Error loading platform details: ' + error})
             })
         }
       },

@@ -335,7 +335,7 @@ cs:
             let response = await axios.get(`/api/platform/${this.platformId}/`)
             this.platform = response.data
           } catch(error) {
-              this.showSnackbar({content: 'Error loading platforms: '+error})
+              this.showSnackbar({content: 'Error loading platform details: '+error})
           }
         }
       },
