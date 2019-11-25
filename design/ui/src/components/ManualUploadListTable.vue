@@ -29,6 +29,20 @@ cs:
         </template>
 
         <template #item.actions="{item}">
+            <v-tooltip bottom v-if="item.can_edit">
+                <template v-slot:activator="{ on }">
+                    <v-btn
+                            icon
+                            small
+                            color="error"
+                            @click.stop="selectedMDU = item; showDeleteDialog = true"
+                            v-on="on"
+                    >
+                        <v-icon small>fa fa-trash-alt</v-icon>
+                    </v-btn>
+                </template>
+                <span>{{ $t('actions.delete') }}</span>
+            </v-tooltip>
             <v-tooltip bottom v-if="item.import_batch">
                 <template v-slot:activator="{ on }">
                     <v-btn
@@ -56,20 +70,6 @@ cs:
                     </v-btn>
                 </template>
                 <span>{{ $t('actions.show_chart') }}</span>
-            </v-tooltip>
-            <v-tooltip bottom v-if="item.can_edit">
-                <template v-slot:activator="{ on }">
-                    <v-btn
-                            icon
-                            small
-                            color="error"
-                            @click.stop="selectedMDU = item; showDeleteDialog = true"
-                            v-on="on"
-                    >
-                        <v-icon small>fa fa-trash-alt</v-icon>
-                    </v-btn>
-                </template>
-                <span>{{ $t('actions.delete') }}</span>
             </v-tooltip>
         </template>
 
@@ -113,6 +113,7 @@ cs:
 
         <v-dialog
                 v-model="showDeleteDialog"
+                max-width="720px"
         >
             <v-card>
                 <v-card-title v-text="$t('really_delete')"></v-card-title>
@@ -175,7 +176,7 @@ cs:
 </template>
 
 <script>
-  import {mapActions, mapState} from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import axios from 'axios'
   import AccessLogList from './AccessLogList'
   import ImportBatchChart from './ImportBatchChart'
@@ -207,8 +208,11 @@ cs:
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
       }),
+      ...mapGetters({
+        organizationSelected: 'organizationSelected',
+      }),
       headers () {
-        return [
+        const out = [
           {
             text: this.$t('title_fields.uploaded'),
             value: 'created',
@@ -230,6 +234,17 @@ cs:
             value: 'actions',
           }
         ]
+        if (!this.organizationSelected) {
+          out.splice(
+            1,
+            0,
+            {
+              text: this.$t('organization'),
+              value: 'organization.name',
+            }
+          )
+        }
+        return out
       },
       url () {
         if (this.selectedOrganizationId) {
@@ -264,7 +279,7 @@ cs:
           axios.delete(`/api/manual-data-upload/${this.selectedMDU.pk}/`)
           this.showSnackbar({content: this.$t('delete_success'), color: 'success'})
           this.showDeleteDialog = false
-          this.mdus = this.mdus.filter(item => item.pk != this.selectedMDU.pk)
+          this.mdus = this.mdus.filter(item => item.pk !== this.selectedMDU.pk)
           this.selectedMDU = null
         } catch (error) {
           this.showSnackbar({content: 'Error deleting manual data upload: ' + error, color: 'error'})

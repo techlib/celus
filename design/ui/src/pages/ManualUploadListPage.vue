@@ -15,6 +15,7 @@
 
 <script>
   import ManualUploadListTable from '../components/ManualUploadListTable'
+  import { mapGetters } from 'vuex'
 
   export default {
     name: "ManualUploadListPage",
@@ -22,6 +23,12 @@
     components: {
       ManualUploadListTable
     },
+
+    computed: {
+      ...mapGetters({
+        organizationSelected: 'organizationSelected',
+      })
+    }
 
   }
 </script>

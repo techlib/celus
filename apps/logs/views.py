@@ -23,6 +23,7 @@ from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric,
 from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSerializer, \
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
     ManualDataUploadSerializer, InterestGroupSerializer, ManualDataUploadVerboseSerializer
+from organizations.logic.queries import organization_filter_from_org_id
 from publications.models import Platform
 
 
@@ -207,6 +208,11 @@ class ManualDataUploadViewSet(ModelViewSet):
 
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
+    """
+    This version of the ManualDataUploadViewSet is fitered by organization and offerest
+    a verbose output but is read-only. For a less verbose, read-write access, there
+    is the 'manual-data-upload' api view that is directly in the API root.
+    """
 
     serializer_class = ManualDataUploadVerboseSerializer
     queryset = ManualDataUpload.objects.all()
@@ -219,15 +225,19 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
                            )]
 
     def get_queryset(self):
-        organization = get_object_or_404(self.request.user.accessible_organizations(),
-                                         pk=self.kwargs.get('organization_pk'))
-        qs = ManualDataUpload.objects.filter(organization=organization).\
+        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
+                                                     self.request.user)
+        qs = ManualDataUpload.objects.filter(**org_filter).\
             select_related('import_batch', 'import_batch__user', 'organization', 'platform',
                            'report_type', 'user')
         # add access level stuff
-        access_level = self.request.user.organization_relationship(organization.pk)
-        for mdu in qs:  # type: ManualDataUpload
-            mdu.can_edit = access_level >= mdu.owner_level
+        org_to_level = {}   # this is used to cache user access level for the same organization
+        for mdu in qs:  # type: SushiCredentials
+            if mdu.organization_id not in org_to_level:
+                org_to_level[mdu.organization_id] = \
+                    self.request.user.organization_relationship(mdu.organization_id)
+            user_org_level = org_to_level[mdu.organization_id]
+            mdu.can_edit = user_org_level >= mdu.owner_level
         return qs
 
 
