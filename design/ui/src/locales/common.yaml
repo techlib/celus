@@ -43,6 +43,7 @@ en:
     data_file: Data file
     lock: Lock
     outside_consortium: Outside consortium
+    uploaded: Uploaded
   titles: Titles
   overview: Overview
   chart:
@@ -146,6 +147,7 @@ cs:
     data_file: Datový soubor
     lock: Zámek
     outside_consortium: Mimo konzorcium
+    uploaded: Nahráno
   titles: Tituly
   overview: Přehled
   chart:

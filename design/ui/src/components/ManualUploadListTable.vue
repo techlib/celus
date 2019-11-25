@@ -1,4 +1,18 @@
 <i18n src="../locales/common.yaml"></i18n>
+<i18n>
+en:
+    really_delete: Really delete?
+    is_processed: Imported
+    delete_warning: You are about to delete this manually uploaded data from the database.
+                    Please confirm this action.
+    delete_success: Successfully deleted selected manually uploaded data
+
+cs:
+    really_delete: Opravdu smazat?
+    is_processed: Importováno
+    delete_warning: Prosím potvrďte, že chcete smazat z databáze tato ručně nahraná data.
+    delete_success: Vybraná ručně nahraná data byla úspěšně smazána
+</i18n>
 
 <template>
 <div>
@@ -49,6 +63,7 @@
                             icon
                             small
                             color="error"
+                            @click.stop="selectedMDU = item; showDeleteDialog = true"
                             v-on="on"
                     >
                         <v-icon small>fa fa-trash-alt</v-icon>
@@ -56,6 +71,10 @@
                 </template>
                 <span>{{ $t('actions.delete') }}</span>
             </v-tooltip>
+        </template>
+
+        <template #item.is_processed="{item}">
+            <CheckMark :value="item.is_processed" />
         </template>
 
     </v-data-table>
@@ -90,7 +109,68 @@
                     </v-btn>
                 </v-card-actions>
             </v-card>
-    </v-dialog>
+        </v-dialog>
+
+        <v-dialog
+                v-model="showDeleteDialog"
+        >
+            <v-card>
+                <v-card-title v-text="$t('really_delete')"></v-card-title>
+                <v-card-text>
+                    <v-container
+                            fluid
+                            class="pb-0"
+                    >
+                        <v-row>
+                            <v-col cols="12">
+                                {{ $t('delete_warning') }}
+                            </v-col>
+                        </v-row>
+                        <v-row>
+                            <v-col cols="12" class="pb-0">
+                                <table v-if="this.selectedMDU" class="overview">
+                                    <tr>
+                                        <th v-text="$t('platform')"></th>
+                                        <td>{{ this.selectedMDU.platform.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th v-text="$t('organization')"></th>
+                                        <td>{{ this.selectedMDU.organization.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th v-text="$t('labels.user')"></th>
+                                        <td>{{ this.selectedMDU.user.first_name }}, {{ this.selectedMDU.user.last_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th v-text="$t('title_fields.uploaded')"></th>
+                                        <td>{{ isoDateTimeFormat(this.selectedMDU.created) }}</td>
+                                    </tr>
+                                </table>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                            @click="showDeleteDialog = false"
+                            class="mr-2 mb-2"
+                            color="secondary"
+                    >
+                        {{ $t('actions.cancel') }}
+                    </v-btn>
+                    <v-btn
+                            @click="performDelete()"
+                            class="mr-2 mb-2"
+                            color="error"
+                    >
+                        <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
+                        {{ $t('actions.delete') }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
 </div>
 </template>
 
@@ -100,11 +180,13 @@
   import AccessLogList from './AccessLogList'
   import ImportBatchChart from './ImportBatchChart'
   import {isoDateTimeFormat, isoDateTimeFormatSpans} from '../libs/dates'
+  import CheckMark from './CheckMark'
 
   export default {
     name: "ManualUploadListTable",
 
     components: {
+      CheckMark,
       AccessLogList,
       ImportBatchChart
     },
@@ -114,7 +196,9 @@
         mdus: [],
         loading: false,
         showBatchDialog: false,
+        showDeleteDialog: false,
         selectedBatch: null,
+        selectedMDU: null,
         dialogType: 'chart',
       }
     },
@@ -126,19 +210,23 @@
       headers () {
         return [
           {
-            text: 'uploaded',
+            text: this.$t('title_fields.uploaded'),
             value: 'created',
           },
           {
-            text: 'platform',
+            text: this.$t('platform'),
             value: 'platform.name',
           },
           {
-            text: 'user',
+            text: this.$t('labels.user'),
             value: 'user.last_name',
           },
           {
-            text: 'actions',
+            text: this.$t('is_processed'),
+            value: 'is_processed',
+          },
+          {
+            text: this.$t('title_fields.actions'),
             value: 'actions',
           }
         ]
@@ -170,7 +258,18 @@
             this.loading = false
           }
         }
-      }
+      },
+      performDelete () {
+        try {
+          axios.delete(`/api/manual-data-upload/${this.selectedMDU.pk}/`)
+          this.showSnackbar({content: this.$t('delete_success'), color: 'success'})
+          this.showDeleteDialog = false
+          this.mdus = this.mdus.filter(item => item.pk != this.selectedMDU.pk)
+          this.selectedMDU = null
+        } catch (error) {
+          this.showSnackbar({content: 'Error deleting manual data upload: ' + error, color: 'error'})
+        }
+      },
     },
 
     watch: {
@@ -191,6 +290,14 @@
     span.time {
         font-weight: 300;
         font-size: 87.5%;
+    }
+
+    table.overview {
+
+        th {
+            text-align: left;
+            padding-right: 1.5rem;
+        }
     }
 
 </style>
