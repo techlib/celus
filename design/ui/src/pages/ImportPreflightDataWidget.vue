@@ -22,7 +22,69 @@ cs:
 
 
 <template>
-    <table>
+    <v-container>
+        <v-row>
+            <v-col cols="auto">
+                <v-card hover>
+                    <v-card-text>
+                        <h4>{{ $t('output_logs') }}</h4>
+                        <div class="text-right">{{ preflightData.log_count }}</div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+            <v-col cols="auto">
+                <v-card hover>
+                    <v-card-text>
+                        <h4>{{ $t('total_hits') }}</h4>
+                        <div class="text-right">{{ preflightData.hits_total }}</div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <v-col cols="auto">
+                <v-card hover>
+                    <v-card-text>
+                        <h4>{{ $t('title_count') }}</h4>
+                        <div class="text-right">{{ titleCount }}</div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col cols="auto">
+                <v-card hover>
+                    <v-card-text>
+                        <h4>{{ $t('imported_months') }}</h4>
+                        <div class="text-right">
+                        <table style="width: 100%">
+                            <tr v-for="rec in monthsSorted" :key="rec.name">
+                                <td class="text-left pr-4">{{ rec.name.substring(0, 7) }}</td>
+                                <td>{{ rec.value }}</td>
+                            </tr>
+                        </table>
+                        </div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <v-col cols="auto">
+                <v-card hover>
+                    <v-card-text>
+                        <h4>{{ $t('imported_metrics') }}</h4>
+                        <div class="text-right">
+                            <table>
+                                <tr v-for="rec in metricsSorted" :key="rec.name">
+                                    <td class="text-left pr-4">{{ rec.name }}</td>
+                                    <td>{{ rec.value }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+        </v-row>
+    <!--table>
         <tr>
             <th class="text-left">{{ $t('output_logs') }}</th>
             <td class="text-right">{{ preflightData.log_count }}</td>
@@ -56,7 +118,8 @@ cs:
                 </ul>
             </td>
         </tr>
-    </table>
+    </table-->
+    </v-container>
 </template>
 <script>
 
