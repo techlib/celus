@@ -40,5 +40,4 @@ def erms_sync_platforms() -> dict:
         data_source, _created = DataSource.objects.get_or_create(short_name='ERMS',
                                                                  type=DataSource.TYPE_API)
         syncer = PlatformSyncer(data_source)
-        print([r for r in erms_records if r.get('id')==2265])
         return syncer.sync_data(erms_records)
