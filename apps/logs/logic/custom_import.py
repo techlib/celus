@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date, datetime
 import dateparser
 from django.db import connection
@@ -102,11 +103,28 @@ def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, in
     return result
 
 
+def histogram(iterable) -> Counter:
+    out = Counter()
+    for x in iterable:
+        out[x] += 1
+    return out
+
+
+def histogram_with_count(iterable) -> Counter:
+    out = Counter()
+    for x, count in iterable:
+        out[x] += count
+    return out
+
+
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    records = mdu.data_to_records()
+    records = mdu.data_to_records()  # type: [CounterRecord]
     return {
         'log_count': len(records),
-        'months': list(sorted({record.start for record in records}))
+        'hits_total': sum((record.value for record in records), 0),
+        'months': histogram_with_count([(record.start, record.value) for record in records]),
+        'metrics': histogram_with_count([(record.metric, record.value) for record in records]),
+        'titles': histogram_with_count([(record.title, record.value) for record in records]),
     }
 
 

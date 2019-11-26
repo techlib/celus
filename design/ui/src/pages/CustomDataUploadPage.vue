@@ -145,20 +145,10 @@ cs:
                 <v-card>
                     <v-card-title>{{ $t('overview') }}</v-card-title>
                     <v-card-text>
-                        <table v-if="preflightData">
-                            <tr>
-                                <th class="text-left">{{ $t('output_logs') }}</th>
-                                <td class="text-right">{{ preflightData.log_count }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-left">{{ $t('imported_months') }}</th>
-                                <td>
-                                    <ul class="no-decoration">
-                                        <li v-for="month in preflightData.months" :key="month">{{ month.substring(0, 7) }}</li>
-                                    </ul>
-                                </td>
-                            </tr>
-                        </table>
+                        <ImportPreflightDataWidget
+                                v-if="preflightData"
+                                :preflight-data="preflightData"
+                        />
                         <v-alert v-else-if="preflightError" type="error">
                             <strong v-text="$t('following_error_found')"></strong>:
                             <span v-text="preflightError"></span>
@@ -257,17 +247,19 @@ cs:
 
 <script>
   import axios from 'axios'
-  import { mapActions, mapState } from 'vuex'
+  import {mapActions, mapState} from 'vuex'
   import ImportBatchChart from '../components/ImportBatchChart'
   import AccessLogList from '../components/AccessLogList'
   import ReportTypeCreateWidget from '../components/ReportTypeCreateWidget'
   import LargeSpinner from '../components/LargeSpinner'
   import CustomUploadInfoWidget from '../components/CustomUploadInfoWidget'
   import ReportTypeInfoWidget from '../components/ReportTypeInfoWidget'
+  import ImportPreflightDataWidget from './ImportPreflightDataWidget'
 
   export default {
     name: 'CustomDataUploadPage',
     components: {
+      ImportPreflightDataWidget,
       LargeSpinner,
       ReportTypeCreateWidget,
       ImportBatchChart,
@@ -466,10 +458,3 @@ cs:
   }
 </script>
 
-<style scoped lang="scss">
-
-    ul.no-decoration {
-        list-style: none;
-    }
-
-</style>
