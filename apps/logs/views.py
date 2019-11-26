@@ -1,3 +1,5 @@
+import traceback
+from django.core.mail import mail_admins
 from django.db.models import Count
 from django.http import HttpResponseBadRequest
 from pandas import DataFrame
@@ -192,6 +194,8 @@ class ManualDataUploadViewSet(ModelViewSet):
             stats = custom_import_preflight_check(mdu)
             return Response(stats)
         except Exception as e:
+            body = f'URL: {request.path}\n\nException: {e}\n\nTraceback: {traceback.format_exc()}'
+            mail_admins('MDU preflight check error', body)
             return Response({'error': str(e)}, status=400)
 
     @action(methods=['POST'], detail=True, url_path='process')

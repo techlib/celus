@@ -361,7 +361,6 @@ class ManualDataUpload(models.Model):
                                                            'metric': default_metric.pk})
         else:
             reader = crt.get_reader_class()()
-            print(self.data_file)
             records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT,
                                                           self.data_file.name))
         return records
