@@ -9,29 +9,25 @@ cs:
 </i18n>
 
 <template>
-    <v-card outlined>
-        <v-card-title>
-            <v-scroll-y-transition leave-absolute>
+    <v-scroll-y-transition leave-absolute>
+        <v-card outlined :key="reportType.pk">
+            <v-card-title>
+
                 <span v-text="reportType.name" :key="reportType.pk" class="font-weight-light"></span>
-            </v-scroll-y-transition>
-        </v-card-title>
+            </v-card-title>
 
-        <v-card-text>
-            <div>
-                <strong v-text="$t('interest_metrics')"></strong>:
-                <v-fade-transition leave-absolute>
+            <v-card-text>
+                <div>
+                    <strong v-text="$t('interest_metrics')"></strong>:
                     <span v-text="interestMetrics" :key="reportType.pk"></span>
-                </v-fade-transition>
-            </div>
-            <div>
-                <strong v-text="$t('dimensions')"></strong>:
-                <v-fade-transition leave-absolute>
+                </div>
+                <div>
+                    <strong v-text="$t('dimensions')"></strong>:
                     <span v-text="dimensions" :key="reportType.pk"></span>
-                </v-fade-transition>
-            </div>
-        </v-card-text>
-    </v-card>
-
+                </div>
+            </v-card-text>
+        </v-card>
+    </v-scroll-y-transition>
 </template>
 
 <script>
