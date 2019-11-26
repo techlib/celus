@@ -21,6 +21,7 @@ en:
     return_to_platform: Go to platform page
     following_error_found: The following error was found when checking the imported data
     back_to_start: Back to data upload
+    no_report_types: There are not reports defined for this platform - contact administrators to add some
 
 cs:
     data_file: Datový soubor k nahrání
@@ -43,6 +44,7 @@ cs:
     return_to_platform: Přejít na stránku platformy
     following_error_found: Při kontrole dat byla nalezena následující chyba
     back_to_start: Zpět na nahrání dat
+    no_report_types: Pro tuto platformu nejsou definovány žádné reporty - kontaktujte administrátory pro jejich přidání
 </i18n>
 
 <template>
@@ -84,15 +86,29 @@ cs:
                         v-model="valid"
                 >
                     <v-container fluid elevation-3 pa-5>
+                        <v-row no-gutters>
+                            <v-col cols="12">
+                                <ReportTypeInfoWidget
+                                        v-if="selectedReportType"
+                                        :report-type="selectedReportType"
+                                />
+                                <v-alert type="warning" v-else-if="reportTypesFetched">
+                                    {{ $t('no_report_types') }}
+                                </v-alert>
+                            </v-col>
+                        </v-row>
                         <v-row>
                             <v-col cols="12" md="6">
                                 <v-select
-                                        v-model="selectedReportTypeId"
+                                        v-model="selectedReportType"
                                         :items="reportTypes"
                                         item-text="name"
                                         item-value="pk"
                                         required
+                                        return-object
                                         :label="$t('labels.report_type')"
+                                        :no-data-text="$t('no_report_types')"
+                                        :rules="[filledIn]"
                                 >
                                     <template v-slot:item="props">
                                         <span v-if="props.item.public">{{ props.item.name }}</span>
@@ -247,6 +263,7 @@ cs:
   import ReportTypeCreateWidget from '../components/ReportTypeCreateWidget'
   import LargeSpinner from '../components/LargeSpinner'
   import CustomUploadInfoWidget from '../components/CustomUploadInfoWidget'
+  import ReportTypeInfoWidget from '../components/ReportTypeInfoWidget'
 
   export default {
     name: 'CustomDataUploadPage',
@@ -256,6 +273,7 @@ cs:
       ImportBatchChart,
       AccessLogList,
       CustomUploadInfoWidget,
+      ReportTypeInfoWidget,
     },
     props: {
       platformId: {required: true},
@@ -267,7 +285,7 @@ cs:
         valid: false,
         platform: null,
         reportTypes: [],
-        selectedReportTypeId: null,
+        selectedReportType: null,
         showErrorDialog: false,
         errors: [],
         step: 1,
@@ -279,6 +297,7 @@ cs:
         showAddReportTypeDialog: false,
         tab: 'chart',
         uploadObjectProcessing: false,
+        reportTypesFetched: false,
       }
     },
     computed: {
@@ -313,7 +332,7 @@ cs:
         formData.append('data_file', this.dataFile)
         formData.append('organization', this.organizationId)
         formData.append('platform', this.platformId)
-        formData.append('report_type', this.selectedReportTypeId)
+        formData.append('report_type', this.selectedReportType.pk)
         try {
           let response = await axios.post(
             '/api/manual-data-upload/',
@@ -360,8 +379,9 @@ cs:
             const response = await axios.get(url)
             this.reportTypes = response.data
             if (this.reportTypes.length > 0) {
-              this.selectedReportTypeId = this.reportTypes[0].pk
+              this.selectedReportType = this.reportTypes[0]
             }
+            this.reportTypesFetched = true
           } catch (error) {
             this.showSnackbar({content: 'Error loading title: ' + error})
           }

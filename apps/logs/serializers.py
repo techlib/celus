@@ -12,7 +12,7 @@ from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer
 from .models import Metric, Dimension, ReportType, ManualDataUpload, InterestGroup, AccessLog, \
-    ImportBatch, ReportTypeToDimension
+    ImportBatch, ReportTypeToDimension, ReportInterestMetric
 
 
 class OrganizationSourceExtractingMixin(object):
@@ -26,6 +26,13 @@ class OrganizationSourceExtractingMixin(object):
             return data_source
         else:
             raise ValidationError('user cannot access selected organization')
+
+
+class InterestGroupSerializer(ModelSerializer):
+
+    class Meta:
+        model = InterestGroup
+        fields = ('pk', 'short_name', 'name', 'important', 'position')
 
 
 class MetricSerializer(ModelSerializer):
@@ -132,6 +139,30 @@ class ReportTypeSerializer(ModelSerializer):
         return result
 
 
+class ReportInterestMetricSerializer(ModelSerializer):
+
+    interest_group = InterestGroupSerializer(read_only=True)
+    metric = MetricSerializer(read_only=True)
+    target_metric = MetricSerializer(read_only=True)
+
+    class Meta:
+        model = ReportInterestMetric
+        fields = ('metric', 'report_type', 'target_metric', 'interest_group')
+
+
+class ReportTypeExtendedSerializer(ModelSerializer):
+
+    dimensions_sorted = DimensionSerializer(many=True, read_only=True)
+    used_metrics = MetricSerializer(many=True, read_only=True)
+    interest_metric_set = ReportInterestMetricSerializer(many=True, read_only=True,
+                                                         source='reportinterestmetric_set')
+
+    class Meta:
+        model = ReportType
+        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'desc', 'dimensions_sorted',
+                  'used_metrics', 'interest_metric_set')
+
+
 class AccessLogSerializer(BaseSerializer):
 
     report_type = StringRelatedField()
@@ -236,9 +267,3 @@ class ManualDataUploadVerboseSerializer(ModelSerializer):
                   'user', 'created', 'is_processed', 'log', 'import_batch', 'extra',
                   'can_edit', 'owner_level')
 
-
-class InterestGroupSerializer(ModelSerializer):
-
-    class Meta:
-        model = InterestGroup
-        fields = ('pk', 'short_name', 'name', 'important', 'position')

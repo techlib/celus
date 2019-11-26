@@ -13,7 +13,7 @@ from core.logic.dates import date_filter_from_params
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
 from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metric
-from logs.serializers import ReportTypeSerializer
+from logs.serializers import ReportTypeSerializer, ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title
@@ -33,8 +33,14 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         Provides a list of report types associated with this platform
         """
         platform = get_object_or_404(Platform.objects.all(), pk=pk)
-        report_types = ReportType.objects.filter(interest_platforms=platform)
-        return Response(ReportTypeSerializer(report_types, many=True).data)
+        report_types = ReportType.objects.filter(interest_platforms=platform).\
+            prefetch_related('reportinterestmetric_set__metric',
+                             'reportinterestmetric_set__interest_group')
+        # for rt in report_types:
+        #     rt.used_metrics = Metric.objects.\
+        #         filter(pk__in=AccessLog.objects.filter(report_type=rt, platform=platform).
+        #                values('metric').distinct())
+        return Response(ReportTypeExtendedSerializer(report_types, many=True).data)
 
 
 class PlatformViewSet(ReadOnlyModelViewSet):
