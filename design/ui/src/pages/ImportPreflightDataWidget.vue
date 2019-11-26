@@ -7,6 +7,7 @@ en:
     total_hits: Sum of hits
     imported_metrics: Found metrics
     title_count: Title count
+    hits: hits
 
 cs:
     output_logs: Vygenerované záznamy
@@ -16,6 +17,7 @@ cs:
     total_hits: Součet zásahů
     imported_metrics: Nalezené metriky
     title_count: Počet titulů
+    hits: zásahů
 </i18n>
 
 
@@ -49,8 +51,7 @@ cs:
             <td>
                 <ul class="no-decoration">
                     <li v-for="rec in metricsSorted" :key="rec.name">
-                        {{ rec.name }}
-                        / <i>{{ rec.value }}</i>
+                        {{ rec.name }} / <i>{{ rec.value }}</i>
                     </li>
                 </ul>
             </td>
@@ -58,8 +59,15 @@ cs:
     </table>
 </template>
 <script>
+
+  import HoverText from '../components/HoverText'
+
   export default {
     name: 'ImportPreflightDataWidget',
+
+    components: {
+      HoverText,
+    },
 
     props: {
       preflightData: {required: true, type: Object},
