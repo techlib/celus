@@ -1,5 +1,13 @@
 <i18n src="../locales/common.yaml"></i18n>
 
+<i18n>
+en:
+    add: Upload new data from file
+
+cs:
+    add: Nahrát nová data ze souboru
+</i18n>
+
 <template>
     <span>
         <v-tooltip bottom>

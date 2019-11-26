@@ -3,45 +3,49 @@
 <template>
     <div>
         <v-card>
-        <v-card-title>
-        <v-text-field
-                v-model="searchDebounced"
-                append-icon="fa-search"
-                :label="$t('labels.search')"
-                single-line
-                hide-details
-        ></v-text-field>
-        </v-card-title>
-        <v-data-table
-                :items="batches"
-                :headers="headers"
-                :loading="loading"
-                :search="search"
-        >
-            <!--:server-items-length="totalCount"
-            :items-per-page.sync="pageSize"
-            :page.sync="page"
-            :sort-by.sync="orderBy"
-            :sort-desc.sync="orderDesc"-->
-        <template v-slot:item.actions="props">
-            <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                    <v-btn icon small color="secondary" @click.stop="selectedBatch = props.item.pk; dialogType = 'data'; showDialog = true" v-on="on">
-                        <v-icon small>fa-microscope</v-icon>
-                    </v-btn>
+            <v-card-title>
+                <v-text-field
+                        v-model="searchDebounced"
+                        append-icon="fa-search"
+                        :label="$t('labels.search')"
+                        single-line
+                        hide-details
+                ></v-text-field>
+            </v-card-title>
+            <v-data-table
+                    :items="batches"
+                    :headers="headers"
+                    :loading="loading"
+                    :search="search"
+            >
+                <!--:server-items-length="totalCount"
+                :items-per-page.sync="pageSize"
+                :page.sync="page"
+                :sort-by.sync="orderBy"
+                :sort-desc.sync="orderDesc"-->
+                <template #item.actions="{item}">
+                    <v-tooltip bottom>
+                        <template v-slot:activator="{ on }">
+                            <v-btn icon small color="secondary" @click.stop="selectedBatch = item.pk; dialogType = 'data'; showDialog = true" v-on="on">
+                                <v-icon small>fa-microscope</v-icon>
+                            </v-btn>
+                        </template>
+                        <span>{{ $t('actions.show_raw_data') }}</span>
+                    </v-tooltip>
+                    <v-tooltip bottom>
+                        <template v-slot:activator="{ on }">
+                            <v-btn icon small color="secondary" @click.stop="selectedBatch = item.pk; dialogType = 'chart'; showDialog = true" v-on="on">
+                                <v-icon small>fa-chart-bar</v-icon>
+                            </v-btn>
+                        </template>
+                        <span>{{ $t('actions.show_chart') }}</span>
+                    </v-tooltip>
                 </template>
-                <span>{{ $t('actions.show_raw_data') }}</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                    <v-btn icon small color="secondary" @click.stop="selectedBatch = props.item.pk; dialogType = 'chart'; showDialog = true" v-on="on">
-                        <v-icon small>fa-chart-bar</v-icon>
-                    </v-btn>
+                <template #item.user.username="{item}">
+                    {{ userToString(item.user) }}
                 </template>
-                <span>{{ $t('actions.show_chart') }}</span>
-            </v-tooltip>
-        </template>
-    </v-data-table>
+
+            </v-data-table>
         </v-card>
 
     <v-dialog
@@ -70,6 +74,7 @@
   import ImportBatchChart from '../components/ImportBatchChart'
   import {isoDateTimeFormat, parseDateTime} from '../libs/dates'
   import debounce from 'lodash/debounce'
+  import {userToString} from '../libs/user'
 
   export default {
     name: "ImportBatchesPage",
@@ -141,6 +146,7 @@
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      userToString: userToString,
       async loadImportBatches () {
         this.loading = true
         let url = `/api/import-batch/?page_size=${this.pageSize}&page=${this.page}`

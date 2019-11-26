@@ -27,7 +27,7 @@ cs:
             :loading="loading"
     >
         <template #item.user.last_name="{item}">
-            {{ item.user.last_name }}, {{ item.user.first_name }}
+            {{ userToString(item.user) }}
         </template>
 
         <template #item.created="{item}">
@@ -173,7 +173,7 @@ cs:
                                     </tr>
                                     <tr>
                                         <th v-text="$t('labels.user')"></th>
-                                        <td>{{ selectedMDU.user.first_name }}, {{ selectedMDU.user.last_name }}</td>
+                                        <td>{{ userToString(selectedMDU.user) }}</td>
                                     </tr>
                                     <tr>
                                         <th v-text="$t('title_fields.uploaded')"></th>
@@ -215,6 +215,7 @@ cs:
   import ImportBatchChart from './ImportBatchChart'
   import {isoDateTimeFormat, isoDateTimeFormatSpans} from '../libs/dates'
   import CheckMark from './CheckMark'
+  import {userToString} from '../libs/user'
 
   export default {
     name: "ManualUploadListTable",
@@ -298,6 +299,7 @@ cs:
       }),
       isoDateTimeFormat: isoDateTimeFormat,
       isoDateTimeFormatSpans: isoDateTimeFormatSpans,
+      userToString: userToString,
       async fetchMDUs () {
         if (this.url) {
           this.loading = true
