@@ -64,7 +64,14 @@ cs:
                 </v-breadcrumbs>
             </v-row>
             <v-row>
-                <h2 v-if="platform">{{ platform.name }}</h2>
+                <v-col>
+                    <h2 v-if="platform">{{ platform.name }}</h2>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col>
+                    <CustomUploadInfoWidget />
+                </v-col>
             </v-row>
         </v-container>
         <v-stepper v-model="step" vertical>
@@ -239,10 +246,17 @@ cs:
   import AccessLogList from '../components/AccessLogList'
   import ReportTypeCreateWidget from '../components/ReportTypeCreateWidget'
   import LargeSpinner from '../components/LargeSpinner'
+  import CustomUploadInfoWidget from '../components/CustomUploadInfoWidget'
 
   export default {
     name: 'CustomDataUploadPage',
-    components: {LargeSpinner, ReportTypeCreateWidget, ImportBatchChart, AccessLogList},
+    components: {
+      LargeSpinner,
+      ReportTypeCreateWidget,
+      ImportBatchChart,
+      AccessLogList,
+      CustomUploadInfoWidget,
+    },
     props: {
       platformId: {required: true},
       uploadObjectId: {required: false},
