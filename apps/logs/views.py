@@ -188,11 +188,11 @@ class ManualDataUploadViewSet(ModelViewSet):
     @action(methods=['GET'], detail=True, url_path='preflight')
     def preflight_check(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
-        # try:
-        stats = custom_import_preflight_check(mdu)
-        return Response(stats)
-        # except Exception as e:
-        #     return Response({'error': str(e)}, status=400)
+        try:
+            stats = custom_import_preflight_check(mdu)
+            return Response(stats)
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
 
     @action(methods=['POST'], detail=True, url_path='process')
     def process(self, request, pk):
