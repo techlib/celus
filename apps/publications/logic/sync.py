@@ -13,13 +13,20 @@ from core.models import DataSource
 from erms.api import ERMS
 
 
-class PlaformSyncer(ERMSObjectSyncer):
+class PlatformSyncer(ERMSObjectSyncer):
 
     attr_map = {
         'id': 'ext_id',
-        'short name_en': 'short_name',
+        'short name': 'short_name',
+        'short_name_en': 'short_name',  # short name is not translatable
+        'short_name_cs': 'short_name',
         'provider': 'provider',
+        'provider_en': 'provider_en',
+        'provider_cs': 'provider_cs',
         'name': 'name',
+        'name_en': 'name_en',
+        'name_cs': 'name_cs',
+        'url': 'url',
     }
 
     object_class = Platform
@@ -32,5 +39,5 @@ def erms_sync_platforms() -> dict:
         erms_records = erms.fetch_objects(ERMS.CLS_PLATFORM)
         data_source, _created = DataSource.objects.get_or_create(short_name='ERMS',
                                                                  type=DataSource.TYPE_API)
-        syncer = PlaformSyncer(data_source)
+        syncer = PlatformSyncer(data_source)
         return syncer.sync_data(erms_records)
