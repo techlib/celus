@@ -84,41 +84,6 @@ cs:
             </v-col>
 
         </v-row>
-    <!--table>
-        <tr>
-            <th class="text-left">{{ $t('output_logs') }}</th>
-            <td class="text-right">{{ preflightData.log_count }}</td>
-        </tr>
-        <tr>
-            <th class="text-left">{{ $t('total_hits') }}</th>
-            <td class="text-right">{{ preflightData.hits_total }}</td>
-        </tr>
-        <tr>
-            <th class="text-left">{{ $t('title_count') }}</th>
-            <td class="text-right">{{ titleCount }}</td>
-        </tr>
-        <tr>
-            <th class="text-left">{{ $t('imported_months') }}</th>
-            <td>
-                <ul class="no-decoration">
-                    <li v-for="rec in monthsSorted" :key="rec.name">
-                        {{ rec.name.substring(0, 7) }}
-                        / <i>{{ rec.value }}</i>
-                    </li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <th class="text-left">{{ $t('imported_metrics') }}</th>
-            <td>
-                <ul class="no-decoration">
-                    <li v-for="rec in metricsSorted" :key="rec.name">
-                        {{ rec.name }} / <i>{{ rec.value }}</i>
-                    </li>
-                </ul>
-            </td>
-        </tr>
-    </table-->
     </v-container>
 </template>
 <script>
