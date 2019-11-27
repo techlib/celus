@@ -367,9 +367,9 @@ cs:
       },
       valid () {
         if (this.credentials) {
-          return (this.selectedReportTypes.length > 0 && this.url && this.requestorId)
+          return (this.selectedReportTypes.length > 0 && this.url && this.customerId)
         } else {
-          return (this.selectedReportTypes.length > 0 && this.url && this.requestorId &&
+          return (this.selectedReportTypes.length > 0 && this.url && this.customerId &&
             this.platform !== null && this.counterVersion)
         }
       },
