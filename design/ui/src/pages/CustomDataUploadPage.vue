@@ -125,6 +125,7 @@ cs:
                                         :placeholder="$t('data_file_placeholder')"
                                         required
                                         :rules="[filledIn]"
+                                        :disabled="!selectedReportType"
                                 >
                                 </v-file-input>
                             </v-col>
