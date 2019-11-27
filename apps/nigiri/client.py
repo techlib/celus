@@ -198,9 +198,10 @@ class Sushi5Client(SushiClientBase):
 
     def _construct_url_params(self, extra=None):
         result = {
-            self.REQUESTOR_ID_PARAM: self.requestor_id,
             self.CUSTOMER_ID_PARAM: self.customer_id if self.customer_id else self.requestor_id,
         }
+        if self.requestor_id:
+            result[self.REQUESTOR_ID_PARAM] = self.requestor_id
         if self.extra_params:
             result.update(self.extra_params)
         if extra:
