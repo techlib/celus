@@ -88,13 +88,10 @@ cs:
 </template>
 <script>
 
-  import HoverText from '../components/HoverText'
-
   export default {
     name: 'ImportPreflightDataWidget',
 
     components: {
-      HoverText,
     },
 
     props: {
