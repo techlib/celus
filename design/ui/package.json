@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'"
+    "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'",
+    "test": "jest"
   },
   "dependencies": {
     "@vue/cli-plugin-babel": "^3.11.0",
@@ -29,24 +30,32 @@
     "vue-gravatar": "^1.3.0",
     "vue-i18n": "^8.14.1",
     "vue-router": "^3.1.2",
-    "vuetify": "^2.1.9",
+    "vuetify": "^2.1.12",
     "vuetify-loader": "^1.3.0",
     "vuex": "^3.1.1",
     "vuex-persist": "^2.0.1",
     "yaml-loader": "^0.5.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
     "@kazupon/vue-i18n-loader": "^0.3.0",
     "@vue/cli-plugin-babel": "^3.1.1",
     "@vue/cli-plugin-eslint": "^3.1.5",
     "@vue/cli-service": "^3.1.4",
+    "@vue/test-utils": "^1.0.0-beta.29",
+    "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^10.0.3",
+    "babel-jest": "^24.9.0",
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
+    "jest": "^24.9.0",
+    "jest-serializer-vue": "^2.0.2",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.1",
     "vue-cli-plugin-i18n": "^0.6.0",
     "vue-cli-plugin-vuetify": "^0.5.0",
+    "vue-jest": "^3.0.5",
     "vue-template-compiler": "^2.5.21",
     "vuetify-loader": "^1.0.5",
     "webpack-bundle-analyzer": "^3.5.2"
