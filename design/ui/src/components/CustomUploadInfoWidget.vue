@@ -7,9 +7,42 @@ en:
            can use COUNTER data saved in <strong>CSV</strong> file. For platforms that do not use
            COUNTER, you need to <strong>prepare data according to the rules below</strong>.
            Files in the Microsoft <strong>Excell format are not supported</strong>.
+    non_counter_data_h: non-COUNTER data
+    non_counter_data:
+           Because of the large variability in formats that providers use to deliver non-COUNTER
+           data, it is not possible to implement support for all of them. Instead, you have to convert
+           the data into a common format described below.
+           <br><br>
+           <em>Note</em> - It is often most practical to prepare your data in a table editor
+           and then export it into the CSV format with the correct parameters.
+    ncd_file_format_h: File format
+    ncd_file_format:
+           For the data to be correctly imported, it is necessary to use the CSV format with
+           the following parameters -
+           comma (<code>,</code>) as field separator, double quotes (<code>"</code>) for text
+           quotation.
+    ncd_file_content_h: File content
+    ncd_file_content:
+           The first row of the table contains a header which describes the meaning of individual
+           columns. Data for individual titles, metrics, etc. are stored in separate rows.
+           If the file contains data for more than one month, they are stored as part of one
+           row in separate columns.
+           <br>
+           Names of individual columns are defined by the report type used (more exactly the
+           the dimensions it contains).
+           List of dimensions for a specific report type will be displayed when it is selected from
+           the selection in the fields "Standard dimensions" and "Report specific dimensions".
+           Besides the columns for individual dimensions, columns for data for individual months
+           are supported. These have to be named in the "Month Year" form, e.g. "Jan 2019"
+           (month is specified using its English 3-letter abbreviation) or in
+           the "YYYY-MM" format, e.g. "2019-01".
+           <br><br>
+           <em>Note</em> - the order of columns is not important, but their names must strictly
+           match the report type specification.
+    ncd_file_example_h: Example
     example_img_desc:
-           Ukázka se standardními rozměry <i>Metric</i> a <i>Title</i> a specifickými
-           rozměry <i>Publisher</i> a <i>Success</i>
+           Example with standard dimensions <i>Metric</i> and <i>Title</i> and specific
+           dimensions <i>Publisher</i> and <i>Success</i>.
 
 cs:
     part1: Tato stránka umožňuje nahrání dat k platformám, které neposkytují rozhraní SUSHI a nebo
@@ -46,10 +79,13 @@ cs:
            rozměry jsou podporovány ještě sloupce s daty pro jednotlivé měsíce. Ty musí mít název
            v podobě "Month Year", např. "Jan 2019" (názvy měsíců jsou třípísmenné anglické zkratky)
            a nebo "YYYY-MM", např. "2019-01".
+           <br><br>
+           <em>Poznámka</em> - pořadí sloupců není důležité, ale jejich názvy musí přesně odpovídat
+           specifikaci pro daný typ reportu.
     ncd_file_example_h: Ukázka
     example_img_desc:
            Ukázka se standardními rozměry <i>Metric</i> a <i>Title</i> a specifickými
-           rozměry <i>Publisher</i> a <i>Success</i>
+           rozměry <i>Publisher</i> a <i>Success</i>.
 
 
 </i18n>
@@ -71,8 +107,8 @@ cs:
                     <h4 v-text="$t('ncd_file_content_h')"></h4>
                     <p v-html="$t('ncd_file_content')"></p>
                     <h4 v-text="$t('ncd_file_example_h')"></h4>
-                    <img src="../assets/ex-title-metric-publisher-success.png" :alt="$t('example_img_desc')" />
-
+                    <img src="../assets/ex-title-metric-publisher-success.png" alt="example" />
+                    <div v-html="$t('example_img_desc')"></div>
                 </v-expansion-panel-content>
             </v-expansion-panel>
         </v-expansion-panels>
