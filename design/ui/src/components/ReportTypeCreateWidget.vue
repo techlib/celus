@@ -1,5 +1,5 @@
-<i18n src="../locales/dialog.yaml"></i18n>
-<i18n>
+<i18n lang="yaml" src="../locales/dialog.yaml"></i18n>
+<i18n lang="yaml">
 en:
     short_name: Code name
     short_name_placeholder: Short code name for the report, např. UR

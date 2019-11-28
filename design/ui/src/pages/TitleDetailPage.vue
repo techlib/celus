@@ -1,7 +1,7 @@
-<i18n src="../locales/charts.yaml"></i18n>
-<i18n src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="../locales/charts.yaml"></i18n>
+<i18n lang="yaml" src="../locales/common.yaml"></i18n>
 
-<i18n>
+<i18n lang="yaml">
 en:
     has_annotations: There are some annotations which might be related to this title. Click to scroll to them.
 

@@ -1,5 +1,5 @@
-<i18n src="../locales/common.yaml"></i18n>
-<i18n>
+<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml">
 en:
     add_new: Add new SUSHI
     is_locked: These credentials are locked.

@@ -1,5 +1,5 @@
-<i18n src="../locales/common.yaml"></i18n>
-<i18n>
+<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml">
 en:
     in_progress: Fetching data
     fetching_details: Fetching details

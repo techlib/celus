@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
   title: Sorry, but this page does not exist
   note: Maybe one of the options from the menu could be helpful.

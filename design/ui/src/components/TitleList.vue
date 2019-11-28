@@ -1,6 +1,6 @@
-<i18n src="../locales/common.yaml"></i18n>
-<i18n src="../locales/pub-types.yaml"></i18n>
-<i18n>
+<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="../locales/pub-types.yaml"></i18n>
+<i18n lang="yaml">
 en:
     columns:
         interest: Interest

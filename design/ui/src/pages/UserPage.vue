@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     is_superuser: Superuser
     is_from_master_organization: CzechELib staff

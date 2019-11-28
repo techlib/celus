@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     manual_uploads: Manually uploaded data
     upload_data_tooltip: Upload new data from file

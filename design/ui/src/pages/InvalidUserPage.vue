@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     title: Unauthorized user
     text: Sorry, but your user identity is not associated with any user account in this

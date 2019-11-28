@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     select_platform: Select platform
     continue: Continue

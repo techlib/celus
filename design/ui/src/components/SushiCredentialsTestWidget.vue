@@ -1,5 +1,5 @@
-<i18n src="../locales/common.yaml"></i18n>
-<i18n>
+<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml">
 en:
     select_dates_text: Select date range for SUSHI credentials test. A shorter period usually takes
                        less time to process, so using only one month is advisable.

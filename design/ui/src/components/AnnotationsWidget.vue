@@ -1,5 +1,5 @@
-<i18n src="../locales/common.yaml"></i18n>
-<i18n>
+<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml">
 en:
     add: Add annotation
     edit: Edit annotation

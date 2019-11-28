@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     chart_height: Chart height
 cs:

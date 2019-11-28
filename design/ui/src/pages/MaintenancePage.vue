@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     maintenance: Maintenance
     no_interest: Platforms without interest definition

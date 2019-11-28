@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     interest_metrics: Interest defining metrics
     specific_dimensions: Dimensions specific to report

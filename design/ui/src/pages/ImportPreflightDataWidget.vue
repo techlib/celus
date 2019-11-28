@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     output_logs: Generated logs
     imported_months: Data found for months

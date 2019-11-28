@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     not_logged_in: Logged out
     not_logged_in_text: You are not logged in, probably because you have been logged out due to inactivity. Please click "Login" to be redirected to login page.

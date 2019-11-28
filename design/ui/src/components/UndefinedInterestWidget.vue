@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     has_data: Has data
     platform: Platform

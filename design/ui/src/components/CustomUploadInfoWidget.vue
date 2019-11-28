@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     part1: On this page, you can upload data for platforms which do not offer a SUSHI interface
            or older data which are not longer available through SUSHI.

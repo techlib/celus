@@ -1,5 +1,5 @@
-<i18n src="../locales/dialog.yaml"></i18n>
-<i18n>
+<i18n lang="yaml" src="../locales/dialog.yaml"></i18n>
+<i18n lang="yaml">
 en:
     title: Report type creation examples
     simple_examples_title: Simple examples

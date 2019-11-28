@@ -1,4 +1,4 @@
-<i18n>
+<i18n lang="yaml">
 en:
     background_tasks: Background tasks
     background_tasks_info: Following tasks are run periodically in the background. Here you can trigger
