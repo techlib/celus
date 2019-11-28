@@ -3,12 +3,14 @@ Celery tasks related to SUSHI fetching
 """
 import celery
 
+from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
 from .logic.fetching import retry_queued, fetch_new_sushi_data
 from sushi.models import SushiFetchAttempt, SushiCredentials
 
 
 @celery.shared_task
+@email_if_fails
 def run_sushi_fetch_attempt_task(attempt_id: int):
     attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
     attempt.credentials.fetch_report(
@@ -20,6 +22,7 @@ def run_sushi_fetch_attempt_task(attempt_id: int):
 
 
 @celery.shared_task
+@email_if_fails
 def retry_queued_attempts_task():
     """
     Retry downloading data for attempts that were queued
@@ -29,6 +32,7 @@ def retry_queued_attempts_task():
 
 
 @celery.shared_task
+@email_if_fails
 def fetch_new_sushi_data_task():
     """
     Fetch sushi data for dates and platforms where they are not available
@@ -38,6 +42,7 @@ def fetch_new_sushi_data_task():
 
 
 @celery.shared_task
+@email_if_fails
 def fetch_new_sushi_data_for_credentials_task(credentials_id: int):
     """
     Fetch sushi data for dates and platforms where they are not available - only for specific
