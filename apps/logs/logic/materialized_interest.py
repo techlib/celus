@@ -150,15 +150,17 @@ def extract_interest_from_import_batch(
                                                               max_date=Max('date'))
             min_date = date_range['min_date']
             max_date = date_range['max_date']
-        clashing_dates = {
-            x['date'] for x in
-            import_batch.report_type.superseeded_by.accesslog_set.
-            filter(platform_id=import_batch.platform_id,
-                   organization_id=import_batch.organization_id,
-                   date__lte=max_date,
-                   date__gte=min_date).
-            values('date')
-        }
+        if min_date and max_date:
+            # the accesslog_set might be empty and then there is nothing that could be clashing
+            clashing_dates = {
+                x['date'] for x in
+                import_batch.report_type.superseeded_by.accesslog_set.
+                filter(platform_id=import_batch.platform_id,
+                       organization_id=import_batch.organization_id,
+                       date__lte=max_date,
+                       date__gte=min_date).
+                values('date')
+            }
     for new_log_dict in import_batch.accesslog_set.filter(metric_id__in=interest_metrics).\
             exclude(date__in=clashing_dates).\
             values('organization_id', 'metric_id', 'platform_id', 'target_id', 'date').\
