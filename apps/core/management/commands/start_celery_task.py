@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 
+from core.tasks import fail_intentionally_task
 from logs.tasks import sync_interest_task, recompute_interest_by_batch_task, \
     import_new_sushi_attempts_task, smart_interest_sync_task
 from sushi.tasks import fetch_new_sushi_data_task, retry_queued_attempts_task
@@ -18,6 +19,7 @@ class Command(BaseCommand):
         'import_new_sushi_attempts_task': import_new_sushi_attempts_task,
         'erms_sync_platforms_task': erms_sync_platforms_task,
         'smart_interest_sync_task': smart_interest_sync_task,
+        'fail_intentionally_task': fail_intentionally_task,
     }
 
     def add_arguments(self, parser):

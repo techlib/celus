@@ -20,3 +20,9 @@ def erms_sync_users_and_identities_task():
         logger.info('User import stats: %s', stats)
         stats = sync_identities_with_erms(data_source)
         logger.info('Identity import stats: %s', stats)
+
+
+@celery.shared_task
+@email_if_fails
+def fail_intentionally_task():
+    raise Exception('test error')
