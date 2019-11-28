@@ -310,7 +310,6 @@ cs:
         apiKey: '',
         extraParams: [],
         selectedReportTypes: [],
-        credentialsId: null,
         showTestDialog: false,
         organizations: [],
         platforms: [],
@@ -327,10 +326,10 @@ cs:
         userIsManager: 'showManagementStuff',
       }),
       credentials () {
-        if (this.credentialsObject != null) {
+        if (this.credentialsObject) {
           return this.credentialsObject
         }
-        if (this.savedCredentials != null) {
+        if (this.savedCredentials) {
           return this.savedCredentials
         }
         return null
@@ -355,7 +354,7 @@ cs:
           outside_consortium: this.outsideConsortium,
         }
         if (this.credentials) {
-          data['id'] = this.credentialsId
+          data['id'] = this.credentials.pk
         } else {
           data['platform_id'] = this.platform.pk
           data['organization_id'] = this.organization.pk
@@ -413,7 +412,6 @@ cs:
           this.apiKey = ''
           this.extraParams = []
           this.selectedReportTypes = []
-          this.credentialsId = null
           this.errors = {}
           this.savedCredentials = null
           this.enabled = false
@@ -436,7 +434,6 @@ cs:
           this.apiKey = credentials.api_key
           this.extraParams = extraParams
           this.selectedReportTypes = [...credentials.active_counter_reports]
-          this.credentialsId = credentials.pk
           this.enabled = credentials.enabled
           this.outsideConsortium = credentials.outside_consortium
         }
@@ -483,7 +480,7 @@ cs:
           if (this.credentials) {
             // we have existing credentials - we patch it
             response = await axios.patch(
-              `/api/sushi-credentials/${this.credentialsId}/`,
+              `/api/sushi-credentials/${this.credentials.pk}/`,
               this.apiData,
             )
           } else {
@@ -507,10 +504,9 @@ cs:
       },
       async deleteObject () {
         if (this.credentials) {
-          // we have existing credentials - we patch it
           try {
-            await axios.delete(`/api/sushi-credentials/${this.credentialsId}/`)
-            this.$emit('deleted', {id: this.credentialsId})
+            await axios.delete(`/api/sushi-credentials/${this.credentials.pk}/`)
+            this.$emit('deleted', {id: this.credentials.pk})
             this.$emit('input', false)
             this.showSnackbar({content: this.$t('delete_success'), color: 'success'})
           } catch (error) {
