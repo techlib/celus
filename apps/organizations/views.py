@@ -1,4 +1,7 @@
+from collections import Counter
+
 from django.db.models import Count, Q, Sum, Max, Min
+from django.db.models.functions import Coalesce
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,6 +12,7 @@ from core.permissions import SuperuserOrAdminPermission
 from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
+from publications.models import Title
 from sushi.models import SushiCredentials
 from .serializers import OrganizationSerializer
 
@@ -16,6 +20,8 @@ from .serializers import OrganizationSerializer
 class OrganizationViewSet(ReadOnlyModelViewSet):
 
     serializer_class = OrganizationSerializer
+    histogram_bins = [(0, 0), (1, 1), (2, 5), (6, 10), (11, 20), (21, 50), (51, 100),
+                      (101, 200), (201, 500), (501, 1000)]
 
     def get_queryset(self):
         """
@@ -76,6 +82,42 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             data['days'] = (data['max_date'] - data['min_date']).days + 1
         else:
             data['days'] = 0
+        return Response(data)
+
+    @action(detail=True, url_path='title-interest-histogram')
+    def title_interest_interest(self, request, pk):
+        org_filter = organization_filter_from_org_id(pk, request.user)
+        date_filter = date_filter_from_params(request.GET)
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        counter = Counter()
+        query = AccessLog.objects\
+            .filter(report_type=interest_rt, **org_filter, **date_filter) \
+            .values('target') \
+            .annotate(interest_sum=Coalesce(Sum('value'), 0)) \
+            .values('interest_sum')
+        for rec in query:
+            counter[rec['interest_sum']] += 1
+        # here we bin it according to self.histogram_bins
+        bin_counter = Counter()
+        for hits, count in counter.items():
+            for start, end in self.histogram_bins:
+                if start <= hits <= end:
+                    bin_counter[(start, end)] += count
+                    break
+            else:
+                digits = len(str(hits)) - 1
+                unit = 10**digits
+                start = unit * ((hits-1) // unit)
+                end = start + unit
+                start += 1
+                bin_counter[(start, end)] += count
+        # objects to return
+        def name(a, b):
+            if a == b:
+                return str(a)
+            return f'{a}-{b}'
+        data = [{'count': count, 'start': start, 'end': end, 'name': name(start, end)}
+                for (start, end), count in sorted(bin_counter.items())]
         return Response(data)
 
 

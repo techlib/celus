@@ -7,6 +7,9 @@ en:
     total_interest: Total interest
     number_of_days: Number of days with data
     interest_per_day: Average daily interest
+    title_interest_histogram: Title interest histogram
+    log: Logarithmic scale
+    title_count: Title count
 
 cs:
     titles_with_most_interest: Tituly s největším zájmem tohoto typu
@@ -14,6 +17,9 @@ cs:
     total_interest: Celkový zájem
     number_of_days: Počet dní s daty
     interest_per_day: Průměrný denní zájem
+    title_interest_histogram: Histogram zájmu o tituly
+    log: Logaritmická škála
+    title_count: Počet titulů
 </i18n>
 
 <template>
@@ -24,7 +30,7 @@ cs:
             </v-col>
         </v-row-->
         <v-row>
-            <v-col>
+            <v-col cols="12" lg="6">
                 <v-card>
                     <v-card-title v-text="$t('interest')"></v-card-title>
                     <v-card-text>
@@ -38,6 +44,30 @@ cs:
                                 stack
                         >
                         </APIChart>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <v-col cols="12" lg="6">
+                <v-card>
+                    <v-card-title>
+                        <span v-text="$t('title_interest_histogram')"></span>
+                        <v-spacer></v-spacer>
+                    </v-card-title>
+                    <v-card-text>
+                        <div v-if="histogramChartData" style="position: relative">
+                            <v-checkbox v-model="histogramLogScale" :label="$t('log')" style="position: absolute; bottom: 0; left: 1rem; z-index: 100" />
+                            <ve-histogram
+
+                                    :data="histogramChartData"
+                                    :xAxis="{type: 'category', axisLabel: { rotate: 90 }, data: histogramChartXAxisData}"
+                                    :yAxis="{type: histogramLogScale ? 'log' : 'value', min: histogramLogScale ? 0.1 : 0}"
+                                    :settings="{labelMap: {'count': this.$t('title_count') }}"
+                            >
+                            </ve-histogram>
+                        </div>
+                        <LargeSpinner v-else />
+
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -110,7 +140,7 @@ cs:
   import LargeSpinner from '../components/LargeSpinner'
   import { formatInteger} from '../libs/numbers'
   import { smartFormatFloat } from '../libs/numbers'
-
+  import VeHistogram from 'v-charts/lib/histogram.common'
 
   export default {
     name: "DashboardPage",
@@ -118,6 +148,7 @@ cs:
     components: {
       LargeSpinner,
       APIChart,
+      VeHistogram,
     },
 
     data () {
@@ -125,6 +156,8 @@ cs:
         interestReportType: null,
         interestGroupToTopTitles: {},
         totalInterestData: null,
+        histogramData: null,
+        histogramLogScale: false,
       }
     },
 
@@ -163,6 +196,24 @@ cs:
           return `/api/organization/${this.organizationId}/interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         }
         return null
+      },
+      histogramDataUrl () {
+        if (this.organizationId) {
+          return `/api/organization/${this.organizationId}/title-interest-histogram/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        }
+        return null
+      },
+      histogramChartData () {
+        if (this.histogramData) {
+          return {
+            columns: ['name', 'count'],
+            rows: this.histogramData,
+          }
+        }
+        return null
+      },
+      histogramChartXAxisData () {
+        return [...new Set(this.histogramData.map(item => item.name))]
       }
     },
 
@@ -196,7 +247,7 @@ cs:
             })
           } catch (error) {
             this.showSnackbar({
-              content: 'Error loading most interesting titles: ' + error,
+              content: 'Error loading interesting titles: ' + error,
               color: 'error'
             })
           }
@@ -215,6 +266,20 @@ cs:
             })
           }
         }
+      },
+
+      async fetchHistogramData() {
+        if (this.histogramDataUrl) {
+          try {
+            const response = await axios.get(this.histogramDataUrl)
+            this.histogramData = response.data
+          } catch (error) {
+            this.showSnackbar({
+              content: 'Error loading histogram data: ' + error,
+              color: 'error'
+            })
+          }
+        }
       }
     },
 
@@ -222,6 +287,7 @@ cs:
       this.fetchReportTypes()
       this.fetchTitlesTopInterest()
       this.fetchTotalInterest()
+      this.fetchHistogramData()
     },
 
     watch: {
@@ -234,6 +300,10 @@ cs:
       totalInterestDataUrl () {
         this.totalInterestData = null
         this.fetchTotalInterest()
+      },
+      histogramDataUrl () {
+        this.histogramData = null
+        this.fetchHistogramData()
       }
     }
 
