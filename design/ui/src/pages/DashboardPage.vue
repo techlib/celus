@@ -43,6 +43,23 @@ cs:
             </v-col>
         </v-row>
         <v-row class="align-stretch">
+
+            <v-col cols="auto">
+                <v-card height="100%">
+                    <v-card-text>
+                        <div v-if="totalInterestData" class="text-center ma-5">
+                            <div v-text="$t('total_interest')"></div>
+                            <div class="large-number" v-text="formatInteger(totalInterestData.interest_sum)"></div>
+                            <div class="mt-8" v-text="$t('number_of_days')"></div>
+                            <div class="big-number" v-text="formatInteger(totalInterestData.days)"></div>
+                            <div class="mt-8" v-text="$t('interest_per_day')"></div>
+                            <div class="large-number" v-text="smartFormatFloat(totalInterestData.interest_sum / totalInterestData.days)"></div>
+                        </div>
+                        <LargeSpinner v-else />
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
             <v-col
                     cols="auto"
                     md_="6"
@@ -77,28 +94,6 @@ cs:
                             <div class="mt-8 mb-2"><v-icon large color="grey">fa-times</v-icon></div>
                             {{ $t('no_matching_titles') }}
                         </div>
-                        <LargeSpinner v-else />
-                    </v-card-text>
-                </v-card>
-            </v-col>
-            <v-col cols="auto">
-                <v-card>
-                    <v-card-title v-text="$t('total_interest')"></v-card-title>
-                    <v-card-text>
-                        <table v-if="totalInterestData" class="dashboard">
-                            <tr>
-                                <th v-text="$t('total_interest')"></th>
-                                <td v-text="formatInteger(totalInterestData.interest_sum)"></td>
-                            </tr>
-                            <tr>
-                                <th v-text="$t('number_of_days')"></th>
-                                <td v-text="formatInteger(totalInterestData.days)"></td>
-                            </tr>
-                            <tr>
-                                <th v-text="$t('interest_per_day')"></th>
-                                <td v-text="smartFormatFloat(totalInterestData.interest_sum / totalInterestData.days)"></td>
-                            </tr>
-                        </table>
                         <LargeSpinner v-else />
                     </v-card-text>
                 </v-card>
@@ -235,6 +230,10 @@ cs:
       },
       titleInterestBaseUrl () {
         this.fetchTitlesTopInterest()
+      },
+      totalInterestDataUrl () {
+        this.totalInterestData = null
+        this.fetchTotalInterest()
       }
     }
 
@@ -244,7 +243,6 @@ cs:
 <style scoped lang="scss">
 
     table.dashboard {
-
         width: 100%;
 
         th {
@@ -255,7 +253,18 @@ cs:
         td {
             text-align: right;
         }
+    }
 
+    div.large-number {
+        font-size: 1.75rem;
+        margin-top: 0.375rem;
+        font-weight: bold;
+    }
+
+    div.big-number {
+        font-size: 1.375rem;
+        margin-top: 0.25rem;
+        font-weight: bold;
     }
 
 </style>

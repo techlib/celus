@@ -25,7 +25,7 @@ function smartFormatFloat(number, digits=3) {
       decPart += '0'
     }
   }
-  return numeral(number).format('0'+decPart)
+  return numeral(number).format('0,0'+decPart).replace(/,/g, '\xa0')
 }
 
 export {
