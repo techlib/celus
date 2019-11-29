@@ -9,7 +9,7 @@ cs:
 </i18n>
 
 <template>
-    <v-container fluid>
+    <v-container fluid v-if="organizationId">
         <!--v-row>
             <v-col>
                 <h1 v-text="$t('pages.dashboard')"></h1>
