@@ -2,22 +2,33 @@
 
 <template>
     <v-container>
-        <v-row>
+        <!--v-row>
             <v-col>
                 <h1 v-text="$t('pages.dashboard')"></h1>
+            </v-col>
+        </v-row-->
+        <v-row>
+            <v-col>
+                <v-card>
+                    <v-card-title v-text="$t('interest')"></v-card-title>
+                    <v-card-text>
+                        <APIChart
+                                v-if="interestReportType"
+                                :organization="organizationId"
+                                primary-dimension="date"
+                                :report-type-id="interestReportType.pk"
+                                secondary-dimension="Interest_Type"
+                                raw-report-type
+                                stack
+                        >
+                        </APIChart>
+                    </v-card-text>
+                </v-card>
             </v-col>
         </v-row>
         <v-row>
             <v-col>
-                <h3 v-text="$t('interest')"></h3>
-                <APIChart
-                        v-if="interestReportType"
-                        :organization="organizationId"
-                        primary-dimension="date"
-                        :report-type-id="interestReportType.pk"
-                        raw-report-type
-                >
-                </APIChart>
+
             </v-col>
         </v-row>
     </v-container>
