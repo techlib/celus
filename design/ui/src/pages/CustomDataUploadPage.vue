@@ -111,8 +111,7 @@ cs:
                                         :rules="[filledIn]"
                                 >
                                     <template v-slot:item="props">
-                                        <span v-if="props.item.public">{{ props.item.name }}</span>
-                                        <i v-else>{{ props.item.name }} <span class="font-weight-light">(private)</span></i>
+                                        <span>{{ props.item.name }}</span>
                                     </template>
                                 </v-select>
                             </v-col>
