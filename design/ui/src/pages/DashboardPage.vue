@@ -10,6 +10,8 @@ en:
     title_interest_histogram: Title interest histogram
     log: Logarithmic scale
     title_count: Title count
+    histogram_tooltip: SUSHI data very seldom contains data about titles for which there was not
+      access recorded, so titles with zero count are likely heavily underrepresented.
 
 cs:
     titles_with_most_interest: Tituly s největším zájmem tohoto typu
@@ -20,6 +22,8 @@ cs:
     title_interest_histogram: Histogram zájmu o tituly
     log: Logaritmická škála
     title_count: Počet titulů
+    histogram_tooltip: SUSHI data zřídka obsahují informace o titulech, pro které nebyl zaznamenán
+      žádný zájem. Z toho důvodu je počet titulů s nulovým zájmem pravděpodobně silně podhodnocen.
 </i18n>
 
 <template>
@@ -52,7 +56,13 @@ cs:
                 <v-card>
                     <v-card-title>
                         <span v-text="$t('title_interest_histogram')"></span>
-                        <v-spacer></v-spacer>
+                        <v-tooltip bottom max-width="400px">
+                            <template #activator="{on}">
+                                <v-icon class="ml-2" v-on="on">fa fa-info-circle</v-icon>
+                            </template>
+                            {{ $t('histogram_tooltip') }}
+                        </v-tooltip>
+
                     </v-card-title>
                     <v-card-text>
                         <div v-if="histogramChartData" style="position: relative">
