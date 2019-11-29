@@ -91,6 +91,10 @@
       },
       orderBy: {},
       showMarkLine: {default: true},
+      rawReportType: {
+        default: false,
+        type: Boolean,
+      }
     },
     data () {
       return {
@@ -110,7 +114,8 @@
         if (this.reportTypeId && this.reportTypeId !== -1) {
             reportTypePart = `${this.reportTypeId}/`
         }
-        let url = `${this.dataURLBase}chart-data/${reportTypePart}?prim_dim=${this.primaryDimension}`
+        let urlStart = this.rawReportType ? 'chart-data-raw' : 'chart-data'
+        let url = `${this.dataURLBase}${urlStart}/${reportTypePart}?prim_dim=${this.primaryDimension}`
         if (!this.ignoreDateRange) {
           url += `&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
         }

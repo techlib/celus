@@ -130,6 +130,7 @@ cs:
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
+        fetchInterestReportType: 'fetchInterestReportType',
       }),
       async fetchData () {
         if (this.dataURL) {
@@ -146,17 +147,9 @@ cs:
         }
       },
       async fetchReportTypes () {
-        try {
-          const response = await axios.get('/api/report-type/')
-          for (let rt of response.data) {
-            if (rt.short_name === 'interest') {
-              this.reportTypeId = rt.pk
-              break
-            }
-          }
-        } catch (error) {
-          this.showSnackbar({content: 'Error loading report types: ' + error, color: 'error'})
-        }
+        const interestReportType = await this.fetchInterestReportType()
+        if (interestReportType)
+          this.reportTypeId = interestReportType.pk
       }
     },
     mounted () {

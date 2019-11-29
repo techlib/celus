@@ -30,7 +30,24 @@ export default {
     },
     changeSelectedGroups({commit}, groups) {
       commit('setSelectedGroups', {groups: groups})
-    }
+    },
+
+    async fetchInterestReportType ({dispatch}) {
+        try {
+          const response = await axios.get('/api/report-type/')
+          for (let rt of response.data) {
+            if (rt.short_name === 'interest') {
+              return rt
+            }
+          }
+        } catch (error) {
+          dispatch(
+            'showSnackbar',
+            {content: 'Error loading report types: ' + error, color: 'error'}
+          )
+        }
+        return null
+      }
   },
 
   mutations: {
