@@ -3,9 +3,17 @@
 <i18n lang="yaml">
 en:
     titles_with_most_interest: Titles with the most interest of this type
+    no_matching_titles: No titles with this type of interest
+    total_interest: Total interest
+    number_of_days: Number of days with data
+    interest_per_day: Average daily interest
 
 cs:
     titles_with_most_interest: Tituly s největším zájmem tohoto typu
+    no_matching_titles: Žádné tituly pro tento typ zájmu
+    total_interest: Celkový zájem
+    number_of_days: Počet dní s daty
+    interest_per_day: Průměrný denní zájem
 </i18n>
 
 <template>
@@ -34,7 +42,7 @@ cs:
                 </v-card>
             </v-col>
         </v-row>
-        <v-row>
+        <v-row class="align-stretch">
             <v-col
                     cols="auto"
                     md_="6"
@@ -42,12 +50,12 @@ cs:
                     v-for="record in this.interestGroupTitlesSorted"
                     :key="record.interestGroup.short_name"
             >
-                <v-card min-height="320px" class="text-center">
+                <v-card min-height="320px" height="100%" class="text-center">
                     <v-card-title v-text="record.interestGroup.name"></v-card-title>
                     <v-card-subtitle class="text-left">{{ $t('titles_with_most_interest') }}</v-card-subtitle>
                     <v-card-text>
                         <v-simple-table
-                                v-if="record.titles"
+                                v-if="record.titles && record.titles.length"
                                 class="dashoard"
                                 dense
                         >
@@ -65,6 +73,32 @@ cs:
                             </tr>
                             </tbody>
                         </v-simple-table>
+                        <div v-else-if="record.titles"> <!-- titles loaded, but no data -->
+                            <div class="mt-8 mb-2"><v-icon large color="grey">fa-times</v-icon></div>
+                            {{ $t('no_matching_titles') }}
+                        </div>
+                        <LargeSpinner v-else />
+                    </v-card-text>
+                </v-card>
+            </v-col>
+            <v-col cols="auto">
+                <v-card>
+                    <v-card-title v-text="$t('total_interest')"></v-card-title>
+                    <v-card-text>
+                        <table v-if="totalInterestData" class="dashboard">
+                            <tr>
+                                <th v-text="$t('total_interest')"></th>
+                                <td v-text="formatInteger(totalInterestData.interest_sum)"></td>
+                            </tr>
+                            <tr>
+                                <th v-text="$t('number_of_days')"></th>
+                                <td v-text="formatInteger(totalInterestData.days)"></td>
+                            </tr>
+                            <tr>
+                                <th v-text="$t('interest_per_day')"></th>
+                                <td v-text="smartFormatFloat(totalInterestData.interest_sum / totalInterestData.days)"></td>
+                            </tr>
+                        </table>
                         <LargeSpinner v-else />
                     </v-card-text>
                 </v-card>
@@ -80,6 +114,8 @@ cs:
   import axios from 'axios'
   import LargeSpinner from '../components/LargeSpinner'
   import { formatInteger} from '../libs/numbers'
+  import { smartFormatFloat } from '../libs/numbers'
+
 
   export default {
     name: "DashboardPage",
@@ -93,6 +129,7 @@ cs:
       return {
         interestReportType: null,
         interestGroupToTopTitles: {},
+        totalInterestData: null,
       }
     },
 
@@ -106,7 +143,7 @@ cs:
         dateRangeEnd: 'dateRangeEndText',
       }),
       interestGroupTitlesSorted () {
-        let igs = this.interestGroups.filter(item => item.short_name !== 'other')  //.filter(item => item.important)
+        let igs = this.interestGroups.filter(item => item.short_name !== 'other')
         if (igs) {
           let result = []
           for (let ig of igs.sort((a, b) => (a.important === b.important) ? a.name > b.name : a.important < b.important)) {
@@ -121,7 +158,16 @@ cs:
         return igs
       },
       titleInterestBaseUrl () {
-        return `/api/organization/${this.organizationId}/title-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&page_size=10&desc=true&page=1`
+        if (this.organizationId) {
+          return `/api/organization/${this.organizationId}/title-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&page_size=10&desc=true&page=1`
+        }
+        return null
+      },
+      totalInterestDataUrl () {
+        if (this.organizationId) {
+          return `/api/organization/${this.organizationId}/interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        }
+        return null
       }
     },
 
@@ -131,10 +177,11 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       formatInteger: formatInteger,
-      async fetchReportTypes () {
+      smartFormatFloat: smartFormatFloat,
+      async fetchReportTypes() {
         this.interestReportType = await this.fetchInterestReportType()
       },
-      async fetchTitlesTopInterest () {
+      async fetchTitlesTopInterest() {
         this.interestGroupToTopTitles = {}
         for (let ig of this.interestGroups) {
           if (ig) {
@@ -142,16 +189,36 @@ cs:
           }
         }
       },
-      async fetchTitleInterest (interestGroup) {
-        let url = this.titleInterestBaseUrl + `&order_by=${interestGroup.short_name}`
-        try {
-          let response = await axios.get(url)
-          this.$set(this.interestGroupToTopTitles, interestGroup.short_name, {
-            interestGroup: interestGroup,
-            titles: response.data.results,
-          })
-        } catch (error) {
-          this.showSnackbar({content: 'Error loading most interesting titles: '+error, color: 'error'})
+      async fetchTitleInterest(interestGroup) {
+        let url = this.titleInterestBaseUrl
+        if (url) {
+          url += `&order_by=${interestGroup.short_name}`
+          try {
+            let response = await axios.get(url)
+            this.$set(this.interestGroupToTopTitles, interestGroup.short_name, {
+              interestGroup: interestGroup,
+              titles: response.data.results.filter(item => item.interests[interestGroup.short_name] > 0),
+            })
+          } catch (error) {
+            this.showSnackbar({
+              content: 'Error loading most interesting titles: ' + error,
+              color: 'error'
+            })
+          }
+        }
+      },
+
+      async fetchTotalInterest() {
+        if (this.totalInterestDataUrl) {
+          try {
+            const response = await axios.get(this.totalInterestDataUrl)
+            this.totalInterestData = response.data
+          } catch (error) {
+            this.showSnackbar({
+              content: 'Error loading total interest data: ' + error,
+              color: 'error'
+            })
+          }
         }
       }
     },
@@ -159,6 +226,7 @@ cs:
     mounted () {
       this.fetchReportTypes()
       this.fetchTitlesTopInterest()
+      this.fetchTotalInterest()
     },
 
     watch: {
@@ -181,6 +249,7 @@ cs:
 
         th {
             text-align: left;
+            padding-right: 1rem;
         }
 
         td {

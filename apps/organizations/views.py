@@ -1,9 +1,10 @@
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, Max, Min
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from core.logic.dates import date_filter_from_params, month_end
 from core.permissions import SuperuserOrAdminPermission
 from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
@@ -59,8 +60,23 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
                 .order_by('date__year'):
             # this is here purely to facilitate renaming of the keys
             result.append({'year': rec['date__year'], 'interest': rec['interest_sum']})
-
         return Response(result)
+
+    @action(detail=True, url_path='interest')
+    def interest(self, request, pk):
+        org_filter = organization_filter_from_org_id(pk, request.user)
+        date_filter = date_filter_from_params(request.GET)
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        data = AccessLog.objects\
+            .filter(report_type=interest_rt, **org_filter, **date_filter) \
+            .aggregate(interest_sum=Sum('value'), min_date=Min('date'), max_date=Max('date'))
+        if data['max_date']:
+            # the date might be None and then we do not want to do the math ;)
+            data['max_date'] = month_end(data['max_date'])
+            data['days'] = (data['max_date'] - data['min_date']).days + 1
+        else:
+            data['days'] = 0
+        return Response(data)
 
 
 class StartERMSSyncOrganizationsTask(APIView):
