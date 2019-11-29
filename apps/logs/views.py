@@ -37,38 +37,10 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class Counter5DataView(APIView):
 
-    def get(self, request, report_type_id=None):
-        if report_type_id:
-            if 'virtual' in request.GET:
-                report_type = get_object_or_404(ReportDataView, pk=report_type_id)
-            else:
-                report_type = get_object_or_404(ReportType, pk=report_type_id)
-        else:
-            report_type = None
-        # check for interest in query params
-        # TODO: remove this - it is no longer used
-        if not report_type and (request.GET.get('prim_dim') == 'interest' or
-                                request.GET.get('sec_dim') == 'interest'):
-            # we are dealing with interest based view
-            if 'platform' not in request.GET:
-                return HttpResponseBadRequest('cannot use interest dimension without specifying '
-                                              'platform - interest is platform specific')
-            platform = get_object_or_404(Platform.objects.all(), pk=request.GET['platform'])
-            data = []
-            found_something = False
-            for report_type in platform.interest_reports.all():
-                computer = StatsComputer()
-                data += computer.get_data(report_type, request.GET, request.user)
-                found_something = True
-            if not found_something:
-                # use a default set of reports
-                for report_type in ReportType.objects.filter(short_name__in=['TR', 'DR', 'JR1',
-                                                                             'DB1']):
-                    computer = StatsComputer()
-                    data += computer.get_data(report_type, request.GET, request.user)
-        else:
-            computer = StatsComputer()
-            data = computer.get_data(report_type, request.GET, request.user)
+    def get(self, request, report_type_id):
+        report_type = get_object_or_404(ReportType, pk=report_type_id)
+        computer = StatsComputer()
+        data = computer.get_data(report_type, request.GET, request.user)
         data_format = request.GET.get('format')
         if data_format in ('csv', 'xlsx'):
             # for the bare result, we do not add any extra information, just output the list
