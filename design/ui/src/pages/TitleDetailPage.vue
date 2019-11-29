@@ -1,3 +1,4 @@
+
 <i18n lang="yaml" src="../locales/charts.yaml"></i18n>
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
 
@@ -31,7 +32,10 @@ cs:
         <v-row>
             <v-col>
                 <h2 class="mb-4">{{ titleName }}</h2>
-
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col cols="auto">
                 <table class="overview mb-4 elevation-2">
                     <tr v-if="this.platformId">
                         <th>{{ $t('platform') }}</th>
@@ -49,6 +53,23 @@ cs:
                     </template>
                 </table>
             </v-col>
+            <v-col cols="auto">
+                <table v-if="title" class="overview mb-4 elevation-2">
+                    <tr class="header">
+                        <th colspan="2" v-text="$t('interest')"></th>
+                    </tr>
+                    <tr v-for="ig in interestGroups">
+                        <th v-text="ig.name"></th>
+                        <td class="text-right">
+                            <span v-if="title.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                            <span v-else>
+                                {{ formatInteger(title.interests[ig.short_name]) }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </v-col>
+            <v-spacer></v-spacer>
             <v-col cols="auto">
                 <img  v-if="coverImg" :alt="$t('cover_image')" :src="coverImg" class="cover-image"/>
             </v-col>
@@ -94,12 +115,13 @@ cs:
 </template>
 
 <script>
-  import { mapActions, mapGetters } from 'vuex'
+  import {mapActions, mapGetters, mapState} from 'vuex'
   import axios from 'axios'
   import CounterChartSet from '../components/CounterChartSet'
   import DataExportWidget from '../components/DataExportWidget'
   import AnnotationsWidget from '../components/AnnotationsWidget'
   import goTo from 'vuetify/es5/services/goto'
+  import {formatInteger} from '../libs/numbers'
 
   export default {
     name: 'TitleDetailPage',
@@ -122,8 +144,13 @@ cs:
       }
     },
     computed: {
+      ...mapState({
+        interestGroups: state => state.interest.interestGroups,
+      }),
       ...mapGetters({
         selectedOrganization: 'selectedOrganization',
+        dateRangeStart: 'dateRangeStartText',
+        dateRangeEnd: 'dateRangeEndText',
       }),
       isReady () {
         return this.selectedOrganization && this.titleId
@@ -175,10 +202,10 @@ cs:
       titleUrl () {
         if (this.selectedOrganization && this.titleId) {
           if (this.platformId) {
-            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/`
+            return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title-interest/${this.titleId}/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
           } else {
             // this is the case when no platform is specified
-            return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/`
+            return `/api/organization/${this.selectedOrganization.pk}/title-interest/${this.titleId}/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
           }
         }
         return null
@@ -209,6 +236,7 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       goTo: goTo,
+      formatInteger: formatInteger,
       async loadTitle () {
         let url = this.titleUrl
         if (url) {
@@ -265,6 +293,9 @@ cs:
         }
         this.loadTitle()
       },
+      titleUrl () {
+        this.loadTitle()
+      }
     }
   }
 </script>

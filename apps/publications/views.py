@@ -255,6 +255,12 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         qs = super().paginate_queryset(queryset)
         return self._postprocess_paginated(qs)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self._postprocess_paginated([instance])
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
 
 class PlatformTitleViewSet(BaseTitleViewSet):
 
