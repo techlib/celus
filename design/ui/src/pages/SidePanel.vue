@@ -95,6 +95,7 @@
           {
             title: this.$i18n.t('pages.content'),
             items: [
+              { title: this.$i18n.t('pages.dashboard'), icon: 'fas fa-tachometer-alt', linkTo: 'dashboard' },
               { title: this.$i18n.t('pages.platforms'), icon: 'far fa-list-alt', linkTo: 'platform-list' },
               { title: this.$i18n.t('pages.all_titles'), icon: 'far fa-copy', linkTo: 'title-list' },
               { title: this.$i18n.t('pages.heatmap'), icon: 'far fa-map', linkTo: 'heatmap' },

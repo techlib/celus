@@ -17,6 +17,7 @@ import MaintenancePage from '../pages/MaintenancePage'
 import OrganizationPlatformInterestOverviewPage
   from '../pages/OrganizationPlatformInterestOverviewPage'
 import ManualUploadListPage from '../pages/ManualUploadListPage'
+import DashboardPage from '../pages/DashboardPage'
 
 Vue.use(Router)
 
@@ -25,7 +26,12 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      redirect: {name: 'platform-list'},
+      redirect: {name: 'dashboard'},
+    },
+    {
+      path: '/dashboard/',
+      name: 'dashboard',
+      component: DashboardPage,
     },
     {
       path: '/user/',
