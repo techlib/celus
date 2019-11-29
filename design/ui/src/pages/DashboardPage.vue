@@ -56,7 +56,11 @@ cs:
                                     v-for="title in record.titles"
                                     :key="title.pk"
                             >
-                                <td class="text-left">{{ title.name }}</td>
+                                <td class="text-left">
+                                    <router-link :to="{name: 'title-detail', params: {platformId: null, titleId: title.pk}}">
+                                        {{ title.name }}
+                                    </router-link>
+                                </td>
                                 <td class="text-right">{{ formatInteger(title.interests[record.interestGroup.short_name]) }}</td>
                             </tr>
                             </tbody>
@@ -102,10 +106,10 @@ cs:
         dateRangeEnd: 'dateRangeEndText',
       }),
       interestGroupTitlesSorted () {
-        let igs = this.interestGroups.filter(item => item.important)
+        let igs = this.interestGroups.filter(item => item.short_name !== 'other')  //.filter(item => item.important)
         if (igs) {
           let result = []
-          for (let ig of igs.sort((a, b) => a.name > b.name)) {
+          for (let ig of igs.sort((a, b) => (a.important === b.important) ? a.name > b.name : a.important < b.important)) {
             if (ig.short_name in this.interestGroupToTopTitles) {
               result.push(this.interestGroupToTopTitles[ig.short_name])
             } else {
@@ -133,7 +137,7 @@ cs:
       async fetchTitlesTopInterest () {
         this.interestGroupToTopTitles = {}
         for (let ig of this.interestGroups) {
-          if (ig.important) {
+          if (ig) {
             this.fetchTitleInterest(ig)
           }
         }
