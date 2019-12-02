@@ -11,7 +11,7 @@ cs:
 </i18n>
 
 <template>
-    <v-container>
+    <v-container class="ml-0">
         <v-row no-gutters>
             <v-col>
                 <v-breadcrumbs :items="breadcrumbs" class="pl-0">
@@ -58,7 +58,7 @@ cs:
                     <tr class="header">
                         <th colspan="2" v-text="$t('interest')"></th>
                     </tr>
-                    <tr v-for="ig in interestGroups">
+                    <tr v-for="ig in interestGroups" :key="ig.short_name">
                         <th v-text="ig.name"></th>
                         <td class="text-right">
                             <span v-if="title.interests.loading" class="fas fa-spinner fa-spin subdued"></span>

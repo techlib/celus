@@ -252,7 +252,7 @@ cs:
   }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 
     .thin {
         font-weight: 300;
@@ -260,7 +260,6 @@ cs:
 
 
     table.overview {
-
         padding: 1rem;
 
         tr.header {
@@ -270,6 +269,11 @@ cs:
                 font-size: 82.5%;
                 border-bottom: solid 1px #dddddd;
                 padding-top: 0.5rem;
+            }
+            &:first-child {
+                th {
+                    padding-top: 0;
+                }
             }
         }
 
