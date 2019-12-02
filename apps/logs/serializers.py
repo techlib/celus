@@ -244,7 +244,9 @@ class ManualDataUploadSerializer(ModelSerializer):
 
     @classmethod
     def _adjust_permissions(cls, instance: ManualDataUpload):
-        instance.owner_level = instance.user.organization_relationship(instance.organization_id)
+        if instance.user:
+            instance.owner_level = \
+                instance.user.organization_relationship(instance.organization_id)
         # we do not want to set the level too high in order for the staff to be able to edit it
         if instance.owner_level > UL_CONS_STAFF:
             instance.owner_level = UL_CONS_STAFF

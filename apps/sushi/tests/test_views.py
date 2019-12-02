@@ -55,6 +55,7 @@ class TestSushiCredentialsViewSet(object):
                 'organization_id': organizations[0].pk,
                 'url': 'http://foo.bar.baz',
                 'requestor_id': 'xxxxxxx',
+                'customer_id': 'yyyyy',
                 'counter_version': '5',
                 'active_counter_reports': [counter_report_type.pk],
             }
