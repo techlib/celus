@@ -23,6 +23,7 @@
     props: {
       reportType: {required: true},
       value: {required: false, default: null},  // the selected chart type
+      scope: {required: false, default: ''}
     },
     data () {
       return {
@@ -40,7 +41,7 @@
       }),
       selectedChartType () {
         return this.chartTypes[this.chartTypeIndex]
-      }
+      },
     },
     methods: {
       ...mapActions({
@@ -50,7 +51,7 @@
         if (this.reportType !== null) {
           try {
             let response = await axios.get(`/api/report-data-view/${this.reportType.pk}/chart-definitions/`)
-            this.chartTypes = response.data
+            this.chartTypes = response.data.filter(item => item.scope === '' || item.scope === this.scope)
             if (this.chartTypes.length > 0) {
               this.chartTypeIndex = 0
             } else {

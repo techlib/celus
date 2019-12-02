@@ -96,6 +96,15 @@ class ChartDefinition(models.Model):
         (CHART_TYPE_LINE, _('line')),
     )
 
+    SCOPE_ALL = ''
+    SCOPE_PLATFORM = 'platform'
+    SCOPE_TITLE = 'title'
+    SCOPE_CHOICES = (
+        (SCOPE_ALL, 'any'),
+        (SCOPE_PLATFORM, 'platform'),
+        (SCOPE_TITLE, 'title'),
+    )
+
     name = models.CharField(max_length=200)
     desc = models.TextField(blank=True)
     primary_dimension = \
@@ -123,6 +132,7 @@ class ChartDefinition(models.Model):
     ignore_platform = models.BooleanField(
         default=False, help_text='When checked, the chart will contain data for all platforms. '
                                  'This is useful to compare platforms for one title.')
+    scope = models.CharField(max_length=10, choices=SCOPE_CHOICES, default=SCOPE_ALL)
 
     def __str__(self):
         return self.name

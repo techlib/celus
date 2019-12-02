@@ -114,6 +114,7 @@ cs:
                     :platform-id="platformId"
                     :title-id="null"
                     :report-views-url="reportViewsUrl"
+                    scope="platform"
             >
             </CounterChartSet>
         </section>

@@ -103,6 +103,7 @@ cs:
                     :platform-id="platformId"
                     :title-id="titleId"
                     :report-views-url="reportViewsUrl"
+                    scope="title"
             >
             </CounterChartSet>
         </section>

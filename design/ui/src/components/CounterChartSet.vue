@@ -41,6 +41,7 @@ cs:
             <v-col>
             <ChartTypeSelector
                     :report-type="selectedReportView"
+                    :scope="scope"
                     v-model="selectedChartType"/>
             </v-col>
             <v-col cols="auto" v-if="primaryDimension === 'organization' && this.organizationSelected">
@@ -89,7 +90,8 @@ cs:
       titleId: {},
       reportViewsUrl: {},
       importBatchId: {},
-      ignoreOrganization: {type: Boolean, default: false}
+      ignoreOrganization: {type: Boolean, default: false},
+      scope: {default: '', required: false},
     },
     data () {
       return {
