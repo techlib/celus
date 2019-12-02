@@ -8,6 +8,7 @@ en:
     imported_metrics: Found metrics
     title_count: Title count
     hits: hits
+    is_interest_metric: This metric defines interest for this report type
 
 cs:
     output_logs: Vygenerované záznamy
@@ -18,6 +19,7 @@ cs:
     imported_metrics: Nalezené metriky
     title_count: Počet titulů
     hits: zásahů
+    is_interest_metric: Tato metrika definuje zájem pro tento typ reportu
 </i18n>
 
 
@@ -74,7 +76,19 @@ cs:
                         <div class="text-right">
                             <table>
                                 <tr v-for="rec in metricsSorted" :key="rec.name">
-                                    <td class="text-left pr-4">{{ rec.name }}</td>
+                                    <td class="text-left pr-4">
+                                        <v-tooltip v-if="isInterestMetric(rec.name)" bottom>
+                                            <template #activator="{on}">
+                                                <span v-on="on">
+                                                    {{ rec.name }}
+                                                    <v-icon class="ml-2" x-small>fa fa-star</v-icon>
+                                                </span>
+                                            </template>
+                                            {{ $t('is_interest_metric') }}
+                                        </v-tooltip>
+                                        <span v-else v-text="rec.name"></span>
+                                    </td>
+
                                     <td>{{ rec.value }}</td>
                                 </tr>
                             </table>
@@ -96,6 +110,7 @@ cs:
 
     props: {
       preflightData: {required: true, type: Object},
+      interestMetrics: {required: false, type: Array, default: () => []},
     },
 
     computed: {
@@ -109,6 +124,15 @@ cs:
 
       titleCount () {
         return Object.keys(this.preflightData.titles).length
+      }
+    },
+
+    methods: {
+      isInterestMetric (metricName) {
+        if (this.interestMetrics.indexOf(metricName) > -1) {
+          return true
+        }
+        return false
       }
     }
 

@@ -148,6 +148,7 @@ cs:
                         <ImportPreflightDataWidget
                                 v-if="preflightData"
                                 :preflight-data="preflightData"
+                                :interest-metrics="selectedInterestMetrics"
                         />
                         <v-alert v-else-if="preflightError" type="error">
                             <strong v-text="$t('following_error_found')"></strong>:
@@ -313,6 +314,12 @@ cs:
               text: this.$t('actions.upload_custom_data'),
             },
         ]
+      },
+      selectedInterestMetrics () {
+        if (this.selectedReportType) {
+          return this.selectedReportType.interest_metric_set.map(item => item.metric.short_name)
+        }
+        return []
       },
     },
     methods: {
