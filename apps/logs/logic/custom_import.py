@@ -122,7 +122,7 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
     return {
         'log_count': len(records),
         'hits_total': sum((record.value for record in records), 0),
-        'months': histogram_with_count([(record.start, record.value) for record in records]),
+        'months': histogram_with_count([(str(record.start), record.value) for record in records]),
         'metrics': histogram_with_count([(record.metric, record.value) for record in records]),
         'titles': histogram_with_count([(record.title, record.value) for record in records]),
     }
