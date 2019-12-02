@@ -85,7 +85,6 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
         # we prefilter using the same filter as for count annotation
         # but without the interest_group filter
         prefilter = dict(count_filter)
-        count_filter['accesslog__report_type_id'] = interest_rt.pk   # for counting titles
         # parameters for annotation defining an annotation for each of the interest groups
         interest_annot_params = interest_annotation_params(count_filter, interest_rt)
         # add more filters for dates
@@ -106,7 +105,7 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
             extract_interests_from_objects(interest_rt, result)
         else:
             # we are filtering by ID and thus getting only one object
-            # in this case we drop the count_filter so that it is possible to get data
+            # in this case we drop the prefilter so that it is possible to get data
             # for platforms that are not connected to the organization
             result = Platform.objects.filter(**org_filter).\
                 annotate(title_count=Count('accesslog__target', distinct=True,
@@ -133,17 +132,24 @@ class PlatformInterestViewSet(ViewSet):
         # we get active InterestGroups in order to filter out unused InterestGroups
         # for which the dimension text mapping still exists
         ig_names = {x['short_name'] for x in InterestGroup.objects.all().values('short_name')}
-        interest_annot_params = {interest_type.text: Sum('value', filter=Q(dim1=interest_type.pk))
-                                 for interest_type in
-                                 interest_type_dim.dimensiontext_set.filter(text__in=ig_names)}
+        interest_annot_params = {
+            interest_type.text:
+                Coalesce(
+                    Sum('value', filter=Q(dim1=interest_type.pk, report_type=interest_rt)),
+                    0)
+            for interest_type in interest_type_dim.dimensiontext_set.filter(text__in=ig_names)
+        }
         return interest_rt, interest_annot_params
 
     def get_queryset(self, request, organization_pk):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         date_filter_params = date_filter_from_params(request.GET)
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
+        # we do not filter acceslogs by report type here because we want other report types
+        # to be able to "connect" platform and titles for the title_count
+        # this makes it possible to show the proper title count even if there is no interest
         result = AccessLog.objects\
-            .filter(report_type=interest_rt, **org_filter, **date_filter_params)\
+            .filter(**org_filter, **date_filter_params)\
             .values('platform')\
             .annotate(**interest_annot_params, title_count=Count('target_id', distinct=True))
         return result
@@ -295,7 +301,12 @@ class TitleInterestMixin(object):
         annotations = super()._annotations()
         interest_annot_params = {
             interest_type.text:
-                Coalesce(Sum('accesslog__value', filter=Q(accesslog__dim1=interest_type.pk)), 0)
+                Coalesce(
+                    Sum('accesslog__value',
+                        filter=Q(accesslog__dim1=interest_type.pk,
+                                 accesslog__report_type_id=self.interest_rt.pk)
+                        ),
+                    0)
             for interest_type in
             self.interest_type_dim.dimensiontext_set.filter(text__in=self.interest_groups_names)
         }

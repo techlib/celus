@@ -5,6 +5,7 @@ from typing import Iterable, Optional
 
 from django.db import models
 from django.db.models import Sum, Q
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 
 from charts.models import ReportDataView
@@ -17,7 +18,8 @@ def interest_value_to_annot_name(dt: DimensionText) -> str:
     return f'interest_{dt.pk}'
 
 
-def interest_annotation_params(accesslog_filter: dict, interest_rt: ReportType) -> dict:
+def interest_annotation_params(accesslog_filter: dict, interest_rt: ReportType,
+                               prefix='accesslog__') -> dict:
     """
     :param interest_rt: report type 'interest'
     :param accesslog_filter: filter to apply to all access logs in the summation
@@ -26,10 +28,12 @@ def interest_annotation_params(accesslog_filter: dict, interest_rt: ReportType) 
     interest_type_dim = interest_rt.dimensions_sorted[0]
     interest_annot_params = {
         interest_value_to_annot_name(interest_type):
-            Sum('accesslog__value',
-                filter=Q(accesslog__dim1=interest_type.pk,
-                         accesslog__report_type=interest_rt,
-                         **accesslog_filter))
+            Coalesce(
+                Sum(prefix+'value',
+                    filter=Q(**{prefix+'dim1': interest_type.pk,
+                                prefix+'report_type': interest_rt},
+                             **accesslog_filter)),
+                0)
         for interest_type in interest_type_dim.dimensiontext_set.all()
     }
     return interest_annot_params

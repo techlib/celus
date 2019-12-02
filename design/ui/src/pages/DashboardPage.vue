@@ -240,7 +240,7 @@ cs:
       async fetchTitlesTopInterest() {
         this.interestGroupToTopTitles = {}
         for (let ig of this.interestGroups) {
-          if (ig) {
+          if (ig.short_name !== 'other') {
             this.fetchTitleInterest(ig)
           }
         }
