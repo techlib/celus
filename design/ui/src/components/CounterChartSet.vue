@@ -56,7 +56,7 @@ cs:
                 :primary-dimension="primaryDimension"
                 :secondary-dimension="secondaryDimension"
                 :organization="organizationForChart"
-                :platform="platformId"
+                :platform="platformForChart"
                 :title="titleId"
                 :import-batch="importBatchId"
                 :stack="this.selectedChartType.stack === undefined ? this.selectedChartType.chart_type === 'h-bar' : this.selectedChartType.stack"
@@ -124,6 +124,12 @@ cs:
           return null  // we want data for all organizations
         }
         return this.selectedOrganizationId
+      },
+      platformForChart () {
+        if (this.selectedChartType && this.selectedChartType.ignore_platform) {
+          return null
+        }
+        return this.platformId
       },
       reportViewsForSelect () {
         let out = []

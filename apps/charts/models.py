@@ -120,6 +120,9 @@ class ChartDefinition(models.Model):
     ignore_organization = models.BooleanField(
         default=False, help_text='When checked, this chart will ignore selected organization. '
                                  'Thus it allows creation of charts with organization comparison.')
+    ignore_platform = models.BooleanField(
+        default=False, help_text='When checked, the chart will contain data for all platforms. '
+                                 'This is useful to compare platforms for one title.')
 
     def __str__(self):
         return self.name

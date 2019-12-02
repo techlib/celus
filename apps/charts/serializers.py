@@ -25,5 +25,5 @@ class ChartDefinitionSerializer(ModelSerializer):
         model = ChartDefinition
         fields = ('pk', 'name', 'desc', 'primary_dimension', 'primary_implicit_dimension',
                   'secondary_dimension', 'secondary_implicit_dimension', 'chart_type',
-                  'ordering', 'ignore_organization')
+                  'ordering', 'ignore_organization', 'ignore_platform')
 
