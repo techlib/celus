@@ -9,6 +9,7 @@ class PlatformAdmin(TranslationAdmin):
 
     list_display = ['short_name', 'name', 'provider', 'url']
     ordering = ['short_name']
+    search_fields = ['short_name', 'name', 'provider']
 
 
 @admin.register(models.PlatformInterestReport)
@@ -16,6 +17,7 @@ class PlatformInterestReportAdmin(admin.ModelAdmin):
 
     list_display = ['platform', 'report_type', 'last_modified']
     list_filter = ['report_type']
+    search_fields = ['platform__short_name', 'platform__name', 'platform__provider']
 
 
 @admin.register(models.Title)
