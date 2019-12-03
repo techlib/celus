@@ -2,26 +2,22 @@
 
 <i18n lang="yaml">
 en:
-    titles_with_most_interest: Highest interest of this type
-    no_matching_titles: Nothing with this type of interest
     total_interest: Total interest
     number_of_days: Number of days with data
     interest_per_day: Average daily interest
-    title_interest_histogram: Title interest histogram
+    title_interest_histogram: Interest histogram
     log: Logarithmic scale
-    title_count: Title count
+    title_count: Resource count
     histogram_tooltip: SUSHI data very seldom contains data about titles for which there was not
       access recorded, so titles with zero count are likely heavily underrepresented.
 
 cs:
-    titles_with_most_interest: Největší zájem tohoto typu
-    no_matching_titles: Pro tento typ zájmu nejsou žádné záznamy
     total_interest: Celkový zájem
     number_of_days: Počet dní s daty
     interest_per_day: Průměrný denní zájem
-    title_interest_histogram: Histogram zájmu o tituly
+    title_interest_histogram: Histogram zájmu
     log: Logaritmická škála
-    title_count: Počet titulů
+    title_count: Počet zdrojů
     histogram_tooltip: SUSHI data zřídka obsahují informace o titulech, pro které nebyl zaznamenán
       žádný zájem. Z toho důvodu je počet titulů s nulovým zájmem pravděpodobně silně podhodnocen.
 </i18n>
@@ -103,41 +99,16 @@ cs:
 
             <v-col
                     cols="auto"
-                    md_="6"
-                    lg_="4"
-                    v-for="record in this.interestGroupTitlesSorted"
-                    :key="record.interestGroup.short_name"
+                    v-for="interestGroup in this.interestGroupTitlesSorted"
+                    :key="interestGroup.short_name"
             >
-                <v-card min-height="320px" height="100%" class="text-center">
-                    <v-card-title v-text="record.interestGroup.name"></v-card-title>
-                    <v-card-subtitle class="text-left">{{ $t('titles_with_most_interest') }}</v-card-subtitle>
-                    <v-card-text>
-                        <v-simple-table
-                                v-if="record.titles && record.titles.length"
-                                class="dashoard"
-                                dense
-                        >
-                            <tbody>
-                            <tr
-                                    v-for="title in record.titles"
-                                    :key="title.pk"
-                            >
-                                <td class="text-left">
-                                    <router-link :to="{name: 'title-detail', params: {platformId: null, titleId: title.pk}}">
-                                        {{ title.name }}
-                                    </router-link>
-                                </td>
-                                <td class="text-right">{{ formatInteger(title.interests[record.interestGroup.short_name]) }}</td>
-                            </tr>
-                            </tbody>
-                        </v-simple-table>
-                        <div v-else-if="record.titles"> <!-- titles loaded, but no data -->
-                            <div class="mt-8 mb-2"><v-icon large color="grey">fa-times</v-icon></div>
-                            {{ $t('no_matching_titles') }}
-                        </div>
-                        <LargeSpinner v-else />
-                    </v-card-text>
-                </v-card>
+                <TopTenDashboardWidget
+                        :url-base="titleInterestBaseUrl"
+                        :interest-group="interestGroup"
+                        :pub-types="pubTypesForInterestGroup(interestGroup.short_name)"
+                >
+
+                </TopTenDashboardWidget>
             </v-col>
         </v-row>
     </v-container>
@@ -149,15 +120,17 @@ cs:
   import {mapActions, mapGetters, mapState} from 'vuex'
   import axios from 'axios'
   import LargeSpinner from '../components/LargeSpinner'
-  import { formatInteger} from '../libs/numbers'
-  import { smartFormatFloat } from '../libs/numbers'
+  import {formatInteger, smartFormatFloat} from '../libs/numbers'
   import VeHistogram from 'v-charts/lib/histogram.common'
   import LoaderWidget from '../components/LoaderWidget'
+  import {pubTypes} from '../libs/pub-types'
+  import TopTenDashboardWidget from '../components/TopTenDashboardWidget'
 
   export default {
     name: "DashboardPage",
 
     components: {
+      TopTenDashboardWidget,
       LargeSpinner,
       APIChart,
       VeHistogram,
@@ -167,7 +140,6 @@ cs:
     data () {
       return {
         interestReportType: null,
-        interestGroupToTopTitles: {},
         totalInterestData: null,
         histogramData: null,
         histogramLogScale: false,
@@ -186,15 +158,7 @@ cs:
       interestGroupTitlesSorted () {
         let igs = this.interestGroups.filter(item => item.short_name !== 'other')
         if (igs) {
-          let result = []
-          for (let ig of igs.sort((a, b) => (a.important === b.important) ? a.name > b.name : a.important < b.important)) {
-            if (ig.short_name in this.interestGroupToTopTitles) {
-              result.push(this.interestGroupToTopTitles[ig.short_name])
-            } else {
-              result.push({interestGroup: ig, titles: null})
-            }
-          }
-          return result
+          return igs.sort((a, b) => (a.important === b.important) ? a.name > b.name : a.important < b.important)
         }
         return igs
       },
@@ -227,7 +191,7 @@ cs:
       },
       histogramChartXAxisData () {
         return [...new Set(this.histogramData.map(item => item.name))]
-      }
+      },
     },
 
     methods: {
@@ -235,36 +199,10 @@ cs:
         fetchInterestReportType: 'fetchInterestReportType',
         showSnackbar: 'showSnackbar',
       }),
-      formatInteger: formatInteger,
-      smartFormatFloat: smartFormatFloat,
+      formatInteger,
+      smartFormatFloat,
       async fetchReportTypes() {
         this.interestReportType = await this.fetchInterestReportType()
-      },
-      async fetchTitlesTopInterest() {
-        this.interestGroupToTopTitles = {}
-        for (let ig of this.interestGroups) {
-          if (ig.short_name !== 'other') {
-            this.fetchTitleInterest(ig)
-          }
-        }
-      },
-      async fetchTitleInterest(interestGroup) {
-        let url = this.titleInterestBaseUrl
-        if (url) {
-          url += `&order_by=${interestGroup.short_name}`
-          try {
-            let response = await axios.get(url)
-            this.$set(this.interestGroupToTopTitles, interestGroup.short_name, {
-              interestGroup: interestGroup,
-              titles: response.data.results.filter(item => item.interests[interestGroup.short_name] > 0),
-            })
-          } catch (error) {
-            this.showSnackbar({
-              content: 'Error loading interesting titles: ' + error,
-              color: 'error'
-            })
-          }
-        }
       },
 
       async fetchTotalInterest() {
@@ -293,23 +231,28 @@ cs:
             })
           }
         }
+      },
+
+      pubTypesForInterestGroup (igShortName) {
+        if (igShortName.indexOf('full_text') > -1) {
+          let all = {text: 'pub_type.all', value: '', icon: 'fa-expand'}
+          return [
+            all,
+            ...pubTypes.filter(item => 'BJ'.indexOf(item.code) > -1)
+              .map(item => {return {text: item.title, icon: item.icon, value: item.code}})
+          ]
+        }
+        return []
       }
     },
 
     mounted () {
       this.fetchReportTypes()
-      this.fetchTitlesTopInterest()
       this.fetchTotalInterest()
       this.fetchHistogramData()
     },
 
     watch: {
-      interestGroups () {
-        this.fetchTitlesTopInterest()
-      },
-      titleInterestBaseUrl () {
-        this.fetchTitlesTopInterest()
-      },
       totalInterestDataUrl () {
         this.totalInterestData = null
         this.fetchTotalInterest()
