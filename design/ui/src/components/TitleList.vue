@@ -226,12 +226,9 @@ cs:
       },
       extractPubTypes (i18n) {
         let all = {text: i18n.t('pub_type.all'), value: null, icon: 'fa-expand'}
-        let usedTypes = new Set()
-        this.titles.forEach(title => usedTypes.add(title.pub_type))
         return [
           all,
           ...pubTypes
-            .filter(item => usedTypes.has(item.code))
             .map(item => {return {text: i18n.t(item.title), icon: item.icon, value: item.code}})
         ]
       },
