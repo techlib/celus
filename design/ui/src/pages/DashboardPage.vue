@@ -2,8 +2,8 @@
 
 <i18n lang="yaml">
 en:
-    titles_with_most_interest: Titles with the most interest of this type
-    no_matching_titles: No titles with this type of interest
+    titles_with_most_interest: Highest interest of this type
+    no_matching_titles: Nothing with this type of interest
     total_interest: Total interest
     number_of_days: Number of days with data
     interest_per_day: Average daily interest
@@ -14,8 +14,8 @@ en:
       access recorded, so titles with zero count are likely heavily underrepresented.
 
 cs:
-    titles_with_most_interest: Tituly s největším zájmem tohoto typu
-    no_matching_titles: Žádné tituly pro tento typ zájmu
+    titles_with_most_interest: Největší zájem tohoto typu
+    no_matching_titles: Pro tento typ zájmu nejsou žádné záznamy
     total_interest: Celkový zájem
     number_of_days: Počet dní s daty
     interest_per_day: Průměrný denní zájem
@@ -66,17 +66,18 @@ cs:
                     </v-card-title>
                     <v-card-text>
                         <div v-if="histogramChartData" style="position: relative">
-                            <v-checkbox v-model="histogramLogScale" :label="$t('log')" style="position: absolute; bottom: 0; left: 1rem; z-index: 100" />
+                            <v-checkbox v-model="histogramLogScale" :label="$t('log')" style="position: absolute; bottom: 0; left: 1rem; z-index: 1" />
                             <ve-histogram
 
                                     :data="histogramChartData"
                                     :xAxis="{type: 'category', axisLabel: { rotate: 90 }, data: histogramChartXAxisData}"
                                     :yAxis="{type: histogramLogScale ? 'log' : 'value', min: histogramLogScale ? 0.1 : 0}"
                                     :settings="{labelMap: {'count': this.$t('title_count') }}"
+                                    height="400px"
                             >
                             </ve-histogram>
                         </div>
-                        <LargeSpinner v-else />
+                        <LoaderWidget v-else height="400px" />
 
                     </v-card-text>
                 </v-card>
@@ -151,6 +152,7 @@ cs:
   import { formatInteger} from '../libs/numbers'
   import { smartFormatFloat } from '../libs/numbers'
   import VeHistogram from 'v-charts/lib/histogram.common'
+  import LoaderWidget from '../components/LoaderWidget'
 
   export default {
     name: "DashboardPage",
@@ -159,6 +161,7 @@ cs:
       LargeSpinner,
       APIChart,
       VeHistogram,
+      LoaderWidget,
     },
 
     data () {
