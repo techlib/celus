@@ -66,6 +66,12 @@ class Counter5ReportBase(object):
         if type(report) is list:
             self.extract_errors(report)
             return []
+        # check for messed up report with extra wrapping 'body' element
+        if 'Report_Header' not in report \
+                and 'body' in report \
+                and 'Report_Header' in report['body']:
+            report = report['body']
+
         self.header = report.get('Report_Header')
         if not self.header:
             self.extract_errors(report)
@@ -90,6 +96,8 @@ class Counter5ReportBase(object):
                         this_rec.metric = metric.get('Metric_Type')
                         this_rec.value = int(metric.get('Count'))
                         records.append(this_rec)
+        else:
+            raise SushiException('Incorrect format', content=report)
         self.records = records
         return records
 

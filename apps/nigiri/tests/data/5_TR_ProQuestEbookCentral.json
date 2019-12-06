@@ -1,0 +1,375 @@
+{
+  "body": {
+    "Report_Header": {
+      "Created": "2019-12-06T01:23:50Z",
+      "Created_By": "ProQuest Ebook Central",
+      "Customer_ID": "hidden",
+      "Report_ID": "TR",
+      "Release": "5",
+      "Report_Name": "Title Master Report",
+      "Institution_Name": "Hidden",
+      "Institution_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "EBC:hidden"
+        }
+      ],
+      "Report_Filters": [
+        {
+          "Name": "Platform",
+          "Value": "ProQuest Ebook Central"
+        },
+        {
+          "Name": "Begin_Date",
+          "Value": "2019-11-01"
+        },
+        {
+          "Name": "End_Date",
+          "Value": "2019-11-30"
+        },
+        {
+          "Name": "Access_Method",
+          "Value": "Regular"
+        },
+        {
+          "Name": "Data_Type",
+          "Value": "Book"
+        },
+        {
+          "Name": "Access_Type",
+          "Value": "Controlled"
+        }
+      ],
+      "Report_Attributes": [
+        {
+          "Name": "Attributes_To_Show",
+          "Value": "Access_Method|Data_Type|Access_Type|YOP"
+        }
+      ]
+    },
+    "Report_Items": [
+      {
+        "Title": null,
+        "Publisher": null,
+        "Platform": "ProQuest Ebook Central",
+        "Item_ID": [
+          {
+            "Type": "Proprietary",
+            "Value": "EBC:10064348"
+          }
+        ],
+        "YOP": "0001",
+        "Access_Type": "Controlled",
+        "Access_Method": "Regular",
+        "Data_Type": "Book",
+        "Performance": [
+          {
+            "Period": {
+              "Begin_Date": "2019-11-01",
+              "End_Date": "2019-11-30"
+            },
+            "Instance": [
+              {
+                "Metric_Type": "No_License",
+                "Count": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Title": "Food Over Medicine : The Conversation That Could Save Your Life",
+        "Publisher": "BenBella Books, Inc.",
+        "Platform": "ProQuest Ebook Central",
+        "Item_ID": [
+          {
+            "Type": "Proprietary",
+            "Value": "EBC:1011630"
+          },
+          {
+            "Type": "ISBN",
+            "Value": "978-1-937856-80-9"
+          }
+        ],
+        "YOP": "2014",
+        "Access_Type": "Controlled",
+        "Access_Method": "Regular",
+        "Data_Type": "Book",
+        "Performance": [
+          {
+            "Period": {
+              "Begin_Date": "2019-11-01",
+              "End_Date": "2019-11-30"
+            },
+            "Instance": [
+              {
+                "Metric_Type": "Total_Item_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Item_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Title_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Total_Item_Requests",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Title_Requests",
+                "Count": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Title": "Creative Industries and Innovation in Europe : Concepts, Measures and Comparative Case Studies",
+        "Publisher": "Routledge",
+        "Platform": "ProQuest Ebook Central",
+        "Item_ID": [
+          {
+            "Type": "Proprietary",
+            "Value": "EBC:1016184"
+          },
+          {
+            "Type": "ISBN",
+            "Value": "978-0-415-67740-0"
+          }
+        ],
+        "YOP": "2012",
+        "Access_Type": "Controlled",
+        "Access_Method": "Regular",
+        "Data_Type": "Book",
+        "Performance": [
+          {
+            "Period": {
+              "Begin_Date": "2019-11-01",
+              "End_Date": "2019-11-30"
+            },
+            "Instance": [
+              {
+                "Metric_Type": "Total_Item_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Item_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Title_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Total_Item_Requests",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Title_Requests",
+                "Count": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Title": "River. Space. Design : Planning Strategies, Methods and Projects for Urban Streams",
+        "Publisher": "Walter de Gruyter GmbH",
+        "Platform": "ProQuest Ebook Central",
+        "Item_ID": [
+          {
+            "Type": "Proprietary",
+            "Value": "EBC:1020486"
+          },
+          {
+            "Type": "ISBN",
+            "Value": "978-3-0346-0687-5"
+          }
+        ],
+        "YOP": "2012",
+        "Access_Type": "Controlled",
+        "Access_Method": "Regular",
+        "Data_Type": "Book",
+        "Performance": [
+          {
+            "Period": {
+              "Begin_Date": "2019-11-01",
+              "End_Date": "2019-11-30"
+            },
+            "Instance": [
+              {
+                "Metric_Type": "Unique_Item_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Title_Investigations",
+                "Count": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Title": "Ethnicity and Globalization",
+        "Publisher": "SAGE Publications",
+        "Platform": "ProQuest Ebook Central",
+        "Item_ID": [
+          {
+            "Type": "Proprietary",
+            "Value": "EBC:1024109"
+          },
+          {
+            "Type": "ISBN",
+            "Value": "978-0-7619-5612-9"
+          }
+        ],
+        "YOP": "2000",
+        "Access_Type": "Controlled",
+        "Access_Method": "Regular",
+        "Data_Type": "Book",
+        "Performance": [
+          {
+            "Period": {
+              "Begin_Date": "2019-11-01",
+              "End_Date": "2019-11-30"
+            },
+            "Instance": [
+              {
+                "Metric_Type": "Total_Item_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Item_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Title_Investigations",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Total_Item_Requests",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Item_Requests",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Title_Requests",
+                "Count": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Title": "Antiplatelet and Anticoagulation Therapy",
+        "Publisher": "Springer",
+        "Platform": "ProQuest Ebook Central",
+        "Item_ID": [
+          {
+            "Type": "Proprietary",
+            "Value": "EBC:1030449"
+          },
+          {
+            "Type": "ISBN",
+            "Value": "978-1-4471-4296-6"
+          }
+        ],
+        "YOP": "2012",
+        "Access_Type": "Controlled",
+        "Access_Method": "Regular",
+        "Data_Type": "Book",
+        "Performance": [
+          {
+            "Period": {
+              "Begin_Date": "2019-11-01",
+              "End_Date": "2019-11-30"
+            },
+            "Instance": [
+              {
+                "Metric_Type": "Total_Item_Investigations",
+                "Count": 4
+              },
+              {
+                "Metric_Type": "Unique_Item_Investigations",
+                "Count": 3
+              },
+              {
+                "Metric_Type": "Unique_Title_Investigations",
+                "Count": 3
+              },
+              {
+                "Metric_Type": "Total_Item_Requests",
+                "Count": 4
+              },
+              {
+                "Metric_Type": "Unique_Title_Requests",
+                "Count": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Title": "FreeCAD [How-to]",
+        "Publisher": "Packt Publishing, Limited",
+        "Platform": "ProQuest Ebook Central",
+        "Item_ID": [
+          {
+            "Type": "Proprietary",
+            "Value": "EBC:1037661"
+          },
+          {
+            "Type": "ISBN",
+            "Value": "978-1-84951-886-4"
+          }
+        ],
+        "YOP": "2012",
+        "Access_Type": "Controlled",
+        "Access_Method": "Regular",
+        "Data_Type": "Book",
+        "Performance": [
+          {
+            "Period": {
+              "Begin_Date": "2019-11-01",
+              "End_Date": "2019-11-30"
+            },
+            "Instance": [
+              {
+                "Metric_Type": "Total_Item_Investigations",
+                "Count": 3
+              },
+              {
+                "Metric_Type": "Unique_Item_Investigations",
+                "Count": 3
+              },
+              {
+                "Metric_Type": "Unique_Title_Investigations",
+                "Count": 3
+              },
+              {
+                "Metric_Type": "Total_Item_Requests",
+                "Count": 3
+              },
+              {
+                "Metric_Type": "Unique_Item_Requests",
+                "Count": 1
+              },
+              {
+                "Metric_Type": "Unique_Title_Requests",
+                "Count": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "response": {
+    "status": 200
+  }
+}

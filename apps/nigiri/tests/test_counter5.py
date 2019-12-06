@@ -3,6 +3,7 @@ import json
 import pytest
 
 from ..counter5 import Counter5ReportBase, CounterRecord, Counter5TRReport
+from ..exceptions import SushiException
 
 
 class TestCounter5Reading(object):
@@ -81,3 +82,26 @@ class TestCounter5Reading(object):
             'Section_Type': 'Chapter',
             'Data_Type': 'Book',
         }
+
+    @pytest.mark.now()
+    def test_reading_incorrect_data(self):
+        """
+        Test that data that do not have the proper format are not imported and raise an error
+        """
+        data = {'foo': 'bar'}
+        reader = Counter5TRReport()
+        with pytest.raises(SushiException):
+            reader.read_report(data)
+
+    @pytest.mark.now()
+    def test_reading_messed_up_data_proquest_ebooks(self):
+        """
+        The data from Proquest Ebook Central come messed up by being wrapped in an extra
+        element 'body'.
+        Check that we can properly parse this type of data.
+        """
+        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral.json', 'r') as infile:
+            data = json.load(infile)
+        reader = Counter5TRReport()
+        records = reader.read_report(data)
+        assert len(records) == 30  # 7 titles, metrics - 1, 5, 5, 2, 6, 5, 6
