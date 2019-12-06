@@ -499,6 +499,7 @@ class SushiFetchAttempt(models.Model):
             self.import_batch = None
         self.is_processed = False
         self.import_crashed = False
+        self.contains_data = False
         self.log = ''
         if 'import_crash_traceback' in self.processing_info:
             del self.processing_info['import_crash_traceback']

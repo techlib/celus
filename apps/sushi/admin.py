@@ -38,15 +38,34 @@ def reimport(modeladmin, request, queryset):
 reimport.short_description = 'Reimport data - deletes old and reparses the downloaded file'
 
 
+class HasImportBatch(admin.SimpleListFilter):
+    title = 'has import batch'
+    parameter_name = 'has'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.filter(import_batch__isnull=False)
+        if self.value() == 'no':
+            return queryset.filter(import_batch__isnull=True)
+        return queryset
+
+
 @admin.register(models.SushiFetchAttempt)
 class SushiFetchAttemptAdmin(admin.ModelAdmin):
 
     list_display = ['organization', 'platform', 'counter_version', 'report', 'timestamp',
                     'start_date', 'end_date',
                     'queued', 'import_crashed', 'download_success', 'processing_success',
-                    'is_processed', 'contains_data', 'error_code']
+                    'is_processed', 'contains_data', 'error_code', 'has_import_batch']
     list_filter = ['download_success',  'processing_success', 'is_processed', 'queued',
-                   'import_crashed', 'error_code', 'contains_data', 'counter_report']
+                   'import_crashed', 'error_code', 'contains_data', HasImportBatch,
+                   'counter_report']
     readonly_fields = ['credentials', 'counter_report', 'timestamp', 'start_date', 'end_date',
                        'download_success', 'data_file', 'import_batch', 'queue_previous']
     search_fields = ['credentials__organization__name', 'credentials__platform__name', 'pk']
@@ -65,3 +84,7 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
 
     def counter_version(self, obj: models.SushiFetchAttempt):
         return obj.credentials.counter_version
+
+    def has_import_batch(self, obj: models.SushiFetchAttempt):
+        return obj.import_batch is not None
+    has_import_batch.boolean = True

@@ -7,7 +7,7 @@ from django.db.transaction import atomic
 
 from logs.logic.data_import import import_counter_records
 from logs.models import OrganizationPlatform, ImportBatch
-from nigiri.client import Sushi5Client, SushiException
+from nigiri.client import Sushi5Client, SushiException, SushiError
 from sushi.models import SushiFetchAttempt
 
 
@@ -59,10 +59,16 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         # if we find validation error on data revalidation, we switch the report success attr
         logger.error('Validation error: %s', e)
         logger.info('Marking the attempt as unsuccessful')
-        attempt.download_success = False
-        if attempt.log:
-            attempt.log += '\n'
-        attempt.log += str(e)
+        attempt.download_success = True
+        attempt.processing_success = True
+        attempt.is_processed = True
+        attempt.import_crashed = True
+        attempt.contains_data = False
+        if isinstance(e.text, SushiError):
+            attempt.log = str(e.text)
+            attempt.error_code = e.text.code
+        else:
+            attempt.log = str(e)
         attempt.save()
         return
     # we need to create explicit connection between organization and platform
@@ -90,6 +96,20 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.import_batch = import_batch
         logger.info('Import stats: %s', stats)
     else:
+        if reader.errors:
+            attempt.log = '; '.join(str(e) for e in reader.errors)
+            logger.warning('Found errors: %s', attempt.log)
+            attempt.error_code = reader.errors[0].code
+            attempt.contains_data = False
+            error_explanation = Sushi5Client.explain_error_code(attempt.error_code)
+            attempt.queued = error_explanation.should_retry and error_explanation.setup_ok
+            attempt.processing_success = not (error_explanation.needs_checking
+                                              and error_explanation.setup_ok)
+            attempt.save()
+        else:
+            attempt.contains_data = False
+            attempt.log = 'No data found during import'
+            attempt.save()
         logger.warning('No records found!')
     attempt.mark_processed()
 

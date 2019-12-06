@@ -40,6 +40,9 @@ class SushiError(object):
         self.full_log = full_log
         self.raw_data = raw_data
 
+    def __str__(self):
+        return self.full_log
+
 
 class SushiErrorMeaning(object):
 

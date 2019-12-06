@@ -105,3 +105,35 @@ class TestCounter5Reading(object):
         reader = Counter5TRReport()
         records = reader.read_report(data)
         assert len(records) == 30  # 7 titles, metrics - 1, 5, 5, 2, 6, 5, 6
+
+    @pytest.mark.now()
+    def test_reading_messed_up_data_proquest_ebooks_exception(self):
+        """
+        The data from Proquest Ebook Central come messed up by being wrapped in an extra
+        element 'body'.
+        Check that we can properly parse this type of data.
+        """
+        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json', 'r') as \
+                infile:
+            data = json.load(infile)
+        reader = Counter5TRReport()
+        records = reader.read_report(data)
+        assert len(records) == 0
+        assert len(reader.errors) == 1
+        error = reader.errors[0]
+        assert error.code == '3030'
+
+    @pytest.mark.now()
+    def test_reading_messed_up_data_proquest_ebooks_exception_dr(self):
+        """
+        Another way to mess up the data - body is null and there are exceptions somewhere else :(
+        """
+        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json', 'r') as \
+                infile:
+            data = json.load(infile)
+        reader = Counter5TRReport()
+        records = reader.read_report(data)
+        assert len(records) == 0
+        assert len(reader.errors) == 1
+        error = reader.errors[0]
+        assert error.code == '3030'
