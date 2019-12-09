@@ -1,13 +1,21 @@
-
 <i18n lang="yaml" src="../locales/charts.yaml"></i18n>
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
     has_annotations: There are some annotations which might be related to this title. Click to scroll to them.
-
+    available_from_platforms: Available from platforms
+    this_title_on_platform: Link to this title on the selected platform
+    this_title_no_platform: Link to all data for this title without platform filter
+    current_platform: Current platform
+    no_platform: Regardless of platform
 cs:
     has_annotations: Jsou dostupné poznámky, které mohou být relevantní pro tento titul. Klikněte pro zobrazení.
+    available_from_platforms: Dostupné na platformách
+    this_title_on_platform: Odkaz na tento titul na uvedené platformě
+    this_title_no_platform: Odkaz na souhrná data pro tento titul bez ohledu na platformu
+    current_platform: Právě zobrazovaná platforma
+    no_platform: Bez ohledu na platformu
 </i18n>
 
 <template>
@@ -53,8 +61,8 @@ cs:
                     </template>
                 </table>
             </v-col>
-            <v-col cols="auto">
-                <table v-if="title" class="overview mb-4 elevation-2">
+            <v-col cols="auto" v-if="title" >
+                <table class="overview mb-4 elevation-2">
                     <tr class="header">
                         <th colspan="2" v-text="$t('interest')"></th>
                     </tr>
@@ -67,6 +75,60 @@ cs:
                             </span>
                         </td>
                     </tr>
+                </table>
+            </v-col>
+            <v-col cols="auto" v-if="availableFromPlatforms">
+                <table class="overview mb-4 elevation-2">
+                    <tr class="header">
+                        <th colspan="2" v-text="$t('available_from_platforms')"></th>
+                    </tr>
+                    <tr v-for="platform in availableFromPlatforms" :key="platform.pk">
+                        <td>
+                            <router-link :to="{name: 'platform-detail', params: {platformId: platform.pk}}">
+                                {{ platform.name }}
+                            </router-link>
+                        </td>
+                        <td class="text-right">
+                            <v-tooltip bottom v-if="platform.pk !== platformId">
+                                <template v-slot:activator="{ on }">
+                                    <v-btn small icon v-on="on"
+                                           color="secondary"
+                                           :to="{name: 'platform-title-detail', params: {platformId: platform.pk, titleId: titleId}}">
+                                        <v-icon small>fa-external-link-alt</v-icon>
+                                    </v-btn>
+                                </template>
+                                <span v-text="$t('this_title_on_platform')"></span>
+                            </v-tooltip>
+                            <v-tooltip bottom v-else>
+                                <template v-slot:activator="{ on }">
+                                    <span  v-on="on">
+                                        <v-btn small icon color="secondary" disabled>
+                                            <v-icon small>fa-arrow-left</v-icon>
+                                        </v-btn>
+                                    </span>
+                                </template>
+                                <span v-text="$t('current_platform')"></span>
+                            </v-tooltip>
+                        </td>
+                    </tr>
+
+                    <tr v-if="platformId && availableFromPlatforms && availableFromPlatforms.length > 1" class="mt-4">
+                        <!-- if platform is specified, we provide a link to this title without platform specified -->
+                        <td v-text="$t('no_platform')" class="pt-4 font-weight-light"></td>
+                        <td class="text-right pt-4">
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on }">
+                                    <v-btn small icon v-on="on"
+                                           color="secondary"
+                                           :to="{name: 'title-detail', params: {platformId: null, titleId: titleId}}">
+                                        <v-icon small>fa-external-link-alt</v-icon>
+                                    </v-btn>
+                                </template>
+                                <span v-text="$t('this_title_no_platform')"></span>
+                            </v-tooltip>
+                        </td>
+                    </tr>
+
                 </table>
             </v-col>
             <v-spacer></v-spacer>
@@ -142,6 +204,7 @@ cs:
         platformData: null,
         coverImg: null,
         annotationsCount: 0,
+        availableFromPlatforms: null,
       }
     },
     computed: {
@@ -251,7 +314,7 @@ cs:
         }
       },
       loadPlatform () {
-        if (this.selectedOrganization) {
+        if (this.selectedOrganization && this.platformId) {
           axios.get(`/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/`)
             .then(response => {
               this.platformData = response.data
@@ -259,6 +322,16 @@ cs:
             .catch(error => {
               this.showSnackbar({content: 'Error loading platform details: ' + error})
             })
+        }
+      },
+      async loadAllPlatforms () {
+        if (this.selectedOrganization) {
+          try {
+            const response = await axios.get(`/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/platforms/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`)
+            this.availableFromPlatforms = response.data
+          } catch (error) {
+              this.showSnackbar({content: 'Error loading platform details: ' + error, color: 'error'})
+          }
         }
       },
       getCoverImg () {
@@ -286,6 +359,7 @@ cs:
         this.loadPlatform()
       }
       this.loadTitle()
+      this.loadAllPlatforms()
     },
     watch: {
       selectedOrganization () {
@@ -293,9 +367,11 @@ cs:
           this.loadPlatform()
         }
         this.loadTitle()
+        this.loadAllPlatforms()
       },
       titleUrl () {
         this.loadTitle()
+        this.loadAllPlatforms()
       }
     }
   }

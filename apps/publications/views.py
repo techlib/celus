@@ -414,6 +414,19 @@ class TitleViewSet(BaseTitleViewSet):
 
     serializer_class = TitleSerializer
 
+    @action(detail=True, url_path='platforms')
+    def platforms(self, request, pk, organization_pk):
+        title = get_object_or_404(Title.objects.all(), pk=pk)
+        org_filter = organization_filter_from_org_id(organization_pk, self.request.user)
+        date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
+        platforms = Platform.objects.filter(
+            accesslog__target=title,
+            **date_filter_params,
+            **extend_query_filter(org_filter, 'accesslog__')
+        ).distinct()
+        print(platforms.query)
+        return Response(PlatformSerializer(platforms, many=True).data)
+
 
 class TitleInterestViewSet(TitleInterestMixin, BaseTitleViewSet):
     """
