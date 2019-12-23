@@ -69,3 +69,13 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PlatformTitle(models.Model):
+
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+    date = models.DateField(help_text='Month for which title was available on platform')
+
+    def __str__(self):
+        return f'{self.platform} - {self.title}: {self.date}'
