@@ -74,6 +74,16 @@ class PlatformViewSet(ReadOnlyModelViewSet):
             annotate(title_count=Count('title', distinct=True))
         return Response(qs)
 
+    @action(methods=['GET'], url_path='title-count', detail=True)
+    def title_count_detail(self, request, organization_pk, pk):
+        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        date_filter_params = date_filter_from_params(request.GET)
+        qs = PlatformTitle.objects.\
+            filter(platform_id=pk, **org_filter, **date_filter_params).\
+            values('platform').\
+            annotate(title_count=Count('title', distinct=True))
+        return Response({'title_count': qs.get()['title_count']})
+
 
 class DetailedPlatformViewSet(ReadOnlyModelViewSet):
 
@@ -159,9 +169,9 @@ class PlatformInterestViewSet(ViewSet):
         # to be able to "connect" platform and titles for the title_count
         # this makes it possible to show the proper title count even if there is no interest
         result = AccessLog.objects\
-            .filter(**org_filter, **date_filter_params)\
+            .filter(**org_filter, **date_filter_params, report_type=interest_rt)\
             .values('platform')\
-            .annotate(**interest_annot_params, title_count=Count('target_id', distinct=True))
+            .annotate(**interest_annot_params)
         return result
 
     def list(self, request, organization_pk):

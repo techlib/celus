@@ -192,6 +192,12 @@ cs:
         }
         return null
       },
+      platformTitleCountUrl () {
+        if (this.selectedOrganizationId) {
+          return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+        }
+        return null
+      },
       breadcrumbs () {
           return [
             {
@@ -214,23 +220,33 @@ cs:
           try {
             let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/`)
             this.platform = response.data
-            this.loadPlatformDetails()
+            this.loadPlatformTitleCount()
+            this.loadPlatformInterest()
           } catch(error) {
               this.showSnackbar({content: 'Error loading platforms: '+error})
           }
         }
       },
-      async loadPlatformDetails () {
-        if (this.selectedOrganizationId) {
+      async loadPlatformInterest () {
+        if (this.platformInterestUrl) {
           this.$set(this.platform, 'interests', {loading: true})
-          this.$set(this.platform, 'title_count', 'loading')
           try {
             let response = await axios.get(this.platformInterestUrl)
             this.$set(this.platform, 'interests', response.data)
+          } catch(error) {
+            this.showSnackbar({content: 'Error loading interest: '+error, color: 'error'})
+            this.$set(this.platform, 'interests', {loading: false})
+          }
+        }
+      },
+      async loadPlatformTitleCount () {
+        if (this.platformTitleCountUrl) {
+          this.$set(this.platform, 'title_count', 'loading')
+          try {
+            let response = await axios.get(this.platformTitleCountUrl)
             this.$set(this.platform, 'title_count', response.data.title_count)
           } catch(error) {
-            this.showSnackbar({content: 'Error loading platforms: '+error, color: 'error'})
-            this.$set(this.platform, 'interests', {loading: false})
+            this.showSnackbar({content: 'Error loading title count: '+error, color: 'error'})
             this.$set(this.platform, 'title_count', null)
           }
         }
@@ -247,7 +263,10 @@ cs:
         this.loadPlatform()
       },
       platformInterestUrl () {
-        this.loadPlatformDetails()
+        this.loadPlatformInterest()
+      },
+      platformTitleCountUrl () {
+        this.loadPlatformTitleCount()
       }
     }
   }

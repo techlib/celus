@@ -102,6 +102,9 @@
       platformInterestURL () {
         return `/api/organization/${this.selectedOrganizationId}/platform-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
       },
+      platformTitleCountURL () {
+        return `/api/organization/${this.selectedOrganizationId}/platform/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
+      },
       annotationsUrl () {
         let url = `/api/annotations/?start_date=${this.dateRangeStart}&end_date=${this.dateRangeEnd}`
         if (this.organizationSelected) {
@@ -121,7 +124,8 @@
           try {
             let response = await axios.get(this.platformsURL)
             this.platforms = response.data.map(item => {item.interests = createLoadingInterestRecord(); item.title_count = 'loading'; return item})
-            this.loadPlatformDetails()
+            this.loadPlatformInterest()
+            this.loadPlatformTitleCount()
             this.loadPlatformSushiCounts()
             this.loadAnnotations()
           } catch (error) {
@@ -131,7 +135,7 @@
           }
         }
       },
-      async loadPlatformDetails () {
+      async loadPlatformInterest () {
         try {
           let response = await axios.get(this.platformInterestURL)
           let pkToRow = {}
@@ -142,14 +146,31 @@
             let newData = pkToRow[platform.pk]
             if (newData) {
               this.$set(platform, 'interests', newData)
-              platform.title_count = newData.title_count
             } else {
               platform.interests = createEmptyInterestRecord()
+            }
+          }
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading platform interest: '+error, color: 'warning'})
+        }
+      },
+      async loadPlatformTitleCount () {
+        try {
+          let response = await axios.get(this.platformTitleCountURL)
+          let pkToRow = {}
+          for (let row of response.data) {
+            pkToRow[row.platform] = row
+          }
+          for (let platform of this.platforms) {
+            let newData = pkToRow[platform.pk]
+            if (newData) {
+              platform.title_count = newData.title_count
+            } else {
               platform.title_count = null
             }
           }
         } catch (error) {
-          this.showSnackbar({content: 'Error loading platform details: '+error, color: 'warning'})
+          this.showSnackbar({content: 'Error loading platform title count: '+error, color: 'warning'})
         }
       },
       async loadPlatformSushiCounts () {
