@@ -6,6 +6,7 @@ import magic
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
 from django.db.models import Sum
@@ -246,6 +247,14 @@ class AccessLog(models.Model):
         help_text='Level of user who created this record - used to determine who can modify it'
     )
     import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE)
+
+    class Meta:
+        indexes = (
+            BrinIndex(fields=('report_type',)),
+            BrinIndex(fields=('platform',)),
+            BrinIndex(fields=('organization',)),
+            BrinIndex(fields=('date',)),
+        )
 
 
 class DimensionText(models.Model):
