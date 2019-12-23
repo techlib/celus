@@ -2,7 +2,7 @@ import pytest
 
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 from nigiri.counter4 import Counter4BR2Report
-from publications.models import Platform, Title
+from publications.models import Platform, Title, PlatformTitle
 
 from ..logic.data_import import import_counter_records
 from organizations.tests.conftest import organizations
@@ -28,6 +28,7 @@ class TestDataImport(object):
         al = AccessLog.objects.get()
         assert al.value == 50
         assert al.dim1 is None
+        assert PlatformTitle.objects.count() == 1
 
     def test_simple_data_import_1d(self, counter_records_nd, organizations, report_type_nd,
                                    platform):
@@ -96,6 +97,7 @@ class TestDataImport(object):
         assert al1.dim3 is not None
         assert al1.dim4 is None
 
+    @pytest.mark.now
     def test_reimport(self, counter_records_nd, organizations, report_type_nd, platform):
         crs = list(counter_records_nd(3, record_number=1, title='Title ABC',
                                       dim_value='one value'))
@@ -107,12 +109,14 @@ class TestDataImport(object):
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
         assert stats['new logs'] == 1
+        assert stats['new platformtitles'] == 1
         stats = import_counter_records(rt, organizations[0], platform, crs,
                                        ImportBatch.objects.create(organization=organizations[0],
                                                                   platform=platform,
                                                                   report_type=rt))
         assert stats['new logs'] == 0
         assert stats['skipped logs'] == 1
+        assert stats['new platformtitles'] == 0
 
 
 @pytest.mark.django_db

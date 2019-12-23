@@ -5,7 +5,7 @@ from datetime import date
 from logs.logic.validation import clean_and_validate_issn, ValidationError
 from logs.models import ImportBatch
 from organizations.models import Organization
-from publications.models import Title, Platform
+from publications.models import Title, Platform, PlatformTitle
 from ..models import ReportType, Metric, DimensionText, AccessLog
 from nigiri.counter5 import CounterRecord
 
@@ -220,4 +220,23 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
     AccessLog.objects.bulk_create([AccessLog(import_batch=import_batch, **rec)
                                    for rec in dicts_to_insert])
     stats['new logs'] += len(dicts_to_insert)
+    # and insert the PlatformTitle links
+    stats.update(create_platformtitle_links(organization, platform, dicts_to_insert))
     return stats
+
+
+def create_platformtitle_links(organization, platform, records: [dict]):
+    """
+    Takes list of dicts that are used to create AccessLogs in `import_counter_records`
+    and creates the explicit PlatformTitle objects from the data
+    """
+    existing = {(pt.title_id, pt.date) for pt in
+                PlatformTitle.objects.filter(organization=organization, platform=platform)}
+    tuples = {(rec['target_id'], rec['date'])
+              for rec in records if rec['target_id'] is not None}
+    pts = []
+    for title_id, rec_date in tuples - existing:
+        pts.append(PlatformTitle(organization=organization, platform=platform, title_id=title_id,
+                                 date=rec_date))
+    PlatformTitle.objects.bulk_create(pts)
+    return {'new platformtitles': len(pts)}
