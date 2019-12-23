@@ -75,6 +75,7 @@ class PlatformTitle(models.Model):
 
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+    organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE)
     date = models.DateField(help_text='Month for which title was available on platform')
 
     def __str__(self):

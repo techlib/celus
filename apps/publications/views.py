@@ -16,7 +16,7 @@ from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metri
 from logs.serializers import ReportTypeSerializer, ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
-from publications.models import Platform, Title
+from publications.models import Platform, Title, PlatformTitle
 from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
@@ -63,6 +63,16 @@ class PlatformViewSet(ReadOnlyModelViewSet):
             filter(**org_filter, interest_reports__isnull=True).\
             annotate(has_data=Exists(import_batch_query))
         return Response(DetailedPlatformSerializer(qs, many=True).data)
+
+    @action(methods=['GET'], url_path='title-count', detail=False)
+    def title_count(self, request, organization_pk):
+        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        date_filter_params = date_filter_from_params(request.GET)
+        qs = PlatformTitle.objects.\
+            filter(**org_filter, **date_filter_params).\
+            values('platform').\
+            annotate(title_count=Count('title', distinct=True))
+        return Response(qs)
 
 
 class DetailedPlatformViewSet(ReadOnlyModelViewSet):

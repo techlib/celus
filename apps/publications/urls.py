@@ -12,6 +12,7 @@ root_router.register(r'platform', views.AllPlatformsViewSet, basename='all-platf
 
 org_sub_router = NestedSimpleRouter(organization_router, r'organization', lookup='organization')
 org_sub_router.register(r'platform', views.PlatformViewSet, basename='platform')
+# TODO: following is not used anymore
 org_sub_router.register(r'detailed-platform', views.DetailedPlatformViewSet,
                         basename='detailed-platform')
 org_sub_router.register(r'platform-interest', views.PlatformInterestViewSet,
