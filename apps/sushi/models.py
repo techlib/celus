@@ -5,6 +5,7 @@ from hashlib import blake2b
 from datetime import timedelta, datetime
 from itertools import takewhile
 from typing import Optional
+import json
 
 import requests
 import reversion
@@ -304,6 +305,15 @@ class SushiCredentials(models.Model):
             logger.error('Connection error: %s', e)
             error_code = 'connection'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+        except SushiExceptionNigiri as e:
+            logger.error('Error: %s', e)
+            error_code = 'non-sushi'
+            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            if e.content:
+                try:
+                    file_data = json.dumps(e.content, indent=2, ensure_ascii=False)
+                except Exception:
+                    pass
         except Exception as e:
             logger.error('Error: %s', e)
             error_code = 'non-sushi'
