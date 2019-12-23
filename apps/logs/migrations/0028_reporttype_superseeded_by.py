@@ -19,6 +19,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('logs', '0027_importbatch_interest_timestamp'),
+        ('sushi', '0024_lock_level_change'),
     ]
 
     operations = [
