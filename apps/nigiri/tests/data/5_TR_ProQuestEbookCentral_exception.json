@@ -1,0 +1,62 @@
+{
+  "body": {
+    "Report_Header": {
+      "Created": "2019-12-05T18:17:10Z",
+      "Created_By": "ProQuest Ebook Central",
+      "Customer_ID": "hidden",
+      "Report_ID": "TR",
+      "Release": "5",
+      "Report_Name": "Title Master Report",
+      "Institution_Name": "Hidden",
+      "Institution_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "EBC:hidden"
+        }
+      ],
+      "Report_Filters": [
+        {
+          "Name": "Platform",
+          "Value": "ProQuest Ebook Central"
+        },
+        {
+          "Name": "Begin_Date",
+          "Value": "2017-01-01"
+        },
+        {
+          "Name": "End_Date",
+          "Value": "2017-01-31"
+        },
+        {
+          "Name": "Access_Method",
+          "Value": "Regular"
+        },
+        {
+          "Name": "Data_Type",
+          "Value": "Book"
+        },
+        {
+          "Name": "Access_Type",
+          "Value": "Controlled"
+        }
+      ],
+      "Report_Attributes": [
+        {
+          "Name": "Attributes_To_Show",
+          "Value": "Access_Method|Data_Type|Access_Type|YOP"
+        }
+      ],
+      "Exceptions": [
+        {
+          "Code": "3030",
+          "Severity": "Error",
+          "Message": "No Usage Available for Requested Dates.",
+          "Data": "Usage data is not available for all requested months between the begin_date and end_date."
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200
+  }
+}
