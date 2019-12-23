@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, Index
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
@@ -224,7 +224,7 @@ class ImportBatch(models.Model):
 
 class AccessLog(models.Model):
 
-    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE, db_index=False)
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
@@ -254,6 +254,7 @@ class AccessLog(models.Model):
             BrinIndex(fields=('platform',)),
             BrinIndex(fields=('organization',)),
             BrinIndex(fields=('date',)),
+            Index(fields=('report_type', 'organization')),  # these occur often, so we optimize
         )
 
 

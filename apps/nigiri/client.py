@@ -173,7 +173,7 @@ class Sushi5Client(SushiClientBase):
     EXTRA_PARAMS = {
         # split data in TR report to most possible dimensions for most granular data
         'maximum_split': {
-            'tr': {'attributes_to_show': 'yop|Access_Method|Access_Type|Data_Type|Section_Type'},
+            'tr': {'attributes_to_show': 'YOP|Access_Method|Access_Type|Data_Type|Section_Type'},
             'pr': {'attributes_to_show': 'Access_Method|Data_Type'},
             'dr': {'attributes_to_show': 'Access_Method|Data_Type'},
         }
