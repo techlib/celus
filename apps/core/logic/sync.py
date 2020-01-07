@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class IdentitySyncer(ERMSSyncer):
     attr_map = {
         'identity': 'identity',
-        # 'user': 'user',   # this syncer does not use the mapping anyway, so this is for doc...
+        # 'user': 'user',   # this syncer does not use the mapping anyway, so this is for docs...
     }
 
     object_class = Identity
