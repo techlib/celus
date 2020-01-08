@@ -1,4 +1,4 @@
-from django.db.models import Count, Sum, Q, OuterRef, Exists
+from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
 from django.db.models.functions import Coalesce
 from pandas import DataFrame
 from rest_framework.decorators import action
@@ -234,7 +234,15 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
     serializer_class = TitleSerializer
     # pagination_class = StandardResultsSetPagination
 
-    def _extra_filters(self, org_filter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.org_filter = None
+        self.date_filter = None
+
+    def _extra_filters(self):
+        return {}
+
+    def _extra_accesslog_filters(self):
         return {}
 
     def _annotations(self):
@@ -253,10 +261,12 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         """
         Should return only titles for specific organization and platform
         """
-        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                     self.request.user)
-        date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
+        self.org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
+                                                          self.request.user)
+        self.date_filter = date_filter_from_params(self.request.GET)
+        # run stuff before we start creating the queryset
         self._before_queryset()
+        # put together filters for title itself
         search_filters = []
         q = self.request.query_params.get('q')
         if q:
@@ -265,12 +275,30 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         pub_type_arg = self.request.query_params.get('pub_type')
         if pub_type_arg:
             search_filters.append(Q(pub_type=pub_type_arg))
-        result = Title.objects.filter(
-            *search_filters,
-            **date_filter_params,
-            **extend_query_filter(org_filter, 'accesslog__'),
-            **self._extra_filters(org_filter),
-            ).distinct()
+        # we evaluate this here as it might be important for the _extra_accesslog_filters method
+        extra_filters = self._extra_filters()
+        # put together filters for accesslogs
+        accesslog_filter = {
+            **self._extra_accesslog_filters()
+        }
+        title_qs = Title.objects.all()
+        if accesslog_filter:
+            # we have some filters for accesslog - this means we have to add the relevant
+            # accesslogs to the queryset
+            accesslog_filter.update(**extend_query_filter(self.date_filter, 'accesslog__'))
+            title_qs = title_qs.annotate(
+                relevant_accesslogs=FilteredRelation('accesslog',
+                                                     condition=Q(**accesslog_filter))
+            )
+        # construct the whole query
+        result = title_qs.\
+            filter(
+                *search_filters,
+                **extend_query_filter(self.date_filter, 'platformtitle__'),
+                **extend_query_filter(self.org_filter, 'platformtitle__'),
+                **extra_filters,
+            ).\
+            distinct()
         annot = self._annotations()
         if annot:
             result = result.annotate(**annot)
@@ -290,11 +318,16 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
 
 class PlatformTitleViewSet(BaseTitleViewSet):
 
-    def _extra_filters(self, org_filter):
-        filters = super()._extra_filters(org_filter)
-        platform = get_object_or_404(Platform.objects.filter(**org_filter),
-                                     pk=self.kwargs['platform_pk'])
-        filters['accesslog__platform'] = platform
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.platform = None
+
+    def _extra_filters(self):
+        filters = super()._extra_filters()
+        self.platform = get_object_or_404(Platform.objects.filter(**self.org_filter),
+                                          pk=self.kwargs['platform_pk'])
+        # filters['accesslog__platform'] = platform
+        filters['platformtitle__platform'] = self.platform
         return filters
 
 
@@ -312,9 +345,13 @@ class TitleInterestMixin(object):
         self.interest_groups_names = {x['short_name']
                                       for x in InterestGroup.objects.all().values('short_name')}
 
-    def _extra_filters(self, org_filter):
-        filters = super()._extra_filters(org_filter)
+    def _extra_accesslog_filters(self):
+        filters = super()._extra_accesslog_filters()
         filters['accesslog__report_type_id'] = self.interest_rt.pk
+        if hasattr(self, 'platform') and self.platform:
+            filters['accesslog__platform_id'] = self.platform.pk
+        if self.org_filter:
+            filters['accesslog__organization_id'] = self.org_filter.get('organization__pk')
         return filters
 
     def _annotations(self):
@@ -322,9 +359,8 @@ class TitleInterestMixin(object):
         interest_annot_params = {
             interest_type.text:
                 Coalesce(
-                    Sum('accesslog__value',
-                        filter=Q(accesslog__dim1=interest_type.pk,
-                                 accesslog__report_type_id=self.interest_rt.pk)
+                    Sum('relevant_accesslogs__value',
+                        filter=Q(relevant_accesslogs__dim1=interest_type.pk)
                         ),
                     0)
             for interest_type in
