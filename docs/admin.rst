@@ -3,7 +3,7 @@ Admin documentation
 ===================
 
 This document describes administration of the Celus application. For user documentation
-see XXX.
+see :doc:`user`.
 
 -----------
 Maintenance
@@ -46,3 +46,6 @@ try to re-download the data for the organizations, platforms and dates you have 
 
 The download will take place in the next scheduled download window. The specific delay depends
 on your system settings.
+
+**TODO**: Describe how the above differs when there are already data imported from the SUSHI
+fetch attempts.
