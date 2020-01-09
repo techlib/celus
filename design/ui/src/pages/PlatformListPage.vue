@@ -7,9 +7,18 @@
                 <h2>{{ $t('pages.platforms') }}</h2>
             </v-col>
             <v-spacer></v-spacer>
-            <v-col v-if="showAdminStuff && organizationSelected" cols="auto">
-                <ManualUploadButton />
-                <AddAnnotationButton @update="refreshAnnotations()" class="ml-2"/>
+            <v-col v-if="showAdminStuff && organizationSelected" cols="auto" class="d-none d-sm-block">
+                <v-container fluid pa-0>
+                    <v-row>
+                        <v-col cols="auto" class="pa-1">
+                            <ManualUploadButton />
+                        </v-col>
+                        <v-col cols="auto" class="pa-1">
+                            <AddAnnotationButton @update="refreshAnnotations()" />
+                        </v-col>
+                    </v-row>
+                </v-container>
+
             </v-col>
         </v-row>
         <v-row>
@@ -19,7 +28,7 @@
             <v-col>
                 <v-card>
                     <v-card-text>
-                        <v-btn-toggle v-model="viewType" class="float-right">
+                        <v-btn-toggle v-model="viewType" class="float-sm-right">
                             <v-btn value="interest" small><v-icon small>fa fa-list</v-icon></v-btn>
                             <v-btn value="chart" small><v-icon small>fa fa-chart-bar</v-icon></v-btn>
                             <v-btn value="cost" small><v-icon small>fa fa-dollar-sign</v-icon></v-btn>

@@ -33,7 +33,7 @@ cs:
 
 </i18n>
 <template>
-    <v-container fluid class="pt-0">
+    <v-container fluid class="pt-0 px-0 px-sm-2">
         <v-row>
             <v-spacer></v-spacer>
             <v-col class="pt-0">
@@ -47,7 +47,7 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <v-col>
+            <v-col class="px-0 px-sm-2">
                 <v-data-table
                         :items="platforms"
                         :headers="headers"
