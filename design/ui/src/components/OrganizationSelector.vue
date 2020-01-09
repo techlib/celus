@@ -1,9 +1,10 @@
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
 
 <template>
-    <v-layout align-baseline>
-        <v-flex class="sc" shrink mr-2>{{ $t('organization') }}:</v-flex>
-        <v-flex>
+    <v-container align-baseline>
+        <v-row align="baseline">
+        <v-col v-if="!internalLabel" cols="auto" class="sc" shrink mr-2>{{ $t('organization') }}:</v-col>
+        <v-col cols="auto" class="py-0">
             <v-autocomplete
                     v-model="orgId"
                     :items="items"
@@ -13,13 +14,15 @@
                     eager
                     :menu-props="{width: '800px'}"
                     :filter="filter"
+                    :label="label"
             >
                 <template v-slot:item="{item}">
                     <span :class="{bold: item.extra, org: true}" v-text="item.name"></span>
                 </template>
             </v-autocomplete>
-        </v-flex>
-    </v-layout>
+        </v-col>
+        </v-row>
+    </v-container>
 </template>
 <script>
   import {mapActions, mapGetters, mapState} from 'vuex'
@@ -27,7 +30,8 @@
   export default {
     name: 'OrganizationSelector',
     props: {
-      'lang': {required: false, default: null},
+      lang: {required: false, default: null},
+      internalLabel: {default: false, type: Boolean},
     },
     computed: {
       ...mapState({
@@ -45,6 +49,11 @@
           this.$router.push({name: 'home'}).catch(() => {}) // catch but ignore -
           // it is harmless (https://github.com/vuejs/vue-router/issues/2873)
         }
+      },
+      label () {
+        if (this.internalLabel)
+          return this.$t('organization')
+        return null
       }
     },
     methods: {

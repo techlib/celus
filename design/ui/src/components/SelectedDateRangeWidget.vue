@@ -10,9 +10,14 @@ cs:
 
 <template>
 
-    <v-layout align-center>
-        <v-flex class="sc" shrink mr-2>{{ $t('labels.date_range') }}:</v-flex>
-        <v-flex>
+    <v-container>
+        <v-row align="center">
+        <v-col cols="auto" class="py-0" shrink mr-2>
+            <span :class="inputLikeLabel ? 'input-like' : 'sc'">
+                {{ $t('labels.date_range') }}
+            </span><span v-if="!inputLikeLabel">:</span>
+        </v-col>
+        <v-col cols="auto" class="py-0">
             <v-layout column @click="showDialog = true">
                 <v-flex>{{ rangeName }}</v-flex>
                 <v-flex class="small subdued">{{ rangeValueText }}</v-flex>
@@ -34,8 +39,9 @@ cs:
                     </v-card>
                 </v-dialog>
             </v-layout>
-        </v-flex>
-    </v-layout>
+        </v-col>
+        </v-row>
+    </v-container>
 
 </template>
 
@@ -47,6 +53,9 @@ cs:
   export default {
     name: 'SelectedDateRangeWidget',
     components: {DateRangeSelector},
+    props: {
+      inputLikeLabel: {default: false, type: Boolean},
+    },
     data () {
       return {
         showDialog: false,
@@ -94,6 +103,11 @@ cs:
     }
     .subdued {
         color: #888888;
+    }
+
+    span.input-like {
+        color: rgba(0, 0, 0, 0.6);
+        font-size: 0.75rem;
     }
 
 </style>

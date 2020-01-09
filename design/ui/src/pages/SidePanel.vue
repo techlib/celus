@@ -32,6 +32,11 @@
             </v-list>
         </v-toolbar>
 
+        <!-- stuff that should be here on xs displays because it is hidden from the app-bar -->
+        <OrganizationSelector :lang="appLanguage" internal-label class="d-sm-none" />
+        <SelectedDateRangeWidget input-like-label class="d-sm-none" />
+
+        <!-- the navigation menu itself -->
         <v-list class="pt-0" dense v-for="(group, index) in activeGroups" :key="index" subheader>
             <v-subheader>{{ group.title }}</v-subheader>
 
@@ -67,13 +72,17 @@
                 </v-list-item-content>
             </v-list-item>
         </v-list>
+
     </v-navigation-drawer>
 </template>
 <script>
   import { mapGetters, mapState } from 'vuex'
+  import OrganizationSelector from '../components/OrganizationSelector'
+  import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
 
   export default {
     name: 'SidePanel',
+    components: {SelectedDateRangeWidget, OrganizationSelector},
     props: {
       value: {default: true, type: Boolean},
     },
@@ -86,6 +95,7 @@
     computed: {
         ...mapState({
           user: 'user',
+          appLanguage: 'appLanguage',
         }),
         ...mapGetters({
           organization: 'selectedOrganization',
