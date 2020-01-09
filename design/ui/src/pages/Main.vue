@@ -1,6 +1,6 @@
 <template>
     <v-app v-if="!invalidUser">
-        <SidePanel />
+        <SidePanel v-model="showSidePanel" />
 
         <v-app-bar app clipped-left>
             <v-toolbar-title>
@@ -8,22 +8,22 @@
             </v-toolbar-title>
 
             <v-divider
-                    class="mx-3"
+                    class="mx-3 d-none d-md-block"
                     inset
                     vertical
             ></v-divider>
 
-            <OrganizationSelector :lang="appLanguage" />
+            <OrganizationSelector :lang="appLanguage" class="d-none d-md-flex" />
             <v-spacer></v-spacer>
 
-            <SelectedDateRangeWidget />
+            <SelectedDateRangeWidget class="d-none d-md-flex" />
             <v-spacer></v-spacer>
 
             <v-select
                     v-model="appLanguage"
                     :items="['cs','en']"
                     prepend-icon="fa-globe"
-                    class="short"
+                    class="short d-none d-md-flex"
                     shrink
             >
             </v-select>
@@ -59,6 +59,12 @@
                 </v-tooltip>
             </v-toolbar-items>
 
+            <v-btn
+                    @click.stop="showSidePanel=!showSidePanel"
+                    icon
+                    class="d-md-hide">
+                <v-icon>fa fa-bars</v-icon>
+            </v-btn>
         </v-app-bar>
 
         <v-content>
@@ -123,6 +129,7 @@
     data () {
       return {
         navbarExpanded: false,
+        showSidePanel: true,
       }
     },
     computed: {

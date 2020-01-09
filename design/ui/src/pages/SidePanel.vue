@@ -3,7 +3,7 @@
 
 <template>
     <v-navigation-drawer
-            v-model="drawer"
+            v-model="show"
             :mini-variant.sync="mini"
             clipped
             app
@@ -74,10 +74,13 @@
 
   export default {
     name: 'SidePanel',
+    props: {
+      value: {default: true, type: Boolean},
+    },
     data () {
       return {
         mini: false,
-        drawer: true,
+        show: this.value,
       }
     },
     computed: {
@@ -119,6 +122,14 @@
       },
       activeGroups () {
         return this.groups.filter(group => group.show)
+      }
+    },
+    watch: {
+      show () {
+        this.$emit('input', this.show)
+      },
+      value () {
+        this.show = this.value
       }
     }
   }
