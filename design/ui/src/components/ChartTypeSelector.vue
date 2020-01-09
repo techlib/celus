@@ -1,7 +1,7 @@
 <i18n lang="yaml" src="../locales/charts.yaml"></i18n>
 
 <template>
-   <v-btn-toggle v-model="chartTypeIndex" mandatory class="flex-sm-wrap">
+   <v-btn-toggle v-model="chartTypeIndex" mandatory class="flex-wrap">
         <v-btn v-for="(chartType, index) in chartTypes " text :value="index" :key="chartType.pk">
             <v-tooltip bottom v-if="chartType.desc">
                     <template v-slot:activator="{ on }">

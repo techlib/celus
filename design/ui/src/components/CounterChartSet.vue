@@ -19,8 +19,8 @@ cs:
                 color="secondary"
         ></v-progress-linear>
     </div>
-    <v-container fluid v-else class="pb-0">
-        <v-row>
+    <v-container fluid v-else class="pb-0 px-0 px-sm-2">
+        <v-row no-gutters>
             <v-select
                     :items="reportViewsForSelect"
                     item-text="name"
@@ -49,7 +49,7 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <v-col>
+            <v-col class="px-0 px-sm-2">
         <APIChart
                 v-if="selectedReportView && selectedChartType"
                 :type="typeOfChart"

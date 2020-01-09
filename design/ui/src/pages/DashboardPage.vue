@@ -23,7 +23,7 @@ cs:
 </i18n>
 
 <template>
-    <v-container fluid v-if="organizationId">
+    <v-container fluid v-if="organizationId" pa-0 pa-sm-2>
         <!--v-row>
             <v-col>
                 <h1 v-text="$t('pages.dashboard')"></h1>

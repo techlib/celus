@@ -19,7 +19,7 @@ cs:
 </i18n>
 
 <template>
-    <v-container class="ml-0">
+    <v-container class="ml-0 px-2 px-sm-2">
         <v-row no-gutters>
             <v-col>
                 <v-breadcrumbs :items="breadcrumbs" class="pl-0">
@@ -37,14 +37,14 @@ cs:
                 </v-breadcrumbs>
             </v-col>
         </v-row>
-        <v-row>
+        <v-row class="d-none d-sm-block">
             <v-col>
-                <h2 class="mb-4">{{ titleName }}</h2>
+                <h2 class="mb-sm-2">{{ titleName }}</h2>
             </v-col>
         </v-row>
         <v-row>
             <v-col cols="auto">
-                <table class="overview mb-4 elevation-2">
+                <table class="overview elevation-2">
                     <tr v-if="this.platformId">
                         <th>{{ $t('platform') }}</th>
                         <td>{{ platformName }}</td>
@@ -62,7 +62,7 @@ cs:
                 </table>
             </v-col>
             <v-col cols="auto" v-if="title" >
-                <table class="overview mb-4 elevation-2">
+                <table class="overview elevation-2">
                     <tr class="header">
                         <th colspan="2" v-text="$t('interest')"></th>
                     </tr>
@@ -78,7 +78,7 @@ cs:
                 </table>
             </v-col>
             <v-col cols="auto" v-if="availableFromPlatforms">
-                <table class="overview mb-4 elevation-2">
+                <table class="overview elevation-2">
                     <tr class="header">
                         <th colspan="2" v-text="$t('available_from_platforms')"></th>
                     </tr>
