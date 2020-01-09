@@ -28,24 +28,21 @@ This can be accomplished using the Django admin interface.
 1. Navigate to the `SUSHI` app and click on the link to `Sushi fetch attempts`. Here all attempts
    to fetch SUSHI data are stored - regardless of their success.
 
-   .. image:: images/django_admin_sushi_app.png
+   .. image:: images/dja_sushi_app.png
 
 2. In the list of `Sushi fetch attempts` use the right-side panel to filter the fetch attempts
    to the desired set. The `organization` and `platform` filters are most likely to be useful.
 
 3. Once you have the list of attempts narrowed down to the desired platform and organization
    (and possibly using other criteria), check the checkmark on the left of each of the attempts
-   you wish to delete and select the action `Delete selected sushi fetch attempts` from the
-   dropdown menu at the top of the table. Then press the `Go` button just to the side of the
-   dropdown. You will be asked to confirm the deletion of the selected attempts.
+   you wish to delete and select the action `Delete selected attempts including related usage data`
+   from the dropdown menu at the top of the table. Then press the `Go` button just to the side of
+   the dropdown.
 
-   .. image:: images/django_admin_delete_sushi_attempt.png
+   .. image:: images/dja_sushi_attempt_delete.png
 
 Once you have deleted the corresponding SUSHI fetch attempts, the system will automatically
 try to re-download the data for the organizations, platforms and dates you have just cleared up.
 
-The download will take place in the next scheduled download window. The specific delay depends
+The download will take place in the next scheduled download window. The specific timing depends
 on your system settings.
-
-**TODO**: Describe how the above differs when there are already data imported from the SUSHI
-fetch attempts.
