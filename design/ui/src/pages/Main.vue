@@ -23,7 +23,7 @@
                     v-model="appLanguage"
                     :items="['cs','en']"
                     prepend-icon="fa-globe"
-                    class="short d-none d-md-flex"
+                    class="short"
                     shrink
             >
             </v-select>
@@ -187,11 +187,6 @@
 </script>
 
 <style lang="scss">
-
-    .v-select.v-text-field.short input {
-        max-width: 0;
-        min-width: 3rem;
-    }
 
     img.avatar {
         font-size: 1.25rem;
