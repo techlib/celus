@@ -73,9 +73,14 @@ def erms_sync_organizations() -> dict:
         # then we do another batch of cleaning where we
         # filter out organizations without ICO or czechelib id, but keep parents
         # of those with czechelib id
-        clean_records = [org for org in clean_records
-                         if (org['vals'].get('ico') and org['vals'].get('czechelib id')) or
-                         org['id'] in parent_ids]
+        # we also keep organizations which are registred in settings as master organizations
+        clean_records = [
+            org for org in clean_records
+            if (org['vals'].get('ico') and org['vals'].get('czechelib id'))
+            or org['id'] in parent_ids
+            or (org['vals'].get('czechelib id') and
+                org['vals'].get('czechelib id')[0] in settings.MASTER_ORGANIZATIONS)
+            ]
         syncer = OrganizationSyncer(data_source)
         stats = syncer.sync_data(clean_records)
         return stats

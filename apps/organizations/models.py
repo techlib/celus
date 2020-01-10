@@ -13,7 +13,8 @@ class Organization(MPTTModel):
     ext_id = models.PositiveIntegerField(unique=True, help_text='object ID taken from EMRS')
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True,
                             related_name='children')
-    ico = models.PositiveIntegerField(help_text='Business registration number')
+    ico = models.PositiveIntegerField(help_text='Business registration number', null=True,
+                                      blank=True)
     internal_id = models.CharField(max_length=50, unique=True, null=True,
                                    help_text='special ID used for internal purposes')
     name = models.CharField(max_length=250)
