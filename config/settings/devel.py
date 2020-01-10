@@ -17,6 +17,7 @@ MIDDLEWARE += [
 ]
 
 DATABASES['default']['NAME'] = 'ntk_stats2'
+DATABASES['default']['USER'] = 'ntk_stats'
 CACHE_MIDDLEWARE_SECONDS = 1
 
 

@@ -1,5 +1,5 @@
 """
-WSGI config for ntk_stats project.
+WSGI config for Celus project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

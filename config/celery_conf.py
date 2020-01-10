@@ -1,6 +1,6 @@
 from celery import Celery
 
-app = Celery('ntk-stats')
+app = Celery('celus')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
