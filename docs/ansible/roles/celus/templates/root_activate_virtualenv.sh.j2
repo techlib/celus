@@ -1,0 +1,4 @@
+source /etc/profile.d/virtualenvwrapper.sh
+source /usr/local/bin/virtualenvwrapper.sh
+export DJANGO_SETTINGS_MODULE={{ settings_dir }}.settings.{{ settings_version }}
+workon {{ project_name }}

@@ -1,0 +1,27 @@
+DJANGO_SETTINGS_MODULE={{ settings_dir }}.settings.{{ settings_version }}
+
+CELERYD_NODES="normal interest sushi import"
+
+# Absolute or relative path to the 'celery' command:
+CELERY_BIN="/opt/virtualenvs/{{ project_name }}/bin/celery"
+
+# App instance to use
+# comment out this line if you don't use an app
+CELERY_APP="{{ settings_dir }}"
+
+# How to call manage.py
+CELERYD_MULTI="multi"
+
+# Extra command-line arguments to the worker
+CELERYD_OPTS="--time-limit:interest=14400 --time-limit:sushi=14400 --time-limit:import=14400 --time-limit:normal=300 --concurrency:interest=1 --concurrency:import=1 --concurrency:sushi=2 --concurrency:normal=3 -Ofair:normal -Q:normal celery -Q:interest interest -Q:sushi sushi -Q:import import"
+
+
+CELERYD_LOG_LEVEL=debug
+
+# %N will be replaced with the first part of the nodename.
+CELERYD_LOG_FILE="/var/log/celery/%N.log"
+CELERYD_PID_FILE="/var/run/celery/%N.pid"
+
+# If enabled pid and log directories will be created if missing,
+# and owned by the userid/group configured.
+CELERY_CREATE_DIRS=1

@@ -1,0 +1,12 @@
+# force use of Python 3 on the host machine
+ansible_python_interpreter: /usr/bin/python3
+
+project_git_path_base: https://github.com/techlib/
+project_name: celus
+project_branch: master
+ansible_ssh_user: root
+
+# djangoserver configuration
+settings_version: production
+settings_dir: config
+db_name: celus

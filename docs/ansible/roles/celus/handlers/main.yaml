@@ -1,0 +1,11 @@
+- name: restart apache
+  service: name=httpd state=reloaded
+
+- name: reload systemd
+  systemd: daemon_reload=yes name=celery
+
+- name: restart celery
+  service: name=celery state=restarted
+
+- name: restart celerybeat
+  service: name=celerybeat state=restarted

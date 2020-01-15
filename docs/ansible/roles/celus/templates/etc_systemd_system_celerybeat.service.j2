@@ -1,0 +1,21 @@
+[Unit]
+Description=Celery Beat Service
+After=network.target
+
+[Service]
+Type=simple
+User=celery
+Group=celery
+EnvironmentFile=-/etc/conf.d/celerybeat
+WorkingDirectory=/opt/{{ project_name }}
+PIDFile=${CELERYD_PID_FILE}
+RuntimeDirectory=celery
+RuntimeDirectoryMode=0775
+ExecStart=/bin/sh -c '${CELERY_BIN} beat \
+  -A ${CELERY_APP} --pidfile=${CELERYD_PID_FILE} \
+  --logfile=${CELERYD_LOG_FILE} --loglevel=${CELERYD_LOG_LEVEL} ${CELERYBEAT_OPTS}'
+ExecStop=/bin/sh -c '${CELERY_BIN} stopwait beat \
+  --pidfile=${CELERYD_PID_FILE}'
+
+[Install]
+WantedBy=multi-user.target

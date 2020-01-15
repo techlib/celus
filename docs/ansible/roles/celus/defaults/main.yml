@@ -1,0 +1,12 @@
+# base of git repo path - when project_name is added this path, it should form
+# complete path to the project git repo
+# should end with /
+project_git_path_base: https://github.com/techlib/
+
+# default branch to check when getting project data from git
+project_branch: master
+
+# default settings version to use
+settings_version: production
+
+settings_dir: "config"
