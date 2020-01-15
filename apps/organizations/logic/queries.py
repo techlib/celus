@@ -14,14 +14,14 @@ def organization_filter_from_org_id(org_id, user: User, prefix='') -> dict:
     :return:
     """
     if org_id in ('-1', -1):
-        if user.is_from_master_organization:
+        if user.is_superuser or user.is_from_master_organization:
             return {}
         else:
             raise Http404()
     else:
         if type(org_id) is str and not org_id.isdigit():
             raise Http404()
-        if user.is_from_master_organization or \
+        if user.is_superuser or user.is_from_master_organization or \
                 user.accessible_organizations().filter(pk=org_id).exists():
             return {f'{prefix}organization__pk': org_id}
         raise Http404()
