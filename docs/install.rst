@@ -65,6 +65,11 @@ The ansible playbook will do the following:
 
 
 
+TODO + notes
+============
 
+Create symlink::
+
+    /var/www/html/stats/static# ln -s ./ static
 
 
