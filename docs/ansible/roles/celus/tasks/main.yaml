@@ -43,6 +43,11 @@
   tags: celery
 
 # Cron scripts and helpfull stuff
+
+# the following is necessary for the virtualenvwrapper to work correctly
+- name: make sure the 'python' command is available and refers to python3
+  alternatives: name=python path=/usr/bin/python3
+
 - name: create script for root to easily activate virtualenv
   template: src=root_activate_virtualenv.sh.j2 dest=/root/activate_virtualenv.sh
 
