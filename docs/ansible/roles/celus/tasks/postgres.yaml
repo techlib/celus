@@ -1,0 +1,33 @@
+# prepare DB
+- name: ensure PostgreSQL is installed
+  dnf: name=postgresql-server state=latest
+  register: pg_status
+
+- name: initialize the PostgreSQL cluster
+  command: postgresql-setup --initdb
+  when: pg_status.changed
+
+- name: make sure PostgreSQL is running
+  service: name=postgresql state=started enabled=yes
+
+- name: create postgres user
+  postgresql_user: name="{{ db_user }}" password="{{ db_password }}" encrypted=true
+  become: true
+  become_user: postgres
+
+- name: create postgres database
+  postgresql_db: name="{{ db_name }}" encoding=UTF-8 owner="{{ db_user }}" template=template0
+  become: true
+  become_user: postgres
+
+- name: ensure localhost connections use md5 authentication
+  postgresql_pg_hba:
+    dest: "{{ postgres_hba_file }}"
+    method: md5
+    contype: host
+    address: "{{ item }}"
+  loop:
+    - 127.0.0.1/32
+    - ::1/128
+  notify:
+    - reload postgresql

@@ -1,163 +1,56 @@
-  - name: make sure some basic applications are installed
-    dnf: name="{{ item }}" state=present
-    loop:
-      - git
+- name: make sure some basic applications are installed
+  dnf:
+    state: latest
+    name:
+      - git   # to get source from GIT
+      - sudo  # to be able to create the PostgreSQL database
+      - python3-psycopg2  # to work with PostgreSQL from ansible
+      - redis  # used for caching by the system
 
-  - name: ensure virtualenv and helpers are installed
-    pip: name=virtualenvwrapper
+- name: start the redis server
+  service: name=redis state=started enabled=yes
 
-  - name: activate virtualenvwrapper
-    template: src=etc_profiled_virtualenvwrapper.sh.j2 dest=/etc/profile.d/virtualenvwrapper.sh
+- name: ensure virtualenv and helpers are installed
+  pip: name=virtualenvwrapper
 
-  - name: create backup directory for postgres database
-    file: path=/root/backup group=root mode="u=rwx" state=directory
+- name: activate virtualenvwrapper
+  template: src=etc_profiled_virtualenvwrapper.sh.j2 dest=/etc/profile.d/virtualenvwrapper.sh
 
-  - name: create daily backup script for postgres database
-    template: src=etc_cron_daily_backup_db.j2 dest=/etc/cron.daily/backup_{{ db_name }}_db mode=u=rwx,g=rx,o=rx
+- name: get project source files from git
+  git: repo={{ project_git_path_base }}{{ project_name }}.git dest=/opt/{{ project_name }} accept_hostkey=true version={{ project_branch }} force=yes
+  tags: git_update
+  notify:
+    - restart apache
+    - restart celery
+    - restart celerybeat
 
-  - name: get project source files from git
-    git: repo={{ project_git_path_base }}{{ project_name }}.git dest=/opt/{{ project_name }} accept_hostkey=true version={{ project_branch }} force=yes
-    tags: git_update
-    notify:
-      - restart apache
-      - restart celery
-      - restart celerybeat
+- name: install project python dependencies into virtualenv
+  pip: requirements=/opt/{{ project_name }}/requirements/{{ settings_version }}.txt virtualenv=/opt/virtualenvs/{{ project_name }} chdir=/opt/{{ project_name }} virtualenv_python=python3 extra_args=-U
+  tags: git_update
 
-  - name: install project python dependencies into virtualenv
-    pip: requirements=/opt/{{ project_name }}/requirements/{{ settings_version }}.txt virtualenv=/opt/virtualenvs/{{ project_name }} chdir=/opt/{{ project_name }} virtualenv_python=python3 extra_args=-U
-    tags: git_update
+# postgres
+- name: prepare PostgreSQL database
+  include: postgres.yaml
+  tags: postgres
 
-  - name: create secret settings file
-    template: src=secret_settings.json.j2 dest=/opt/{{ project_name }}/{{ settings_dir }}/settings/secret_settings.json
+# main Django related stuff
+- name: install and set up Django
+  include: django.yaml
 
-  # continue with django
-  - name: apply django migrations
-    django_manage: command=migrate app_path=/opt/{{ project_name }} virtualenv=/opt/virtualenvs/{{ project_name }} settings={{ settings_dir }}.settings.{{ settings_version }}
-    tags: git_update
+# all things related to Celery
+- name: install and set up Celery
+  include: celery.yaml
+  tags: celery
 
-  - name: create initial reversion revisions
-    django_manage: command=createinitialrevisions app_path=/opt/{{ project_name }} virtualenv=/opt/virtualenvs/{{ project_name }} settings={{ settings_dir }}.settings.{{ settings_version }}
-    tags: git_update
+# Cron scripts and helpfull stuff
+- name: create script for root to easily activate virtualenv
+  template: src=root_activate_virtualenv.sh.j2 dest=/root/activate_virtualenv.sh
 
-  - name: make sure media dir exists
-    file: path=/var/www/{{ project_name }}/media group=apache mode="g=rwx" state=directory
+- name: create dailycron script for django sessions cleanup
+  template: src=etc_cron_daily_cleanup_django_sessions.j2 dest=/etc/cron.daily/cleanup_django_sessions mode=u=rwx,g=rx,o=rx
 
-  - name: make sure media subdirs exists
-    file: path=/var/www/{{ project_name }}/media/{{ item }} group=apache mode="g=rwx" state=directory
-    loop: "{{ media_subdirs }}"
-    tags: git_update
+- name: create backup directory for postgres database
+  file: path=/root/backup group=root mode="u=rwx" state=directory
 
-  - name: make sure static dir exists
-    file: path=/var/www/{{ project_name }}/static group=apache mode="g=rx" state=directory
-    tags: git_update
-
-  - name: collect django static files
-    django_manage: command=collectstatic app_path=/opt/{{ project_name }} virtualenv=/opt/virtualenvs/{{ project_name }} settings={{ settings_dir }}.settings.{{ settings_version }}
-    tags: git_update
-
-  - name: fix access rights to project dir
-    file: path=/opt/{{ project_name }} group=apache mode="g=rwx"
-
-  - name: fix access rights to project settings dir
-    file: path=/opt/{{ project_name }}/{{ settings_dir }} group=apache mode="g=rwx"
-
-  - name: fix access rights to debug logfile
-    file: path=/opt/{{ project_name }}/debug.log group=apache mode="g=rw" state=touch
-
-  - name: fix access rights to error logfile
-    file: path=/opt/{{ project_name }}/error.log group=apache mode="g=rw" state=touch
-
-  - name: create dailycron script for django sessions cleanup
-    template: src=etc_cron_daily_cleanup_django_sessions.j2 dest=/etc/cron.daily/cleanup_django_sessions mode=u=rwx,g=rx,o=rx
-
-  # PREPARE Celery
-  # intermediate step before celery becomes part of all requirements
-
-  - name: create user celery
-    user: name=celery comment="User for the celery daemon" shell=/bin/false
-    tags: celery
-
-  - name: install celery
-    pip: name=celery virtualenv=/opt/virtualenvs/{{ project_name }}
-    tags: celery
-    notify:
-      - restart celery
-
-  - name: make sure /var/run/celery/ exists
-    file: path=/var/run/celery/ state=directory owner=celery
-    tags: celery
-
-  - name: make sure /etc/conf.d/ exists
-    file: path=/etc/conf.d/ state=directory owner=root
-    tags: celery
-
-  - name: create celery default configuration
-    template: src=etc_confd_celery.j2 dest=/etc/conf.d/celery mode=u=rw,g=r,o=r
-    tags: celery
-    notify:
-      - restart celery
-
-  - name: create celery init script for systemd
-    template: src=etc_systemd_system_celery.service.j2 dest=/etc/systemd/system/celery.service mode=u=rw,g=r,o=r
-    tags: celery
-    register: systemd_initscript
-    notify:
-      - restart celery
-
-  - name: reload systemd if needed
-    systemd: daemon_reload=yes name=celery
-    tags: celery
-    when: systemd_initscript.changed
-
-  - name: create celerybeat default configuration
-    template: src=etc_confd_celerybeat.j2 dest=/etc/conf.d/celerybeat mode=u=rw,g=r,o=r
-    tags: celery
-    notify:
-      - restart celerybeat
-
-  - name: create celerybeat init script
-    template: src=etc_systemd_system_celerybeat.service.j2 dest=/etc/systemd/system/celerybeat.service mode=u=rw,g=r,o=r
-    tags: celery
-    register: systemd_initscript
-    notify:
-      - restart celerybeat
-
-  - name: reload systemd if needed
-    systemd: daemon_reload=yes name=celery
-    tags: celery
-    when: systemd_initscript.changed
-
-  - name: ensure celery group exists
-    group: name=celery state=present
-    tags: celery
-
-  - name: create celery user
-    user: name=celery comment="Celery" group=celery shell=/bin/bash createhome=no groups=apache
-    tags: celery
-
-  - name: create celery log directory
-    file: path=/var/log/celery state=directory owner=celery
-    tags: celery
-
-  - name: start celery daemon
-    service: name=celery state=started
-    tags: celery
-
-  - name: ensure celery daemon is enabled
-    service: name=celery enabled=yes
-    tags: celery
-
-  - name: start celerybeat daemon
-    service: name=celerybeat state=started
-    tags: celery
-
-  - name: ensure celerybeat daemon is enabled
-    service: name=celerybeat enabled=yes
-    tags: celery
-
-   # / END OF CELERY
-
-  - name: create script for root to easily activate virtualenv
-    template: src=root_activate_virtualenv.sh.j2 dest=/root/activate_virtualenv.sh
-
-
+- name: create daily backup script for postgres database
+  template: src=etc_cron_daily_backup_db.j2 dest=/etc/cron.daily/backup_{{ db_name }}_db mode=u=rwx,g=rx,o=rx

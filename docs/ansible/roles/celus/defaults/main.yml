@@ -10,3 +10,10 @@ project_branch: master
 settings_version: production
 
 settings_dir: "config"
+
+# the name of the PostgreSQL database user to make owner of the database
+# should match django settings
+db_user: "{{ db_name }}"
+
+
+postgres_hba_file: "/var/lib/pgsql/data/pg_hba.conf"

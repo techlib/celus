@@ -3,10 +3,19 @@ ansible_python_interpreter: /usr/bin/python3
 
 project_git_path_base: https://github.com/techlib/
 project_name: celus
-project_branch: master
+project_branch: devel
 ansible_ssh_user: root
 
 # djangoserver configuration
 settings_version: production
 settings_dir: config
 db_name: celus
+
+# secret stuff
+# this stuff is here for demonstration purposes. In production, you would probably want to
+# use ansible vault to store the following setting, but this is outside the scope of this
+# example file
+# IMPORTANT: The following two settings should be different between different machines
+#            and the values here should not be stored in GIT or anywhere public
+django_secret_key: "Use something long like 0OfTJP7Rjctguk1DkKJXD8UQXYaX7nbt but longer"
+db_password: "Good and strong password"

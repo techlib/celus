@@ -9,3 +9,6 @@
 
 - name: restart celerybeat
   service: name=celerybeat state=restarted
+
+- name: reload postgresql
+  service: name=postgresql state=reloaded

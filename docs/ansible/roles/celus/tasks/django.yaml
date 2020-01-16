@@ -1,0 +1,28 @@
+# Django
+- name: create secret settings file
+  template: src=secret_settings.json.j2 dest=/opt/{{ project_name }}/{{ settings_dir }}/settings/secret_settings.json
+
+- name: apply django migrations
+  django_manage: command=migrate app_path=/opt/{{ project_name }} virtualenv=/opt/virtualenvs/{{ project_name }} settings={{ settings_dir }}.settings.{{ settings_version }}
+  tags: git_update
+
+- name: create initial reversion revisions
+  django_manage: command=createinitialrevisions app_path=/opt/{{ project_name }} virtualenv=/opt/virtualenvs/{{ project_name }} settings={{ settings_dir }}.settings.{{ settings_version }}
+  tags: git_update
+
+- name: make sure media dir exists
+  file: path=/var/www/{{ project_name }}/media group=apache mode="g=rwx" state=directory
+
+- name: make sure static dir exists
+  file: path=/var/www/{{ project_name }}/static group=apache mode="g=rx" state=directory
+  tags: git_update
+
+- name: collect django static files
+  django_manage: command=collectstatic app_path=/opt/{{ project_name }} virtualenv=/opt/virtualenvs/{{ project_name }} settings={{ settings_dir }}.settings.{{ settings_version }}
+  tags: git_update
+
+- name: fix access rights to project dir
+  file: path=/opt/{{ project_name }} group=apache mode="g=rx"
+
+- name: fix access rights to project settings dir
+  file: path=/opt/{{ project_name }}/{{ settings_dir }} group=apache mode="g=rx"

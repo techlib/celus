@@ -1,0 +1,83 @@
+# Celery related stuff
+
+- name: create user celery
+  user: name=celery comment="User for the celery daemon" shell=/bin/false
+  tags: celery
+
+- name: install celery
+  pip: name=celery virtualenv=/opt/virtualenvs/{{ project_name }}
+  tags: celery
+  notify:
+    - restart celery
+
+- name: make sure /var/run/celery/ exists
+  file: path=/var/run/celery/ state=directory owner=celery
+  tags: celery
+
+- name: make sure /etc/conf.d/ exists
+  file: path=/etc/conf.d/ state=directory owner=root
+  tags: celery
+
+- name: create celery default configuration
+  template: src=etc_confd_celery.j2 dest=/etc/conf.d/celery mode=u=rw,g=r,o=r
+  tags: celery
+  notify:
+    - restart celery
+
+- name: create celery init script for systemd
+  template: src=etc_systemd_system_celery.service.j2 dest=/etc/systemd/system/celery.service mode=u=rw,g=r,o=r
+  tags: celery
+  register: systemd_initscript
+  notify:
+    - restart celery
+
+- name: reload systemd if needed
+  systemd: daemon_reload=yes name=celery
+  tags: celery
+  when: systemd_initscript.changed
+
+- name: create celerybeat default configuration
+  template: src=etc_confd_celerybeat.j2 dest=/etc/conf.d/celerybeat mode=u=rw,g=r,o=r
+  tags: celery
+  notify:
+    - restart celerybeat
+
+- name: create celerybeat init script
+  template: src=etc_systemd_system_celerybeat.service.j2 dest=/etc/systemd/system/celerybeat.service mode=u=rw,g=r,o=r
+  tags: celery
+  register: systemd_initscript
+  notify:
+    - restart celerybeat
+
+- name: reload systemd if needed
+  systemd: daemon_reload=yes name=celery
+  tags: celery
+  when: systemd_initscript.changed
+
+- name: ensure celery group exists
+  group: name=celery state=present
+  tags: celery
+
+- name: create celery user
+  user: name=celery comment="Celery" group=celery shell=/bin/bash createhome=no groups=apache
+  tags: celery
+
+- name: create celery log directory
+  file: path=/var/log/celery state=directory owner=celery
+  tags: celery
+
+- name: start celery daemon
+  service: name=celery state=started
+  tags: celery
+
+- name: ensure celery daemon is enabled
+  service: name=celery enabled=yes
+  tags: celery
+
+- name: start celerybeat daemon
+  service: name=celerybeat state=started
+  tags: celery
+
+- name: ensure celerybeat daemon is enabled
+  service: name=celerybeat enabled=yes
+  tags: celery
