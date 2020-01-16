@@ -3,14 +3,15 @@
 <template>
     <v-container align-baseline>
         <v-row align="baseline">
-        <v-col v-if="!internalLabel" cols="auto" class="sc" shrink mr-2>{{ $t('organization') }}:</v-col>
-        <v-col cols="auto" class="py-0">
+        <v-col v-if="!internalLabel" cols="auto" class="sc px-0" shrink>{{ $t('organization') }}:</v-col>
+        <v-col cols="auto" :class="{'py-0': !internalLabel, 'mt-3': internalLabel}">
             <v-autocomplete
                     v-model="orgId"
                     :items="items"
                     item-text="name"
                     item-value="pk"
                     clearable
+                    clear-icon="fa fa-times"
                     eager
                     :menu-props="{width: '800px'}"
                     :filter="filter"

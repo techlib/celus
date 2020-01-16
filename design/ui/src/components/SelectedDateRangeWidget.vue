@@ -10,9 +10,9 @@ cs:
 
 <template>
 
-    <v-container>
+    <v-container ml-3>
         <v-row align="center">
-        <v-col cols="auto" class="py-0" shrink mr-2>
+        <v-col cols="auto" class="pa-0" shrink>
             <span :class="inputLikeLabel ? 'input-like' : 'sc'">
                 {{ $t('labels.date_range') }}
             </span><span v-if="!inputLikeLabel">:</span>

@@ -3,7 +3,7 @@
         <SidePanel v-model="showSidePanel" />
 
         <v-app-bar app clipped-left>
-            <v-toolbar-title>
+            <v-toolbar-title class="flex-shrink-0">
                 <img src="../assets/czechelib-stats-64.svg" alt="CzechELib stats">
             </v-toolbar-title>
 
@@ -13,10 +13,10 @@
                     vertical
             ></v-divider>
 
-            <OrganizationSelector :lang="appLanguage" class="d-none d-md-flex" />
+            <OrganizationSelector internal-label :lang="appLanguage" class="d-none d-md-flex" />
             <v-spacer></v-spacer>
 
-            <SelectedDateRangeWidget class="d-none d-md-flex" />
+            <SelectedDateRangeWidget input-like-label class="d-none d-md-flex" />
             <v-spacer></v-spacer>
 
             <v-select
@@ -27,7 +27,9 @@
                     shrink
             >
             </v-select>
-            <v-toolbar-items class="hidden-sm-and-down">
+
+            <!-- user icon -->
+            <v-toolbar-items>
                 <v-divider
                         class="mx-3"
                         inset

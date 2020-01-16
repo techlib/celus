@@ -33,8 +33,13 @@
         </v-toolbar>
 
         <!-- stuff that should be here on xs displays because it is hidden from the app-bar -->
-        <OrganizationSelector :lang="appLanguage" internal-label class="d-sm-none" />
-        <SelectedDateRangeWidget input-like-label class="d-sm-none" />
+        <OrganizationSelector :lang="appLanguage" internal-label class="d-md-none" />
+        <SelectedDateRangeWidget input-like-label class="d-md-none" />
+
+        <v-divider
+                class="d-md-none"
+        ></v-divider>
+
 
         <!-- the navigation menu itself -->
         <v-list class="pt-0" dense v-for="(group, index) in activeGroups" :key="index" subheader>
