@@ -5,8 +5,8 @@ LIVE_ERMS_AUTHENTICATION = True
 
 DEBUG = False
 
-STATIC_ROOT = '/var/www/html/stats/static/'
-MEDIA_ROOT = '/var/www/html/stats/media/'
+STATIC_ROOT = '/var/www/celus/static/'
+MEDIA_ROOT = '/var/www/celus/media/'
 
 ADMINS = (
     ("Beda Kosata", "beda@bigdigdata.com"),

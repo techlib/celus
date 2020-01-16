@@ -15,7 +15,6 @@ Installation instructions presume that `Apache` webserver is already installed a
 to serve the hostname that you will use for the Celus system. In case `shibboleth` is used
 for authentication, it should also be set up.
 
->>> yum install httpd
 
 Python
 ------
@@ -55,7 +54,7 @@ The ansible playbook will do the following:
   background jobs like downloading SUSHI data, etc.
 * install the Celus system from the git repository under ``/opt/celus/`` (you can configure the
   git branch you want to use)
-* create PostgreSQL database for the Celus app
+* create PostgreSQL database for the Celus app with the configured username and password
 * configure the Django installation
 * create cron scripts in ``/etc/cron.daily/`` to backup the database and downloaded SUSHI data
   under ``/root/backup/`` directory.
@@ -63,6 +62,11 @@ The ansible playbook will do the following:
   (Use ``. activate_virtualenv.sh`` to activate the virtual Python environment under which Celus is
   used when you want to run management commands from the command line on the server.)
 
+
+Running the playbook
+--------------------
+
+>>> ansible-playbook celus.yaml -i example.com,
 
 
 TODO + notes

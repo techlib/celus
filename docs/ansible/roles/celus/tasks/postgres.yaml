@@ -31,3 +31,6 @@
     - ::1/128
   notify:
     - reload postgresql
+
+- name: flush handlers to ensure postgresql uses current hba settings
+  meta: flush_handlers
