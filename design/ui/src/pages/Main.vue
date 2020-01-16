@@ -3,8 +3,8 @@
         <SidePanel v-model="showSidePanel" />
 
         <v-app-bar app clipped-left>
-            <v-toolbar-title class="flex-shrink-0">
-                <img src="../assets/czechelib-stats-64.svg" alt="CzechELib stats">
+            <v-toolbar-title class="flex-sm-shrink-0">
+                <img src="../assets/czechelib-stats-64.svg" alt="CzechELib stats" id="logo-image">
             </v-toolbar-title>
 
             <v-divider
@@ -192,6 +192,12 @@
 
     img.avatar {
         font-size: 1.25rem;
+    }
+
+    #logo-image {
+        @media only screen and (max-width:600px) {
+            width: 20vw;
+        }
     }
 
     section.header {
