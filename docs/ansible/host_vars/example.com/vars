@@ -12,10 +12,16 @@ settings_dir: config
 db_name: celus
 
 # secret stuff
-# this stuff is here for demonstration purposes. In production, you would probably want to
-# use ansible vault to store the following setting, but this is outside the scope of this
+# The following data are stored in the secret_settings.json file which is not part
+# of GIT and only exists on the deployment server
+#
+# This actual values here are for demonstration purposes. In production, you would probably want to
+# use ansible vault to store the following settings, but this is outside the scope of this
 # example file
 # IMPORTANT: The following two settings should be different between different machines
 #            and the values here should not be stored in GIT or anywhere public
 django_secret_key: "Use something long like 0OfTJP7Rjctguk1DkKJXD8UQXYaX7nbt but longer"
 db_password: "Good and strong password"
+# the ERMS url may contain a secret portion for increased security. Because of this it is
+# also stored in the secret_settings.json file
+erms_url: "https://example.com/api/"
