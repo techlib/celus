@@ -22,6 +22,8 @@ sources which do not offer this API.
 
    admin.rst
    user.rst
+   install.rst
+   server-maintenance.rst
 
 
 Indices and tables
