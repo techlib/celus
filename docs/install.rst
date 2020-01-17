@@ -87,7 +87,7 @@ for individual hosts lives. For each host that you wish to configure, you need t
 directory with the corresponding name and a ``vars`` file inside that.
 
 For convenience, a sample configuration is provided with the `Celus` source code in the
-``example.com`` dir under ``host_vars/``. You can copy this configuration to your hosts config::
+``example.com`` dir under ``host_vars/``. You can copy this configuration to your hosts config:
 
 >>> cd host_vars
 >>> cp -r example.com my.domain.org
@@ -101,9 +101,9 @@ not tweek these.
 Running the playbook
 --------------------
 
-From the directory ``docs/ansible`` run the following command::
+From the directory ``docs/ansible`` run the following command:
 
-    ansible-playbook celus.yaml -i example.com,
+>>> ansible-playbook celus.yaml -i example.com,
 
 *Note: mind the comma (,) after the name of the host.*
 
@@ -135,7 +135,7 @@ many things that need to be set up there besides `Celus`. Below are examples of 
 `Celus` with Apache.
 
 Celus (as a Django application) uses WSGI to integrate with the server. We use the ``mod_wsgi``
-Apache module to accomplish this. At first you need to install the module::
+Apache module to accomplish this. At first you need to install the module:
 
 >>> yum install python3-mod_wsgi
 
@@ -216,7 +216,7 @@ Creating initial superuser account
 
 In order to log in into the `Celus` administration system, where you can configure most of the
 system, like add users, define report types, etc., you need a superuser account. To create one,
-you need to use the command line on the server and a Django management command ``createsuperuser``::
+you need to use the command line on the server and a Django management command ``createsuperuser``:
 
 >>> cd /root/
 >>> source activate_virtualenv.sh

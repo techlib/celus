@@ -15,7 +15,7 @@ maintenance, etc. - it is good to let the users know and disable the normal fron
 
 To do this, there is a special ``maintenance.html`` page ready for you. You just have to swap
 the normal ``index.html`` file in the static files deployment directory
-(probably ``/var/www/html/celus/static/``) for the ``maintenance.html`` file::
+(probably ``/var/www/html/celus/static/``) for the ``maintenance.html`` file:
 
 >>> cp index.html index.html.bak
 >>> cp maintenance.html index.html
@@ -37,13 +37,13 @@ running Django management commands. Because `Celus` is installed in its own virt
 environment, you need to activate it first in order for the commands to work properly.
 
 For this purpose, the Ansible installation playbook creates the file ``activate_virtualenv.sh``
-under ``/root``. In order to activate the virtual environment, you must "source" this file::
+under ``/root``. In order to activate the virtual environment, you must "source" this file:
 
 >>> source activate_virtualenv.sh
 
 After that, you should see the string ``(celus)`` in front of the command line prompt. This shows
 that the ``celus`` virtual environment is active. After that you may issue Django management
-commands::
+commands:
 
 >>> cd /opt/celus/
 >>> python manage.py XXX
