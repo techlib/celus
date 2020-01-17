@@ -1,0 +1,5504 @@
+[
+{
+  "model": "charts.reportdataview",
+  "pk": 1,
+  "fields": {
+    "base_report_type": 1,
+    "short_name": "TR_JR1",
+    "name": "Counter 5 - Journal Report 1",
+    "name_en": "Counter 5 - Journal Report 1",
+    "name_cs": "Counter 5 - Journal Report 1",
+    "desc": "Journal Requests (Excluding Open Access Gold)",
+    "desc_en": "Journal Requests (Excluding Open Access Gold)",
+    "desc_cs": "Po\u017eadavky na \u010dasopisy (bez Open Access Gold)",
+    "source": null,
+    "metric_allowed_values": [
+      "Total_Item_Requests"
+    ],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 10
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 2,
+  "fields": {
+    "base_report_type": 1,
+    "short_name": "TR_BR1",
+    "name": "Counter 5 - Book Report 1",
+    "name_en": "Counter 5 - Book Report 1",
+    "name_cs": "Counter 5 - Book Report 1",
+    "desc": "Book Requests (Excluding Open Access Gold)",
+    "desc_en": "Book Requests (Excluding Open Access Gold)",
+    "desc_cs": "Po\u017eadavky na knihy (bez Open Access Gold)",
+    "source": null,
+    "metric_allowed_values": [
+      "Total_Item_Requests"
+    ],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 20
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 3,
+  "fields": {
+    "base_report_type": 1,
+    "short_name": "TR_BR2",
+    "name": "Counter 5 - Book Report 2",
+    "name_en": "Counter 5 - Book Report 2",
+    "name_cs": "Counter 5 - Book Report 2",
+    "desc": "Book Access Denied",
+    "desc_en": "Book Access Denied",
+    "desc_cs": "Knihy - odm\u00edtnut\u00fd p\u0159\u00edstup",
+    "source": null,
+    "metric_allowed_values": [
+      "Limit_Exceeded",
+      "No_License"
+    ],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 24
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 4,
+  "fields": {
+    "base_report_type": 1,
+    "short_name": "TR_BR3",
+    "name": "Counter 5 - Book Report 3",
+    "name_en": "Counter 5 - Book Report 3",
+    "name_cs": "Counter 5 - Book Report 3",
+    "desc": "Book Usage by Access Type",
+    "desc_en": "Book Usage by Access Type",
+    "desc_cs": "Vyu\u017e\u00edvanost knih podle typu p\u0159\u00edstupu",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": 1,
+    "is_standard_view": true,
+    "position": 26
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 5,
+  "fields": {
+    "base_report_type": 1,
+    "short_name": "TR_JR3",
+    "name": "Counter 5 - Journal Report 3",
+    "name_en": "Counter 5 - Journal Report 3",
+    "name_cs": "Counter 5 - Journal Report 3",
+    "desc": "Journal Usage by Access Type",
+    "desc_en": "Journal Usage by Access Type",
+    "desc_cs": "Vyu\u017e\u00edvanost \u010dasopis\u016f podle typu p\u0159\u00edstupu",
+    "source": null,
+    "metric_allowed_values": [
+      "Total_Item_Investigations",
+      "Total_Item_Requests",
+      "Unique_Item_Investigations",
+      "Unique_Item_Requests"
+    ],
+    "primary_dimension": 1,
+    "is_standard_view": true,
+    "position": 12
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 6,
+  "fields": {
+    "base_report_type": 3,
+    "short_name": "JR1",
+    "name": "Counter 4 - Journal Report 1",
+    "name_en": "Counter 4 - Journal Report 1",
+    "name_cs": "Counter 4 - Journal Report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 11
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 7,
+  "fields": {
+    "base_report_type": 1,
+    "short_name": "TR_FULL",
+    "name": "Title Report - Full",
+    "name_en": "Title Report - Full",
+    "name_cs": "Title Report - Full",
+    "desc": "Fully customizable view of the COUNTER 5 Title Report",
+    "desc_en": "Fully customizable view of the COUNTER 5 Title Report",
+    "desc_cs": "Pln\u011b variabiln\u00ed pohled na COUNTER 5 Title Report",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": false,
+    "position": 100
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 8,
+  "fields": {
+    "base_report_type": 30,
+    "short_name": "interest_view",
+    "name": "Interest",
+    "name_en": "Interest",
+    "name_cs": "Z\u00e1jem",
+    "desc": "Total interest extracted from individual reports",
+    "desc_en": "Total interest extracted from individual reports",
+    "desc_cs": "Celkov\u00fd z\u00e1jem z\u00edskan\u00fd z d\u00edl\u010d\u00edch zpr\u00e1v",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 9,
+  "fields": {
+    "base_report_type": 2,
+    "short_name": "DR_FULL",
+    "name": "Database Report - Full",
+    "name_en": "Database Report - Full",
+    "name_cs": "Database Report - Full",
+    "desc": "Complete view of the COUNTER 5 Database Report",
+    "desc_en": "Complete view of the COUNTER 5 Database Report",
+    "desc_cs": "Kompletn\u00ed pohled na COUNTER 5 Database Report",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": false,
+    "position": 110
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 10,
+  "fields": {
+    "base_report_type": 24,
+    "short_name": "PR_P1",
+    "name": "Counter 5 - Platform report 1",
+    "name_en": "Counter 5 - Platform report 1",
+    "name_cs": "Counter 5 - Platform report 1",
+    "desc": "Standard \"Platform usage\" view",
+    "desc_en": "Standard \"Platform usage\" view",
+    "desc_cs": "Standardn\u00ed pohled \"Platform usage\"",
+    "source": null,
+    "metric_allowed_values": [
+      "Searches_Platform",
+      "Total_Item_Requests",
+      "Unique_Item_Requests",
+      "Unique_Title_Requests"
+    ],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 50
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 11,
+  "fields": {
+    "base_report_type": 2,
+    "short_name": "DR_D1",
+    "name": "Counter 5 - Database report 1",
+    "name_en": "Counter 5 - Database report 1",
+    "name_cs": "Counter 5 - Database report 1",
+    "desc": "Standard \"Database Search and Item Usage\" view",
+    "desc_en": "Standard \"Database Search and Item Usage\" view",
+    "desc_cs": "Standardn\u00ed pohled \"Database Search and Item Usage\"",
+    "source": null,
+    "metric_allowed_values": [
+      "Searches_Automated",
+      "Searches_Federated",
+      "Searches_Regular",
+      "Total_Item_Investigations",
+      "Total_Item_Requests"
+    ],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 30
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 12,
+  "fields": {
+    "base_report_type": 2,
+    "short_name": "DR_D2",
+    "name": "Counter 5 - Database report 2",
+    "name_en": "Counter 5 - Database report 2",
+    "name_cs": "Counter 5 - Database report 2",
+    "desc": "Standard \"Database Access Denied\" view",
+    "desc_en": "Standard \"Database Access Denied\" view",
+    "desc_cs": "Standardn\u00ed pohled \"Database Access Denied\"",
+    "source": null,
+    "metric_allowed_values": [
+      "Limit_Exceeded",
+      "No_License"
+    ],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 31
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 13,
+  "fields": {
+    "base_report_type": 24,
+    "short_name": "PR_FULL",
+    "name": "Platform Report - Full",
+    "name_en": "Platform Report - Full",
+    "name_cs": "Platform Report - Full",
+    "desc": "Full view of the COUNTER 5 Platform Report",
+    "desc_en": "Full view of the COUNTER 5 Platform Report",
+    "desc_cs": "Kompletn\u00ed pohled na data COUNTER 5 Platform Report",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": false,
+    "position": 120
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 14,
+  "fields": {
+    "base_report_type": 9,
+    "short_name": "BR2",
+    "name": "Counter 4 - Book Report 2",
+    "name_en": "Counter 4 - Book Report 2",
+    "name_cs": "Counter 4 - Book Report 2",
+    "desc": "Number of Successful Section Requests",
+    "desc_en": "Number of Successful Section Requests",
+    "desc_cs": "Po\u010det \u00fasp\u011b\u0161n\u00fdch sta\u017een\u00ed kapitol knih",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 21
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 15,
+  "fields": {
+    "base_report_type": 31,
+    "short_name": "Beck_custom",
+    "name": "Beck - custom",
+    "name_en": "Beck - custom",
+    "name_cs": "Beck - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 60
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 16,
+  "fields": {
+    "base_report_type": 32,
+    "short_name": "Bisnode_custom",
+    "name": "Bisnode - custom",
+    "name_en": "Bisnode - custom",
+    "name_cs": "Bisnode - custom",
+    "desc": "Custom report for the Bisnode platform",
+    "desc_en": "Custom report for the Bisnode platform",
+    "desc_cs": "Vlastn\u00ed druh reportu pro platformu Bisnode",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 61
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 17,
+  "fields": {
+    "base_report_type": 33,
+    "short_name": "CEEOL_custom",
+    "name": "CEEOL - custom",
+    "name_en": "CEEOL - custom",
+    "name_cs": "CEEOL - custom",
+    "desc": "Custom report for the CEEOL platform",
+    "desc_en": "Custom report for the CEEOL platform",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 70
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 18,
+  "fields": {
+    "base_report_type": 34,
+    "short_name": "Knovel_custom",
+    "name": "Knovel - custom",
+    "name_en": "Knovel - custom",
+    "name_cs": "Knovel - custom",
+    "desc": "Custom report for the Knovel platform",
+    "desc_en": "Custom report for the Knovel platform",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 71
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 19,
+  "fields": {
+    "base_report_type": 35,
+    "short_name": "Micromedex_custom",
+    "name": "Micromedex - custom",
+    "name_en": "Micromedex - custom",
+    "name_cs": "Micromedex - custom",
+    "desc": "Custom report for the Micromedex platform",
+    "desc_en": "Custom report for the Micromedex platform",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 72
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 20,
+  "fields": {
+    "base_report_type": 36,
+    "short_name": "Naxos_custom",
+    "name": "Naxos - custom",
+    "name_en": "Naxos - custom",
+    "name_cs": "Naxos - custom",
+    "desc": "Custom report for the Naxos platform",
+    "desc_en": "Custom report for the Naxos platform",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 73
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 21,
+  "fields": {
+    "base_report_type": 37,
+    "short_name": "Reaxys_custom",
+    "name": "Reaxys - custom",
+    "name_en": "Reaxys - custom",
+    "name_cs": "Reaxys - custom",
+    "desc": "Custom report for the Reaxys platform",
+    "desc_en": "Custom report for the Reaxys platform",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 74
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 22,
+  "fields": {
+    "base_report_type": 38,
+    "short_name": "SciFinder_custom",
+    "name": "SciFinder - custom",
+    "name_en": "SciFinder - custom",
+    "name_cs": "SciFinder - custom",
+    "desc": "Custom report for the SciFinder platform",
+    "desc_en": "Custom report for the SciFinder platform",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 75
+  }
+},
+{
+  "model": "charts.reportdataview",
+  "pk": 23,
+  "fields": {
+    "base_report_type": 39,
+    "short_name": "UpToDate_custom",
+    "name": "UpToDate - custom",
+    "name_en": "UpToDate - custom",
+    "name_cs": "UpToDate - custom",
+    "desc": "Custom report for the UpToDate platform",
+    "desc_en": "Custom report for the UpToDate platform",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": true,
+    "position": 76
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 1,
+  "fields": {
+    "report_data_view": 1,
+    "dimension": 3,
+    "allowed_values": [
+      "Journal"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 2,
+  "fields": {
+    "report_data_view": 1,
+    "dimension": 2,
+    "allowed_values": [
+      "Regular"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 3,
+  "fields": {
+    "report_data_view": 1,
+    "dimension": 1,
+    "allowed_values": [
+      "Controlled"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 4,
+  "fields": {
+    "report_data_view": 2,
+    "dimension": 2,
+    "allowed_values": [
+      "Regular"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 5,
+  "fields": {
+    "report_data_view": 2,
+    "dimension": 1,
+    "allowed_values": [
+      "Controlled"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 6,
+  "fields": {
+    "report_data_view": 2,
+    "dimension": 3,
+    "allowed_values": [
+      "Book"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 7,
+  "fields": {
+    "report_data_view": 3,
+    "dimension": 2,
+    "allowed_values": [
+      "Regular"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 8,
+  "fields": {
+    "report_data_view": 3,
+    "dimension": 3,
+    "allowed_values": [
+      "Book"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 9,
+  "fields": {
+    "report_data_view": 4,
+    "dimension": 3,
+    "allowed_values": [
+      "Book"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 10,
+  "fields": {
+    "report_data_view": 4,
+    "dimension": 2,
+    "allowed_values": [
+      "Regular"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 11,
+  "fields": {
+    "report_data_view": 5,
+    "dimension": 2,
+    "allowed_values": [
+      "Regular"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 12,
+  "fields": {
+    "report_data_view": 5,
+    "dimension": 3,
+    "allowed_values": [
+      "Journal"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 13,
+  "fields": {
+    "report_data_view": 10,
+    "dimension": 2,
+    "allowed_values": [
+      "Regular"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 14,
+  "fields": {
+    "report_data_view": 11,
+    "dimension": 2,
+    "allowed_values": [
+      "Regular"
+    ]
+  }
+},
+{
+  "model": "charts.dimensionfilter",
+  "pk": 15,
+  "fields": {
+    "report_data_view": 12,
+    "dimension": 2,
+    "allowed_values": [
+      "Regular"
+    ]
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 1,
+  "fields": {
+    "name": "Metric in time",
+    "name_en": "Metric in time",
+    "name_cs": "Metriky v \u010dase",
+    "desc": "Development of individual metrics in time",
+    "desc_en": "Development of individual metrics in time",
+    "desc_cs": "V\u00fdvoj jednotliv\u00fdch metrik v \u010dase",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "date",
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": "metric",
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 2,
+  "fields": {
+    "name": "Metric comparison",
+    "name_en": "Metric comparison",
+    "name_cs": "Srovn\u00e1n\u00ed metrik",
+    "desc": "Comparison of metrics for the whole time range",
+    "desc_en": "Comparison of metrics for the whole time range",
+    "desc_cs": "Srovn\u00e1n\u00ed metrik pro cel\u00fd \u010dasov\u00fd rozsah",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "metric",
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 3,
+  "fields": {
+    "name": "Data types",
+    "name_en": "Data types",
+    "name_cs": "Typy dat",
+    "desc": "Data type (book, journal, database, ...) comparison",
+    "desc_en": "Data type (book, journal, database, ...) comparison",
+    "desc_cs": "Srovn\u00e1n\u00ed typ\u016f dat (kniha, \u010dasopis, datab\u00e1ze, ...)",
+    "primary_dimension": 3,
+    "primary_implicit_dimension": null,
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 4,
+  "fields": {
+    "name": "Organization comparison",
+    "name_en": "Organization comparison",
+    "name_cs": "Srovn\u00e1n\u00ed organizac\u00ed",
+    "desc": "Comparison of interest between organizations",
+    "desc_en": "Comparison of interest between organizations",
+    "desc_cs": "Srovn\u00e1n\u00ed z\u00e1jmu mezi organizacemi",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "organization",
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": "metric",
+    "chart_type": "h-bar",
+    "ordering": "count",
+    "ignore_organization": true,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 5,
+  "fields": {
+    "name": "Year of publication",
+    "name_en": "Year of publication",
+    "name_cs": "Rok vyd\u00e1n\u00ed",
+    "desc": "Interest split by year of publication and data type",
+    "desc_en": "Interest split by year of publication and data type",
+    "desc_cs": "Z\u00e1jem rozd\u011blen\u00fd podle roku publikace a typu dat",
+    "primary_dimension": 5,
+    "primary_implicit_dimension": null,
+    "secondary_dimension": 3,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 6,
+  "fields": {
+    "name": "Access Type in time",
+    "name_en": "Access Type in time",
+    "name_cs": "Typ p\u0159\u00edstupu v \u010dase",
+    "desc": "Development of Access Type in time",
+    "desc_en": "Development of Access Type in time",
+    "desc_cs": "V\u00fdvoj typu p\u0159\u00edstupu v \u010dase",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "date",
+    "secondary_dimension": 1,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 7,
+  "fields": {
+    "name": "Data Type in time",
+    "name_en": "Data Type in time",
+    "name_cs": "Typ dat v \u010dase",
+    "desc": "Development of Data Type in time",
+    "desc_en": "Development of Data Type in time",
+    "desc_cs": "V\u00fdvoj typu dat v \u010dase",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "date",
+    "secondary_dimension": 3,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 8,
+  "fields": {
+    "name": "Access Type",
+    "name_en": "Access Type",
+    "name_cs": "Typ p\u0159\u00edstupu",
+    "desc": "Comparison of Access Types for the whole time period",
+    "desc_en": "Comparison of Access Types for the whole time period",
+    "desc_cs": "Srovn\u00e1n\u00ed typu p\u0159\u00edstupu pro cel\u00e9 \u010dasov\u00e9 obdob\u00ed",
+    "primary_dimension": 1,
+    "primary_implicit_dimension": null,
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 9,
+  "fields": {
+    "name": "Access Type vs Data Type",
+    "name_en": "Access Type vs Data Type",
+    "name_cs": "Typ p\u0159\u00edstupu podle typu dat",
+    "desc": "Relationship between Access Type (Controlled, Open access) and Data Type",
+    "desc_en": "Relationship between Access Type (Controlled, Open access) and Data Type",
+    "desc_cs": "Vztah mezi typem p\u0159\u00edstupu (kontrolovan\u00fd, open access) a typem dat",
+    "primary_dimension": 3,
+    "primary_implicit_dimension": null,
+    "secondary_dimension": 1,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 10,
+  "fields": {
+    "name": "Section Type",
+    "name_en": "Section Type",
+    "name_cs": "Typ \u010d\u00e1sti",
+    "desc": "Overview of Section Types (book, chapter, article,...) for the whole time range",
+    "desc_en": "Overview of Section Types (book, chapter, article,...) for the whole time range",
+    "desc_cs": "P\u0159ehled typ\u016f \u010d\u00e1sti (kniha, kapitola, \u010dl\u00e1nek,...) za cel\u00e9 obdob\u00ed",
+    "primary_dimension": 4,
+    "primary_implicit_dimension": null,
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 11,
+  "fields": {
+    "name": "Access Method",
+    "name_en": "Access Method",
+    "name_cs": "Zp\u016fsob p\u0159\u00edstupu",
+    "desc": "Overview of Access Methods (Regular, data mining, ...)",
+    "desc_en": "Overview of Access Methods (Regular, data mining, ...)",
+    "desc_cs": "P\u0159ehled zp\u016fsob\u016f p\u0159\u00edstupu (regular, data mining, ...)",
+    "primary_dimension": 2,
+    "primary_implicit_dimension": null,
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 12,
+  "fields": {
+    "name": "Access Type vs Metric",
+    "name_en": "Access Type vs Metric",
+    "name_cs": "Typ p\u0159\u00edstupu podle metriky",
+    "desc": "Relationship between Access Type and Metrics",
+    "desc_en": "Relationship between Access Type and Metrics",
+    "desc_cs": "Vztah mezi typy p\u0159\u00edstupu a metrikami",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "metric",
+    "secondary_dimension": 1,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 13,
+  "fields": {
+    "name": "Typ z\u00e1jmu v \u010dase",
+    "name_en": "Typ z\u00e1jmu v \u010dase",
+    "name_cs": "Typ z\u00e1jmu v \u010dase",
+    "desc": "Development of different interest types in time",
+    "desc_en": "Development of different interest types in time",
+    "desc_cs": "V\u00fdvoj typ\u016f z\u00e1jmu v \u010dase",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "date",
+    "secondary_dimension": 29,
+    "secondary_implicit_dimension": null,
+    "chart_type": "v-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 14,
+  "fields": {
+    "name": "Interest type",
+    "name_en": "Interest type",
+    "name_cs": "Typ z\u00e1jmu",
+    "desc": "Interest split into groups by its type (title, database, ...)",
+    "desc_en": "Interest split into groups by its type (title, database, ...)",
+    "desc_cs": "Z\u00e1jem rozd\u011blen\u00fd do skupin podle typu (title, database, ...)",
+    "primary_dimension": 29,
+    "primary_implicit_dimension": null,
+    "secondary_dimension": null,
+    "secondary_implicit_dimension": "metric",
+    "chart_type": "h-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": false,
+    "scope": ""
+  }
+},
+{
+  "model": "charts.chartdefinition",
+  "pk": 15,
+  "fields": {
+    "name": "Platform comparison",
+    "name_en": "Platform comparison",
+    "name_cs": "Srovn\u00e1n\u00ed platforem",
+    "desc": "Overview of all platforms for which this title is available",
+    "desc_en": "Overview of all platforms for which this title is available",
+    "desc_cs": "P\u0159ehled v\u0161ech platforem, p\u0159es kter\u00e9 je dostupn\u00fd tento titul",
+    "primary_dimension": null,
+    "primary_implicit_dimension": "platform",
+    "secondary_dimension": 29,
+    "secondary_implicit_dimension": null,
+    "chart_type": "h-bar",
+    "ordering": "",
+    "ignore_organization": false,
+    "ignore_platform": true,
+    "scope": "title"
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 1,
+  "fields": {
+    "report_data_view": 1,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 2,
+  "fields": {
+    "report_data_view": 1,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 3,
+  "fields": {
+    "report_data_view": 6,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 4,
+  "fields": {
+    "report_data_view": 7,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 5,
+  "fields": {
+    "report_data_view": 7,
+    "chart_definition": 3,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 6,
+  "fields": {
+    "report_data_view": 8,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 7,
+  "fields": {
+    "report_data_view": 8,
+    "chart_definition": 4,
+    "position": 2
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 9,
+  "fields": {
+    "report_data_view": 1,
+    "chart_definition": 5,
+    "position": 10
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 10,
+  "fields": {
+    "report_data_view": 7,
+    "chart_definition": 5,
+    "position": 10
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 11,
+  "fields": {
+    "report_data_view": 10,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 12,
+  "fields": {
+    "report_data_view": 11,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 13,
+  "fields": {
+    "report_data_view": 12,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 14,
+  "fields": {
+    "report_data_view": 9,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 15,
+  "fields": {
+    "report_data_view": 14,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 16,
+  "fields": {
+    "report_data_view": 7,
+    "chart_definition": 6,
+    "position": 3
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 17,
+  "fields": {
+    "report_data_view": 7,
+    "chart_definition": 8,
+    "position": 4
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 18,
+  "fields": {
+    "report_data_view": 7,
+    "chart_definition": 9,
+    "position": 5
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 19,
+  "fields": {
+    "report_data_view": 7,
+    "chart_definition": 10,
+    "position": 6
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 20,
+  "fields": {
+    "report_data_view": 5,
+    "chart_definition": 6,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 21,
+  "fields": {
+    "report_data_view": 3,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 22,
+  "fields": {
+    "report_data_view": 4,
+    "chart_definition": 6,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 23,
+  "fields": {
+    "report_data_view": 13,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 24,
+  "fields": {
+    "report_data_view": 9,
+    "chart_definition": 11,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 25,
+  "fields": {
+    "report_data_view": 7,
+    "chart_definition": 11,
+    "position": 8
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 26,
+  "fields": {
+    "report_data_view": 4,
+    "chart_definition": 12,
+    "position": 2
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 27,
+  "fields": {
+    "report_data_view": 9,
+    "chart_definition": 7,
+    "position": 2
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 29,
+  "fields": {
+    "report_data_view": 1,
+    "chart_definition": 4,
+    "position": 5
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 30,
+  "fields": {
+    "report_data_view": 6,
+    "chart_definition": 4,
+    "position": 4
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 31,
+  "fields": {
+    "report_data_view": 2,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 32,
+  "fields": {
+    "report_data_view": 15,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 33,
+  "fields": {
+    "report_data_view": 15,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 34,
+  "fields": {
+    "report_data_view": 16,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 35,
+  "fields": {
+    "report_data_view": 16,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 36,
+  "fields": {
+    "report_data_view": 17,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 37,
+  "fields": {
+    "report_data_view": 17,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 38,
+  "fields": {
+    "report_data_view": 18,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 39,
+  "fields": {
+    "report_data_view": 18,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 40,
+  "fields": {
+    "report_data_view": 19,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 41,
+  "fields": {
+    "report_data_view": 19,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 42,
+  "fields": {
+    "report_data_view": 20,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 43,
+  "fields": {
+    "report_data_view": 20,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 44,
+  "fields": {
+    "report_data_view": 21,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 45,
+  "fields": {
+    "report_data_view": 21,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 46,
+  "fields": {
+    "report_data_view": 22,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 47,
+  "fields": {
+    "report_data_view": 22,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 48,
+  "fields": {
+    "report_data_view": 23,
+    "chart_definition": 1,
+    "position": 0
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 49,
+  "fields": {
+    "report_data_view": 23,
+    "chart_definition": 2,
+    "position": 1
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 50,
+  "fields": {
+    "report_data_view": 8,
+    "chart_definition": 13,
+    "position": 4
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 51,
+  "fields": {
+    "report_data_view": 8,
+    "chart_definition": 14,
+    "position": 5
+  }
+},
+{
+  "model": "charts.reportviewtocharttype",
+  "pk": 52,
+  "fields": {
+    "report_data_view": 8,
+    "chart_definition": 15,
+    "position": 20
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 1,
+  "fields": {
+    "short_name": "TR",
+    "name": "Counter 5 - Title report",
+    "name_en": "Counter 5 - Title report",
+    "name_cs": "Counter 5 - Title report",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 2,
+  "fields": {
+    "short_name": "DR",
+    "name": "Counter 5 - Database report",
+    "name_en": "Counter 5 - Database report",
+    "name_cs": "Counter 5 - Database report",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 3,
+  "fields": {
+    "short_name": "JR1",
+    "name": "Counter 4 - Journal Report 1",
+    "name_en": "Counter 4 - Journal Report 1",
+    "name_cs": "Counter 4 - Journal Report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 1
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 4,
+  "fields": {
+    "short_name": "JR1GOA",
+    "name": "Counter 4 - Journal Report 1 Gold Open Access",
+    "name_en": "Counter 4 - Journal Report 1 Gold Open Access",
+    "name_cs": "Counter 4 - Journal Report 1 Gold Open Access",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 1
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 5,
+  "fields": {
+    "short_name": "JR2",
+    "name": "Counter 4 - Journal Report 2",
+    "name_en": "Counter 4 - Journal Report 2",
+    "name_cs": null,
+    "desc": "Access denied",
+    "desc_en": "Access denied",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 1
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 6,
+  "fields": {
+    "short_name": "JR5",
+    "name": "Counter 4 - Journal Report 5",
+    "name_en": "Counter 4 - Journal Report 5",
+    "name_cs": "Counter 4 - Journal Report 5",
+    "desc": "Access by year of publication",
+    "desc_en": "Access by year of publication",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 7,
+  "fields": {
+    "short_name": "JR1a",
+    "name": "Counter 4 - Journal Report 1 - Archive access",
+    "name_en": "Counter 4 - Journal Report 1 - Archive access",
+    "name_cs": "Counter 4 - Journal Report 1 - Archive access",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 1
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 8,
+  "fields": {
+    "short_name": "BR1",
+    "name": "Counter 4 - Book Report 1",
+    "name_en": "Counter 4 - Book Report 1",
+    "name_cs": "Counter 4 - Book Report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 1
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 9,
+  "fields": {
+    "short_name": "BR2",
+    "name": "Counter 4 - Book Report 2",
+    "name_en": "Counter 4 - Book Report 2",
+    "name_cs": "Counter 4 - Book Report 2",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 1
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 10,
+  "fields": {
+    "short_name": "BR3",
+    "name": "Counter 4 - Book Report 3",
+    "name_en": "Counter 4 - Book Report 3",
+    "name_cs": "Counter 4 - Book Report 3",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 1
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 11,
+  "fields": {
+    "short_name": "DB1",
+    "name": "Counter 4 - Database Report 1",
+    "name_en": "Counter 4 - Database Report 1",
+    "name_cs": "Counter 4 - Database Report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 2
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 12,
+  "fields": {
+    "short_name": "DB2",
+    "name": "Counter 4 - Database Report 2",
+    "name_en": "Counter 4 - Database Report 2",
+    "name_cs": "Counter 4 - Database Report 2",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 24,
+  "fields": {
+    "short_name": "PR",
+    "name": "Counter 5 - Platform report",
+    "name_en": "Counter 5 - Platform report",
+    "name_cs": "Counter 5 - Platform report",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 28,
+  "fields": {
+    "short_name": "PR1",
+    "name": "Counter 4 - Platform report 1",
+    "name_en": "Counter 4 - Platform report 1",
+    "name_cs": "Counter 4 - Platform report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": 24
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 30,
+  "fields": {
+    "short_name": "interest",
+    "name": "Interest",
+    "name_en": "Interest",
+    "name_cs": "Z\u00e1jem",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 31,
+  "fields": {
+    "short_name": "Beck_custom",
+    "name": "Beck - custom",
+    "name_en": "Beck - custom",
+    "name_cs": "Beck - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 32,
+  "fields": {
+    "short_name": "Bisnode_custom",
+    "name": "Bisnode - custom",
+    "name_en": "Bisnode - custom",
+    "name_cs": "Bisnode - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 33,
+  "fields": {
+    "short_name": "CEEOL_custom",
+    "name": "CEEOL - custom",
+    "name_en": "CEEOL - custom",
+    "name_cs": "CEEOL - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 34,
+  "fields": {
+    "short_name": "Knovel_custom",
+    "name": "Knovel - custom",
+    "name_en": "Knovel - custom",
+    "name_cs": "Knovel - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 35,
+  "fields": {
+    "short_name": "Micromedex_custom",
+    "name": "Micromedex - custom",
+    "name_en": "Micromedex - custom",
+    "name_cs": "Micromedex - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 36,
+  "fields": {
+    "short_name": "Naxos_custom",
+    "name": "Naxos - custom",
+    "name_en": "Naxos - custom",
+    "name_cs": "Naxos - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 37,
+  "fields": {
+    "short_name": "Reaxys_custom",
+    "name": "Reaxys - custom",
+    "name_en": "Reaxys - custom",
+    "name_cs": "Reaxys - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 38,
+  "fields": {
+    "short_name": "SciFinder_custom",
+    "name": "SciFinder - custom",
+    "name_en": "SciFinder - custom",
+    "name_cs": "SciFinder - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 39,
+  "fields": {
+    "short_name": "UpToDate_custom",
+    "name": "UpToDate - custom",
+    "name_en": "UpToDate - custom",
+    "name_cs": "UpToDate - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.interestgroup",
+  "pk": 1,
+  "fields": {
+    "short_name": "full_text",
+    "name": "Full text",
+    "name_en": "Full text",
+    "name_cs": "Pln\u00fd text",
+    "important": true,
+    "position": 1
+  }
+},
+{
+  "model": "logs.interestgroup",
+  "pk": 2,
+  "fields": {
+    "short_name": "search",
+    "name": "Search",
+    "name_en": "Search",
+    "name_cs": "Hled\u00e1n\u00ed",
+    "important": true,
+    "position": 2
+  }
+},
+{
+  "model": "logs.interestgroup",
+  "pk": 3,
+  "fields": {
+    "short_name": "other",
+    "name": "Other",
+    "name_en": "Other",
+    "name_cs": "Jin\u00e9",
+    "important": false,
+    "position": 10
+  }
+},
+{
+  "model": "logs.interestgroup",
+  "pk": 5,
+  "fields": {
+    "short_name": "full_text_denial",
+    "name": "Denial - full text",
+    "name_en": "Denial - full text",
+    "name_cs": "Odm\u00edtnut\u00ed - pln\u00fd text",
+    "important": false,
+    "position": 4
+  }
+},
+{
+  "model": "logs.interestgroup",
+  "pk": 6,
+  "fields": {
+    "short_name": "search_denial",
+    "name": "Denial - search",
+    "name_en": "Denial - search",
+    "name_cs": "Odm\u00edtnut\u00ed - hled\u00e1n\u00ed",
+    "important": false,
+    "position": 7
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 1,
+  "fields": {
+    "short_name": "Unique_Item_Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 2,
+  "fields": {
+    "short_name": "Total_Item_Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": "Total_Item_Requests",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 3,
+  "fields": {
+    "short_name": "Unique_Item_Investigations",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": false,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 4,
+  "fields": {
+    "short_name": "Total_Item_Investigations",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": false,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 5,
+  "fields": {
+    "short_name": "No_License",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 6,
+  "fields": {
+    "short_name": "Unique_Title_Investigations",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": false,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 7,
+  "fields": {
+    "short_name": "Unique_Title_Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 8,
+  "fields": {
+    "short_name": "FT Article Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": "FT Article Requests",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 9,
+  "fields": {
+    "short_name": "Limit_Exceeded",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 10,
+  "fields": {
+    "short_name": "Searches_Regular",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 11,
+  "fields": {
+    "short_name": "Searches_Automated",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 12,
+  "fields": {
+    "short_name": "Searches_Federated",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 18,
+  "fields": {
+    "short_name": "Searches_Platform",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 19,
+  "fields": {
+    "short_name": "Book Section Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 20,
+  "fields": {
+    "short_name": "Regular Searches",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 21,
+  "fields": {
+    "short_name": "Searches-federated and automated",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 22,
+  "fields": {
+    "short_name": "Result Clicks",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 23,
+  "fields": {
+    "short_name": "Record Views",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 24,
+  "fields": {
+    "short_name": "C4_Regular_Searches",
+    "name": "C4: Regular Searches",
+    "name_en": "C4: Regular Searches",
+    "name_cs": "C4: Regular Searches",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 25,
+  "fields": {
+    "short_name": "C5_Regular_Searches",
+    "name": "C5: Regular Searches",
+    "name_en": "C5: Regular Searches",
+    "name_cs": "C5: Regular Searches",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 26,
+  "fields": {
+    "short_name": "C4_FT_Article_Downloads",
+    "name": "C4: FT Article Downloads",
+    "name_en": "C4: FT Article Downloads",
+    "name_cs": "C4: FT Article Downloads",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 27,
+  "fields": {
+    "short_name": "C5_Total_Item_Requests",
+    "name": "C5: Total Item Requests",
+    "name_en": "C5: Total Item Requests",
+    "name_cs": "C5: Total Item Requests",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 28,
+  "fields": {
+    "short_name": "C4_Book_Section_Requests",
+    "name": "C4: Book Section Requests",
+    "name_en": "C4: Book Section Requests",
+    "name_cs": "C4: Book Section Requests",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 29,
+  "fields": {
+    "short_name": "C5_Platform_Searches",
+    "name": "C5: Platform Searches",
+    "name_en": "C5: Platform Searches",
+    "name_cs": "C5: Platform Searches",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 38,
+  "fields": {
+    "short_name": "0",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 39,
+  "fields": {
+    "short_name": "documents",
+    "name": "Documents",
+    "name_en": "Documents",
+    "name_cs": "Dokumenty",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 40,
+  "fields": {
+    "short_name": "sessions",
+    "name": "Sessions",
+    "name_en": "Sessions",
+    "name_cs": "Sezen\u00ed",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 41,
+  "fields": {
+    "short_name": "interest_doc_downloads",
+    "name": "Non-SUSHI document downloads",
+    "name_en": "Non-SUSHI document downloads",
+    "name_cs": "Sta\u017een\u00ed dokument\u016f mimo SUSHI",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 42,
+  "fields": {
+    "short_name": "Exports",
+    "name": "Credits",
+    "name_en": "Credits",
+    "name_cs": "Kredity",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 45,
+  "fields": {
+    "short_name": "visits",
+    "name": "Visits",
+    "name_en": "Visits",
+    "name_cs": "N\u00e1v\u0161t\u011bvy",
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 78,
+  "fields": {
+    "short_name": "Chapters",
+    "name": "Chapters",
+    "name_en": "Chapters",
+    "name_cs": "Kapitoly",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 79,
+  "fields": {
+    "short_name": "Resources",
+    "name": "Resources",
+    "name_en": "Resources",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 80,
+  "fields": {
+    "short_name": "Document_count",
+    "name": "Document_count",
+    "name_en": "Document_count",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 81,
+  "fields": {
+    "short_name": "Tracks",
+    "name": "Tracks",
+    "name_en": "Tracks",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 82,
+  "fields": {
+    "short_name": "RXS2",
+    "name": "RXS2",
+    "name_en": "RXS2",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 83,
+  "fields": {
+    "short_name": "Substance/Markush",
+    "name": "Substance/Markush",
+    "name_en": "Substance/Markush",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 84,
+  "fields": {
+    "short_name": "Reaction",
+    "name": "Reaction",
+    "name_en": "Reaction",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 85,
+  "fields": {
+    "short_name": "Reference CAPlus",
+    "name": "Reference CAPlus",
+    "name_en": "Reference CAPlus",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 86,
+  "fields": {
+    "short_name": "Reference Medline",
+    "name": "Reference Medline",
+    "name_en": "Reference Medline",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 87,
+  "fields": {
+    "short_name": "Commercial Source",
+    "name": "Commercial Source",
+    "name_en": "Commercial Source",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 88,
+  "fields": {
+    "short_name": "Regulatory",
+    "name": "Regulatory",
+    "name_en": "Regulatory",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 89,
+  "fields": {
+    "short_name": "Access_from_IP",
+    "name": "Access_from_IP",
+    "name_en": "Access_from_IP",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 90,
+  "fields": {
+    "short_name": "FP",
+    "name": "FP",
+    "name_en": "FP",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 91,
+  "fields": {
+    "short_name": "login",
+    "name": "login",
+    "name_en": "login",
+    "name_cs": null,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 92,
+  "fields": {
+    "short_name": "scopus:Record_Views",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.metric",
+  "pk": 155,
+  "fields": {
+    "short_name": "Book Title Requests",
+    "name": "",
+    "name_en": null,
+    "name_cs": null,
+    "desc": "",
+    "desc_en": null,
+    "desc_cs": null,
+    "active": true,
+    "source": null
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 1,
+  "fields": {
+    "report_type": 1,
+    "metric": 2,
+    "target_metric": 27,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 2,
+  "fields": {
+    "report_type": 3,
+    "metric": 8,
+    "target_metric": 26,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 3,
+  "fields": {
+    "report_type": 11,
+    "metric": 20,
+    "target_metric": 24,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 4,
+  "fields": {
+    "report_type": 9,
+    "metric": 19,
+    "target_metric": 28,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 5,
+  "fields": {
+    "report_type": 2,
+    "metric": 10,
+    "target_metric": 25,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 6,
+  "fields": {
+    "report_type": 28,
+    "metric": 20,
+    "target_metric": 24,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 7,
+  "fields": {
+    "report_type": 24,
+    "metric": 18,
+    "target_metric": 29,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 8,
+  "fields": {
+    "report_type": 31,
+    "metric": 39,
+    "target_metric": 41,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 9,
+  "fields": {
+    "report_type": 32,
+    "metric": 42,
+    "target_metric": null,
+    "interest_group": 3,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 10,
+  "fields": {
+    "report_type": 33,
+    "metric": 8,
+    "target_metric": null,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 11,
+  "fields": {
+    "report_type": 33,
+    "metric": 78,
+    "target_metric": null,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 12,
+  "fields": {
+    "report_type": 34,
+    "metric": 79,
+    "target_metric": null,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 13,
+  "fields": {
+    "report_type": 35,
+    "metric": 80,
+    "target_metric": null,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 14,
+  "fields": {
+    "report_type": 36,
+    "metric": 81,
+    "target_metric": null,
+    "interest_group": 3,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 15,
+  "fields": {
+    "report_type": 37,
+    "metric": 82,
+    "target_metric": null,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 16,
+  "fields": {
+    "report_type": 38,
+    "metric": 83,
+    "target_metric": null,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 17,
+  "fields": {
+    "report_type": 38,
+    "metric": 84,
+    "target_metric": null,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 18,
+  "fields": {
+    "report_type": 38,
+    "metric": 85,
+    "target_metric": null,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 19,
+  "fields": {
+    "report_type": 38,
+    "metric": 86,
+    "target_metric": null,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 20,
+  "fields": {
+    "report_type": 38,
+    "metric": 87,
+    "target_metric": null,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 21,
+  "fields": {
+    "report_type": 38,
+    "metric": 88,
+    "target_metric": null,
+    "interest_group": 2,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 22,
+  "fields": {
+    "report_type": 39,
+    "metric": 89,
+    "target_metric": null,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 23,
+  "fields": {
+    "report_type": 39,
+    "metric": 90,
+    "target_metric": null,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 24,
+  "fields": {
+    "report_type": 39,
+    "metric": 91,
+    "target_metric": null,
+    "interest_group": 1,
+    "created": "2019-10-23T17:21:50.995Z",
+    "last_modified": "2019-10-23T17:21:51.168Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 25,
+  "fields": {
+    "report_type": 1,
+    "metric": 9,
+    "target_metric": null,
+    "interest_group": 5,
+    "created": "2019-10-23T17:23:39.892Z",
+    "last_modified": "2019-11-01T18:18:03.021Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 26,
+  "fields": {
+    "report_type": 1,
+    "metric": 5,
+    "target_metric": null,
+    "interest_group": 5,
+    "created": "2019-10-23T17:23:56.065Z",
+    "last_modified": "2019-11-01T18:17:57.053Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 27,
+  "fields": {
+    "report_type": 2,
+    "metric": 9,
+    "target_metric": null,
+    "interest_group": 6,
+    "created": "2019-10-23T17:24:07.031Z",
+    "last_modified": "2019-11-01T18:17:51.596Z"
+  }
+},
+{
+  "model": "logs.reportinterestmetric",
+  "pk": 28,
+  "fields": {
+    "report_type": 2,
+    "metric": 5,
+    "target_metric": null,
+    "interest_group": 6,
+    "created": "2019-10-23T17:24:20.555Z",
+    "last_modified": "2019-11-01T18:17:46.100Z"
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 1,
+  "fields": {
+    "short_name": "Access_Type",
+    "name": "Access Type",
+    "name_en": "Access Type",
+    "name_cs": "Typ p\u0159\u00edstupu",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 2,
+  "fields": {
+    "short_name": "Access_Method",
+    "name": "Access Method",
+    "name_en": "Access Method",
+    "name_cs": "Metoda p\u0159\u00edstupu",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 3,
+  "fields": {
+    "short_name": "Data_Type",
+    "name": "Data Type",
+    "name_en": "Data Type",
+    "name_cs": "Typ dat",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 4,
+  "fields": {
+    "short_name": "Section_Type",
+    "name": "Section Type",
+    "name_en": "Section Type",
+    "name_cs": "Typ \u010d\u00e1sti",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 5,
+  "fields": {
+    "short_name": "YOP",
+    "name": "Year of publication",
+    "name_en": "Year of publication",
+    "name_cs": "Rok vyd\u00e1n\u00ed",
+    "type": 1,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 6,
+  "fields": {
+    "short_name": "Publisher",
+    "name": "Publisher",
+    "name_en": "Publisher",
+    "name_cs": "Vydavatel",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.dimension",
+  "pk": 29,
+  "fields": {
+    "short_name": "Interest_Type",
+    "name": "Interest type",
+    "name_en": "Interest type",
+    "name_cs": "Typ z\u00e1jmu",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 1,
+  "fields": {
+    "report_type": 1,
+    "dimension": 1,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 2,
+  "fields": {
+    "report_type": 1,
+    "dimension": 2,
+    "position": 1
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 3,
+  "fields": {
+    "report_type": 1,
+    "dimension": 3,
+    "position": 2
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 4,
+  "fields": {
+    "report_type": 1,
+    "dimension": 4,
+    "position": 3
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 5,
+  "fields": {
+    "report_type": 1,
+    "dimension": 5,
+    "position": 4
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 6,
+  "fields": {
+    "report_type": 1,
+    "dimension": 6,
+    "position": 5
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 7,
+  "fields": {
+    "report_type": 2,
+    "dimension": 2,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 8,
+  "fields": {
+    "report_type": 2,
+    "dimension": 3,
+    "position": 1
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 9,
+  "fields": {
+    "report_type": 2,
+    "dimension": 6,
+    "position": 2
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 10,
+  "fields": {
+    "report_type": 3,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 11,
+  "fields": {
+    "report_type": 4,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 12,
+  "fields": {
+    "report_type": 5,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 13,
+  "fields": {
+    "report_type": 6,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 14,
+  "fields": {
+    "report_type": 7,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 15,
+  "fields": {
+    "report_type": 8,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 16,
+  "fields": {
+    "report_type": 9,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 17,
+  "fields": {
+    "report_type": 10,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 18,
+  "fields": {
+    "report_type": 11,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 19,
+  "fields": {
+    "report_type": 12,
+    "dimension": 6,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 20,
+  "fields": {
+    "report_type": 24,
+    "dimension": 2,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 21,
+  "fields": {
+    "report_type": 24,
+    "dimension": 3,
+    "position": 1
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 28,
+  "fields": {
+    "report_type": 30,
+    "dimension": 29,
+    "position": 0
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 1556,
+  "fields": {
+    "dimension": 29,
+    "text": "full_text",
+    "text_local": "Full text",
+    "text_local_en": "Full text",
+    "text_local_cs": "Pln\u00fd text"
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 1557,
+  "fields": {
+    "dimension": 29,
+    "text": "search",
+    "text_local": "Search",
+    "text_local_en": "Search",
+    "text_local_cs": "Hled\u00e1n\u00ed"
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 19886,
+  "fields": {
+    "dimension": 29,
+    "text": "denial",
+    "text_local": "Denial",
+    "text_local_en": "Denial",
+    "text_local_cs": "Odm\u00edtnut\u00ed"
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 19905,
+  "fields": {
+    "dimension": 29,
+    "text": "full_text_denial",
+    "text_local": "Denial - full text",
+    "text_local_en": "Denial - full text",
+    "text_local_cs": "Odm\u00edtnut\u00ed - pln\u00fd text"
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 19906,
+  "fields": {
+    "dimension": 29,
+    "text": "search_denial",
+    "text_local": "Denial - search",
+    "text_local_en": "Denial - search",
+    "text_local_cs": "Odm\u00edtnut\u00ed - hled\u00e1n\u00ed"
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 19956,
+  "fields": {
+    "dimension": 29,
+    "text": "other",
+    "text_local": "Other",
+    "text_local_en": "Other",
+    "text_local_cs": "Jin\u00fd"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 1,
+  "fields": {
+    "report_type": 1,
+    "platform": 4,
+    "created": "2019-10-23T17:21:51.462Z",
+    "last_modified": "2019-10-23T17:21:51.462Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 2,
+  "fields": {
+    "report_type": 3,
+    "platform": 4,
+    "created": "2019-10-23T17:21:51.462Z",
+    "last_modified": "2019-10-23T17:21:51.462Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 3,
+  "fields": {
+    "report_type": 24,
+    "platform": 44,
+    "created": "2019-10-23T17:21:51.464Z",
+    "last_modified": "2019-10-23T17:21:51.464Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 4,
+  "fields": {
+    "report_type": 28,
+    "platform": 44,
+    "created": "2019-10-23T17:21:51.465Z",
+    "last_modified": "2019-10-23T17:21:51.465Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 5,
+  "fields": {
+    "report_type": 1,
+    "platform": 45,
+    "created": "2019-10-23T17:21:51.466Z",
+    "last_modified": "2019-10-23T17:21:51.466Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 6,
+  "fields": {
+    "report_type": 3,
+    "platform": 45,
+    "created": "2019-10-23T17:21:51.467Z",
+    "last_modified": "2019-10-23T17:21:51.467Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 7,
+  "fields": {
+    "report_type": 1,
+    "platform": 46,
+    "created": "2019-10-23T17:21:51.468Z",
+    "last_modified": "2019-10-23T17:21:51.468Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 8,
+  "fields": {
+    "report_type": 3,
+    "platform": 46,
+    "created": "2019-10-23T17:21:51.469Z",
+    "last_modified": "2019-10-23T17:21:51.469Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 9,
+  "fields": {
+    "report_type": 1,
+    "platform": 47,
+    "created": "2019-10-23T17:21:51.471Z",
+    "last_modified": "2019-10-23T17:21:51.471Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 10,
+  "fields": {
+    "report_type": 3,
+    "platform": 47,
+    "created": "2019-10-23T17:21:51.471Z",
+    "last_modified": "2019-10-23T17:21:51.471Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 11,
+  "fields": {
+    "report_type": 1,
+    "platform": 49,
+    "created": "2019-10-23T17:21:51.475Z",
+    "last_modified": "2019-10-23T17:21:51.475Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 12,
+  "fields": {
+    "report_type": 3,
+    "platform": 49,
+    "created": "2019-10-23T17:21:51.476Z",
+    "last_modified": "2019-10-23T17:21:51.476Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 13,
+  "fields": {
+    "report_type": 33,
+    "platform": 52,
+    "created": "2019-10-23T17:21:51.479Z",
+    "last_modified": "2019-10-23T17:21:51.479Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 14,
+  "fields": {
+    "report_type": 1,
+    "platform": 9,
+    "created": "2019-10-23T17:21:51.481Z",
+    "last_modified": "2019-10-23T17:21:51.481Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 15,
+  "fields": {
+    "report_type": 3,
+    "platform": 9,
+    "created": "2019-10-23T17:21:51.481Z",
+    "last_modified": "2019-10-23T17:21:51.481Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 16,
+  "fields": {
+    "report_type": 1,
+    "platform": 10,
+    "created": "2019-10-23T17:21:51.483Z",
+    "last_modified": "2019-10-23T17:21:51.483Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 17,
+  "fields": {
+    "report_type": 3,
+    "platform": 10,
+    "created": "2019-10-23T17:21:51.484Z",
+    "last_modified": "2019-10-23T17:21:51.484Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 18,
+  "fields": {
+    "report_type": 1,
+    "platform": 6,
+    "created": "2019-10-23T17:21:51.485Z",
+    "last_modified": "2019-10-23T17:21:51.485Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 19,
+  "fields": {
+    "report_type": 2,
+    "platform": 6,
+    "created": "2019-10-23T17:21:51.486Z",
+    "last_modified": "2019-10-23T17:21:51.486Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 20,
+  "fields": {
+    "report_type": 3,
+    "platform": 6,
+    "created": "2019-10-23T17:21:51.487Z",
+    "last_modified": "2019-10-23T17:21:51.487Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 21,
+  "fields": {
+    "report_type": 9,
+    "platform": 6,
+    "created": "2019-10-23T17:21:51.487Z",
+    "last_modified": "2019-10-23T17:21:51.487Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 22,
+  "fields": {
+    "report_type": 11,
+    "platform": 6,
+    "created": "2019-10-23T17:21:51.488Z",
+    "last_modified": "2019-10-23T17:21:51.488Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 23,
+  "fields": {
+    "report_type": 1,
+    "platform": 7,
+    "created": "2019-10-23T17:21:51.491Z",
+    "last_modified": "2019-10-23T17:21:51.491Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 24,
+  "fields": {
+    "report_type": 3,
+    "platform": 7,
+    "created": "2019-10-23T17:21:51.492Z",
+    "last_modified": "2019-10-23T17:21:51.492Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 25,
+  "fields": {
+    "report_type": 9,
+    "platform": 7,
+    "created": "2019-10-23T17:21:51.493Z",
+    "last_modified": "2019-10-23T17:21:51.493Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 26,
+  "fields": {
+    "report_type": 1,
+    "platform": 13,
+    "created": "2019-10-23T17:21:51.494Z",
+    "last_modified": "2019-10-23T17:21:51.494Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 27,
+  "fields": {
+    "report_type": 3,
+    "platform": 13,
+    "created": "2019-10-23T17:21:51.495Z",
+    "last_modified": "2019-10-23T17:21:51.495Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 28,
+  "fields": {
+    "report_type": 1,
+    "platform": 15,
+    "created": "2019-10-23T17:21:51.497Z",
+    "last_modified": "2019-10-23T17:21:51.498Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 29,
+  "fields": {
+    "report_type": 3,
+    "platform": 15,
+    "created": "2019-10-23T17:21:51.498Z",
+    "last_modified": "2019-10-23T17:21:51.498Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 30,
+  "fields": {
+    "report_type": 1,
+    "platform": 16,
+    "created": "2019-10-23T17:21:51.500Z",
+    "last_modified": "2019-10-23T17:21:51.500Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 31,
+  "fields": {
+    "report_type": 3,
+    "platform": 16,
+    "created": "2019-10-23T17:21:51.500Z",
+    "last_modified": "2019-10-23T17:21:51.500Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 32,
+  "fields": {
+    "report_type": 34,
+    "platform": 17,
+    "created": "2019-10-23T17:21:51.502Z",
+    "last_modified": "2019-10-23T17:21:51.502Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 33,
+  "fields": {
+    "report_type": 24,
+    "platform": 18,
+    "created": "2019-10-23T17:21:51.504Z",
+    "last_modified": "2019-10-23T17:21:51.504Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 34,
+  "fields": {
+    "report_type": 28,
+    "platform": 18,
+    "created": "2019-10-23T17:21:51.504Z",
+    "last_modified": "2019-10-23T17:21:51.504Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 35,
+  "fields": {
+    "report_type": 35,
+    "platform": 19,
+    "created": "2019-10-23T17:21:51.506Z",
+    "last_modified": "2019-10-23T17:21:51.506Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 36,
+  "fields": {
+    "report_type": 1,
+    "platform": 8,
+    "created": "2019-10-23T17:21:51.508Z",
+    "last_modified": "2019-10-23T17:21:51.508Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 37,
+  "fields": {
+    "report_type": 3,
+    "platform": 8,
+    "created": "2019-10-23T17:21:51.508Z",
+    "last_modified": "2019-10-23T17:21:51.508Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 38,
+  "fields": {
+    "report_type": 36,
+    "platform": 20,
+    "created": "2019-10-23T17:21:51.510Z",
+    "last_modified": "2019-10-23T17:21:51.510Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 39,
+  "fields": {
+    "report_type": 1,
+    "platform": 21,
+    "created": "2019-10-23T17:21:51.512Z",
+    "last_modified": "2019-10-23T17:21:51.512Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 40,
+  "fields": {
+    "report_type": 3,
+    "platform": 21,
+    "created": "2019-10-23T17:21:51.512Z",
+    "last_modified": "2019-10-23T17:21:51.512Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 41,
+  "fields": {
+    "report_type": 24,
+    "platform": 22,
+    "created": "2019-10-23T17:21:51.514Z",
+    "last_modified": "2019-10-23T17:21:51.514Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 42,
+  "fields": {
+    "report_type": 28,
+    "platform": 22,
+    "created": "2019-10-23T17:21:51.515Z",
+    "last_modified": "2019-10-23T17:21:51.515Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 43,
+  "fields": {
+    "report_type": 1,
+    "platform": 24,
+    "created": "2019-10-23T17:21:51.517Z",
+    "last_modified": "2019-10-23T17:21:51.517Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 44,
+  "fields": {
+    "report_type": 3,
+    "platform": 24,
+    "created": "2019-10-23T17:21:51.518Z",
+    "last_modified": "2019-10-23T17:21:51.518Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 45,
+  "fields": {
+    "report_type": 1,
+    "platform": 27,
+    "created": "2019-10-23T17:21:51.522Z",
+    "last_modified": "2019-10-23T17:21:51.522Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 46,
+  "fields": {
+    "report_type": 2,
+    "platform": 27,
+    "created": "2019-10-23T17:21:51.523Z",
+    "last_modified": "2019-10-23T17:21:51.523Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 47,
+  "fields": {
+    "report_type": 3,
+    "platform": 27,
+    "created": "2019-10-23T17:21:51.523Z",
+    "last_modified": "2019-10-23T17:21:51.523Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 48,
+  "fields": {
+    "report_type": 11,
+    "platform": 27,
+    "created": "2019-10-23T17:21:51.524Z",
+    "last_modified": "2019-10-23T17:21:51.524Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 49,
+  "fields": {
+    "report_type": 37,
+    "platform": 29,
+    "created": "2019-10-23T17:21:51.527Z",
+    "last_modified": "2019-10-23T17:21:51.527Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 50,
+  "fields": {
+    "report_type": 1,
+    "platform": 30,
+    "created": "2019-10-23T17:21:51.529Z",
+    "last_modified": "2019-10-23T17:21:51.529Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 51,
+  "fields": {
+    "report_type": 3,
+    "platform": 30,
+    "created": "2019-10-23T17:21:51.529Z",
+    "last_modified": "2019-10-23T17:21:51.529Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 52,
+  "fields": {
+    "report_type": 1,
+    "platform": 32,
+    "created": "2019-10-23T17:21:51.532Z",
+    "last_modified": "2019-10-23T17:21:51.532Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 53,
+  "fields": {
+    "report_type": 3,
+    "platform": 32,
+    "created": "2019-10-23T17:21:51.532Z",
+    "last_modified": "2019-10-23T17:21:51.532Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 54,
+  "fields": {
+    "report_type": 1,
+    "platform": 33,
+    "created": "2019-10-23T17:21:51.534Z",
+    "last_modified": "2019-10-23T17:21:51.534Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 55,
+  "fields": {
+    "report_type": 3,
+    "platform": 33,
+    "created": "2019-10-23T17:21:51.534Z",
+    "last_modified": "2019-10-23T17:21:51.535Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 56,
+  "fields": {
+    "report_type": 38,
+    "platform": 34,
+    "created": "2019-10-23T17:21:51.536Z",
+    "last_modified": "2019-10-23T17:21:51.536Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 57,
+  "fields": {
+    "report_type": 1,
+    "platform": 36,
+    "created": "2019-10-23T17:21:51.539Z",
+    "last_modified": "2019-10-23T17:21:51.539Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 58,
+  "fields": {
+    "report_type": 3,
+    "platform": 36,
+    "created": "2019-10-23T17:21:51.539Z",
+    "last_modified": "2019-10-23T17:21:51.539Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 59,
+  "fields": {
+    "report_type": 2,
+    "platform": 38,
+    "created": "2019-10-23T17:21:51.542Z",
+    "last_modified": "2019-10-23T17:21:51.542Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 60,
+  "fields": {
+    "report_type": 11,
+    "platform": 38,
+    "created": "2019-10-23T17:21:51.543Z",
+    "last_modified": "2019-10-23T17:21:51.543Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 61,
+  "fields": {
+    "report_type": 28,
+    "platform": 38,
+    "created": "2019-10-23T17:21:51.543Z",
+    "last_modified": "2019-10-23T17:21:51.543Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 62,
+  "fields": {
+    "report_type": 1,
+    "platform": 39,
+    "created": "2019-10-23T17:21:51.545Z",
+    "last_modified": "2019-10-23T17:21:51.545Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 63,
+  "fields": {
+    "report_type": 3,
+    "platform": 39,
+    "created": "2019-10-23T17:21:51.546Z",
+    "last_modified": "2019-10-23T17:21:51.546Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 64,
+  "fields": {
+    "report_type": 9,
+    "platform": 39,
+    "created": "2019-10-23T17:21:51.546Z",
+    "last_modified": "2019-10-23T17:21:51.546Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 65,
+  "fields": {
+    "report_type": 1,
+    "platform": 40,
+    "created": "2019-10-23T17:21:51.548Z",
+    "last_modified": "2019-10-23T17:21:51.548Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 66,
+  "fields": {
+    "report_type": 3,
+    "platform": 40,
+    "created": "2019-10-23T17:21:51.548Z",
+    "last_modified": "2019-10-23T17:21:51.548Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 67,
+  "fields": {
+    "report_type": 39,
+    "platform": 41,
+    "created": "2019-10-23T17:21:51.551Z",
+    "last_modified": "2019-11-15T13:57:53.135Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 68,
+  "fields": {
+    "report_type": 2,
+    "platform": 42,
+    "created": "2019-10-23T17:21:51.553Z",
+    "last_modified": "2019-10-23T17:21:51.553Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 69,
+  "fields": {
+    "report_type": 11,
+    "platform": 42,
+    "created": "2019-10-23T17:21:51.553Z",
+    "last_modified": "2019-10-23T17:21:51.553Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 70,
+  "fields": {
+    "report_type": 28,
+    "platform": 42,
+    "created": "2019-10-23T17:21:51.554Z",
+    "last_modified": "2019-10-23T17:21:51.554Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 71,
+  "fields": {
+    "report_type": 1,
+    "platform": 43,
+    "created": "2019-11-05T09:36:32.271Z",
+    "last_modified": "2019-11-05T09:36:32.271Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 72,
+  "fields": {
+    "report_type": 9,
+    "platform": 56,
+    "created": "2019-11-05T14:08:02.212Z",
+    "last_modified": "2019-11-05T14:08:02.212Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 73,
+  "fields": {
+    "report_type": 1,
+    "platform": 57,
+    "created": "2019-11-05T14:21:27.849Z",
+    "last_modified": "2019-11-05T14:21:27.849Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 74,
+  "fields": {
+    "report_type": 1,
+    "platform": 58,
+    "created": "2019-11-05T14:27:49.208Z",
+    "last_modified": "2019-11-05T14:27:49.208Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 75,
+  "fields": {
+    "report_type": 1,
+    "platform": 11,
+    "created": "2019-11-22T08:02:51.517Z",
+    "last_modified": "2019-11-22T08:02:51.517Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 76,
+  "fields": {
+    "report_type": 3,
+    "platform": 11,
+    "created": "2019-11-22T08:03:15.015Z",
+    "last_modified": "2019-11-22T08:03:15.015Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 77,
+  "fields": {
+    "report_type": 1,
+    "platform": 59,
+    "created": "2019-11-22T08:05:15.057Z",
+    "last_modified": "2019-11-22T08:05:15.057Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 78,
+  "fields": {
+    "report_type": 1,
+    "platform": 60,
+    "created": "2019-11-22T08:05:28.257Z",
+    "last_modified": "2019-11-22T08:05:28.257Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 79,
+  "fields": {
+    "report_type": 1,
+    "platform": 61,
+    "created": "2019-11-22T08:05:42.053Z",
+    "last_modified": "2019-11-22T08:05:42.053Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 80,
+  "fields": {
+    "report_type": 1,
+    "platform": 62,
+    "created": "2019-11-22T08:05:56.028Z",
+    "last_modified": "2019-11-22T08:05:56.028Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 81,
+  "fields": {
+    "report_type": 3,
+    "platform": 59,
+    "created": "2019-11-22T08:07:28.969Z",
+    "last_modified": "2019-11-22T08:07:28.969Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 82,
+  "fields": {
+    "report_type": 3,
+    "platform": 60,
+    "created": "2019-11-22T08:07:41.753Z",
+    "last_modified": "2019-11-22T08:07:41.753Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 83,
+  "fields": {
+    "report_type": 9,
+    "platform": 60,
+    "created": "2019-11-22T08:08:00.065Z",
+    "last_modified": "2019-11-22T08:08:00.065Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 84,
+  "fields": {
+    "report_type": 3,
+    "platform": 62,
+    "created": "2019-11-22T08:08:14.617Z",
+    "last_modified": "2019-11-22T08:08:14.617Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 85,
+  "fields": {
+    "report_type": 1,
+    "platform": 54,
+    "created": "2019-11-22T08:08:37.587Z",
+    "last_modified": "2019-11-22T08:08:37.587Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 86,
+  "fields": {
+    "report_type": 32,
+    "platform": 50,
+    "created": "2019-11-22T08:13:50.724Z",
+    "last_modified": "2019-11-22T08:13:50.725Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 87,
+  "fields": {
+    "report_type": 31,
+    "platform": 53,
+    "created": "2019-11-22T08:14:01.615Z",
+    "last_modified": "2019-11-22T08:14:01.615Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 88,
+  "fields": {
+    "report_type": 1,
+    "platform": 48,
+    "created": "2019-11-22T08:15:22.397Z",
+    "last_modified": "2019-11-22T08:15:22.397Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 89,
+  "fields": {
+    "report_type": 3,
+    "platform": 48,
+    "created": "2019-11-22T08:15:37.428Z",
+    "last_modified": "2019-11-22T08:15:37.428Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 90,
+  "fields": {
+    "report_type": 1,
+    "platform": 55,
+    "created": "2019-11-25T15:49:13.496Z",
+    "last_modified": "2019-11-25T15:49:13.496Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 91,
+  "fields": {
+    "report_type": 1,
+    "platform": 2,
+    "created": "2019-11-26T09:32:04.620Z",
+    "last_modified": "2019-11-26T09:32:04.620Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 92,
+  "fields": {
+    "report_type": 3,
+    "platform": 2,
+    "created": "2019-11-26T09:32:17.344Z",
+    "last_modified": "2019-11-26T09:32:17.344Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 93,
+  "fields": {
+    "report_type": 1,
+    "platform": 25,
+    "created": "2019-11-26T09:32:30.396Z",
+    "last_modified": "2019-11-26T09:32:30.396Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 94,
+  "fields": {
+    "report_type": 3,
+    "platform": 25,
+    "created": "2019-11-26T09:32:42.622Z",
+    "last_modified": "2019-11-26T09:32:42.622Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 95,
+  "fields": {
+    "report_type": 1,
+    "platform": 63,
+    "created": "2019-11-26T13:08:01.709Z",
+    "last_modified": "2019-11-26T13:08:01.709Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 96,
+  "fields": {
+    "report_type": 3,
+    "platform": 63,
+    "created": "2019-11-26T13:08:11.799Z",
+    "last_modified": "2019-11-26T13:08:11.799Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 97,
+  "fields": {
+    "report_type": 9,
+    "platform": 61,
+    "created": "2019-12-03T09:33:04.797Z",
+    "last_modified": "2019-12-03T09:33:04.797Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 98,
+  "fields": {
+    "report_type": 1,
+    "platform": 64,
+    "created": "2019-12-05T09:30:42.999Z",
+    "last_modified": "2019-12-05T09:30:42.999Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 99,
+  "fields": {
+    "report_type": 3,
+    "platform": 64,
+    "created": "2019-12-05T09:30:50.234Z",
+    "last_modified": "2019-12-05T09:30:50.234Z"
+  }
+},
+{
+  "model": "publications.platforminterestreport",
+  "pk": 100,
+  "fields": {
+    "report_type": 1,
+    "platform": 28,
+    "created": "2019-12-05T09:32:11.627Z",
+    "last_modified": "2019-12-05T09:32:11.627Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 1,
+  "fields": {
+    "ext_id": 600,
+    "short_name": "AAAS",
+    "name": "AAAS/Science",
+    "name_en": "AAAS/Science",
+    "name_cs": null,
+    "provider": "AAAS",
+    "provider_en": "AAAS",
+    "provider_cs": null,
+    "url": "http://ScienceOnline.org",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 2,
+  "fields": {
+    "ext_id": 613,
+    "short_name": "ACM",
+    "name": "ACM Digital Library",
+    "name_en": "ACM Digital Library",
+    "name_cs": null,
+    "provider": "ACM",
+    "provider_en": "ACM",
+    "provider_cs": null,
+    "url": "https://dl.acm.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 3,
+  "fields": {
+    "ext_id": 618,
+    "short_name": "AACR",
+    "name": "AACR",
+    "name_en": "AACR",
+    "name_cs": null,
+    "provider": "AACR",
+    "provider_en": "AACR",
+    "provider_cs": null,
+    "url": "http://aacrjournals.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 4,
+  "fields": {
+    "ext_id": 619,
+    "short_name": "ACS",
+    "name": "ACS",
+    "name_en": "ACS",
+    "name_cs": null,
+    "provider": "ACS",
+    "provider_en": "ACS",
+    "provider_cs": null,
+    "url": "https://pubs.acs.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 5,
+  "fields": {
+    "ext_id": 621,
+    "short_name": "Thieme",
+    "name": "Thieme",
+    "name_en": "Thieme",
+    "name_cs": null,
+    "provider": "Thieme",
+    "provider_en": "Thieme",
+    "provider_cs": null,
+    "url": "https://www.thieme.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 6,
+  "fields": {
+    "ext_id": 622,
+    "short_name": "EbscoHost",
+    "name": "EbscoHost",
+    "name_en": "EbscoHost",
+    "name_cs": null,
+    "provider": "EBSCO",
+    "provider_en": "EBSCO",
+    "provider_cs": null,
+    "url": "http://search.epnet.com",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 7,
+  "fields": {
+    "ext_id": 637,
+    "short_name": "GSW",
+    "name": "GeoScienceWorld",
+    "name_en": "GeoScienceWorld",
+    "name_cs": null,
+    "provider": "GSW",
+    "provider_en": "GSW",
+    "provider_cs": null,
+    "url": "https://pubs.geoscienceworld.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 8,
+  "fields": {
+    "ext_id": 643,
+    "short_name": "Nature_com",
+    "name": "Nature.com",
+    "name_en": "Nature.com",
+    "name_cs": null,
+    "provider": "SpringerNature",
+    "provider_en": "SpringerNature",
+    "provider_cs": null,
+    "url": "https://www.nature.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 9,
+  "fields": {
+    "ext_id": 650,
+    "short_name": "CUP",
+    "name": "CUP",
+    "name_en": "CUP",
+    "name_cs": null,
+    "provider": "CUP",
+    "provider_en": "CUP",
+    "provider_cs": null,
+    "url": "https://www.cambridge.org/core/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 10,
+  "fields": {
+    "ext_id": 651,
+    "short_name": "DeGruyter",
+    "name": "DeGruyter",
+    "name_en": "DeGruyter",
+    "name_cs": null,
+    "provider": "DeGruyter",
+    "provider_en": "DeGruyter",
+    "provider_cs": null,
+    "url": "https://www.degruyter.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 11,
+  "fields": {
+    "ext_id": 652,
+    "short_name": "Emerald",
+    "name": "Emerald Insight",
+    "name_en": "Emerald Insight",
+    "name_cs": null,
+    "provider": "Emerald",
+    "provider_en": "Emerald",
+    "provider_cs": null,
+    "url": "https://www.emeraldinsight.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 12,
+  "fields": {
+    "ext_id": 653,
+    "short_name": "Gale",
+    "name": "Gale",
+    "name_en": "Gale",
+    "name_cs": null,
+    "provider": "Gale",
+    "provider_en": "Gale",
+    "provider_cs": null,
+    "url": "https://go.galegroup.com/ps",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 13,
+  "fields": {
+    "ext_id": 654,
+    "short_name": "IEEEXplore",
+    "name": "IEEE Xplore Digital Library",
+    "name_en": "IEEE Xplore Digital Library",
+    "name_cs": null,
+    "provider": "IEEE",
+    "provider_en": "IEEE",
+    "provider_cs": null,
+    "url": "https://ieeexplore.ieee.org/Xplore/home.jsp",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 14,
+  "fields": {
+    "ext_id": 655,
+    "short_name": "InCites",
+    "name": "InCites",
+    "name_en": "InCites",
+    "name_cs": null,
+    "provider": "Clarivate",
+    "provider_en": "Clarivate",
+    "provider_cs": null,
+    "url": "https://incites.thomsonreuters.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 15,
+  "fields": {
+    "ext_id": 656,
+    "short_name": "IOP",
+    "name": "IOPscience",
+    "name_en": "IOPscience",
+    "name_cs": null,
+    "provider": "IOP",
+    "provider_en": "IOP",
+    "provider_cs": null,
+    "url": "http://iopscience.iop.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 16,
+  "fields": {
+    "ext_id": 657,
+    "short_name": "JSTOR",
+    "name": "JSTOR",
+    "name_en": "JSTOR",
+    "name_cs": null,
+    "provider": "JSTOR",
+    "provider_en": "JSTOR",
+    "provider_cs": null,
+    "url": "https://www.jstor.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 17,
+  "fields": {
+    "ext_id": 658,
+    "short_name": "Knovel",
+    "name": "Knovel",
+    "name_en": "Knovel",
+    "name_cs": "Knovel",
+    "provider": "Elsevier",
+    "provider_en": "Elsevier",
+    "provider_cs": "Elsevier",
+    "url": "https://app.knovel.com/web/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 18,
+  "fields": {
+    "ext_id": 659,
+    "short_name": "MathSciNet",
+    "name": "MathSciNet",
+    "name_en": "MathSciNet",
+    "name_cs": null,
+    "provider": "AMS",
+    "provider_en": "AMS",
+    "provider_cs": null,
+    "url": "https://mathscinet.ams.org/mathscinet/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 19,
+  "fields": {
+    "ext_id": 660,
+    "short_name": "Micromedex",
+    "name": "Micromedex",
+    "name_en": "Micromedex",
+    "name_cs": "Micromedex",
+    "provider": "Truven",
+    "provider_en": "Truven",
+    "provider_cs": "Truven",
+    "url": "https://www.micromedexsolutions.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 20,
+  "fields": {
+    "ext_id": 661,
+    "short_name": "Naxos",
+    "name": "Naxos Music Library",
+    "name_en": "Naxos Music Library",
+    "name_cs": "Naxos Music Library",
+    "provider": "Naxos",
+    "provider_en": "Naxos",
+    "provider_cs": "Naxos",
+    "url": "https://www.naxosmusiclibrary.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 21,
+  "fields": {
+    "ext_id": 662,
+    "short_name": "NEJM",
+    "name": "NEJM",
+    "name_en": "NEJM",
+    "name_cs": null,
+    "provider": "NEJM",
+    "provider_en": "NEJM",
+    "provider_cs": null,
+    "url": "https://www.nejm.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 22,
+  "fields": {
+    "ext_id": 663,
+    "short_name": "OECDiLibrary",
+    "name": "OECD iLibrary",
+    "name_en": "OECD iLibrary",
+    "name_cs": null,
+    "provider": "OECD",
+    "provider_en": "OECD",
+    "provider_cs": null,
+    "url": "https://www.oecd-ilibrary.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 23,
+  "fields": {
+    "ext_id": 664,
+    "short_name": "OED",
+    "name": "Oxford English Dictionary",
+    "name_en": "Oxford English Dictionary",
+    "name_cs": null,
+    "provider": "OUP",
+    "provider_en": "OUP",
+    "provider_cs": null,
+    "url": "http://www.oed.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 24,
+  "fields": {
+    "ext_id": 665,
+    "short_name": "OUP",
+    "name": "OUP",
+    "name_en": "OUP",
+    "name_cs": null,
+    "provider": "OUP",
+    "provider_en": "OUP",
+    "provider_cs": null,
+    "url": "https://academic.oup.com/journals",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 25,
+  "fields": {
+    "ext_id": 666,
+    "short_name": "Ovid",
+    "name": "Ovid",
+    "name_en": "Ovid",
+    "name_cs": null,
+    "provider": "Ovid",
+    "provider_en": "Ovid",
+    "provider_cs": null,
+    "url": "http://www.ovid.com/site/index.jsp",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 26,
+  "fields": {
+    "ext_id": 667,
+    "short_name": "Oxford_Music",
+    "name": "Oxford Music Online",
+    "name_en": "Oxford Music Online",
+    "name_cs": null,
+    "provider": "OUP",
+    "provider_en": "OUP",
+    "provider_cs": null,
+    "url": "http://www.oxfordmusiconline.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 27,
+  "fields": {
+    "ext_id": 668,
+    "short_name": "ProQuest",
+    "name": "ProQuest",
+    "name_en": "ProQuest",
+    "name_cs": null,
+    "provider": "ProQuest",
+    "provider_en": "ProQuest",
+    "provider_cs": null,
+    "url": "https://search.proquest.com/i",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 28,
+  "fields": {
+    "ext_id": 669,
+    "short_name": "ProQuestEbookCentral",
+    "name": "ProQuest Ebook Central",
+    "name_en": "ProQuest Ebook Central",
+    "name_cs": null,
+    "provider": "ProQuest",
+    "provider_en": "ProQuest",
+    "provider_cs": null,
+    "url": "https://ebookcentral.proquest.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 29,
+  "fields": {
+    "ext_id": 670,
+    "short_name": "Reaxys",
+    "name": "Reaxys",
+    "name_en": "Reaxys",
+    "name_cs": "Reaxys",
+    "provider": "Elsevier",
+    "provider_en": "Elsevier",
+    "provider_cs": "Elsevier",
+    "url": "https://www.reaxys.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 30,
+  "fields": {
+    "ext_id": 671,
+    "short_name": "RSC",
+    "name": "RSC",
+    "name_en": "RSC",
+    "name_cs": null,
+    "provider": "RSC",
+    "provider_en": "RSC",
+    "provider_cs": null,
+    "url": "http://pubs.rsc.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 31,
+  "fields": {
+    "ext_id": 672,
+    "short_name": "SAEMobilus",
+    "name": "SAE Mobilus",
+    "name_en": "SAE Mobilus",
+    "name_cs": null,
+    "provider": "SAE",
+    "provider_en": "SAE",
+    "provider_cs": null,
+    "url": "https://saemobilus.sae.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 32,
+  "fields": {
+    "ext_id": 673,
+    "short_name": "Sage",
+    "name": "Sage",
+    "name_en": "Sage",
+    "name_cs": null,
+    "provider": "SAGE",
+    "provider_en": "SAGE",
+    "provider_cs": null,
+    "url": "http://journals.sagepub.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 33,
+  "fields": {
+    "ext_id": 674,
+    "short_name": "ScienceDirect",
+    "name": "ScienceDirect",
+    "name_en": "ScienceDirect",
+    "name_cs": null,
+    "provider": "Elsevier",
+    "provider_en": "Elsevier",
+    "provider_cs": null,
+    "url": "https://www.sciencedirect.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 34,
+  "fields": {
+    "ext_id": 675,
+    "short_name": "SciFinder",
+    "name": "SciFinder",
+    "name_en": "SciFinder",
+    "name_cs": "SciFinder",
+    "provider": "ACS",
+    "provider_en": "ACS",
+    "provider_cs": "ACS",
+    "url": "https://scifinder.cas.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 35,
+  "fields": {
+    "ext_id": 676,
+    "short_name": "SciFinder_n",
+    "name": "SciFinder-n",
+    "name_en": "SciFinder-n",
+    "name_cs": null,
+    "provider": "ACS",
+    "provider_en": "ACS",
+    "provider_cs": null,
+    "url": "https://scifinder-n.cas.org",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 36,
+  "fields": {
+    "ext_id": 677,
+    "short_name": "Scitation",
+    "name": "Scitation",
+    "name_en": "Scitation",
+    "name_cs": null,
+    "provider": "AIP",
+    "provider_en": "AIP",
+    "provider_cs": null,
+    "url": "https://www.scitation.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 37,
+  "fields": {
+    "ext_id": 678,
+    "short_name": "SciVal",
+    "name": "SciVal",
+    "name_en": "SciVal",
+    "name_cs": null,
+    "provider": "Elsevier",
+    "provider_en": "Elsevier",
+    "provider_cs": null,
+    "url": "https://www.scival.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 38,
+  "fields": {
+    "ext_id": 679,
+    "short_name": "Scopus",
+    "name": "Scopus",
+    "name_en": "Scopus",
+    "name_cs": null,
+    "provider": "Elsevier",
+    "provider_en": "Elsevier",
+    "provider_cs": null,
+    "url": "https://www.scopus.com",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 39,
+  "fields": {
+    "ext_id": 680,
+    "short_name": "SpringerLink",
+    "name": "SpringerLink",
+    "name_en": "SpringerLink",
+    "name_cs": null,
+    "provider": "SpringerNature",
+    "provider_en": "SpringerNature",
+    "provider_cs": null,
+    "url": "https://link.springer.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 40,
+  "fields": {
+    "ext_id": 681,
+    "short_name": "Tandfonline",
+    "name": "Taylor & Francis Online",
+    "name_en": "Taylor & Francis Online",
+    "name_cs": null,
+    "provider": "T&F",
+    "provider_en": "T&F",
+    "provider_cs": null,
+    "url": "https://www.tandfonline.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 41,
+  "fields": {
+    "ext_id": 682,
+    "short_name": "Uptodate",
+    "name": "UpToDate",
+    "name_en": "UpToDate",
+    "name_cs": "UpToDate",
+    "provider": "WK",
+    "provider_en": "WK",
+    "provider_cs": "WK",
+    "url": "https://www.uptodate.com/home",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 42,
+  "fields": {
+    "ext_id": 683,
+    "short_name": "WebOfKnowledge",
+    "name": "Web Of Science",
+    "name_en": "Web Of Science",
+    "name_cs": null,
+    "provider": "Clarivate",
+    "provider_en": "Clarivate",
+    "provider_cs": null,
+    "url": "http://webofknowledge.com",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 43,
+  "fields": {
+    "ext_id": 684,
+    "short_name": "WileyOnlineLibrary",
+    "name": "Wiley Online Library",
+    "name_en": "Wiley Online Library",
+    "name_cs": null,
+    "provider": "Wiley",
+    "provider_en": "Wiley",
+    "provider_cs": null,
+    "url": "https://onlinelibrary.wiley.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 44,
+  "fields": {
+    "ext_id": 2229,
+    "short_name": "AlexanderStreet",
+    "name": "AlexanderStreet",
+    "name_en": "AlexanderStreet",
+    "name_cs": null,
+    "provider": "Alexander Street",
+    "provider_en": "Alexander Street",
+    "provider_cs": null,
+    "url": "https://www.search.alexanderstreet.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 45,
+  "fields": {
+    "ext_id": 2230,
+    "short_name": "AMA",
+    "name": "AMA",
+    "name_en": "AMA",
+    "name_cs": null,
+    "provider": "AMA",
+    "provider_en": "AMA",
+    "provider_cs": null,
+    "url": "https://www.jamanetwork.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 46,
+  "fields": {
+    "ext_id": 2231,
+    "short_name": "AMS",
+    "name": "AMS",
+    "name_en": "AMS",
+    "name_cs": null,
+    "provider": "AMS",
+    "provider_en": "AMS",
+    "provider_cs": null,
+    "url": "https://www.ams.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 47,
+  "fields": {
+    "ext_id": 2232,
+    "short_name": "APS",
+    "name": "APS",
+    "name_en": "APS",
+    "name_cs": null,
+    "provider": "APS",
+    "provider_en": "APS",
+    "provider_cs": null,
+    "url": "https://www.journals.aps.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 48,
+  "fields": {
+    "ext_id": 2233,
+    "short_name": "ASME",
+    "name": "ASME",
+    "name_en": "ASME",
+    "name_cs": null,
+    "provider": "ASME",
+    "provider_en": "ASME",
+    "provider_cs": null,
+    "url": "https://www.asme.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 49,
+  "fields": {
+    "ext_id": 2234,
+    "short_name": "BioOne",
+    "name": "BioOne",
+    "name_en": "BioOne",
+    "name_cs": null,
+    "provider": "BioOne",
+    "provider_en": "BioOne",
+    "provider_cs": null,
+    "url": "http://www.bioone.org/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 50,
+  "fields": {
+    "ext_id": 2235,
+    "short_name": "Bisnode",
+    "name": "Bisnode",
+    "name_en": "Bisnode",
+    "name_cs": null,
+    "provider": "Bisnode",
+    "provider_en": "Bisnode",
+    "provider_cs": null,
+    "url": "http://www.albertina.cz/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 51,
+  "fields": {
+    "ext_id": 2236,
+    "short_name": "Brepolis",
+    "name": "Brepolis",
+    "name_en": "Brepolis",
+    "name_cs": null,
+    "provider": "Brepols",
+    "provider_en": "Brepols",
+    "provider_cs": null,
+    "url": "http://www.brepolis.net/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 52,
+  "fields": {
+    "ext_id": 2237,
+    "short_name": "CEEOL",
+    "name": "CEEOL",
+    "name_en": "CEEOL",
+    "name_cs": "CEEOL",
+    "provider": "CEEOL",
+    "provider_en": "CEEOL",
+    "provider_cs": "CEEOL",
+    "url": "https://www.ceeol.com/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 53,
+  "fields": {
+    "ext_id": 2238,
+    "short_name": "beck-online",
+    "name": "beck-online",
+    "name_en": "beck-online",
+    "name_cs": null,
+    "provider": "CHBeck",
+    "provider_en": "CHBeck",
+    "provider_cs": null,
+    "url": "https://www.beck-online.cz/",
+    "source": 1,
+    "created": "2019-10-23T17:21:51.213Z",
+    "last_modified": "2019-10-23T17:21:51.296Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 54,
+  "fields": {
+    "ext_id": 2250,
+    "short_name": "Allen",
+    "name": "Allen Press",
+    "name_en": "Allen Press",
+    "name_cs": null,
+    "provider": "Allen Press",
+    "provider_en": "Allen Press",
+    "provider_cs": null,
+    "url": "https://www.allenpress.com/",
+    "source": 1,
+    "created": "2019-10-24T14:35:01.468Z",
+    "last_modified": "2019-11-01T15:35:01.526Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 55,
+  "fields": {
+    "ext_id": 2255,
+    "short_name": "NRC Res. Press",
+    "name": "NRC Research Press",
+    "name_en": "NRC Research Press",
+    "name_cs": null,
+    "provider": "Canadian Science Publishing (CSP)",
+    "provider_en": "Canadian Science Publishing (CSP)",
+    "provider_cs": null,
+    "url": "https://www.nrcresearchpress.com/",
+    "source": 1,
+    "created": "2019-11-04T15:35:01.616Z",
+    "last_modified": "2019-11-04T15:35:01.617Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 56,
+  "fields": {
+    "ext_id": 2256,
+    "short_name": "T&F ebooks",
+    "name": "Taylor and Francis ebooks",
+    "name_en": "Taylor and Francis ebooks",
+    "name_cs": null,
+    "provider": "",
+    "provider_en": null,
+    "provider_cs": null,
+    "url": "https://www.taylorfrancis.com/",
+    "source": 1,
+    "created": "2019-11-05T14:07:27.195Z",
+    "last_modified": "2019-11-05T14:07:27.196Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 57,
+  "fields": {
+    "ext_id": 2257,
+    "short_name": "Corrosion",
+    "name": "Corrosion",
+    "name_en": "Corrosion",
+    "name_cs": null,
+    "provider": "",
+    "provider_en": null,
+    "provider_cs": null,
+    "url": "https://corrosionjournal.org/",
+    "source": 1,
+    "created": "2019-11-05T14:20:40.528Z",
+    "last_modified": "2019-11-05T14:20:40.528Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 58,
+  "fields": {
+    "ext_id": 2258,
+    "short_name": "Rubber Chem Tech",
+    "name": "Rubber Chemistry and Technology",
+    "name_en": "Rubber Chemistry and Technology",
+    "name_cs": null,
+    "provider": "",
+    "provider_en": null,
+    "provider_cs": null,
+    "url": "https://rubberchemtechnol.org/",
+    "source": 1,
+    "created": "2019-11-05T14:27:28.324Z",
+    "last_modified": "2019-11-05T14:27:28.324Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 59,
+  "fields": {
+    "ext_id": 2261,
+    "short_name": "ASCE",
+    "name": "ASCE Library",
+    "name_en": "ASCE Library",
+    "name_cs": null,
+    "provider": "",
+    "provider_en": null,
+    "provider_cs": null,
+    "url": "https://ascelibrary.org/",
+    "source": 1,
+    "created": "2019-11-21T15:45:51.226Z",
+    "last_modified": "2019-11-21T15:45:51.226Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 60,
+  "fields": {
+    "ext_id": 2262,
+    "short_name": "ICE",
+    "name": "ICE Virtual Library",
+    "name_en": "ICE Virtual Library",
+    "name_cs": null,
+    "provider": "",
+    "provider_en": null,
+    "provider_cs": null,
+    "url": "https://www.icevirtuallibrary.com/",
+    "source": 1,
+    "created": "2019-11-21T15:45:51.244Z",
+    "last_modified": "2019-11-21T15:45:51.244Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 61,
+  "fields": {
+    "ext_id": 2263,
+    "short_name": "IET",
+    "name": "IET Digital Library",
+    "name_en": "IET Digital Library",
+    "name_cs": null,
+    "provider": "",
+    "provider_en": null,
+    "provider_cs": null,
+    "url": "https://digital-library.theiet.org/",
+    "source": 1,
+    "created": "2019-11-21T15:45:51.245Z",
+    "last_modified": "2019-11-21T15:45:51.245Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 62,
+  "fields": {
+    "ext_id": 2264,
+    "short_name": "OSA",
+    "name": "OSA",
+    "name_en": "OSA",
+    "name_cs": null,
+    "provider": "",
+    "provider_en": null,
+    "provider_cs": null,
+    "url": "https://www.osa.org/",
+    "source": 1,
+    "created": "2019-11-21T15:45:51.246Z",
+    "last_modified": "2019-11-21T15:45:51.246Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 63,
+  "fields": {
+    "ext_id": 2265,
+    "short_name": "J-STAGE",
+    "name": "J-STAGE",
+    "name_en": "J-STAGE",
+    "name_cs": null,
+    "provider": "Japan Science and Technology Agency",
+    "provider_en": "Japan Science and Technology Agency",
+    "provider_cs": null,
+    "url": "https://www.jstage.jst.go.jp/",
+    "source": 1,
+    "created": "2019-11-26T09:58:48.035Z",
+    "last_modified": "2019-11-26T13:04:56.852Z"
+  }
+},
+{
+  "model": "publications.platform",
+  "pk": 64,
+  "fields": {
+    "ext_id": 2266,
+    "short_name": "Annual Reviews",
+    "name": "Annual Reviews",
+    "name_en": "Annual Reviews",
+    "name_cs": null,
+    "provider": "",
+    "provider_en": null,
+    "provider_cs": null,
+    "url": "https://www.annualreviews.org/",
+    "source": 1,
+    "created": "2019-12-05T08:26:46.112Z",
+    "last_modified": "2019-12-05T08:26:46.112Z"
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 1,
+  "fields": {
+    "code": "JR1",
+    "name": "Journal report 1",
+    "counter_version": 4,
+    "report_type": 3,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 2,
+  "fields": {
+    "code": "TR",
+    "name": "Title report",
+    "counter_version": 5,
+    "report_type": 1,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 3,
+  "fields": {
+    "code": "JR1GOA",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 4,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 4,
+  "fields": {
+    "code": "JR1a",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 7,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 5,
+  "fields": {
+    "code": "BR1",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 8,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 6,
+  "fields": {
+    "code": "BR2",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 9,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 7,
+  "fields": {
+    "code": "BR3",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 10,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 8,
+  "fields": {
+    "code": "DB1",
+    "name": "Counter 4 - Database Report 1",
+    "counter_version": 4,
+    "report_type": 11,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 10,
+  "fields": {
+    "code": "JR2",
+    "name": "",
+    "counter_version": 4,
+    "report_type": 5,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 11,
+  "fields": {
+    "code": "DR",
+    "name": "Counter 5 - Database report",
+    "counter_version": 5,
+    "report_type": 2,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 12,
+  "fields": {
+    "code": "PR",
+    "name": "Platform report",
+    "counter_version": 5,
+    "report_type": 24,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 13,
+  "fields": {
+    "code": "PR1",
+    "name": "Counter 4: Platform report 1",
+    "counter_version": 4,
+    "report_type": 28,
+    "active": true
+  }
+},
+{
+  "model": "core.datasource",
+  "pk": 1,
+  "fields": {
+    "short_name": "ERMS",
+    "type": 1,
+    "url": "",
+    "organization": null
+  }
+}
+]
