@@ -6,6 +6,7 @@
       - sudo  # to be able to create the PostgreSQL database
       - python3-psycopg2  # to work with PostgreSQL from ansible
       - redis  # used for caching by the system
+      - zstd  # fast compression library used for backups
 
 - name: start the redis server
   service: name=redis state=started enabled=yes

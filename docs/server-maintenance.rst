@@ -52,3 +52,42 @@ where ``XXX`` is the name of the command.
 
 **Note**: Running ``python manage.py`` alone is a good way to test that everything works well and
 there are no configuration problems.
+
+
+---------------
+Backing up data
+---------------
+
+There are two important locations of data that `Celus` uses and that you might want to back up:
+
+* the database
+* the media directory, which contains all the downloaded SUSHI reports
+
+By default the database is called ``celus`` and the media directory is located under
+``/var/www/celus/``. If you modified the installation playbook, it might be different in your case.
+
+For convenience, the ansible installation playbook creates a Cron script for you that creates
+daily backups in the ``/root/backup/``. The backups are compressed using the fast
+`Zstandard <https://github.com/facebook/zstd>`_ compression algorithm. The contents of the database
+is stored in files named ``celus-dump-YYYYmmdd.sql.zst``, the media files are stored in files named
+``media-YYYYmmdd.tar.zst``, where ``YYYYmmdd`` is the date of the backup.
+
+It is thus easy to backup the server just by copying the backup files from ``/root/backup/`` to a
+separate location.
+
+
+------------------------------
+Restoring database from backup
+------------------------------
+
+If you need to restore the database from the backup file - either because of some mishap or to
+clone the database on a different system - here is the way we use.
+
+>>> su postgres
+>>> dropdb celus   # this will delete the current celus database!
+>>> createdb -O celus celus   # create new database celus owned by user celus
+>>> zstd -dc name-of-backup-file.sql.zst | psql celus
+
+The procedure above drops the database and creates a new one in order to make sure not residues
+from possible previous database collide with data from the backup. All the commands are run as the
+user ``postgres`` which is the standard way to work with database creation in PostgreSQL.
