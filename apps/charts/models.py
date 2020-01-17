@@ -132,7 +132,7 @@ class ChartDefinition(models.Model):
     ignore_platform = models.BooleanField(
         default=False, help_text='When checked, the chart will contain data for all platforms. '
                                  'This is useful to compare platforms for one title.')
-    scope = models.CharField(max_length=10, choices=SCOPE_CHOICES, default=SCOPE_ALL)
+    scope = models.CharField(max_length=10, choices=SCOPE_CHOICES, default=SCOPE_ALL, blank=True)
 
     def __str__(self):
         return self.name
