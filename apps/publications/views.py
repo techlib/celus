@@ -82,7 +82,12 @@ class PlatformViewSet(ReadOnlyModelViewSet):
             filter(platform_id=pk, **org_filter, **date_filter_params).\
             values('platform').\
             annotate(title_count=Count('title', distinct=True))
-        return Response({'title_count': qs.get()['title_count']})
+        try:
+            result = qs.get()
+            title_count = result.get('title_count', 0)
+        except PlatformTitle.DoesNotExist:
+            title_count = 0
+        return Response({'title_count': title_count})
 
 
 class DetailedPlatformViewSet(ReadOnlyModelViewSet):
