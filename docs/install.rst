@@ -211,6 +211,24 @@ We also recommend to turn on response compression. For example like this::
     </IfModule>
 
 
+Creating initial superuser account
+----------------------------------
+
+In order to log in into the `Celus` administration system, where you can configure most of the
+system, like add users, define report types, etc., you need a superuser account. To create one,
+you need to use the command line on the server and a Django management command ``createsuperuser``::
+
+    cd /root/
+    source activate_virtualenv.sh
+    cd /opt/celus
+    python manage.py createsuperuser
+
+You will be prompted for the username, email and password of the superuser.
+
+**Note**: You can read more about the Django management commands and the activation of python
+virtual environment in :ref:`cli-management`.
+
+
 Loading initial data into the database
 --------------------------------------
 

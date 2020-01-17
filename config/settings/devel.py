@@ -1,5 +1,7 @@
 from .base import *
 
+DATABASES['default']['NAME'] = 'celus2'
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 INSTALLED_APPS += ['debug_toolbar']
