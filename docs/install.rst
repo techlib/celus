@@ -5,6 +5,12 @@ Installation
 This installation instructions manual is based on RHEL/CentOS 8.0 system. It should be possible
 to use it with only minor adjustments on other Linux systems as well.
 
+We recommend using a separate (virtual) machine for installation of Celus. The system is relatively
+self-contained, but there may be some system wide changes made during the installation that might
+conflict with other apps installed in parallel. For example, the system wide services ``celery``
+and ``celerybeat`` will be created for `Celus`.
+
+
 Prerequisites
 =============
 
@@ -103,12 +109,118 @@ From the directory ``docs/ansible`` run the following command::
 
 Of course replace the `example.com` name with the name of the system you are installing on.
 
+Ansible will provide a nice output showing you what it is doing. If everything goes well,
+all steps will go correctly and you will have most of the system set up.
 
-TODO + notes
-============
+If anything breaks during
+the installation, Ansible will stop and provide you with relevant information. You can safely
+re-run the playbook at any time after debugging the issue - the playbook is designed to skip steps
+that were already successfully completed. However, be warned that changes that you make manually
+on the deployment server may be overwritten by Ansible. This is especially true for modification
+to files that Ansible created on the server.
 
-Create symlink::
 
-    /var/www/html/stats/static# ln -s ./ static
+Finalizing steps
+================
 
+While the provided Ansible playbook will perform most of the installation steps, there are a few
+things that you need to do to finalize the install.
+
+
+Configuring Apache
+------------------
+
+The playbook does not attempt to configure Apache (or other webserver) in any way as there are
+many things that need to be set up there besides `Celus`. Below are examples of how we integrate
+`Celus` with Apache.
+
+Celus (as a Django application) uses WSGI to integrate with the server. We use the ``mod_wsgi``
+Apache module to accomplish this. At first you need to install the module::
+
+    yum install python3-mod_wsgi
+
+Then you need to integrate `Celus` into your Apache configuration. We use the following config
+in the ``VirtualHost`` part of config for our deployment::
+
+    # Django stuff - mod_wsgi
+    TimeOut 300
+    WSGIScriptAlias /api /opt/celus/config/wsgi.py/api
+    WSGIScriptAlias /wsEc67YNV2sq /opt/celus/config/wsgi.py/wsEc67YNV2sq
+    WSGIDaemonProcess celus python-home=/opt/virtualenvs/celus/ python-path=/opt/celus/ processes=8 threads=10
+    WSGIProcessGroup celus
+
+    <Directory /opt/celus/config>
+    <Files production.wsgi>
+    Require all granted
+    </Files>
+    </Directory>
+
+    # Javascript routing needs the following
+    FallbackResource /index.html
+
+    Alias /media/ /var/www/celus/media/
+
+If you use `shibboleth` for user authentication, you probably also need the following parts in
+your config::
+
+    <Location />
+      AuthType shibboleth
+      ShibRequestSetting requireSession true
+      require valid-user
+
+      RequestHeader set "X-User-Id" "%{accountID}e"
+      RequestHeader set "X-Full-Name" "%{givenName}e %{sn}e"
+      RequestHeader set "X-First-Name" "%{givenName}e"
+      RequestHeader set "X-Last-Name" "%{sn}e"
+      RequestHeader set "X-User-Name" "%{uid}e"
+      RequestHeader set "X-Mail" "%{mail}e"
+      RequestHeader set "X-cn" "%{cn}e"
+      RequestHeader set "X-Roles" "%{ntkRole}e"
+      RequestHeader set "X-Identity" "%{eppn}e"
+    </Location>
+
+    <Location /api>
+      AuthType shibboleth
+      # when requireSession is false, 401 is returned instead of 302 which is good for the API
+      ShibRequestSetting requireSession false
+      require valid-user
+    </Location>
+
+
+We also recommend to turn on response compression. For example like this::
+
+    <IfModule mod_deflate.c>
+      # Compress HTML, CSS, JavaScript, Text, XML and fonts
+      AddOutputFilterByType DEFLATE application/javascript
+      AddOutputFilterByType DEFLATE application/json
+      AddOutputFilterByType DEFLATE application/xhtml+xml
+      AddOutputFilterByType DEFLATE application/xml
+      AddOutputFilterByType DEFLATE image/svg+xml
+      AddOutputFilterByType DEFLATE image/x-icon
+      AddOutputFilterByType DEFLATE text/css
+      AddOutputFilterByType DEFLATE text/html
+      AddOutputFilterByType DEFLATE text/javascript
+      AddOutputFilterByType DEFLATE text/plain
+      AddOutputFilterByType DEFLATE text/xml
+
+      # Remove browser bugs (only needed for really old browsers)
+      BrowserMatch ^Mozilla/4 gzip-only-text/html
+      BrowserMatch ^Mozilla/4\.0[678] no-gzip
+      BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+      Header append Vary User-Agent
+    </IfModule>
+
+
+Loading initial data into the database
+--------------------------------------
+
+In `Celus` many parts of the system are not hard-coded but driven by the configuration stored in
+the application database. Just after installation this database is empty and thus many essential
+pieces are missing, such as the definitions of report types, data dimensions, etc.
+
+Because bootstrapping the whole system manually would be a lot of work which would be the same
+between installs, we provide basic set of reports, dimensions, etc. with `Celus`. This data
+are ment to be used only once for bootstrapping the system. If you have already made your own
+changes in the system database, you could loose data by repeating the procedure described below,
+so be careful.
 

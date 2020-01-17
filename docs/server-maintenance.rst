@@ -24,3 +24,10 @@ Of course you may modify the ``maintenance.html`` page to provide more informati
 such as the expected time of recovery, etc.
 
 Once you are done, just put the ``index.html.bak`` back to ``index.html`` and you are done.
+
+
+-------------------------------------
+Using command line management scripts
+-------------------------------------
+
+TODO
