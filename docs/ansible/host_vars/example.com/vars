@@ -14,17 +14,17 @@ project_git_path_base: https://github.com/techlib/
 # There are three important GIT branches used in development
 # - devel - for active development, not suitable for serious use
 # - staging - more polished code ready for previewing new functionality before production release
-# - production - code ready to be used in production
+# - master - code ready to be used in production
 #
-# we recommend using the production branch
-project_branch: production
+# we recommend using the master branch
+project_branch: master
 
 # Most of the settings for Celus are stored in Django settings files. There are two settings
 # files suitable for running on a server - staging and production
 # The purpose of these is to enable deployment of two different configurations from the same
 # source code.
 # It is only loosely related to the project_branch setting above in that
-# we run the staging branch with the staging settings and vice versa for production
+# we run the staging branch with the staging settings and master branch with production settings
 # However, both the settings are equally "stable".
 settings_version: production
 #

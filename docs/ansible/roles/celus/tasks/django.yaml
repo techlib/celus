@@ -17,6 +17,9 @@
   file: path=/var/www/{{ project_name }}/static group=apache mode="g=rx" state=directory
   tags: git_update
 
+- name: create symlink in static dir to enable django admin to find its static files
+  file: path=/var/www/{{ project_name }}/static/static src=./ state=link
+
 - name: collect django static files
   django_manage: command=collectstatic app_path=/opt/{{ project_name }} virtualenv=/opt/virtualenvs/{{ project_name }} settings={{ settings_dir }}.settings.{{ settings_version }}
   tags: git_update

@@ -36,6 +36,7 @@
 # main Django related stuff
 - name: install and set up Django
   include: django.yaml
+  tags: django
 
 # all things related to Celery
 - name: install and set up Celery
