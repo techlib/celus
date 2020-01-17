@@ -242,3 +242,11 @@ are ment to be used only once for bootstrapping the system. If you have already 
 changes in the system database, you could loose data by repeating the procedure described below,
 so be careful.
 
+Similarly to superuser account creation, this procedure involves :ref:`cli-management`.
+
+Assuming you are in the ``/opt/celus`` installation directory, just run:
+
+>>> python manage.py loaddata data/initial-data.json
+
+You will be presented with a report that objects have been installed from the fixture.
+
