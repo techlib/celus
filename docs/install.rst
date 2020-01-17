@@ -89,8 +89,8 @@ directory with the corresponding name and a ``vars`` file inside that.
 For convenience, a sample configuration is provided with the `Celus` source code in the
 ``example.com`` dir under ``host_vars/``. You can copy this configuration to your hosts config::
 
-    cd host_vars
-    cp -r example.com my.domain.org
+>>> cd host_vars
+>>> cp -r example.com my.domain.org
 
 The ``vars`` file in the ``example.com`` dir contains an annotated configuration. It explicitly
 marks the things that you need to modify and the things that you might want to. There are some
@@ -137,7 +137,7 @@ many things that need to be set up there besides `Celus`. Below are examples of 
 Celus (as a Django application) uses WSGI to integrate with the server. We use the ``mod_wsgi``
 Apache module to accomplish this. At first you need to install the module::
 
-    yum install python3-mod_wsgi
+>>> yum install python3-mod_wsgi
 
 Then you need to integrate `Celus` into your Apache configuration. We use the following config
 in the ``VirtualHost`` part of config for our deployment::
@@ -218,10 +218,10 @@ In order to log in into the `Celus` administration system, where you can configu
 system, like add users, define report types, etc., you need a superuser account. To create one,
 you need to use the command line on the server and a Django management command ``createsuperuser``::
 
-    cd /root/
-    source activate_virtualenv.sh
-    cd /opt/celus
-    python manage.py createsuperuser
+>>> cd /root/
+>>> source activate_virtualenv.sh
+>>> cd /opt/celus
+>>> python manage.py createsuperuser
 
 You will be prompted for the username, email and password of the superuser.
 
