@@ -1,27 +1,54 @@
 # force use of Python 3 on the host machine
+# you probably do not want to change this
 ansible_python_interpreter: /usr/bin/python3
 
-project_git_path_base: https://github.com/techlib/
-project_name: celus
-project_branch: devel
-ansible_ssh_user: root
+# You most definitely do not want to change the following
+project_name: celus   # influences great many things, from git repo name to installation dir name
+ansible_ssh_user: root   # you will have to tweek the playbook if you decide to use other user
 
-# djangoserver configuration
+# if you have forked celus, you might want to provide your own URL here
+project_git_path_base: https://github.com/techlib/
+
+# You might want to change the following
+#
+# There are three important GIT branches used in development
+# - devel - for active development, not suitable for serious use
+# - staging - more polished code ready for previewing new functionality before production release
+# - production - code ready to be used in production
+#
+# we recommend using the production branch
+project_branch: production
+
+# Most of the settings for Celus are stored in Django settings files. There are two settings
+# files suitable for running on a server - staging and production
+# The purpose of these is to enable deployment of two different configurations from the same
+# source code.
+# It is only loosely related to the project_branch setting above in that
+# we run the staging branch with the staging settings and vice versa for production
+# However, both the settings are equally "stable".
 settings_version: production
-settings_dir: config
+#
+# The following is the name of the PostgreSQL database that the celus playbook will create
+# for Celus. If you change db_name here (not recommended), you need to modify the corresponding
+# settings file in Celus code as well
 db_name: celus
 
-# secret stuff
+
+# Secret stuff - **your should most definitely change these**
+#
 # The following data are stored in the secret_settings.json file which is not part
 # of GIT and only exists on the deployment server
 #
-# This actual values here are for demonstration purposes. In production, you would probably want to
-# use ansible vault to store the following settings, but this is outside the scope of this
+# The actual values here are for demonstration purposes only. In production, you would probably
+# want to use ansible vault to store the following settings, but this is outside the scope of this
 # example file
 # IMPORTANT: The following two settings should be different between different machines
 #            and the values here should not be stored in GIT or anywhere public
+# django_secret_key is used by Django for security stuff like hashing, use something long and random
 django_secret_key: "Use something long like 0OfTJP7Rjctguk1DkKJXD8UQXYaX7nbt but longer"
+# db_password will be used to create the database user and to create the settings file as well
 db_password: "Good and strong password"
+#
 # the ERMS url may contain a secret portion for increased security. Because of this it is
 # also stored in the secret_settings.json file
 erms_url: "https://example.com/api/"

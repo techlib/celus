@@ -9,7 +9,7 @@ project_branch: master
 # default settings version to use
 settings_version: production
 
-settings_dir: "config"
+settings_dir: config
 
 # the name of the PostgreSQL database user to make owner of the database
 # should match django settings
