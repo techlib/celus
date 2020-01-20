@@ -31,7 +31,7 @@ cs:
         </v-row-->
         <v-row>
             <v-col cols="12" lg="6">
-                <v-card>
+                <v-card min-height="480">
                     <v-card-title v-text="$t('interest')"></v-card-title>
                     <v-card-text>
                         <APIChart
@@ -49,7 +49,7 @@ cs:
             </v-col>
 
             <v-col cols="12" lg="6">
-                <v-card>
+                <v-card min-height="480">
                     <v-card-title>
                         <span v-text="$t('title_interest_histogram')"></span>
                         <v-tooltip bottom max-width="400px">
@@ -82,7 +82,7 @@ cs:
         <v-row class="align-stretch">
 
             <v-col cols="auto">
-                <v-card height="100%">
+                <v-card height="100%" min-height="320">
                     <v-card-text>
                         <div v-if="totalInterestData" class="text-center ma-5">
                             <div v-text="$t('total_interest')"></div>
@@ -101,7 +101,12 @@ cs:
                     cols="auto"
                     v-for="interestGroup in this.interestGroupTitlesSorted"
                     :key="interestGroup.short_name"
+                    class="top-col"
             >
+                <v-lazy
+                    min-height="320"
+                    transition="fade-transition"
+                  >
                 <TopTenDashboardWidget
                         :url-base="titleInterestBaseUrl"
                         :interest-group="interestGroup"
@@ -109,6 +114,7 @@ cs:
                 >
 
                 </TopTenDashboardWidget>
+                </v-lazy>
             </v-col>
         </v-row>
     </v-container>
@@ -291,6 +297,10 @@ cs:
         font-size: 1.375rem;
         margin-top: 0.25rem;
         font-weight: bold;
+    }
+
+    .top-col {
+        min-width: 400px;
     }
 
 </style>

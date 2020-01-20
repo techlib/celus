@@ -11,7 +11,7 @@ cs:
 </i18n>
 
 <template>
-    <v-card min-height="320px" height="100%" class="text-center">
+    <v-card min-height="320px" height="100%" min-width="400" class="text-center">
         <!-- publication type selector -->
         <div
                 v-if="pubTypes && pubTypes.length"
