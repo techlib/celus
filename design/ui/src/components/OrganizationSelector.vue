@@ -1,7 +1,7 @@
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
 
 <template>
-    <v-container align-baseline>
+    <v-container align-baseline fluid>
         <v-row align="baseline">
         <v-col v-if="!internalLabel" cols="auto" class="sc px-0" shrink>{{ $t('organization') }}:</v-col>
         <v-col cols="auto" :class="{'py-0': !internalLabel, 'mt-3': internalLabel}">

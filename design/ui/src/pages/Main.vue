@@ -14,8 +14,6 @@
             ></v-divider>
 
             <OrganizationSelector internal-label :lang="appLanguage" class="d-none d-md-flex" />
-            <v-spacer></v-spacer>
-
             <SelectedDateRangeWidget input-like-label class="d-none d-md-flex" />
             <v-spacer></v-spacer>
 
