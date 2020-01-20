@@ -237,15 +237,15 @@ cs:
                             <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
                             {{ $t('delete') }}
                         </v-btn>
-                        <v-btn color="secondary" @click="closeDialog()">
+                        <v-btn color="secondary" @click="closeDialog()" class="mr-2">
                             <v-icon small class="mr-1">fa fa-times</v-icon>
                             {{ $t('close') }}
                         </v-btn>
-                        <v-btn color="warning" @click="saveAndTest()" :disabled="!valid">
+                        <v-btn color="warning" @click="saveAndTest()" :disabled="!valid" class="mr-2">
                             <v-icon small class="mr-1">fa fa-play</v-icon>
                             {{ $t('save_and_test') }}
                         </v-btn>
-                        <v-btn color="primary" @click="saveAndClose()" :disabled="!valid">
+                        <v-btn color="primary" @click="saveAndClose()" :disabled="!valid" class="mr-2">
                             <v-icon small class="mr-1">fa fa-save</v-icon>
                             {{ $t('save') }}
                         </v-btn>
