@@ -17,7 +17,7 @@ sources which do not offer this API.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    admin.rst

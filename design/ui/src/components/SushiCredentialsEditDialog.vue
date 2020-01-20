@@ -233,7 +233,7 @@ cs:
                     </v-col>
                     <v-spacer></v-spacer>
                     <v-col cols="auto">
-                        <v-btn color="error" @click="deleteObject()" class="mr-8">
+                        <v-btn v-if="credentials" color="error" @click="deleteObject()" class="mr-8">
                             <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
                             {{ $t('delete') }}
                         </v-btn>
