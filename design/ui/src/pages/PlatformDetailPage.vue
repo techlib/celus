@@ -9,107 +9,108 @@ cs:
 </i18n>
 
 <template>
-    <div>
-        <v-layout>
-            <v-flex>
-                <v-breadcrumbs :items="breadcrumbs" class="pl-0">
-                    <template v-slot:item="props">
-                        <router-link
-                                v-if="props.item.linkName"
-                                :to="{name: props.item.linkName, params: props.item.linkParams}"
-                        >
-                            {{ props.item.text }}
-                        </router-link>
-                        <span v-else>
+    <div class="px-md-2">
+        <div>
+            <v-breadcrumbs :items="breadcrumbs" class="pl-0">
+                <template v-slot:item="props">
+                    <router-link
+                            v-if="props.item.linkName"
+                            :to="{name: props.item.linkName, params: props.item.linkParams}"
+                    >
+                        {{ props.item.text }}
+                    </router-link>
+                    <span v-else>
                     {{ props.item.text }}
                 </span>
-                    </template>
-                </v-breadcrumbs>
+                </template>
+            </v-breadcrumbs>
+        </div>
 
-                <h2 class="mb-4">{{ platform ? platform.name : '' }}</h2>
+        <h2 class="mb-0">{{ platform ? platform.name : '' }}</h2>
 
-                <v-layout row ma-2 mb-4>
-                    <v-flex shrink mr-sm-4>
-                        <table v-if="platform" class="overview mb-4 elevation-2">
-                            <tr>
-                                <th>{{ $t('labels.provider') }}</th>
-                                <td>{{ platform.provider }}</td>
-                            </tr>
-                            <tr>
-                                <th>{{ $t('labels.url') }}</th>
-                                <td><a :href="platform.url">{{ platform.url }}</a></td>
-                            </tr>
-                        </table>
-                    </v-flex>
-                    <v-flex shrink mr-sm-4>
-                        <table v-if="platform" class="overview mb-4 elevation-2">
-                            <tr>
-                                <th>{{ $t('labels.title_count') }}</th>
-                                <td class="text-right">
-                                    <span v-if="platform.title_count === 'loading'" class="fas fa-spinner fa-spin subdued"></span>
-                                    <span v-else>
+        <v-container fluid class="px-0">
+            <v-row>
+                <v-col cols="auto" mr-sm-4>
+                    <table v-if="platform" class="overview mb-4 elevation-2">
+                        <tr>
+                            <th>{{ $t('labels.provider') }}</th>
+                            <td>{{ platform.provider }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ $t('labels.url') }}</th>
+                            <td><a :href="platform.url">{{ platform.url }}</a></td>
+                        </tr>
+                    </table>
+                </v-col>
+                <v-col cols="auto" mr-sm-4>
+                    <table v-if="platform" class="overview mb-4 elevation-2">
+                        <tr>
+                            <th>{{ $t('labels.title_count') }}</th>
+                            <td class="text-right">
+                                <span v-if="platform.title_count === 'loading'" class="fas fa-spinner fa-spin subdued"></span>
+                                <span v-else>
                                         {{ formatInteger(platform.title_count) }}
                                     </span>
-                                </td>
-                            </tr>
-                            <tr class="header">
-                                <th colspan="2" v-text="$t('interest')"></th>
-                            </tr>
-                            <tr v-for="ig in interestGroups">
-                                <th v-text="ig.name"></th>
-                                <td class="text-right">
-                                    <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
-                                    <span v-else>
+                            </td>
+                        </tr>
+                        <tr class="header">
+                            <th colspan="2" v-text="$t('interest')"></th>
+                        </tr>
+                        <tr v-for="ig in interestGroups" :key="ig.pk">
+                            <th v-text="ig.name"></th>
+                            <td class="text-right">
+                                <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
+                                <span v-else>
                                         {{ formatInteger(platform.interests[ig.short_name]) }}
                                     </span>
-                                </td>
-                            </tr>
-                        </table>
-                    </v-flex>
-                    <v-spacer></v-spacer>
-                    <v-flex shrink v-if="showAdminStuff && organizationSelected">
-                        <v-card>
-                            <!--v-card-title>
-                                {{ $t('title_fields.actions') }}
-                            </v-card-title-->
-                            <v-card-text>
-                                <div>
-                                    <v-btn
-                                            text small
-                                            :to="{name: 'platform-upload-data', params: {platformId: platformId}}"
-                                    >
-                                        <v-icon small class="mr-2">fa-upload</v-icon>
-                                        {{ $t('actions.upload_custom_data') }}
-                                    </v-btn>
+                            </td>
+                        </tr>
+                    </table>
+                </v-col>
+                <v-spacer></v-spacer>
+                <v-col cols="auto" v-if="showAdminStuff && organizationSelected">
+                    <v-card>
+                        <!--v-card-title>
+                            {{ $t('title_fields.actions') }}
+                        </v-card-title-->
+                        <v-card-text>
+                            <div>
+                                <v-btn
+                                        text small
+                                        :to="{name: 'platform-upload-data', params: {platformId: platformId}}"
+                                >
+                                    <v-icon small class="mr-2">fa-upload</v-icon>
+                                    {{ $t('actions.upload_custom_data') }}
+                                </v-btn>
 
-                                </div>
-                                <div>
-                                    <AddAnnotationButton
-                                            :platform="platform"
-                                            @update="refreshAnnotations()"
-                                            text
-                                            small
-                                    />
-                                </div>
-                            </v-card-text>
-                        </v-card>
-                    </v-flex>
-                </v-layout>
-            </v-flex>
+                            </div>
+                            <div>
+                                <AddAnnotationButton
+                                        :platform="platform"
+                                        @update="refreshAnnotations()"
+                                        text
+                                        small
+                                />
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
+        </v-container>
 
-        </v-layout>
-
-        <section class="mb-5">
-            <AnnotationsWidget v-if="platform" :platform="platform" :allow-add="showAdminStuff" ref="annotWidget"></AnnotationsWidget>
+        <section class="mb-5" v-if="platform">
+            <AnnotationsWidget :platform="platform" :allow-add="showAdminStuff" ref="annotWidget"></AnnotationsWidget>
         </section>
 
         <section v-if="selectedOrganizationId && platform">
-            <v-layout>
-                <v-flex><h3>{{ $t('overview') }}</h3></v-flex>
-                <v-flex shrink>
-                    <data-export-widget :platform="platformId"></data-export-widget>
-                </v-flex>
-            </v-layout>
+            <v-container fluid class="pa-0">
+                <v-row class="ma-0">
+                    <v-col class="py-0"><h3>{{ $t('overview') }}</h3></v-col>
+                    <v-col cols="auto" class="py-0">
+                        <data-export-widget :platform="platformId"></data-export-widget>
+                    </v-col>
+                </v-row>
+            </v-container>
             <CounterChartSet
                     :platform-id="platformId"
                     :title-id="null"

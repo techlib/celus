@@ -101,9 +101,7 @@
             </v-container>
         </v-footer>
 
-        <v-layout justify-center>
-            <LoginDialog />
-        </v-layout>
+        <LoginDialog />
     </v-app>
     <!-- invalid user state -->
     <InvalidUserPage v-else />

@@ -119,22 +119,24 @@ cs:
                     <v-expansion-panel>
                         <v-expansion-panel-header>{{ $t('labels.http_authentication') }}</v-expansion-panel-header>
                         <v-expansion-panel-content>
-                            <v-layout row>
-                                <v-flex xs12 sm6 px-5>
+                            <v-container>
+                            <v-row>
+                                <v-col cols="12" :sm="6">
                                     <v-text-field
                                             v-model="httpUsername"
                                             :label="$t('labels.http_username')"
                                     >
                                     </v-text-field>
-                                </v-flex>
-                                <v-flex xs12 sm6 px-5>
+                                </v-col>
+                                <v-col cols="12" :sm="6">
                                     <v-text-field
                                             v-model="httpPassword"
                                             :label="$t('labels.http_password')"
                                     >
                                     </v-text-field>
-                                </v-flex>
-                            </v-layout>
+                                </v-col>
+                            </v-row>
+                            </v-container>
                         </v-expansion-panel-content>
                     </v-expansion-panel>
                     <v-expansion-panel>

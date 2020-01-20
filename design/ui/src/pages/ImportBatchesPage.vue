@@ -51,15 +51,14 @@
     <v-dialog
             v-model="showDialog"
     >
-        <v-card>
+        <v-card class="pt-4">
             <v-card-text>
                 <AccessLogList v-if="dialogType === 'data'" :import-batch="selectedBatch" />
                 <ImportBatchChart v-else-if="dialogType === 'chart'" :import-batch-id="selectedBatch" />
             </v-card-text>
             <v-card-actions>
-                <v-layout pb-3 pr-5 justify-end>
-                    <v-btn @click="showDialog = false">{{ $t('actions.close') }}</v-btn>
-                </v-layout>
+                <v-spacer></v-spacer>
+                <v-btn @click="showDialog = false" class="mb-2 mr-2">{{ $t('actions.close') }}</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
