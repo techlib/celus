@@ -47,22 +47,31 @@ cs:
                         <tr>
                             <th>{{ $t('labels.title_count') }}</th>
                             <td class="text-right">
-                                <span v-if="platform.title_count === 'loading'" class="fas fa-spinner fa-spin subdued"></span>
+                                <span
+                                        v-if="platform.title_count === 'loading'"
+                                        class="fas fa-spinner fa-spin subdued">
+                                </span>
                                 <span v-else>
-                                        {{ formatInteger(platform.title_count) }}
-                                    </span>
+                                    {{ formatInteger(platform.title_count) }}
+                                </span>
                             </td>
                         </tr>
                         <tr class="header">
                             <th colspan="2" v-text="$t('interest')"></th>
                         </tr>
                         <tr v-for="ig in interestGroups" :key="ig.pk">
-                            <th v-text="ig.name"></th>
+                            <th
+                                    v-text="ig.name"
+                                    :class="{'subdued-th': platform.interests.loading || platform.interests[ig.short_name] === 0}">
+                            </th>
                             <td class="text-right">
-                                <span v-if="platform.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
-                                <span v-else>
-                                        {{ formatInteger(platform.interests[ig.short_name]) }}
-                                    </span>
+                                <span
+                                        v-if="platform.interests.loading"
+                                        class="fas fa-spinner fa-spin subdued">
+                                </span>
+                                <span v-else :class="{'subdued': platform.interests[ig.short_name] === 0}">
+                                    {{ formatInteger(platform.interests[ig.short_name]) }}
+                                </span>
                             </td>
                         </tr>
                     </table>
@@ -286,7 +295,7 @@ cs:
         tr.header {
             th {
                 font-variant: small-caps;
-                font-weight: 300;
+                font-weight: 500;
                 font-size: 82.5%;
                 border-bottom: solid 1px #dddddd;
                 padding-top: 0.5rem;
@@ -301,6 +310,12 @@ cs:
         th {
             text-align: left;
             padding-right: 1.5rem;
+            font-weight: 300;
+
+            &.subdued-th {
+                //font-weight: normal;
+                color: #999999;
+            }
         }
     }
 
