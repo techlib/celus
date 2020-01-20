@@ -25,11 +25,3 @@ sources which do not offer this API.
    install.rst
    server-maintenance.rst
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
