@@ -1,0 +1,9 @@
+[
+{
+  "Code": 1011,
+  "Severity": "Warning",
+  "Message": "Report Queued for Processing",
+  "Help_URL": "https://support.jstor.org",
+  "Data": "Report is currently queued for processing. Please retry the request after some reasonable time."
+}
+]

@@ -320,11 +320,16 @@ class SushiCredentials(models.Model):
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
         else:
             download_success = True
+            error = report.errors or (report.warnings and not report.records)
             # check for errors
-            if report.errors:
-                logger.error('Found errors: %s', report.errors)
-                log = '; '.join(str(e) for e in report.errors)
-                error_code = report.errors[0].code
+            if error:
+                if report.errors:
+                    logger.error('Found errors: %s', report.errors)
+                    log = '; '.join(str(e) for e in report.errors)
+                    error_code = report.errors[0].code
+                else:
+                    log = 'Warnings: ' + '; '.join(str(e) for e in report.errors)
+                    error_code = report.warnings[0].code
                 contains_data = False
                 error_explanation = client.explain_error_code(error_code)
                 queued = error_explanation.should_retry and error_explanation.setup_ok
@@ -391,7 +396,8 @@ class SushiFetchAttempt(models.Model):
                                            'refetched?')
     when_queued = models.DateTimeField(null=True, blank=True)
     queue_previous = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
-                                       related_query_name='queue_following')
+                                       related_query_name='queue_following',
+                                       related_name='queue_following')
     data_file = models.FileField(upload_to=where_to_store, blank=True, null=True)
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
@@ -427,6 +433,36 @@ class SushiFetchAttempt(models.Model):
     def ok(self):
         return self.download_success and self.processing_success
 
+    @property
+    def queueing_explanation(self):
+        if not self.queued:
+            return 'Not queued'
+        following_count = self.queue_following.count()
+        if following_count:
+            return f'{following_count} following attempt(s) exist - no queueing applies for ' \
+                   f'this attempt'
+        output = []
+        cred_based_delay = self.credentials.when_can_access()
+        cred_based_retry = now() + timedelta(seconds=cred_based_delay)
+        output.append(f'Credentials based retry date: {cred_based_retry}')
+        attempt_retry = self.when_to_retry()
+        output.append(f'Attempt retry date: {attempt_retry}')
+        if not attempt_retry:
+            when_retry = None
+        else:
+            when_retry = max(attempt_retry, cred_based_retry)
+        output.append('------------------')
+        if when_retry and when_retry <= now():
+            # we are ready to retry
+            output.append('Ready to retry')
+        else:
+            if when_retry:
+                retry_delay = when_retry - now()
+                output.append(f'Too soon to retry - need {retry_delay}')
+            else:
+                output.append('Should not retry automatically')
+        return '\n'.join(output)
+
     def retry(self):
         attempt = self.credentials.fetch_report(counter_report=self.counter_report,
                                                 start_date=self.start_date,
@@ -437,8 +473,7 @@ class SushiFetchAttempt(models.Model):
 
     def previous_attempt_count(self):
         """
-        Goes through the possible linked list of queue_previous and counts the how long the list
-        is.
+        Goes through the possible linked list of queue_previous and counts how long the list is.
         """
         count = 0
         current = self

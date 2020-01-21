@@ -134,12 +134,25 @@ class TestCounter5Reading(object):
         error = reader.errors[0]
         assert error.code == '3030'
 
-    @pytest.mark.now()
     def test_reading_messed_up_data_error_directly_in_data(self):
         """
         There is no header, just the error in the json
         """
         with open('apps/nigiri/tests/data/naked_error.json', 'r') as \
+                infile:
+            data = json.load(infile)
+        reader = Counter5TRReport()
+        records = reader.read_report(data)
+        assert len(records) == 0
+        assert len(reader.warnings) == 1
+        assert reader.queued
+
+    @pytest.mark.now()
+    def test_reading_messed_up_data_error_list_directly_in_data(self):
+        """
+        There is no header, just the error in the json
+        """
+        with open('apps/nigiri/tests/data/naked_errors.json', 'r') as \
                 infile:
             data = json.load(infile)
         reader = Counter5TRReport()

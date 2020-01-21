@@ -83,7 +83,8 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
                    'import_crashed', 'error_code', 'contains_data', HasImportBatch,
                    'counter_report', 'credentials__organization', 'credentials__platform']
     readonly_fields = ['credentials', 'counter_report', 'timestamp', 'start_date', 'end_date',
-                       'download_success', 'data_file', 'import_batch', 'queue_previous']
+                       'download_success', 'data_file', 'import_batch', 'queue_previous',
+                       'queueing_explanation']
     search_fields = ['credentials__organization__name', 'credentials__platform__name', 'pk']
     actions = [delete_with_data, reimport]
     list_select_related = ['credentials__platform', 'credentials__organization', 'credentials',
