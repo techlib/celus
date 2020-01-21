@@ -96,10 +96,15 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.import_batch = import_batch
         logger.info('Import stats: %s', stats)
     else:
-        if reader.errors:
-            attempt.log = '; '.join(str(e) for e in reader.errors)
-            logger.warning('Found errors: %s', attempt.log)
-            attempt.error_code = reader.errors[0].code
+        if reader.errors or reader.warnings:
+            if reader.errors:
+                attempt.log = '; '.join(str(e) for e in reader.errors)
+                logger.warning('Found errors: %s', attempt.log)
+                attempt.error_code = reader.errors[0].code
+            else:
+                attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
+                attempt.error_code = reader.warnings[0].code
+            attempt.download_success = True
             attempt.contains_data = False
             error_explanation = Sushi5Client.explain_error_code(attempt.error_code)
             attempt.queued = error_explanation.should_retry and error_explanation.setup_ok

@@ -99,8 +99,7 @@ class Counter5ReportBase(object):
                         records.append(this_rec)
         else:
             # we have no data
-            if not self.errors:
-                print(report)
+            if not self.errors and not self.warnings:
                 # if there is no other reason why there should be no data, we raise exception
                 raise SushiException('Incorrect format', content=report)
         self.records = records
