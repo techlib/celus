@@ -196,6 +196,31 @@ CACHES = {
     }
 }
 
+# Cachalot related settings
+CACHALOT_ONLY_CACHABLE_TABLES = frozenset((
+    'charts_chartdefinition',
+    'charts_dimensionfilter',
+    'charts_reportdataview',
+    'charts_reportviewtocharttype',
+    'logs_accesslog',
+    'logs_dimension',
+    'logs_dimensiontext',
+    'logs_interestgroup',
+    'logs_metric',
+    'logs_organizationplatform',
+    'logs_reportinterestmetric',
+    'logs_reporttype',
+    'logs_reporttypetodimension',
+    'organizations_organizations',
+    'organizations_userorganization',
+    'publications_platform',
+    'publications_platforminterestreport',
+    'publications_platformtitle',
+    'publications_title',
+    'sushi_counterreporttype',
+))
+# CACHALOT_UNCACHABLE_TABLES = frozenset(('django_migrations',))
+
 # Celery
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BROKER_URL = 'redis://localhost'
