@@ -328,7 +328,7 @@ class SushiCredentials(models.Model):
                     log = '; '.join(str(e) for e in report.errors)
                     error_code = report.errors[0].code
                 else:
-                    log = 'Warnings: ' + '; '.join(str(e) for e in report.errors)
+                    log = 'Warnings: ' + '; '.join(str(e) for e in report.warnings)
                     error_code = report.warnings[0].code
                 contains_data = False
                 error_explanation = client.explain_error_code(error_code)
