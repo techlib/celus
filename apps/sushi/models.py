@@ -335,6 +335,7 @@ class SushiCredentials(models.Model):
                 queued = error_explanation.should_retry and error_explanation.setup_ok
                 processing_success = not (error_explanation.needs_checking
                                           and error_explanation.setup_ok)
+                file_data = client.report_to_string(report.raw_data)
             else:
                 contains_data = True
                 processing_success = True
