@@ -7,6 +7,9 @@ of usage data of electronic information sources, such as scientific journals, et
 designed specifically to handle consortia of individual user organizations and separate usage
 statistics for each member organization.
 
+.. image:: docs/images/dashboard.png
+   :scale: 75%
+
 
 You can find the documentation at Read the Docs:
 
