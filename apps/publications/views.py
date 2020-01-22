@@ -296,14 +296,19 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
                                                      condition=Q(**accesslog_filter))
             )
         # construct the whole query
-        result = title_qs.\
-            filter(
-                *search_filters,
-                **extend_query_filter(self.date_filter, 'platformtitle__'),
-                **extend_query_filter(self.org_filter, 'platformtitle__'),
-                **extra_filters,
-            ).\
-            distinct()
+        # joining together platformtitle and accesslog is problematic, because there are
+        # usually several platformtitles and thus the join multiplies the number of joined
+        # accesslogs and the sums are then multiplied as well.
+        # because of this, we preselect the titles and then use the distinct IDs as base
+        # for the query containing the sums
+        # as a side effect, the query is also faster ;)
+        base_title_query = Title.objects.filter(
+            *search_filters,
+            **extend_query_filter(self.date_filter, 'platformtitle__'),
+            **extend_query_filter(self.org_filter, 'platformtitle__'),
+            **extra_filters,
+        ).distinct()
+        result = title_qs.filter(pk__in=base_title_query)
         annot = self._annotations()
         if annot:
             result = result.annotate(**annot)

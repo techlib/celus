@@ -85,7 +85,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         return Response(data)
 
     @action(detail=True, url_path='title-interest-histogram')
-    def title_interest_interest(self, request, pk):
+    def title_interest_histogram(self, request, pk):
         org_filter = organization_filter_from_org_id(pk, request.user)
         date_filter = date_filter_from_params(request.GET)
         interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
