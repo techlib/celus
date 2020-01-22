@@ -357,6 +357,12 @@ class Sushi4Client(SushiClientBase):
     implementation
     """
 
+    # remap of extra params into names that have special meaning for the pycounter client
+    extra_params_remap = {
+        'Name': 'requestor_name',
+        'Email': 'requestor_email',
+    }
+
     def __init__(self, url, requestor_id, customer_id=None, extra_params=None, auth=None):
         super().__init__(url, requestor_id, customer_id, extra_params, auth)
 
@@ -371,6 +377,11 @@ class Sushi4Client(SushiClientBase):
         if self.requestor_id:
             kwargs['requestor_id'] = self.requestor_id
         if params:
+            # recode params that have special meaning
+            for orig, new in self.extra_params_remap.items():
+                if orig in params:
+                    kwargs[new] = params.pop(orig)
+            # put the rest in as it is
             kwargs.update(params)
         if self.auth:
             kwargs['auth'] = self.auth
