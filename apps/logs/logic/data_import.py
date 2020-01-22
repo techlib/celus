@@ -1,14 +1,14 @@
 import logging
-from collections import Counter
+from collections import Counter, namedtuple
 from datetime import date
 
+from core.logic.debug import log_memory
 from logs.logic.validation import clean_and_validate_issn, ValidationError
 from logs.models import ImportBatch
+from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Title, Platform, PlatformTitle
 from ..models import ReportType, Metric, DimensionText, AccessLog
-from nigiri.counter5 import CounterRecord
-
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,9 @@ def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=No
         return obj
     else:
         return mapping[attr_value]
+
+
+TitleRec = namedtuple('TitleRec', ('name', 'pub_type', 'issn', 'eissn', 'isbn', 'doi'))
 
 
 class TitleManager(object):
@@ -41,11 +44,24 @@ class TitleManager(object):
         # in the following, we use values_list to speed things up as there are a lot of objects
         # and creating them takes a lot of time
         # (e.g. processing time for import was cut from 3.5s to 1.2s by switching to this)
+        self.key_to_title_id_and_pub_type = {}
+            # tuple(t[:5]): tuple(t[5:])
+            # for t in Title.objects.all().order_by().
+            # values_list('name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type')
+            # }
+        self.stats = Counter()
+
+    def prefetch_titles(self, records: [TitleRec]):
+        title_qs = Title.objects.all()
+        for attr_name in ('issn', 'eissn', 'isbn', 'doi', 'name'):
+            attr_values = {getattr(rec, attr_name) for rec in records}
+            title_qs = title_qs.filter(**{attr_name+'__in': attr_values})
         self.key_to_title_id_and_pub_type = {
             tuple(t[:5]): tuple(t[5:])
-            for t in Title.objects.all().order_by().
+            for t in title_qs.order_by().
             values_list('name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type')
-            }
+        }
+        logger.debug('Prefetched %d records', len(self.key_to_title_id_and_pub_type))
 
     @classmethod
     def decode_pub_type(cls, pub_type: str) -> str:
@@ -59,40 +75,47 @@ class TitleManager(object):
             return Title.PUB_TYPE_BOOK
         return Title.PUB_TYPE_UNKNOWN
 
-    def get_or_create(self, name, pub_type, isbn, issn, eissn, doi) -> int:
-        if not name:
+    def get_or_create(self, record: TitleRec) -> int:
+        if not record.name:
             logger.warning('Record is missing or has empty title: '
-                           'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s', isbn, issn, eissn, doi)
+                           'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s',
+                           record.isbn, record.issn, record.eissn, record.doi)
             return None
         # normalize issn, eissn and isbn - the are sometimes malformed by whitespace in the data
+        issn = record.issn
         if issn:
             try:
                 issn = clean_and_validate_issn(issn)
             except ValidationError as e:
                 logger.error(f'Error: {e}')
                 issn = ''
+        eissn = record.eissn
         if eissn:
             try:
                 eissn = clean_and_validate_issn(eissn)
             except ValidationError as e:
                 logger.error(f'Error: {e}')
                 eissn = ''
-        isbn = isbn.replace(' ', '') if isbn else isbn
-        pub_type = self.decode_pub_type(pub_type)
-        key = (name, isbn, issn, eissn, doi)
+        isbn = record.isbn.replace(' ', '') if record.isbn else record.isbn
+        pub_type = self.decode_pub_type(record.pub_type)
+        key = (record.name, isbn, issn, eissn, record.doi)
         if key in self.key_to_title_id_and_pub_type:
             title_pk, db_pub_type = self.key_to_title_id_and_pub_type[key]
             # check if we need to improve the pub_type from UNKNOWN to something better
             if db_pub_type == Title.PUB_TYPE_UNKNOWN and pub_type != Title.PUB_TYPE_UNKNOWN:
                 logger.info('Upgrading publication type from unknown to "%s"', pub_type)
                 Title.objects.filter(pk=title_pk).update(pub_type=pub_type)
+                self.stats['update'] += 1
+            else:
+                self.stats['existing'] += 1
             return title_pk
-        title = Title.objects.create(name=name, pub_type=pub_type, isbn=isbn, issn=issn,
-                                     eissn=eissn, doi=doi)
+        title = Title.objects.create(name=record.name, pub_type=pub_type, isbn=isbn, issn=issn,
+                                     eissn=eissn, doi=record.doi)
         self.key_to_title_id_and_pub_type[key] = (title.pk, pub_type)
+        self.stats['created'] += 1
         return title.pk
 
-    def get_or_create_from_counter_record(self, record: CounterRecord) -> int:
+    def counter_record_to_title_rec(self, record: CounterRecord) -> TitleRec:
         title = record.title
         isbn = None
         issn = None
@@ -129,7 +152,11 @@ class TitleManager(object):
         issn = '' if issn is None else issn
         eissn = '' if eissn is None else eissn
         doi = '' if doi is None else doi
-        return self.get_or_create(title, pub_type, isbn, issn, eissn, doi)
+        return TitleRec(name=title, pub_type=pub_type, isbn=isbn, issn=issn, eissn=eissn, doi=doi)
+
+    def get_or_create_from_counter_record(self, record: CounterRecord) -> int:
+        title_rec = self.counter_record_to_title_rec(record)
+        return self.get_or_create(title_rec)
 
 
 def import_counter_records(report_type: ReportType, organization: Organization, platform: Platform,
@@ -138,18 +165,23 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
     # prepare all remaps
     metrics = {metric.short_name: metric for metric in Metric.objects.all()}
     text_to_int_remaps = {}
+    log_memory('X-2')
     for dim_text in DimensionText.objects.all():
         if dim_text.dimension_id not in text_to_int_remaps:
             text_to_int_remaps[dim_text.dimension_id] = {}
         text_to_int_remaps[dim_text.dimension_id][dim_text.text] = dim_text
+    log_memory('X-1.5')
     tm = TitleManager()
+    title_recs = [tm.counter_record_to_title_rec(rec) for rec in records]
+    tm.prefetch_titles(title_recs)
     # prepare raw data to be inserted into the database
     dimensions = report_type.dimensions_sorted
     to_insert = {}
     seen_dates = set()
-    for record in records:  # type: CounterRecord
+    log_memory('X-1')
+    for title_rec, record in zip(title_recs, records):  # type: TitleRec, CounterRecord
         # attributes that define the identity of the log
-        title_id = tm.get_or_create_from_counter_record(record)
+        title_id = tm.get_or_create(title_rec)
         if title_id is None:
             # the title could not be found or created (probably missing required field like title)
             stats['warn missing title'] += 1
@@ -187,8 +219,10 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
         else:
             to_insert[key] = record.value
         seen_dates.add(record.start)
+    logger.info('Title statistics: %s', tm.stats)
     # compare the prepared data with current database content
     # get the candidates
+    log_memory('XX')
     to_check = AccessLog.objects.filter(organization=organization, platform=platform,
                                         report_type=report_type, date__lte=max(seen_dates),
                                         date__gte=min(seen_dates))
@@ -202,6 +236,7 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
         key = tuple(sorted(al_rec.items()))
         to_compare[key] = (pk, value)
     # make the comparison
+    log_memory('XX2')
     dicts_to_insert = []
     for key, value in to_insert.items():
         db_pk, db_value = to_compare.get(key, (None, None))
@@ -217,11 +252,14 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
             rec['value'] = value
             dicts_to_insert.append(rec)
     # now insert the records that are clean to be inserted
+    log_memory('XX3')
     AccessLog.objects.bulk_create([AccessLog(import_batch=import_batch, **rec)
                                    for rec in dicts_to_insert])
     stats['new logs'] += len(dicts_to_insert)
+    log_memory('XX4')
     # and insert the PlatformTitle links
     stats.update(create_platformtitle_links(organization, platform, dicts_to_insert))
+    log_memory('XX5')
     return stats
 
 
