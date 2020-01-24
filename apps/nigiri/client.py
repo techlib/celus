@@ -112,7 +112,10 @@ class SushiClientBase(object):
             return SushiErrorMeaning(should_retry=False, needs_checking=False, setup_ok=False)
         elif error_code in (3030,):
             # no usage data for the requested period, it is success, but again no data
-            return SushiErrorMeaning(should_retry=False, needs_checking=False, setup_ok=True)
+            # unfortunately, some providers, such as Clarivate (Web Of Science) use this
+            # wrongly in cases when 3031 should be used, so we need to treat it like this
+            return SushiErrorMeaning(should_retry=True, needs_checking=False, setup_ok=True,
+                                     retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS)
         elif error_code in (1010, 1011, 1020):
             # some forms of 'try it later' errors
             return SushiErrorMeaning(should_retry=True, needs_checking=False, setup_ok=True,
