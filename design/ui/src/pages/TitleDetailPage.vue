@@ -67,13 +67,20 @@ cs:
                         <th colspan="2" v-text="$t('interest')"></th>
                     </tr>
                     <tr v-for="ig in interestGroups" :key="ig.short_name">
-                        <th v-text="ig.name"></th>
-                        <td class="text-right">
-                            <span v-if="title.interests.loading" class="fas fa-spinner fa-spin subdued"></span>
-                            <span v-else>
-                                {{ formatInteger(title.interests[ig.short_name]) }}
-                            </span>
-                        </td>
+
+                        <th
+                                    v-text="ig.name"
+                                    :class="{'subdued-th': title.interests.loading || title.interests[ig.short_name] === 0}">
+                            </th>
+                            <td class="text-right">
+                                <span
+                                        v-if="title.interests.loading"
+                                        class="fas fa-spinner fa-spin subdued">
+                                </span>
+                                <span v-else :class="{'subdued': title.interests[ig.short_name] === 0}">
+                                    {{ formatInteger(title.interests[ig.short_name]) }}
+                                </span>
+                            </td>
                     </tr>
                 </table>
             </v-col>

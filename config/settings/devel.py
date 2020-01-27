@@ -1,6 +1,7 @@
 from .base import *
 
 DATABASES['default']['NAME'] = 'celus'
+DATABASES['default']['PORT'] = 5434
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
