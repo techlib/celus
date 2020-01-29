@@ -1,6 +1,7 @@
 from .base import *
 
 DATABASES['default']['NAME'] = 'celus_demo'
+MASTER_ORGANIZATIONS = ['NTK-61387142-CEL', 'GMJ-9379']
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
