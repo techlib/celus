@@ -115,7 +115,7 @@ cs:
       },
       autoHeight () {
         const primDimUniqueValues = new Set(this.dataRaw.map(item => item[this.secondaryDim]))
-        return this.dataRaw.length > 0 ? primDimUniqueValues.size * 18 + 100 : 600
+        return this.dataRaw.length > 0 ? primDimUniqueValues.size * 18 + 250 : 600
       },
       minHeight () {
         return 200
