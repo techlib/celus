@@ -124,6 +124,11 @@ class SushiClientBase(object):
             # the data is not yet available - usually some months are missing
             return SushiErrorMeaning(should_retry=True, needs_checking=False, setup_ok=True,
                                      retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS)
+        elif error_code >= 4000:
+            # some other stuff for which we want to check later if the data exists
+            # in the wild, we have seen 4010
+            return SushiErrorMeaning(should_retry=True, needs_checking=False, setup_ok=True,
+                                     retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS)
         else:
             return SushiErrorMeaning(should_retry=True, needs_checking=True, setup_ok=False)
 
