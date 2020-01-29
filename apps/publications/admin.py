@@ -25,3 +25,10 @@ class TitleAdmin(admin.ModelAdmin):
 
     list_display = ['name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi']
     search_fields = ['name', 'isbn', 'issn', 'eissn', 'doi']
+
+
+@admin.register(models.PlatformTitle)
+class PlatformTitleAdmin(admin.ModelAdmin):
+
+    list_display = ['platform', 'organization', 'title']
+    list_filter = ['platform', 'organization']
