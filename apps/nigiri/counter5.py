@@ -80,7 +80,7 @@ class Counter5ReportBase(object):
             self.extract_errors(self.header.get('Exceptions', []))
         records = []
         items = report.get('Report_Items')
-        if items:
+        if items is not None:
             for item in items:
                 record = CounterRecord()
                 record.platform_name = item.get('Platform')
