@@ -12,6 +12,7 @@ import VuexPersistence from 'vuex-persist'
 import {sortOrganizations} from '../libs/organizations'
 import interest from './modules/interest'
 import maintenance from './modules/maintenance'
+import login from './modules/login'
 
 Vue.use(Vuex)
 
@@ -30,6 +31,7 @@ export default new Vuex.Store({
   modules: {
     interest,
     maintenance,
+    login,
   },
   state: {
     user: null,
@@ -128,6 +130,13 @@ export default new Vuex.Store({
         return state.basicInfo['REFERENCE_CURRENCY']
       }
       return null
+    },
+    usesPasswordLogin (state) {
+      if ('AUTHENTICATION_BACKENDS' in state.basicInfo) {
+        if ('django.contrib.auth.backends.ModelBackend' in state.basicInfo['AUTHENTICATION_BACKEND'])
+          return true
+      }
+      return false
     }
   },
   actions: {
@@ -150,13 +159,15 @@ export default new Vuex.Store({
         }
         return Promise.reject(error)
       })
-      await dispatch('loadUserData')  // we need user data first
-      dispatch('loadBasicInfo')
-      dispatch('loadOrganizations')
-      dispatch('changeDateRangeObject', state.dateRangeIndex)
-      dispatch('fetchInterestGroups')
-      if (getters.showManagementStuff) {
-        dispatch('fetchNoInterestPlatforms')
+      await dispatch('loadBasicInfo')
+      if (state.basicInfo.length > 0) {
+        await dispatch('loadUserData')  // we need user data first
+        dispatch('loadOrganizations')
+        dispatch('changeDateRangeObject', state.dateRangeIndex)
+        dispatch('fetchInterestGroups')
+        if (getters.showManagementStuff) {
+          dispatch('fetchNoInterestPlatforms')
+        }
       }
     },
     showSnackbar (context, {content, color}) {
@@ -278,9 +289,6 @@ export default new Vuex.Store({
     },
     setSnackbarContent(state, {content}) {
       Vue.set(state, 'snackbarContent', content)
-    },
-    setLoginError(state, {error}) {
-      Vue.set(state, 'loginError', error)
     },
     setAuthToken(state, {token}) {
       Vue.set(state, 'authToken', token)

@@ -70,7 +70,7 @@ MIDDLEWARE = [
 
 AUTHENTICATION_BACKENDS = [
     'apps.core.auth.EDUIdAuthenticationBackend',
-    # 'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -324,4 +324,4 @@ for key in ("ERMS_API_URL",):
 
 DATABASES['default']['PASSWORD'] = secrets['DB_PASSWORD']
 
-EXPORTED_SETTINGS = ['REFERENCE_CURRENCY']
+EXPORTED_SETTINGS = ['REFERENCE_CURRENCY', 'AUTHENTICATION_BACKENDS']
