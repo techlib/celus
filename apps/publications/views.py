@@ -10,6 +10,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
+from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
 from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metric
@@ -264,7 +265,6 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
     def _before_queryset(self):
         pass
 
-
     def get_queryset(self):
         """
         Should return only titles for specific organization and platform
@@ -280,8 +280,6 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         if q:
             search_filters = [Q(name__ilike=p) | Q(isbn__ilike=p) | Q(issn__ilike=p) |\
                               Q(doi__ilike=p) for p in q.split()]
-            # search_filters = [Q(name__icontains=p) | Q(isbn__contains=p) | Q(issn__contains=p) |\
-            #                   Q(doi__contains=p) for p in q.split()]
         pub_type_arg = self.request.query_params.get('pub_type')
         if pub_type_arg:
             search_filters.append(Q(pub_type=pub_type_arg))
@@ -495,8 +493,13 @@ class TitleViewSet(BaseTitleViewSet):
             **date_filter_params,
             **extend_query_filter(org_filter, 'accesslog__')
         ).distinct()
-        print(platforms.query)
         return Response(PlatformSerializer(platforms, many=True).data)
+
+
+class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 
 class TitleInterestViewSet(TitleInterestMixin, BaseTitleViewSet):
@@ -505,7 +508,7 @@ class TitleInterestViewSet(TitleInterestMixin, BaseTitleViewSet):
     """
 
     serializer_class = TitleCountSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = SmartResultsSetPagination
 
 
 class StartERMSSyncPlatformsTask(APIView):
