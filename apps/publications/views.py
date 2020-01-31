@@ -14,7 +14,7 @@ from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
 from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metric
-from logs.serializers import ReportTypeSerializer, ReportTypeExtendedSerializer
+from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title, PlatformTitle
@@ -23,6 +23,10 @@ from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSe
 from .tasks import erms_sync_platforms_task
 # noinspection PyUnresolvedReferences
 from core import db  # needed to register the ilike lookup
+
+
+class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
+    pass
 
 
 class AllPlatformsViewSet(ReadOnlyModelViewSet):
@@ -403,7 +407,7 @@ class TitleInterestMixin(object):
 class PlatformTitleInterestViewSet(TitleInterestMixin, PlatformTitleViewSet):
 
     serializer_class = TitleCountSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = SmartResultsSetPagination
 
 
 class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
@@ -494,12 +498,6 @@ class TitleViewSet(BaseTitleViewSet):
             **extend_query_filter(org_filter, 'accesslog__')
         ).distinct()
         return Response(PlatformSerializer(platforms, many=True).data)
-
-
-class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
-    page_size = 100
-    page_size_query_param = 'page_size'
-    max_page_size = 1000
 
 
 class TitleInterestViewSet(TitleInterestMixin, BaseTitleViewSet):
