@@ -18,6 +18,11 @@ module.exports = {
         changeOrigin: true,
         ws: true
       },
+      '/rest-auth/': {
+        target: devURLBase,
+        changeOrigin: true,
+        ws: true
+      },
     }
   },
 

@@ -39,9 +39,11 @@ INSTALLED_APPS = [
     'modeltranslation',  # must be before admin
     'django.contrib.admin',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_celery_results',
     'mptt',
     'reversion',
+    'rest_auth',
     'core.apps.CoreConfig',
     'publications.apps.PublicationsConfig',
     'logs.apps.LogsConfig',
@@ -69,8 +71,8 @@ MIDDLEWARE = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'apps.core.auth.EDUIdAuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend',
+    'apps.core.auth.EDUIdAuthenticationBackend',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -180,6 +182,9 @@ REST_FRAMEWORK = {
         'rest_pandas.renderers.PandasCSVRenderer',
         'rest_pandas.renderers.PandasExcelRenderer',
     ),
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'core.authentication.SessionAuthentication401',
+    ]
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
 }

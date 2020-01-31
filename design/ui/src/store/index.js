@@ -131,13 +131,6 @@ export default new Vuex.Store({
       }
       return null
     },
-    usesPasswordLogin (state) {
-      if ('AUTHENTICATION_BACKENDS' in state.basicInfo) {
-        if ('django.contrib.auth.backends.ModelBackend' in state.basicInfo['AUTHENTICATION_BACKEND'])
-          return true
-      }
-      return false
-    }
   },
   actions: {
     async start ({dispatch, getters, state}) {
@@ -159,15 +152,15 @@ export default new Vuex.Store({
         }
         return Promise.reject(error)
       })
-      await dispatch('loadBasicInfo')
-      if (state.basicInfo.length > 0) {
-        await dispatch('loadUserData')  // we need user data first
-        dispatch('loadOrganizations')
-        dispatch('changeDateRangeObject', state.dateRangeIndex)
-        dispatch('fetchInterestGroups')
-        if (getters.showManagementStuff) {
-          dispatch('fetchNoInterestPlatforms')
-        }
+      await dispatch('loadUserData')  // we need user data first
+    },
+    afterAuthentication ({dispatch, state, getters}) {
+      dispatch('loadBasicInfo')
+      dispatch('loadOrganizations')
+      dispatch('changeDateRangeObject', state.dateRangeIndex)
+      dispatch('fetchInterestGroups')
+      if (getters.showManagementStuff) {
+        dispatch('fetchNoInterestPlatforms')
       }
     },
     showSnackbar (context, {content, color}) {
@@ -180,18 +173,22 @@ export default new Vuex.Store({
     selectOrganization (context, {id}) {
       context.commit('setSelectedOrganizationId', {id})
     },
-    async loadUserData (context) {
+    async loadUserData ({commit, dispatch}) {
       try {
         let response = await axios.get('/api/user/')
-        context.commit('setUserData', response.data)
-        context.commit('setAppLanguage', {lang: response.data.language})
+        commit('setUserData', response.data)
+        commit('setAppLanguage', {lang: response.data.language})
+        dispatch('afterAuthentication')
       } catch(error) {
         if (error.response && error.response.status === 403) {
           // we could not get user data because of 403 Forbidden error
           // thus we must inform the user that he will not see anything
-          context.commit('setInvalidUser', {value: true})
+          commit('setInvalidUser', {value: true})
+        } else if (error.response && error.response.status === 401 && error.response.headers['www-authenticate'] === 'Session') {
+          dispatch('changeUsesPasswordLogin', true)
+          dispatch('setShowLoginDialog', {show: true})
         } else {
-          context.dispatch('showSnackbar', {content: 'Error loading user data: ' + error})
+          dispatch('showSnackbar', {content: 'Error loading user data: ' + error})
         }
       }
     },

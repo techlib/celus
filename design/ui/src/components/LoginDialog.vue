@@ -13,17 +13,26 @@ cs:
 </i18n>
 
 <template>
-    <v-dialog v-model="showLoginDialog" persistent max-width="290">
+    <v-dialog v-model="showLoginDialog" persistent :max-width="usesPasswordLogin ? 480 : 290">
         <v-card v-if="usesPasswordLogin">
             <v-card-title class="headline">{{ $t('not_logged_in') }}</v-card-title>
             <v-card-text>
                 <div>{{ $t('not_logged_in_internal_text') }}</div>
+                <v-divider class="my-3"></v-divider>
                 <v-text-field v-model="username" :label="$t('username')"></v-text-field>
                 <v-text-field v-model="password" type="password" :label="$t('password')"></v-text-field>
+                <v-alert
+                        v-if="loginError"
+                        type="error"
+                        v-text="loginErrorText"
+                        outlined
+                        icon="fas fa-exclamation-circle"
+                >
+                </v-alert>
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="login">{{ $t('login') }}</v-btn>
+                <v-btn color="primary" text @click="doLogin">{{ $t('login') }}</v-btn>
             </v-card-actions>
         </v-card>
         <v-card v-else>
@@ -37,7 +46,7 @@ cs:
     </v-dialog>
 </template>
 <script>
-  import {mapGetters} from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
 
   export default {
     name: 'LoginDialog',
@@ -51,8 +60,12 @@ cs:
       }
     },
     computed: {
+      ...mapState({
+        usesPasswordLogin: state => state.login.usesPasswordLogin,
+        loginError: state => state.login.loginError,
+      }),
       ...mapGetters({
-        usesPasswordLogin: 'usesPasswordLogin',
+        loginErrorText: 'loginErrorText',
       }),
       showLoginDialog: {
         get () {
@@ -66,6 +79,15 @@ cs:
         // we add the current timestamp param to the URL in order to unsure the
         // page will not be fetched from cache by the browser
         return new Date().getTime()
+      }
+    },
+
+    methods: {
+      ...mapActions({
+        login: 'login',
+      }),
+      doLogin () {
+        this.login({email: this.username, password: this.password})
       }
     }
   }
