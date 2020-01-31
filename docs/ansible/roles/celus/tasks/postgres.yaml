@@ -7,6 +7,9 @@
   command: postgresql-setup --initdb
   when: pg_status.changed
 
+- name: ensure PostgreSQL contrib package is installed
+  dnf: name=postgresql-contrib state=latest
+
 - name: make sure PostgreSQL is running
   service: name=postgresql state=started enabled=yes
 
