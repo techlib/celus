@@ -4,12 +4,16 @@ en:
     not_logged_in_internal_text: You are not logged in, probably because you have been logged out due to inactivity. Please enter your login credentials and click "Login".
     not_logged_in_external_text: You are not logged in, probably because you have been logged out due to inactivity. Please click "Login" to be redirected to login page.
     login: Login
+    email: Email
+    password: Password
 
 cs:
     not_logged_in: Jste odhlášeni
     not_logged_in_internal_text: Pravděpodobně jste byli odhlášeni z důvodu neaktivity. Zadejte své přihlašovací údaje a stiskněte "Přihlásit" pro opětovné přihlášení.
     not_logged_in_external_text: Pravděpodobně jste byli odhlášeni z důvodu neaktivity. Prosím stiskněte "Přihlásit" pro opětovné přihlášení.
     login: Přihlásit
+    email: Email
+    password: Heslo
 </i18n>
 
 <template>
@@ -19,7 +23,7 @@ cs:
             <v-card-text>
                 <div>{{ $t('not_logged_in_internal_text') }}</div>
                 <v-divider class="my-3"></v-divider>
-                <v-text-field v-model="username" :label="$t('username')"></v-text-field>
+                <v-text-field v-model="username" :label="$t('email')"></v-text-field>
                 <v-text-field v-model="password" type="password" :label="$t('password')"></v-text-field>
                 <v-alert
                         v-if="loginError"
