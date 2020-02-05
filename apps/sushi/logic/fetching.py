@@ -265,7 +265,7 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
                     # to decide on what to do
                     action = smart_decide_conflict_action(conflict)
                 if action == 'stop':
-                    logger.debug('Skipping on existing data: %s, %s: %s',
+                    logger.debug('Stopping on existing data: %s, %s: %s',
                                  platform, fetch_unit.credentials.organization, start_date)
                     continue
                 elif action == 'skip':
