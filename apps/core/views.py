@@ -4,6 +4,7 @@ from django.core.mail import mail_admins
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import translation
 from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -24,6 +25,8 @@ class UserView(GenericAPIView):
 
 
 class SystemInfoView(GenericAPIView):
+
+    permission_classes = [AllowAny]
 
     def get(self, request):
         data = {name: getattr(settings, name) for name in settings.EXPORTED_SETTINGS}

@@ -10,16 +10,23 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
+from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
 from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metric
-from logs.serializers import ReportTypeSerializer, ReportTypeExtendedSerializer
+from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title, PlatformTitle
 from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
+# noinspection PyUnresolvedReferences
+from core import db  # needed to register the ilike lookup
+
+
+class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
+    pass
 
 
 class AllPlatformsViewSet(ReadOnlyModelViewSet):
@@ -275,8 +282,8 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         search_filters = []
         q = self.request.query_params.get('q')
         if q:
-            search_filters = [Q(name__icontains=p) | Q(isbn__contains=p) | Q(issn__contains=p) |\
-                              Q(doi__contains=p) for p in q.split()]
+            search_filters = [Q(name__ilike=p) | Q(isbn__ilike=p) | Q(issn__ilike=p) |\
+                              Q(doi__ilike=p) for p in q.split()]
         pub_type_arg = self.request.query_params.get('pub_type')
         if pub_type_arg:
             search_filters.append(Q(pub_type=pub_type_arg))
@@ -400,7 +407,7 @@ class TitleInterestMixin(object):
 class PlatformTitleInterestViewSet(TitleInterestMixin, PlatformTitleViewSet):
 
     serializer_class = TitleCountSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = SmartResultsSetPagination
 
 
 class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
@@ -490,7 +497,6 @@ class TitleViewSet(BaseTitleViewSet):
             **date_filter_params,
             **extend_query_filter(org_filter, 'accesslog__')
         ).distinct()
-        print(platforms.query)
         return Response(PlatformSerializer(platforms, many=True).data)
 
 
@@ -500,7 +506,7 @@ class TitleInterestViewSet(TitleInterestMixin, BaseTitleViewSet):
     """
 
     serializer_class = TitleCountSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = SmartResultsSetPagination
 
 
 class StartERMSSyncPlatformsTask(APIView):

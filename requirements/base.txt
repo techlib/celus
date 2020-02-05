@@ -9,6 +9,7 @@ redis==3.3.11
 django-redis==4.11.0
 django-anymail==7.0.0
 djangorestframework==3.11.0
+django-rest-auth==0.9.5
 drf-nested-routers==0.91
 django-mptt==0.10.0
 django-modeltranslation==0.14.1
