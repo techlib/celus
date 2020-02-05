@@ -31,7 +31,7 @@ export default {
 
       try {
         await axios.post(
-          '/rest-auth/login/',
+          '/api/rest-auth/login/',
           {'email': email, 'password': password},
           {headers: {'X-CSRFToken': csrftoken}})
 
