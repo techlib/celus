@@ -1,6 +1,10 @@
 from .base import *
 
-ALLOWED_HOSTS = ['stats.czechelib.cz']
+DATABASES['default']['USER'] = 'celus_demo'
+DATABASES['default']['NAME'] = 'celus_demo'
+DATABASES['default']['HOST'] = 'db.i.bigdigdata.com'
+
+ALLOWED_HOSTS = ['celusdemo.bigdigdata.com']
 LIVE_ERMS_AUTHENTICATION = True
 
 DEBUG = False
