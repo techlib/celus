@@ -194,7 +194,7 @@ export default new Vuex.Store({
             }
             organizations[rec.pk] = rec
           }
-          if (context.state.user && context.state.user.is_from_master_organization) {
+          if (context.getters.showManagementStuff) {
             organizations[-1] = {name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1, extra: true}
           }
           context.commit('setOrganizations', organizations)
