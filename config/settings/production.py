@@ -4,8 +4,8 @@ DATABASES['default']['USER'] = 'celus_demo'
 DATABASES['default']['NAME'] = 'celus_demo'
 DATABASES['default']['HOST'] = 'db.i.bigdigdata.com'
 
-ALLOWED_HOSTS = ['celusdemo.bigdigdata.com']
-LIVE_ERMS_AUTHENTICATION = True
+ALLOWED_HOSTS = ['celusdemo.bigdigdata.com', 'demo.celus.net']
+LIVE_ERMS_AUTHENTICATION = False
 
 DEBUG = False
 
