@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 
 from core.models import Identity
+from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import OrganizationPlatform, AccessLog, Metric, ImportBatch, InterestGroup, \
     ReportInterestMetric
@@ -209,12 +210,15 @@ class TestPlatformTitleAPI(object):
         metric = Metric.objects.create(short_name='m1', name='Metric1')
         import_batch = ImportBatch.objects.create(platform=platform, organization=organization,
                                                   report_type=rt)
-        AccessLog.objects.create(platform=platform, target=titles[0], value=1, date='2019-01-01',
-                                 report_type=rt, metric=metric, organization=organization,
-                                 import_batch=import_batch)
-        AccessLog.objects.create(platform=platform, target=titles[0], value=1, date='2019-02-01',
-                                 report_type=rt, metric=metric, organization=organization,
-                                 import_batch=import_batch)
+        al1 = AccessLog.objects.create(
+            platform=platform, target=titles[0], value=1, date='2019-01-01', report_type=rt,
+            metric=metric, organization=organization, import_batch=import_batch
+        )
+        al2 = AccessLog.objects.create(
+            platform=platform, target=titles[0], value=1, date='2019-02-01', report_type=rt,
+            metric=metric, organization=organization, import_batch=import_batch
+        )
+        create_platformtitle_links_from_accesslogs([al1, al2])
         resp = authenticated_client.get(reverse('platform-title-list',
                                                 args=[organization.pk, platform.pk]))
         assert resp.status_code == 200
@@ -243,12 +247,15 @@ class TestPlatformTitleAPI(object):
         PlatformInterestReport.objects.create(report_type=rt, platform=platform)
         import_batch = ImportBatch.objects.create(platform=platform, organization=organization,
                                                   report_type=rt)
-        AccessLog.objects.create(platform=platform, target=titles[0], value=1, date='2019-01-01',
-                                 report_type=rt, metric=metric, organization=organization,
-                                 import_batch=import_batch)
-        AccessLog.objects.create(platform=platform, target=titles[0], value=1, date='2019-02-01',
-                                 report_type=rt, metric=metric, organization=organization,
-                                 import_batch=import_batch)
+        al1 = AccessLog.objects.create(
+            platform=platform, target=titles[0], value=1, date='2019-01-01', report_type=rt,
+            metric=metric, organization=organization, import_batch=import_batch
+        )
+        al2 = AccessLog.objects.create(
+            platform=platform, target=titles[0], value=1, date='2019-02-01', report_type=rt,
+            metric=metric, organization=organization, import_batch=import_batch
+        )
+        create_platformtitle_links_from_accesslogs([al1, al2])
         sync_interest_by_import_batches()
         resp = authenticated_client.get(reverse('platform-title-interest-list',
                                                 args=[organization.pk, platform.pk]))
@@ -287,12 +294,15 @@ class TestPlatformTitleAPI(object):
                                                    report_type=rt)
         import_batch2 = ImportBatch.objects.create(platform=platform, report_type=rt,
                                                    organization=other_organization)
-        AccessLog.objects.create(platform=platform, target=titles[0], value=3, date='2019-01-01',
-                                 report_type=rt, metric=metric, organization=organization,
-                                 import_batch=import_batch1)
-        AccessLog.objects.create(platform=platform, target=titles[0], value=2, date='2019-01-01',
-                                 report_type=rt, metric=metric, organization=other_organization,
-                                 import_batch=import_batch2)
+        al1 = AccessLog.objects.create(
+            platform=platform, target=titles[0], value=3, date='2019-01-01', report_type=rt,
+            metric=metric, organization=organization, import_batch=import_batch1
+        )
+        al2 = AccessLog.objects.create(
+            platform=platform, target=titles[0], value=2, date='2019-01-01', report_type=rt,
+            metric=metric, organization=other_organization, import_batch=import_batch2
+        )
+        create_platformtitle_links_from_accesslogs([al1, al2])
         sync_interest_by_import_batches()
         resp = authenticated_client.get(reverse('platform-title-interest-list',
                                                 args=[organization.pk, platform.pk]))
