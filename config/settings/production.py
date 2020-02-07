@@ -3,6 +3,7 @@ from .base import *
 DATABASES['default']['USER'] = 'celus_demo'
 DATABASES['default']['NAME'] = 'celus_demo'
 DATABASES['default']['HOST'] = 'db.i.bigdigdata.com'
+MASTER_ORGANIZATIONS = ['NTK-61387142-CEL', 'GMJ-9379']  # organizations whose users should have access to all
 
 ALLOWED_HOSTS = ['celusdemo.bigdigdata.com', 'demo.celus.net']
 LIVE_ERMS_AUTHENTICATION = False
