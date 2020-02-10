@@ -133,7 +133,7 @@ cs:
             <h3 class="pt-3">{{ $t('titles') }}</h3>
 
             <InterestGroupSelector />
-            <TitleList :url="titleListURL" :platform-id="platformId"></TitleList>
+            <TitleList :url="titleListURL" :platform-id="platformId" :order-interest="orderInterest"></TitleList>
         </section>
         <section v-if="platform && !platform.title_count">
             <v-container fluid>
@@ -179,6 +179,7 @@ cs:
         dateRangeEnd: 'dateRangeEndText',
         showAdminStuff: 'showAdminStuff',
         organizationSelected: 'organizationSelected',
+        activeInterestGroups: 'selectedGroupObjects',
       }),
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',
@@ -219,6 +220,13 @@ cs:
             }
         ]
       },
+      orderInterest () {
+        // The interest that should be used for sorting the titles
+        if (this.activeInterestGroups.length) {
+          return this.activeInterestGroups[0].short_name
+        }
+        return null
+      }
     },
     methods: {
       ...mapActions({

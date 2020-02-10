@@ -58,7 +58,6 @@ cs:
                 :server-items-length="totalTitleCount"
                 :must-sort="true"
                 :items-per-page="25"
-                :sort-desc="true"
                 sort-by="name"
                 :page="1"
                 :options.sync="options"
@@ -103,7 +102,8 @@ cs:
     components: {ShortenText},
     props: {
       url: {required: true},
-      platformId: {required: false}
+      platformId: {required: false},
+      orderInterest: {required: false, default: null, type: String},
     },
     data () {
       return {
@@ -116,6 +116,8 @@ cs:
         searchString: '',
         pubTypes: [],
         options: {
+          sortDesc: [!!this.orderInterest],
+          sortBy: [this.orderInterest ? this.orderInterest : 'name']
         }
       }
     },
