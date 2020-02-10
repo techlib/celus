@@ -118,7 +118,8 @@ cs:
         options: {
           sortDesc: [!!this.orderInterest],
           sortBy: [this.orderInterest ? this.orderInterest : 'name']
-        }
+        },
+        cancelTokenSource: null,
       }
     },
     computed: {
@@ -204,20 +205,35 @@ cs:
       iconForPubType: iconForPubType,
       titleForPubType: titleForPubType,
       async loadData () {
+        // we must cancel previous request in order to prevent stale long-loading data to be
+        // pulled in
+        if (this.cancelTokenSource) {
+          this.cancelTokenSource.cancel('new data requested')
+          this.cancelTokenSource = null
+        }
         // it seems there is an issue in i18n that makes this.$i18n undefined after the
         // await call later on. To make i18n work, we store it here and then pass it on
         // to the extractPubTypes method
         const i18n = this.$i18n
         if (this.fullUrl) {
           this.loading = true
+          this.cancelTokenSource = axios.CancelToken.source()
           try {
-            let response = await axios.get(this.fullUrl)
+            let response = await axios.get(this.fullUrl, {cancelToken: this.cancelTokenSource.token})
             this.titles = response.data.results
             this.totalTitleCount = response.data.count
-          } catch (error) {
-            this.showSnackbar({content: 'Error loading title list: ' + error})
-          } finally {
             this.loading = false
+          } catch (error) {
+            if (axios.isCancel(error)) {
+              console.debug('Request cancelled')
+            } else {
+              this.showSnackbar({content: 'Error loading title list: ' + error})
+              this.loading = false
+            }
+          } finally {
+            // normally, we would do this.loading = false here, but we do not want to do it
+            // in case the request was cancelled, as it means there are more data arriving later
+            // and this is not the most recent request
           }
 
           if (!this.selectedPubType) {
