@@ -48,5 +48,7 @@ module.exports = {
       .use('yaml')
         .loader('yaml-loader')
         .end()
-  }
+  },
+
+  transpileDependencies: ['vuex-persist', 'vuetify'],
 }
