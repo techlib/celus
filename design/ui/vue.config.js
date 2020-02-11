@@ -50,5 +50,5 @@ module.exports = {
         .end()
   },
 
-  //transpileDependencies: ['vuex-persist', 'vuetify'],
+  transpileDependencies: ['vuetify'],
 }
