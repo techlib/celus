@@ -1,7 +1,10 @@
 import traceback
+from time import time
+
 from django.core.mail import mail_admins
 from django.db.models import Count
 from django.http import HttpResponseBadRequest
+from django.views import View
 from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -19,6 +22,7 @@ from core.permissions import OrganizationRequiredInDataForNonSuperusers, \
     SuperuserOrAdminPermission, OwnerLevelBasedPermissions, CanPostOrganizationDataPermission, \
     CanAccessOrganizationRelatedObjectPermission
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
+from logs.logic.export import CSVExporter
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
     ManualDataUpload, InterestGroup
@@ -81,10 +85,11 @@ class RawDataExportView(PandasView):
 
     serializer_class = AccessLogSerializer
     implicit_dims = ['platform', 'metric', 'organization', 'target', 'report_type', 'import_batch']
-    export_size_limit = 50000  # limit the number of records in output to this number
+    export_size_limit = 100_000  # limit the number of records in output to this number
 
     def get_queryset(self):
         query_params = self.extract_query_filter_params(self.request)
+        print('Count:', AccessLog.objects.filter(**query_params).count())
         data = AccessLog.objects.filter(**query_params)\
             .select_related(*self.implicit_dims)[:self.export_size_limit]
         text_id_to_text = {dt['id']: dt['text']
@@ -98,6 +103,10 @@ class RawDataExportView(PandasView):
                     al.mapped_dim_values_[dim.short_name] = text_id_to_text.get(value, value)
                 else:
                     al.mapped_dim_values_[dim.short_name] = value
+            if al.target:
+                al.mapped_dim_values_['isbn'] = al.target.isbn
+                al.mapped_dim_values_['issn'] = al.target.issn
+                al.mapped_dim_values_['eissn'] = al.target.eissn
         return data
 
     @classmethod
@@ -106,6 +115,28 @@ class RawDataExportView(PandasView):
         query_params.update(
             extract_accesslog_attr_query_params(request.GET, dimensions=cls.implicit_dims))
         return query_params
+
+
+class RawDataDelayedExportView(View):
+
+    def get(self, request):
+        t = time()
+        query_params = self.extract_query_filter_params(request)
+        total_count = AccessLog.objects.filter(**query_params).count()
+        print(total_count)
+        exporter = CSVExporter()
+        filename = exporter.export_raw_accesslogs_to_file(query_params)
+        print(filename)
+        print(time()-t)
+        return Response({'file': filename})
+
+    @classmethod
+    def extract_query_filter_params(cls, request) -> dict:
+        query_params = date_filter_from_params(request.GET)
+        query_params.update(
+            extract_accesslog_attr_query_params(request.GET, dimensions=CSVExporter.implicit_dims))
+        return query_params
+
 
 
 class ImportBatchViewSet(ReadOnlyModelViewSet):
