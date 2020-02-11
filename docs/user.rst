@@ -19,6 +19,21 @@ General information
 -------------------
 
 
+Supported browsers
+==================
+
+The following modern browsers are fully supported (minimum version is in backets):
+
+* Chrome and Chromium (75+)
+* Firefox (70+)
+* Safari (10+)
+* Edge (43+)
+
+There is also partial support for Internet Explorer version 11, but since this browser is
+very much obsolete, the support is not full and no effort is put into improving or maintaining it.
+
+
+
 Understanding access levels in Celus
 ====================================
 
