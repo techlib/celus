@@ -50,5 +50,5 @@ module.exports = {
         .end()
   },
 
-  transpileDependencies: ['vuetify'],
+  transpileDependencies: ['vuex-persist', 'vuetify'], //'lodash', 'lodash.*'],
 }
