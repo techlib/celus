@@ -278,3 +278,26 @@ def create_platformtitle_links(organization, platform, records: [dict]):
                                  date=rec_date))
     PlatformTitle.objects.bulk_create(pts)
     return {'new platformtitles': len(pts)}
+
+
+def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [PlatformTitle]:
+    """
+    Creates all the required platformtitle objects from a list of accesslogs
+    :param accesslogs:
+    :return:
+    """
+    data = {(al.organization_id, al.platform_id, al.target_id, al.date) for al in accesslogs}
+    possible_clashing = {
+        (pt.organization_id, pt.platform_id, pt.target_id, pt.date) for pt in
+        PlatformTitle.objects.filter(
+            organization_id__in={rec[0] for rec in data},
+            platform_id__in={rec[1] for rec in data},
+            title_id__in={rec[2] for rec in data},
+            date__in={rec[3] for rec in data},
+        )
+    }
+    to_create = [
+        PlatformTitle(organization_id=rec[0], platform_id=rec[1], title_id=rec[2], date=rec[3])
+        for rec in (data - possible_clashing)
+    ]
+    return PlatformTitle.objects.bulk_create(to_create)

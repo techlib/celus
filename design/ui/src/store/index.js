@@ -141,7 +141,9 @@ export default new Vuex.Store({
         return response;
       }, function (error) {
         // Do something with response error
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        if (axios.isCancel(error)) {
+          // we ignore this
+        } else if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           // if there is 401 error, try to (re)authenticate
           dispatch('setShowLoginDialog', {show: true})
         } else if (typeof error.response === 'undefined') {
