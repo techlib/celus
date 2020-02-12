@@ -71,6 +71,23 @@ class CanAccessOrganizationRelatedObjectPermission(OrganizationRelatedPermission
             return self.has_org_admin(request.user, obj.organization_id)
 
 
+class CanAccessOrganizationFromGETAttrs(OrganizationRelatedPermissionMixin,
+                                        BasePermission):
+    """
+    Checks that object the user has access to the organization present in the GET params
+    """
+
+    def has_permission(self, request, view):
+        organization = request.GET.get('organization')
+        if organization is None:
+            return False
+        if organization == '-1':
+            return request.user.is_superuser or request.user.is_from_master_organization
+        else:
+            return request.user.accessible_organizations().\
+                filter(organization_id=organization).exists()
+
+
 class OrganizationRequiredInDataForNonSuperusers(BasePermission):
 
     FULL_DATA_METHODS = ('POST', 'PUT')

@@ -1,9 +1,10 @@
 import traceback
-from time import time
 
+from django.core.cache import cache
 from django.core.mail import mail_admins
 from django.db.models import Count
-from django.http import HttpResponseBadRequest
+from django.http import JsonResponse
+from django.urls import reverse
 from django.views import View
 from pandas import DataFrame
 from rest_framework.decorators import action
@@ -15,12 +16,11 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_pandas import PandasView
 
-from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from core.models import DataSource
 from core.permissions import OrganizationRequiredInDataForNonSuperusers, \
     SuperuserOrAdminPermission, OwnerLevelBasedPermissions, CanPostOrganizationDataPermission, \
-    CanAccessOrganizationRelatedObjectPermission
+    CanAccessOrganizationRelatedObjectPermission, CanAccessOrganizationFromGETAttrs
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
@@ -30,7 +30,7 @@ from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSe
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
     ManualDataUploadSerializer, InterestGroupSerializer, ManualDataUploadVerboseSerializer
 from organizations.logic.queries import organization_filter_from_org_id
-from publications.models import Platform
+from .tasks import export_raw_data_task
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -117,25 +117,50 @@ class RawDataExportView(PandasView):
         return query_params
 
 
-class RawDataDelayedExportView(View):
+class RawDataDelayedExportView(APIView):
+
+    permission_classes = [IsAuthenticated &
+                          (SuperuserOrAdminPermission |
+                           (CanPostOrganizationDataPermission &
+                            OrganizationRequiredInDataForNonSuperusers &
+                            CanAccessOrganizationFromGETAttrs
+                            )
+                           )]
 
     def get(self, request):
-        t = time()
         query_params = self.extract_query_filter_params(request)
-        total_count = AccessLog.objects.filter(**query_params).count()
-        print(total_count)
+        exporter = CSVExport(query_params)
+        return JsonResponse({'total_count': exporter.record_count})
+
+    def post(self, request):
+        query_params = self.extract_query_filter_params(request)
         exporter = CSVExport(query_params, zip_compress=True)
-        exporter.export_raw_accesslogs_to_file()
-        print(exporter.filename)
-        print(time()-t)
-        return Response({'file': exporter.filename})
+        print(query_params)
+        export_raw_data_task.delay(query_params, exporter.filename_base,
+                                   zip_compress=exporter.zip_compress)
+        return JsonResponse({
+            'progress_url': reverse('raw_data_export_progress', args=(exporter.filename_base,)),
+            'result_url': exporter.file_url,
+        })
 
     @classmethod
     def extract_query_filter_params(cls, request) -> dict:
-        query_params = date_filter_from_params(request.GET)
+        # we use celery with the params, so we need to make it serialization friendly
+        # thus we convert the params accordingly using str_date and used_ids
+        query_params = date_filter_from_params(request.GET, str_date=True)
         query_params.update(
-            extract_accesslog_attr_query_params(request.GET, dimensions=CSVExport.implicit_dims))
+            extract_accesslog_attr_query_params(request.GET, dimensions=CSVExport.implicit_dims,
+                                                use_ids=True))
         return query_params
+
+
+class RawDataDelayedExportProgressView(View):
+
+    def get(self, request, handle):
+        count = None
+        if handle and handle.startswith('raw-data-'):
+            count = cache.get(handle)
+        return JsonResponse({'count': count})
 
 
 class ImportBatchViewSet(ReadOnlyModelViewSet):

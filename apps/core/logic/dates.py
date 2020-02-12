@@ -54,20 +54,26 @@ def date_range_from_params(params: dict) -> (datetime.date, datetime.date):
     return start_date, end_date
 
 
-def date_filter_from_params(params: dict, key_start='') -> dict:
+def date_filter_from_params(params: dict, key_start='', str_date=False) -> dict:
     """
     Returns dict with params suitable for the filter method of an object specifying dates
     as the are given in the params dict. This dict will typically be the GET dict from a request
     :param params:
     :param key_start: when give, the dict keys will have this value prepended
+    :param str_date: when True, dates will be converted to strings
     :return:
     """
     result = {}
     start_date = parse_month(params.get('start'))
     if start_date:
+        if str_date:
+            start_date = str(start_date)
         result[key_start + 'date__gte'] = start_date
+
     end_date = parse_month(params.get('end'))
     if end_date:
         end_date = month_end(end_date)
+        if str_date:
+            end_date = str(end_date)
         result[key_start + 'date__lte'] = end_date
     return result

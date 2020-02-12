@@ -25,10 +25,13 @@ class CSVExport(object):
     title_attrs = ['isbn', 'issn', 'eissn']
     outdir = 'export'
 
-    def __init__(self, query_params: dict, zip_compress: bool=False):
+    def __init__(self, query_params: dict, zip_compress: bool = False, filename_base=None):
         self.query_params = query_params
         self.zip_compress = zip_compress
-        self.filename_base = self.create_filename_base()
+        if filename_base:
+            self.filename_base = filename_base
+        else:
+            self.filename_base = self.create_filename_base()
 
     def create_filename_base(self) -> str:
         ts = now().strftime('%Y%m%d-%H%M%S.%f')
@@ -57,9 +60,16 @@ class CSVExport(object):
         if not os.path.exists(outdir):
             os.mkdir(outdir)
 
+    def create_queryset(self):
+        return AccessLog.objects.filter(**self.query_params)
+
+    @property
+    def record_count(self):
+        return self.create_queryset().count()
+
     def export_raw_accesslogs_to_file(self):
         self.create_outdir()
-        queryset = AccessLog.objects.filter(**self.query_params)
+        queryset = self.create_queryset()
         if self.zip_compress:
             with ZipFile(self.file_path, 'w', compression=ZIP_DEFLATED) as outzip:
                 with outzip.open(self.filename_base + '.csv', 'w', force_zip64=True) as outfile:
@@ -69,6 +79,12 @@ class CSVExport(object):
         else:
             with open(self.file_path, 'w') as outfile:
                 self.export_raw_accesslogs_to_stream_lowlevel(outfile, queryset=queryset)
+
+    def store_error(self):
+        self.store_progress(-1)
+
+    def store_progress(self, value):
+        cache.set(self.filename_base, value)
 
     def export_raw_accesslogs_to_stream_lowlevel(self, stream: IO, queryset: QuerySet):
         text_id_to_text = {dt['id']: dt['text']
@@ -104,6 +120,6 @@ class CSVExport(object):
                     record[dim.short_name] = value
             writer.writerow(record)
             if rec_num % 999 == 0:
-                cache.set(self.filename_base, rec_num+1)
-        cache.set(self.filename_base, rec_num+1)
+                self.store_progress(rec_num+1)
+        self.store_progress(rec_num+1)
 

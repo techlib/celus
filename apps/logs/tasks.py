@@ -6,6 +6,7 @@ import celery
 from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
 from logs.logic.attempt_import import import_new_sushi_attempts
+from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import sync_interest_by_import_batches, \
     recompute_interest_by_batch, smart_interest_sync
 
@@ -48,4 +49,18 @@ def smart_interest_sync_task():
     not processed or out of sync
     """
     smart_interest_sync()
+
+
+@celery.shared_task
+@email_if_fails
+def export_raw_data_task(query_params, filename_base, zip_compress=False):
+    """
+    Exports raw data into a file in the MEDIA directory
+    """
+    exporter = CSVExport(query_params, zip_compress=zip_compress, filename_base=filename_base)
+    try:
+        exporter.export_raw_accesslogs_to_file()
+    except Exception as e:
+        exporter.store_error()
+        raise e
 
