@@ -97,7 +97,6 @@ class TestDataImport(object):
         assert al1.dim3 is not None
         assert al1.dim4 is None
 
-    @pytest.mark.now
     def test_reimport(self, counter_records_nd, organizations, report_type_nd, platform):
         crs = list(counter_records_nd(3, record_number=1, title='Title ABC',
                                       dim_value='one value'))

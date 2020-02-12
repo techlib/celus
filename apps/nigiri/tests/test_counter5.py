@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from ..counter5 import Counter5ReportBase, CounterRecord, Counter5TRReport
+from ..counter5 import Counter5ReportBase, Counter5TRReport
 from ..exceptions import SushiException
 
 
@@ -147,7 +147,6 @@ class TestCounter5Reading(object):
         assert len(reader.warnings) == 1
         assert reader.queued
 
-    @pytest.mark.now()
     def test_reading_messed_up_data_error_list_directly_in_data(self):
         """
         There is no header, just the error in the json
@@ -160,3 +159,5 @@ class TestCounter5Reading(object):
         assert len(records) == 0
         assert len(reader.warnings) == 1
         assert reader.queued
+
+

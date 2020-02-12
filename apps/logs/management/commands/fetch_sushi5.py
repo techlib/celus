@@ -1,5 +1,6 @@
 import json
 import logging
+from copy import deepcopy
 
 from datetime import date, timedelta
 from django.core.management.base import BaseCommand
@@ -37,8 +38,9 @@ class Command(BaseCommand):
         begin_date = options['begin_date'] if options['begin_date'] else f'{today.year}-01'
         end_date = options['end_date'] if options['end_date'] else \
             (today - timedelta(days=today.day)).strftime('%Y-%m')  # previous month
-        # add params to ensure maximum split (most granular) data
-        params = client.EXTRA_PARAMS['maximum_split'].get(report_type.lower(), {})
+        # add params to ensure maximum split (most granular) data, we copy the value to prevent
+        # possible pollution by later updates
+        params = deepcpy(client.EXTRA_PARAMS['maximum_split'].get(report_type.lower(), {}))
         # fetch it
         self.stderr.write(self.style.WARNING(
             f'Getting {report_type} report from {begin_date} to {end_date}')
