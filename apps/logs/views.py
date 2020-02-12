@@ -22,7 +22,7 @@ from core.permissions import OrganizationRequiredInDataForNonSuperusers, \
     SuperuserOrAdminPermission, OwnerLevelBasedPermissions, CanPostOrganizationDataPermission, \
     CanAccessOrganizationRelatedObjectPermission
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
-from logs.logic.export import CSVExporter
+from logs.logic.export import CSVExport
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
     ManualDataUpload, InterestGroup
@@ -124,19 +124,18 @@ class RawDataDelayedExportView(View):
         query_params = self.extract_query_filter_params(request)
         total_count = AccessLog.objects.filter(**query_params).count()
         print(total_count)
-        exporter = CSVExporter()
-        filename = exporter.export_raw_accesslogs_to_file(query_params)
-        print(filename)
+        exporter = CSVExport(query_params, zip_compress=True)
+        exporter.export_raw_accesslogs_to_file()
+        print(exporter.filename)
         print(time()-t)
-        return Response({'file': filename})
+        return Response({'file': exporter.filename})
 
     @classmethod
     def extract_query_filter_params(cls, request) -> dict:
         query_params = date_filter_from_params(request.GET)
         query_params.update(
-            extract_accesslog_attr_query_params(request.GET, dimensions=CSVExporter.implicit_dims))
+            extract_accesslog_attr_query_params(request.GET, dimensions=CSVExport.implicit_dims))
         return query_params
-
 
 
 class ImportBatchViewSet(ReadOnlyModelViewSet):
