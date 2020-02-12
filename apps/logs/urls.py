@@ -15,6 +15,9 @@ urlpatterns = [
     path('chart-data-raw/<report_type_id>/', views.Counter5DataView.as_view(),
          name='chart_data_raw'),
     path('raw-data/', views.RawDataExportView.as_view()),
+    path('raw-data-export/', views.RawDataDelayedExportView.as_view()),
+    path('raw-data-export/progress/<handle>', views.RawDataDelayedExportProgressView.as_view(),
+         name='raw_data_export_progress'),
 ]
 
 urlpatterns += router.urls

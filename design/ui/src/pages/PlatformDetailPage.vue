@@ -116,7 +116,8 @@ cs:
                 <v-row class="ma-0">
                     <v-col class="py-0"><h3>{{ $t('overview') }}</h3></v-col>
                     <v-col cols="auto" class="py-0">
-                        <data-export-widget :platform="platformId"></data-export-widget>
+                        <raw-data-export-widget :platform="platformId"></raw-data-export-widget>
+                        <!--data-export-widget :platform="platformId"></data-export-widget-->
                     </v-col>
                 </v-row>
             </v-container>
@@ -154,6 +155,7 @@ cs:
   import AnnotationsWidget from '../components/AnnotationsWidget'
   import AddAnnotationButton from '../components/AddAnnotationButton'
   import InterestGroupSelector from '../components/InterestGroupSelector'
+  import RawDataExportWidget from '../components/RawDataExportWidget'
 
   export default {
     name: 'PlatformDetailPage',
@@ -164,6 +166,7 @@ cs:
       AnnotationsWidget,
       AddAnnotationButton,
       InterestGroupSelector,
+      RawDataExportWidget,
     },
     props: {
       'platformId': {required: true},

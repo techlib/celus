@@ -63,7 +63,14 @@ def extract_interests_from_objects(interest_rt: ReportType, objects: Iterable):
 
 
 def extract_accesslog_attr_query_params(
-        params, dimensions=('date', 'platform', 'metric', 'organization', 'target')):
+        params, dimensions=('date', 'platform', 'metric', 'organization', 'target'),
+        use_ids=False):
+    """
+    :param params: dict with the params
+    :param dimensions:
+    :param use_ids: when True, fk_id=Number will be used instead of fk=Instance
+    :return:
+    """
     query_params = {}
     for dim_name in dimensions:
         value = params.get(dim_name)
@@ -71,7 +78,10 @@ def extract_accesslog_attr_query_params(
             field = AccessLog._meta.get_field(dim_name)
             if isinstance(field, models.ForeignKey):
                 if value not in (-1, '-1'):
-                    query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
+                    if use_ids:
+                        query_params[f'{dim_name}_id'] = value
+                    else:
+                        query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
                 else:
                     # we ignore foreign keys with value -1
                     pass
