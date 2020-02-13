@@ -66,6 +66,10 @@
   file: path=/var/log/celery state=directory owner=celery
   tags: celery
 
+- name: create celery logrotate script
+  template: src=etc_logrotated_celery.j2 dest=/etc/logrotate.d/celery
+  tags: celery
+
 - name: start celery daemon
   service: name=celery state=started
   tags: celery
