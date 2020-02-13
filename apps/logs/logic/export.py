@@ -55,8 +55,8 @@ class CSVExport(object):
         return os.path.join(settings.MEDIA_ROOT, self.filename)
 
     @classmethod
-    def create_outdir(self):
-        outdir = os.path.join(settings.MEDIA_ROOT, self.outdir)
+    def create_outdir(cls):
+        outdir = os.path.join(settings.MEDIA_ROOT, cls.outdir)
         if not os.path.exists(outdir):
             os.mkdir(outdir)
 
