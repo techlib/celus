@@ -163,7 +163,11 @@ class FetchUnit(object):
         """
         If there are credentials for the same platform and organization and an older superseeded
         report type than the one associated with this object, return a list of corresponding
-        FetchUnits
+        FetchUnits.
+
+        This method is not used anymore - we process all counter reports regardless of C5 or C4
+        (before we only went for C4 only if C5 was not available and this method took care or
+        this)
         """
         out = []
         for rt in self.report_type.report_type.superseeds.all():  # type: ReportType
@@ -179,24 +183,13 @@ def create_fetch_units() -> [FetchUnit]:
     """
     prepare the fetch units - lines for which we will try to fetch data month by month
     """
+    # Historically, this was used to start only with C5 reports where available and
+    # only downgrade to C4 if C5 was missing. However, it proved non-transparent
+    # and so we decided to download all data
     fetch_units = []
-    seen_units = set()  # org_id, plat_id, rt_id for unsuperseeded report type
-    # get all credentials that are connected to a unsuperseeded report type
-    for rt in CounterReportType.objects.filter(report_type__superseeded_by__isnull=True,
-                                               active=True):
+    for rt in CounterReportType.objects.filter(active=True):
         for credentials in rt.sushicredentials_set.filter(enabled=True):
             fetch_units.append(FetchUnit(credentials, rt))
-            seen_units.add((credentials.organization_id, credentials.platform_id, rt.pk))
-    # go over the superseeded report types and see if we should add some
-    # for example because newer version of the report type is not supported on that platform
-    for rt in CounterReportType.objects.filter(report_type__superseeded_by__isnull=False,
-                                               active=True):
-        for credentials in rt.sushicredentials_set.filter(enabled=True):
-            key = (credentials.organization_id, credentials.platform_id,
-                   rt.report_type.superseeded_by.counterreporttype.pk)
-            if key not in seen_units:
-                fetch_units.append(FetchUnit(credentials, rt))
-                seen_units.add(key)
     return fetch_units
 
 
@@ -292,19 +285,10 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
                 if go_on:
                     new_fetch_units.append(fetch_unit)
                 else:
-                    # split or end (when split return nothing)
-                    logger.info('Unsuccessful fetch, downgrading: %s, %s: %s',
+                    logger.info('Unsuccessful fetch, stoping: %s, %s: %s',
                                 platform, fetch_unit.credentials.organization, start_date)
-                    split_units = fetch_unit.split()
-                    logger.info('Downgraded %s to %s', fetch_unit.report_type.code, split_units)
-                    # the new units on the same dates
-                    for i, unit in enumerate(split_units):
-                        if i != 0:
-                            sleep(sleep_time)
-                        unit.sleep()
-                        attempt = unit.download(start_date, end, use_lock=use_lock)
-                        if attempt.contains_data:
-                            new_fetch_units.append(unit)
+            # sleep but only if this is not the last in the list - it would not make sense
+            # to wait just before finishing
             if fetch_unit is not fetch_units[-1]:
                 sleep(sleep_time)
         fetch_units = new_fetch_units
