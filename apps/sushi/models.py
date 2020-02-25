@@ -1,6 +1,7 @@
 import os
 import logging
 import traceback
+from copy import deepcopy
 from hashlib import blake2b
 from datetime import timedelta, datetime
 from itertools import takewhile
@@ -295,7 +296,9 @@ class SushiCredentials(models.Model):
         queued = False
         error_code = ''
         # we want extra split data from the report
-        params = client.EXTRA_PARAMS['maximum_split'].get(counter_report.code.lower(), {})
+        # params must be a copy, otherwise we will pollute EXTRA_PARAMS
+        params = deepcopy(client.EXTRA_PARAMS['maximum_split'].
+                          get(counter_report.code.lower(), {}))
         extra = self.extra_params or {}
         params.update(extra)
         try:

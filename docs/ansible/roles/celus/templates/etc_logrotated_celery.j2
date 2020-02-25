@@ -1,0 +1,14 @@
+/var/log/celery/*.log {
+	weekly
+	missingok
+	rotate 520
+	compress
+        compresscmd /usr/bin/xz
+        compressext .xz
+        uncompresscmd /usr/bin/unxz
+	delaycompress
+	notifempty
+	create 0640 celery celery
+	dateext
+	dateformat -%Y-%m-%d
+}

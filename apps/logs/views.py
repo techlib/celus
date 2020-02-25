@@ -1,7 +1,11 @@
 import traceback
+
+from django.core.cache import cache
 from django.core.mail import mail_admins
 from django.db.models import Count
-from django.http import HttpResponseBadRequest
+from django.http import JsonResponse
+from django.urls import reverse
+from django.views import View
 from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -12,13 +16,13 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_pandas import PandasView
 
-from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from core.models import DataSource
 from core.permissions import OrganizationRequiredInDataForNonSuperusers, \
     SuperuserOrAdminPermission, OwnerLevelBasedPermissions, CanPostOrganizationDataPermission, \
-    CanAccessOrganizationRelatedObjectPermission
+    CanAccessOrganizationRelatedObjectPermission, CanAccessOrganizationFromGETAttrs
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
+from logs.logic.export import CSVExport
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric, ImportBatch, \
     ManualDataUpload, InterestGroup
@@ -26,7 +30,7 @@ from logs.serializers import DimensionSerializer, ReportTypeSerializer, MetricSe
     AccessLogSerializer, ImportBatchSerializer, ImportBatchVerboseSerializer, \
     ManualDataUploadSerializer, InterestGroupSerializer, ManualDataUploadVerboseSerializer
 from organizations.logic.queries import organization_filter_from_org_id
-from publications.models import Platform
+from .tasks import export_raw_data_task
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -81,10 +85,11 @@ class RawDataExportView(PandasView):
 
     serializer_class = AccessLogSerializer
     implicit_dims = ['platform', 'metric', 'organization', 'target', 'report_type', 'import_batch']
-    export_size_limit = 50000  # limit the number of records in output to this number
+    export_size_limit = 100_000  # limit the number of records in output to this number
 
     def get_queryset(self):
         query_params = self.extract_query_filter_params(self.request)
+        print('Count:', AccessLog.objects.filter(**query_params).count())
         data = AccessLog.objects.filter(**query_params)\
             .select_related(*self.implicit_dims)[:self.export_size_limit]
         text_id_to_text = {dt['id']: dt['text']
@@ -98,6 +103,10 @@ class RawDataExportView(PandasView):
                     al.mapped_dim_values_[dim.short_name] = text_id_to_text.get(value, value)
                 else:
                     al.mapped_dim_values_[dim.short_name] = value
+            if al.target:
+                al.mapped_dim_values_['isbn'] = al.target.isbn
+                al.mapped_dim_values_['issn'] = al.target.issn
+                al.mapped_dim_values_['eissn'] = al.target.eissn
         return data
 
     @classmethod
@@ -106,6 +115,52 @@ class RawDataExportView(PandasView):
         query_params.update(
             extract_accesslog_attr_query_params(request.GET, dimensions=cls.implicit_dims))
         return query_params
+
+
+class RawDataDelayedExportView(APIView):
+
+    permission_classes = [IsAuthenticated &
+                          (SuperuserOrAdminPermission |
+                           (CanPostOrganizationDataPermission &
+                            OrganizationRequiredInDataForNonSuperusers &
+                            CanAccessOrganizationFromGETAttrs
+                            )
+                           )]
+
+    def get(self, request):
+        query_params = self.extract_query_filter_params(request)
+        exporter = CSVExport(query_params)
+        return JsonResponse({'total_count': exporter.record_count})
+
+    def post(self, request):
+        query_params = self.extract_query_filter_params(request)
+        exporter = CSVExport(query_params, zip_compress=True)
+        print(query_params)
+        export_raw_data_task.delay(query_params, exporter.filename_base,
+                                   zip_compress=exporter.zip_compress)
+        return JsonResponse({
+            'progress_url': reverse('raw_data_export_progress', args=(exporter.filename_base,)),
+            'result_url': exporter.file_url,
+        })
+
+    @classmethod
+    def extract_query_filter_params(cls, request) -> dict:
+        # we use celery with the params, so we need to make it serialization friendly
+        # thus we convert the params accordingly using str_date and used_ids
+        query_params = date_filter_from_params(request.GET, str_date=True)
+        query_params.update(
+            extract_accesslog_attr_query_params(request.GET, dimensions=CSVExport.implicit_dims,
+                                                use_ids=True))
+        return query_params
+
+
+class RawDataDelayedExportProgressView(View):
+
+    def get(self, request, handle):
+        count = None
+        if handle and handle.startswith('raw-data-'):
+            count = cache.get(handle)
+        return JsonResponse({'count': count})
 
 
 class ImportBatchViewSet(ReadOnlyModelViewSet):
