@@ -40,7 +40,7 @@ class Command(BaseCommand):
             (today - timedelta(days=today.day)).strftime('%Y-%m')  # previous month
         # add params to ensure maximum split (most granular) data, we copy the value to prevent
         # possible pollution by later updates
-        params = deepcpy(client.EXTRA_PARAMS['maximum_split'].get(report_type.lower(), {}))
+        params = deepcopy(client.EXTRA_PARAMS['maximum_split'].get(report_type.lower(), {}))
         # fetch it
         self.stderr.write(self.style.WARNING(
             f'Getting {report_type} report from {begin_date} to {end_date}')

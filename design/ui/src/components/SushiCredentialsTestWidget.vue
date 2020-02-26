@@ -157,8 +157,10 @@ cs:
       },
       clean () {
         this.started = false
-        for (let comp of this.$refs.attemptStatus) {
-          comp.stop()
+        if (this.$refs.attemptStatus) {
+          for (let comp of this.$refs.attemptStatus) {
+            comp.stop()
+          }
         }
         this.attemptIds = []
       }

@@ -41,7 +41,7 @@ cs:
                     <v-col cols="12" :md="6">
                         <v-text-field
                                 v-if="credentials"
-                                v-model="organization"
+                                :value="organization.name"
                                 :label="$t('organization')"
                                 disabled
                         >
@@ -59,7 +59,7 @@ cs:
                     <v-col cols="12" :md="6">
                         <v-text-field
                                 v-if="credentials"
-                                v-model="platform"
+                                :value="platform.name"
                                 :label="$t('platform')"
                                 disabled
                         >
@@ -262,6 +262,7 @@ cs:
                 <v-card-title>{{ $t('test_dialog') }}</v-card-title>
                 <v-card-text>
                     <SushiCredentialsTestWidget
+                            v-if="showTestDialog"
                             :credentials="credentials"
                             :report-types="selectedReportTypes"
                             ref="testWidget"
@@ -400,9 +401,9 @@ cs:
         if (!credentials) {
           // no credentials - we init to the initial state
           this.organizationId = null
-          this.organization = ''
+          this.organization = {name: ''}
           this.platformId = null
-          this.platform = ''
+          this.platform = {name: ''}
           this.requestorId = ''
           this.customerId = ''
           this.counterVersion = null
@@ -422,9 +423,9 @@ cs:
             extraParams.push({key: key, value: value})
           }
           this.organizationId = credentials.organization.id
-          this.organization = credentials.organization.name
+          this.organization = credentials.organization
           this.platformId = credentials.platform.id
-          this.platform = credentials.platform.name
+          this.platform = credentials.platform
           this.requestorId = credentials.requestor_id
           this.customerId = credentials.customer_id
           this.counterVersion = credentials.counter_version
