@@ -75,11 +75,12 @@ def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, in
     if column_map is None:
         column_map = DEFAULT_COLUMN_MAP
     if extra_dims is None:
-        extra_dims = {}
+        extra_dims = []
     # process the records
     result = []
     for record in records:
-        dimensions = {}
+        implicit_dimensions = {}
+        explicit_dimensions = {}
         monthly_values = {}
         for key, value in record.items():
             month = col_name_to_month(key)
@@ -87,19 +88,20 @@ def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, in
                 monthly_values[month] = int(value)
             else:
                 if key in column_map:
-                    dimensions[column_map[key]] = value
+                    implicit_dimensions[column_map[key]] = value
                 elif key in extra_dims:
-                    dimensions[extra_dims[key]] = value
+                    explicit_dimensions[key] = value
                 else:
                     raise KeyError(_('We don\'t know how to interpret the column "{column}"').
                                    format(column=key))
         # we put initial data into the data we read - these are usually dimensions that are fixed
         # for the whole import and are not part of the data itself
         for key, value in initial_data.items():
-            if key not in dimensions:
-                dimensions[key] = value  # only update if the value is not present
+            if key not in implicit_dimensions:
+                implicit_dimensions[key] = value  # only update if the value is not present
         for month, value in monthly_values.items():
-            result.append(CounterRecord(value=value, start=month, **dimensions))
+            result.append(CounterRecord(value=value, start=month,
+                                        dimension_data=explicit_dimensions, **implicit_dimensions))
     return result
 
 
