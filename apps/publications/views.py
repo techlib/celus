@@ -21,8 +21,6 @@ from publications.models import Platform, Title, PlatformTitle
 from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
-# noinspection PyUnresolvedReferences
-from core import db  # needed to register the ilike lookup
 
 
 class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
