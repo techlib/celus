@@ -74,7 +74,7 @@ class CanAccessOrganizationRelatedObjectPermission(OrganizationRelatedPermission
 class CanAccessOrganizationFromGETAttrs(OrganizationRelatedPermissionMixin,
                                         BasePermission):
     """
-    Checks that object the user has access to the organization present in the GET params
+    Checks that the user has access to the organization present in the GET params
     """
 
     def has_permission(self, request, view):
