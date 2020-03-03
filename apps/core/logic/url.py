@@ -10,8 +10,9 @@ def extract_organization_id_from_request_data(request) -> (int, bool):
     :param request:
     :return:
     """
-    if 'organization' in request.data:
-        return request.data.get('organization'), True
-    if 'organization_id' in request.data:
-        return request.data.get('organization_id'), True
+    for source in (request.data, request.GET):
+        if 'organization' in source:
+            return source.get('organization'), True
+        if 'organization_id' in request.data:
+            return source.get('organization_id'), True
     return None, False

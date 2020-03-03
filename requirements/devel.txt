@@ -4,4 +4,4 @@ django-debug-toolbar==2.2
 django-livereload-server==0.3.2
 jupyter==1.0.0
 django-querycount==0.7.0
-sphinx==2.3.1
+sphinx==2.4.3

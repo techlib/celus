@@ -21,8 +21,6 @@ from publications.models import Platform, Title, PlatformTitle
 from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
-# noinspection PyUnresolvedReferences
-from core import db  # needed to register the ilike lookup
 
 
 class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
@@ -177,9 +175,6 @@ class PlatformInterestViewSet(ViewSet):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         date_filter_params = date_filter_from_params(request.GET)
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
-        # we do not filter acceslogs by report type here because we want other report types
-        # to be able to "connect" platform and titles for the title_count
-        # this makes it possible to show the proper title count even if there is no interest
         result = AccessLog.objects\
             .filter(**org_filter, **date_filter_params, report_type=interest_rt)\
             .values('platform')\
@@ -199,7 +194,6 @@ class PlatformInterestViewSet(ViewSet):
             data['platform'] = [platform_names[pk] for pk in data['platform']]
             data.set_index('platform', drop=True, inplace=True)
             data.rename(columns=metric_names, inplace=True)
-            data.drop(columns='title_count', inplace=True)
             return Response(data,
                             headers={
                                 'Content-Disposition':

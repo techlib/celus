@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'charts.apps.ChartsConfig',
     'annotations.apps.AnnotationsConfig',
     'cost.apps.CostConfig',
+    'activity.apps.ActivityConfig',
     'rest_pandas',
     'error_report',
     'cachalot',

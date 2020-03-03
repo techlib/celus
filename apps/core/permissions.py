@@ -84,8 +84,7 @@ class CanAccessOrganizationFromGETAttrs(OrganizationRelatedPermissionMixin,
         if organization == '-1':
             return request.user.is_superuser or request.user.is_from_master_organization
         else:
-            return request.user.accessible_organizations().\
-                filter(organization_id=organization).exists()
+            return request.user.accessible_organizations().filter(pk=organization).exists()
 
 
 class OrganizationRequiredInDataForNonSuperusers(BasePermission):

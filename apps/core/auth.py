@@ -6,7 +6,6 @@ from core.logic.sync import UserSyncer, IdentitySyncer
 from core.models import Identity, User, DataSource
 from erms.api import ERMS
 
-
 logger = logging.getLogger(__name__)
 
 
