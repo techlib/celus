@@ -30,7 +30,7 @@
   import _toolBox from 'echarts/lib/component/toolbox'
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
-  import { mapActions, mapGetters } from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import 'echarts/lib/component/markLine'
   import LoaderWidget from './LoaderWidget'
 
@@ -104,12 +104,18 @@
       }
     },
     computed: {
+      ...mapState({
+        user: 'user',
+      }),
       ...mapGetters({
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
         selectedOrganization: 'selectedOrganization',
       }),
       dataURL () {
+        if (!this.user) {
+          return null
+        }
         let reportTypePart = ''  // used do decide if report type should be part of the URL
         if (this.reportTypeId && this.reportTypeId !== -1) {
             reportTypePart = `${this.reportTypeId}/`
