@@ -238,8 +238,8 @@ pieces are missing, such as the definitions of report types, data dimensions, et
 
 Because bootstrapping the whole system manually would be a lot of work which would be the same
 between installs, we provide basic set of reports, dimensions, etc. with `Celus`. This data
-are ment to be used only once for bootstrapping the system. If you have already made your own
-changes in the system database, you could loose data by repeating the procedure described below,
+are meant to be used only once for bootstrapping the system. If you have already made your own
+changes in the system database, you could lose data by repeating the procedure described below,
 so be careful.
 
 Similarly to superuser account creation, this procedure involves :ref:`cli-management`.
