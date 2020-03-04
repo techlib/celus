@@ -26,5 +26,5 @@ warranty of any kind.
 This repository contains the code as it is used by the CzechELib consortium. For customization,
 we recommend creating a fork of the repository and modifying the code there.
 
-Please use the "Issues" feature of Github to report any problems with the software. Fixes
+Please use the `Issues <issues/>`_ feature of Github to report any problems with the software. Fixes
 of improvements in form of pull requests are welcome.
