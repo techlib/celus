@@ -17,3 +17,14 @@ You can find the documentation at Read the Docs:
 * `development version <https://celus.readthedocs.io/en/devel/index.html>`_
 
 
+License
+-------
+
+Celus is open-source project licensed under the MIT license. It is offered as-is without
+warranty of any kind.
+
+This repository contains the code as it is used by the CzechELib consortium. For customization,
+we recommend creating a fork of the repository and modifying the code there.
+
+Please use the "Issues" feature of Github to report any problems with the software. Fixes
+of improvements in form of pull requests are welcome.
