@@ -11,6 +11,12 @@ conflict with other apps installed in parallel. For example, the system wide ser
 and ``celerybeat`` will be created for `Celus`.
 
 
+Please note that the install procedure is tailor made for deployment of Celus for the CzechELib
+consortium. It might require extra effort to make it work in different environment. In case you
+find something missing in the instructions, we welcome fixes - ideally in form of pull requests
+on `Github <https://github.com/techlib/celus/>_`.
+
+
 Prerequisites
 =============
 
