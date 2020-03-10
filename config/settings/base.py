@@ -212,7 +212,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset((
     'logs_reportinterestmetric',
     'logs_reporttype',
     'logs_reporttypetodimension',
-    'organizations_organizations',
+    'organizations_organization',
     'organizations_userorganization',
     'publications_platform',
     'publications_platforminterestreport',
