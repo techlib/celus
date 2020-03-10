@@ -256,7 +256,7 @@ cs:
           if (error.response && error.response.status === 400) {
             let info = error.response.data
             let error_msg = ''
-            if ('non_field_errors' in info) {
+            if (info.index('non_field_errors') >= 0) {
               error_msg = info.non_field_errors
             } else {
               for (let [key, value] of Object.entries(info)) {
