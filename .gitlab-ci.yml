@@ -1,0 +1,18 @@
+image: node:10.5.0
+
+stages:
+  - build
+
+#before_script:
+#  - npm install
+
+vue:
+  stage: build
+  script:
+    - cd design/ui
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - apps/core/static/
+
