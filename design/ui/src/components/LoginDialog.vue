@@ -6,6 +6,8 @@ en:
     login: Login
     email: Email
     password: Password
+    login_error: There was an error logging you in
+    how_to_gain_access: To gain or renew access to this Celus installation, let us know at <a href="mailto:ask@celus.net">ask@celus.net</a>
 
 cs:
     not_logged_in: Jste odhlášeni
@@ -14,6 +16,8 @@ cs:
     login: Přihlásit
     email: Email
     password: Heslo
+    login_error: Při přihlášování došlo k chybě
+    how_to_gain_access: Pokud chcete získat nebo obnovit přístup k tomuto systému, napište nám na <a href="mailto:ask@celus.net">ask@celus.net</a>
 </i18n>
 
 <template>
@@ -28,10 +32,12 @@ cs:
                 <v-alert
                         v-if="loginError"
                         type="error"
-                        v-text="loginErrorText"
                         outlined
                         icon="fas fa-exclamation-circle"
                 >
+                    {{ $t('login_error') }}: "<em>{{ loginErrorText }}</em>"
+                    <p class="mt-4" v-html="$t('how_to_gain_access')"></p>
+
                 </v-alert>
             </v-card-text>
             <v-card-actions>
