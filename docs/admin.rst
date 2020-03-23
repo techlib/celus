@@ -169,7 +169,7 @@ To define the list of charts for a view, you need to visit `Charts` > `Report vi
 where you will find a list of already created associations. To create new one, click on
 `Add report view to chart type` in the upper right corner and fill in the form as shown below:
 
-.. image:: dja_add_report_view_to_chart_type.png
+.. image:: images/dja_add_report_view_to_chart_type.png
 
 Report data view
     Select the report view for which you want to make a chart available
