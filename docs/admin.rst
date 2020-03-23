@@ -89,6 +89,110 @@ Desc
 
 You can leave the `Source` field empty.
 
+When all dimensions are associated with a report type, it is ready for users to upload data
+of this type. However, to visualize the data, more has to be done.
+
+
+Creating a report data view
+---------------------------
+
+A report type (described above) describes how data are read from a source file and how it is stored
+in the database. To make the presentation of the data more flexible, Celus uses "report data views"
+which define one of more different views of the underlying report type data.
+
+In order to make a report type accessible in the user interface, at least one report data view
+has to be created for it.
+
+Report data views are created in the `Charts` > `Report data views` part of the Django admin.
+In the screenshot below, you can see the definition of view which creates JR1 view from the
+underlying COUNTER 5 TR master report.
+
+.. image:: images/dja_report_data_view_tr_jr1.png
+
+The meaning of each attributes is as follows.
+
+Base report type
+    The report type for which this view should be used - defines the underlying report type.
+
+Short name
+    Mostly internal short version of the report view name - used in some dropdown menus in
+    the admin, etc.
+
+Name
+    Localized version of the view name - this is the name users see in the UI.
+
+Desc
+    Localized version of the description of the view - it is presented in some places of the UI
+    together with the name.
+
+Source
+    You can leave this empty
+
+Metric allowed values
+    If the view should not present all metrics from the underlying report, but only some of them,
+    you can list them here ``["Metric one", "Metric two"]``. This is a list in the JSON format,
+    so please be careful about the proper formatting of data. To allow all metric values, use
+    empty list (``[]``). If any values are present in the list, only these metrics will be shown.
+
+Primary dimension
+    A remnant of a previous version kept only for backwards compatibility. Not used anymore
+
+Is standard view
+    When checked, it means this view will be presented to the user in a dropdown menu in section
+    "Standard views". Otherwise it will be shown in the following section. This option is usually
+    checked.
+
+Position
+    A relative number which is used to sort the views in the dropdown menu presented to the user.
+    Please note that the numbers are only relative, so it does not matter if the number is
+    10 or 10000, the only thing that matters is the size of the numbers relative to other views.
+    Please note as well that only views for which there are any data on a specific page are
+    presented to the user. This means that for example COUNTER 5 views are not shown to users
+    on platforms which only have COUNTER 4 data.
+
+Note that there may be more than one view of the same report type data. For example all the
+TR_JR1, TR_BR1 and other reports in COUNTER 5 are created in this way in Celus from the
+underlying COUNTER 5 TR master report.
+
+When you save a report data view definition, you are ready for the last part of making the
+data available to the user.
+
+
+Associating charts with report data views
+-----------------------------------------
+
+The last step in making a new report type available to users is to tell Celus which charts
+should be presented to the user if he selects the report data view (see above) associated with
+the report type.
+
+To define the list of charts for a view, you need to visit `Charts` > `Report view to chart types`
+where you will find a list of already created associations. To create new one, click on
+`Add report view to chart type` in the upper right corner and fill in the form as shown below:
+
+.. image:: dja_add_report_view_to_chart_type.png
+
+Report data view
+    Select the report view for which you want to make a chart available
+
+Chart definition
+    Select one of the existing chart definitions. (You can also
+    `create new one <Creating chart definitions>`_ yourself and then
+    return back here if none of the existing suits you.)
+
+Position
+    A relative number which defines the order of charts in which they are presented for the
+    report view at hand.
+
+Once you fill in the data and save the definition, the user will be able not only to view
+the report view name in the selection of available reports for matching platforms, but also to
+choose from available charts after he selects it.
+
+
+Creating chart definitions
+--------------------------
+
+To be added
+
 
 -----------
 Maintenance
