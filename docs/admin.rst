@@ -191,7 +191,62 @@ choose from available charts after he selects it.
 Creating chart definitions
 --------------------------
 
-To be added
+Charts definition describes what a chart presented to the user should look like. It describes how
+the underlying data should be presented.
+
+To create or modify a chart definition, go to the `Charts` > `Chart definitions` part of the
+Django admin. There you will see a list of the already defined charts and also have the possibility
+to create a new one.
+
+By clicking `Add chart definition` in the upper right corner, you will be presented with the
+following form:
+
+
+.. image:: images/dja_add_chart_definition.png
+
+Name
+    Localized name of the chart - this will be presented to the user
+
+Desc
+    Localized description of the chart - this will be shown as a tooltip to the user.
+
+Primary dimension & Primary implicit dimension
+    These two values define what the primary dimension - X axis - should be for the charts.
+    If the dimension should be one of the built-in (implicit) ones, than the
+    `Primary implicit dimension` value is set. Otherwise use the `Primary dimension` and select
+    the corresponding dimension.
+
+Secondary dimension & Secondary implicit dimension
+    Similarly to the case of primary dimensions, these two attributes together define the secondary
+    dimension of the chart. This means different series into which the data is subdivided.
+
+Chart type
+    Select one of the available types of chart.
+
+Ordering
+    By default the data in the chart are ordered naturally by the primary dimension. However, if
+    you would like to have a different ordering, you can set it up here. It has to be a name
+    of one of the dimensions. For example, you can use ``count`` to order data by the largest
+    value.
+
+Ignore organization
+    Normally a chart shows data for a specified platform/title and organization. If you would like
+    to create a chart that compares different organizations, you can check this box. Please note
+    that if the user does not have access to the presented organizations, the organization's name
+    will be anonymized.
+
+Ignore platform
+    Similarly to `Ignore organization` this allows creation of charts which span multiple
+    platforms. This can be used to create a chart which compares different platforms from which
+    a title is available.
+
+Scope
+    Where should this chart be displayed. It may be either `platform` for charts displayed on the
+    chart detail page, `title` for those on title detail page, or `any` for those presented on
+    both.
+
+Once you fill in the parameters of your chart and save it, you will be able to associate it with
+specific report data views and use if for data presentation to your user.
 
 
 -----------
