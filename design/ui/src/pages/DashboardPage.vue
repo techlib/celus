@@ -8,7 +8,7 @@ en:
     title_interest_histogram: Interest histogram
     log: Logarithmic scale
     title_count: Resource count
-    histogram_tooltip: SUSHI data very seldom contains data about titles for which there was not
+    histogram_tooltip: SUSHI data very seldom contains data about titles for which there was no
       access recorded, so titles with zero count are likely heavily underrepresented.
 
 cs:

@@ -171,8 +171,10 @@
         this.navbarExpanded = !this.navbarExpanded
       },
     },
-    mounted () {
+    created() {
       this.start()
+    },
+    async mounted () {
       this.$i18n.locale = this.appLanguage
     },
     watch: {

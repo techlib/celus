@@ -39,7 +39,7 @@ class ReportInterestMetricAdmin(TranslationAdmin):
 
 
 @admin.register(models.Dimension)
-class DimensionAdmin(admin.ModelAdmin):
+class DimensionAdmin(TranslationAdmin):
 
     list_display = ['short_name', 'name', 'type', 'desc', 'source']
     ordering = ['short_name']
