@@ -282,7 +282,7 @@ example it might be the COUNTER 4 BR2 report for one platform and the COUNTER 4 
 another - depending on that kind of content is available on that platform and how it is used
 by the consortium.
 
-More information about defining interest is available in `Working with interest`_
+More information about defining interest is available in `Working with interest`_.
 
 *NOTE*: You can find a list of platforms without interest definition under the `Maintenance`
 label of the navigation sidebar. If any such platforms already contain data, they will be
