@@ -249,6 +249,46 @@ Once you fill in the parameters of your chart and save it, you will be able to a
 specific report data views and use if for data presentation to your user.
 
 
+Adding a new platform
+=====================
+
+The list of platforms is periodically synchronized with the external ERMS system, so in order to
+add a platform, you need to do it there.
+
+It is also possible to add a new platform using the Django admin. You can find it in section
+`Publication` > `Platforms`. In order for the platform not to be deleted during the next ERMS
+synchronization, you need to let the `Source` attribute empty.
+
+When a new platform is added, it means that it will be available in different menus throughout
+the system, it will be visible in the platform list for admin users, etc., but there will be no
+data and no interest definition.
+
+
+Create SUSHI credentials
+------------------------
+
+If you want to download data over SUSHI for the newly added platform, you need to add the
+corresponding SUSHI credentials into the system. The method is thoroughly described in the
+user documentation - :ref:`work-with-sushi`.
+
+
+Define interest for a platform
+------------------------------
+
+Because platforms differ in their content, there is no "one size fits all" definition of interest
+for all of them. Instead interest has to be defined for each platform individually. This means
+telling Celus which report types should be used to compute interest data for that platform - for
+example it might be the COUNTER 4 BR2 report for one platform and the COUNTER 4 JR1 report for
+another - depending on that kind of content is available on that platform and how it is used
+by the consortium.
+
+More information about defining interest is available in `TODO`
+
+*NOTE*: You can find a list of platforms without interest definition under the `Maintenance`
+label of the navigation sidebar. If any such platforms already contain data, they will be
+highlighted as it is most important to define it for these.
+
+
 -----------
 Maintenance
 -----------

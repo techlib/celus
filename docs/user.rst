@@ -74,11 +74,13 @@ Normal access
 Privileged access
 -----------------
 
+.. _work-with-sushi:
+
 Setting up, editing and debugging SUSHI
 =======================================
 
-SUSHI managment
----------------
+SUSHI management
+----------------
 
 Setting up SUSHI downloading for your organization is usually the most important task you have to
 perform in `Celus`. Management of SUSHI is only accessible to users with organization admin
