@@ -282,11 +282,33 @@ example it might be the COUNTER 4 BR2 report for one platform and the COUNTER 4 
 another - depending on that kind of content is available on that platform and how it is used
 by the consortium.
 
-More information about defining interest is available in `TODO`
+More information about defining interest is available in `Working with interest`_
 
 *NOTE*: You can find a list of platforms without interest definition under the `Maintenance`
 label of the navigation sidebar. If any such platforms already contain data, they will be
 highlighted as it is most important to define it for these.
+
+
+Working with interest
+=====================
+
+This section describes how interest works behind the scenes and how to work with it to get the
+desired result. For more generic information about interest please see :ref:`interest-intro`.
+
+
+Platform specific interest calculation
+--------------------------------------
+
+Even though different interest types make the interest system pretty
+flexible, it is also sometimes desired to be able to make specific adjustments to how interest
+is calculated for specific platforms. This is especially true for platform which do not offer
+COUNTER data and report types have to be tailor made for them. In such case Celus cannot
+guess how to extract the interest data without explicit instructions from the user.
+
+To accomplish the above, we decided to make it possible (and necessary) to assign specific reports
+to a platform as "interest defining". There may be more than one such report type - e. g.
+COUNTER 4 BR2 and COUNTER 5 TR reports.
+
 
 
 -----------
