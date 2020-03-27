@@ -296,6 +296,24 @@ This section describes how interest works behind the scenes and how to work with
 desired result. For more generic information about interest please see :ref:`interest-intro`.
 
 
+How is interest defined
+-----------------------
+
+As a compromise between flexibility and maintainability, Celus uses a two tiered approach to
+defining interest.
+
+Each platform defines a set of reports which should be used to calculate
+interest for that platform. This makes it possible to distinguish between different types of
+platforms and their focus on different types of content.
+
+For each report type a set of metrics is selected which define the interest for that particular
+report type. For example you can decide that from the COUNTER 5 TR report the metric
+"Unique_Item_Requests" will be the best measure of interest for your particular use, but other
+consortia might use the "Total_Item_Requests" metric instead.
+
+
+
+
 Platform specific interest calculation
 --------------------------------------
 
@@ -308,6 +326,21 @@ guess how to extract the interest data without explicit instructions from the us
 To accomplish the above, we decided to make it possible (and necessary) to assign specific reports
 to a platform as "interest defining". There may be more than one such report type - e. g.
 COUNTER 4 BR2 and COUNTER 5 TR reports.
+
+To tell Celus which reports should be used to calculate interest, you should create corresponding
+record under `Publications` > `Platform interest reports`. The only two required input values
+are `Report type` - the name of the report - and `Platform` - the platform you wish to associate
+the report type with.
+
+.. image:: images/dja_platforminterestreport.png
+
+You can associate more than one report type with a platform. Also one report type may be connected
+to more than one platform. In fact many platforms use the same set of report types for interest
+calculation.
+
+
+Defining interest for new report types
+--------------------------------------
 
 
 
