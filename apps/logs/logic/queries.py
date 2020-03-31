@@ -266,7 +266,9 @@ class StatsComputer(object):
         """
         field = AccessLog._meta.get_field(dim_name)
         if isinstance(field, models.ForeignKey):
-            mapping = {obj.pk: obj for obj in field.related_model.objects.all()}
+            unique_values = {rec[dim_name] for rec in data}
+            mapping = {obj.pk: obj for
+                       obj in field.related_model.objects.filter(pk__in=unique_values)}
             for rec in data:
                 if rec[dim_name] in mapping:
                     rec[dim_name] = to_text_fn(mapping[rec[dim_name]]).replace('_', ' ')
