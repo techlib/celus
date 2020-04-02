@@ -95,6 +95,14 @@
         default: false,
         type: Boolean,
       },
+      dataSizeThreshold: {
+        default: 100,
+        type: Number,
+      },
+      maxLabelLength: {
+        default: 50,
+        type: Number,
+      }
     },
     data () {
       return {
@@ -212,8 +220,10 @@
         if (this.loading) {
           return []
         }
-        // no secondary dimension
+        // secondary dimension
         if (this.secondaryDimension) {
+          console.log('going to pivot')
+          let now = new Date()
           let out = jsonToPivotjson(
             this.dataRaw,
             {
@@ -221,6 +231,7 @@
               column: this.secondaryDimension,
               value: 'count',
             })
+          console.log('pivot ended', new Date() - now)
           if (this.orderBy) {
             // NOTE: order by sum of values - it does not matter how is the orderBy called
             function sumNonPrimary (rec) {
@@ -230,9 +241,15 @@
             let sum = sumNonPrimary.bind(this)
             out.sort((a, b) => (sum(a) - sum(b)))
           }
+          if (out.length > this.dataSizeThreshold) {
+            let warning = `Too many data points to display (${out.length}), truncating to ${this.dataSizeThreshold}`
+            console.warn(warning)
+            this.showSnackbar({content: warning, color: 'warning'})
+            out = out.slice(0, this.dataSizeThreshold)
+          }
           return out
         } else {
-          // secondary dimension
+          // no secondary dimension
           if (this.orderBy) {
             // order by
             this.dataRaw.sort((a, b) => {
@@ -336,10 +353,27 @@
         if (this.dataURL) {
           try {
             let response = await axios.get(this.dataURL)
+            // check length of data and truncate if needed
+            let rawData = response.data.data  // type: Array
             // reformat date value to exclude the day component
-            this.dataRaw = response.data.data.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
+            rawData = rawData.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
+            // truncate long labels
+          this.dataRaw = rawData.map(dict => {
+            let val1 = dict[this.primaryDimension]
+            if (val1.length > this.maxLabelLength + 3) {
+              dict[this.primaryDimension] = val1.substring(0, this.maxLabelLength) + '\u2026'
+            }
+            if (this.secondaryDimension) {
+              let val2 = dict[this.secondaryDimension]
+              if (val2.length > this.maxLabelLength + 3) {
+                dict[this.secondaryDimension] = val2.substring(0, this.maxLabelLength) + '\u2026'
+              }
+            }
+            return dict
+            }
+          )
           } catch (error) {
-            this.showSnackbar({content: 'Error fetching data: '+error})
+            this.showSnackbar({content: 'Error fetching data: '+error, color: 'error'})
           } finally {
             this.loading = false
           }

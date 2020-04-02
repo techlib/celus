@@ -2,6 +2,7 @@
 Functions that help in constructing django queries
 """
 from typing import Iterable, Optional
+import logging
 
 from django.db import models
 from django.db.models import Sum, Q
@@ -12,6 +13,8 @@ from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
 from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText
+
+logger = logging.getLogger(__name__)
 
 
 def interest_value_to_annot_name(dt: DimensionText) -> str:
@@ -96,6 +99,7 @@ class StatsComputer(object):
     input_dim_to_query_dim = {'interest': 'metric'}
     extra_query_params = {'interest': lambda rt: {'metric__reportinterestmetric__report_type': rt}}
     implicit_dim_to_text_fn = {'interest': lambda x: str(x)}
+    hard_result_count_limit = 2_000
 
     def __init__(self):
         self.io_prim_dim_name = None  # name of dimension that was requested and will be outputed
@@ -175,6 +179,10 @@ class StatsComputer(object):
                 .annotate(count=Sum('value')) \
                 .values(self.prim_dim_name, 'count') \
                 .order_by(self.prim_dim_name)
+        if len(data) > self.hard_result_count_limit:
+            logger.warning('Result size of %d exceeded the limit of %d records - truncating',
+                           len(data), self.hard_result_count_limit)
+            data = data[:self.hard_result_count_limit]
         self.post_process_data(data, user)
         return data
 
