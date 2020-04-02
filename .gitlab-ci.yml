@@ -5,6 +5,8 @@ stages:
 build_vue:
   stage: build
   image: node:10.5.0
+  before_script:
+    - cp design/ui/vue.config.js.build design/ui/vue.config.js
   script:
     - cd design/ui
     - npm install
