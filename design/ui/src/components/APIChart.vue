@@ -9,17 +9,35 @@
             <div class="infotext">{{ $t('chart.no_data') }}</div>
         </div>
     </div>
-    <component v-else
-            :is="chartComponent"
-            :data="chartData"
-            :settings="chartSettings"
-            :extend="chartExtend"
-            :height="height"
-            :toolbox="chartToolbox"
-            :data-zoom="dataZoom"
-            :mark-line="markLine"
-            >
-    </component>
+    <div v-else>
+        <v-alert
+                v-if="reportedMetricsText"
+                type="info"
+                outlined
+        >
+            <v-tooltip bottom>
+                <template #activator="{on}">
+                    <span v-on="on">
+                        <span class="thin" v-text="$t('reported_metrics')"></span>:
+                        {{ reportedMetricsText }}
+                    </span>
+                </template>
+                {{ $t('reported_metrics_tooltip') }}
+                <span v-if="reportedMetrics.length > 1">{{ $t('reported_metrics_tooltip_many') }}</span>
+            </v-tooltip>
+        </v-alert>
+        <component
+                :is="chartComponent"
+                :data="chartData"
+                :settings="chartSettings"
+                :extend="chartExtend"
+                :height="height"
+                :toolbox="chartToolbox"
+                :data-zoom="dataZoom"
+                :mark-line="markLine"
+                >
+        </component>
+    </div>
 </template>
 <script>
   import VeHistogram from 'v-charts/lib/histogram.common'
@@ -99,8 +117,8 @@
     data () {
       return {
         dataRaw: [],
-        data_meta: null,
         loading: true,
+        reportedMetrics: [],
       }
     },
     computed: {
@@ -324,6 +342,13 @@
         } else {
           return VeLine
         }
+      },
+      reportedMetricsText () {
+        if (this.reportedMetrics.length > 0) {
+          return this.reportedMetrics.map(metric => (metric.name || metric.short_name).replace(/_/g, ' ')).join(', ')
+        } else {
+          return ''
+        }
       }
     },
     methods: {
@@ -338,6 +363,7 @@
             let response = await axios.get(this.dataURL)
             // reformat date value to exclude the day component
             this.dataRaw = response.data.data.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
+            this.reportedMetrics = response.data.reported_metrics
           } catch (error) {
             this.showSnackbar({content: 'Error fetching data: '+error})
           } finally {
