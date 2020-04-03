@@ -10,7 +10,7 @@ from charts.models import ReportDataView
 from charts.serializers import ChartDefinitionSerializer, ReportDataViewSerializer
 from logs.logic.queries import StatsComputer
 from logs.models import ReportType
-from logs.serializers import DimensionSerializer
+from logs.serializers import DimensionSerializer, MetricSerializer
 from publications.models import Platform
 
 
@@ -62,4 +62,6 @@ class ChartDataView(APIView):
             reply[computer.prim_dim_name] = DimensionSerializer(computer.prim_dim_obj).data
         if computer.sec_dim_obj:
             reply[computer.sec_dim_name] = DimensionSerializer(computer.sec_dim_obj).data
+        reply['reported_metrics'] = \
+            MetricSerializer(computer.reported_metrics.values(), many=True).data
         return Response(reply)

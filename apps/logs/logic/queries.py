@@ -105,6 +105,7 @@ class StatsComputer(object):
         self.sec_dim_name = None
         self.sec_dim_obj = None
         self.dim_raw_name_to_name = {}
+        self.reported_metrics = {}
 
     @classmethod
     def _translate_dimension_spec(cls, dim_name: str, report_type: ReportType) -> \
@@ -248,6 +249,20 @@ class StatsComputer(object):
             query_params.update(sec_extra(report_type))
         # add filter for dates
         query_params.update(date_filter_from_params(params))
+        # filter to only interest metrics if metric neither primary nor secondary dim
+        if report_type and self.prim_dim_name != 'metric' and self.sec_dim_name != 'metric':
+            # Rationale: summing up different metrics together does not make much sence
+            # for example Total_Item_Requests and Unique_Item_Requests are dependent on each
+            # other and in fact the latter is a subset of the former. Thus we only use the
+            # metrics that define interest for computation if metric itself is not the primary
+            # or secondary dimension
+            # Technical note: putting the filter into the queue leads to a very slow response
+            # (2500 ms instead of 60 ms is a test case) - this is why we get the pks of the metrics
+            # first and then use the "in" filter.
+            base_rt = report_type.base_report_type if isinstance(report_type, ReportDataView) \
+                      else report_type  # type: ReportType
+            self.reported_metrics = {im.pk: im for im in base_rt.interest_metrics.order_by()}
+            query_params['metric_id__in'] = self.reported_metrics.keys()
         # create the base query
         if report_type and isinstance(report_type, ReportDataView):
             query = report_type.logdata_qs().filter(**query_params)

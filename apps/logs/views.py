@@ -66,6 +66,7 @@ class Counter5DataView(APIView):
             reply[computer.prim_dim_name] = DimensionSerializer(computer.prim_dim_obj).data
         if computer.sec_dim_obj:
             reply[computer.sec_dim_name] = DimensionSerializer(computer.sec_dim_obj).data
+        reply['reported_metrics'] = computer.reported_metrics
         return Response(reply)
 
 
