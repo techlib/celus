@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
-from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText
+from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText, Metric
 
 
 def interest_value_to_annot_name(dt: DimensionText) -> str:
@@ -249,6 +249,11 @@ class StatsComputer(object):
             query_params.update(sec_extra(report_type))
         # add filter for dates
         query_params.update(date_filter_from_params(params))
+        # create the base query
+        if report_type and isinstance(report_type, ReportDataView):
+            query = report_type.logdata_qs().filter(**query_params)
+        else:
+            query = AccessLog.objects.filter(**query_params)
         # filter to only interest metrics if metric neither primary nor secondary dim
         if report_type and self.prim_dim_name != 'metric' and self.sec_dim_name != 'metric':
             # Rationale: summing up different metrics together does not make much sence
@@ -262,12 +267,15 @@ class StatsComputer(object):
             base_rt = report_type.base_report_type if isinstance(report_type, ReportDataView) \
                       else report_type  # type: ReportType
             self.reported_metrics = {im.pk: im for im in base_rt.interest_metrics.order_by()}
-            query_params['metric_id__in'] = self.reported_metrics.keys()
-        # create the base query
-        if report_type and isinstance(report_type, ReportDataView):
-            query = report_type.logdata_qs().filter(**query_params)
-        else:
-            query = AccessLog.objects.filter(**query_params)
+            if self.reported_metrics:
+                query = query.filter(metric_id__in=self.reported_metrics.keys())
+            else:
+                # if there are no interest metrics associated with the report_type
+                # we need to tell the user that all possible metrics were used
+                used_metric_ids = {rec['metric_id'] for rec in
+                                   query.values('metric_id').distinct()}
+                self.reported_metrics = {im.pk: im for im in
+                                         Metric.objects.filter(pk__in=used_metric_ids)}
         return query, dim_raw_name_to_name
 
     @classmethod
