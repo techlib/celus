@@ -7,7 +7,19 @@ from copy import copy
 from .exceptions import SushiException
 
 
+# TODO we can try to use  data classes https://docs.python.org/3/library/dataclasses.html
+# but newer version o python >= 3.7 is required here
 class CounterRecord(object):
+    __slots__ = (
+        "platform_name",
+        "start",
+        "end",
+        "title",
+        "title_ids",
+        "dimension_data",
+        "metric",
+        "value",
+    )
 
     def __init__(self, platform_name=None, start=None, end=None, title=None, title_ids=None,
                  metric=None, value=None, dimension_data=None):
