@@ -230,7 +230,7 @@
         if (this.loading) {
           return []
         }
-        // no secondary dimension
+        // secondary dimension
         if (this.secondaryDimension) {
           let out = jsonToPivotjson(
             this.dataRaw,
@@ -250,7 +250,7 @@
           }
           return out
         } else {
-          // secondary dimension
+          // no secondary dimension
           if (this.orderBy) {
             // order by
             this.dataRaw.sort((a, b) => {
