@@ -1,3 +1,5 @@
+import typing
+
 from collections import Counter
 from datetime import date, datetime
 import dateparser
@@ -68,7 +70,7 @@ DEFAULT_COLUMN_MAP = {
 
 
 def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, initial_data=None) \
-        -> [CounterRecord]:
+        -> typing.Generator[typing.List[CounterRecord], None, None]:
     # prepare the keyword arguments
     if initial_data is None:
         initial_data = {}
@@ -102,7 +104,7 @@ def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, in
         for month, value in monthly_values.items():
             result.append(CounterRecord(value=value, start=month,
                                         dimension_data=explicit_dimensions, **implicit_dimensions))
-    return result
+    return (e for e in [result])  # TODO convert this into a propper generator
 
 
 def histogram(iterable) -> Counter:

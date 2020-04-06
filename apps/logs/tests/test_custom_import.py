@@ -1,3 +1,5 @@
+import itertools
+
 from datetime import date
 from io import StringIO
 
@@ -29,7 +31,7 @@ class TestCustomImport(object):
             {'Metric': 'M1', 'Jan 2019': 10, 'Feb 2019': 7, 'Mar 2019': 11},
             {'Metric': 'M2', 'Jan 2019':  1, 'Feb 2019': 2, 'Mar 2019':  3},
         ]
-        records = custom_data_to_records(data)
+        records = [e for e in itertools.chain(*custom_data_to_records(data))]
         assert len(records) == 6
         for record in records:
             assert record.value in (1, 2, 3, 7, 10, 11)
@@ -48,6 +50,7 @@ class TestCustomImport(object):
         ]
         records = custom_data_to_records(data, initial_data={'platform_name': 'PLA1'},
                                          column_map={'MetricXX': 'metric'})
+        records = [e for e in itertools.chain(*records)]
         assert len(records) == 6
         for record in records:
             assert record.value in (1, 2, 3, 7, 10, 11)
@@ -67,6 +70,7 @@ class TestCustomImport(object):
         ]
         records = custom_data_to_records(data,
                                          initial_data={'platform_name': 'PLA1', 'metric': 'MD'})
+        records = [e for e in itertools.chain(*records)]
         assert len(records) == 6
         for record in records:
             assert record.value in (1, 2, 3, 7, 10, 11)

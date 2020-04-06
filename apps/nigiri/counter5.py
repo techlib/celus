@@ -2,8 +2,11 @@
 Module dealing with data in the COUNTER5 format.
 """
 import json
+import typing
+
 from copy import copy
 
+from . import DEFAULT_BATCH_SIZE
 from .exceptions import SushiException
 
 
@@ -65,10 +68,10 @@ class Counter5ReportBase(object):
         self.errors = []
         self.warnings = []
         self.raw_data = None
-        if report:
-            self.read_report(report)
 
-    def read_report(self, report: dict) -> [CounterRecord]:
+    def read_report(
+        self, report: dict, size: int = DEFAULT_BATCH_SIZE,
+    ) -> typing.Generator[typing.List[CounterRecord], None, None]:
         """
         Reads in the report as returned by the API using Sushi5Client
         :param report:
@@ -77,7 +80,7 @@ class Counter5ReportBase(object):
         self.raw_data = report
         if type(report) is list:
             self.extract_errors(report)
-            return []
+            return
         # check for messed up report with extra wrapping 'body' element
         if 'Report_Header' not in report \
                 and 'body' in report \
@@ -90,8 +93,8 @@ class Counter5ReportBase(object):
             self.extract_errors(report)
         else:
             self.extract_errors(self.header.get('Exceptions', []))
-        records = []
         items = report.get('Report_Items')
+        res = []
         if items is not None:
             for item in items:
                 record = CounterRecord()
@@ -108,14 +111,17 @@ class Counter5ReportBase(object):
                         this_rec = copy(record)
                         this_rec.metric = metric.get('Metric_Type')
                         this_rec.value = int(metric.get('Count'))
-                        records.append(this_rec)
+                        res.append(this_rec)
+                        if len(res) >= size:
+                            yield res
+                            res = []
+            if res:
+                yield res
         else:
             # we have no data
             if not self.errors and not self.warnings:
                 # if there is no other reason why there should be no data, we raise exception
                 raise SushiException('Incorrect format', content=report)
-        self.records = records
-        return records
 
     def extract_errors(self, data):
         if type(data) is list:

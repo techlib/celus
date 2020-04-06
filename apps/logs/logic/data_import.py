@@ -1,4 +1,5 @@
 import logging
+import typing
 from collections import Counter, namedtuple
 from datetime import date
 
@@ -160,9 +161,28 @@ class TitleManager(object):
         return self.get_or_create(title_rec)
 
 
-def import_counter_records(report_type: ReportType, organization: Organization, platform: Platform,
-                           records: [CounterRecord], import_batch: ImportBatch) -> Counter:
+def import_counter_records(
+    report_type: ReportType, organization: Organization, platform: Platform,
+    records_gen: typing.Generator[typing.List[CounterRecord], None, None],
+    import_batch: ImportBatch,
+) -> Counter:
     stats = Counter()
+    tm = TitleManager()
+
+    for records in records_gen:
+        _import_counter_records(
+            report_type, organization, platform, records, import_batch,
+            stats, tm,
+        )
+
+    return stats
+
+
+def _import_counter_records(
+    report_type: ReportType, organization: Organization, platform: Platform,
+    records: typing.List[CounterRecord], import_batch: ImportBatch,
+    stats: Counter, tm: TitleManager
+):
     # prepare all remaps
     metrics = {
         metric.short_name: {"pk": metric.pk, "short_name": metric.short_name}
@@ -175,7 +195,6 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
             text_to_int_remaps[dim_text["dimension_id"]] = {}
         text_to_int_remaps[dim_text["dimension_id"]][dim_text["text"]] = dim_text
     log_memory('X-1.5')
-    tm = TitleManager()
     title_recs = [tm.counter_record_to_title_rec(rec) for rec in records]
     tm.prefetch_titles(title_recs)
     # prepare raw data to be inserted into the database
@@ -263,7 +282,6 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
     # and insert the PlatformTitle links
     stats.update(create_platformtitle_links(organization, platform, dicts_to_insert))
     log_memory('XX5')
-    return stats
 
 
 def create_platformtitle_links(organization, platform, records: [dict]):

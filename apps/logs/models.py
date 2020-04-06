@@ -1,6 +1,7 @@
 import codecs
 import csv
 import os
+import typing
 
 import magic
 from django.conf import settings
@@ -352,7 +353,7 @@ class ManualDataUpload(models.Model):
         data = list(reader)
         return data
 
-    def data_to_records(self) -> [CounterRecord]:
+    def data_to_records(self) -> typing.Generator[typing.List[CounterRecord], None, None]:
         try:
             crt = self.report_type.counterreporttype
         except ObjectDoesNotExist:

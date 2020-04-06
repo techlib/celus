@@ -52,7 +52,7 @@ class TestCounter5Reading(object):
     def test_record_simple(self):
         data = json.loads(self.data_simple)
         reader = Counter5ReportBase()
-        records = reader.read_report(data)
+        records = [e for e in reader.read_report(data)][0]
         assert len(records) == 2
         assert records[0].platform_name == 'PlOne'
         assert records[0].title == 'Title1'
@@ -70,7 +70,7 @@ class TestCounter5Reading(object):
     def test_record_simple_tr(self):
         data = json.loads(self.data_simple)
         reader = Counter5TRReport()
-        records = reader.read_report(data)
+        records = [e for e in reader.read_report(data)][0]
         assert len(records) == 2
         assert records[0].value == 10
         # just test what is different in TR report
@@ -90,7 +90,7 @@ class TestCounter5Reading(object):
         data = {'foo': 'bar'}
         reader = Counter5TRReport()
         with pytest.raises(SushiException):
-            reader.read_report(data)
+            [e for e in reader.read_report(data)]
 
     def test_reading_messed_up_data_proquest_ebooks(self):
         """
@@ -101,7 +101,7 @@ class TestCounter5Reading(object):
         with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral.json', 'r') as infile:
             data = json.load(infile)
         reader = Counter5TRReport()
-        records = reader.read_report(data)
+        records = [e for e in reader.read_report(data)][0]
         assert len(records) == 30  # 7 titles, metrics - 1, 5, 5, 2, 6, 5, 6
 
     def test_reading_messed_up_data_proquest_ebooks_exception(self):
@@ -114,7 +114,7 @@ class TestCounter5Reading(object):
                 infile:
             data = json.load(infile)
         reader = Counter5TRReport()
-        records = reader.read_report(data)
+        records = [e for e in reader.read_report(data)]
         assert len(records) == 0
         assert len(reader.errors) == 1
         error = reader.errors[0]
@@ -128,7 +128,7 @@ class TestCounter5Reading(object):
                 infile:
             data = json.load(infile)
         reader = Counter5TRReport()
-        records = reader.read_report(data)
+        records = [e for e in reader.read_report(data)]
         assert len(records) == 0
         assert len(reader.errors) == 1
         error = reader.errors[0]
@@ -142,7 +142,7 @@ class TestCounter5Reading(object):
                 infile:
             data = json.load(infile)
         reader = Counter5TRReport()
-        records = reader.read_report(data)
+        records = [e for e in reader.read_report(data)]
         assert len(records) == 0
         assert len(reader.warnings) == 1
         assert reader.queued
@@ -155,9 +155,7 @@ class TestCounter5Reading(object):
                 infile:
             data = json.load(infile)
         reader = Counter5TRReport()
-        records = reader.read_report(data)
+        records = [e for e in reader.read_report(data)]
         assert len(records) == 0
         assert len(reader.warnings) == 1
         assert reader.queued
-
-
