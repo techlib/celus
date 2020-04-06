@@ -13,16 +13,17 @@ from ..models import ReportType, Metric, DimensionText, AccessLog
 logger = logging.getLogger(__name__)
 
 
-def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=None):
+def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=None) -> int:
     if attr_value not in mapping:
         data = {attr_name: attr_value}
         if other_attrs:
             data.update(other_attrs)
         obj = model.objects.create(**data)
-        mapping[attr_value] = obj
-        return obj
+        data["pk"] = obj.pk
+        mapping[attr_value] = data
+        return obj.pk
     else:
-        return mapping[attr_value]
+        return mapping[attr_value]["pk"]
 
 
 TitleRec = namedtuple('TitleRec', ('name', 'pub_type', 'issn', 'eissn', 'isbn', 'doi'))
@@ -163,13 +164,16 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
                            records: [CounterRecord], import_batch: ImportBatch) -> Counter:
     stats = Counter()
     # prepare all remaps
-    metrics = {metric.short_name: metric for metric in Metric.objects.all()}
+    metrics = {
+        metric.short_name: {"pk": metric.pk, "short_name": metric.short_name}
+        for metric in Metric.objects.all()
+    }
     text_to_int_remaps = {}
     log_memory('X-2')
-    for dim_text in DimensionText.objects.all():
-        if dim_text.dimension_id not in text_to_int_remaps:
-            text_to_int_remaps[dim_text.dimension_id] = {}
-        text_to_int_remaps[dim_text.dimension_id][dim_text.text] = dim_text
+    for dim_text in DimensionText.objects.values("dimension_id", "text", "pk"):
+        if dim_text["dimension_id"] not in text_to_int_remaps:
+            text_to_int_remaps[dim_text["dimension_id"]] = {}
+        text_to_int_remaps[dim_text["dimension_id"]][dim_text["text"]] = dim_text
     log_memory('X-1.5')
     tm = TitleManager()
     title_recs = [tm.counter_record_to_title_rec(rec) for rec in records]
@@ -189,7 +193,7 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
             # we can pass a specific metric by numeric ID
             metric_id = record.metric
         else:
-            metric_id = get_or_create_with_map(Metric, metrics, 'short_name', record.metric).pk
+            metric_id = get_or_create_with_map(Metric, metrics, 'short_name', record.metric)
         start = record.start if not isinstance(record.start, date) else record.start.isoformat()
         id_attrs = {
             'report_type_id': report_type.pk,
@@ -207,9 +211,8 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
                     if not remap:
                         remap = {}
                         text_to_int_remaps[dim.pk] = remap
-                    dim_text_obj = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
+                    dim_value = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
                                                           other_attrs={'dimension_id': dim.pk})
-                    dim_value = dim_text_obj.pk
             else:
                 dim_value = int(dim_value) if dim_value is not None else None
             id_attrs[f'dim{i+1}'] = dim_value
