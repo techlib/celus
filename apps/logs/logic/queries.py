@@ -103,7 +103,7 @@ class StatsComputer(object):
     input_dim_to_query_dim = {'interest': 'metric'}
     extra_query_params = {'interest': lambda rt: {'metric__reportinterestmetric__report_type': rt}}
     implicit_dim_to_text_fn = {'interest': lambda x: str(x)}
-    hard_result_count_limit = 2_000
+    hard_result_count_limit = 20_000
 
     def __init__(self):
         self.io_prim_dim_name = None  # name of dimension that was requested and will be outputed

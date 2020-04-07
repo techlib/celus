@@ -5,7 +5,7 @@
     <LoaderWidget
             v-if="loading || crunchingData"
             :height="height"
-            :text="crunchingData ? 'crunching' : 'loading'"
+            :text="crunchingData ? crunchingText : 'loading'"
             :icon-name="crunchingData ? 'fa-fan' : 'fa-cog'"
     />
     <div v-else-if="tooMuchData" :style="{'height': height}" id="loading">
@@ -57,11 +57,13 @@
   // the following two imports are here to ensure the components at hand will be bundled
   import _dataZoom from 'echarts/lib/component/dataZoom'
   import _toolBox from 'echarts/lib/component/toolbox'
+  // other imports
   import axios from 'axios'
   import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions, mapGetters, mapState } from 'vuex'
   import 'echarts/lib/component/markLine'
   import LoaderWidget from './LoaderWidget'
+  import { pivot } from '../libs/pivot'
 
   export default {
     name: 'APIChart',
@@ -142,6 +144,8 @@
         reportedMetrics: [],
         tooMuchData: false,
         displayData: [],
+        rawDataLength: 0,
+        out: null,
       }
     },
     computed: {
@@ -344,13 +348,18 @@
         } else {
           return ''
         }
+      },
+      crunchingText () {
+        return `crunching ${this.rawDataLength} records`
       }
     },
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      ingestData (rawData) {
+      async ingestData (rawData) {
+        // prepare the data
+        this.crunchingData = true
         // reformat date value to exclude the day component
         rawData = rawData.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
         // truncate long labels
@@ -368,20 +377,12 @@
             return dict
           }
         )
-        // prepare the data
-        this.crunchingData = true
-        console.log('loading:', this.loading, 'crunching:', this.crunchingData)
         // secondary dimension
         if (this.secondaryDimension) {
           console.log('going to pivot')
           let now = new Date()
-          let out = jsonToPivotjson(
-            this.dataRaw,
-            {
-              row: this.primaryDimension,
-              column: this.secondaryDimension,
-              value: 'count',
-            })
+          let out = this.pivot()
+          this.out = out
           console.log('pivot ended', new Date() - now)
           if (this.orderBy) {
             // NOTE: order by sum of values - it does not matter how is the orderBy called
@@ -392,16 +393,7 @@
             let sum = sumNonPrimary.bind(this)
             out.sort((a, b) => (sum(a) - sum(b)))
           }
-          console.log('aaaa')
-          if (out.length > this.dataSizeThreshold) {
-            let warning = `Too many data points to display (${out.length}), truncating to ${this.dataSizeThreshold}`
-            console.warn(warning)
-            this.showSnackbar({content: warning, color: 'warning'})
-            this.displayData = out.slice(0, this.dataSizeThreshold)
-          } else {
-            this.displayData = out
-          }
-          console.log('bbbb')
+          this.displayData = out
         } else {
           // no secondary dimension
           if (this.orderBy) {
@@ -425,13 +417,28 @@
               this.tooMuchData = true
               return
             }
-            this.ingestData(response.data.data)
+            this.loading = false
+            this.crunchingData = true
+            this.rawDataLength = response.data.data.length
+            // we use timeout to give the interface time to redraw
+            setTimeout(async () => await this.ingestData(response.data.data), 10)
           } catch (error) {
             this.showSnackbar({content: 'Error fetching data: '+error, color: 'error'})
           } finally {
             this.loading = false
           }
         }
+      },
+      pivot () {
+        // let out = jsonToPivotjson(
+        //   this.dataRaw,
+        //   {
+        //     row: this.primaryDimension,
+        //     column: this.secondaryDimension,
+        //     value: 'count',
+        //   })
+        // return out
+        return pivot(this.dataRaw, this.primaryDimension, this.secondaryDimension, 'count')
       },
       dimensionToName (dim) {
         if (typeof dim === 'number') {
