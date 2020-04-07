@@ -15,7 +15,7 @@ def counter_records_0d():
     rec1 = CounterRecord(platform_name='Platform1', start='2019-01-01', end='2019-01-31',
                          metric='Metric 1', value=50, dimension_data={},
                          title='Title X', title_ids={'Print_ISSN': '1234-5678'})
-    return (e for e in [[rec1]])
+    return (e for e in [rec1])
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ def counter_records_nd():
                                 dimension_data=dim_data,
                                 title=title,
                                 title_ids={'ISBN': fake.isbn13()})
-            yield [rec]
+            yield rec
     return fn
 
 
@@ -77,7 +77,7 @@ def counter_records():
                                 dimension_data=dim_data,
                                 title=title,
                                 title_ids={'Print_ISSN': '1234-5678'})
-            yield [rec]
+            yield rec
     return fn
 
 

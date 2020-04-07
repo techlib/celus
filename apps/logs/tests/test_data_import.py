@@ -40,7 +40,6 @@ class TestDataImport(object):
                                ImportBatch.objects.create(organization=organizations[0],
                                                           platform=platform,
                                                           report_type=report_type))
-        crs = crs[0]
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
         al = AccessLog.objects.get()
@@ -59,7 +58,6 @@ class TestDataImport(object):
                                        ImportBatch.objects.create(organization=organizations[0],
                                                                   platform=platform,
                                                                   report_type=report_type))
-        crs = crs[0]
         assert stats['skipped logs'] == 0
         assert stats['new logs'] == 10
         assert AccessLog.objects.count() == 10
@@ -83,7 +81,6 @@ class TestDataImport(object):
                                ImportBatch.objects.create(organization=organizations[0],
                                                           platform=platform,
                                                           report_type=rt))
-        crs = crs[0]
         assert AccessLog.objects.count() == 10
         assert Title.objects.count() > 0
         al1, al2 = AccessLog.objects.order_by('pk')[:2]
@@ -125,20 +122,19 @@ class TestDataImport(object):
 class TestCounter4Import(object):
 
     def test_import_br2_tsv(self, organizations, report_type_nd, platform):
+        rt = report_type_nd(1, dimension_names=['Publisher'])
         from pycounter import report
         data = report.parse('apps/logs/tests/data/counter4_br2.tsv')
         reader = Counter4BR2Report()
-        rt = report_type_nd(1, dimension_names=['Publisher'])
-
-        def read_records():
-            return reader.read_report(data)
-
-        assert len(list(read_records())[0]) == 60  # 12 months, 5 titles
+        records = [e for e in reader.read_report(data)]
+        assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
         import_batch = ImportBatch.objects.create(platform=platform, organization=organization,
                                                   report_type=rt)
         assert AccessLog.objects.count() == 0
-        stats = import_counter_records(rt, organization, platform, read_records(), import_batch)
+        stats = import_counter_records(
+            rt, organization, platform, (e for e in records), import_batch
+        )
         assert AccessLog.objects.count() == 60
         assert stats['new logs'] == 60
         values = [al['value'] for al in AccessLog.objects.

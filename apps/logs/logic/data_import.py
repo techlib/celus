@@ -1,3 +1,4 @@
+import gc
 import logging
 import typing
 from collections import Counter, namedtuple
@@ -12,6 +13,8 @@ from publications.models import Title, Platform, PlatformTitle
 from ..models import ReportType, Metric, DimensionText, AccessLog
 
 logger = logging.getLogger(__name__)
+
+COUNTER_RECORD_BUFFER_SIZE = 10000
 
 
 def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=None) -> int:
@@ -163,15 +166,27 @@ class TitleManager(object):
 
 def import_counter_records(
     report_type: ReportType, organization: Organization, platform: Platform,
-    records_gen: typing.Generator[typing.List[CounterRecord], None, None],
+    records: typing.Generator[CounterRecord, None, None],
     import_batch: ImportBatch,
 ) -> Counter:
     stats = Counter()
     tm = TitleManager()
 
-    for records in records_gen:
+    buff: typing.List[CounterRecord] = []
+    for record in records:
+        buff.append(record)
+        if len(buff) >= COUNTER_RECORD_BUFFER_SIZE:
+            _import_counter_records(
+                report_type, organization, platform, buff, import_batch,
+                stats, tm,
+            )
+            buff = []
+            gc.collect()
+
+    # flush the rest of the buffer
+    if buff:
         _import_counter_records(
-            report_type, organization, platform, records, import_batch,
+            report_type, organization, platform, buff, import_batch,
             stats, tm,
         )
 

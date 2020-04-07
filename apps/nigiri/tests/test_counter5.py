@@ -8,51 +8,11 @@ from ..exceptions import SushiException
 
 class TestCounter5Reading(object):
 
-    data_simple = '''
-      {
-      "Report_Items": [
-        {
-          "Title": "Title1",
-          "Publisher": "Pub1",
-          "Item_ID": [
-            {
-              "Type": "ISBN",
-              "Value": "978-1-111111-01-1"
-            }
-          ],
-          "Section_Type": "Chapter",
-          "Platform": "PlOne",
-          "Data_Type": "Book",
-          "YOP": "2009",
-          "Access_Type": "OA_Gold",
-          "Access_Method": "Regular",
-          "Performance": [
-            {
-              "Period": {
-                "Begin_Date": "2019-05-01",
-                "End_Date": "2019-05-31"
-              },
-              "Instance": [
-                {
-                  "Metric_Type": "Total_Item_Investigations",
-                  "Count": 10
-                },
-                {
-                  "Metric_Type": "Total_Item_Requests",
-                  "Count": 8
-                }
-              ]
-            }
-          ]
-        }
-      ]
-      }
-    '''
-
     def test_record_simple(self):
-        data = json.loads(self.data_simple)
         reader = Counter5ReportBase()
-        records = [e for e in reader.read_report(data)][0]
+        records = [
+            e for e in reader.file_to_records('apps/nigiri/tests/data/data_simple.json')
+        ]
         assert len(records) == 2
         assert records[0].platform_name == 'PlOne'
         assert records[0].title == 'Title1'
@@ -68,9 +28,10 @@ class TestCounter5Reading(object):
             assert getattr(records[0], attr) == getattr(records[1], attr)
 
     def test_record_simple_tr(self):
-        data = json.loads(self.data_simple)
         reader = Counter5TRReport()
-        records = [e for e in reader.read_report(data)][0]
+        records = [
+            e for e in reader.file_to_records('apps/nigiri/tests/data/data_simple.json')
+        ]
         assert len(records) == 2
         assert records[0].value == 10
         # just test what is different in TR report
@@ -87,10 +48,11 @@ class TestCounter5Reading(object):
         """
         Test that data that do not have the proper format are not imported and raise an error
         """
-        data = {'foo': 'bar'}
         reader = Counter5TRReport()
         with pytest.raises(SushiException):
-            [e for e in reader.read_report(data)]
+            [
+                e for e in reader.file_to_records('apps/nigiri/tests/data/data_incorrect.json')
+            ]
 
     def test_reading_messed_up_data_proquest_ebooks(self):
         """
@@ -98,10 +60,12 @@ class TestCounter5Reading(object):
         element 'body'.
         Check that we can properly parse this type of data.
         """
-        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral.json', 'r') as infile:
-            data = json.load(infile)
         reader = Counter5TRReport()
-        records = [e for e in reader.read_report(data)][0]
+        records = [
+            e for e in reader.file_to_records(
+                'apps/nigiri/tests/data/5_TR_ProQuestEbookCentral.json'
+            )
+        ]
         assert len(records) == 30  # 7 titles, metrics - 1, 5, 5, 2, 6, 5, 6
 
     def test_reading_messed_up_data_proquest_ebooks_exception(self):
@@ -110,11 +74,12 @@ class TestCounter5Reading(object):
         element 'body'.
         Check that we can properly parse this type of data.
         """
-        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json', 'r') as \
-                infile:
-            data = json.load(infile)
         reader = Counter5TRReport()
-        records = [e for e in reader.read_report(data)]
+        records = [
+            e for e in reader.file_to_records(
+                'apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json'
+            )
+        ]
         assert len(records) == 0
         assert len(reader.errors) == 1
         error = reader.errors[0]
@@ -124,11 +89,12 @@ class TestCounter5Reading(object):
         """
         Another way to mess up the data - body is null and there are exceptions somewhere else :(
         """
-        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json', 'r') as \
-                infile:
-            data = json.load(infile)
         reader = Counter5TRReport()
-        records = [e for e in reader.read_report(data)]
+        records = [
+            e for e in reader.file_to_records(
+                'apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json'
+            )
+        ]
         assert len(records) == 0
         assert len(reader.errors) == 1
         error = reader.errors[0]
@@ -138,11 +104,10 @@ class TestCounter5Reading(object):
         """
         There is no header, just the error in the json
         """
-        with open('apps/nigiri/tests/data/naked_error.json', 'r') as \
-                infile:
-            data = json.load(infile)
         reader = Counter5TRReport()
-        records = [e for e in reader.read_report(data)]
+        records = [
+            e for e in reader.file_to_records('apps/nigiri/tests/data/naked_error.json')
+        ]
         assert len(records) == 0
         assert len(reader.warnings) == 1
         assert reader.queued
@@ -151,11 +116,10 @@ class TestCounter5Reading(object):
         """
         There is no header, just the error in the json
         """
-        with open('apps/nigiri/tests/data/naked_errors.json', 'r') as \
-                infile:
-            data = json.load(infile)
         reader = Counter5TRReport()
-        records = [e for e in reader.read_report(data)]
+        records = [
+            e for e in reader.file_to_records('apps/nigiri/tests/data/naked_errors.json')
+        ]
         assert len(records) == 0
         assert len(reader.warnings) == 1
         assert reader.queued
