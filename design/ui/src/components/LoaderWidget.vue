@@ -1,6 +1,7 @@
 <template>
-    <div :style="{'height': height}" class="loader">
-        <i class="fas fa-cog fa-spin" :style="{color: color}"></i>
+    <div :style="{height: height, color: color}" class="loader">
+        <i class="fas fa-spin" :class="iconName"></i>
+        <p class="text">{{ text }}</p>
     </div>
 </template>
 <script>
@@ -10,6 +11,8 @@
       loading: {},
       height: {default: '600px'},
       color: {default: '#1db79a88'},
+      text: {default: '', required: false},
+      iconName: {default: 'fa-cog'},
     }
   }
 </script>
@@ -17,11 +20,16 @@
 
     div.loader {
         //background-color: white;
-        font-size: 60px;
         text-align: center;
+        padding-top: 160px;
 
         i {
-            margin-top: 160px;
+            font-size: 60px;
+            display: block;
+        }
+
+        p.text {
+            margin-top: 1rem;
         }
 
     }

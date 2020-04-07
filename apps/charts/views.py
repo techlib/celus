@@ -8,7 +8,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from charts.models import ChartDefinition
 from charts.models import ReportDataView
 from charts.serializers import ChartDefinitionSerializer, ReportDataViewSerializer
-from logs.logic.queries import StatsComputer
+from logs.logic.queries import StatsComputer, TooMuchDataError
 from logs.models import ReportType
 from logs.serializers import DimensionSerializer, MetricSerializer
 from publications.models import Platform
@@ -40,7 +40,10 @@ class ChartDataView(APIView):
     def get(self, request, report_view_id):
         report_view = get_object_or_404(ReportDataView, pk=report_view_id)
         computer = StatsComputer()
-        data = computer.get_data(report_view, request.GET, request.user)
+        try:
+            data = computer.get_data(report_view, request.GET, request.user)
+        except TooMuchDataError:
+            return Response({'too_much_data': True})
         data_format = request.GET.get('format')
         if data_format in ('csv', 'xlsx'):
             # for the bare result, we do not add any extra information, just output the list

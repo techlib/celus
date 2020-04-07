@@ -18,8 +18,11 @@ en:
             zoom_back: Back
             export_csv: Export CSV
         no_data: Sorry, no data available
+        too_much_data: Sorry, there is too much data and it cannot be displayed
         my_org: My organization
         log_scale: Logarithmic scale
+        loading_data: Loading data
+        preparing_data: Crunching data
     reported_metrics: Displayed metrics
     reported_metrics_tooltip: Only these metrics were used to compute the displayed values.
     reported_metrics_tooltip_many: The resulting value is a sum of the individual displayed metrics.
@@ -43,8 +46,11 @@ cs:
             zoom_back: Zpět
             export_csv: Export CSV
         no_data: Je nám líto, ale nemáme data k zobrazení
+        too_much_data: Je nám líto, ale dat je příliš mnoho a nelze je zobrazit
         my_org: Moje organizace
         log_scale: Logaritmická škála
+        loading_data: Nahrávám data
+        preparing_data: Zpracovávám data
     reported_metrics: Použité metriky
     reported_metrics_tooltip: Při výpočtu dat pro tento graf byly použity pouze tyto metriky.
     reported_metrics_tooltip_many: Výsledná hodnota je součtem jednotlivých uvedených metrik.

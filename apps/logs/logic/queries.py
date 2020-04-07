@@ -17,6 +17,10 @@ from logs.models import InterestGroup, AccessLog, ReportType, Dimension, Dimensi
 logger = logging.getLogger(__name__)
 
 
+class TooMuchDataError(Exception):
+    pass
+
+
 def interest_value_to_annot_name(dt: DimensionText) -> str:
     return f'interest_{dt.pk}'
 
@@ -181,9 +185,9 @@ class StatsComputer(object):
                 .values(self.prim_dim_name, 'count') \
                 .order_by(self.prim_dim_name)
         if len(data) > self.hard_result_count_limit:
-            logger.warning('Result size of %d exceeded the limit of %d records - truncating',
+            logger.warning('Result size of %d exceeded the limit of %d records',
                            len(data), self.hard_result_count_limit)
-            data = data[:self.hard_result_count_limit]
+            raise TooMuchDataError()
         self.post_process_data(data, user)
         return data
 
