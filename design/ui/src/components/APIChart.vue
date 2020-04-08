@@ -5,8 +5,8 @@
     <LoaderWidget
             v-if="loading || crunchingData"
             :height="height"
-            :text="crunchingData ? crunchingText : 'loading'"
-            :icon-name="crunchingData ? 'fa-fan' : 'fa-cog'"
+            :text="crunchingData ? crunchingText : $t('chart.loading_data')"
+            :icon-name="crunchingData ? 'fa-cog' : 'fa-sync-alt'"
     />
     <div v-else-if="tooMuchData" :style="{'height': height}" id="loading">
         <div>
@@ -349,7 +349,7 @@
         }
       },
       crunchingText () {
-        return `crunching ${this.rawDataLength} records`
+        return this.$tc('chart.crunching_records', this.rawDataLength)
       }
     },
     methods: {

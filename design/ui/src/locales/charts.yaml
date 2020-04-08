@@ -23,6 +23,7 @@ en:
         log_scale: Logarithmic scale
         loading_data: Loading data
         preparing_data: Crunching data
+        crunching_records: Crunching {n} record | Crunching {n} records
     reported_metrics: Displayed metrics
     reported_metrics_tooltip: Only these metrics were used to compute the displayed values.
     reported_metrics_tooltip_many: The resulting value is a sum of the individual displayed metrics.
@@ -51,6 +52,7 @@ cs:
         log_scale: Logaritmická škála
         loading_data: Nahrávám data
         preparing_data: Zpracovávám data
+        crunching_records: Zpracovávám {n} záznam | Zpracovávám {n} záznamů
     reported_metrics: Použité metriky
     reported_metrics_tooltip: Při výpočtu dat pro tento graf byly použity pouze tyto metriky.
     reported_metrics_tooltip_many: Výsledná hodnota je součtem jednotlivých uvedených metrik.
