@@ -137,7 +137,6 @@
     data () {
       return {
         dataRaw: [],
-        data_meta: null,
         loading: true,
         crunchingData: false,
         reportedMetrics: [],
