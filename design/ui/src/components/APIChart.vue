@@ -414,6 +414,7 @@
             this.loading = false
             this.crunchingData = true
             this.rawDataLength = response.data.data.length
+            this.reportedMetrics = response.data.reported_metrics
             // we use timeout to give the interface time to redraw
             setTimeout(async () => await this.ingestData(response.data.data), 10)
           } catch (error) {
