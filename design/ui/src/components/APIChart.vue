@@ -125,10 +125,6 @@
         default: false,
         type: Boolean,
       },
-      dataSizeThreshold: {
-        default: 100,
-        type: Number,
-      },
       maxLabelLength: {
         default: 50,
         type: Number,
