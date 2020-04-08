@@ -59,7 +59,6 @@
   import _toolBox from 'echarts/lib/component/toolbox'
   // other imports
   import axios from 'axios'
-  import jsonToPivotjson from 'json-to-pivot-json'
   import { mapActions, mapGetters, mapState } from 'vuex'
   import 'echarts/lib/component/markLine'
   import LoaderWidget from './LoaderWidget'
@@ -430,14 +429,6 @@
         }
       },
       pivot () {
-        // let out = jsonToPivotjson(
-        //   this.dataRaw,
-        //   {
-        //     row: this.primaryDimension,
-        //     column: this.secondaryDimension,
-        //     value: 'count',
-        //   })
-        // return out
         return pivot(this.dataRaw, this.primaryDimension, this.secondaryDimension, 'count')
       },
       dimensionToName (dim) {
