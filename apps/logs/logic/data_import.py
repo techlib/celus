@@ -268,7 +268,7 @@ def create_platformtitle_links(organization, platform, records: [dict]):
     Takes list of dicts that are used to create AccessLogs in `import_counter_records`
     and creates the explicit PlatformTitle objects from the data
     """
-    existing = {(pt.title_id, pt.date) for pt in
+    existing = {(pt.title_id, pt.date.isoformat()) for pt in
                 PlatformTitle.objects.filter(organization=organization, platform=platform)}
     tuples = {(rec['target_id'], rec['date'])
               for rec in records if rec['target_id'] is not None}

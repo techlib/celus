@@ -1,4 +1,5 @@
 -r base.txt
+-e git+https://github.com/beda42/pycounter.git#egg=pycounter
 pytest==5.3.5
 pytest-cov==2.8.1
 pytest-django==3.8.0
