@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/', include('cost.urls')),
     path('wsEc67YNV2sq/', admin.site.urls),
     path('error/', include('error_report.urls')),
+    path('', include('django_prometheus.urls')),
 ]
 
 if settings.DEBUG:

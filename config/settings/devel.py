@@ -1,6 +1,7 @@
 from .base import *
 
 DATABASES['default']['NAME'] = 'celus'
+ALLOWED_HOSTS = ['*']
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
@@ -12,11 +13,15 @@ if DISABLE_CACHALOT and 'cachalot' in INSTALLED_APPS:
     INSTALLED_APPS.remove('cachalot')
 LIVE_ERMS_AUTHENTICATION = False
 
-MIDDLEWARE += [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'livereload.middleware.LiveReloadScript',
-    'querycount.middleware.QueryCountMiddleware',
-]
+MIDDLEWARE = \
+    MIDDLEWARE[:-1] + \
+    [
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
+        'livereload.middleware.LiveReloadScript',
+        'querycount.middleware.QueryCountMiddleware',
+    ] + \
+    MIDDLEWARE[-1:]
+
 
 CACHE_MIDDLEWARE_SECONDS = 1
 
