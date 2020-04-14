@@ -273,11 +273,13 @@ def create_platformtitle_links(organization, platform, records: [dict]):
     tuples = {(rec['target_id'], rec['date'])
               for rec in records if rec['target_id'] is not None}
     pts = []
+    before_count = PlatformTitle.objects.count()
     for title_id, rec_date in tuples - existing:
         pts.append(PlatformTitle(organization=organization, platform=platform, title_id=title_id,
                                  date=rec_date))
-    PlatformTitle.objects.bulk_create(pts)
-    return {'new platformtitles': len(pts)}
+    PlatformTitle.objects.bulk_create(pts, ignore_conflicts=True)
+    after_count = PlatformTitle.objects.count()
+    return {'new platformtitles': after_count - before_count}
 
 
 def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [PlatformTitle]:
@@ -300,4 +302,4 @@ def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [Plat
         PlatformTitle(organization_id=rec[0], platform_id=rec[1], title_id=rec[2], date=rec[3])
         for rec in (data - possible_clashing)
     ]
-    return PlatformTitle.objects.bulk_create(to_create)
+    return PlatformTitle.objects.bulk_create(to_create, ignore_conflicts=True)
