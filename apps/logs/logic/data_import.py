@@ -200,8 +200,8 @@ def _import_counter_records(
 ):
     # prepare all remaps
     metrics = {
-        metric.short_name: {"pk": metric.pk, "short_name": metric.short_name}
-        for metric in Metric.objects.all()
+        metric["short_name"]: {"pk": metric["pk"], "short_name": metric["short_name"]}
+        for metric in Metric.objects.values("pk", "short_name")
     }
     text_to_int_remaps = {}
     log_memory('X-2')
