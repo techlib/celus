@@ -15,6 +15,8 @@ from .tasks import erms_sync_users_and_identities_task
 
 class UserView(GenericAPIView):
 
+    serializer_class = UserSerializer
+
     def get(self, request):
         if request.user:
             translation.activate(request.user.language)

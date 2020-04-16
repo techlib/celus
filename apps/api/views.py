@@ -1,3 +1,5 @@
-from django.shortcuts import render
+from django.views.generic import TemplateView
 
-# Create your views here.
+
+class RedocView(TemplateView):
+    template_name = "api/redoc.html"

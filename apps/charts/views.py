@@ -21,6 +21,8 @@ class ChartDefinitionViewSet(ReadOnlyModelViewSet):
 
 
 class ReportTypeToReportDataViewView(APIView):
+    def get_serializer_class(self):
+        return ReportDataViewSerializer
 
     def get(self, request, report_type_pk):
         rdvs = ReportDataView.objects.filter(base_report_type_id=report_type_pk)
@@ -28,6 +30,8 @@ class ReportTypeToReportDataViewView(APIView):
 
 
 class ReportDataViewChartDefinitions(APIView):
+    def get_serializer_class(self):
+        return ChartDefinitionSerializer
 
     def get(self, request, view_pk):
         chd = ChartDefinition.objects.filter(reportviewtocharttype__report_data_view_id=view_pk).\
