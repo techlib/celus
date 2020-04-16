@@ -78,8 +78,8 @@ class PlatformTitle(models.Model):
     organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE)
     date = models.DateField(help_text='Month for which title was available on platform')
 
-    # class Meta:
-    #     unique_together = (('title', 'platform', 'organization', 'date'),)
+    class Meta:
+        unique_together = (('title', 'platform', 'organization', 'date'),)
 
     def __str__(self):
         return f'{self.platform} - {self.title}: {self.date}'
