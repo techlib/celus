@@ -19,14 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('api/', include('logs.urls')),
-    path('api/', include('organizations.urls')),
-    path('api/', include('publications.urls')),
-    path('api/', include('core.urls')),
-    path('api/', include('sushi.urls')),
-    path('api/', include('charts.urls')),
-    path('api/', include('annotations.urls')),
-    path('api/', include('cost.urls')),
+    path('api/', include('api.urls')),
     path('wsEc67YNV2sq/', admin.site.urls),
     path('error/', include('error_report.urls')),
 ]
