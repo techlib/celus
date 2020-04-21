@@ -1,0 +1,2 @@
+-r staging.txt
+uvicorn==0.11.3
