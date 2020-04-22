@@ -50,28 +50,28 @@ cs:
         </v-row>
         <v-row>
             <v-col class="px-0 px-sm-2">
-        <APIChart
-                v-if="selectedReportView && selectedChartType"
-                :type="typeOfChart"
-                :report-type-id="selectedReportView.pk"
-                :primary-dimension="primaryDimension"
-                :secondary-dimension="secondaryDimension"
-                :organization="organizationForChart"
-                :platform="platformForChart"
-                :title="titleId"
-                :import-batch="importBatchId"
-                :stack="this.selectedChartType.stack === undefined ? this.selectedChartType.chart_type === 'h-bar' : this.selectedChartType.stack"
-                :order-by="this.selectedChartType.ordering"
-                :ignore-date-range="!!importBatchId"
-                :show-mark-line="showMarkLine"
-        >
-        </APIChart>
-        <v-alert v-else-if="selectedReportView" type="warning" border="right" colored-border elevation="2">
-            {{ $t('no_chart_types_available') }}
-        </v-alert>
-        <v-alert v-else type="warning" border="right" colored-border elevation="2">
-            {{ $t('no_reports_available_for_title') }}
-        </v-alert>
+                <APIChart
+                        v-if="selectedReportView && selectedChartType"
+                        :type="typeOfChart"
+                        :report-type-id="selectedReportView.pk"
+                        :primary-dimension="primaryDimension"
+                        :secondary-dimension="secondaryDimension"
+                        :organization="organizationForChart"
+                        :platform="platformForChart"
+                        :title="titleId"
+                        :import-batch="importBatchId"
+                        :stack="this.selectedChartType.stack === undefined ? this.selectedChartType.chart_type === 'h-bar' : this.selectedChartType.stack"
+                        :order-by="this.selectedChartType.ordering"
+                        :ignore-date-range="!!importBatchId"
+                        :show-mark-line="showMarkLine"
+                >
+                </APIChart>
+                <v-alert v-else-if="selectedReportView" type="warning" border="right" colored-border elevation="2">
+                    {{ $t('no_chart_types_available') }}
+                </v-alert>
+                <v-alert v-else type="warning" border="right" colored-border elevation="2">
+                    {{ $t('no_reports_available_for_title') }}
+                </v-alert>
             </v-col>
         </v-row>
     </v-container>

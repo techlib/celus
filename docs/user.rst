@@ -69,16 +69,58 @@ Understanding access levels in Celus
 Normal access
 -------------
 
+.. _interest-intro:
+
+Interest - what it means and how to interpret it
+================================================
+
+Statistics obtained from publishers use many different metrics, such as "Items displayed during
+search", "Items retrieved by the user", etc. Without knowing exactly how each of these metrics
+is defined (either in the COUNTER standard or outside of it for custom data), it is sometimes
+difficult for normal users to understand the presented statistics.
+
+In order to simplify this and give users one specific measurement of how much each e-resource
+is used, we devised the concept of **interest**. This one value should make it possible to more
+easily compare values between different titles, platform and also time periods. It should also
+enable easier comparison between data obtained using different version of COUNTER.
+
+Because different platforms focus on different types of services, the definition of interest cannot
+be the same. Some platforms offer searching capabilities, some offer full texts of journal articles
+or access to whole electronic books. In order to make it possible to distinguish between these
+cases, Celus uses more than one interest type.
+
+
+Interest types
+--------------
+
+When creating Celus, we saw two basic types of services that e-resource platforms offer - access
+to full texts and database searching. Therefore we made it possible to use different types of
+interest for these services and created the `Full text` and `Search` interest types. Thus it is
+possible to easily distinguish between types of platforms and in case a platform offers both
+types of services (e.g. EBSCO) compare the two types of interest.
+
+Another important aspect of interest is that users express it both when they successfully access
+the e-resource and when they are denied access. In order to incorporate this into Celus in a way
+that would not cause confusion (as could happen if the two types of interest were simply mixed
+together), we also created a corresponding types of interest called `Denial - full text` and
+`Denial - search`. These represent denial data related to the previously mentioned types of
+interest which are used only for successful access to a resource.
+
+For platforms that fall outside of the scope of `full text` vs `search`, there is also the `Other`
+type of interest used in specific cases.
+
 
 -----------------
 Privileged access
 -----------------
 
+.. _work-with-sushi:
+
 Setting up, editing and debugging SUSHI
 =======================================
 
-SUSHI managment
----------------
+SUSHI management
+----------------
 
 Setting up SUSHI downloading for your organization is usually the most important task you have to
 perform in `Celus`. Management of SUSHI is only accessible to users with organization admin

@@ -131,6 +131,17 @@ export default new Vuex.Store({
       }
       return null
     },
+    letAxiosThrough (state, getters) {
+      /*
+        when true, all requests by axios will be put through,
+        otherwise only requests with privileged=true in config will be let through and
+        others will have to wait for this to become true
+      */
+      if (state.user !== null && getters.selectedOrganization) {
+        return true
+      }
+      return false
+    }
   },
   actions: {
     async start ({dispatch, getters, state}) {
@@ -154,6 +165,33 @@ export default new Vuex.Store({
         }
         return Promise.reject(error)
       })
+
+      axios.interceptors.request.use(async config =>
+        {
+          // only let requests marked as privileged unless state.letAxiosThrough is true
+          // this helps to let requests wait until all the required setup is done (user is logged
+          // in, some basic data is loaded, etc.)
+          if (getters.letAxiosThrough || config.privileged) {
+            return config
+          }
+          const watcher = new Promise(resolve => {
+             this.watch(
+               (state, getters) => getters.letAxiosThrough,
+               newVal => {
+                 if (newVal)
+                   resolve();
+               }
+             );
+          });
+          try {
+            await watcher
+            return config
+          } catch (e) {
+            console.error('error waiting for permission to use axios', e)
+          }
+        }
+      )
+
       await dispatch('loadUserData')  // we need user data first
     },
     afterAuthentication ({dispatch, state, getters}) {
@@ -177,7 +215,7 @@ export default new Vuex.Store({
     },
     async loadUserData ({commit, dispatch}) {
       try {
-        let response = await axios.get('/api/user/')
+        let response = await axios.get('/api/user/', {privileged: true})
         commit('setUserData', response.data)
         commit('setAppLanguage', {lang: response.data.language})
         dispatch('afterAuthentication')
@@ -195,7 +233,7 @@ export default new Vuex.Store({
       }
     },
     loadOrganizations (context) {
-      axios.get('/api/organization/')
+      axios.get('/api/organization/', {privileged: true})
         .then(response => {
           let organizations = {}
           for (let rec of response.data) {
@@ -288,6 +326,9 @@ export default new Vuex.Store({
     },
     setSnackbarContent(state, {content}) {
       Vue.set(state, 'snackbarContent', content)
+    },
+    setLoginError(state, {error}) {
+      Vue.set(state, 'loginError', error)
     },
     setAuthToken(state, {token}) {
       Vue.set(state, 'authToken', token)

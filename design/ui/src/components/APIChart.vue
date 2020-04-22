@@ -2,24 +2,53 @@
 <i18n lang="yaml" src="../locales/charts.yaml"></i18n>
 
 <template>
-    <LoaderWidget v-if="loading" :height="height" />
+    <LoaderWidget
+            v-if="loading || crunchingData"
+            :height="height"
+            :text="crunchingData ? crunchingText : $t('chart.loading_data')"
+            :icon-name="crunchingData ? 'fa-cog' : 'fa-sync-alt'"
+    />
+    <div v-else-if="tooMuchData" :style="{'height': height}" id="loading">
+        <div>
+            <i class="far fa-frown"></i>
+            <div class="infotext">{{ $t('chart.too_much_data') }}</div>
+        </div>
+    </div>
     <div v-else-if="dataRaw.length === 0" :style="{'height': height}" id="loading">
         <div>
             <i class="far fa-frown"></i>
             <div class="infotext">{{ $t('chart.no_data') }}</div>
         </div>
     </div>
-    <component v-else
-            :is="chartComponent"
-            :data="chartData"
-            :settings="chartSettings"
-            :extend="chartExtend"
-            :height="height"
-            :toolbox="chartToolbox"
-            :data-zoom="dataZoom"
-            :mark-line="markLine"
-            >
-    </component>
+    <div v-else>
+        <v-alert
+                v-if="reportedMetricsText"
+                type="info"
+                outlined
+        >
+            <v-tooltip bottom>
+                <template #activator="{on}">
+                    <span v-on="on">
+                        <span class="thin" v-text="$t('reported_metrics')"></span>:
+                        {{ reportedMetricsText }}
+                    </span>
+                </template>
+                {{ $t('reported_metrics_tooltip') }}
+                <span v-if="reportedMetrics.length > 1">{{ $t('reported_metrics_tooltip_many') }}</span>
+            </v-tooltip>
+        </v-alert>
+        <component
+                :is="chartComponent"
+                :data="chartData"
+                :settings="chartSettings"
+                :extend="chartExtend"
+                :height="height"
+                :toolbox="chartToolbox"
+                :data-zoom="dataZoom"
+                :mark-line="markLine"
+                >
+        </component>
+    </div>
 </template>
 <script>
   import VeHistogram from 'v-charts/lib/histogram.common'
@@ -28,11 +57,12 @@
   // the following two imports are here to ensure the components at hand will be bundled
   import _dataZoom from 'echarts/lib/component/dataZoom'
   import _toolBox from 'echarts/lib/component/toolbox'
+  // other imports
   import axios from 'axios'
-  import jsonToPivotjson from 'json-to-pivot-json'
-  import { mapActions, mapGetters } from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import 'echarts/lib/component/markLine'
   import LoaderWidget from './LoaderWidget'
+  import { pivot } from '../libs/pivot'
 
   export default {
     name: 'APIChart',
@@ -95,21 +125,36 @@
         default: false,
         type: Boolean,
       },
+      maxLabelLength: {
+        default: 50,
+        type: Number,
+      }
     },
     data () {
       return {
         dataRaw: [],
-        data_meta: null,
         loading: true,
+        crunchingData: false,
+        reportedMetrics: [],
+        tooMuchData: false,
+        displayData: [],
+        rawDataLength: 0,
+        out: null,
       }
     },
     computed: {
+      ...mapState({
+        user: 'user',
+      }),
       ...mapGetters({
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
         selectedOrganization: 'selectedOrganization',
       }),
       dataURL () {
+        if (!this.user) {
+          return null
+        }
         let reportTypePart = ''  // used do decide if report type should be part of the URL
         if (this.reportTypeId && this.reportTypeId !== -1) {
             reportTypePart = `${this.reportTypeId}/`
@@ -203,38 +248,10 @@
         return {}
       },
       rows () {
-        if (this.loading) {
+        if (this.loading || this.crunchingData) {
           return []
         }
-        // no secondary dimension
-        if (this.secondaryDimension) {
-          let out = jsonToPivotjson(
-            this.dataRaw,
-            {
-              row: this.primaryDimension,
-              column: this.secondaryDimension,
-              value: 'count',
-            })
-          if (this.orderBy) {
-            // NOTE: order by sum of values - it does not matter how is the orderBy called
-            function sumNonPrimary (rec) {
-              // remove value of primary dimension, sum the rest
-              return Object.entries(rec).filter(([a, b]) => a !== this.primaryDimension).map(([a, b]) => b).reduce((x, y) => x + y)
-            }
-            let sum = sumNonPrimary.bind(this)
-            out.sort((a, b) => (sum(a) - sum(b)))
-          }
-          return out
-        } else {
-          // secondary dimension
-          if (this.orderBy) {
-            // order by
-            this.dataRaw.sort((a, b) => {
-              return a[this.orderBy] - b[this.orderBy]
-            })
-          }
-          return this.dataRaw
-        }
+        return this.displayData
       },
       organizationRow () {
         if (!this.selectedOrganization) {
@@ -318,26 +335,97 @@
         } else {
           return VeLine
         }
+      },
+      reportedMetricsText () {
+        if (this.reportedMetrics.length > 0) {
+          return this.reportedMetrics.map(metric => (metric.name || metric.short_name).replace(/_/g, ' ')).join(', ')
+        } else {
+          return ''
+        }
+      },
+      crunchingText () {
+        return this.$tc('chart.crunching_records', this.rawDataLength)
       }
     },
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      async ingestData (rawData) {
+        // prepare the data
+        this.crunchingData = true
+        // reformat date value to exclude the day component
+        rawData = rawData.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
+        // truncate long labels
+        this.dataRaw = rawData.map(dict => {
+            let val1 = dict[this.primaryDimension]
+            if (val1.length > this.maxLabelLength + 3) {
+              dict[this.primaryDimension] = val1.substring(0, this.maxLabelLength) + '\u2026'
+            }
+            if (this.secondaryDimension) {
+              let val2 = dict[this.secondaryDimension]
+              if (val2.length > this.maxLabelLength + 3) {
+                dict[this.secondaryDimension] = val2.substring(0, this.maxLabelLength) + '\u2026'
+              }
+            }
+            return dict
+          }
+        )
+        // secondary dimension
+        if (this.secondaryDimension) {
+          console.log('going to pivot')
+          let now = new Date()
+          let out = this.pivot()
+          this.out = out
+          console.log('pivot ended', new Date() - now)
+          if (this.orderBy) {
+            // NOTE: order by sum of values - it does not matter how is the orderBy called
+            function sumNonPrimary (rec) {
+              // remove value of primary dimension, sum the rest
+              return Object.entries(rec).filter(([a, b]) => a !== this.primaryDimension).map(([a, b]) => b).reduce((x, y) => x + y)
+            }
+            let sum = sumNonPrimary.bind(this)
+            out.sort((a, b) => (sum(a) - sum(b)))
+          }
+          this.displayData = out
+        } else {
+          // no secondary dimension
+          if (this.orderBy) {
+            // order by
+            this.dataRaw.sort((a, b) => {
+              return a[this.orderBy] - b[this.orderBy]
+            })
+          }
+          this.displayData = this.dataRaw
+        }
+        this.crunchingData = false
+      },
       async loadData() {
         this.loading = true
         this.dataRaw = []
+        this.tooMuchData = false
         if (this.dataURL) {
           try {
             let response = await axios.get(this.dataURL)
-            // reformat date value to exclude the day component
-            this.dataRaw = response.data.data.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
+            if (response.data.too_much_data) {
+              this.tooMuchData = true
+              return
+            }
+            this.loading = false
+            this.crunchingData = true
+            this.rawDataLength = response.data.data.length
+            this.reportedMetrics = response.data.reported_metrics
+            // we use timeout to give the interface time to redraw
+            setTimeout(async () => await this.ingestData(response.data.data), 10)
           } catch (error) {
-            this.showSnackbar({content: 'Error fetching data: '+error})
+            this.showSnackbar({content: 'Error fetching data: '+error, color: 'error'})
           } finally {
             this.loading = false
           }
         }
+      },
+      pivot () {
+        return pivot(this.dataRaw, this.primaryDimension, this.secondaryDimension, 'count')
       },
       dimensionToName (dim) {
         if (typeof dim === 'number') {
