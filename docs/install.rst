@@ -11,6 +11,12 @@ conflict with other apps installed in parallel. For example, the system wide ser
 and ``celerybeat`` will be created for `Celus`.
 
 
+Please note that the install procedure is tailor made for deployment of Celus for the CzechELib
+consortium. It might require extra effort to make it work in different environment. In case you
+find something missing in the instructions, we welcome fixes - ideally in form of pull requests
+on `Github <https://github.com/techlib/celus/>_`.
+
+
 Prerequisites
 =============
 
@@ -238,8 +244,8 @@ pieces are missing, such as the definitions of report types, data dimensions, et
 
 Because bootstrapping the whole system manually would be a lot of work which would be the same
 between installs, we provide basic set of reports, dimensions, etc. with `Celus`. This data
-are ment to be used only once for bootstrapping the system. If you have already made your own
-changes in the system database, you could loose data by repeating the procedure described below,
+are meant to be used only once for bootstrapping the system. If you have already made your own
+changes in the system database, you could lose data by repeating the procedure described below,
 so be careful.
 
 Similarly to superuser account creation, this procedure involves :ref:`cli-management`.

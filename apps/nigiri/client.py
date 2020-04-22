@@ -204,8 +204,8 @@ class Sushi5Client(SushiClientBase):
         '2018-07'
         """
         if hasattr(value, 'isoformat'):
-            return value.isoformat()[:10]
-        return value[:10]
+            return value.isoformat()[:7]
+        return value[:7]
 
     def _construct_url_params(self, extra=None):
         result = {
