@@ -29,11 +29,11 @@
             <v-tooltip bottom>
                 <template #activator="{on}">
                     <span v-on="on">
-                        <span class="thin" v-text="$t('reported_metrics')"></span>:
-                        {{ reportedMetricsText }}
+                        <span class="thin" v-text="$t('interest_metrics_only')"></span>
                     </span>
                 </template>
-                {{ $t('reported_metrics_tooltip') }}
+                <strong>{{ $t('reported_metrics_tooltip') }}</strong>
+                <div v-html="reportedMetricsText"></div>
                 <span v-if="reportedMetrics.length > 1">{{ $t('reported_metrics_tooltip_many') }}</span>
             </v-tooltip>
         </v-alert>
@@ -338,7 +338,8 @@
       },
       reportedMetricsText () {
         if (this.reportedMetrics.length > 0) {
-          return this.reportedMetrics.map(metric => (metric.name || metric.short_name).replace(/_/g, ' ')).join(', ')
+          let inside = this.reportedMetrics.map(metric => (metric.name || metric.short_name).replace(/_/g, ' ')).join('</li><li>')
+          return `<ul><li>${inside}</li></ul>`
         } else {
           return ''
         }
