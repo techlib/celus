@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose -f ../docker/docker-compose-k8s.yml convert
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: celery-worker
+  name: celery-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: celery-worker
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose -f ../docker/docker-compose-k8s.yml convert
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: celery-worker
+    spec:
+      containers:
+      - command:
+        - /var/www/celus/start_celery.sh
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: config.settings.docker
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: CELERY_BROKER_URL
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: POSTGRES_DB
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: POSTGRES_HOST
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: POSTGRES_PORT
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: POSTGRES_USER
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: REDIS_HOST
+        - name: REDIS_LOCATION
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: REDIS_LOCATION
+        image: registry.gitlab.com/big-dig-data/celus/celus-django:v0.0.0
+        imagePullPolicy: ""
+        name: celus-celery-worker
+        resources: {}
+      imagePullSecrets:
+      - name: gitlab
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

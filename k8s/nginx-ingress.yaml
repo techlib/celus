@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: celus-nginx-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx    
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+  - hosts:
+    - k8s-test.celus.net
+    secretName: k8s-test-celus-net
+  rules:
+  - host: k8s-test.celus.net
+    http:
+      paths:
+      - backend:
+          serviceName: celus-nginx
+          servicePort: 80

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose -f ../docker/docker-compose-k8s.yml convert
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: nginx
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: nginx
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose -f ../docker/docker-compose-k8s.yml convert
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: nginx
+    spec:
+      containers:
+      - image: registry.gitlab.com/big-dig-data/celus/celus-nginx:v0.0.0
+        imagePullPolicy: ""
+        name: celus-nginx
+        ports:
+        - containerPort: 80
+        resources: {}
+      imagePullSecrets:
+      - name: gitlab
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}
