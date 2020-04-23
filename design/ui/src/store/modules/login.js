@@ -33,7 +33,7 @@ export default {
         await axios.post(
           '/api/rest-auth/login/',
           {'email': email, 'password': password},
-          {headers: {'X-CSRFToken': csrftoken}})
+          {headers: {'X-CSRFToken': csrftoken}, privileged: true})
 
         this.commit('setAuthenticated', true)
         this.dispatch('setShowLoginDialog', false)
