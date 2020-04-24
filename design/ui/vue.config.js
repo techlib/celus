@@ -19,6 +19,9 @@ module.exports = {
         ws: true
       },
     },
+    overlay: {
+      errors: false,
+    }
   },
 
   //filenameHashing: false,

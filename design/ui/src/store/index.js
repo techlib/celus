@@ -12,8 +12,13 @@ import VuexPersistence from 'vuex-persist'
 import {sortOrganizations} from '../libs/organizations'
 import interest from './modules/interest'
 import maintenance from './modules/maintenance'
+import { ConcurrencyManager } from 'axios-concurrency'
 
 Vue.use(Vuex)
+
+const MAX_CONCURRENT_REQUESTS_DEFAULT = 2
+let concurrencyManager = null
+
 
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
@@ -164,6 +169,14 @@ export default new Vuex.Store({
         return Promise.reject(error)
       })
 
+      // install concurrency manager
+      let max_concurrent_requests = parseInt(localStorage.getItem('max_concurrent_requests'))
+      if (!max_concurrent_requests) {
+        max_concurrent_requests = MAX_CONCURRENT_REQUESTS_DEFAULT
+      }
+      console.log('max_concurrent_requests', max_concurrent_requests)
+      concurrencyManager = ConcurrencyManager(axios, max_concurrent_requests);
+
       axios.interceptors.request.use(async config =>
         {
           // only let requests marked as privileged unless state.letAxiosThrough is true
@@ -189,6 +202,7 @@ export default new Vuex.Store({
           }
         }
       )
+
 
       await dispatch('loadUserData')  // we need user data first
       dispatch('loadBasicInfo')
