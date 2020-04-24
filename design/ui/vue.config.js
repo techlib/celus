@@ -18,6 +18,9 @@ module.exports = {
         changeOrigin: true,
         ws: true
       },
+    },
+    overlay: {
+      errors: false,
     }
   },
 
