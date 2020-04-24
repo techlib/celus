@@ -34,7 +34,7 @@ class EDUIdAuthenticationBackend:
     """
 
     def authenticate(self, request, remote_user=None):
-        if not remote_user:
+        if not remote_user or remote_user == '(null)':
             return None
         if settings.LIVE_ERMS_AUTHENTICATION:
             try:

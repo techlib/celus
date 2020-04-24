@@ -18,6 +18,9 @@ module.exports = {
         changeOrigin: true,
         ws: true
       },
+    },
+    overlay: {
+      errors: false,
     }
   },
 
@@ -51,4 +54,6 @@ module.exports = {
   },
 
   transpileDependencies: ['vuex-persist', 'vuetify'], //'lodash', 'lodash.*'],
+
+  lintOnSave: false,
 }
