@@ -18,7 +18,7 @@ module.exports = {
         changeOrigin: true,
         ws: true
       },
-    }
+    },
   },
 
   //filenameHashing: false,
@@ -51,4 +51,6 @@ module.exports = {
   },
 
   transpileDependencies: ['vuex-persist', 'vuetify'], //'lodash', 'lodash.*'],
+
+  lintOnSave: false,
 }
