@@ -301,7 +301,7 @@ class StatsComputer(object):
         """
         field = AccessLog._meta.get_field(dim_name)
         if isinstance(field, models.ForeignKey):
-            unique_values = {rec[dim_name] for rec in data}
+            unique_values = {rec[dim_name] for rec in data if type(rec[dim_name]) is int}
             mapping = {obj.pk: obj for
                        obj in field.related_model.objects.filter(pk__in=unique_values)}
             for rec in data:
