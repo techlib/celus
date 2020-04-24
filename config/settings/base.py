@@ -316,7 +316,7 @@ LOGGING = {
 }
 
 # hopefully temporary hacks
-SILENCED_SYSTEM_CHECKS = ["cachalot.E003"]
+SILENCED_SYSTEM_CHECKS = []
 
 # This loads the secret key and potentially other secret settings from a JSON file
 # it must be kept here, otherwise the settings will be missing
