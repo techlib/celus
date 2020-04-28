@@ -33,9 +33,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         t1 = time()
         log_memory('0')
-        with open(options['file'], 'r', encoding='utf-8') as infile:
-            data = json.load(infile)
-        log_memory('1')
         reader = Counter5TRReport()
         organization = Organization.objects.get(internal_id=options['organization'])
         platform = Platform.objects.get(short_name=options['platform'])
@@ -49,7 +46,7 @@ class Command(BaseCommand):
         self.stderr.write(f'Time #1: {time()-t1}\n')
         t2 = time()
         log_memory('A')
-        records = reader.read_report(data)
+        records = reader.file_to_records(options['file'])
         self.stderr.write(f'Time #2: {time() - t2}\n')
         log_memory('B')
         t3 = time()
@@ -60,4 +57,3 @@ class Command(BaseCommand):
         log_memory('C')
         self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
         self.stderr.write(self.style.WARNING(f'Import batch ID: #{import_batch.pk}'))
-

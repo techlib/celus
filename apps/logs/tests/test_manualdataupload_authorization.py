@@ -98,7 +98,7 @@ class TestAuthorization(object):
         if has_access:
             assert resp.status_code == 201
         else:
-            assert resp.status_code == 403
+            assert resp.status_code in (403, 401)  # depends on auth backend
 
     @pytest.mark.parametrize(['user_type', 'owner_level'],
                              [['related_admin', UL_ORG_ADMIN],
@@ -142,7 +142,7 @@ class TestAuthorization(object):
                                         (mdu_rel, can_access_rel))):
             url = reverse('manual-data-upload-detail', args=(mdu.pk,))
             resp = client.get(url, **authentication_headers(identity))
-            expected_status_codes = (200,) if can else (403, 404)
+            expected_status_codes = (200,) if can else (403, 401, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
     @pytest.mark.parametrize(['user_type', 'can_delete_rel_org_admin',
@@ -169,7 +169,7 @@ class TestAuthorization(object):
                  (mdu_set.super, can_delete_superadmin))):
             url = reverse('manual-data-upload-detail', args=(mdu.pk,))
             resp = client.delete(url, **authentication_headers(identity))
-            expected_status_codes = (204,) if can else (403, 404)
+            expected_status_codes = (204,) if can else (403, 401, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
     @pytest.mark.parametrize(['user_type', 'can_modify_rel_org_admin',
@@ -198,7 +198,7 @@ class TestAuthorization(object):
                                 {'platform': platforms[1].pk},
                                 content_type='application/json',
                                 **authentication_headers(identity))
-            expected_status_codes = (200,) if can else (403, 404)
+            expected_status_codes = (200,) if can else (403, 401, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
     @pytest.mark.parametrize(['user_type', 'can_set_rel_org', 'can_set_unrel_org'],
@@ -225,5 +225,5 @@ class TestAuthorization(object):
                                 {'organization_id': org_obj.id},
                                 content_type='application/json',
                                 **authentication_headers(identity))
-            expected_status_codes = (200,) if can else (403, 404)
+            expected_status_codes = (200,) if can else (403, 401, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'

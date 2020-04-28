@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'annotations.apps.AnnotationsConfig',
     'cost.apps.CostConfig',
     'activity.apps.ActivityConfig',
+    'api.apps.ApiConfig',
     'rest_pandas',
     'error_report',
     'cachalot',

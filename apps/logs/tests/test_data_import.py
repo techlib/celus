@@ -126,13 +126,15 @@ class TestCounter4Import(object):
         from pycounter import report
         data = report.parse('apps/logs/tests/data/counter4_br2.tsv')
         reader = Counter4BR2Report()
-        records = reader.read_report(data)
+        records = [e for e in reader.read_report(data)]
         assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
         import_batch = ImportBatch.objects.create(platform=platform, organization=organization,
                                                   report_type=rt)
         assert AccessLog.objects.count() == 0
-        stats = import_counter_records(rt, organization, platform, records, import_batch)
+        stats = import_counter_records(
+            rt, organization, platform, (e for e in records), import_batch
+        )
         assert AccessLog.objects.count() == 60
         assert stats['new logs'] == 60
         values = [al['value'] for al in AccessLog.objects.
