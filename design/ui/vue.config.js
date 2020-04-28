@@ -54,4 +54,6 @@ module.exports = {
   },
 
   transpileDependencies: ['vuex-persist', 'vuetify'], //'lodash', 'lodash.*'],
+
+  lintOnSave: false,
 }
