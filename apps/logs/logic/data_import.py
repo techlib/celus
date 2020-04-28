@@ -38,6 +38,12 @@ class TitleManager(object):
         'report': Title.PUB_TYPE_REPORT,
         'newspaper or newsletter': Title.PUB_TYPE_NEWSPAPER,
         'multimedia': Title.PUB_TYPE_MULTIMEDIA,
+        'article': Title.PUB_TYPE_ARTICLE,
+        'book segment': Title.PUB_TYPE_BOOK_SEGMENT,
+        'dataset': Title.PUB_TYPE_DATASET,
+        'platform': Title.PUB_TYPE_PLATFORM,
+        'repository item': Title.PUB_TYPE_REPOSITORY_ITEM,
+        'thesis or dissertation': Title.PUB_TYPE_THESIS_OR_DISSERTATION,
     }
 
     def __init__(self):
@@ -67,11 +73,12 @@ class TitleManager(object):
     def decode_pub_type(cls, pub_type: str) -> str:
         if not pub_type:
             return Title.PUB_TYPE_UNKNOWN
+        pub_type = pub_type.replace('_', ' ').lower()
         if pub_type in Title.PUB_TYPE_MAP:
             return pub_type
-        elif pub_type.lower() == 'journal':
+        elif pub_type == 'journal':
             return Title.PUB_TYPE_JOURNAL
-        elif pub_type.lower() == 'book':
+        elif pub_type == 'book':
             return Title.PUB_TYPE_BOOK
         return Title.PUB_TYPE_UNKNOWN
 
