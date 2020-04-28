@@ -44,7 +44,7 @@ class TestAuthorization(object):
             assert resp.status_code == 200
             assert len(resp.json()) == annot_count
         else:
-            assert resp.status_code == 403
+            assert resp.status_code in (403, 401)  # depends on auth backend
 
     @pytest.mark.parametrize(['user_type', 'can_create_rel', 'can_create_unrel',
                               'can_create_noorg'],
@@ -66,22 +66,22 @@ class TestAuthorization(object):
                                  'subject_cs': 'X', 'subject_en': 'Y'},
                            content_type='application/json',
                            **authentication_headers(identity))
-        expected_status_code = 201 if can_create_rel else 403
-        assert resp.status_code == expected_status_code
+        expected_status_codes = (201, ) if can_create_rel else (403, 401)
+        assert resp.status_code in expected_status_codes
         # test creation of record for unrelated organization
         resp = client.post(url, {'organization_id': organizations[1].pk, 'platform_id': None,
                                  'subject_cs': 'X', 'subject_en': 'Y'},
                            content_type='application/json',
                            **authentication_headers(identity))
-        expected_status_code = 201 if can_create_unrel else 403
-        assert resp.status_code == expected_status_code
+        expected_status_codes = (201, ) if can_create_unrel else (403, 401)
+        assert resp.status_code in expected_status_codes
         # test creation of records without organization
         resp = client.post(url, {'organization_id': None, 'platform_id': None,
                                  'subject_cs': 'X', 'subject_en': 'Y'},
                            content_type='application/json',
                            **authentication_headers(identity))
-        expected_status_code = 201 if can_create_noorg else 403
-        assert resp.status_code == expected_status_code
+        expected_status_codes = (201, ) if can_create_noorg else (403, 401)
+        assert resp.status_code in expected_status_codes
 
     @pytest.mark.parametrize(['user_type', 'can_access_unrel', 'can_access_rel',
                               'can_access_noorg'],
@@ -109,7 +109,7 @@ class TestAuthorization(object):
                  (annot_noorg, can_access_noorg),)):
             url = reverse('annotations-detail', args=(annot.pk,))
             resp = client.get(url, **authentication_headers(identity))
-            expected_status_codes = (200,) if can else (403, 404)
+            expected_status_codes = (200,) if can else (403, 401, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
     @pytest.mark.parametrize(['user_type', 'can_delete_rel_org_admin',
@@ -144,7 +144,7 @@ class TestAuthorization(object):
                  (annot_super, can_delete_superadmin))):
             url = reverse('annotations-detail', args=(annot.pk,))
             resp = client.delete(url, **authentication_headers(identity))
-            expected_status_codes = (204,) if can else (403, 404)
+            expected_status_codes = (204,) if can else (403, 401, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
     @pytest.mark.parametrize(['user_type', 'can_modify_rel_org_admin',
@@ -179,7 +179,7 @@ class TestAuthorization(object):
             url = reverse('annotations-detail', args=(annot.pk,))
             resp = client.patch(url, {'subject': 'XXX'}, content_type='application/json',
                                 **authentication_headers(identity))
-            expected_status_codes = (200,) if can else (403, 404)
+            expected_status_codes = (200,) if can else (403, 401, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
 
     @pytest.mark.parametrize(['user_type', 'can_set_rel_org', 'can_set_unrel_org',
@@ -202,5 +202,5 @@ class TestAuthorization(object):
             resp = client.patch(url, {'organization_id': org_obj.id if org_obj else None},
                                 content_type='application/json',
                                 **authentication_headers(identity))
-            expected_status_codes = (200,) if can else (403, 404)
+            expected_status_codes = (200,) if can else (403, 401, 404)
             assert resp.status_code in expected_status_codes, f'i = {i}'
