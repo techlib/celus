@@ -19,9 +19,9 @@ class TestAuthentication(object):
     def test_invalid_identity_api_access(self, invalid_identity, client, authentication_headers):
         url = reverse('report-type-list')
         resp = client.get(url, **authentication_headers(invalid_identity))
-        assert resp.status_code == 403
+        assert resp.status_code in (403, 401)  # depends on auth backend
 
     def test_no_identity_api_access(self, client):
         url = reverse('report-type-list')
         resp = client.get(url)
-        assert resp.status_code == 403
+        assert resp.status_code in (403, 401)  # depends on auth backend
