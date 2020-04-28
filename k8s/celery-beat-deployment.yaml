@@ -70,7 +70,7 @@ spec:
               name: celus
               key: REDIS_LOCATION
         image: registry.gitlab.com/big-dig-data/celus/celus-django:v0.0.0
-        imagePullPolicy: ""
+        imagePullPolicy: Always
         name: celus-celery-beat
         resources: {}
       imagePullSecrets:

@@ -14,6 +14,10 @@ installation from github worked fine for me::
 
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud/deploy.yaml
 
+and configure ingress-nginx::
+
+    kubectl apply -f ingress-config.yaml
+
 
 2. Install cert-manager
 #######################
@@ -34,9 +38,7 @@ to obtain Let's Encrypt via ACME.
 
 2) Edit ingress-nginx service::
 
-    kubectl -n ingress-nginx edit service ingress-nginx-controller
-
-and place `service.beta.kubernetes.io/do-loadbalancer-hostname: "k8s-loadbalancer.celus.net"` to `annotations` section.
+    kubectl -n ingress-nginx annotate services ingress-nginx-controller service.beta.kubernetes.io/do-loadbalancer-hostname=k8s-loadbalancer.celus.net
 
 see https://www.digitalocean.com/community/questions/how-do-i-correct-a-connection-timed-out-error-during-http-01-challenge-propagation-with-cert-manager
 
