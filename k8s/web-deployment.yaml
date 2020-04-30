@@ -31,6 +31,16 @@ spec:
           value: config.settings.docker
         - name: FORWARDED_ALLOW_IPS
           value: "*"
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: DJANGO_SECRET_KEY
+        - name: ERMS_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: celus
+              key: ERMS_API_URL
         - name: CELERY_BROKER_URL
           valueFrom:
             secretKeyRef:

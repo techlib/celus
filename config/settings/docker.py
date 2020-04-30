@@ -7,6 +7,9 @@ from .staging import *  # noqa
 
 ALLOWED_HOSTS = ["*"]
 
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "change-me")
+ERMS_API_URL = os.environ.get("ERMS_API_URL", "https://erms.czechelib.cz/api/")
+
 DATABASES["default"]["NAME"] = os.environ.get("POSTGRES_DB", "celus")
 DATABASES["default"]["USER"] = os.environ.get("POSTGRES_USER", "celus")
 DATABASES["default"]["PASSWORD"] = os.environ.get("POSTGRES_PASSWORD", "celus")

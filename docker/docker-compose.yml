@@ -20,6 +20,8 @@ services:
     entrypoint: /var/www/celus/entrypoint-web.sh
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.docker
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - ERMS_API_URL=${ERMS_API_URL}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -53,6 +55,8 @@ services:
     entrypoint: /var/www/celus/start_celery.sh
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.docker
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - ERMS_API_URL=${ERMS_API_URL}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -71,6 +75,8 @@ services:
     entrypoint: /var/www/celus/start_celerybeat.sh
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.docker
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - ERMS_API_URL=${ERMS_API_URL}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
