@@ -1,0 +1,71 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Make Release
+
+jobs:
+  build:
+    name: Build Node
+    runs-on: ubuntu-latest
+    container:
+      image: node:10.5.0
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Copy source
+        run: |
+          cp design/ui/vue.config.js.build design/ui/vue.config.js
+
+      - name: Compile sources
+        run: |
+          cd design/ui
+          npm install
+          npm run build
+
+      - name: Upload Artefacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: html-root
+          path: ./apps/core/static/
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: ['build']
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v1
+        with:
+          name: html-root
+          path: html-root
+
+      - name: Compress artefact
+        run: |
+          tar czf html-root.tar.gz html-root
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ""
+          draft: false
+          prerelease: false
+
+      - name: Upload artefact to release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: html-root.tar.gz
+          asset_name: html-root.tar.gz
+          asset_content_type: application/tar+gzip
