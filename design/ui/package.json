@@ -51,6 +51,7 @@
     "eslint": "^5.16.0",
     "eslint-plugin-jest": "^23.8.2",
     "eslint-plugin-vue": "^5.0.0",
+    "git-revision-webpack-plugin": "^3.0.6",
     "jest": "^25.4.0",
     "jest-serializer-vue": "^2.0.2",
     "stylus": "^0.54.7",

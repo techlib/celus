@@ -1,7 +1,9 @@
 let devURLBase = 'http://localhost:8015/'
 
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-
+const webpack = require('webpack')
+const GitRevisionPlugin = require('git-revision-webpack-plugin')
+const gitRevisionPlugin = new GitRevisionPlugin({branch: true})
 
 module.exports = {
   runtimeCompiler: true,
@@ -37,7 +39,15 @@ module.exports = {
   },
 
   configureWebpack: {
-    plugins: [new BundleAnalyzerPlugin()]
+    plugins: [
+      new BundleAnalyzerPlugin(),
+      gitRevisionPlugin,
+      new webpack.DefinePlugin({
+        'GIT_VERSION': JSON.stringify(gitRevisionPlugin.version()),
+        'GIT_COMMITHASH': JSON.stringify(gitRevisionPlugin.commithash()),
+        'GIT_BRANCH': JSON.stringify(gitRevisionPlugin.branch()),
+      })
+    ]
   },
 
   chainWebpack: config => {

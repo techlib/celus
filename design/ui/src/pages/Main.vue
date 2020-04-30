@@ -69,7 +69,6 @@
 
         <v-content>
             <v-container fluid pa-0 pa-sm-2>
-
                 <router-view :key="$route.fullPath"/>
                 <!--keep-alive max="5">
                     <router-view :key="$route.fullPath"/>
