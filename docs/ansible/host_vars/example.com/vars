@@ -34,7 +34,7 @@ settings_version: production
 db_name: celus
 
 
-# Secret stuff - **your should most definitely change these**
+# Secret stuff - **you should most definitely change these**
 #
 # The following data are stored in the secret_settings.json file which is not part
 # of GIT and only exists on the deployment server

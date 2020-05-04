@@ -9,7 +9,6 @@ from rest_framework.views import APIView
 
 from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
 from core.serializers import UserSerializer
-
 from .tasks import erms_sync_users_and_identities_task
 
 

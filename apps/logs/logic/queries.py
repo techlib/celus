@@ -2,6 +2,7 @@
 Functions that help in constructing django queries
 """
 from typing import Iterable, Optional
+import logging
 
 from django.db import models
 from django.db.models import Sum, Q
@@ -11,7 +12,13 @@ from django.shortcuts import get_object_or_404
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
-from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText
+from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText, Metric
+
+logger = logging.getLogger(__name__)
+
+
+class TooMuchDataError(Exception):
+    pass
 
 
 def interest_value_to_annot_name(dt: DimensionText) -> str:
@@ -96,6 +103,7 @@ class StatsComputer(object):
     input_dim_to_query_dim = {'interest': 'metric'}
     extra_query_params = {'interest': lambda rt: {'metric__reportinterestmetric__report_type': rt}}
     implicit_dim_to_text_fn = {'interest': lambda x: str(x)}
+    hard_result_count_limit = 20_000
 
     def __init__(self):
         self.io_prim_dim_name = None  # name of dimension that was requested and will be outputed
@@ -105,6 +113,7 @@ class StatsComputer(object):
         self.sec_dim_name = None
         self.sec_dim_obj = None
         self.dim_raw_name_to_name = {}
+        self.reported_metrics = {}
 
     @classmethod
     def _translate_dimension_spec(cls, dim_name: str, report_type: ReportType) -> \
@@ -175,6 +184,10 @@ class StatsComputer(object):
                 .annotate(count=Sum('value')) \
                 .values(self.prim_dim_name, 'count') \
                 .order_by(self.prim_dim_name)
+        if len(data) > self.hard_result_count_limit:
+            logger.warning('Result size of %d exceeded the limit of %d records',
+                           len(data), self.hard_result_count_limit)
+            raise TooMuchDataError()
         self.post_process_data(data, user)
         return data
 
@@ -253,6 +266,28 @@ class StatsComputer(object):
             query = report_type.logdata_qs().filter(**query_params)
         else:
             query = AccessLog.objects.filter(**query_params)
+        # filter to only interest metrics if metric neither primary nor secondary dim
+        if report_type and self.prim_dim_name != 'metric' and self.sec_dim_name != 'metric':
+            # Rationale: summing up different metrics together does not make much sence
+            # for example Total_Item_Requests and Unique_Item_Requests are dependent on each
+            # other and in fact the latter is a subset of the former. Thus we only use the
+            # metrics that define interest for computation if metric itself is not the primary
+            # or secondary dimension
+            # Technical note: putting the filter into the queue leads to a very slow response
+            # (2500 ms instead of 60 ms is a test case) - this is why we get the pks of the metrics
+            # first and then use the "in" filter.
+            base_rt = report_type.base_report_type if isinstance(report_type, ReportDataView) \
+                      else report_type  # type: ReportType
+            self.reported_metrics = {im.pk: im for im in base_rt.interest_metrics.order_by()}
+            if self.reported_metrics:
+                query = query.filter(metric_id__in=self.reported_metrics.keys())
+            else:
+                # if there are no interest metrics associated with the report_type
+                # we need to tell the user that all possible metrics were used
+                used_metric_ids = {rec['metric_id'] for rec in
+                                   query.values('metric_id').distinct()}
+                self.reported_metrics = {im.pk: im for im in
+                                         Metric.objects.filter(pk__in=used_metric_ids)}
         return query, dim_raw_name_to_name
 
     @classmethod
@@ -266,7 +301,9 @@ class StatsComputer(object):
         """
         field = AccessLog._meta.get_field(dim_name)
         if isinstance(field, models.ForeignKey):
-            mapping = {obj.pk: obj for obj in field.related_model.objects.all()}
+            unique_values = {rec[dim_name] for rec in data if type(rec[dim_name]) is int}
+            mapping = {obj.pk: obj for
+                       obj in field.related_model.objects.filter(pk__in=unique_values)}
             for rec in data:
                 if rec[dim_name] in mapping:
                     rec[dim_name] = to_text_fn(mapping[rec[dim_name]]).replace('_', ' ')

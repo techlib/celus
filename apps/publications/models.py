@@ -42,6 +42,13 @@ class Title(models.Model):
     PUB_TYPE_REPORT = 'R'
     PUB_TYPE_NEWSPAPER = 'N'
     PUB_TYPE_MULTIMEDIA = 'M'
+    PUB_TYPE_ARTICLE = 'A'
+    PUB_TYPE_BOOK_SEGMENT = 'S'
+    PUB_TYPE_DATASET = 'T'
+    PUB_TYPE_PLATFORM = 'P'
+    PUB_TYPE_REPOSITORY_ITEM = 'I'
+    PUB_TYPE_THESIS_OR_DISSERTATION = 'H'
+
     PUB_TYPE_CHOICES = (
         (PUB_TYPE_BOOK, _('Book')),
         (PUB_TYPE_JOURNAL, _('Journal')),
@@ -51,6 +58,12 @@ class Title(models.Model):
         (PUB_TYPE_REPORT, _('Report')),
         (PUB_TYPE_NEWSPAPER, _('Newspaper')),
         (PUB_TYPE_MULTIMEDIA, _('Multimedia')),
+        (PUB_TYPE_ARTICLE, _('Article')),
+        (PUB_TYPE_BOOK_SEGMENT, _('Book segment')),
+        (PUB_TYPE_DATASET, _('Dataset')),
+        (PUB_TYPE_PLATFORM, _('Platform')),
+        (PUB_TYPE_REPOSITORY_ITEM, _('Repository item')),
+        (PUB_TYPE_THESIS_OR_DISSERTATION, _('Thesis or dissertation')),
     )
     PUB_TYPE_MAP = dict(PUB_TYPE_CHOICES)
 
@@ -78,8 +91,8 @@ class PlatformTitle(models.Model):
     organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE)
     date = models.DateField(help_text='Month for which title was available on platform')
 
-    # class Meta:
-    #     unique_together = (('title', 'platform', 'organization', 'date'),)
+    class Meta:
+        unique_together = (('title', 'platform', 'organization', 'date'),)
 
     def __str__(self):
         return f'{self.platform} - {self.title}: {self.date}'
