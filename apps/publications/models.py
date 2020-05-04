@@ -67,6 +67,22 @@ class Title(models.Model):
     )
     PUB_TYPE_MAP = dict(PUB_TYPE_CHOICES)
 
+    data_type_to_pub_type_map = {
+        'journal': PUB_TYPE_JOURNAL,
+        'book': PUB_TYPE_BOOK,
+        'database': PUB_TYPE_DATABASE,
+        'other': PUB_TYPE_OTHER,
+        'report': PUB_TYPE_REPORT,
+        'newspaper_or_newsletter': PUB_TYPE_NEWSPAPER,
+        'multimedia': PUB_TYPE_MULTIMEDIA,
+        'article': PUB_TYPE_ARTICLE,
+        'book_segment': PUB_TYPE_BOOK_SEGMENT,
+        'dataset': PUB_TYPE_DATASET,
+        'platform': PUB_TYPE_PLATFORM,
+        'repository_item': PUB_TYPE_REPOSITORY_ITEM,
+        'thesis_or_dissertation': PUB_TYPE_THESIS_OR_DISSERTATION,
+    }
+
     name = models.TextField()
     pub_type = models.CharField(max_length=1, choices=PUB_TYPE_CHOICES,
                                 verbose_name='Publication type')
@@ -82,6 +98,27 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def data_type_to_pub_type(cls, data_type: str) -> str:
+        """
+        Takes a Data_Type value as it could appear in COUNTER data and translate it to
+        the pub_type value as would be stored in the database for the title.
+        Does some string manipulation for greater flexibility
+        """
+        data_type = data_type.replace(' ', '_').lower()
+        return cls.data_type_to_pub_type_map.get(data_type, cls.PUB_TYPE_UNKNOWN)
+
+    def guess_pub_type(self):
+        """
+        Based on presence of isbn, issn and eissn attrs, guess what type of publication this is
+        :return:
+        """
+        if self.isbn and not self.issn:
+            return self.PUB_TYPE_BOOK
+        if (self.issn or self.eissn) and not self.isbn:
+            return self.PUB_TYPE_JOURNAL
+        return self.PUB_TYPE_UNKNOWN
 
 
 class PlatformTitle(models.Model):
