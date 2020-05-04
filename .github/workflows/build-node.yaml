@@ -6,12 +6,17 @@ jobs:
   build:
     name: Build Node
     runs-on: ubuntu-latest
-    container: 
-      image: node:10.5.0
+    container:
+      image: node:12.16.3-buster
 
     steps:
+      - name: Install git
+        run: |
+          apt install git
+
       - name: Checkout code
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
+
       - name: Copy source
         run: |
           cp design/ui/vue.config.js.build design/ui/vue.config.js
