@@ -7,6 +7,14 @@ let pubTypes = [
   {code: 'M', icon: 'fas fa-compact-disc', title: 'pub_type.multimedia'},
   {code: 'U', icon: 'fa-question', title: 'pub_type.unknown'},
   {code: 'O', icon: 'fa-folder', title: 'pub_type.other'},
+  {code: 'A', icon: 'fa-clipboard', title: 'pub_type.article'},
+  {code: 'S', icon: 'fa-book-open', title: 'pub_type.book_segment'},
+  {code: 'T', icon: 'fa-table', title: 'pub_type.dataset'},
+  {code: 'P', icon: 'fa-building', title: 'pub_type.platform'},
+  {code: 'I', icon: 'fa-bars', title: 'pub_type.repository_item'},
+  {code: 'H', icon: 'fas fa-scroll', title: 'pub_type.thesis_or_dissertation'},
+
+
 ]
 
 let pubTypeToIcon = {}
