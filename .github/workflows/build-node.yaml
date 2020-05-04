@@ -10,11 +10,15 @@ jobs:
       image: node:10.5.0
 
     steps:
+      - name: Install git
+        run: |
+          apt install git
+
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - run: |
-          git fetch --prune --unshallow --tags
+#      - run: |
+#          git fetch --prune --unshallow --tags
 
       - name: Copy source
         run: |
