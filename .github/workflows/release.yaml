@@ -17,12 +17,14 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          - fetch-depth: 0
 
       - name: Fetch complete git history and tags
         run: |
-          git tag
           git describe
-          git fetch --prune --unshallow --tags
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          git describe
 
       - name: Copy source
         run: |
