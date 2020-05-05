@@ -20,6 +20,8 @@ jobs:
 
       - name: Fetch complete git history and tags
         run: |
+          git tag
+          git describe
           git fetch --prune --unshallow --tags
 
       - name: Copy source
