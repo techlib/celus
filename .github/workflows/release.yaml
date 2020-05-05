@@ -18,7 +18,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - run: |
+      - name: Fetch complete git history and tags
+        run: |
           git fetch --prune --unshallow
 
       - name: Copy source
