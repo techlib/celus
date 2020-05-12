@@ -21,7 +21,7 @@ class TestPlatformAPI(object):
                                organizations):
         resp = client.get(reverse('platform-list', args=[organizations[0].pk]),
                           **authentication_headers(invalid_identity))
-        assert resp.status_code == 403
+        assert resp.status_code in (403, 401)  # depends on auth backend
 
     def test_authorized_user_no_platforms_no_org(self, authenticated_client, organizations):
         resp = authenticated_client.get(reverse('platform-list', args=[organizations[0].pk]))
@@ -77,7 +77,7 @@ class TestPlatformDetailedAPI(object):
                                organizations):
         resp = client.get(reverse('detailed-platform-list', args=[organizations[0].pk]),
                           **authentication_headers(invalid_identity))
-        assert resp.status_code == 403
+        assert resp.status_code in (403, 401)  # depends on auth backend
 
     def test_authorized_user_no_platforms_no_org(self, authenticated_client, organizations,
                                                  interest_rt):
@@ -170,7 +170,7 @@ class TestPlatformTitleAPI(object):
         resp = client.get(reverse('platform-title-list',
                                   args=[organizations[0].pk, platforms[0].pk]),
                           **authentication_headers(invalid_identity))
-        assert resp.status_code == 403
+        assert resp.status_code in (403, 401)  # depends on auth backend
 
     def test_authorized_user_no_org(self, authenticated_client, organizations,
                                     platforms):

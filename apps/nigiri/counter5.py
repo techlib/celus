@@ -2,12 +2,27 @@
 Module dealing with data in the COUNTER5 format.
 """
 import json
+import typing
 from copy import copy
+
+import ijson.backends.python as ijson  # TODO yalj2 backend can be faster...
 
 from .exceptions import SushiException
 
 
+# TODO we can try to use  data classes https://docs.python.org/3/library/dataclasses.html
+# but newer version o python >= 3.7 is required here
 class CounterRecord(object):
+    __slots__ = (
+        "platform_name",
+        "start",
+        "end",
+        "title",
+        "title_ids",
+        "dimension_data",
+        "metric",
+        "value",
+    )
 
     def __init__(self, platform_name=None, start=None, end=None, title=None, title_ids=None,
                  metric=None, value=None, dimension_data=None):
@@ -19,6 +34,11 @@ class CounterRecord(object):
         self.dimension_data = dimension_data if dimension_data is not None else {}
         self.metric = metric
         self.value = value
+
+    @classmethod
+    def empty_generator(cls) -> typing.Generator['CounterRecord', None, None]:
+        empty: typing.List['CounterRecord'] = []
+        return (e for e in empty)
 
 
 class CounterError(object):
@@ -46,64 +66,41 @@ class Counter5ReportBase(object):
     dimensions = []  # this should be redefined in subclasses
     allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']
 
-    def __init__(self, report=None):
+    def __init__(self, report: bytes=None):
         self.records = []
         self.queued = False
         self.header = {}
         self.errors = []
         self.warnings = []
-        self.raw_data = None
-        if report:
-            self.read_report(report)
+        self.raw_data = report  # TODO raw data are supposed to be removed
 
-    def read_report(self, report: dict) -> [CounterRecord]:
+    def read_report(
+        self, header: dict, items: typing.Generator[dict, None, None],
+    ) -> typing.Generator[CounterRecord, None, None]:
         """
         Reads in the report as returned by the API using Sushi5Client
         :param report:
         :return:
         """
-        self.raw_data = report
-        if type(report) is list:
-            self.extract_errors(report)
-            return []
-        # check for messed up report with extra wrapping 'body' element
-        if 'Report_Header' not in report \
-                and 'body' in report \
-                and report['body'] \
-                and 'Report_Header' in report['body']:
-            report = report['body']
 
-        self.header = report.get('Report_Header')
-        if not self.header:
-            self.extract_errors(report)
-        else:
-            self.extract_errors(self.header.get('Exceptions', []))
-        records = []
-        items = report.get('Report_Items')
-        if items is not None:
-            for item in items:
-                record = CounterRecord()
-                record.platform_name = item.get('Platform')
-                record.title = self._item_get_title(item)
-                record.title_ids = self._extract_title_ids(item.get('Item_ID', []))
-                record.dimension_data = self._extract_dimension_data(self.dimensions, item)
-                performances = item.get('Performance')
-                for performance in performances:
-                    period = performance.get('Period', {})
-                    record.start = period.get('Begin_Date')
-                    record.end = period.get('End_Date')
-                    for metric in performance.get('Instance', []):
-                        this_rec = copy(record)
-                        this_rec.metric = metric.get('Metric_Type')
-                        this_rec.value = int(metric.get('Count'))
-                        records.append(this_rec)
-        else:
-            # we have no data
-            if not self.errors and not self.warnings:
-                # if there is no other reason why there should be no data, we raise exception
-                raise SushiException('Incorrect format', content=report)
-        self.records = records
-        return records
+        self.header = header
+
+        for item in items:
+            record = CounterRecord()
+            record.platform_name = item.get('Platform')
+            record.title = self._item_get_title(item)
+            record.title_ids = self._extract_title_ids(item.get('Item_ID', []))
+            record.dimension_data = self._extract_dimension_data(self.dimensions, item)
+            performances = item.get('Performance')
+            for performance in performances:
+                period = performance.get('Period', {})
+                record.start = period.get('Begin_Date')
+                record.end = period.get('End_Date')
+                for metric in performance.get('Instance', []):
+                    this_rec = copy(record)
+                    this_rec.metric = metric.get('Metric_Type')
+                    this_rec.value = int(metric.get('Count'))
+                    yield this_rec
 
     def extract_errors(self, data):
         if type(data) is list:
@@ -121,9 +118,62 @@ class Counter5ReportBase(object):
                 else:
                     self.errors.append(error)
 
-    def file_to_records(self, filename: str):
-        data = self.file_to_input(filename)
-        return self.read_report(data)
+    def file_to_records(
+        self, filename: str
+    ) -> typing.Generator[CounterRecord, None, None]:
+        f = open(filename, 'rb')  # file will be closed later (once generator struct is discarded)
+
+        # first check whether it is not an error report
+        first_character = f.read(1)
+        while first_character not in b'[{':
+            first_character = f.read(1)
+        f.seek(0)
+
+        if first_character == '[':
+            # error report handling
+            self.extract_errors(json.load(f))
+            return CounterRecord.empty_generator()
+
+        # try to read the header
+        header = dict(ijson.kvitems(f, "Report_Header"))
+        f.seek(0)
+
+        # check whether the header is not located in 'body' element
+        if not header:
+            header = dict(ijson.kvitems(f, "body.Report_Header"))
+            f.seek(0)
+
+        # Try to Read exceptions
+        self.extract_errors(header.get('Exceptions', []))  # In header
+        self.extract_errors(list(ijson.items(f, "Exceptions.items")))  # In <root>
+        f.seek(0)
+        self.extract_errors(list(ijson.items(f, "body.Exceptions.items")))  # In body element
+        f.seek(0)
+
+        # try to read the first item
+        record_found = bool(next(ijson.items(f, "Report_Items.item"), None))
+        f.seek(0)
+        if record_found:
+            # Items found
+            items = ijson.items(f, "Report_Items.item")
+        else:
+            # Try to seek in body element
+            record_found = bool(next(ijson.items(f, "body.Report_Items.item"), None))
+            f.seek(0)  # rewind back
+            items = ijson.items(f, "body.Report_Items.item")
+
+        if not header and not record_found:
+            # No data and no header -> try to extract an exception
+            self.extract_errors(json.load(f))
+            items = CounterRecord.empty_generator()
+
+        if not record_found:
+            # we have no data
+            if not self.errors and not self.warnings:
+                # if there is no other reason why there should be no data, we raise exception
+                raise SushiException('Incorrect format', content=f.read())
+
+        return self.read_report(header, items)
 
     @classmethod
     def file_to_input(cls, filename: str):

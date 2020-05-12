@@ -1,0 +1,38 @@
+  {
+  "Report_Items": [
+    {
+      "Title": "Title1",
+      "Publisher": "Pub1",
+      "Item_ID": [
+        {
+          "Type": "ISBN",
+          "Value": "978-1-111111-01-1"
+        }
+      ],
+      "Section_Type": "Chapter",
+      "Platform": "PlOne",
+      "Data_Type": "Book",
+      "YOP": "2009",
+      "Access_Type": "OA_Gold",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2019-05-01",
+            "End_Date": "2019-05-31"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 10
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 8
+            }
+          ]
+        }
+      ]
+    }
+  ]
+  }
