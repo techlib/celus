@@ -1,8 +1,8 @@
 import os
 
-from .staging import DATABASES
-from .staging import CACHES
-from .staging import *  # noqa
+from .production import DATABASES
+from .production import CACHES
+from .production import *  # noqa
 
 
 ALLOWED_HOSTS = ["*"]
