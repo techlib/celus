@@ -1,19 +1,19 @@
-Django==2.2.10
-pytz==2019.3
+Django==2.2.12
+pytz==2020.1
 django-allauth==0.41.0
-psycopg2-binary==2.8.4
-celery==4.4.1
+psycopg2-binary==2.8.5
+celery==4.4.2
 django-celery-results==1.2.1
-redis==3.4.1
+redis==3.5.0
 django-redis==4.11.0
-django-anymail==7.0.0
+django-anymail==7.1.0
 djangorestframework==3.11.0
 django-rest-auth==0.9.5
 drf-nested-routers==0.91
 django-mptt==0.11.0
-django-modeltranslation==0.14.4
+django-modeltranslation==0.15
 django-cachalot==2.2.0
-dateparser==0.7.2
+dateparser==0.7.4
 rest-pandas==1.1.0
 python-magic==0.4.15
 django-reversion==3.0.7
@@ -21,6 +21,8 @@ django-error-report==0.2.0
 psutil==5.7.0
 lz4==3.0.2
 django-prometheus==2.0.0
+-e git+https://github.com/beda42/django-cachalot.git@30d899f#egg=django-cachalot
+ijson==3.0
 # pycounter==1.1.1
 # -e git+https://github.com/beda42/pycounter.git#egg=pycounter
 # -e pycounter

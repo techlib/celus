@@ -442,4 +442,3 @@ class Sushi4Client(SushiClientBase):
         writer = csv.writer(out, dialect='excel', delimiter="\t")
         writer.writerows(lines)
         return out.getvalue()
-

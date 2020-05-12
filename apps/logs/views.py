@@ -41,6 +41,10 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class Counter5DataView(APIView):
 
+    # permission_classes = [IsAuthenticated &
+    #                       (SuperuserOrAdminPermission | CanAccessOrganizationFromGETAttrs)
+    #                      ]
+
     def get(self, request, report_type_id):
         report_type = get_object_or_404(ReportType, pk=report_type_id)
         computer = StatsComputer()

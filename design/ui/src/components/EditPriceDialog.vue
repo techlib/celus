@@ -3,7 +3,7 @@
 <i18n lang="yaml">
 en:
     year: Year
-    price: Cena
+    price: Price
 
 cs:
     year: Rok

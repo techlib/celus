@@ -1,6 +1,7 @@
 import codecs
 import csv
 import os
+import typing
 
 import magic
 from django.conf import settings
@@ -287,7 +288,11 @@ def where_to_store(instance: 'ManualDataUpload', filename):
 def validate_mime_type(fileobj):
     detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
     fileobj.seek(0)
-    if detected_type not in ('text/csv', 'text/plain', 'application/csv'):
+    # there is not one type to rule them all - magic is not perfect and we need to consider
+    # other possibilities that could be detected - for example the text/x-Algol68 seems
+    # to be returned for some CSV files with some version of libmagic
+    # (the library magic uses internally)
+    if detected_type not in ('text/csv', 'text/plain', 'application/csv', 'text/x-Algol68'):
         raise ValidationError(_("The uploaded file is not a CSV file or is corrupted. "
                                 "The file type seems to be '{detected_type}'. "
                                 "Please upload a CSV file.").
@@ -352,7 +357,7 @@ class ManualDataUpload(models.Model):
         data = list(reader)
         return data
 
-    def data_to_records(self) -> [CounterRecord]:
+    def data_to_records(self) -> typing.Generator[typing.List[CounterRecord], None, None]:
         try:
             crt = self.report_type.counterreporttype
         except ObjectDoesNotExist:

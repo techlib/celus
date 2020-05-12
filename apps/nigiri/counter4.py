@@ -2,10 +2,12 @@
 Module dealing with data in the COUNTER4 format as provided by the pycounter library
 """
 
+import typing
 from copy import copy
 
 from pycounter import report
-from pycounter.report import CounterReport, CounterEresource
+from pycounter.report import CounterEresource, CounterReport
+
 from .counter5 import CounterRecord
 
 
@@ -27,13 +29,12 @@ class Counter4ReportBase(object):
     def __init__(self):
         self.records = []
 
-    def read_report(self, report: CounterReport) -> [CounterRecord]:
+    def read_report(self, report: CounterReport) -> typing.Generator[CounterRecord, None, None]:
         """
         Reads in the report as returned by the API using Sushi5Client
         :param report:
         :return:
         """
-        records = []
         for journal in report:  # type: CounterEresource
             for start, metric, value in journal:
                 record = CounterRecord()
@@ -44,10 +45,9 @@ class Counter4ReportBase(object):
                 record.start = start
                 record.metric = metric
                 record.value = value
-                records.append(record)
-        return records
+                yield record
 
-    def file_to_records(self, filename: str):
+    def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
         data = self.file_to_input(filename)
         return self.read_report(data)
 
