@@ -1,6 +1,10 @@
 stages:
+  - push
   - tests
   - build
+
+include:
+  - local: /.gitlab/github-export.yml
 
 build_vue:
   stage: build
