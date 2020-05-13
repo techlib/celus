@@ -8,6 +8,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from charts.models import ChartDefinition
 from charts.models import ReportDataView
 from charts.serializers import ChartDefinitionSerializer, ReportDataViewSerializer
+from core.prometheus import report_access_time_summary, report_access_total_counter
 from logs.logic.queries import StatsComputer, TooMuchDataError
 from logs.models import ReportType
 from logs.serializers import DimensionSerializer, MetricSerializer
@@ -40,10 +41,14 @@ class ChartDataView(APIView):
     def get(self, request, report_view_id):
         report_view = get_object_or_404(ReportDataView, pk=report_view_id)
         computer = StatsComputer()
-        try:
-            data = computer.get_data(report_view, request.GET, request.user)
-        except TooMuchDataError:
-            return Response({'too_much_data': True})
+        # prometheus stats
+        label_attrs = dict(view_type='chart_data', report_type=report_view.base_report_type_id)
+        report_access_total_counter.labels(**label_attrs).inc()
+        with report_access_time_summary.labels(**label_attrs).time():
+            try:
+                data = computer.get_data(report_view, request.GET, request.user)
+            except TooMuchDataError:
+                return Response({'too_much_data': True})
         data_format = request.GET.get('format')
         if data_format in ('csv', 'xlsx'):
             # for the bare result, we do not add any extra information, just output the list
