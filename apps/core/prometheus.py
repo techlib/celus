@@ -10,7 +10,7 @@ report_access_total_counter = \
 
 report_access_time_summary = \
     Summary(
-        'report_access_time_seconds',
+        'celus_report_access_time_seconds',
         'The time it took to process request for data for each report type. Also '
         'split by view_type',
         ['view_type', 'report_type']
