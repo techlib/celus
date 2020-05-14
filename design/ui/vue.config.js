@@ -2,8 +2,6 @@ let devURLBase = 'http://localhost:8015/'
 
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const webpack = require('webpack')
-const GitRevisionPlugin = require('git-revision-webpack-plugin')
-const gitRevisionPlugin = new GitRevisionPlugin({branch: true})
 
 module.exports = {
   runtimeCompiler: true,
@@ -21,13 +19,11 @@ module.exports = {
         ws: true
       },
     },
-    overlay: {
-      errors: false,
-    }
+    overlay: (process.env.BUILD == 'yes' ? false : { errors: false }),
   },
 
   //filenameHashing: false,
-  outputDir: '../../apps/core/static/',
+  outputDir: process.env.OUTPUT_DIR || '../../apps/core/static/',
 
   pluginOptions: {
     i18n: {
@@ -40,12 +36,11 @@ module.exports = {
 
   configureWebpack: {
     plugins: [
-      new BundleAnalyzerPlugin(),
-      gitRevisionPlugin,
+      new BundleAnalyzerPlugin((process.env.BUILD == 'yes' ? {analyzerMode: 'disabled'}: {})),
       new webpack.DefinePlugin({
-        'GIT_VERSION': JSON.stringify(gitRevisionPlugin.version()),
-        'GIT_COMMITHASH': JSON.stringify(gitRevisionPlugin.commithash()),
-        'GIT_BRANCH': JSON.stringify(gitRevisionPlugin.branch()),
+        'GIT_VERSION': JSON.stringify(`${process.env.GIT_VERSION || ''}`),
+        'GIT_COMMITHASH': JSON.stringify(`${process.env.GIT_COMMITHASH || ''}`),
+        'GIT_BRANCH': JSON.stringify(`${process.env.GIT_BRANCH || ''}`),
       })
     ]
   },
