@@ -6,7 +6,7 @@ from logs.logic.materialized_interest import sync_interest_for_import_batch, \
     fast_compare_existing_and_new_records, _find_unprocessed_batches, \
     _find_platform_interest_changes, _find_metric_interest_changes, \
     _find_platform_report_type_disconnect, _find_report_type_metric_disconnect, \
-    _find_superseeded_import_batches
+    _find_superseeded_import_batches, smart_interest_sync, recompute_interest_by_batch
 from logs.models import ImportBatch, AccessLog, ReportInterestMetric, Metric, InterestGroup
 from logs.models import ReportType
 from publications.models import Platform, PlatformInterestReport
@@ -45,9 +45,10 @@ class TestInterestCalculation(object):
         sync_interest_for_import_batch(ib, interest_rt)
         assert interest_rt.accesslog_set.count() == 3, 'now it should work'
 
+    @pytest.mark.now()
     def test_superseeded_report_types(self, counter_records, organizations, report_type_nd):
         """
-        Test that when there are data for two report types from which one obsoletest the other,
+        Test that when there are data for two report types from which one obsoletes the other,
         the newer data get precedence in interest values. On the other hand, if there are only
         data for that date in the old batch, take the data from there
         """
@@ -94,6 +95,59 @@ class TestInterestCalculation(object):
         assert interest_rt.accesslog_set.count() == 1, '1 of 3 should make it to interest'
         sync_interest_for_import_batch(ib_new, interest_rt)
         assert interest_rt.accesslog_set.count() == 4, '3 of 3 should make it to interest'
+
+    @pytest.mark.now()
+    def test_superseeded_report_types_with_different_titles(self, counter_records, organizations,
+                                                            report_type_nd):
+        """
+        Test that when there are data for two report types from which one obsoletes the other,
+        the newer data get precedence in interest values.
+        This should also work if there are different titles in the two batches because the
+        detection should not work on title level
+        """
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        data_old = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title2', '2018-01-01', '1v2', 2],
+            ['Title3', '2018-01-01', '1v2', 4],
+        ]
+        data_new = [
+            ['Title1', '2018-01-01', '1v1', 8],
+            ['Title4', '2018-01-01', '1v2', 16],  # new title
+            ['Title5', '2018-01-01', '1v2', 32],  # new title
+        ]
+        crs_old = list(counter_records(data_old, metric='Hits', platform='Platform1'))
+        crs_new = list(counter_records(data_new, metric='Hits', platform='Platform1'))
+        report_type_old = report_type_nd(1, short_name='old')  # type: ReportType
+        report_type_new = report_type_nd(1, short_name='new')
+        report_type_old.superseeded_by = report_type_new
+        report_type_old.save()
+        ib_old = ImportBatch.objects.create(organization=organization, platform=platform,
+                                            report_type=report_type_old)
+        ib_new = ImportBatch.objects.create(organization=organization, platform=platform,
+                                            report_type=report_type_new)
+        import_counter_records(report_type_old, organization, platform, crs_old,
+                               import_batch=ib_old)
+        import_counter_records(report_type_new, organization, platform, crs_new,
+                               import_batch=ib_new)
+        assert AccessLog.objects.count() == 6
+        # now define the interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
+        hit_metric = Metric.objects.get(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(report_type=report_type_old, metric=hit_metric,
+                                            interest_group=ig)
+        ReportInterestMetric.objects.create(report_type=report_type_new, metric=hit_metric,
+                                            interest_group=ig)
+        # sync and count
+        sync_interest_for_import_batch(ib_old, interest_rt)
+        assert interest_rt.accesslog_set.count() == 0, '0 of 3 should make it to interest'
+        sync_interest_for_import_batch(ib_new, interest_rt)
+        assert interest_rt.accesslog_set.count() == 3, '3 of 3 should make it to interest'
 
 
 @pytest.mark.django_db()
@@ -286,6 +340,67 @@ class TestInterestRecomputationDetection(object):
         assert stats['new_logs'] == 1
         qs = _find_superseeded_import_batches()
         assert {obj.pk for obj in qs} == {ib_old.pk}
+
+    @pytest.mark.now()
+    def test_superseeded_interest_deleted_with_different_titles(
+            self, counter_records, organizations, report_type_nd
+    ):
+        """
+        Test that there are old data for obsolete interest and I import new ones for the
+        obsoleting RT, the old interest data will be removed even if the titles are different.
+        """
+        organization = organizations[0]
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        data_old = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title2', '2018-01-01', '1v2', 2],
+            ['Title3', '2018-01-01', '1v2', 4],
+        ]
+        data_new = [
+            ['Title1', '2018-01-01', '1v1', 8],
+            ['Title4', '2018-01-01', '1v2', 16],  # new title
+            ['Title5', '2018-01-01', '1v2', 32],  # new title
+        ]
+        crs_old = list(counter_records(data_old, metric='Hits', platform='Platform1'))
+        crs_new = list(counter_records(data_new, metric='Hits', platform='Platform1'))
+        report_type_old = report_type_nd(1, short_name='old')  # type: ReportType
+        report_type_new = report_type_nd(1, short_name='new')
+        report_type_old.superseeded_by = report_type_new
+        report_type_old.save()
+        ib_old = ImportBatch.objects.create(organization=organization, platform=platform,
+                                            report_type=report_type_old)
+        ib_new = ImportBatch.objects.create(organization=organization, platform=platform,
+                                            report_type=report_type_new)
+        import_counter_records(report_type_old, organization, platform, crs_old,
+                               import_batch=ib_old)
+        assert AccessLog.objects.count() == 3
+        # now define the interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
+        hit_metric = Metric.objects.get(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(report_type=report_type_old, metric=hit_metric,
+                                            interest_group=ig)
+        ReportInterestMetric.objects.create(report_type=report_type_new, metric=hit_metric,
+                                            interest_group=ig)
+        # sync old data
+        sync_interest_for_import_batch(ib_old, interest_rt)
+        assert interest_rt.accesslog_set.count() == 3, '3 of 3 should make it to interest'
+        assert ib_old.accesslog_set.filter(
+            report_type=interest_rt).count() == 3, '3 new interest records'
+        import_counter_records(report_type_new, organization, platform, crs_new,
+                               import_batch=ib_new)
+        sync_interest_for_import_batch(ib_new, interest_rt)
+        assert interest_rt.accesslog_set.count() == 6, '3 of 3 should make it to interest'
+        # let's run the detection code and see if it removes the old stuff
+        smart_interest_sync()
+        assert interest_rt.accesslog_set.count() == 3, 'only 3 of 6 should remain'
+        assert ib_new.accesslog_set.filter(
+            report_type=interest_rt).count() == 3, '# new interest records from new data'
+        assert ib_old.accesslog_set.filter(
+            report_type=interest_rt).count() == 0, 'old interest should be removed'
 
 
 class TestSupportCode(object):
