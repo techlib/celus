@@ -57,10 +57,12 @@ def sync_interest_for_import_batch(
     really_new, to_delete_pks, same = \
         fast_compare_existing_and_new_records(old_log_dicts, new_log_dicts, accesslog_keys)
     # create new, remove old
-    AccessLog.objects.bulk_create(
-        AccessLog(report_type=interest_rt, import_batch=import_batch, **log_dict)
-        for log_dict in really_new)
-    AccessLog.objects.filter(pk__in=to_delete_pks).delete()
+    if really_new:
+        AccessLog.objects.bulk_create(
+            AccessLog(report_type=interest_rt, import_batch=import_batch, **log_dict)
+            for log_dict in really_new)
+    if to_delete_pks:
+        AccessLog.objects.filter(pk__in=to_delete_pks).delete()
     # update the import batch
     import_batch.interest_timestamp = now()
     import_batch.save()
@@ -238,7 +240,8 @@ def find_batches_that_need_interest_sync():
     for fn in (_find_unprocessed_batches,
                _find_platform_interest_changes,
                _find_metric_interest_changes,
-               _find_platform_report_type_disconnect):
+               _find_platform_report_type_disconnect,
+               _find_potentially_superseded_import_batches):
         yield fn()
     for qs in _find_report_type_metric_disconnect():  # this is a generator itself
         yield qs
@@ -339,6 +342,28 @@ def _find_superseeded_import_batches():
     query = ImportBatch.objects.filter(report_type__superseeded_by__isnull=False).\
         annotate(has_interest=Exists(interest_al)).\
         filter(has_interest=True, pk__in=al_query)
-    # print(query.query)
     return query
 
+
+def _find_potentially_superseded_import_batches():
+    """
+    Find import batches for which there may be a clashing import batch with report type
+    superseding the one for this batch.
+
+    NOTE: This potentially returns a large number of hits, but when run regularly, the update
+          of interest_timestamp in the checked ImportBatches should keep the number at bay.
+          If we ever wanted to get rid of this, we might store the date of the last interest
+          calculation and only take import batches that have been created since. From these,
+          we could then come up with a list of potentially obsoleted import batches.
+    """
+    superseding_ib = ImportBatch.objects.\
+        filter(platform=OuterRef('platform'),
+               organization=OuterRef('organization'),
+               report_type=OuterRef('report_type__superseeded_by'),
+               interest_timestamp__gt=OuterRef('interest_timestamp')
+               )
+    query = ImportBatch.objects.\
+        filter(report_type__superseeded_by__isnull=False). \
+        annotate(has_clash=Exists(superseding_ib)).\
+        filter(has_clash=True)
+    return query
