@@ -2,8 +2,12 @@ FROM node:10.5.0 as celus-node-build
 
 WORKDIR /root/build/
 
+ENV BUILD=yes
+ARG GIT_VERSION
+ARG GIT_COMMITHASH
+ARG GIT_BRANCH
+
 COPY design design/
-COPY design/ui/vue.config.js.build design/ui/vue.config.js
 
 RUN \
 	sed -i -e "s/outputDir: .*$/outputDir: 'static\/',/" design/ui/vue.config.js && \

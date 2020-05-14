@@ -50,26 +50,5 @@ run_tests:
   tags:
     - bdd
 
-docker_images:
-  stage: image
-  before_script:
-    - docker info
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
-  script:
-    - docker pull $CI_REGISTRY_IMAGE/celus-django:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE/celus-django:latest --tag $CI_REGISTRY_IMAGE/celus-django:${CI_COMMIT_TAG} --tag $CI_REGISTRY_IMAGE/celus-django:latest --target celus-django .
-    - docker push $CI_REGISTRY_IMAGE/celus-django:${CI_COMMIT_TAG}
-    - docker push $CI_REGISTRY_IMAGE/celus-django:latest
-
-    - docker pull $CI_REGISTRY_IMAGE/celus-nginx:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE/celus-nginx:latest --tag $CI_REGISTRY_IMAGE/celus-nginx:${CI_COMMIT_TAG} --tag $CI_REGISTRY_IMAGE/celus-nginx:latest --target celus-nginx .
-    - docker push $CI_REGISTRY_IMAGE/celus-nginx:${CI_COMMIT_TAG}
-    - docker push $CI_REGISTRY_IMAGE/celus-nginx:latest
-
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^i[0-9].*/'
-      when: on_success
-
-  tags:
-    - dind
+include:
+  - local: /.gitlab/build-image.yml
