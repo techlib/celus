@@ -366,7 +366,7 @@
         rawData = rawData.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
         // truncate long labels
         this.dataRaw = rawData.map(dict => {
-            let val1 = dict[this.primaryDimension]
+            let val1 = String(dict[this.primaryDimension])
             if (val1.length > this.maxLabelLength + 3) {
               dict[this.primaryDimension] = val1.substring(0, this.maxLabelLength) + '\u2026'
             }

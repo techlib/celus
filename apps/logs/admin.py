@@ -10,16 +10,39 @@ class OrganizationPlatformAdmin(admin.ModelAdmin):
     list_display = ['organization', 'platform']
 
 
+class IsMaterialized(admin.SimpleListFilter):
+    title = 'is materialized'
+    parameter_name = 'materialized'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.filter(materialization_spec__isnull=False)
+        if self.value() == 'no':
+            return queryset.filter(materialization_spec__isnull=True)
+        return queryset
+
+
 @admin.register(models.ReportType)
 class ReportTypeAdmin(TranslationAdmin):
 
-    list_display = ['short_name', 'name', 'desc', 'dimension_list', 'source', 'superseeded_by']
+    list_display = ['short_name', 'name', 'desc', 'dimension_list', 'source', 'superseeded_by',
+                    'materialized']
     ordering = ['short_name']
-    list_filter = ['source']
+    list_filter = ['source', IsMaterialized]
 
     @classmethod
     def dimension_list(cls, obj: models.ReportType):
         return ', '.join(obj.dimension_short_names)
+
+    def materialized(self, obj: models.ReportType):
+        return bool(obj.materialization_spec)
+    materialized.boolean = True
 
 
 @admin.register(models.Metric)
@@ -94,3 +117,8 @@ class ImportBatchAdmin(admin.ModelAdmin):
     #     qs = super().get_queryset(request)
     #     return qs.annotate(log_count=Count('accesslog'))
 
+
+@admin.register(models.ReportMaterializationSpec)
+class ReportMaterializationSpecAdmin(admin.ModelAdmin):
+
+    list_display = ['name', 'base_report_type', 'description']
