@@ -256,10 +256,6 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'logs.tasks.smart_interest_sync_task',
         'schedule': schedule(run_every=timedelta(minutes=10)),
     },
-    'recompute_interest_by_batch_task': {
-        'task': 'logs.tasks.recompute_interest_by_batch_task',
-        'schedule': crontab(minute=15, hour=1),  # every day at 1:15
-    },
     'retry_queued_attempts_task': {
         'task': 'sushi.tasks.retry_queued_attempts_task',
         'schedule': schedule(run_every=timedelta(minutes=30)),

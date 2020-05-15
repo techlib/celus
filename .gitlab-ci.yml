@@ -7,6 +7,9 @@ stages:
 include:
   - local: /.gitlab/github-export.yml
 
+include:
+  - local: /.gitlab/github-export.yml
+
 build_vue:
   stage: build
   image: node:10.5.0

@@ -884,7 +884,7 @@
   "pk": 13,
   "fields": {
     "name": "Typ z\u00e1jmu v \u010dase",
-    "name_en": "Typ z\u00e1jmu v \u010dase",
+    "name_en": "Interest type in time",
     "name_cs": "Typ z\u00e1jmu v \u010dase",
     "desc": "Development of different interest types in time",
     "desc_en": "Development of different interest types in time",
