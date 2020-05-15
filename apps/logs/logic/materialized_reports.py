@@ -1,10 +1,11 @@
 import logging
 from time import time
-from typing import Iterable
+from typing import Iterable, Dict
 
 from django.db.models import Sum
 from django.db.transaction import atomic
 
+from organizations.logic.queries import extend_query_filter
 from ..models import ImportBatch, AccessLog, ReportType
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None):
         batch_size = guess_batch_size_for_materialization(rt)
         logger.debug('Guessing batch_size for "%s": %d', rt, batch_size)
     # construct query
-    filter_attrs = {f'materialization_data__r{rt.pk}__isnull': True}
+    filter_attrs = materialized_import_batch_query_attrs(rt)
     to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
     while to_process:
         start = time()
@@ -54,13 +55,12 @@ def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=2
     :return:
     """
     keep, _remove = rt.materialization_spec.split_attributes(add_id_postfix=True)
-    source_batch_count = ImportBatch.objects.filter(
-        **{f'materialization_data__r{rt.pk}__isnull': True},
-    ).count()
+    import_batch_filter = materialized_import_batch_query_attrs(rt)
+    source_batch_count = ImportBatch.objects.filter(**import_batch_filter).count()
     result_log_count = (
         AccessLog.objects.filter(
             report_type=rt.materialization_spec.base_report_type,
-            **{f'import_batch__materialization_data__r{rt.pk}__isnull': True},
+            **extend_query_filter(import_batch_filter, 'import_batch__'),
         )
         .values('import_batch_id', *keep)
         .annotate(value=Sum('value'))
@@ -96,3 +96,18 @@ def create_materialized_accesslogs_for_importbatches(rt: ReportType, ibs: Iterab
     for ib in ibs:
         ib.materialization_data[f'r{rt.pk}'] = time()
         ib.save(update_fields=['materialization_data'])
+
+
+def materialized_import_batch_query_attrs(rt: ReportType) -> Dict:
+    """
+    Creates query attrs needed to get ImportBatches that should be 'materialized' for the
+    ReportType rt.
+    :param rt:
+    :return: {}
+    """
+    filter_attrs = {f'materialization_data__r{rt.pk}__isnull': True}
+    if rt.materialization_spec.base_report_type.short_name == 'interest':
+        # for interest based materialized report types, we need to check the interest calculation
+        # as well
+        filter_attrs['interest_timestamp__isnull'] = False
+    return filter_attrs
