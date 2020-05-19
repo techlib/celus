@@ -39,9 +39,9 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None):
     filter_attrs = materialized_import_batch_query_attrs(rt)
     to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
     while to_process:
-        start = time()
+        start = monotonic()
         create_materialized_accesslogs_for_importbatches(rt, to_process)
-        logger.debug('Batch materialization took %.1f s', time() - start)
+        logger.debug('Batch materialization took %.1f s', monotonic() - start)
         to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
 
 
