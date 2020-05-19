@@ -10,6 +10,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from core.logic.bins import bin_hits
 from core.logic.dates import date_filter_from_params, month_end
 from core.permissions import SuperuserOrAdminPermission
+from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
@@ -73,8 +74,10 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         org_filter = organization_filter_from_org_id(pk, request.user)
         date_filter = date_filter_from_params(request.GET)
         interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        accesslog_filter_params = {'report_type': interest_rt, **org_filter, **date_filter}
+        replace_report_type_with_materialized(accesslog_filter_params)
         data = AccessLog.objects\
-            .filter(report_type=interest_rt, **org_filter, **date_filter) \
+            .filter(**accesslog_filter_params) \
             .aggregate(interest_sum=Sum('value'), min_date=Min('date'), max_date=Max('date'))
         if data['max_date']:
             # the date might be None and then we do not want to do the math ;)

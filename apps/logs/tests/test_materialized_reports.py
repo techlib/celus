@@ -2,6 +2,7 @@ import pytest
 
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports
+from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import (
     ImportBatch,
     AccessLog,
@@ -103,3 +104,36 @@ class TestMaterializedReport(object):
         # test it
         assert mat_report.accesslog_set.count() == 1
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {7}
+
+    @pytest.mark.now()
+    @pytest.mark.parametrize(
+        ['query_params', 'other_dims', 'result'],
+        [
+            ({}, set(), True),
+            ({}, {'target'}, False),
+            ({}, {'target', 'dim1'}, False),
+            ({}, {'target', 'dim2'}, False),
+            ({}, {'target', 'date'}, False),
+            ({}, {'date'}, True),
+            ({}, {'dim2'}, True),
+            ({}, {'dim2', 'date'}, True),
+            ({'target_id': 10}, set(), False),
+            ({'date__lt': '2020-01-01'}, set(), True),
+            ({'target_id': 10, 'dim2': 5}, set(), False),
+            ({'dim2': 5}, set(), True),
+            ({'dim2': 5, 'date__gt': '2010-05-05'}, set(), True),
+            ({'date__lt': '2020-01-01'}, {'dim1'}, False),
+        ],
+    )
+    def test_replace_report_type_with_materialized(
+        self, report_type_nd, query_params, other_dims, result
+    ):
+        report_type = report_type_nd(1)
+        # prepare the materialized report
+        spec = ReportMaterializationSpec.objects.create(
+            base_report_type=report_type, keep_dim1=False, keep_target=False
+        )
+        ReportType.objects.create(materialization_spec=spec, short_name='m', name='m')
+        # test the result
+        qp = {'report_type': report_type, **query_params}
+        assert replace_report_type_with_materialized(qp, other_used_dimensions=other_dims) == result

@@ -102,6 +102,86 @@ def extract_accesslog_attr_query_params(
     return query_params
 
 
+def test_possible_materialized_report_use(
+    query_params: {}, other_used_dimensions: Optional[Iterable] = None
+) -> Optional[ReportType]:
+    """
+    Try to find a suitable materialized report for the one that is present in query params.
+    It checks all the query params so that it does not
+    select a report that would be missing some of the dimension needed for this query
+    :param other_used_dimensions: list of other dimensions used by the query
+    :param query_params: mapping of query attributes
+    :return:
+    """
+
+    def normalize_param(param):
+        if '__' in param:
+            return normalize_param(param.split('__')[0])
+        if param.endswith('_id'):
+            return normalize_param(param[:-3])
+        return param
+
+    rt = query_params.get('report_type')
+    if rt:
+        candidates = ReportType.objects.filter(materialization_spec__base_report_type=rt)
+        if candidates:
+            normalized_query_params = {normalize_param(param) for param in query_params}
+            if other_used_dimensions:
+                normalized_query_params |= set(other_used_dimensions)
+            final_candidates = []
+            for candidate in candidates:
+                kept, removed = candidate.materialization_spec.split_attributes()
+                overlap = normalized_query_params & set(removed)
+                if overlap:
+                    # some of the params in normalized_query_params are within removed, pitty
+                    logger.debug(
+                        'Removing candidate "%s" from list - it lacks %s', candidate, overlap
+                    )
+                else:
+                    final_candidates.append(candidate)
+                    logger.debug('Candidate "%s" suitable when it comes to attrs', candidate)
+            if final_candidates:
+                if len(final_candidates) > 1:
+                    # we must decide upon the better one
+                    logger.debug(
+                        'More than one candidate materialized report: %s', final_candidates
+                    )
+                    to_sort = [
+                        (candidate.accesslog_set.count(), candidate)
+                        for candidate in final_candidates
+                    ]
+                    to_sort.sort(key=lambda x: x[0])
+                    logger.debug('Sorted candidates: %s, picking "%s"', to_sort, to_sort[0][1])
+                    return to_sort[0][1]
+                else:
+                    return final_candidates[0]
+
+
+def replace_report_type_with_materialized(
+    query_params: {}, other_used_dimensions: Optional[Iterable] = None
+) -> bool:
+    """
+    Takes a list of parameters that would be passed as filter to Accesslog.objects.filter
+    and tries to find a better suited report_type. If it finds one, it replaces it
+    in the `query_params` dict (in place).
+    :param other_used_dimensions: see `test_possible_materialized_report_use`
+    :param query_params: see `test_possible_materialized_report_use`
+    :return: did replacement take place
+    """
+    materialized_report = test_possible_materialized_report_use(
+        query_params, other_used_dimensions=other_used_dimensions
+    )
+    if materialized_report:
+        logger.info(
+            'Using materialized report: %s instead of %s',
+            materialized_report,
+            query_params['report_type'],
+        )
+        query_params['report_type'] = materialized_report
+        return True
+    return False
+
+
 class StatsComputer(object):
 
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'import_batch']
@@ -238,58 +318,6 @@ class StatsComputer(object):
                 rec[new_sec_dim_name] = rec[self.sec_dim_name]
                 del rec[self.sec_dim_name]
 
-    def _check_possible_materialized_report_use(self, query_params: {}) -> Optional[ReportType]:
-        """
-        Try to find a suitable materialized report for the one that is present in query params.
-        It check all the query params and primary and secondary dimensions so that it does not
-        select a report that would be missing some of the dimension needed for this query
-        :param query_params:
-        :return:
-        """
-
-        def normalize_param(param):
-            if '__' in param:
-                return normalize_param(param.split('__')[0])
-            if param.endswith('_id'):
-                return normalize_param(param[:-3])
-            return param
-
-        rt = query_params.get('report_type')
-        if rt:
-            candidates = ReportType.objects.filter(materialization_spec__base_report_type=rt)
-            if candidates:
-                normalized_query_params = {normalize_param(param) for param in query_params}
-                normalized_query_params.add(self.prim_dim_name)
-                if self.sec_dim_name:
-                    normalized_query_params.add(self.sec_dim_name)
-                final_candidates = []
-                for candidate in candidates:
-                    kept, removed = candidate.materialization_spec.split_attributes()
-                    overlap = normalized_query_params & set(removed)
-                    if overlap:
-                        # some of the params in normalized_query_params are within removed, pitty
-                        logger.debug(
-                            'Removing candidate "%s" from list - it lacks %s', candidate, overlap
-                        )
-                    else:
-                        final_candidates.append(candidate)
-                        logger.debug('Candidate "%s" suitable when it comes to attrs', candidate)
-                if final_candidates:
-                    if len(final_candidates) > 1:
-                        # we must decide upon the better one
-                        logger.debug(
-                            'More than one candiate materialized report: %s', final_candidates
-                        )
-                        to_sort = [
-                            (candidate.accesslog_set.count(), candidate)
-                            for candidate in final_candidates
-                        ]
-                        to_sort.sort(key=lambda x: x[0])
-                        logger.debug('Sorted candidates: %s, picking "%s"', to_sort, to_sort[0][1])
-                        return to_sort[0][1]
-                    else:
-                        return final_candidates[0]
-
     def construct_query(self, report_type, params):
         if report_type:
             if isinstance(report_type, ReportType):
@@ -333,14 +361,10 @@ class StatsComputer(object):
         query_params.update(date_filter_from_params(params))
 
         # maybe use materialized report if available
-        materialized_report = self._check_possible_materialized_report_use(query_params)
-        if materialized_report:
-            logger.info(
-                'Using materialized report: %s instead of %s',
-                materialized_report,
-                query_params['report_type'],
-            )
-            query_params['report_type'] = materialized_report
+        extra_dims = {self.prim_dim_name}
+        if self.sec_dim_name:
+            extra_dims.add(self.sec_dim_name)
+        replace_report_type_with_materialized(query_params, other_used_dimensions=extra_dims)
 
         # construct the query
         query = AccessLog.objects.filter(**query_params)
