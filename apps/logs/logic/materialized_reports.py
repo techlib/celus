@@ -1,5 +1,5 @@
 import logging
-from time import time
+from time import time, monotonic
 from typing import Iterable, Dict
 
 from django.db.models import Sum
@@ -40,8 +40,10 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None):
     to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
     while to_process:
         start = monotonic()
-        create_materialized_accesslogs_for_importbatches(rt, to_process)
-        logger.debug('Batch materialization took %.1f s', monotonic() - start)
+        size = create_materialized_accesslogs_for_importbatches(rt, to_process)
+        logger.debug(
+            'Batch materialization took %.1f s; records created: %d', monotonic() - start, size
+        )
         to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
 
 
@@ -72,7 +74,9 @@ def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=2
 
 
 @atomic
-def create_materialized_accesslogs_for_importbatches(rt: ReportType, ibs: Iterable[ImportBatch]):
+def create_materialized_accesslogs_for_importbatches(
+    rt: ReportType, ibs: Iterable[ImportBatch]
+) -> int:
     """
     Given an input materialized report type and a set of import batches, it creates all the
     materialized AccessLogs.
@@ -92,10 +96,12 @@ def create_materialized_accesslogs_for_importbatches(rt: ReportType, ibs: Iterab
         .values('import_batch_id', *keep)
         .annotate(value=Sum('value'))
     )
-    AccessLog.objects.bulk_create(AccessLog(report_type=rt, **log) for log in query)
+    to_insert = [AccessLog(report_type=rt, **log) for log in query]
+    AccessLog.objects.bulk_create(to_insert)
     for ib in ibs:
         ib.materialization_data[f'r{rt.pk}'] = time()
         ib.save(update_fields=['materialization_data'])
+    return len(to_insert)
 
 
 def materialized_import_batch_query_attrs(rt: ReportType) -> Dict:
