@@ -199,11 +199,12 @@ class StatsComputer(object):
         self.sec_dim_obj = None
         self.dim_raw_name_to_name = {}
         self.reported_metrics = {}
+        # the following represents the report type that was actually used to make the db query
+        # if a materialized report is used later on, the following value will be changed
+        # to the new report type in order to signal the change to the outside
+        self.used_report_type = None
 
-    @classmethod
-    def _translate_dimension_spec(
-        cls, dim_name: str, report_type: ReportType
-    ) -> (str, str, Optional[Dimension]):
+    def _translate_dimension_spec(self, dim_name: str) -> (str, str, Optional[Dimension]):
         """
         Translate the value which is used to specify the dimension in request to the actual
         dimension for querying
@@ -213,29 +214,26 @@ class StatsComputer(object):
         """
         if dim_name is None:
             return None, None, None
-        if dim_name in cls.input_dim_to_query_dim:
-            return dim_name, cls.input_dim_to_query_dim[dim_name], None
-        if dim_name in cls.implicit_dims:
+        if dim_name in self.input_dim_to_query_dim:
+            return dim_name, self.input_dim_to_query_dim[dim_name], None
+        if dim_name in self.implicit_dims:
             return dim_name, dim_name, None
-        if isinstance(report_type, ReportDataView):
-            report_type = report_type.base_report_type
-        dimensions = report_type.dimensions_sorted
+        dimensions = self.used_report_type.dimensions_sorted
         for dim_idx, dimension in enumerate(dimensions):
             if dimension.short_name == dim_name:
                 break
         else:
-            raise ValueError(f'Unknown dimension: {dim_name} for report type: {report_type}')
+            raise ValueError(
+                f'Unknown dimension: {dim_name} for report type: {self.used_report_type}'
+            )
         return dimension.short_name, f'dim{dim_idx+1}', dimension
 
-    def _extract_dimension_specs(
-        self, report_type: ReportType, primary_dim: str, secondary_dim: Optional[str]
-    ):
+    def _extract_dimension_specs(self, primary_dim: str, secondary_dim: Optional[str]):
         """
         Here we get the primary and secondary dimension name and corresponding objects from the
         request based on the report_type
         :param primary_dim: name of the dimension
         :param secondary_dim: name of the secondary dimension, may be None
-        :param report_type: report type instance
         :return:
         """
         # decode the dimensions to find out what we need to have in the query
@@ -243,9 +241,9 @@ class StatsComputer(object):
             self.io_prim_dim_name,
             self.prim_dim_name,
             self.prim_dim_obj,
-        ) = self._translate_dimension_spec(primary_dim, report_type)
+        ) = self._translate_dimension_spec(primary_dim)
         self.io_sec_dim_name, self.sec_dim_name, self.sec_dim_obj = self._translate_dimension_spec(
-            secondary_dim, report_type
+            secondary_dim
         )
 
     def get_data(self, report_type: ReportType, params: dict, user):
@@ -260,7 +258,10 @@ class StatsComputer(object):
         """
         secondary_dim = params.get('sec_dim')
         primary_dim = params.get('prim_dim', 'date')
-        self._extract_dimension_specs(report_type, primary_dim, secondary_dim)
+        self.used_report_type = (
+            report_type.base_report_type if isinstance(report_type, ReportDataView) else report_type
+        )
+        self._extract_dimension_specs(primary_dim, secondary_dim)
         # construct the query
         query, self.dim_raw_name_to_name = self.construct_query(report_type, params)
         # get the data - we need two separate queries for 1d and 2d cases
@@ -320,10 +321,7 @@ class StatsComputer(object):
 
     def construct_query(self, report_type, params):
         if report_type:
-            if isinstance(report_type, ReportType):
-                query_params = {'report_type': report_type, 'metric__active': True}
-            else:
-                query_params = {'report_type': report_type.base_report_type, 'metric__active': True}
+            query_params = {'report_type': self.used_report_type, 'metric__active': True}
         else:
             query_params = {'metric__active': True}
         # go over implicit dimensions and add them to the query if GET params are given for this
@@ -343,7 +341,8 @@ class StatsComputer(object):
                         try:
                             value = DimensionText.objects.get(dimension=dim, text=value).pk
                         except DimensionText.DoesNotExist:
-                            pass  # we leave the value as it is - it will probably lead to empty result
+                            # we leave the value as it is - it will probably lead to empty result
+                            pass
                     query_params[dim_raw_name] = value
         # remap dimension names if the query dim name is different from the i/o one
         if self.prim_dim_name != self.io_prim_dim_name:
@@ -364,7 +363,11 @@ class StatsComputer(object):
         extra_dims = {self.prim_dim_name}
         if self.sec_dim_name:
             extra_dims.add(self.sec_dim_name)
-        replace_report_type_with_materialized(query_params, other_used_dimensions=extra_dims)
+        rt_change = replace_report_type_with_materialized(
+            query_params, other_used_dimensions=extra_dims
+        )
+        if rt_change:
+            self.used_report_type = query_params.get('report_type')
 
         # construct the query
         query = AccessLog.objects.filter(**query_params)
@@ -381,12 +384,8 @@ class StatsComputer(object):
             # Technical note: putting the filter into the query leads to a very slow response
             # (2500 ms instead of 60 ms is a test case) - this is why we get the pks of the metrics
             # first and then use the "in" filter.
-            base_rt = (
-                report_type.base_report_type
-                if isinstance(report_type, ReportDataView)
-                else report_type
-            )  # type: ReportType
-            self.reported_metrics = {im.pk: im for im in base_rt.interest_metrics.order_by()}
+            self.reported_metrics = {im.pk: im for im in
+                                     self.used_report_type.interest_metrics.order_by()}
             if self.reported_metrics:
                 query = query.filter(metric_id__in=self.reported_metrics.keys())
             else:
