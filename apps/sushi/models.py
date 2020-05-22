@@ -1,3 +1,4 @@
+import hashlib
 import os
 import logging
 import traceback
@@ -5,7 +6,7 @@ from copy import deepcopy
 from hashlib import blake2b
 from datetime import timedelta, datetime
 from itertools import takewhile
-from typing import Optional
+from typing import Optional, Dict
 import json
 
 import requests
@@ -97,6 +98,7 @@ class SushiCredentials(models.Model):
         (UL_CONS_STAFF, 'Consortium staff'),
         (UL_CONS_ADMIN, 'Superuser'),
     )
+    blake_hash_size = 16
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
@@ -199,6 +201,45 @@ class SushiCredentials(models.Model):
                 return diff
         return 0
 
+    def version_dict(self) -> Dict:
+        """
+        Returns a dictionary will all the attributes of this object that may be subject to
+        change between versions and which influence success with querying the remote
+        server.
+        It is used to store credentials version information with SushiFetchAttempts and as a
+        source for hashing for `credentials_version_hash`.
+        :return:
+        """
+        keys = {
+            'url',
+            'counter_version',
+            'requestor_id',
+            'customer_id',
+            'http_username',
+            'http_password',
+            'api_key',
+            'extra_params',
+        }
+        return {key: getattr(self, key) for key in keys}
+
+    @classmethod
+    def hash_version_dict(cls, data):
+        """
+        Return a has of a dictionary. Must take care of possible differences in ordering of keys
+        :param data:
+        :return:
+        """
+        dump = json.dumps(data, ensure_ascii=False, sort_keys=True)
+        return blake2b(dump.encode('utf-8'), digest_size=cls.blake_hash_size).hexdigest()
+
+    def version_hash(self):
+        """
+        A hash of the variable things of current credentials  - may be used to detect changes
+        in credentials.
+        :return:
+        """
+        return self.hash_version_dict(self.version_dict())
+
     def fetch_report(self, counter_report: CounterReportType, start_date, end_date,
                      fetch_attempt: 'SushiFetchAttempt' = None, use_url_lock=True) -> \
             'SushiFetchAttempt':
@@ -220,12 +261,20 @@ class SushiCredentials(models.Model):
         else:
             attempt_params = fetch_m(client, counter_report, start_date, end_date)
         attempt_params['in_progress'] = False
+        # add version info to the attempt
+        attempt_params['credentials_version_hash'] = self.version_hash()
+        # now store it - into an existing object or a new one
         if fetch_attempt:
             for key, value in attempt_params.items():
                 setattr(fetch_attempt, key, value)
+            fetch_attempt.processing_info['credentials_version'] = self.version_dict()
             fetch_attempt.save()
             return fetch_attempt
         else:
+            if 'processing_info' in attempt_params:
+                attempt_params['processing_info']['credentials_version'] = self.version_dict()
+            else:
+                attempt_params['processing_info'] = {'credentials_version': self.version_dict()}
             attempt = SushiFetchAttempt.objects.create(**attempt_params)
             return attempt
 
@@ -409,6 +458,10 @@ class SushiFetchAttempt(models.Model):
                                        help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
+    credentials_version_hash = models.CharField(
+        max_length=2*SushiCredentials.blake_hash_size,
+        help_text='Hash computed from the credentials at the time this attempt was made'
+    )
     processing_info = JSONField(default=dict, help_text='Internal info')
 
     def __str__(self):
