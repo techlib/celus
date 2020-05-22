@@ -2,8 +2,12 @@ FROM node:10.5.0 as celus-node-build
 
 WORKDIR /root/build/
 
+ENV BUILD=yes
+ARG GIT_VERSION
+ARG GIT_COMMITHASH
+ARG GIT_BRANCH
+
 COPY design design/
-COPY design/ui/vue.config.js.build design/ui/vue.config.js
 
 RUN \
 	sed -i -e "s/outputDir: .*$/outputDir: 'static\/',/" design/ui/vue.config.js && \
@@ -53,7 +57,7 @@ COPY --from=celus-node-build /root/build/design/ui/static static
 # collect statics
 RUN \
 	cp config/settings/secret_settings.json.example config/settings/secret_settings.json && \
-	yes yes | python manage.py collectstatic
+	yes yes | env PROMETHEUS_EXPORT_MIGRATIONS=0 python manage.py collectstatic
 
 COPY start_celery.sh start_celerybeat.sh docker/entrypoint-web.sh docker/entrypoint-web.sh ./
 

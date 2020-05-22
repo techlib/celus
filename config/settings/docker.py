@@ -1,11 +1,15 @@
 import os
 
-from .staging import DATABASES
-from .staging import CACHES
-from .staging import *  # noqa
+from .production import DATABASES
+from .production import CACHES
+from .production import *  # noqa
 
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get("EXTERNAL_HOSTNAMES", "*").split(",")
+USE_X_FORWARDED_HOST = True
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "change-me")
+ERMS_API_URL = os.environ.get("ERMS_API_URL", "https://erms.czechelib.cz/api/")
 
 DATABASES["default"]["NAME"] = os.environ.get("POSTGRES_DB", "celus")
 DATABASES["default"]["USER"] = os.environ.get("POSTGRES_USER", "celus")

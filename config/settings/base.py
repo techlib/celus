@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
+from distutils.util import strtobool
+import os
 import sys
 
 from celery.schedules import schedule, crontab
@@ -53,6 +55,7 @@ INSTALLED_APPS = [
     'annotations.apps.AnnotationsConfig',
     'cost.apps.CostConfig',
     'activity.apps.ActivityConfig',
+    'api.apps.ApiConfig',
     'rest_pandas',
     'error_report',
     'cachalot',
@@ -337,3 +340,7 @@ for key in ("ERMS_API_URL",):
 DATABASES['default']['PASSWORD'] = secrets['DB_PASSWORD']
 
 EXPORTED_SETTINGS = ['REFERENCE_CURRENCY', 'AUTHENTICATION_BACKENDS']
+
+# Need to disable prometheus migrations when collecting static without DB
+# see https://github.com/korfuri/django-prometheus/issues/34
+PROMETHEUS_EXPORT_MIGRATIONS = strtobool(os.environ.get('PROMETHEUS_EXPORT_MIGRATIONS', '1'))
