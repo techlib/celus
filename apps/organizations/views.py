@@ -7,12 +7,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from core.logic.bins import bin_hits
 from core.logic.dates import date_filter_from_params, month_end
 from core.permissions import SuperuserOrAdminPermission
+from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
-from publications.models import Title
 from sushi.models import SushiCredentials
 from .serializers import OrganizationSerializer
 
@@ -73,8 +74,10 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         org_filter = organization_filter_from_org_id(pk, request.user)
         date_filter = date_filter_from_params(request.GET)
         interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        accesslog_filter_params = {'report_type': interest_rt, **org_filter, **date_filter}
+        replace_report_type_with_materialized(accesslog_filter_params)
         data = AccessLog.objects\
-            .filter(report_type=interest_rt, **org_filter, **date_filter) \
+            .filter(**accesslog_filter_params) \
             .aggregate(interest_sum=Sum('value'), min_date=Min('date'), max_date=Max('date'))
         if data['max_date']:
             # the date might be None and then we do not want to do the math ;)
@@ -98,19 +101,8 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         for rec in query:
             counter[rec['interest_sum']] += 1
         # here we bin it according to self.histogram_bins
-        bin_counter = Counter()
-        for hits, count in counter.items():
-            for start, end in self.histogram_bins:
-                if start <= hits <= end:
-                    bin_counter[(start, end)] += count
-                    break
-            else:
-                digits = len(str(hits)) - 1
-                unit = 10**digits
-                start = unit * ((hits-1) // unit)
-                end = start + unit
-                start += 1
-                bin_counter[(start, end)] += count
+        bin_counter = bin_hits(counter, histogram_bins=self.histogram_bins)
+
         # objects to return
         def name(a, b):
             if a == b:

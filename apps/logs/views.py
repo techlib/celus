@@ -1,4 +1,5 @@
 import traceback
+from time import monotonic
 
 from django.core.cache import cache
 from django.core.mail import mail_admins
@@ -21,6 +22,7 @@ from core.models import DataSource
 from core.permissions import OrganizationRequiredInDataForNonSuperusers, \
     SuperuserOrAdminPermission, OwnerLevelBasedPermissions, CanPostOrganizationDataPermission, \
     CanAccessOrganizationRelatedObjectPermission, CanAccessOrganizationFromGETAttrs
+from core.prometheus import report_access_time_summary, report_access_total_counter
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
 from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
@@ -41,10 +43,19 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class Counter5DataView(APIView):
 
+    # permission_classes = [IsAuthenticated &
+    #                       (SuperuserOrAdminPermission | CanAccessOrganizationFromGETAttrs)
+    #                      ]
+
     def get(self, request, report_type_id):
         report_type = get_object_or_404(ReportType, pk=report_type_id)
         computer = StatsComputer()
+        start = monotonic()
         data = computer.get_data(report_type, request.GET, request.user)
+        label_attrs = dict(view_type='chart_data_raw', report_type=computer.used_report_type.pk)
+        report_access_total_counter.labels(**label_attrs).inc()
+        report_access_time_summary.labels(**label_attrs).observe(monotonic() - start)
+
         data_format = request.GET.get('format')
         if data_format in ('csv', 'xlsx'):
             # for the bare result, we do not add any extra information, just output the list

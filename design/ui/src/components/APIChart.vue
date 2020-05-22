@@ -6,7 +6,7 @@
             v-if="loading || crunchingData"
             :height="height"
             :text="crunchingData ? crunchingText : $t('chart.loading_data')"
-            :icon-name="crunchingData ? 'fa-cog' : 'fa-sync-alt'"
+            icon-name="fa-cog"
     />
     <div v-else-if="tooMuchData" :style="{'height': height}" id="loading">
         <div>
@@ -21,33 +21,40 @@
         </div>
     </div>
     <div v-else>
-        <v-alert
-                v-if="reportedMetricsText"
-                type="info"
-                outlined
-        >
-            <v-tooltip bottom>
-                <template #activator="{on}">
-                    <span v-on="on">
-                        <span class="thin" v-text="$t('reported_metrics')"></span>:
-                        {{ reportedMetricsText }}
-                    </span>
-                </template>
-                {{ $t('reported_metrics_tooltip') }}
-                <span v-if="reportedMetrics.length > 1">{{ $t('reported_metrics_tooltip_many') }}</span>
-            </v-tooltip>
-        </v-alert>
-        <component
-                :is="chartComponent"
-                :data="chartData"
-                :settings="chartSettings"
-                :extend="chartExtend"
-                :height="height"
-                :toolbox="chartToolbox"
-                :data-zoom="dataZoom"
-                :mark-line="markLine"
-                >
-        </component>
+    <v-container class="pa-0">
+        <v-row class="pb-3">
+            <v-spacer></v-spacer>
+            <v-col cols="auto" shrink class="pr-3" v-if="reportedMetrics.length">
+                <v-tooltip bottom>
+                    <template #activator="{on}">
+                        <span v-on="on">
+                            <v-icon
+                                    color="info"
+                            >
+                                fa-info-circle
+                            </v-icon>
+                        </span>
+                    </template>
+                    <strong>{{ $t('reported_metrics_tooltip') }}</strong>
+                    <div v-html="reportedMetricsText"></div>
+                    <span v-if="reportedMetrics.length > 1">{{ $t('reported_metrics_tooltip_many') }}</span>
+                </v-tooltip>
+            </v-col>
+        </v-row>
+    </v-container>
+        <div>
+                <component
+                        :is="chartComponent"
+                        :data="chartData"
+                        :settings="chartSettings"
+                        :extend="chartExtend"
+                        :height="height"
+                        :toolbox="chartToolbox"
+                        :data-zoom="dataZoom"
+                        :mark-line="markLine"
+                        >
+                </component>
+            </div>
     </div>
 </template>
 <script>
@@ -338,7 +345,8 @@
       },
       reportedMetricsText () {
         if (this.reportedMetrics.length > 0) {
-          return this.reportedMetrics.map(metric => (metric.name || metric.short_name).replace(/_/g, ' ')).join(', ')
+          let inside = this.reportedMetrics.map(metric => (metric.name || metric.short_name).replace(/_/g, ' ')).join('</li><li>')
+          return `<ul><li>${inside}</li></ul>`
         } else {
           return ''
         }
@@ -358,7 +366,7 @@
         rawData = rawData.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
         // truncate long labels
         this.dataRaw = rawData.map(dict => {
-            let val1 = dict[this.primaryDimension]
+            let val1 = String(dict[this.primaryDimension])
             if (val1.length > this.maxLabelLength + 3) {
               dict[this.primaryDimension] = val1.substring(0, this.maxLabelLength) + '\u2026'
             }

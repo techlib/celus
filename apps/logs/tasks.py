@@ -9,6 +9,7 @@ from logs.logic.attempt_import import import_new_sushi_attempts
 from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import sync_interest_by_import_batches, \
     recompute_interest_by_batch, smart_interest_sync
+from logs.logic.materialized_reports import sync_materialized_reports
 
 
 @celery.shared_task
@@ -64,3 +65,12 @@ def export_raw_data_task(query_params, filename_base, zip_compress=False):
         exporter.store_error()
         raise e
 
+
+@celery.shared_task
+@email_if_fails
+def sync_materialized_reports_task():
+    """
+    Synchronizes materialized reports for import batches that were not processed yet
+    """
+    with cache_based_lock('sync_materialized_reports_task', blocking_timeout=10):
+        sync_materialized_reports()

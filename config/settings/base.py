@@ -246,6 +246,7 @@ CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
                       'sushi.tasks.fetch_new_sushi_data_for_credentials_task': {'queue': 'sushi'},
                       'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
                       'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
+                      'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
                       }
 
 CELERY_BEAT_SCHEDULE = {
@@ -253,9 +254,9 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'logs.tasks.smart_interest_sync_task',
         'schedule': schedule(run_every=timedelta(minutes=10)),
     },
-    'recompute_interest_by_batch_task': {
-        'task': 'logs.tasks.recompute_interest_by_batch_task',
-        'schedule': crontab(minute=15, hour=1),  # every day at 1:15
+    'sync_materialized_reports_task': {
+        'task': 'logs.tasks.sync_materialized_reports_task',
+        'schedule': schedule(run_every=timedelta(minutes=7)),
     },
     'retry_queued_attempts_task': {
         'task': 'sushi.tasks.retry_queued_attempts_task',
@@ -321,7 +322,7 @@ LOGGING = {
 }
 
 # hopefully temporary hacks
-SILENCED_SYSTEM_CHECKS = ["cachalot.E003"]
+SILENCED_SYSTEM_CHECKS = []
 
 # This loads the secret key and potentially other secret settings from a JSON file
 # it must be kept here, otherwise the settings will be missing

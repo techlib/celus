@@ -1,13 +1,20 @@
 stages:
+  - push
   - tests
   - build
   - image
+
+include:
+  - local: /.gitlab/github-export.yml
 
 build_vue:
   stage: build
   image: node:10.5.0
   before_script:
-    - cp design/ui/vue.config.js.build design/ui/vue.config.js
+    - export "BUILD=yes"
+    - export "GIT_VERSION=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}"
+    - export "GIT_COMMITHASH=${CI_COMMIT_SHA}"
+    - export "GIT_BRANCH=${CI_COMMIT_REF_NAME:-$CI_COMMIT_SHA}"
   script:
     - cd design/ui
     - npm install
@@ -33,13 +40,13 @@ run_tests:
     REDIS_URL: "redis://redis:6379/1"
   before_script:
     - apt-get update
-    - apt-get -y install --no-install-recommends ca-certificates git cmake make pkg-config gcc g++ python3-dev python3-pip python3-venv python3-setuptools virtualenv curl libmagic-dev
+    - apt-get -y install --no-install-recommends ca-certificates git cmake make pkg-config gcc g++ python3-dev python3-pip python3-venv python3-setuptools virtualenv curl libmagic-dev python3-wheel
     - update-alternatives --install /usr/bin/python python /usr/bin/python3 1
     - update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
     - pip install -r requirements/test.txt
   script:
     - cp config/settings/secret_settings.json.example config/settings/secret_settings.json
-    - pytest
+    - pytest apps
   tags:
     - bdd
 

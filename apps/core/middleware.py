@@ -16,6 +16,19 @@ class EDUIdHeaderMiddleware(RemoteUserMiddleware):
 
     def process_request(self, request):
         logger.warning('Identity: %s', request.META.get(self.header))
+        headers = [
+            'HTTP_X_USER_ID',
+            'HTTP_X_FULL_NAME',
+            'HTTP_X_FIRST_NAME',
+            'HTTP_X_LAST_NAME',
+            'HTTP_X_USER_NAME',
+            'HTTP_X_MAIL',
+            'HTTP_X_CN',
+            'HTTP_X_ROLES',
+            'HTTP_X_IDENTITY',
+        ]
+        out = '; '.join(f'{header}: {request.META.get(header)}' for header in headers)
+        logger.warning('Headers: %s', out)
         super().process_request(request)
 
     def _remove_invalid_user(self, request):

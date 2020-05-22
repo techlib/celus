@@ -9,6 +9,13 @@ en:
     multimedia: Multimedia
     unknown: Unknown
     other: Other
+    article: Article
+    book_segment: Book segment
+    dataset: Dataset
+    platform: Platform
+    repository_item: Repository item
+    thesis_or_dissertation: Thesis or dissertation
+
 
 cs:
   pub_type:
@@ -21,3 +28,9 @@ cs:
     multimedia: Multimedia
     unknown: Neznámý
     other: Jiný
+    article: Článek
+    book_segment: Část knihy
+    dataset: Dataset
+    platform: Platforma
+    repository_item: Položka repozitáře
+    thesis_or_dissertation: Diplomová nebo disertační práce

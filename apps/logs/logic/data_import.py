@@ -1,6 +1,7 @@
 import logging
 from collections import Counter, namedtuple
 from datetime import date
+from typing import Optional
 
 from core.logic.debug import log_memory
 from logs.logic.validation import clean_and_validate_issn, ValidationError
@@ -29,57 +30,39 @@ TitleRec = namedtuple('TitleRec', ('name', 'pub_type', 'issn', 'eissn', 'isbn', 
 
 
 class TitleManager(object):
-
-    data_type_to_pubtype = {
-        'journal': Title.PUB_TYPE_JOURNAL,
-        'book': Title.PUB_TYPE_BOOK,
-        'database': Title.PUB_TYPE_DATABASE,
-        'other': Title.PUB_TYPE_OTHER,
-        'report': Title.PUB_TYPE_REPORT,
-        'newspaper or newsletter': Title.PUB_TYPE_NEWSPAPER,
-        'multimedia': Title.PUB_TYPE_MULTIMEDIA,
-    }
-
     def __init__(self):
         # in the following, we use values_list to speed things up as there are a lot of objects
         # and creating them takes a lot of time
         # (e.g. processing time for import was cut from 3.5s to 1.2s by switching to this)
         self.key_to_title_id_and_pub_type = {}
-            # tuple(t[:5]): tuple(t[5:])
-            # for t in Title.objects.all().order_by().
-            # values_list('name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type')
-            # }
+        # tuple(t[:5]): tuple(t[5:])
+        # for t in Title.objects.all().order_by().
+        # values_list('name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type')
+        # }
         self.stats = Counter()
 
     def prefetch_titles(self, records: [TitleRec]):
         title_qs = Title.objects.all()
         for attr_name in ('issn', 'eissn', 'isbn', 'doi', 'name'):
             attr_values = {getattr(rec, attr_name) for rec in records}
-            title_qs = title_qs.filter(**{attr_name+'__in': attr_values})
+            title_qs = title_qs.filter(**{attr_name + '__in': attr_values})
         self.key_to_title_id_and_pub_type = {
             tuple(t[:5]): tuple(t[5:])
-            for t in title_qs.order_by().
-            values_list('name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type')
+            for t in title_qs.order_by().values_list(
+                'name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type'
+            )
         }
         logger.debug('Prefetched %d records', len(self.key_to_title_id_and_pub_type))
 
-    @classmethod
-    def decode_pub_type(cls, pub_type: str) -> str:
-        if not pub_type:
-            return Title.PUB_TYPE_UNKNOWN
-        if pub_type in Title.PUB_TYPE_MAP:
-            return pub_type
-        elif pub_type.lower() == 'journal':
-            return Title.PUB_TYPE_JOURNAL
-        elif pub_type.lower() == 'book':
-            return Title.PUB_TYPE_BOOK
-        return Title.PUB_TYPE_UNKNOWN
-
-    def get_or_create(self, record: TitleRec) -> int:
+    def get_or_create(self, record: TitleRec) -> Optional[int]:
         if not record.name:
-            logger.warning('Record is missing or has empty title: '
-                           'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s',
-                           record.isbn, record.issn, record.eissn, record.doi)
+            logger.warning(
+                'Record is missing or has empty title: ' 'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s',
+                record.isbn,
+                record.issn,
+                record.eissn,
+                record.doi,
+            )
             return None
         # normalize issn, eissn and isbn - the are sometimes malformed by whitespace in the data
         issn = record.issn
@@ -97,21 +80,22 @@ class TitleManager(object):
                 logger.error(f'Error: {e}')
                 eissn = ''
         isbn = record.isbn.replace(' ', '') if record.isbn else record.isbn
-        pub_type = self.decode_pub_type(record.pub_type)
         key = (record.name, isbn, issn, eissn, record.doi)
         if key in self.key_to_title_id_and_pub_type:
             title_pk, db_pub_type = self.key_to_title_id_and_pub_type[key]
             # check if we need to improve the pub_type from UNKNOWN to something better
-            if db_pub_type == Title.PUB_TYPE_UNKNOWN and pub_type != Title.PUB_TYPE_UNKNOWN:
-                logger.info('Upgrading publication type from unknown to "%s"', pub_type)
-                Title.objects.filter(pk=title_pk).update(pub_type=pub_type)
+            if db_pub_type == Title.PUB_TYPE_UNKNOWN and record.pub_type != Title.PUB_TYPE_UNKNOWN:
+                logger.info('Upgrading publication type from unknown to "%s"', record.pub_type)
+                Title.objects.filter(pk=title_pk).update(pub_type=record.pub_type)
                 self.stats['update'] += 1
             else:
                 self.stats['existing'] += 1
             return title_pk
-        title = Title.objects.create(name=record.name, pub_type=pub_type, isbn=isbn, issn=issn,
-                                     eissn=eissn, doi=record.doi)
-        self.key_to_title_id_and_pub_type[key] = (title.pk, pub_type)
+        title = Title.objects.create(
+            name=record.name, pub_type=record.pub_type, isbn=isbn, issn=issn, eissn=eissn,
+            doi=record.doi
+        )
+        self.key_to_title_id_and_pub_type[key] = (title.pk, record.pub_type)
         self.stats['created'] += 1
         return title.pk
 
@@ -130,23 +114,7 @@ class TitleManager(object):
                 issn = value
             elif key == 'ISBN':
                 isbn = value
-        pub_type = 'B' if isbn else 'J' if issn or eissn else None
-        if not pub_type:
-            if isbn is None and issn is not None:
-                pub_type = 'J'
-            elif isbn is not None and issn is None:
-                pub_type = 'B'
-        if not pub_type:
-            # try based on data
-            if 'Data_Type' in record.dimension_data:
-                data_type = record.dimension_data['Data_Type'].lower()
-                if data_type in self.data_type_to_pubtype:
-                    pub_type = self.data_type_to_pubtype[data_type]
-                elif 'news' in data_type:
-                    pub_type = Title.PUB_TYPE_NEWSPAPER
-                else:
-                    logger.warning('Unrecognized Data_Type for publication type recognition: %s',
-                                   data_type)
+        pub_type = self.deduce_pub_type(eissn, isbn, issn, record)
         # convert None values for the following attrs to empty strings
         isbn = '' if isbn is None else isbn
         issn = '' if issn is None else issn
@@ -154,13 +122,31 @@ class TitleManager(object):
         doi = '' if doi is None else doi
         return TitleRec(name=title, pub_type=pub_type, isbn=isbn, issn=issn, eissn=eissn, doi=doi)
 
+    def deduce_pub_type(self, eissn, isbn, issn, record):
+        pub_type = Title.PUB_TYPE_UNKNOWN
+        if 'Data_Type' in record.dimension_data:
+            data_type = record.dimension_data['Data_Type']
+            pub_type = Title.data_type_to_pub_type(data_type)
+        if pub_type == Title.PUB_TYPE_UNKNOWN:
+            # we try harder - based on isbn, issn, etc.
+            if (issn is not None or eissn is not None) and isbn is None:
+                pub_type = Title.PUB_TYPE_JOURNAL
+            elif isbn is not None and issn is None:
+                pub_type = Title.PUB_TYPE_BOOK
+        return pub_type
+
     def get_or_create_from_counter_record(self, record: CounterRecord) -> int:
         title_rec = self.counter_record_to_title_rec(record)
         return self.get_or_create(title_rec)
 
 
-def import_counter_records(report_type: ReportType, organization: Organization, platform: Platform,
-                           records: [CounterRecord], import_batch: ImportBatch) -> Counter:
+def import_counter_records(
+    report_type: ReportType,
+    organization: Organization,
+    platform: Platform,
+    records: [CounterRecord],
+    import_batch: ImportBatch,
+) -> Counter:
     stats = Counter()
     # prepare all remaps
     metrics = {metric.short_name: metric for metric in Metric.objects.all()}
@@ -207,8 +193,13 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
                     if not remap:
                         remap = {}
                         text_to_int_remaps[dim.pk] = remap
-                    dim_text_obj = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
-                                                          other_attrs={'dimension_id': dim.pk})
+                    dim_text_obj = get_or_create_with_map(
+                        DimensionText,
+                        remap,
+                        'text',
+                        dim_value,
+                        other_attrs={'dimension_id': dim.pk},
+                    )
                     dim_value = dim_text_obj.pk
             else:
                 dim_value = int(dim_value) if dim_value is not None else None
@@ -223,13 +214,25 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
     # compare the prepared data with current database content
     # get the candidates
     log_memory('XX')
-    to_check = AccessLog.objects.filter(organization=organization, platform=platform,
-                                        report_type=report_type, date__lte=max(seen_dates),
-                                        date__gte=min(seen_dates))
+    to_check = AccessLog.objects.filter(
+        organization=organization,
+        platform=platform,
+        report_type=report_type,
+        date__lte=max(seen_dates),
+        date__gte=min(seen_dates),
+    )
     to_compare = {}
-    for al_rec in to_check.values('pk', 'organization_id', 'platform_id', 'report_type_id',
-                                  'date', 'value', 'target_id', 'metric_id',
-                                  *[f'dim{i+1}' for i, d in enumerate(dimensions)]):
+    for al_rec in to_check.values(
+        'pk',
+        'organization_id',
+        'platform_id',
+        'report_type_id',
+        'date',
+        'value',
+        'target_id',
+        'metric_id',
+        *[f'dim{i+1}' for i, d in enumerate(dimensions)],
+    ):
         pk = al_rec.pop('pk')
         value = al_rec.pop('value')
         al_rec['date'] = al_rec['date'].isoformat()
@@ -253,8 +256,9 @@ def import_counter_records(report_type: ReportType, organization: Organization, 
             dicts_to_insert.append(rec)
     # now insert the records that are clean to be inserted
     log_memory('XX3')
-    AccessLog.objects.bulk_create([AccessLog(import_batch=import_batch, **rec)
-                                   for rec in dicts_to_insert])
+    AccessLog.objects.bulk_create(
+        [AccessLog(import_batch=import_batch, **rec) for rec in dicts_to_insert]
+    )
     stats['new logs'] += len(dicts_to_insert)
     log_memory('XX4')
     # and insert the PlatformTitle links
@@ -268,15 +272,19 @@ def create_platformtitle_links(organization, platform, records: [dict]):
     Takes list of dicts that are used to create AccessLogs in `import_counter_records`
     and creates the explicit PlatformTitle objects from the data
     """
-    existing = {(pt.title_id, pt.date.isoformat()) for pt in
-                PlatformTitle.objects.filter(organization=organization, platform=platform)}
-    tuples = {(rec['target_id'], rec['date'])
-              for rec in records if rec['target_id'] is not None}
+    existing = {
+        (pt.title_id, pt.date.isoformat())
+        for pt in PlatformTitle.objects.filter(organization=organization, platform=platform)
+    }
+    tuples = {(rec['target_id'], rec['date']) for rec in records if rec['target_id'] is not None}
     pts = []
     before_count = PlatformTitle.objects.count()
     for title_id, rec_date in tuples - existing:
-        pts.append(PlatformTitle(organization=organization, platform=platform, title_id=title_id,
-                                 date=rec_date))
+        pts.append(
+            PlatformTitle(
+                organization=organization, platform=platform, title_id=title_id, date=rec_date
+            )
+        )
     PlatformTitle.objects.bulk_create(pts, ignore_conflicts=True)
     after_count = PlatformTitle.objects.count()
     return {'new platformtitles': after_count - before_count}
@@ -290,8 +298,8 @@ def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [Plat
     """
     data = {(al.organization_id, al.platform_id, al.target_id, al.date) for al in accesslogs}
     possible_clashing = {
-        (pt.organization_id, pt.platform_id, pt.target_id, pt.date) for pt in
-        PlatformTitle.objects.filter(
+        (pt.organization_id, pt.platform_id, pt.target_id, pt.date)
+        for pt in PlatformTitle.objects.filter(
             organization_id__in={rec[0] for rec in data},
             platform_id__in={rec[1] for rec in data},
             title_id__in={rec[2] for rec in data},

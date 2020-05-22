@@ -32,8 +32,8 @@ cs:
         <v-row>
             <v-col cols="12" lg="6">
                 <v-card min-height="480">
-                    <v-card-title v-text="$t('interest')"></v-card-title>
-                    <v-card-text>
+                    <v-card-title v-text="$t('interest')" class="float-left"></v-card-title>
+                    <v-card-text class="pt-3">
                         <APIChart
                                 v-if="interestReportType"
                                 :organization="organizationId"
@@ -52,6 +52,7 @@ cs:
                 <v-card min-height="480">
                     <v-card-title>
                         <span v-text="$t('title_interest_histogram')"></span>
+                        <v-spacer></v-spacer>
                         <v-tooltip bottom max-width="400px">
                             <template #activator="{on}">
                                 <v-icon class="ml-2" v-on="on">fa fa-info-circle</v-icon>

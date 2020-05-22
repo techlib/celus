@@ -1,7 +1,7 @@
 let devURLBase = 'http://localhost:8015/'
 
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-
+const webpack = require('webpack')
 
 module.exports = {
   runtimeCompiler: true,
@@ -17,12 +17,13 @@ module.exports = {
         target: devURLBase,
         changeOrigin: true,
         ws: true
-      }
-    }
+      },
+    },
+    overlay: (process.env.BUILD == 'yes' ? false : { errors: false }),
   },
 
   //filenameHashing: false,
-  outputDir: '../../apps/core/static/',
+  outputDir: process.env.OUTPUT_DIR || '../../apps/core/static/',
 
   pluginOptions: {
     i18n: {
@@ -34,7 +35,14 @@ module.exports = {
   },
 
   configureWebpack: {
-    plugins: [new BundleAnalyzerPlugin({analyzerMode: 'disabled'})]
+    plugins: [
+      new BundleAnalyzerPlugin((process.env.BUILD == 'yes' ? {analyzerMode: 'disabled'}: {})),
+      new webpack.DefinePlugin({
+        'GIT_VERSION': JSON.stringify(`${process.env.GIT_VERSION || ''}`),
+        'GIT_COMMITHASH': JSON.stringify(`${process.env.GIT_COMMITHASH || ''}`),
+        'GIT_BRANCH': JSON.stringify(`${process.env.GIT_BRANCH || ''}`),
+      })
+    ]
   },
 
   chainWebpack: config => {
@@ -51,4 +59,6 @@ module.exports = {
   },
 
   transpileDependencies: ['vuex-persist', 'vuetify'], //'lodash', 'lodash.*'],
+
+  lintOnSave: false,
 }

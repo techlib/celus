@@ -1,3 +1,5 @@
+import os
+
 from .base import *
 
 DATABASES['default']['NAME'] = 'celus_demo'
@@ -9,9 +11,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 INSTALLED_APPS += ['debug_toolbar']
 INSTALLED_APPS.insert(4, 'livereload')  # it must be before staticfiles
 
-DISABLE_CACHALOT = True
+DISABLE_CACHALOT = bool(int(os.environ.get("DISABLE_CACHALOT", 1)))
 if DISABLE_CACHALOT and 'cachalot' in INSTALLED_APPS:
     INSTALLED_APPS.remove('cachalot')
+print('cachalot disabled' if DISABLE_CACHALOT else 'cachalot_enabled')
+
 LIVE_ERMS_AUTHENTICATION = False
 
 MIDDLEWARE = \
