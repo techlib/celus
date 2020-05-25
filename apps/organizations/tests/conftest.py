@@ -51,7 +51,7 @@ def identity_by_user_type(
 ):
     def fn(user_type):
         org = organizations[0]
-        # we do not user admin_client, master_client, etc. because the way the fixtures work
+        # we do not use admin_client, master_client, etc. because the way the fixtures work
         # they all point to the same client object which obviously does not work
         if user_type == 'no_user':
             identity = None

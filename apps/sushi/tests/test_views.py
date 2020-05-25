@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from core.models import UL_ORG_ADMIN, UL_CONS_ADMIN, UL_CONS_STAFF, Identity
 from organizations.models import UserOrganization
-from sushi.models import SushiCredentials
+from sushi.models import SushiCredentials, SushiFetchAttempt
 from organizations.tests.conftest import organizations
 from publications.tests.conftest import platforms
 from core.tests.conftest import master_client, master_identity, valid_identity, authenticated_client
@@ -213,3 +213,193 @@ class TestSushiCredentialsViewSet(object):
         resp = authenticated_client.delete(url)
         assert resp.status_code == 204
         assert SushiCredentials.objects.count() == 0
+
+
+@pytest.mark.now
+@pytest.mark.django_db()
+class TestSushiFetchAttemptStatsView(object):
+    def test_no_dates_mode_all(
+        self, organizations, platforms, counter_report_type_named, master_client
+    ):
+        """
+        Test that the api view works when the requested data does not contain dates and all
+        attempts are requested
+        """
+        credentials = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platforms[0],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url='http://a.b.c/',
+        )
+        new_rt1 = counter_report_type_named('new1')
+        SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+        )
+        assert SushiFetchAttempt.objects.count() == 1
+        url = reverse('sushi-fetch-attempt-stats')
+        resp = master_client.get(url + '?mode=all')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['failure_count'] == 1
+
+    def test_no_dates_mode_current(
+        self, organizations, platforms, counter_report_type_named, master_client
+    ):
+        """
+        Test that the api view works when the requested data does not contain dates and all
+        attempts are requested
+        """
+        credentials = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platforms[0],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url='http://a.b.c/',
+        )
+        new_rt1 = counter_report_type_named('new1')
+        SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+        )
+        assert SushiFetchAttempt.objects.count() == 1
+        # now update the credentials so that the attempt is no longer related to the current
+        # version
+        credentials.customer_id = 'new_id'
+        credentials.save()
+        # let's try it - there should be nothing
+        url = reverse('sushi-fetch-attempt-stats')
+        resp = master_client.get(url + '?mode=current')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 0
+
+    def test_no_dates_mode_current_2(
+        self, organizations, platforms, counter_report_type_named, master_client
+    ):
+        """
+        Test that the api view works when the requested data does not contain dates and all
+        attempts are requested
+        """
+        credentials = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platforms[0],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url='http://a.b.c/',
+        )
+        new_rt1 = counter_report_type_named('new1')
+        SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+        )
+        assert SushiFetchAttempt.objects.count() == 1
+        # now update the credentials so that the attempt is no longer related to the current
+        # version
+        credentials.customer_id = 'new_id'
+        credentials.save()
+        # create a second attempt, this one with current version
+        SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+        )
+        assert SushiFetchAttempt.objects.count() == 2
+        # let's try it - there should be nothing
+        url = reverse('sushi-fetch-attempt-stats')
+        resp = master_client.get(url + '?mode=current')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['failure_count'] == 1
+        # let's check that with mode=all there would be two
+        resp = master_client.get(url + '?mode=all')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['failure_count'] == 2
+
+    def test_no_dates_mode_success_and_current(
+        self, organizations, platforms, counter_report_type_named, master_client
+    ):
+        """
+        Test that the api view works when the requested data does not contain dates and all
+        attempts are requested
+        """
+        credentials = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platforms[0],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url='http://a.b.c/',
+        )
+        new_rt1 = counter_report_type_named('new1')
+        # one success
+        SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+            contains_data=True,
+        )
+        # one failure
+        SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+            contains_data=False,
+        )
+        assert SushiFetchAttempt.objects.count() == 2
+        # now update the credentials so that the attempt is no longer related to the current
+        # version
+        credentials.customer_id = 'new_id'
+        credentials.save()
+        # create a second attempt, this one with current version
+        # one new failure
+        SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+            contains_data=False,
+        )
+        assert SushiFetchAttempt.objects.count() == 3
+        # let's try it - there should be nothing
+        url = reverse('sushi-fetch-attempt-stats')
+        resp = master_client.get(url + '?mode=success_and_current&success_metric=contains_data')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['success_count'] == 1
+        assert data[0]['failure_count'] == 1
+        # let's check that with mode=current there would be only one
+        resp = master_client.get(url + '?mode=current&success_metric=contains_data')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['success_count'] == 0
+        assert data[0]['failure_count'] == 1
+        # let's check that with mode=all there would be three
+        resp = master_client.get(url + '?mode=all&success_metric=contains_data')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['success_count'] == 1
+        assert data[0]['failure_count'] == 2

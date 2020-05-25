@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import dateparser
 import reversion
-from django.db.models import Count, Q, Max, Min
+from django.db.models import Count, Q, Max, Min, F
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -155,6 +155,13 @@ class SushiFetchAttemptStatsView(APIView):
         'organization': ('credentials__organization', 'credentials__organization__name'),
     }
 
+    modes = {
+        'current': '',  # only attempts that match the current version of their credentials
+        'success_and_current': '',  # all successful and unsuccessful for current version of creds
+        'all': '',  # all attempts
+    }
+    default_mode = 'current'
+
     key_to_attr_map = {value[1]: key for key, value in attr_to_query_param_map.items()}
     key_to_attr_map.update(
         {value[0]: key + '_id' for key, value in attr_to_query_param_map.items()}
@@ -163,22 +170,26 @@ class SushiFetchAttemptStatsView(APIView):
 
     def get(self, request):
         organizations = request.user.accessible_organizations()
-        filter_params = {}
+        filter_params = []
         if 'organization' in request.query_params:
-            filter_params['credentials__organization'] = get_object_or_404(
-                organizations, pk=request.query_params['organization']
+            filter_params.append(
+                Q(
+                    credentials__organization=get_object_or_404(
+                        organizations, pk=request.query_params['organization']
+                    )
+                )
             )
         else:
-            filter_params['credentials__organization__in'] = organizations
+            filter_params.append(Q(credentials__organization__in=organizations))
         if 'platform' in request.query_params:
-            filter_params['credentials__platform_id'] = request.query_params['platform']
+            filter_params.append(Q(credentials__platform_id=request.query_params['platform']))
         if 'date_from' in request.query_params:
             date_from = dateparser.parse(request.query_params['date_from'])
             if date_from:
-                filter_params['timestamp__date__gte'] = date_from
+                filter_params.append(Q(timestamp__date__gte=date_from))
         if 'counter_version' in request.query_params:
             counter_version = request.query_params['counter_version']
-            filter_params['credentials__counter_version'] = counter_version
+            filter_params.append(Q(credentials__counter_version=counter_version))
         # what should be in the result?
         x = request.query_params.get('x', 'report')
         y = request.query_params.get('y', 'platform')
@@ -186,6 +197,22 @@ class SushiFetchAttemptStatsView(APIView):
         success_metric = request.query_params.get('success_metric', self.success_metrics[-1])
         if success_metric not in self.success_metrics:
             success_metric = self.success_metrics[-1]
+        # deal with mode - we need to add extra filters for some of the modes
+        mode = request.query_params.get('mode', self.default_mode)
+        if mode not in self.modes:
+            mode = self.default_mode
+        if mode == 'all':
+            # there is nothing to do here
+            pass
+        elif mode == 'current':
+            filter_params.append(Q(credentials_version_hash=F('credentials__version_hash')))
+        elif mode == 'success_and_current':
+            # all successful + other that match current version of credentials
+            filter_params.append(
+                Q(**{success_metric: True})
+                | Q(credentials_version_hash=F('credentials__version_hash'))
+            )
+        # fetch the data - we have different code in presence and absence of date in the data
         if x != 'month' and y != 'month':
             data = self.get_data_no_months(x, y, filter_params, success_metric)
         else:
@@ -197,7 +224,7 @@ class SushiFetchAttemptStatsView(APIView):
             out.append({self.key_to_attr_map.get(key, key): value for key, value in obj.items()})
         return Response(out)
 
-    def get_data_no_months(self, x, y, filter_params, success_metric):
+    def get_data_no_months(self, x, y, filter_params: [], success_metric):
         if x not in self.attr_to_query_param_map:
             return HttpResponseBadRequest('unsupported x dimension: "{}"'.format(x))
         if y not in self.attr_to_query_param_map:
@@ -209,7 +236,7 @@ class SushiFetchAttemptStatsView(APIView):
         values.extend(self.attr_to_query_param_map[y])
         # now get the output
         qs = (
-            SushiFetchAttempt.objects.filter(**filter_params)
+            SushiFetchAttempt.objects.filter(*filter_params)
             .values(*values)
             .annotate(
                 success_count=Count('pk', filter=Q(**{success_metric: True})),
@@ -218,7 +245,7 @@ class SushiFetchAttemptStatsView(APIView):
         )
         return qs
 
-    def get_data_with_months(self, dim, filter_params, success_metric):
+    def get_data_with_months(self, dim, filter_params: [], success_metric):
         if dim not in self.attr_to_query_param_map:
             return HttpResponseBadRequest('unsupported dimension: "{}"'.format(dim))
         # we use 2 separate fields for dim in order to preserve both the ID of the
@@ -232,7 +259,7 @@ class SushiFetchAttemptStatsView(APIView):
         while cur_date < end:
             # now get the output
             for rec in (
-                SushiFetchAttempt.objects.filter(**filter_params)
+                SushiFetchAttempt.objects.filter(*filter_params)
                 .filter(start_date__lte=cur_date, end_date__gte=cur_date)
                 .values(*values)
                 .annotate(
