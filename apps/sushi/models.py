@@ -140,6 +140,9 @@ class SushiCredentials(models.Model):
         default=UL_ORG_ADMIN,
         help_text='Only user with the same or higher level can unlock it and/or edit it',
     )
+    version_hash = models.CharField(
+        max_length=blake_hash_size * 2, help_text='Current hash of model attributes'
+    )
 
     class Meta:
         unique_together = (('organization', 'platform', 'counter_version'),)
@@ -147,6 +150,13 @@ class SushiCredentials(models.Model):
 
     def __str__(self):
         return f'{self.organization} - {self.platform}, {self.get_counter_version_display()}'
+
+    def save(self, *args, **kwargs):
+        """
+        We override the parent save method to make sure `version_hash` is recomputed on each save
+        """
+        self.version_hash = self.compute_version_hash()
+        super().save(*args, **kwargs)
 
     def change_lock(self, user: User, level: int):
         """
@@ -251,7 +261,7 @@ class SushiCredentials(models.Model):
         dump = json.dumps(data, ensure_ascii=False, sort_keys=True)
         return blake2b(dump.encode('utf-8'), digest_size=cls.blake_hash_size).hexdigest()
 
-    def version_hash(self):
+    def compute_version_hash(self):
         """
         A hash of the variable things of current credentials  - may be used to detect changes
         in credentials.
@@ -286,7 +296,7 @@ class SushiCredentials(models.Model):
             attempt_params = fetch_m(client, counter_report, start_date, end_date)
         attempt_params['in_progress'] = False
         # add version info to the attempt
-        attempt_params['credentials_version_hash'] = self.version_hash()
+        attempt_params['credentials_version_hash'] = self.compute_version_hash()
         # now store it - into an existing object or a new one
         if fetch_attempt:
             for key, value in attempt_params.items():
