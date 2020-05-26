@@ -20,7 +20,7 @@ services:
     entrypoint: /var/www/celus/entrypoint-web.sh
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.docker
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
       - ERMS_API_URL=${ERMS_API_URL}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -52,10 +52,10 @@ services:
       context: ..
       target: celus-django
     image: "celus-django"
-    entrypoint: /var/www/celus/start_celery.sh
+    entrypoint: /var/www/celus/entrypoint-celery.py
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.docker
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
       - ERMS_API_URL=${ERMS_API_URL}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -63,6 +63,18 @@ services:
       - POSTGRES_HOST=${POSTGRES_HOST}
       - REDIS_LOCATION=${REDIS_LOCATION}
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_WORKER_NORMAL_QUEUES=normal
+      - CELERY_WORKER_NORMAL_CONCURRENCY=3
+      - CELERY_WORKER_LONG_QUEUES=long
+      - CELERY_WORKER_LONG_CONCURRENCY=1
+      - CELERY_WORKER_LONG_TIMELIMIT=3600
+      - CELERY_WORKER_SUSHI_QUEUES=sushi
+      - CELERY_WORKER_SUSHI_CONCURRENCY=2
+      - CELERY_WORKER_SUSHI_TIMELIMIT=14400
+      - CELERY_WORKER_INTEREST_QUEUES=interest
+      - CELERY_WORKER_INTEREST_TIMELIMIT=14400
+      - CELERY_WORKER_IMPORT_QUEUES=import
+      - CELERY_WORKER_IMPORT_TIMELIMIT=14400
     depends_on:
       - redis
       - postgres
@@ -72,10 +84,10 @@ services:
       context: ..
       target: celus-django
     image: "celus-django"
-    entrypoint: /var/www/celus/start_celerybeat.sh
+    entrypoint: /var/www/celus/entrypoint-celery-beat.sh
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.docker
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
       - ERMS_API_URL=${ERMS_API_URL}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}

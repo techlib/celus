@@ -26,7 +26,7 @@ RUN \
 	apt-get -y install --no-install-recommends \
 		ca-certificates git cmake pkg-config gcc g++ openssh-client \
 		python3-dev python3-setuptools python3-pip python3-virtualenv \
-		python3-wheel curl locales libmagic-dev wait-for-it \
+		python3-wheel curl locales libmagic-dev wait-for-it libcap-dev \
 		&& \
 	apt-get clean
 
@@ -43,7 +43,8 @@ RUN \
 # install dependencies
 COPY requirements/ requirements/
 RUN \
-	pip install -r requirements/docker.txt
+	pip install -r requirements/docker.txt \
+	pip install python-prctl
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.docker
 
@@ -59,7 +60,7 @@ RUN \
 	cp config/settings/secret_settings.json.example config/settings/secret_settings.json && \
 	yes yes | env PROMETHEUS_EXPORT_MIGRATIONS=0 python manage.py collectstatic
 
-COPY start_celery.sh start_celerybeat.sh docker/entrypoint-web.sh docker/entrypoint-web.sh ./
+COPY docker/entrypoint-celery.py docker/entrypoint-celery-beat.sh docker/entrypoint-web.sh ./
 
 ENV LC_ALL="en_US.UTF-8"
 ENV LANG="en_US.UTF-8"
