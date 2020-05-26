@@ -215,7 +215,6 @@ class TestSushiCredentialsViewSet(object):
         assert SushiCredentials.objects.count() == 0
 
 
-@pytest.mark.now
 @pytest.mark.django_db()
 class TestSushiFetchAttemptStatsView(object):
     def test_no_dates_mode_all(
