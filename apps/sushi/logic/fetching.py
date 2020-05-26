@@ -4,11 +4,12 @@ Stuff related to fetching data from SUSHI servers.
 import concurrent.futures
 import logging
 import traceback
-from collections import Counter
+from collections import Counter, namedtuple
 from datetime import timedelta, date
 from functools import partial
+from itertools import groupby
 from time import sleep
-from typing import Optional
+from typing import Optional, Tuple
 
 from dateparser import parse as parse_date
 from django.conf import settings
@@ -310,3 +311,47 @@ def smart_decide_conflict_action(conflict):
         action = 'skip'  # it is too soon to retry
         logger.debug('Smart deciding to skip attempt - it is too soon to retry')
     return action
+
+
+def months_to_cover(first_month=None) -> [date]:
+    """
+    List of dates (month starts) for which we should try to get data
+    """
+    last_month = month_start(month_start(now().date()) - timedelta(days=15))
+    first_month = first_month or parse_date(settings.SUSHI_ATTEMPT_LAST_DATE+'-01').date()
+    month = first_month
+    months_to_check = []
+    while month <= last_month:
+        months_to_check.append(month)
+        month = month_start(month + timedelta(days=45))
+    return months_to_check
+
+
+DataHole = namedtuple('DataHole', ['date', 'credentials', 'counter_report', 'attempt_count'])
+
+
+def find_holes_in_data() -> [DataHole]:
+    """
+    Looks for months for which there should be data, but are not. The result is bound to specific
+    credentials and report type
+    :return:
+    """
+    months = months_to_cover()
+    result = []
+    for credentials in SushiCredentials.objects.filter(enabled=True):  # type: SushiCredentials
+        for report_type in credentials.active_counter_reports.all():
+            attempts = SushiFetchAttempt.objects.filter(credentials=credentials,
+                                                        counter_report=report_type)
+            month_to_attempts = {key: list(group)
+                                 for key, group in groupby(attempts, lambda x: x.start_date)}
+            for month in months:
+                attempts = month_to_attempts.get(month, [])
+                successful_attempts = [attempt for attempt in attempts
+                                       if attempt.processing_success]
+                if not successful_attempts:
+                    result.append(DataHole(date=month, credentials=credentials,
+                                           counter_report=report_type, attempt_count=len(attempts))
+                                  )
+    return result
+
+
