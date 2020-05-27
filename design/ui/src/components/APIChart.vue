@@ -23,8 +23,22 @@
     <div v-else>
     <v-container class="pa-0">
         <v-row class="pb-3">
+            <v-col
+                    v-if="showTableToggle"
+                    cols="auto"
+                    class="pl-5 py-0"
+            >
+                <v-btn-toggle
+                        v-model="tableView"
+                        mandatory
+                        borderless
+                >
+                    <v-btn :value="false" small><v-icon small>fa fa-chart-bar</v-icon></v-btn>
+                    <v-btn :value="true" small><v-icon small>fa fa-list</v-icon></v-btn>
+                </v-btn-toggle>
+            </v-col>
             <v-spacer></v-spacer>
-            <v-col cols="auto" shrink class="pr-3" v-if="reportedMetrics.length">
+            <v-col cols="auto" shrink class="pr-3 pa-0" v-if="reportedMetrics.length">
                 <v-tooltip bottom>
                     <template #activator="{on}">
                         <span v-on="on">
@@ -42,8 +56,9 @@
             </v-col>
         </v-row>
     </v-container>
-        <div>
+        <div :style="{'min-height': height}">
                 <component
+                        v-if="!tableView"
                         :is="chartComponent"
                         :data="chartData"
                         :settings="chartSettings"
@@ -54,7 +69,13 @@
                         :mark-line="markLine"
                         >
                 </component>
-            </div>
+            <ChartDataTable
+                    :rows="chartData.rows"
+                    :columns="chartData.columns"
+                    :primary-dimension="primaryDimension"
+                    v-else>
+            </ChartDataTable>
+        </div>
     </div>
 </template>
 <script>
@@ -70,10 +91,11 @@
   import 'echarts/lib/component/markLine'
   import LoaderWidget from './LoaderWidget'
   import { pivot } from '../libs/pivot'
+  import ChartDataTable from './ChartDataTable'
 
   export default {
     name: 'APIChart',
-    components: {VeHistogram, VeBar, VeLine, LoaderWidget},
+    components: {ChartDataTable, VeHistogram, VeBar, VeLine, LoaderWidget},
     props: {
       type: {
         type: String,
@@ -135,6 +157,10 @@
       maxLabelLength: {
         default: 50,
         type: Number,
+      },
+      showTableToggle: {
+        default: true,
+        type: Boolean,
       }
     },
     data () {
@@ -147,6 +173,7 @@
         displayData: [],
         rawDataLength: 0,
         out: null,
+        tableView: false,
       }
     },
     computed: {
