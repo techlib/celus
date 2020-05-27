@@ -9,7 +9,7 @@ cs:
 <template>
 <v-data-table
         :headers="headers"
-        :items="rows"
+        :items="formattedRows"
         :footer-props="{disableItemsPerPage: true, itemsPerPageOptions: [12]}"
         dense
 >
@@ -20,7 +20,7 @@ cs:
                     :key="i"
                     class="text-right"
             >
-                <span v-if="headers[i]['value'] !== primaryDimension">{{ total }}</span>
+                <span v-if="headers[i]['value'] !== primaryDimension">{{ formatInteger(total) }}</span>
                 <span v-else>{{ $t('total') }}</span>
             </th>
         </tr>
@@ -29,6 +29,8 @@ cs:
 </template>
 
 <script>
+  import { formatInteger } from '../libs/numbers'
+
   export default {
     name: 'ChartDataTable',
 
@@ -55,6 +57,28 @@ cs:
           }
         )
       },
+      formattedRows () {
+        return this.rows.map(x => {
+          let ret = {}
+          for (let [key, value] of Object.entries(x)) {
+            if (key != this.primaryDimension) {
+              let int = formatInteger(value)
+              if (int)
+                ret[key] = int
+              else
+                ret[key] = value
+            } else {
+              ret[key] = value
+            }
+          }
+          return ret
+        })
+      }
+
+    },
+
+    methods: {
+      formatInteger,
     }
 
   }
