@@ -47,6 +47,8 @@ class ReportType(models.Model):
                                               through_fields=('report_type', 'metric'))
     superseeded_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
                                        related_name='superseeds')
+    materialization_spec = models.ForeignKey('ReportMaterializationSpec', null=True, blank=True,
+                                             on_delete=models.SET_NULL)
 
     class Meta:
         unique_together = (('short_name', 'source'),)
@@ -71,6 +73,67 @@ class ReportType(models.Model):
     @property
     def public(self):
         return self.source is None
+
+
+class ReportMaterializationSpec(models.Model):
+
+    """
+    Describes how to slice a report type to get a new one. Used for materializing new report
+    types from existing ones.
+    """
+
+    name = models.CharField(max_length=100)
+    note = models.TextField(blank=True)
+    base_report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE,
+                                         limit_choices_to={'materialization_spec__isnull': True})
+    keep_metric = models.BooleanField(default=True)
+    keep_organization = models.BooleanField(default=True)
+    keep_platform = models.BooleanField(default=True)
+    keep_target = models.BooleanField(default=True)
+    keep_dim1 = models.BooleanField(default=True)
+    keep_dim2 = models.BooleanField(default=True)
+    keep_dim3 = models.BooleanField(default=True)
+    keep_dim4 = models.BooleanField(default=True)
+    keep_dim5 = models.BooleanField(default=True)
+    keep_dim6 = models.BooleanField(default=True)
+    keep_dim7 = models.BooleanField(default=True)
+    keep_date = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.name} ({self.base_report_type} {self.description})'
+
+    @property
+    def description(self):
+        _keep, missing = self.split_attributes()
+        return ' -' + ' -'.join(missing)
+
+    def split_attributes(self, add_id_postfix=False) -> ([], []):
+        """
+        return two lists of attribute names for the AccessLog models - the ones to keep and the
+        ones to remove
+        :param add_id_postfix: if given, the _id postfix will be added to the fk based attrs
+        :return: (keep, remove)
+        """
+        keep = []
+        remove = []
+        id_postfix = '_id' if add_id_postfix else ''
+        for attr in ('metric', 'organization', 'platform', 'target'):
+            if getattr(self, 'keep_'+attr):
+                keep.append(attr+id_postfix)
+            else:
+                remove.append(attr+id_postfix)
+        if self.keep_date:
+            keep.append('date')
+        else:
+            remove.append('date')
+        for i in range(1, 8):
+            if getattr(self, f'keep_dim{i}'):
+                keep.append(f'dim{i}')
+            else:
+                remove.append(f'dim{i}')
+        return keep, remove
 
 
 class InterestGroup(models.Model):
@@ -209,6 +272,9 @@ class ImportBatch(models.Model):
     log = models.TextField(blank=True)
     interest_timestamp = models.DateTimeField(
         null=True, blank=True, help_text='When was interest processed for this batch')
+    materialization_data = JSONField(default=dict, blank=True,
+                                     help_text='Internal information about materialized report '
+                                               'data in this batch')
 
     class Meta:
         verbose_name_plural = "Import batches"

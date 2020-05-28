@@ -20,7 +20,6 @@ Vue.use(Vuex)
 const MAX_CONCURRENT_REQUESTS_DEFAULT = 2
 let concurrencyManager = null
 
-
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
   reducer: state => ({
@@ -204,7 +203,6 @@ export default new Vuex.Store({
           }
         }
       )
-
 
       await dispatch('loadUserData')  // we need user data first
     },

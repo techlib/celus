@@ -1,3 +1,5 @@
+from time import monotonic
+
 from django.http import HttpResponseBadRequest
 from pandas import DataFrame
 from rest_framework.generics import get_object_or_404
@@ -45,14 +47,16 @@ class ChartDataView(APIView):
     def get(self, request, report_view_id):
         report_view = get_object_or_404(ReportDataView, pk=report_view_id)
         computer = StatsComputer()
+        start = monotonic()
+        try:
+            data = computer.get_data(report_view, request.GET, request.user)
+        except TooMuchDataError:
+            return Response({'too_much_data': True})
         # prometheus stats
-        label_attrs = dict(view_type='chart_data', report_type=report_view.base_report_type_id)
+        label_attrs = dict(view_type='chart_data', report_type=computer.used_report_type.pk)
         report_access_total_counter.labels(**label_attrs).inc()
-        with report_access_time_summary.labels(**label_attrs).time():
-            try:
-                data = computer.get_data(report_view, request.GET, request.user)
-            except TooMuchDataError:
-                return Response({'too_much_data': True})
+        report_access_time_summary.labels(**label_attrs).observe(monotonic() - start)
+
         data_format = request.GET.get('format')
         if data_format in ('csv', 'xlsx'):
             # for the bare result, we do not add any extra information, just output the list

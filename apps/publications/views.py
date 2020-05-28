@@ -12,7 +12,8 @@ from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
 from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission
-from logs.logic.queries import extract_interests_from_objects, interest_annotation_params
+from logs.logic.queries import extract_interests_from_objects, interest_annotation_params, \
+    replace_report_type_with_materialized
 from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metric
 from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
@@ -165,7 +166,7 @@ class PlatformInterestViewSet(ViewSet):
         interest_annot_params = {
             interest_type.text:
                 Coalesce(
-                    Sum('value', filter=Q(dim1=interest_type.pk, report_type=interest_rt)),
+                    Sum('value', filter=Q(dim1=interest_type.pk)),
                     0)
             for interest_type in interest_type_dim.dimensiontext_set.filter(text__in=ig_names)
         }
@@ -175,8 +176,10 @@ class PlatformInterestViewSet(ViewSet):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         date_filter_params = date_filter_from_params(request.GET)
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
+        accesslog_filter = {'report_type': interest_rt, **org_filter, **date_filter_params}
+        replace_report_type_with_materialized(accesslog_filter)
         result = AccessLog.objects\
-            .filter(**org_filter, **date_filter_params, report_type=interest_rt)\
+            .filter(**accesslog_filter)\
             .values('platform')\
             .annotate(**interest_annot_params)
         return result
@@ -215,8 +218,10 @@ class PlatformInterestViewSet(ViewSet):
         """
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        accesslog_filter = {'report_type': interest_rt, 'platform_id': pk, **org_filter}
+        replace_report_type_with_materialized(accesslog_filter)
         result = AccessLog.objects\
-            .filter(report_type=interest_rt, **org_filter, platform_id=pk)\
+            .filter(**accesslog_filter)\
             .values('date__year')\
             .annotate(**interest_annot_params)
         return Response(result)
@@ -228,8 +233,10 @@ class PlatformInterestViewSet(ViewSet):
         """
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        accesslog_filter = {'report_type': interest_rt, **org_filter}
+        replace_report_type_with_materialized(accesslog_filter)
         result = AccessLog.objects\
-            .filter(report_type=interest_rt, **org_filter)\
+            .filter(**accesslog_filter)\
             .values('platform', 'date__year')\
             .annotate(**interest_annot_params)
         return Response(result)

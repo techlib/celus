@@ -1,4 +1,5 @@
 import traceback
+from time import monotonic
 
 from django.core.cache import cache
 from django.core.mail import mail_admins
@@ -49,10 +50,12 @@ class Counter5DataView(APIView):
     def get(self, request, report_type_id):
         report_type = get_object_or_404(ReportType, pk=report_type_id)
         computer = StatsComputer()
-        label_attrs = dict(view_type='chart_data_raw', report_type=report_type.pk)
+        start = monotonic()
+        data = computer.get_data(report_type, request.GET, request.user)
+        label_attrs = dict(view_type='chart_data_raw', report_type=computer.used_report_type.pk)
         report_access_total_counter.labels(**label_attrs).inc()
-        with report_access_time_summary.labels(**label_attrs).time():
-            data = computer.get_data(report_type, request.GET, request.user)
+        report_access_time_summary.labels(**label_attrs).observe(monotonic() - start)
+
         data_format = request.GET.get('format')
         if data_format in ('csv', 'xlsx'):
             # for the bare result, we do not add any extra information, just output the list
