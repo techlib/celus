@@ -225,7 +225,7 @@ class StatsComputer(object):
         if dim_name in self.implicit_dims:
             # this is the only place where we use the split version of dim_name (for now)
             if rest:
-                return dim_name, dim_name + '__' + rest, None
+                return dim_name, f'{dim_name}__{rest}', None
             else:
                 return dim_name, dim_name, None
         dimensions = self.used_report_type.dimensions_sorted
