@@ -279,6 +279,46 @@ class TestChartDataAPI(object):
         assert len(data['data']) == count
 
 
+    @pytest.mark.now
+    def test_api_date_year_query(self, counter_records, organizations, report_type_nd,
+                                 authenticated_client):
+        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
+                                           provider='Provider 1')
+        data = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title1', '2018-02-01', '1v1', 2],
+            ['Title2', '2018-03-01', '1v2', 4],
+            ['Title1', '2019-01-01', '1v1', 8],
+        ]
+        crs = list(counter_records(data, metric='Hits', platform='Platform1'))
+        organization = organizations[0]
+        report_type = report_type_nd(1)
+        import_batch = ImportBatch.objects.create(organization=organization, platform=platform,
+                                                  report_type=report_type)
+        import_counter_records(report_type, organization, platform, crs, import_batch)
+        assert AccessLog.objects.count() == 4
+        metric = Metric.objects.get(short_name='Hits')
+        # check it without year first
+        params = {'organization': organization.pk,
+                  'metric': metric.pk,
+                  'platform': platform.pk,
+                  'prim_dim': 'date'
+                  }
+        resp = authenticated_client.get(reverse('chart_data_raw', args=(report_type.pk,)),
+                                        params)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data['data']) == 4
+        # now try years
+        params['prim_dim'] = 'date__year'
+        resp = authenticated_client.get(reverse('chart_data_raw', args=(report_type.pk,)),
+                                        params)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data['data']) == 2
+        assert data['data'][0]['count'] == 7
+
+
 @pytest.mark.django_db
 class TestManualDataUpload(object):
 

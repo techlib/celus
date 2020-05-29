@@ -212,12 +212,22 @@ class StatsComputer(object):
         :return: (output name of the dimension, name of dimension attr on AccessLog model,
                   Dimension instance if not implicit)
         """
+        # we support Django style __ for date parts and related fields references
+        # here we split the name before processing if __ is present
+        rest = ''
+        if dim_name and '__' in dim_name:
+            dim_name, rest = dim_name.split('__', 1)
+
         if dim_name is None:
             return None, None, None
         if dim_name in self.input_dim_to_query_dim:
             return dim_name, self.input_dim_to_query_dim[dim_name], None
         if dim_name in self.implicit_dims:
-            return dim_name, dim_name, None
+            # this is the only place where we use the split version of dim_name (for now)
+            if rest:
+                return dim_name, dim_name + '__' + rest, None
+            else:
+                return dim_name, dim_name, None
         dimensions = self.used_report_type.dimensions_sorted
         for dim_idx, dimension in enumerate(dimensions):
             if dimension.short_name == dim_name:

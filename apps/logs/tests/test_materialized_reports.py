@@ -15,7 +15,6 @@ from organizations.tests.conftest import organizations
 
 @pytest.mark.django_db()
 class TestMaterializedReport(object):
-    @pytest.mark.now()
     def test_not_title(self, counter_records, organizations, report_type_nd):
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
@@ -45,7 +44,6 @@ class TestMaterializedReport(object):
         assert mat_report.accesslog_set.count() == 2
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {1, 6}
 
-    @pytest.mark.now()
     def test_no_dim1(self, counter_records, organizations, report_type_nd):
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
@@ -75,7 +73,6 @@ class TestMaterializedReport(object):
         assert mat_report.accesslog_set.count() == 3
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {1, 2, 4}
 
-    @pytest.mark.now()
     def test_no_title_and_dim1(self, counter_records, organizations, report_type_nd):
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
@@ -105,7 +102,6 @@ class TestMaterializedReport(object):
         assert mat_report.accesslog_set.count() == 1
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {7}
 
-    @pytest.mark.now()
     @pytest.mark.parametrize(
         ['query_params', 'other_dims', 'result'],
         [

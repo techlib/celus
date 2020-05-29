@@ -390,7 +390,9 @@
         // prepare the data
         this.crunchingData = true
         // reformat date value to exclude the day component
-        rawData = rawData.map(dict => {if ('date' in dict) dict['date'] = dict.date.substring(0, 7); return dict})
+        // the check for dict.date.substring is there because the date may be a year as a number
+        // in some cases
+        rawData = rawData.map(dict => {if ('date' in dict && dict.date.substring) dict['date'] = dict.date.substring(0, 7); return dict})
         // truncate long labels
         this.dataRaw = rawData.map(dict => {
             let val1 = String(dict[this.primaryDimension])
