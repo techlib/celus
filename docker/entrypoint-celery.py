@@ -41,9 +41,10 @@ def config_to_program(worker_name, options: dict) -> typing.List[str]:
         [
             f"--time-limit={options['TIMELIMIT']}",
             f"--concurrency={options['CONCURRENCY']}",
-            f"-Ofair",
+            "-Ofair",
             f"--queues={queues}",
             f"--hostname={worker_name}@{socket.gethostname()}",
+            "--pool=threads",
         ]
     )
 
