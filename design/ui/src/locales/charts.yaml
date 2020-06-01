@@ -24,6 +24,12 @@ en:
         loading_data: Loading data
         preparing_data: Crunching data
         crunching_records: Crunching {n} record | Crunching {n} records
+    chart_view:
+        table: Table view
+        chart: Chart view
+    x_axis:
+        linear: Linear X axis
+        year_months: Group data by months - creates separate bars for each year
     interest_metrics_only: This view uses interest-defining metrics only.
     reported_metrics_tooltip: "Only the following metrics were used to compute the displayed values:"
     reported_metrics_tooltip_many: The resulting value is a sum of the individual displayed metrics.
@@ -53,6 +59,12 @@ cs:
         loading_data: Nahrávám data
         preparing_data: Zpracovávám data
         crunching_records: Zpracovávám {n} záznam | Zpracovávám {n} záznamů
+    chart_view:
+        table: Tabulkové zobrazení
+        chart: Zobrazení v grafu
+    x_axis:
+        linear: Lineární osa X
+        year_months: Seskupení dat po měsících - vytvoří sloupce pro jednotlivé roky
     interest_metrics_only: Tento pohled využívá pouze metriky, které definují zájem.
     reported_metrics_tooltip: "Při výpočtu dat pro tento graf byly použity pouze tyto metriky:"
     reported_metrics_tooltip_many: Výsledná hodnota je součtem jednotlivých uvedených metrik.

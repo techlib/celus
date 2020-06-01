@@ -33,8 +33,50 @@
                         mandatory
                         borderless
                 >
-                    <v-btn :value="false" small><v-icon small>fa fa-chart-bar</v-icon></v-btn>
-                    <v-btn :value="true" small><v-icon small>fa fa-list</v-icon></v-btn>
+                    <v-tooltip bottom>
+                        <template #activator="{on}">
+                            <v-btn :value="false" small v-on="on">
+                                <v-icon small>fa fa-chart-bar</v-icon>
+                            </v-btn>
+                        </template>
+                        <span>{{ $t('chart_view.chart') }}</span>
+                    </v-tooltip>
+                    <v-tooltip bottom>
+                        <template #activator="{on}">
+                            <v-btn :value="true" small v-on="on">
+                                <v-icon small>fa fa-list</v-icon>
+                            </v-btn>
+                        </template>
+                        <span>{{ $t('chart_view.table') }}</span>
+                    </v-tooltip>
+                </v-btn-toggle>
+            </v-col>
+            <v-col
+                    v-if="allowYearAsSeries"
+                    cols="auto"
+                    class="pl-5 py-0"
+            >
+                <v-btn-toggle
+                        v-model="yearAsSeries"
+                        mandatory
+                        borderless
+                >
+                    <v-tooltip bottom>
+                        <template #activator="{on}">
+                            <v-btn :value="false" small v-on="on">
+                                <v-icon x-small>fa fa-ellipsis-h</v-icon>
+                            </v-btn>
+                        </template>
+                        <span>{{ $t('x_axis.linear') }}</span>
+                    </v-tooltip>
+                    <v-tooltip bottom>
+                        <template #activator="{on}">
+                            <v-btn :value="true" small v-on="on"  :disabled="primaryDimension !== 'date'">
+                                <v-icon x-small>fa fa-layer-group</v-icon>
+                            </v-btn>
+                        </template>
+                        <span>{{ $t('x_axis.year_months') }}</span>
+                    </v-tooltip>
                 </v-btn-toggle>
             </v-col>
             <v-spacer></v-spacer>
@@ -72,7 +114,7 @@
             <ChartDataTable
                     :rows="chartData.rows"
                     :columns="chartData.columns"
-                    :primary-dimension="primaryDimension"
+                    :primary-dimension="shownPrimaryDimension"
                     v-else>
             </ChartDataTable>
         </div>
@@ -139,7 +181,9 @@
         type: Boolean,
         default: false,
       },
-      height: {default: '400px'},
+      height: {
+        default: '400px'
+      },
       zoom: {
         type: Boolean,
         default: true,
@@ -161,7 +205,11 @@
       showTableToggle: {
         default: true,
         type: Boolean,
-      }
+      },
+      allowYearAsSeries: {
+        default: true,
+        type: Boolean,
+      },
     },
     data () {
       return {
@@ -172,8 +220,10 @@
         tooMuchData: false,
         displayData: [],
         rawDataLength: 0,
+        rawData: null,
         out: null,
         tableView: false,
+        yearAsSeries: false, // should each year form a separate series?
       }
     },
     computed: {
@@ -216,14 +266,14 @@
           return []
         if (this.dataRaw.length === 0)
           return []
-        if (this.secondaryDimension) {
+        if (this.shownSecondaryDimension) {
           let rows = this.rows
           return [
-            this.dimensionToName(this.primaryDimension),
-            ...Object.keys(rows[0]).filter(item => item !== this.primaryDimension)
+            this.dimensionToName(this.shownPrimaryDimension),
+            ...Object.keys(rows[0]).filter(item => item !== this.shownPrimaryDimension)
           ]
         } else {
-          return [this.dimensionToName(this.primaryDimension), 'count']
+          return [this.dimensionToName(this.shownPrimaryDimension), 'count']
         }
       },
       chartData () {
@@ -234,7 +284,7 @@
       },
       chartExtend () {
         let colors = ['#ff0000', '#ff8844', '#ff4488', '#ff4444']
-        if (this.primaryDimension === 'organization') {
+        if (this.shownPrimaryDimension === 'organization') {
           let that = this
           return {
             series(item) {
@@ -256,7 +306,7 @@
         return {}
       },
       markLine () {
-        if (this.primaryDimension === 'organization' && this.showMarkLine && this.organizationRow !== null) {
+        if (this.shownPrimaryDimension === 'organization' && this.showMarkLine && this.organizationRow !== null) {
           return {
             silent: true,
             symbol: ['none', 'none'],
@@ -302,15 +352,27 @@
       },
       chartSettings () {
         let out = {}
-        if (!this.secondaryDimension) {
+        if (!this.shownSecondaryDimension) {
           // count is the metric, we remap it to a different name
           out['labelMap'] = {
             'count': this.$i18n.t('chart.count')
           }
         } else {
-          if (this.rows && this.rows.length && this.stack) {
-            out['stack'] = {
-              'all': [...Object.keys(this.rows[0]).filter(item => item !== this.primaryDimension)]
+          if (this.rows && this.rows.length) {
+            if (this.regroupByYear) {
+              let stack = {}
+              for (let key of Object.keys(this.rows[0])) {
+                let year = key.substring(0, 4)
+                if (!(year in stack)) {
+                  stack[year] = []
+                }
+                stack[year].push(key)
+              }
+              out['stack'] = stack
+            } else if (this.stack) {
+              out['stack'] = {
+                'all': [...Object.keys(this.rows[0]).filter(item => item !== this.shownPrimaryDimension)]
+              }
             }
           }
         }
@@ -380,7 +442,20 @@
       },
       crunchingText () {
         return this.$tc('chart.crunching_records', this.rawDataLength)
-      }
+      },
+      regroupByYear () {
+        return this.yearAsSeries && this.primaryDimension === 'date'
+      },
+      shownPrimaryDimension () {
+        if (this.regroupByYear)
+          return 'month'
+        return this.primaryDimension
+      },
+      shownSecondaryDimension () {
+        if (this.regroupByYear)
+          return 'year'
+        return this.secondaryDimension
+      },
     },
     methods: {
       ...mapActions({
@@ -408,9 +483,18 @@
             return dict
           }
         )
+        // extract years when necessary
+        if (this.regroupByYear) {
+          this.dataRaw.forEach(dict => {
+            dict['year'] = dict['date'].substring(0, 4)
+            if (this.secondaryDimension) {
+              dict.year += ': ' + dict[this.secondaryDimension]
+            }
+            dict['month'] = Number.parseInt(dict['date'].substring(5, 7), 10)
+          })
+        }
         // secondary dimension
-        if (this.secondaryDimension) {
-          console.log('going to pivot')
+        if (this.shownSecondaryDimension) {
           let now = new Date()
           let out = this.pivot()
           this.out = out
@@ -419,10 +503,13 @@
             // NOTE: order by sum of values - it does not matter how is the orderBy called
             function sumNonPrimary (rec) {
               // remove value of primary dimension, sum the rest
-              return Object.entries(rec).filter(([a, b]) => a !== this.primaryDimension).map(([a, b]) => b).reduce((x, y) => x + y)
+              return Object.entries(rec).filter(([a, b]) => a !== this.shownPrimaryDimension).map(([a, b]) => b).reduce((x, y) => x + y)
             }
             let sum = sumNonPrimary.bind(this)
             out.sort((a, b) => (sum(a) - sum(b)))
+          }
+          if (this.regroupByYear && this.shownPrimaryDimension === 'month') {
+            out.forEach(dict => dict.month = new Date(2020, dict.month - 1, 1).toLocaleString(this.$i18n.locale,{month: "short"}))
           }
           this.displayData = out
         } else {
@@ -451,6 +538,7 @@
             this.loading = false
             this.crunchingData = true
             this.rawDataLength = response.data.data.length
+            this.rawData = response.data.data
             this.reportedMetrics = response.data.reported_metrics
             // we use timeout to give the interface time to redraw
             setTimeout(async () => await this.ingestData(response.data.data), 10)
@@ -462,7 +550,7 @@
         }
       },
       pivot () {
-        return pivot(this.dataRaw, this.primaryDimension, this.secondaryDimension, 'count')
+        return pivot(this.dataRaw, this.shownPrimaryDimension, this.shownSecondaryDimension, 'count')
       },
       dimensionToName (dim) {
         if (typeof dim === 'number') {
@@ -478,6 +566,9 @@
       dataURL () {
         this.loadData()
       },
+      yearAsSeries () {
+        this.ingestData(this.rawData)
+      }
     }
   }
 </script>
