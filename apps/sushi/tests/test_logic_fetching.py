@@ -13,6 +13,14 @@ from sushi.models import CounterReportType, SushiCredentials, SushiFetchAttempt
 from organizations.tests.conftest import organizations
 from publications.tests.conftest import platforms
 from logs.tests.conftest import report_type_nd
+from ..tasks import retry_holes_with_new_credentials_task
+
+
+@pytest.fixture(scope='session')
+def celery_config():
+    return {
+        'task_always_eager': True,
+    }
 
 
 class TestHelperFunctions(object):
@@ -125,8 +133,52 @@ class TestHoleFillingMachinery(object):
         assert len(holes) == 3
         # add an attempt and try again
         assert SushiFetchAttempt.objects.count() == 0
-        stats = retry_holes_with_new_credentials()
-        print(stats)
+        retry_holes_with_new_credentials()
+        assert SushiFetchAttempt.objects.count() == 3
+        holes = find_holes_in_data()
+        assert len(holes) == 0
+
+    @pytest.mark.now
+    def test_retry_holes_with_new_credentials_task(self, settings, organizations, report_type_nd,
+                                                   celery_session_worker):
+        """
+        Tests the `find_holes_in_data` function.
+        """
+        # set the date to 3 months before today
+        first_month = month_start(month_start(now().date()) - timedelta(days=80))
+        settings.SUSHI_ATTEMPT_LAST_DATE = first_month.isoformat()[:7]
+        # create all the prerequisites
+        data = [
+            {
+                'platform': 'XXX',
+                'organization': organizations[1].internal_id,
+                'customer_id': 'BBB',
+                'requestor_id': 'RRRX',
+                'URL': 'http://this.is/test/2',
+                'version': 5,
+                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+            },
+        ]
+        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
+        import_sushi_credentials(data)
+        assert SushiCredentials.objects.count() == 1
+        cr1 = SushiCredentials.objects.get()
+        cr1.create_sushi_client()
+        report = CounterReportType.objects.create(
+            code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
+        )
+        cr1.active_counter_reports.add(report)
+
+        def mock_get_report_data(*args, **kwargs):
+            return Counter5ReportBase()
+
+        Sushi5Client.get_report_data = mock_get_report_data
+        # test that find_holes_in_data returns the right number of records
+        holes = find_holes_in_data()
+        assert len(holes) == 3
+        # add an attempt and try again
+        assert SushiFetchAttempt.objects.count() == 0
+        retry_holes_with_new_credentials_task()
         assert SushiFetchAttempt.objects.count() == 3
         holes = find_holes_in_data()
         assert len(holes) == 0

@@ -240,6 +240,15 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BROKER_URL = 'redis://localhost'
 CELERY_TIMEZONE = TIME_ZONE
 
+# Note about priorities - it is not clear from the Celery documentation, but from my experiments
+# it looks like:
+# - 0 means "higher" priority - it gets processed first
+#   9 is the "lowest" priority - gets processed last
+# - default priority is 0 (or 1 or 2 - these end up in the same list)
+
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'queue_order_strategy': 'priority',
+}
 
 CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
                       'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
@@ -250,6 +259,7 @@ CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
                       'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
                       'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
                       'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
+                      'core.tasks.test': {'queue': 'normal'}
                       }
 
 CELERY_BEAT_SCHEDULE = {
