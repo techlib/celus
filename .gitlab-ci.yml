@@ -1,10 +1,12 @@
 stages:
   - push
+  - lints
   - tests
   - build
 
 include:
   - local: /.gitlab/github-export.yml
+  - local: /.gitlab/pre-commit.yml
 
 build_vue:
   stage: build
