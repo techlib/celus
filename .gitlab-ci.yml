@@ -42,7 +42,7 @@ run_tests:
     - apt-get -y install --no-install-recommends ca-certificates git cmake make pkg-config gcc g++ python3-dev python3-pip python3-venv python3-setuptools virtualenv curl libmagic-dev python3-wheel
     - update-alternatives --install /usr/bin/python python /usr/bin/python3 1
     - update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
-    - pip install -r requirements/test.txt
+    - pip install -r requirements/develop.txt
   script:
     - cp config/settings/secret_settings.json.example config/settings/secret_settings.json
     - pytest -v apps
