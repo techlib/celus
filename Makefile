@@ -9,5 +9,3 @@ requirements/production.txt: poetry.lock
 
 requirements/develop.txt: poetry.lock
 	poetry export -q --dev --without-hashes -f requirements.txt -o $@
-
-
