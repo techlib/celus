@@ -134,8 +134,7 @@ class RawDataDelayedExportView(APIView):
 
     permission_classes = [IsAuthenticated &
                           (SuperuserOrAdminPermission |
-                           (CanPostOrganizationDataPermission &
-                            OrganizationRequiredInDataForNonSuperusers &
+                           (OrganizationRequiredInDataForNonSuperusers &
                             CanAccessOrganizationFromGETAttrs
                             )
                            )]
