@@ -45,6 +45,6 @@ run_tests:
     - pip install -r requirements/test.txt
   script:
     - cp config/settings/secret_settings.json.example config/settings/secret_settings.json
-    - pytest apps
+    - pytest -v apps
   tags:
     - bdd
