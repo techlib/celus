@@ -46,5 +46,3 @@ class TestURLComposition(object):
         Sushi5Client.get_report_data = mock_get_report_data
         cr1.fetch_report(report, start_date='2020-01-01', end_date='2020-01-31')
         assert orig_params == Sushi5Client.EXTRA_PARAMS
-
-

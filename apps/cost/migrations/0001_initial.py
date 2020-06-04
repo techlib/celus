@@ -21,14 +21,40 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Payment',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('year', models.PositiveSmallIntegerField(validators=[core.validators.validate_year])),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
+                (
+                    'year',
+                    models.PositiveSmallIntegerField(validators=[core.validators.validate_year]),
+                ),
                 ('price', models.PositiveIntegerField(help_text='Price in reference currency')),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('last_updated', models.DateTimeField(default=django.utils.timezone.now)),
-                ('last_updated_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('organization', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization')),
-                ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='publications.Platform')),
+                (
+                    'last_updated_by',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    'organization',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization'
+                    ),
+                ),
+                (
+                    'platform',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'
+                    ),
+                ),
             ],
         ),
     ]

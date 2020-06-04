@@ -13,6 +13,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='counterreporttype',
             name='active',
-            field=models.BooleanField(default=True, help_text='When turned off, this type of report will not be automatically downloaded'),
+            field=models.BooleanField(
+                default=True,
+                help_text='When turned off, this type of report will not be automatically downloaded',
+            ),
         ),
     ]

@@ -12,8 +12,11 @@ from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
 from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission
-from logs.logic.queries import extract_interests_from_objects, interest_annotation_params, \
-    replace_report_type_with_materialized
+from logs.logic.queries import (
+    extract_interests_from_objects,
+    interest_annotation_params,
+    replace_report_type_with_materialized,
+)
 from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metric
 from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
@@ -39,9 +42,9 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         Provides a list of report types associated with this platform
         """
         platform = get_object_or_404(Platform.objects.all(), pk=pk)
-        report_types = ReportType.objects.filter(interest_platforms=platform).\
-            prefetch_related('reportinterestmetric_set__metric',
-                             'reportinterestmetric_set__interest_group')
+        report_types = ReportType.objects.filter(interest_platforms=platform).prefetch_related(
+            'reportinterestmetric_set__metric', 'reportinterestmetric_set__interest_group'
+        )
         # for rt in report_types:
         #     rt.used_metrics = Metric.objects.\
         #         filter(pk__in=AccessLog.objects.filter(report_type=rt, platform=platform).
@@ -57,37 +60,40 @@ class PlatformViewSet(ReadOnlyModelViewSet):
         """
         Should return only platforms for the requested organization
         """
-        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                     self.request.user)
+        org_filter = organization_filter_from_org_id(
+            self.kwargs.get('organization_pk'), self.request.user
+        )
         return Platform.objects.filter(**org_filter)
 
     @action(methods=['GET'], url_path='no-interest-defined', detail=False)
     def without_interest_definition(self, request, organization_pk):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         import_batch_query = ImportBatch.objects.filter(platform_id=OuterRef('pk'))
-        qs = Platform.objects.\
-            filter(**org_filter, interest_reports__isnull=True).\
-            annotate(has_data=Exists(import_batch_query))
+        qs = Platform.objects.filter(**org_filter, interest_reports__isnull=True).annotate(
+            has_data=Exists(import_batch_query)
+        )
         return Response(DetailedPlatformSerializer(qs, many=True).data)
 
     @action(methods=['GET'], url_path='title-count', detail=False)
     def title_count(self, request, organization_pk):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         date_filter_params = date_filter_from_params(request.GET)
-        qs = PlatformTitle.objects.\
-            filter(**org_filter, **date_filter_params).\
-            values('platform').\
-            annotate(title_count=Count('title', distinct=True))
+        qs = (
+            PlatformTitle.objects.filter(**org_filter, **date_filter_params)
+            .values('platform')
+            .annotate(title_count=Count('title', distinct=True))
+        )
         return Response(qs)
 
     @action(methods=['GET'], url_path='title-count', detail=True)
     def title_count_detail(self, request, organization_pk, pk):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         date_filter_params = date_filter_from_params(request.GET)
-        qs = PlatformTitle.objects.\
-            filter(platform_id=pk, **org_filter, **date_filter_params).\
-            values('platform').\
-            annotate(title_count=Count('title', distinct=True))
+        qs = (
+            PlatformTitle.objects.filter(platform_id=pk, **org_filter, **date_filter_params)
+            .values('platform')
+            .annotate(title_count=Count('title', distinct=True))
+        )
         try:
             result = qs.get()
             title_count = result.get('title_count', 0)
@@ -109,8 +115,9 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
             interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
         except ReportType.DoesNotExist:
             raise ValueError('No interest report type exists')
-        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                     self.request.user)
+        org_filter = organization_filter_from_org_id(
+            self.kwargs.get('organization_pk'), self.request.user
+        )
         # filters for the suitable access logs
         count_filter = extend_query_filter(org_filter, 'accesslog__')
         # we prefilter using the same filter as for count annotation
@@ -129,19 +136,23 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
             # we are not filtering by id, so we are getting a list and thus adding interest here
             # otherwise we will do it in get_object
             # also we filter only platforms that have some data for the organization at hand
-            result = Platform.objects.filter(**org_filter).filter(**prefilter). \
-                annotate(title_count=Count('accesslog__target', distinct=True,
-                                           filter=Q(**count_filter)),
-                         **interest_annot_params)
+            result = (
+                Platform.objects.filter(**org_filter)
+                .filter(**prefilter)
+                .annotate(
+                    title_count=Count('accesslog__target', distinct=True, filter=Q(**count_filter)),
+                    **interest_annot_params,
+                )
+            )
             extract_interests_from_objects(interest_rt, result)
         else:
             # we are filtering by ID and thus getting only one object
             # in this case we drop the prefilter so that it is possible to get data
             # for platforms that are not connected to the organization
-            result = Platform.objects.filter(**org_filter).\
-                annotate(title_count=Count('accesslog__target', distinct=True,
-                                           filter=Q(**count_filter)),
-                         **interest_annot_params)
+            result = Platform.objects.filter(**org_filter).annotate(
+                title_count=Count('accesslog__target', distinct=True, filter=Q(**count_filter)),
+                **interest_annot_params,
+            )
         return result
 
     def get_object(self):
@@ -154,7 +165,6 @@ class DetailedPlatformViewSet(ReadOnlyModelViewSet):
 
 
 class PlatformInterestViewSet(ViewSet):
-
     @classmethod
     def get_report_type_and_filters(cls):
         interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
@@ -164,10 +174,7 @@ class PlatformInterestViewSet(ViewSet):
         # for which the dimension text mapping still exists
         ig_names = {x['short_name'] for x in InterestGroup.objects.all().values('short_name')}
         interest_annot_params = {
-            interest_type.text:
-                Coalesce(
-                    Sum('value', filter=Q(dim1=interest_type.pk)),
-                    0)
+            interest_type.text: Coalesce(Sum('value', filter=Q(dim1=interest_type.pk)), 0)
             for interest_type in interest_type_dim.dimensiontext_set.filter(text__in=ig_names)
         }
         return interest_rt, interest_annot_params
@@ -178,10 +185,11 @@ class PlatformInterestViewSet(ViewSet):
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
         accesslog_filter = {'report_type': interest_rt, **org_filter, **date_filter_params}
         replace_report_type_with_materialized(accesslog_filter)
-        result = AccessLog.objects\
-            .filter(**accesslog_filter)\
-            .values('platform')\
+        result = (
+            AccessLog.objects.filter(**accesslog_filter)
+            .values('platform')
             .annotate(**interest_annot_params)
+        )
         return result
 
     def list(self, request, organization_pk):
@@ -190,18 +198,21 @@ class PlatformInterestViewSet(ViewSet):
         if data_format in ('csv', 'xlsx'):
             # when exporting, we want to rename the columns and rows
             data = DataFrame(qs)
-            platform_names = {pl['pk']: pl['short_name']
-                              for pl in Platform.objects.all().values('pk', 'short_name')}
-            metric_names = {m['short_name']: m['name']
-                            for m in InterestGroup.objects.all().values('short_name', 'name')}
+            platform_names = {
+                pl['pk']: pl['short_name']
+                for pl in Platform.objects.all().values('pk', 'short_name')
+            }
+            metric_names = {
+                m['short_name']: m['name']
+                for m in InterestGroup.objects.all().values('short_name', 'name')
+            }
             data['platform'] = [platform_names[pk] for pk in data['platform']]
             data.set_index('platform', drop=True, inplace=True)
             data.rename(columns=metric_names, inplace=True)
-            return Response(data,
-                            headers={
-                                'Content-Disposition':
-                                    f'attachment; filename="export.{data_format}"'
-                            })
+            return Response(
+                data,
+                headers={'Content-Disposition': f'attachment; filename="export.{data_format}"'},
+            )
         return Response(qs)
 
     def retrieve(self, request, organization_pk, pk):
@@ -220,10 +231,11 @@ class PlatformInterestViewSet(ViewSet):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         accesslog_filter = {'report_type': interest_rt, 'platform_id': pk, **org_filter}
         replace_report_type_with_materialized(accesslog_filter)
-        result = AccessLog.objects\
-            .filter(**accesslog_filter)\
-            .values('date__year')\
+        result = (
+            AccessLog.objects.filter(**accesslog_filter)
+            .values('date__year')
             .annotate(**interest_annot_params)
+        )
         return Response(result)
 
     @action(detail=False, url_path='by-year')
@@ -235,10 +247,11 @@ class PlatformInterestViewSet(ViewSet):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         accesslog_filter = {'report_type': interest_rt, **org_filter}
         replace_report_type_with_materialized(accesslog_filter)
-        result = AccessLog.objects\
-            .filter(**accesslog_filter)\
-            .values('platform', 'date__year')\
+        result = (
+            AccessLog.objects.filter(**accesslog_filter)
+            .values('platform', 'date__year')
             .annotate(**interest_annot_params)
+        )
         return Response(result)
 
 
@@ -274,8 +287,9 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         """
         Should return only titles for specific organization and platform
         """
-        self.org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                          self.request.user)
+        self.org_filter = organization_filter_from_org_id(
+            self.kwargs.get('organization_pk'), self.request.user
+        )
         self.date_filter = date_filter_from_params(self.request.GET)
         # run stuff before we start creating the queryset
         self._before_queryset()
@@ -283,25 +297,24 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         search_filters = []
         q = self.request.query_params.get('q')
         if q:
-            search_filters = [Q(name__ilike=p) | Q(isbn__ilike=p) | Q(issn__ilike=p) |\
-                              Q(doi__ilike=p) for p in q.split()]
+            search_filters = [
+                Q(name__ilike=p) | Q(isbn__ilike=p) | Q(issn__ilike=p) | Q(doi__ilike=p)
+                for p in q.split()
+            ]
         pub_type_arg = self.request.query_params.get('pub_type')
         if pub_type_arg:
             search_filters.append(Q(pub_type=pub_type_arg))
         # we evaluate this here as it might be important for the _extra_accesslog_filters method
         extra_filters = self._extra_filters()
         # put together filters for accesslogs
-        accesslog_filter = {
-            **self._extra_accesslog_filters()
-        }
+        accesslog_filter = {**self._extra_accesslog_filters()}
         title_qs = Title.objects.all()
         if accesslog_filter:
             # we have some filters for accesslog - this means we have to add the relevant
             # accesslogs to the queryset
             accesslog_filter.update(**extend_query_filter(self.date_filter, 'accesslog__'))
             title_qs = title_qs.annotate(
-                relevant_accesslogs=FilteredRelation('accesslog',
-                                                     condition=Q(**accesslog_filter))
+                relevant_accesslogs=FilteredRelation('accesslog', condition=Q(**accesslog_filter))
             )
         # construct the whole query
         # joining together platformtitle and accesslog is problematic, because there are
@@ -335,22 +348,21 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
 
 
 class PlatformTitleViewSet(BaseTitleViewSet):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.platform = None
 
     def _extra_filters(self):
         filters = super()._extra_filters()
-        self.platform = get_object_or_404(Platform.objects.filter(**self.org_filter),
-                                          pk=self.kwargs['platform_pk'])
+        self.platform = get_object_or_404(
+            Platform.objects.filter(**self.org_filter), pk=self.kwargs['platform_pk']
+        )
         # filters['accesslog__platform'] = platform
         filters['platformtitle__platform'] = self.platform
         return filters
 
 
 class TitleInterestMixin(object):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.interest_rt = None
@@ -360,8 +372,9 @@ class TitleInterestMixin(object):
     def _before_queryset(self):
         self.interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
         self.interest_type_dim = self.interest_rt.dimensions_sorted[0]
-        self.interest_groups_names = {x['short_name']
-                                      for x in InterestGroup.objects.all().values('short_name')}
+        self.interest_groups_names = {
+            x['short_name'] for x in InterestGroup.objects.all().values('short_name')
+        }
 
     def _extra_accesslog_filters(self):
         filters = super()._extra_accesslog_filters()
@@ -375,22 +388,26 @@ class TitleInterestMixin(object):
     def _annotations(self):
         annotations = super()._annotations()
         interest_annot_params = {
-            interest_type.text:
-                Coalesce(
-                    Sum('relevant_accesslogs__value',
-                        filter=Q(relevant_accesslogs__dim1=interest_type.pk)
-                        ),
-                    0)
-            for interest_type in
-            self.interest_type_dim.dimensiontext_set.filter(text__in=self.interest_groups_names)
+            interest_type.text: Coalesce(
+                Sum(
+                    'relevant_accesslogs__value',
+                    filter=Q(relevant_accesslogs__dim1=interest_type.pk),
+                ),
+                0,
+            )
+            for interest_type in self.interest_type_dim.dimensiontext_set.filter(
+                text__in=self.interest_groups_names
+            )
         }
         annotations.update(interest_annot_params)
         return annotations
 
     def _postprocess_paginated(self, result):
         interest_types = {
-            interest_type.text for interest_type in
-            self.interest_type_dim.dimensiontext_set.filter(text__in=self.interest_groups_names)
+            interest_type.text
+            for interest_type in self.interest_type_dim.dimensiontext_set.filter(
+                text__in=self.interest_groups_names
+            )
         }
         for record in result:
             record.interests = {it: getattr(record, it) for it in interest_types}
@@ -424,12 +441,14 @@ class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
         return {}
 
     def get_queryset(self):
-        org_filter = organization_filter_from_org_id(self.kwargs.get('organization_pk'),
-                                                     self.request.user)
+        org_filter = organization_filter_from_org_id(
+            self.kwargs.get('organization_pk'), self.request.user
+        )
         extra_filters = self._extra_filters(org_filter)
         access_log_filter = Q(**org_filter, **extra_filters)
-        distinct_rts = AccessLog.objects.filter(access_log_filter).\
-            values('report_type_id').distinct()
+        distinct_rts = (
+            AccessLog.objects.filter(access_log_filter).values('report_type_id').distinct()
+        )
         report_types = ReportDataView.objects.filter(base_report_type_id__in=distinct_rts)
         # the following is a alternative approach which uses Exists subquery
         # it might be faster in some cases but seems to be somewhat slower in others
@@ -467,8 +486,9 @@ class PlatformReportDataViewViewSet(BaseReportDataViewViewSet):
     """
 
     def _extra_filters(self, org_filter):
-        platform = get_object_or_404(Platform.objects.filter(**org_filter),
-                                     pk=self.kwargs['platform_pk'])
+        platform = get_object_or_404(
+            Platform.objects.filter(**org_filter), pk=self.kwargs['platform_pk']
+        )
         return {'platform': platform}
 
 
@@ -478,8 +498,9 @@ class PlatformTitleReportDataViewViewSet(BaseReportDataViewViewSet):
     """
 
     def _extra_filters(self, org_filter):
-        platform = get_object_or_404(Platform.objects.filter(**org_filter),
-                                     pk=self.kwargs['platform_pk'])
+        platform = get_object_or_404(
+            Platform.objects.filter(**org_filter), pk=self.kwargs['platform_pk']
+        )
         title = get_object_or_404(Title.objects.all(), pk=self.kwargs['title_pk'])
         return {'target': title, 'platform': platform}
 
@@ -496,7 +517,7 @@ class TitleViewSet(BaseTitleViewSet):
         platforms = Platform.objects.filter(
             accesslog__target=title,
             **date_filter_params,
-            **extend_query_filter(org_filter, 'accesslog__')
+            **extend_query_filter(org_filter, 'accesslog__'),
         ).distinct()
         return Response(PlatformSerializer(platforms, many=True).data)
 
@@ -516,6 +537,4 @@ class StartERMSSyncPlatformsTask(APIView):
 
     def post(self, request):
         task = erms_sync_platforms_task.delay()
-        return Response({
-            'id': task.id,
-        })
+        return Response({'id': task.id,})

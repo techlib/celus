@@ -29,15 +29,20 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
     :return:
     """
     stats = Counter()
-    db_credentials = {(cr.organization_id, cr.platform_id, cr.counter_version): cr
-                      for cr in SushiCredentials.objects.all()}
+    db_credentials = {
+        (cr.organization_id, cr.platform_id, cr.counter_version): cr
+        for cr in SushiCredentials.objects.all()
+    }
     platforms = {pl.short_name: pl for pl in Platform.objects.all()}
     organizations = {org.internal_id: org for org in Organization.objects.all()}
     for record in records:
         organization = organizations.get(record.get('organization'))
         if not organization:
-            logger.error('Unknown organization: "%s" in "%s"',
-                         record.get('organization'), record.get('organization_name'))
+            logger.error(
+                'Unknown organization: "%s" in "%s"',
+                record.get('organization'),
+                record.get('organization_name'),
+            )
             stats['error'] += 1
             continue
         platform = platforms.get(record.get('platform'))
@@ -81,8 +86,8 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
                 with reversion.create_revision():
                     cr.save()
                     reversion.set_comment(
-                        reversion_comment or
-                        'Updated from logic.data_import.import_sushi_credentials'
+                        reversion_comment
+                        or 'Updated from logic.data_import.import_sushi_credentials'
                     )
                 stats['synced'] += 1
             else:
@@ -100,8 +105,7 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
                     **optional,
                 )
                 reversion.set_comment(
-                    reversion_comment or
-                    'Created by logic.data_import.import_sushi_credentials'
+                    reversion_comment or 'Created by logic.data_import.import_sushi_credentials'
                 )
                 db_credentials[key] = cr
             stats['added'] += 1

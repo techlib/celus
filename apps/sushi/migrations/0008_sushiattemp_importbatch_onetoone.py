@@ -14,6 +14,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sushifetchattempt',
             name='import_batch',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.SET_NULL, to='logs.ImportBatch'),
+            field=models.OneToOneField(
+                null=True, on_delete=django.db.models.deletion.SET_NULL, to='logs.ImportBatch'
+            ),
         ),
     ]

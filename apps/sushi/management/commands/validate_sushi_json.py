@@ -35,13 +35,14 @@ class Command(BaseCommand):
                     logger.error('Missing title in item #%s: %s', i, item)
                 item_key = self.item_to_key(item)
                 if item_key in seen_data:
-                    logger.warning('Clashing data for key %s in record #%d',
-                                   item_key, seen_data[item_key])
+                    logger.warning(
+                        'Clashing data for key %s in record #%d', item_key, seen_data[item_key]
+                    )
                     logger.info('  #%d: %s', seen_data[item_key], items[seen_data[item_key]])
                     logger.info('  #%d: %s', i, item)
                 else:
                     seen_data[item_key] = i
-            logger.info('Found %d records', i+1)
+            logger.info('Found %d records', i + 1)
 
     @classmethod
     def item_to_key(cls, item):
@@ -55,9 +56,3 @@ class Command(BaseCommand):
                     break
         item_key += [item.get(key) for key in Counter5TRReport.dimensions]
         return tuple(item_key)
-
-
-
-
-
-

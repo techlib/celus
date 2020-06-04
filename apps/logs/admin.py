@@ -31,8 +31,15 @@ class IsMaterialized(admin.SimpleListFilter):
 @admin.register(models.ReportType)
 class ReportTypeAdmin(TranslationAdmin):
 
-    list_display = ['short_name', 'name', 'desc', 'dimension_list', 'source', 'superseeded_by',
-                    'materialized']
+    list_display = [
+        'short_name',
+        'name',
+        'desc',
+        'dimension_list',
+        'source',
+        'superseeded_by',
+        'materialized',
+    ]
     ordering = ['short_name']
     list_filter = ['source', IsMaterialized]
 
@@ -42,6 +49,7 @@ class ReportTypeAdmin(TranslationAdmin):
 
     def materialized(self, obj: models.ReportType):
         return bool(obj.materialization_spec)
+
     materialized.boolean = True
 
 
@@ -86,8 +94,16 @@ class ReportTypeToDimensionAdmin(admin.ModelAdmin):
 @admin.register(models.AccessLog)
 class AccessLogAdmin(admin.ModelAdmin):
 
-    list_display = ['metric', 'report_type', 'organization', 'platform', 'target', 'created',
-                    'date', 'value']
+    list_display = [
+        'metric',
+        'report_type',
+        'organization',
+        'platform',
+        'target',
+        'created',
+        'date',
+        'value',
+    ]
     list_select_related = ['organization', 'platform', 'target', 'metric', 'report_type']
     readonly_fields = ['target', 'import_batch', 'organization', 'platform']
     search_fields = ['platform__name', 'target__name', 'organization__name']

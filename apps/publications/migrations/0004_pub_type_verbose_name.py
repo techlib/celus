@@ -13,6 +13,10 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='title',
             name='pub_type',
-            field=models.CharField(choices=[('B', 'Book'), ('J', 'Journal')], max_length=1, verbose_name='Publication type'),
+            field=models.CharField(
+                choices=[('B', 'Book'), ('J', 'Journal')],
+                max_length=1,
+                verbose_name='Publication type',
+            ),
         ),
     ]

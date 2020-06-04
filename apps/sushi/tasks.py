@@ -24,7 +24,7 @@ def run_sushi_fetch_attempt_task(attempt_id: int):
         counter_report=attempt.counter_report,
         start_date=attempt.start_date,
         end_date=attempt.end_date,
-        fetch_attempt=attempt
+        fetch_attempt=attempt,
     )
 
 
@@ -62,8 +62,9 @@ def fetch_new_sushi_data_for_credentials_task(credentials_id: int):
 
 @celery.shared_task
 @email_if_fails
-def make_fetch_attempt_task(credentials_id: int, counter_report_id: int, start_date: datetime,
-                            end_date: datetime):
+def make_fetch_attempt_task(
+    credentials_id: int, counter_report_id: int, start_date: datetime, end_date: datetime
+):
     """
     The input data are enough to specify one SushiFetchAttempt. Create it and download the
     data.
@@ -101,11 +102,13 @@ def retry_holes_with_new_credentials_task():
                 # when passed on by celery
                 make_fetch_attempt_task.apply_async(
                     [],
-                    dict(credentials_id=hole.credentials.pk,
-                         counter_report_id=hole.counter_report.pk,
-                         start_date=hole.date.isoformat(),
-                         end_date=month_end(hole.date).isoformat()),
-                    priority=9
+                    dict(
+                        credentials_id=hole.credentials.pk,
+                        counter_report_id=hole.counter_report.pk,
+                        start_date=hole.date.isoformat(),
+                        end_date=month_end(hole.date).isoformat(),
+                    ),
+                    priority=9,
                 )
                 stats['started'] += 1
             else:

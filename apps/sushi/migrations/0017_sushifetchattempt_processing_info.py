@@ -14,6 +14,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sushifetchattempt',
             name='processing_info',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='Internal info'),
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                default=dict, help_text='Internal info'
+            ),
         ),
     ]

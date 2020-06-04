@@ -1,6 +1,10 @@
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import HiddenField, CurrentUserDefault, BooleanField, \
-    SerializerMethodField
+from rest_framework.fields import (
+    HiddenField,
+    CurrentUserDefault,
+    BooleanField,
+    SerializerMethodField,
+)
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer
 
@@ -13,7 +17,6 @@ from .models import SushiCredentials, CounterReportType, SushiFetchAttempt
 
 
 class CounterReportTypeSerializer(ModelSerializer):
-
     class Meta:
         model = CounterReportType
         fields = ('id', 'code', 'name', 'counter_version')
@@ -23,12 +26,15 @@ class SushiCredentialsSerializer(ModelSerializer):
 
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
-    active_counter_reports_long = \
-        CounterReportTypeSerializer(many=True, source='active_counter_reports', read_only=True)
-    organization_id = PrimaryKeyRelatedField(source='organization', write_only=True,
-                                             queryset=Organization.objects.all())
-    platform_id = PrimaryKeyRelatedField(source='platform', write_only=True,
-                                         queryset=Platform.objects.all())
+    active_counter_reports_long = CounterReportTypeSerializer(
+        many=True, source='active_counter_reports', read_only=True
+    )
+    organization_id = PrimaryKeyRelatedField(
+        source='organization', write_only=True, queryset=Organization.objects.all()
+    )
+    platform_id = PrimaryKeyRelatedField(
+        source='platform', write_only=True, queryset=Platform.objects.all()
+    )
     locked_for_me = BooleanField(read_only=True)
     can_lock = BooleanField(read_only=True)
     submitter = HiddenField(default=CurrentUserDefault())
@@ -36,11 +42,30 @@ class SushiCredentialsSerializer(ModelSerializer):
 
     class Meta:
         model = SushiCredentials
-        fields = ('pk', 'organization', 'platform', 'enabled', 'url', 'counter_version',
-                  'requestor_id', 'customer_id', 'http_username', 'http_password', 'api_key',
-                  'extra_params', 'active_counter_reports', 'active_counter_reports_long',
-                  'organization_id', 'platform_id', 'submitter', 'locked_for_me', 'lock_level',
-                  'can_lock', 'locked', 'outside_consortium')
+        fields = (
+            'pk',
+            'organization',
+            'platform',
+            'enabled',
+            'url',
+            'counter_version',
+            'requestor_id',
+            'customer_id',
+            'http_username',
+            'http_password',
+            'api_key',
+            'extra_params',
+            'active_counter_reports',
+            'active_counter_reports_long',
+            'organization_id',
+            'platform_id',
+            'submitter',
+            'locked_for_me',
+            'lock_level',
+            'can_lock',
+            'locked',
+            'outside_consortium',
+        )
 
     def get_locked(self, obj: SushiCredentials):
         return obj.lock_level >= UL_CONS_STAFF
@@ -75,8 +100,25 @@ class SushiFetchAttemptSerializer(ModelSerializer):
 
     class Meta:
         model = SushiFetchAttempt
-        fields = ('pk', 'timestamp', 'start_date', 'end_date', 'download_success', 'error_code',
-                  'contains_data', 'queued', 'is_processed', 'when_processed', 'when_queued',
-                  'counter_report', 'organization', 'log', 'import_batch', 'data_file',
-                  'processing_success', 'in_progress', 'counter_report_verbose', 'credentials')
-
+        fields = (
+            'pk',
+            'timestamp',
+            'start_date',
+            'end_date',
+            'download_success',
+            'error_code',
+            'contains_data',
+            'queued',
+            'is_processed',
+            'when_processed',
+            'when_queued',
+            'counter_report',
+            'organization',
+            'log',
+            'import_batch',
+            'data_file',
+            'processing_success',
+            'in_progress',
+            'counter_report_verbose',
+            'credentials',
+        )

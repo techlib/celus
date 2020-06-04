@@ -1,6 +1,5 @@
 def extract_organization_id_from_request_query(request):
-    return (request.query_params.get('organization') or
-            request.query_params.get('organization_id'))
+    return request.query_params.get('organization') or request.query_params.get('organization_id')
 
 
 def extract_organization_id_from_request_data(request) -> (int, bool):

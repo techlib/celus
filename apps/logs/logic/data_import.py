@@ -97,8 +97,12 @@ class TitleManager(object):
                 self.stats['existing'] += 1
             return title_pk
         title = Title.objects.create(
-            name=record.name, pub_type=record.pub_type, isbn=isbn, issn=issn, eissn=eissn,
-            doi=record.doi
+            name=record.name,
+            pub_type=record.pub_type,
+            isbn=isbn,
+            issn=issn,
+            eissn=eissn,
+            doi=record.doi,
         )
         self.key_to_title_id_and_pub_type[key] = (title.pk, record.pub_type)
         self.stats['created'] += 1
@@ -160,8 +164,7 @@ def import_counter_records(
         buff.append(record)
         if len(buff) >= COUNTER_RECORD_BUFFER_SIZE:
             _import_counter_records(
-                report_type, organization, platform, buff, import_batch,
-                stats, tm,
+                report_type, organization, platform, buff, import_batch, stats, tm,
             )
             buff = []
             gc.collect()
@@ -169,17 +172,20 @@ def import_counter_records(
     # flush the rest of the buffer
     if buff:
         _import_counter_records(
-            report_type, organization, platform, buff, import_batch,
-            stats, tm,
+            report_type, organization, platform, buff, import_batch, stats, tm,
         )
 
     return stats
 
 
 def _import_counter_records(
-    report_type: ReportType, organization: Organization, platform: Platform,
-    records: typing.List[CounterRecord], import_batch: ImportBatch,
-    stats: Counter, tm: TitleManager
+    report_type: ReportType,
+    organization: Organization,
+    platform: Platform,
+    records: typing.List[CounterRecord],
+    import_batch: ImportBatch,
+    stats: Counter,
+    tm: TitleManager,
 ):
     # prepare all remaps
     metrics = {
@@ -228,8 +234,13 @@ def _import_counter_records(
                     if not remap:
                         remap = {}
                         text_to_int_remaps[dim.pk] = remap
-                    dim_value = get_or_create_with_map(DimensionText, remap, 'text', dim_value,
-                                                          other_attrs={'dimension_id': dim.pk})
+                    dim_value = get_or_create_with_map(
+                        DimensionText,
+                        remap,
+                        'text',
+                        dim_value,
+                        other_attrs={'dimension_id': dim.pk},
+                    )
             else:
                 dim_value = int(dim_value) if dim_value is not None else None
             id_attrs[f'dim{i+1}'] = dim_value

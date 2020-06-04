@@ -10,12 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='annotation',
-            name='report_type',
-        ),
-        migrations.RemoveField(
-            model_name='annotation',
-            name='title',
-        ),
+        migrations.RemoveField(model_name='annotation', name='report_type',),
+        migrations.RemoveField(model_name='annotation', name='title',),
     ]

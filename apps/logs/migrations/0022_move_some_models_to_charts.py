@@ -10,22 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='reportdataview',
-            name='base_report_type',
-        ),
-        migrations.RemoveField(
-            model_name='reportdataview',
-            name='primary_dimension',
-        ),
-        migrations.RemoveField(
-            model_name='reportdataview',
-            name='source',
-        ),
-        migrations.DeleteModel(
-            name='DimensionFilter',
-        ),
-        migrations.DeleteModel(
-            name='ReportDataView',
-        ),
+        migrations.RemoveField(model_name='reportdataview', name='base_report_type',),
+        migrations.RemoveField(model_name='reportdataview', name='primary_dimension',),
+        migrations.RemoveField(model_name='reportdataview', name='source',),
+        migrations.DeleteModel(name='DimensionFilter',),
+        migrations.DeleteModel(name='ReportDataView',),
     ]

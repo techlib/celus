@@ -13,6 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='language',
-            field=models.CharField(choices=[('en', 'English'), ('cs', 'Czech')], default='cs', help_text="User's preferred language", max_length=2),
+            field=models.CharField(
+                choices=[('en', 'English'), ('cs', 'Czech')],
+                default='cs',
+                help_text="User's preferred language",
+                max_length=2,
+            ),
         ),
     ]

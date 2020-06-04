@@ -10,16 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='platform',
-            options={'ordering': ('short_name',)},
-        ),
-        migrations.RemoveField(
-            model_name='platform',
-            name='short_name_cs',
-        ),
-        migrations.RemoveField(
-            model_name='platform',
-            name='short_name_en',
-        ),
+        migrations.AlterModelOptions(name='platform', options={'ordering': ('short_name',)},),
+        migrations.RemoveField(model_name='platform', name='short_name_cs',),
+        migrations.RemoveField(model_name='platform', name='short_name_en',),
     ]

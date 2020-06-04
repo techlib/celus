@@ -15,8 +15,5 @@ class Migration(migrations.Migration):
             name='ico',
             field=models.PositiveIntegerField(help_text='Business registration number'),
         ),
-        migrations.AlterUniqueTogether(
-            name='organization',
-            unique_together={('ico', 'level')},
-        ),
+        migrations.AlterUniqueTogether(name='organization', unique_together={('ico', 'level')},),
     ]

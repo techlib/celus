@@ -7,9 +7,7 @@ class UserActivity(models.Model):
 
     ACTION_TYPE_LOGIN = 'LGN'
 
-    ACTION_TYPE_CHOICES = (
-        (ACTION_TYPE_LOGIN, 'Login'),
-    )
+    ACTION_TYPE_CHOICES = ((ACTION_TYPE_LOGIN, 'Login'),)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     action_type = models.CharField(max_length=3, choices=ACTION_TYPE_CHOICES)

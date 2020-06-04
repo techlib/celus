@@ -12,8 +12,18 @@ class ReportDataViewSerializer(ModelSerializer):
 
     class Meta:
         model = ReportDataView
-        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'desc', 'public',
-                  'primary_dimension', 'is_standard_view', 'position')
+        fields = (
+            'pk',
+            'short_name',
+            'name',
+            'name_cs',
+            'name_en',
+            'desc',
+            'public',
+            'primary_dimension',
+            'is_standard_view',
+            'position',
+        )
 
 
 class ChartDefinitionSerializer(ModelSerializer):
@@ -23,7 +33,17 @@ class ChartDefinitionSerializer(ModelSerializer):
 
     class Meta:
         model = ChartDefinition
-        fields = ('pk', 'name', 'desc', 'primary_dimension', 'primary_implicit_dimension',
-                  'secondary_dimension', 'secondary_implicit_dimension', 'chart_type',
-                  'ordering', 'ignore_organization', 'ignore_platform', 'scope')
-
+        fields = (
+            'pk',
+            'name',
+            'desc',
+            'primary_dimension',
+            'primary_implicit_dimension',
+            'secondary_dimension',
+            'secondary_implicit_dimension',
+            'chart_type',
+            'ordering',
+            'ignore_organization',
+            'ignore_platform',
+            'scope',
+        )

@@ -15,8 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 def import_new_sushi_attempts():
-    queryset = SushiFetchAttempt.objects.filter(is_processed=False, download_success=True,
-                                                contains_data=True, import_crashed=False)
+    queryset = SushiFetchAttempt.objects.filter(
+        is_processed=False, download_success=True, contains_data=True, import_crashed=False
+    )
     count = queryset.count()
     logger.info('Found %d unprocessed successful download attempts matching criteria', count)
     for i, attempt in enumerate(queryset):
@@ -73,12 +74,14 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         return
     # we need to create explicit connection between organization and platform
     op, created = OrganizationPlatform.objects.get_or_create(
-        platform=attempt.credentials.platform,
-        organization=attempt.credentials.organization
+        platform=attempt.credentials.platform, organization=attempt.credentials.organization
     )
     if created:
-        logger.debug('Created Organization-Platform connection between %s and %s',
-                     op.organization, op.platform)
+        logger.debug(
+            'Created Organization-Platform connection between %s and %s',
+            op.organization,
+            op.platform,
+        )
     # now read the data and import it
     records = reader.read_report(data)
     if records:
@@ -92,7 +95,8 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.credentials.organization,
             attempt.credentials.platform,
             records,
-            import_batch)
+            import_batch,
+        )
         attempt.import_batch = import_batch
         logger.info('Import stats: %s', stats)
     else:
@@ -108,8 +112,9 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.contains_data = False
             error_explanation = Sushi5Client.explain_error_code(attempt.error_code)
             attempt.queued = error_explanation.should_retry and error_explanation.setup_ok
-            attempt.processing_success = not (error_explanation.needs_checking
-                                              and error_explanation.setup_ok)
+            attempt.processing_success = not (
+                error_explanation.needs_checking and error_explanation.setup_ok
+            )
             attempt.save()
         else:
             attempt.contains_data = False

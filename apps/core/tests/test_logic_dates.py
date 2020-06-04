@@ -7,7 +7,6 @@ from core.logic.dates import parse_month
 
 
 class TestParseMonth(object):
-
     def test_parse_valid(self):
         assert parse_month('2019-02') == date(2019, 2, 1)
         assert parse_month('2019-02-03') == date(2019, 2, 1)
@@ -21,7 +20,6 @@ class TestParseMonth(object):
 
 
 class TestMonthEnd(object):
-
     @pytest.mark.parametrize(
         'value, result',
         [
@@ -30,7 +28,7 @@ class TestMonthEnd(object):
             (date(2019, 7, 15), date(2019, 7, 31)),
             (date(2019, 7, 31), date(2019, 7, 31)),
             (date(2020, 2, 1), date(2020, 2, 29)),
-        ]
-        )
+        ],
+    )
     def test_month_end(self, value, result):
         assert month_end(value) == result

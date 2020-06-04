@@ -13,6 +13,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='chartdefinition',
             name='ignore_organization',
-            field=models.BooleanField(default=False, help_text='When checked, this chart will ignore selected organization. Thus it allows creation of charts with organization comparison.'),
+            field=models.BooleanField(
+                default=False,
+                help_text='When checked, this chart will ignore selected organization. Thus it allows creation of charts with organization comparison.',
+            ),
         ),
     ]

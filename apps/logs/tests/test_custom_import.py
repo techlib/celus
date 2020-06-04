@@ -15,8 +15,7 @@ from publications.models import Platform, Title
 from ..logic.data_import import import_counter_records
 from organizations.tests.conftest import *
 from publications.tests.conftest import *
-from core.tests.conftest import authenticated_client, valid_identity, master_identity, \
-    master_client
+from core.tests.conftest import authenticated_client, valid_identity, master_identity, master_client
 
 
 @pytest.mark.django_db
@@ -29,7 +28,7 @@ class TestCustomImport(object):
     def test_custom_data_to_records_1(self):
         data = [
             {'Metric': 'M1', 'Jan 2019': 10, 'Feb 2019': 7, 'Mar 2019': 11},
-            {'Metric': 'M2', 'Jan 2019':  1, 'Feb 2019': 2, 'Mar 2019':  3},
+            {'Metric': 'M2', 'Jan 2019': 1, 'Feb 2019': 2, 'Mar 2019': 3},
         ]
         records = [e for e in custom_data_to_records(data)]
         assert len(records) == 6
@@ -46,10 +45,11 @@ class TestCustomImport(object):
     def test_custom_data_to_records_with_init_data(self):
         data = [
             {'MetricXX': 'M1', 'Jan 2019': 10, 'Feb 2019': 7, 'Mar 2019': 11},
-            {'MetricXX': 'M2', 'Jan 2019':  1, 'Feb 2019': 2, 'Mar 2019':  3},
+            {'MetricXX': 'M2', 'Jan 2019': 1, 'Feb 2019': 2, 'Mar 2019': 3},
         ]
-        records = custom_data_to_records(data, initial_data={'platform_name': 'PLA1'},
-                                         column_map={'MetricXX': 'metric'})
+        records = custom_data_to_records(
+            data, initial_data={'platform_name': 'PLA1'}, column_map={'MetricXX': 'metric'}
+        )
         records = [e for e in records]  # convert generator to a list
         assert len(records) == 6
         for record in records:
@@ -66,10 +66,11 @@ class TestCustomImport(object):
     def test_custom_data_to_records_no_metric(self):
         data = [
             {'Jan 2019': 10, 'Feb 2019': 7, 'Mar 2019': 11},
-            {'Jan 2019':  1, 'Feb 2019': 2, 'Mar 2019':  3, 'Metric': 'MX'},
+            {'Jan 2019': 1, 'Feb 2019': 2, 'Mar 2019': 3, 'Metric': 'MX'},
         ]
-        records = custom_data_to_records(data,
-                                         initial_data={'platform_name': 'PLA1', 'metric': 'MD'})
+        records = custom_data_to_records(
+            data, initial_data={'platform_name': 'PLA1', 'metric': 'MD'}
+        )
         records = [e for e in records]  # convert generator to a list
         assert len(records) == 6
         for record in records:
@@ -81,8 +82,9 @@ class TestCustomImport(object):
             else:
                 assert record.metric == 'MX'
 
-    def test_custom_data_import_process(self, organizations, report_type_nd, tmp_path, settings,
-                                        master_client, master_identity):
+    def test_custom_data_import_process(
+        self, organizations, report_type_nd, tmp_path, settings, master_client, master_identity
+    ):
         """
         Complex text
           - upload data to create ManualDataUpload object using the API
@@ -93,8 +95,9 @@ class TestCustomImport(object):
         """
         report_type = report_type_nd(0)
         organization = organizations[0]
-        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
-                                           provider='Provider 1')
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
         csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
         file = StringIO(csv_content)
         settings.MEDIA_ROOT = tmp_path
@@ -105,7 +108,8 @@ class TestCustomImport(object):
                 'organization': organization.pk,
                 'report_type': report_type.pk,
                 'data_file': file,
-            })
+            },
+        )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
         assert mdu.organization == organization
@@ -130,22 +134,25 @@ class TestCustomImport(object):
                 'organization': organization.pk,
                 'report_type': report_type.pk,
                 'data_file': file,
-            })
+            },
+        )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
         response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
         assert response.status_code == 200
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
 
-    def test_manual_data_upload_api_delete(self, organizations, report_type_nd, tmp_path, settings,
-                                           master_client, master_identity):
+    def test_manual_data_upload_api_delete(
+        self, organizations, report_type_nd, tmp_path, settings, master_client, master_identity
+    ):
         """
         When deleting manual data upload, we need to delete the import_batch as well.
         """
         report_type = report_type_nd(0)
         organization = organizations[0]
-        platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',
-                                           provider='Provider 1')
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
         csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
         file = StringIO(csv_content)
         settings.MEDIA_ROOT = tmp_path
@@ -156,7 +163,8 @@ class TestCustomImport(object):
                 'organization': organization.pk,
                 'report_type': report_type.pk,
                 'data_file': file,
-            })
+            },
+        )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
         assert mdu.import_batch is None
@@ -178,22 +186,32 @@ class TestCustomImport(object):
         assert ImportBatch.objects.count() == 0
         assert AccessLog.objects.count() == 0
 
-    @pytest.mark.parametrize(['user_type', 'owner_level'],
-                             [['related_admin', UL_ORG_ADMIN],
-                              ['master_user', UL_CONS_STAFF],
-                              ['superuser', UL_CONS_STAFF]])
+    @pytest.mark.parametrize(
+        ['user_type', 'owner_level'],
+        [
+            ['related_admin', UL_ORG_ADMIN],
+            ['master_user', UL_CONS_STAFF],
+            ['superuser', UL_CONS_STAFF],
+        ],
+    )
     def test_custom_data_import_owner_level(
-            self, user_type, owner_level, settings, tmp_path,
-            identity_by_user_type, client, organizations, report_type_nd, platforms):
+        self,
+        user_type,
+        owner_level,
+        settings,
+        tmp_path,
+        identity_by_user_type,
+        client,
+        organizations,
+        report_type_nd,
+        platforms,
+    ):
         identity, org = identity_by_user_type(user_type)
         rt = report_type_nd(0)
         settings.MEDIA_ROOT = tmp_path
         file = File(StringIO('Source,2019-01\naaaa,9\n'))
         mdu = ManualDataUpload.objects.create(
-            organization=org,
-            platform=platforms[0],
-            report_type=rt,
-            owner_level=owner_level,
+            organization=org, platform=platforms[0], report_type=rt, owner_level=owner_level,
         )
         mdu.data_file.save('xxx', file)
         assert mdu.import_batch is None

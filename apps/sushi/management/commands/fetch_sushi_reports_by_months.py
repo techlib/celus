@@ -24,15 +24,28 @@ class Command(BaseCommand):
         parser.add_argument('-r', dest='report', help='code of the counter report to fetch')
         parser.add_argument('-s', dest='start_date')
         parser.add_argument('-e', dest='end_date', default='2018-01-01')
-        parser.add_argument('--conflict-error', dest='conflict_error',
-                            default='continue', choices=self.conflict_strategies)
-        parser.add_argument('--conflict-ok', dest='conflict_ok',
-                            default='skip', choices=self.conflict_strategies)
-        parser.add_argument('--sleep', dest='sleep', type=int, default=0,
-                            help='Time to sleep between requests in ms')
-        parser.add_argument('-u', action='store_true', dest='skip_on_unsuccess',
-                            help='do not attempt new fetching if even an unsuccessful attempt '
-                                 'exists')
+        parser.add_argument(
+            '--conflict-error',
+            dest='conflict_error',
+            default='continue',
+            choices=self.conflict_strategies,
+        )
+        parser.add_argument(
+            '--conflict-ok', dest='conflict_ok', default='skip', choices=self.conflict_strategies
+        )
+        parser.add_argument(
+            '--sleep',
+            dest='sleep',
+            type=int,
+            default=0,
+            help='Time to sleep between requests in ms',
+        )
+        parser.add_argument(
+            '-u',
+            action='store_true',
+            dest='skip_on_unsuccess',
+            help='do not attempt new fetching if even an unsuccessful attempt ' 'exists',
+        )
 
     # TODO: This is now mostly handled in .logic.fetching, this should be removed one day
     def handle(self, *args, **options):
@@ -91,8 +104,10 @@ class Command(BaseCommand):
         while fetch_units and start_date >= end_date:
             new_fetch_units = []
             platform = fetch_units[0].credentials.platform
-            self.stderr.write(self.style.NOTICE(
-                f'Processing {len(fetch_units)} fetch units for platform {platform}, {start_date}')
+            self.stderr.write(
+                self.style.NOTICE(
+                    f'Processing {len(fetch_units)} fetch units for platform {platform}, {start_date}'
+                )
             )
             for fetch_unit in fetch_units:  # type: FetchUnit
                 end = month_end(start_date)
@@ -101,25 +116,41 @@ class Command(BaseCommand):
                 if conflict:
                     action = self.decide_conflict(conflict)
                     if action == 'stop':
-                        logger.debug('Skipping on existing data: %s, %s: %s',
-                                     platform, fetch_unit.credentials.organization, start_date)
+                        logger.debug(
+                            'Skipping on existing data: %s, %s: %s',
+                            platform,
+                            fetch_unit.credentials.organization,
+                            start_date,
+                        )
                         continue
                     elif action == 'skip':
-                        logger.debug('Skipping on existing data: %s, %s: %s',
-                                     platform, fetch_unit.credentials.organization, start_date)
+                        logger.debug(
+                            'Skipping on existing data: %s, %s: %s',
+                            platform,
+                            fetch_unit.credentials.organization,
+                            start_date,
+                        )
                         new_fetch_units.append(fetch_unit)
                         continue
                     else:
-                        logger.debug('Continuing regardless of existing data: %s, %s: %s',
-                                     platform, fetch_unit.credentials.organization, start_date)
+                        logger.debug(
+                            'Continuing regardless of existing data: %s, %s: %s',
+                            platform,
+                            fetch_unit.credentials.organization,
+                            start_date,
+                        )
                 # download the data
                 attempt = fetch_unit.download(start_date, end)
                 if attempt.contains_data or attempt.queued:
                     new_fetch_units.append(fetch_unit)
                 else:
                     # no data in this attempt, we split or end (when split return nothing)
-                    logger.info('Unsuccessful fetch, downgrading: %s, %s: %s',
-                                platform, fetch_unit.credentials.organization, start_date)
+                    logger.info(
+                        'Unsuccessful fetch, downgrading: %s, %s: %s',
+                        platform,
+                        fetch_unit.credentials.organization,
+                        start_date,
+                    )
                     split_units = fetch_unit.split()
                     logger.info('Downgraded %s to %s', fetch_unit.report_type.code, split_units)
                     # the the new units on the same dates

@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='importbatch',
             name='interest_processed',
-            field=models.BooleanField(default=False, help_text='Was interest already calculated for this import batch'),
+            field=models.BooleanField(
+                default=False, help_text='Was interest already calculated for this import batch'
+            ),
         ),
     ]

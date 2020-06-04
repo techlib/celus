@@ -25,10 +25,23 @@ from core.logic.dates import month_end
 from core.models import USER_LEVEL_CHOICES, UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, User
 from core.task_support import cache_based_lock
 from logs.models import ImportBatch
-from nigiri.client import Sushi5Client, Sushi4Client, SushiException as SushiExceptionNigiri, \
-    SushiClientBase, SushiErrorMeaning
-from nigiri.counter4 import Counter4JR1Report, Counter4BR2Report, Counter4DB1Report, \
-    Counter4PR1Report, Counter4BR1Report, Counter4JR2Report, Counter4DB2Report, Counter4BR3Report
+from nigiri.client import (
+    Sushi5Client,
+    Sushi4Client,
+    SushiException as SushiExceptionNigiri,
+    SushiClientBase,
+    SushiErrorMeaning,
+)
+from nigiri.counter4 import (
+    Counter4JR1Report,
+    Counter4BR2Report,
+    Counter4DB1Report,
+    Counter4PR1Report,
+    Counter4BR1Report,
+    Counter4JR2Report,
+    Counter4DB2Report,
+    Counter4BR3Report,
+)
 from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
 from organizations.models import Organization
 from publications.models import Platform
@@ -69,9 +82,10 @@ class CounterReportType(models.Model):
     name = models.CharField(max_length=128, blank=True)
     counter_version = models.PositiveSmallIntegerField(choices=COUNTER_VERSIONS)
     report_type = models.OneToOneField('logs.ReportType', on_delete=models.CASCADE)
-    active = models.BooleanField(default=True,
-                                 help_text='When turned off, this type of report will not be '
-                                           'automatically downloaded')
+    active = models.BooleanField(
+        default=True,
+        help_text='When turned off, this type of report will not be ' 'automatically downloaded',
+    )
 
     class Meta:
         unique_together = (('code', 'counter_version'),)
@@ -115,18 +129,20 @@ class SushiCredentials(models.Model):
     outside_consortium = models.BooleanField(
         default=False,
         help_text='True if these credentials belong to access bought outside of the consortium - '
-                  'necessary for proper cost calculation'
+        'necessary for proper cost calculation',
     )
     # meta info
     created = models.DateTimeField(default=now)
     last_updated = models.DateTimeField(auto_now=True)
     last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     lock_level = models.PositiveSmallIntegerField(
-        choices=LOCK_LEVEL_CHOICES, default=UL_ORG_ADMIN,
-        help_text='Only user with the same or higher level can unlock it and/or edit it'
+        choices=LOCK_LEVEL_CHOICES,
+        default=UL_ORG_ADMIN,
+        help_text='Only user with the same or higher level can unlock it and/or edit it',
     )
-    version_hash = models.CharField(max_length=blake_hash_size*2,
-                                    help_text='Current hash of model attributes')
+    version_hash = models.CharField(
+        max_length=blake_hash_size * 2, help_text='Current hash of model attributes'
+    )
 
     class Meta:
         unique_together = (('organization', 'platform', 'counter_version'),)
@@ -150,11 +166,14 @@ class SushiCredentials(models.Model):
         if self.lock_level > self.UNLOCKED:
             # we want to relock with different privileges
             if owner_level < self.lock_level:
-                raise PermissionDenied(f'User {user} does not have high enough privileges '
-                                       f'to lock {self}')
+                raise PermissionDenied(
+                    f'User {user} does not have high enough privileges ' f'to lock {self}'
+                )
         if owner_level < level:
-            raise PermissionDenied(f'User {user} does not have high enough privileges '
-                                   f'to lock {self} to level {level}')
+            raise PermissionDenied(
+                f'User {user} does not have high enough privileges '
+                f'to lock {self} to level {level}'
+            )
         with reversion.create_revision():
             self.lock_level = level
             self.save()
@@ -199,11 +218,12 @@ class SushiCredentials(models.Model):
         per unit of time
         :return:
         """
-        last_attempts = self.sushifetchattempt_set.order_by('-timestamp').\
-            values('error_code', 'timestamp')[:16]
+        last_attempts = self.sushifetchattempt_set.order_by('-timestamp').values(
+            'error_code', 'timestamp'
+        )[:16]
         too_many_attempts = list(takewhile(lambda x: x['error_code'] == '1020', last_attempts))
         if too_many_attempts:
-            seconds = base_wait_unit * 2**len(too_many_attempts)
+            seconds = base_wait_unit * 2 ** len(too_many_attempts)
             last_timestamp = too_many_attempts[0]['timestamp']
             diff = (last_timestamp + timedelta(seconds=seconds) - now()).seconds
             if diff > 0:
@@ -249,9 +269,14 @@ class SushiCredentials(models.Model):
         """
         return self.hash_version_dict(self.version_dict())
 
-    def fetch_report(self, counter_report: CounterReportType, start_date, end_date,
-                     fetch_attempt: 'SushiFetchAttempt' = None, use_url_lock=True) -> \
-            'SushiFetchAttempt':
+    def fetch_report(
+        self,
+        counter_report: CounterReportType,
+        start_date,
+        end_date,
+        fetch_attempt: 'SushiFetchAttempt' = None,
+        use_url_lock=True,
+    ) -> 'SushiFetchAttempt':
         """
         :param counter_report:
         :param start_date:
@@ -299,8 +324,9 @@ class SushiCredentials(models.Model):
         params = self.extra_params or {}
         params['sushi_dump'] = True
         try:
-            report = client.get_report_data(counter_report.code, start_date, end_date,
-                                            params=params)
+            report = client.get_report_data(
+                counter_report.code, start_date, end_date, params=params
+            )
         except SushiException as e:
             logger.error("Error: %s", e)
             file_data = e.raw
@@ -309,8 +335,9 @@ class SushiCredentials(models.Model):
                 error_code = errors[0].code
                 error_explanation = client.explain_error_code(error_code)
                 queued = error_explanation.should_retry and error_explanation.setup_ok
-                download_success = not (error_explanation.needs_checking
-                                        and error_explanation.setup_ok)
+                download_success = not (
+                    error_explanation.needs_checking and error_explanation.setup_ok
+                )
                 processing_success = download_success
             log = '\n'.join(error.full_log for error in errors)
             filename = 'foo.xml'  # we just need the extension
@@ -355,13 +382,13 @@ class SushiCredentials(models.Model):
         error_code = ''
         # we want extra split data from the report
         # params must be a copy, otherwise we will pollute EXTRA_PARAMS
-        params = deepcopy(client.EXTRA_PARAMS['maximum_split'].
-                          get(counter_report.code.lower(), {}))
+        params = deepcopy(client.EXTRA_PARAMS['maximum_split'].get(counter_report.code.lower(), {}))
         extra = self.extra_params or {}
         params.update(extra)
         try:
-            report = client.get_report_data(counter_report.code, start_date, end_date,
-                                            params=params)
+            report = client.get_report_data(
+                counter_report.code, start_date, end_date, params=params
+            )
         except requests.exceptions.ConnectionError as e:
             logger.error('Connection error: %s', e)
             error_code = 'connection'
@@ -394,8 +421,9 @@ class SushiCredentials(models.Model):
                 contains_data = False
                 error_explanation = client.explain_error_code(error_code)
                 queued = error_explanation.should_retry and error_explanation.setup_ok
-                processing_success = not (error_explanation.needs_checking
-                                          and error_explanation.setup_ok)
+                processing_success = not (
+                    error_explanation.needs_checking and error_explanation.setup_ok
+                )
                 file_data = client.report_to_string(report.raw_data)
             else:
                 contains_data = True
@@ -427,9 +455,11 @@ class SushiCredentials(models.Model):
 def where_to_store(instance: 'SushiFetchAttempt', filename):
     root, ext = os.path.splitext(filename)
     ts = now().strftime('%Y%m%d-%H%M%S.%f')
-    return f'counter/{instance.credentials.organization.internal_id}/' \
-           f'{instance.credentials.platform.short_name}/' \
-           f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
+    return (
+        f'counter/{instance.credentials.organization.internal_id}/'
+        f'{instance.credentials.platform.short_name}/'
+        f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
+    )
 
 
 class SushiFetchAttempt(models.Model):
@@ -439,37 +469,47 @@ class SushiFetchAttempt(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    in_progress = models.BooleanField(default=False,
-                                      help_text='True if the data is still downloading')
-    download_success = models.BooleanField(default=False,
-                                           help_text="True if there was no error downloading data")
-    processing_success = models.BooleanField(default=False,
-                                             help_text="True if there was no error extracting "
-                                                       "data from the downloaded material")
-    contains_data = models.BooleanField(default=False,
-                                        help_text='Does the report actually contain data for '
-                                                  'import')
-    import_crashed = models.BooleanField(default=False,
-                                         help_text='Set to true if there was an error during '
-                                                   'data import. Details in log and '
-                                                   'processing_info')
-    queued = models.BooleanField(default=False,
-                                 help_text='Was the attempt queued by the provider and should be '
-                                           'refetched?')
+    in_progress = models.BooleanField(
+        default=False, help_text='True if the data is still downloading'
+    )
+    download_success = models.BooleanField(
+        default=False, help_text="True if there was no error downloading data"
+    )
+    processing_success = models.BooleanField(
+        default=False,
+        help_text="True if there was no error extracting " "data from the downloaded material",
+    )
+    contains_data = models.BooleanField(
+        default=False, help_text='Does the report actually contain data for ' 'import'
+    )
+    import_crashed = models.BooleanField(
+        default=False,
+        help_text='Set to true if there was an error during '
+        'data import. Details in log and '
+        'processing_info',
+    )
+    queued = models.BooleanField(
+        default=False,
+        help_text='Was the attempt queued by the provider and should be ' 'refetched?',
+    )
     when_queued = models.DateTimeField(null=True, blank=True)
-    queue_previous = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
-                                       related_query_name='queue_following',
-                                       related_name='queue_following')
+    queue_previous = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_query_name='queue_following',
+        related_name='queue_following',
+    )
     data_file = models.FileField(upload_to=where_to_store, blank=True, null=True)
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
-    is_processed = models.BooleanField(default=False,
-                                       help_text='Was the data converted into logs?')
+    is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
     credentials_version_hash = models.CharField(
-        max_length=2*SushiCredentials.blake_hash_size,
-        help_text='Hash computed from the credentials at the time this attempt was made'
+        max_length=2 * SushiCredentials.blake_hash_size,
+        help_text='Hash computed from the credentials at the time this attempt was made',
     )
     processing_info = JSONField(default=dict, help_text='Internal info')
 
@@ -505,8 +545,10 @@ class SushiFetchAttempt(models.Model):
             return 'Not queued'
         following_count = self.queue_following.count()
         if following_count:
-            return f'{following_count} following attempt(s) exist - no queueing applies for ' \
-                   f'this attempt'
+            return (
+                f'{following_count} following attempt(s) exist - no queueing applies for '
+                f'this attempt'
+            )
         output = []
         cred_based_delay = self.credentials.when_can_access()
         cred_based_retry = now() + timedelta(seconds=cred_based_delay)
@@ -530,9 +572,11 @@ class SushiFetchAttempt(models.Model):
         return '\n'.join(output)
 
     def retry(self):
-        attempt = self.credentials.fetch_report(counter_report=self.counter_report,
-                                                start_date=self.start_date,
-                                                end_date=month_end(self.end_date))
+        attempt = self.credentials.fetch_report(
+            counter_report=self.counter_report,
+            start_date=self.start_date,
+            end_date=month_end(self.end_date),
+        )
         attempt.queue_previous = self
         attempt.save()
         return attempt
@@ -575,7 +619,7 @@ class SushiFetchAttempt(models.Model):
         if prev_count > settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
             # we reached the maximum number of retries, we do not continue
             return None
-        return interval * (2**prev_count)
+        return interval * (2 ** prev_count)
 
     def when_to_retry(self) -> Optional[datetime]:
         """

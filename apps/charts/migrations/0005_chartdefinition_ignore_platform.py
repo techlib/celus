@@ -13,6 +13,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='chartdefinition',
             name='ignore_platform',
-            field=models.BooleanField(default=False, help_text='When checked, the chart will contain data for all platforms. This is useful to compare platforms for one title.'),
+            field=models.BooleanField(
+                default=False,
+                help_text='When checked, the chart will contain data for all platforms. This is useful to compare platforms for one title.',
+            ),
         ),
     ]

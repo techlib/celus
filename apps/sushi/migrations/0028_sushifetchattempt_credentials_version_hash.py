@@ -13,7 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sushifetchattempt',
             name='credentials_version_hash',
-            field=models.CharField(default='', help_text='Hash computed from the credentials at the time this attempt was made', max_length=32),
+            field=models.CharField(
+                default='',
+                help_text='Hash computed from the credentials at the time this attempt was made',
+                max_length=32,
+            ),
             preserve_default=False,
         ),
     ]

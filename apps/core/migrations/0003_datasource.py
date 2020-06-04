@@ -15,21 +15,49 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='DataSource',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('short_name', models.SlugField()),
-                ('type', models.PositiveSmallIntegerField(choices=[(1, 'API'), (2, 'Organization')])),
+                (
+                    'type',
+                    models.PositiveSmallIntegerField(choices=[(1, 'API'), (2, 'Organization')]),
+                ),
                 ('url', models.URLField(blank=True)),
-                ('organization', models.OneToOneField(blank=True, help_text='Used to define data sources private to an organization', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='private_data_source', to='organizations.Organization')),
+                (
+                    'organization',
+                    models.OneToOneField(
+                        blank=True,
+                        help_text='Used to define data sources private to an organization',
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='private_data_source',
+                        to='organizations.Organization',
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
             model_name='identity',
             name='source',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='core.DataSource'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='core.DataSource',
+            ),
         ),
         migrations.AddField(
             model_name='user',
             name='source',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='core.DataSource'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='core.DataSource',
+            ),
         ),
     ]

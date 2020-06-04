@@ -14,10 +14,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='accesslog',
             name='report_type',
-            field=models.ForeignKey(db_index=False, on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'),
+            field=models.ForeignKey(
+                db_index=False, on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+            ),
         ),
         migrations.AddIndex(
             model_name='accesslog',
-            index=models.Index(fields=['report_type', 'organization'], name='logs_access_report__2ce170_idx'),
+            index=models.Index(
+                fields=['report_type', 'organization'], name='logs_access_report__2ce170_idx'
+            ),
         ),
     ]

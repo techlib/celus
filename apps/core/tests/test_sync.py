@@ -18,30 +18,9 @@ def data_source():
 class TestUserSync(object):
 
     user_data = [
-        {
-            'id': 1,
-            'vals': {
-                'name@cs': ['Pepa Vonasek']
-            },
-            'refs': {
-                'administrator of': [5]
-            }
-        },
-        {
-            'id': 22,
-            'vals': {
-                'name@cs': ['Lojza Huml']
-            },
-            'refs': {
-                'administrator of': []
-            }
-        },
-        {
-            'id': 333,
-            'vals': {
-                'name@en': ['Jack Sparrow']
-            },
-        },
+        {'id': 1, 'vals': {'name@cs': ['Pepa Vonasek']}, 'refs': {'administrator of': [5]}},
+        {'id': 22, 'vals': {'name@cs': ['Lojza Huml']}, 'refs': {'administrator of': []}},
+        {'id': 333, 'vals': {'name@en': ['Jack Sparrow']},},
     ]
 
     def test_sync_users(self, data_source):
@@ -92,18 +71,9 @@ class TestUserSync(object):
 class TestIdentitySync(object):
 
     identity_data = [
-        {
-            'person': 1,
-            'identity': 'foo@bar.baz',
-        },
-        {
-            'person': 1,
-            'identity': 'foo@baz.bar',
-        },
-        {
-            'person': 22,
-            'identity': 'X',
-        },
+        {'person': 1, 'identity': 'foo@bar.baz',},
+        {'person': 1, 'identity': 'foo@baz.bar',},
+        {'person': 22, 'identity': 'X',},
     ]
 
     def test_sync_identities(self, data_source):

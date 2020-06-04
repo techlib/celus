@@ -15,11 +15,19 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='accesslog',
             name='target',
-            field=models.ForeignKey(help_text='Title for which this log was created', null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Title'),
+            field=models.ForeignKey(
+                help_text='Title for which this log was created',
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='publications.Title',
+            ),
         ),
         migrations.AlterField(
             model_name='manualdataupload',
             name='data_file',
-            field=models.FileField(upload_to=logs.models.where_to_store, validators=[logs.models.validate_mime_type, logs.models.check_can_parse]),
+            field=models.FileField(
+                upload_to=logs.models.where_to_store,
+                validators=[logs.models.validate_mime_type, logs.models.check_can_parse],
+            ),
         ),
     ]

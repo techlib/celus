@@ -18,6 +18,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sushifetchattempt',
             name='processing_success',
-            field=models.BooleanField(help_text='True if there was no error extracting data from the downloaded material'),
+            field=models.BooleanField(
+                help_text='True if there was no error extracting data from the downloaded material'
+            ),
         ),
     ]

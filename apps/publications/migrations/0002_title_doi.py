@@ -11,8 +11,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='title',
-            name='doi',
-            field=models.CharField(blank=True, max_length=250),
+            model_name='title', name='doi', field=models.CharField(blank=True, max_length=250),
         ),
     ]
