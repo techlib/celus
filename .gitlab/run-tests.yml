@@ -15,7 +15,10 @@ run_tests:
     - poetry install
   script:
     - cp config/settings/secret_settings.json.example config/settings/secret_settings.json
-    - poetry run pytest -v apps
+    - poetry run pytest -v --junitxml=report.xml apps
+  artifacts:
+    reports:
+      junit: report.xml
   tags:
     - bdd
   dependencies:
