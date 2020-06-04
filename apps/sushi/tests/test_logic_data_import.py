@@ -8,7 +8,6 @@ from organizations.tests.conftest import organizations
 
 @pytest.mark.django_db
 class TestLogicDataImport(object):
-
     def test_sushi_import(self, organizations):
         assert SushiCredentials.objects.count() == 0
         data = [
@@ -19,7 +18,7 @@ class TestLogicDataImport(object):
                 'requestor_id': 'RRR',
                 'URL': 'http://this.is/test/',
                 'version': 4,
-             },
+            },
             {
                 'platform': 'XXX',
                 'organization': organizations[1].internal_id,
@@ -27,8 +26,8 @@ class TestLogicDataImport(object):
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
                 'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar'
-             },
+                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+            },
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         stats = import_sushi_credentials(data)
@@ -63,7 +62,7 @@ class TestLogicDataImport(object):
                 'requestor_id': 'RRR',
                 'URL': 'http://this.is/test/',
                 'version': 4,
-             },
+            },
             {
                 'platform': 'XXX',
                 'organization': organizations[1].internal_id,
@@ -71,8 +70,8 @@ class TestLogicDataImport(object):
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
                 'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar'
-             },
+                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+            },
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         stats = import_sushi_credentials(data)

@@ -13,18 +13,26 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='accesslog',
-            index=django.contrib.postgres.indexes.BrinIndex(fields=['report_type'], name='logs_access_report__0a3f70_brin'),
+            index=django.contrib.postgres.indexes.BrinIndex(
+                fields=['report_type'], name='logs_access_report__0a3f70_brin'
+            ),
         ),
         migrations.AddIndex(
             model_name='accesslog',
-            index=django.contrib.postgres.indexes.BrinIndex(fields=['platform'], name='logs_access_platfor_0be71c_brin'),
+            index=django.contrib.postgres.indexes.BrinIndex(
+                fields=['platform'], name='logs_access_platfor_0be71c_brin'
+            ),
         ),
         migrations.AddIndex(
             model_name='accesslog',
-            index=django.contrib.postgres.indexes.BrinIndex(fields=['organization'], name='logs_access_organiz_53e398_brin'),
+            index=django.contrib.postgres.indexes.BrinIndex(
+                fields=['organization'], name='logs_access_organiz_53e398_brin'
+            ),
         ),
         migrations.AddIndex(
             model_name='accesslog',
-            index=django.contrib.postgres.indexes.BrinIndex(fields=['date'], name='logs_access_date_9337d2_brin'),
+            index=django.contrib.postgres.indexes.BrinIndex(
+                fields=['date'], name='logs_access_date_9337d2_brin'
+            ),
         ),
     ]

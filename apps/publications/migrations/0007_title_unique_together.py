@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='title',
-            unique_together={('name', 'isbn', 'issn', 'eissn', 'doi')},
+            name='title', unique_together={('name', 'isbn', 'issn', 'eissn', 'doi')},
         ),
     ]

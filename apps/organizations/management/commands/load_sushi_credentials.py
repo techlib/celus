@@ -19,6 +19,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stats = import_sushi_credentials_from_csv(
             options['file'],
-            reversion_comment='Updated/created by command line script "load_sushi_credentials"'
+            reversion_comment='Updated/created by command line script "load_sushi_credentials"',
         )
         self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))

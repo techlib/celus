@@ -14,6 +14,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='manualdataupload',
             name='data_file',
-            field=models.FileField(upload_to=logs.models.where_to_store, validators=[logs.models.validate_mime_type]),
+            field=models.FileField(
+                upload_to=logs.models.where_to_store, validators=[logs.models.validate_mime_type]
+            ),
         ),
     ]

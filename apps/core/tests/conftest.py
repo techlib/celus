@@ -32,8 +32,8 @@ def master_identity():
             ico='12345',
             name_cs='šéf',
             name_en='boss',
-            short_name='master'
-            )
+            short_name='master',
+        )
     )
     yield id_string
 
@@ -69,4 +69,5 @@ def unauthenticated_client(client, invalid_identity):
 def authentication_headers():
     def fn(identity):
         return {settings.EDUID_IDENTITY_HEADER: identity}
+
     return fn

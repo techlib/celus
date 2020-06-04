@@ -11,12 +11,8 @@ class MyUserAdmin(UserAdmin):
 
     custom_fields = ('ext_id', 'source', 'language')
 
-    fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': custom_fields}),
-    )
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {'fields': custom_fields}),
-    )
+    fieldsets = UserAdmin.fieldsets + ((None, {'fields': custom_fields}),)
+    add_fieldsets = UserAdmin.add_fieldsets + ((None, {'fields': custom_fields}),)
 
     list_filter = ('source',) + UserAdmin.list_filter
 

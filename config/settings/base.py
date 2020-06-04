@@ -108,14 +108,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-            'ENGINE': 'django_prometheus.db.backends.postgresql',
-            'NAME': 'celus',
-            'USER': 'celus',
-            'PASSWORD': '--REPLACE ME--',  # should be replaced later with data from secret json
-            'HOST': '127.0.0.1',
-            'PORT': '5432',
-            'ATOMIC_REQUESTS': True,
-        }
+        'ENGINE': 'django_prometheus.db.backends.postgresql',
+        'NAME': 'celus',
+        'USER': 'celus',
+        'PASSWORD': '--REPLACE ME--',  # should be replaced later with data from secret json
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+        'ATOMIC_REQUESTS': True,
+    }
 }
 
 
@@ -123,18 +123,10 @@ DATABASES = {
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
 # Custom user model
@@ -171,27 +163,21 @@ STATICFILES_FINDERS = (
 STATIC_ROOT = BASE_DIR / "static_compiled"
 
 # Email
-ADMINS = (
-    ("Beda Kosata", "beda@bigdigdata.com"),
-)
+ADMINS = (("Beda Kosata", "beda@bigdigdata.com"),)
 EMAIL_SUBJECT_PREFIX = '[Stats] '
 
 # REST framework
 
 REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False,
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
         'rest_pandas.renderers.PandasCSVRenderer',
         'rest_pandas.renderers.PandasExcelRenderer',
     ),
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'core.authentication.SessionAuthentication401',
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': ['core.authentication.SessionAuthentication401',]
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
 }
@@ -211,28 +197,30 @@ CACHES = {
 }
 
 # Cachalot related settings
-CACHALOT_ONLY_CACHABLE_TABLES = frozenset((
-    'charts_chartdefinition',
-    'charts_dimensionfilter',
-    'charts_reportdataview',
-    'charts_reportviewtocharttype',
-    'logs_accesslog',
-    'logs_dimension',
-    'logs_dimensiontext',
-    'logs_interestgroup',
-    'logs_metric',
-    'logs_organizationplatform',
-    'logs_reportinterestmetric',
-    'logs_reporttype',
-    'logs_reporttypetodimension',
-    'organizations_organization',
-    'organizations_userorganization',
-    'publications_platform',
-    'publications_platforminterestreport',
-    'publications_platformtitle',
-    'publications_title',
-    'sushi_counterreporttype',
-))
+CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
+    (
+        'charts_chartdefinition',
+        'charts_dimensionfilter',
+        'charts_reportdataview',
+        'charts_reportviewtocharttype',
+        'logs_accesslog',
+        'logs_dimension',
+        'logs_dimensiontext',
+        'logs_interestgroup',
+        'logs_metric',
+        'logs_organizationplatform',
+        'logs_reportinterestmetric',
+        'logs_reporttype',
+        'logs_reporttypetodimension',
+        'organizations_organization',
+        'organizations_userorganization',
+        'publications_platform',
+        'publications_platforminterestreport',
+        'publications_platformtitle',
+        'publications_title',
+        'sushi_counterreporttype',
+    )
+)
 # CACHALOT_UNCACHABLE_TABLES = frozenset(('django_migrations',))
 
 # Celery
@@ -241,16 +229,17 @@ CELERY_BROKER_URL = 'redis://localhost'
 CELERY_TIMEZONE = TIME_ZONE
 
 
-CELERY_TASK_ROUTES = {'logs.tasks.sync_interest_task': {'queue': 'interest'},
-                      'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
-                      'sushi.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
-                      'sushi.tasks.run_sushi_fetch_attempt_task': {'queue': 'sushi'},
-                      'sushi.tasks.fetch_new_sushi_data_task': {'queue': 'sushi'},
-                      'sushi.tasks.fetch_new_sushi_data_for_credentials_task': {'queue': 'sushi'},
-                      'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
-                      'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
-                      'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
-                      }
+CELERY_TASK_ROUTES = {
+    'logs.tasks.sync_interest_task': {'queue': 'interest'},
+    'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
+    'sushi.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
+    'sushi.tasks.run_sushi_fetch_attempt_task': {'queue': 'sushi'},
+    'sushi.tasks.fetch_new_sushi_data_task': {'queue': 'sushi'},
+    'sushi.tasks.fetch_new_sushi_data_for_credentials_task': {'queue': 'sushi'},
+    'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
+    'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
+    'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
+}
 
 CELERY_BEAT_SCHEDULE = {
     'smart_interest_sync_task': {
@@ -284,7 +273,7 @@ CELERY_BEAT_SCHEDULE = {
     'erms_sync_users_and_identities_task': {
         'task': 'core.tasks.erms_sync_users_and_identities_task',
         'schedule': schedule(run_every=timedelta(minutes=30)),
-    }
+    },
 }
 
 
@@ -301,27 +290,13 @@ REFERENCE_CURRENCY = 'CZK'  # this is the currency used for price calculation
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-        },
-    },
+    'handlers': {'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler',},},
     'loggers': {
-        'django.db': {
-            'level': 'INFO',
-        },
-        'pycounter': {
-            'level': 'INFO',
-        },
-        'requests': {
-            'level': 'INFO',
-        }
+        'django.db': {'level': 'INFO',},
+        'pycounter': {'level': 'INFO',},
+        'requests': {'level': 'INFO',},
     },
-    'root': {
-        'level': 'DEBUG',
-        'handlers': ['console'],
-    }
+    'root': {'level': 'DEBUG', 'handlers': ['console'],},
 }
 
 # hopefully temporary hacks

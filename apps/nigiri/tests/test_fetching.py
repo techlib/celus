@@ -14,7 +14,6 @@ from sushi.models import SushiCredentials, CounterReportType
 
 @pytest.mark.django_db
 class TestURLComposition(object):
-
     def test_extra_params_is_not_polluted_by_extra_data(self, organizations, report_type_nd):
         assert SushiCredentials.objects.count() == 0
         data = [
@@ -25,7 +24,7 @@ class TestURLComposition(object):
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
                 'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar'
+                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
             },
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
@@ -36,8 +35,9 @@ class TestURLComposition(object):
         # let's create
         cr1 = credentials[0]
         cr1.create_sushi_client()
-        report = CounterReportType.objects.create(code='tr', name='tr', counter_version=5,
-                                                  report_type=report_type_nd(0))
+        report = CounterReportType.objects.create(
+            code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
+        )
         orig_params = deepcopy(Sushi5Client.EXTRA_PARAMS)
 
         def mock_get_report_data(*args, **kwargs):

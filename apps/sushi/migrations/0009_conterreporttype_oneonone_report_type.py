@@ -14,6 +14,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='counterreporttype',
             name='report_type',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'),
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+            ),
         ),
     ]

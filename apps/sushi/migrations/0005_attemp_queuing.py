@@ -13,7 +13,10 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sushifetchattempt',
             name='queued',
-            field=models.BooleanField(default=False, help_text='Was the attempt queued by the provider and should be refetched?'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Was the attempt queued by the provider and should be refetched?',
+            ),
         ),
         migrations.AddField(
             model_name='sushifetchattempt',

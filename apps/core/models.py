@@ -22,12 +22,12 @@ USER_LEVEL_CHOICES = (
 )
 
 # relationship between user and accessed resource
-REL_SUPERUSER = 1000   # superuser
-REL_MASTER_ORG = 400   # user from master organization
-REL_ORG_ADMIN = 300    # admin of related organization
-REL_ORG_USER = 200     # user from related organization
-REL_UNREL_USER = 100   # unrelated user - not from this organization
-REL_NO_USER = 0        # no user
+REL_SUPERUSER = 1000  # superuser
+REL_MASTER_ORG = 400  # user from master organization
+REL_ORG_ADMIN = 300  # admin of related organization
+REL_ORG_USER = 200  # user from related organization
+REL_UNREL_USER = 100  # unrelated user - not from this organization
+REL_NO_USER = 0  # no user
 
 
 class DataSource(models.Model):
@@ -48,10 +48,14 @@ class DataSource(models.Model):
     short_name = models.SlugField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     url = models.URLField(blank=True)
-    organization = models.OneToOneField('organizations.Organization', on_delete=models.CASCADE,
-                                        null=True, blank=True, related_name='private_data_source',
-                                        help_text='Used to define data sources private to an '
-                                                  'organization')
+    organization = models.OneToOneField(
+        'organizations.Organization',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='private_data_source',
+        help_text='Used to define data sources private to an ' 'organization',
+    )
 
     def __str__(self):
         if self.organization and self.type == self.TYPE_ORGANIZATION:
@@ -61,12 +65,16 @@ class DataSource(models.Model):
 
 class User(AbstractUser):
 
-    ext_id = models.PositiveIntegerField(null=True, blank=True,
-                                         help_text='ID used in original source of this user data')
+    ext_id = models.PositiveIntegerField(
+        null=True, blank=True, help_text='ID used in original source of this user data'
+    )
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
-    language = models.CharField(max_length=2, choices=settings.LANGUAGES,
-                                default=settings.LANGUAGES[-1][0],
-                                help_text='User\'s preferred language')
+    language = models.CharField(
+        max_length=2,
+        choices=settings.LANGUAGES,
+        default=settings.LANGUAGES[-1][0],
+        help_text='User\'s preferred language',
+    )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -83,11 +91,12 @@ class User(AbstractUser):
         if self.is_superuser or self.is_from_master_organization:
             # user is part of one of the master organizations - he should have access to all orgs
             return Organization.objects.all()
-        return (self.organizations.all() |
-                Organization.objects.filter(
-                    tree_id__in=self.organizations.all().filter(level=0).values('tree_id').
-                    distinct())
-                ).distinct()
+        return (
+            self.organizations.all()
+            | Organization.objects.filter(
+                tree_id__in=self.organizations.all().filter(level=0).values('tree_id').distinct()
+            )
+        ).distinct()
         # the following is an old version where siblings could see each other
         # return Organization.objects.filter(
         #     tree_id__in=self.organizations.all().values('tree_id').distinct())
@@ -103,6 +112,7 @@ class User(AbstractUser):
         :return:
         """
         from organizations.models import UserOrganization, Organization
+
         if self.is_superuser:
             return REL_SUPERUSER
         elif self.is_from_master_organization:
@@ -113,6 +123,7 @@ class User(AbstractUser):
 
     def organization_relationship(self, org_id: int):
         from organizations.models import UserOrganization, Organization
+
         if self.is_superuser:
             return REL_SUPERUSER
         elif self.is_from_master_organization:
@@ -138,8 +149,12 @@ class User(AbstractUser):
 class Identity(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    identity = models.CharField(max_length=100, unique=True, db_index=True,
-                                help_text='External identifier of the person, usually email')
+    identity = models.CharField(
+        max_length=100,
+        unique=True,
+        db_index=True,
+        help_text='External identifier of the person, usually email',
+    )
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -149,6 +164,3 @@ class Identity(models.Model):
 
     def __str__(self):
         return self.identity
-
-
-

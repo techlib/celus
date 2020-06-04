@@ -26,5 +26,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(default=True),
             preserve_default=False,
         ),
-        migrations.RunPython(fill_processing_success_from_download_success, noop)
+        migrations.RunPython(fill_processing_success_from_download_success, noop),
     ]

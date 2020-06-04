@@ -11,13 +11,15 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='interestgroup',
-            options={'ordering': ('position', 'important')},
+            name='interestgroup', options={'ordering': ('position', 'important')},
         ),
         migrations.AddField(
             model_name='interestgroup',
             name='important',
-            field=models.BooleanField(default=False, help_text='Important interest groups should be shown preferentially to users'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Important interest groups should be shown preferentially to users',
+            ),
         ),
         migrations.AddField(
             model_name='interestgroup',

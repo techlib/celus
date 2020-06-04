@@ -31,9 +31,12 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
     """
     # no reason redownloading those where download was not successful - this has to be done
     # manually
-    qs = SushiFetchAttempt.objects.filter(queued=True, processing_success=True).\
-        annotate(following_count=Count('queue_following')).filter(following_count=0).\
-        order_by('-when_queued')
+    qs = (
+        SushiFetchAttempt.objects.filter(queued=True, processing_success=True)
+        .annotate(following_count=Count('queue_following'))
+        .filter(following_count=0)
+        .order_by('-when_queued')
+    )
     logger.debug('Found %s attempts to retry', qs.count())
     last_platform = None
     stats = Counter()
@@ -82,11 +85,14 @@ def fetch_new_sushi_data(credentials: Optional[SushiCredentials] = None):
     start_date = month_start(month_start(now().date()) - timedelta(days=15))  # start of prev month
     end_date = month_start(parse_date(settings.SUSHI_ATTEMPT_LAST_DATE))
     # do not use lock, we lock the whole queue with same URL
-    processing_fn = partial(process_fetch_units_wrapper,
-                            conflict_ok='skip', conflict_error='smart', sleep_time=2,
-                            use_lock=False)
-    args = [(lock_name, fus, start_date, end_date)
-            for lock_name, fus in lock_name_to_units.items()]
+    processing_fn = partial(
+        process_fetch_units_wrapper,
+        conflict_ok='skip',
+        conflict_error='smart',
+        sleep_time=2,
+        use_lock=False,
+    )
+    args = [(lock_name, fus, start_date, end_date) for lock_name, fus in lock_name_to_units.items()]
     logger.info('Starting processing of %d sushi fetching queues', len(args))
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
         for result in executor.map(processing_fn, args):
@@ -95,8 +101,9 @@ def fetch_new_sushi_data(credentials: Optional[SushiCredentials] = None):
 
 def process_fetch_units_wrapper(args, **kwargs):
     lock_name, fetch_units, start_date, end_date = args
-    logger.debug('Going to lock fetching of %d fetch units with lock %s',
-                 len(fetch_units), lock_name)
+    logger.debug(
+        'Going to lock fetching of %d fetch units with lock %s', len(fetch_units), lock_name
+    )
     with cache_based_lock(lock_name):
         logger.debug('Locked %s', lock_name)
         try:
@@ -122,10 +129,12 @@ class FetchUnit(object):
 
     def download(self, start_date, end_date, use_lock=True):
         logger.info('Fetching %s, %s for %s', self.credentials, self.report_type, start_date)
-        attempt = self.credentials.fetch_report(counter_report=self.report_type,
-                                                start_date=start_date,
-                                                end_date=end_date,
-                                                use_url_lock=use_lock)
+        attempt = self.credentials.fetch_report(
+            counter_report=self.report_type,
+            start_date=start_date,
+            end_date=end_date,
+            use_url_lock=use_lock,
+        )
         logger.info('Result: %s', attempt)
         self.last_attempt = attempt
         return attempt
@@ -149,8 +158,10 @@ class FetchUnit(object):
         :return:
         """
         attempts = SushiFetchAttempt.objects.filter(
-            credentials=self.credentials, counter_report=self.report_type,
-            start_date__lte=start_date, end_date__gte=end_date
+            credentials=self.credentials,
+            counter_report=self.report_type,
+            start_date__lte=start_date,
+            end_date__gte=end_date,
         )
         successes = ['contains_data', 'queued', 'processing_success', 'download_success']
         for success_type in successes:
@@ -172,9 +183,10 @@ class FetchUnit(object):
         out = []
         for rt in self.report_type.report_type.superseeds.all():  # type: ReportType
             for cred in SushiCredentials.objects.filter(
-                    active_counter_reports=rt.counterreporttype,
-                    organization_id=self.credentials.organization_id,
-                    platform_id=self.credentials.platform_id):
+                active_counter_reports=rt.counterreporttype,
+                organization_id=self.credentials.organization_id,
+                platform_id=self.credentials.platform_id,
+            ):
                 out.append(FetchUnit(cred, rt.counterreporttype))
         return out
 
@@ -193,17 +205,21 @@ def create_fetch_units() -> [FetchUnit]:
     return fetch_units
 
 
-def filter_fetch_units_by_credentials(fetch_units: [FetchUnit], credentials: SushiCredentials) ->\
-        [FetchUnit]:
+def filter_fetch_units_by_credentials(
+    fetch_units: [FetchUnit], credentials: SushiCredentials
+) -> [FetchUnit]:
     """
     Takes a list of FetchUnits and filters them so that only those that are related to
     platform and organization from `credentials` remain.
     It is used to get FetchUnits for credentials but to use credentials for newer COUNTER
     versions where desired (which naive approach based simply on `credentials` cannot do)
     """
-    return [fu for fu in fetch_units
-            if fu.credentials.organization_id == credentials.organization_id and
-            fu.credentials.platform_id == credentials.platform_id]
+    return [
+        fu
+        for fu in fetch_units
+        if fu.credentials.organization_id == credentials.organization_id
+        and fu.credentials.platform_id == credentials.platform_id
+    ]
 
 
 def split_fetch_units_by_platform(fetch_units) -> dict:
@@ -231,44 +247,65 @@ def split_fetch_units_by_url_lock_name(fetch_units) -> dict:
     for fetch_unit in fetch_units:
         url_lock_name = fetch_unit.credentials.url_lock_name
         if url_lock_name not in lock_name_to_fetch_units:
-            logger.debug('Assigning lock name %s to URL %s',
-                         url_lock_name, fetch_unit.credentials.url)
+            logger.debug(
+                'Assigning lock name %s to URL %s', url_lock_name, fetch_unit.credentials.url
+            )
             lock_name_to_fetch_units[url_lock_name] = []
         lock_name_to_fetch_units[url_lock_name].append(fetch_unit)
     return lock_name_to_fetch_units
 
 
-def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: date,
-                        conflict_ok='skip', conflict_error='smart', sleep_time=0,
-                        use_lock=True):
+def process_fetch_units(
+    fetch_units: [FetchUnit],
+    start_date: date,
+    end_date: date,
+    conflict_ok='skip',
+    conflict_error='smart',
+    sleep_time=0,
+    use_lock=True,
+):
     while fetch_units and start_date >= end_date:
         new_fetch_units = []
         platform = fetch_units[0].credentials.platform
-        logger.debug('Processing %d fetch units for platform %s, %s',
-                     len(fetch_units), platform, start_date)
+        logger.debug(
+            'Processing %d fetch units for platform %s, %s', len(fetch_units), platform, start_date
+        )
         for fetch_unit in fetch_units:  # type: FetchUnit
             end = month_end(start_date)
             # deal with possible conflict
             conflict = fetch_unit.find_conflicting(start_date, end)
             if conflict:
-                action = conflict_ok if (conflict.contains_data or conflict.queued)\
-                    else conflict_error
+                action = (
+                    conflict_ok if (conflict.contains_data or conflict.queued) else conflict_error
+                )
                 if action == 'smart':
                     # smart means that we use the retry timeout of the conflicting attempt
                     # to decide on what to do
                     action = smart_decide_conflict_action(conflict)
                 if action == 'stop':
-                    logger.debug('Stopping on existing data: %s, %s: %s',
-                                 platform, fetch_unit.credentials.organization, start_date)
+                    logger.debug(
+                        'Stopping on existing data: %s, %s: %s',
+                        platform,
+                        fetch_unit.credentials.organization,
+                        start_date,
+                    )
                     continue
                 elif action == 'skip':
-                    logger.debug('Skipping on existing data: %s, %s: %s',
-                                 platform, fetch_unit.credentials.organization, start_date)
+                    logger.debug(
+                        'Skipping on existing data: %s, %s: %s',
+                        platform,
+                        fetch_unit.credentials.organization,
+                        start_date,
+                    )
                     new_fetch_units.append(fetch_unit)
                     continue
                 else:
-                    logger.debug('Continuing regardless of existing data: %s, %s: %s',
-                                 platform, fetch_unit.credentials.organization, start_date)
+                    logger.debug(
+                        'Continuing regardless of existing data: %s, %s: %s',
+                        platform,
+                        fetch_unit.credentials.organization,
+                        start_date,
+                    )
             # download the data
             fetch_unit.sleep()
             attempt = fetch_unit.download(start_date, end, use_lock=use_lock)
@@ -285,8 +322,12 @@ def process_fetch_units(fetch_units: [FetchUnit], start_date: date, end_date: da
                 if go_on:
                     new_fetch_units.append(fetch_unit)
                 else:
-                    logger.info('Unsuccessful fetch, stoping: %s, %s: %s',
-                                platform, fetch_unit.credentials.organization, start_date)
+                    logger.info(
+                        'Unsuccessful fetch, stoping: %s, %s: %s',
+                        platform,
+                        fetch_unit.credentials.organization,
+                        start_date,
+                    )
             # sleep but only if this is not the last in the list - it would not make sense
             # to wait just before finishing
             if fetch_unit is not fetch_units[-1]:

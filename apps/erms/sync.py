@@ -31,9 +31,10 @@ class Syncer(object):
 
     def prefetch_db_objects(self):
         if self.object_class:
-            self.db_key_to_obj = {getattr(obj, self.primary_id): obj
-                                  for obj in
-                                  self.object_class.objects.filter(source=self.data_source)}
+            self.db_key_to_obj = {
+                getattr(obj, self.primary_id): obj
+                for obj in self.object_class.objects.filter(source=self.data_source)
+            }
 
     def sync_data(self, records: [dict]) -> dict:
         self.prefetch_db_objects()
@@ -111,7 +112,6 @@ class ERMSSyncer(Syncer):
 
 
 class ERMSObjectSyncer(ERMSSyncer):
-
     def translate_record(self, record: dict) -> dict:
         output = super().translate_record(record['vals'])
         output['ext_id'] = record['id']

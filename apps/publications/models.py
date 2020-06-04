@@ -19,8 +19,9 @@ class Platform(models.Model):
     name = models.CharField(max_length=250)
     provider = models.CharField(max_length=250)
     url = models.URLField(blank=True)
-    interest_reports = models.ManyToManyField('logs.ReportType', through=PlatformInterestReport,
-                                              related_name='interest_platforms')
+    interest_reports = models.ManyToManyField(
+        'logs.ReportType', through=PlatformInterestReport, related_name='interest_platforms'
+    )
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -84,12 +85,14 @@ class Title(models.Model):
     }
 
     name = models.TextField()
-    pub_type = models.CharField(max_length=1, choices=PUB_TYPE_CHOICES,
-                                verbose_name='Publication type')
+    pub_type = models.CharField(
+        max_length=1, choices=PUB_TYPE_CHOICES, verbose_name='Publication type'
+    )
     isbn = models.CharField(max_length=20, blank=True, default='')
     issn = models.CharField(max_length=9, blank=True, default='')
-    eissn = models.CharField(max_length=9, blank=True, default='',
-                             help_text="ISSN of electronic version")
+    eissn = models.CharField(
+        max_length=9, blank=True, default='', help_text="ISSN of electronic version"
+    )
     doi = models.CharField(max_length=250, blank=True, default='')
 
     class Meta:

@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sushifetchattempt',
             name='contains_data',
-            field=models.BooleanField(default=False, help_text='Does the report actually contain data for import'),
+            field=models.BooleanField(
+                default=False, help_text='Does the report actually contain data for import'
+            ),
         ),
     ]

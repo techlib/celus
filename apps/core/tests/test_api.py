@@ -6,7 +6,6 @@ from core.models import Identity
 
 @pytest.mark.django_db
 class TestUserAPI(object):
-
     def test_authenticated(self, authenticated_client):
         resp = authenticated_client.get(reverse('user_api_view'))
         assert resp.status_code == 200

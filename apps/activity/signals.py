@@ -6,6 +6,4 @@ from activity.models import UserActivity
 
 @receiver(user_logged_in)
 def log_user_activity_login(request, user, **kwargs):
-    UserActivity.objects.create(user=user,
-                                action_type=UserActivity.ACTION_TYPE_LOGIN)
-
+    UserActivity.objects.create(user=user, action_type=UserActivity.ACTION_TYPE_LOGIN)

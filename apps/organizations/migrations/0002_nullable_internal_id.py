@@ -18,11 +18,18 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='organization',
             name='ico',
-            field=models.PositiveIntegerField(help_text='Business registration number', unique=True),
+            field=models.PositiveIntegerField(
+                help_text='Business registration number', unique=True
+            ),
         ),
         migrations.AlterField(
             model_name='organization',
             name='internal_id',
-            field=models.CharField(help_text='special ID used for internal purposes', max_length=50, null=True, unique=True),
+            field=models.CharField(
+                help_text='special ID used for internal purposes',
+                max_length=50,
+                null=True,
+                unique=True,
+            ),
         ),
     ]

@@ -20,18 +20,69 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ManualDataUpload',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('data_file', models.FileField(upload_to=logs.models.where_to_store)),
                 ('log', models.TextField(blank=True)),
-                ('is_processed', models.BooleanField(default=False, help_text='Was the data converted into logs?')),
+                (
+                    'is_processed',
+                    models.BooleanField(
+                        default=False, help_text='Was the data converted into logs?'
+                    ),
+                ),
                 ('when_processed', models.DateTimeField(blank=True, null=True)),
-                ('extra', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Internal data related to processing of the upload')),
-                ('import_batch', models.OneToOneField(null=True, on_delete=django.db.models.deletion.SET_NULL, to='logs.ImportBatch')),
-                ('organization', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization')),
-                ('platform', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Platform')),
-                ('report_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType')),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    'extra',
+                    django.contrib.postgres.fields.jsonb.JSONField(
+                        blank=True,
+                        default=dict,
+                        help_text='Internal data related to processing of the upload',
+                    ),
+                ),
+                (
+                    'import_batch',
+                    models.OneToOneField(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to='logs.ImportBatch',
+                    ),
+                ),
+                (
+                    'organization',
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to='organizations.Organization',
+                    ),
+                ),
+                (
+                    'platform',
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to='publications.Platform',
+                    ),
+                ),
+                (
+                    'report_type',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+                    ),
+                ),
+                (
+                    'user',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

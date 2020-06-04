@@ -18,9 +18,7 @@ class Migration(migrations.Migration):
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='identity',
-            name='last_modified',
-            field=models.DateTimeField(auto_now=True),
+            model_name='identity', name='last_modified', field=models.DateTimeField(auto_now=True),
         ),
         migrations.AddField(
             model_name='user',
@@ -29,8 +27,6 @@ class Migration(migrations.Migration):
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='user',
-            name='last_modified',
-            field=models.DateTimeField(auto_now=True),
+            model_name='user', name='last_modified', field=models.DateTimeField(auto_now=True),
         ),
     ]

@@ -11,24 +11,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameModel(
-            old_name='VirtualReportType',
-            new_name='ReportDataView',
-        ),
-        migrations.RemoveField(
-            model_name='metric',
-            name='interest_group',
-        ),
-        migrations.RemoveField(
-            model_name='metric',
-            name='name_in_interest_group',
-        ),
-        migrations.RemoveField(
-            model_name='metric',
-            name='name_in_interest_group_cs',
-        ),
-        migrations.RemoveField(
-            model_name='metric',
-            name='name_in_interest_group_en',
-        ),
+        migrations.RenameModel(old_name='VirtualReportType', new_name='ReportDataView',),
+        migrations.RemoveField(model_name='metric', name='interest_group',),
+        migrations.RemoveField(model_name='metric', name='name_in_interest_group',),
+        migrations.RemoveField(model_name='metric', name='name_in_interest_group_cs',),
+        migrations.RemoveField(model_name='metric', name='name_in_interest_group_en',),
     ]

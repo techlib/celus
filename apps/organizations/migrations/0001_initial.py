@@ -19,7 +19,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Organization',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('ext_id', models.PositiveIntegerField(unique=True)),
                 ('ico', models.PositiveIntegerField(unique=True)),
                 ('internal_id', models.CharField(max_length=50, unique=True)),
@@ -30,25 +35,52 @@ class Migration(migrations.Migration):
                 ('short_name_en', models.CharField(max_length=100, null=True)),
                 ('short_name_cs', models.CharField(max_length=100, null=True)),
                 ('url', models.URLField(blank=True)),
-                ('fte', models.PositiveIntegerField(default=0, help_text='Last available FTE number for organization')),
+                (
+                    'fte',
+                    models.PositiveIntegerField(
+                        default=0, help_text='Last available FTE number for organization'
+                    ),
+                ),
                 ('address', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
                 ('lft', models.PositiveIntegerField(editable=False)),
                 ('rght', models.PositiveIntegerField(editable=False)),
                 ('tree_id', models.PositiveIntegerField(db_index=True, editable=False)),
                 ('level', models.PositiveIntegerField(editable=False)),
-                ('parent', mptt.fields.TreeForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='children', to='organizations.Organization')),
+                (
+                    'parent',
+                    mptt.fields.TreeForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='children',
+                        to='organizations.Organization',
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={'abstract': False,},
         ),
         migrations.CreateModel(
             name='UserOrganization',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('is_admin', models.BooleanField(default=False)),
-                ('organization', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    'organization',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization'
+                    ),
+                ),
+                (
+                    'user',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
+                    ),
+                ),
             ],
         ),
     ]

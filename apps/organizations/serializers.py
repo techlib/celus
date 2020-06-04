@@ -12,5 +12,14 @@ class OrganizationSerializer(ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('pk', 'ext_id', 'short_name', 'name', 'internal_id', 'ico', 'parent', 'is_admin',
-                  'is_member') + tuple('name_'+lang[0] for lang in settings.LANGUAGES)
+        fields = (
+            'pk',
+            'ext_id',
+            'short_name',
+            'name',
+            'internal_id',
+            'ico',
+            'parent',
+            'is_admin',
+            'is_member',
+        ) + tuple('name_' + lang[0] for lang in settings.LANGUAGES)

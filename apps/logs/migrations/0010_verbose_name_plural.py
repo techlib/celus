@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='importbatch',
-            options={'verbose_name_plural': 'Import batches'},
+            name='importbatch', options={'verbose_name_plural': 'Import batches'},
         ),
     ]

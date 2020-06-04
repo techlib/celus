@@ -25,6 +25,6 @@ class Migration(migrations.Migration):
                DROP INDEX publications_title_isbn_trgm;
                DROP INDEX publications_title_issn_trgm;
                DROP INDEX publications_title_doi_trgm;
-               """
-        )
+               """,
+        ),
     ]

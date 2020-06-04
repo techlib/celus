@@ -22,7 +22,7 @@ class SmartPageNumberPagination(PageNumberPagination):
         except ValueError:
             page_number = 1
         queryset = queryset.annotate(**{self.COUNT_ATTR: Window(Count('*'))})
-        result = queryset[(page_number-1)*page_size:page_number*page_size]
+        result = queryset[(page_number - 1) * page_size : page_number * page_size]
         if result:
             first = result[0]
             if type(first) is dict:
@@ -32,9 +32,13 @@ class SmartPageNumberPagination(PageNumberPagination):
         return result
 
     def get_paginated_response(self, data):
-        return Response(OrderedDict([
-            ('count', self.count_),
-            #('next', self.get_next_link()),
-            #('previous', self.get_previous_link()),
-            ('results', data)
-        ]))
+        return Response(
+            OrderedDict(
+                [
+                    ('count', self.count_),
+                    # ('next', self.get_next_link()),
+                    # ('previous', self.get_previous_link()),
+                    ('results', data),
+                ]
+            )
+        )

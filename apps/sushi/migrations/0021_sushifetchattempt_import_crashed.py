@@ -13,6 +13,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sushifetchattempt',
             name='import_crashed',
-            field=models.BooleanField(default=False, help_text='Set to true if there was an error during data import. Details in log and processing_info'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Set to true if there was an error during data import. Details in log and processing_info',
+            ),
         ),
     ]

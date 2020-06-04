@@ -17,7 +17,7 @@ def run_sushi_fetch_attempt_task(attempt_id: int):
         counter_report=attempt.counter_report,
         start_date=attempt.start_date,
         end_date=attempt.end_date,
-        fetch_attempt=attempt
+        fetch_attempt=attempt,
     )
 
 

@@ -5,6 +5,7 @@ from api import ERMS
 
 if __name__ == '__main__':
     import json
+
     with open('../../config/settings/secret_settings.json', 'r') as infile:
         settings = json.load(infile)
     erms = ERMS(settings['ERMS_API_URL'])
@@ -36,17 +37,28 @@ if __name__ == '__main__':
                 splits = erms.fetch_endpoint(erms.EP_OFFER_SPLIT, offer=offer_id)
                 for ppy in offer['price_per_year']:
                     year_splits = [split for split in splits if split['year'] == ppy['year']]
-                    print("Year: {}, Price offer: {} {}; Price splits: {}+{} ({})+({})".format(
-                        ppy['year'],
-                        ppy['amount'],
-                        ppy['currency'],
-                        sum(ys['participation']['amount'] for ys in year_splits
-                            if ys['participation']['amount']),
-                        sum(ys['subsidy']['amount'] for ys in year_splits
-                            if 'subsidy' in ys and ys['subsidy'] and ys['subsidy']['amount']),
-                        ', '.join(str(ys['participation']['amount']) for ys in year_splits),
-                        ', '.join(str(ys['subsidy']['amount']) for ys in year_splits
-                                  if 'subsidy' in ys and ys['subsidy']),
-                    ))
+                    print(
+                        "Year: {}, Price offer: {} {}; Price splits: {}+{} ({})+({})".format(
+                            ppy['year'],
+                            ppy['amount'],
+                            ppy['currency'],
+                            sum(
+                                ys['participation']['amount']
+                                for ys in year_splits
+                                if ys['participation']['amount']
+                            ),
+                            sum(
+                                ys['subsidy']['amount']
+                                for ys in year_splits
+                                if 'subsidy' in ys and ys['subsidy'] and ys['subsidy']['amount']
+                            ),
+                            ', '.join(str(ys['participation']['amount']) for ys in year_splits),
+                            ', '.join(
+                                str(ys['subsidy']['amount'])
+                                for ys in year_splits
+                                if 'subsidy' in ys and ys['subsidy']
+                            ),
+                        )
+                    )
 
         print(offers)

@@ -16,8 +16,9 @@ def sync_user_with_erms(user_id):
         identity = identities[0]
         persons = erms.fetch_objects(ERMS.CLS_PERSON, object_id=identity['person'])
         if persons:
-            data_source, _created = DataSource.objects.get_or_create(short_name='ERMS',
-                                                                     type=DataSource.TYPE_API)
+            data_source, _created = DataSource.objects.get_or_create(
+                short_name='ERMS', type=DataSource.TYPE_API
+            )
             u_syncer = UserSyncer(data_source)
             stats = u_syncer.sync_data(persons)
             logger.debug('User sync on login: %s', stats)

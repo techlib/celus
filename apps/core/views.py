@@ -35,7 +35,6 @@ class SystemInfoView(GenericAPIView):
 
 
 class UserLanguageView(APIView):
-
     def get(self, request):
         if request.user:
             return Response({'language': request.user.language})
@@ -67,9 +66,7 @@ class StartERMSSyncUsersAndIdentitiesTask(APIView):
 
     def post(self, request):
         task = erms_sync_users_and_identities_task.delay()
-        return Response({
-            'id': task.id,
-        })
+        return Response({'id': task.id,})
 
 
 class TestEmailView(APIView):

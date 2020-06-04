@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sushifetchattempt',
             name='in_progress',
-            field=models.BooleanField(default=False, help_text='True if the data is still downloading'),
+            field=models.BooleanField(
+                default=False, help_text='True if the data is still downloading'
+            ),
         ),
     ]

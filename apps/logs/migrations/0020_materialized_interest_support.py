@@ -14,11 +14,22 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='reportinterestmetric',
             name='interest_group',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='logs.InterestGroup'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to='logs.InterestGroup',
+            ),
         ),
         migrations.AddField(
             model_name='reportinterestmetric',
             name='target_metric',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='source_report_interest_metrics', to='logs.Metric'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='source_report_interest_metrics',
+                to='logs.Metric',
+            ),
         ),
     ]

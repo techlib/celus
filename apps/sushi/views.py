@@ -20,8 +20,11 @@ from core.permissions import SuperuserOrAdminPermission, OrganizationRelatedPerm
 from organizations.logic.queries import organization_filter_from_org_id
 from sushi.models import CounterReportType, SushiFetchAttempt
 from sushi.serializers import CounterReportTypeSerializer, SushiFetchAttemptSerializer
-from sushi.tasks import run_sushi_fetch_attempt_task, fetch_new_sushi_data_task, \
-    fetch_new_sushi_data_for_credentials_task
+from sushi.tasks import (
+    run_sushi_fetch_attempt_task,
+    fetch_new_sushi_data_task,
+    fetch_new_sushi_data_for_credentials_task,
+)
 from .models import SushiCredentials
 from .serializers import SushiCredentialsSerializer
 
@@ -33,8 +36,11 @@ class SushiCredentialsViewSet(ModelViewSet):
 
     def get_queryset(self):
         user_organizations = self.request.user.accessible_organizations()
-        qs = SushiCredentials.objects.filter(organization__in=user_organizations).\
-            select_related('organization', 'platform').prefetch_related('active_counter_reports')
+        qs = (
+            SushiCredentials.objects.filter(organization__in=user_organizations)
+            .select_related('organization', 'platform')
+            .prefetch_related('active_counter_reports')
+        )
         organization_id = self.request.query_params.get('organization')
         if organization_id:
             qs = qs.filter(**organization_filter_from_org_id(organization_id, self.request.user))
@@ -42,8 +48,9 @@ class SushiCredentialsViewSet(ModelViewSet):
         org_to_level = {}
         for sc in qs:  # type: SushiCredentials
             if sc.organization_id not in org_to_level:
-                org_to_level[sc.organization_id] = \
-                    self.request.user.organization_relationship(sc.organization_id)
+                org_to_level[sc.organization_id] = self.request.user.organization_relationship(
+                    sc.organization_id
+                )
             user_org_level = org_to_level[sc.organization_id]
             if user_org_level >= sc.lock_level:
                 sc.locked_for_me = False
@@ -83,11 +90,13 @@ class SushiCredentialsViewSet(ModelViewSet):
         owner_level = request.user.organization_relationship(credentials.organization_id)
         requested_level = request.data.get('lock_level', owner_level)
         credentials.change_lock(request.user, requested_level)
-        return Response({
-            'ok': True,
-            'lock_level': credentials.lock_level,
-            'locked': credentials.lock_level >= UL_CONS_STAFF
-        })
+        return Response(
+            {
+                'ok': True,
+                'lock_level': credentials.lock_level,
+                'locked': credentials.lock_level >= UL_CONS_STAFF,
+            }
+        )
 
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):
@@ -106,8 +115,9 @@ class SushiFetchAttemptViewSet(ModelViewSet):
         organizations = self.request.user.accessible_organizations()
         filter_params = {}
         if 'organization' in self.request.query_params:
-            filter_params['credentials__organization'] = \
-                get_object_or_404(organizations, pk=self.request.query_params['organization'])
+            filter_params['credentials__organization'] = get_object_or_404(
+                organizations, pk=self.request.query_params['organization']
+            )
         else:
             filter_params['credentials__organization__in'] = organizations
         if 'platform' in self.request.query_params:
@@ -125,8 +135,9 @@ class SushiFetchAttemptViewSet(ModelViewSet):
         if 'counter_version' in self.request.query_params:
             counter_version = self.request.query_params['counter_version']
             filter_params['credentials__counter_version'] = counter_version
-        return SushiFetchAttempt.objects.filter(**filter_params).\
-            select_related('counter_report', 'credentials__organization')
+        return SushiFetchAttempt.objects.filter(**filter_params).select_related(
+            'counter_report', 'credentials__organization'
+        )
 
     def perform_create(self, serializer: SushiFetchAttemptSerializer):
         serializer.validated_data['in_progress'] = True
@@ -145,15 +156,18 @@ class SushiFetchAttemptStatsView(APIView):
     }
 
     key_to_attr_map = {value[1]: key for key, value in attr_to_query_param_map.items()}
-    key_to_attr_map.update({value[0]: key+'_id' for key, value in attr_to_query_param_map.items()})
+    key_to_attr_map.update(
+        {value[0]: key + '_id' for key, value in attr_to_query_param_map.items()}
+    )
     success_metrics = ['download_success', 'processing_success', 'contains_data']
 
     def get(self, request):
         organizations = request.user.accessible_organizations()
         filter_params = {}
         if 'organization' in request.query_params:
-            filter_params['credentials__organization'] = \
-                get_object_or_404(organizations, pk=request.query_params['organization'])
+            filter_params['credentials__organization'] = get_object_or_404(
+                organizations, pk=request.query_params['organization']
+            )
         else:
             filter_params['credentials__organization__in'] = organizations
         if 'platform' in request.query_params:
@@ -194,9 +208,13 @@ class SushiFetchAttemptStatsView(APIView):
         values.extend(self.attr_to_query_param_map[x])
         values.extend(self.attr_to_query_param_map[y])
         # now get the output
-        qs = SushiFetchAttempt.objects.filter(**filter_params).values(*values).annotate(
-            success_count=Count('pk', filter=Q(**{success_metric: True})),
-            failure_count=Count('pk', filter=Q(**{success_metric: False})),
+        qs = (
+            SushiFetchAttempt.objects.filter(**filter_params)
+            .values(*values)
+            .annotate(
+                success_count=Count('pk', filter=Q(**{success_metric: True})),
+                failure_count=Count('pk', filter=Q(**{success_metric: False})),
+            )
         )
         return qs
 
@@ -213,10 +231,14 @@ class SushiFetchAttemptStatsView(APIView):
         output = []
         while cur_date < end:
             # now get the output
-            for rec in SushiFetchAttempt.objects.filter(**filter_params).\
-                filter(start_date__lte=cur_date, end_date__gte=cur_date).values(*values).annotate(
-                success_count=Count('pk', filter=Q(**{success_metric: True})),
-                failure_count=Count('pk', filter=Q(**{success_metric: False})),
+            for rec in (
+                SushiFetchAttempt.objects.filter(**filter_params)
+                .filter(start_date__lte=cur_date, end_date__gte=cur_date)
+                .values(*values)
+                .annotate(
+                    success_count=Count('pk', filter=Q(**{success_metric: True})),
+                    failure_count=Count('pk', filter=Q(**{success_metric: False})),
+                )
             ):
                 cur_date_str = '-'.join(str(cur_date).split('-')[:2])
                 rec['month'] = cur_date_str[2:]
@@ -232,31 +254,25 @@ class StartFetchNewSushiDataTask(APIView):
 
     def post(self, request):
         task = fetch_new_sushi_data_task.delay()
-        return Response({
-            'id': task.id,
-        })
+        return Response({'id': task.id,})
 
 
 class StartFetchNewSushiDataForCredentialsTask(APIView):
-
     def post(self, request, credentials_pk):
         try:
             credentials = SushiCredentials.objects.get(pk=credentials_pk)
         except SushiCredentials.DoesNotExist:
             return HttpResponseBadRequest(
-                json.dumps(
-                    {'error': f'Credentials object with id={credentials_pk} does not exist'}
-                )
+                json.dumps({'error': f'Credentials object with id={credentials_pk} does not exist'})
             )
         # let's check authorization
         if request.user.is_superuser or request.user.is_from_master_organization:
             pass
-        elif OrganizationRelatedPermissionMixin.\
-                has_org_access(request.user, credentials.organization_id):
+        elif OrganizationRelatedPermissionMixin.has_org_access(
+            request.user, credentials.organization_id
+        ):
             pass
         else:
             raise PermissionDenied('User is neither manager nor admin of related organization')
         task = fetch_new_sushi_data_for_credentials_task.delay(credentials.pk)
-        return Response({
-            'id': task.id,
-        })
+        return Response({'id': task.id,})

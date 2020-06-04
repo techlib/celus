@@ -37,7 +37,8 @@ def erms_sync_platforms() -> dict:
     with cache_based_lock('erms_sync_platforms'):
         erms = ERMS(base_url=settings.ERMS_API_URL)
         erms_records = erms.fetch_objects(ERMS.CLS_PLATFORM)
-        data_source, _created = DataSource.objects.get_or_create(short_name='ERMS',
-                                                                 type=DataSource.TYPE_API)
+        data_source, _created = DataSource.objects.get_or_create(
+            short_name='ERMS', type=DataSource.TYPE_API
+        )
         syncer = PlatformSyncer(data_source)
         return syncer.sync_data(erms_records)

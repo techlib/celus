@@ -16,17 +16,35 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SushiCredentials',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('url', models.URLField()),
-                ('version', models.PositiveSmallIntegerField(choices=[(4, 'COUNTER 4'), (5, 'COUNTER 5')])),
+                (
+                    'version',
+                    models.PositiveSmallIntegerField(choices=[(4, 'COUNTER 4'), (5, 'COUNTER 5')]),
+                ),
                 ('requestor_id', models.CharField(max_length=128)),
                 ('client_id', models.CharField(blank=True, max_length=128)),
                 ('http_username', models.CharField(blank=True, max_length=128)),
                 ('http_password', models.CharField(blank=True, max_length=128)),
                 ('api_key', models.CharField(blank=True, max_length=128)),
                 ('extra_params', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
-                ('organization', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization')),
-                ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='publications.Platform')),
+                (
+                    'organization',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization'
+                    ),
+                ),
+                (
+                    'platform',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'
+                    ),
+                ),
             ],
         ),
     ]

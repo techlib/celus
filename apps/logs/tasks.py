@@ -7,8 +7,11 @@ from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
 from logs.logic.attempt_import import import_new_sushi_attempts
 from logs.logic.export import CSVExport
-from logs.logic.materialized_interest import sync_interest_by_import_batches, \
-    recompute_interest_by_batch, smart_interest_sync
+from logs.logic.materialized_interest import (
+    sync_interest_by_import_batches,
+    recompute_interest_by_batch,
+    smart_interest_sync,
+)
 from logs.logic.materialized_reports import sync_materialized_reports
 
 

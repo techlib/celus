@@ -20,7 +20,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Annotation',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('subject', models.CharField(max_length=200)),
                 ('subject_en', models.CharField(max_length=200, null=True)),
                 ('subject_cs', models.CharField(max_length=200, null=True)),
@@ -33,11 +38,51 @@ class Migration(migrations.Migration):
                 ('start_date', models.DateField(blank=True, null=True)),
                 ('end_date', models.DateField(blank=True, null=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('organization', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization')),
-                ('platform', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Platform')),
-                ('report_type', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType')),
-                ('title', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Title')),
+                (
+                    'author',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    'organization',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to='organizations.Organization',
+                    ),
+                ),
+                (
+                    'platform',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to='publications.Platform',
+                    ),
+                ),
+                (
+                    'report_type',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to='logs.ReportType',
+                    ),
+                ),
+                (
+                    'title',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to='publications.Title',
+                    ),
+                ),
             ],
         ),
     ]

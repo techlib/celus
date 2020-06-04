@@ -24,8 +24,17 @@ class CounterRecord(object):
         "value",
     )
 
-    def __init__(self, platform_name=None, start=None, end=None, title=None, title_ids=None,
-                 metric=None, value=None, dimension_data=None):
+    def __init__(
+        self,
+        platform_name=None,
+        start=None,
+        end=None,
+        title=None,
+        title_ids=None,
+        metric=None,
+        value=None,
+        dimension_data=None,
+    ):
         self.platform_name = platform_name
         self.start = start
         self.end = end
@@ -42,7 +51,6 @@ class CounterRecord(object):
 
 
 class CounterError(object):
-
     def __init__(self, code=None, severity=None, message=None, data=None):
         self.code = code
         self.severity = severity
@@ -51,8 +59,12 @@ class CounterError(object):
 
     @classmethod
     def from_sushi_dict(cls, rec):
-        return cls(code=rec.get('Code'), severity=rec.get('Severity'), message=rec.get('Message'),
-                   data=rec.get('Data'))
+        return cls(
+            code=rec.get('Code'),
+            severity=rec.get('Severity'),
+            message=rec.get('Message'),
+            data=rec.get('Data'),
+        )
 
     def __str__(self):
         return f'{self.severity or "Error"} #{self.code}: {self.message}'
@@ -66,7 +78,7 @@ class Counter5ReportBase(object):
     dimensions = []  # this should be redefined in subclasses
     allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']
 
-    def __init__(self, report: bytes=None):
+    def __init__(self, report: bytes = None):
         self.records = []
         self.queued = False
         self.header = {}
@@ -118,9 +130,7 @@ class Counter5ReportBase(object):
                 else:
                     self.errors.append(error)
 
-    def file_to_records(
-        self, filename: str
-    ) -> typing.Generator[CounterRecord, None, None]:
+    def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
         f = open(filename, 'rb')  # file will be closed later (once generator struct is discarded)
 
         # first check whether it is not an error report

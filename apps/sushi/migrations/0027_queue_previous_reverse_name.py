@@ -14,6 +14,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sushifetchattempt',
             name='queue_previous',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='queue_following', related_query_name='queue_following', to='sushi.SushiFetchAttempt'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='queue_following',
+                related_query_name='queue_following',
+                to='sushi.SushiFetchAttempt',
+            ),
         ),
     ]

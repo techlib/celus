@@ -20,11 +20,19 @@ class Command(BaseCommand):
         parser.add_argument('-r', dest='report', help='code of the counter report to fetch')
         parser.add_argument('-s', dest='start_date', default='2019-01-01')
         parser.add_argument('-e', dest='end_date', default='2019-06-30')
-        parser.add_argument('--sleep', dest='sleep', type=int, default=0,
-                            help='Time to sleep between requests in ms')
-        parser.add_argument('-u', action='store_true', dest='skip_on_unsuccess',
-                            help='do not attempt new fetching if even an unsuccessful attempt '
-                                 'exists')
+        parser.add_argument(
+            '--sleep',
+            dest='sleep',
+            type=int,
+            default=0,
+            help='Time to sleep between requests in ms',
+        )
+        parser.add_argument(
+            '-u',
+            action='store_true',
+            dest='skip_on_unsuccess',
+            help='do not attempt new fetching if even an unsuccessful attempt ' 'exists',
+        )
 
     def handle(self, *args, **options):
         self.sleep_time = options['sleep'] / 1000
@@ -52,15 +60,18 @@ class Command(BaseCommand):
             for cr in crs:
                 key = (cred.platform_id, cred.counter_version)
                 # check if we have a successful attempt already and skip it if yes
-                success_req_for_skip = {'download_success': True, 'processing_success': True} \
-                    if not options['skip_on_unsuccess'] else {}
+                success_req_for_skip = (
+                    {'download_success': True, 'processing_success': True}
+                    if not options['skip_on_unsuccess']
+                    else {}
+                )
                 existing = SushiFetchAttempt.objects.filter(
-                        credentials=cred,
-                        counter_report=cr,
-                        start_date=start_date,
-                        end_date=end_date,
-                        **success_req_for_skip,
-                    ).exists()
+                    credentials=cred,
+                    counter_report=cr,
+                    start_date=start_date,
+                    end_date=end_date,
+                    **success_req_for_skip,
+                ).exists()
                 if existing:
                     self.stderr.write(self.style.SUCCESS(f'Skipping existing {cred}, {cr}'))
                 else:
@@ -72,30 +83,30 @@ class Command(BaseCommand):
             return
         # let's create some threads and use them to process individual platforms
         with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-            for result in executor.map(self.download_list,
-                                       list(platform_counter_v_to_requests.items())):
+            for result in executor.map(
+                self.download_list, list(platform_counter_v_to_requests.items())
+            ):
                 pass
 
     def download_list(self, attrs):
         key, param_list = attrs  # unpack the tuple passed in
-        self.stderr.write(self.style.SUCCESS(
-            f'Starting thread for {len(param_list)} downloads for key {key}'))
+        self.stderr.write(
+            self.style.SUCCESS(f'Starting thread for {len(param_list)} downloads for key {key}')
+        )
         for i, params in enumerate(param_list):
             self.download(*params)
             if i != len(param_list) - 1:
                 # do not sleep for last item
                 sleep(self.sleep_time)
-        self.stderr.write(self.style.SUCCESS(
-            f'Ending thread for {len(param_list)} downloads for key {key}'))
+        self.stderr.write(
+            self.style.SUCCESS(f'Ending thread for {len(param_list)} downloads for key {key}')
+        )
 
     def download(self, cred: SushiCredentials, cr: CounterReportType, start_date, end_date):
         self.stderr.write(self.style.NOTICE(f'Fetching {cred}, {cr}'))
-        attempt = cred.fetch_report(counter_report=cr,
-                                    start_date=start_date,
-                                    end_date=end_date)
+        attempt = cred.fetch_report(counter_report=cr, start_date=start_date, end_date=end_date)
         if attempt.download_success:
             style = self.style.SUCCESS
         else:
             style = self.style.ERROR
         self.stderr.write(style(attempt))
-

@@ -12,13 +12,17 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RenameField(
-            model_name='sushifetchattempt',
-            old_name='success',
-            new_name='download_success',
+            model_name='sushifetchattempt', old_name='success', new_name='download_success',
         ),
         migrations.AddField(
             model_name='sushifetchattempt',
             name='queue_previous',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_query_name='queue_following', to='sushi.SushiFetchAttempt'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_query_name='queue_following',
+                to='sushi.SushiFetchAttempt',
+            ),
         ),
     ]
