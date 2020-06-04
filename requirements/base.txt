@@ -20,6 +20,7 @@ django-error-report==0.2.0
 psutil==5.7.0
 lz4==3.0.2
 django-prometheus==2.0.0
+python-dateutil==2.6.1
 -e git+https://github.com/beda42/django-cachalot.git@30d899f#egg=django-cachalot
 ijson==3.0
 # pycounter==1.1.1

@@ -112,7 +112,7 @@ class SushiCredentials(models.Model):
         (UL_CONS_STAFF, 'Consortium staff'),
         (UL_CONS_ADMIN, 'Superuser'),
     )
-    blake_hash_size = 16
+    BLAKE_HASH_SIZE = 16
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
@@ -141,7 +141,7 @@ class SushiCredentials(models.Model):
         help_text='Only user with the same or higher level can unlock it and/or edit it',
     )
     version_hash = models.CharField(
-        max_length=blake_hash_size * 2, help_text='Current hash of model attributes'
+        max_length=BLAKE_HASH_SIZE * 2, help_text='Current hash of model attributes'
     )
 
     class Meta:
@@ -259,7 +259,7 @@ class SushiCredentials(models.Model):
         :return:
         """
         dump = json.dumps(data, ensure_ascii=False, sort_keys=True)
-        return blake2b(dump.encode('utf-8'), digest_size=cls.blake_hash_size).hexdigest()
+        return blake2b(dump.encode('utf-8'), digest_size=cls.BLAKE_HASH_SIZE).hexdigest()
 
     def compute_version_hash(self):
         """
@@ -508,7 +508,7 @@ class SushiFetchAttempt(models.Model):
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
     credentials_version_hash = models.CharField(
-        max_length=2 * SushiCredentials.blake_hash_size,
+        max_length=2 * SushiCredentials.BLAKE_HASH_SIZE,
         help_text='Hash computed from the credentials at the time this attempt was made',
     )
     processing_info = JSONField(default=dict, help_text='Internal info')

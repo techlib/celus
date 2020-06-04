@@ -91,7 +91,7 @@ def retry_holes_with_new_credentials_task():
     holes = find_holes_in_data()
     logger.debug('Found %d holes to retry', len(holes))
     stats = Counter()
-    for i, hole in enumerate(holes):
+    for hole in holes:
         cred_based_delay = hole.credentials.when_can_access()
         if not hole.attempt_with_current_credentials:
             # this is what we want to process - cases when sushi credentials were updated

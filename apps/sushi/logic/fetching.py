@@ -12,6 +12,7 @@ from time import sleep
 from typing import Optional, Tuple
 
 from dateparser import parse as parse_date
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db.models import Count
 from django.utils.timezone import now
@@ -364,7 +365,7 @@ def months_to_cover(first_month=None) -> [date]:
     months_to_check = []
     while month <= last_month:
         months_to_check.append(month)
-        month = month_start(month + timedelta(days=45))
+        month = month_start(month + relativedelta(months=1))
     return months_to_check
 
 
@@ -426,7 +427,7 @@ def retry_holes_with_new_credentials(sleep_interval=0) -> Counter:
     logger.debug('Found %d holes to retry', len(holes))
     last_platform = None
     stats = Counter()
-    for i, hole in enumerate(holes):  # type: DataHole
+    for hole in holes:  # type: DataHole
         cred_based_delay = hole.credentials.when_can_access()
         if not hole.attempt_with_current_credentials:
             # this is what we want to process - cases when sushi credentials were updated
