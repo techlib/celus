@@ -278,8 +278,6 @@ class TestChartDataAPI(object):
         assert 'data' in data
         assert len(data['data']) == count
 
-
-    @pytest.mark.now
     def test_api_date_year_query(self, counter_records, organizations, report_type_nd,
                                  authenticated_client):
         platform = Platform.objects.create(ext_id=1234, short_name='Platform1', name='Platform 1',

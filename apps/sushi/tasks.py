@@ -65,10 +65,18 @@ def fetch_new_sushi_data_for_credentials_task(credentials_id: int):
 def make_fetch_attempt_task(credentials_id: int, counter_report_id: int, start_date: datetime,
                             end_date: datetime):
     """
-    The input data are enough to specify one SushiFetchAttemps. Create it and download the
-    data
+    The input data are enough to specify one SushiFetchAttempt. Create it and download the
+    data.
     """
     credentials = SushiCredentials.objects.get(pk=credentials_id)
+    # We check that the request can be made based on data from the credentials,
+    # because the task runs independent of other tasks for the same credentials, and it is possible
+    # that some other task already exhausted the daily limit for downloads or something like
+    # this.
+    delay = credentials.when_can_access()
+    if delay:
+        logger.warning('Cannot start fetch attempt for another %d s; aborting', delay)
+        return
     counter_report = CounterReportType.objects.get(pk=counter_report_id)
     credentials.fetch_report(counter_report, start_date, end_date, use_url_lock=True)
 
