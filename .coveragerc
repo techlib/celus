@@ -9,3 +9,5 @@ omit =
   */management/*
   */tests.py
   */experiments.py
+  */conftest.py
+  */tests/*
