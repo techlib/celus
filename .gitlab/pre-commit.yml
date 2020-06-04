@@ -1,19 +1,11 @@
 pre-commit:
   stage: lints
-  image: ubuntu:bionic  #TODO we can prepare a docker image to speed up the tests
-  variables:
-    LC_ALL: en_US.UTF-8
+  image: registry.gitlab.com/big-dig-data/celus/celus-test:latest
   before_script:
-    - apt-get update
-    - apt-get -y install --no-install-recommends ca-certificates git cmake make pkg-config gcc g++ python3-dev python3-pip python3-venv python3-setuptools virtualenv curl libmagic-dev python3-wheel locales
-    - update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-    - update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
-    - echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
-    - locale-gen
-    - curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-    - export PATH="${PATH}:${HOME}/.poetry/bin"
-  script:
     - poetry install
+  script:
     - poetry run pre-commit run --hook-stage push --all-files
   tags:
     - bdd
+  dependencies:
+    - test_image
