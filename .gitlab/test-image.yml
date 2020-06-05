@@ -9,5 +9,9 @@ test_image:
     - docker build --cache-from $CI_REGISTRY_IMAGE/celus-test:latest --tag $CI_REGISTRY_IMAGE/celus-test:latest --target celus-test -f ci/Dockerfile .
     - docker push $CI_REGISTRY_IMAGE/celus-test:latest
 
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: on_success
+
   tags:
     - dind
