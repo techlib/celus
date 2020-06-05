@@ -1,7 +1,10 @@
 import pytest
 
+from core.models import UL_ORG_ADMIN
+from sushi.models import CounterReportType, SushiCredentials
+from organizations.tests.conftest import organizations
+from publications.tests.conftest import platforms
 from logs.tests.conftest import report_type_nd
-from sushi.models import CounterReportType
 
 
 @pytest.fixture()
@@ -21,3 +24,15 @@ def counter_report_type(report_type_nd):
     yield CounterReportType.objects.create(
         code='TR', counter_version=5, name='Title report', report_type=report_type
     )
+
+
+@pytest.fixture()
+def credentials(organizations, platforms):
+    credentials = SushiCredentials.objects.create(
+        organization=organizations[0],
+        platform=platforms[0],
+        counter_version=5,
+        lock_level=UL_ORG_ADMIN,
+        url='http://a.b.c/',
+    )
+    yield credentials
