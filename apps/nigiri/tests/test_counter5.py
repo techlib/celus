@@ -110,8 +110,7 @@ class TestCounter5Reading(object):
         element 'body'.
         Check that we can properly parse this type of data.
         """
-        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json', 'r') as \
-                infile:
+        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json', 'r') as infile:
             data = json.load(infile)
         reader = Counter5TRReport()
         records = reader.read_report(data)
@@ -124,8 +123,7 @@ class TestCounter5Reading(object):
         """
         Another way to mess up the data - body is null and there are exceptions somewhere else :(
         """
-        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json', 'r') as \
-                infile:
+        with open('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json', 'r') as infile:
             data = json.load(infile)
         reader = Counter5TRReport()
         records = reader.read_report(data)
@@ -138,8 +136,7 @@ class TestCounter5Reading(object):
         """
         There is no header, just the error in the json
         """
-        with open('apps/nigiri/tests/data/naked_error.json', 'r') as \
-                infile:
+        with open('apps/nigiri/tests/data/naked_error.json', 'r') as infile:
             data = json.load(infile)
         reader = Counter5TRReport()
         records = reader.read_report(data)
@@ -151,13 +148,10 @@ class TestCounter5Reading(object):
         """
         There is no header, just the error in the json
         """
-        with open('apps/nigiri/tests/data/naked_errors.json', 'r') as \
-                infile:
+        with open('apps/nigiri/tests/data/naked_errors.json', 'r') as infile:
             data = json.load(infile)
         reader = Counter5TRReport()
         records = reader.read_report(data)
         assert len(records) == 0
         assert len(reader.warnings) == 1
         assert reader.queued
-
-

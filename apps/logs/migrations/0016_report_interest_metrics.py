@@ -14,12 +14,50 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ReportInterestMetric',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(blank=True, help_text='How is the metric called in context of interest', max_length=100)),
-                ('name_en', models.CharField(blank=True, help_text='How is the metric called in context of interest', max_length=100, null=True)),
-                ('name_cs', models.CharField(blank=True, help_text='How is the metric called in context of interest', max_length=100, null=True)),
-                ('metric', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='logs.Metric')),
-                ('report_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
+                (
+                    'name',
+                    models.CharField(
+                        blank=True,
+                        help_text='How is the metric called in context of interest',
+                        max_length=100,
+                    ),
+                ),
+                (
+                    'name_en',
+                    models.CharField(
+                        blank=True,
+                        help_text='How is the metric called in context of interest',
+                        max_length=100,
+                        null=True,
+                    ),
+                ),
+                (
+                    'name_cs',
+                    models.CharField(
+                        blank=True,
+                        help_text='How is the metric called in context of interest',
+                        max_length=100,
+                        null=True,
+                    ),
+                ),
+                (
+                    'metric',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='logs.Metric'
+                    ),
+                ),
+                (
+                    'report_type',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+                    ),
+                ),
             ],
         ),
         migrations.AddField(

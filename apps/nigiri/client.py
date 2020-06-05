@@ -24,15 +24,10 @@ ns_soap = 'http://schemas.xmlsoap.org/soap/envelope/'
 ns_sushi = 'http://www.niso.org/schemas/sushi'
 ns_counter = 'http://www.niso.org/schemas/sushi/counter'
 
-namespaces = {
-    's': ns_soap,
-    'sushi': ns_sushi,
-    'counter': ns_counter
-}
+namespaces = {'s': ns_soap, 'sushi': ns_sushi, 'counter': ns_counter}
 
 
 class SushiError(object):
-
     def __init__(self, code='', text='', full_log='', raw_data=None, severity=None):
         self.code = code
         self.severity = severity
@@ -61,8 +56,13 @@ class SushiErrorMeaning(object):
         RETRY_IN_MONTHS: timedelta(days=30),
     }
 
-    def __init__(self, should_retry=False, needs_checking=True, setup_ok=False,
-                 retry_interval=RETRY_AFTER_CHECKUP):
+    def __init__(
+        self,
+        should_retry=False,
+        needs_checking=True,
+        setup_ok=False,
+        retry_interval=RETRY_AFTER_CHECKUP,
+    ):
         """
 
         :param should_retry:
@@ -83,7 +83,6 @@ class SushiErrorMeaning(object):
 
 
 class SushiClientBase(object):
-
     def __init__(self, url, requestor_id, customer_id=None, extra_params=None, auth=None):
         self.url = url
         self.requestor_id = requestor_id
@@ -114,21 +113,37 @@ class SushiClientBase(object):
             # no usage data for the requested period, it is success, but again no data
             # unfortunately, some providers, such as Clarivate (Web Of Science) use this
             # wrongly in cases when 3031 should be used, so we need to treat it like this
-            return SushiErrorMeaning(should_retry=True, needs_checking=False, setup_ok=True,
-                                     retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS)
+            return SushiErrorMeaning(
+                should_retry=True,
+                needs_checking=False,
+                setup_ok=True,
+                retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS,
+            )
         elif error_code in (1010, 1011, 1020):
             # some forms of 'try it later' errors
-            return SushiErrorMeaning(should_retry=True, needs_checking=False, setup_ok=True,
-                                     retry_interval=SushiErrorMeaning.RETRY_IN_MINUTES)
+            return SushiErrorMeaning(
+                should_retry=True,
+                needs_checking=False,
+                setup_ok=True,
+                retry_interval=SushiErrorMeaning.RETRY_IN_MINUTES,
+            )
         elif error_code in (3031,):
             # the data is not yet available - usually some months are missing
-            return SushiErrorMeaning(should_retry=True, needs_checking=False, setup_ok=True,
-                                     retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS)
+            return SushiErrorMeaning(
+                should_retry=True,
+                needs_checking=False,
+                setup_ok=True,
+                retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS,
+            )
         elif error_code >= 4000:
             # some other stuff for which we want to check later if the data exists
             # in the wild, we have seen 4010
-            return SushiErrorMeaning(should_retry=True, needs_checking=False, setup_ok=True,
-                                     retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS)
+            return SushiErrorMeaning(
+                should_retry=True,
+                needs_checking=False,
+                setup_ok=True,
+                retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS,
+            )
         else:
             return SushiErrorMeaning(should_retry=True, needs_checking=True, setup_ok=False)
 
@@ -157,24 +172,13 @@ class Sushi5Client(SushiClientBase):
         },
         'dr': {
             'name': 'Database report',
-            'subreports': {
-                'd1': 'Search and Item usage',
-                'd2': 'Database Access Denied'
-            },
+            'subreports': {'d1': 'Search and Item usage', 'd2': 'Database Access Denied'},
         },
         'ir': {
             'name': 'Item report',
-            'subreports': {
-                'a1': 'Journal article requests',
-                'm1': 'Multimedia item requests',
-            },
+            'subreports': {'a1': 'Journal article requests', 'm1': 'Multimedia item requests',},
         },
-        'pr': {
-            'name': 'Platform report',
-            'subreports': {
-                'p1': 'View by Metric_Type',
-            },
-        }
+        'pr': {'name': 'Platform report', 'subreports': {'p1': 'View by Metric_Type',},},
     }
 
     # sets of additional parameters for specific setups
@@ -191,9 +195,10 @@ class Sushi5Client(SushiClientBase):
         super().__init__(url, requestor_id, customer_id, extra_params, auth)
         self.session = requests.Session()
         self.session.headers.update(
-            {'User-Agent':
-                 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0'
-             })
+            {
+                'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0'
+            }
+        )
 
     @classmethod
     def _encode_date(cls, value) -> str:
@@ -260,8 +265,7 @@ class Sushi5Client(SushiClientBase):
         response.raise_for_status()
         return response.content
 
-    def get_report_data(self, report_type, begin_date, end_date, params=None) -> \
-            Counter5ReportBase:
+    def get_report_data(self, report_type, begin_date, end_date, params=None) -> Counter5ReportBase:
         content = self.get_report(report_type, begin_date, end_date, params=params)
         if report_type.lower() == 'tr':
             report_class = Counter5TRReport
@@ -303,8 +307,9 @@ class Sushi5Client(SushiClientBase):
         errors = []
         for exception in header.get('Exceptions', []):
             if exception.get('Severity') in ('Info', 'Warning'):
-                logging.warning("Warning Exception in COUNTER 5 report: %s",
-                                cls._format_error(exception))
+                logging.warning(
+                    "Warning Exception in COUNTER 5 report: %s", cls._format_error(exception)
+                )
             else:
                 errors.append(exception)
         if errors:
@@ -321,8 +326,9 @@ class Sushi5Client(SushiClientBase):
         errors = []
         for exception in header.get('Exceptions', []):
             if exception.get('Severity') in ('Info', 'Warning'):
-                logging.warning("Warning Exception in COUNTER 5 report: %s",
-                                self._format_error(exception))
+                logging.warning(
+                    "Warning Exception in COUNTER 5 report: %s", self._format_error(exception)
+                )
             else:
                 errors.append(self._format_error(exception))
         return errors
@@ -403,12 +409,7 @@ class Sushi4Client(SushiClientBase):
             response = body[0] if len(body) > 0 else None
         except Exception as e:
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
-            return [SushiError(
-                code='non-sushi',
-                text=str(e),
-                full_log=log,
-                severity='Exception',
-            )]
+            return [SushiError(code='non-sushi', text=str(e), full_log=log, severity='Exception',)]
         else:
             errors = []
             if response is not None:
@@ -420,19 +421,23 @@ class Sushi4Client(SushiClientBase):
                     severity = exception.find('sushi:Severity', namespaces)
                     severity = severity.text if severity is not None else 'Unknown'
                     full_log = f'{severity}: #{code}; {message}'
-                    errors.append(SushiError(
-                        code=code,
-                        text=message,
-                        severity=severity,
-                        full_log=full_log,
-                        raw_data=str(exception),
-                    ))
+                    errors.append(
+                        SushiError(
+                            code=code,
+                            text=message,
+                            severity=severity,
+                            full_log=full_log,
+                            raw_data=str(exception),
+                        )
+                    )
             if not errors:
-                errors.append(SushiError(
-                    code='non-sushi',
-                    text='Could not find Exception data in XML, probably wrong format',
-                    full_log='Could not find Exception data in XML, probably wrong format',
-                    severity='Exception',)
+                errors.append(
+                    SushiError(
+                        code='non-sushi',
+                        text='Could not find Exception data in XML, probably wrong format',
+                        full_log='Could not find Exception data in XML, probably wrong format',
+                        severity='Exception',
+                    )
                 )
             return errors
 
@@ -442,4 +447,3 @@ class Sushi4Client(SushiClientBase):
         writer = csv.writer(out, dialect='excel', delimiter="\t")
         writer.writerows(lines)
         return out.getvalue()
-

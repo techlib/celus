@@ -8,9 +8,7 @@ DEBUG = False
 STATIC_ROOT = '/var/www/celus/static/'
 MEDIA_ROOT = '/var/www/celus/media/'
 
-ADMINS = (
-    ("Beda Kosata", "beda@bigdigdata.com"),
-)
+ADMINS = (("Beda Kosata", "beda@bigdigdata.com"),)
 
 EMAIL_HOST = 'smtp.ntkcz.cz'
 SERVER_EMAIL = 'admin@stats.czechelib.cz'

@@ -11,8 +11,10 @@ router.register(r'sushi-fetch-attempt', views.SushiFetchAttemptViewSet)
 urlpatterns = [
     path('sushi-fetch-attempt-stats/', views.SushiFetchAttemptStatsView.as_view()),
     path('run-task/fetch-new-sushi-data', views.StartFetchNewSushiDataTask.as_view()),
-    path('run-task/fetch-new-sushi-data/<int:credentials_pk>',
-         views.StartFetchNewSushiDataForCredentialsTask.as_view())
+    path(
+        'run-task/fetch-new-sushi-data/<int:credentials_pk>',
+        views.StartFetchNewSushiDataForCredentialsTask.as_view(),
+    ),
 ]
 
 urlpatterns += router.urls

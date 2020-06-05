@@ -14,8 +14,9 @@ def load_secret_settings_json_file(filename: str) -> dict:
     for name in ("SECRET_KEY", "DB_PASSWORD"):
         value = secret_settings.get(name, None)
         if value is None:
-            raise ValueError("Required secret setting {0} missing from file {1}".
-                             format(name, filename))
+            raise ValueError(
+                "Required secret setting {0} missing from file {1}".format(name, filename)
+            )
         result[name] = value
     # the following loads all the not required settings silently and passes them to the caller
     for key, value in secret_settings.items():

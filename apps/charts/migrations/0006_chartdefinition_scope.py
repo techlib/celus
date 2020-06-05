@@ -13,6 +13,10 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='chartdefinition',
             name='scope',
-            field=models.CharField(choices=[('', 'any'), ('platform', 'platform'), ('title', 'title')], default='', max_length=10),
+            field=models.CharField(
+                choices=[('', 'any'), ('platform', 'platform'), ('title', 'title')],
+                default='',
+                max_length=10,
+            ),
         ),
     ]

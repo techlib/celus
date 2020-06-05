@@ -10,14 +10,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='reportdataview',
-            options={'ordering': ('position',)},
-        ),
+        migrations.AlterModelOptions(name='reportdataview', options={'ordering': ('position',)},),
         migrations.AddField(
             model_name='reportdataview',
             name='is_standard_view',
-            field=models.BooleanField(default=True, help_text='Standard view are shown separately from other views'),
+            field=models.BooleanField(
+                default=True, help_text='Standard view are shown separately from other views'
+            ),
         ),
         migrations.AddField(
             model_name='reportdataview',

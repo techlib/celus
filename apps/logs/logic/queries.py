@@ -384,8 +384,9 @@ class StatsComputer(object):
             # Technical note: putting the filter into the query leads to a very slow response
             # (2500 ms instead of 60 ms is a test case) - this is why we get the pks of the metrics
             # first and then use the "in" filter.
-            self.reported_metrics = {im.pk: im for im in
-                                     self.used_report_type.interest_metrics.order_by()}
+            self.reported_metrics = {
+                im.pk: im for im in self.used_report_type.interest_metrics.order_by()
+            }
             if self.reported_metrics:
                 query = query.filter(metric_id__in=self.reported_metrics.keys())
             else:

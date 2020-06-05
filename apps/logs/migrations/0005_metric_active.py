@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='metric',
             name='active',
-            field=models.BooleanField(default=True, help_text='Only active metrics are reported to users'),
+            field=models.BooleanField(
+                default=True, help_text='Only active metrics are reported to users'
+            ),
         ),
     ]

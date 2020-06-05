@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='user',
             name='ext_id',
-            field=models.PositiveIntegerField(blank=True, help_text='ID used in original source of this user data', null=True),
+            field=models.PositiveIntegerField(
+                blank=True, help_text='ID used in original source of this user data', null=True
+            ),
         ),
     ]

@@ -10,8 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='title',
-            options={'ordering': ('name', 'pub_type')},
-        ),
+        migrations.AlterModelOptions(name='title', options={'ordering': ('name', 'pub_type')},),
     ]

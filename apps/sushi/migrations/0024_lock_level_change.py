@@ -13,6 +13,15 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sushicredentials',
             name='lock_level',
-            field=models.PositiveSmallIntegerField(choices=[(0, 'Unlocked'), (300, 'Organization admin'), (400, 'Consortium staff'), (1000, 'Superuser')], default=300, help_text='Only user with the same or higher level can unlock it and/or edit it'),
+            field=models.PositiveSmallIntegerField(
+                choices=[
+                    (0, 'Unlocked'),
+                    (300, 'Organization admin'),
+                    (400, 'Consortium staff'),
+                    (1000, 'Superuser'),
+                ],
+                default=300,
+                help_text='Only user with the same or higher level can unlock it and/or edit it',
+            ),
         ),
     ]

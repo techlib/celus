@@ -10,16 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='reportinterestmetric',
-            name='name',
-        ),
-        migrations.RemoveField(
-            model_name='reportinterestmetric',
-            name='name_cs',
-        ),
-        migrations.RemoveField(
-            model_name='reportinterestmetric',
-            name='name_en',
-        ),
+        migrations.RemoveField(model_name='reportinterestmetric', name='name',),
+        migrations.RemoveField(model_name='reportinterestmetric', name='name_cs',),
+        migrations.RemoveField(model_name='reportinterestmetric', name='name_en',),
     ]

@@ -4,54 +4,71 @@ from django.urls import reverse
 from core.models import Identity
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
-from logs.models import OrganizationPlatform, AccessLog, Metric, ImportBatch, InterestGroup, \
-    ReportInterestMetric
+from logs.models import (
+    OrganizationPlatform,
+    AccessLog,
+    Metric,
+    ImportBatch,
+    InterestGroup,
+    ReportInterestMetric,
+)
 from logs.tests.conftest import report_type_nd
 from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations
-from core.tests.conftest import valid_identity, authenticated_client, authentication_headers,\
-    invalid_identity
+from core.tests.conftest import (
+    valid_identity,
+    authenticated_client,
+    authentication_headers,
+    invalid_identity,
+)
 from publications.models import PlatformInterestReport
 
 
 @pytest.mark.django_db
 class TestPlatformAPI(object):
-
-    def test_unauthorized_user(self, client, invalid_identity, authentication_headers,
-                               organizations):
-        resp = client.get(reverse('platform-list', args=[organizations[0].pk]),
-                          **authentication_headers(invalid_identity))
+    def test_unauthorized_user(
+        self, client, invalid_identity, authentication_headers, organizations
+    ):
+        resp = client.get(
+            reverse('platform-list', args=[organizations[0].pk]),
+            **authentication_headers(invalid_identity),
+        )
         assert resp.status_code == 403
 
     def test_authorized_user_no_platforms_no_org(self, authenticated_client, organizations):
         resp = authenticated_client.get(reverse('platform-list', args=[organizations[0].pk]))
         assert resp.status_code == 404
 
-    def test_authorized_user_no_platforms_org(self, authenticated_client, organizations,
-                                              valid_identity):
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(user=identity.user, organization=organizations[0])
-        resp = authenticated_client.get(reverse('platform-list', args=[organizations[0].pk]))
-        assert resp.status_code == 200
-        assert resp.json() == []
-    def test_authorized_user_accessible_empty_platforms(self, authenticated_client, organizations,
-                                                        valid_identity):
+    def test_authorized_user_no_platforms_org(
+        self, authenticated_client, organizations, valid_identity
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
         resp = authenticated_client.get(reverse('platform-list', args=[organizations[0].pk]))
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_authorized_user_inaccessible_platforms(self, authenticated_client, organizations,
-                                                    platforms, valid_identity):
+    def test_authorized_user_accessible_empty_platforms(
+        self, authenticated_client, organizations, valid_identity
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
         resp = authenticated_client.get(reverse('platform-list', args=[organizations[0].pk]))
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_authorized_user_accessible_platforms(self, authenticated_client, organizations,
-                                                  platforms, valid_identity):
+    def test_authorized_user_inaccessible_platforms(
+        self, authenticated_client, organizations, platforms, valid_identity
+    ):
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        UserOrganization.objects.create(user=identity.user, organization=organizations[0])
+        resp = authenticated_client.get(reverse('platform-list', args=[organizations[0].pk]))
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_authorized_user_accessible_platforms(
+        self, authenticated_client, organizations, platforms, valid_identity
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
         OrganizationPlatform.objects.create(organization=organizations[0], platform=platforms[0])
@@ -60,8 +77,9 @@ class TestPlatformAPI(object):
         assert len(resp.json()) == 1
         assert resp.json()[0]['pk'] == platforms[0].pk
 
-    def test_authorized_user_platforms_in_inaccessible_org(self, authenticated_client,
-                                                           organizations, platforms):
+    def test_authorized_user_platforms_in_inaccessible_org(
+        self, authenticated_client, organizations, platforms
+    ):
         """
         There is an org and it has platforms, but the user cannot access the org
         """
@@ -72,59 +90,78 @@ class TestPlatformAPI(object):
 
 @pytest.mark.django_db
 class TestPlatformDetailedAPI(object):
-
-    def test_unauthorized_user(self, client, invalid_identity, authentication_headers,
-                               organizations):
-        resp = client.get(reverse('detailed-platform-list', args=[organizations[0].pk]),
-                          **authentication_headers(invalid_identity))
+    def test_unauthorized_user(
+        self, client, invalid_identity, authentication_headers, organizations
+    ):
+        resp = client.get(
+            reverse('detailed-platform-list', args=[organizations[0].pk]),
+            **authentication_headers(invalid_identity),
+        )
         assert resp.status_code == 403
 
-    def test_authorized_user_no_platforms_no_org(self, authenticated_client, organizations,
-                                                 interest_rt):
-        resp = authenticated_client.get(reverse('detailed-platform-list',
-                                                args=[organizations[0].pk]))
+    def test_authorized_user_no_platforms_no_org(
+        self, authenticated_client, organizations, interest_rt
+    ):
+        resp = authenticated_client.get(
+            reverse('detailed-platform-list', args=[organizations[0].pk])
+        )
         assert resp.status_code == 404
 
-    def test_authorized_user_no_platforms_org(self, authenticated_client, organizations,
-                                              valid_identity, interest_rt):
+    def test_authorized_user_no_platforms_org(
+        self, authenticated_client, organizations, valid_identity, interest_rt
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
-        resp = authenticated_client.get(reverse('detailed-platform-list',
-                                                args=[organizations[0].pk]))
+        resp = authenticated_client.get(
+            reverse('detailed-platform-list', args=[organizations[0].pk])
+        )
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_authorized_user_accessible_empty_platforms(self, authenticated_client, organizations,
-                                                        valid_identity, interest_rt):
+    def test_authorized_user_accessible_empty_platforms(
+        self, authenticated_client, organizations, valid_identity, interest_rt
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
-        resp = authenticated_client.get(reverse('detailed-platform-list',
-                                                args=[organizations[0].pk]))
+        resp = authenticated_client.get(
+            reverse('detailed-platform-list', args=[organizations[0].pk])
+        )
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_authorized_user_inaccessible_platforms(self, authenticated_client, organizations,
-                                                    platforms, valid_identity, interest_rt):
+    def test_authorized_user_inaccessible_platforms(
+        self, authenticated_client, organizations, platforms, valid_identity, interest_rt
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
-        resp = authenticated_client.get(reverse('detailed-platform-list',
-                                                args=[organizations[0].pk]))
+        resp = authenticated_client.get(
+            reverse('detailed-platform-list', args=[organizations[0].pk])
+        )
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_authorized_user_accessible_platforms(self, authenticated_client, organizations,
-                                                  platforms, valid_identity, interest_rt):
+    def test_authorized_user_accessible_platforms(
+        self, authenticated_client, organizations, platforms, valid_identity, interest_rt
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
         OrganizationPlatform.objects.create(organization=organizations[0], platform=platforms[0])
-        resp = authenticated_client.get(reverse('detailed-platform-list',
-                                                args=[organizations[0].pk]))
+        resp = authenticated_client.get(
+            reverse('detailed-platform-list', args=[organizations[0].pk])
+        )
         assert resp.status_code == 200
         assert len(resp.json()) == 0, 'no platforms without accesslogs'
 
     def test_authorized_user_accessible_platforms_with_titles(
-            self, authenticated_client, organizations, platforms, valid_identity, titles,
-            report_type_nd, interest_rt):
+        self,
+        authenticated_client,
+        organizations,
+        platforms,
+        valid_identity,
+        titles,
+        report_type_nd,
+        interest_rt,
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         organization = organizations[0]
         platform = platforms[0]
@@ -136,16 +173,32 @@ class TestPlatformDetailedAPI(object):
         metric = Metric.objects.create(short_name='m1', name='Metric1')
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
         PlatformInterestReport.objects.create(report_type=rt, platform=platform)
-        import_batch1 = ImportBatch.objects.create(platform=platform, organization=organization,
-                                                   report_type=rt)
-        import_batch2 = ImportBatch.objects.create(platform=platform,
-                                                   organization=organizations[1], report_type=rt)
-        AccessLog.objects.create(platform=platform, target=titles[0], value=5, date='2019-01-01',
-                                 report_type=rt, metric=metric, organization=organization,
-                                 import_batch=import_batch1)
-        AccessLog.objects.create(platform=platform, target=titles[0], value=7, date='2019-01-01',
-                                 report_type=rt, metric=metric, organization=organizations[1],
-                                 import_batch=import_batch2)
+        import_batch1 = ImportBatch.objects.create(
+            platform=platform, organization=organization, report_type=rt
+        )
+        import_batch2 = ImportBatch.objects.create(
+            platform=platform, organization=organizations[1], report_type=rt
+        )
+        AccessLog.objects.create(
+            platform=platform,
+            target=titles[0],
+            value=5,
+            date='2019-01-01',
+            report_type=rt,
+            metric=metric,
+            organization=organization,
+            import_batch=import_batch1,
+        )
+        AccessLog.objects.create(
+            platform=platform,
+            target=titles[0],
+            value=7,
+            date='2019-01-01',
+            report_type=rt,
+            metric=metric,
+            organization=organizations[1],
+            import_batch=import_batch2,
+        )
         sync_interest_by_import_batches()
         resp = authenticated_client.get(reverse('detailed-platform-list', args=[organization.pk]))
         assert resp.status_code == 200
@@ -155,32 +208,35 @@ class TestPlatformDetailedAPI(object):
         assert resp.json()[0]['title_count'] == 1
         assert resp.json()[0]['interests']['interest1']['value'] == 5
         # try with date range outside
-        resp = authenticated_client.get(reverse('detailed-platform-list',
-                                                args=[organization.pk]) + '?start=2019-02')
+        resp = authenticated_client.get(
+            reverse('detailed-platform-list', args=[organization.pk]) + '?start=2019-02'
+        )
         assert resp.status_code == 200
         assert len(resp.json()) == 0
 
 
 @pytest.mark.django_db
 class TestPlatformTitleAPI(object):
-
-    def test_unauthorized_user(self, client, invalid_identity, authentication_headers,
-                               organizations, platforms):
+    def test_unauthorized_user(
+        self, client, invalid_identity, authentication_headers, organizations, platforms
+    ):
         OrganizationPlatform.objects.create(organization=organizations[0], platform=platforms[0])
-        resp = client.get(reverse('platform-title-list',
-                                  args=[organizations[0].pk, platforms[0].pk]),
-                          **authentication_headers(invalid_identity))
+        resp = client.get(
+            reverse('platform-title-list', args=[organizations[0].pk, platforms[0].pk]),
+            **authentication_headers(invalid_identity),
+        )
         assert resp.status_code == 403
 
-    def test_authorized_user_no_org(self, authenticated_client, organizations,
-                                    platforms):
+    def test_authorized_user_no_org(self, authenticated_client, organizations, platforms):
         OrganizationPlatform.objects.create(organization=organizations[0], platform=platforms[0])
-        resp = authenticated_client.get(reverse('platform-title-list',
-                                                args=[organizations[0].pk, platforms[0].pk]))
+        resp = authenticated_client.get(
+            reverse('platform-title-list', args=[organizations[0].pk, platforms[0].pk])
+        )
         assert resp.status_code == 404
 
     def test_authorized_user_accessible_platforms_no_titles(
-            self, authenticated_client, organizations, platforms, valid_identity, titles):
+        self, authenticated_client, organizations, platforms, valid_identity, titles
+    ):
         """
         Titles are created by the 'titles' fixture, but should not appear in the result as they
         are not accessible for an associated platform
@@ -188,14 +244,15 @@ class TestPlatformTitleAPI(object):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
         OrganizationPlatform.objects.create(organization=organizations[0], platform=platforms[0])
-        resp = authenticated_client.get(reverse('platform-title-list',
-                                                args=[organizations[0].pk, platforms[0].pk]))
+        resp = authenticated_client.get(
+            reverse('platform-title-list', args=[organizations[0].pk, platforms[0].pk])
+        )
         assert resp.status_code == 200
         assert len(resp.json()) == 0
 
     def test_authorized_user_accessible_platforms_titles(
-            self, authenticated_client, organizations, platforms, valid_identity, titles,
-            report_type_nd):
+        self, authenticated_client, organizations, platforms, valid_identity, titles, report_type_nd
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         organization = organizations[0]
         platform = platforms[0]
@@ -208,19 +265,33 @@ class TestPlatformTitleAPI(object):
         # - second title is not present - the filtering works OK
         rt = report_type_nd(0)
         metric = Metric.objects.create(short_name='m1', name='Metric1')
-        import_batch = ImportBatch.objects.create(platform=platform, organization=organization,
-                                                  report_type=rt)
+        import_batch = ImportBatch.objects.create(
+            platform=platform, organization=organization, report_type=rt
+        )
         al1 = AccessLog.objects.create(
-            platform=platform, target=titles[0], value=1, date='2019-01-01', report_type=rt,
-            metric=metric, organization=organization, import_batch=import_batch
+            platform=platform,
+            target=titles[0],
+            value=1,
+            date='2019-01-01',
+            report_type=rt,
+            metric=metric,
+            organization=organization,
+            import_batch=import_batch,
         )
         al2 = AccessLog.objects.create(
-            platform=platform, target=titles[0], value=1, date='2019-02-01', report_type=rt,
-            metric=metric, organization=organization, import_batch=import_batch
+            platform=platform,
+            target=titles[0],
+            value=1,
+            date='2019-02-01',
+            report_type=rt,
+            metric=metric,
+            organization=organization,
+            import_batch=import_batch,
         )
         create_platformtitle_links_from_accesslogs([al1, al2])
-        resp = authenticated_client.get(reverse('platform-title-list',
-                                                args=[organization.pk, platform.pk]))
+        resp = authenticated_client.get(
+            reverse('platform-title-list', args=[organization.pk, platform.pk])
+        )
         assert resp.status_code == 200
         print(resp.json())
         assert len(resp.json()) == 1
@@ -228,8 +299,15 @@ class TestPlatformTitleAPI(object):
         assert resp.json()[0]['name'] == titles[0].name
 
     def test_authorized_user_accessible_platforms_titles_count(
-            self, authenticated_client, organizations, platforms, valid_identity, titles,
-            report_type_nd, interest_rt):
+        self,
+        authenticated_client,
+        organizations,
+        platforms,
+        valid_identity,
+        titles,
+        report_type_nd,
+        interest_rt,
+    ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         organization = organizations[0]
         platform = platforms[0]
@@ -245,20 +323,34 @@ class TestPlatformTitleAPI(object):
         metric = Metric.objects.create(short_name='m1', name='Metric1')
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
         PlatformInterestReport.objects.create(report_type=rt, platform=platform)
-        import_batch = ImportBatch.objects.create(platform=platform, organization=organization,
-                                                  report_type=rt)
+        import_batch = ImportBatch.objects.create(
+            platform=platform, organization=organization, report_type=rt
+        )
         al1 = AccessLog.objects.create(
-            platform=platform, target=titles[0], value=1, date='2019-01-01', report_type=rt,
-            metric=metric, organization=organization, import_batch=import_batch
+            platform=platform,
+            target=titles[0],
+            value=1,
+            date='2019-01-01',
+            report_type=rt,
+            metric=metric,
+            organization=organization,
+            import_batch=import_batch,
         )
         al2 = AccessLog.objects.create(
-            platform=platform, target=titles[0], value=1, date='2019-02-01', report_type=rt,
-            metric=metric, organization=organization, import_batch=import_batch
+            platform=platform,
+            target=titles[0],
+            value=1,
+            date='2019-02-01',
+            report_type=rt,
+            metric=metric,
+            organization=organization,
+            import_batch=import_batch,
         )
         create_platformtitle_links_from_accesslogs([al1, al2])
         sync_interest_by_import_batches()
-        resp = authenticated_client.get(reverse('platform-title-interest-list',
-                                                args=[organization.pk, platform.pk]))
+        resp = authenticated_client.get(
+            reverse('platform-title-interest-list', args=[organization.pk, platform.pk])
+        )
         assert resp.status_code == 200
         assert 'results' in resp.json()
         data = resp.json()['results']
@@ -268,8 +360,15 @@ class TestPlatformTitleAPI(object):
         assert data[0]['interests']['interest1'] == 2
 
     def test_authorized_user_accessible_platforms_titles_count_organization_filter(
-            self, authenticated_client, organizations, platforms, valid_identity, titles,
-            report_type_nd, interest_rt):
+        self,
+        authenticated_client,
+        organizations,
+        platforms,
+        valid_identity,
+        titles,
+        report_type_nd,
+        interest_rt,
+    ):
         """
         Test that when using the API to get number of accesses to a title on a platform,
         that data for a different organization are not counted in
@@ -290,22 +389,37 @@ class TestPlatformTitleAPI(object):
         metric = Metric.objects.create(short_name='m1', name='Metric1')
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
         PlatformInterestReport.objects.create(report_type=rt, platform=platform)
-        import_batch1 = ImportBatch.objects.create(platform=platform, organization=organization,
-                                                   report_type=rt)
-        import_batch2 = ImportBatch.objects.create(platform=platform, report_type=rt,
-                                                   organization=other_organization)
+        import_batch1 = ImportBatch.objects.create(
+            platform=platform, organization=organization, report_type=rt
+        )
+        import_batch2 = ImportBatch.objects.create(
+            platform=platform, report_type=rt, organization=other_organization
+        )
         al1 = AccessLog.objects.create(
-            platform=platform, target=titles[0], value=3, date='2019-01-01', report_type=rt,
-            metric=metric, organization=organization, import_batch=import_batch1
+            platform=platform,
+            target=titles[0],
+            value=3,
+            date='2019-01-01',
+            report_type=rt,
+            metric=metric,
+            organization=organization,
+            import_batch=import_batch1,
         )
         al2 = AccessLog.objects.create(
-            platform=platform, target=titles[0], value=2, date='2019-01-01', report_type=rt,
-            metric=metric, organization=other_organization, import_batch=import_batch2
+            platform=platform,
+            target=titles[0],
+            value=2,
+            date='2019-01-01',
+            report_type=rt,
+            metric=metric,
+            organization=other_organization,
+            import_batch=import_batch2,
         )
         create_platformtitle_links_from_accesslogs([al1, al2])
         sync_interest_by_import_batches()
-        resp = authenticated_client.get(reverse('platform-title-interest-list',
-                                                args=[organization.pk, platform.pk]))
+        resp = authenticated_client.get(
+            reverse('platform-title-interest-list', args=[organization.pk, platform.pk])
+        )
         assert resp.status_code == 200
         assert 'results' in resp.json()
         data = resp.json()['results']

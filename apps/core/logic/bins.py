@@ -2,8 +2,9 @@ from collections import Counter
 from typing import Tuple, Mapping, Sequence
 
 
-def bin_hits(counter: Mapping[int, int], histogram_bins: Sequence[Tuple[int, int]] = ()) -> \
-        Mapping[Tuple[int, int], int]:
+def bin_hits(
+    counter: Mapping[int, int], histogram_bins: Sequence[Tuple[int, int]] = ()
+) -> Mapping[Tuple[int, int], int]:
     """
     Takes a counter in the form humber_of_hits => count_of_cases and transforms it into a counter
     (bin_start, bin_end) => count_of_cases. That is e. g. {(0,1): 10, (2,5): 20}, etc.

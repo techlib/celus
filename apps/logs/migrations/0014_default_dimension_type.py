@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='dimension',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'integer'), (2, 'text')], default=2),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'integer'), (2, 'text')], default=2
+            ),
         ),
     ]

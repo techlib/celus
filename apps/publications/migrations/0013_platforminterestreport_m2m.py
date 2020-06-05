@@ -32,24 +32,41 @@ class Migration(migrations.Migration):
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='platform',
-            name='last_modified',
-            field=models.DateTimeField(auto_now=True),
+            model_name='platform', name='last_modified', field=models.DateTimeField(auto_now=True),
         ),
         migrations.CreateModel(
             name='PlatformInterestReport',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
-                ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='publications.Platform')),
-                ('report_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType')),
+                (
+                    'platform',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'
+                    ),
+                ),
+                (
+                    'report_type',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
             model_name='platform',
             name='interest_reports_through',
-            field=models.ManyToManyField(related_name='interest_platforms', through='publications.PlatformInterestReport', to='logs.ReportType'),
+            field=models.ManyToManyField(
+                related_name='interest_platforms',
+                through='publications.PlatformInterestReport',
+                to='logs.ReportType',
+            ),
         ),
-        migrations.RunPython(fill_platforminterestreport_m2m, noop)
+        migrations.RunPython(fill_platforminterestreport_m2m, noop),
     ]

@@ -8,9 +8,17 @@ from .exceptions import SushiException
 
 
 class CounterRecord(object):
-
-    def __init__(self, platform_name=None, start=None, end=None, title=None, title_ids=None,
-                 metric=None, value=None, dimension_data=None):
+    def __init__(
+        self,
+        platform_name=None,
+        start=None,
+        end=None,
+        title=None,
+        title_ids=None,
+        metric=None,
+        value=None,
+        dimension_data=None,
+    ):
         self.platform_name = platform_name
         self.start = start
         self.end = end
@@ -22,7 +30,6 @@ class CounterRecord(object):
 
 
 class CounterError(object):
-
     def __init__(self, code=None, severity=None, message=None, data=None):
         self.code = code
         self.severity = severity
@@ -31,8 +38,12 @@ class CounterError(object):
 
     @classmethod
     def from_sushi_dict(cls, rec):
-        return cls(code=rec.get('Code'), severity=rec.get('Severity'), message=rec.get('Message'),
-                   data=rec.get('Data'))
+        return cls(
+            code=rec.get('Code'),
+            severity=rec.get('Severity'),
+            message=rec.get('Message'),
+            data=rec.get('Data'),
+        )
 
     def __str__(self):
         return f'{self.severity or "Error"} #{self.code}: {self.message}'
@@ -67,10 +78,12 @@ class Counter5ReportBase(object):
             self.extract_errors(report)
             return []
         # check for messed up report with extra wrapping 'body' element
-        if 'Report_Header' not in report \
-                and 'body' in report \
-                and report['body'] \
-                and 'Report_Header' in report['body']:
+        if (
+            'Report_Header' not in report
+            and 'body' in report
+            and report['body']
+            and 'Report_Header' in report['body']
+        ):
             report = report['body']
 
         self.header = report.get('Report_Header')

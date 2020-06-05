@@ -15,6 +15,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='organization',
             name='platforms',
-            field=models.ManyToManyField(through='logs.OrganizationPlatform', to='publications.Platform'),
+            field=models.ManyToManyField(
+                through='logs.OrganizationPlatform', to='publications.Platform'
+            ),
         ),
     ]

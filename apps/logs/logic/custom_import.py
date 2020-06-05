@@ -32,7 +32,8 @@ def col_name_to_month(row_name: str) -> date:
 
 
 def custom_data_import_precheck(
-        header, rows, expected_dimensions=('Institution', 'Source', 'Title', 'Metric')) -> list:
+    header, rows, expected_dimensions=('Institution', 'Source', 'Title', 'Metric')
+) -> list:
     problems = []
     month_columns = []
     # check that we understand all the column names
@@ -52,9 +53,12 @@ def custom_data_import_precheck(
             try:
                 int(cell)
             except ValueError:
-                problems.append(_('Value cannot be converted into integer, row {row}, '
-                                  'column "{column}", value: "{value}"').
-                                format(row=i+1, column=header[j], value=cell))
+                problems.append(
+                    _(
+                        'Value cannot be converted into integer, row {row}, '
+                        'column "{column}", value: "{value}"'
+                    ).format(row=i + 1, column=header[j], value=cell)
+                )
     return problems
 
 
@@ -67,8 +71,9 @@ DEFAULT_COLUMN_MAP = {
 }
 
 
-def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, initial_data=None) \
-        -> [CounterRecord]:
+def custom_data_to_records(
+    records: [dict], column_map=None, extra_dims=None, initial_data=None
+) -> [CounterRecord]:
     # prepare the keyword arguments
     if initial_data is None:
         initial_data = {}
@@ -92,16 +97,25 @@ def custom_data_to_records(records: [dict], column_map=None, extra_dims=None, in
                 elif key in extra_dims:
                     explicit_dimensions[key] = value
                 else:
-                    raise KeyError(_('We don\'t know how to interpret the column "{column}"').
-                                   format(column=key))
+                    raise KeyError(
+                        _('We don\'t know how to interpret the column "{column}"').format(
+                            column=key
+                        )
+                    )
         # we put initial data into the data we read - these are usually dimensions that are fixed
         # for the whole import and are not part of the data itself
         for key, value in initial_data.items():
             if key not in implicit_dimensions:
                 implicit_dimensions[key] = value  # only update if the value is not present
         for month, value in monthly_values.items():
-            result.append(CounterRecord(value=value, start=month,
-                                        dimension_data=explicit_dimensions, **implicit_dimensions))
+            result.append(
+                CounterRecord(
+                    value=value,
+                    start=month,
+                    dimension_data=explicit_dimensions,
+                    **implicit_dimensions,
+                )
+            )
     return result
 
 
@@ -134,14 +148,19 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
 def import_custom_data(mdu: ManualDataUpload, user) -> dict:
     records = mdu.data_to_records()
     # TODO: the owner level should be derived from the user and the organization at hand
-    import_batch = ImportBatch.objects.create(platform=mdu.platform, organization=mdu.organization,
-                                              report_type=mdu.report_type, user=user,
-                                              system_created=False, owner_level=mdu.owner_level)
-    stats = import_counter_records(mdu.report_type, mdu.organization, mdu.platform, records,
-                                   import_batch=import_batch)
+    import_batch = ImportBatch.objects.create(
+        platform=mdu.platform,
+        organization=mdu.organization,
+        report_type=mdu.report_type,
+        user=user,
+        system_created=False,
+        owner_level=mdu.owner_level,
+    )
+    stats = import_counter_records(
+        mdu.report_type, mdu.organization, mdu.platform, records, import_batch=import_batch
+    )
     # explicitly connect the organization and the platform
-    OrganizationPlatform.objects.get_or_create(platform=mdu.platform,
-                                               organization=mdu.organization)
+    OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=mdu.organization)
     mdu.import_batch = import_batch
     mdu.mark_processed()
     # the following could be used to debug the speed of this code chunk

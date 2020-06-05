@@ -17,14 +17,15 @@ print('cachalot disabled' if DISABLE_CACHALOT else 'cachalot_enabled')
 
 LIVE_ERMS_AUTHENTICATION = False
 
-MIDDLEWARE = \
-    MIDDLEWARE[:-1] + \
-    [
+MIDDLEWARE = (
+    MIDDLEWARE[:-1]
+    + [
         'debug_toolbar.middleware.DebugToolbarMiddleware',
         'livereload.middleware.LiveReloadScript',
         'querycount.middleware.QueryCountMiddleware',
-    ] + \
-    MIDDLEWARE[-1:]
+    ]
+    + MIDDLEWARE[-1:]
+)
 
 
 CACHE_MIDDLEWARE_SECONDS = 1

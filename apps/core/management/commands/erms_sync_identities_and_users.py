@@ -18,8 +18,9 @@ class Command(BaseCommand):
 
     @atomic
     def handle(self, *args, **options):
-        data_source, _created = DataSource.objects.get_or_create(short_name='ERMS',
-                                                                 type=DataSource.TYPE_API)
+        data_source, _created = DataSource.objects.get_or_create(
+            short_name='ERMS', type=DataSource.TYPE_API
+        )
         stats = sync_users_with_erms(data_source)
         self.stderr.write(self.style.WARNING(f'User import stats: {stats}'))
         stats = sync_identities_with_erms(data_source)

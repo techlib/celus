@@ -7,14 +7,18 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
             name='Platform',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('ext_id', models.PositiveIntegerField(unique=True)),
                 ('short_name', models.CharField(max_length=100)),
                 ('short_name_en', models.CharField(max_length=100, null=True)),
@@ -31,12 +35,25 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Title',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('name', models.TextField()),
-                ('pub_type', models.CharField(choices=[('B', 'Book'), ('J', 'Journal')], max_length=1)),
+                (
+                    'pub_type',
+                    models.CharField(choices=[('B', 'Book'), ('J', 'Journal')], max_length=1),
+                ),
                 ('isbn', models.CharField(blank=True, max_length=20)),
                 ('issn', models.CharField(blank=True, max_length=9)),
-                ('eissn', models.CharField(blank=True, help_text='ISSN of electronic version', max_length=9)),
+                (
+                    'eissn',
+                    models.CharField(
+                        blank=True, help_text='ISSN of electronic version', max_length=9
+                    ),
+                ),
             ],
         ),
     ]

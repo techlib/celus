@@ -49,8 +49,9 @@ class OrganizationSyncer(ERMSObjectSyncer):
 def erms_sync_organizations() -> dict:
     with cache_based_lock('sync_organizations_with_erms'):
         erms = ERMS(base_url=settings.ERMS_API_URL)
-        data_source, _created = DataSource.objects.get_or_create(short_name='ERMS',
-                                                                 type=DataSource.TYPE_API)
+        data_source, _created = DataSource.objects.get_or_create(
+            short_name='ERMS', type=DataSource.TYPE_API
+        )
         erms_orgs = erms.fetch_objects(ERMS.CLS_ORGANIZATION)
         parent_ids = set()
         internal_ids = set()
@@ -75,12 +76,15 @@ def erms_sync_organizations() -> dict:
         # of those with czechelib id
         # we also keep organizations which are registred in settings as master organizations
         clean_records = [
-            org for org in clean_records
+            org
+            for org in clean_records
             if (org['vals'].get('ico') and org['vals'].get('czechelib id'))
             or org['id'] in parent_ids
-            or (org['vals'].get('czechelib id') and
-                org['vals'].get('czechelib id')[0] in settings.MASTER_ORGANIZATIONS)
-            ]
+            or (
+                org['vals'].get('czechelib id')
+                and org['vals'].get('czechelib id')[0] in settings.MASTER_ORGANIZATIONS
+            )
+        ]
         syncer = OrganizationSyncer(data_source)
         stats = syncer.sync_data(clean_records)
         return stats

@@ -23,8 +23,9 @@ class Command(BaseCommand):
     help = 'Goes over the queued sushi attempts and redownloads them where needed'
 
     def add_arguments(self, parser):
-        parser.add_argument('-n', dest='number', type=int, default=0,
-                            help='number of attempts to process')
+        parser.add_argument(
+            '-n', dest='number', type=int, default=0, help='number of attempts to process'
+        )
 
     def handle(self, *args, **options):
         stats = retry_queued(number=options['number'], sleep_interval=2)

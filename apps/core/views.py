@@ -13,7 +13,6 @@ from .tasks import erms_sync_users_and_identities_task
 
 
 class UserView(GenericAPIView):
-
     def get(self, request):
         if request.user:
             translation.activate(request.user.language)
@@ -23,14 +22,12 @@ class UserView(GenericAPIView):
 
 
 class SystemInfoView(GenericAPIView):
-
     def get(self, request):
         data = {name: getattr(settings, name) for name in settings.EXPORTED_SETTINGS}
         return Response(data)
 
 
 class UserLanguageView(APIView):
-
     def get(self, request):
         if request.user:
             return Response({'language': request.user.language})
@@ -62,9 +59,7 @@ class StartERMSSyncUsersAndIdentitiesTask(APIView):
 
     def post(self, request):
         task = erms_sync_users_and_identities_task.delay()
-        return Response({
-            'id': task.id,
-        })
+        return Response({'id': task.id,})
 
 
 class TestEmailView(APIView):

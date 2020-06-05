@@ -13,6 +13,16 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='manualdataupload',
             name='owner_level',
-            field=models.PositiveSmallIntegerField(choices=[(100, 'Normal user'), (200, 'Robot'), (300, 'Organization admin'), (400, 'Consortium staff'), (1000, 'Consortium admin')], default=200, help_text='Level of user who created this record - used to determine who can modify it'),
+            field=models.PositiveSmallIntegerField(
+                choices=[
+                    (100, 'Normal user'),
+                    (200, 'Robot'),
+                    (300, 'Organization admin'),
+                    (400, 'Consortium staff'),
+                    (1000, 'Consortium admin'),
+                ],
+                default=200,
+                help_text='Level of user who created this record - used to determine who can modify it',
+            ),
         ),
     ]

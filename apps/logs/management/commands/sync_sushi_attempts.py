@@ -14,17 +14,19 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-r', dest='report_type', help='code of the counter report to fetch')
-        parser.add_argument('-n', dest='number_of_items', type=int,
-                            help='number of attempts to process')
+        parser.add_argument(
+            '-n', dest='number_of_items', type=int, help='number of attempts to process'
+        )
 
     def handle(self, *args, **options):
-        queryset = SushiFetchAttempt.objects.filter(is_processed=False, download_success=True,
-                                                    contains_data=True)
+        queryset = SushiFetchAttempt.objects.filter(
+            is_processed=False, download_success=True, contains_data=True
+        )
         if options['report_type']:
             queryset = queryset.filter(counter_report__code=options['report_type'])
         count = queryset.count()
         if options['number_of_items']:
-            queryset = queryset[:options['number_of_items']]
+            queryset = queryset[: options['number_of_items']]
         logger.info('Found %d unprocessed successful download attempts matching criteria', count)
         for i, attempt in enumerate(queryset):
             logger.info('----- Attempt #%d -----', i)

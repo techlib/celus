@@ -26,7 +26,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='reporttype',
             name='superseeded_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='superseeds', to='logs.ReportType'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='superseeds',
+                to='logs.ReportType',
+            ),
         ),
-        migrations.RunPython(counter_report_type_superseeding_to_report_type_superseeding, noop)
+        migrations.RunPython(counter_report_type_superseeding_to_report_type_superseeding, noop),
     ]

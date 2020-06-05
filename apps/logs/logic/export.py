@@ -87,14 +87,19 @@ class CSVExport(object):
         cache.set(self.filename_base, value)
 
     def export_raw_accesslogs_to_stream_lowlevel(self, stream: IO, queryset: QuerySet):
-        text_id_to_text = {dt['id']: dt['text']
-                           for dt in DimensionText.objects.all().values('id', 'text')}
-        rt_to_dimensions = {rt.pk: rt.dimensions_sorted for rt in
-                            ReportType.objects.filter(pk__in=queryset.distinct('report_type_id').
-                                                      values('report_type_id'))}
+        text_id_to_text = {
+            dt['id']: dt['text'] for dt in DimensionText.objects.all().values('id', 'text')
+        }
+        rt_to_dimensions = {
+            rt.pk: rt.dimensions_sorted
+            for rt in ReportType.objects.filter(
+                pk__in=queryset.distinct('report_type_id').values('report_type_id')
+            )
+        }
         # get all field names for the CSV
-        field_name_map = {(f'{dim}__{attr}' if attr else dim): dim
-                          for dim, attr in self.implicit_dims.items()}
+        field_name_map = {
+            (f'{dim}__{attr}' if attr else dim): dim for dim, attr in self.implicit_dims.items()
+        }
         field_name_map.update({f'target__{attr}': attr for attr in self.title_attrs})
         field_names = list(field_name_map.values())
         for tr, dims in rt_to_dimensions.items():
@@ -120,6 +125,5 @@ class CSVExport(object):
                     record[dim.short_name] = value
             writer.writerow(record)
             if rec_num % 999 == 0:
-                self.store_progress(rec_num+1)
-        self.store_progress(rec_num+1)
-
+                self.store_progress(rec_num + 1)
+        self.store_progress(rec_num + 1)

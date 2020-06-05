@@ -18,21 +18,38 @@ class AnnotationSerializer(ModelSerializer):
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
     subject = ReadOnlyField()
-    organization_id = PrimaryKeyRelatedField(source='organization', write_only=True,
-                                             allow_null=True, queryset=Organization.objects.all())
-    platform_id = PrimaryKeyRelatedField(source='platform', write_only=True, allow_null=True,
-                                         queryset=Platform.objects.all())
+    organization_id = PrimaryKeyRelatedField(
+        source='organization', write_only=True, allow_null=True, queryset=Organization.objects.all()
+    )
+    platform_id = PrimaryKeyRelatedField(
+        source='platform', write_only=True, allow_null=True, queryset=Platform.objects.all()
+    )
     can_edit = BooleanField(read_only=True)
     submitter = HiddenField(default=CurrentUserDefault())
 
     class Meta:
         model = Annotation
-        fields = ('pk', 'organization_id', 'platform_id',
-                  'subject', 'subject_en', 'subject_cs',
-                  'short_message', 'short_message_en', 'short_message_cs',
-                  'message', 'message_en', 'message_cs',
-                  'start_date', 'end_date', 'organization', 'platform', 'level',
-                  'can_edit', 'submitter')
+        fields = (
+            'pk',
+            'organization_id',
+            'platform_id',
+            'subject',
+            'subject_en',
+            'subject_cs',
+            'short_message',
+            'short_message_en',
+            'short_message_cs',
+            'message',
+            'message_en',
+            'message_cs',
+            'start_date',
+            'end_date',
+            'organization',
+            'platform',
+            'level',
+            'can_edit',
+            'submitter',
+        )
         extra_kwargs = {
             'subject_en': {'allow_blank': False},
             'subject_cs': {'allow_blank': False},
@@ -54,12 +71,14 @@ class AnnotationSerializer(ModelSerializer):
     @classmethod
     def _adjust_permissions(cls, instance: Annotation, submitter: User):
         instance.author = submitter
-        instance.owner_level = submitter.organization_relationship(instance.organization_id) \
-            if instance.organization_id else UL_CONS_STAFF
+        instance.owner_level = (
+            submitter.organization_relationship(instance.organization_id)
+            if instance.organization_id
+            else UL_CONS_STAFF
+        )
         # we do not want to set the level too high in order for the staff to be able to edit it
         if instance.owner_level > UL_CONS_STAFF:
             instance.owner_level = UL_CONS_STAFF
         instance.save()
         instance.can_edit = instance.can_edit(submitter)
         return instance
-

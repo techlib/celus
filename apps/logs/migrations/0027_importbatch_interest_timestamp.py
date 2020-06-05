@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='importbatch',
             name='interest_timestamp',
-            field=models.DateTimeField(blank=True, help_text='When was interest procesed for this batch', null=True),
+            field=models.DateTimeField(
+                blank=True, help_text='When was interest procesed for this batch', null=True
+            ),
         ),
     ]

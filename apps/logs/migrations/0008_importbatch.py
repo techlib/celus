@@ -17,11 +17,37 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ImportBatch',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                    ),
+                ),
                 ('created', models.DateTimeField(default=django.utils.timezone.now)),
                 ('system_created', models.BooleanField(default=True)),
-                ('owner_level', models.PositiveSmallIntegerField(choices=[(100, 'Normal user'), (200, 'Robot'), (300, 'Organization admin'), (400, 'Consortium staff'), (1000, 'Consortium admin')], default=200, help_text='Level of user who created this record - used to determine who can modify it')),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    'owner_level',
+                    models.PositiveSmallIntegerField(
+                        choices=[
+                            (100, 'Normal user'),
+                            (200, 'Robot'),
+                            (300, 'Organization admin'),
+                            (400, 'Consortium staff'),
+                            (1000, 'Consortium admin'),
+                        ],
+                        default=200,
+                        help_text='Level of user who created this record - used to determine who can modify it',
+                    ),
+                ),
+                (
+                    'user',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

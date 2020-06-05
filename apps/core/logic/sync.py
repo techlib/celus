@@ -35,7 +35,7 @@ class IdentitySyncer(ERMSSyncer):
     def translate_record(self, record: dict) -> dict:
         return {
             'user': self.user_id_to_user.get(record.get('person')),
-            'identity': record.get('identity')
+            'identity': record.get('identity'),
         }
 
 
@@ -90,27 +90,31 @@ class UserSyncer(ERMSObjectSyncer):
         """
         stats = super().sync_data(records)
         # the following deals with user-organization link syncing
-        org_user_to_db_obj = {(uo.organization.ext_id, uo.user.ext_id): uo
-                              for uo in UserOrganization.objects.filter(source=self.data_source).
-                              select_related('organization', 'user')}
+        org_user_to_db_obj = {
+            (uo.organization.ext_id, uo.user.ext_id): uo
+            for uo in UserOrganization.objects.filter(source=self.data_source).select_related(
+                'organization', 'user'
+            )
+        }
         org_ext_id_to_db_obj = {org.ext_id: org for org in Organization.objects.all()}
         for (org_ext_id, user_ext_id), is_admin in self._org_user_status.items():
             uo = org_user_to_db_obj.get((org_ext_id, user_ext_id))
             if not uo:
                 user = self.db_key_to_obj.get(user_ext_id)
                 if not user:
-                    logger.warning('User with ext_id %s not found even though present in data',
-                                   user_ext_id)
+                    logger.warning(
+                        'User with ext_id %s not found even though present in data', user_ext_id
+                    )
                     stats['User-Org no user'] += 1
                     continue
                 organization = org_ext_id_to_db_obj.get(org_ext_id)
                 if not organization:
-                    logger.warning('Organization with ext_id %s not found in db',
-                                   org_ext_id)
+                    logger.warning('Organization with ext_id %s not found in db', org_ext_id)
                     stats['User-Org no org'] += 1
                     continue
-                uo = UserOrganization.objects.create(user=user, organization=organization,
-                                                     is_admin=is_admin, source=self.data_source)
+                uo = UserOrganization.objects.create(
+                    user=user, organization=organization, is_admin=is_admin, source=self.data_source
+                )
                 org_user_to_db_obj[(org_ext_id, user_ext_id)] = uo
                 stats['User-Org created'] += 1
             else:
@@ -137,8 +141,12 @@ def sync_users(data_source: DataSource, records: [dict]) -> dict:
     # this means that manually created users will not be removed
     # and users from other source neither
     seen_external_ids = {int(rec['id']) for rec in records}
-    info = get_user_model().objects.filter(source=data_source). \
-        exclude(ext_id__in=seen_external_ids).delete()
+    info = (
+        get_user_model()
+        .objects.filter(source=data_source)
+        .exclude(ext_id__in=seen_external_ids)
+        .delete()
+    )
     stats['removed'] = info
     return stats
 

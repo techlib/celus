@@ -14,24 +14,30 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='importbatch',
-            name='log',
-            field=models.TextField(blank=True),
+            model_name='importbatch', name='log', field=models.TextField(blank=True),
         ),
         migrations.AddField(
             model_name='importbatch',
             name='organization',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization'),
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='organizations.Organization',
+            ),
         ),
         migrations.AddField(
             model_name='importbatch',
             name='platform',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'),
+            field=models.ForeignKey(
+                null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'
+            ),
         ),
         migrations.AddField(
             model_name='importbatch',
             name='report_type',
-            field=models.ForeignKey(default=None, on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'),
+            field=models.ForeignKey(
+                default=None, on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+            ),
             preserve_default=False,
         ),
     ]

@@ -13,6 +13,10 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='annotation',
             name='level',
-            field=models.CharField(choices=[('info', 'info'), ('important', 'important')], default='info', max_length=20),
+            field=models.CharField(
+                choices=[('info', 'info'), ('important', 'important')],
+                default='info',
+                max_length=20,
+            ),
         ),
     ]

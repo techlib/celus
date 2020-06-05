@@ -1,10 +1,18 @@
 from django.core.management.base import BaseCommand
 
 from core.tasks import fail_intentionally_task
-from logs.tasks import sync_interest_task, recompute_interest_by_batch_task, \
-    import_new_sushi_attempts_task, smart_interest_sync_task, sync_materialized_reports_task
-from sushi.tasks import fetch_new_sushi_data_task, retry_queued_attempts_task, \
-    fetch_new_sushi_data_for_credentials_task
+from logs.tasks import (
+    sync_interest_task,
+    recompute_interest_by_batch_task,
+    import_new_sushi_attempts_task,
+    smart_interest_sync_task,
+    sync_materialized_reports_task,
+)
+from sushi.tasks import (
+    fetch_new_sushi_data_task,
+    retry_queued_attempts_task,
+    fetch_new_sushi_data_for_credentials_task,
+)
 from publications.tasks import erms_sync_platforms_task
 
 
@@ -42,5 +50,3 @@ class Command(BaseCommand):
             self.stderr.write(self.style.SUCCESS(f'Starting task: {task_name}'))
             handle = task.delay(*args)
             self.stderr.write(self.style.SUCCESS(f'Task handle: {handle}'))
-
-

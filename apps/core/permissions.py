@@ -31,8 +31,9 @@ class OrganizationRelatedPermissionMixin(object):
     @classmethod
     def has_org_admin(cls, user, org_id):
         if org_id:
-            return UserOrganization.objects.\
-                filter(user=user, organization_id=org_id, is_admin=True).exists()
+            return UserOrganization.objects.filter(
+                user=user, organization_id=org_id, is_admin=True
+            ).exists()
         return False
 
     @classmethod
@@ -57,8 +58,9 @@ class CanPostOrganizationDataPermission(OrganizationRelatedPermissionMixin, Base
         return True
 
 
-class CanAccessOrganizationRelatedObjectPermission(OrganizationRelatedPermissionMixin,
-                                                   BasePermission):
+class CanAccessOrganizationRelatedObjectPermission(
+    OrganizationRelatedPermissionMixin, BasePermission
+):
     """
     Checks that object that is accessed is associated with an organization that the user
     can access
@@ -71,8 +73,7 @@ class CanAccessOrganizationRelatedObjectPermission(OrganizationRelatedPermission
             return self.has_org_admin(request.user, obj.organization_id)
 
 
-class CanAccessOrganizationFromGETAttrs(OrganizationRelatedPermissionMixin,
-                                        BasePermission):
+class CanAccessOrganizationFromGETAttrs(OrganizationRelatedPermissionMixin, BasePermission):
     """
     Checks that the user has access to the organization present in the GET params
     """
@@ -104,10 +105,11 @@ class OrganizationRequiredInDataForNonSuperusers(BasePermission):
 
 
 class SuperuserOrAdminPermission(BasePermission):
-
     def has_permission(self, request, view):
-        if request.user.is_superuser or (hasattr(request.user, 'is_from_master_organization') and
-                                         request.user.is_from_master_organization):
+        if request.user.is_superuser or (
+            hasattr(request.user, 'is_from_master_organization')
+            and request.user.is_from_master_organization
+        ):
             return True
         return False
 
@@ -118,7 +120,6 @@ class SuperuserOrAdminPermission(BasePermission):
 
 
 class SuperuserPermission(BasePermission):
-
     def has_permission(self, request, view):
         return request.user.is_superuser
 

@@ -39,15 +39,19 @@ class ReportType(models.Model):
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
-    dimensions = models.ManyToManyField('Dimension', related_name='report_types',
-                                        through='ReportTypeToDimension')
+    dimensions = models.ManyToManyField(
+        'Dimension', related_name='report_types', through='ReportTypeToDimension'
+    )
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
-    interest_metrics = models.ManyToManyField('Metric', through='ReportInterestMetric',
-                                              through_fields=('report_type', 'metric'))
-    superseeded_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL,
-                                       related_name='superseeds')
-    materialization_spec = models.ForeignKey('ReportMaterializationSpec', null=True, blank=True,
-                                             on_delete=models.SET_NULL)
+    interest_metrics = models.ManyToManyField(
+        'Metric', through='ReportInterestMetric', through_fields=('report_type', 'metric')
+    )
+    superseeded_by = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL, related_name='superseeds'
+    )
+    materialization_spec = models.ForeignKey(
+        'ReportMaterializationSpec', null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     class Meta:
         unique_together = (('short_name', 'source'),)
@@ -65,8 +69,11 @@ class ReportType(models.Model):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if ReportType.objects.exclude(pk=self.pk).filter(short_name=self.short_name,
-                                                         source__isnull=True).exists():
+        if (
+            ReportType.objects.exclude(pk=self.pk)
+            .filter(short_name=self.short_name, source__isnull=True)
+            .exists()
+        ):
             raise ValidationError("Attribute 'short_name' should be unique for each data source")
 
     @property
@@ -83,8 +90,11 @@ class ReportMaterializationSpec(models.Model):
 
     name = models.CharField(max_length=100)
     note = models.TextField(blank=True)
-    base_report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE,
-                                         limit_choices_to={'materialization_spec__isnull': True})
+    base_report_type = models.ForeignKey(
+        ReportType,
+        on_delete=models.CASCADE,
+        limit_choices_to={'materialization_spec__isnull': True},
+    )
     keep_metric = models.BooleanField(default=True)
     keep_organization = models.BooleanField(default=True)
     keep_platform = models.BooleanField(default=True)
@@ -119,10 +129,10 @@ class ReportMaterializationSpec(models.Model):
         remove = []
         id_postfix = '_id' if add_id_postfix else ''
         for attr in ('metric', 'organization', 'platform', 'target'):
-            if getattr(self, 'keep_'+attr):
-                keep.append(attr+id_postfix)
+            if getattr(self, 'keep_' + attr):
+                keep.append(attr + id_postfix)
             else:
-                remove.append(attr+id_postfix)
+                remove.append(attr + id_postfix)
         if self.keep_date:
             keep.append('date')
         else:
@@ -144,11 +154,11 @@ class InterestGroup(models.Model):
     There will for instance be interest in books which would be described by different
     metrics in COUNTER 4 and 5, then there will be the interest in databases, etc.
     """
+
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     important = models.BooleanField(
-        default=False,
-        help_text='Important interest groups should be shown preferentially to users'
+        default=False, help_text='Important interest groups should be shown preferentially to users'
     )
     position = models.PositiveSmallIntegerField(help_text='Used for sorting')
 
@@ -168,8 +178,9 @@ class Metric(models.Model):
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250, blank=True)
     desc = models.TextField(blank=True)
-    active = models.BooleanField(default=True,
-                                 help_text='Only active metrics are reported to users')
+    active = models.BooleanField(
+        default=True, help_text='Only active metrics are reported to users'
+    )
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
@@ -190,10 +201,16 @@ class ReportInterestMetric(models.Model):
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
-    target_metric = models.ForeignKey(Metric, on_delete=models.SET_NULL, null=True, blank=True,
-                                      related_name='source_report_interest_metrics')
-    interest_group = models.ForeignKey(InterestGroup, null=True, blank=True,
-                                       on_delete=models.SET_NULL)
+    target_metric = models.ForeignKey(
+        Metric,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='source_report_interest_metrics',
+    )
+    interest_group = models.ForeignKey(
+        InterestGroup, null=True, blank=True, on_delete=models.SET_NULL
+    )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -219,7 +236,7 @@ class Dimension(models.Model):
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
-        ordering = ('reporttypetodimension', )
+        ordering = ('reporttypetodimension',)
         unique_together = (('short_name', 'source'),)
 
     def __str__(self):
@@ -242,7 +259,7 @@ class ReportTypeToDimension(models.Model):
     position = models.PositiveSmallIntegerField()
 
     class Meta:
-        unique_together = (('report_type', 'dimension'), )
+        unique_together = (('report_type', 'dimension'),)
         ordering = ('position',)
 
     def __str__(self):
@@ -261,19 +278,23 @@ class ImportBatch(models.Model):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
     created = models.DateTimeField(default=now)
     system_created = models.BooleanField(default=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
-                             on_delete=models.SET_NULL)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
     owner_level = models.PositiveSmallIntegerField(
         choices=USER_LEVEL_CHOICES,
         default=UL_ROBOT,
-        help_text='Level of user who created this record - used to determine who can modify it'
+        help_text='Level of user who created this record - used to determine who can modify it',
     )
     log = models.TextField(blank=True)
     interest_timestamp = models.DateTimeField(
-        null=True, blank=True, help_text='When was interest processed for this batch')
-    materialization_data = JSONField(default=dict, blank=True,
-                                     help_text='Internal information about materialized report '
-                                               'data in this batch')
+        null=True, blank=True, help_text='When was interest processed for this batch'
+    )
+    materialization_data = JSONField(
+        default=dict,
+        blank=True,
+        help_text='Internal information about materialized report ' 'data in this batch',
+    )
 
     class Meta:
         verbose_name_plural = "Import batches"
@@ -294,8 +315,9 @@ class AccessLog(models.Model):
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
-    target = models.ForeignKey(Title, on_delete=models.CASCADE, null=True,
-                               help_text='Title for which this log was created')
+    target = models.ForeignKey(
+        Title, on_delete=models.CASCADE, null=True, help_text='Title for which this log was created'
+    )
     dim1 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #1')
     dim2 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #2')
     dim3 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #3')
@@ -310,7 +332,7 @@ class AccessLog(models.Model):
     owner_level = models.PositiveSmallIntegerField(
         choices=USER_LEVEL_CHOICES,
         default=UL_ROBOT,
-        help_text='Level of user who created this record - used to determine who can modify it'
+        help_text='Level of user who created this record - used to determine who can modify it',
     )
     import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE)
 
@@ -346,8 +368,10 @@ class DimensionText(models.Model):
 def where_to_store(instance: 'ManualDataUpload', filename):
     root, ext = os.path.splitext(filename)
     ts = now().strftime('%Y%m%d-%H%M%S.%f')
-    return f'custom/{instance.user_id}/{instance.report_type.short_name}-' \
-           f'{instance.platform.short_name}_{ts}{ext}'
+    return (
+        f'custom/{instance.user_id}/{instance.report_type.short_name}-'
+        f'{instance.platform.short_name}_{ts}{ext}'
+    )
 
 
 def validate_mime_type(fileobj):
@@ -358,26 +382,32 @@ def validate_mime_type(fileobj):
     # to be returned for some CSV files with some version of libmagic
     # (the library magic uses internally)
     if detected_type not in ('text/csv', 'text/plain', 'application/csv', 'text/x-Algol68'):
-        raise ValidationError(_("The uploaded file is not a CSV file or is corrupted. "
-                                "The file type seems to be '{detected_type}'. "
-                                "Please upload a CSV file.").
-                              format(detected_type=detected_type))
+        raise ValidationError(
+            _(
+                "The uploaded file is not a CSV file or is corrupted. "
+                "The file type seems to be '{detected_type}'. "
+                "Please upload a CSV file."
+            ).format(detected_type=detected_type)
+        )
 
 
 def check_can_parse(fileobj):
     from logs.logic.custom_import import custom_data_import_precheck
+
     reader = csv.reader(codecs.iterdecode(fileobj, 'utf-8'))
     first_row = next(reader)
     try:
         second_row = next(reader)
     except StopIteration:
-        raise ValidationError(_('Only one row in the uploaded file, there is not data to '
-                                'import'))
+        raise ValidationError(
+            _('Only one row in the uploaded file, there is not data to ' 'import')
+        )
     fileobj.seek(0)
     problems = custom_data_import_precheck(first_row, [second_row])
     if problems:
-        raise ValidationError(_('Errors understanding uploaded data: {}').
-                              format('; '.join(problems)))
+        raise ValidationError(
+            _('Errors understanding uploaded data: {}').format('; '.join(problems))
+        )
 
 
 class ManualDataUpload(models.Model):
@@ -385,23 +415,23 @@ class ManualDataUpload(models.Model):
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
-                             on_delete=models.SET_NULL)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
     owner_level = models.PositiveSmallIntegerField(
         choices=USER_LEVEL_CHOICES,
         default=UL_ROBOT,
-        help_text='Level of user who created this record - used to determine who can modify it'
+        help_text='Level of user who created this record - used to determine who can modify it',
     )
     created = models.DateTimeField(auto_now_add=True)
-    data_file = models.FileField(upload_to=where_to_store,
-                                 validators=[validate_mime_type])
+    data_file = models.FileField(upload_to=where_to_store, validators=[validate_mime_type])
     log = models.TextField(blank=True)
-    is_processed = models.BooleanField(default=False,
-                                       help_text='Was the data converted into logs?')
+    is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
-    extra = JSONField(default=dict, blank=True,
-                      help_text='Internal data related to processing of the upload')
+    extra = JSONField(
+        default=dict, blank=True, help_text='Internal data related to processing of the upload'
+    )
 
     def __str__(self):
         return f'{self.user.username}: {self.report_type}, {self.platform}'
@@ -430,17 +460,20 @@ class ManualDataUpload(models.Model):
         if not crt:
             # this is really custom data - there is no special counter report type associated
             from logs.logic.custom_import import custom_data_to_records
+
             data = self.to_record_dicts()
             default_metric, _created = Metric.objects.get_or_create(
-                short_name='visits', name_en='Visits', name_cs='Návštěvy',
-                source=self.report_type.source
+                short_name='visits',
+                name_en='Visits',
+                name_cs='Návštěvy',
+                source=self.report_type.source,
             )
-            records = custom_data_to_records(data,
-                                             extra_dims=self.report_type.dimension_short_names,
-                                             initial_data={'platform_name': self.platform.name,
-                                                           'metric': default_metric.pk})
+            records = custom_data_to_records(
+                data,
+                extra_dims=self.report_type.dimension_short_names,
+                initial_data={'platform_name': self.platform.name, 'metric': default_metric.pk},
+            )
         else:
             reader = crt.get_reader_class()()
-            records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT,
-                                                          self.data_file.name))
+            records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, self.data_file.name))
         return records

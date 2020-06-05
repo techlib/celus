@@ -24,18 +24,19 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='accesslog',
             name='organization',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization'),
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='organizations.Organization',
+            ),
         ),
         migrations.AddField(
             model_name='accesslog',
             name='platform',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'),
+            field=models.ForeignKey(
+                null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'
+            ),
         ),
-        migrations.RunPython(
-            split_access_log_source
-        ),
-        migrations.RemoveField(
-            model_name='accesslog',
-            name='source',
-        ),
+        migrations.RunPython(split_access_log_source),
+        migrations.RemoveField(model_name='accesslog', name='source',),
     ]

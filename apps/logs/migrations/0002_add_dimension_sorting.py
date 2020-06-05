@@ -11,11 +11,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='dimension',
-            options={'ordering': ('reporttypetodimension',)},
+            name='dimension', options={'ordering': ('reporttypetodimension',)},
         ),
         migrations.AlterModelOptions(
-            name='reporttypetodimension',
-            options={'ordering': ('position',)},
+            name='reporttypetodimension', options={'ordering': ('position',)},
         ),
     ]

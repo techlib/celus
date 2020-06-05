@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='organization',
             name='ico',
-            field=models.PositiveIntegerField(blank=True, help_text='Business registration number', null=True),
+            field=models.PositiveIntegerField(
+                blank=True, help_text='Business registration number', null=True
+            ),
         ),
     ]

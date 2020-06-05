@@ -18,7 +18,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='title',
             name='eissn',
-            field=models.CharField(blank=True, help_text='ISSN of electronic version', max_length=9, null=True),
+            field=models.CharField(
+                blank=True, help_text='ISSN of electronic version', max_length=9, null=True
+            ),
         ),
         migrations.AlterField(
             model_name='title',
