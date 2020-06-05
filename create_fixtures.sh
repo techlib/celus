@@ -27,4 +27,3 @@ python manage.py dumpdata --indent 2 logs.reporttype logs.interestgroup logs.met
 # apps.sushi - model CounterReportType
 
 python manage.py dumpdata --indent 2 sushi.counterreporttype > apps/sushi/fixtures/sushi.json
-

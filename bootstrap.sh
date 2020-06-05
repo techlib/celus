@@ -28,4 +28,3 @@ python manage.py load_sushi_credentials "$1"
 python manage.py load_platform_report_table "$2"
 
 # * start task to fetch SUSHI data
-

@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                CREATE INDEX publications_title_issn_trgm ON publications_title
                    USING GIN (issn gin_trgm_ops);
                CREATE INDEX publications_title_doi_trgm ON publications_title
-                   USING GIN (doi gin_trgm_ops);                                       
+                   USING GIN (doi gin_trgm_ops);
             """,
             """DROP INDEX publications_title_name_trgm;
                DROP INDEX publications_title_isbn_trgm;

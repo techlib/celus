@@ -33,13 +33,13 @@ github_push_tag:
     - echo "TAG ${CI_COMMIT_TAG}"
     - echo "Check whether it was merged into public branches"
     - >
-      if git branch --contains $(git rev-list -n1 "tags/${CI_COMMIT_TAG}") | cut -c 3- | grep -E '^(devel|master|staging)$'; then 
+      if git branch --contains $(git rev-list -n1 "tags/${CI_COMMIT_TAG}") | cut -c 3- | grep -E '^(devel|master|staging)$'; then
         git push github "tags/${CI_COMMIT_TAG}"
       else
         echo "TAG $CI_COMMIT_TAG is not in public branches"
       fi
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9].*/'  
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9].*/'
       when: always
     - when: never
   tags:

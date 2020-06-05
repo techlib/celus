@@ -3,8 +3,10 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.4.0
     hooks:
-    #- id: trailing-whitespace
-    #- id: end-of-file-fixer
+    - id: trailing-whitespace
+      exclude: '^.*\.(tsv|json|svg)'
+    - id: end-of-file-fixer
+      exclude: '^.*\.(tsv|json|svg)'
     - id: check-yaml
     - id: check-added-large-files
 
