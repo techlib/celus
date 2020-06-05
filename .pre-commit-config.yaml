@@ -15,3 +15,8 @@ repos:
       entry: make update_requirements
       language: system
       files: poetry.lock
+    - id: black
+      name: Black formatter
+      entry: poetry run black --check
+      language: system
+      types: [python]
