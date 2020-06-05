@@ -113,6 +113,7 @@ class CSVExport(object):
         writer = csv.DictWriter(stream, field_names)
         writer.writeheader()
         # write the records
+        rec_num = 0
         for rec_num, log in enumerate(queryset.values(*values).iterator()):  # type: int, dict
             record = {attr_out: log.get(attr_in) for attr_in, attr_out in field_name_map.items()}
             record['value'] = log['value']

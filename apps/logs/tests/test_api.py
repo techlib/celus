@@ -1,5 +1,4 @@
 import json
-import sys
 from io import StringIO
 from unittest.mock import patch
 
@@ -21,13 +20,6 @@ from core.tests.conftest import (
     master_client,
     admin_identity,
 )
-
-
-@pytest.fixture(scope='session')
-def celery_config():
-    return {
-        'task_always_eager': True,
-    }
 
 
 @pytest.mark.django_db
@@ -523,19 +515,11 @@ class TestRawDataExport(object):
         ],
     )
     def test_raw_export_start_organization_access(
-        self,
-        user_type,
-        can_access,
-        identity_by_user_type,
-        client,
-        authentication_headers,
-        celery_session_worker,
+        self, user_type, can_access, identity_by_user_type, client, authentication_headers,
     ):
-        # celery_session_worker above is needed for the task_always_eager setting, that is
-        # set up at the top of this file in a fixture gets applied
         identity, org = identity_by_user_type(user_type)
         url = reverse('raw_data_export')
-        with patch('logs.views.CSVExport.export_raw_accesslogs_to_file') as export_fn:
+        with patch('logs.views.export_raw_data_task') as export_task:
             resp = client.post(
                 url + f'?organization={org.pk}',
                 content_type='application/json',
@@ -544,9 +528,9 @@ class TestRawDataExport(object):
             expected_status_code = (200,) if can_access else (401, 403)
             assert resp.status_code in expected_status_code
             if can_access:
-                export_fn.assert_called()
+                export_task.delay.assert_called()
             else:
-                export_fn.assert_not_called()
+                export_task.delay.assert_not_called()
 
     @pytest.mark.parametrize(
         ['user_type', 'can_access'],
@@ -561,25 +545,17 @@ class TestRawDataExport(object):
         ],
     )
     def test_raw_export_start_no_organization_access(
-        self,
-        user_type,
-        can_access,
-        identity_by_user_type,
-        client,
-        authentication_headers,
-        celery_session_worker,
+        self, user_type, can_access, identity_by_user_type, client, authentication_headers,
     ):
-        # celery_session_worker above is needed for the task_always_eager setting, that is
-        # set up at the top of this file in a fixture gets applied
         identity, org = identity_by_user_type(user_type)
         url = reverse('raw_data_export')
-        with patch('logs.views.CSVExport.export_raw_accesslogs_to_file') as export_fn:
+        with patch('logs.views.export_raw_data_task') as export_task:
             resp = client.post(
                 url, content_type='application/json', **authentication_headers(identity)
             )
             expected_status_code = (200,) if can_access else (401, 403)
             assert resp.status_code in expected_status_code
             if can_access:
-                export_fn.assert_called()
+                export_task.delay.assert_called()
             else:
-                export_fn.assert_not_called()
+                export_task.delay.assert_not_called()
