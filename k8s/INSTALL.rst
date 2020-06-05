@@ -77,7 +77,7 @@ Fill the file `secrets/secrets-celus.yaml` with appropriate values. And load it 
 ##############################
 
 Note that you can watch whether it was successfull using::
-    
+
     kubectl get pods
     kubectl get service
     kubectl describe ingress

@@ -15,7 +15,7 @@ services:
       context: ..
       target: celus-django
     image: "celus-django"
-    expose: 
+    expose:
       - 8000
     entrypoint: /var/www/celus/entrypoint-web.sh
     environment:
