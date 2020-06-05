@@ -409,5 +409,3 @@ Common SUSHI problems
   common cases - by stopping trying other months if the credentials are obviously erroneous,
   by retrying attempts which should be retried, or by stopping attempts when the server
   reports overload.
-
-

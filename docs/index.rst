@@ -24,4 +24,3 @@ sources which do not offer this API.
    user.rst
    install.rst
    server-maintenance.rst
-

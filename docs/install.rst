@@ -255,4 +255,3 @@ Assuming you are in the ``/opt/celus`` installation directory, just run:
 >>> python manage.py loaddata data/initial-data.json
 
 You will be presented with a report that objects have been installed from the fixture.
-

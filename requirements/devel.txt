@@ -1,8 +1,0 @@
--r test.txt
--e pycounter  # we use local version in development
-django-debug-toolbar==2.2
-django-livereload-server==0.3.2
-jupyter==1.0.0
-django-querycount==0.7.0
-sphinx==3.0.3
-uritemplate==3.0.1

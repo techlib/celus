@@ -1,0 +1,27 @@
+run_tests:
+  stage: tests
+  image: registry.gitlab.com/big-dig-data/celus/celus-test:latest
+  services:
+    - postgres
+    - redis
+  variables:
+    DJANGO_SETTINGS_MODULE: config.settings.test
+    POSTGRES_DB: celus
+    POSTGRES_USER: celus
+    POSTGRES_PASSWORD: celus
+    POSTGRES_HOST: postgres
+    REDIS_URL: "redis://redis:6379/1"
+  before_script:
+    - poetry install
+  script:
+    - cp config/settings/secret_settings.json.example config/settings/secret_settings.json
+    - poetry run pytest -v --junitxml=report.xml --cov=activity --cov=annotations --cov=api --cov=charts --cov=core --cov=cost --cov=erms --cov=logs --cov=nigiri --cov=organizations --cov=publications --cov=sushi --cov-report=xml --cov-report=term apps/
+  artifacts:
+    reports:
+      junit: report.xml
+      cobertura: coverage.xml
+  coverage: /^TOTAL.*\s+([^\s]+)%$/
+  tags:
+    - bdd
+  dependencies:
+    - test_image

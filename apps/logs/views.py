@@ -1,3 +1,4 @@
+import sys
 import traceback
 from time import monotonic
 
@@ -160,11 +161,7 @@ class RawDataDelayedExportView(APIView):
         IsAuthenticated
         & (
             SuperuserOrAdminPermission
-            | (
-                CanPostOrganizationDataPermission
-                & OrganizationRequiredInDataForNonSuperusers
-                & CanAccessOrganizationFromGETAttrs
-            )
+            | (OrganizationRequiredInDataForNonSuperusers & CanAccessOrganizationFromGETAttrs)
         )
     ]
 
@@ -176,7 +173,6 @@ class RawDataDelayedExportView(APIView):
     def post(self, request):
         query_params = self.extract_query_filter_params(request)
         exporter = CSVExport(query_params, zip_compress=True)
-        print(query_params)
         export_raw_data_task.delay(
             query_params, exporter.filename_base, zip_compress=exporter.zip_compress
         )
