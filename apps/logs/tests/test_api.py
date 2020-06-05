@@ -541,8 +541,8 @@ class TestRawDataExport(object):
                 content_type='application/json',
                 **authentication_headers(identity),
             )
-            expected_status_code = 200 if can_access else 403
-            assert resp.status_code == expected_status_code
+            expected_status_code = (200,) if can_access else (401, 403)
+            assert resp.status_code in expected_status_code
             if can_access:
                 export_fn.assert_called()
             else:
@@ -577,8 +577,8 @@ class TestRawDataExport(object):
             resp = client.post(
                 url, content_type='application/json', **authentication_headers(identity)
             )
-            expected_status_code = 200 if can_access else 403
-            assert resp.status_code == expected_status_code
+            expected_status_code = (200,) if can_access else (401, 403)
+            assert resp.status_code in expected_status_code
             if can_access:
                 export_fn.assert_called()
             else:
