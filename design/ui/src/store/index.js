@@ -156,6 +156,12 @@ export default new Vuex.Store({
       }
       return true
     },
+    celusAdminSitePath (state) {
+      if ('CELUS_ADMIN_SITE_PATH' in state.basicInfo) {
+        return state.basicInfo.CELUS_ADMIN_SITE_PATH
+      }
+      return 'wsEc67YNV2sq/'
+    },
     letAxiosThrough (state, getters) {
       /*
         when true, all requests by axios will be put through,

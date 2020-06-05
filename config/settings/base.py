@@ -9,9 +9,11 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
+import os
+import sys
+
 from datetime import timedelta
 from pathlib import Path
-import sys
 
 from celery.schedules import schedule, crontab
 from decouple import config, Csv
@@ -384,6 +386,7 @@ EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[Stats] ')
 SERVER_EMAIL = config('SERVER_EMAIL', default='root@localhost')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='root@localhost')
 
+CELUS_ADMIN_SITE_PATH = config('CELUS_ADMIN_SITE_PATH', default='wsEc67YNV2sq/')
 
 EXPORTED_SETTINGS = [
     'REFERENCE_CURRENCY',
@@ -392,6 +395,7 @@ EXPORTED_SETTINGS = [
     'SOCIAL_ACCOUNTS_SUPPORTED',
     'CONSORTIAL_INSTALLATION',
     'ALLOW_MANUAL_UPLOAD',
+    'CELUS_ADMIN_SITE_PATH',
 ]
 
 # Need to disable prometheus migrations when collecting static without DB

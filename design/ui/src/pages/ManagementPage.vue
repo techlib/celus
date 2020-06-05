@@ -12,7 +12,7 @@ en:
     task_error: An error occurred during task submission
     management_page: Management page
     django_admin: Django admin
-    django_admin_text: You can use <a href="/wsEc67YNV2sq/" target="_blank">Django admin</a> for low-level management.
+    django_admin_text: You can use <a href="{adminUrl}" target="_blank">Django admin</a> for low-level management.
 
 cs:
     background_tasks: Úlohy na pozadí
@@ -27,7 +27,7 @@ cs:
     task_error: Při zadávání úlohy došlo k chybě
     management_page: Správa systému
     django_admin: Django admin
-    django_admin_text: Pro nízkoúrovňový přístup ke správě systému můžete využít rozhraní <a href="/wsEc67YNV2sq/" target="_blank">Django admin</a>.
+    django_admin_text: Pro nízkoúrovňový přístup ke správě systému můžete využít rozhraní <a href="{adminUrl}" target="_blank">Django admin</a>.
 </i18n>
 
 <template>
@@ -37,7 +37,7 @@ cs:
         <section v-if="user.is_superuser || user.is_staff">
             <h2 class="text-h4 mb-3">{{ $t('django_admin') }}</h2>
 
-            <p v-html="$t('django_admin_text')" class="font-weight-light"></p>
+            <p v-html="$t('django_admin_text', {adminUrl: getCelusAdminSitePath})" v-bind:title="getCelusAdminSitePath" class="font-weight-light"></p>
         </section>
 
         <h2 class="text-h4 mb-3">{{ $t('background_tasks') }}</h2>
@@ -77,7 +77,7 @@ cs:
 <script>
   import axios from 'axios'
   import {isoDateTimeFormat} from '../libs/dates'
-  import {mapState} from 'vuex'
+  import {mapState, mapGetters} from 'vuex'
 
   export default {
     name: "ManagementPage",
@@ -90,6 +90,12 @@ cs:
       ...mapState({
         user: 'user',
       }),
+      ...mapGetters({
+        celusAdminSitePath: 'celusAdminSitePath',
+      }),
+      getCelusAdminSitePath() {
+        return `/${this.celusAdminSitePath}`
+      },
       celeryTasks () {
         return [
           {
