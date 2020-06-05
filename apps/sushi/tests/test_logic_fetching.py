@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 import pytest
 from django.utils.timezone import now
@@ -14,13 +15,6 @@ from organizations.tests.conftest import organizations
 from publications.tests.conftest import platforms
 from logs.tests.conftest import report_type_nd
 from ..tasks import retry_holes_with_new_credentials_task
-
-
-@pytest.fixture(scope='session')
-def celery_config():
-    return {
-        'task_always_eager': True,
-    }
 
 
 class TestHelperFunctions(object):
@@ -138,11 +132,10 @@ class TestHoleFillingMachinery(object):
         holes = find_holes_in_data()
         assert len(holes) == 0
 
-    def test_retry_holes_with_new_credentials_task(
-        self, settings, organizations, report_type_nd, celery_session_worker
-    ):
+    @pytest.mark.now
+    def test_retry_holes_with_new_credentials_task(self, settings, organizations, report_type_nd):
         """
-        Tests the `find_holes_in_data` function.
+        Tests the task based version of trying data holes
         """
         # set the date to 3 months before today
         first_month = month_start(month_start(now().date()) - timedelta(days=80))
@@ -178,7 +171,6 @@ class TestHoleFillingMachinery(object):
         assert len(holes) == 3
         # add an attempt and try again
         assert SushiFetchAttempt.objects.count() == 0
-        retry_holes_with_new_credentials_task()
-        assert SushiFetchAttempt.objects.count() == 3
-        holes = find_holes_in_data()
-        assert len(holes) == 0
+        with patch('sushi.tasks.make_fetch_attempt_task') as task_mock:
+            retry_holes_with_new_credentials_task()
+            assert task_mock.apply_async.call_count == 3
