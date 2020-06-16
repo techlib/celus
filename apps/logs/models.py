@@ -435,7 +435,7 @@ class ManualDataUpload(models.Model):
     )
 
     def __str__(self):
-        return f'{self.user.username}: {self.report_type}, {self.platform}'
+        return f'{self.user.username if self.user else ""}: {self.report_type}, {self.platform}'
 
     def delete(self, using=None, keep_parents=False):
         if self.import_batch:
