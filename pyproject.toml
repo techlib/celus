@@ -15,7 +15,7 @@ authors = ["Beda Kosata <beda@bigdigdata.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = ">=3.6.1"
+python = "^3.6.8"
 
 celery = "~4.4.2"
 dateparser = "~0.7.4"
@@ -40,6 +40,8 @@ psutil = "~5.7.0"
 psycopg2-binary = "~2.8.5"
 redis = "~3.5.0"
 rest-pandas = "~1.1.0"
+requests = "^2.23.0"
+urllib3 = "~1.25.0"
 
 [tool.poetry.dev-dependencies]
 black = {version = "*", allow-prereleases = true}

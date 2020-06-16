@@ -1,11 +1,11 @@
 alabaster==0.7.12
 amqp==2.6.0
 appdirs==1.4.4
-appnope==0.1.0; python_version >= "3.3" and sys_platform == "darwin" or platform_system == "Darwin"
+appnope==0.1.0; sys_platform == "darwin" or platform_system == "Darwin" or python_version >= "3.3" and sys_platform == "darwin"
 atomicwrites==1.4.0; sys_platform == "win32"
 attrs==19.3.0
 babel==2.8.0
-backcall==0.2.0; python_version >= "3.3"
+backcall==0.2.0
 beautifulsoup4==4.9.1
 billiard==3.6.3.0
 black==19.10b0
@@ -20,7 +20,7 @@ coverage==4.4.2
 dateparser==0.7.6
 decorator==4.4.2
 defusedxml==0.6.0
-distlib==0.3.0
+distlib==0.3.0; python_version >= "3.6.8" and python_version < "4.0.0"
 django==2.2.13
 django-allauth==0.41.0
 django-anymail==7.1.0
@@ -44,19 +44,19 @@ entrypoints==0.3
 et-xmlfile==1.0.1
 factory-boy==2.12.0
 faker==4.0.3
-filelock==3.0.12
+filelock==3.0.12; python_version >= "3.6.8" and python_version < "4.0.0"
 future==0.18.2
 identify==1.4.19
 idna==2.9
 imagesize==1.2.0
-importlib-metadata==1.6.1; python_version < "3.8"
-importlib-resources==2.0.1; python_version < "3.7"
+importlib-metadata==1.6.1; python_version >= "3.6.8" and python_version < "3.7" or python_version >= "3.6.8" and python_version < "3.8" or python_version < "3.8"
+importlib-resources==2.0.1; python_version >= "3.6.8" and python_version < "3.7" or python_version < "3.7"
 ipykernel==5.3.0
 ipython==7.15.0
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
 jdcal==1.4.1
-jedi==0.17.0; python_version >= "3.3"
+jedi==0.17.0
 jinja2==2.11.2
 jsonschema==3.2.0
 jupyter==1.0.0
@@ -79,19 +79,19 @@ openpyxl==3.0.3
 packaging==20.4
 pandas==1.0.4
 pandocfilters==1.4.2
-parso==0.7.0; python_version >= "3.3"
+parso==0.7.0
 pathspec==0.8.0
 pendulum==2.1.0
-pexpect==4.8.0; python_version >= "3.3" and sys_platform != "win32"
-pickleshare==0.7.5; python_version >= "3.3"
+pexpect==4.8.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32"
+pickleshare==0.7.5
 pluggy==0.13.1
 pre-commit==2.4.0
 prometheus-client==0.8.0
 prompt-toolkit==3.0.5
 psutil==5.7.0
 psycopg2-binary==2.8.5
-ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or os_name != "nt"
-py==1.8.1
+ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32" or os_name != "nt" or python_version >= "3.3" and sys_platform != "win32" and (python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32")
+py==1.8.2
 -e git+https://github.com/beda42/pycounter.git@15a0e4add83f07ecfe8e29482de4a6297a7fbc43#egg=pycounter
 pyfakefs==4.0.2
 pygments==2.6.1
@@ -137,7 +137,7 @@ tornado==6.0.4
 traitlets==4.3.3
 typed-ast==1.4.1
 tzlocal==2.1
-urllib3==1.22
+urllib3==1.25.9
 vine==1.3.0
 virtualenv==20.0.23
 waitress==1.4.4
@@ -146,4 +146,4 @@ webencodings==0.5.1
 webob==1.8.6
 webtest==2.0.35
 widgetsnbextension==3.5.1
-zipp==3.1.0; python_version < "3.8"
+zipp==3.1.0; python_version >= "3.6.8" and python_version < "3.7" or python_version >= "3.6.8" and python_version < "3.8" or python_version < "3.8" or python_version >= "3.6.8" and python_version < "3.7" and (python_version >= "3.6.8" and python_version < "3.7" or python_version >= "3.6.8" and python_version < "3.8" or python_version < "3.8") or python_version >= "3.6.8" and python_version < "3.8" and (python_version >= "3.6.8" and python_version < "3.7" or python_version >= "3.6.8" and python_version < "3.8" or python_version < "3.8")
