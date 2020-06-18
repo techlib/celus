@@ -1,6 +1,8 @@
 import codecs
 import csv
+import logging
 import os
+from time import monotonic
 from typing import IO
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -10,6 +12,9 @@ from django.core.cache import cache
 from django.utils.timezone import now
 
 from ..models import AccessLog, DimensionText, ReportType
+
+
+logger = logging.getLogger(__name__)
 
 
 class CSVExport(object):
@@ -87,15 +92,18 @@ class CSVExport(object):
         cache.set(self.filename_base, value)
 
     def export_raw_accesslogs_to_stream_lowlevel(self, stream: IO, queryset: QuerySet):
+        start = monotonic()
         text_id_to_text = {
             dt['id']: dt['text'] for dt in DimensionText.objects.all().values('id', 'text')
         }
+        logger.debug('Finished loading text remaps: %.2f s', monotonic() - start)
         rt_to_dimensions = {
             rt.pk: rt.dimensions_sorted
             for rt in ReportType.objects.filter(
                 pk__in=queryset.distinct('report_type_id').values('report_type_id')
             )
         }
+        logger.debug('Finished loading report_types and dimensions: %.2f s', monotonic() - start)
         # get all field names for the CSV
         field_name_map = {
             (f'{dim}__{attr}' if attr else dim): dim for dim, attr in self.implicit_dims.items()
@@ -105,6 +113,7 @@ class CSVExport(object):
         for tr, dims in rt_to_dimensions.items():
             field_names += [dim.short_name for dim in dims if dim.short_name not in field_names]
         field_names.append('value')
+        logger.debug('Finished preparing field names: %.2f s', monotonic() - start)
         # values that will be retrieved from the accesslogs
         values = ['value', 'report_type_id']
         values += list(field_name_map.keys())
@@ -112,6 +121,10 @@ class CSVExport(object):
         # crate the writer
         writer = csv.DictWriter(stream, field_names)
         writer.writeheader()
+        # disable cachalot for this query
+        logger.debug('Disabling cachalot for this query')
+        queryset.query.cachalot_do_not_cache = True
+        logger.debug('Finished preparing CSV writer: %.2f s', monotonic() - start)
         # write the records
         rec_num = 0
         for rec_num, log in enumerate(queryset.values(*values).iterator()):  # type: int, dict
@@ -127,4 +140,6 @@ class CSVExport(object):
             writer.writerow(record)
             if rec_num % 999 == 0:
                 self.store_progress(rec_num + 1)
+            if rec_num % 99999 == 0:
+                logger.debug('Stored %d records: %.2f s', rec_num, monotonic() - start)
         self.store_progress(rec_num + 1)
