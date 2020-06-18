@@ -24,6 +24,7 @@ drf-nested-routers==0.91
 et-xmlfile==1.0.1
 future==0.18.2
 idna==2.9
+ijson==3.0.4
 importlib-metadata==1.6.1; python_version < "3.8"
 jdcal==1.4.1
 kombu==4.6.10

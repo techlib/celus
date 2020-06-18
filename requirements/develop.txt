@@ -49,6 +49,7 @@ filelock==3.0.12
 future==0.18.2
 identify==1.4.19
 idna==2.9
+ijson==3.0.4
 imagesize==1.2.0
 importlib-metadata==1.6.1; python_version < "3.8"
 importlib-resources==2.0.1; python_version < "3.7"
@@ -91,7 +92,7 @@ prometheus-client==0.8.0
 prompt-toolkit==3.0.5
 psutil==5.7.0
 psycopg2-binary==2.8.5
-ptyprocess==0.6.0; sys_platform != "win32" or os_name != "nt" or python_version >= "3.3" and sys_platform != "win32"
+ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32" or os_name != "nt" or python_version >= "3.3" and sys_platform != "win32" and (python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32")
 py==1.8.2
 -e git+https://github.com/beda42/pycounter.git@15a0e4add83f07ecfe8e29482de4a6297a7fbc43#egg=pycounter
 pyfakefs==4.0.2

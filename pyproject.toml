@@ -43,6 +43,8 @@ rest-pandas = "~1.1.0"
 requests = "^2.23.0"
 urllib3 = "~1.25.0"
 django-rest-auth = "~0.9.5"
+ijson = "^3.0.4"
+
 
 
 [tool.poetry.dev-dependencies]
