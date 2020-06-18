@@ -28,7 +28,7 @@ version = "1.4.4"
 [[package]]
 category = "dev"
 description = "Disable App Nap on OS X 10.9"
-marker = "python_version >= \"3.3\" and sys_platform == \"darwin\" or platform_system == \"Darwin\""
+marker = "sys_platform == \"darwin\" or platform_system == \"Darwin\" or python_version >= \"3.3\" and sys_platform == \"darwin\""
 name = "appnope"
 optional = false
 python-versions = "*"
@@ -71,7 +71,6 @@ pytz = ">=2015.7"
 [[package]]
 category = "dev"
 description = "Specifications for callback functions passed in to an API"
-marker = "python_version >= \"3.3\""
 name = "backcall"
 optional = false
 python-versions = "*"
@@ -586,14 +585,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.9"
 
 [[package]]
-category = "main"
-description = "Iterative JSON parser with a standard Python iterator interface"
-name = "ijson"
-optional = false
-python-versions = "*"
-version = "3.0.4"
-
-[[package]]
 category = "dev"
 description = "Getting image size from png/jpeg/jpeg2000/gif file"
 name = "imagesize"
@@ -728,7 +719,6 @@ version = "1.4.1"
 [[package]]
 category = "dev"
 description = "An autocompletion tool for Python that can be used for text editors."
-marker = "python_version >= \"3.3\""
 name = "jedi"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
@@ -1074,7 +1064,6 @@ version = "1.4.2"
 [[package]]
 category = "dev"
 description = "A Python Parser"
-marker = "python_version >= \"3.3\""
 name = "parso"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -1106,7 +1095,7 @@ pytzdata = ">=2018.3"
 [[package]]
 category = "dev"
 description = "Pexpect allows easy control of interactive console applications."
-marker = "python_version >= \"3.3\" and sys_platform != \"win32\""
+marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\""
 name = "pexpect"
 optional = false
 python-versions = "*"
@@ -1118,7 +1107,6 @@ ptyprocess = ">=0.5"
 [[package]]
 category = "dev"
 description = "Tiny 'shelve'-like database with concurrency support"
-marker = "python_version >= \"3.3\""
 name = "pickleshare"
 optional = false
 python-versions = "*"
@@ -1208,7 +1196,7 @@ version = "2.8.5"
 [[package]]
 category = "dev"
 description = "Run a subprocess in a pseudo terminal"
-marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or os_name != \"nt\""
+marker = "sys_platform != \"win32\" or os_name != \"nt\" or python_version >= \"3.3\" and sys_platform != \"win32\""
 name = "ptyprocess"
 optional = false
 python-versions = "*"
@@ -1342,8 +1330,8 @@ category = "main"
 description = "Extensions to the standard Python datetime module"
 name = "python-dateutil"
 optional = false
-python-versions = "*"
-version = "2.6.1"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+version = "2.8.1"
 
 [package.dependencies]
 six = ">=1.5"
@@ -1883,7 +1871,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "39e5876aa59e3811c04d7d09ec78a64073cbb3aa06ec6216722e8da4c5fdecae"
+content-hash = "056c644e5bade37d6a1413394741a846b87b4d1731cd4460b447162ade3505b9"
 python-versions = "^3.6.8"
 
 [metadata.files]
@@ -2109,28 +2097,6 @@ identify = [
 idna = [
     {file = "idna-2.9-py2.py3-none-any.whl", hash = "sha256:a068a21ceac8a4d63dbfd964670474107f541babbd2250d61922f029858365fa"},
     {file = "idna-2.9.tar.gz", hash = "sha256:7588d1c14ae4c77d74036e8c22ff447b26d0fde8f007354fd48a7814db15b7cb"},
-]
-ijson = [
-    {file = "ijson-3.0.4-cp27-cp27m-macosx_10_6_x86_64.whl", hash = "sha256:244606e042bb836d75be6c9d890ca9cf5774ffee6306337c73624b5252e97cc9"},
-    {file = "ijson-3.0.4-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:9a1dbfa2887caf50022ee5ee226d9dd347498da63bbf3ed8e655aa4826240977"},
-    {file = "ijson-3.0.4-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:077151d61e4760e4281ba4f8639f7ed5b3ce93ec0b51e6648485a39b2ed449d8"},
-    {file = "ijson-3.0.4-cp34-cp34m-macosx_10_6_x86_64.whl", hash = "sha256:d045d2cb728d4553b7eca0c9464888ea181dfa65e16dacf8b369fcd7757bc1fa"},
-    {file = "ijson-3.0.4-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:176c6638351cad63d4cd803237185e9e79656527498f527e1adcff839540c08f"},
-    {file = "ijson-3.0.4-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:8389eddab9abc19145995d9d485bfc5cba8fd6b18b14b36106e0ac7ae689d345"},
-    {file = "ijson-3.0.4-cp35-cp35m-win32.whl", hash = "sha256:9cf47e65eec4ce5b94c5c71888c3356537394b17e24d9c9b47e3a5eef124c41e"},
-    {file = "ijson-3.0.4-cp35-cp35m-win_amd64.whl", hash = "sha256:ee8544d2ca4f39ae6f920be72022bb7f3928639bc4767bd0299a44b2005df3fe"},
-    {file = "ijson-3.0.4-cp36-cp36m-macosx_10_6_x86_64.whl", hash = "sha256:0d7fd00900493497e58b7873a53ff6f27a7070875f285d4e7d80a5c62d745f80"},
-    {file = "ijson-3.0.4-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:4113be2f0332d15a13fb8599655218678eace0bebd736a8ba3ef8856ce0e74c6"},
-    {file = "ijson-3.0.4-cp36-cp36m-win32.whl", hash = "sha256:3925cff93a904423d4284855990dd386aa524304d4cb8ec7b3afc78e34de1ec6"},
-    {file = "ijson-3.0.4-cp36-cp36m-win_amd64.whl", hash = "sha256:c9bf76a3d54280bb0a2c45d475dc822ab35f265824f336977843f0b2e5e4de39"},
-    {file = "ijson-3.0.4-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:68ffb77e234eabba3d4c98d8f3c9c14d971cbe6ffc5a703f252dbf73163d857e"},
-    {file = "ijson-3.0.4-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:29b44c7ae1a7a3dc27d835e6bf23c6c07350eacd7b13b54ace16fe6d167ff684"},
-    {file = "ijson-3.0.4-cp37-cp37m-win32.whl", hash = "sha256:4fb8dd9b12f6996442a69012375886e7393d57c0c0b6185bf191d6e6d4d9394d"},
-    {file = "ijson-3.0.4-cp37-cp37m-win_amd64.whl", hash = "sha256:2589c757fec65b07a459af630059766149cdde3ff1c3a171a726a7b5842fbcf5"},
-    {file = "ijson-3.0.4-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:40dc2826a340737de2927a6523ce722fff187811c06b744cf69e09de9a0aa79e"},
-    {file = "ijson-3.0.4-cp38-cp38-win32.whl", hash = "sha256:7cdd8de953e2782fdedccc01e3b22cd1bc1c3e92cf253c27daf7c65e62fd0a53"},
-    {file = "ijson-3.0.4-cp38-cp38-win_amd64.whl", hash = "sha256:9bb773fc34a4c6b60d31329063f9bf870e238bbe619c6b9805bfb4ba5f12472e"},
-    {file = "ijson-3.0.4.tar.gz", hash = "sha256:6e25448318cda55e82a5de52beb6813b003cb8e4a7b5753305912a30055a29f8"},
 ]
 imagesize = [
     {file = "imagesize-1.2.0-py2.py3-none-any.whl", hash = "sha256:6965f19a6a2039c7d48bca7dba2473069ff854c36ae6f19d2cde309d998228a1"},
@@ -2505,8 +2471,8 @@ pytest-django = [
     {file = "pytest_django-3.9.0-py2.py3-none-any.whl", hash = "sha256:64f99d565dd9497af412fcab2989fe40982c1282d4118ff422b407f3f7275ca5"},
 ]
 python-dateutil = [
-    {file = "python-dateutil-2.6.1.tar.gz", hash = "sha256:891c38b2a02f5bb1be3e4793866c8df49c7d19baabf9c1bad62547e0b4866aca"},
-    {file = "python_dateutil-2.6.1-py2.py3-none-any.whl", hash = "sha256:95511bae634d69bc7329ba55e646499a842bc4ec342ad54a8cdb65645a0aad3c"},
+    {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
+    {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
 ]
 python-magic = [
     {file = "python-magic-0.4.18.tar.gz", hash = "sha256:b757db2a5289ea3f1ced9e60f072965243ea43a2221430048fd8cacab17be0ce"},
