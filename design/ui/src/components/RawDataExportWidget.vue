@@ -13,6 +13,9 @@ en:
     start_export: Start export
     export_running: Export is running, please wait.
     data_ready: Data is ready.
+    error_during_progress: There was an error getting progress data from the server
+    retrying_connection: Retrying to fetch data - attempt {number} / {total}
+    retrying_failed: "Already retried {number} times without success - it looks like something went horribly wrong"
 
 cs:
     export_raw_data: Export všech dat
@@ -27,6 +30,8 @@ cs:
     start_export: Spustit export
     export_running: Probíhá export, vydržte prosím.
     data_ready: Data jsou připravena.
+    error_during_progress: Při získávání dat o průběhu ze serveru došlo k chybě
+    retrying_failed: "{number} pokusů o stažení bylo neúspěšných - pravděpodobně se něco rozbilo"
 
 </i18n>
 
@@ -55,7 +60,16 @@ cs:
 
                     <!-- error :( -->
                     <div v-if="error">
-                        <v-alert type="error">$t('error')</v-alert>
+                        <v-alert type="error">
+                            {{ $t('error') }}
+                        </v-alert>
+                    </div>
+                    <div v-else-if="errorDuringProgress">
+                        <v-alert :type="shouldRetry ? 'warning' : 'error'">
+                            <strong>{{ $t('error_during_progress') }}</strong>
+                            <div v-if="shouldRetry">{{ $t('retrying_connection', {number: retriedTimes, total: retryNumber}) }}</div>
+                            <div v-else>{{ $t('retrying_failed', {number: retriedTimes}) }}</div>
+                        </v-alert>
                     </div>
                     <!-- export in progress -->
                     <div v-else-if="waiting" class="pt-4">
@@ -104,7 +118,16 @@ cs:
       title: {},
       platform: {},
       reportType: {},
-      retryInterval: {required: false, default: 1000, type: Number},
+      retryInterval: {
+        required: false,
+        default: 1000,
+        type: Number
+      },
+      retryNumber: {
+        required: false,
+        default: 10,
+        type: Number,
+      }
     },
 
     data () {
@@ -117,6 +140,8 @@ cs:
         resultUrl: null,
         currentCount: 0,
         error: false,
+        errorDuringProgress: null, // Object
+        retriedTimes: 0,
       }
     },
 
@@ -149,6 +174,9 @@ cs:
           return 100 * this.currentCount / this.totalCount
         }
         return 0
+      },
+      shouldRetry () {
+        return (this.retriedTimes < this.retryNumber)
       }
 
     },
@@ -182,6 +210,8 @@ cs:
       async checkProgress () {
         try {
           let response = await axios.get(this.progressUrl)
+          this.retriedTimes = 0  // reset eventual retry counter on success
+          this.errorDuringProgress = null
           this.currentCount = response.data.count
           if (this.currentCount === this.totalCount) {
             this.waiting = false
@@ -189,10 +219,14 @@ cs:
             this.error = true
           }
           if (this.waiting) {
+            this.retriedTimes = 0  // reset eventual retry counter on success
             setTimeout(this.checkProgress, this.retryInterval)
           }
         } catch (error) {
-          this.showSnackbar({content: 'Error loading export progress: '+error, color: 'error'})
+          this.errorDuringProgress = error
+          this.retriedTimes += 1
+          if (this.shouldRetry)
+            setTimeout(this.checkProgress, this.retryInterval)
         }
       },
       cleanup () {
@@ -203,6 +237,8 @@ cs:
         this.resultUrl = null
         this.currentCount = 0
         this.error = false
+        this.errorDuringProgress = null
+        this.retriedTimes = 0
       }
     },
 
