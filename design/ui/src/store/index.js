@@ -135,6 +135,12 @@ export default new Vuex.Store({
       }
       return null
     },
+    allowSignUp (state) {
+      if ('ALLOW_USER_REGISTRATION' in state.basicInfo) {
+        return state.basicInfo['ALLOW_USER_REGISTRATION']
+      }
+      return false
+    },
     letAxiosThrough (state, getters) {
       /*
         when true, all requests by axios will be put through,
@@ -203,11 +209,10 @@ export default new Vuex.Store({
           }
         }
       )
-
+      await dispatch('loadBasicInfo')  // load basic info - this can be done without logging in
       await dispatch('loadUserData')  // we need user data first
     },
     afterAuthentication ({dispatch, state, getters}) {
-      dispatch('loadBasicInfo')
       dispatch('loadOrganizations')
       dispatch('changeDateRangeObject', state.dateRangeIndex)
       dispatch('fetchInterestGroups')
@@ -268,7 +273,7 @@ export default new Vuex.Store({
     },
     async loadBasicInfo ({dispatch, commit}) {
       try {
-        commit('setBasicInfo', (await axios.get('/api/info/')).data)
+        commit('setBasicInfo', (await axios.get('/api/info/', {privileged: true})).data)
       } catch (error) {
         dispatch('showSnackbar', {content: 'Error loading basic info: ' + error, color: 'error'})
       }

@@ -110,7 +110,7 @@
   import { mapActions, mapGetters, mapState } from 'vuex'
   import OrganizationSelector from '../components/OrganizationSelector'
   import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
-  import LoginDialog from '../components/LoginDialog'
+  import LoginDialog from '../components/account/LoginDialog'
   import InvalidUserPage from './InvalidUserPage'
   import VGravatar from 'vue-gravatar'
 

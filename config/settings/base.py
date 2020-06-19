@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     'mptt',
     'reversion',
     'rest_auth',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'rest_auth.registration',
     'core.apps.CoreConfig',
     'publications.apps.PublicationsConfig',
     'logs.apps.LogsConfig',
@@ -297,6 +301,17 @@ QUEUED_SUSHI_MAX_RETRY_COUNT = 5  # how many times max should we retry queued at
 SUSHI_ATTEMPT_LAST_DATE = '2017-01'  # default date where to end fetching sushi data
 REFERENCE_CURRENCY = 'CZK'  # this is the currency used for price calculation
 
+# use authentication and registration
+# should users be allowed to create accounts themselves
+ALLOW_USER_REGISTRATION = False
+# social authentication providers
+SOCIAL_ACCOUNTS_SUPPORTED = []
+SITE_ID = 1
+# allauth config
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -324,7 +339,12 @@ for key in ("ERMS_API_URL",):
 
 DATABASES['default']['PASSWORD'] = secrets['DB_PASSWORD']
 
-EXPORTED_SETTINGS = ['REFERENCE_CURRENCY', 'AUTHENTICATION_BACKENDS']
+EXPORTED_SETTINGS = [
+    'REFERENCE_CURRENCY',
+    'AUTHENTICATION_BACKENDS',
+    'ALLOW_USER_REGISTRATION',
+    'SOCIAL_ACCOUNTS_SUPPORTED',
+]
 
 # Need to disable prometheus migrations when collecting static without DB
 # see https://github.com/korfuri/django-prometheus/issues/34
