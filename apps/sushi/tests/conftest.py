@@ -27,6 +27,15 @@ def counter_report_type(report_type_nd):
 
 
 @pytest.fixture()
+def counter_report_type_wrap_report_type(report_type_nd):
+    def fun(report_type, code='TR', counter_version=5, name='Title report'):
+        return CounterReportType.objects.create(
+            code=code, counter_version=counter_version, name=name, report_type=report_type
+        )
+    return fun
+
+
+@pytest.fixture()
 def credentials(organizations, platforms):
     credentials = SushiCredentials.objects.create(
         organization=organizations[0],
