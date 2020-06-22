@@ -260,7 +260,7 @@ export default new Vuex.Store({
         }
       }
     },
-    async loadOrganizations ({dispatch, commit, getters, state}) {
+    async loadOrganizations ({dispatch, getters}) {
       try {
         let response = await axios.get('/api/organization/', {privileged: true})
         let organizations = {}
@@ -273,17 +273,25 @@ export default new Vuex.Store({
           if (getters.showManagementStuff) {
             organizations[-1] = {name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1, extra: true}
           }
-          commit('setOrganizations', organizations)
-          if (!(state.selectedOrganizationId in organizations)) {
-            if (response.data.length > 0) {
-              commit('setSelectedOrganizationId', {id: response.data[0].pk})
-            } else {
-              commit('setSelectedOrganizationId', {id: null})
-            }
-          }
+          await dispatch('setOrganizations', organizations)
+          dispatch('selectFirstOrganization')
         } catch (error) {
           dispatch('showSnackbar', {content: 'Error loading organizations: ' + error})
         }
+    },
+    async setOrganizations ({commit}, organizations) {
+      commit('setOrganizations', organizations)
+    },
+    selectFirstOrganization ({state, commit}) {
+      if (!state.organizations)
+        return
+      if (!(state.selectedOrganizationId in state.organizations)) {
+        if (Object.keys(state.organizations).length > 0) {
+          commit('setSelectedOrganizationId', {id: Number.parseInt(Object.keys(state.organizations)[0], 10)})
+        } else {
+          commit('setSelectedOrganizationId', {id: null})
+        }
+      }
     },
     async loadBasicInfo ({dispatch, commit}) {
       try {
@@ -291,7 +299,6 @@ export default new Vuex.Store({
       } catch (error) {
         dispatch('showSnackbar', {content: 'Error loading basic info: ' + error, color: 'error'})
       }
-
     },
     changeDateRangeObject (context, dateRangeIndex) {
       let drObj = context.state.dateRanges[dateRangeIndex]
@@ -368,7 +375,7 @@ export default new Vuex.Store({
       state.user = user
     },
     setOrganizations(state, organizations) {
-      state.organizations = organizations
+      Vue.set(state, 'organizations', organizations)
     },
     setSelectedOrganizationId(state, {id}) {
       state.selectedOrganizationId = id

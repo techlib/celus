@@ -39,7 +39,8 @@ cs:
 </template>
 
 <script>
-  import { mapGetters } from 'vuex'
+  import { mapActions, mapGetters } from 'vuex'
+  import axios from 'axios'
 
   export default {
     name: 'CreateOrganizationDialog',
@@ -61,8 +62,25 @@ cs:
     },
 
     methods: {
-      createOrganization () {
-        console.log('creating')
+      ...mapActions({
+        showSnackbar: 'showSnackbar',
+        setOrganizations: 'setOrganizations',
+        selectFirstOrganization: 'selectFirstOrganization',
+      }),
+      async createOrganization () {
+        try {
+          let response = await axios.post(
+            '/api/organization/create-user-default/',
+            {name: this.name, url: this.url},
+            {privileged: true},
+            )
+          let organizations = {}
+          organizations[response.data.pk] = response.data
+          await this.setOrganizations(organizations)
+          this.selectFirstOrganization()
+        } catch (error) {
+          this.showSnackbar({content: 'Error creating organization: '+error, color: 'error'})
+        }
       }
     }
   }

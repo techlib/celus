@@ -77,3 +77,14 @@ class TestOrganizationAPI(object):
         assert (
             org.private_data_source == userorg.source
         ), 'user-organization data source should be the organizations own private data-source'
+
+    @pytest.mark.now
+    def test_user_default_organization_creation_not_allowed(self, authenticated_client, settings):
+        settings.ALLOW_USER_REGISTRATION = False
+        url = reverse('organization-create-user-default')
+        assert Organization.objects.count() == 0
+        resp = authenticated_client.post(
+            url, {'name': 'test organization'}, content_type='application/json'
+        )
+        assert resp.status_code == 400
+        assert Organization.objects.count() == 0
