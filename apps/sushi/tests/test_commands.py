@@ -5,7 +5,6 @@ from core.models import UL_ORG_ADMIN
 from sushi.models import SushiCredentials, SushiFetchAttempt
 
 
-@pytest.mark.now
 @pytest.mark.django_db
 class TestFindMissingAttemptFiles(object):
     """
