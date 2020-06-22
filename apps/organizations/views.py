@@ -1,21 +1,27 @@
+import json
 from collections import Counter
 
+from django.conf import settings
 from django.db.models import Count, Q, Sum, Max, Min
 from django.db.models.functions import Coalesce
+from django.http import HttpResponseBadRequest
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework import status
 
 from core.logic.bins import bin_hits
 from core.logic.dates import date_filter_from_params, month_end
+from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
 from sushi.models import SushiCredentials
-from .serializers import OrganizationSerializer
+from .models import UserOrganization
+from .serializers import OrganizationSerializer, OrganizationSimpleSerializer
 
 
 class OrganizationViewSet(ReadOnlyModelViewSet):
@@ -138,6 +144,39 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             for (start, end), count in sorted(bin_counter.items())
         ]
         return Response(data)
+
+    @action(detail=False, methods=['post'], url_path='create-user-default')
+    def create_user_default(self, request):
+        """
+        Lets a user create an organization if account creation is allowed and this user does
+        not have an organization yet.
+        """
+        if not settings.ALLOW_USER_REGISTRATION:
+            return HttpResponseBadRequest(
+                json.dumps({'error': 'Organization creation is not allowed'}),
+                content_type='application/json',
+            )
+        organization_count = request.user.organizations.count()
+        if organization_count > 0:
+            return HttpResponseBadRequest(
+                json.dumps({'error': 'User is allowed to create only one organization'}),
+                content_type='application/json',
+            )
+        serializer = OrganizationSimpleSerializer()
+        valid_data = {**serializer.validate(request.data)}
+        valid_data['ext_id'] = 1001  # TODO: we need to create unique ID here
+        org = serializer.create(valid_data)
+        data_source = DataSource.objects.create(organization=org, type=DataSource.TYPE_ORGANIZATION)
+        # we add the just created data source as source for the organization itself
+        # it looks strange, but it is a usable way how to say that this is a user-created
+        # organization
+        org.source = data_source
+        org.save()
+        # associate the user with this organization as admin
+        UserOrganization.objects.create(
+            user=request.user, organization=org, is_admin=True, source=data_source
+        )
+        return Response(OrganizationSerializer(org).data, status=status.HTTP_201_CREATED)
 
 
 class StartERMSSyncOrganizationsTask(APIView):

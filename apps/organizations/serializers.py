@@ -23,3 +23,12 @@ class OrganizationSerializer(ModelSerializer):
             'is_admin',
             'is_member',
         ) + tuple('name_' + lang[0] for lang in settings.LANGUAGES)
+
+
+class OrganizationSimpleSerializer(ModelSerializer):
+    class Meta:
+        model = Organization
+        fields = (
+            'name',
+            'url',
+        )

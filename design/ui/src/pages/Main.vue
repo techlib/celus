@@ -100,6 +100,7 @@
         </v-footer>
 
         <LoginDialog />
+        <CreateOrganizationDialog />
     </v-app>
     <!-- invalid user state -->
     <InvalidUserPage v-else />
@@ -113,10 +114,12 @@
   import LoginDialog from '../components/account/LoginDialog'
   import InvalidUserPage from './InvalidUserPage'
   import VGravatar from 'vue-gravatar'
+  import CreateOrganizationDialog from '../components/account/CreateOrganizationDialog'
 
   export default {
     name: 'Dashboard',
     components: {
+      CreateOrganizationDialog,
       InvalidUserPage,
       LoginDialog,
       SelectedDateRangeWidget,
@@ -142,6 +145,8 @@
         avatarText: 'avatarText',
         avatarImg: 'avatarImg',
         usernameText: 'usernameText',
+        bootUpFinished: 'bootUpFinished',
+        allowSignup: 'allowSignup',
       }),
       snackbarShow: {
         get () {

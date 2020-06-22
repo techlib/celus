@@ -2,13 +2,14 @@ import pytest
 from django.urls import reverse
 
 from core.models import Identity
-from organizations.models import UserOrganization
+from organizations.models import UserOrganization, Organization
 from core.tests.conftest import (
     authenticated_client,
     authentication_headers,
     invalid_identity,
     valid_identity,
 )
+from organizations.views import OrganizationViewSet
 
 
 @pytest.mark.django_db
@@ -55,3 +56,24 @@ class TestOrganizationAPI(object):
         """
         resp = authenticated_client.get(reverse('organization-detail', args=[organizations[0].pk]))
         assert resp.status_code == 404
+
+    @pytest.mark.now
+    def test_user_default_organization_creation(self, authenticated_client, settings):
+        settings.ALLOW_USER_REGISTRATION = True
+        url = reverse('organization-create-user-default')
+        assert Organization.objects.count() == 0
+        resp = authenticated_client.post(
+            url, {'name': 'test organization'}, content_type='application/json'
+        )
+        assert resp.status_code == 201
+        assert Organization.objects.count() == 1
+        org = Organization.objects.get()
+        assert org.name == 'test organization'
+        assert org in authenticated_client.user.organizations.all()
+        assert (
+            org.private_data_source == org.source
+        ), 'organization object data source should be the organizations own private data-source'
+        userorg = UserOrganization.objects.get(organization=org, user=authenticated_client.user)
+        assert (
+            org.private_data_source == userorg.source
+        ), 'user-organization data source should be the organizations own private data-source'

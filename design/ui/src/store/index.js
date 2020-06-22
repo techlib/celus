@@ -6,14 +6,15 @@ import addMonths from 'date-fns/add_months'
 import addYears from 'date-fns/add_years'
 import endOfYear from 'date-fns/end_of_year'
 import startOfYear from 'date-fns/start_of_year'
-import {ymDateFormat} from '../libs/dates'
-import {format as formatNumber} from 'mathjs/lib/function/string/format'
+import { ymDateFormat } from '../libs/dates'
+import { format as formatNumber } from 'mathjs/lib/function/string/format'
 import VuexPersistence from 'vuex-persist'
-import {sortOrganizations} from '../libs/organizations'
+import { sortOrganizations } from '../libs/organizations'
 import interest from './modules/interest'
 import maintenance from './modules/maintenance'
 import login from './modules/login'
 import { ConcurrencyManager } from 'axios-concurrency'
+import { isEqual } from 'lodash'
 
 Vue.use(Vuex)
 
@@ -44,7 +45,7 @@ export default new Vuex.Store({
     snackbarContent: null,
     snackbarColor: null,
     loginError: null,
-    organizations: {},
+    organizations: null,
     selectedOrganizationId: null,
     dateRangeStart: null,
     dateRangeEnd: null,
@@ -151,6 +152,16 @@ export default new Vuex.Store({
         return true
       }
       return false
+    },
+    bootUpFinished (state) {
+      /*
+      true when all data necessary for startup are loaded, false if it is still in progress
+       */
+      // as for now, when organizations are loaded, we consider boot-up finished
+      return (state.organizations !== null)
+    },
+    showCreateOrganizationDialog (state, getters) {
+      return (getters.bootUpFinished && getters.allowSignUp && isEqual(state.organizations, {}))
     }
   },
   actions: {
@@ -249,27 +260,30 @@ export default new Vuex.Store({
         }
       }
     },
-    loadOrganizations (context) {
-      axios.get('/api/organization/', {privileged: true})
-        .then(response => {
-          let organizations = {}
+    async loadOrganizations ({dispatch, commit, getters, state}) {
+      try {
+        let response = await axios.get('/api/organization/', {privileged: true})
+        let organizations = {}
           for (let rec of response.data) {
             if (rec['name_cs'] === null) {
               rec['name_cs'] = rec['name']
             }
             organizations[rec.pk] = rec
           }
-          if (context.getters.showManagementStuff) {
+          if (getters.showManagementStuff) {
             organizations[-1] = {name: 'All', name_cs: 'Všechny', name_en: 'All', pk: -1, extra: true}
           }
-          context.commit('setOrganizations', organizations)
-          if (!(context.state.selectedOrganizationId in organizations) && response.data.length > 0) {
-            context.commit('setSelectedOrganizationId', {id: response.data[0].pk})
+          commit('setOrganizations', organizations)
+          if (!(state.selectedOrganizationId in organizations)) {
+            if (response.data.length > 0) {
+              commit('setSelectedOrganizationId', {id: response.data[0].pk})
+            } else {
+              commit('setSelectedOrganizationId', {id: null})
+            }
           }
-        })
-        .catch(error => {
-          context.dispatch('showSnackbar', {content: 'Error loading organizations: ' + error})
-        })
+        } catch (error) {
+          dispatch('showSnackbar', {content: 'Error loading organizations: ' + error})
+        }
     },
     async loadBasicInfo ({dispatch, commit}) {
       try {
