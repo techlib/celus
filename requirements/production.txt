@@ -1,7 +1,7 @@
 amqp==2.6.0
 billiard==3.6.3.0
 celery==4.4.5
-certifi==2020.4.5.2
+certifi==2020.6.20
 chardet==3.0.4
 click==7.1.2
 dateparser==0.7.6
@@ -9,7 +9,7 @@ defusedxml==0.6.0
 django==2.2.13
 django-allauth==0.41.0
 django-anymail==7.1.0
--e git+https://github.com/beda42/django-cachalot.git@4f3960e14cf1ec5ddbdf16259773b1e1015151b5#egg=django-cachalot
+-e git+https://github.com/beda42/django-cachalot.git@154ec37662e3ed20687d7710660856c3e5e95116#egg=django-cachalot
 django-celery-results==1.2.1
 django-error-report==0.2.0
 django-js-asset==1.2.2
@@ -28,7 +28,7 @@ jdcal==1.4.1
 kombu==4.6.10
 lxml==4.5.1
 lz4==3.0.2
-numpy==1.18.5
+numpy==1.19.0
 oauthlib==3.1.0
 openpyxl==3.0.3
 pandas==1.0.5
