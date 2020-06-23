@@ -2,7 +2,7 @@ import os
 
 from .base import *
 
-DATABASES['default']['NAME'] = 'celus_demo'
+DATABASES['default']['NAME'] = 'celus'
 MASTER_ORGANIZATIONS = ['NTK-61387142-CEL', 'GMJ-9379']
 ALLOWED_HOSTS = ['*']
 ALLOW_USER_REGISTRATION = True

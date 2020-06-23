@@ -66,7 +66,7 @@ cs:
                 </div>
                 {{ $t('no_matching_titles') }}
             </div>
-            <LargeSpinner v-else/>
+            <LargeSpinner v-else />
         </v-card-text>
     </v-card>
 

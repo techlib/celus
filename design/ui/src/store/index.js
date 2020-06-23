@@ -158,7 +158,7 @@ export default new Vuex.Store({
       true when all data necessary for startup are loaded, false if it is still in progress
        */
       // as for now, when organizations are loaded, we consider boot-up finished
-      return (state.organizations !== null)
+      return (state.organizations !== null && true)
     },
     showCreateOrganizationDialog (state, getters) {
       return (getters.bootUpFinished && getters.allowSignUp && isEqual(state.organizations, {}))
@@ -204,13 +204,14 @@ export default new Vuex.Store({
             return config
           }
           const watcher = new Promise(resolve => {
-             this.watch(
-               (state, getters) => getters.letAxiosThrough,
-               newVal => {
-                 if (newVal)
-                   resolve();
-               }
-             );
+            console.log(`delaying request for ${config.url}`)
+            this.watch(
+              (state, getters) => getters.letAxiosThrough,
+              newVal => {
+                if (newVal)
+                  resolve();
+              }
+            );
           });
           try {
             await watcher
@@ -259,6 +260,12 @@ export default new Vuex.Store({
           dispatch('showSnackbar', {content: 'Error loading user data: ' + error})
         }
       }
+    },
+    cleanUserData ({commit}) {
+      commit('setUserData', null)
+      commit('setAuthenticated', false)
+      //commit('setSelectedOrganizationId', null)
+      commit('setOrganizations', null)
     },
     async loadOrganizations ({dispatch, getters}) {
       try {

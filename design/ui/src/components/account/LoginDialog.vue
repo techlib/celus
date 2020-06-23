@@ -8,8 +8,8 @@ TODO:
 
 <i18n lang="yaml">
 en:
-    not_logged_in: Logged out
-    not_logged_in_internal_text: You are not logged in, probably because you have been logged out due to inactivity. Please enter your login credentials and click "Login".
+    not_logged_in: Login
+    not_logged_in_internal_text: Please enter your login credentials and click "Login".
     not_logged_in_external_text: You are not logged in, probably because you have been logged out due to inactivity. Please click "Login" to be redirected to login page.
     login: Login
     email: Email
@@ -19,10 +19,15 @@ en:
     how_to_gain_access: To gain or renew access to this Celus installation, let us know at <a href="mailto:ask@celus.net">ask@celus.net</a>
     signup: "Don't have an account yet? {register_here}"
     register: Register here!
+    just_registering: Register
+    just_registering_text: "Registration is quick and completely free - just fill in your email address and pick a strong password."
+    create_account: Create account
+    min_pwd_length: Minimum 6 characters
+    required: This value cannot be empty
 
 cs:
-    not_logged_in: Jste odhlášeni
-    not_logged_in_internal_text: Pravděpodobně jste byli odhlášeni z důvodu neaktivity. Zadejte své přihlašovací údaje a stiskněte "Přihlásit" pro opětovné přihlášení.
+    not_logged_in: Přihlášení
+    not_logged_in_internal_text: Zadejte své přihlašovací údaje a stiskněte "Přihlásit".
     not_logged_in_external_text: Pravděpodobně jste byli odhlášeni z důvodu neaktivity. Prosím stiskněte "Přihlásit" pro opětovné přihlášení.
     login: Přihlásit
     email: Email
@@ -30,6 +35,11 @@ cs:
     password2: Potvrzení hesla
     login_error: Při přihlášování došlo k chybě
     how_to_gain_access: Pokud chcete získat nebo obnovit přístup k tomuto systému, napište nám na <a href="mailto:ask@celus.net">ask@celus.net</a>
+    signup: "Ještě nemáte účet? {register_here}"
+    register: Zaregistrujte se!
+    just_registering: Registrace
+    just_registering_text: "Registrace je rychlá a zcela a zdarma - stačí vyplnit email a vybrat si silné heslo."
+    create_account: Vytvořit účet
 </i18n>
 
 <template>
@@ -38,21 +48,24 @@ cs:
             <v-card-title class="headline">{{ $t('not_logged_in') }}</v-card-title>
             <v-card-text>
                 <div>{{ $t('not_logged_in_internal_text') }}</div>
-                <v-divider class="my-3"></v-divider>
-                <v-text-field v-model="username" :label="$t('email')"></v-text-field>
-                <v-text-field v-model="password" type="password" :label="$t('password')"></v-text-field>
 
                 <v-alert
                         v-if="allowSignUp"
-                        color="warning"
+                        color="primary"
                         outlined
+                        class="mt-3"
                 >
-                    <i18n path="signup" tag="span">
+                    <v-icon class="pr-3">far fa-hand-point-right</v-icon>
+                    <i18n path="signup" tag="span" class="text--secondary">
                         <template #register_here>
                             <a @click="justRegistering = true" v-text="$t('register')"></a>
                         </template>
                     </i18n>
                 </v-alert>
+
+                <v-divider class="my-3"></v-divider>
+                <v-text-field v-model="email" :label="$t('email')"></v-text-field>
+                <v-text-field v-model="password" type="password" :label="$t('password')"></v-text-field>
 
                 <v-alert
                         v-if="loginError"
@@ -67,21 +80,28 @@ cs:
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="doLogin">{{ $t('login') }}</v-btn>
+                <v-btn color="primary" class="ma-3" @click="doLogin">{{ $t('login') }}</v-btn>
             </v-card-actions>
         </v-card>
         <!-- just registering -->
         <v-card v-else-if="usesPasswordLogin && justRegistering">
             <v-card-title class="headline">{{ $t('just_registering') }}</v-card-title>
             <v-card-text>
-                <v-text-field v-model="username" :label="$t('email')"></v-text-field>
+                <div v-text="$t('just_registering_text')"></div>
+                <v-divider class="my-3"></v-divider>
                 <v-text-field
-                        v-model="password" type="password" :label="$t('password')"
+                        v-model="email"
+                        :label="$t('email')"
+                        :rules="[rules.required]"
+                ></v-text-field>
+                <v-text-field
+                        v-model="password" type="password"
+                        :label="$t('password')"
                         :rules="[rules.required, rules.min]"
                 ></v-text-field>
                 <v-text-field v-model="password2" type="password" :label="$t('password2')"></v-text-field>
             </v-card-text>
-            <v-card-actions>
+            <v-card-actions class="pa-6">
                 <v-spacer></v-spacer>
                 <v-btn
                         color="primary"
@@ -112,13 +132,13 @@ cs:
     },
     data () {
       return {
-        username: '',
+        email: '',
         password: '',
         password2: '',
         justRegistering: false,
         rules: {
-          required: value => !!value || 'Required.',
-          min: v => v.length >= 6 || 'Min 6 characters',
+          required: value => !!value || this.$t('required'),
+          min: v => v.length >= 6 || this.$t('min_pwd_length'),
         }
       }
     },
@@ -156,7 +176,7 @@ cs:
         showSnackbar: 'showSnackbar',
       }),
       doLogin () {
-        this.login({email: this.username, password: this.password})
+        this.login({email: this.email, password: this.password})
       },
       async doSignUp () {
         console.info('Signing up')
@@ -164,7 +184,7 @@ cs:
           let result = await axios.post(
             '/api/rest-auth/registration/',
             {
-              email: this.username,
+              email: this.email,
               password1: this.password,
               password2: this.password2,
             },

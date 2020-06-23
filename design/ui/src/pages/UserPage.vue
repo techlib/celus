@@ -34,6 +34,11 @@ cs:
         </h3>
         <h4 v-if="user.email" class="font-weight-light mb-1">{{ user.email }}</h4>
 
+        <div class="py-2">
+            <v-btn @click="logout" v-text="$t('logout')"></v-btn>
+        </div>
+
+
         <div class="mb-10 font-weight-black">
             <span v-if="user.is_superuser" v-text="$t('is_superuser')"></span>
             <span v-else-if="user.is_from_master_organization" v-text="$t('is_from_master_organization')"></span>
@@ -51,11 +56,12 @@ cs:
             </template>
 
         </v-data-table>
+
     </div>
 </template>
 
 <script>
-  import {mapGetters, mapState} from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import VGravatar from 'vue-gravatar'
   import CheckMark from '../components/CheckMark'
 
@@ -92,6 +98,11 @@ cs:
       organizationList () {
         return Object.values(this.organizations).filter(item => item.is_member)
       }
+    },
+    methods: {
+      ...mapActions({
+        logout: 'logout',
+      })
     }
   }
 </script>

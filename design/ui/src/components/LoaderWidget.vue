@@ -1,5 +1,5 @@
 <template>
-    <div :style="{height: height, color: color}" class="loader">
+    <div :style="{height: height, color: color, paddingTop: paddingTop}" class="loader">
         <i class="fas fa-spin" :class="iconName"></i>
         <p class="text">{{ text }}</p>
     </div>
@@ -13,19 +13,17 @@
       color: {default: '#1db79a88'},
       text: {default: '', required: false},
       iconName: {default: 'fa-cog'},
+      paddingTop: {default: '160px'},
     }
   }
 </script>
 <style scoped lang="scss">
 
     div.loader {
-        //background-color: white;
         text-align: center;
-        padding-top: 160px;
 
         i {
             font-size: 60px;
-            display: block;
         }
 
         p.text {

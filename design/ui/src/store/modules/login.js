@@ -25,8 +25,8 @@ export default {
   },
 
   actions: {
-    async login(context, {email, password}) {
-      context.commit('setLoginError', {'error': null})
+    async login({commit, dispatch}, {email, password}) {
+      commit('setLoginError', {'error': null})
       let csrftoken = Cookies.get('csrftoken')
 
       try {
@@ -35,13 +35,27 @@ export default {
           {'email': email, 'password': password},
           {headers: {'X-CSRFToken': csrftoken}, privileged: true})
 
-        this.commit('setAuthenticated', true)
-        this.dispatch('setShowLoginDialog', false)
-        this.dispatch('loadUserData')
-        this.dispatch('afterAuthentication')
+        commit('setAuthenticated', true)
+        dispatch('setShowLoginDialog', false)
+        dispatch('loadUserData')
+        dispatch('afterAuthentication')
       } catch (error) {
         context.commit('setLoginError', {'error': error})
       }
+    },
+    async logout ({commit, dispatch}) {
+      let csrftoken = Cookies.get('csrftoken')
+      try {
+        await axios.post(
+          '/api/rest-auth/logout/',
+          {},
+          {headers: {'X-CSRFToken': csrftoken}})
+      } catch (error) {
+        dispatch('showSnackbar', {'content': 'Error logging out:' + error, color: 'error'})
+        return
+      }
+      await dispatch('cleanUserData')
+      await dispatch('setShowLoginDialog', {show: true})
     },
     changeUsesPasswordLogin({commit}, value) {
       commit('setUsesPasswordLogin', value)
