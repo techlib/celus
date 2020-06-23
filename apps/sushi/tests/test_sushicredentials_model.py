@@ -190,7 +190,9 @@ class TestCredentialsVersioning(object):
         cr1.save()
         assert cr1.compute_version_hash() == hash1
 
-    def test_version_info_is_stored_in_fetch_attempt(self, organizations, report_type_nd):
+    def test_version_info_is_stored_in_fetch_attempt(
+        self, organizations, report_type_nd, monkeypatch
+    ):
         """
         Tests that when we fetch data using `SushiCredentials`, the `SushiFetchAttempt` that is
         created contains information about the credentials version - both in `processing_info`
@@ -219,7 +221,7 @@ class TestCredentialsVersioning(object):
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
 
-        Sushi5Client.get_report_data = mock_get_report_data
+        monkeypatch.setattr(Sushi5Client, 'get_report_data', mock_get_report_data)
         attempt: SushiFetchAttempt = cr1.fetch_report(
             report, start_date='2020-01-01', end_date='2020-01-31'
         )

@@ -31,7 +31,7 @@ class TestHelperFunctions(object):
 
 @pytest.mark.django_db
 class TestHoleFillingMachinery(object):
-    def test_find_holes_in_data(self, settings, organizations, report_type_nd):
+    def test_find_holes_in_data(self, settings, organizations, report_type_nd, monkeypatch):
         """
         Tests the `find_holes_in_data` function.
         """
@@ -63,7 +63,7 @@ class TestHoleFillingMachinery(object):
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
 
-        Sushi5Client.get_report_data = mock_get_report_data
+        monkeypatch.setattr(Sushi5Client, 'get_report_data', mock_get_report_data)
         # test that find_holes_in_data returns the right number of records
         holes = find_holes_in_data()
         assert len(holes) == 3
@@ -89,7 +89,9 @@ class TestHoleFillingMachinery(object):
         assert len(holes) == 2, 'nothing should change'
         assert holes[0].attempt_count == 1
 
-    def test_retry_holes_with_new_credentials(self, settings, organizations, report_type_nd):
+    def test_retry_holes_with_new_credentials(
+        self, settings, organizations, report_type_nd, monkeypatch
+    ):
         """
         Tests the `find_holes_in_data` function.
         """
@@ -121,7 +123,7 @@ class TestHoleFillingMachinery(object):
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
 
-        Sushi5Client.get_report_data = mock_get_report_data
+        monkeypatch.setattr(Sushi5Client, 'get_report_data', mock_get_report_data)
         # test that find_holes_in_data returns the right number of records
         holes = find_holes_in_data()
         assert len(holes) == 3
@@ -132,7 +134,9 @@ class TestHoleFillingMachinery(object):
         holes = find_holes_in_data()
         assert len(holes) == 0
 
-    def test_retry_holes_with_new_credentials_task(self, settings, organizations, report_type_nd):
+    def test_retry_holes_with_new_credentials_task(
+        self, settings, organizations, report_type_nd, monkeypatch
+    ):
         """
         Tests the task based version of trying data holes
         """
@@ -164,7 +168,7 @@ class TestHoleFillingMachinery(object):
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
 
-        Sushi5Client.get_report_data = mock_get_report_data
+        monkeypatch.setattr(Sushi5Client, 'get_report_data', mock_get_report_data)
         # test that find_holes_in_data returns the right number of records
         holes = find_holes_in_data()
         assert len(holes) == 3
