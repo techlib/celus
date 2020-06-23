@@ -111,5 +111,5 @@ class TestCounter5Reading(object):
         reader = Counter5TRReport()
         records = [e for e in reader.file_to_records('apps/nigiri/tests/data/naked_errors.json')]
         assert len(records) == 0
-        assert len(reader.warnings) == 1
+        assert len(reader.warnings) == 2
         assert reader.queued

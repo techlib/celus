@@ -32,6 +32,7 @@ def counter_report_type_wrap_report_type(report_type_nd):
         return CounterReportType.objects.create(
             code=code, counter_version=counter_version, name=name, report_type=report_type
         )
+
     return fun
 
 

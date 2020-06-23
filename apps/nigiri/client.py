@@ -8,13 +8,20 @@ from urllib.parse import urljoin
 import logging
 from xml.etree import ElementTree as ET
 import traceback
+import typing
 
 import requests
 
 from pycounter import sushi
 from pycounter.csvhelper import UnicodeWriter
 
-from .counter5 import Counter5TRReport, Counter5DRReport, Counter5ReportBase
+from .counter5 import (
+    Counter5TRReport,
+    Counter5DRReport,
+    Counter5ReportBase,
+    CounterRecord,
+    CounterError,
+)
 from .exceptions import SushiException
 
 logger = logging.getLogger(__name__)
@@ -242,7 +249,7 @@ class Sushi5Client(SushiClientBase):
         response.raise_for_status()
         return response.content
 
-    def get_available_reports(self, params=None) -> list:
+    def get_available_reports(self, params=None) -> typing.Generator[dict, None, None]:
         content = self.get_available_reports_raw(params=params)
         reports = self.report_to_data(content)
         return reports
@@ -276,45 +283,39 @@ class Sushi5Client(SushiClientBase):
         data = json.loads(content)
         return report_class(data)
 
-    def report_to_data(self, report: bytes, validate=True):
+    def report_to_data(self, report: bytes, validate=True) -> typing.Generator[dict, None, None]:
         try:
-            data = json.loads(report)
+            fd = StringIO(report.decode())
+            counter_report = Counter5ReportBase()
+            record_found, header, data = counter_report.fd_to_dicts(fd)
         except ValueError as e:
             raise SushiException(str(e), content=report)
         if validate:
-            self.validate_data(data)
+            self.validate_data(counter_report.errors, counter_report.warnings)
         return data
 
     @classmethod
-    def validate_data(cls, data: Union[Dict, List]):
-        """
-        Checks that the provided data contain valid COUNTER data and not an error.
-        If the data contains an error message, it will raise SushiException
-        :param data:
+    def validate_data(cls, errors: typing.List[CounterError], warnings: typing.List[CounterError]):
+        """ Checks that the parsed erorrs and warings are not fatal.
+            If so, it will raise SushiException
+        :param errors: list of errors
+        :param warnings: list of warnings
         :return:
         """
-        if type(data) is list:
-            # for list, we validate the whole list
-            for item in data:
-                cls.validate_data(item)
-            return
-        if 'Exception' in data:
-            exc = data['Exception']
-            raise SushiException(cls._format_error(exc), content=data)
-        if 'Severity' in data and data['Severity'] == 'Error':
-            raise SushiException(cls._format_error(data), content=data)
-        header = data.get('Report_Header', {})
-        errors = []
-        for exception in header.get('Exceptions', []):
-            if exception.get('Severity') in ('Info', 'Warning'):
-                logging.warning(
-                    "Warning Exception in COUNTER 5 report: %s", cls._format_error(exception)
-                )
-            else:
-                errors.append(exception)
-        if errors:
-            message = '; '.join(cls._format_error(error).full_log for error in errors)
-            raise SushiException(message, content=data)
+        if len(errors) == 1:
+            errors[0].raise_me()
+        elif len(errors) >= 1:
+            message = '; '.join(
+                cls._format_error(error.to_sushi_dict()).full_log for error in errors
+            )
+            raise SushiException(message, content=[e.data for e in errors])
+
+        # log warnings
+        for warning in warnings:
+            logging.warning(
+                "Warning Exception in COUNTER 5 report: %s",
+                cls._format_error(warning.to_sushi_dict()),
+            )
 
     def extract_errors_from_data(self, report_data):
         if 'Exception' in report_data:

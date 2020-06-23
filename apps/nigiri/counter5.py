@@ -2,6 +2,7 @@
 Module dealing with data in the COUNTER5 format.
 """
 import json
+import io
 import typing
 from copy import copy
 
@@ -66,6 +67,9 @@ class CounterError(object):
             data=rec.get('Data'),
         )
 
+    def to_sushi_dict(self):
+        return dict(Code=self.code, Severity=self.severity, Message=self.message, Data=self.data,)
+
     def __str__(self):
         return f'{self.severity or "Error"} #{self.code}: {self.message}'
 
@@ -82,8 +86,8 @@ class Counter5ReportBase(object):
         self.records = []
         self.queued = False
         self.header = {}
-        self.errors = []
-        self.warnings = []
+        self.errors: typing.List[CounterError] = []
+        self.warnings: typing.List[CounterError] = []
         self.raw_data = report  # TODO raw data are supposed to be removed
 
     def read_report(
@@ -120,6 +124,8 @@ class Counter5ReportBase(object):
         else:
             if 'Exceptions' in data:
                 return self.extract_errors(data['Exceptions'])
+            elif 'Exception' in data:
+                return self.extract_errors(data['Exception'])
             if 'Code' in data or 'Severity' in data:
                 error = CounterError.from_sushi_dict(data)
                 if error.severity in ('Warning', 'Info'):
@@ -130,59 +136,72 @@ class Counter5ReportBase(object):
                 else:
                     self.errors.append(error)
 
-    def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
-        f = open(filename, 'rb')  # file will be closed later (once generator struct is discarded)
+    def fd_to_dicts(
+        self, fd: typing.TextIO
+    ) -> typing.Tuple[bool, dict, typing.Generator[dict, None, None]]:
+        def empty_generator() -> typing.Generator[dict, None, None]:
+            empty: typing.List[dict] = []
+            return (e for e in empty)
 
         # first check whether it is not an error report
-        first_character = f.read(1)
-        while first_character not in b'[{':
-            first_character = f.read(1)
-        f.seek(0)
+        first_character = fd.read(1)
+        while first_character not in '[{':
+            first_character = fd.read(1)
+        fd.seek(0)
 
         if first_character == '[':
             # error report handling
-            self.extract_errors(json.load(f))
-            return CounterRecord.empty_generator()
+            self.extract_errors(json.load(fd))
+            return False, {}, empty_generator()
 
         # try to read the header
-        header = dict(ijson.kvitems(f, "Report_Header"))
-        f.seek(0)
+        header = dict(ijson.kvitems(fd, "Report_Header"))
+        fd.seek(0)
 
         # check whether the header is not located in 'body' element
         if not header:
-            header = dict(ijson.kvitems(f, "body.Report_Header"))
-            f.seek(0)
+            header = dict(ijson.kvitems(fd, "body.Report_Header"))
+            fd.seek(0)
+        else:
+            # Try to extract exceptions from header
+            self.extract_errors(header)
 
         # Try to Read exceptions
         self.extract_errors(header.get('Exceptions', []))  # In header
-        self.extract_errors(list(ijson.items(f, "Exceptions.items")))  # In <root>
-        f.seek(0)
-        self.extract_errors(list(ijson.items(f, "body.Exceptions.items")))  # In body element
-        f.seek(0)
+        self.extract_errors(list(ijson.items(fd, "Exceptions.items")))  # In <root>
+        fd.seek(0)
+        self.extract_errors(list(ijson.items(fd, "body.Exceptions.items")))  # In body element
+        fd.seek(0)
 
         # try to read the first item
-        record_found = bool(next(ijson.items(f, "Report_Items.item"), None))
-        f.seek(0)
+        record_found = bool(next(ijson.items(fd, "Report_Items.item"), None))
+        fd.seek(0)
         if record_found:
             # Items found
-            items = ijson.items(f, "Report_Items.item")
+            items = ijson.items(fd, "Report_Items.item")
         else:
             # Try to seek in body element
-            record_found = bool(next(ijson.items(f, "body.Report_Items.item"), None))
-            f.seek(0)  # rewind back
-            items = ijson.items(f, "body.Report_Items.item")
+            record_found = bool(next(ijson.items(fd, "body.Report_Items.item"), None))
+            fd.seek(0)  # rewind back
+            items = ijson.items(fd, "body.Report_Items.item")
 
         if not header and not record_found:
             # No data and no header -> try to extract an exception
-            self.extract_errors(json.load(f))
-            items = CounterRecord.empty_generator()
+            self.extract_errors(json.load(fd))
+            items = empty_generator()
 
         if not record_found:
             # we have no data
             if not self.errors and not self.warnings:
                 # if there is no other reason why there should be no data, we raise exception
-                raise SushiException('Incorrect format', content=f.read())
+                raise SushiException('Incorrect format', content=fd.read())
 
+        return record_found, header, items
+
+    def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
+        f = open(filename, 'r')  # file will be closed later (once generator struct is discarded)
+        record_found, header, items = self.fd_to_dicts(f)
+        self.record_found = record_found
         return self.read_report(header, items)
 
     @classmethod

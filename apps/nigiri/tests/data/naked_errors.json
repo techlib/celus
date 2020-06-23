@@ -5,5 +5,12 @@
   "Message": "Report Queued for Processing",
   "Help_URL": "https://support.jstor.org",
   "Data": "Report is currently queued for processing. Please retry the request after some reasonable time."
+},
+{
+  "Code": 3060,
+  "Severity": "Warning",
+  "Message": "Invalid Report Filter Value",
+  "Help_URL": "https://support.jstor.org",
+  "Data": "platform not able to be changed from its value of jstor"
 }
 ]

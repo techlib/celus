@@ -1,6 +1,6 @@
 import logging
 import os
-import traceback
+import typing
 
 from django.conf import settings
 from django.db.transaction import atomic
@@ -8,6 +8,7 @@ from django.db.transaction import atomic
 from logs.logic.data_import import import_counter_records
 from logs.models import OrganizationPlatform, ImportBatch
 from nigiri.client import Sushi5Client, SushiException, SushiError
+from nigiri.counter5 import CounterError
 from sushi.models import SushiFetchAttempt
 
 
@@ -30,11 +31,11 @@ def import_new_sushi_attempts():
             attempt.mark_crashed(e)
 
 
-def validate_data_v5(data):
-    Sushi5Client.validate_data(data)
+def validate_data_v5(warnings: typing.List[CounterError], errors: typing.List[CounterError]):
+    Sushi5Client.validate_data(warnings, errors)
 
 
-def validate_data_v4(data):
+def validate_data_v4(warnings: typing.List[CounterError], errors: typing.List[CounterError]):
     return None
 
 
@@ -48,14 +49,14 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     logger.debug('Processing file: %s', attempt.data_file.name)
     reader = reader_cls()
     try:
-        data = reader.file_to_input(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
+        records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
     except FileNotFoundError as e:
         logger.error('Cannot find the referenced file - probably deleted?: %s', e)
         attempt.mark_crashed(e)
         return
     validator = validate_data_v4 if counter_version == 4 else validate_data_v5
     try:
-        validator(data)
+        validator(reader.errors, reader.warnings)
     except SushiException as e:
         # if we find validation error on data revalidation, we switch the report success attr
         logger.error('Validation error: %s', e)
@@ -82,9 +83,9 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             op.organization,
             op.platform,
         )
+
     # now read the data and import it
-    records = reader.read_report(data)
-    if records:
+    if reader.record_found:
         import_batch = ImportBatch.objects.create(
             platform=attempt.credentials.platform,
             organization=attempt.credentials.organization,

@@ -28,6 +28,8 @@ class Counter4ReportBase(object):
 
     def __init__(self):
         self.records = []
+        self.header: dict = {}
+        self.record_found: bool = False
 
     def read_report(self, report: CounterReport) -> typing.Generator[CounterRecord, None, None]:
         """
@@ -35,6 +37,7 @@ class Counter4ReportBase(object):
         :param report:
         :return:
         """
+        self.record_found = len(report.pubs) > 0
         for journal in report:  # type: CounterEresource
             for start, metric, value in journal:
                 record = CounterRecord()
