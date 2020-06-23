@@ -333,7 +333,6 @@ Django = ">=2"
 reference = "154ec37662e3ed20687d7710660856c3e5e95116"
 type = "git"
 url = "https://github.com/beda42/django-cachalot.git"
-
 [[package]]
 category = "main"
 description = "Celery result backends for Django."
@@ -1242,7 +1241,6 @@ tests = ["httmock", "mock", "pytest", "coverage"]
 reference = "15a0e4add83f07ecfe8e29482de4a6297a7fbc43"
 type = "git"
 url = "https://github.com/beda42/pycounter.git"
-
 [[package]]
 category = "dev"
 description = "pyfakefs implements a fake file system that mocks the Python file system modules."
@@ -1880,7 +1878,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "f76b48722d4bbcdb91ab51bfd826102a6ecba6af0f88c833ce1968310ab02a6f"
+content-hash = "3fd59c82b720da6aa39fe6949e6d5b22376f0846ba0212a64d5b740bfb481877"
 python-versions = "^3.6.8"
 
 [metadata.files]
