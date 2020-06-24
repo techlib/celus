@@ -41,7 +41,6 @@ export default {
         commit('setAuthenticated', true)
         dispatch('setShowLoginDialog', false)
         dispatch('loadUserData')
-        dispatch('afterAuthentication')
       } catch (error) {
         commit('setLoginError', {'error': error})
       }
@@ -59,6 +58,21 @@ export default {
       }
       await dispatch('cleanUserData')
       await dispatch('setShowLoginDialog', {show: true})
+    },
+    async signup ({commit, dispatch}, {email, password1, password2}) {
+      let result = await axios.post(
+        '/api/rest-auth/registration/',
+        {
+          email: email,
+          password1: password1,
+          password2: password2,
+        },
+        {privileged: true},
+      )
+      console.log(result)
+      commit('setAuthenticated', true)
+      dispatch('setShowLoginDialog', false)
+      dispatch('loadUserData')
     },
     changeUsesPasswordLogin({commit}, value) {
       commit('setUsesPasswordLogin', value)
