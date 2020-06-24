@@ -34,7 +34,7 @@ cs:
         </h3>
         <h4 v-if="user.email" class="font-weight-light mb-1">{{ user.email }}</h4>
 
-        <div class="py-2">
+        <div class="py-2" v-if="canLogout">
             <v-btn @click="logout" v-text="$t('logout')"></v-btn>
         </div>
 
@@ -82,6 +82,7 @@ cs:
         loggedIn: 'loggedIn',
         avatarText: 'avatarText',
         usernameText: 'usernameText',
+        canLogout: 'canLogout',
       }),
       headers () {
         return [

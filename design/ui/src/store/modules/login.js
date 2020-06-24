@@ -21,6 +21,9 @@ export default {
         return state.loginError
       }
       return null
+    },
+    canLogout (state) {
+      return state.usesPasswordLogin  // we only know how to log-out when password login is used
     }
   },
 
@@ -40,10 +43,10 @@ export default {
         dispatch('loadUserData')
         dispatch('afterAuthentication')
       } catch (error) {
-        context.commit('setLoginError', {'error': error})
+        commit('setLoginError', {'error': error})
       }
     },
-    async logout ({commit, dispatch}) {
+    async logout ({dispatch}) {
       let csrftoken = Cookies.get('csrftoken')
       try {
         await axios.post(
