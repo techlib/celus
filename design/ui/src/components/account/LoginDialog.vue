@@ -175,7 +175,7 @@ cs:
         email: '',
         password: '',
         password2: '',
-        justRegistering: false,
+        justRegistering: 'register' in this.$route.query,
         rules: {
           required: value => !!value || this.$t('required'),
           min: v => v.length >= 6 || this.$t('min_pwd_length'),
