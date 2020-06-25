@@ -280,8 +280,7 @@ class Sushi5Client(SushiClientBase):
             report_class = Counter5DRReport
         else:
             report_class = Counter5ReportBase
-        data = json.loads(content)
-        return report_class(data)
+        return report_class(content)
 
     def report_to_data(self, report: bytes, validate=True) -> typing.Generator[dict, None, None]:
         try:

@@ -1,6 +1,6 @@
-import json
-
 import pytest
+
+from pathlib import Path
 
 from ..counter5 import Counter5ReportBase, Counter5TRReport
 from ..exceptions import SushiException
@@ -9,7 +9,12 @@ from ..exceptions import SushiException
 class TestCounter5Reading(object):
     def test_record_simple(self):
         reader = Counter5ReportBase()
-        records = [e for e in reader.file_to_records('apps/nigiri/tests/data/data_simple.json')]
+        records = [
+            e
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/data_simple.json'
+            )
+        ]
         assert len(records) == 2
         assert records[0].platform_name == 'PlOne'
         assert records[0].title == 'Title1'
@@ -26,7 +31,12 @@ class TestCounter5Reading(object):
 
     def test_record_simple_tr(self):
         reader = Counter5TRReport()
-        records = [e for e in reader.file_to_records('apps/nigiri/tests/data/data_simple.json')]
+        records = [
+            e
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/data_simple.json'
+            )
+        ]
         assert len(records) == 2
         assert records[0].value == 10
         # just test what is different in TR report
@@ -45,7 +55,12 @@ class TestCounter5Reading(object):
         """
         reader = Counter5TRReport()
         with pytest.raises(SushiException):
-            [e for e in reader.file_to_records('apps/nigiri/tests/data/data_incorrect.json')]
+            [
+                e
+                for e in reader.file_to_records(
+                    Path(__file__).parent / 'data/counter5/data_incorrect.json'
+                )
+            ]
 
     def test_reading_messed_up_data_proquest_ebooks(self):
         """
@@ -56,7 +71,9 @@ class TestCounter5Reading(object):
         reader = Counter5TRReport()
         records = [
             e
-            for e in reader.file_to_records('apps/nigiri/tests/data/5_TR_ProQuestEbookCentral.json')
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral.json'
+            )
         ]
         assert len(records) == 30  # 7 titles, metrics - 1, 5, 5, 2, 6, 5, 6
 
@@ -70,7 +87,7 @@ class TestCounter5Reading(object):
         records = [
             e
             for e in reader.file_to_records(
-                'apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json'
+                Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral_exception.json'
             )
         ]
         assert len(records) == 0
@@ -86,7 +103,7 @@ class TestCounter5Reading(object):
         records = [
             e
             for e in reader.file_to_records(
-                'apps/nigiri/tests/data/5_TR_ProQuestEbookCentral_exception.json'
+                Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral_exception.json'
             )
         ]
         assert len(records) == 0
@@ -99,7 +116,12 @@ class TestCounter5Reading(object):
         There is no header, just the error in the json
         """
         reader = Counter5TRReport()
-        records = [e for e in reader.file_to_records('apps/nigiri/tests/data/naked_error.json')]
+        records = [
+            e
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/naked_error.json'
+            )
+        ]
         assert len(records) == 0
         assert len(reader.warnings) == 1
         assert reader.queued
@@ -109,7 +131,12 @@ class TestCounter5Reading(object):
         There is no header, just the error in the json
         """
         reader = Counter5TRReport()
-        records = [e for e in reader.file_to_records('apps/nigiri/tests/data/naked_errors.json')]
+        records = [
+            e
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/naked_errors.json'
+            )
+        ]
         assert len(records) == 0
         assert len(reader.warnings) == 2
         assert reader.queued

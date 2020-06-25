@@ -82,13 +82,18 @@ class Counter5ReportBase(object):
     dimensions = []  # this should be redefined in subclasses
     allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']
 
-    def __init__(self, report: bytes = None):
+    def __init__(self, report: typing.Optional[bytes] = None):
         self.records = []
         self.queued = False
         self.header = {}
         self.errors: typing.List[CounterError] = []
         self.warnings: typing.List[CounterError] = []
         self.raw_data = report  # TODO raw data are supposed to be removed
+
+        # Parse it for the first time to extract errors and warnings
+        if self.raw_data:
+            fd = io.StringIO(self.raw_data.decode())
+            self.fd_to_dicts(fd)
 
     def read_report(
         self, header: dict, items: typing.Generator[dict, None, None],

@@ -424,12 +424,12 @@ class SushiCredentials(models.Model):
                 processing_success = not (
                     error_explanation.needs_checking and error_explanation.setup_ok
                 )
-                file_data = client.report_to_string(report.raw_data)
+                file_data = report.raw_data
             else:
                 contains_data = True
                 processing_success = True
                 queued = report.queued
-                file_data = client.report_to_string(report.raw_data)
+                file_data = report.raw_data
                 log = ''
         # now create the attempt instance
         if file_data:
