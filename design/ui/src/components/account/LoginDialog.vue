@@ -23,10 +23,11 @@ en:
     just_registering: Register
     just_registering_text: "Registration is quick and completely free - just fill in your email address and pick a strong password."
     create_account: Create account
-    min_pwd_length: Minimum 6 characters
+    min_pwd_length: Minimum 8 characters
     required: This value cannot be empty
     login_from_register: "Already have account? {login_here}"
     login_link: Login here.
+    signup_error: Error during sign-up
 
 cs:
     not_logged_in: Přihlášení
@@ -44,8 +45,11 @@ cs:
     just_registering: Registrace
     just_registering_text: "Registrace je rychlá a zcela a zdarma - stačí vyplnit email a vybrat si silné heslo."
     create_account: Vytvořit účet
+    min_pwd_length: Minimálně 8 znaků
+    required: Toto pole nesmí být prázdné
     login_from_register: "Již máte účet? {login_here}"
     login_link: Přihlašte se zde.
+    signup_error: Chyba při vytváření účtu
 </i18n>
 
 <template>
@@ -124,7 +128,7 @@ cs:
                 <v-text-field
                         v-model="password"
                         :label="$t('new_password')"
-                        :rules="[rules.required, rules.min]"
+                        :rules="[passwordError, rules.required, rules.min]"
                         :type="showPassword ? 'text' : 'password'"
                         :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
                         @click:append="showPassword = !showPassword"
@@ -133,7 +137,7 @@ cs:
                 <!--v-text-field v-model="password2" type="password" :label="$t('password2')"></v-text-field-->
 
                 <v-alert
-                        v-if="signupError"
+                        v-if="signupError && !emailError && !passwordError && !emailEdited && !passwordEdited"
                         type="error"
                         outlined
                         icon="fas fa-exclamation-circle"
@@ -163,7 +167,6 @@ cs:
 </template>
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import axios from 'axios'
 
   export default {
     name: 'LoginDialog',
@@ -178,10 +181,12 @@ cs:
         justRegistering: 'register' in this.$route.query,
         rules: {
           required: value => !!value || this.$t('required'),
-          min: v => v.length >= 6 || this.$t('min_pwd_length'),
+          min: v => v.length >= 8 || this.$t('min_pwd_length'),
         },
         signupError: null,
         showPassword: false,
+        emailEdited: false,  // when email gets edited, we hide associated error message
+        passwordEdited: false,
       }
     },
     computed: {
@@ -208,16 +213,23 @@ cs:
         return new Date().getTime()
       },
       signupValid () {
-        return (this.email !== '' && this.password !== '')
+        return (this.email !== '' && this.password.length >= 8)
       },
       emailError () {
-        if (this.signupError) {
+        if (this.signupError && !this.emailEdited) {
           if (this.signupError.response.data && this.signupError.response.data.email) {
             return this.signupError.response.data.email[0]
           }
-          return false
         }
-        return false
+        return true
+      },
+      passwordError () {
+        if (this.signupError && !this.passwordEdited) {
+          if (this.signupError.response.data && this.signupError.response.data.password1) {
+            return this.signupError.response.data.password1[0]
+          }
+        }
+        return true
       },
     },
 
@@ -226,7 +238,6 @@ cs:
         login: 'login',
         signup: 'signup',
         showSnackbar: 'showSnackbar',
-
       }),
       doLogin () {
         this.login({email: this.email, password: this.password})
@@ -237,13 +248,9 @@ cs:
           await this.signup({email: this.email, password1: this.password, password2: this.password})
           this.showSnackbar({content: 'Signup ok', color: 'success'})
         } catch (error) {
-          console.log(error)
-          if (error.response.status === 400) {
-            console.log(error.response.data)
-            this.signupError = error
-          } else {
-            this.showSnackbar({content: 'Could not sign you up: ' + error, color: 'error'})
-          }
+          this.emailEdited = false
+          this.passwordEdited = false
+          this.signupError = error
         }
       },
       processError (error) {
@@ -252,7 +259,17 @@ cs:
 
         }
       }
+    },
+
+    watch: {
+      email () {
+        this.emailEdited = true
+      },
+      password () {
+        this.passwordEdited = true
+      }
     }
+
   }
 </script>
 <style lang="scss">
