@@ -25,7 +25,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stats = Counter()
         to_delete = []
-        for attempt in SushiFetchAttempt.objects.filter(data_file__isnull=False):
+        for attempt in SushiFetchAttempt.objects.filter(data_file__isnull=False).exclude(
+            data_file__exact=""
+        ):
             filepath = Path(settings.MEDIA_ROOT) / attempt.data_file.name
             if filepath.exists():
                 stats['exists'] += 1
@@ -36,7 +38,7 @@ class Command(BaseCommand):
         logger.info('Stats: %s', stats)
         if to_delete:
             if options['delete']:
-                logger.info('Deleting %d fetch attempts')
+                logger.info('Deleting %d fetch attempts', stats['missing'])
                 SushiFetchAttempt.objects.filter(pk__in=to_delete).delete()
             else:
                 logger.info('Nothing deleted - use "-d" to delete attempts with missing files')
