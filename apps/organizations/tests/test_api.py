@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from core.models import Identity
+from core.models import Identity, User
 from organizations.models import UserOrganization, Organization
 from core.tests.conftest import (
     authenticated_client,
@@ -88,3 +88,43 @@ class TestOrganizationAPI(object):
         )
         assert resp.status_code == 400
         assert Organization.objects.count() == 0
+
+    @pytest.mark.now
+    def test_user_default_organization_creation_twice(self, authenticated_client, settings):
+        settings.ALLOW_USER_REGISTRATION = True
+        url = reverse('organization-create-user-default')
+        assert Organization.objects.count() == 0
+        resp = authenticated_client.post(
+            url, {'name': 'test organization'}, content_type='application/json'
+        )
+        assert resp.status_code == 201
+        assert Organization.objects.count() == 1
+        # second time
+        resp = authenticated_client.post(
+            url, {'name': 'test organization'}, content_type='application/json'
+        )
+        assert resp.status_code == 400, 'only one organization per user'
+        assert Organization.objects.count() == 1
+
+    @pytest.mark.now
+    def test_user_default_organization_different_users(
+        self, admin_client, authenticated_client, settings
+    ):
+        settings.ALLOW_USER_REGISTRATION = True
+        url = reverse('organization-create-user-default')
+        assert Organization.objects.count() == 0
+        resp = admin_client.post(
+            url, {'name': 'test organization'}, content_type='application/json'
+        )
+        assert resp.status_code == 201
+        assert Organization.objects.count() == 1
+        # second time
+        resp = authenticated_client.post(
+            url, {'name': 'test organization'}, content_type='application/json'
+        )
+        assert resp.status_code == 201, 'no problem for different user'
+        assert Organization.objects.count() == 2
+        # each user should have one organization
+        assert authenticated_client.user.organizations.count() == 1
+        admin_user = User.objects.get(is_superuser=True)
+        assert admin_user.organizations.count() == 1

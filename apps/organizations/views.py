@@ -163,8 +163,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
                 content_type='application/json',
             )
         serializer = OrganizationSimpleSerializer()
-        valid_data = {**serializer.validate(request.data)}
-        valid_data['ext_id'] = 1001  # TODO: we need to create unique ID here
+        valid_data = serializer.validate(request.data)
         org = serializer.create(valid_data)
         data_source = DataSource.objects.create(organization=org, type=DataSource.TYPE_ORGANIZATION)
         # we add the just created data source as source for the organization itself
