@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError
 from django.db import models
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
@@ -10,7 +9,9 @@ from publications.models import Platform
 
 class Organization(MPTTModel):
 
-    ext_id = models.PositiveIntegerField(unique=True, help_text='object ID taken from EMRS')
+    ext_id = models.PositiveIntegerField(
+        unique=True, help_text='object ID taken from EMRS', null=True, default=None
+    )
     parent = TreeForeignKey(
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='children'
     )

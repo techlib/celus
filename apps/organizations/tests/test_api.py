@@ -15,7 +15,7 @@ from core.tests.conftest import (
 class TestOrganizationAPI(object):
     def test_unauthorized_user(self, client, invalid_identity, authentication_headers):
         resp = client.get(reverse('organization-list'), **authentication_headers(invalid_identity))
-        assert resp.status_code == 403
+        assert resp.status_code in (403, 401)  # depends on auth backend
 
     def test_authorized_user_no_orgs(self, authenticated_client):
         resp = authenticated_client.get(reverse('organization-list'))
