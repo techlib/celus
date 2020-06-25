@@ -10,7 +10,7 @@ from publications.models import Platform
 class Organization(MPTTModel):
 
     ext_id = models.PositiveIntegerField(
-        unique=True, help_text='object ID taken from EMRS', null=True, default=None
+        unique=True, help_text='object ID taken from EMRS', null=True, default=None, blank=True,
     )
     parent = TreeForeignKey(
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='children'
@@ -19,7 +19,11 @@ class Organization(MPTTModel):
         help_text='Business registration number', null=True, blank=True
     )
     internal_id = models.CharField(
-        max_length=50, unique=True, null=True, help_text='special ID used for internal purposes'
+        max_length=50,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text='special ID used for internal purposes',
     )
     name = models.CharField(max_length=250)
     short_name = models.CharField(max_length=100)
@@ -27,7 +31,7 @@ class Organization(MPTTModel):
     fte = models.PositiveIntegerField(
         help_text='Last available FTE number for organization', default=0
     )
-    address = JSONField(default=dict)
+    address = JSONField(default=dict, blank=True)
     source = models.ForeignKey(
         'core.DataSource',
         on_delete=models.CASCADE,
