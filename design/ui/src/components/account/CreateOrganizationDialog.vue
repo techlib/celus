@@ -1,14 +1,15 @@
 <i18n lang="yaml">
 en:
     create_organization: Create your organization
-    info_text: Your account is not associated with any organization yet. In order to use Celus
-      we need to register your organization. Please fill in the following form.
+    info_text: To start using Celus, you need to add your organization first. Just a name is enough for now.
     do_create: Create organization
     name: Name
-    url: URL
 
 cs:
     create_organization: Vytvořte svou organizaci
+    info_text: K využívání Celusu je potřeba vytvořit svou organizaci. Prozatím postačí její název.
+    do_create: Vytvořit organizaci
+    name: Název
 </i18n>
 
 <template>
@@ -21,8 +22,6 @@ cs:
 
                 <v-form :value="valid">
                     <v-text-field v-model="name" :label="$t('name') + '*'" aria-required="true"></v-text-field>
-                    <v-text-field v-model="url" :label="$t('url')"></v-text-field>
-
                 </v-form>
             </v-card-text>
             <v-card-actions>
@@ -48,7 +47,6 @@ cs:
     data () {
       return {
         name: '',
-        url: '',
       }
     },
 
@@ -71,7 +69,7 @@ cs:
         try {
           let response = await axios.post(
             '/api/organization/create-user-default/',
-            {name: this.name, url: this.url},
+            {name: this.name},
             {privileged: true},
             )
           let organizations = {}
