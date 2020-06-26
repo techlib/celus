@@ -3,11 +3,19 @@ import typing
 from datetime import datetime
 from rest_framework.serializers import (
     ModelSerializer,
+    Serializer,
     SerializerMethodField,
+    ChoiceField,
+    DateTimeField,
 )
 
 
 from core.models import User
+
+
+class EmailVerificationSerializer(Serializer):
+    status = ChoiceField(User.EMAIL_VERIFICATION_STATUSES, read_only=True)
+    email_sent = DateTimeField(read_only=True, default=None)
 
 
 class UserSerializer(ModelSerializer):

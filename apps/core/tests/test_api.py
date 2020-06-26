@@ -75,6 +75,36 @@ class TestUserAPI(object):
         assert resp_data["email_verification_sent"] == sent_time.strftime('%Y-%m-%dT%H:%M:%SZ')
         assert User.objects.get(pk=user.pk).email_verified is True
 
+    def test_send_email_verification(self, authenticated_client, valid_identity, mailoutbox):
+        user = authenticated_client.user
+        user.email = valid_identity
+        user.save()
+
+        # get user info
+        resp = authenticated_client.get(reverse('user_api_view'))
+        assert resp.status_code == 200
+        resp_data = resp.json()
+        assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_UNKNOWN
+        assert resp_data["email_verification_sent"] is None
+        assert User.objects.get(pk=user.pk).email_verified is False
+        assert len(mailoutbox) == 0
+
+        # send verification email
+        resp = authenticated_client.post(reverse('user_api_verify_email_view'))
+        assert resp.status_code == 200
+        resp_data = resp.json()
+        assert resp_data["status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
+        assert resp_data["email_sent"] is not None
+        assert len(mailoutbox) == 1
+
+        # obtain user info again
+        resp = authenticated_client.get(reverse('user_api_view'))
+        assert resp.status_code == 200
+        resp_data = resp.json()
+
+        assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
+        assert resp_data["email_verification_sent"] is not None
+
 
 @pytest.mark.now
 @pytest.mark.django_db

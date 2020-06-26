@@ -1,15 +1,17 @@
+from allauth.account.utils import sync_user_email_addresses, send_email_confirmation
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import translation
 from rest_framework.generics import GenericAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.models import User
 from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
-from core.serializers import UserSerializer
+from core.serializers import UserSerializer, EmailVerificationSerializer
 from .tasks import erms_sync_users_and_identities_task
 
 
@@ -62,6 +64,22 @@ class UserLanguageView(APIView):
                 request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
                 return Response({'ok': True})
         return HttpResponseForbidden('user is not logged in')
+
+
+class UserVerifyEmailView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = EmailVerificationSerializer
+
+    def post(self, request):
+        user: User = request.user
+        sync_user_email_addresses(user)
+
+        # Don't send email if already verified
+        if not user.email_verified:
+            send_email_confirmation(request, user, signup=False)
+
+        del user.email_verification  # reload cached property
+        return Response(self.serializer_class(user.email_verification).data)
 
 
 class StartERMSSyncUsersAndIdentitiesTask(APIView):
