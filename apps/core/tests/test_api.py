@@ -1,5 +1,10 @@
 import pytest
+
+from datetime import datetime
+
+from allauth.account.models import EmailAddress, EmailConfirmation
 from django.urls import reverse
+from django.utils import timezone
 
 from core.models import Identity, User
 
@@ -21,6 +26,55 @@ class TestUserAPI(object):
         resp_data = resp.json()
         assert resp_data['username'] == identity.user.username
 
+    def test_verified_email(self, authenticated_client, valid_identity):
+        """
+        Test which checks email validity status
+        """
+        user = authenticated_client.user
+        sent_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+
+        def get_response() -> dict:
+            resp = authenticated_client.get(reverse('user_api_view'))
+            assert resp.status_code == 200
+            return resp.json()
+
+        resp_data = get_response()
+
+        assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_UNKNOWN
+        assert resp_data["email_verification_sent"] is None
+        assert User.objects.get(pk=user.pk).email_verified is False
+
+        # Create linked email
+        # Situation when the verification email was not sent
+        email_address = EmailAddress.objects.create(user=user, email=user.email)
+
+        resp_data = get_response()
+
+        assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
+        assert resp_data["email_verification_sent"] is None
+        assert User.objects.get(pk=user.pk).email_verified is False
+
+        # Create confirmation
+        confirmation = EmailConfirmation.objects.create(email_address=email_address)
+        confirmation.sent = sent_time
+        confirmation.save()
+
+        resp_data = get_response()
+
+        assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
+        assert resp_data["email_verification_sent"] == sent_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+        assert User.objects.get(pk=user.pk).email_verified is False
+
+        # Make the email verified
+        email_address.verified = True
+        email_address.save()
+
+        resp_data = get_response()
+
+        assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_VERIFIED
+        assert resp_data["email_verification_sent"] == sent_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+        assert User.objects.get(pk=user.pk).email_verified is True
+
 
 @pytest.mark.now
 @pytest.mark.django_db
@@ -40,6 +94,12 @@ class TestAccountCreationAPI(object):
         assert len(mailoutbox) == 1
         user = User.objects.get()
         assert user.email == 'foo@bar.baz'
+        assert user.email_verified is False
+        assert user.email_verification["status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
+        assert user.emailaddress_set.count() == 1
+        assert user.emailaddress_set.first().emailconfirmation_set.count() == 1
+
+        # check
 
     def test_create_account_bad_data(self, mailoutbox, client):
         """

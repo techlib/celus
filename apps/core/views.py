@@ -16,8 +16,12 @@ from .tasks import erms_sync_users_and_identities_task
 class UserView(GenericAPIView):
 
     serializer_class = UserSerializer
+    action = 'current'
 
     def get(self, request):
+        """ Obtains info about currently logged user
+        """
+
         if request.user:
             translation.activate(request.user.language)
             request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language

@@ -1,3 +1,5 @@
+from allauth.account.models import EmailAddress, EmailConfirmation
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -64,6 +66,15 @@ class DataSource(models.Model):
 
 
 class User(AbstractUser):
+
+    EMAIL_VERIFICATION_STATUS_UNKNOWN = "unknown"
+    EMAIL_VERIFICATION_STATUS_VERIFIED = "verified"
+    EMAIL_VERIFICATION_STATUS_PENDING = "pending"
+    EMAIL_VERIFICATION_STATUSES = (
+        EMAIL_VERIFICATION_STATUS_UNKNOWN,
+        EMAIL_VERIFICATION_STATUS_VERIFIED,
+        EMAIL_VERIFICATION_STATUS_PENDING,
+    )
 
     ext_id = models.PositiveIntegerField(
         null=True, blank=True, help_text='ID used in original source of this user data'
@@ -144,6 +155,32 @@ class User(AbstractUser):
                 else:
                     return REL_ORG_ADMIN
             return REL_UNREL_USER
+
+    @cached_property
+    def email_verification(self) -> dict:
+        res = {
+            "status": self.EMAIL_VERIFICATION_STATUS_UNKNOWN,
+            "email_sent": None,
+        }
+        try:
+            # get current email address from allauth
+            email_address: EmailAddress = self.emailaddress_set.get(email=self.email)
+            res["status"] = (
+                self.EMAIL_VERIFICATION_STATUS_VERIFIED
+                if email_address.verified
+                else self.EMAIL_VERIFICATION_STATUS_PENDING
+            )
+            confirmation: EmailConfirmation = email_address.emailconfirmation_set.last()
+            if confirmation:
+                res["email_sent"] = confirmation.sent
+
+        except (EmailAddress.DoesNotExist, EmailConfirmation.DoesNotExist):
+            pass
+        return res
+
+    @cached_property
+    def email_verified(self):
+        return self.EMAIL_VERIFICATION_STATUS_VERIFIED == self.email_verification['status']
 
 
 class Identity(models.Model):

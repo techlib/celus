@@ -351,3 +351,7 @@ EXPORTED_SETTINGS = [
 # Need to disable prometheus migrations when collecting static without DB
 # see https://github.com/korfuri/django-prometheus/issues/34
 PROMETHEUS_EXPORT_MIGRATIONS = strtobool(os.environ.get('PROMETHEUS_EXPORT_MIGRATIONS', '1'))
+
+# Configure allauth email verification
+ACCOUNT_EMAIL_VERIFICATION = "optional"  # send verification email, but not required for login
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = False  # Confirmation will be stored in db
