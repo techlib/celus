@@ -3,6 +3,7 @@ import os
 from .base import *
 
 DATABASES['default']['NAME'] = 'celus'
+DATABASES['default']['PORT'] = 5434
 MASTER_ORGANIZATIONS = ['NTK-61387142-CEL', 'GMJ-9379']
 ALLOWED_HOSTS = ['*']
 ALLOW_USER_REGISTRATION = True

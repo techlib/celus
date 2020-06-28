@@ -9,7 +9,6 @@ from sushi.models import SushiFetchAttempt
 from nigiri.exceptions import SushiException
 
 
-@pytest.mark.now
 @pytest.mark.django_db
 class TestSushiFetching(object):
     @pytest.mark.parametrize(

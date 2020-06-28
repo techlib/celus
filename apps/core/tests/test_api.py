@@ -147,3 +147,19 @@ class TestAccountCreationAPI(object):
         assert 'email' in data
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
+
+    def test_create_account_email_customization(self, mailoutbox, client):
+        """
+        Tests that the email verification email sent when creating an account uses our own
+        text and not the one provided with allauth.
+        """
+        resp = client.post(
+            '/api/rest-auth/registration/',
+            {'email': 'foo@bar.baz', 'password1': 'verysecret666', 'password2': 'verysecret666'},
+        )
+        assert resp.status_code == 201
+        assert len(mailoutbox) == 1
+        mail = mailoutbox[0]
+        assert 'Celus.one' in mail.subject, "Celus.one must be mentioned in the email body"
+        assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
+        assert '/verify-email?key=' in mail.body, "We use custom url endpoint, it should be there"

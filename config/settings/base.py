@@ -47,9 +47,6 @@ INSTALLED_APPS = [
     'reversion',
     'rest_auth',
     'django.contrib.sites',
-    'allauth',
-    'allauth.socialaccount',
-    'allauth.account',
     'rest_auth.registration',
     'core.apps.CoreConfig',
     'publications.apps.PublicationsConfig',
@@ -65,6 +62,10 @@ INSTALLED_APPS = [
     'error_report',
     'cachalot',
     'django_prometheus',
+    # allauth is at the end so that we can easily override its templates
+    'allauth',
+    'allauth.socialaccount',
+    'allauth.account',
 ]
 
 MIDDLEWARE = [
@@ -313,6 +314,9 @@ SITE_ID = 1
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = "optional"  # send verification email, but not required for login
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = False  # Confirmation will be stored in db
+ACCOUNT_ADAPTER = 'core.account.CelusAccountAdapter'
 
 LOGGING = {
     'version': 1,
@@ -351,7 +355,3 @@ EXPORTED_SETTINGS = [
 # Need to disable prometheus migrations when collecting static without DB
 # see https://github.com/korfuri/django-prometheus/issues/34
 PROMETHEUS_EXPORT_MIGRATIONS = strtobool(os.environ.get('PROMETHEUS_EXPORT_MIGRATIONS', '1'))
-
-# Configure allauth email verification
-ACCOUNT_EMAIL_VERIFICATION = "optional"  # send verification email, but not required for login
-ACCOUNT_EMAIL_CONFIRMATION_HMAC = False  # Confirmation will be stored in db

@@ -1,0 +1,4 @@
+{% load i18n %}
+{% blocktrans %}
+Please verify your e-mail address for use with Celus.one
+{% endblocktrans %}
