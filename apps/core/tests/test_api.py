@@ -162,4 +162,4 @@ class TestAccountCreationAPI(object):
         mail = mailoutbox[0]
         assert 'Celus.one' in mail.subject, "Celus.one must be mentioned in the email body"
         assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
-        assert '/verify-email?key=' in mail.body, "We use custom url endpoint, it should be there"
+        assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"

@@ -8,7 +8,7 @@ import vuetify from './plugins/vuetify';
 
 Vue.config.productionTip = false
 
-const titleBase = 'CzechELib stats'
+const titleBase = 'Celus.one'
 router.afterEach((to, from) => {
   document.title = titleBase
   if (to.meta && to.meta.title) {

@@ -1,5 +1,10 @@
 <template>
-    <InvalidUserPage v-if="invalidUser" />
+    <router-view
+            v-if="$route.meta.outsideNormalLayout"
+    >
+    </router-view>
+
+    <InvalidUserPage v-else-if="invalidUser" />
 
     <StandardLayout v-else-if="bootUpFinished" />
 

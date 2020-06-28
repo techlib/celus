@@ -18,6 +18,7 @@ import OrganizationPlatformInterestOverviewPage
   from '../pages/OrganizationPlatformInterestOverviewPage'
 import ManualUploadListPage from '../pages/ManualUploadListPage'
 import DashboardPage from '../pages/DashboardPage'
+import VerifyEmailPage from '../pages/VerifyEmailPage'
 
 Vue.use(Router)
 
@@ -27,6 +28,14 @@ export default new Router({
       path: '/',
       name: 'home',
       redirect: {name: 'dashboard'},
+    },
+    {
+      path: '/verify-email/',
+      name: 'verify-email',
+      component: VerifyEmailPage,
+      meta: {
+        outsideNormalLayout: true,
+      }
     },
     {
       path: '/dashboard/',
