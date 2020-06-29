@@ -10,6 +10,7 @@ import celery
 from core.logic.dates import month_end
 from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
+from logs.tasks import import_one_sushi_attempt_task
 from sushi.models import SushiFetchAttempt, SushiCredentials, CounterReportType
 from .logic.fetching import retry_queued, fetch_new_sushi_data, find_holes_in_data
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @celery.shared_task
 @email_if_fails
-def run_sushi_fetch_attempt_task(attempt_id: int):
+def run_sushi_fetch_attempt_task(attempt_id: int, import_data: bool = False):
     attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
     attempt.credentials.fetch_report(
         counter_report=attempt.counter_report,
@@ -26,6 +27,8 @@ def run_sushi_fetch_attempt_task(attempt_id: int):
         end_date=attempt.end_date,
         fetch_attempt=attempt,
     )
+    if import_data:
+        import_one_sushi_attempt_task.delay(attempt.id)
 
 
 @celery.shared_task

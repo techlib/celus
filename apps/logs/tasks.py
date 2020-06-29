@@ -5,7 +5,7 @@ import celery
 
 from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
-from logs.logic.attempt_import import import_new_sushi_attempts
+from logs.logic.attempt_import import import_new_sushi_attempts, import_one_sushi_attempt
 from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import (
     sync_interest_by_import_batches,
@@ -13,6 +13,7 @@ from logs.logic.materialized_interest import (
     smart_interest_sync,
 )
 from logs.logic.materialized_reports import sync_materialized_reports
+from sushi.models import SushiFetchAttempt
 
 
 @celery.shared_task
@@ -33,6 +34,17 @@ def import_new_sushi_attempts_task():
     """
     with cache_based_lock('import_new_sushi_attempts_task', blocking_timeout=10):
         import_new_sushi_attempts()
+
+
+@celery.shared_task
+@email_if_fails
+def import_one_sushi_attempt_task(attempt_id: int):
+    """
+    Tries to import a single sushi attempt task
+    """
+    with cache_based_lock('import_new_sushi_attempts_task', blocking_timeout=10):
+        attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
+        import_one_sushi_attempt(attempt)
 
 
 @celery.shared_task
