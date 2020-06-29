@@ -304,6 +304,9 @@ QUEUED_SUSHI_MAX_RETRY_COUNT = 5  # how many times max should we retry queued at
 SUSHI_ATTEMPT_LAST_DATE = '2017-01'  # default date where to end fetching sushi data
 REFERENCE_CURRENCY = 'CZK'  # this is the currency used for price calculation
 
+# Celus features configuration
+CONSORTIAL_INSTALLATION = True  # is this installation intended for one consortium
+
 # use authentication and registration
 # should users be allowed to create accounts themselves
 ALLOW_USER_REGISTRATION = False
@@ -350,6 +353,7 @@ EXPORTED_SETTINGS = [
     'AUTHENTICATION_BACKENDS',
     'ALLOW_USER_REGISTRATION',
     'SOCIAL_ACCOUNTS_SUPPORTED',
+    'CONSORTIAL_INSTALLATION',
 ]
 
 # Need to disable prometheus migrations when collecting static without DB
