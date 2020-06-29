@@ -37,6 +37,7 @@ en:
         When you have tested that your credentials work, we recommend activating automated
         harvesting of data using the <strong>Enabled</strong> toggle. For "enabled" credentials,
         Celus will automatically harvest data including past usage.
+    step5_text_2: |
         <em>Note</em>: Please note that Celus does not start harvesting data immediately, but
         rather schedules periodic downloads for night hours when the traffic is lowest. Give it
         a day or two to fetch all your data.
@@ -116,6 +117,7 @@ en:
 
             <v-stepper-content :step="5">
                 <p v-html="$t('step5_text')"></p>
+                <p v-html="$t('step5_text_2')"></p>
                 <p>
                     <img
                             src="../../assets/sushi_credentials-enable.png"
