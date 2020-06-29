@@ -8,3 +8,6 @@ class CoreConfig(AppConfig):
         super().ready()
         # noinspection PyUnresolvedReferences
         from . import db  # needed to register the ilike lookup
+
+        # noinspection PyUnresolvedReferences
+        from . import signals  # needed to register the signals

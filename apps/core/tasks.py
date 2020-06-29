@@ -1,6 +1,7 @@
 import logging
 
 import celery
+from django.core.mail import mail_admins
 
 from core.logic.error_reporting import email_if_fails
 from .models import DataSource
@@ -21,6 +22,11 @@ def erms_sync_users_and_identities_task():
         logger.info('User import stats: %s', stats)
         stats = sync_identities_with_erms(data_source)
         logger.info('Identity import stats: %s', stats)
+
+
+@celery.shared_task
+def async_mail_admins(subject, body):
+    mail_admins(subject, body)
 
 
 @celery.shared_task

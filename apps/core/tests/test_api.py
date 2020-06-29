@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from datetime import datetime
@@ -163,3 +165,22 @@ class TestAccountCreationAPI(object):
         assert 'Celus.one' in mail.subject, "Celus.one must be mentioned in the email body"
         assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
         assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
+
+    def test_email_admins_about_create_account(self, mailoutbox, client):
+        """
+        Tests that admins are sent a email when user creates an account
+        """
+        assert User.objects.count() == 0
+        assert len(mailoutbox) == 0
+        with patch('core.signals.async_mail_admins') as email_task:
+            resp = client.post(
+                '/api/rest-auth/registration/',
+                {
+                    'email': 'foo@bar.baz',
+                    'password1': 'verysecret666',
+                    'password2': 'verysecret666',
+                },
+            )
+            assert resp.status_code == 201
+            assert User.objects.count() == 1
+            assert email_task.delay.called, 'email to admins should be sent'
