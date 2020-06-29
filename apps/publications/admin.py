@@ -16,7 +16,7 @@ class PlatformAdmin(TranslationAdmin):
 class PlatformInterestReportAdmin(admin.ModelAdmin):
 
     list_display = ['platform', 'report_type', 'last_modified']
-    list_filter = ['report_type']
+    list_filter = ['report_type', 'platform']
     search_fields = ['platform__short_name', 'platform__name', 'platform__provider']
 
 
