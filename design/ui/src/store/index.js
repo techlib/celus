@@ -142,6 +142,12 @@ export default new Vuex.Store({
       }
       return false
     },
+    consortialInstall (state) {
+      if ('CONSORTIAL_INSTALLATION' in state.basicInfo) {
+        return state.basicInfo['CONSORTIAL_INSTALLATION']
+      }
+      return true
+    },
     letAxiosThrough (state, getters) {
       /*
         when true, all requests by axios will be put through,

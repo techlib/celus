@@ -213,7 +213,7 @@ cs:
                             <span>{{ $t('enabled_tooltip') }}</span>
                         </v-tooltip>
                     </v-col>
-                    <v-col cols="auto" class="ml-6">
+                    <v-col cols="auto" class="ml-6" v-if="consortialInstall">
                         <v-tooltip bottom>
                             <template v-slot:activator="{ on }">
                                 <span v-on="on">
@@ -325,6 +325,7 @@ cs:
         selectedOrganization: 'selectedOrganization',
         organizationSelected: 'organizationSelected',
         userIsManager: 'showManagementStuff',
+        consortialInstall: 'consortialInstall',
       }),
       credentials () {
         if (this.credentialsObject) {

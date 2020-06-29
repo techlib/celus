@@ -145,7 +145,7 @@ cs:
 
 <script>
   import axios from 'axios'
-  import { mapActions, mapState } from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import debounce from 'lodash/debounce'
   import SushiCredentialsEditDialog from '../components/SushiCredentialsEditDialog'
   import SushiAttemptListWidget from '../components/SushiAttemptListWidget'
@@ -171,8 +171,11 @@ cs:
       ...mapState({
         organizationId: 'selectedOrganizationId',
       }),
+      ...mapGetters({
+        consortialInstall: 'consortialInstall',
+      }),
       headers () {
-        return [
+        let allHeaders = [
           {
             text: this.$i18n.t('organization'),
             value: 'organization.name',
@@ -210,6 +213,7 @@ cs:
             sortable: false,
           },
         ]
+        return allHeaders.filter(row => row.value !== 'outside_consortium' || this.consortialInstall)
       },
       searchDebounced: {
         get () {
