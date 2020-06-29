@@ -10,6 +10,7 @@ en:
     unverified_email: Your email address has not been verified. Some functions of Celus will not be available.
         Check your email for a verification message from Celus.
     resend_verification_email: Resend verification email
+    verification_resent: Verification email was resent
 
 cs:
     is_superuser: Superuživatel
@@ -22,6 +23,7 @@ cs:
     unverified_email: Vaše emailová adresa nebyla ověřená. Některé funkce systému nebudou k dispozici.
         Zkontrolujte ověřovací email od aplikace Celus ve své schránce.
     resend_verification_email: Znovu zaslat ověřovací email
+    verification_resent: Ověřovací email byl znovu zaslán
 </i18n>
 
 <template>
@@ -135,6 +137,7 @@ cs:
       async resendVerificationEmail () {
         try {
           await axios.post('/api/user/verify-email')
+          this.showSnackbar({content: this.$t('verification_resent'), color: 'success'})
         } catch (error) {
           this.showSnackbar({content: 'Error sending verification email: '+error, color: 'error'})
         }
