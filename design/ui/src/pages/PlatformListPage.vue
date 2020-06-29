@@ -10,7 +10,7 @@
             <v-col v-if="showAdminStuff && organizationSelected" cols="auto" class="d-none d-sm-block">
                 <v-container fluid pa-0>
                     <v-row>
-                        <v-col cols="auto" class="pa-1">
+                        <v-col cols="auto" class="pa-1" v-if="allowManualDataUpload">
                             <ManualUploadButton />
                         </v-col>
                         <v-col cols="auto" class="pa-1">
@@ -104,6 +104,7 @@
         showAdminStuff: 'showAdminStuff',
         organizationSelected: 'organizationSelected',
         activeInterestGroups: 'selectedGroupObjects',
+        allowManualDataUpload: 'allowManualDataUpload',
       }),
       platformsURL () {
         return `/api/organization/${this.selectedOrganizationId}/platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`

@@ -11,7 +11,7 @@ cs:
 </i18n>
 
 <template>
-    <v-container fluid>
+    <v-container fluid v-if="allowManualDataUpload">
         <v-row>
             <v-col>
                 <h2 v-text="$t('manual_uploads')"></h2>
@@ -52,6 +52,7 @@ cs:
     computed: {
       ...mapGetters({
         organizationSelected: 'organizationSelected',
+        allowManualDataUpload: 'allowManualDataUpload',
       })
     }
 

@@ -148,6 +148,12 @@ export default new Vuex.Store({
       }
       return true
     },
+    allowManualDataUpload (state) {
+      if ('ALLOW_MANUAL_UPLOAD' in state.basicInfo) {
+        return state.basicInfo['ALLOW_MANUAL_UPLOAD']
+      }
+      return true
+    },
     letAxiosThrough (state, getters) {
       /*
         when true, all requests by axios will be put through,

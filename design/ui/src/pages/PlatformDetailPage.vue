@@ -83,7 +83,7 @@ cs:
                             {{ $t('title_fields.actions') }}
                         </v-card-title-->
                         <v-card-text>
-                            <div>
+                            <div v-if="allowManualDataUpload">
                                 <v-btn
                                         text small
                                         :to="{name: 'platform-upload-data', params: {platformId: platformId}}"
@@ -183,6 +183,7 @@ cs:
         showAdminStuff: 'showAdminStuff',
         organizationSelected: 'organizationSelected',
         activeInterestGroups: 'selectedGroupObjects',
+        allowManualDataUpload: 'allowManualDataUpload',
       }),
       ...mapState({
         selectedOrganizationId: 'selectedOrganizationId',

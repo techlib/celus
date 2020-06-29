@@ -107,6 +107,7 @@
           showAdminStuff: 'showAdminStuff',
           showManagementStuff: 'showManagementStuff',
           notifications: 'getNotifications',
+          allowManualDataUpload: 'allowManualDataUpload',
         }),
         groups () {
           return [
@@ -127,7 +128,7 @@
                 { title: this.$t('pages.maintenance'), icon: 'fa fa-toolbox', linkTo: 'maintenance', show: this.showManagementStuff },
                 { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list', show: this.showAdminStuff },
                 { title: this.$t('pages.sushi_fetch_attempts'), icon: 'fa-retweet', linkTo: 'sushi-fetch-attempts', show: this.showAdminStuff },
-                { title: this.$t('pages.manual_data_uploads'), icon: 'fa-upload', linkTo: 'manual-data-upload-list', show: this.showAdminStuff },
+                { title: this.$t('pages.manual_data_uploads'), icon: 'fa-upload', linkTo: 'manual-data-upload-list', show: this.showAdminStuff && this.allowManualDataUpload },
                 //{ title: this.$t('pages.import_batches'), icon: 'fa-file-import', linkTo: 'import-batch-list', show: this.showAdminStuff },
               ],
               show: this.showAdminStuff,
