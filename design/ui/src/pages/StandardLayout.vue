@@ -91,7 +91,9 @@ cs:
         <v-content>
             <v-container fluid pa-0 pa-sm-2>
 
-                <router-view :key="$route.fullPath" v-if="loggedIn"/>
+                <IntroPage v-if="loggedIn && showIntro" />
+                <router-view :key="$route.fullPath" v-else-if="loggedIn"/>
+
                 <!--keep-alive max="5">
                     <router-view :key="$route.fullPath"/>
                 </keep-alive-->
@@ -128,10 +130,12 @@ cs:
   import InvalidUserPage from './InvalidUserPage'
   import VGravatar from 'vue-gravatar'
   import CreateOrganizationDialog from '../components/account/CreateOrganizationDialog'
+  import IntroPage from './IntroPage'
 
   export default {
     name: 'Dashboard',
     components: {
+      IntroPage,
       CreateOrganizationDialog,
       InvalidUserPage,
       LoginDialog,
@@ -161,7 +165,8 @@ cs:
         avatarImg: 'avatarImg',
         usernameText: 'usernameText',
         bootUpFinished: 'bootUpFinished',
-        emailVerified: 'emailVerified'
+        emailVerified: 'emailVerified',
+        showIntro: 'showIntro',
       }),
       snackbarShow: {
         get () {
