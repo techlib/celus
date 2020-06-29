@@ -117,10 +117,15 @@ class TestAccountCreationAPI(object):
         """
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
-        resp = client.post(
-            '/api/rest-auth/registration/',
-            {'email': 'foo@bar.baz', 'password1': 'verysecret666', 'password2': 'verysecret666'},
-        )
+        with patch('core.signals.async_mail_admins'):  # fake celery task
+            resp = client.post(
+                '/api/rest-auth/registration/',
+                {
+                    'email': 'foo@bar.baz',
+                    'password1': 'verysecret666',
+                    'password2': 'verysecret666',
+                },
+            )
         assert resp.status_code == 201
         assert User.objects.count() == 1
         assert len(mailoutbox) == 1
@@ -140,10 +145,15 @@ class TestAccountCreationAPI(object):
         """
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
-        resp = client.post(
-            '/api/rest-auth/registration/',
-            {'email': 'thisisnoemail', 'password1': 'verysecret666', 'password2': 'verysecret666'},
-        )
+        with patch('core.signals.async_mail_admins'):  # fake celery task
+            resp = client.post(
+                '/api/rest-auth/registration/',
+                {
+                    'email': 'thisisnoemail',
+                    'password1': 'verysecret666',
+                    'password2': 'verysecret666',
+                },
+            )
         assert resp.status_code == 400
         data = resp.json()
         assert 'email' in data
@@ -155,10 +165,15 @@ class TestAccountCreationAPI(object):
         Tests that the email verification email sent when creating an account uses our own
         text and not the one provided with allauth.
         """
-        resp = client.post(
-            '/api/rest-auth/registration/',
-            {'email': 'foo@bar.baz', 'password1': 'verysecret666', 'password2': 'verysecret666'},
-        )
+        with patch('core.signals.async_mail_admins'):  # fake celery task
+            resp = client.post(
+                '/api/rest-auth/registration/',
+                {
+                    'email': 'foo@bar.baz',
+                    'password1': 'verysecret666',
+                    'password2': 'verysecret666',
+                },
+            )
         assert resp.status_code == 201
         assert len(mailoutbox) == 1
         mail = mailoutbox[0]
