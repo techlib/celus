@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from core.logic.url import extract_organization_id_from_request_data
@@ -125,3 +126,15 @@ class SuperuserPermission(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return request.user.is_superuser
+
+
+class EnabledInSettingsPermission(BasePermission):
+    name_in_settings: str = ''
+    default: bool = False
+
+    def has_permission(self, request, view):
+        return getattr(settings, self.name_in_settings, self.default)
+
+
+class ManualDataUploadEnabledPermission(EnabledInSettingsPermission):
+    name_in_settings = 'ALLOW_MANUAL_UPLOAD'

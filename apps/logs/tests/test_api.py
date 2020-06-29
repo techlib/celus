@@ -409,6 +409,11 @@ class TestManualDataUpload(object):
         )
         assert response.status_code == 201
 
+    def test_manual_upload_data_disabled(self, master_client, settings):
+        settings.ALLOW_MANUAL_UPLOAD = False
+        response = master_client.get(reverse('manual-data-upload-list'),)
+        assert response.status_code == 403
+
 
 @pytest.mark.django_db
 class TestReportTypeAPI(object):

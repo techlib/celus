@@ -2,6 +2,7 @@ import sys
 import traceback
 from time import monotonic
 
+from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import mail_admins
 from django.db.models import Count
@@ -27,6 +28,7 @@ from core.permissions import (
     CanPostOrganizationDataPermission,
     CanAccessOrganizationRelatedObjectPermission,
     CanAccessOrganizationFromGETAttrs,
+    ManualDataUploadEnabledPermission,
 )
 from core.prometheus import report_access_time_summary, report_access_total_counter
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
@@ -248,6 +250,7 @@ class ManualDataUploadViewSet(ModelViewSet):
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
         IsAuthenticated
+        & ManualDataUploadEnabledPermission
         & (
             (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
             | (
@@ -293,6 +296,7 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
         IsAuthenticated
+        & ManualDataUploadEnabledPermission
         & (
             (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
             | (OwnerLevelBasedPermissions & CanAccessOrganizationRelatedObjectPermission)
