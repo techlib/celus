@@ -7,6 +7,9 @@ en:
                                    those listed below are explicitly associated with this account
     organization: Organization
     is_admin: Admin
+    unverified_email: Your email address has not been verified. Some functions of Celus will not be available.
+        Check your email for a verification message from Celus.
+    resend_verification_email: Resend verification email
 
 cs:
     is_superuser: Superuživatel
@@ -16,6 +19,9 @@ cs:
                                    uvedené jen ty, ke kterým je uživatel explicitně přiřazen.
     organization: Organizace
     is_admin: Administrátor
+    unverified_email: Vaše emailová adresa nebyla ověřená. Některé funkce systému nebudou k dispozici.
+        Zkontrolujte ověřovací email od aplikace Celus ve své schránce.
+    resend_verification_email: Znovu zaslat ověřovací email
 </i18n>
 
 <template>
@@ -37,6 +43,23 @@ cs:
         <div class="py-2" v-if="canLogout">
             <v-btn @click="logout" v-text="$t('logout')"></v-btn>
         </div>
+
+
+        <v-alert
+                v-if="!emailVerified"
+                type="warning"
+                class="my-3 py-5"
+                outlined
+        >
+            {{ $t('unverified_email') }}
+            <v-btn
+                    color="primary"
+                    @click="resendVerificationEmail()"
+                    class="my-5"
+            >
+                {{ $t('resend_verification_email') }}
+            </v-btn>
+        </v-alert>
 
 
         <div class="mb-10 font-weight-black">
@@ -64,6 +87,7 @@ cs:
   import { mapActions, mapGetters, mapState } from 'vuex'
   import VGravatar from 'vue-gravatar'
   import CheckMark from '../components/CheckMark'
+  import axios from 'axios'
 
   export default {
     name: "UserPage",
@@ -83,6 +107,7 @@ cs:
         avatarText: 'avatarText',
         usernameText: 'usernameText',
         canLogout: 'canLogout',
+        emailVerified: 'emailVerified',
       }),
       headers () {
         return [
@@ -98,12 +123,27 @@ cs:
       },
       organizationList () {
         return Object.values(this.organizations).filter(item => item.is_member)
-      }
+      },
     },
+
     methods: {
       ...mapActions({
         logout: 'logout',
-      })
+        loadUserData: 'loadUserData',
+        showSnackbar: 'showSnackbar',
+      }),
+      async resendVerificationEmail () {
+        try {
+          await axios.post('/api/user/verify-email')
+        } catch (error) {
+          this.showSnackbar({content: 'Error sending verification email: '+error, color: 'error'})
+        }
+      }
+    },
+
+    mounted () {
+      // redownload user data on page load to make it is up-to-date
+      this.loadUserData()
     }
   }
 </script>

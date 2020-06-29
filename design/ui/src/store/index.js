@@ -174,7 +174,10 @@ export default new Vuex.Store({
     },
     showCreateOrganizationDialog (state, getters) {
       return (getters.bootUpFinished && getters.allowSignUp && isEqual(state.organizations, {}))
-    }
+    },
+    emailVerified (state) {
+      return state.user && state.user.email_verification_status === 'verified'
+    },
   },
   actions: {
     async start ({dispatch, getters, state}) {

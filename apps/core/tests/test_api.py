@@ -111,6 +111,12 @@ class TestUserAPI(object):
 @pytest.mark.now
 @pytest.mark.django_db
 class TestAccountCreationAPI(object):
+    test_user_data = {
+        'email': 'foo@bar.baz',
+        'password1': 'verysecret666',
+        'password2': 'verysecret666',
+    }
+
     def test_create_account(self, mailoutbox, client):
         """
         Tests that the API endpoint for account creation works as expected by the frontend code
@@ -118,14 +124,7 @@ class TestAccountCreationAPI(object):
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
         with patch('core.signals.async_mail_admins'):  # fake celery task
-            resp = client.post(
-                '/api/rest-auth/registration/',
-                {
-                    'email': 'foo@bar.baz',
-                    'password1': 'verysecret666',
-                    'password2': 'verysecret666',
-                },
-            )
+            resp = client.post('/api/rest-auth/registration/', self.test_user_data)
         assert resp.status_code == 201
         assert User.objects.count() == 1
         assert len(mailoutbox) == 1
@@ -181,6 +180,24 @@ class TestAccountCreationAPI(object):
         assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
         assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
 
+    def test_create_account_email_customization_resend(self, mailoutbox, authenticated_client):
+        """
+        Tests that the email verification email sent when re-sending verification email has custom
+        text and not the one provided with allauth.
+        """
+        user = authenticated_client.user
+        user.email = 'foo@bar.baz'
+        user.save()
+        # create email address to get user into the 'unverified' status
+        EmailAddress.objects.create(user=user, email=user.email)
+        resp = authenticated_client.post('/api/user/verify-email')
+        assert resp.status_code == 200
+        assert len(mailoutbox) == 1
+        mail = mailoutbox[0]
+        assert 'Celus.one' in mail.subject, "Celus.one must be mentioned in the email body"
+        assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
+        assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
+
     def test_email_admins_about_create_account(self, mailoutbox, client):
         """
         Tests that admins are sent a email when user creates an account
@@ -188,14 +205,7 @@ class TestAccountCreationAPI(object):
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
         with patch('core.signals.async_mail_admins') as email_task:
-            resp = client.post(
-                '/api/rest-auth/registration/',
-                {
-                    'email': 'foo@bar.baz',
-                    'password1': 'verysecret666',
-                    'password2': 'verysecret666',
-                },
-            )
+            resp = client.post('/api/rest-auth/registration/', self.test_user_data)
             assert resp.status_code == 201
             assert User.objects.count() == 1
             assert email_task.delay.called, 'email to admins should be sent'

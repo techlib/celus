@@ -1,4 +1,1 @@
-{% load i18n %}
-{% blocktrans %}
-Please verify your e-mail address for use with Celus.one
-{% endblocktrans %}
+{% include 'account/email/email_confirmation_subject.txt' %}
