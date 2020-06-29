@@ -76,10 +76,15 @@ cs:
                 </v-alert>
 
                 <v-divider class="my-3"></v-divider>
-                <v-text-field v-model="email" :label="$t('email')"></v-text-field>
+                <v-text-field
+                        v-model="email"
+                        :label="$t('email')"
+                        :rules="[emailError, rules.required, rules.email]"
+                ></v-text-field>
                 <v-text-field
                         v-model="password"
                         :label="$t('password')"
+                        :rules="[passwordError, rules.required, rules.min]"
                         :type="showPassword ? 'text' : 'password'"
                         :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
                         @click:append="showPassword = !showPassword"
@@ -98,7 +103,12 @@ cs:
             </v-card-text>
             <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" class="ma-3" @click="doLogin">{{ $t('login') }}</v-btn>
+                <v-btn
+                        color="primary"
+                        class="ma-3"
+                        @click="doLogin"
+                        :disabled="!loginValid"
+                >{{ $t('login') }}</v-btn>
             </v-card-actions>
         </v-card>
         <!-- just registering -->
@@ -216,6 +226,9 @@ cs:
         return new Date().getTime()
       },
       signupValid () {
+        return (this.email !== '' && this.password.length >= 8)
+      },
+      loginValid () {
         return (this.email !== '' && this.password.length >= 8)
       },
       emailError () {
