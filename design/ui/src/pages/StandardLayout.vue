@@ -1,3 +1,11 @@
+<i18n>
+en:
+    email_not_verified: Your email is not verified
+
+cs:
+    email_not_verified: Vaše emailová adresa není ověřená
+</i18n>
+
 <template>
     <v-app>
         <SidePanel v-model="showSidePanel" />
@@ -34,6 +42,17 @@
                         vertical
                 ></v-divider>
 
+                <v-tooltip bottom v-if="!emailVerified">
+                    <template v-slot:activator="{ on }">
+                        <span v-on="on">
+                            <router-link :to="{name: 'user-page'}">
+                                <v-icon class="mx-2 mt-5" color="warning">fa fa-exclamation-triangle</v-icon>
+                            </router-link>
+                        </span>
+                    </template>
+                    {{ $t('email_not_verified') }}
+                </v-tooltip>
+
                 <v-tooltip bottom>
                     <template v-slot:activator="{ on }">
                         <span v-on="on" >
@@ -54,7 +73,6 @@
                             </router-link>
                         </span>
                     </template>
-
                     <span>{{ usernameText }}</span>
                 </v-tooltip>
             </v-toolbar-items>
@@ -143,6 +161,7 @@
         avatarImg: 'avatarImg',
         usernameText: 'usernameText',
         bootUpFinished: 'bootUpFinished',
+        emailVerified: 'emailVerified'
       }),
       snackbarShow: {
         get () {
