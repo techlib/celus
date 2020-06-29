@@ -179,7 +179,6 @@ export default new Vuex.Store({
     },
     showIntro () {
       return true
-    }
     },
     emailVerified (state) {
       return state.user && state.user.email_verification_status === 'verified'
