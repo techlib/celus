@@ -40,7 +40,7 @@ export default {
       }
       return []
     },
-    async loadSushiCredentialsCount ({commit}) {
+    async loadSushiCredentialsCount ({commit, dispatch}) {
       try {
         let response = await axios.get('/api/sushi-credentials/count/')
         commit('setSushiCredentialsCount', response.data)
