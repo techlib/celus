@@ -306,6 +306,7 @@ REFERENCE_CURRENCY = 'CZK'  # this is the currency used for price calculation
 
 # Celus features configuration
 CONSORTIAL_INSTALLATION = True  # is this installation intended for one consortium
+ALLOW_MANUAL_UPLOAD = True
 
 # use authentication and registration
 # should users be allowed to create accounts themselves
@@ -354,6 +355,7 @@ EXPORTED_SETTINGS = [
     'ALLOW_USER_REGISTRATION',
     'SOCIAL_ACCOUNTS_SUPPORTED',
     'CONSORTIAL_INSTALLATION',
+    'ALLOW_MANUAL_UPLOAD',
 ]
 
 # Need to disable prometheus migrations when collecting static without DB
