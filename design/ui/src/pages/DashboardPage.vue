@@ -23,7 +23,8 @@ cs:
 </i18n>
 
 <template>
-    <v-container fluid v-if="organizationId" pa-0 pa-sm-2>
+    <IntroPage v-if="loggedIn && showIntro" />
+    <v-container fluid v-else-if="organizationId" pa-0 pa-sm-2>
         <!--v-row>
             <v-col>
                 <h1 v-text="$t('pages.dashboard')"></h1>
@@ -132,11 +133,13 @@ cs:
   import LoaderWidget from '../components/LoaderWidget'
   import {pubTypes} from '../libs/pub-types'
   import TopTenDashboardWidget from '../components/TopTenDashboardWidget'
+  import IntroPage from './IntroPage'
 
   export default {
     name: "DashboardPage",
 
     components: {
+      IntroPage,
       TopTenDashboardWidget,
       LargeSpinner,
       APIChart,
@@ -161,6 +164,8 @@ cs:
       ...mapGetters({
         dateRangeStart: 'dateRangeStartText',
         dateRangeEnd: 'dateRangeEndText',
+        loggedIn: 'loggedIn',
+        showIntro: 'showIntro',
       }),
       interestGroupTitlesSorted () {
         let igs = this.interestGroups.filter(item => item.short_name !== 'other')

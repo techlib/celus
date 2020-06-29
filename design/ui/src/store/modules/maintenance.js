@@ -5,6 +5,7 @@ export default {
   state: {
     noInterestPlatformsCount: 0,
     noInterestPlatformsWithDataCount: 0,
+    sushiCredentialsCount: 0,
   },
 
   getters: {
@@ -38,7 +39,15 @@ export default {
         dispatch('showSnackbar', {content: 'Error fetching data: ' + error, color: 'error'})
       }
       return []
-    }
+    },
+    async loadSushiCredentialsCount ({commit}) {
+      try {
+        let response = await axios.get('/api/sushi-credentials/count/')
+        commit('setSushiCredentialsCount', response.data)
+      } catch(error) {
+        dispatch('showSnackbar', {content: 'Error loading sushi credentials count: ' + error, color: 'error'})
+      }
+    },
   },
 
   mutations: {
@@ -48,5 +57,8 @@ export default {
     setNoInterestPlatformsWithDataCount (state, {count}) {
       state.noInterestPlatformsWithDataCount = count
     },
+    setSushiCredentialsCount (state, {count}) {
+      state.sushiCredentialsCount = count
+    }
   }
 }

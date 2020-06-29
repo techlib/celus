@@ -177,8 +177,8 @@ export default new Vuex.Store({
     showCreateOrganizationDialog (state, getters) {
       return (getters.bootUpFinished && getters.allowSignUp && isEqual(state.organizations, {}))
     },
-    showIntro () {
-      return true
+    showIntro (state) {
+      return state.maintenance.sushiCredentialsCount === 0
     },
     emailVerified (state) {
       return state.user && state.user.email_verification_status === 'verified'
@@ -249,6 +249,7 @@ export default new Vuex.Store({
       dispatch('loadOrganizations')
       dispatch('changeDateRangeObject', state.dateRangeIndex)
       dispatch('fetchInterestGroups')
+      dispatch('loadSushiCredentialsCount')
       if (getters.showManagementStuff) {
         dispatch('fetchNoInterestPlatforms')
       }

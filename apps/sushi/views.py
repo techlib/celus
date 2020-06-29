@@ -98,6 +98,15 @@ class SushiCredentialsViewSet(ModelViewSet):
             }
         )
 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """
+        Just simple count of SushiCredentials
+        """
+        user_organizations = self.request.user.accessible_organizations()
+        qs = SushiCredentials.objects.filter(organization__in=user_organizations)
+        return Response({'count': qs.count(),})
+
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):
 
