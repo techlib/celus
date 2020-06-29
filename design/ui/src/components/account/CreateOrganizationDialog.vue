@@ -64,18 +64,18 @@ cs:
         showSnackbar: 'showSnackbar',
         setOrganizations: 'setOrganizations',
         selectFirstOrganization: 'selectFirstOrganization',
+        loadOrganizations: 'loadOrganizations',
       }),
       async createOrganization () {
         try {
-          let response = await axios.post(
+          await axios.post(
             '/api/organization/create-user-default/',
             {name: this.name},
             {privileged: true},
             )
-          let organizations = {}
-          organizations[response.data.pk] = response.data
-          await this.setOrganizations(organizations)
-          this.selectFirstOrganization()
+          // we use the vuex defined action to load the organizations because it also does some
+          // other magic, like updating the internal organization list, etc.
+          await this.loadOrganizations()
         } catch (error) {
           this.showSnackbar({content: 'Error creating organization: '+error, color: 'error'})
         }
