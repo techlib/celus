@@ -68,6 +68,7 @@ class TestOrganizationAPI(object):
         assert Organization.objects.count() == 1
         org = Organization.objects.get()
         assert org.name == 'test organization'
+        assert org.internal_id == 'test#test-organization'
         assert org in authenticated_client.user.organizations.all()
         assert (
             org.private_data_source == org.source

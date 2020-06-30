@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db.models import Count, Q, Sum, Max, Min
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
+from django.utils.text import slugify
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -170,6 +171,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         # it looks strange, but it is a usable way how to say that this is a user-created
         # organization
         org.source = data_source
+        org.internal_id = f"{slugify(request.user.username)}#{ slugify(org.name) }"[:50]
         org.save()
         # associate the user with this organization as admin
         UserOrganization.objects.create(
