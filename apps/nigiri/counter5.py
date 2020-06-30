@@ -150,7 +150,7 @@ class Counter5ReportBase(object):
 
         # first check whether it is not an error report
         first_character = fd.read(1)
-        while first_character not in '[{':
+        while first_character not in '[{"':
             first_character = fd.read(1)
         fd.seek(0)
 
@@ -158,6 +158,13 @@ class Counter5ReportBase(object):
             # error report handling
             self.extract_errors(json.load(fd))
             return False, {}, empty_generator()
+
+        elif first_character == '"':
+            # stringified header with an error recieved
+            json_string = json.load(fd)
+            data = json.loads(json_string)
+            self.extract_errors(data)
+            return False, data, empty_generator()
 
         # try to read the header
         header = dict(ijson.kvitems(fd, "Report_Header"))

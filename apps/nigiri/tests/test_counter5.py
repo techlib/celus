@@ -140,3 +140,19 @@ class TestCounter5Reading(object):
         assert len(records) == 0
         assert len(reader.warnings) == 2
         assert reader.queued
+
+    def test_reading_strigified_exception(self):
+        """
+        Body is stringified json - header containing error
+        """
+        reader = Counter5TRReport()
+        records = [
+            e
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/stringified_error.json'
+            )
+        ]
+        assert len(records) == 0
+        assert len(reader.errors) == 1
+        error = reader.errors[0]
+        assert str(error.code) == '2090'
