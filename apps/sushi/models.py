@@ -455,8 +455,9 @@ class SushiCredentials(models.Model):
 def where_to_store(instance: 'SushiFetchAttempt', filename):
     root, ext = os.path.splitext(filename)
     ts = now().strftime('%Y%m%d-%H%M%S.%f')
+    organization = instance.credentials.organization
     return (
-        f'counter/{instance.credentials.organization.internal_id}/'
+        f'counter/{organization.internal_id or organization.pk}/'
         f'{instance.credentials.platform.short_name}/'
         f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
     )

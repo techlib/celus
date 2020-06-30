@@ -9,10 +9,10 @@ from logs.tests.conftest import report_type_nd
 
 @pytest.fixture()
 def counter_report_type_named(report_type_nd):
-    def fn(name):
+    def fn(name, version=5):
         rt = report_type_nd(0, short_name=name + 'rt')
         return CounterReportType.objects.create(
-            code=name, counter_version=5, name=name + ' title', report_type=rt
+            code=name, counter_version=version, name=name + ' title', report_type=rt
         )
 
     yield fn
