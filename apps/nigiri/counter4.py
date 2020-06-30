@@ -38,6 +38,9 @@ class Counter4ReportBase(object):
         :return:
         """
         self.record_found = len(report.pubs) > 0
+        return self._read_report(report)
+
+    def _read_report(self, report: CounterReport) -> typing.Generator[CounterRecord, None, None]:
         for journal in report:  # type: CounterEresource
             for start, metric, value in journal:
                 record = CounterRecord()
@@ -52,6 +55,7 @@ class Counter4ReportBase(object):
 
     def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
         data = self.file_to_input(filename)
+
         return self.read_report(data)
 
     @classmethod

@@ -8,7 +8,8 @@ from django.db.transaction import atomic
 from logs.logic.data_import import import_counter_records
 from logs.models import OrganizationPlatform, ImportBatch
 from nigiri.client import Sushi5Client, SushiException, SushiError
-from nigiri.counter5 import CounterError
+from nigiri.counter5 import CounterError, Counter5ReportBase
+from nigiri.counter4 import Counter4ReportBase
 from sushi.models import SushiFetchAttempt
 
 
@@ -31,11 +32,12 @@ def import_new_sushi_attempts():
             attempt.mark_crashed(e)
 
 
-def validate_data_v5(warnings: typing.List[CounterError], errors: typing.List[CounterError]):
-    Sushi5Client.validate_data(warnings, errors)
+def validate_data_v5(report: Counter5ReportBase):
+    Sushi5Client.validate_data(report.errors, report.warnings)
 
 
-def validate_data_v4(warnings: typing.List[CounterError], errors: typing.List[CounterError]):
+def validate_data_v4(report: Counter4ReportBase):
+    # Counter 4 validation is skipped
     return None
 
 
@@ -54,9 +56,11 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         logger.error('Cannot find the referenced file - probably deleted?: %s', e)
         attempt.mark_crashed(e)
         return
-    validator = validate_data_v4 if counter_version == 4 else validate_data_v5
     try:
-        validator(reader.errors, reader.warnings)
+        if counter_version == 4:
+            validate_data_v4(reader)
+        elif counter_version == 5:
+            validate_data_v5(reader)
     except SushiException as e:
         # if we find validation error on data revalidation, we switch the report success attr
         logger.error('Validation error: %s', e)
@@ -101,7 +105,8 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.import_batch = import_batch
         logger.info('Import stats: %s', stats)
     else:
-        if reader.errors or reader.warnings:
+        # Process errors for counter5
+        if counter_version == 5 and reader.errors or reader.warnings:
             if reader.errors:
                 attempt.log = '; '.join(str(e) for e in reader.errors)
                 logger.warning('Found errors: %s', attempt.log)
