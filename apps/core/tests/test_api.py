@@ -135,7 +135,21 @@ class TestAccountCreationAPI(object):
         assert user.emailaddress_set.count() == 1
         assert user.emailaddress_set.first().emailconfirmation_set.count() == 1
 
-        # check
+    def test_create_account_same_username(self, client):
+        """
+        Tests that is it possible to create two accounts with the same part before @ in email
+        """
+        assert User.objects.count() == 0
+        with patch('core.signals.async_mail_admins'):  # fake celery task
+            resp = client.post('/api/rest-auth/registration/', self.test_user_data)
+        assert resp.status_code == 201
+        assert User.objects.count() == 1
+        second_user_data = dict(self.test_user_data)
+        second_user_data['email'] = 'foo@baz.bar'
+        with patch('core.signals.async_mail_admins'):  # fake celery task
+            resp = client.post('/api/rest-auth/registration/', second_user_data)
+        assert resp.status_code == 201
+        assert User.objects.count() == 2
 
     def test_create_account_bad_data(self, mailoutbox, client):
         """

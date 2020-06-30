@@ -107,7 +107,7 @@ cs:
                         color="primary"
                         class="ma-3"
                         @click="doLogin"
-                        :disabled="!loginValid"
+                        :disabled="!loginValid || requestInProgress"
                 >{{ $t('login') }}</v-btn>
             </v-card-actions>
         </v-card>
@@ -162,7 +162,7 @@ cs:
                 <v-btn
                         color="primary"
                         @click="doSignUp"
-                        :disabled="!signupValid"
+                        :disabled="!signupValid || requestInProgress"
                 >{{ $t('create_account') }}</v-btn>
             </v-card-actions>
         </v-card>
@@ -200,6 +200,7 @@ cs:
         showPassword: false,
         emailEdited: false,  // when email gets edited, we hide associated error message
         passwordEdited: false,
+        requestInProgress: false,  // if a request was just sent to the backend and is processed
       }
     },
     computed: {
@@ -255,11 +256,16 @@ cs:
         signup: 'signup',
         showSnackbar: 'showSnackbar',
       }),
-      doLogin () {
-        this.login({email: this.email, password: this.password})
+      async doLogin () {
+        this.requestInProgress = true
+        try {
+          await this.login({email: this.email, password: this.password})
+        } finally {
+          this.requestInProgress = false
+        }
       },
       async doSignUp () {
-        console.info('Signing up')
+        this.requestInProgress = true
         try {
           await this.signup({email: this.email, password1: this.password, password2: this.password})
           this.showSnackbar({content: 'Signup ok', color: 'success'})
@@ -267,6 +273,8 @@ cs:
           this.emailEdited = false
           this.passwordEdited = false
           this.signupError = error
+        } finally {
+          this.requestInProgress = false
         }
       },
       processError (error) {
