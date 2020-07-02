@@ -1,0 +1,40 @@
+<soapenv:Envelope
+  xmlns:xsi="http://www.w3.org/1999/XMLSchema-instance"
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:xsd="http://www.w3.org/1999/XMLSchema">
+  <soapenv:Body soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <ReportResponse ID="61fhhs/fremantle"
+      xsi:schemaLocation="http://www.niso.org/schemas/sushi/counter http://www.niso.org/schemas/sushi/counter_sushi4_0.xsd"
+      Created="2020-06-30T20:14:04"
+      xmlns="http://www.niso.org/schemas/sushi/counter"
+      xmlns:s="http://www.niso.org/schemas/sushi"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <s:Requestor>
+        <s:ID>61fhhs/fremantle</s:ID>
+        <s:Name></s:Name>
+        <s:Email></s:Email>
+      </s:Requestor>
+      <s:CustomerReference>
+        <s:ID>XXXXXX</s:ID>
+        <s:Name></s:Name>
+      </s:CustomerReference>
+      <s:ReportDefinition Name="BR2" Release="4">
+        <s:Filters>
+          <s:UsageDateRange>
+            <s:Begin>2020-05-01</s:Begin>
+            <s:End>2020-05-31</s:End>
+          </s:UsageDateRange>
+        </s:Filters>
+      </s:ReportDefinition>
+      <Report xmlns="http://www.niso.org/schemas/sushi/counter">
+		      <Exception Created="2020-06-30T20:14:04" xmlns="http://www.niso.org/schemas/sushi">
+        <Number>1110</Number>
+        <Severity>Error</Severity>
+        <Message>Invalid location and location ID. Provide loc=id in CustomerReference ID.</Message>
+      </Exception>
+
+	  </Report>
+    </ReportResponse>
+  </soapenv:Body>
+</soapenv:Envelope>

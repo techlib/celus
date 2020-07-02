@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <soap:Body>
+    <ReportResponse ID="3ed2c379-1320-4c90-a25f-e341dab01760" xmlns="http://www.niso.org/schemas/sushi/counter" xmlns:s="http://www.niso.org/schemas/sushi" xsi:schemaLocation="http://www.niso.org/schemas/sushi/counter http://www.niso.org/schemas/sushi/counter_sushi4_0.xsd" Created="2020-06-30T00:52:17.254-05:00">
+      <s:Requestor>
+        <s:ID>user@example.com</s:ID>
+        <s:Name></s:Name>
+        <s:Email></s:Email>
+      </s:Requestor>
+      <s:CustomerReference>
+        <s:ID>1234567</s:ID>
+        <s:Name></s:Name>
+      </s:CustomerReference>
+      <s:ReportDefinition Name="BR2" Release="4">
+        <s:Filters>
+          <s:UsageDateRange>
+            <s:Begin>2020-05-01</s:Begin>
+            <s:End>2020-05-31</s:End>
+          </s:UsageDateRange>
+        </s:Filters>
+      </s:ReportDefinition>
+<Exception xmlns="http://www.niso.org/schemas/sushi" Created="2020-06-30T00:52:17.250-05:00">
+  <Number>3000</Number>
+  <Severity>Error</Severity>
+  <Message>This report (BR2,4) is not supported</Message>
+</Exception>
+</ReportResponse>
+  </soap:Body>
+</soap:Envelope>

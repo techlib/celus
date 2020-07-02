@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope
+	xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<soapenv:Body>
+		<rr:ReportResponse Created="2020-07-01T01:20:35.281+00:00"
+			xmlns:rr="http://www.niso.org/schemas/sushi/counter">
+			<Exception Created="2020-07-01T01:20:35.281+00:00" xmlns="http://www.niso.org/schemas/sushi">
+				<Number>2010</Number>
+				<Severity>Error</Severity>
+				<Message>Requestor is Not Authorized to Access Usage for Institution</Message>
+			</Exception>
+			<ns1:Requestor xmlns:ns1="http://www.niso.org/schemas/sushi">
+				<ns1:ID>ffffffffffffffffffffffff</ns1:ID>
+				<ns1:Name></ns1:Name>
+				<ns1:Email></ns1:Email>
+			</ns1:Requestor>
+			<ns2:CustomerReference xmlns:ns2="http://www.niso.org/schemas/sushi">
+				<ns2:ID>fffff</ns2:ID>
+			</ns2:CustomerReference>
+			<ns3:ReportDefinition
+				Name="BR2"
+				Release="4"
+				xmlns:ns3="http://www.niso.org/schemas/sushi">
+				<ns3:Filters>
+					<ns3:UsageDateRange>
+						<ns3:Begin>2019-01-01</ns3:Begin>
+						<ns3:End>2019-01-31</ns3:End>
+					</ns3:UsageDateRange>
+				</ns3:Filters>
+			</ns3:ReportDefinition>
+		</rr:ReportResponse>
+	</soapenv:Body>
+</soapenv:Envelope>
