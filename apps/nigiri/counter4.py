@@ -87,7 +87,7 @@ class Counter4JR1Report(Counter4ReportBase):
 
 class Counter4JR2Report(Counter4ReportBase):
 
-    dimensions = ['Publisher']
+    dimensions = ['Publisher', 'Access Denied Category']
 
 
 class Counter4BR1Report(Counter4ReportBase):
