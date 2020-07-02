@@ -518,6 +518,15 @@ class SushiFetchAttempt(models.Model):
         return f'{self.status}: {self.credentials}, {self.counter_report}'
 
     @property
+    def can_import_data(self):
+        return (
+            not self.is_processed
+            and self.download_success
+            and self.contains_data
+            and not self.import_crashed
+        )
+
+    @property
     def status(self):
         status = 'SUCCESS'
         if not self.download_success:

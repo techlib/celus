@@ -65,5 +65,9 @@ class TestSushiFetching(object):
             assert attempt.log == log
 
             # import the attempt and check the result
-            import_one_sushi_attempt(attempt)
-            assert attempt.import_crashed is import_crashed
+            if attempt.can_import_data:
+                import_one_sushi_attempt(attempt)
+                assert attempt.import_crashed is import_crashed
+            else:
+                with pytest.raises(ValueError):
+                    import_one_sushi_attempt(attempt)

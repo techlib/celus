@@ -27,7 +27,7 @@ def run_sushi_fetch_attempt_task(attempt_id: int, import_data: bool = False):
         end_date=attempt.end_date,
         fetch_attempt=attempt,
     )
-    if import_data:
+    if import_data and attempt.can_import_data:
         import_one_sushi_attempt_task.delay(attempt.id)
 
 

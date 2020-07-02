@@ -5,7 +5,8 @@ from django.core.files.base import ContentFile
 
 from core.models import UL_ORG_ADMIN
 from organizations.tests.conftest import organizations
-from sushi.tests.conftest import counter_report_type_named
+from publications.tests.conftest import platforms
+from sushi.tests.conftest import counter_report_type_named, credentials, counter_report_type
 from sushi.models import SushiFetchAttempt, SushiCredentials
 
 from ..logic.attempt_import import import_one_sushi_attempt
@@ -40,6 +41,10 @@ class TestAttemptImport:
             end_date="2018-12-31",
             data_file=data_file,
             credentials_version_hash=credentials.compute_version_hash(),
+            download_success=True,
+            is_processed=False,
+            import_crashed=False,
+            contains_data=True,
         )
 
         import_one_sushi_attempt(fetch_attempt)
@@ -47,3 +52,37 @@ class TestAttemptImport:
         assert fetch_attempt.import_crashed is False
         assert fetch_attempt.import_batch is not None
         assert fetch_attempt.import_batch.accesslog_set.count() == 60
+
+    @pytest.mark.parametrize(
+        "download_success,is_processed,contains_data,import_crashed",
+        (
+            (False, False, True, False),
+            (True, True, True, False),
+            (True, False, False, False),
+            (True, False, True, True),
+        ),
+    )
+    def test_import_precondition_error(
+        self,
+        download_success,
+        is_processed,
+        contains_data,
+        import_crashed,
+        credentials,
+        counter_report_type,
+    ):
+        fetch_attempt = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date="2018-01-01",
+            end_date="2018-12-31",
+            data_file=None,
+            credentials_version_hash=credentials.compute_version_hash(),
+            download_success=download_success,
+            is_processed=is_processed,
+            contains_data=contains_data,
+            import_crashed=import_crashed,
+        )
+
+        with pytest.raises(ValueError):
+            import_one_sushi_attempt(fetch_attempt)

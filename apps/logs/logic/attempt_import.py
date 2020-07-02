@@ -48,7 +48,20 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     if not reader_cls:
         logger.warning('Unsupported report type %s', attempt.counter_report.code)
         return
+
+    if attempt.is_processed:
+        raise ValueError(f'Data already imported (attempt={attempt.pk})')
+
+    if not attempt.download_success:
+        raise ValueError(f'Trying to import data when download failed (attempt={attempt.pk})')
+
+    if not attempt.contains_data:
+        raise ValueError(f'Attempt contains no data (attempt={attempt.pk})')
     logger.debug('Processing file: %s', attempt.data_file.name)
+
+    if attempt.import_crashed:
+        raise ValueError(f'Import of data already crashed (attempt={attempt.pk})')
+
     reader = reader_cls()
     try:
         records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
