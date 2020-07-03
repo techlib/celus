@@ -37,6 +37,13 @@ class TestSushiFetching(object):
                 True,
                 'Error #3030: No Usage Available for Requested Dates.',
             ),
+            (
+                'error-in-root.json',
+                True,
+                False,
+                True,
+                'Error #2090: Got response code: 404 for request: https://example.com/path/path',
+            ),
         ),
         ids=lambda x: "" if isinstance(x, str) and not x.endswith('.json') else x,
     )

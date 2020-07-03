@@ -182,6 +182,8 @@ class Counter5ReportBase(object):
         self.extract_errors(header.get('Exceptions', []))  # In header
         self.extract_errors(list(ijson.items(fd, "Exceptions.items")))  # In <root>
         fd.seek(0)
+        self.extract_errors(dict(ijson.kvitems(fd, "Exception")))  # Single exception in <root>
+        fd.seek(0)
         self.extract_errors(list(ijson.items(fd, "body.Exceptions.items")))  # In body element
         fd.seek(0)
 
