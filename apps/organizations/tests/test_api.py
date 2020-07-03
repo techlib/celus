@@ -68,6 +68,9 @@ class TestOrganizationAPI(object):
         assert Organization.objects.count() == 1
         org = Organization.objects.get()
         assert org.name == 'test organization'
+        # All language mutations are supposed to be set to the same name
+        assert org.name_en == 'test organization'
+        assert org.name_cs == 'test organization'
         assert org.internal_id == 'test#test-organization'
         assert org in authenticated_client.user.organizations.all()
         assert (

@@ -166,6 +166,10 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         serializer = OrganizationSimpleSerializer()
         valid_data = serializer.validate(request.data)
         org = serializer.create(valid_data)
+        # update all language mutations
+        # so the organization name is properly shown even when langage changes
+        org.name_cs = valid_data["name"]
+        org.name_en = valid_data["name"]
         data_source = DataSource.objects.create(organization=org, type=DataSource.TYPE_ORGANIZATION)
         # we add the just created data source as source for the organization itself
         # it looks strange, but it is a usable way how to say that this is a user-created
