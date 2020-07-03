@@ -67,7 +67,7 @@ cs:
                         <v-select v-else
                                   v-model="platform"
                                   :items="allowedPlatforms"
-                                  item-text="short_name"
+                                  item-text="name"
                                   :label="$t('platform')"
                                   return-object
                         >
