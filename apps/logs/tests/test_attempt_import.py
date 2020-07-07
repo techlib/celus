@@ -2,6 +2,7 @@ import pytest
 
 from pathlib import Path
 from django.core.files.base import ContentFile
+from django.db.models import Sum
 
 from core.models import UL_ORG_ADMIN
 from organizations.tests.conftest import organizations
@@ -86,7 +87,8 @@ class TestAttemptImport:
 
         assert fetch_attempt.import_crashed is False
         assert fetch_attempt.import_batch is not None
-        assert fetch_attempt.import_batch.accesslog_set.count() == 6
+        assert fetch_attempt.import_batch.accesslog_set.count() == 2
+        assert fetch_attempt.import_batch.accesslog_set.aggregate(total=Sum('value'))['total'] == 5
 
     @pytest.mark.parametrize(
         "download_success,is_processed,contains_data,import_crashed",
