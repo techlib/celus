@@ -333,6 +333,7 @@ Django = ">=2"
 reference = "154ec37662e3ed20687d7710660856c3e5e95116"
 type = "git"
 url = "https://github.com/beda42/django-cachalot.git"
+
 [[package]]
 category = "main"
 description = "Celery result backends for Django."
@@ -396,6 +397,10 @@ name = "django-modeltranslation"
 optional = false
 python-versions = "*"
 version = "0.15"
+
+[package.dependencies]
+Django = ">=2.2"
+six = "*"
 
 [[package]]
 category = "main"
@@ -1203,7 +1208,7 @@ version = "2.8.5"
 [[package]]
 category = "dev"
 description = "Run a subprocess in a pseudo terminal"
-marker = "sys_platform != \"win32\" or os_name != \"nt\" or python_version >= \"3.3\" and sys_platform != \"win32\""
+marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\" or os_name != \"nt\" or python_version >= \"3.3\" and sys_platform != \"win32\" and (python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\")"
 name = "ptyprocess"
 optional = false
 python-versions = "*"
@@ -1223,7 +1228,7 @@ description = "Project COUNTER/NISO SUSHI statistics"
 name = "pycounter"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "2.0.0"
+version = "2.1.2"
 
 [package.dependencies]
 click = "*"
@@ -1235,10 +1240,10 @@ six = "*"
 
 [package.extras]
 docs = ["sphinx", "sphinx-rtd-theme"]
-tests = ["httmock", "mock", "pytest", "coverage"]
+tests = ["coverage", "httmock", "mock", "pytest"]
 
 [package.source]
-reference = "15a0e4add83f07ecfe8e29482de4a6297a7fbc43"
+reference = "fef2ab29958cfc796fb24f0d227bf22dd31915a0"
 type = "git"
 url = "https://github.com/beda42/pycounter.git"
 [[package]]
@@ -1401,7 +1406,7 @@ category = "dev"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "5.3.1"
 
 [[package]]
@@ -1878,7 +1883,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "3fd59c82b720da6aa39fe6949e6d5b22376f0846ba0212a64d5b740bfb481877"
+content-hash = "5f7fcbf89ce388776567143e0bdc8a8785d253ef1ab15cb5cae47134adbe294f"
 python-versions = "^3.6.8"
 
 [metadata.files]
@@ -2280,11 +2285,6 @@ markupsafe = [
     {file = "MarkupSafe-1.1.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:ba59edeaa2fc6114428f1637ffff42da1e311e29382d81b339c1817d37ec93c6"},
     {file = "MarkupSafe-1.1.1-cp37-cp37m-win32.whl", hash = "sha256:b00c1de48212e4cc9603895652c5c410df699856a2853135b3967591e4beebc2"},
     {file = "MarkupSafe-1.1.1-cp37-cp37m-win_amd64.whl", hash = "sha256:9bf40443012702a1d2070043cb6291650a0841ece432556f784f004937f0f32c"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:6788b695d50a51edb699cb55e35487e430fa21f1ed838122d722e0ff0ac5ba15"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:cdb132fc825c38e1aeec2c8aa9338310d29d337bebbd7baa06889d09a60a1fa2"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:13d3144e1e340870b25e7b10b98d779608c02016d5184cfb9927a9f10c689f42"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-win32.whl", hash = "sha256:596510de112c685489095da617b5bcbbac7dd6384aeebeda4df6025d0256a81b"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-win_amd64.whl", hash = "sha256:e8313f01ba26fbbe36c7be1966a7b7424942f670f38e666995b88d012765b9be"},
     {file = "MarkupSafe-1.1.1.tar.gz", hash = "sha256:29872e92839765e546828bb7754a68c418d927cd064fd4708fab9fe9c8bb116b"},
 ]
 mistune = [
