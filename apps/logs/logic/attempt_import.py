@@ -41,14 +41,7 @@ def validate_data_v4(report: Counter4ReportBase):
     return None
 
 
-@atomic
-def import_one_sushi_attempt(attempt: SushiFetchAttempt):
-    counter_version = attempt.credentials.counter_version
-    reader_cls = attempt.counter_report.get_reader_class()
-    if not reader_cls:
-        logger.warning('Unsupported report type %s', attempt.counter_report.code)
-        return
-
+def _check_importable_attempt(attempt: SushiFetchAttempt):
     if attempt.is_processed:
         raise ValueError(f'Data already imported (attempt={attempt.pk})')
 
@@ -57,10 +50,22 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
 
     if not attempt.contains_data:
         raise ValueError(f'Attempt contains no data (attempt={attempt.pk})')
-    logger.debug('Processing file: %s', attempt.data_file.name)
 
     if attempt.import_crashed:
         raise ValueError(f'Import of data already crashed (attempt={attempt.pk})')
+
+
+@atomic
+def import_one_sushi_attempt(attempt: SushiFetchAttempt):
+    counter_version = attempt.credentials.counter_version
+    reader_cls = attempt.counter_report.get_reader_class()
+    if not reader_cls:
+        logger.warning('Unsupported report type %s', attempt.counter_report.code)
+        return
+
+    _check_importable_attempt(attempt)
+
+    logger.debug('Processing file: %s', attempt.data_file.name)
 
     reader = reader_cls()
     try:
@@ -116,10 +121,15 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             import_batch,
         )
         attempt.import_batch = import_batch
+        attempt.processing_success = True
+        if counter_version == 5 and (reader.errors or reader.warnings):
+            attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
+            attempt.error_code = reader.warnings[0].code
+        attempt.save()
         logger.info('Import stats: %s', stats)
     else:
         # Process errors for counter5
-        if counter_version == 5 and reader.errors or reader.warnings:
+        if counter_version == 5 and (reader.errors or reader.warnings):
             if reader.errors:
                 attempt.log = '; '.join(str(e) for e in reader.errors)
                 logger.warning('Found errors: %s', attempt.log)

@@ -123,3 +123,44 @@ class TestAttemptImport:
 
         with pytest.raises(ValueError):
             import_one_sushi_attempt(fetch_attempt)
+
+    def test_counter5_tr_warning(self, organizations, counter_report_type_named, platform):
+        cr_type = counter_report_type_named('TR', version=5)
+
+        creds = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platform,
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url="http://a.b.c/",
+        )
+
+        with (Path(__file__).parent / "data/counter5/5_TR_with_warning.json").open() as f:
+
+            data_file = ContentFile(f.read())
+            data_file.name = f"something.json"
+
+        fetch_attempt = SushiFetchAttempt.objects.create(
+            credentials=creds,
+            counter_report=cr_type,
+            start_date="2018-11-01",
+            end_date="2018-11-30",
+            data_file=data_file,
+            credentials_version_hash=creds.compute_version_hash(),
+            download_success=True,
+            is_processed=False,
+            import_crashed=False,
+            contains_data=True,
+        )
+
+        import_one_sushi_attempt(fetch_attempt)
+
+        assert fetch_attempt.contains_data is True
+        assert fetch_attempt.import_crashed is False
+        assert fetch_attempt.import_batch is not None
+        assert fetch_attempt.processing_success is True
+        assert fetch_attempt.import_batch.accesslog_set.count() == 12
+        assert (
+            fetch_attempt.log
+            == "Warnings: Warning #3032: Usage No Longer Available for Requested Dates"
+        )

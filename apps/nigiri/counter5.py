@@ -174,18 +174,23 @@ class Counter5ReportBase(object):
         if not header:
             header = dict(ijson.kvitems(fd, "body.Report_Header"))
             fd.seek(0)
-        else:
+
+        if header:
             # Try to extract exceptions from header
             self.extract_errors(header)
 
-        # Try to Read exceptions
-        self.extract_errors(header.get('Exceptions', []))  # In header
-        self.extract_errors(list(ijson.items(fd, "Exceptions.items")))  # In <root>
-        fd.seek(0)
-        self.extract_errors(dict(ijson.kvitems(fd, "Exception")))  # Single exception in <root>
-        fd.seek(0)
-        self.extract_errors(list(ijson.items(fd, "body.Exceptions.items")))  # In body element
-        fd.seek(0)
+        # Errors still not extracted
+        if not self.errors and not self.warnings:
+            # Extract exceptions from root
+            self.extract_errors(list(ijson.items(fd, "Exceptions.items")))  # In <root>
+            fd.seek(0)
+            self.extract_errors(dict(ijson.kvitems(fd, "Exception")))  # Single exception in <root>
+            fd.seek(0)
+            # Extract exception(s) from body
+            self.extract_errors(list(ijson.items(fd, "body.Exceptions.items")))
+            fd.seek(0)
+            self.extract_errors(dict(ijson.kvitems(fd, "body.Exception")))
+            fd.seek(0)
 
         # try to read the first item
         record_found = bool(next(ijson.items(fd, "Report_Items.item"), None))
