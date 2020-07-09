@@ -158,6 +158,21 @@ class SushiFetchAttemptViewSet(ModelViewSet):
             'counter_report', 'credentials__organization'
         )
 
+    @action(methods=['POST'], detail=False, url_path='cleanup')
+    def cleanup(self, request):
+        """
+        Clean Sushi attempts
+
+        keep only those which contain data and remove failures
+        """
+        attempts = [
+            e.pk
+            for e in self.get_queryset().filter(import_batch__isnull=True)
+            if e.status in ['FAILURE', 'BROKEN']
+        ]
+        SushiFetchAttempt.objects.filter(pk__in=attempts).delete()
+        return Response()
+
     def perform_create(self, serializer: SushiFetchAttemptSerializer):
         # check that the user is allowed to create attempts for this organization
         credentials = serializer.validated_data['credentials']

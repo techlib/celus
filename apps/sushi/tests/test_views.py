@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from core.models import UL_ORG_ADMIN, UL_CONS_ADMIN, UL_CONS_STAFF, Identity
 from organizations.models import UserOrganization
+from logs.models import ImportBatch
 from sushi.models import SushiCredentials, SushiFetchAttempt
 from organizations.tests.conftest import organizations, identity_by_user_type
 from publications.tests.conftest import platforms
@@ -508,3 +509,70 @@ class TestSushiFetchAttemptView(object):
         resp = master_client.get(reverse('sushi-fetch-attempt-detail', args=(pk,)))
         assert resp.status_code == 200
         assert resp.json() == create_data
+
+    @pytest.mark.parametrize(
+        'batch_present,other_org,download_success,contains_data,processing_success,queued,remained',
+        (
+            (True, False, False, False, False, False, True),  # has data
+            (False, True, False, False, False, False, True),  # other org
+            (False, False, False, False, False, False, False),  # all failed
+            (False, False, True, False, False, False, False),  # download ok processing failed
+            (False, False, False, False, True, False, False),  # download failed processing ok
+            (False, False, True, False, True, False, True),  # download ok processing ok
+        ),
+    )
+    def test_cleanup(
+        self,
+        organizations,
+        platforms,
+        counter_report_type,
+        authenticated_client,
+        batch_present,
+        other_org,
+        download_success,
+        contains_data,
+        processing_success,
+        queued,
+        remained,
+    ):
+        batch = (
+            ImportBatch.objects.create(
+                platform=platforms[0],
+                organization=organizations[0],
+                report_type=counter_report_type.report_type,
+            )
+            if batch_present
+            else None
+        )
+
+        #  assign user to organization
+        user = authenticated_client.user
+        if other_org:
+            UserOrganization.objects.filter(user=user, organization=organizations[0]).delete()
+        else:
+            UserOrganization.objects.get_or_create(user=user, organization=organizations[0])
+
+        credentials = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platforms[0],
+            counter_version=5,
+            url='http://a.b.c/',
+        )
+        attempt = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=counter_report_type,
+            import_batch=batch,
+            download_success=download_success,
+            contains_data=contains_data,
+            queued=queued,
+            processing_success=processing_success,
+        )
+
+        resp = authenticated_client.post(reverse('sushi-fetch-attempt-cleanup'))
+        assert resp.status_code == 200
+
+        # is attempt present
+        assert bool(SushiFetchAttempt.objects.count()) is remained
