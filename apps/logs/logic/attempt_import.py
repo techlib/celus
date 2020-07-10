@@ -48,9 +48,6 @@ def _check_importable_attempt(attempt: SushiFetchAttempt):
     if not attempt.download_success:
         raise ValueError(f'Trying to import data when download failed (attempt={attempt.pk})')
 
-    if not attempt.contains_data:
-        raise ValueError(f'Attempt contains no data (attempt={attempt.pk})')
-
     if attempt.import_crashed:
         raise ValueError(f'Import of data already crashed (attempt={attempt.pk})')
 

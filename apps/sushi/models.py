@@ -519,12 +519,7 @@ class SushiFetchAttempt(models.Model):
 
     @property
     def can_import_data(self):
-        return (
-            not self.is_processed
-            and self.download_success
-            and self.contains_data
-            and not self.import_crashed
-        )
+        return not self.is_processed and self.download_success and not self.import_crashed
 
     @property
     def status(self):
