@@ -197,7 +197,7 @@ class SushiCredentials(models.Model):
         if self.http_password and self.http_username:
             attrs['auth'] = (self.http_username, self.http_password)
         if self.counter_version == 4:
-            return Sushi4Client(**attrs)
+            return Sushi4Client(extra_params=extra, **attrs)
         else:
             return Sushi5Client(extra_params=extra, **attrs)
 
