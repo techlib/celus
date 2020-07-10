@@ -2,6 +2,7 @@
 Celery tasks reside here
 """
 import celery
+import logging
 
 from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
@@ -14,6 +15,9 @@ from logs.logic.materialized_interest import (
 )
 from logs.logic.materialized_reports import sync_materialized_reports
 from sushi.models import SushiFetchAttempt
+
+
+logger = logging.getLogger(__file__)
 
 
 @celery.shared_task
@@ -43,7 +47,13 @@ def import_one_sushi_attempt_task(attempt_id: int):
     Tries to import a single sushi attempt task
     """
     with cache_based_lock('import_new_sushi_attempts_task', blocking_timeout=10):
-        attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
+        try:
+            attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
+        except SushiFetchAttempt.DoesNotExist:
+            # sushi attempt was deleted in the meantime
+            # e.g. someone could remove credentials
+            logger.warning("Sushi attempt '%s' was not found.", attempt_id)
+            return
         import_one_sushi_attempt(attempt)
 
 

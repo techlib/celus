@@ -20,7 +20,13 @@ logger = logging.getLogger(__name__)
 @celery.shared_task
 @email_if_fails
 def run_sushi_fetch_attempt_task(attempt_id: int, import_data: bool = False):
-    attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
+    try:
+        attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
+    except SushiFetchAttempt.DoesNotExist:
+        logger.warning("Sushi attempt '%s' was not found.", attempt_id)
+        # sushi attempt was deleted in the meantime
+        # e.g. someone could remove credentials
+        return
     attempt.credentials.fetch_report(
         counter_report=attempt.counter_report,
         start_date=attempt.start_date,
