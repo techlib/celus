@@ -2,6 +2,7 @@ import pytest
 
 from pathlib import Path
 
+from logs.logic.data_import import TitleManager, TitleRec
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 from nigiri.counter4 import Counter4BR2Report
 from publications.models import Platform, Title, PlatformTitle
@@ -183,3 +184,43 @@ class TestCounter4Import(object):
         ]
         assert len(values) == 12
         assert values == [1, 10, 2, 3, 5, 0, 0, 0, 0, 0, 0, 0]
+
+
+@pytest.mark.django_db
+class TestTitleManager:
+    def test_get_or_create(self):
+        """ Creting same title """
+        tm = TitleManager()
+        record = TitleRec("TITLE", Title.PUB_TYPE_BOOK, "", "", "977-481-83-13d6-2", "")
+
+        # creating same title
+        pk1 = tm.get_or_create(record)
+        assert tm.stats['created'] == 1
+        assert tm.stats['existing'] == 0
+        pk2 = tm.get_or_create(record)
+        assert tm.stats['created'] == 1
+        assert tm.stats['existing'] == 1
+        assert pk1 is not None
+        assert pk2 is not None
+        assert pk1 == pk2
+
+    def test_get_or_create_no_cache(self):
+        """
+            creating same title with cache flushed
+            this may occur when ther are two same imports
+            running in paralel.
+        """
+
+        tm = TitleManager()
+        record = TitleRec("TITLE", Title.PUB_TYPE_BOOK, "", "", "977-481-83-13d6-2", "")
+
+        pk1 = tm.get_or_create(record)
+        assert tm.stats['created'] == 1
+        assert tm.stats['existing'] == 0
+        tm.key_to_title_id_and_pub_type.clear()
+        pk2 = tm.get_or_create(record)
+        assert tm.stats['created'] == 1
+        assert tm.stats['existing'] == 1
+        assert pk1 is not None
+        assert pk2 is not None
+        assert pk1 == pk2

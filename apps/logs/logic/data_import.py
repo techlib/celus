@@ -96,7 +96,7 @@ class TitleManager(object):
             else:
                 self.stats['existing'] += 1
             return title_pk
-        title = Title.objects.create(
+        title, created = Title.objects.get_or_create(
             name=record.name,
             pub_type=record.pub_type,
             isbn=isbn,
@@ -105,7 +105,10 @@ class TitleManager(object):
             doi=record.doi,
         )
         self.key_to_title_id_and_pub_type[key] = (title.pk, record.pub_type)
-        self.stats['created'] += 1
+        if created:
+            self.stats['created'] += 1
+        else:
+            self.stats['existing'] += 1
         return title.pk
 
     def counter_record_to_title_rec(self, record: CounterRecord) -> TitleRec:
