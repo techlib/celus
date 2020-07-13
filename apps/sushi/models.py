@@ -519,7 +519,12 @@ class SushiFetchAttempt(models.Model):
 
     @property
     def can_import_data(self):
-        return not self.is_processed and self.download_success and not self.import_crashed
+        return (
+            not self.is_processed
+            and self.download_success
+            and self.contains_data
+            and not self.import_crashed
+        )
 
     @property
     def status(self):
@@ -652,6 +657,7 @@ class SushiFetchAttempt(models.Model):
         * deleting any data related to the import_batch
         * deleting the import_batch itself
         * changing is_processed to False
+        * and mark attempt as if it didn't crashed
         """
         stats = {}
         if self.import_batch:
@@ -659,7 +665,6 @@ class SushiFetchAttempt(models.Model):
             self.import_batch = None
         self.is_processed = False
         self.import_crashed = False
-        self.contains_data = False
         self.log = ''
         if 'import_crash_traceback' in self.processing_info:
             del self.processing_info['import_crash_traceback']
