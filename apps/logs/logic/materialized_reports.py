@@ -1,6 +1,6 @@
 import logging
 from time import time, monotonic
-from typing import Iterable, Dict
+from typing import Iterable, Dict, Callable
 
 from django.db.models import Sum
 from django.db.transaction import atomic
@@ -117,3 +117,40 @@ def materialized_import_batch_query_attrs(rt: ReportType) -> Dict:
         # as well
         filter_attrs['interest_timestamp__isnull'] = False
     return filter_attrs
+
+
+@atomic
+def remove_materialized_accesslogs(progress_callback: Callable[[int], None] = None):
+    """
+    Deletes all the AccessLogs for materialized views and associated data from ImportBatches
+    :param progress_callback:
+    :return:
+    """
+    rt_keys = set()
+    for rt in ReportType.objects.filter(materialization_spec__isnull=False):
+        rt.accesslog_set.all().delete()
+        rt_keys.add(rt.pk)
+    # we iterate stupidly over all import batches, but that's life for you - I did not find
+    # a way to batch update json field, so I at least go over each import batch only once for
+    # all report types
+    for i, ib in enumerate(ImportBatch.objects.all()):
+        save = False
+        for rt_pk in rt_keys:
+            key = f'r{rt_pk}'
+            if key in ib.materialization_data:
+                ib.materialization_data.pop(key)
+                save = True
+        if save:
+            ib.save()
+        if progress_callback and i and i % 1000 == 0:
+            progress_callback(i)
+
+
+def recompute_materialized_reports(progress_callback: Callable[[int], None] = None):
+    """
+    Deletes all the AccessLogs for materialized views and associated data from ImportBatches
+    and then restarts recomputation of materialized reports
+    :return:
+    """
+    remove_materialized_accesslogs(progress_callback=progress_callback)
+    sync_materialized_reports()
