@@ -302,11 +302,19 @@ ACCOUNT_ADAPTER = 'core.account.CelusAccountAdapter'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler',},},
+    'handlers': {
+        'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler',},
+        'errorlog': {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': BASE_DIR / 'error.log',
+        },
+        'mail_admins': {'level': 'ERROR', 'class': 'django.utils.log.AdminEmailHandler',},
+    },
     'loggers': {
         'django.db': {'level': 'INFO',},
         'pycounter': {'level': 'INFO',},
         'requests': {'level': 'INFO',},
+        'django': {'level': 'ERROR', 'handlers': ['errorlog', 'mail_admins'], 'propagate': True,},
     },
     'root': {'level': 'DEBUG', 'handlers': ['console'],},
 }
