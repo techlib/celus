@@ -11,24 +11,14 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
-from distutils.util import strtobool
-import os
 import sys
 
 from celery.schedules import schedule, crontab
-
-from .json_settings import load_secret_settings_json_file
+from decouple import config, Csv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / 'apps'))
-
-SECRET_KEY = '----REPLACE ME------'
-
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -85,9 +75,14 @@ MIDDLEWARE = [
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-    'apps.core.auth.EDUIdAuthenticationBackend',
 ]
+
+if config('ALLOW_EMAIL_LOGIN', cast=bool, default=True):
+    AUTHENTICATION_BACKENDS.append('allauth.account.auth_backends.AuthenticationBackend')
+
+if config('ALLOW_EDUID_LOGIN', cast=bool, default=True):
+    AUTHENTICATION_BACKENDS.append('apps.core.auth.EDUIdAuthenticationBackend')
+
 
 ROOT_URLCONF = 'config.urls'
 
@@ -169,9 +164,6 @@ STATICFILES_FINDERS = (
 )
 STATIC_ROOT = BASE_DIR / "static_compiled"
 
-# Email
-ADMINS = (("Beda Kosata", "beda@bigdigdata.com"),)
-EMAIL_SUBJECT_PREFIX = '[Stats] '
 
 # REST framework
 
@@ -294,27 +286,6 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-
-# ERMS related stuff
-ERMS_API_URL = "https://erms.czechelib.cz/api/"
-EDUID_IDENTITY_HEADER = 'HTTP_X_IDENTITY'
-MASTER_ORGANIZATIONS = ['NTK-61387142-CEL']  # organizations whose users should have access to all
-# should we try to authenticate against ERMS before trying local data?
-LIVE_ERMS_AUTHENTICATION = False
-QUEUED_SUSHI_MAX_RETRY_COUNT = 5  # how many times max should we retry queued attempts
-SUSHI_ATTEMPT_LAST_DATE = '2017-01'  # default date where to end fetching sushi data
-REFERENCE_CURRENCY = 'CZK'  # this is the currency used for price calculation
-
-# Celus features configuration
-CONSORTIAL_INSTALLATION = True  # is this installation intended for one consortium
-ALLOW_MANUAL_UPLOAD = True
-
-# use authentication and registration
-# should users be allowed to create accounts themselves
-ALLOW_USER_REGISTRATION = False
-# social authentication providers
-SOCIAL_ACCOUNTS_SUPPORTED = []
-SITE_ID = 1
 # allauth config
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
@@ -338,17 +309,48 @@ LOGGING = {
 # hopefully temporary hacks
 SILENCED_SYSTEM_CHECKS = []
 
-# This loads the secret key and potentially other secret settings from a JSON file
-# it must be kept here, otherwise the settings will be missing
-secrets = load_secret_settings_json_file(BASE_DIR / 'config/settings/secret_settings.json')
-for key in ("SECRET_KEY",):
-    locals()[key] = secrets[key]
-# optional keys
-for key in ("ERMS_API_URL",):
-    if key in secrets:
-        locals()[key] = secrets[key]
+# instance configuration
+# django stuff
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', cast=bool, default=False)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
+DATABASES['default']['NAME'] = config('DB_NAME', default='celus')
+DATABASES['default']['PASSWORD'] = config('DB_PASSWORD')
+DATABASES['default']['PORT'] = config('DB_PORT', cast=int, default=5432)
 
-DATABASES['default']['PASSWORD'] = secrets['DB_PASSWORD']
+# other django stuff
+MAILGUN_API_KEY = config('MAILGUN_API_KEY', default='fill me in')
+
+# ERMS related stuff
+ERMS_API_URL = config('ERMS_API_URL', default='https://erms.czechelib.cz/api/')
+EDUID_IDENTITY_HEADER = config('EDUID_IDENTITY_HEADER', default='HTTP_X_IDENTITY')
+# organizations whose users should have access to all
+MASTER_ORGANIZATIONS = config('MASTER_ORGANIZATIONS', cast=Csv(), default='NTK-61387142-CEL')
+# should we try to authenticate against ERMS before trying local data?
+LIVE_ERMS_AUTHENTICATION = config('LIVE_ERMS_AUTHENTICATION', cast=bool, default=False)
+# how many times max should we retry queued attempts
+QUEUED_SUSHI_MAX_RETRY_COUNT = config('QUEUED_SUSHI_MAX_RETRY_COUNT', cast=int, default=5)
+# default date where to end fetching sushi data
+SUSHI_ATTEMPT_LAST_DATE = config('SUSHI_ATTEMPT_LAST_DATE', default='2017-01')
+# this is the currency used for price calculation
+REFERENCE_CURRENCY = config('REFERENCE_CURRENCY', default='CZK')
+
+# Celus features configuration
+# is this installation intended for one consortium
+CONSORTIAL_INSTALLATION = config('CONSORTIAL_INSTALLATION', cast=bool, default=True)
+ALLOW_MANUAL_UPLOAD = config('ALLOW_MANUAL_UPLOAD', cast=bool, default=True)
+
+# user authentication and registration
+# should users be allowed to create accounts themselves
+ALLOW_USER_REGISTRATION = config('ALLOW_USER_REGISTRATION', cast=bool, default=False)
+# social authentication providers
+SOCIAL_ACCOUNTS_SUPPORTED = config('SOCIAL_ACCOUNTS_SUPPORTED', cast=Csv(), default='')
+SITE_ID = config('SITE_ID', cast=int, default=1)
+
+# Email
+ADMINS = config('ADMINS', cast=Csv(cast=Csv(post_process=tuple), delimiter=';'), default='')
+EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[Stats] ')
+
 
 EXPORTED_SETTINGS = [
     'REFERENCE_CURRENCY',
@@ -361,4 +363,4 @@ EXPORTED_SETTINGS = [
 
 # Need to disable prometheus migrations when collecting static without DB
 # see https://github.com/korfuri/django-prometheus/issues/34
-PROMETHEUS_EXPORT_MIGRATIONS = strtobool(os.environ.get('PROMETHEUS_EXPORT_MIGRATIONS', '1'))
+PROMETHEUS_EXPORT_MIGRATIONS = config('PROMETHEUS_EXPORT_MIGRATIONS', cast=bool, default=True)
