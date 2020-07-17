@@ -182,7 +182,6 @@ class TestCustomImport(object):
         assert ImportBatch.objects.count() == 0
         assert AccessLog.objects.count() == 0
 
-    @pytest.mark.now
     @pytest.mark.parametrize(
         ['user_type', 'owner_level'],
         [

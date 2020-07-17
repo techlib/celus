@@ -8,7 +8,6 @@ from publications.models import Platform
 
 @pytest.mark.django_db
 class TestERMSSynchronization(object):
-    @pytest.mark.now
     def test_dict_syncer(self):
         data = [
             {

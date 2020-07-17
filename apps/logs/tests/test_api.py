@@ -467,7 +467,6 @@ class TestReportTypeAPI(object):
         assert 'object does not exist' in response.json()['dimensions'][0]
 
 
-@pytest.mark.now
 @pytest.mark.django_db
 class TestRawDataExport(object):
     @pytest.mark.parametrize(

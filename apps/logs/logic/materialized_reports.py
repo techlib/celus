@@ -1,11 +1,10 @@
 import logging
 from time import time, monotonic
-from typing import Iterable, Dict, Callable
+from typing import Iterable, Callable
 
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db.transaction import atomic
 
-from organizations.logic.queries import extend_query_filter
 from ..models import ImportBatch, AccessLog, ReportType
 
 logger = logging.getLogger(__name__)
@@ -36,15 +35,15 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None):
         batch_size = guess_batch_size_for_materialization(rt)
         logger.debug('Guessing batch_size for "%s": %d', rt, batch_size)
     # construct query
-    filter_attrs = materialized_import_batch_query_attrs(rt)
-    to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
+    filter_attrs = materialized_import_batch_query_filters(rt)
+    to_process = ImportBatch.objects.filter(*filter_attrs)[:batch_size]
     while to_process:
         start = monotonic()
         size = create_materialized_accesslogs_for_importbatches(rt, to_process)
         logger.debug(
             'Batch materialization took %.1f s; records created: %d', monotonic() - start, size
         )
-        to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
+        to_process = ImportBatch.objects.filter(*filter_attrs)[:batch_size]
 
 
 def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=25_000):
@@ -57,12 +56,12 @@ def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=2
     :return:
     """
     keep, _remove = rt.materialization_spec.split_attributes(add_id_postfix=True)
-    import_batch_filter = materialized_import_batch_query_attrs(rt)
-    source_batch_count = ImportBatch.objects.filter(**import_batch_filter).count()
+    import_batch_filter = materialized_import_batch_query_filters(rt)
+    source_batch_count = ImportBatch.objects.filter(*import_batch_filter).count()
     result_log_count = (
         AccessLog.objects.filter(
             report_type=rt.materialization_spec.base_report_type,
-            **extend_query_filter(import_batch_filter, 'import_batch__'),
+            *materialized_import_batch_query_filters(rt, attr_prefix='import_batch__'),
         )
         .values('import_batch_id', *keep)
         .annotate(value=Sum('value'))
@@ -104,19 +103,24 @@ def create_materialized_accesslogs_for_importbatches(
     return len(to_insert)
 
 
-def materialized_import_batch_query_attrs(rt: ReportType) -> Dict:
+def materialized_import_batch_query_filters(rt: ReportType, attr_prefix: str = '') -> [Q]:
     """
     Creates query attrs needed to get ImportBatches that should be 'materialized' for the
     ReportType rt.
     :param rt:
+    :param attr_prefix: references to model fields will be prefixed with this prefix - useful
+                        when referencing from related model
     :return: {}
     """
-    filter_attrs = {f'materialization_data__r{rt.pk}__isnull': True}
+    filters = [Q(**{f'{attr_prefix}materialization_data__r{rt.pk}__isnull': True})]
     if rt.materialization_spec.base_report_type.short_name == 'interest':
         # for interest based materialized report types, we need to check the interest calculation
-        # as well
-        filter_attrs['interest_timestamp__isnull'] = False
-    return filter_attrs
+        # as well. We only include batches
+        #  * with interest calculated already
+        #  * with interest calculated after data materialization
+        #    (can happen if interest definition is changed)
+        filters.append(Q(**{f'{attr_prefix}interest_timestamp__isnull': False}))
+    return filters
 
 
 @atomic

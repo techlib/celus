@@ -14,7 +14,6 @@ from sushi.models import SushiCredentials, CounterReportType
 
 @pytest.mark.django_db
 class TestURLComposition(object):
-    @pytest.mark.now
     def test_extra_params_is_not_polluted_by_extra_data(self, organizations, report_type_nd):
         assert SushiCredentials.objects.count() == 0
         data = [

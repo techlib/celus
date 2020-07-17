@@ -53,7 +53,6 @@ class TestInterestCalculation(object):
         sync_interest_for_import_batch(ib, interest_rt)
         assert interest_rt.accesslog_set.count() == 3, 'now it should work'
 
-    @pytest.mark.now()
     def test_superseeded_report_types(self, counter_records, organizations, report_type_nd):
         """
         Test that when there are data for two report types from which one obsoletes the other,
@@ -111,7 +110,6 @@ class TestInterestCalculation(object):
         sync_interest_for_import_batch(ib_new, interest_rt)
         assert interest_rt.accesslog_set.count() == 4, '3 of 3 should make it to interest'
 
-    @pytest.mark.now()
     def test_superseeded_report_types_with_different_titles(
         self, counter_records, organizations, report_type_nd
     ):
@@ -458,7 +456,6 @@ class TestInterestRecomputationDetection(object):
         qs = _find_superseeded_import_batches()
         assert {obj.pk for obj in qs} == {ib_old.pk}
 
-    @pytest.mark.now()
     def test_superseeded_interest_deleted_with_different_titles(
         self, counter_records, organizations, report_type_nd
     ):
