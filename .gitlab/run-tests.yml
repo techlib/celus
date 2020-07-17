@@ -14,7 +14,7 @@ run_tests:
   before_script:
     - poetry install
   script:
-    - cp config/settings/secret_settings.json.example config/settings/secret_settings.json
+    - cp .env.example .env
     - poetry run pytest -v --junitxml=report.xml --cov=activity --cov=annotations --cov=api --cov=charts --cov=core --cov=cost --cov=erms --cov=logs --cov=nigiri --cov=organizations --cov=publications --cov=sushi --cov-report=xml --cov-report=term apps/
   artifacts:
     reports:
