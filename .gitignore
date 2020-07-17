@@ -9,4 +9,4 @@ celerybeat-schedule
 /.pytest_cache
 .~*
 media/*
-!/.env
+/.env
