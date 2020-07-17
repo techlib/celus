@@ -50,13 +50,18 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'rest_pandas',
     'error_report',
-    'cachalot',
     'django_prometheus',
     # allauth is at the end so that we can easily override its templates
     'allauth',
     'allauth.socialaccount',
     'allauth.account',
 ]
+
+DISABLE_CACHALOT = config('DISABLE_CACHALOT', cast=bool, default=False)
+if not DISABLE_CACHALOT:
+    INSTALLED_APPS.append('cachalot')
+else:
+    print('cachalot disabled', file=sys.stderr)
 
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',

@@ -2,33 +2,20 @@ import os
 
 from .base import *
 
-DATABASES['default']['NAME'] = 'celus'
-MASTER_ORGANIZATIONS = ['NTK-61387142-CEL', 'GMJ-9379']
 ALLOWED_HOSTS = ['*']
-ALLOW_USER_REGISTRATION = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 INSTALLED_APPS += ['debug_toolbar']
-INSTALLED_APPS.insert(4, 'livereload')  # it must be before staticfiles
-
-DISABLE_CACHALOT = bool(int(os.environ.get("DISABLE_CACHALOT", 1)))
-if DISABLE_CACHALOT and 'cachalot' in INSTALLED_APPS:
-    INSTALLED_APPS.remove('cachalot')
-print('cachalot disabled' if DISABLE_CACHALOT else 'cachalot_enabled')
-
-LIVE_ERMS_AUTHENTICATION = False
 
 MIDDLEWARE = (
     MIDDLEWARE[:-1]
     + [
         'debug_toolbar.middleware.DebugToolbarMiddleware',
-        'livereload.middleware.LiveReloadScript',
         'querycount.middleware.QueryCountMiddleware',
     ]
     + MIDDLEWARE[-1:]
 )
-
 
 CACHE_MIDDLEWARE_SECONDS = 1
 
@@ -54,8 +41,6 @@ DEBUG_TOOLBAR_PANELS += [
     'debug_toolbar.panels.redirects.RedirectsPanel',
 ]
 
-# livereload
-LIVERELOAD_PORT = 35563
 # debug toolbar
 INTERNAL_IPS = ['127.0.0.1']
 

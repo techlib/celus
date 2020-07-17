@@ -51,7 +51,6 @@ python-decouple = "^3.3"
 [tool.poetry.dev-dependencies]
 black = {version = "*", allow-prereleases = true}
 django-debug-toolbar = "~2.2.0"
-django-livereload-server= "~0.3.2"
 django-querycount = "~0.7.0"
 jupyter = "~1.0.0"
 pre-commit = "~2.4.0"
