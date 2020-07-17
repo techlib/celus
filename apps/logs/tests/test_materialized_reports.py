@@ -1,4 +1,5 @@
 import pytest
+from django.core.management import call_command
 
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports
@@ -133,3 +134,39 @@ class TestMaterializedReport(object):
         # test the result
         qp = {'report_type': report_type, **query_params}
         assert replace_report_type_with_materialized(qp, other_used_dimensions=other_dims) == result
+
+
+@pytest.mark.django_db()
+class TestMaterializedReportManagementCommands(object):
+    @pytest.mark.now()
+    def test_recompute_materialized_reports(self, counter_records, organizations, report_type_nd):
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
+        data1 = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title2', '2018-01-01', '1v2', 2],
+            ['Title3', '2018-01-01', '1v2', 4],
+        ]
+        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        ib = ImportBatch.objects.create(
+            organization=organization, platform=platform, report_type=report_type
+        )
+        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        # now define materialized report
+        spec = ReportMaterializationSpec.objects.create(
+            base_report_type=report_type, keep_target=False
+        )
+        mat_report = ReportType.objects.create(materialization_spec=spec, short_name='m', name='m')
+        sync_materialized_reports()
+        # test it
+        assert mat_report.accesslog_set.count() == 2
+        mat_logs_ids = {al.pk for al in mat_report.accesslog_set.all()}
+        values = {rec['value'] for rec in mat_report.accesslog_set.values('value')}
+        # now run the command and see if the ids have changed but have the same values
+        call_command('recompute_materialized_reports')
+        assert mat_report.accesslog_set.count() == 2
+        assert mat_logs_ids != {al.pk for al in mat_report.accesslog_set.all()}
+        assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == values
