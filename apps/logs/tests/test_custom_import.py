@@ -1,5 +1,3 @@
-import itertools
-
 from datetime import date
 from io import StringIO
 
@@ -7,15 +5,14 @@ import pytest
 from django.core.files import File
 from django.urls import reverse
 
-from core.models import User, Identity, UL_ORG_ADMIN, UL_CONS_STAFF
+from core.models import Identity, UL_ORG_ADMIN, UL_CONS_STAFF
 from logs.logic.custom_import import custom_data_to_records, import_custom_data
-from logs.models import ReportType, AccessLog, DimensionText, ImportBatch, ManualDataUpload
-from publications.models import Platform, Title
+from logs.models import AccessLog, ImportBatch, ManualDataUpload
+from publications.models import Platform
 
-from ..logic.data_import import import_counter_records
+from core.tests.conftest import *
 from organizations.tests.conftest import *
-from publications.tests.conftest import *
-from core.tests.conftest import authenticated_client, valid_identity, master_identity, master_client
+from publications.tests.conftest import platforms, interest_rt, titles
 
 
 @pytest.mark.django_db
@@ -201,8 +198,6 @@ class TestCustomImport(object):
         settings,
         tmp_path,
         identity_by_user_type,
-        client,
-        organizations,
         report_type_nd,
         platforms,
     ):

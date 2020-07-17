@@ -71,3 +71,15 @@ def authentication_headers():
         return {settings.EDUID_IDENTITY_HEADER: identity}
 
     return fn
+
+
+__all__ = [
+    'admin_identity',
+    'master_client',
+    'master_identity',
+    'authentication_headers',
+    'authentication_headers',
+    'unauthenticated_client',
+    'valid_identity',
+    'invalid_identity',
+]

@@ -1,4 +1,6 @@
 import pytest
+
+from core.models import Identity
 from core.tests.conftest import *
 
 from ..models import Organization, UserOrganization
@@ -82,3 +84,6 @@ def identity_by_user_type(
         return identity, org
 
     return fn
+
+
+__all__ = ['identity_by_user_type', 'organizations', 'organizations_random']
