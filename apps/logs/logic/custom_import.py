@@ -136,7 +136,7 @@ def histogram_with_count(iterable) -> Counter:
 
 
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    records = mdu.data_to_records()  # type: [CounterRecord]
+    records = list(mdu.data_to_records())  # type: [CounterRecord]
     return {
         'log_count': len(records),
         'hits_total': sum((record.value for record in records), 0),
