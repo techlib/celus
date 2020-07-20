@@ -2,30 +2,33 @@ import pytest
 from django.core.management import call_command
 
 from logs.logic.data_import import import_counter_records
+from logs.logic.materialized_interest import sync_interest_for_import_batch
 from logs.logic.materialized_reports import sync_materialized_reports
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import (
     ImportBatch,
     AccessLog,
     ReportMaterializationSpec,
+    ReportInterestMetric,
+    Metric,
+    InterestGroup,
 )
 from logs.models import ReportType
-from publications.models import Platform
+from nigiri.counter5 import CounterRecord
+from publications.models import Platform, PlatformInterestReport
 from organizations.tests.conftest import organizations
+from publications.tests.conftest import platform
 
 
 @pytest.mark.django_db()
 class TestMaterializedReport(object):
-    def test_not_title(self, counter_records, organizations, report_type_nd):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
+    def test_not_title(self, counter_records, organizations, report_type_nd, platform):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
         ib = ImportBatch.objects.create(
@@ -45,16 +48,13 @@ class TestMaterializedReport(object):
         assert mat_report.accesslog_set.count() == 2
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {1, 6}
 
-    def test_no_dim1(self, counter_records, organizations, report_type_nd):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
+    def test_no_dim1(self, counter_records, organizations, report_type_nd, platform):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
         ib = ImportBatch.objects.create(
@@ -74,16 +74,13 @@ class TestMaterializedReport(object):
         assert mat_report.accesslog_set.count() == 3
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {1, 2, 4}
 
-    def test_no_title_and_dim1(self, counter_records, organizations, report_type_nd):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
+    def test_no_title_and_dim1(self, counter_records, organizations, report_type_nd, platform):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
         ib = ImportBatch.objects.create(
@@ -135,20 +132,72 @@ class TestMaterializedReport(object):
         qp = {'report_type': report_type, **query_params}
         assert replace_report_type_with_materialized(qp, other_used_dimensions=other_dims) == result
 
+    @pytest.mark.now()
+    def test_recomputation_after_interest_changes(self, organizations, report_type_nd, platform):
+        """
+        When interest definition changes and interest is thus recomputed after materialization
+        occurs, we need to recompute materialized reports as well.
+        """
+        cr = lambda **kw: CounterRecord(platform_name=platform.name, **kw)
+        crs1 = [
+            cr(start='2018-01-01', end='2018-01-31', metric='m1', value=1, title='Title1',),
+            cr(start='2018-01-01', end='2018-01-31', metric='m2', value=2, title='Title2',),
+            cr(start='2018-03-01', end='2018-03-31', metric='m2', value=4, title='Title3',),
+        ]
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        ib = ImportBatch.objects.create(
+            organization=organization, platform=platform, report_type=report_type
+        )
+        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        assert AccessLog.objects.count() == 3
+
+        # now define the interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        # we use metric m1 with one record - we will switch to m2 later
+        rim = ReportInterestMetric.objects.create(
+            report_type=report_type,
+            metric=Metric.objects.get(short_name='m1'),
+            interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
+        )
+        sync_interest_for_import_batch(ib, interest_rt)
+        assert interest_rt.accesslog_set.count() == 1, '1 record for metric m1'
+
+        # now define materialized report for interest
+        spec = ReportMaterializationSpec.objects.create(
+            base_report_type=interest_rt, keep_target=False
+        )
+        mat_report = ReportType.objects.create(materialization_spec=spec, short_name='m', name='m')
+        sync_materialized_reports()
+        assert mat_report.accesslog_set.count() == 1, '1 record for interest in metric m1'
+        old_mat_pks = {al.pk for al in mat_report.accesslog_set.all()}
+
+        # now recompute the interest with the right metric
+        rim.metric = Metric.objects.get(short_name='m2')
+        rim.save()
+        ib.refresh_from_db()  # this is needed because materialization_data was added to the ib
+        sync_interest_for_import_batch(ib, interest_rt)
+        assert interest_rt.accesslog_set.count() == 2, '2 interest records for metric m2'
+
+        # and check that the materialization is up to date as well
+        sync_materialized_reports()
+        ib.refresh_from_db()
+        assert old_mat_pks != {al.pk for al in mat_report.accesslog_set.all()}
+        assert mat_report.accesslog_set.count() == 2, '2 access logs without title for metric m2'
+
 
 @pytest.mark.django_db()
 class TestMaterializedReportManagementCommands(object):
-    @pytest.mark.now()
-    def test_recompute_materialized_reports(self, counter_records, organizations, report_type_nd):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
+    def test_recompute_materialized_reports(
+        self, counter_records, organizations, report_type_nd, platform
+    ):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
         ib = ImportBatch.objects.create(

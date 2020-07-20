@@ -1,11 +1,12 @@
 import logging
 from time import time, monotonic
-from typing import Iterable, Dict, Callable
+from typing import Iterable, Callable
 
-from django.db.models import Sum
+from django.db.models import Sum, Q, QuerySet, FloatField
+from django.db.models.expressions import RawSQL
+from django.db.models.functions import Cast
 from django.db.transaction import atomic
 
-from organizations.logic.queries import extend_query_filter
 from ..models import ImportBatch, AccessLog, ReportType
 
 logger = logging.getLogger(__name__)
@@ -36,15 +37,14 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None):
         batch_size = guess_batch_size_for_materialization(rt)
         logger.debug('Guessing batch_size for "%s": %d', rt, batch_size)
     # construct query
-    filter_attrs = materialized_import_batch_query_attrs(rt)
-    to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
+    to_process = materialized_import_batch_queryset(rt)[:batch_size]
     while to_process:
         start = monotonic()
         size = create_materialized_accesslogs_for_importbatches(rt, to_process)
         logger.debug(
             'Batch materialization took %.1f s; records created: %d', monotonic() - start, size
         )
-        to_process = ImportBatch.objects.filter(**filter_attrs)[:batch_size]
+        to_process = materialized_import_batch_queryset(rt)[:batch_size]
 
 
 def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=25_000):
@@ -57,17 +57,19 @@ def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=2
     :return:
     """
     keep, _remove = rt.materialization_spec.split_attributes(add_id_postfix=True)
-    import_batch_filter = materialized_import_batch_query_attrs(rt)
-    source_batch_count = ImportBatch.objects.filter(**import_batch_filter).count()
+    import_batch_qs = materialized_import_batch_queryset(rt)
+    source_batch_count = import_batch_qs.count()
+    # the annotation bellow causes group by to be run and Import batches counted
+    # it is also faster than using distinct for some reason
     result_log_count = (
         AccessLog.objects.filter(
             report_type=rt.materialization_spec.base_report_type,
-            **extend_query_filter(import_batch_filter, 'import_batch__'),
+            import_batch_id__in=import_batch_qs,
         )
         .values('import_batch_id', *keep)
         .annotate(value=Sum('value'))
-        .count()
     )
+    result_log_count = result_log_count.count()
     if source_batch_count and result_log_count:
         return source_batch_count * desired_log_threshold // result_log_count
     return 1000
@@ -104,19 +106,34 @@ def create_materialized_accesslogs_for_importbatches(
     return len(to_insert)
 
 
-def materialized_import_batch_query_attrs(rt: ReportType) -> Dict:
+def materialized_import_batch_queryset(rt: ReportType) -> QuerySet:
     """
     Creates query attrs needed to get ImportBatches that should be 'materialized' for the
     ReportType rt.
     :param rt:
-    :return: {}
+    :return: [Q]
     """
-    filter_attrs = {f'materialization_data__r{rt.pk}__isnull': True}
     if rt.materialization_spec.base_report_type.short_name == 'interest':
         # for interest based materialized report types, we need to check the interest calculation
-        # as well
-        filter_attrs['interest_timestamp__isnull'] = False
-    return filter_attrs
+        # as well. We only include batches
+        #  * with interest calculated already and not data materialization
+        #  * with interest calculated after data materialization
+        #    (can happen if interest definition is changed)
+        # the interest_ts field will be added in annotation later on
+        no_materialization = Q(
+            **{f'materialization_data__r{rt.pk}__isnull': True}, interest_timestamp__isnull=False
+        )
+        stale_materialization = Q(
+            interest_ts__gte=Cast(RawSQL('materialization_data->%s', (f'r{rt.pk}',)), FloatField())
+        )
+        # bellow we use RawSQL rather than Extract('interest_timestamp', 'epoch') because it
+        # returns the timestamp in active timezone rather than in UTC as time() is presented
+        # and thus even new data could appear stale due to the timezone shift :/
+        return ImportBatch.objects.annotate(
+            interest_ts=Cast(RawSQL('EXTRACT(EPOCH FROM interest_timestamp)', ()), FloatField())
+        ).filter(stale_materialization | no_materialization)
+    else:
+        return ImportBatch.objects.filter(**{f'materialization_data__r{rt.pk}__isnull': True})
 
 
 @atomic
