@@ -17,20 +17,18 @@ from logs.models import ReportType
 from nigiri.counter5 import CounterRecord
 from publications.models import Platform, PlatformInterestReport
 from organizations.tests.conftest import organizations
+from publications.tests.conftest import platform
 
 
 @pytest.mark.django_db()
 class TestMaterializedReport(object):
-    def test_not_title(self, counter_records, organizations, report_type_nd):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
+    def test_not_title(self, counter_records, organizations, report_type_nd, platform):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
         ib = ImportBatch.objects.create(
@@ -50,16 +48,13 @@ class TestMaterializedReport(object):
         assert mat_report.accesslog_set.count() == 2
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {1, 6}
 
-    def test_no_dim1(self, counter_records, organizations, report_type_nd):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
+    def test_no_dim1(self, counter_records, organizations, report_type_nd, platform):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
         ib = ImportBatch.objects.create(
@@ -79,16 +74,13 @@ class TestMaterializedReport(object):
         assert mat_report.accesslog_set.count() == 3
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {1, 2, 4}
 
-    def test_no_title_and_dim1(self, counter_records, organizations, report_type_nd):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
+    def test_no_title_and_dim1(self, counter_records, organizations, report_type_nd, platform):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
         ib = ImportBatch.objects.create(
@@ -141,14 +133,11 @@ class TestMaterializedReport(object):
         assert replace_report_type_with_materialized(qp, other_used_dimensions=other_dims) == result
 
     @pytest.mark.now()
-    def test_recomputation_after_interest_changes(self, organizations, report_type_nd):
+    def test_recomputation_after_interest_changes(self, organizations, report_type_nd, platform):
         """
         When interest definition changes and interest is thus recomputed after materialization
         occurs, we need to recompute materialized reports as well.
         """
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
         cr = lambda **kw: CounterRecord(platform_name=platform.name, **kw)
         crs1 = [
             cr(start='2018-01-01', end='2018-01-31', metric='m1', value=1, title='Title1',),
@@ -200,16 +189,15 @@ class TestMaterializedReport(object):
 
 @pytest.mark.django_db()
 class TestMaterializedReportManagementCommands(object):
-    def test_recompute_materialized_reports(self, counter_records, organizations, report_type_nd):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
+    def test_recompute_materialized_reports(
+        self, counter_records, organizations, report_type_nd, platform
+    ):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
         ib = ImportBatch.objects.create(

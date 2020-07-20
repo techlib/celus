@@ -18,6 +18,13 @@ def platforms():
 
 
 @pytest.fixture
+def platform():
+    return Platform.objects.create(
+        ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+    )
+
+
+@pytest.fixture
 def titles():
     t1 = Title.objects.create(name='Title 1', pub_type='B', isbn='123-464-2356', doi='10.1223/x')
     t2 = Title.objects.create(
