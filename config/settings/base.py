@@ -15,6 +15,8 @@ import sys
 
 from celery.schedules import schedule, crontab
 from decouple import config, Csv
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -377,3 +379,8 @@ EXPORTED_SETTINGS = [
 # Need to disable prometheus migrations when collecting static without DB
 # see https://github.com/korfuri/django-prometheus/issues/34
 PROMETHEUS_EXPORT_MIGRATIONS = config('PROMETHEUS_EXPORT_MIGRATIONS', cast=bool, default=True)
+
+# sentry
+sentry_url = config('SENTRY_URL', default='')
+if sentry_url:
+    sentry_sdk.init(dsn=sentry_url, integrations=[DjangoIntegration()], send_default_pii=True)

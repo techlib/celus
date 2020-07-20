@@ -45,6 +45,7 @@ urllib3 = "~1.25.0"
 django-rest-auth = "~0.9.5"
 ijson = "^3.0.4"
 python-decouple = "^3.3"
+sentry-sdk = "^0.16.1"
 
 
 
