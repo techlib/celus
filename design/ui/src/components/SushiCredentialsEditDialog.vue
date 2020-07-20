@@ -40,16 +40,14 @@ cs:
         <v-card-text>
             <v-container fluid>
                 <v-row>
-                    <v-col cols="12">
+                    <v-col cols="12" :md="4">
                         <v-text-field
                                 v-model="title"
                                 :label="$t('title_label')"
                         >
                         </v-text-field>
                     </v-col>
-                </v-row>
-                <v-row>
-                    <v-col cols="12" :md="6">
+                    <v-col cols="12" :md="4">
                         <v-text-field
                                 v-if="credentials"
                                 :value="organization.name"
@@ -67,7 +65,7 @@ cs:
                         >
                         </v-select>
                     </v-col>
-                    <v-col cols="12" :md="6">
+                    <v-col cols="12" :md="4">
                         <v-text-field
                                 v-if="credentials"
                                 :value="platform.name"
