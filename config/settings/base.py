@@ -172,7 +172,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
-STATIC_ROOT = BASE_DIR / "static_compiled"
+STATIC_ROOT = config('STATIC_ROOT', default=BASE_DIR / "static_compiled")
 
 
 # REST framework
