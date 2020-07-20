@@ -9,6 +9,7 @@ from publications.tests.conftest import platforms
 from core.tests.conftest import master_client, master_identity, valid_identity, authenticated_client
 
 
+@pytest.mark.now
 @pytest.mark.django_db()
 class TestSushiCredentialsViewSet(object):
     def test_lock_action(self, master_client, organizations, platforms):
@@ -48,9 +49,12 @@ class TestSushiCredentialsViewSet(object):
         UserOrganization.objects.create(user=identity.user, organization=organizations[0])
 
         url = reverse('sushi-credentials-list')
+
+        title = 'Foo bar credentials'
         resp = authenticated_client.post(
             url,
             {
+                'title': title,
                 'platform_id': platforms[0].pk,
                 'organization_id': organizations[0].pk,
                 'url': 'http://foo.bar.baz',
@@ -64,6 +68,7 @@ class TestSushiCredentialsViewSet(object):
         sc = SushiCredentials.objects.get()
         assert sc.last_updated_by == identity.user
         assert sc.active_counter_reports.count() == 1
+        assert sc.title == title
 
     def test_edit_action(self, organizations, platforms, valid_identity, authenticated_client):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
@@ -77,12 +82,17 @@ class TestSushiCredentialsViewSet(object):
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
         )
+        assert credentials.title == ''
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         new_url = 'http://x.y.com/'
-        resp = authenticated_client.patch(url, {'url': new_url}, content_type='application/json')
+        new_title = 'New title'
+        resp = authenticated_client.patch(
+            url, {'url': new_url, 'title': new_title}, content_type='application/json'
+        )
         assert resp.status_code == 200
         credentials.refresh_from_db()
         assert credentials.url == new_url
+        assert credentials.title == new_title
 
     def test_edit_action_locked(
         self, organizations, platforms, valid_identity, authenticated_client

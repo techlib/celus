@@ -14,6 +14,7 @@ en:
     title:
         edit_sushi_credentials: Edit SUSHI credentials
     delete_success: Sushi credentials were successfully removed
+    title_label: Title
 
 cs:
     add_custom_param: Přidat vlastní parametr
@@ -28,6 +29,7 @@ cs:
     title:
         edit_sushi_credentials: Přihlašovací údaje SUSHI
     delete_success: Přihlašovací údaje byly úspěšně odstraněny
+    title_label: Název
 </i18n>
 
 
@@ -37,6 +39,15 @@ cs:
         <v-card-title class="headline">{{ $t('title.edit_sushi_credentials') }}</v-card-title>
         <v-card-text>
             <v-container fluid>
+                <v-row>
+                    <v-col cols="12">
+                        <v-text-field
+                                v-model="title"
+                                :label="$t('title_label')"
+                        >
+                        </v-text-field>
+                    </v-col>
+                </v-row>
                 <v-row>
                     <v-col cols="12" :md="6">
                         <v-text-field
@@ -318,6 +329,7 @@ cs:
         savedCredentials: null,
         enabled: false,
         outsideConsortium: true,
+        title: '',
       }
     },
     computed: {
@@ -343,6 +355,7 @@ cs:
             extraParams[rec.key] = rec.value
         }
         let data = {
+          title: this.title,
           customer_id: this.customerId,
           requestor_id: this.requestorId,
           api_key: this.apiKey,
@@ -401,6 +414,7 @@ cs:
         let credentials = this.credentials
         if (!credentials) {
           // no credentials - we init to the initial state
+          this.title = ''
           this.organizationId = null
           this.organization = {name: ''}
           this.platformId = null
@@ -423,6 +437,7 @@ cs:
           for (let [key, value] of Object.entries(credentials.extra_params)) {
             extraParams.push({key: key, value: value})
           }
+          this.title = credentials.title
           this.organizationId = credentials.organization.id
           this.organization = credentials.organization
           this.platformId = credentials.platform.id

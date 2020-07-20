@@ -44,6 +44,7 @@ class SushiCredentialsSerializer(ModelSerializer):
         model = SushiCredentials
         fields = (
             'pk',
+            'title',
             'organization',
             'platform',
             'enabled',

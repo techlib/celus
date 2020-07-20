@@ -113,7 +113,7 @@ cs:
                 </template>
             </v-data-table>
         </v-card>
-        <v-dialog v-model="showEditDialog">
+        <v-dialog v-model="showEditDialog" :max-width="dialogMaxWidth">
             <SushiCredentialsEditDialog
                     :credentials-object="selectedCredentials"
                     v-model="showEditDialog"
@@ -122,7 +122,7 @@ cs:
                     key="edit"
             ></SushiCredentialsEditDialog>
         </v-dialog>
-        <v-dialog v-model="showCreateDialog">
+        <v-dialog v-model="showCreateDialog" :max-width="dialogMaxWidth">
             <SushiCredentialsEditDialog
                     v-model="showCreateDialog"
                     @update-credentials="updateCredentials"
@@ -153,7 +153,16 @@ cs:
 
   export default {
     name: "SushiCredentialsManagementPage",
+
     components: {SushiCredentialsEditDialog, SushiAttemptListWidget, CheckMark},
+
+    props: {
+      dialogMaxWidth: {
+        required: false,
+        default: '1000px',
+      }
+    },
+
     data () {
       return {
         sushiCredentialsList: [],
@@ -176,6 +185,11 @@ cs:
       }),
       headers () {
         let allHeaders = [
+          {
+            text: this.$i18n.t('title'),
+            value: 'title',
+            class: 'wrap',
+          },
           {
             text: this.$i18n.t('organization'),
             value: 'organization.name',

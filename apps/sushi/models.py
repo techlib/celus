@@ -114,6 +114,7 @@ class SushiCredentials(models.Model):
     )
     BLAKE_HASH_SIZE = 16
 
+    title = models.CharField(max_length=120, blank=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     url = models.URLField()
@@ -145,7 +146,7 @@ class SushiCredentials(models.Model):
     )
 
     class Meta:
-        unique_together = (('organization', 'platform', 'counter_version'),)
+        unique_together = (('organization', 'platform', 'counter_version', 'title'),)
         verbose_name_plural = 'Sushi credentials'
 
     def __str__(self):

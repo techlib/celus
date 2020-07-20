@@ -79,7 +79,6 @@ class TestCustomImport(object):
             else:
                 assert record.metric == 'MX'
 
-    @pytest.mark.now
     def test_custom_data_import_process(
         self, organizations, report_type_nd, tmp_path, settings, master_client, master_identity
     ):

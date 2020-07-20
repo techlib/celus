@@ -108,7 +108,6 @@ class TestUserAPI(object):
         assert resp_data["email_verification_sent"] is not None
 
 
-@pytest.mark.now
 @pytest.mark.django_db
 class TestAccountCreationAPI(object):
     test_user_data = {

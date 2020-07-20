@@ -132,7 +132,6 @@ class TestMaterializedReport(object):
         qp = {'report_type': report_type, **query_params}
         assert replace_report_type_with_materialized(qp, other_used_dimensions=other_dims) == result
 
-    @pytest.mark.now()
     def test_recomputation_after_interest_changes(self, organizations, report_type_nd, platform):
         """
         When interest definition changes and interest is thus recomputed after materialization
