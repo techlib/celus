@@ -362,6 +362,8 @@ SITE_ID = config('SITE_ID', cast=int, default=1)
 # Email
 ADMINS = config('ADMINS', cast=Csv(cast=Csv(post_process=tuple), delimiter=';'), default='')
 EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[Stats] ')
+SERVER_EMAIL = config('SERVER_EMAIL', default='root@localhost')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='root@localhost')
 
 
 EXPORTED_SETTINGS = [
