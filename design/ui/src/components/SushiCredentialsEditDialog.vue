@@ -15,6 +15,7 @@ en:
         edit_sushi_credentials: Edit SUSHI credentials
     delete_success: Sushi credentials were successfully removed
     title_label: Title
+    credentials_conflict: "|{n} record for same platform/version|{n} records for same platform/version"
 
 cs:
     add_custom_param: Přidat vlastní parametr
@@ -30,6 +31,7 @@ cs:
         edit_sushi_credentials: Přihlašovací údaje SUSHI
     delete_success: Přihlašovací údaje byly úspěšně odstraněny
     title_label: Název
+    credentials_conflict: "|{n} záznam pro stejnou platformu/verzi|{n} záznamy pro stejnou platformu/verzi|{n} záznamů pro stejnou platformu/verzi"
 </i18n>
 
 
@@ -102,17 +104,18 @@ cs:
                 </v-row>
 
                 <v-row>
-                    <v-col cols="6" :sm="2">
+                    <v-col cols="6" :sm="3">
                         <v-select
                                 v-model="counterVersion"
                                 :label="$t('labels.counter_version')"
                                 :items="allowedCounterVersions"
                                 :disabled="!!credentials"
                                 :no-data-text="$t('all_versions_used')"
+                                :hint="versionHint"
                         >
                         </v-select>
                     </v-col>
-                    <v-col cols="12" :sm="10">
+                    <v-col cols="12" :sm="9">
                         <v-text-field
                                 v-model="url"
                                 :label="$t('labels.url')"
@@ -389,20 +392,18 @@ cs:
         return this.platforms
       },
       allowedCounterVersions () {
-        let versions = [4, 5]
-        if (!this.existingCredentials) {
-          return versions
-        }
-        // we have a list of existing credentials - we will filter the possibilities according
-        // to what is already defined
-        let existing = []
-        for (let cred of this.existingCredentials) {
-          if (cred.organization.pk === this.organization.pk && cred.platform.pk === this.platform.pk) {
-            existing.push(cred.counter_version)
-          }
-        }
-        return versions.filter(item => existing.indexOf(item) < 0)
+        return [4, 5]
       },
+      versionHint () {
+        if (!this.existingCredentials) {
+          return null
+        }
+        let sameVerCount = this.existingCredentials.filter(cred => cred.organization.pk === this.organization.pk && cred.platform.pk === this.platform.pk && cred.counter_version === this.counterVersion)
+        if (sameVerCount.length > 0) {
+          return this.$tc('credentials_conflict', sameVerCount.length)
+        }
+        return null
+      }
     },
     methods: {
       ...mapActions({
