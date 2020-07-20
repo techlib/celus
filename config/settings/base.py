@@ -16,8 +16,9 @@ import sys
 from celery.schedules import schedule, crontab
 from decouple import config, Csv
 import sentry_sdk
+from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
-
+from sentry_sdk.integrations.redis import RedisIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / 'apps'))
@@ -382,4 +383,8 @@ PROMETHEUS_EXPORT_MIGRATIONS = config('PROMETHEUS_EXPORT_MIGRATIONS', cast=bool,
 # sentry
 sentry_url = config('SENTRY_URL', default='')
 if sentry_url:
-    sentry_sdk.init(dsn=sentry_url, integrations=[DjangoIntegration()], send_default_pii=True)
+    sentry_sdk.init(
+        dsn=sentry_url,
+        integrations=[DjangoIntegration(), CeleryIntegration(), RedisIntegration()],
+        send_default_pii=True,
+    )
