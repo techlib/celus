@@ -23,6 +23,8 @@ from sentry_sdk.integrations.redis import RedisIntegration
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / 'apps'))
 
+USES_ERMS = config('USES_ERMS', cast=bool, default=False)
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -280,6 +282,9 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'sushi.tasks.fetch_new_sushi_data_task',
         'schedule': crontab(minute=13, hour=3),  # every day at 3:13
     },
+}
+
+ERMS_CELERY_SCHEDULE = {
     'erms_sync_platforms_task': {
         'task': 'publications.tasks.erms_sync_platforms_task',
         'schedule': schedule(run_every=timedelta(minutes=30)),
@@ -293,6 +298,9 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': schedule(run_every=timedelta(minutes=30)),
     },
 }
+
+if USES_ERMS:
+    CELERY_BEAT_SCHEDULE.update(ERMS_CELERY_SCHEDULE)
 
 # allauth config
 ACCOUNT_EMAIL_REQUIRED = True
@@ -340,7 +348,7 @@ EDUID_IDENTITY_HEADER = config('EDUID_IDENTITY_HEADER', default='HTTP_X_IDENTITY
 # organizations whose users should have access to all
 MASTER_ORGANIZATIONS = config('MASTER_ORGANIZATIONS', cast=Csv(), default='NTK-61387142-CEL')
 # should we try to authenticate against ERMS before trying local data?
-LIVE_ERMS_AUTHENTICATION = config('LIVE_ERMS_AUTHENTICATION', cast=bool, default=False)
+LIVE_ERMS_AUTHENTICATION = config('LIVE_ERMS_AUTHENTICATION', cast=bool, default=USES_ERMS)
 # how many times max should we retry queued attempts
 QUEUED_SUSHI_MAX_RETRY_COUNT = config('QUEUED_SUSHI_MAX_RETRY_COUNT', cast=int, default=5)
 # default date where to end fetching sushi data
