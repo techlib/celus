@@ -118,11 +118,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django_prometheus.db.backends.postgresql',
-        'NAME': 'celus',
-        'USER': 'celus',
-        'PASSWORD': '--REPLACE ME--',  # should be replaced later with data from secret json
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'NAME': config('DB_NAME', default='celus'),
+        'USER': config('DB_USER', default='celus'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', cast=int, default=5432),
         'ATOMIC_REQUESTS': True,
     }
 }
@@ -329,9 +329,6 @@ SILENCED_SYSTEM_CHECKS = []
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', cast=bool, default=False)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
-DATABASES['default']['NAME'] = config('DB_NAME', default='celus')
-DATABASES['default']['PASSWORD'] = config('DB_PASSWORD')
-DATABASES['default']['PORT'] = config('DB_PORT', cast=int, default=5432)
 
 # other django stuff
 MAILGUN_API_KEY = config('MAILGUN_API_KEY', default='fill me in')
