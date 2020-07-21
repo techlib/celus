@@ -1,25 +1,21 @@
 import csv
 import json
-import urllib
-from datetime import datetime, timedelta
-from io import StringIO
-from typing import List, Dict, Union, Optional
-from urllib.parse import urljoin
 import logging
-from xml.etree import ElementTree as ET
 import traceback
 import typing
+import urllib
+from datetime import datetime, timedelta
+from io import StringIO, BytesIO
+from urllib.parse import urljoin
+from xml.etree import ElementTree as ET
 
 import requests
-
 from pycounter import sushi
-from pycounter.csvhelper import UnicodeWriter
 
 from .counter5 import (
     Counter5TRReport,
     Counter5DRReport,
     Counter5ReportBase,
-    CounterRecord,
     CounterError,
 )
 from .exceptions import SushiException
@@ -284,7 +280,7 @@ class Sushi5Client(SushiClientBase):
 
     def report_to_data(self, report: bytes, validate=True) -> typing.Generator[dict, None, None]:
         try:
-            fd = StringIO(report.decode())
+            fd = BytesIO(report)
             counter_report = Counter5ReportBase()
             record_found, header, data = counter_report.fd_to_dicts(fd)
         except ValueError as e:

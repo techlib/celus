@@ -92,7 +92,7 @@ class Counter5ReportBase(object):
 
         # Parse it for the first time to extract errors and warnings
         if self.raw_data:
-            fd = io.StringIO(self.raw_data.decode())
+            fd = io.BytesIO(self.raw_data)
             self.fd_to_dicts(fd)
 
     def read_report(
@@ -142,24 +142,24 @@ class Counter5ReportBase(object):
                     self.errors.append(error)
 
     def fd_to_dicts(
-        self, fd: typing.TextIO
+        self, fd: typing.BinaryIO
     ) -> typing.Tuple[bool, dict, typing.Generator[dict, None, None]]:
         def empty_generator() -> typing.Generator[dict, None, None]:
             empty: typing.List[dict] = []
             return (e for e in empty)
 
         # first check whether it is not an error report
-        first_character = fd.read(1)
-        while first_character not in '[{"':
+        first_character = fd.read(1)  # type: bytes
+        while first_character not in b'[{"':
             first_character = fd.read(1)
         fd.seek(0)
 
-        if first_character == '[':
+        if first_character == b'[':
             # error report handling
             self.extract_errors(json.load(fd))
             return False, {}, empty_generator()
 
-        elif first_character == '"':
+        elif first_character == b'"':
             # stringified header with an error recieved
             json_string = json.load(fd)
             data = json.loads(json_string)
@@ -218,7 +218,7 @@ class Counter5ReportBase(object):
         return record_found, header, items
 
     def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
-        f = open(filename, 'r')  # file will be closed later (once generator struct is discarded)
+        f = open(filename, 'rb')  # file will be closed later (once generator struct is discarded)
         record_found, header, items = self.fd_to_dicts(f)
         self.record_found = record_found
         return self.read_report(header, items)
