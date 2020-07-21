@@ -12,7 +12,10 @@ cs:
 
         <v-app-bar app clipped-left>
             <v-toolbar-title class="flex-sm-shrink-0">
-                <img src="../assets/czechelib-stats-64.svg" alt="CzechELib stats" id="logo-image">
+                <img
+                        :src="siteLogo ? siteLogo.img : '../assets/czechelib-stats-64.svg'"
+                        :alt="siteLogo ? siteLogo.alt_text : 'Celus'"
+                        id="logo-image">
             </v-toolbar-title>
 
             <v-divider
@@ -104,15 +107,9 @@ cs:
         <v-footer app absolute inset height="128px">
             <v-container fluid>
                 <v-row no-gutters wrap>
-                <v-col cols="auto">
-                    <img src="../assets/eu_fond.svg" alt="Logo ESI fondu" class="logow">
-                </v-col>
-                <v-col cols="auto">
-                    <img src="../assets/MSMT_cz.svg" alt="Logo MŠMT" class="logow">
-                </v-col>
-                <v-col cols="auto">
-                    <img src="../assets/ntk-96.svg" alt="Logo NTK" class="logow">
-                </v-col>
+                    <v-col cols="auto" v-for="(image, index) of footerImages" :key="index">
+                        <img :src="image.img" :alt="image.alt_text" class="logow">
+                    </v-col>
                 </v-row>
             </v-container>
         </v-footer>
@@ -154,6 +151,9 @@ cs:
         snackbarText: 'snackbarContent',
         snackbarColor: 'snackbarColor',
         user: 'user',
+        siteLogo: state => state.siteConfig.siteLogo,
+        siteName: state => state.siteConfig.siteName,
+        footerImages: state => state.siteConfig.footerImages,
       }),
       ...mapGetters({
         loggedIn: 'loggedIn',
@@ -216,6 +216,7 @@ cs:
         @media only screen and (max-width:600px) {
             width: 20vw;
         }
+        max-width: 128px;
     }
 
     section.header {

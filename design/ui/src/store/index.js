@@ -13,6 +13,7 @@ import { sortOrganizations } from '../libs/organizations'
 import interest from './modules/interest'
 import maintenance from './modules/maintenance'
 import login from './modules/login'
+import siteConfig from './modules/site-config'
 import { ConcurrencyManager } from 'axios-concurrency'
 import { isEqual } from 'lodash'
 
@@ -37,6 +38,7 @@ export default new Vuex.Store({
     interest,
     maintenance,
     login,
+    siteConfig,
   },
   state: {
     user: null,
@@ -237,6 +239,7 @@ export default new Vuex.Store({
         }
       )
       await dispatch('loadBasicInfo')  // load basic info - this can be done without logging in
+      await dispatch('loadSiteConfig')  // site config - name, images, etc.
       await dispatch('loadUserData')  // we need user data first
     },
     afterAuthentication ({dispatch, state, getters}) {
@@ -377,7 +380,7 @@ export default new Vuex.Store({
       } catch (error) {
         // ignore this error - it is not crucial
       }
-    }
+    },
   },
   mutations: {
     setSnackbarShow(state, {show, color}) {

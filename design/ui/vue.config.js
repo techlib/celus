@@ -18,6 +18,11 @@ module.exports = {
         changeOrigin: true,
         ws: true
       },
+      '/media/': {
+        target: devURLBase,
+        changeOrigin: true,
+        ws: true
+      },
     },
     overlay: (process.env.BUILD == 'yes' ? false : { errors: false }),
   },
