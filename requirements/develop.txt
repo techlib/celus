@@ -1,11 +1,11 @@
 alabaster==0.7.12
 amqp==2.6.0
 appdirs==1.4.4
-appnope==0.1.0; python_version >= "3.3" and sys_platform == "darwin" or platform_system == "Darwin"
+appnope==0.1.0; sys_platform == "darwin" or platform_system == "Darwin" or python_version >= "3.3" and sys_platform == "darwin"
 atomicwrites==1.4.0; sys_platform == "win32"
 attrs==19.3.0
 babel==2.8.0
-backcall==0.2.0; python_version >= "3.3"
+backcall==0.2.0
 beautifulsoup4==4.9.1
 billiard==3.6.3.0
 black==19.10b0
@@ -57,7 +57,7 @@ ipython==7.16.1
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
 jdcal==1.4.1
-jedi==0.17.2; python_version >= "3.3"
+jedi==0.17.2
 jinja2==2.11.2
 jsonschema==3.2.0
 jupyter==1.0.0
@@ -83,8 +83,9 @@ pandocfilters==1.4.2
 parso==0.7.0; python_version >= "3.3"
 pathspec==0.8.0
 pendulum==2.1.1
-pexpect==4.8.0; python_version >= "3.3" and sys_platform != "win32"
-pickleshare==0.7.5; python_version >= "3.3"
+pexpect==4.8.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32"
+pickleshare==0.7.5
+pillow==7.2.0
 pluggy==0.13.1
 pre-commit==2.4.0
 prometheus-client==0.8.0

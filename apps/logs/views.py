@@ -1,8 +1,6 @@
-import sys
 import traceback
 from time import monotonic
 
-from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import mail_admins
 from django.db.models import Count
