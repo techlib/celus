@@ -341,7 +341,16 @@ DEBUG = config('DEBUG', cast=bool, default=False)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
 
 # other django stuff
-MAILGUN_API_KEY = config('MAILGUN_API_KEY', default='fill me in')
+MAILGUN_API_KEY = config('MAILGUN_API_KEY', default='')
+if MAILGUN_API_KEY:
+    # if we have the mailgun api key, we activate mailgun
+    INSTALLED_APPS += ['anymail']
+    EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
+    ANYMAIL = {
+        'MAILGUN_API_KEY': MAILGUN_API_KEY,
+        'MAILGUN_SENDER_DOMAIN': config('MAILGUN_SENDER_DOMAIN', default='mg.celus.net'),
+        'MAILGUN_API_URL': config('MAILGUN_API_URL', default='https://api.eu.mailgun.net/v3'),
+    }
 
 # ERMS related stuff
 ERMS_API_URL = config('ERMS_API_URL', default='https://erms.czechelib.cz/api/')
