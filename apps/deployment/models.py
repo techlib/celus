@@ -5,7 +5,7 @@ from django.db import models
 class SiteImage(models.Model):
 
     site = models.ForeignKey(Site, on_delete=models.CASCADE)
-    img = models.ImageField(upload_to='deployment')
+    img = models.FileField(upload_to='deployment')
     alt_text = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)

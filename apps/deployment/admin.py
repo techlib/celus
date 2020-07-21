@@ -6,12 +6,12 @@ from .models import FooterImage, SiteLogo
 @admin.register(FooterImage)
 class FooterImageAdmin(admin.ModelAdmin):
 
-    list_display = ('site', 'img', 'alt_text', 'position', 'last_modified')
-    list_display_links = ('img',)
+    list_display = ('alt_text', 'site', 'img', 'position', 'last_modified')
+    list_display_links = ('alt_text',)
 
 
 @admin.register(SiteLogo)
 class FooterImageAdmin(admin.ModelAdmin):
 
-    list_display = ('site', 'img', 'alt_text', 'last_modified')
-    list_display_links = ('img',)
+    list_display = ('alt_text', 'site', 'img', 'last_modified')
+    list_display_links = ('alt_text',)

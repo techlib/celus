@@ -214,6 +214,7 @@ cs:
             width: 20vw;
         }
         max-width: 128px;
+        max-height: 48px;
     }
 
     img.logo {
