@@ -333,7 +333,7 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         annot = self._annotations()
         if annot:
             result = result.annotate(**annot)
-        result = self._postprocess(result)
+        result = self._postprocess(result.order_by('name', 'pub_type'))
         return result
 
     def paginate_queryset(self, queryset):
