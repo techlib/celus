@@ -82,22 +82,12 @@
         font-size: 1.25rem;
     }
 
-    #logo-image {
-        @media only screen and (max-width:600px) {
-            width: 20vw;
-        }
-    }
-
     section.header {
         margin-bottom: 2rem;
     }
 
     div.fields {
         margin-top: 1rem;
-    }
-
-    footer.v-footer {
-        // bottom: -100px;
     }
 
     div.v-input {
@@ -114,14 +104,6 @@
                 }
             }
         }
-    }
-
-    img.logo {
-        max-width: 20vw;
-    }
-
-    img.logow {
-        max-height: 10vw;
     }
 
 </style>

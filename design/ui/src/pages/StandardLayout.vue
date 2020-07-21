@@ -13,7 +13,7 @@ cs:
         <v-app-bar app clipped-left>
             <v-toolbar-title class="flex-sm-shrink-0">
                 <img
-                        :src="siteLogo ? siteLogo.img : '../assets/czechelib-stats-64.svg'"
+                        :src="siteLogo ? siteLogo.img : require('../assets/celus-plus-dark.svg')"
                         :alt="siteLogo ? siteLogo.alt_text : 'Celus'"
                         id="logo-image">
             </v-toolbar-title>
@@ -104,7 +104,7 @@ cs:
                 </v-snackbar>
             </v-container>
         </v-content>
-        <v-footer app absolute inset height="128px">
+        <v-footer app absolute inset height="128px" v-if="footerImages.length">
             <v-container fluid>
                 <v-row no-gutters wrap>
                     <v-col cols="auto" v-for="(image, index) of footerImages" :key="index">
@@ -206,11 +206,7 @@ cs:
   }
 </script>
 
-<style lang="scss">
-
-    img.avatar {
-        font-size: 1.25rem;
-    }
+<style lang="scss" scoped>
 
     #logo-image {
         @media only screen and (max-width:600px) {
@@ -219,40 +215,12 @@ cs:
         max-width: 128px;
     }
 
-    section.header {
-        margin-bottom: 2rem;
-    }
-
-    div.fields {
-        margin-top: 1rem;
-    }
-
-    footer.v-footer {
-        // bottom: -100px;
-    }
-
-    div.v-input {
-
-        &.short {
-            flex-grow: 0;
-        }
-
-        div.v-input__control {
-            div.v-text-field__details {
-                min-height: 1px;
-                .v-messages {
-                    min-height: 1px;
-                }
-            }
-        }
-    }
-
     img.logo {
         max-width: 20vw;
     }
 
     img.logow {
-        max-height: 10vw;
+        max-height: 92px;
     }
 
 </style>

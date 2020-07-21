@@ -6,7 +6,7 @@ export default {
   state: {
     siteName: 'Celus',
     siteDomain: '',
-    siteLogo: '/static/img/celus-plus-dark.svg',
+    siteLogo: null,
     footerImages: [],
   },
 
