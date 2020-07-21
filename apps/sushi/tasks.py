@@ -39,6 +39,8 @@ def run_sushi_fetch_attempt_task(attempt_id: int, import_data: bool = False):
     )
     if import_data and attempt.can_import_data:
         import_one_sushi_attempt_task.delay(attempt.id)
+        # TODO: the following is here to make onboarding more user friendly, but is probably
+        # not what we want in a production environment - let's remove it one day
         smart_interest_sync_task.apply_async(countdown=3)
         sync_materialized_reports_task.apply_async(countdown=5)
 
