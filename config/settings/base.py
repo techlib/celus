@@ -167,7 +167,7 @@ LANGUAGES = (
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
-MEDIA_ROOT = str(BASE_DIR / 'media/')
+MEDIA_ROOT = config('MEDIA_ROOT', default=str(BASE_DIR / 'media/'))
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
