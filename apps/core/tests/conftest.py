@@ -1,6 +1,7 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 
 from core.models import Identity
 from organizations.models import Organization
@@ -71,6 +72,11 @@ def authentication_headers():
         return {settings.EDUID_IDENTITY_HEADER: identity}
 
     return fn
+
+
+@pytest.fixture
+def site():
+    return Site.objects.create(id=settings.SITE_ID, name='Celus test', domain='test.celus.net')
 
 
 __all__ = [

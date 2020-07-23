@@ -1,4 +1,5 @@
 from django.contrib.sites.models import Site
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -27,6 +28,9 @@ class SiteViewSet(ReadOnlyModelViewSet):
 
 
 class SiteOverview(APIView):
+
+    permission_classes = [AllowAny]
+
     def get(self, request):
         site = Site.objects.get(pk=settings.SITE_ID)
         footer_images = [

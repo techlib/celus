@@ -77,7 +77,7 @@ class TestUserAPI(object):
         assert resp_data["email_verification_sent"] == sent_time.strftime('%Y-%m-%dT%H:%M:%SZ')
         assert User.objects.get(pk=user.pk).email_verified is True
 
-    def test_send_email_verification(self, authenticated_client, valid_identity, mailoutbox):
+    def test_send_email_verification(self, authenticated_client, valid_identity, mailoutbox, site):
         user = authenticated_client.user
         user.email = valid_identity
         user.save()
@@ -116,7 +116,7 @@ class TestAccountCreationAPI(object):
         'password2': 'verysecret666',
     }
 
-    def test_create_account(self, mailoutbox, client):
+    def test_create_account(self, mailoutbox, client, site):
         """
         Tests that the API endpoint for account creation works as expected by the frontend code
         """
@@ -134,7 +134,7 @@ class TestAccountCreationAPI(object):
         assert user.emailaddress_set.count() == 1
         assert user.emailaddress_set.first().emailconfirmation_set.count() == 1
 
-    def test_create_account_same_username(self, client):
+    def test_create_account_same_username(self, client, site):
         """
         Tests that is it possible to create two accounts with the same part before @ in email
         """
@@ -172,7 +172,7 @@ class TestAccountCreationAPI(object):
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
 
-    def test_create_account_email_customization(self, mailoutbox, client):
+    def test_create_account_email_customization(self, mailoutbox, client, site):
         """
         Tests that the email verification email sent when creating an account uses our own
         text and not the one provided with allauth.
@@ -193,7 +193,9 @@ class TestAccountCreationAPI(object):
         assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
         assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
 
-    def test_create_account_email_customization_resend(self, mailoutbox, authenticated_client):
+    def test_create_account_email_customization_resend(
+        self, mailoutbox, authenticated_client, site
+    ):
         """
         Tests that the email verification email sent when re-sending verification email has custom
         text and not the one provided with allauth.
@@ -211,7 +213,7 @@ class TestAccountCreationAPI(object):
         assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
         assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
 
-    def test_email_admins_about_create_account(self, mailoutbox, client):
+    def test_email_admins_about_create_account(self, mailoutbox, client, site):
         """
         Tests that admins are sent a email when user creates an account
         """

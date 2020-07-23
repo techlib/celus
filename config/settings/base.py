@@ -343,6 +343,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
 # other django stuff
 MAILGUN_API_KEY = config('MAILGUN_API_KEY', default='')
 if MAILGUN_API_KEY:
+    print("dfasdlkfjdaslfdkasjflasdkfjasdl;kfjdsaflks")
     # if we have the mailgun api key, we activate mailgun
     INSTALLED_APPS += ['anymail']
     EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
