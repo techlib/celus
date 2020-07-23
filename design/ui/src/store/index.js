@@ -15,7 +15,7 @@ import maintenance from './modules/maintenance'
 import login from './modules/login'
 import siteConfig from './modules/site-config'
 import { ConcurrencyManager } from 'axios-concurrency'
-import { isEqual } from 'lodash'
+import isEqual from 'lodash/isEqual'
 
 Vue.use(Vuex)
 
