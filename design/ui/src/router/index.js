@@ -1,25 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import NotFoundPage from '../pages/NotFoundPage'
-// import ChartTestPage from '../pages/ChartTestPage'
-import PlatformListPage from '../pages/PlatformListPage'
-import PlatformDetailPage from '../pages/PlatformDetailPage'
-import TitleDetailPage from '../pages/TitleDetailPage'
-import AllTitlesListPage from '../pages/AllTitlesListPage'
-import AfterLoginPage from '../pages/AfterLoginPage'
-import SushiCredentialsManagementPage from '../pages/SushiCredentialsManagementPage'
-import ImportBatchesPage from '../pages/ImportBatchesPage'
-import CustomDataUploadPage from '../pages/CustomDataUploadPage'
-import SushiFetchAttemptsPage from '../pages/SushiFetchAttemptsPage'
-import UserPage from '../pages/UserPage'
-import ManagementPage from '../pages/ManagementPage'
-import MaintenancePage from '../pages/MaintenancePage'
-import OrganizationPlatformInterestOverviewPage
-  from '../pages/OrganizationPlatformInterestOverviewPage'
-import ManualUploadListPage from '../pages/ManualUploadListPage'
-import DashboardPage from '../pages/DashboardPage'
-import IntroPage from '../pages/IntroPage'
-import VerifyEmailPage from '../pages/VerifyEmailPage'
 
 Vue.use(Router)
 
@@ -33,7 +13,7 @@ export default new Router({
     {
       path: '/verify-email/',
       name: 'verify-email',
-      component: VerifyEmailPage,
+      component: () => import('../pages/VerifyEmailPage.vue'),
       meta: {
         outsideNormalLayout: true,
       }
@@ -41,39 +21,39 @@ export default new Router({
     {
       path: '/intro/',
       name: 'intro',
-      component: IntroPage,
+      component: () => import('../pages/IntroPage.vue'),
     },
     {
       path: '/dashboard/',
       name: 'dashboard',
-      component: DashboardPage,
+      component: () => import('../pages/DashboardPage.vue'),
     },
     {
       path: '/user/',
       name: 'user-page',
-      component: UserPage,
+      component: () => import('../pages/UserPage.vue'),
     },
     {
       path: '/platforms/',
       name: 'platform-list',
-      component: PlatformListPage,
+      component: () => import('../pages/PlatformListPage.vue'),
       // meta: {title: 'pages.platforms'}
     },
     {
       path: '/titles/',
       name: 'title-list',
-      component: AllTitlesListPage
+      component: () => import('../pages/AllTitlesListPage.vue')
     },
     {
       path: '/platforms/:platformId',
       name: 'platform-detail',
-      component: PlatformDetailPage,
+      component: () => import('../pages/PlatformDetailPage.vue'),
       props: route => ({platformId: Number.parseInt(route.params.platformId, 10)})
     },
     {
       path: '/platforms/:platformId/title/:titleId',
       name: 'platform-title-detail',
-      component: TitleDetailPage,
+      component: () => import('../pages/TitleDetailPage.vue'),
       props: route => ({
         platformId: Number.parseInt(route.params.platformId, 10),
         titleId: Number.parseInt(route.params.titleId, 10),
@@ -82,7 +62,7 @@ export default new Router({
     {
       path: '/titles/:titleId',
       name: 'title-detail',
-      component: TitleDetailPage,
+      component: () => import('../pages/TitleDetailPage.vue'),
       props: route => ({
         platformId: null,
         titleId: Number.parseInt(route.params.titleId, 10),
@@ -91,48 +71,48 @@ export default new Router({
     {
       path: '/heatmap',
       name: 'heatmap',
-      component: OrganizationPlatformInterestOverviewPage,
+      component: () => import('../pages/OrganizationPlatformInterestOverviewPage.vue'),
     },
     {
       path: '/admin/management/',
       name: 'management',
-      component: ManagementPage,
+      component: () => import('../pages/ManagementPage.vue'),
     },
     {
       path: '/admin/sushi-credentials/',
       name: 'sushi-credentials-list',
-      component: SushiCredentialsManagementPage,
+      component: () => import('../pages/SushiCredentialsManagementPage.vue'),
     },
     {
       path: '/admin/import-batches/',
       name: 'import-batch-list',
-      component: ImportBatchesPage,
+      component: () => import('../pages/ImportBatchesPage.vue'),
     },
     {
       path: '/admin/mdu/',
       name: 'manual-data-upload-list',
-      component: ManualUploadListPage,
+      component: () => import('../pages/ManualUploadListPage.vue'),
     },
     {
       path: '/admin/sushi-fetch-attempts/',
       name: 'sushi-fetch-attempts',
-      component: SushiFetchAttemptsPage,
+      component: () => import('../pages/SushiFetchAttemptsPage.vue'),
     },
     {
       path: '/admin/maintenance/',
       name: 'maintenance',
-      component: MaintenancePage,
+      component: () => import('../pages/MaintenancePage.vue'),
     },
     {
       path: '/platforms/:platformId/upload-data/',
       name: 'platform-upload-data',
-      component: CustomDataUploadPage,
+      component: () => import('../pages/CustomDataUploadPage.vue'),
       props: route => ({platformId: Number.parseInt(route.params.platformId, 10)})
     },
     {
       path: '/platforms/:platformId/upload-data/:uploadObjectId',
       name: 'platform-upload-data-step2',
-      component: CustomDataUploadPage,
+      component: () => import('../pages/CustomDataUploadPage.vue'),
       props: route => ({
         platformId: Number.parseInt(route.params.platformId, 10),
         uploadObjectId: Number.parseInt(route.params.uploadObjectId, 10),
@@ -141,12 +121,12 @@ export default new Router({
     {
       path: '/secure',
       name: 'after-login-page',
-      component: AfterLoginPage,
+      component: () => import('../pages/AfterLoginPage.vue'),
     },
 
     {
       path: '*',
-      component: NotFoundPage,
+      component: () => import('../pages/NotFoundPage.vue'),
     }
   ],
   mode: 'history',
