@@ -32,15 +32,15 @@ cs:
 
 <template>
     <v-container>
-        <!--h1 class="display-2 mb-4">{{ $t('management_page') }}</h1-->
+        <!--h1 class="text-h3 mb-4">{{ $t('management_page') }}</h1-->
 
         <section v-if="user.is_superuser || user.is_staff">
-            <h2 class="display-1 mb-3">{{ $t('django_admin') }}</h2>
+            <h2 class="text-h4 mb-3">{{ $t('django_admin') }}</h2>
 
             <p v-html="$t('django_admin_text')" class="font-weight-light"></p>
         </section>
 
-        <h2 class="display-1 mb-3">{{ $t('background_tasks') }}</h2>
+        <h2 class="text-h4 mb-3">{{ $t('background_tasks') }}</h2>
         <p class="font-weight-light" v-text="$t('background_tasks_info')"></p>
 
 

@@ -88,7 +88,7 @@ cs:
             </v-btn>
         </v-app-bar>
 
-        <v-content>
+        <v-main>
             <v-container fluid pa-0 pa-sm-2>
 
                 <router-view :key="$route.fullPath" v-if="loggedIn"/>
@@ -104,7 +104,7 @@ cs:
                     </v-btn>
                 </v-snackbar>
             </v-container>
-        </v-content>
+        </v-main>
         <v-footer app absolute inset height="128px" v-if="footerImages.length">
             <v-container fluid>
                 <v-row no-gutters wrap>
