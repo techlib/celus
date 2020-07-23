@@ -77,7 +77,7 @@ def authentication_headers():
 @pytest.fixture
 def site():
     return Site.objects.get_or_create(
-        id=settings.SITE_ID, name='Celus test', domain='test.celus.net'
+        id=settings.SITE_ID, defaults={'name': 'Celus test', 'domain': 'test.celus.net'}
     )[0]
 
 
