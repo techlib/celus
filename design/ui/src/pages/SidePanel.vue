@@ -7,7 +7,7 @@
             :mini-variant.sync="mini"
             clipped
             app
-            mobile-break-point="900"
+            mobile-breakpoint="900"
     >
         <v-toolbar flat class="transparent">
             <v-list class="pa-0">
