@@ -6,7 +6,7 @@ from datetime import date
 from typing import Optional
 
 from core.logic.debug import log_memory
-from logs.logic.validation import clean_and_validate_issn, ValidationError
+from logs.logic.validation import clean_and_validate_issn, ValidationError, normalize_isbn
 from logs.models import ImportBatch
 from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
@@ -36,14 +36,7 @@ TitleRec = namedtuple('TitleRec', ('name', 'pub_type', 'issn', 'eissn', 'isbn', 
 
 class TitleManager(object):
     def __init__(self):
-        # in the following, we use values_list to speed things up as there are a lot of objects
-        # and creating them takes a lot of time
-        # (e.g. processing time for import was cut from 3.5s to 1.2s by switching to this)
         self.key_to_title_id_and_pub_type = {}
-        # tuple(t[:5]): tuple(t[5:])
-        # for t in Title.objects.all().order_by().
-        # values_list('name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type')
-        # }
         self.stats = Counter()
 
     def prefetch_titles(self, records: [TitleRec]):
@@ -59,6 +52,29 @@ class TitleManager(object):
         }
         logger.debug('Prefetched %d records', len(self.key_to_title_id_and_pub_type))
 
+    @classmethod
+    def normalize_title_rec(cls, record: TitleRec) -> TitleRec:
+        """
+        Normalize specific fields in the record and return a new TitleRec with normalized data.
+        Should be run before one attempts to ingest the data into the database.
+        """
+        # normalize issn, eissn and isbn - they are sometimes malformed by whitespace in the data
+        issn = record.issn
+        if issn:
+            issn = clean_and_validate_issn(issn, raise_error=False)
+        eissn = record.eissn
+        if eissn:
+            eissn = clean_and_validate_issn(eissn, raise_error=False)
+        isbn = normalize_isbn(record.isbn) if record.isbn else record.isbn
+        return TitleRec(
+            name=record.name,
+            isbn=isbn,
+            issn=issn,
+            eissn=eissn,
+            doi=record.doi,
+            pub_type=record.pub_type,
+        )
+
     def get_or_create(self, record: TitleRec) -> Optional[int]:
         if not record.name:
             logger.warning(
@@ -69,23 +85,7 @@ class TitleManager(object):
                 record.doi,
             )
             return None
-        # normalize issn, eissn and isbn - the are sometimes malformed by whitespace in the data
-        issn = record.issn
-        if issn:
-            try:
-                issn = clean_and_validate_issn(issn)
-            except ValidationError as e:
-                logger.error(f'Error: {e}')
-                issn = ''
-        eissn = record.eissn
-        if eissn:
-            try:
-                eissn = clean_and_validate_issn(eissn)
-            except ValidationError as e:
-                logger.error(f'Error: {e}')
-                eissn = ''
-        isbn = record.isbn.replace(' ', '') if record.isbn else record.isbn
-        key = (record.name, isbn, issn, eissn, record.doi)
+        key = (record.name, record.isbn, record.issn, record.eissn, record.doi)
         if key in self.key_to_title_id_and_pub_type:
             title_pk, db_pub_type = self.key_to_title_id_and_pub_type[key]
             # check if we need to improve the pub_type from UNKNOWN to something better
@@ -99,9 +99,9 @@ class TitleManager(object):
         title, created = Title.objects.get_or_create(
             name=record.name,
             pub_type=record.pub_type,
-            isbn=isbn,
-            issn=issn,
-            eissn=eissn,
+            isbn=record.isbn,
+            issn=record.issn,
+            eissn=record.eissn,
             doi=record.doi,
         )
         self.key_to_title_id_and_pub_type[key] = (title.pk, record.pub_type)
@@ -121,11 +121,11 @@ class TitleManager(object):
             if key == 'DOI':
                 doi = value
             elif key == 'Online_ISSN':
-                eissn = value
+                eissn = clean_and_validate_issn(value, raise_error=False) if value else value
             elif key == 'Print_ISSN':
-                issn = value
+                issn = clean_and_validate_issn(value, raise_error=False) if value else value
             elif key == 'ISBN':
-                isbn = value
+                isbn = normalize_isbn(value) if value else value
         pub_type = self.deduce_pub_type(eissn, isbn, issn, record)
         # convert None values for the following attrs to empty strings
         isbn = '' if isbn is None else isbn

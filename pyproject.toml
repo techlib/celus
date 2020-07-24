@@ -47,6 +47,7 @@ ijson = "^3.0.4"
 python-decouple = "^3.3"
 sentry-sdk = "^0.16.1"
 Pillow = "^7.2.0"
+isbnlib = "^3.10.3"
 
 
 

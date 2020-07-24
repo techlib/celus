@@ -56,6 +56,7 @@ ipykernel==5.3.3
 ipython==7.16.1
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
+isbnlib==3.10.3
 jdcal==1.4.1
 jedi==0.17.2
 jinja2==2.11.2
@@ -80,7 +81,7 @@ openpyxl==3.0.4
 packaging==20.4
 pandas==1.0.5
 pandocfilters==1.4.2
-parso==0.7.0; python_version >= "3.3"
+parso==0.7.0
 pathspec==0.8.0
 pendulum==2.1.1
 pexpect==4.8.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32"
@@ -92,7 +93,7 @@ prometheus-client==0.8.0
 prompt-toolkit==3.0.5
 psutil==5.7.2
 psycopg2-binary==2.8.5
-ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or os_name != "nt"
+ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32" or os_name != "nt" or python_version >= "3.3" and sys_platform != "win32" and (python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32")
 py==1.9.0
 -e git+https://github.com/beda42/pycounter.git@fef2ab29958cfc796fb24f0d227bf22dd31915a0#egg=pycounter
 pyfakefs==4.0.2

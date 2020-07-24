@@ -384,6 +384,10 @@ optional = false
 python-versions = "*"
 version = "0.15.1"
 
+[package.dependencies]
+Django = ">=2.2"
+six = "*"
+
 [[package]]
 category = "main"
 description = "Utilities for implementing Modified Preorder Tree Traversal with your Django Models and working with trees of Model instances."
@@ -697,6 +701,14 @@ version = ">=4.0.0"
 
 [package.extras]
 test = ["pytest (>=3.6.0)", "pytest-cov", "mock"]
+
+[[package]]
+category = "main"
+description = "Extract, clean, transform, hyphenate and metadata for ISBNs (International Standard Book Number)."
+name = "isbnlib"
+optional = false
+python-versions = "*"
+version = "3.10.3"
 
 [[package]]
 category = "main"
@@ -1054,7 +1066,6 @@ version = "1.4.2"
 [[package]]
 category = "dev"
 description = "A Python Parser"
-marker = "python_version >= \"3.3\""
 name = "parso"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -1195,7 +1206,7 @@ version = "2.8.5"
 [[package]]
 category = "dev"
 description = "Run a subprocess in a pseudo terminal"
-marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or os_name != \"nt\""
+marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\" or os_name != \"nt\" or python_version >= \"3.3\" and sys_platform != \"win32\" and (python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\")"
 name = "ptyprocess"
 optional = false
 python-versions = "*"
@@ -1406,7 +1417,7 @@ category = "dev"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "5.3.1"
 
 [[package]]
@@ -1909,7 +1920,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "818d768473d97afac4ed953af15de859d53ec122f5717878368d2ac9ca023da6"
+content-hash = "e9c55a22854f3203cc4f67c51e890c6e01a3f9d589b8c175662d7e112cf98371"
 python-versions = "^3.6.8"
 
 [metadata.files]
@@ -2187,6 +2198,10 @@ ipywidgets = [
     {file = "ipywidgets-7.5.1-py2.py3-none-any.whl", hash = "sha256:13ffeca438e0c0f91ae583dc22f50379b9d6b28390ac7be8b757140e9a771516"},
     {file = "ipywidgets-7.5.1.tar.gz", hash = "sha256:e945f6e02854a74994c596d9db83444a1850c01648f1574adf144fbbabe05c97"},
 ]
+isbnlib = [
+    {file = "isbnlib-3.10.3-py2.py3-none-any.whl", hash = "sha256:55a0f8d2070ce366fd4d03b4f30fe6caf9d0cadb4ae107676980570473e41178"},
+    {file = "isbnlib-3.10.3.tar.gz", hash = "sha256:2295c01465fe19776b1f9432fd99fd24e61230d146ded2752e0d980ef6f4101f"},
+]
 jdcal = [
     {file = "jdcal-1.4.1-py2.py3-none-any.whl", hash = "sha256:1abf1305fce18b4e8aa248cf8fe0c56ce2032392bc64bbd61b5dff2a19ec8bba"},
     {file = "jdcal-1.4.1.tar.gz", hash = "sha256:472872e096eb8df219c23f2689fc336668bdb43d194094b5cc1707e1640acfc8"},
@@ -2380,6 +2395,7 @@ oauthlib = [
 ]
 openpyxl = [
     {file = "openpyxl-3.0.4-py2.py3-none-any.whl", hash = "sha256:6e62f058d19b09b95d20ebfbfb04857ad08d0833190516c1660675f699c6186f"},
+    {file = "openpyxl-3.0.4.tar.gz", hash = "sha256:d88dd1480668019684c66cfff3e52a5de4ed41e9df5dd52e008cbf27af0dbf87"},
 ]
 packaging = [
     {file = "packaging-20.4-py2.py3-none-any.whl", hash = "sha256:998416ba6962ae7fbd6596850b80e17859a5753ba17c32284f67bfff33784181"},
