@@ -10,18 +10,18 @@ beautifulsoup4==4.9.1
 billiard==3.6.3.0
 black==19.10b0
 bleach==3.1.5
-celery==4.4.5
+celery==4.4.6
 certifi==2020.6.20
 cfgv==3.1.0
 chardet==3.0.4
 click==7.1.2
 colorama==0.4.3; python_version >= "3.3" and sys_platform == "win32" or sys_platform == "win32"
-coverage==5.1
+coverage==5.2
 dateparser==0.7.6
 decorator==4.4.2
 defusedxml==0.6.0
-distlib==0.3.0
-django==2.2.13
+distlib==0.3.1
+django==2.2.14
 django-allauth==0.41.0
 django-anymail==7.1.0
 -e git+https://github.com/beda42/django-cachalot.git@154ec37662e3ed20687d7710660856c3e5e95116#egg=django-cachalot
@@ -29,12 +29,12 @@ django-celery-results==1.2.1
 django-debug-toolbar==2.2
 django-error-report==0.2.0
 django-js-asset==1.2.2
-django-livereload-server==0.3.2
-django-modeltranslation==0.15
+django-modeltranslation==0.15.1
 django-mptt==0.11.0
 django-prometheus==2.0.0
 django-querycount==0.7.0
 django-redis==4.11.0
+django-rest-auth==0.9.5
 django-reversion==3.0.7
 django-webtest==1.9.7
 djangorestframework==3.11.0
@@ -46,25 +46,27 @@ factory-boy==2.12.0
 faker==4.0.3
 filelock==3.0.12
 future==0.18.2
-identify==1.4.20
-idna==2.9
+identify==1.4.24
+idna==2.10
+ijson==3.1.post0
 imagesize==1.2.0
-importlib-metadata==1.6.1; python_version < "3.8"
-importlib-resources==2.0.1; python_version < "3.7"
-ipykernel==5.3.0
-ipython==7.15.0
+importlib-metadata==1.7.0; python_version < "3.8"
+importlib-resources==3.0.0; python_version < "3.7"
+ipykernel==5.3.3
+ipython==7.16.1
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
+isbnlib==3.10.3
 jdcal==1.4.1
-jedi==0.17.1
+jedi==0.17.2
 jinja2==2.11.2
 jsonschema==3.2.0
 jupyter==1.0.0
-jupyter-client==6.1.3
+jupyter-client==6.1.6
 jupyter-console==6.1.0
 jupyter-core==4.6.3
-kombu==4.6.10
-lxml==4.5.1
+kombu==4.6.11
+lxml==4.5.2
 lz4==3.0.2
 markupsafe==1.1.1
 mistune==0.8.4
@@ -75,24 +77,25 @@ nodeenv==1.4.0
 notebook==6.0.3
 numpy==1.19.0
 oauthlib==3.1.0
-openpyxl==3.0.3
+openpyxl==3.0.4
 packaging==20.4
 pandas==1.0.5
 pandocfilters==1.4.2
 parso==0.7.0
 pathspec==0.8.0
-pendulum==2.1.0
+pendulum==2.1.1
 pexpect==4.8.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32"
 pickleshare==0.7.5
+pillow==7.2.0
 pluggy==0.13.1
 pre-commit==2.4.0
 prometheus-client==0.8.0
 prompt-toolkit==3.0.5
-psutil==5.7.0
+psutil==5.7.2
 psycopg2-binary==2.8.5
-ptyprocess==0.6.0; sys_platform != "win32" or os_name != "nt" or python_version >= "3.3" and sys_platform != "win32"
-py==1.8.2
--e git+https://github.com/beda42/pycounter.git@15a0e4add83f07ecfe8e29482de4a6297a7fbc43#egg=pycounter
+ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32" or os_name != "nt" or python_version >= "3.3" and sys_platform != "win32" and (python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32")
+py==1.9.0
+-e git+https://github.com/beda42/pycounter.git@fef2ab29958cfc796fb24f0d227bf22dd31915a0#egg=pycounter
 pyfakefs==4.0.2
 pygments==2.6.1
 pyparsing==2.4.7
@@ -101,10 +104,11 @@ pytest==5.4.3
 pytest-cov==2.8.1
 pytest-django==3.9.0
 python-dateutil==2.8.1
+python-decouple==3.3
 python-magic==0.4.18
-python3-openid==3.1.0
+python3-openid==3.2.0
 pytz==2020.1
-pytzdata==2019.3
+pytzdata==2020.1
 pywin32==228; sys_platform == "win32"
 pywinpty==0.5.7; os_name == "nt"
 pyyaml==5.3.1
@@ -112,12 +116,13 @@ pyzmq==19.0.1
 qtconsole==4.7.5
 qtpy==1.9.0
 redis==3.5.3
-regex==2020.6.8
+regex==2020.7.14
 requests==2.24.0
 requests-mock==1.8.0
 requests-oauthlib==1.3.0
 rest-pandas==1.1.0
 send2trash==1.5.0
+sentry-sdk==0.16.1
 six==1.15.0
 snowballstemmer==2.0.0
 soupsieve==1.9.6
@@ -139,9 +144,9 @@ typed-ast==1.4.1
 tzlocal==2.1
 urllib3==1.25.9
 vine==1.3.0
-virtualenv==20.0.24
+virtualenv==20.0.27
 waitress==1.4.4
-wcwidth==0.2.4
+wcwidth==0.2.5
 webencodings==0.5.1
 webob==1.8.6
 webtest==2.0.35
