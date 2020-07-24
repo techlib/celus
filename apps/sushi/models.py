@@ -1,28 +1,28 @@
-import hashlib
 import os
+import json
 import logging
+import os
 import traceback
 from copy import deepcopy
-from hashlib import blake2b
 from datetime import timedelta, datetime
+from hashlib import blake2b
 from itertools import takewhile
 from typing import Optional, Dict
-import json
 
 import requests
 import reversion
+from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.files.base import ContentFile
 from django.db import models
+from django.db.models import F
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from pycounter.exceptions import SushiException
-
-from django.conf import settings
 from rest_framework.exceptions import PermissionDenied
 
 from core.logic.dates import month_end
-from core.models import USER_LEVEL_CHOICES, UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, User
+from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, User
 from core.task_support import cache_based_lock
 from logs.models import ImportBatch
 from nigiri.client import (
@@ -45,7 +45,6 @@ from nigiri.counter4 import (
 from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
 from organizations.models import Organization
 from publications.models import Platform
-
 
 logger = logging.getLogger(__name__)
 
@@ -464,7 +463,26 @@ def where_to_store(instance: 'SushiFetchAttempt', filename):
     )
 
 
+class SushiFetchAttemptManager(models.Manager):
+    def current(self):
+        return self.filter(credentials_version_hash=F('credentials__version_hash'))
+
+    def successful(self, success_measure='is_processed'):
+        assert success_measure in (
+            'is_processed',
+            'download_success',
+            'processing_success',
+            'contains_data',
+        )
+        return self.filter(**{success_measure: True})
+
+    def current_or_successful(self, success_measure='is_processed'):
+        return self.current() | self.successful()
+
+
 class SushiFetchAttempt(models.Model):
+
+    objects = SushiFetchAttemptManager()
 
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)

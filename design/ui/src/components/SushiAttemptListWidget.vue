@@ -28,7 +28,7 @@ cs:
         <v-card-text>
             <v-container fluid>
                 <v-row>
-                    <v-col>
+                    <v-col cols="12" md="6" lg="5">
                         <table class="overview">
                             <tr v-if="organization">
                                 <th class="text-left">{{ $t('organization') }}:</th>
@@ -57,11 +57,20 @@ cs:
                         </table>
                     </v-col>
                     <v-spacer></v-spacer>
-                    <v-col cols="auto">
-                        <v-switch v-model="showSuccess" :label="$t('show_success')" color="success"></v-switch>
-                    </v-col>
-                    <v-col cols="auto">
-                        <v-switch v-model="showFailure" :label="$t('show_failure')" color="error"></v-switch>
+                    <v-col cols="12" lg="7">
+                        <v-container fluid class="pa-0">
+                            <v-row justify="end">
+                                <v-col cols="auto" class="py-0">
+                                    <FetchAttemptModeFilter v-model="historyMode"/>
+                                </v-col>
+                                <v-col cols="auto" class="py-0">
+                                    <v-switch v-model="showSuccess" :label="$t('show_success')" color="success" dense></v-switch>
+                                </v-col>
+                                <v-col cols="auto" class="py-0">
+                                    <v-switch v-model="showFailure" :label="$t('show_failure')" color="error" dense></v-switch>
+                                </v-col>
+                            </v-row>
+                        </v-container>
                     </v-col>
                 </v-row>
                 <v-row>
@@ -144,15 +153,16 @@ cs:
 </template>
 
 <script>
-  import {mapActions} from 'vuex'
+  import { mapActions } from 'vuex'
   import axios from 'axios'
   import AccessLogList from './AccessLogList'
   import ImportBatchChart from './ImportBatchChart'
   import CheckMark from './CheckMark'
+  import FetchAttemptModeFilter from './sushi/FetchAttemptModeFilter'
 
   export default {
     name: "SushiAttemptListWidget",
-    components: {AccessLogList, ImportBatchChart, CheckMark},
+    components: {AccessLogList, ImportBatchChart, CheckMark, FetchAttemptModeFilter},
     props: {
       organization: {required: false},
       platform: {required: false},
@@ -173,6 +183,8 @@ cs:
         selectedBatch: null,
         dialogType: '',
         loading: false,
+        hideObsolete: true,
+        historyMode: 'success_and_current'
       }
     },
     computed: {
@@ -180,7 +192,7 @@ cs:
         if (!(this.organization || this.platform || this.report)) {
           return ''
         }
-        let base = `/api/sushi-fetch-attempt/?format=json`
+        let base = `/api/sushi-fetch-attempt/?format=json&mode=${this.historyMode}`
         if (this.organization) {
           base += `&organization=${this.organization.pk}`
         }

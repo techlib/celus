@@ -13,11 +13,6 @@ en:
     counter_version: Counter version
     success_metric: Success metric
     all_orgs: Show all organizations
-    mode: Mode
-    modes:
-        all: All
-        current: Current
-        success_and_current: Success & current
 
 cs:
     dim:
@@ -31,11 +26,6 @@ cs:
     counter_version: Verze Counter
     success_metric: Měřítko úspěchu
     all_orgs: Všechny organizace
-    mode: Mód
-    modes:
-        all: Všechny
-        current: Aktuální
-        success_and_current: Úspěšné & aktuální
 </i18n>
 
 <template>
@@ -63,11 +53,7 @@ cs:
                 ></v-select>
             </v-col>
             <v-col>
-                <v-select
-                        :items="modeList"
-                        v-model="mode"
-                        :label="$t('mode')"
-                ></v-select>
+                <FetchAttemptModeFilter v-model="mode"/>
             </v-col>
             <v-col cols="auto" v-if="user.is_superuser">
                 <v-switch v-model="allOrganizations" :label="$t('all_orgs')"></v-switch>
@@ -158,12 +144,13 @@ cs:
 <script>
 
   import axios from 'axios'
-  import {mapActions, mapGetters, mapState} from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import SushiAttemptListWidget from '../components/SushiAttemptListWidget'
+  import FetchAttemptModeFilter from '../components/sushi/FetchAttemptModeFilter'
 
   export default {
     name: "SushiFetchAttemptsPage",
-    components: {SushiAttemptListWidget},
+    components: {FetchAttemptModeFilter, SushiAttemptListWidget},
     data () {
       return {
         statsData: [],
@@ -180,7 +167,7 @@ cs:
         counterVersion: null,
         successMetric: 'contains_data',
         allOrganizations: false,
-        mode: 'all',
+        mode: 'success_and_current',
       }
     },
     computed: {
@@ -216,13 +203,7 @@ cs:
           {value: 'download_success', text: this.$t('title_fields.download_success')},
           {value: 'processing_success', text: this.$t('title_fields.processing_success')},
           {value: 'contains_data', text: this.$t('title_fields.contains_data')},
-        ]
-      },
-      modeList () {
-        return [
-          {value: 'all', text: this.$t('modes.all')},
-          {value: 'current', text: this.$t('modes.current')},
-          {value: 'success_and_current', text: this.$t('modes.success_and_current')},
+          {value: 'is_processed', text: this.$t('title_fields.processed')},
         ]
       },
       organizationUrlParam () {

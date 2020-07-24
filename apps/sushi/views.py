@@ -144,7 +144,14 @@ class SushiFetchAttemptViewSet(ModelViewSet):
         if 'counter_version' in self.request.query_params:
             counter_version = self.request.query_params['counter_version']
             filter_params['credentials__counter_version'] = counter_version
-        return SushiFetchAttempt.objects.filter(**filter_params).select_related(
+        mode = self.request.query_params.get('mode')
+        if mode == 'all':
+            qs = SushiFetchAttempt.objects.all()
+        elif mode == 'current':
+            qs = SushiFetchAttempt.objects.current()
+        else:
+            qs = SushiFetchAttempt.objects.current_or_successful()
+        return qs.filter(**filter_params).select_related(
             'counter_report', 'credentials__organization'
         )
 
@@ -175,7 +182,7 @@ class SushiFetchAttemptStatsView(APIView):
     key_to_attr_map.update(
         {value[0]: key + '_id' for key, value in attr_to_query_param_map.items()}
     )
-    success_metrics = ['download_success', 'processing_success', 'contains_data']
+    success_metrics = ['download_success', 'processing_success', 'contains_data', 'is_processed']
 
     def get(self, request):
         organizations = request.user.accessible_organizations()
