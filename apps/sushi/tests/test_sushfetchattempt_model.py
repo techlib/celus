@@ -62,3 +62,21 @@ class TestFileName:
         assert fetch_attempt.data_file.name.startswith(
             f"counter/{internal_id or organization.pk}/{ platform_name }/{ version }_{code}"
         )
+
+
+@pytest.mark.django_db
+class TestSushiFetchAttemptModelManager(object):
+    def test_custom_manager_methods_exist(self):
+        """
+        Test that custom manager methods exist at all
+        """
+        SushiFetchAttempt.objects.all()
+        SushiFetchAttempt.objects.current()
+        SushiFetchAttempt.objects.current_or_successful()
+
+    def test_custom_manager_methods_exist_on_queryset(self):
+        """
+        Test that custom manager methods are also available on querysets for SushiFetchAttempts
+        """
+        SushiFetchAttempt.objects.filter(download_success=True).current()
+        SushiFetchAttempt.objects.filter(download_success=True).current_or_successful()

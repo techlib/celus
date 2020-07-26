@@ -463,7 +463,7 @@ def where_to_store(instance: 'SushiFetchAttempt', filename):
     )
 
 
-class SushiFetchAttemptManager(models.Manager):
+class SushiFetchAttemptQuerySet(models.QuerySet):
     def current(self):
         return self.filter(credentials_version_hash=F('credentials__version_hash'))
 
@@ -477,12 +477,12 @@ class SushiFetchAttemptManager(models.Manager):
         return self.filter(**{success_measure: True})
 
     def current_or_successful(self, success_measure='is_processed'):
-        return self.current() | self.successful()
+        return self.current() | self.successful(success_measure=success_measure)
 
 
 class SushiFetchAttempt(models.Model):
 
-    objects = SushiFetchAttemptManager()
+    objects = SushiFetchAttemptQuerySet.as_manager()
 
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
