@@ -359,7 +359,7 @@ def months_to_cover(first_month=None) -> [date]:
     List of dates (month starts) for which we should try to get data
     """
     last_month = month_start(month_start(now().date()) - timedelta(days=15))
-    first_month = first_month or parse_date(settings.SUSHI_ATTEMPT_LAST_DATE+'-01').date()
+    first_month = first_month or parse_date(settings.SUSHI_ATTEMPT_LAST_DATE + '-01').date()
     month = first_month
     months_to_check = []
     while month <= last_month:
@@ -368,8 +368,10 @@ def months_to_cover(first_month=None) -> [date]:
     return months_to_check
 
 
-DataHole = namedtuple('DataHole', ['date', 'credentials', 'counter_report', 'attempt_count',
-                                   'attempt_with_current_credentials'])
+DataHole = namedtuple(
+    'DataHole',
+    ['date', 'credentials', 'counter_report', 'attempt_count', 'attempt_with_current_credentials'],
+)
 
 
 def find_holes_in_data() -> [DataHole]:
@@ -382,26 +384,35 @@ def find_holes_in_data() -> [DataHole]:
     result = []
     for credentials in SushiCredentials.objects.filter(enabled=True):  # type: SushiCredentials
         for report_type in credentials.active_counter_reports.all():
-            attempts = SushiFetchAttempt.objects.filter(credentials=credentials,
-                                                        counter_report=report_type)
-            month_to_attempts = {key: list(group)
-                                 for key, group in groupby(attempts, lambda x: x.start_date)}
+            attempts = SushiFetchAttempt.objects.filter(
+                credentials=credentials, counter_report=report_type
+            )
+            month_to_attempts = {
+                key: list(group) for key, group in groupby(attempts, lambda x: x.start_date)
+            }
             for month in months:
                 attempts = month_to_attempts.get(month, [])
                 # we consider queued attempts successful because they will be tried again
                 # that is, holes with queued attempts are not holes :)
-                successful_attempts = [attempt for attempt in attempts
-                                       if attempt.processing_success or attempt.queued]
+                successful_attempts = [
+                    attempt for attempt in attempts if attempt.processing_success or attempt.queued
+                ]
                 # attempts with the current version of credentials
                 current_attempts = [
-                    attempt for attempt in attempts
+                    attempt
+                    for attempt in attempts
                     if attempt.credentials_version_hash == credentials.version_hash
                 ]
                 if not successful_attempts:
-                    result.append(DataHole(date=month, credentials=credentials,
-                                           counter_report=report_type, attempt_count=len(attempts),
-                                           attempt_with_current_credentials=bool(current_attempts))
-                                  )
+                    result.append(
+                        DataHole(
+                            date=month,
+                            credentials=credentials,
+                            counter_report=report_type,
+                            attempt_count=len(attempts),
+                            attempt_with_current_credentials=bool(current_attempts),
+                        )
+                    )
     return result
 
 
@@ -415,17 +426,19 @@ def retry_holes_with_new_credentials(sleep_interval=0) -> Counter:
     logger.debug('Found %d holes to retry', len(holes))
     last_platform = None
     stats = Counter()
-    for i, hole in enumerate(holes):   # type: DataHole
+    for i, hole in enumerate(holes):  # type: DataHole
         cred_based_delay = hole.credentials.when_can_access()
         if not hole.attempt_with_current_credentials:
             # this is what we want to process - cases when sushi credentials were updated
             if cred_based_delay == 0:
                 # we are ready to retry
                 logger.debug('Trying to fill hole: %s / %s', hole.credentials, hole.date)
-                attempt = hole.credentials.fetch_report(counter_report=hole.counter_report,
-                                                        start_date=hole.date,
-                                                        end_date=month_end(hole.date),
-                                                        use_url_lock=True)
+                attempt = hole.credentials.fetch_report(
+                    counter_report=hole.counter_report,
+                    start_date=hole.date,
+                    end_date=month_end(hole.date),
+                    use_url_lock=True,
+                )
                 logger.debug('Result: %s', attempt)
                 stats[f'retry_{attempt.status}'] += 1
                 if attempt.credentials.platform_id == last_platform:
