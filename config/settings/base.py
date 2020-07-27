@@ -290,6 +290,8 @@ QUEUED_SUSHI_MAX_RETRY_COUNT = 5  # how many times max should we retry queued at
 SUSHI_ATTEMPT_LAST_DATE = '2017-01'  # default date where to end fetching sushi data
 REFERENCE_CURRENCY = 'CZK'  # this is the currency used for price calculation
 
+SENTRY_URL = None
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -311,7 +313,7 @@ secrets = load_secret_settings_json_file(BASE_DIR / 'config/settings/secret_sett
 for key in ("SECRET_KEY",):
     locals()[key] = secrets[key]
 # optional keys
-for key in ("ERMS_API_URL",):
+for key in ("ERMS_API_URL", "SENTRY_URL"):
     if key in secrets:
         locals()[key] = secrets[key]
 
