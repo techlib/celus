@@ -408,7 +408,9 @@ class SushiCredentials(models.Model):
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
         else:
             download_success = True
-            error = report.errors or (report.warnings and not report.records)
+            contains_data = report.record_found
+
+            error = report.errors or (report.warnings and not report.record_found)
             # check for errors
             if error:
                 if report.errors:
@@ -418,7 +420,6 @@ class SushiCredentials(models.Model):
                 else:
                     log = 'Warnings: ' + '; '.join(str(e) for e in report.warnings)
                     error_code = report.warnings[0].code
-                contains_data = False
                 error_explanation = client.explain_error_code(error_code)
                 queued = error_explanation.should_retry and error_explanation.setup_ok
                 processing_success = not (
@@ -426,11 +427,11 @@ class SushiCredentials(models.Model):
                 )
                 file_data = report.raw_data
             else:
-                contains_data = True
                 processing_success = True
                 queued = report.queued
                 file_data = report.raw_data
                 log = ''
+
         # now create the attempt instance
         if file_data:
             data_file = ContentFile(file_data)

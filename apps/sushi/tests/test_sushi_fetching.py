@@ -44,6 +44,7 @@ class TestSushiFetching(object):
                 True,
                 'Error #2090: Got response code: 404 for request: https://example.com/path/path',
             ),
+            ('no_data.json', True, False, False, '',),
         ),
         ids=lambda x: "" if isinstance(x, str) and not x.endswith('.json') else x,
     )

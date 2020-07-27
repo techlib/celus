@@ -85,6 +85,7 @@ class Counter5ReportBase(object):
     def __init__(self, report: typing.Optional[bytes] = None):
         self.records = []
         self.queued = False
+        self.record_found: bool = False  # is populated once `fd_to_dicts` is called
         self.header = {}
         self.errors: typing.List[CounterError] = []
         self.warnings: typing.List[CounterError] = []
@@ -143,7 +144,7 @@ class Counter5ReportBase(object):
 
     def fd_to_dicts(
         self, fd: typing.BinaryIO
-    ) -> typing.Tuple[bool, dict, typing.Generator[dict, None, None]]:
+    ) -> typing.Tuple[dict, typing.Generator[dict, None, None]]:
         def empty_generator() -> typing.Generator[dict, None, None]:
             empty: typing.List[dict] = []
             return (e for e in empty)
@@ -157,14 +158,14 @@ class Counter5ReportBase(object):
         if first_character == b'[':
             # error report handling
             self.extract_errors(json.load(fd))
-            return False, {}, empty_generator()
+            return {}, empty_generator()
 
         elif first_character == b'"':
             # stringified header with an error recieved
             json_string = json.load(fd)
             data = json.loads(json_string)
             self.extract_errors(data)
-            return False, data, empty_generator()
+            return data, empty_generator()
 
         # try to read the header
         header = dict(ijson.kvitems(fd, "Report_Header"))
@@ -193,34 +194,40 @@ class Counter5ReportBase(object):
             fd.seek(0)
 
         # try to read the first item
-        record_found = bool(next(ijson.items(fd, "Report_Items.item"), None))
+        self.record_found = bool(next(ijson.items(fd, "Report_Items.item"), None))
         fd.seek(0)
-        if record_found:
+        if self.record_found:
             # Items found
             items = ijson.items(fd, "Report_Items.item")
         else:
             # Try to seek in body element
-            record_found = bool(next(ijson.items(fd, "body.Report_Items.item"), None))
+            self.record_found = bool(next(ijson.items(fd, "body.Report_Items.item"), None))
             fd.seek(0)  # rewind back
             items = ijson.items(fd, "body.Report_Items.item")
 
-        if not header and not record_found:
+        if not header and not self.record_found:
             # No data and no header -> try to extract an exception
             self.extract_errors(json.load(fd))
             items = empty_generator()
 
-        if not record_found:
+        if not self.record_found:
             # we have no data
             if not self.errors and not self.warnings:
-                # if there is no other reason why there should be no data, we raise exception
+                # check whether Report_Items or body.Report_Items are present
+                # if they are present, but empty consider this as a valid input
+                fd.seek(0)
+                for prefix, e_type, _ in ijson.parse(fd):
+                    if e_type == "start_array" and prefix in ("Report_Items", "body.Report_Items"):
+                        return header, empty_generator()
+
+                # We didn't find an exception nor data field => json is not correct
                 raise SushiException('Incorrect format', content=fd.read())
 
-        return record_found, header, items
+        return header, items
 
     def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
         f = open(filename, 'rb')  # file will be closed later (once generator struct is discarded)
-        record_found, header, items = self.fd_to_dicts(f)
-        self.record_found = record_found
+        header, items = self.fd_to_dicts(f)
         return self.read_report(header, items)
 
     @classmethod

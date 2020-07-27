@@ -111,6 +111,18 @@ class TestCounter5Reading(object):
         error = reader.errors[0]
         assert error.code == '3030'
 
+    def test_no_exception_no_data(self):
+        """
+        There is no exception in the header, but also no data (no data found for such period)
+        """
+        reader = Counter5TRReport()
+        records = [
+            e for e in reader.file_to_records(Path(__file__).parent / 'data/counter5/no_data.json')
+        ]
+        assert len(records) == 0
+        assert len(reader.warnings) == 0
+        assert not reader.queued
+
     def test_reading_messed_up_data_error_directly_in_data(self):
         """
         There is no header, just the error in the json

@@ -282,7 +282,7 @@ class Sushi5Client(SushiClientBase):
         try:
             fd = BytesIO(report)
             counter_report = Counter5ReportBase()
-            record_found, header, data = counter_report.fd_to_dicts(fd)
+            header, data = counter_report.fd_to_dicts(fd)
         except ValueError as e:
             raise SushiException(str(e), content=report)
         if validate:
