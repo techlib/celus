@@ -22,3 +22,8 @@ repos:
       entry: poetry run black --check
       language: system
       types: [python]
+    - id: pytestnow
+      name: Check that no tests marked with 'now' exist
+      entry: "@pytest.mark.now"
+      language: pygrep
+      types: [python]
