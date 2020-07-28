@@ -399,10 +399,14 @@ EXPORTED_SETTINGS = [
 PROMETHEUS_EXPORT_MIGRATIONS = config('PROMETHEUS_EXPORT_MIGRATIONS', cast=bool, default=True)
 
 # sentry
-sentry_url = config('SENTRY_URL', default='')
-if sentry_url:
+SENTRY_ENVIRONMENT = config('SENTRY_ENVIRONMENT', default='unknown')
+SENTRY_RELEASE = config('SENTRY_RELEASE', default='')
+SENTRY_URL = config('SENTRY_URL', default='unknown')
+if SENTRY_URL:
     sentry_sdk.init(
-        dsn=sentry_url,
+        dsn=SENTRY_URL,
         integrations=[DjangoIntegration(), CeleryIntegration(), RedisIntegration()],
         send_default_pii=True,
+        environment=SENTRY_ENVIRONMENT,
+        release=SENTRY_RELEASE or None,
     )
