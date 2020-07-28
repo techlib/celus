@@ -3,9 +3,10 @@
 <i18n lang="yaml">
 en:
     select_date_range: Select date range
-
+    tooltip: Click to change the global date range
 cs:
     select_date_range: Vyberte rozmezí dat
+    tooltip: Kliknutím změníte globální nastavení zobrazovaného rozmezí dat
 </i18n>
 
 <template>
@@ -18,27 +19,42 @@ cs:
             </span><span v-if="!inputLikeLabel">:</span>
         </v-col>
         <v-col cols="auto" class="py-0">
-            <v-layout column @click="showDialog = true">
-                <v-flex>{{ rangeName }}</v-flex>
-                <v-flex class="small subdued">{{ rangeValueText }}</v-flex>
+            <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                    <v-layout
+                            @click="showDialog = true"
+                            class="clickable"
+                            v-on="on"
+                            align-center
+                    >
+                        <v-layout
+                                column
+                        >
+                            <v-flex>{{ rangeName }}</v-flex>
+                            <v-flex class="small subdued">{{ rangeValueText }}</v-flex>
 
-                <v-dialog
-                        v-model="showDialog"
-                        max-width="520px"
-                >
-                    <v-card>
-                        <v-card-title>{{ $t('select_date_range') }}</v-card-title>
-                        <v-divider></v-divider>
-                        <v-card-text>
-                            <DateRangeSelector />
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-spacer></v-spacer>
-                            <v-btn color="primary" text @click="showDialog = false">Close</v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
-            </v-layout>
+                            <v-dialog
+                                    v-model="showDialog"
+                                    max-width="520px"
+                            >
+                                <v-card>
+                                    <v-card-title>{{ $t('select_date_range') }}</v-card-title>
+                                    <v-divider></v-divider>
+                                    <v-card-text>
+                                        <DateRangeSelector />
+                                    </v-card-text>
+                                    <v-card-actions>
+                                        <v-spacer></v-spacer>
+                                        <v-btn color="primary" text @click="showDialog = false">Close</v-btn>
+                                    </v-card-actions>
+                                </v-card>
+                            </v-dialog>
+                        </v-layout>
+                        <v-flex class="pl-2"><v-icon>fa-caret-down</v-icon></v-flex>
+                    </v-layout>
+                </template>
+                <span v-text="$t('tooltip')"></span>
+            </v-tooltip>
         </v-col>
         </v-row>
     </v-container>
@@ -110,4 +126,7 @@ cs:
         font-size: 0.75rem;
     }
 
+    .clickable {
+        cursor: pointer;
+    }
 </style>
