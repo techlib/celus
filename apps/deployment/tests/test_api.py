@@ -5,7 +5,6 @@ from django.urls import reverse
 from core.tests.conftest import site
 
 
-@pytest.mark.now
 @pytest.mark.django_db
 class TestDeploymentAPI(object):
     def test_api_is_open(self, client, site):
