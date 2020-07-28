@@ -27,6 +27,7 @@ class TestUserAPI(object):
         assert resp.status_code == 200
         resp_data = resp.json()
         assert resp_data['username'] == identity.user.username
+        assert 'extra_data' in resp_data
 
     def test_verified_email(self, authenticated_client, valid_identity):
         """
@@ -106,6 +107,69 @@ class TestUserAPI(object):
 
         assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
         assert resp_data["email_verification_sent"] is not None
+
+    def test_set_extra_data(self, authenticated_client):
+        """
+        Checks that it is possible to store extra_data in User models
+        """
+        resp = authenticated_client.post(
+            reverse('user_extra_data_view'), {'basic_tour_finished': True}
+        )
+        assert resp.status_code == 200
+        user = authenticated_client.user
+        user.refresh_from_db()
+        assert 'basic_tour_finished' in user.extra_data
+        assert user.extra_data['basic_tour_finished'] is True
+
+    def test_set_extra_data_merging(self, authenticated_client):
+        """
+        Checks that when storing extra_data in User model, existing keys are not removed
+        """
+        user = authenticated_client.user
+        user.extra_data['foobar'] = 10
+        user.save()
+        resp = authenticated_client.post(
+            reverse('user_extra_data_view'), {'basic_tour_finished': True}
+        )
+        assert resp.status_code == 200
+        user.refresh_from_db()
+        assert 'basic_tour_finished' in user.extra_data
+        assert user.extra_data['basic_tour_finished'] is True
+        assert user.extra_data['foobar'] == 10
+
+    def test_set_extra_data_bad_key(self, authenticated_client):
+        """
+        Checks that it is possible to store extra_data in User models, but only allowed ones.
+        """
+        resp = authenticated_client.post(reverse('user_extra_data_view'), {'foobarbaz': True})
+        assert resp.status_code == 400
+        user = authenticated_client.user
+        user.refresh_from_db()
+        assert 'foobarbaz' not in user.extra_data
+
+    def test_set_extra_data_bad_value(self, authenticated_client):
+        """
+        Checks that value validation work for extra data
+        """
+        resp = authenticated_client.post(
+            reverse('user_extra_data_view'), {'basic_tour_finished': 'foobarbaz'}
+        )
+        assert resp.status_code == 400
+
+    def test_set_extra_data_no_data(self, authenticated_client):
+        """
+        Checks that posting empty data raises a BadRequest error
+        """
+        user = authenticated_client.user
+        # add some extra data - we check later that it did not disappear
+        user.extra_data['foobar'] = True
+        old_extra_data = user.extra_data
+        user.save()
+        resp = authenticated_client.post(reverse('user_extra_data_view'), {})
+        assert resp.status_code == 400
+        user.refresh_from_db()
+        assert 'foobar' in user.extra_data
+        assert old_extra_data == user.extra_data
 
 
 @pytest.mark.django_db

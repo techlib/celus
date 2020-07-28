@@ -8,9 +8,13 @@ cs:
 
 <template>
     <v-app>
-        <SidePanel v-model="showSidePanel" />
+        <SidePanel
+                v-model="showSidePanel"
+                data-tour="side-panel"
+                :tour-name="userBasicTourFinished ? 'basic' : null"
+        />
 
-        <v-app-bar app clipped-left>
+        <v-app-bar app clipped-left data-tour="app-bar">
             <v-toolbar-title class="flex-sm-shrink-0">
                 <img
                         :src="siteLogo ? siteLogo.img : require('../assets/celus-plus-dark.svg')"
@@ -24,8 +28,18 @@ cs:
                     vertical
             ></v-divider>
 
-            <OrganizationSelector internal-label :lang="appLanguage" class="d-none d-md-flex" />
-            <SelectedDateRangeWidget input-like-label class="d-none d-md-flex" />
+            <OrganizationSelector
+                    internal-label
+                    :lang="appLanguage"
+                    v-if="$vuetify.breakpoint.mdAndUp"
+                    class="d-flex"
+            />
+            <SelectedDateRangeWidget
+                    input-like-label
+                    class="d-flex"
+                    v-if="$vuetify.breakpoint.smAndUp"
+            />
+
             <v-spacer></v-spacer>
 
             <v-select
@@ -60,7 +74,7 @@ cs:
                     <template v-slot:activator="{ on }">
                         <span v-on="on" >
                             <router-link :to="{name: 'user-page'}">
-                                <v-avatar color="primary" class="mt-2">
+                                <v-avatar color="primary" class="mt-2" data-tour="user-avatar">
                                     <v-gravatar
                                             v-if="loggedIn && user"
                                             :email="user.email"
@@ -83,9 +97,11 @@ cs:
             <v-btn
                     @click.stop="showSidePanel=!showSidePanel"
                     icon
-                    class="d-md-hide">
+                    data-tour="menu-show-button"
+            >
                 <v-icon>fa fa-bars</v-icon>
             </v-btn>
+
         </v-app-bar>
 
         <v-main>
@@ -116,7 +132,11 @@ cs:
         </v-footer>
 
         <LoginDialog />
-        <CreateOrganizationDialog />
+        <CreateOrganizationDialog
+                v-if="showCreateOrganizationDialog"
+        />
+
+        <UITour name="basic" />
     </v-app>
 </template>
 
@@ -126,15 +146,15 @@ cs:
   import OrganizationSelector from '../components/OrganizationSelector'
   import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
   import LoginDialog from '../components/account/LoginDialog'
-  import InvalidUserPage from './InvalidUserPage'
   import VGravatar from 'vue-gravatar'
   import CreateOrganizationDialog from '../components/account/CreateOrganizationDialog'
+  import UITour from '../components/help/UITour'
 
   export default {
     name: 'Dashboard',
     components: {
+      UITour,
       CreateOrganizationDialog,
-      InvalidUserPage,
       LoginDialog,
       SelectedDateRangeWidget,
       OrganizationSelector,
@@ -145,6 +165,7 @@ cs:
       return {
         navbarExpanded: false,
         showSidePanel: true,
+        basicsTourName: 'basic',
       }
     },
     computed: {
@@ -163,6 +184,9 @@ cs:
         usernameText: 'usernameText',
         bootUpFinished: 'bootUpFinished',
         emailVerified: 'emailVerified',
+        tourFinished: 'tourFinished',
+        tourNeverSeen: 'tourNeverSeen',
+        showCreateOrganizationDialog: 'showCreateOrganizationDialog',
       }),
       snackbarShow: {
         get () {
@@ -182,25 +206,47 @@ cs:
           this.$router.go()
         }
       },
+      userBasicTourFinished () {
+        return this.tourFinished(this.basicsTourName)
+      }
     },
     methods: {
       ...mapActions({
         hideSnackbar: 'hideSnackbar',
         start: 'start',
+        backstageChangeTourStatus: 'backstageChangeTourStatus',
       }),
       toggleNavbar () {
         this.navbarExpanded = !this.navbarExpanded
       },
     },
+
     created() {
       this.start()
     },
+
     async mounted () {
       this.$i18n.locale = this.appLanguage
+      if (!this.userBasicTourFinished && !this.showCreateOrganizationDialog) {
+        this.$tours[this.basicsTourName].start()
+      }
     },
+
     watch: {
       appLanguage () {
         this.$i18n.locale = this.appLanguage
+      },
+
+      userBasicTourFinished () {
+        if (!this.userBasicTourFinished) {
+          this.$tours[this.basicsTourName].start()
+        }
+      },
+
+      showCreateOrganizationDialog () {
+        if (!this.showCreateOrganizationDialog && !this.userBasicTourFinished) {
+          this.$tours[this.basicsTourName].start()
+        }
       },
     }
 
@@ -225,4 +271,9 @@ cs:
         max-height: 92px;
     }
 
+    .v-navigation-drawer {
+        &.v-tour__target--relative {
+            position: fixed;
+        }
+    }
 </style>

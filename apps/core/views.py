@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import translation
+from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -11,7 +12,7 @@ from rest_framework.views import APIView
 
 from core.models import User
 from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
-from core.serializers import UserSerializer, EmailVerificationSerializer
+from core.serializers import UserSerializer, EmailVerificationSerializer, UserExtraDataSerializer
 from .tasks import erms_sync_users_and_identities_task
 
 
@@ -106,3 +107,48 @@ class TestErrorView(APIView):
 
     def get(self, request):
         raise Exception('test error')
+
+
+class UserExtraDataView(APIView):
+
+    """
+    Allows storage of extra data into the user.extra_data field.
+    It uses a predefined dictionary of keys and value types, so that it protects against attacks
+    where users would store huge arbitrary values in the database.
+    We enforce this on the API level and not on the model level, because we want the freedom
+    to store anything inside our code - the protection is applied just to the public API
+    """
+
+    ALLOWED_KEYS = {
+        'basic_tour_finished': bool,
+    }
+
+    def get(self, request):
+        if request.user:
+            return Response(request.user.extra_data)
+        return HttpResponseForbidden('user is not logged in')
+
+    def post(self, request):
+        return self._set_extra_data(request)
+
+    def put(self, request):
+        return self._set_extra_data(request)
+
+    def _set_extra_data(self, request):
+        if not request.user:
+            return HttpResponseForbidden('user is not logged in')
+
+        serializer = UserExtraDataSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)  # raises 400 exception
+        # in order to distinguish between default values and the ones set by the user,
+        # we use default=None in the serializer. And now we need to remove the None
+        # values from the dict in order to save only the values set by the user.
+        clean_data = {
+            key: value for key, value in serializer.validated_data.items() if value is not None
+        }
+        if not clean_data:
+            return Response({'error': 'no valid data supplied'}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.extra_data.update(clean_data)
+        request.user.save()
+        return Response(request.user.extra_data)

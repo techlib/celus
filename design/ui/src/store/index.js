@@ -12,6 +12,7 @@ import VuexPersistence from 'vuex-persist'
 import { sortOrganizations } from '../libs/organizations'
 import interest from './modules/interest'
 import maintenance from './modules/maintenance'
+import tour from './modules/tour'
 import login from './modules/login'
 import siteConfig from './modules/site-config'
 import { ConcurrencyManager } from 'axios-concurrency'
@@ -40,6 +41,7 @@ export default new Vuex.Store({
     maintenance,
     login,
     siteConfig,
+    tour,
   },
   state: {
     user: null,
@@ -450,6 +452,12 @@ export default new Vuex.Store({
     },
     setBasicInfo(state, data) {
       state.basicInfo = data
+    },
+    storeUserExtraData (state, {extraData}) {
+      Vue.set(state.user, 'extra_data', extraData)
+    },
+    modifyUserExtraData (state, {key, value}) {
+      Vue.set(state.user.extra_data, key, value)
     },
     setBackendReady(state, ready) {
       state.backendReady = ready

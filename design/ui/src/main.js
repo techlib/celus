@@ -5,7 +5,11 @@ import store from './store'
 import router from './router'
 import i18n from './i18n'
 import vuetify from './plugins/vuetify';
+import VueTour from 'vue-tour'
 
+require('vue-tour/dist/vue-tour.css')
+
+Vue.use(VueTour)
 Vue.config.productionTip = false
 
 const titleBase = 'Celus'
@@ -22,5 +26,5 @@ new Vue({
   store,
   i18n,
   router,
-  vuetify
+  vuetify,
 })

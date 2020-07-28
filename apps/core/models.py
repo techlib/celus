@@ -2,6 +2,7 @@ from allauth.account.models import EmailAddress, EmailConfirmation
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -85,6 +86,9 @@ class User(AbstractUser):
         choices=settings.LANGUAGES,
         default=settings.LANGUAGES[-1][0],
         help_text='User\'s preferred language',
+    )
+    extra_data = JSONField(
+        default=dict, help_text='User state data that do not deserve a dedicated field', blank=True
     )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)

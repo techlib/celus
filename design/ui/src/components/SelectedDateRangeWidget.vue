@@ -18,7 +18,7 @@ cs:
                 {{ $t('labels.date_range') }}
             </span><span v-if="!inputLikeLabel">:</span>
         </v-col>
-        <v-col cols="auto" class="py-0">
+        <v-col cols="auto" class="py-0" data-tour="date-range">
             <v-tooltip bottom>
                 <template v-slot:activator="{ on }">
                     <v-layout

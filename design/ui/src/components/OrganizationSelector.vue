@@ -16,6 +16,7 @@
                     :menu-props="{width: '800px'}"
                     :filter="filter"
                     :label="label"
+                    data-tour="organization-select"
             >
                 <template v-slot:item="{item}">
                     <span :class="{bold: item.extra, org: true}" v-text="item.name"></span>

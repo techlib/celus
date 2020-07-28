@@ -9,7 +9,7 @@ class MyUserAdmin(UserAdmin):
 
     list_display = UserAdmin.list_display + ('language', 'source')
 
-    custom_fields = ('ext_id', 'source', 'language')
+    custom_fields = ('ext_id', 'source', 'language', 'extra_data')
 
     fieldsets = UserAdmin.fieldsets + ((None, {'fields': custom_fields}),)
     add_fieldsets = UserAdmin.add_fieldsets + ((None, {'fields': custom_fields}),)

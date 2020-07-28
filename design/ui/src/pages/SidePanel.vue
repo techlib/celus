@@ -1,5 +1,6 @@
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
 <i18n lang="yaml" src="../locales/notifications.yaml"></i18n>
+<i18n lang="yaml" src="../locales/tours.yaml"></i18n>
 
 <template>
     <v-navigation-drawer
@@ -33,8 +34,15 @@
         </v-toolbar>
 
         <!-- stuff that should be here on xs displays because it is hidden from the app-bar -->
-        <OrganizationSelector :lang="appLanguage" internal-label class="d-md-none" />
-        <SelectedDateRangeWidget input-like-label class="d-md-none" />
+        <OrganizationSelector
+                :lang="appLanguage"
+                internal-label
+                v-if="$vuetify.breakpoint.smAndDown"
+        />
+        <SelectedDateRangeWidget
+                input-like-label
+                v-if="$vuetify.breakpoint.xs"
+        />
 
         <v-divider
                 class="d-md-none"
@@ -78,10 +86,21 @@
             </v-list-item>
         </v-list>
 
+        <template #append>
+            <div class="pb-3 text-center">
+                <v-btn
+                        v-if="tourName"
+                        outlined
+                        v-text="$t(tourToShow.title)"
+                        color="grey"
+                        @click="activateTour({name: tourName})"
+                ></v-btn>
+            </div>
+        </template>
     </v-navigation-drawer>
 </template>
 <script>
-  import { mapGetters, mapState } from 'vuex'
+  import { mapActions, mapGetters, mapState } from 'vuex'
   import OrganizationSelector from '../components/OrganizationSelector'
   import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
 
@@ -90,6 +109,7 @@
     components: {SelectedDateRangeWidget, OrganizationSelector},
     props: {
       value: {default: true, type: Boolean},
+      tourName: {default: null, required: false, type: String},
     },
     data () {
       return {
@@ -109,7 +129,11 @@
           notifications: 'getNotifications',
           allowManualDataUpload: 'allowManualDataUpload',
           consortialInstall: 'consortialInstall',
+          tourByName: 'tourByName',
         }),
+        tourToShow () {
+          return this.tourByName(this.tourName)
+        },
         groups () {
           return [
           {
@@ -141,6 +165,13 @@
         return this.groups.filter(group => group.show)
       }
     },
+
+    methods: {
+      ...mapActions({
+        activateTour: 'activateTour',
+      })
+    },
+
     watch: {
       show () {
         this.$emit('input', this.show)

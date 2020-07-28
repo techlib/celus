@@ -1,6 +1,8 @@
 import typing
 
 from datetime import datetime
+
+from rest_framework.fields import BooleanField
 from rest_framework.serializers import (
     ModelSerializer,
     Serializer,
@@ -36,6 +38,7 @@ class UserSerializer(ModelSerializer):
             'is_superuser',
             'email_verification_status',
             'email_verification_sent',
+            'extra_data',
         )
 
     def get_email_verification_status(self, obj) -> str:
@@ -49,3 +52,7 @@ class UserSimpleSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = ('pk', 'username', 'ext_id', 'first_name', 'last_name', 'email')
+
+
+class UserExtraDataSerializer(Serializer):
+    basic_tour_finished = BooleanField(required=False, allow_null=True, default=None)
