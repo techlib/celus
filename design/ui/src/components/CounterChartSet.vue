@@ -20,25 +20,26 @@ cs:
         ></v-progress-linear>
     </div>
     <v-container fluid v-else class="pb-0 px-0 px-sm-2">
-        <v-row no-gutters>
-            <v-select
-                    :items="reportViewsForSelect"
-                    item-text="name"
-                    v-model="selectedReportView"
-                    :label="$t('available_report_types')"
-                    :return-object="true"
-            >
-                <template v-slot:item="{item}">
-                    <v-list-item-content>
-                        <v-list-item-title v-html="item.name"></v-list-item-title>
-                        <v-list-item-subtitle v-if="item.desc" v-html="item.desc"></v-list-item-subtitle>
-                    </v-list-item-content>
-                </template>
-            </v-select>
-        </v-row>
-
-        <v-row class="mt-3 mb-3">
-            <v-col>
+        <v-row >
+            <v-col cols="6">
+                <v-select
+                        :items="reportViewsForSelect"
+                        item-text="name"
+                        v-model="selectedReportView"
+                        :label="$t('available_report_types')"
+                        :return-object="true"
+                        outlined
+                        dense
+                >
+                    <template v-slot:item="{item}">
+                        <v-list-item-content>
+                            <v-list-item-title v-html="item.name"></v-list-item-title>
+                            <v-list-item-subtitle v-if="item.desc" v-html="item.desc"></v-list-item-subtitle>
+                        </v-list-item-content>
+                    </template>
+                </v-select>
+            </v-col>
+            <v-col cols="6">
             <ChartTypeSelector
                     :report-type="selectedReportView"
                     :scope="scope"

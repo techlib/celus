@@ -1,7 +1,8 @@
 <i18n lang="yaml" src="../locales/charts.yaml"></i18n>
 
 <template>
-   <v-btn-toggle v-model="chartTypeIndex" mandatory class="flex-wrap">
+    <!--
+   <v-btn-toggle v-model="chartTypeIndex" mandatory class="flex-wrap" dense>
         <v-btn v-for="(chartType, index) in chartTypes " text :value="index" :key="chartType.pk">
             <v-tooltip bottom v-if="chartType.desc">
                     <template v-slot:activator="{ on }">
@@ -12,6 +13,24 @@
             <span v-else v-text="chartType.name"></span>
         </v-btn>
     </v-btn-toggle>
+-->
+    <v-select
+            :items="chartTypesFinal"
+            item-text="name"
+            v-model="chartTypeIndex"
+            :label="$t('available_charts')"
+            item-value="index"
+            outlined
+            dense
+    >
+        <template v-slot:item="{item}">
+            <v-list-item-content>
+                <v-list-item-title v-html="item.name"></v-list-item-title>
+                <v-list-item-subtitle v-if="item.desc" v-html="item.desc"></v-list-item-subtitle>
+            </v-list-item-content>
+        </template>
+    </v-select>
+
 </template>
 
 <script>
@@ -42,6 +61,9 @@
       selectedChartType () {
         return this.chartTypes[this.chartTypeIndex]
       },
+      chartTypesFinal () {
+        return this.chartTypes.map((item, index) => {item.index = index; return item})
+      }
     },
     methods: {
       ...mapActions({
