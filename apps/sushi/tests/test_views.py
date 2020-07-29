@@ -437,8 +437,8 @@ class TestSushiFetchAttemptView(object):
     @pytest.mark.parametrize(
         ['user_type', 'can_create', 'return_code'],
         [
-            ['no_user', False, 401],
-            ['invalid', False, 401],
+            ['no_user', False, 403],
+            ['invalid', False, 403],
             ['unrelated', False, 403],
             ['related_user', False, 403],
             ['related_admin', True, 201],
