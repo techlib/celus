@@ -423,7 +423,6 @@ class TestSushiFetchAttemptStatsView(object):
         assert data[0]['failure_count'] == 2
 
 
-@pytest.mark.now
 @pytest.mark.django_db()
 class TestSushiFetchAttemptView(object):
     def test_create(self, master_client, credentials, counter_report_type):
