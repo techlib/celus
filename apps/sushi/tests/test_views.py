@@ -1,12 +1,22 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
 
 from core.models import UL_ORG_ADMIN, UL_CONS_ADMIN, UL_CONS_STAFF, Identity
 from organizations.models import UserOrganization
 from sushi.models import SushiCredentials, SushiFetchAttempt
-from organizations.tests.conftest import organizations
+from organizations.tests.conftest import organizations, identity_by_user_type
 from publications.tests.conftest import platforms
-from core.tests.conftest import master_client, master_identity, valid_identity, authenticated_client
+from core.tests.conftest import (
+    master_client,
+    master_identity,
+    valid_identity,
+    authenticated_client,
+    authentication_headers,
+    admin_identity,
+    invalid_identity,
+)
 
 
 @pytest.mark.django_db()
@@ -402,3 +412,91 @@ class TestSushiFetchAttemptStatsView(object):
         assert len(data) == 1
         assert data[0]['success_count'] == 1
         assert data[0]['failure_count'] == 2
+
+
+@pytest.mark.now
+@pytest.mark.django_db()
+class TestSushiFetchAttemptView(object):
+    def test_create(self, master_client, credentials, counter_report_type):
+        # we must patch the run_sushi_fetch_attempt_task task in order to prevent stalling
+        # during tests by CI
+        with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
+            resp = master_client.post(
+                reverse('sushi-fetch-attempt-list'),
+                {
+                    'credentials': credentials.pk,
+                    'start_date': '2020-01-01',
+                    'end_date': '2020-01-31',
+                    'counter_report': counter_report_type.pk,
+                },
+            )
+            assert task_mock.apply_async.call_count == 1
+            assert resp.status_code == 201
+            assert 'pk' in resp.json()
+
+    @pytest.mark.parametrize(
+        ['user_type', 'can_create', 'return_code'],
+        [
+            ['no_user', False, 401],
+            ['invalid', False, 401],
+            ['unrelated', False, 403],
+            ['related_user', False, 403],
+            ['related_admin', True, 201],
+            ['master_user', True, 201],
+            ['superuser', True, 201],
+        ],
+    )
+    def test_create_api_access(
+        self,
+        user_type,
+        can_create,
+        return_code,
+        client,
+        authentication_headers,
+        credentials,
+        counter_report_type,
+        identity_by_user_type,
+    ):
+        identity, org = identity_by_user_type(user_type)
+
+        with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
+            resp = client.post(
+                reverse('sushi-fetch-attempt-list'),
+                {
+                    'credentials': credentials.pk,
+                    'start_date': '2020-01-01',
+                    'end_date': '2020-01-31',
+                    'counter_report': counter_report_type.pk,
+                },
+                **authentication_headers(identity),
+            )
+            assert resp.status_code == return_code
+            if can_create:
+                assert task_mock.apply_async.call_count == 1
+            else:
+                assert task_mock.apply_async.call_count == 0
+
+    def test_detail_available_after_create(self, master_client, credentials, counter_report_type):
+        """
+        Check that if we create an attempt, it will be available using the same API later.
+        This test was created because after introducing default filtering of attempts
+        to successful+current, this was not true
+        """
+        with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
+            resp = master_client.post(
+                reverse('sushi-fetch-attempt-list'),
+                {
+                    'credentials': credentials.pk,
+                    'start_date': '2020-01-01',
+                    'end_date': '2020-01-31',
+                    'counter_report': counter_report_type.pk,
+                },
+            )
+            assert task_mock.apply_async.call_count == 1
+        assert resp.status_code == 201
+        create_data = resp.json()
+        pk = create_data['pk']
+        # now get the details of the attempt using GET
+        resp = master_client.get(reverse('sushi-fetch-attempt-detail', args=(pk,)))
+        assert resp.status_code == 200
+        assert resp.json() == create_data

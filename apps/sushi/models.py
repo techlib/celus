@@ -535,6 +535,11 @@ class SushiFetchAttempt(models.Model):
     def __str__(self):
         return f'{self.status}: {self.credentials}, {self.counter_report}'
 
+    def save(self, *args, **kwargs):
+        if not self.credentials_version_hash and self.credentials:
+            self.credentials_version_hash = self.credentials.version_hash
+        super().save(*args, **kwargs)
+
     @property
     def status(self):
         status = 'SUCCESS'

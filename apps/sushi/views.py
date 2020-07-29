@@ -15,7 +15,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from reversion.views import create_revision
 
 from core.logic.dates import month_start, month_end
-from core.models import UL_CONS_STAFF
+from core.models import UL_CONS_STAFF, REL_ORG_ADMIN
 from core.permissions import SuperuserOrAdminPermission, OrganizationRelatedPermissionMixin
 from organizations.logic.queries import organization_filter_from_org_id
 from sushi.models import CounterReportType, SushiFetchAttempt
@@ -111,6 +111,9 @@ class SushiFetchAttemptViewSet(ModelViewSet):
     queryset = SushiFetchAttempt.objects.none()
     http_method_names = ['get', 'post', 'options', 'head']
 
+    def get_object(self):
+        return super().get_object()
+
     def get_queryset(self):
         organizations = self.request.user.accessible_organizations()
         filter_params = {}
@@ -136,17 +139,25 @@ class SushiFetchAttemptViewSet(ModelViewSet):
             counter_version = self.request.query_params['counter_version']
             filter_params['credentials__counter_version'] = counter_version
         mode = self.request.query_params.get('mode')
-        if mode == 'all':
-            qs = SushiFetchAttempt.objects.all()
+        if mode == 'success_and_current':
+            qs = SushiFetchAttempt.objects.current_or_successful()
         elif mode == 'current':
             qs = SushiFetchAttempt.objects.current()
         else:
-            qs = SushiFetchAttempt.objects.current_or_successful()
+            qs = SushiFetchAttempt.objects.all()
         return qs.filter(**filter_params).select_related(
             'counter_report', 'credentials__organization'
         )
 
     def perform_create(self, serializer: SushiFetchAttemptSerializer):
+        # check that the user is allowed to create attempts for this organization
+        credentials = serializer.validated_data['credentials']
+        org_relation = self.request.user.organization_relationship(credentials.organization_id)
+        if org_relation < REL_ORG_ADMIN:
+            raise PermissionDenied(
+                'user is not allowed to start fetch attempts for this organization'
+            )
+        # proceed with creation
         serializer.validated_data['in_progress'] = True
         serializer.validated_data['end_date'] = month_end(serializer.validated_data['end_date'])
         super().perform_create(serializer)
