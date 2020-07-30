@@ -1,0 +1,15 @@
+sentry_release:
+  stage: release
+  image:
+    name: getsentry/sentry-cli
+  variables:
+    SENTRY_URL: https://sentry.bigdigdata.com/
+    SENTRY_ORG: bigdigdata
+    SENTRY_LOG_LEVEL: debug
+  script:
+    - sentry-cli releases new -p celus-plus celus-$CI_COMMIT_SHA
+    - sentry-cli releases set-commits --auto celus-$CI_COMMIT_SHA
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ $SENTRY_RELEASE_BRANCHES'
+      when: on_success

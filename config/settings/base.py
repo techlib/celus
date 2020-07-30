@@ -405,12 +405,12 @@ PROMETHEUS_EXPORT_MIGRATIONS = config('PROMETHEUS_EXPORT_MIGRATIONS', cast=bool,
 # sentry
 SENTRY_ENVIRONMENT = config('SENTRY_ENVIRONMENT', default='unknown')
 SENTRY_RELEASE = config('SENTRY_RELEASE', default='')
-SENTRY_URL = config('SENTRY_URL', default='unknown')
+SENTRY_URL = config('SENTRY_URL', default='')
 if SENTRY_URL:
     sentry_sdk.init(
         dsn=SENTRY_URL,
         integrations=[DjangoIntegration(), CeleryIntegration(), RedisIntegration()],
         send_default_pii=True,
         environment=SENTRY_ENVIRONMENT,
-        release=SENTRY_RELEASE or None,
+        release=f"celus-{SENTRY_RELEASE}" if SENTRY_RELEASE else None,
     )
