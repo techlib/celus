@@ -1,6 +1,11 @@
+import logging
 import urllib.parse
+import typing
 
 import requests
+
+
+logger = logging.getLogger(__file__)
 
 
 class ERMSError(Exception):
@@ -33,8 +38,23 @@ class ERMS(object):
     CLS_PLATFORM = 'Platform'
 
     def __init__(self, base_url="https://erms.czechelib.cz/api/"):
+        ERMS.check_url(base_url)
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
+
+    @staticmethod
+    def check_url(url):
+        """ Check whether the url is in a propper format
+            otherwise it raises ERMSError exception
+        """
+        try:
+            parsed = urllib.parse.urlparse(url)
+        except Exception as e:
+            raise ERMSError(f"Incorrect ERMS url {url}") from e
+
+        # Need at least 'https://example.com/'
+        if not parsed.netloc or not parsed.scheme:
+            raise ERMSError(f"Incorrect ERMS url {url}")
 
     @classmethod
     def _construct_query_string(cls, value):
@@ -42,7 +62,7 @@ class ERMS(object):
             return 'in.({})'.format(','.join(str(_id) for _id in value))
         return f'eq.{value}'
 
-    def construct_object_url(self, cls=None, object_id=None):
+    def construct_object_url(self, cls=None, object_id=None) -> str:
         params = {}
         if cls:
             params['class'] = self._construct_query_string(cls)
@@ -59,13 +79,16 @@ class ERMS(object):
             return response.json()
         raise ERMSError(response)
 
-    def fetch_objects(self, cls=None, object_id=None):
+    def fetch_objects(self, cls=None, object_id=None) -> list:
         url = self.construct_object_url(cls=cls, object_id=object_id)
+        ERMS.check_url(url)
+
         data = self.fetch_url(url)
         return data
 
-    def fetch_endpoint(self, endpoint, object_id=None, **kwargs):
+    def fetch_endpoint(self, endpoint, object_id=None, **kwargs) -> list:
         url = f'{self.base_url}/{endpoint}'
+
         params = {}
         if object_id:
             params['id'] = self._construct_query_string(object_id)
@@ -73,4 +96,6 @@ class ERMS(object):
             params[key] = self._construct_query_string(value)
         if params:
             url += '?{}'.format(urllib.parse.urlencode(params))
+
+        ERMS.check_url(url)
         return self.fetch_url(url)

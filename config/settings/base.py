@@ -13,6 +13,7 @@ import os
 import sys
 
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
 
 from celery.schedules import schedule, crontab
@@ -356,6 +357,15 @@ if MAILGUN_API_KEY:
 
 # ERMS related stuff
 ERMS_API_URL = config('ERMS_API_URL', default='https://erms.czechelib.cz/api/')
+if ERMS_API_URL:
+    from erms.api import ERMS, ERMSError
+
+    try:
+        ERMS.check_url(ERMS_API_URL)
+    except ERMSError as e:
+        raise ImproperlyConfigured("ERMS_API_URL") from e
+
+
 EDUID_IDENTITY_HEADER = config('EDUID_IDENTITY_HEADER', default='HTTP_X_IDENTITY')
 # organizations whose users should have access to all
 MASTER_ORGANIZATIONS = config('MASTER_ORGANIZATIONS', cast=Csv(), default='NTK-61387142-CEL')
