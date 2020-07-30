@@ -21,7 +21,7 @@
         </div>
     </div>
     <div v-else>
-    <v-container class="pa-0">
+    <v-container class="pa-0" fluid>
         <v-row class="pb-3">
             <v-col
                     v-if="showTableToggle"

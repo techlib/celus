@@ -1,20 +1,25 @@
 <i18n lang="yaml" src="../locales/charts.yaml"></i18n>
 
 <template>
-    <!--
-   <v-btn-toggle v-model="chartTypeIndex" mandatory class="flex-wrap" dense>
+    <v-btn-toggle
+            v-if="widget === 'buttons'"
+            v-model="chartTypeIndex"
+            mandatory
+            class="flex-wrap"
+            dense
+    >
         <v-btn v-for="(chartType, index) in chartTypes " text :value="index" :key="chartType.pk">
             <v-tooltip bottom v-if="chartType.desc">
-                    <template v-slot:activator="{ on }">
-                        <span v-on="on" v-text="chartType.name"></span>
-                    </template>
-                    <span>{{ chartType.desc }}</span>
-                </v-tooltip>
+                <template v-slot:activator="{ on }">
+                    <span v-on="on" v-text="chartType.name"></span>
+                </template>
+                <span>{{ chartType.desc }}</span>
+            </v-tooltip>
             <span v-else v-text="chartType.name"></span>
         </v-btn>
     </v-btn-toggle>
--->
     <v-select
+            v-else
             :items="chartTypesFinal"
             item-text="name"
             v-model="chartTypeIndex"
@@ -42,7 +47,8 @@
     props: {
       reportType: {required: true},
       value: {required: false, default: null},  // the selected chart type
-      scope: {required: false, default: ''}
+      scope: {required: false, default: ''},
+      widget: {default: 'select'}
     },
     data () {
       return {
