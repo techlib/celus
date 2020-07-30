@@ -69,7 +69,8 @@ cs:
                                         v-if="platform.interests.loading"
                                         class="fas fa-spinner fa-spin subdued">
                                 </span>
-                                <span v-else :class="{'subdued': platform.interests[ig.short_name] === 0}">
+                                <span v-else
+                                      :class="{'subdued': platform.interests[ig.short_name] === 0}">
                                     {{ formatInteger(platform.interests[ig.short_name]) }}
                                 </span>
                             </td>
@@ -107,40 +108,70 @@ cs:
             </v-row>
         </v-container>
 
-        <section class="mb-5" v-if="platform">
-            <AnnotationsWidget :platform="platform" :allow-add="showAdminStuff" ref="annotWidget"></AnnotationsWidget>
-        </section>
+        <v-tabs
+                v-model="activeTab"
+                background-color="blue-grey lighten-1"
+                centered
+                grow
+                class="mt-1"
+                dark
+        >
+            <v-tabs-slider></v-tabs-slider>
 
-        <section v-if="selectedOrganizationId && platform">
-            <v-container fluid class="pa-0">
-                <v-row class="ma-0">
-                    <v-col class="py-0"><h3>{{ $t('overview') }}</h3></v-col>
-                    <v-col cols="auto" class="py-0">
-                        <raw-data-export-widget :platform="platformId"></raw-data-export-widget>
-                        <!--data-export-widget :platform="platformId"></data-export-widget-->
-                    </v-col>
-                </v-row>
-            </v-container>
-            <CounterChartSet
-                    :platform-id="platformId"
-                    :title-id="null"
-                    :report-views-url="reportViewsUrl"
-                    scope="platform"
-            >
-            </CounterChartSet>
-        </section>
 
-        <section v-if="platform && platform.title_count">
-            <h3 class="pt-3">{{ $t('titles') }}</h3>
+            <v-tab href="#chart">
+                <v-icon class="mr-2">fa-chart-bar</v-icon>
+                <span v-text="$t('charts')"></span>
+            </v-tab>
+            <v-tab href="#titles">
+                <v-icon class="mr-2">fa-bars</v-icon>
+                <span v-text="$t('titles')"></span>
+            </v-tab>
 
-            <InterestGroupSelector />
-            <TitleList :url="titleListURL" :platform-id="platformId" :order-interest="orderInterest"></TitleList>
-        </section>
-        <section v-if="platform && !platform.title_count">
-            <v-container fluid>
-                <v-alert elevation="2" colored-border border="right" type="warning">{{ $t('no_info') }}</v-alert>
-            </v-container>
-        </section>
+            <v-tabs-items v-model="activeTab">
+                <v-tab-item value="chart">
+                    <section class="mb-5" v-if="platform">
+                        <AnnotationsWidget :platform="platform" :allow-add="showAdminStuff"
+                                           ref="annotWidget"></AnnotationsWidget>
+                    </section>
+
+                    <section v-if="selectedOrganizationId && platform">
+                        <v-container fluid class="pa-0">
+                            <v-row class="ma-0">
+                                <v-col class="py-0"><h3>{{ $t('overview') }}</h3></v-col>
+                                <v-col cols="auto" class="py-0">
+                                    <raw-data-export-widget
+                                            :platform="platformId"></raw-data-export-widget>
+                                    <!--data-export-widget :platform="platformId"></data-export-widget-->
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                        <CounterChartSet
+                                :platform-id="platformId"
+                                :title-id="null"
+                                :report-views-url="reportViewsUrl"
+                                scope="platform"
+                        >
+                        </CounterChartSet>
+                    </section>
+                </v-tab-item>
+
+                <v-tab-item value="titles">
+                    <section v-if="platform && platform.title_count">
+                        <h3 class="pt-3">{{ $t('titles') }}</h3>
+
+                        <InterestGroupSelector/>
+                        <TitleList :url="titleListURL" :platform-id="platformId"
+                                   :order-interest="orderInterest"></TitleList>
+                    </section>
+                    <section v-if="platform && !platform.title_count">
+                        <v-container fluid>
+                            <v-alert elevation="2" colored-border border="right" type="warning">{{ $t('no_info') }}</v-alert>
+                        </v-container>
+                    </section>
+                </v-tab-item>
+            </v-tabs-items>
+        </v-tabs>
     </div>
 
 </template>
@@ -174,6 +205,7 @@ cs:
     data () {
       return {
         platform: null,
+        activeTab: 'chart',
       }
     },
     computed: {
@@ -329,6 +361,10 @@ cs:
                 color: #999999;
             }
         }
+    }
+
+    section.odd {
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
 </style>
