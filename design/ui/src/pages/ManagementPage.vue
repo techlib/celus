@@ -84,11 +84,34 @@ cs:
     data () {
       return {
         lastTask: null,
+        allCeleryTasks: [
+          {
+            title: this.$t('erms_sync_platforms'),
+            taskName: 'erms-sync-platforms',
+            filter: context => context.uses_erms,
+          },
+          {
+            title: this.$t('erms_sync_organizations'),
+            taskName: 'erms-sync-organizations',
+            filter: context => context.uses_erms,
+          },
+          {
+            title: this.$t('erms_sync_users_and_identities'),
+            taskName: 'erms-sync-users-and-identities',
+            filter: context => context.uses_erms,
+          },
+          {
+            title: this.$t('fetch_new_sushi_data'),
+            taskName: 'fetch-new-sushi-data',
+            icon: 'fas fa-running',
+          },
+        ],
       }
     },
     computed: {
       ...mapState({
         user: 'user',
+        basicInfo: 'basicInfo',
       }),
       ...mapGetters({
         celusAdminSitePath: 'celusAdminSitePath',
@@ -97,25 +120,10 @@ cs:
         return `/${this.celusAdminSitePath}`
       },
       celeryTasks () {
-        return [
-          {
-            title: this.$t('erms_sync_platforms'),
-            taskName: 'erms-sync-platforms',
-          },
-          {
-            title: this.$t('erms_sync_organizations'),
-            taskName: 'erms-sync-organizations',
-          },
-          {
-            title: this.$t('erms_sync_users_and_identities'),
-            taskName: 'erms-sync-users-and-identities',
-          },
-          {
-            title: this.$t('fetch_new_sushi_data'),
-            taskName: 'fetch-new-sushi-data',
-            icon: 'fas fa-running',
-          },
-        ]
+        let context = {
+          uses_erms: !!(this.basicInfo.USES_ERMS)
+        }
+        return this.allCeleryTasks.filter(item => item.filter ? item.filter(context) : true)
       },
     },
     methods: {

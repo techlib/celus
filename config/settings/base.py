@@ -409,6 +409,7 @@ EXPORTED_SETTINGS = [
     'CELUS_ADMIN_SITE_PATH',
     'ALLOW_EMAIL_LOGIN',
     'ALLOW_EDUID_LOGIN',
+    'USES_ERMS',
 ]
 
 # Need to disable prometheus migrations when collecting static without DB
