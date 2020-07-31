@@ -7,7 +7,6 @@ export default {
     email: '',
     loginError: null,
     authenticated: false,
-    usesPasswordLogin: false,
   },
 
   getters: {
@@ -22,8 +21,11 @@ export default {
       }
       return null
     },
-    canLogout (state) {
-      return state.usesPasswordLogin  // we only know how to log-out when password login is used
+    usesPasswordLogin (state, getters, rootState) {
+      return !!(rootState.basicInfo.ALLOW_EMAIL_LOGIN)
+    },
+    canLogout (state, getters) {
+      return getters.usesPasswordLogin  // we only know how to log-out when password login is used
     }
   },
 
@@ -74,9 +76,6 @@ export default {
       dispatch('setShowLoginDialog', false)
       dispatch('loadUserData')
     },
-    changeUsesPasswordLogin({commit}, value) {
-      commit('setUsesPasswordLogin', value)
-    }
   },
 
   mutations: {
@@ -86,9 +85,5 @@ export default {
     setAuthenticated(state, authenticated) {
       state.authenticated = authenticated
     },
-    setUsesPasswordLogin(state, uses) {
-      state.usesPasswordLogin = uses
-    }
-
   }
 }

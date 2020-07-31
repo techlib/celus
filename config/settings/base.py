@@ -91,10 +91,12 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-if config('ALLOW_EMAIL_LOGIN', cast=bool, default=True):
+ALLOW_EMAIL_LOGIN = config('ALLOW_EMAIL_LOGIN', cast=bool, default=True)
+if ALLOW_EMAIL_LOGIN:
     AUTHENTICATION_BACKENDS.append('allauth.account.auth_backends.AuthenticationBackend')
 
-if config('ALLOW_EDUID_LOGIN', cast=bool, default=True):
+ALLOW_EDUID_LOGIN = config('ALLOW_EDUID_LOGIN', cast=bool, default=True)
+if ALLOW_EDUID_LOGIN:
     AUTHENTICATION_BACKENDS.append('apps.core.auth.EDUIdAuthenticationBackend')
 
 
@@ -400,12 +402,13 @@ CELUS_ADMIN_SITE_PATH = config('CELUS_ADMIN_SITE_PATH', default='wsEc67YNV2sq/')
 
 EXPORTED_SETTINGS = [
     'REFERENCE_CURRENCY',
-    'AUTHENTICATION_BACKENDS',
     'ALLOW_USER_REGISTRATION',
     'SOCIAL_ACCOUNTS_SUPPORTED',
     'CONSORTIAL_INSTALLATION',
     'ALLOW_MANUAL_UPLOAD',
     'CELUS_ADMIN_SITE_PATH',
+    'ALLOW_EMAIL_LOGIN',
+    'ALLOW_EDUID_LOGIN',
 ]
 
 # Need to disable prometheus migrations when collecting static without DB

@@ -11,6 +11,7 @@ en:
         Check your email for a verification message from Celus.
     resend_verification_email: Resend verification email
     verification_resent: Verification email was resent
+    logout: Log out
 
 cs:
     is_superuser: Superuživatel
@@ -24,6 +25,7 @@ cs:
         Zkontrolujte ověřovací email od aplikace Celus ve své schránce.
     resend_verification_email: Znovu zaslat ověřovací email
     verification_resent: Ověřovací email byl znovu zaslán
+    logout: Odhlásit se
 </i18n>
 
 <template>

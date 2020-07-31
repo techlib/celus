@@ -224,3 +224,17 @@ class TestAccountCreationAPI(object):
             assert resp.status_code == 201
             assert User.objects.count() == 1
             assert email_task.delay.called, 'email to admins should be sent'
+
+
+@pytest.mark.django_db
+class TestBasicInfoAPI(object):
+    def test_system_info_api_view(self, client, settings):
+        resp = client.get(reverse('system_info_api_view'))
+        assert resp.status_code == 200
+        data = resp.json()
+        # just a few hard-coded text values
+        assert 'ALLOW_EMAIL_LOGIN' in data
+        assert 'ALLOW_USER_REGISTRATION' in data
+        # test it all
+        for key in settings.EXPORTED_SETTINGS:
+            assert key in data

@@ -282,7 +282,6 @@ export default new Vuex.Store({
           // thus we must inform the user that he will not see anything
           commit('setInvalidUser', {value: true})
         } else if (error.response && error.response.status === 401 && error.response.headers['www-authenticate'] === 'Session') {
-          dispatch('changeUsesPasswordLogin', true)
           dispatch('setShowLoginDialog', {show: true})
         } else {
           dispatch('showSnackbar', {content: 'Error loading user data: ' + error})
