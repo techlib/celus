@@ -15,6 +15,7 @@ from ..logic.fetching import (
     retry_holes_with_new_credentials,
     create_fetch_units,
     FetchUnit,
+    process_fetch_units,
 )
 from sushi.models import CounterReportType, SushiCredentials, SushiFetchAttempt
 from organizations.tests.conftest import organizations
@@ -193,6 +194,56 @@ class TestSushiFetching(object):
         credentials.active_counter_reports.add(counter_report_type)
         fus = create_fetch_units()
         assert len(fus) == 1
+
+    def test_process_fetch_units_broken(self, fetch_unit: FetchUnit, monkeypatch):
+        """
+        Test that `process_fetch_units` stops after first attempt if the credentials are broken
+        """
+
+        def mock_download(self_: FetchUnit, start_date, end_date, **kwargs):
+            """
+            simulate broken credentials by returning attempts that is not successful
+            """
+            mock_download.called = (
+                mock_download.called + 1 if hasattr(mock_download, 'called') else 1
+            )
+            return SushiFetchAttempt.objects.create(
+                credentials=self_.credentials,
+                counter_report=self_.report_type,
+                start_date=start_date,
+                end_date=end_date,
+                error_code='3000',
+                download_success=True,
+                processing_success=False,
+            )
+
+        monkeypatch.setattr(FetchUnit, 'download', mock_download)
+        process_fetch_units([fetch_unit], start_date=date(2020, 1, 1), end_date=date(2019, 1, 1))
+        assert mock_download.called == 1, 'one attempt for 13 months because of broken credentials'
+
+    def test_process_fetch_units_ok(self, fetch_unit: FetchUnit, monkeypatch):
+        """
+        Test that `process_fetch_units` continues to fetch older data if good data get returned
+        from previous attempts.
+        """
+
+        def mock_download(self_: FetchUnit, start_date, end_date, **kwargs):
+            mock_download.called = (
+                mock_download.called + 1 if hasattr(mock_download, 'called') else 1
+            )
+            return SushiFetchAttempt.objects.create(
+                credentials=self_.credentials,
+                counter_report=self_.report_type,
+                start_date=start_date,
+                end_date=end_date,
+                download_success=True,
+                processing_success=True,
+                contains_data=True,
+            )
+
+        monkeypatch.setattr(FetchUnit, 'download', mock_download)
+        process_fetch_units([fetch_unit], start_date=date(2020, 1, 1), end_date=date(2019, 1, 1))
+        assert mock_download.called == 13, 'thirteen months'
 
 
 @pytest.mark.django_db
