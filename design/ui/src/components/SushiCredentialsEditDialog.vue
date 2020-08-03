@@ -69,7 +69,7 @@ cs:
                     </v-col>
                     <v-col cols="12" :md="4">
                         <v-text-field
-                                v-if="credentials"
+                                v-if="credentials || fixedPlatform"
                                 :value="platform.name"
                                 :label="$t('platform')"
                                 disabled
@@ -305,7 +305,8 @@ cs:
     props: {
       credentialsObject: {},
       value: {default: false},
-      existingCredentials: {required: false, type: Array}
+      existingCredentials: {required: false, type: Array},
+      fixedPlatform: {required: false, type: Number},
     },
     data () {
       return {
@@ -478,12 +479,22 @@ cs:
         }
       },
       async loadPlatforms () {
-        try {
-          let result = await axios.get('/api/platform/')
-          this.platforms = result.data
-          this.platform = this.platforms[0]
-        } catch (error) {
-          this.showSnackbar({content: 'Error loading platforms: ' + error})
+        if (this.fixedPlatform) {
+          try {
+            let result = await axios.get(`/api/platform/${this.fixedPlatform}/`)
+            this.platform = result.data
+            this.platforms = [this.platform]
+          } catch (error) {
+            this.showSnackbar({content: `Error loading platform id:${this.fixedPlatform}: ` + error})
+          }
+        } else {
+          try {
+            let result = await axios.get('/api/platform/')
+            this.platforms = result.data
+            this.platform = this.platforms[0]
+          } catch (error) {
+            this.showSnackbar({content: 'Error loading platforms: ' + error})
+          }
         }
       },
       closeDialog () {

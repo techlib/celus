@@ -172,7 +172,12 @@ cs:
                 </v-tab-item>
 
                 <v-tab-item value="sushi" v-if="showAdminStuff">
-                    <h2>Sushi</h2>
+                    <SushiCredentialsManagementWidget
+                            :organization-id="this.selectedOrganizationId"
+                            :platform-id="this.platformId"
+                    >
+                    </SushiCredentialsManagementWidget>
+
                 </v-tab-item>
             </v-tabs-items>
         </v-tabs>
@@ -185,15 +190,18 @@ cs:
   import TitleList from '../components/TitleList'
   import axios from 'axios'
   import CounterChartSet from '../components/CounterChartSet'
-  import {formatInteger} from '../libs/numbers'
+  import {formatInteger} from '@/libs/numbers'
   import AnnotationsWidget from '../components/AnnotationsWidget'
   import AddAnnotationButton from '../components/AddAnnotationButton'
   import InterestGroupSelector from '../components/InterestGroupSelector'
   import RawDataExportWidget from '../components/RawDataExportWidget'
+  import SushiCredentialsManagementWidget
+    from '@/components/sushi/SushiCredentialsManagementWidget'
 
   export default {
     name: 'PlatformDetailPage',
     components: {
+      SushiCredentialsManagementWidget,
       TitleList,
       CounterChartSet,
       AnnotationsWidget,
@@ -207,7 +215,7 @@ cs:
     data () {
       return {
         platform: null,
-        activeTab: 'chart',
+        activeTab: this.$route.query.tab || 'chart',
       }
     },
     computed: {

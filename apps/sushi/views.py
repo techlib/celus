@@ -44,6 +44,10 @@ class SushiCredentialsViewSet(ModelViewSet):
         organization_id = self.request.query_params.get('organization')
         if organization_id:
             qs = qs.filter(**organization_filter_from_org_id(organization_id, self.request.user))
+        # platform filter
+        platform_id = self.request.query_params.get('platform')
+        if platform_id:
+            qs = qs.filter(platform_id=platform_id)
         # we add info about locked status for current user
         org_to_level = {}
         for sc in qs:  # type: SushiCredentials

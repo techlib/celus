@@ -128,6 +128,7 @@ cs:
                     @update-credentials="updateCredentials"
                     :existing-credentials="sushiCredentialsList"
                     key="create"
+                    :fixed-platform="platformId"
             ></SushiCredentialsEditDialog>
         </v-dialog>
         <v-dialog v-model="showDetailsDialog">
@@ -160,6 +161,16 @@ cs:
       dialogMaxWidth: {
         required: false,
         default: '1000px',
+      },
+      organizationId: {
+        default: -1,
+        type: Number,
+        required: false,
+      },
+      platformId: {
+        default: null,
+        type: Number,
+        required: false,
       }
     },
 
@@ -177,9 +188,6 @@ cs:
       }
     },
     computed: {
-      ...mapState({
-        organizationId: 'selectedOrganizationId',
-      }),
       ...mapGetters({
         consortialInstall: 'consortialInstall',
       }),
@@ -236,6 +244,13 @@ cs:
         set: debounce(function (value) {
           this.search = value
         }, 500)
+      },
+      dataUrl () {
+        let base = `/api/sushi-credentials/?organization=${this.organizationId}`
+        if (this.platformId) {
+          base += `&platform=${this.platformId}`
+        }
+        return base
       }
     },
     methods: {
@@ -245,14 +260,13 @@ cs:
       async loadSushiCredentialsList () {
         this.loading = true
         try {
-          let response = await axios.get(`/api/sushi-credentials/?organization=${this.organizationId}`)
+          let response = await axios.get(this.dataUrl)
           this.sushiCredentialsList = response.data
         } catch (error) {
           this.showSnackbar({content: 'Error loading credentials list: '+error})
         } finally {
           this.loading = false
         }
-
       },
       updateCredentials (credentials) {
         // the new credentials as returned by the edit dialog
@@ -305,6 +319,9 @@ cs:
         if (!value) {
           this.selectedCredentials = null
         }
+      },
+      dataUrl () {
+        this.loadSushiCredentialsList()
       }
     },
     mounted() {
