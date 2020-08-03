@@ -3,9 +3,11 @@
 <i18n lang="yaml">
 en:
     no_info: Unfortunately there are no data about titles available for this platform.
+    sushi: Sushi
 
 cs:
     no_info: Pro tuto platformu bohužel nejsou dostupná žádná data o titulech.
+    sushi: Sushi
 </i18n>
 
 <template>
