@@ -245,6 +245,90 @@ class TestSushiFetching(object):
         process_fetch_units([fetch_unit], start_date=date(2020, 1, 1), end_date=date(2019, 1, 1))
         assert mock_download.called == 13, 'thirteen months'
 
+    def test_process_fetch_units_with_successful_conflict(self, fetch_unit: FetchUnit, monkeypatch):
+        """
+        Test that `process_fetch_units` skips attempts if successful conflicting attempt is
+        already present.
+        """
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 1, 31)
+        SushiFetchAttempt.objects.create(
+            credentials=fetch_unit.credentials,
+            counter_report=fetch_unit.report_type,
+            start_date=start_date,
+            end_date=end_date,
+            download_success=True,
+            processing_success=True,
+            contains_data=True,
+        )
+
+        def mock_download(*args, **kwargs):
+            mock_download.called = True
+
+        monkeypatch.setattr(FetchUnit, 'download', mock_download)
+        process_fetch_units([fetch_unit], start_date=start_date, end_date=start_date)
+        assert getattr(mock_download, 'called', False) is False, 'attempt should not be made'
+
+    def test_process_fetch_units_with_failed_conflict(self, fetch_unit: FetchUnit, monkeypatch):
+        """
+        Test that `process_fetch_units` skips attempts if failed conflicting attempt is
+        already present and it thinks there is no reason to retry.
+        """
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 1, 31)
+        SushiFetchAttempt.objects.create(
+            credentials=fetch_unit.credentials,
+            counter_report=fetch_unit.report_type,
+            start_date=start_date,
+            end_date=end_date,
+            download_success=True,
+            processing_success=False,
+            contains_data=False,
+        )
+
+        def mock_download(*args, **kwargs):
+            mock_download.called = True
+
+        monkeypatch.setattr(FetchUnit, 'download', mock_download)
+        process_fetch_units([fetch_unit], start_date=start_date, end_date=start_date)
+        assert getattr(mock_download, 'called', False) is False, 'attempt should not be made'
+
+    def test_process_fetch_units_with_retriable_failed_conflict(
+        self, fetch_unit: FetchUnit, monkeypatch
+    ):
+        """
+        Test that `process_fetch_units` makes attempts if a conflicting attempt is
+        already present, when the old attempt was not successful and it seems new attempt may help.
+        """
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 1, 31)
+        sfa = SushiFetchAttempt.objects.create(
+            credentials=fetch_unit.credentials,
+            counter_report=fetch_unit.report_type,
+            start_date=start_date,
+            end_date=end_date,
+            download_success=True,
+            processing_success=True,
+            contains_data=False,
+            error_code='3030',
+        )
+        # override the timestamp of old attempt to make sure retrial is due
+        sfa.timestamp = now() - timedelta(days=30)
+        sfa.save()
+
+        def mock_download(self_, start, end, **kwargs):
+            mock_download.called = True
+            return SushiFetchAttempt.objects.create(
+                credentials=self_.credentials,
+                counter_report=self_.report_type,
+                start_date=start,
+                end_date=end,
+            )
+
+        monkeypatch.setattr(FetchUnit, 'download', mock_download)
+        process_fetch_units([fetch_unit], start_date=start_date, end_date=start_date)
+        assert mock_download.called is True, 'attempt should be made'
+
 
 @pytest.mark.django_db
 class TestFetchUnit(object):
