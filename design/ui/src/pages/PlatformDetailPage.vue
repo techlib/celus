@@ -138,8 +138,12 @@ cs:
                 <v-icon class="mr-2">fa-bars</v-icon>
                 <span v-text="$t('titles')"></span>
             </v-tab>
+            <v-tab v-if="showAdminStuff" href="#sushi">
+                <v-icon class="mr-2">fa-download</v-icon>
+                <span v-text="$t('sushi')"></span>
+            </v-tab>
 
-            <v-tabs-items v-model="activeTab">
+            <v-tabs-items v-model="activeTab" class="platform-page">
                 <v-tab-item value="chart">
                     <section v-if="selectedOrganizationId && platform">
                         <CounterChartSet
@@ -165,6 +169,10 @@ cs:
                             <v-alert elevation="2" colored-border border="right" type="warning">{{ $t('no_info') }}</v-alert>
                         </v-container>
                     </section>
+                </v-tab-item>
+
+                <v-tab-item value="sushi" v-if="showAdminStuff">
+                    <h2>Sushi</h2>
                 </v-tab-item>
             </v-tabs-items>
         </v-tabs>
@@ -364,6 +372,12 @@ cs:
     hr.light {
       color: #ffffff;
       background-color: #00A000;
+    }
+
+    .v-tabs-items {
+      &.platform-page {
+        min-height: 600px;
+      }
     }
 
 </style>
