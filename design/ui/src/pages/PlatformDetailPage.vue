@@ -78,13 +78,10 @@ cs:
                     </table>
                 </v-col>
                 <v-spacer></v-spacer>
-                <v-col cols="auto" v-if="showAdminStuff && organizationSelected">
+                <v-col cols="auto" v-if="showAdminStuff">
                     <v-card>
-                        <!--v-card-title>
-                            {{ $t('title_fields.actions') }}
-                        </v-card-title-->
                         <v-card-text>
-                            <div v-if="allowManualDataUpload">
+                            <div v-if="organizationSelected && allowManualDataUpload">
                                 <v-btn
                                         text small
                                         :to="{name: 'platform-upload-data', params: {platformId: platformId}}"
@@ -94,7 +91,7 @@ cs:
                                 </v-btn>
 
                             </div>
-                            <div>
+                            <div v-if="organizationSelected">
                                 <AddAnnotationButton
                                         :platform="platform"
                                         @update="refreshAnnotations()"
@@ -102,19 +99,33 @@ cs:
                                         small
                                 />
                             </div>
+
+                            <raw-data-export-widget
+                                    :platform="platformId"
+                                    text
+                                    small
+                            ></raw-data-export-widget>
+
                         </v-card-text>
                     </v-card>
                 </v-col>
             </v-row>
         </v-container>
 
+        <section class="mb-5" v-if="platform">
+            <AnnotationsWidget
+                    :platform="platform"
+                    :allow-add="showAdminStuff"
+                    ref="annotWidget">
+            </AnnotationsWidget>
+        </section>
+
         <v-tabs
                 v-model="activeTab"
-                background-color="blue-grey lighten-1"
+                background-color="#f5f5f5"
                 centered
                 grow
                 class="mt-1"
-                dark
         >
             <v-tabs-slider></v-tabs-slider>
 
@@ -130,22 +141,7 @@ cs:
 
             <v-tabs-items v-model="activeTab">
                 <v-tab-item value="chart">
-                    <section class="mb-5" v-if="platform">
-                        <AnnotationsWidget :platform="platform" :allow-add="showAdminStuff"
-                                           ref="annotWidget"></AnnotationsWidget>
-                    </section>
-
                     <section v-if="selectedOrganizationId && platform">
-                        <v-container fluid class="pa-0">
-                            <v-row class="ma-0">
-                                <v-col class="py-0"><h3>{{ $t('overview') }}</h3></v-col>
-                                <v-col cols="auto" class="py-0">
-                                    <raw-data-export-widget
-                                            :platform="platformId"></raw-data-export-widget>
-                                    <!--data-export-widget :platform="platformId"></data-export-widget-->
-                                </v-col>
-                            </v-row>
-                        </v-container>
                         <CounterChartSet
                                 :platform-id="platformId"
                                 :title-id="null"
@@ -181,7 +177,6 @@ cs:
   import TitleList from '../components/TitleList'
   import axios from 'axios'
   import CounterChartSet from '../components/CounterChartSet'
-  import DataExportWidget from '../components/DataExportWidget'
   import {formatInteger} from '../libs/numbers'
   import AnnotationsWidget from '../components/AnnotationsWidget'
   import AddAnnotationButton from '../components/AddAnnotationButton'
@@ -191,7 +186,6 @@ cs:
   export default {
     name: 'PlatformDetailPage',
     components: {
-      DataExportWidget,
       TitleList,
       CounterChartSet,
       AnnotationsWidget,
@@ -363,8 +357,13 @@ cs:
         }
     }
 
-    section.odd {
-      background-color: rgba(0, 0, 0, 0.1);
+    .v-tab--active {
+      background-color: #E0F2F1AA;
+    }
+
+    hr.light {
+      color: #ffffff;
+      background-color: #00A000;
     }
 
 </style>

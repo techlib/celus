@@ -33,7 +33,7 @@ en:
     interest_metrics_only: This view uses interest-defining metrics only.
     reported_metrics_tooltip: "Only the following metrics were used to compute the displayed values:"
     reported_metrics_tooltip_many: The resulting value is a sum of the individual displayed metrics.
-    available_charts: Available charts
+    available_charts: Choose a chart
 cs:
     chart:
         date_metric: Metrika v čase
@@ -69,4 +69,4 @@ cs:
     interest_metrics_only: Tento pohled využívá pouze metriky, které definují zájem.
     reported_metrics_tooltip: "Při výpočtu dat pro tento graf byly použity pouze tyto metriky:"
     reported_metrics_tooltip_many: Výsledná hodnota je součtem jednotlivých uvedených metrik.
-    available_charts: Dostupné grafy
+    available_charts: Vyberte graf

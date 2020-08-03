@@ -39,9 +39,11 @@ cs:
     <span>
         <v-btn
                 @click="showDialog = true"
-                color="primary"
+                :color="color"
+                :text="text"
+                :small="small"
         >
-            <v-icon left>fa-download</v-icon>
+            <v-icon left :small="small">fa-download</v-icon>
             {{ $t('export_raw_data') }}
         </v-btn>
         <v-dialog
@@ -127,7 +129,20 @@ cs:
         required: false,
         default: 10,
         type: Number,
-      }
+      },
+      // following are passed on to v-btn
+      text: {
+        default: false,
+        type: Boolean,
+      },
+      color: {
+        required: false,
+      },
+      small: {
+        default: false,
+        type: Boolean,
+      },
+
     },
 
     data () {
