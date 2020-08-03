@@ -16,6 +16,7 @@ en:
     delete_success: Sushi credentials were successfully removed
     title_label: Title
     credentials_conflict: "|{n} record for same platform/version|{n} records for same platform/version"
+    title_in_conflict: <strong>Use a different title</strong>. When creating more than one set of credentials for the same organization, platform and COUNTER version, you need to use distinct titles in order to distinguish between the sets.
 
 cs:
     add_custom_param: Přidat vlastní parametr
@@ -32,6 +33,7 @@ cs:
     delete_success: Přihlašovací údaje byly úspěšně odstraněny
     title_label: Název
     credentials_conflict: "|{n} záznam pro stejnou platformu/verzi|{n} záznamy pro stejnou platformu/verzi|{n} záznamů pro stejnou platformu/verzi"
+    title_in_conflict: <strong>Použijte jiný název</strong>. Pokud vytváříte více přihlašovacích údajů pro stejnout organizaci, platformu a verzi COUNTER, musíte použít různé názvy, aby bylo možné přihlašovací údaje rozlišit.
 </i18n>
 
 
@@ -47,6 +49,15 @@ cs:
                                 v-model="title"
                                 :label="$t('title_label')"
                         >
+                            <template v-slot:append v-if="titleHint">
+                                <v-tooltip bottom v-if="titleHint">
+                                    <template #activator="{on}">
+                                        <v-icon v-on="on" small color="warning">fa-exclamation-triangle</v-icon>
+                                    </template>
+                                    <div v-html="titleHint" style="max-width: 400px"></div>
+                                </v-tooltip>
+
+                            </template>
                         </v-text-field>
                     </v-col>
                     <v-col cols="12" :md="4">
@@ -382,6 +393,9 @@ cs:
         return this.allReportTypes.filter(item => item.counter_version === this.counterVersion)
       },
       valid () {
+        if (this.conflictingCredentials) {
+          return false
+        }
         if (this.credentials) {
           return (this.selectedReportTypes.length > 0 && this.url && this.customerId)
         } else {
@@ -399,12 +413,40 @@ cs:
         if (!this.existingCredentials) {
           return null
         }
-        let sameVerCount = this.existingCredentials.filter(cred => cred.organization.pk === this.organization.pk && cred.platform.pk === this.platform.pk && cred.counter_version === this.counterVersion)
-        if (sameVerCount.length > 0) {
-          return this.$tc('credentials_conflict', sameVerCount.length)
+        if (this.similarCredentials > 0) {
+          return this.$tc('credentials_conflict', this.similarCredentials.length)
         }
         return null
-      }
+      },
+      conflictingCredentials () {
+        /*
+        * return true if there are credentials with the same organization, platform and counter
+        * version and also the same name - this is not allowed and should be reflected in the
+        * UI
+        * */
+        return !!(this.similarCredentials.filter(cred => cred.title == this.title).length)
+      },
+      similarCredentials () {
+        /*
+        list of credentials that have the same organization, platform and counter version
+         */
+        if (this.existingCredentials) {
+          return this.existingCredentials.filter(
+            cred =>
+              cred.organization.pk === this.organization.pk &&
+              cred.platform.pk === this.platform.pk &&
+              cred.counter_version === this.counterVersion
+          )
+        }
+        return []
+      },
+      titleHint () {
+        if (this.conflictingCredentials) {
+          return this.$t('title_in_conflict')
+        }
+        return false
+      },
+
     },
     methods: {
       ...mapActions({
