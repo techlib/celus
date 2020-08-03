@@ -11,10 +11,10 @@ from organizations.urls import router as organization_router
 from . import views
 
 root_router = SimpleRouter()
-root_router.register(r'platform', views.AllPlatformsViewSet, basename='all-platforms')
 
 org_sub_router = NestedSimpleRouter(organization_router, r'organization', lookup='organization')
 org_sub_router.register(r'platform', views.PlatformViewSet, basename='platform')
+org_sub_router.register(r'all-platform', views.AllPlatformsViewSet, basename='all-platforms')
 # TODO: following is not used anymore
 org_sub_router.register(
     r'detailed-platform', views.DetailedPlatformViewSet, basename='detailed-platform'

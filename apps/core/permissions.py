@@ -1,5 +1,5 @@
 from django.conf import settings
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
 
 from core.logic.url import extract_organization_id_from_request_data
 from organizations.models import UserOrganization
@@ -44,6 +44,19 @@ class OrganizationRelatedPermissionMixin(object):
         return user.accessible_organizations().filter(pk=org_id).exists()
 
 
+class ViewPlatformPermission(IsAuthenticated):
+
+    """
+    Permission to view platform object
+    """
+
+    def has_object_permission(self, request, view, obj):
+        if request.method not in SAFE_METHODS:
+            return False
+
+        return request.user.accessible_platforms().filter(pk=obj.pk).exists()
+
+
 class CanPostOrganizationDataPermission(OrganizationRelatedPermissionMixin, BasePermission):
 
     """
@@ -74,7 +87,7 @@ class CanAccessOrganizationRelatedObjectPermission(
             return self.has_org_admin(request.user, obj.organization_id)
 
 
-class CanAccessOrganizationFromGETAttrs(OrganizationRelatedPermissionMixin, BasePermission):
+class CanAccessOrganizationFromGETAttrs(BasePermission):
     """
     Checks that the user has access to the organization present in the GET params
     """

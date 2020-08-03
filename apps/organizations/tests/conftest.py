@@ -4,7 +4,7 @@ from core.models import Identity
 from core.tests.conftest import *
 
 from ..models import Organization, UserOrganization
-from .object_factories import OrganizationFactory
+from test_fixtures.entities.organizations import OrganizationFactory
 
 
 @pytest.fixture()

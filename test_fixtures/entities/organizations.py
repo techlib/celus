@@ -1,7 +1,7 @@
 import factory
-from faker import Faker
 
-from ..models import Organization
+from faker import Faker
+from organizations.models import Organization
 
 
 fake = Faker()

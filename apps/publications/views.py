@@ -1,7 +1,9 @@
 from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
 from django.db.models.functions import Coalesce
 from pandas import DataFrame
+from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,7 +13,10 @@ from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.logic.dates import date_filter_from_params
 from core.pagination import SmartPageNumberPagination
-from core.permissions import SuperuserOrAdminPermission
+from core.permissions import (
+    SuperuserOrAdminPermission,
+    ViewPlatformPermission,
+)
 from logs.logic.queries import (
     extract_interests_from_objects,
     interest_annotation_params,
@@ -22,6 +27,7 @@ from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from publications.models import Platform, Title, PlatformTitle
+from organizations.models import Organization
 from publications.serializers import TitleCountSerializer
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
@@ -32,9 +38,22 @@ class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPag
 
 
 class AllPlatformsViewSet(ReadOnlyModelViewSet):
+    permission_classes = [ViewPlatformPermission]
 
     serializer_class = PlatformSerializer
-    queryset = Platform.objects.all().order_by('name')
+
+    def get_queryset(self):
+        """Returns Platforms which can be displayed to the user"""
+        try:
+            organization_pk = int(self.kwargs.get('organization_pk'))
+        except ValueError as exc:
+            raise ValidationError(detail=f'Bad value for the "organization_pk" param: "{str(exc)}"')
+        if organization_pk and organization_pk != -1:
+            organization = Organization.objects.get(pk=organization_pk)
+        else:
+            # all organizations were requested using -1
+            organization = None
+        return self.request.user.accessible_platforms(organization=organization).order_by('name')
 
     @action(detail=True, url_path='report-types')
     def get_report_types(self, request, pk):

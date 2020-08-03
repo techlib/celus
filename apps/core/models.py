@@ -1,3 +1,5 @@
+import typing
+
 from allauth.account.models import EmailAddress, EmailConfirmation
 
 from django.conf import settings
@@ -115,6 +117,29 @@ class User(AbstractUser):
         # the following is an old version where siblings could see each other
         # return Organization.objects.filter(
         #     tree_id__in=self.organizations.all().values('tree_id').distinct())
+
+    def accessible_platforms(
+        self, organization: typing.Optional["apps.publications.models.Organization"] = None
+    ) -> models.QuerySet:
+
+        """
+        Display accessible platform for the user
+
+        :param: organization:
+        :returns: queryset with accessible platforms
+        """
+        Platform = apps.get_model(app_label='publications', model_name='Platform')
+
+        # Platforms with empty source are considered as public
+        # + all platforms which belong to the one of user's organization
+        query = (
+            models.Q(
+                source__organization__in=self.accessible_organizations().filter(pk=organization.pk)
+            )
+            if organization
+            else models.Q(source__organization__in=self.accessible_organizations())
+        )
+        return Platform.objects.filter(~models.Q(source__type=DataSource.TYPE_ORGANIZATION) | query)
 
     @cached_property
     def is_from_master_organization(self):
