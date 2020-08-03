@@ -158,8 +158,6 @@ cs:
 
                 <v-tab-item value="titles">
                     <section v-if="platform && platform.title_count">
-                        <h3 class="pt-3">{{ $t('titles') }}</h3>
-
                         <InterestGroupSelector/>
                         <TitleList :url="titleListURL" :platform-id="platformId"
                                    :order-interest="orderInterest"></TitleList>
