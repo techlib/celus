@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, date
 from unittest.mock import patch
 
 import pytest
@@ -9,7 +9,13 @@ from nigiri.client import Sushi5Client
 from nigiri.counter5 import Counter5ReportBase
 from publications.models import Platform
 from ..logic.data_import import import_sushi_credentials
-from ..logic.fetching import months_to_cover, find_holes_in_data, retry_holes_with_new_credentials
+from ..logic.fetching import (
+    months_to_cover,
+    find_holes_in_data,
+    retry_holes_with_new_credentials,
+    create_fetch_units,
+    FetchUnit,
+)
 from sushi.models import CounterReportType, SushiCredentials, SushiFetchAttempt
 from organizations.tests.conftest import organizations
 from publications.tests.conftest import platforms
@@ -177,3 +183,79 @@ class TestHoleFillingMachinery(object):
         with patch('sushi.tasks.make_fetch_attempt_task') as task_mock:
             retry_holes_with_new_credentials_task()
             assert task_mock.apply_async.call_count == 3
+
+
+@pytest.mark.django_db
+class TestSushiFetching(object):
+    def test_create_fetch_units(self, credentials, counter_report_type):
+        fus = create_fetch_units()
+        assert len(fus) == 0, 'no fetchunits until credentails have some report type active'
+        credentials.active_counter_reports.add(counter_report_type)
+        fus = create_fetch_units()
+        assert len(fus) == 1
+
+
+@pytest.mark.django_db
+class TestFetchUnit(object):
+    def test_find_conflicting(self, fetch_unit: FetchUnit):
+        """
+        Tests that the `FetchUnit.find_conflicting` works as expected. Simple version.
+        """
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 1, 31)
+        assert fetch_unit.find_conflicting(start_date, end_date) is None
+        fa = SushiFetchAttempt.objects.create(
+            credentials=fetch_unit.credentials,
+            counter_report=fetch_unit.report_type,
+            start_date=start_date,
+            end_date=end_date,
+            credentials_version_hash=fetch_unit.credentials.version_hash,
+        )
+        assert fetch_unit.find_conflicting(start_date, end_date).pk == fa.pk
+
+    def test_find_conflicting_with_versions_failed(self, fetch_unit: FetchUnit):
+        """
+        Tests that the `FetchUnit.find_conflicting` works as expected. This version takes
+        credentials versions into consideration.
+        Existing attempt should not be reported as conflicting, if it was created using
+        an old version of credentials and was not successful.
+        """
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 1, 31)
+        assert fetch_unit.find_conflicting(start_date, end_date) is None
+        SushiFetchAttempt.objects.create(
+            credentials=fetch_unit.credentials,
+            counter_report=fetch_unit.report_type,
+            start_date=start_date,
+            end_date=end_date,
+            credentials_version_hash='foobarbaz',  # definitely not matching credentials
+            download_success=False,
+        )
+        assert (
+            fetch_unit.find_conflicting(start_date, end_date) is None
+        ), 'should not report attempt with old version of credentials'
+
+    def test_find_conflicting_with_versions_successful(self, fetch_unit: FetchUnit):
+        """
+        Tests that the `FetchUnit.find_conflicting` works as expected. This version takes
+        credentials versions into consideration.
+        Existing attempt should be reported as conflicting, if it was created using
+        an old version of credentials, but was successful - this prevents redownload of data
+        successfully fetched in the past.
+        """
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 1, 31)
+        assert fetch_unit.find_conflicting(start_date, end_date) is None
+        fa = SushiFetchAttempt.objects.create(
+            credentials=fetch_unit.credentials,
+            counter_report=fetch_unit.report_type,
+            start_date=start_date,
+            end_date=end_date,
+            credentials_version_hash='foobarbaz',  # definitely not matching credentials
+            download_success=True,
+            processing_success=True,
+            contains_data=True,  # this means successful
+        )
+        assert (
+            fetch_unit.find_conflicting(start_date, end_date).pk == fa.pk
+        ), 'should report successful attempt with old version of credentials'

@@ -80,3 +80,45 @@ class TestSushiFetchAttemptModelManager(object):
         """
         SushiFetchAttempt.objects.filter(download_success=True).current()
         SushiFetchAttempt.objects.filter(download_success=True).current_or_successful()
+
+
+@pytest.mark.django_db
+class TestSushiFetchAttemptModel(object):
+    def test_conflicting_fully_enclosing(self, credentials, counter_report_type):
+        fa = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+        )
+        assert fa.conflicting(fully_enclosing=True).count() == 0, 'no conflicts'
+        fa2 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-03-31',
+        )
+        assert fa.conflicting(fully_enclosing=True).count() == 1, 'one conflict'
+        # results do not have to be symmetrical because of different date ranges
+        assert fa.conflicting(fully_enclosing=True).get().pk == fa2.pk
+        assert fa2.conflicting(fully_enclosing=True).count() == 0
+
+    def test_conflicting_not_fully_enclosing(self, credentials, counter_report_type):
+        fa = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+        )
+        # fully_enclosing is False by default, so no need to specify it
+        assert fa.conflicting().count() == 0, 'no conflicts'
+        fa2 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-03-31',
+        )
+        assert fa.conflicting().count() == 1, 'one conflict'
+        # results should be symmetrical - fa conflicts with fa2, fa2 conflicts with fa
+        assert fa.conflicting().get().pk == fa2.pk
+        assert fa2.conflicting().get().pk == fa.pk

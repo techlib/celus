@@ -1,6 +1,7 @@
 import pytest
 
 from core.models import UL_ORG_ADMIN
+from sushi.logic.fetching import FetchUnit
 from sushi.models import CounterReportType, SushiCredentials
 from organizations.tests.conftest import organizations
 from publications.tests.conftest import platforms
@@ -46,3 +47,9 @@ def credentials(organizations, platforms):
         url='http://a.b.c/',
     )
     yield credentials
+
+
+@pytest.fixture()
+def fetch_unit(credentials, counter_report_type):
+    credentials.active_counter_reports.add(counter_report_type)
+    yield FetchUnit(credentials=credentials, report_type=counter_report_type)

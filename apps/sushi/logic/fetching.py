@@ -102,6 +102,9 @@ def fetch_new_sushi_data(credentials: Optional[SushiCredentials] = None):
 
 
 def process_fetch_units_wrapper(args, **kwargs):
+    """
+    Wrapper around `process_fetch_units` to make is simple to use it with the threading module
+    """
     lock_name, fetch_units, start_date, end_date = args
     logger.debug(
         'Going to lock fetching of %d fetch units with lock %s', len(fetch_units), lock_name
@@ -151,10 +154,10 @@ class FetchUnit(object):
             logger.info('Fetch unit is going to sleep for %.1f seconds', time_to_sleep)
             sleep(time_to_sleep)
 
-    def find_conflicting(self, start_date, end_date):
+    def find_conflicting(self, start_date: date, end_date: date) -> Optional[SushiFetchAttempt]:
         """
         Find SushiFetch attempt corresponding to our credentials and report type and the dates
-        at hand. If found, it selected the one that has the best result and returns it
+        at hand. If found, it selects the one that has the best result and returns it
         :param start_date:
         :param end_date:
         :return:
@@ -164,33 +167,13 @@ class FetchUnit(object):
             counter_report=self.report_type,
             start_date__lte=start_date,
             end_date__gte=end_date,
-        )
+        ).current_or_successful(success_measure='contains_data')
         successes = ['contains_data', 'queued', 'processing_success', 'download_success']
         for success_type in successes:
             matching = [attempt for attempt in attempts if getattr(attempt, success_type) is True]
             if matching:
                 return matching[0]
         return attempts[0] if attempts else None
-
-    def split(self):
-        """
-        If there are credentials for the same platform and organization and an older superseeded
-        report type than the one associated with this object, return a list of corresponding
-        FetchUnits.
-
-        This method is not used anymore - we process all counter reports regardless of C5 or C4
-        (before we only went for C4 only if C5 was not available and this method took care or
-        this)
-        """
-        out = []
-        for rt in self.report_type.report_type.superseeds.all():  # type: ReportType
-            for cred in SushiCredentials.objects.filter(
-                active_counter_reports=rt.counterreporttype,
-                organization_id=self.credentials.organization_id,
-                platform_id=self.credentials.platform_id,
-            ):
-                out.append(FetchUnit(cred, rt.counterreporttype))
-        return out
 
 
 def create_fetch_units() -> [FetchUnit]:
@@ -224,25 +207,13 @@ def filter_fetch_units_by_credentials(
     ]
 
 
-def split_fetch_units_by_platform(fetch_units) -> dict:
-    """
-    split the fetch units by platform so that we can process each platform in separate
-    thread or task
-    :return: platform_id -> [FetchUnit]
-    """
-    platform_to_fetch_units = {}
-    for fetch_unit in fetch_units:
-        platform_id = fetch_unit.credentials.platform_id
-        if platform_id not in platform_to_fetch_units:
-            platform_to_fetch_units[platform_id] = []
-        platform_to_fetch_units[platform_id].append(fetch_unit)
-    return platform_to_fetch_units
-
-
 def split_fetch_units_by_url_lock_name(fetch_units) -> dict:
     """
-    split the fetch units by platform so that we can process each platform in separate
-    thread or task
+    split the fetch units by the SUSHI server URL (represented by url_lock value),
+    so that we can process each URL in separate thread or task and thus have control
+    over timing - some SUSHI servers disallow more than one request in paralled for the
+    same client, some only allow a certain number of attempts per day (and thus we need to stop
+    new attempts once we detect this)
     :return: url_lock_name -> [FetchUnit]
     """
     lock_name_to_fetch_units = {}
@@ -266,6 +237,17 @@ def process_fetch_units(
     sleep_time=0,
     use_lock=True,
 ):
+    """
+
+    :param fetch_units:
+    :param start_date:
+    :param end_date:
+    :param conflict_ok:
+    :param conflict_error:
+    :param sleep_time:
+    :param use_lock:
+    :return:
+    """
     while fetch_units and start_date >= end_date:
         new_fetch_units = []
         platform = fetch_units[0].credentials.platform
@@ -420,7 +402,7 @@ def find_holes_in_data() -> [DataHole]:
 def retry_holes_with_new_credentials(sleep_interval=0) -> Counter:
     """
     Find holes in data using `find_holes_in_data` and decide if it makes sense to redownload them.
-    If yes, it do so.
+    If yes, do so.
     :return:
     """
     holes = find_holes_in_data()

@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import timedelta, datetime
 from hashlib import blake2b
 from itertools import takewhile
-from typing import Optional, Dict
+from typing import Optional, Dict, Iterable
 
 import requests
 import reversion
@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.files.base import ContentFile
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from pycounter.exceptions import SushiException
@@ -605,6 +605,22 @@ class SushiFetchAttempt(models.Model):
             else:
                 output.append('Should not retry automatically')
         return '\n'.join(output)
+
+    def conflicting(self, fully_enclosing: bool = False) -> Iterable['SushiFetchAttempt']:
+        """
+        Returns a queryset with `SushiFetchAttempts` for the same credentials, report_type and
+        times as this one
+        :fully_enclosing: should the conflicting attempts fully enclose self?
+        :return: queryset of SushiFetchAttempts
+        """
+        max_start_date = self.start_date if fully_enclosing else self.end_date
+        min_end_date = self.end_date if fully_enclosing else self.start_date
+        return SushiFetchAttempt.objects.filter(
+            credentials=self.credentials,
+            counter_report=self.counter_report,
+            start_date__lte=max_start_date,
+            end_date__gte=min_end_date,
+        ).exclude(pk=self.pk)
 
     def retry(self):
         attempt = self.credentials.fetch_report(
