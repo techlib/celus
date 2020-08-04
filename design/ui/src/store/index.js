@@ -16,6 +16,7 @@ import login from './modules/login'
 import siteConfig from './modules/site-config'
 import { ConcurrencyManager } from 'axios-concurrency'
 import isEqual from 'lodash/isEqual'
+import sleep from '@/libs/sleep'
 
 Vue.use(Vuex)
 
@@ -66,6 +67,8 @@ export default new Vuex.Store({
     showLoginDialog: false,
     appLanguage: 'en',
     basicInfo: {},
+    backendReady: false,
+    bootUpMessage: 'loading_basic_data',
   },
   getters: {
     avatarImg: state => {
@@ -327,11 +330,18 @@ export default new Vuex.Store({
         }
       }
     },
-    async loadBasicInfo ({dispatch, commit}) {
-      try {
-        commit('setBasicInfo', (await axios.get('/api/info/', {privileged: true})).data)
-      } catch (error) {
-        dispatch('showSnackbar', {content: 'Error loading basic info: ' + error, color: 'error'})
+    async loadBasicInfo ({commit}) {
+      while (true) {
+        try {
+          let response = await axios.get('/api/info/', {privileged: true})
+          commit('setBackendReady', true)
+          commit('setBasicInfo', response.data)
+          break
+        } catch (error) {
+          // sleep and retry
+          commit('setBackendReady', false)
+          await sleep(2000)
+        }
       }
     },
     changeDateRangeObject (context, dateRangeIndex) {
@@ -440,6 +450,14 @@ export default new Vuex.Store({
     },
     setBasicInfo(state, data) {
       state.basicInfo = data
-    }
+    },
+    setBackendReady(state, ready) {
+      state.backendReady = ready
+      if (ready) {
+        state.bootUpMessage = 'loading_basic_data'
+      } else {
+        state.bootUpMessage = 'waiting_for_backend'
+      }
+    },
   }
 })

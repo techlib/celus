@@ -1,3 +1,15 @@
+<i18n lang="yaml">
+en:
+  loading_basic_data: Loading basic data
+  waiting_for_backend: Connecting to Celus server
+
+# we use the English text for Czech on purpose - we do not want to accidentally show cs to
+# English speakers.
+cs:
+  loading_basic_data: Loading basic data
+  waiting_for_backend: Connecting to Celus server
+</i18n>
+
 <template>
 <div>
     <div class="bootup-logo">
@@ -5,7 +17,7 @@
     </div>
     <h1 class="bootup">Welcome to Celus</h1>
     <LoaderWidget
-        text="Loading basic data"
+        :text="$t(bootUpMessage)"
         height="300px"
         padding-top="80px"
         max-width="400px"
@@ -15,9 +27,18 @@
 
 <script>
   import LoaderWidget from './LoaderWidget'
+  import { mapState } from 'vuex'
   export default {
     name: 'BootUpWidget',
-    components: {LoaderWidget}
+
+    components: {LoaderWidget},
+
+    computed: {
+      ...mapState({
+        backendReady: 'backendReady',
+        bootUpMessage: 'bootUpMessage',
+      })
+    }
   }
 </script>
 

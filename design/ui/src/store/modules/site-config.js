@@ -1,5 +1,6 @@
 import axios from 'axios'
 import Vue from 'vue'
+import sleep from '@/libs/sleep'
 
 export default {
 
@@ -12,14 +13,19 @@ export default {
 
   actions: {
     async loadSiteConfig ({commit}) {
-      try {
-        let response = await axios.get('/api/deployment/overview/', {privileged: true})
-        commit('setSiteName', {siteName: response.data.site_name})
-        commit('setSiteDomain', {siteDomain: response.data.site_domain})
-        commit('setSiteLogo', {siteLogo: response.data.site_logo})
-        commit('setFooterImages', {images: response.data.footer_images})
-      } catch (error) {
-        throw error
+      while (true) {
+        try {
+          let response = await axios.get('/api/deployment/overview/', {privileged: true})
+          commit('setSiteName', {siteName: response.data.site_name})
+          commit('setSiteDomain', {siteDomain: response.data.site_domain})
+          commit('setSiteLogo', {siteLogo: response.data.site_logo})
+          commit('setFooterImages', {images: response.data.footer_images})
+          break
+        } catch (error) {
+          // wait 2 s and retry
+          commit('setBackendReady', false)
+          await sleep(2000)
+        }
       }
     }
   },
