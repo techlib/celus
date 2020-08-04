@@ -205,13 +205,13 @@ cs:
     },
     computed: {
       ...mapState({
-        usesPasswordLogin: state => state.login.usesPasswordLogin,
         loginError: state => state.login.loginError,
 
       }),
       ...mapGetters({
         loginErrorText: 'loginErrorText',
         allowSignUp: 'allowSignUp',
+        usesPasswordLogin: 'usesPasswordLogin',
       }),
       showLoginDialog: {
         get () {
