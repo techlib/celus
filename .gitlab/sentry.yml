@@ -11,5 +11,5 @@ sentry_release:
     - sentry-cli releases set-commits --auto celus-$CI_COMMIT_SHA
 
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ $SENTRY_RELEASE_BRANCHES'
+    - if: '$CI_COMMIT_BRANCH =~ $SENTRY_RELEASE_BRANCHES && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
