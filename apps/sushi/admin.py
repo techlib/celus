@@ -15,12 +15,19 @@ class SushiCredentialsAdmin(VersionAdmin):
         'organization',
         'organization_internal_id',
         'platform',
+        'url',
         'counter_version',
         'customer_id',
         'requestor_id',
         'enabled',
     ]
     list_filter = ['enabled', 'counter_version', 'organization', 'platform']
+    search_fields = [
+        'organization__name',
+        'platform__name',
+        'pk',
+        'url',
+    ]
 
     @classmethod
     def organization_internal_id(cls, obj: models.SushiCredentials):
@@ -143,7 +150,12 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         'queue_previous',
         'queueing_explanation',
     ]
-    search_fields = ['credentials__organization__name', 'credentials__platform__name', 'pk']
+    search_fields = [
+        'credentials__organization__name',
+        'credentials__platform__name',
+        'pk',
+        'credentials__url',
+    ]
     actions = [delete_with_data, reimport]
     list_select_related = [
         'credentials__platform',
