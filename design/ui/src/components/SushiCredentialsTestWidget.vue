@@ -93,9 +93,9 @@ cs:
 <script>
   import { mapActions } from 'vuex'
   import axios from 'axios'
-  import { ymDateFormat } from '../libs/dates'
+  import { ymDateFormat } from '@/libs/dates'
   import SushiCredentialsStatusWidget from './SushiCredentialsStatusWidget'
-  import addMonths from 'date-fns/add_months'
+  import addMonths from 'date-fns/addMonths'
 
   export default {
     name: 'SushiCredentialsTestWidget',

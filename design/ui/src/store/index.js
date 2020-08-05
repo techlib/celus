@@ -2,14 +2,14 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios'
 import Cookies from 'js-cookie'
-import addMonths from 'date-fns/add_months'
-import addYears from 'date-fns/add_years'
-import endOfYear from 'date-fns/end_of_year'
-import startOfYear from 'date-fns/start_of_year'
-import { ymDateFormat } from '../libs/dates'
+import addMonths from 'date-fns/addMonths'
+import addYears from 'date-fns/addYears'
+import endOfYear from 'date-fns/endOfYear'
+import startOfYear from 'date-fns/startOfYear'
+import { ymDateFormat, parseDateTime } from '@/libs/dates'
 import { format as formatNumber } from 'mathjs/lib/function/string/format'
 import VuexPersistence from 'vuex-persist'
-import { sortOrganizations } from '../libs/organizations'
+import { sortOrganizations } from '@/libs/organizations'
 import interest from './modules/interest'
 import maintenance from './modules/maintenance'
 import tour from './modules/tour'
@@ -31,7 +31,19 @@ const vuexLocal = new VuexPersistence({
     dateRangeIndex: state.dateRangeIndex,
     dateRangeStart: state.dateRangeStart,
     dateRangeEnd: state.dateRangeEnd,
-  })
+  }),
+  restoreState(key, storage) {
+    const value = JSON.parse(storage.getItem(key))
+    if (key === 'vuex') {
+      if (value.dateRangeEnd) {
+        value.dateRangeEnd = parseDateTime(value.dateRangeEnd)
+      }
+      if (value.dateRangeStart) {
+        value.dateRangeStart = parseDateTime(value.dateRangeStart)
+      }
+    }
+    return value
+  },
 })
 
 export default new Vuex.Store({

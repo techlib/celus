@@ -1,24 +1,24 @@
 import format from 'date-fns/format'
-import parse from 'date-fns/parse'
+import parseISO from 'date-fns/parseISO'
 
 function isoDateFormat (date) {
-    return format(date, 'YYYY-MM-DD')
+    return format(date, 'yyyy-MM-dd')
 }
 
 function ymDateFormat (date) {
-    return format(date, 'YYYY-MM')
+    return format(date, 'yyyy-MM')
 }
 
 function parseDateTime (text) {
-    return parse(text)
+    return parseISO(text)
 }
 
 function isoDateTimeFormat (date) {
-    return format(date, 'YYYY-MM-DD HH:mm:ss')
+    return format(date, 'yyyy-MM-dd HH:mm:ss')
 }
 
 function isoDateTimeFormatSpans (date) {
-    return `<span class="date">${format(date, 'YYYY-MM-DD')}</span> <span class="time">${format(date, 'HH:mm:ss')}</span>`
+    return `<span class="date">${format(date, 'yyyy-MM-dd')}</span> <span class="time">${format(date, 'HH:mm:ss')}</span>`
 }
 
 export {

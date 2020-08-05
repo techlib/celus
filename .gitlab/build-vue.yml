@@ -1,6 +1,6 @@
 build_vue:
   stage: build
-  image: node:10.5.0
+  image: node:12.18
   before_script:
     - export "BUILD=yes"
     - export "GIT_VERSION=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}"

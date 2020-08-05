@@ -46,7 +46,7 @@ module.exports = {
         'GIT_VERSION': JSON.stringify(`${process.env.GIT_VERSION || ''}`),
         'GIT_COMMITHASH': JSON.stringify(`${process.env.GIT_COMMITHASH || ''}`),
         'GIT_BRANCH': JSON.stringify(`${process.env.GIT_BRANCH || ''}`),
-      })
+      }),
     ]
   },
 

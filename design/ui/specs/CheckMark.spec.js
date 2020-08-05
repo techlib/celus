@@ -19,7 +19,7 @@ describe('CheckMark', () => {
   })
 
   // the tests themselves
-  test('check color', () => {
+  test('check error color', () => {
     const wrapper = mount(CheckMark, {
       localVue,
       vuetify,
@@ -28,9 +28,19 @@ describe('CheckMark', () => {
       }
     })
     expect(wrapper.html()).toContain('error')
-    wrapper.setProps({value: true})
-    expect(wrapper.html()).not.toContain('error')
+  }),
+
+  test('check success color', () => {
+    const wrapper = mount(CheckMark, {
+      localVue,
+      vuetify,
+      propsData: {
+        value: true,
+      }
+    })
+    //wrapper.setProps({value: true})
     expect(wrapper.html()).toContain('success')
+    expect(wrapper.html()).not.toContain('error')
   })
 
 })

@@ -201,8 +201,8 @@ cs:
         get () {
           return this.$store.state.appLanguage
         },
-        async set (newValue) {
-          await this.$store.dispatch('setAppLanguage', {lang: newValue})
+        set (newValue) {
+          this.$store.dispatch('setAppLanguage', {lang: newValue})
           this.$router.go()
         }
       },

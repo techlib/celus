@@ -74,7 +74,7 @@
 
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import { ymDateFormat } from '../libs/dates'
+  import { ymDateFormat, parseDateTime } from '@/libs/dates'
 
   export default {
     name: 'DateRangeSelector',
@@ -103,11 +103,11 @@
       },
       start: {
         get () {return ymDateFormat(this.startRaw)},
-        set (value) {this.setDateRangeStart(value)}
+        set (value) {this.setDateRangeStart(parseDateTime(value))}
       },
       end: {
         get () {return ymDateFormat(this.endRaw)},
-        set (value) {this.setDateRangeEnd(value)}
+        set (value) {this.setDateRangeEnd(parseDateTime(value))}
       },
     },
     methods: {
