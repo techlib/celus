@@ -1,7 +1,7 @@
 from rest_framework.fields import BooleanField
 from rest_framework.serializers import ModelSerializer
 
-from .models import ReportDataView, ChartDefinition
+from .models import ReportDataView, ChartDefinition, ReportViewToChartType
 from logs.serializers import DimensionSerializer
 
 
@@ -46,4 +46,15 @@ class ChartDefinitionSerializer(ModelSerializer):
             'ignore_organization',
             'ignore_platform',
             'scope',
+        )
+
+
+class ReportViewToChartTypeSerializer(ModelSerializer):
+    class Meta:
+        model = ReportViewToChartType
+        fields = (
+            'pk',
+            'report_data_view',
+            'chart_definition',
+            'position',
         )

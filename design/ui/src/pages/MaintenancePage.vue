@@ -24,9 +24,19 @@ cs:
                                     v-text="$t('no_interest')"
                             >
                             </v-tab>
+                            <v-tab
+                                    href="#charts"
+                                    v-text="$t('charts')"
+                            >
+                            </v-tab>
+
                             <v-tab-item value="no-interest">
                                 <UndefinedInterestWidget />
                             </v-tab-item>
+                            <v-tab-item value="charts">
+                                <ReportViewToChartManagementWidget />
+                            </v-tab-item>
+
                         </v-tabs>
                     </v-card-text>
                 </v-card>
@@ -38,9 +48,12 @@ cs:
 <script>
 
   import UndefinedInterestWidget from '../components/UndefinedInterestWidget'
+  import ReportViewToChartManagementWidget
+    from '@/components/admin/ReportViewToChartManagementWidget'
   export default {
     name: 'MaintenancePage',
     components: {
+      ReportViewToChartManagementWidget,
       UndefinedInterestWidget,
     },
     data () {

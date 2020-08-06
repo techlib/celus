@@ -20,8 +20,10 @@ cs:
         ></v-progress-linear>
     </div>
     <v-container fluid v-else class="pb-0 px-0 px-sm-2">
-        <v-row >
-            <v-col cols="12" md="6" lg="5" xl="4">
+        <v-row v-if="!(fixedChart && fixedReportView)">
+            <v-col cols="12" md="6" lg="5" xl="4"
+                   v-if="!fixedReportView"
+            >
                 <v-select
                         :items="reportViewsForSelect"
                         item-text="name"
@@ -39,13 +41,15 @@ cs:
                     </template>
                 </v-select>
             </v-col>
-            <v-col cols="12" md="6" lg="5" xl="4">
-            <ChartTypeSelector
-                    :report-type="selectedReportView"
-                    :scope="scope"
-                    v-model="selectedChartType"
-                    widget="select"
-            />
+            <v-col cols="12" md="6" lg="5" xl="4"
+                   v-if="!fixedChart"
+            >
+                <ChartTypeSelector
+                        :report-type="selectedReportView"
+                        :scope="scope"
+                        v-model="selectedChartType"
+                        widget="select"
+                />
             </v-col>
             <v-col cols="auto" v-if="primaryDimension === 'organization' && this.organizationSelected">
                 <v-switch v-model="showMarkLine" :label="$t('mark_my_org')"></v-switch>
@@ -95,12 +99,14 @@ cs:
       importBatchId: {},
       ignoreOrganization: {type: Boolean, default: false},
       scope: {default: '', required: false},
+      fixedReportView: {required: false, default: null},
+      fixedChart: {required: false, default: null},
     },
     data () {
       return {
         reportViews: [],
-        selectedReportView: null,
-        selectedChartType: null,
+        selectedReportView: this.fixedReportView,
+        selectedChartType: this.fixedChart,
         loading: false,
         showMarkLine: true,
       }
@@ -218,7 +224,12 @@ cs:
       reportViewsUrl () {
         this.loadReportViews()
       },
-
+      fixedReportView () {
+        this.selectedReportView = this.fixedReportView
+      },
+      fixedChart () {
+        this.selectedChartType = this.fixedChart
+      }
     }
 
   }

@@ -21,6 +21,10 @@ class TooMuchDataError(Exception):
     pass
 
 
+class BadRequestError(Exception):
+    pass
+
+
 def interest_value_to_annot_name(dt: DimensionText) -> str:
     return f'interest_{dt.pk}'
 
@@ -233,8 +237,8 @@ class StatsComputer(object):
             if dimension.short_name == dim_name:
                 break
         else:
-            raise ValueError(
-                f'Unknown dimension: {dim_name} for report type: {self.used_report_type}'
+            raise BadRequestError(
+                f'Unknown dimension: "{dim_name}" for report type: "{self.used_report_type}"'
             )
         return dimension.short_name, f'dim{dim_idx+1}', dimension
 

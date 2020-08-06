@@ -24,6 +24,7 @@ en:
         loading_data: Loading data
         preparing_data: Crunching data
         crunching_records: Crunching {n} record | Crunching {n} records
+        request_error: Could not load data due to an error
     chart_view:
         table: Table view
         chart: Chart view
@@ -60,6 +61,7 @@ cs:
         loading_data: Nahrávám data
         preparing_data: Zpracovávám data
         crunching_records: Zpracovávám {n} záznam | Zpracovávám {n} záznamů
+        request_error: Nebylo možné nahrát data kvůli chybě
     chart_view:
         table: Tabulkové zobrazení
         chart: Zobrazení v grafu

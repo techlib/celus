@@ -78,6 +78,9 @@ en:
     metric: Metric
     accesslog_count: Log count
     annotations: Annotations
+    chart: Chart
+    report_view: Report
+    position: Position
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -98,6 +101,7 @@ en:
     show_raw_data: Show raw data
     show_chart: Show charts
     delete: Delete
+    save: Save
   in_czech: Czech
   in_english: English
   cover_image: Cover image
@@ -184,6 +188,9 @@ cs:
     metric: Metrika
     accesslog_count: Počet záznamů
     annotations: Poznámky
+    chart: Graf
+    report_view: Report
+    position: Pozice
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu
@@ -204,6 +211,7 @@ cs:
     show_raw_data: Zobrazit data
     show_chart: Zobrazit grafy
     delete: Smazat
+    save: Uložit
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky

@@ -10,8 +10,15 @@
     />
     <div v-else-if="tooMuchData" :style="{'height': height}" id="loading">
         <div>
-            <i class="far fa-frown"></i>
+            <i class="far fa-frown pb-6"></i>
             <div class="infotext">{{ $t('chart.too_much_data') }}</div>
+        </div>
+    </div>
+    <div v-else-if="error" :style="{'height': height, 'color': 'orange'}" id="loading">
+        <div>
+            <i class="fa fa-exclamation-triangle pb-6"></i>
+            <div class="infotext pb-4 font-weight-light">{{ $t('chart.request_error') }}:</div>
+            <div class="infotext font-weight-bold">{{ error }}</div>
         </div>
     </div>
     <div v-else-if="dataRaw.length === 0" :style="{'height': height}" id="loading">
@@ -224,6 +231,7 @@
         out: null,
         tableView: false,
         yearAsSeries: false, // should each year form a separate series?
+        error: null,
       }
     },
     computed: {
@@ -528,6 +536,7 @@
         this.loading = true
         this.dataRaw = []
         this.tooMuchData = false
+        this.error = null
         if (this.dataURL) {
           try {
             let response = await axios.get(this.dataURL)
@@ -543,7 +552,19 @@
             // we use timeout to give the interface time to redraw
             setTimeout(async () => await this.ingestData(response.data.data), 10)
           } catch (error) {
-            this.showSnackbar({content: 'Error fetching data: '+error, color: 'error'})
+            if (error.response.status === 400 && error.response.data && error.response.data.error) {
+              // we have some useful error to report rather than a generic one
+              this.error = error.response.data.error
+              this.showSnackbar({
+                content: 'Error fetching data: '+error.response.data.error,
+                color: 'error'
+              })
+            } else {
+              this.showSnackbar({
+                content: 'Error fetching data: ' + error,
+                color: 'error'
+              })
+            }
           } finally {
             this.loading = false
           }

@@ -1,20 +1,23 @@
 from time import monotonic
 
-from django.http import HttpResponseBadRequest
 from pandas import DataFrame
+from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
-from charts.models import ChartDefinition
+from charts.models import ChartDefinition, ReportViewToChartType
 from charts.models import ReportDataView
-from charts.serializers import ChartDefinitionSerializer, ReportDataViewSerializer
+from charts.serializers import (
+    ChartDefinitionSerializer,
+    ReportDataViewSerializer,
+    ReportViewToChartTypeSerializer,
+)
+from core.permissions import SuperuserOrAdminPermission
 from core.prometheus import report_access_time_summary, report_access_total_counter
-from logs.logic.queries import StatsComputer, TooMuchDataError
-from logs.models import ReportType
+from logs.logic.queries import StatsComputer, TooMuchDataError, BadRequestError
 from logs.serializers import DimensionSerializer, MetricSerializer
-from publications.models import Platform
 
 
 class ChartDefinitionViewSet(ReadOnlyModelViewSet):
@@ -52,6 +55,9 @@ class ChartDataView(APIView):
             data = computer.get_data(report_view, request.GET, request.user)
         except TooMuchDataError:
             return Response({'too_much_data': True})
+        except BadRequestError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
         # prometheus stats
         label_attrs = dict(view_type='chart_data', report_type=computer.used_report_type.pk)
         report_access_total_counter.labels(**label_attrs).inc()
@@ -81,3 +87,27 @@ class ChartDataView(APIView):
             computer.reported_metrics.values(), many=True
         ).data
         return Response(reply)
+
+
+class ReportViewToChartTypeViewSet(ModelViewSet):
+
+    """
+    Simple ViewSet for mapping of `ReportDataView`s to `ChartDefinition` - `ReportViewToChartType`.
+    It is only accessible to superusers because it is only used to view and change how charts
+    are assigned to report views - normal users get this data using other views in this module.
+    """
+
+    permission_classes = [SuperuserOrAdminPermission]
+    queryset = ReportViewToChartType.objects.all()
+    serializer_class = ReportViewToChartTypeSerializer
+
+
+class ReportDataViewViewSet(ReadOnlyModelViewSet):
+
+    """
+    ViewSet with `ReportDataView`s. It is read-only as we do not want to support editing using
+    the API at this stage.
+    """
+
+    queryset = ReportDataView.objects.all()
+    serializer_class = ReportDataViewSerializer
