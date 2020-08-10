@@ -13,6 +13,9 @@ en:
     counter_version: Counter version
     success_metric: Success metric
     all_orgs: Show all organizations
+    refresh: Refresh
+    cleanup: Cleanup
+    cleanup_description: Removes unsucessful attempts which contain no data.
 
 cs:
     dim:
@@ -26,6 +29,9 @@ cs:
     counter_version: Verze Counter
     success_metric: Měřítko úspěchu
     all_orgs: Všechny organizace
+    refresh: Obnovit
+    cleanup: Pročistit
+    cleanup_description: Odstraní neúspěšné pokusy, které neobsahují žádná data.
 </i18n>
 
 <template>
@@ -93,10 +99,24 @@ cs:
                         class="short"
                 ></v-select>
             </v-col>
+        </v-row>
+        <v-row>
             <v-col cols="auto">
-                <v-btn @click="loadAttemptStats()" color="primary">
-                    <v-icon small>fa-sync-alt</v-icon>
+                <v-btn @click="loadAttemptStats()" color="primary" >
+                    <v-icon left>fa-sync-alt</v-icon>
+                    {{ $t('refresh') }}
                 </v-btn>
+            </v-col>
+            <v-col cols="auto">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                <v-btn @click="cleanupSushiAttempts()" color="warning" v-bind="attrs" v-on="on">
+                    <v-icon left>fa-cut</v-icon>
+                    {{ $t('cleanup') }}
+                </v-btn>
+                </template>
+                <span>{{ $t('cleanup_description') }}</span>
+              </v-tooltip>
             </v-col>
         </v-row>
         <v-row>
@@ -224,6 +244,14 @@ cs:
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
+      async cleanupSushiAttempts () {
+        try {
+          await axios.post(`/api/sushi-fetch-attempt/cleanup/`, {}, {})
+        } catch (error) {
+          this.showSnackbar({content: 'Error cleaning unsuccessful attempts: ' + error, color: 'error'})
+        }
+        await this.loadAttemptStats()
+      },
       async loadAttemptStats () {
         try {
           let response = await axios.get(this.statsUrl)
