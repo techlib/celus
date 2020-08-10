@@ -34,7 +34,7 @@ cs:
 </template>
 <script>
   import axios from 'axios'
-  import { mapActions } from 'vuex'
+  import { mapActions, mapState } from 'vuex'
   export default {
     name: 'PlatformSelectionWidget',
     data () {
@@ -43,13 +43,20 @@ cs:
         platforms: [],
       }
     },
+
+    computed: {
+      ...mapState({
+        selectedOrganizationId: 'selectedOrganizationId',
+      }),
+    },
+
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
       async loadPlatforms () {
         try {
-          let response = await axios.get('/api/platform/')
+          let response = await axios.get(`/api/organization/${this.selectedOrganizationId}/all-platform/`)
           this.platforms = response.data
         } catch (error) {
           this.showSnackbar({content: 'Error loading platform list: ' + error})

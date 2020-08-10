@@ -92,6 +92,7 @@ cs:
                                   item-text="name"
                                   :label="$t('platform')"
                                   return-object
+                                  :loading="loadingPlatforms"
                         >
                         </v-select>
                     </v-col>
@@ -343,6 +344,7 @@ cs:
         enabled: false,
         outsideConsortium: true,
         title: '',
+        loadingPlatforms: false,
       }
     },
     computed: {
@@ -446,6 +448,12 @@ cs:
         }
         return false
       },
+      platformsBaseUrl () {
+        if (this.organization && this.organization.pk) {
+          return `/api/organization/${this.organization.pk}/all-platform/`
+        }
+        return null
+      },
 
     },
     methods: {
@@ -521,21 +529,29 @@ cs:
         }
       },
       async loadPlatforms () {
-        if (this.fixedPlatform) {
-          try {
-            let result = await axios.get(`/api/platform/${this.fixedPlatform}/`)
-            this.platform = result.data
-            this.platforms = [this.platform]
-          } catch (error) {
-            this.showSnackbar({content: `Error loading platform id:${this.fixedPlatform}: ` + error})
-          }
-        } else {
-          try {
-            let result = await axios.get('/api/platform/')
-            this.platforms = result.data
-            this.platform = this.platforms[0]
-          } catch (error) {
-            this.showSnackbar({content: 'Error loading platforms: ' + error})
+        if (this.platformsBaseUrl) {
+          this.platforms = []
+          this.loadingPlatforms = true
+          if (this.fixedPlatform) {
+            try {
+              let result = await axios.get(this.platformsBaseUrl + this.fixedPlatform + '/')
+              this.platform = result.data
+              this.platforms = [this.platform]
+            } catch (error) {
+              this.showSnackbar({content: `Error loading platform id:${this.fixedPlatform}: ` + error})
+            } finally {
+              this.loadingPlatforms = false
+            }
+          } else {
+            try {
+              let result = await axios.get(this.platformsBaseUrl)
+              this.platforms = result.data
+              this.platform = this.platforms[0]
+            } catch (error) {
+              this.showSnackbar({content: 'Error loading platforms: ' + error})
+            } finally {
+              this.loadingPlatforms = false
+            }
           }
         }
       },
@@ -616,10 +632,12 @@ cs:
         }
       }
     },
+
     mounted () {
       this.loadReportTypes()
       this.init()
     },
+
     watch: {
       credentialsObject () {
         this.init()
@@ -627,6 +645,9 @@ cs:
       value (value) {
         if (value === true)
           this.init()
+      },
+      platformsBaseUrl () {
+        this.loadPlatforms()
       }
     }
 

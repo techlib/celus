@@ -51,6 +51,7 @@ cs:
                     :items="platforms"
                     item-text="name"
                     item-value="pk"
+                    :loading="loadingPlatforms"
                 >
                     <template v-slot:item="{item}">
                         <span :class="{bold: item.extra}">{{ item.name }}</span>
@@ -244,6 +245,7 @@ cs:
         platformId:  null,
         organizationId: null,
         platforms: [],
+        loadingPlatforms: false,
       }
     },
     computed: {
@@ -296,6 +298,12 @@ cs:
         }
         return true
       },
+      availablePlatformsUrl () {
+        if (this.organizationId !== null) {
+          return `/api/organization/${this.organizationId}/all-platform/`
+        }
+        return null
+      }
     },
     methods: {
       ...mapActions({
@@ -335,12 +343,19 @@ cs:
         }
       },
       async fetchPlatforms () {
+        if (this.availablePlatformsUrl == null) {
+          return null
+        }
+        this.platforms = []
+        this.loadingPlatforms = true
         try {
-          let response = await axios.get('/api/platform/')
+          let response = await axios.get(this.availablePlatformsUrl)
           this.platforms = response.data
           this.platforms.unshift({name: this.$t('all'), pk: null, extra: true})
         } catch (error) {
           this.showSnackbar({content: 'Error loading platform list: ' + error, color: 'error'})
+        } finally {
+          this.loadingPlatforms = false
         }
       },
       annotationObjectToData () {
@@ -394,12 +409,19 @@ cs:
     watch: {
       annotation () {
         this.annotationObjectToData()
+      },
+      availablePlatformsUrl () {
+        if (this.availablePlatformsUrl) {
+          this.fetchPlatforms()
+        }
       }
     },
+
     created () {
       this.fetchPlatforms()
       this.annotationObjectToData()
     },
+
     mounted() {
       this.platformId = this.platform ? this.platform.pk : null
       this.organizationId = this.appSelectedOrganizationId

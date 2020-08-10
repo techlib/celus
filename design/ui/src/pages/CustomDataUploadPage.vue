@@ -364,7 +364,7 @@ cs:
       async loadPlatform () {
         if (this.organizationId) {
           try {
-            let response = await axios.get(`/api/platform/${this.platformId}/`)
+            let response = await axios.get(`/api/organization/${this.organizationId}/all-platform/${this.platformId}/`)
             this.platform = response.data
           } catch(error) {
               this.showSnackbar({content: 'Error loading platform details: '+error})
@@ -372,7 +372,7 @@ cs:
         }
       },
       async loadReportTypes () {
-        let url = `/api/platform/${this.platformId}/report-types/`
+        let url = `/api/organization/${this.organizationId}/all-platform/${this.platformId}/report-types/`
         if (url) {
           try {
             const response = await axios.get(url)

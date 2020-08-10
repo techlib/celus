@@ -42,25 +42,32 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
 
     serializer_class = PlatformSerializer
 
-    def get_queryset(self):
-        """Returns Platforms which can be displayed to the user"""
+    @classmethod
+    def _organization_pk_to_obj(cls, organization_pk):
         try:
-            organization_pk = int(self.kwargs.get('organization_pk'))
+            organization_pk = int(organization_pk)
         except ValueError as exc:
             raise ValidationError(detail=f'Bad value for the "organization_pk" param: "{str(exc)}"')
         if organization_pk and organization_pk != -1:
-            organization = Organization.objects.get(pk=organization_pk)
+            return Organization.objects.get(pk=organization_pk)
         else:
             # all organizations were requested using -1
-            organization = None
+            return None
+
+    def get_queryset(self):
+        """Returns Platforms which can be displayed to the user"""
+        organization = self._organization_pk_to_obj(self.kwargs.get('organization_pk'))
         return self.request.user.accessible_platforms(organization=organization).order_by('name')
 
     @action(detail=True, url_path='report-types')
-    def get_report_types(self, request, pk):
+    def get_report_types(self, request, pk, organization_pk):
         """
         Provides a list of report types associated with this platform
         """
-        platform = get_object_or_404(Platform.objects.all(), pk=pk)
+        organization = self._organization_pk_to_obj(organization_pk)
+        platform = get_object_or_404(
+            request.user.accessible_platforms(organization=organization), pk=pk
+        )
         report_types = ReportType.objects.filter(interest_platforms=platform).prefetch_related(
             'reportinterestmetric_set__metric', 'reportinterestmetric_set__interest_group'
         )
