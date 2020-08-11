@@ -104,6 +104,7 @@ cs:
                         :rules="[emailError, rules.required, rules.email]"
                 ></v-text-field>
                 <v-text-field
+                        v-on:keyup.enter="triggerLoginOnEnter"
                         v-model="password"
                         :label="$t('password')"
                         :rules="[passwordError, rules.required, rules.min]"
@@ -379,6 +380,11 @@ cs:
         this.passwordEdited = false
         this.requestInProgress = false
         this.$store.state.login.loginError = null
+      },
+      async triggerLoginOnEnter () {
+        if (this.loginValid) {
+            await this.doLogin()
+        }
       },
       async doLogin () {
         this.requestInProgress = true
