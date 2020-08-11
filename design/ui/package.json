@@ -10,6 +10,8 @@
     "test": "jest"
   },
   "dependencies": {
+    "@sentry/browser": "^5.20.1",
+    "@sentry/integrations": "^5.20.1",
     "axios": "^0.19.2",
     "axios-concurrency": "git+https://github.com/beda42/axios-concurrency.git",
     "core-js": "^3.6.5",
@@ -28,7 +30,6 @@
     "vue-gravatar": "^1.3.1",
     "vue-i18n": "^8.20.0",
     "vue-router": "^3.4.1",
-    "vuetify": "^2.3.7",
     "vue-tour": "^1.5.0",
     "vuetify": "^2.3.8",
     "vuex": "^3.5.1",

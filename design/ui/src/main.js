@@ -8,6 +8,15 @@ import router from './router'
 import i18n from './i18n'
 import vuetify from './plugins/vuetify';
 import VueTour from 'vue-tour'
+import * as Sentry from '@sentry/browser';
+import { Vue as VueIntegration  } from '@sentry/integrations';
+
+Sentry.init({
+    dsn: SENTRY_URL,
+    integrations: [new VueIntegration({Vue, attachProps: true, logErrors: true})],
+    release: GIT_COMMITHASH ? `celus-${GIT_COMMITHASH}`: '',
+    environment: SENTRY_ENVIRONMENT ? SENTRY_ENVIRONMENT: '',
+});
 
 require('vue-tour/dist/vue-tour.css')
 

@@ -7,9 +7,10 @@ sentry_release:
     SENTRY_ORG: bigdigdata
     SENTRY_LOG_LEVEL: debug
   script:
-    - sentry-cli releases new -p celus-plus celus-$CI_COMMIT_SHA
+    - sentry-cli releases new -p celus-plus -p celus-plus-js celus-$CI_COMMIT_SHA
     - sentry-cli releases set-commits --auto celus-$CI_COMMIT_SHA
-
+    - sentry-cli releases -p celus-plus-js files celus-$CI_COMMIT_SHA upload-sourcemaps apps/core/static/
+    - sentry-cli releases finalize celus-$CI_COMMIT_SHA
   rules:
     - if: '$CI_COMMIT_BRANCH =~ $SENTRY_RELEASE_BRANCHES && $CI_PIPELINE_SOURCE == "push"'
       when: on_success

@@ -6,6 +6,10 @@ build_vue:
     - export "GIT_VERSION=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}"
     - export "GIT_COMMITHASH=${CI_COMMIT_SHA}"
     - export "GIT_BRANCH=${CI_COMMIT_REF_NAME:-$CI_COMMIT_SHA}"
+      # Sentry enviroment is read based on current branch and variables defined by gitlab
+    - export "BRANCH_NORMALIZED=${GIT_BRANCH//-/_}"  # replaces dashes with _ demo-staging -> demo_staging
+    - export "MAPPING_VAR_NAME=SENTRY_ENVIRONMENT_$BRANCH_NORMALIZED"
+    - export "SENTRY_ENVIRONMENT=${!MAPPING_VAR_NAME}"
   script:
     - cd design/ui
     - npm install

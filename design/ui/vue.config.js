@@ -46,6 +46,8 @@ module.exports = {
         'GIT_VERSION': JSON.stringify(`${process.env.GIT_VERSION || ''}`),
         'GIT_COMMITHASH': JSON.stringify(`${process.env.GIT_COMMITHASH || ''}`),
         'GIT_BRANCH': JSON.stringify(`${process.env.GIT_BRANCH || ''}`),
+        'SENTRY_URL': JSON.stringify(`${process.env.SENTRY_URL_JS || ''}`),
+        'SENTRY_ENVIRONMENT': JSON.stringify(`${process.env.SENTRY_ENVIRONMENT || ''}`),
       }),
     ]
   },
