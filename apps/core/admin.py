@@ -1,3 +1,5 @@
+from allauth.account.adapter import get_adapter
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
@@ -15,6 +17,16 @@ class MyUserAdmin(UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + ((None, {'fields': custom_fields}),)
 
     list_filter = ('source',) + UserAdmin.list_filter
+
+    actions = ['send_invitation_emails']
+
+    def send_invitation_emails(self, request, queryset):
+        adapter = get_adapter()
+
+        for user in queryset.all():
+            adapter.send_invitation_email(request, user)
+
+    send_invitation_emails.allowed_permissions = ('change',)
 
 
 @admin.register(Identity)

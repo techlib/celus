@@ -31,7 +31,7 @@
     "vue-i18n": "^8.18.2",
     "vue-router": "^3.3.4",
     "vue-tour": "^1.5.0",
-    "vuetify": "^2.3.5",
+    "vuetify": "^2.3.8",
     "vuex": "^3.5.1",
     "vuex-persist": "^2.2.0",
     "yaml-loader": "^0.5.0"

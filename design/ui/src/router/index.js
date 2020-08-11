@@ -19,6 +19,24 @@ export default new Router({
       }
     },
     {
+      path: '/reset-password/',
+      name: 'reset-password',
+      component: () => import('../pages/PasswordResetPage.vue'),
+      meta: {
+        outsideNormalLayout: true,
+        invitation: false
+      }
+    },
+    {
+      path: '/accept-invitation/',
+      name: 'accept-invitation',
+      component: () => import('../pages/PasswordResetPage.vue'),
+      meta: {
+        outsideNormalLayout: true,
+        invitation: true
+      }
+    },
+    {
       path: '/intro/',
       name: 'intro',
       component: () => import('../pages/IntroPage.vue'),

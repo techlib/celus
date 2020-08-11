@@ -11,7 +11,7 @@
     <div v-else>
         <v-app>
             <BootUpWidget />
-            <LoginDialog />
+            <LoginDialog v-if="showLoginDialog" />
         </v-app>
     </div>
 
@@ -40,6 +40,7 @@
       ...mapState({
         invalidUser: 'invalidUser',
         user: 'user',
+        showLoginDialog: 'showLoginDialog',
       }),
       ...mapGetters({
         loggedIn: 'loggedIn',

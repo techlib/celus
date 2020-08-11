@@ -6,6 +6,8 @@ en:
   save: Save
   test: Test
   delete: Delete
+  min_pwd_length: Minimum 8 characters
+  required: This value cannot be empty
 
 cs:
   value_required: Toto pole je povinné
@@ -15,3 +17,5 @@ cs:
   save: Uložit
   test: Otestovat
   delete: Smazat
+  min_pwd_length: Minimálně 8 znaků
+  required: Toto pole nesmí být prázdné

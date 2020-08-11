@@ -31,6 +31,8 @@ USES_ERMS = config('USES_ERMS', cast=bool, default=False)
 # Application definition
 
 INSTALLED_APPS = [
+    # `core` is here before `auth` because it overrides some templates in registration
+    'core.apps.CoreConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -46,7 +48,6 @@ INSTALLED_APPS = [
     'rest_auth',
     'django.contrib.sites',
     'rest_auth.registration',
-    'core.apps.CoreConfig',
     'publications.apps.PublicationsConfig',
     'logs.apps.LogsConfig',
     'organizations.apps.OrganizationsConfig',

@@ -76,6 +76,13 @@ export default {
       dispatch('setShowLoginDialog', false)
       dispatch('loadUserData')
     },
+    async resetPassword({commit, dispatch}, {email}) {
+      let csrftoken = Cookies.get('csrftoken')
+      await axios.post(
+        '/api/rest-auth/password/reset/',
+        {'email': email},
+        {headers: {'X-CSRFToken': csrftoken}, privileged: true})
+    },
   },
 
   mutations: {

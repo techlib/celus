@@ -1,0 +1,13 @@
+{% load i18n %}{% autoescape off %}
+{% blocktrans %}You're invited to register into the usage statistics application Celus at {{ site_name }}.{% endblocktrans %}
+
+{% trans "To accept the invitation, please go to the following page and choose your password:" %}
+{% block reset_link %}
+{{ protocol }}://{{ domain }}/accept-invitation/?uid={{ uid }}&token={{ token }}
+{% endblock %}
+
+{% trans "Looking forward to meeting you in Celus!" %}
+
+{% blocktrans %}The Celus team{% endblocktrans %}
+
+{% endautoescape %}
