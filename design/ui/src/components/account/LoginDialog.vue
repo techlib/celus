@@ -288,6 +288,7 @@ cs:
 </template>
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
+  import validateEmail from '@/libs/email-validation'
 
   export default {
     name: 'LoginDialog',
@@ -303,7 +304,7 @@ cs:
         rules: {
           required: value => !!value || this.$t('required'),
           min: v => v.length >= 8 || this.$t('min_pwd_length'),
-          email: v => !!v.match(/^.+@.+\...+/) || this.$t('email_required')
+          email: v => !!validateEmail(v) || this.$t('email_required')
         },
         signupError: null,
         resetError: null,
