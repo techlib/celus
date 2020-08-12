@@ -85,8 +85,8 @@ class User(AbstractUser):
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
     language = models.CharField(
         max_length=2,
-        choices=settings.LANGUAGES,
-        default=settings.LANGUAGES[-1][0],
+        choices=settings.AVAILABLE_LANGUAGES,
+        default=settings.AVAILABLE_LANGUAGES[-1][0],
         help_text='User\'s preferred language',
     )
     extra_data = JSONField(
