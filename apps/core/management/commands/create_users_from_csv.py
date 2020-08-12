@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
 
-    help = 'Sync organizations between ERMS and the database'
+    help = (
+        'Create/sync users with a CSV table. Columns can be: '
+        '"name","email","superuser","staff","organization","org_admin"'
+    )
 
     def add_arguments(self, parser):
         parser.add_argument('csv_file')
@@ -44,8 +47,6 @@ class Command(BaseCommand):
                     'last_name': last_name,
                 }
                 user, created = User.objects.update_or_create(email=email, defaults=user_params,)
-                if email.startswith('jmoi'):
-                    print('dfsd', user.is_superuser, user_params)
                 if created:
                     stats['user_created'] += 1
                     logger.debug('created user %s: %s', email, user_params)
