@@ -163,8 +163,17 @@ class UserPasswordResetView(PasswordResetConfirmView):
     """
 
     def post(self, request, *args, **kwargs):
+        """
+        We extend the parent implementation in order to insert a signal. Unfortunatelly we have
+        to duplicate part of the parent code, but it is probably better than replacing it
+        completely
+        """
+        # serialization is done in parent method as well, but we do it once more to get to the
+        # user instance which we need for the signal
+        # also, we need to do the serialization before we call super().post, because once
+        # it is fully processed, the token will no longer be valid and validation will fail
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid()  # populates serializer.user
         response = super().post(request, *args, **kwargs)
-        # we send the signal because response is returned from parent .post only in case of
-        # success - an exception is raised otherwise
-        password_reset_signal.send(self.__class__, request=request, user=request.user)
+        password_reset_signal.send(self.__class__, request=request, user=serializer.user)
         return response
