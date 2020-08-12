@@ -45,7 +45,6 @@
       ...mapGetters({
         loggedIn: 'loggedIn',
         bootUpFinished: 'bootUpFinished',
-        allowSignup: 'allowSignup',
       }),
       appLanguage: {
         get () {
