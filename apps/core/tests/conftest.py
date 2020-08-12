@@ -10,7 +10,7 @@ from organizations.models import Organization
 @pytest.fixture
 def valid_identity():
     id_string = 'valid@user.test'
-    user = get_user_model().objects.create(username='test')
+    user = get_user_model().objects.create(username='test', email=id_string)
     Identity.objects.create(user=user, identity=id_string)
     yield id_string
 

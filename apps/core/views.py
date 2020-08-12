@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import translation
+from rest_auth.views import PasswordResetConfirmView
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,6 +14,7 @@ from rest_framework.views import APIView
 from core.models import User
 from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
 from core.serializers import UserSerializer, EmailVerificationSerializer, UserExtraDataSerializer
+from .signals import password_reset_signal
 from .tasks import erms_sync_users_and_identities_task
 
 
@@ -152,3 +154,17 @@ class UserExtraDataView(APIView):
         request.user.extra_data.update(clean_data)
         request.user.save()
         return Response(request.user.extra_data)
+
+
+class UserPasswordResetView(PasswordResetConfirmView):
+    """
+    We have to extend the rest-auth `PasswordResetConfirmView` in order to emit a signal
+    on successful reset
+    """
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        # we send the signal because response is returned from parent .post only in case of
+        # success - an exception is raised otherwise
+        password_reset_signal.send(self.__class__, request=request, user=request.user)
+        return response

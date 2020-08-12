@@ -9,6 +9,7 @@ urlpatterns = [
         'user/verify-email', views.UserVerifyEmailView.as_view(), name='user_api_verify_email_view'
     ),
     path('user/extra-data', views.UserExtraDataView.as_view(), name='user_extra_data_view'),
+    path('user/password-reset', views.UserPasswordResetView.as_view(), name='user_password_reset'),
     path('info/', views.SystemInfoView.as_view(), name='system_info_api_view'),
     path(
         'run-task/erms-sync-users-and-identities',

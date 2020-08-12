@@ -1,3 +1,4 @@
+import re
 from unittest.mock import patch
 
 import pytest
@@ -302,3 +303,48 @@ class TestBasicInfoAPI(object):
         # test it all
         for key in settings.EXPORTED_SETTINGS:
             assert key in data
+
+
+@pytest.mark.django_db
+class TestInvitationAndPasswordResetAPI(object):
+    def test_password_reset_email_is_sent(self, authenticated_client, mailoutbox):
+        """
+        Test that the API endpoint for sending password reset emails works and really sends out
+        an email with the correct link
+        """
+        user = authenticated_client.user
+        assert len(mailoutbox) == 0
+        resp = authenticated_client.post('/api/rest-auth/password/reset/', {'email': user.email})
+        assert resp.status_code == 200
+        assert len(mailoutbox) == 1
+        assert '/reset-password/?' in mailoutbox[0].body, 'reset link should be present in mail'
+
+    def test_password_reset_confirm_endpoint_works(self, authenticated_client, mailoutbox):
+        """
+        Test that password can be changed using the link sent when password reset it triggered
+        """
+        # at first we need to get the appropriate input for the endpoint
+        # the code is buried in a django form, so we simply simulate sending the email and
+        # get the data from there
+        user = authenticated_client.user
+        resp = authenticated_client.post('/api/rest-auth/password/reset/', {'email': user.email})
+        assert resp.status_code == 200
+        assert len(mailoutbox) == 1
+        # extract uid and token to use for the endpoint
+        # - the link itself points to frontend so it is not directly usable
+        uid = re.search(r'\?uid=(\w+)&', mailoutbox[0].body).group(1)
+        token = re.search(r'&token=([\w-]+)', mailoutbox[0].body).group(1)
+        assert uid and token, 'both uid and token must be present in the email body'
+        # now try resetting the password
+        old_pwd = user.password
+        new_pwd = 'foobarbaz95432'
+        resp = authenticated_client.post(
+            '/api/user/password-reset',
+            {'uid': uid, 'token': token, 'new_password1': new_pwd, 'new_password2': new_pwd},
+        )
+        assert resp.status_code == 200
+        assert len(mailoutbox) == 1, 'no new email after password reset'
+        user.refresh_from_db()
+        assert user.password != old_pwd
+        # one more thing - check that the user email is thus verified
+        assert user.email_verified

@@ -148,7 +148,7 @@ en:
         this.error = null
         try {
           await axios.post(
-            `/api/rest-auth/password/reset/confirm/`,
+            `/api/user/password-reset`,
             {
               uid: this.uid,
               token: this.token,
