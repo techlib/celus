@@ -14,7 +14,7 @@ class PlatformInterestReport(models.Model):
 
 class Platform(models.Model):
 
-    ext_id = models.PositiveIntegerField(unique=True)
+    ext_id = models.PositiveIntegerField(unique=True, blank=True, null=True)
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     provider = models.CharField(max_length=250)

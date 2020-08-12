@@ -14,6 +14,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('file', help='CSV file to import')
+        parser.add_argument('--do-it', dest='doit', action='store_true')
 
     @atomic
     def handle(self, *args, **options):
@@ -22,3 +23,5 @@ class Command(BaseCommand):
             reversion_comment='Updated/created by command line script "load_sushi_credentials"',
         )
         self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
+        if not options['doit']:
+            raise ValueError('preventing db commit, use --do-it to really do it ;)')

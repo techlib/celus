@@ -33,8 +33,12 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
         (cr.organization_id, cr.platform_id, cr.counter_version): cr
         for cr in SushiCredentials.objects.all()
     }
-    platforms = {pl.short_name: pl for pl in Platform.objects.all()}
-    organizations = {org.internal_id: org for org in Organization.objects.all()}
+    platform_objects = Platform.objects.all()
+    platforms = {pl.short_name: pl for pl in platform_objects}
+    platforms.update({pl.name: pl for pl in platform_objects})
+    organization_objects = Organization.objects.all()
+    organizations = {org.internal_id: org for org in organization_objects}
+    organizations.update({org.short_name: org for org in organization_objects})
     for record in records:
         organization = organizations.get(record.get('organization'))
         if not organization:
