@@ -40,7 +40,7 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
     organizations = {org.internal_id: org for org in organization_objects}
     organizations.update({org.short_name: org for org in organization_objects})
     for record in records:
-        organization = organizations.get(record.get('organization'))
+        organization = organizations.get(record.get('organization', '').strip())
         if not organization:
             logger.error(
                 'Unknown organization: "%s" in "%s"',
@@ -49,9 +49,9 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
             )
             stats['error'] += 1
             continue
-        platform = platforms.get(record.get('platform'))
+        platform = platforms.get(record.get('platform').strip())
         if not platform:
-            logger.error('Unknown platform: "%s"', record.get('platform'))
+            logger.error('Unknown platform: "%s"', record.get('platform', '').strip())
             stats['error'] += 1
             continue
         version = int(record.get('version'))
