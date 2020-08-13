@@ -214,7 +214,8 @@ cs:
                         color="primary"
                         @click="doSignUp"
                         :disabled="!signupValid || requestInProgress"
-                >{{ $t('create_account') }}</v-btn>
+                        v-text="$t('create_account')"
+                ></v-btn>
             </v-card-actions>
         </v-card>
         <!-- reset password -->
