@@ -119,7 +119,11 @@ cs:
                         icon="fas fa-exclamation-circle"
                 >
                     {{ $t('login_error') }}: "<em>{{ loginErrorText }}</em>"
-                    <p v-if="!allowSignUp" class="mt-4" v-html="$t('how_to_gain_access')"></p>
+                    <!--
+                       we need to find a better way how to decide if we want to display the following;
+                       until then, I am disabling it.
+                    -->
+                    <!-- p v-if="!allowSignUp" class="mt-4" v-html="$t('how_to_gain_access')"></p-->
 
                 </v-alert>
             </v-card-text>
