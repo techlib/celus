@@ -34,12 +34,14 @@ const vuexLocal = new VuexPersistence({
   }),
   restoreState(key, storage) {
     const value = JSON.parse(storage.getItem(key))
-    if (key === 'vuex') {
-      if (value.dateRangeEnd) {
-        value.dateRangeEnd = parseDateTime(value.dateRangeEnd)
-      }
-      if (value.dateRangeStart) {
-        value.dateRangeStart = parseDateTime(value.dateRangeStart)
+    if (value) {
+      if (key === 'vuex') {
+        if (value.dateRangeEnd) {
+          value.dateRangeEnd = parseDateTime(value.dateRangeEnd)
+        }
+        if (value.dateRangeStart) {
+          value.dateRangeStart = parseDateTime(value.dateRangeStart)
+        }
       }
     }
     return value
