@@ -1,0 +1,28 @@
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sc="http://www.niso.org/schemas/sushi/counter" xmlns:sushi="http://www.niso.org/schemas/sushi">
+	<soap:Body>
+		<sc:ReportResponse xmlns="http://www.niso.org/schemas/sushi">
+			<Exception xmlns="http://www.niso.org/schemas/sushi/">
+				<Number>3030</Number>
+				<Severity>Error</Severity>
+				<Message>No Usage Available for Requested Dates</Message>
+			</Exception>
+			<Requestor>
+				<ID>FFFFFFFFFFF</ID>
+				<Name/>
+				<Email/>
+			</Requestor>
+			<CustomerReference>
+				<ID>1111111</ID>
+				<Name/>
+			</CustomerReference>
+			<ReportDefinition Name="DB1" Release="4">
+				<Filters>
+					<UsageDateRange>
+						<Begin>2020-05-01</Begin>
+						<End>2020-05-31</End>
+					</UsageDateRange>
+				</Filters>
+			</ReportDefinition>
+		</sc:ReportResponse>
+	</soap:Body>
+</soap:Envelope>

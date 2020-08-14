@@ -27,7 +27,12 @@ ns_soap = 'http://schemas.xmlsoap.org/soap/envelope/'
 ns_sushi = 'http://www.niso.org/schemas/sushi'
 ns_counter = 'http://www.niso.org/schemas/sushi/counter'
 
-namespaces = {'s': ns_soap, 'sushi': ns_sushi, 'counter': ns_counter}
+namespaces = {
+    's': ns_soap,
+    'sushi': ns_sushi,
+    'sushi_alt': f"{ns_sushi}/",  # sushi alternative with / in the end
+    'counter': ns_counter,
+}
 
 
 class SushiError(object):
@@ -83,6 +88,19 @@ class SushiErrorMeaning(object):
     @property
     def retry_interval_timedelta(self):
         return self.RETRY_INTERVAL_TO_TIMEDELTA.get(self.retry_interval)
+
+
+def recursive_finder(
+    et: ET.Element, names: typing.List[str], namespaces: typing.Dict[str, str]
+) -> typing.Generator[ET.Element, None, None]:
+
+    for name in names:
+        for element in et.findall(name, namespaces):
+            yield element
+
+    for e in et:
+        for element in recursive_finder(e, names, namespaces):
+            yield element
 
 
 class SushiClientBase(object):
@@ -409,13 +427,29 @@ class Sushi4Client(SushiClientBase):
         else:
             errors = []
             if response is not None:
-                for exception in response.findall('sushi:Exception', namespaces):
+                for exception in recursive_finder(
+                    response, ['sushi:Exception', 'sushi_alt:Exception'], namespaces
+                ):
                     code = exception.find('sushi:Number', namespaces)
+                    code = exception.find('sushi_alt:Number', namespaces) if code is None else code
                     code = code.text if code is not None else ''
+
                     message = exception.find('sushi:Message', namespaces)
+                    message = (
+                        exception.find('sushi_alt:Message', namespaces)
+                        if message is None
+                        else message
+                    )
                     message = message.text if message is not None else ''
+
                     severity = exception.find('sushi:Severity', namespaces)
+                    severity = (
+                        exception.find('sushi_alt:Severity', namespaces)
+                        if severity is None
+                        else severity
+                    )
                     severity = severity.text if severity is not None else 'Unknown'
+
                     full_log = f'{severity}: #{code}; {message}'
                     errors.append(
                         SushiError(
