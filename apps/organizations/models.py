@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models import UniqueConstraint, Q
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
@@ -52,6 +53,35 @@ class Organization(MPTTModel):
 
     def __str__(self):
         return self.name
+
+
+class OrganizationAltName(models.Model):
+
+    """
+    Represents an alternative name for an organization. It is mostly useful for data import when
+    trying to match organization with an ID in imported document
+    """
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    source = models.ForeignKey('core.DataSource', on_delete=models.CASCADE, null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        # the following make name and source unique together even if source is NULL which is not
+        # the case when simply using unique_together
+        # The idea here is that you can only have one name mapped to one Organization,
+        # on the other hand, if different organizations create their own alt-names using
+        # their organization source, it should be allowed because we will take this into account
+        # then importing data.
+        constraints = [
+            UniqueConstraint(fields=['name', 'source'], name='name_source_not_null'),
+            UniqueConstraint(fields=['name'], condition=Q(source=None), name='name_source_null'),
+        ]
+
+    def validate_unique(self, exclude=None):
+        return super().validate_unique(exclude)
 
 
 class UserOrganization(models.Model):
