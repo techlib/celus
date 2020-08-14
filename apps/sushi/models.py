@@ -390,11 +390,11 @@ class SushiCredentials(models.Model):
                 counter_report.code, start_date, end_date, params=params
             )
         except requests.exceptions.ConnectionError as e:
-            logger.error('Connection error: %s', e)
+            logger.warning('Connection error: %s', e)
             error_code = 'connection'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
         except SushiExceptionNigiri as e:
-            logger.error('Error: %s', e)
+            logger.warning('Error: %s', e)
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             if e.content:
@@ -414,7 +414,7 @@ class SushiCredentials(models.Model):
             # check for errors
             if error:
                 if report.errors:
-                    logger.error('Found errors: %s', report.errors)
+                    logger.warning('Found errors: %s', report.errors)
                     log = '; '.join(str(e) for e in report.errors)
                     error_code = report.errors[0].code
                 else:
