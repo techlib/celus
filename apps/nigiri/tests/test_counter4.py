@@ -24,8 +24,8 @@ class TestErrors:
 
         client = Sushi4Client("https://example.com/", "user")
 
-        with (Path(__file__).parent / "data/counter4/" / filename).open() as f:
-            errors = client.extract_errors_from_data(f.read())
+        with (Path(__file__).parent / "data/counter4/" / filename).open("rb") as f:
+            errors = client.extract_errors_from_data(f)
             assert len(errors) == 1
             error = errors[0]
             assert int(error.code) == code

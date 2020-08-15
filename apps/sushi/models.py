@@ -1,21 +1,21 @@
 import os
 import json
 import logging
-import os
 import traceback
 from copy import deepcopy
 from datetime import timedelta, datetime
 from hashlib import blake2b
 from itertools import takewhile
-from typing import Optional, Dict, Iterable
+from tempfile import TemporaryFile
+from typing import Optional, Dict, Iterable, IO
 
 import requests
 import reversion
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
-from django.core.files.base import ContentFile
+from django.core.files.base import File
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import F
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from pycounter.exceptions import SushiException
@@ -288,12 +288,13 @@ class SushiCredentials(models.Model):
         :return:
         """
         client = self.create_sushi_client()
+        output_file = TemporaryFile("w+b")
         fetch_m = self._fetch_report_v4 if self.counter_version == 4 else self._fetch_report_v5
         if use_url_lock:
             with cache_based_lock(self.url_lock_name):
-                attempt_params = fetch_m(client, counter_report, start_date, end_date)
+                attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
         else:
-            attempt_params = fetch_m(client, counter_report, start_date, end_date)
+            attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
         attempt_params['in_progress'] = False
         # add version info to the attempt
         attempt_params['credentials_version_hash'] = self.compute_version_hash()
@@ -312,24 +313,24 @@ class SushiCredentials(models.Model):
             attempt = SushiFetchAttempt.objects.create(**attempt_params)
             return attempt
 
-    def _fetch_report_v4(self, client, counter_report, start_date, end_date) -> dict:
-        file_data = None
+    def _fetch_report_v4(
+        self, client, counter_report, start_date, end_date, file_data: IO[bytes]
+    ) -> dict:
         contains_data = False
         download_success = False
         processing_success = False
         log = ''
-        data_file = None
         error_code = ''
         queued = False
         params = self.extra_params or {}
         params['sushi_dump'] = True
+        filename = 'foo.tsv'  # we just need the extension
         try:
-            report = client.get_report_data(
-                counter_report.code, start_date, end_date, params=params
+            client.get_report_data(
+                counter_report.code, start_date, end_date, output_content=file_data, params=params,
             )
         except SushiException as e:
             logger.error("Error: %s", e)
-            file_data = e.raw
             errors = client.extract_errors_from_data(file_data)
             if errors:
                 error_code = errors[0].code
@@ -347,14 +348,13 @@ class SushiCredentials(models.Model):
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             filename = 'foo.xml'  # we just need the extension
         else:
-            file_data = client.report_to_string(report)
-            filename = 'foo.tsv'  # we just need the extension
             contains_data = True
             download_success = True
             processing_success = True
-        if file_data:
-            data_file = ContentFile(file_data)
-            data_file.name = filename
+
+        file_data.seek(0)
+        data_file = File(file_data)
+        data_file.name = filename
         when_queued = now() if queued else None
         return dict(
             credentials=self,
@@ -371,12 +371,12 @@ class SushiCredentials(models.Model):
             when_queued=when_queued,
         )
 
-    def _fetch_report_v5(self, client, counter_report, start_date, end_date) -> dict:
-        file_data = None
+    def _fetch_report_v5(
+        self, client, counter_report, start_date, end_date, file_data: IO[bytes]
+    ) -> dict:
         contains_data = False
         download_success = False
         processing_success = False
-        data_file = None
         filename = 'foo.json'
         queued = False
         error_code = ''
@@ -387,7 +387,7 @@ class SushiCredentials(models.Model):
         params.update(extra)
         try:
             report = client.get_report_data(
-                counter_report.code, start_date, end_date, params=params
+                counter_report.code, start_date, end_date, output_content=file_data, params=params
             )
         except requests.exceptions.ConnectionError as e:
             logger.warning('Connection error: %s', e)
@@ -397,11 +397,6 @@ class SushiCredentials(models.Model):
             logger.warning('Error: %s', e)
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
-            if e.content:
-                try:
-                    file_data = json.dumps(e.content, indent=2, ensure_ascii=False)
-                except Exception:
-                    pass
         except Exception as e:
             logger.error('Error: %s', e)
             error_code = 'non-sushi'
@@ -425,17 +420,15 @@ class SushiCredentials(models.Model):
                 processing_success = not (
                     error_explanation.needs_checking and error_explanation.setup_ok
                 )
-                file_data = report.raw_data
             else:
                 processing_success = True
                 queued = report.queued
-                file_data = report.raw_data
                 log = ''
 
         # now create the attempt instance
-        if file_data:
-            data_file = ContentFile(file_data)
-            data_file.name = filename
+        file_data.seek(0)  # make sure that file is rewind to the start
+        django_file = File(file_data)
+        django_file.name = filename
         when_queued = now() if queued else None
         return dict(
             credentials=self,
@@ -443,7 +436,7 @@ class SushiCredentials(models.Model):
             start_date=start_date,
             end_date=end_date,
             download_success=download_success,
-            data_file=data_file,
+            data_file=django_file,
             queued=queued,
             log=log,
             error_code=error_code,

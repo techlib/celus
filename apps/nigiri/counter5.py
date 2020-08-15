@@ -82,19 +82,17 @@ class Counter5ReportBase(object):
     dimensions = []  # this should be redefined in subclasses
     allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']
 
-    def __init__(self, report: typing.Optional[bytes] = None):
+    def __init__(self, report: typing.Optional[typing.IO[bytes]] = None):
         self.records = []
         self.queued = False
         self.record_found: bool = False  # is populated once `fd_to_dicts` is called
         self.header = {}
         self.errors: typing.List[CounterError] = []
         self.warnings: typing.List[CounterError] = []
-        self.raw_data = report  # TODO raw data are supposed to be removed
 
         # Parse it for the first time to extract errors and warnings
-        if self.raw_data:
-            fd = io.BytesIO(self.raw_data)
-            self.fd_to_dicts(fd)
+        if report:
+            self.fd_to_dicts(report)
 
     def read_report(
         self, header: dict, items: typing.Generator[dict, None, None],
@@ -143,11 +141,14 @@ class Counter5ReportBase(object):
                     self.errors.append(error)
 
     def fd_to_dicts(
-        self, fd: typing.BinaryIO
+        self, fd: typing.IO[bytes]
     ) -> typing.Tuple[dict, typing.Generator[dict, None, None]]:
         def empty_generator() -> typing.Generator[dict, None, None]:
             empty: typing.List[dict] = []
             return (e for e in empty)
+
+        # make sure that fd is at the begining
+        fd.seek(0)
 
         # first check whether it is not an error report
         first_character = fd.read(1)  # type: bytes

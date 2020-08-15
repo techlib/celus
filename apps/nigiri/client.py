@@ -117,7 +117,14 @@ class SushiClientBase(object):
     def report_to_string(self, report_data):
         raise NotImplementedError()
 
-    def get_report_data(self, report_type, begin_date, end_date, params=None):
+    def get_report_data(
+        self,
+        report_type,
+        begin_date,
+        end_date,
+        output_content: typing.Optional[typing.IO] = None,
+        params=None,
+    ):
         raise NotImplementedError()
 
     @classmethod
@@ -245,12 +252,12 @@ class Sushi5Client(SushiClientBase):
             result.update(extra)
         return result
 
-    def _make_request(self, url, params):
+    def _make_request(self, url, params, stream=False):
         logger.debug('Making request to :%s?%s', url, urllib.parse.urlencode(params))
         kwargs = {}
         if self.auth:
             kwargs['auth'] = self.auth
-        return self.session.get(url, params=params, **kwargs)
+        return self.session.get(url, params=params, stream=stream, **kwargs)
 
     def get_available_reports_raw(self, params=None) -> bytes:
         """
@@ -268,12 +275,20 @@ class Sushi5Client(SushiClientBase):
         reports = self.report_to_data(content)
         return reports
 
-    def get_report(self, report_type, begin_date, end_date, params=None):
+    def get_report(
+        self,
+        report_type,
+        begin_date,
+        end_date,
+        dump_file: typing.Optional[typing.IO] = None,
+        params=None,
+    ):
         """
         Return a SUSHI report based on the provided params
         :param report_type:
         :param begin_date:
         :param end_date:
+        :param dump_file: where to put file output
         :param params:
         :return:
         """
@@ -282,19 +297,32 @@ class Sushi5Client(SushiClientBase):
         params = self._construct_url_params(extra=params)
         params['begin_date'] = self._encode_date(begin_date)
         params['end_date'] = self._encode_date(end_date)
-        response = self._make_request(url, params)
+        response = self._make_request(url, params, stream=bool(dump_file))
+        if dump_file is not None:
+            for data in response.iter_content(1024 * 1024):
+                dump_file.write(data)
+            dump_file.seek(0)
         response.raise_for_status()
-        return response.content
 
-    def get_report_data(self, report_type, begin_date, end_date, params=None) -> Counter5ReportBase:
-        content = self.get_report(report_type, begin_date, end_date, params=params)
+    def get_report_data(
+        self,
+        report_type,
+        begin_date,
+        end_date,
+        output_content: typing.Optional[typing.IO] = None,
+        params=None,
+    ) -> Counter5ReportBase:
+        self.get_report(report_type, begin_date, end_date, params=params, dump_file=output_content)
         if report_type.lower() == 'tr':
             report_class = Counter5TRReport
         elif report_type.lower() == 'dr':
             report_class = Counter5DRReport
         else:
             report_class = Counter5ReportBase
-        return report_class(content)
+
+        if output_content:
+            output_content.seek(0)
+        return report_class(output_content)
 
     def report_to_data(self, report: bytes, validate=True) -> typing.Generator[dict, None, None]:
         try:
@@ -330,7 +358,7 @@ class Sushi5Client(SushiClientBase):
                 cls._format_error(warning.to_sushi_dict()),
             )
 
-    def extract_errors_from_data(self, report_data):
+    def extract_errors_from_data(self, report_data: dict):
         if 'Exception' in report_data:
             exc = report_data['Exception']
             return self._format_error(exc)
@@ -400,7 +428,14 @@ class Sushi4Client(SushiClientBase):
             return value.isoformat()[:7]
         return value[:7]
 
-    def get_report_data(self, report_type, begin_date, end_date, params=None):
+    def get_report_data(
+        self,
+        report_type,
+        begin_date,
+        end_date,
+        output_content: typing.Optional[typing.IO] = None,
+        params=None,
+    ):
         kwargs = {'customer_reference': self.customer_id}
         if self.requestor_id:
             kwargs['requestor_id'] = self.requestor_id
@@ -413,12 +448,16 @@ class Sushi4Client(SushiClientBase):
             kwargs.update(params)
         if self.auth:
             kwargs['auth'] = self.auth
-        report = sushi.get_report(self.url, begin_date, end_date, report=report_type, **kwargs)
+        report = sushi.get_report(
+            self.url, begin_date, end_date, report=report_type, dump_file=output_content, **kwargs
+        )
         return report
 
-    def extract_errors_from_data(self, report_data):
+    def extract_errors_from_data(self, report_data: typing.IO[bytes]):
         try:
-            envelope = ET.fromstring(report_data)
+            report_data.seek(0)  # set to start
+            content = report_data.read().decode('utf8', 'ignore')
+            envelope = ET.fromstring(content)
             body = envelope[0]
             response = body[0] if len(body) > 0 else None
         except Exception as e:
