@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+import typing
 
 import dateparser
 import reversion
@@ -30,8 +31,13 @@ from sushi.tasks import (
     fetch_new_sushi_data_task,
     fetch_new_sushi_data_for_credentials_task,
 )
+from .filters import CleanupFilterBackend
 from .models import SushiCredentials
-from .serializers import SushiCredentialsSerializer
+from .serializers import (
+    SushiCredentialsSerializer,
+    SushiCleanupSerializer,
+    SushiCleanupCountSerializer,
+)
 
 
 class SushiCredentialsViewSet(ModelViewSet):
@@ -190,20 +196,45 @@ class SushiFetchAttemptViewSet(ModelViewSet):
             'counter_report', 'credentials__organization', 'credentials__platform',
         )
 
-    @action(methods=['POST'], detail=False, url_path='cleanup')
-    def cleanup(self, request):
-        """
-        Clean Sushi attempts
-
-        keep only those which contain data and remove failures
-        """
-        attempts = [
+    def _cleanup_pks(self) -> typing.List[int]:
+        queryset = self.filter_queryset(self.get_queryset())
+        return [
             e.pk
-            for e in self.get_queryset().filter(import_batch__isnull=True)
+            for e in queryset.filter(import_batch__isnull=True)
             if e.status in ['FAILURE', 'BROKEN']
         ]
-        SushiFetchAttempt.objects.filter(pk__in=attempts).delete()
-        return Response()
+
+    @action(
+        methods=['POST', 'GET'],
+        detail=False,
+        url_path='cleanup',
+        serializer_class=SushiCleanupCountSerializer,
+        filter_backends=(CleanupFilterBackend,),
+    )
+    def cleanup(self, request):
+        """
+        Clean Sushi attempts (GET - just display the number POST - trigger deletion)
+
+        keep only those which contain data and remove failures
+
+        Return how many attempts (will be / were) deleted
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        pks = [
+            e.pk
+            for e in queryset.filter(import_batch__isnull=True)
+            if e.status in ['FAILURE', 'BROKEN']
+        ]
+
+        if request.method == "POST":
+            count, _ = SushiFetchAttempt.objects.filter(pk__in=pks).delete()
+        elif request.method == "GET":
+            count = SushiFetchAttempt.objects.filter(pk__in=pks).count()
+
+        response_serializer = SushiCleanupCountSerializer(data={"count": count})
+        response_serializer.is_valid(raise_exception=True)
+
+        return Response(response_serializer.validated_data)
 
     def perform_create(self, serializer: SushiFetchAttemptSerializer):
         # check that the user is allowed to create attempts for this organization

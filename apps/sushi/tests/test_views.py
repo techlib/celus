@@ -1,7 +1,11 @@
 from unittest.mock import patch
 
+from datetime import timedelta
+
 import pytest
 from django.urls import reverse
+from django.utils import timezone
+from urllib.parse import quote
 
 from core.models import UL_ORG_ADMIN, UL_CONS_STAFF, Identity
 from logs.models import ImportBatch
@@ -558,14 +562,16 @@ class TestSushiFetchAttemptView(object):
         assert resp.json() == create_data
 
     @pytest.mark.parametrize(
-        'batch_present,other_org,download_success,contains_data,processing_success,queued,remained',
+        'batch_present,other_org,download_success,contains_data,processing_success,queued,remained,older_than',
         (
-            (True, False, False, False, False, False, True),  # has data
-            (False, True, False, False, False, False, True),  # other org
-            (False, False, False, False, False, False, False),  # all failed
-            (False, False, True, False, False, False, False),  # download ok processing failed
-            (False, False, False, False, True, False, False),  # download failed processing ok
-            (False, False, True, False, True, False, True),  # download ok processing ok
+            (True, False, False, False, False, False, True, None),  # has data
+            (False, True, False, False, False, False, True, None),  # other org
+            (False, False, False, False, False, False, False, None),  # all failed
+            (False, False, True, False, False, False, False, None),  # download ok processing failed
+            (False, False, False, False, True, False, False, None),  # download failed processing ok
+            (False, False, True, False, True, False, True, None),  # download ok processing ok
+            (False, False, False, False, False, False, True, -1),  # not old enough
+            (False, False, False, False, False, False, False, 1),  # old enough
         ),
     )
     def test_cleanup(
@@ -581,6 +587,7 @@ class TestSushiFetchAttemptView(object):
         processing_success,
         queued,
         remained,
+        older_than,
     ):
         batch = (
             ImportBatch.objects.create(
@@ -618,8 +625,22 @@ class TestSushiFetchAttemptView(object):
             processing_success=processing_success,
         )
 
-        resp = authenticated_client.post(reverse('sushi-fetch-attempt-cleanup'))
-        assert resp.status_code == 200
+        url = reverse('sushi-fetch-attempt-cleanup')
+        if older_than:
+            ot = (timezone.now() + timedelta(minutes=older_than)).isoformat()
+            get_resp = authenticated_client.get(url, {"older_than": ot})
+            post_resp = authenticated_client.post(url, {"older_than": ot})
+        else:
+            get_resp = authenticated_client.get(url)
+            post_resp = authenticated_client.post(url)
+
+        assert get_resp.status_code == 200
+        assert post_resp.status_code == 200
 
         # is attempt present
-        assert bool(SushiFetchAttempt.objects.count()) is remained
+        if remained:
+            assert get_resp.json() == post_resp.json() == {"count": 0}
+            assert SushiFetchAttempt.objects.count() == 1
+        else:
+            assert get_resp.json() == post_resp.json() == {"count": 1}
+            assert SushiFetchAttempt.objects.count() == 0

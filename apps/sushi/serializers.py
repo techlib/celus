@@ -1,13 +1,17 @@
+from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import (
-    HiddenField,
-    CurrentUserDefault,
     BooleanField,
+    CurrentUserDefault,
+    DateTimeField,
+    HiddenField,
+    IntegerField,
     SerializerMethodField,
     IntegerField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, Serializer
+
 
 from core.models import UL_CONS_STAFF
 from organizations.models import Organization
@@ -156,3 +160,11 @@ class SushiFetchAttemptSimpleSerializer(ModelSerializer):
             'when_processed',
             'when_queued',
         )
+
+
+class SushiCleanupSerializer(Serializer):
+    older_than = DateTimeField(required=False)
+
+
+class SushiCleanupCountSerializer(Serializer):
+    count = IntegerField(required=True)

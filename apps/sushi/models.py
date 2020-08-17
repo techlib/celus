@@ -490,6 +490,7 @@ class SushiFetchAttempt(models.Model):
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
     start_date = models.DateField()
     end_date = models.DateField()
     in_progress = models.BooleanField(
