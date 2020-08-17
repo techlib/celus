@@ -189,7 +189,9 @@ class Metric(models.Model):
         ordering = ('short_name', 'name')
 
     def __str__(self):
-        return self.name or self.short_name
+        if self.name and self.name != self.short_name:
+            return f'{self.short_name} => {self.name}'
+        return self.short_name
 
 
 class ReportInterestMetric(models.Model):
