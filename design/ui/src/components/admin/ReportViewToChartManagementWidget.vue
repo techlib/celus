@@ -228,9 +228,12 @@ export default {
       }
     },
     addLink (viewId, chartId) {
-      console.log('adding', viewId, chartId)
       // find a free position
-      let maxPosition = Math.max(...Array.from(this.reportViewToChart.values()).filter(item => item.report_data_view == viewId).map(item => item.position))
+      let maxPosition = Math.max(...Array.from(this.reportViewToChart.values()).filter(item => item.report_data_view == viewId).map(item => item.position)) || -1
+      if (maxPosition < 0) {
+        // in case of empty array Math.max returns -Infinity, we convert it to -1 here
+        maxPosition = -1
+      }
       this.storeReportViewToChart(viewId, chartId, maxPosition+1)
     },
     activateLinkEdit (viewId, chartId) {
