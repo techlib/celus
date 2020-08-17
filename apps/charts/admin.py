@@ -18,7 +18,6 @@ class ReportDataViewAdmin(TranslationAdmin):
         'filters',
         'metric_allowed_values',
     ]
-    ordering = ['position']
     list_filter = ['source']
     list_editable = ['position', 'is_standard_view']
 

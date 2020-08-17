@@ -475,7 +475,9 @@ class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
         distinct_rts = (
             AccessLog.objects.filter(access_log_filter).values('report_type_id').distinct()
         )
-        report_types = ReportDataView.objects.filter(base_report_type_id__in=distinct_rts)
+        report_types = ReportDataView.objects.filter(base_report_type_id__in=distinct_rts).order_by(
+            'position'
+        )
         # the following is a alternative approach which uses Exists subquery
         # it might be faster in some cases but seems to be somewhat slower in others
         # access_log_query = AccessLog.objects.\

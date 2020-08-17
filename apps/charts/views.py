@@ -31,7 +31,9 @@ class ReportTypeToReportDataViewView(APIView):
         return ReportDataViewSerializer
 
     def get(self, request, report_type_pk):
-        rdvs = ReportDataView.objects.filter(base_report_type_id=report_type_pk)
+        rdvs = ReportDataView.objects.filter(base_report_type_id=report_type_pk).order_by(
+            'position'
+        )
         return Response(ReportDataViewSerializer(rdvs, many=True).data)
 
 
@@ -109,5 +111,5 @@ class ReportDataViewViewSet(ReadOnlyModelViewSet):
     the API at this stage.
     """
 
-    queryset = ReportDataView.objects.all()
+    queryset = ReportDataView.objects.all().order_by('position')
     serializer_class = ReportDataViewSerializer

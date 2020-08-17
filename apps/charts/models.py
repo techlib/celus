@@ -32,7 +32,7 @@ class ReportDataView(models.Model):
     position = models.PositiveIntegerField(default=100)
 
     class Meta:
-        ordering = ('position',)
+        ordering = ('short_name',)
 
     def __str__(self):
         return self.short_name

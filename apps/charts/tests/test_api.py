@@ -3,7 +3,11 @@ from django.urls import reverse
 
 from charts.models import ReportDataView, ChartDefinition, ReportViewToChartType
 from core.tests.conftest import master_client, master_identity, authenticated_client, valid_identity
+from logs.models import OrganizationPlatform, AccessLog, Metric, ImportBatch
 from logs.tests.conftest import report_type_nd
+from publications.models import Title
+from publications.tests.conftest import platform
+from organizations.tests.conftest import organizations
 
 
 @pytest.fixture
@@ -92,6 +96,109 @@ class TestReportViewAPI(object):
         data = resp.json()
         assert len(data) == 1
         assert data[0]['pk'] == simple_report_view.pk
+
+    def test_api_list_ordering(self, report_type_nd, master_client):
+        """
+        Check that report data views are ordered by position in reply, not by name or short_name
+        """
+        rt = report_type_nd(0)
+        ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
+        ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
+        ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
+        resp = master_client.get(reverse('report-view-list'))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert [rec['position'] for rec in data] == [1, 2, 3]
+
+    def test_api_list_for_report_type_ordering(self, report_type_nd, master_client):
+        """
+        Check that report data views are ordered by position in reply, not by name or short_name
+        - for report-type-to-report-data-view
+        """
+        rt = report_type_nd(0)
+        ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
+        ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
+        ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
+        resp = master_client.get(reverse('report-type-to-report-data-view', args=(rt.pk,)))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert [rec['position'] for rec in data] == [1, 2, 3]
+
+    def test_api_list_for_platform_ordering(
+        self, report_type_nd, master_client, platform, organizations
+    ):
+        """
+        Check that report data views are ordered by position in reply, not by name or short_name
+        - for platform-report-data-views
+        """
+        rt = report_type_nd(0)
+        ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
+        ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
+        ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
+        organization = organizations[0]
+        OrganizationPlatform.objects.create(organization=organization, platform=platform)
+        # we need to add accesslog in order to connect platform and report-type
+        AccessLog.objects.create(
+            report_type=rt,
+            organization=organization,
+            platform=platform,
+            value=1,
+            date='2020-01-01',
+            metric=Metric.objects.create(short_name='metric'),
+            import_batch=ImportBatch.objects.create(
+                report_type=rt, organization=organization, platform=platform,
+            ),
+        )
+        resp = master_client.get(
+            reverse(
+                'platform-report-data-views-list',
+                kwargs={'organization_pk': organization.pk, 'platform_pk': platform.pk},
+            )
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert [rec['position'] for rec in data] == [1, 2, 3]
+
+    def test_api_list_for_platform_and_title_ordering(
+        self, report_type_nd, master_client, platform, organizations
+    ):
+        """
+        Check that report data views are ordered by position in reply, not by name or short_name
+        - for platform-report-data-views
+        """
+        rt = report_type_nd(0)
+        ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
+        ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
+        ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
+        organization = organizations[0]
+        OrganizationPlatform.objects.create(organization=organization, platform=platform)
+        title = Title.objects.create(name='Journal of Foo Bar')
+        # we need to add accesslog in order to connect platform and report-type
+        AccessLog.objects.create(
+            report_type=rt,
+            organization=organization,
+            platform=platform,
+            target=title,
+            value=1,
+            date='2020-01-01',
+            metric=Metric.objects.create(short_name='metric'),
+            import_batch=ImportBatch.objects.create(
+                report_type=rt, organization=organization, platform=platform,
+            ),
+        )
+        resp = master_client.get(
+            reverse(
+                'platform-title-report-data-views-list',
+                kwargs={
+                    'organization_pk': organization.pk,
+                    'platform_pk': platform.pk,
+                    'title_pk': title.pk,
+                },
+            )
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert [rec['position'] for rec in data] == [1, 2, 3]
 
 
 @pytest.mark.django_db
