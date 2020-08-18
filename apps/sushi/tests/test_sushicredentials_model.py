@@ -1,5 +1,6 @@
 import pytest
 from rest_framework.exceptions import PermissionDenied
+from pycounter.report import CounterReport
 
 from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, Identity
 from nigiri.client import Sushi5Client, Sushi4Client
@@ -261,7 +262,7 @@ class TestCredentialsVersioning(object):
         )
 
         def mock_get_report_data(*args, **kwargs):
-            return Counter4ReportBase()
+            return CounterReport(report_type="JR1", perios=("2020-01-01", "2020-01-01"))
 
         monkeypatch.setattr(Sushi4Client, 'get_report_data', mock_get_report_data)
         attempt: SushiFetchAttempt = cr1.fetch_report(

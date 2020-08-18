@@ -361,8 +361,9 @@ class SushiCredentials(models.Model):
             # Write error file
             file_data.seek(0)
             data_file = File(file_data)
-            data_file.name = filename
-            when_queued = now() if queued else None
+
+        data_file.name = filename
+        when_queued = now() if queued else None
 
         return dict(
             credentials=self,

@@ -11,6 +11,7 @@ from xml.etree import ElementTree as ET
 
 import requests
 from pycounter import sushi
+from pycounter import report
 
 from .counter5 import (
     Counter5TRReport,
@@ -435,7 +436,7 @@ class Sushi4Client(SushiClientBase):
         end_date,
         output_content: typing.Optional[typing.IO] = None,
         params=None,
-    ):
+    ) -> report.CounterReport:
         kwargs = {'customer_reference': self.customer_id}
         if self.requestor_id:
             kwargs['requestor_id'] = self.requestor_id
@@ -510,7 +511,7 @@ class Sushi4Client(SushiClientBase):
                 )
             return errors
 
-    def report_to_string(self, report_data):
+    def report_to_string(self, report_data: report.CounterReport):
         lines = report_data.as_generic()
         out = StringIO()
         writer = csv.writer(out, dialect='excel', delimiter="\t")
