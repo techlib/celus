@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.1.1] (2020-08-18)
+
+### Fixes
+
+- fix mismatch of version hash between credentials and attempts causing
+  incorrect display of attempt status on SUSHI downloads page
+
+
 ## [2.1.0] (2020-08-18)
 
 ### Added
