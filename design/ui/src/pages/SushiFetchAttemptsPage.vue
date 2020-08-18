@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="../locales/dialog.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
@@ -14,8 +15,10 @@ en:
     success_metric: Success metric
     all_orgs: Show all organizations
     refresh: Refresh
-    cleanup: Cleanup
-    cleanup_description: Removes unsucessful attempts which contain no data.
+    cleanup:
+        button: Cleanup
+        title: Remove unsuccessful attempts
+        description: Removes unsucessful attempts which contain no data.
 
 cs:
     dim:
@@ -30,8 +33,10 @@ cs:
     success_metric: Měřítko úspěchu
     all_orgs: Všechny organizace
     refresh: Obnovit
-    cleanup: Pročistit
-    cleanup_description: Odstraní neúspěšné pokusy, které neobsahují žádná data.
+    cleanup:
+        button: Pročistit
+        title: Odstranit neúspěšné pokusy
+        description: Odstraní neúspěšné pokusy, které neobsahují žádná data.
 </i18n>
 
 <template>
@@ -110,12 +115,12 @@ cs:
             <v-col cols="auto">
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
-                <v-btn @click="cleanupSushiAttempts()" color="warning" v-bind="attrs" v-on="on">
+                <v-btn @click="showCleanup()" color="warning" v-bind="attrs" v-on="on">
                     <v-icon left>fa-cut</v-icon>
-                    {{ $t('cleanup') }}
+                    {{ $t('cleanup.button') }}
                 </v-btn>
                 </template>
-                <span>{{ $t('cleanup_description') }}</span>
+                <span>{{ $t('cleanup.description') }}</span>
               </v-tooltip>
             </v-col>
         </v-row>
@@ -158,6 +163,24 @@ cs:
             >
             </SushiAttemptListWidget>
         </v-dialog>
+        <v-dialog
+            v-model="showCleanupDialog"
+            max-width="800px"
+        >
+            <v-card>
+                <v-card-title>{{ $t('cleanup.title') }}</v-card-title>
+                <v-card-text>
+                    <SushiAttemptCleanupWidget
+                        @close="closeCleanup"
+                    >
+                    </SushiAttemptCleanupWidget>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="secondary" @click="closeCleanup()">{{ $t('close') }}</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
@@ -165,12 +188,13 @@ cs:
 
   import axios from 'axios'
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
-  import FetchAttemptModeFilter from '@/components/sushi/FetchAttemptModeFilter'
+  import SushiAttemptListWidget from '@/components/SushiAttemptListWidget'
+  import FetchAttemptModeFilter from '@components/sushi/FetchAttemptModeFilter'
+  import SushiAttemptCleanupWidget from '@components/sushi/SushiAttemptCleanupWidget'
 
   export default {
     name: "SushiFetchAttemptsPage",
-    components: {FetchAttemptModeFilter, SushiAttemptListWidget},
+    components: {FetchAttemptModeFilter, SushiAttemptListWidget, SushiAttemptCleanupWidget},
     data () {
       return {
         statsData: [],
@@ -181,6 +205,7 @@ cs:
         rows: [],
         tableData: {},
         showDetailDialog: false,
+        showCleanupDialog: false,
         selectedItem: {},
         startDate: null,
         dateMenu: null,
@@ -244,14 +269,6 @@ cs:
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
-      async cleanupSushiAttempts () {
-        try {
-          await axios.post(`/api/sushi-fetch-attempt/cleanup/`, {}, {})
-        } catch (error) {
-          this.showSnackbar({content: 'Error cleaning unsuccessful attempts: ' + error, color: 'error'})
-        }
-        await this.loadAttemptStats()
-      },
       async loadAttemptStats () {
         try {
           let response = await axios.get(this.statsUrl)
@@ -308,9 +325,16 @@ cs:
         this.selectedItem[this.y] = this.rows[rowIndex]
         this.showDetailDialog = true
       },
+      showCleanup () {
+        this.showCleanupDialog = true
+      },
       closeDetails () {
         this.selectedItem = {}
         this.showDetailDialog = false
+      },
+      async closeCleanup () {
+        this.showCleanupDialog = false
+        await this.loadAttemptStats()
       }
     },
     watch: {
