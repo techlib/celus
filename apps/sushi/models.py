@@ -13,7 +13,7 @@ import requests
 import reversion
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
-from django.core.files.base import File
+from django.core.files.base import ContentFile, File
 from django.db import models
 from django.db.models import F
 from django.db.transaction import atomic
@@ -325,8 +325,10 @@ class SushiCredentials(models.Model):
         params = self.extra_params or {}
         params['sushi_dump'] = True
         filename = 'foo.tsv'  # we just need the extension
+        report = None
+
         try:
-            client.get_report_data(
+            report = client.get_report_data(
                 counter_report.code, start_date, end_date, output_content=file_data, params=params,
             )
         except SushiException as e:
@@ -352,10 +354,16 @@ class SushiCredentials(models.Model):
             download_success = True
             processing_success = True
 
-        file_data.seek(0)
-        data_file = File(file_data)
-        data_file.name = filename
-        when_queued = now() if queued else None
+        if report:
+            # Write tsv report
+            data_file = ContentFile(client.report_to_string(report))
+        else:
+            # Write error file
+            file_data.seek(0)
+            data_file = File(file_data)
+            data_file.name = filename
+            when_queued = now() if queued else None
+
         return dict(
             credentials=self,
             counter_report=counter_report,
