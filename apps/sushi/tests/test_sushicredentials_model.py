@@ -2,7 +2,8 @@ import pytest
 from rest_framework.exceptions import PermissionDenied
 
 from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, Identity
-from nigiri.client import Sushi5Client
+from nigiri.client import Sushi5Client, Sushi4Client
+from nigiri.counter4 import Counter4ReportBase
 from nigiri.counter5 import Counter5ReportBase
 from organizations.models import UserOrganization
 from sushi.logic.data_import import import_sushi_credentials
@@ -196,7 +197,8 @@ class TestCredentialsVersioning(object):
         """
         Tests that when we fetch data using `SushiCredentials`, the `SushiFetchAttempt` that is
         created contains information about the credentials version - both in `processing_info`
-        and in `credentials_version_hash`
+        and in `credentials_version_hash`.
+        This version tests Counter 5
         """
         data = [
             {
@@ -227,4 +229,44 @@ class TestCredentialsVersioning(object):
         )
         assert 'credentials_version' in attempt.processing_info
         assert attempt.credentials_version_hash != ''
-        assert attempt.credentials_version_hash == cr1.compute_version_hash()
+        assert attempt.credentials_version_hash == cr1.version_hash
+
+    def test_version_info_is_stored_in_fetch_attempt_c4(
+        self, organizations, report_type_nd, monkeypatch
+    ):
+        """
+        Tests that when we fetch data using `SushiCredentials`, the `SushiFetchAttempt` that is
+        created contains information about the credentials version - both in `processing_info`
+        and in `credentials_version_hash`.
+        This version tests Counter 4
+        """
+        data = [
+            {
+                'platform': 'XXX',
+                'organization': organizations[1].internal_id,
+                'customer_id': 'BBB',
+                'requestor_id': 'RRRX',
+                'URL': 'http://this.is/test/2',
+                'version': 4,
+                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+            },
+        ]
+        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
+        import_sushi_credentials(data)
+        assert SushiCredentials.objects.count() == 1
+        cr1 = SushiCredentials.objects.get()
+        cr1.create_sushi_client()
+        report = CounterReportType.objects.create(
+            code='tr', name='tr', counter_version=4, report_type=report_type_nd(0)
+        )
+
+        def mock_get_report_data(*args, **kwargs):
+            return Counter4ReportBase()
+
+        monkeypatch.setattr(Sushi4Client, 'get_report_data', mock_get_report_data)
+        attempt: SushiFetchAttempt = cr1.fetch_report(
+            report, start_date='2020-01-01', end_date='2020-01-31'
+        )
+        assert 'credentials_version' in attempt.processing_info
+        assert attempt.credentials_version_hash != ''
+        assert attempt.credentials_version_hash == cr1.version_hash

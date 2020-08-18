@@ -297,7 +297,7 @@ class SushiCredentials(models.Model):
             attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
         attempt_params['in_progress'] = False
         # add version info to the attempt
-        attempt_params['credentials_version_hash'] = self.compute_version_hash()
+        attempt_params['credentials_version_hash'] = self.version_hash
         # now store it - into an existing object or a new one
         if fetch_attempt:
             for key, value in attempt_params.items():
