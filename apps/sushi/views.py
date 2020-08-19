@@ -7,6 +7,7 @@ from django.db.models import Count, Q, Max, Min, F
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -19,7 +20,11 @@ from core.models import UL_CONS_STAFF, REL_ORG_ADMIN
 from core.permissions import SuperuserOrAdminPermission, OrganizationRelatedPermissionMixin
 from organizations.logic.queries import organization_filter_from_org_id
 from sushi.models import CounterReportType, SushiFetchAttempt
-from sushi.serializers import CounterReportTypeSerializer, SushiFetchAttemptSerializer
+from sushi.serializers import (
+    CounterReportTypeSerializer,
+    SushiFetchAttemptSerializer,
+    SushiFetchAttemptSimpleSerializer,
+)
 from sushi.tasks import (
     run_sushi_fetch_attempt_task,
     fetch_new_sushi_data_task,
@@ -110,6 +115,29 @@ class SushiCredentialsViewSet(ModelViewSet):
         user_organizations = self.request.user.accessible_organizations()
         qs = SushiCredentials.objects.filter(organization__in=user_organizations)
         return Response({'count': qs.count(),})
+
+    @action(detail=False, methods=['get'], url_name='month-overview', url_path='month-overview')
+    def month_overview(self, request):
+        month = request.query_params.get('month')
+        if not month:
+            return Response(
+                {'error': 'Missing "month" URL param'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        month_date = dateparser.parse(month)
+        start = month_start(month_date)
+        end = month_end(month_date)
+        credentials = self.get_queryset()
+        query = (
+            SushiFetchAttempt.objects.filter(
+                start_date=start, end_date=end, credentials_id__in=credentials
+            )
+            .order_by("credentials_id", "counter_report_id", "-timestamp")
+            .distinct("credentials_id", "counter_report_id")
+            .select_related('credentials')
+        )
+        records = SushiFetchAttemptSimpleSerializer(query, many=True).data
+        return Response(records)
 
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):

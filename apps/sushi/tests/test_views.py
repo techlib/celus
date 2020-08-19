@@ -3,21 +3,10 @@ from unittest.mock import patch
 import pytest
 from django.urls import reverse
 
-from core.models import UL_ORG_ADMIN, UL_CONS_ADMIN, UL_CONS_STAFF, Identity
-from organizations.models import UserOrganization
+from core.models import UL_ORG_ADMIN, UL_CONS_STAFF, Identity
 from logs.models import ImportBatch
+from organizations.models import UserOrganization
 from sushi.models import SushiCredentials, SushiFetchAttempt
-from organizations.tests.conftest import organizations, identity_by_user_type
-from publications.tests.conftest import platforms
-from core.tests.conftest import (
-    master_client,
-    master_identity,
-    valid_identity,
-    authenticated_client,
-    authentication_headers,
-    admin_identity,
-    invalid_identity,
-)
 
 
 @pytest.mark.django_db()
@@ -233,6 +222,53 @@ class TestSushiCredentialsViewSet(object):
         resp = authenticated_client.delete(url)
         assert resp.status_code == 204
         assert SushiCredentials.objects.count() == 0
+
+    def test_month_overview_no_month(self, master_client):
+        """
+        Test the month-overview custom action - month attr should be given
+        """
+        url = reverse('sushi-credentials-month-overview')
+        resp = master_client.get(url)
+        assert resp.status_code == 400, 'Month URL param must be present'
+
+    def test_month_overview(
+        self, organizations, platforms, counter_report_type_named, master_client
+    ):
+        """
+        Test the month-overview custom action
+        """
+        credentials = SushiCredentials.objects.create(
+            organization=organizations[0],
+            platform=platforms[0],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url='http://a.b.c/',
+        )
+        new_rt1 = counter_report_type_named('new1')
+        credentials.active_counter_reports.add(new_rt1)
+        SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+        )
+        attempt2 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+        )
+        url = reverse('sushi-credentials-month-overview')
+        resp = master_client.get(url, {'month': '2020-01'})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, 'there should be one record for one set of credentials'
+        rec = data[0]
+        assert rec['credentials_id'] == credentials.pk
+        assert rec['counter_report_id'] == new_rt1.pk
+        assert rec['pk'] == attempt2.pk, 'the second (newer) attempt should be reported'
 
 
 @pytest.mark.django_db()

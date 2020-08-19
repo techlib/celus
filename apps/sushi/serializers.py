@@ -123,3 +123,27 @@ class SushiFetchAttemptSerializer(ModelSerializer):
             'counter_report_verbose',
             'credentials',
         )
+
+
+class SushiFetchAttemptSimpleSerializer(ModelSerializer):
+    class Meta:
+        model = SushiFetchAttempt
+        fields = (
+            'pk',
+            'timestamp',
+            'start_date',
+            'end_date',
+            'download_success',
+            'error_code',
+            'contains_data',
+            'queued',
+            'is_processed',
+            'when_processed',
+            'when_queued',
+            'counter_report_id',
+            'import_batch',
+            'data_file',
+            'processing_success',
+            'in_progress',
+            'credentials_id',
+        )
