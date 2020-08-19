@@ -134,7 +134,7 @@ class SushiCredentialsViewSet(ModelViewSet):
             )
             .order_by("credentials_id", "counter_report_id", "-timestamp")
             .distinct("credentials_id", "counter_report_id")
-            .select_related('credentials')
+            .select_related('credentials', 'counter_report')
         )
         records = SushiFetchAttemptSimpleSerializer(query, many=True).data
         return Response(records)

@@ -1,42 +1,90 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n>
+en:
+  hide_successful: Hide successful rows
+
+cs:
+  hide_successful: Skrýt úspěšné řádky
+</i18n>
+
 
 <template>
     <v-layout>
         <v-card>
             <v-card-text>
-                <v-date-picker
-                        v-model="selectedMonth"
-                        type="month"
-                        no-title
-                        :locale="$i18n.locale"
-                        :allowed-dates="allowedMonths"
-                ></v-date-picker>
-                <v-data-table
-                        :items="sushiCredentialsWithAttempts"
-                        :headers="headers"
-                        :search="search"
-                        :items-per-page.sync="itemsPerPage"
-                        :sort-by="orderBy"
-                        multi-sort
-                        :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
-                        :loading="loading"
-                >
-                    <template #item.enabled="{item}">
-                        <CheckMark :value="item.enabled" false-color="secondary" true-color="secondary"/>
-                    </template>
-                    <template #item.outside_consortium="{item}">
-                        <CheckMark :value="item.outside_consortium" false-color="secondary" true-color="secondary"/>
-                    </template>
-                    <template v-for="rt in usedReportTypes" v-slot:[slotName(rt)]="{item}">
+                <v-container>
+                    <v-row>
+                        <v-col cols="auto">
+                            <v-menu
+                                    v-model="showMonthMenu"
+                                    transition="scale-transition"
+                                    offset-y
+                            >
+                                <template v-slot:activator="{ on }">
+                                    <v-text-field
+                                            v-model="selectedMonth"
+                                            :label="$t('month')"
+                                            prepend-icon="fa-calendar"
+                                            readonly
+                                            v-on="on"
+                                    ></v-text-field>
+                                </template>
+                                <v-date-picker
+                                        v-model="selectedMonth"
+                                        type="month"
+                                        no-title
+                                        :locale="$i18n.locale"
+                                        :allowed-dates="allowedMonths"
+                                ></v-date-picker>
+                            </v-menu>
+                        </v-col>
+                        <v-col cols="2">
+                            <v-select
+                                    :items="[{text: '4 + 5', value: null}, {text: '4', value: 4}, {text: '5', value: 5}]"
+                                    v-model="counterVersion"
+                                    :label="$t('labels.counter_version')"
+                                    class="short"
+                            ></v-select>
+                        </v-col>
+                        <v-col>
+                            <v-switch
+                                    v-model="hideSuccessful"
+                                    :label="$t('hide_successful')"
+                            >
+
+                            </v-switch>
+                        </v-col>
+                    </v-row>
+                    <v-row>
+                        <v-data-table
+                                :items="sushiCredentialsWithAttempts"
+                                :headers="headers"
+                                :search="search"
+                                :items-per-page.sync="itemsPerPage"
+                                :sort-by="orderBy"
+                                multi-sort
+                                :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
+                                :loading="loading"
+                                dense
+                        >
+                            <template #item.enabled="{item}">
+                                <CheckMark :value="item.enabled" false-color="secondary" true-color="secondary"/>
+                            </template>
+                            <template #item.outside_consortium="{item}">
+                                <CheckMark :value="item.outside_consortium" false-color="secondary" true-color="secondary"/>
+                            </template>
+                            <template v-for="rt in usedReportTypes" v-slot:[slotName(rt)]="{item}">
                         <span v-if="item[rt.code]" :key="`${rt.code}-${item.credentials_id}`">
                             <v-icon v-if="item[rt.code].queued" color="secondary">far fa-clock</v-icon>
                             <v-icon v-else-if="item[rt.code].import_batch" color="success">far fa-check-circle</v-icon>
                             <v-icon v-else-if="item[rt.code].error_code" color="red lighten-2">fa fa-exclamation-circle</v-icon>
                             <v-icon v-else color="warning">far fa-question-circle</v-icon>
                         </span>
-                    </template>
+                            </template>
 
-                </v-data-table>
+                        </v-data-table>
+                    </v-row>
+                </v-container>
             </v-card-text>
         </v-card>
         <v-dialog v-model="showDetailsDialog">
@@ -94,9 +142,12 @@
         itemsPerPage: 25,
         selectedCredentials: null,
         showDetailsDialog: false,
-        orderBy: ['organization.name', 'platform.name', 'counter_version'],
+        orderBy: ['platform.name', 'organization.name'],
         loading: false,
         selectedMonth: ymDateFormat(addDays(startOfMonth(new Date()), -15)),
+        showMonthMenu: false,
+        counterVersion: null,
+        hideSuccessful: false,
       }
     },
     computed: {
@@ -111,27 +162,27 @@
             class: 'wrap',
           },
           {
+            text: this.$i18n.t('platform'),
+            value: 'platform.name'
+          },
+          {
             text: this.$i18n.t('organization'),
             value: 'organization.name',
             class: 'wrap',
-          },
-          {
-            text: this.$i18n.t('platform'),
-            value: 'platform.name'
           },
           {
             text: this.$i18n.t('title_fields.counter_version'),
             value: 'counter_version',
             align: 'end',
           },
-          {
+          /*{
             text: this.$i18n.t('title_fields.outside_consortium'),
             value: 'outside_consortium',
           },
           {
             text: this.$i18n.t('title_fields.enabled'),
             value: 'enabled',
-          },
+          },*/
         ]
         for (let reportType of this.usedReportTypes) {
           allHeaders.push({
@@ -158,6 +209,9 @@
         return base
       },
       attemptsUrl () {
+        if (!this.selectedMonth) {
+          return null
+        }
         let base = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.selectedMonth}`
         if (this.platformId) {
           base += `&platform=${this.platformId}`
@@ -165,7 +219,10 @@
         return base
       },
       usedReportTypes () {
-        let usedRTIds = new Set(this.attemptData.map(item => item.counter_report_id))
+        let usedRTIds = new Set(this.attemptData
+          .filter(item =>
+            this.counterVersion === null || item.counter_version === this.counterVersion)
+          .map(item => item.counter_report_id))
         return this.reportTypes.filter(item => usedRTIds.has(item.id))
       },
       sushiCredentialsWithAttempts () {
@@ -175,6 +232,8 @@
           }
           return item
         })
+          .filter(item => this.counterVersion === null || item.counter_version === this.counterVersion)
+          .filter(item => !this.hideSuccessful || this.usedReportTypes.filter(rt => item[rt.code] && item[rt.code].import_batch).length == 0)
       }
 
     },
@@ -195,6 +254,9 @@
         }
       },
       async loadAttempts () {
+        if (!this.attemptsUrl) {
+          return
+        }
         this.loading = true
         try {
           let response = await axios.get(this.attemptsUrl)

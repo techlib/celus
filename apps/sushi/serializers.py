@@ -4,6 +4,7 @@ from rest_framework.fields import (
     CurrentUserDefault,
     BooleanField,
     SerializerMethodField,
+    IntegerField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer
@@ -127,11 +128,15 @@ class SushiFetchAttemptSerializer(ModelSerializer):
 
 
 class SushiFetchAttemptSimpleSerializer(ModelSerializer):
+
+    counter_version = IntegerField(read_only=True, source='counter_report.counter_version')
+
     class Meta:
         model = SushiFetchAttempt
         fields = (
             'contains_data',
             'counter_report_id',
+            'counter_version',
             'credentials_id',
             'data_file',
             'download_success',
