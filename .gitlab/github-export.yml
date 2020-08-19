@@ -2,9 +2,9 @@
   before_script:
     - export GIT_SSH_COMMAND="ssh -i $CELUS_GITHUB_PUSH_KEY"
     - chmod 0600 "$CELUS_GITHUB_PUSH_KEY"
-    - apt update
-    - apt -y upgrade
-    - apt -y install --no-install-recommends git openssh-client
+    - apt-get update
+    - apt-get -y upgrade
+    - apt-get -y install --no-install-recommends git openssh-client
     - mkdir -p ~/.ssh/
     - ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
     - git remote add github "${CELUS_GITHUB_REPO}" || true
