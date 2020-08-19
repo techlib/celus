@@ -1,5 +1,5 @@
-<i18n lang="yaml" src="../locales/common.yaml"></i18n>
-<i18n lang="yaml" src="../locales/dialog.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 <i18n lang="yaml">
 en:
     sushi_fetch_attempts: Sushi fetch attempts
@@ -155,10 +155,10 @@ cs:
 <script>
   import { mapActions } from 'vuex'
   import axios from 'axios'
-  import AccessLogList from './AccessLogList'
-  import ImportBatchChart from './ImportBatchChart'
-  import CheckMark from './CheckMark'
-  import FetchAttemptModeFilter from './sushi/FetchAttemptModeFilter'
+  import AccessLogList from '../AccessLogList'
+  import ImportBatchChart from '../ImportBatchChart'
+  import CheckMark from '../CheckMark'
+  import FetchAttemptModeFilter from './FetchAttemptModeFilter'
 
   export default {
     name: "SushiAttemptListWidget",

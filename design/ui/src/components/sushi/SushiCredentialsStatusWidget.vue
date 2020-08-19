@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
     in_progress: Fetching data
@@ -71,7 +71,7 @@ cs:
 <script>
   import { mapActions } from 'vuex'
   import axios from 'axios'
-  import CheckMark from './CheckMark'
+  import CheckMark from '../CheckMark'
 
   export default {
     name: 'SushiCredentialsStatusWidget',

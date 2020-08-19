@@ -149,7 +149,7 @@ en:
 </template>
 
 <script>
-  import SushiCredentialsEditDialog from '../SushiCredentialsEditDialog'
+  import SushiCredentialsEditDialog from '../sushi/SushiCredentialsEditDialog'
   import { mapActions } from 'vuex'
   export default {
     name: 'FirstSushiHelpWidget',

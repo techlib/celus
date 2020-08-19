@@ -4,7 +4,7 @@ import Vuetify from 'vuetify'
 import { mount, createLocalVue } from '@vue/test-utils'
 
 // stuff to check
-import SushiCredentialsEditDialog from '@/components/SushiCredentialsEditDialog'
+import SushiCredentialsEditDialog from '@/components/sushi/SushiCredentialsEditDialog'
 
 // basic setup
 Vue.use(Vuetify)

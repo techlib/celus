@@ -145,7 +145,7 @@ cs:
 
   import axios from 'axios'
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import SushiAttemptListWidget from '../components/SushiAttemptListWidget'
+  import SushiAttemptListWidget from '../components/sushi/SushiAttemptListWidget'
   import FetchAttemptModeFilter from '../components/sushi/FetchAttemptModeFilter'
 
   export default {

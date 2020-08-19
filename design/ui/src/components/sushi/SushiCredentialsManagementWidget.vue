@@ -148,8 +148,8 @@ cs:
   import axios from 'axios'
   import { mapActions, mapGetters, mapState } from 'vuex'
   import debounce from 'lodash/debounce'
-  import SushiCredentialsEditDialog from '@/components/SushiCredentialsEditDialog'
-  import SushiAttemptListWidget from '@/components/SushiAttemptListWidget'
+  import SushiCredentialsEditDialog from '@/components/sushi/SushiCredentialsEditDialog'
+  import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
   import CheckMark from '@/components/CheckMark'
 
   export default {
