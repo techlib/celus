@@ -3,118 +3,42 @@
 <template>
     <v-layout>
         <v-card>
-            <v-card-title>
-                <v-btn
-                        @click="activateCreateDialog()"
-                        color="warning"
+            <v-card-text>
+                <v-date-picker
+                        v-model="selectedMonth"
+                        type="month"
+                        no-title
+                        :locale="$i18n.locale"
+                        :allowed-dates="allowedMonths"
+                ></v-date-picker>
+                <v-data-table
+                        :items="sushiCredentialsWithAttempts"
+                        :headers="headers"
+                        :search="search"
+                        :items-per-page.sync="itemsPerPage"
+                        :sort-by="orderBy"
+                        multi-sort
+                        :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
+                        :loading="loading"
                 >
-                    <v-icon small class="mr-2">fa-plus</v-icon>
-                    {{ $t('add_new') }}
-                </v-btn>
-                <v-spacer></v-spacer>
-                <v-text-field
-                        v-model="searchDebounced"
-                        append-icon="fa-search"
-                        :label="$t('labels.search')"
-                        single-line
-                        hide-details
-                        clearable
-                        clear-icon="fa-times"
-                ></v-text-field>
-            </v-card-title>
-            <v-data-table
-                    :items="sushiCredentialsList"
-                    :headers="headers"
-                    :search="search"
-                    :items-per-page.sync="itemsPerPage"
-                    :sort-by="orderBy"
-                    multi-sort
-                    :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
-                    :loading="loading"
-            >
-                <template v-slot:item.active_counter_reports="{item}">
-                    <v-tooltip
-                            bottom
-                            v-for="(report, index) in item.active_counter_reports_long"
-                            :key="index"
-                    >
-                        <template v-slot:activator="{ on }">
-                            <v-chip class="mr-1" color="teal" outlined label v-on="on">
-                                {{ report.code }}
-                            </v-chip>
-                        </template>
-                        <span>
-                            <span v-if="report.name">{{ report.name }}</span>
-                            <span v-else>{{ report.code }}</span>
+                    <template #item.enabled="{item}">
+                        <CheckMark :value="item.enabled" false-color="secondary" true-color="secondary"/>
+                    </template>
+                    <template #item.outside_consortium="{item}">
+                        <CheckMark :value="item.outside_consortium" false-color="secondary" true-color="secondary"/>
+                    </template>
+                    <template v-for="rt in usedReportTypes" v-slot:[slotName(rt)]="{item}">
+                        <span v-if="item[rt.code]" :key="`${rt.code}-${item.credentials_id}`">
+                            <v-icon v-if="item[rt.code].queued" color="secondary">far fa-clock</v-icon>
+                            <v-icon v-else-if="item[rt.code].import_batch" color="success">far fa-check-circle</v-icon>
+                            <v-icon v-else-if="item[rt.code].error_code" color="red lighten-2">fa fa-exclamation-circle</v-icon>
+                            <v-icon v-else color="warning">far fa-question-circle</v-icon>
                         </span>
-                    </v-tooltip>
-                </template>
-                <template v-slot:item.actions="{item}">
-                    <v-btn v-if="!item.locked_for_me" text small color="secondary" @click.stop="selectedCredentials = item; showEditDialog = true">
-                        <v-icon left x-small>fa-edit</v-icon>
-                        {{ $t('actions.edit') }}
-                    </v-btn>
-                    <v-btn text small color="secondary" @click.stop="selectedCredentials = item; showDetailsDialog = true">
-                        <v-icon left x-small>fa-list</v-icon>
-                        {{ $t('actions.show_attempts') }}
-                    </v-btn>
-                </template>
-                <template v-slot:item.enabled="{item}">
-                    <CheckMark :value="item.enabled" />
-                </template>
-                <template v-slot:item.outside_consortium="{item}">
-                    <CheckMark :value="item.outside_consortium" />
-                </template>
-                <template v-slot:item.locked="{item}">
-                    <!-- locked for me -->
-                    <v-tooltip bottom v-if="item.locked && item.locked_for_me">
-                        <template v-slot:activator="{ on }">
-                            <v-icon small v-on="on" color="red">fa-fw fa-lock</v-icon>
-                        </template>
-                        {{ $t('is_locked') }} {{ $t('cannot_edit') }}
-                    </v-tooltip>
-                    <!-- locked, but I can edit -->
-                    <v-tooltip bottom v-else-if="item.locked">
-                        <template v-slot:activator="{ on }">
-                            <v-icon small v-on="on" color="red">fa-fw fa-lock</v-icon>
-                        </template>
-                        {{ $t('is_locked') }} {{ $t('can_edit') }}
-                    </v-tooltip>
-                    <!-- not locked at all -->
-                    <v-tooltip bottom v-else>
-                        <template v-slot:activator="{ on }">
-                            <v-icon small v-on="on" color="green">fa-fw fa-lock-open</v-icon>
-                        </template>
-                        {{ $t('is_unlocked') }}
-                    </v-tooltip>
+                    </template>
 
-                    <v-tooltip bottom v-if="item.can_lock">
-                        <template v-slot:activator="{ on }">
-                            <v-btn text icon @click="toggleLock(item)" v-on="on"><v-icon small>fa-key</v-icon></v-btn>
-                        </template>
-                        {{ $t('can_lock') }}
-                    </v-tooltip>
-                </template>
-            </v-data-table>
+                </v-data-table>
+            </v-card-text>
         </v-card>
-        <v-dialog v-model="showEditDialog" :max-width="dialogMaxWidth">
-            <SushiCredentialsEditDialog
-                    :credentials-object="selectedCredentials"
-                    v-model="showEditDialog"
-                    @update-credentials="updateCredentials"
-                    @deleted="deleteCredentials"
-                    key="edit"
-            ></SushiCredentialsEditDialog>
-        </v-dialog>
-        <v-dialog v-model="showCreateDialog" :max-width="dialogMaxWidth">
-            <SushiCredentialsEditDialog
-                    v-model="showCreateDialog"
-                    @update-credentials="updateCredentials"
-                    :existing-credentials="sushiCredentialsList"
-                    key="create"
-                    :fixed-platform="platformId"
-            ></SushiCredentialsEditDialog>
-        </v-dialog>
         <v-dialog v-model="showDetailsDialog">
             <SushiAttemptListWidget
                     v-if="selectedCredentials"
@@ -132,14 +56,16 @@
   import axios from 'axios'
   import { mapActions, mapGetters, mapState } from 'vuex'
   import debounce from 'lodash/debounce'
-  import SushiCredentialsEditDialog from '@/components/sushi/SushiCredentialsEditDialog'
   import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
   import CheckMark from '@/components/CheckMark'
+  import startOfMonth from 'date-fns/startOfMonth'
+  import addDays from 'date-fns/addDays'
+  import { ymDateFormat } from '@/libs/dates'
 
   export default {
     name: "SushiCredentialsMonthOverviewWidget",
 
-    components: {SushiCredentialsEditDialog, SushiAttemptListWidget, CheckMark},
+    components: {SushiAttemptListWidget, CheckMark},
 
     props: {
       dialogMaxWidth: {
@@ -161,14 +87,16 @@
     data () {
       return {
         sushiCredentialsList: [],
+        attemptData: [],
+        attemptMap: new Map(),
+        reportTypes: [],
         search: '',
         itemsPerPage: 25,
         selectedCredentials: null,
-        showEditDialog: false,
         showDetailsDialog: false,
-        showCreateDialog: false,
         orderBy: ['organization.name', 'platform.name', 'counter_version'],
         loading: false,
+        selectedMonth: ymDateFormat(addDays(startOfMonth(new Date()), -15)),
       }
     },
     computed: {
@@ -197,11 +125,6 @@
             align: 'end',
           },
           {
-            text: this.$i18n.t('title_fields.active_reports'),
-            value: 'active_counter_reports',
-            sortable: false,
-          },
-          {
             text: this.$i18n.t('title_fields.outside_consortium'),
             value: 'outside_consortium',
           },
@@ -209,16 +132,14 @@
             text: this.$i18n.t('title_fields.enabled'),
             value: 'enabled',
           },
-          {
-            text: this.$i18n.t('title_fields.lock'),
-            value: 'locked',
-          },
-          {
-            text: this.$i18n.t('title_fields.actions'),
-            value: 'actions',
-            sortable: false,
-          },
         ]
+        for (let reportType of this.usedReportTypes) {
+          allHeaders.push({
+            text: reportType.code,
+            value: reportType.code,
+            sortable: false,
+          })
+        }
         return allHeaders.filter(row => row.value !== 'outside_consortium' || this.consortialInstall)
       },
       searchDebounced: {
@@ -229,14 +150,35 @@
           this.search = value
         }, 500)
       },
-      dataUrl () {
+      credentialsUrl () {
         let base = `/api/sushi-credentials/?organization=${this.organizationId}`
         if (this.platformId) {
           base += `&platform=${this.platformId}`
         }
         return base
+      },
+      attemptsUrl () {
+        let base = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.selectedMonth}`
+        if (this.platformId) {
+          base += `&platform=${this.platformId}`
+        }
+        return base
+      },
+      usedReportTypes () {
+        let usedRTIds = new Set(this.attemptData.map(item => item.counter_report_id))
+        return this.reportTypes.filter(item => usedRTIds.has(item.id))
+      },
+      sushiCredentialsWithAttempts () {
+        return this.sushiCredentialsList.map(item => {
+          for (let reportType of this.usedReportTypes) {
+            item[reportType.code] = this.attemptMap.get(`${item.pk}-${reportType.id}`)
+          }
+          return item
+        })
       }
+
     },
+
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
@@ -244,72 +186,64 @@
       async loadSushiCredentialsList () {
         this.loading = true
         try {
-          let response = await axios.get(this.dataUrl)
+          let response = await axios.get(this.credentialsUrl)
           this.sushiCredentialsList = response.data
         } catch (error) {
-          this.showSnackbar({content: 'Error loading credentials list: '+error})
+          this.showSnackbar({content: 'Error loading credentials list: '+error, color: 'error'})
         } finally {
           this.loading = false
         }
       },
-      updateCredentials (credentials) {
-        // the new credentials as returned by the edit dialog
-        // we put them at the right place in the list of credentials
-        let found = false
-        for (let i=0; i < this.sushiCredentialsList.length; i++) {
-          if (this.sushiCredentialsList[i].pk === credentials.pk) {
-            this.$set(this.sushiCredentialsList, i, credentials)
-            found = true
-            break
-          }
-        }
-        if (!found) {
-          // we did not find the corresponding record - we add it at the end
-          this.sushiCredentialsList.push(credentials)
-        }
-      },
-      deleteCredentials ({id}) {
-        this.sushiCredentialsList = this.sushiCredentialsList.filter(item => item.pk !== id)
-      },
-      async toggleLock (credentials) {
-        let newLockLevel = 400
-        if (credentials.locked) {
-          newLockLevel = 300
-        }
+      async loadAttempts () {
+        this.loading = true
         try {
-          let response = await axios.post(`/api/sushi-credentials/${credentials.pk}/lock/`,
-            {lock_level: newLockLevel})
-          credentials.lock_level = response.data.lock_level
-          credentials.locked = response.data.locked
+          let response = await axios.get(this.attemptsUrl)
+          this.attemptData = response.data
+          // create a map to easily find the attempt data
+          let attemptMap = new Map()
+          this.attemptData.forEach(item => attemptMap.set(`${item.credentials_id}-${item.counter_report_id}`, item))
+          this.attemptMap = attemptMap
         } catch (error) {
-          this.showSnackbar({content: 'Error (un)locking credentials: '+error, color: 'error'})
+          this.showSnackbar({content: 'Error loading attempts: '+error, color: 'error'})
+        } finally {
+          this.loading = false
+        }
+      },
+      async loadReportTypes () {
+        this.loading = true
+        try {
+          let response = await axios.get('/api/counter-report-type/')
+          this.reportTypes = response.data
+        } catch (error) {
+          this.showSnackbar({content: 'Error loading report types: '+error, color: 'error'})
+        } finally {
+          this.loading = false
         }
       },
       closeDetailsDialog () {
         this.selectedCredentials = null
         this.showDetailsDialog = false
       },
-      activateCreateDialog () {
-        this.showCreateDialog = true
+      allowedMonths (value) {
+        let now = ymDateFormat(new Date())
+        return value <= now
       },
+      slotName: rt =>  'item.' + rt.code,
     },
+
     watch: {
-      showEditDialog (value) {
-        if (!value) {
-          this.selectedCredentials = null
-        }
-      },
-      showCreateDialog (value) {
-        if (!value) {
-          this.selectedCredentials = null
-        }
-      },
       dataUrl () {
         this.loadSushiCredentialsList()
+      },
+      attemptsUrl () {
+        this.loadAttempts()
       }
     },
+
     mounted() {
+      this.loadReportTypes()
       this.loadSushiCredentialsList()
+      this.loadAttempts()
     }
   }
 </script>

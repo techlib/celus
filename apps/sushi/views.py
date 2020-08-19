@@ -130,7 +130,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         credentials = self.get_queryset()
         query = (
             SushiFetchAttempt.objects.filter(
-                start_date=start, end_date=end, credentials_id__in=credentials
+                start_date=start, end_date=end, credentials_id__in=credentials, in_progress=False,
             )
             .order_by("credentials_id", "counter_report_id", "-timestamp")
             .distinct("credentials_id", "counter_report_id")
