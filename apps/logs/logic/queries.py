@@ -191,7 +191,10 @@ class StatsComputer(object):
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'import_batch']
     input_dim_to_query_dim = {'interest': 'metric'}
     extra_query_params = {'interest': lambda rt: {'metric__reportinterestmetric__report_type': rt}}
-    implicit_dim_to_text_fn = {'interest': lambda x: str(x)}
+    implicit_dim_to_text_fn = {
+        'interest': lambda x: str(x),
+        'metric': lambda x: x.name or x.short_name,
+    }
     hard_result_count_limit = 20_000
 
     def __init__(self):
@@ -390,13 +393,13 @@ class StatsComputer(object):
 
         # filter to only interest metrics if metric neither primary nor secondary dim
         if report_type and self.prim_dim_name != 'metric' and self.sec_dim_name != 'metric':
-            # Rationale: summing up different metrics together does not make much sence
+            # Rationale: summing up different metrics together does not make much sense
             # for example Total_Item_Requests and Unique_Item_Requests are dependent on each
             # other and in fact the latter is a subset of the former. Thus we only use the
             # metrics that define interest for computation if metric itself is not the primary
             # or secondary dimension
             # Technical note: putting the filter into the query leads to a very slow response
-            # (2500 ms instead of 60 ms is a test case) - this is why we get the pks of the metrics
+            # (2500 ms instead of 60 ms in a test case) - this is why we get the pks of the metrics
             # first and then use the "in" filter.
             self.reported_metrics = {
                 im.pk: im for im in self.used_report_type.interest_metrics.order_by()
