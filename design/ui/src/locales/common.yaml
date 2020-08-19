@@ -13,6 +13,7 @@ en:
     heatmap: Interest heatmap
     manual_data_uploads: Manual data uploads
     dashboard: Dashboard
+    sushi_monthly_overview: SUSHI status
   menu: Menu
   organization: Organization
   platform: Platform
@@ -123,6 +124,7 @@ cs:
     heatmap: Heatmapa zájmu
     manual_data_uploads: Ručně nahraná data
     dashboard: Přehled
+    sushi_monthly_overview: Stav SUSHI
   menu: Menu
   organization: Organizace
   platform: Platforma

@@ -1,6 +1,6 @@
-<i18n lang="yaml" src="../locales/common.yaml"></i18n>
-<i18n lang="yaml" src="../locales/notifications.yaml"></i18n>
-<i18n lang="yaml" src="../locales/tours.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/notifications.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/tours.yaml"></i18n>
 
 <template>
     <v-navigation-drawer
@@ -151,7 +151,8 @@
               items: [
                 { title: this.$i18n.t('pages.management'), icon: 'fas fa-tools', linkTo: 'management', show: this.showManagementStuff },
                 { title: this.$t('pages.maintenance'), icon: 'fa fa-toolbox', linkTo: 'maintenance', show: this.showManagementStuff },
-                { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list', show: this.showAdminStuff },
+                { title: this.$i18n.t('pages.sushi_monthly_overview'), icon: 'far fa-calendar-check', linkTo: 'sushi-monthly-overview', show: this.showAdminStuff },
+                { title: this.$i18n.t('pages.sushi_management'), icon: 'far fa-arrow-alt-circle-down', linkTo: 'sushi-credentials-list', show: this.showManagementStuff },
                 { title: this.$t('pages.sushi_fetch_attempts'), icon: 'fa-retweet', linkTo: 'sushi-fetch-attempts', show: this.showAdminStuff },
                 { title: this.$t('pages.manual_data_uploads'), icon: 'fa-upload', linkTo: 'manual-data-upload-list', show: this.showAdminStuff && this.allowManualDataUpload },
                 //{ title: this.$t('pages.import_batches'), icon: 'fa-file-import', linkTo: 'import-batch-list', show: this.showAdminStuff },

@@ -102,6 +102,11 @@ export default new Router({
       component: () => import('../pages/SushiCredentialsManagementPage.vue'),
     },
     {
+      path: '/admin/sushi-by-month/',
+      name: 'sushi-monthly-overview',
+      component: () => import('../pages/SushiCredentialsMonthOverviewPage.vue'),
+    },
+    {
       path: '/admin/import-batches/',
       name: 'import-batch-list',
       component: () => import('../pages/ImportBatchesPage.vue'),
