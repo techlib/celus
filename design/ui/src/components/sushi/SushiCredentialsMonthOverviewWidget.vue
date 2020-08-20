@@ -2,86 +2,101 @@
 <i18n lang="yaml">
 en:
   hide_successful: Hide successful rows
+  stats: Statistics
 
 cs:
   hide_successful: Skrýt úspěšné řádky
+  stats: Statistika
 </i18n>
 
 
 <template>
-    <v-layout>
-        <v-card>
-            <v-card-text>
-                <v-container>
-                    <v-row>
-                        <v-col cols="auto">
-                            <v-menu
-                                    v-model="showMonthMenu"
-                                    transition="scale-transition"
-                                    offset-y
-                            >
-                                <template v-slot:activator="{ on }">
-                                    <v-text-field
-                                            v-model="selectedMonth"
-                                            :label="$t('month')"
-                                            prepend-icon="fa-calendar"
-                                            readonly
-                                            v-on="on"
-                                    ></v-text-field>
-                                </template>
-                                <v-date-picker
-                                        v-model="selectedMonth"
-                                        type="month"
-                                        no-title
-                                        :locale="$i18n.locale"
-                                        :allowed-dates="allowedMonths"
-                                ></v-date-picker>
-                            </v-menu>
-                        </v-col>
-                        <v-col cols="2">
-                            <v-select
-                                    :items="[{text: '4 + 5', value: null}, {text: '4', value: 4}, {text: '5', value: 5}]"
-                                    v-model="counterVersion"
-                                    :label="$t('labels.counter_version')"
-                                    class="short"
-                            ></v-select>
-                        </v-col>
-                        <v-col>
-                            <v-switch
-                                    v-model="hideSuccessful"
-                                    :label="$t('hide_successful')"
-                            >
-
-                            </v-switch>
-                        </v-col>
-                    </v-row>
-                    <v-row>
-                        <v-data-table
-                                :items="sushiCredentialsWithAttempts"
-                                :headers="headers"
-                                :search="search"
-                                :items-per-page.sync="itemsPerPage"
-                                :sort-by="orderBy"
-                                multi-sort
-                                :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
-                                :loading="loading"
-                                dense
+    <v-card>
+        <v-card-text>
+            <v-container>
+                <v-row>
+                    <v-col cols="auto">
+                        <v-menu
+                                v-model="showMonthMenu"
+                                transition="scale-transition"
+                                offset-y
                         >
-                            <template #item.enabled="{item}">
-                                <CheckMark :value="item.enabled" false-color="secondary" true-color="secondary"/>
+                            <template v-slot:activator="{ on }">
+                                <v-text-field
+                                        v-model="selectedMonth"
+                                        :label="$t('month')"
+                                        prepend-icon="fa-calendar"
+                                        readonly
+                                        v-on="on"
+                                ></v-text-field>
                             </template>
-                            <template #item.outside_consortium="{item}">
-                                <CheckMark :value="item.outside_consortium" false-color="secondary" true-color="secondary"/>
-                            </template>
-                            <template v-for="rt in usedReportTypes" v-slot:[slotName(rt)]="{item}">
-                                <SushiAttemptStateIcon :attempt="item[rt.code]" :key="`${rt.code}-${item.credentials_id}`" />
-                            </template>
+                            <v-date-picker
+                                    v-model="selectedMonth"
+                                    type="month"
+                                    no-title
+                                    :locale="$i18n.locale"
+                                    :allowed-dates="allowedMonths"
+                            ></v-date-picker>
+                        </v-menu>
+                    </v-col>
+                    <v-col cols="2">
+                        <v-select
+                                :items="[{text: '4 + 5', value: null}, {text: '4', value: 4}, {text: '5', value: 5}]"
+                                v-model="counterVersion"
+                                :label="$t('labels.counter_version')"
+                                class="short"
+                        ></v-select>
+                    </v-col>
+                    <v-col>
+                        <v-switch
+                                v-model="hideSuccessful"
+                                :label="$t('hide_successful')"
+                        >
 
-                        </v-data-table>
-                    </v-row>
-                </v-container>
-            </v-card-text>
-        </v-card>
+                        </v-switch>
+                    </v-col>
+                </v-row>
+
+                <v-row>
+                    <v-col>
+                        <div class="stats">
+                        <h4 class="d-inline-block mr-5">{{ $t('stats') }}:</h4>
+                        <span v-for="[state, count] in stateStats" class="mr-3" :key="state">
+                            <SushiAttemptStateIcon :force-state="state" />
+                            {{ count }}
+                        </span>
+                        </div>
+                    </v-col>
+                </v-row>
+
+
+                <v-row>
+                    <v-data-table
+                            :items="sushiCredentialsWithAttempts"
+                            :headers="headers"
+                            :search="search"
+                            :items-per-page.sync="itemsPerPage"
+                            :sort-by="orderBy"
+                            multi-sort
+                            :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
+                            :loading="loading"
+                            dense
+                    >
+                        <template #item.enabled="{item}">
+                            <CheckMark :value="item.enabled" false-color="secondary" true-color="secondary"/>
+                        </template>
+                        <template #item.outside_consortium="{item}">
+                            <CheckMark :value="item.outside_consortium" false-color="secondary" true-color="secondary"/>
+                        </template>
+                        <template v-for="rt in usedReportTypes" v-slot:[slotName(rt)]="{item}">
+                            <SushiAttemptStateIcon :attempt="item[rt.code]" :key="`${rt.code}-${item.credentials_id}`" />
+                        </template>
+
+                    </v-data-table>
+                </v-row>
+            </v-container>
+        </v-card-text>
+
         <v-dialog v-model="showDetailsDialog">
             <SushiAttemptListWidget
                     v-if="selectedCredentials"
@@ -92,7 +107,8 @@ cs:
             >
             </SushiAttemptListWidget>
         </v-dialog>
-    </v-layout>
+    </v-card>
+
 </template>
 
 <script>
@@ -105,6 +121,7 @@ import startOfMonth from 'date-fns/startOfMonth'
 import addDays from 'date-fns/addDays'
 import { ymDateFormat } from '@/libs/dates'
 import SushiAttemptStateIcon from '@/components/sushi/SushiAttemptStateIcon'
+import { ATTEMPT_ERROR, ATTEMPT_SUCCESS, attemptState } from '@/libs/attempt-state'
 
 export default {
     name: "SushiCredentialsMonthOverviewWidget",
@@ -221,6 +238,9 @@ export default {
           .map(item => item.counter_report_id))
         return this.reportTypes.filter(item => usedRTIds.has(item.id))
       },
+      activeAttempts () {
+        return this.attemptData.filter(item => this.counterVersion === null || item.counter_version === this.counterVersion)
+      },
       sushiCredentialsWithAttempts () {
         return this.sushiCredentialsList.map(item => {
           for (let reportType of this.usedReportTypes) {
@@ -229,7 +249,18 @@ export default {
           return item
         })
           .filter(item => this.counterVersion === null || item.counter_version === this.counterVersion)
-          .filter(item => !this.hideSuccessful || this.usedReportTypes.filter(rt => item[rt.code] && item[rt.code].import_batch).length == 0)
+          .filter(item => !this.hideSuccessful || this.usedReportTypes.filter(rt => item[rt.code] && item[rt.code].import_batch).length != this.usedReportTypes.filter(rt => item[rt.code]).length)
+      },
+      stateStats () {
+        let stats = new Map()
+        for (let state of this.activeAttempts.map(attemptState)) {
+          if (stats.has(state)) {
+            stats.set(state, stats.get(state) + 1)
+          } else {
+            stats.set(state, 1)
+          }
+        }
+        return [...stats.entries()]
       }
 
     },
@@ -305,3 +336,13 @@ export default {
     }
   }
 </script>
+
+<style lang="scss" scoped>
+
+div.stats {
+  background-color: #efefef;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+}
+
+</style>

@@ -12,7 +12,7 @@ en:
 
 <template>
     <span v-if="attemptState">
-        <v-tooltip left>
+        <v-tooltip bottom>
             <template v-slot:activator="{ on }">
                 <span v-on="on" >
                     <v-icon v-if="attemptState === stateQueued" color="secondary">far fa-clock</v-icon>
@@ -43,7 +43,7 @@ export default {
   name: 'SushiAttemptStateIcon',
 
   props: {
-    attempt: {required: true},
+    attempt: {required: false},
     forceState: {required: false, default: null, type: String}
   },
 
