@@ -20,3 +20,12 @@ class UserOrganizationAdmin(admin.ModelAdmin):
     list_filter = ['source']
     list_select_related = ['source', 'organization', 'user']
     search_fields = ['user__username', 'user__email']
+
+
+@admin.register(models.OrganizationAltName)
+class OrganizationAltNameAdmin(admin.ModelAdmin):
+
+    list_display = ['organization', 'name']
+    list_filter = ['organization']
+    list_select_related = ['organization']
+    search_fields = ['organization__name', 'organization__short_name', 'name']

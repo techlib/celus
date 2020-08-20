@@ -83,6 +83,9 @@ class OrganizationAltName(models.Model):
     def validate_unique(self, exclude=None):
         return super().validate_unique(exclude)
 
+    def __str__(self):
+        return self.name
+
 
 class UserOrganization(models.Model):
 
