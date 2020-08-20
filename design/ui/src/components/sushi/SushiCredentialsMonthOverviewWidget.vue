@@ -13,7 +13,7 @@ cs:
 <template>
     <v-card>
         <v-card-text>
-            <v-container>
+            <v-container fluid>
                 <v-row>
                     <v-col cols="auto">
                         <v-menu
@@ -62,7 +62,7 @@ cs:
                         <div class="stats">
                         <h4 class="d-inline-block mr-5">{{ $t('stats') }}:</h4>
                         <span v-for="[state, count] in stateStats" class="mr-3" :key="state">
-                            <SushiAttemptStateIcon :force-state="state" />
+                            <SushiAttemptStateIcon :force-state="state"/>
                             {{ count }}
                         </span>
                         </div>
@@ -82,14 +82,13 @@ cs:
                             :loading="loading"
                             dense
                     >
-                        <template #item.enabled="{item}">
-                            <CheckMark :value="item.enabled" false-color="secondary" true-color="secondary"/>
-                        </template>
-                        <template #item.outside_consortium="{item}">
-                            <CheckMark :value="item.outside_consortium" false-color="secondary" true-color="secondary"/>
-                        </template>
                         <template v-for="rt in usedReportTypes" v-slot:[slotName(rt)]="{item}">
-                            <SushiAttemptStateIcon :attempt="item[rt.code]" :key="`${rt.code}-${item.credentials_id}`" />
+                            <span
+                                    :key="`${rt.code}-${item.credentials_id}`"
+                                    @click="showAttempt(item[rt.code])"
+                            >
+                                <SushiAttemptStateIcon :attempt="item[rt.code]"/>
+                            </span>
                         </template>
 
                     </v-data-table>
@@ -99,10 +98,8 @@ cs:
 
         <v-dialog v-model="showDetailsDialog">
             <SushiAttemptListWidget
-                    v-if="selectedCredentials"
-                    :organization="selectedCredentials.organization"
-                    :platform="selectedCredentials.platform"
-                    :counter-version="selectedCredentials.counter_version"
+                    v-if="selectedAttempt"
+                    :attempt-id="selectedAttempt.pk"
                     @close="closeDetailsDialog"
             >
             </SushiAttemptListWidget>
@@ -153,7 +150,7 @@ export default {
         reportTypes: [],
         search: '',
         itemsPerPage: 25,
-        selectedCredentials: null,
+        selectedAttempt: null,
         showDetailsDialog: false,
         orderBy: ['platform.name', 'organization.name'],
         loading: false,
@@ -318,6 +315,10 @@ export default {
         return value <= now
       },
       slotName: rt =>  'item.' + rt.code,
+      showAttempt (attempt) {
+        this.selectedAttempt = attempt
+        this.showDetailsDialog = true
+      }
     },
 
     watch: {

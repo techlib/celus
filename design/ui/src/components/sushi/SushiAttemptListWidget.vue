@@ -27,7 +27,7 @@ cs:
         <v-card-title>{{ $t('sushi_fetch_attempts') }}</v-card-title>
         <v-card-text>
             <v-container fluid>
-                <v-row>
+                <v-row v-if="!attemptId">
                     <v-col cols="12" md="6" lg="5">
                         <table class="overview">
                             <tr v-if="organization">
@@ -86,27 +86,30 @@ cs:
                                 :items-per-page="5"
                                 :loading="loading"
                         >
-                            <template v-slot:item.download_success="props">
-                                <CheckMark :value="props.item.download_success" />
+                            <template #item.download_success="{item}">
+                                <CheckMark :value="item.download_success" />
                             </template>
-                            <template v-slot:item.processing_success="props">
-                                <CheckMark :value="props.item.processing_success" />
+                            <template #item.processing_success="{item}">
+                                <CheckMark :value="item.processing_success" />
                             </template>
-                            <template v-slot:item.contains_data="props">
-                                <CheckMark :value="props.item.contains_data" />
+                            <template #item.contains_data="{item}">
+                                <CheckMark :value="item.contains_data" />
                             </template>
-                            <template v-slot:item.is_processed="props">
-                                <CheckMark :value="props.item.is_processed" />
+                            <template #item.is_processed="{item}">
+                                <CheckMark :value="item.is_processed" />
                             </template>
-                            <template v-slot:expanded-item="{item, headers}">
+                            <template #item.queued="{item}">
+                                <CheckMark :value="item.queued" />
+                            </template>
+                            <template #expanded-item="{item, headers}">
                                 <th colspan="2">Log</th>
                                 <td :colspan="headers.length-3" class="pre">{{ item.log }}</td>
                                 <td v-if="item.data_file"><a :href="item.data_file" target="_blank">Data file</a></td>
                             </template>
-                            <template v-slot:item.data-table-expand="{isExpanded, expand}">
+                            <template #item.data-table-expand="{isExpanded, expand}">
                                 <v-icon @click="expand(!isExpanded)" small>{{ isExpanded  ? 'fa-angle-down' : 'fa-angle-right' }}</v-icon>
                             </template>
-                            <template v-slot:item.actions="{item}">
+                            <template #item.actions="{item}">
                                 <v-tooltip bottom v-if="item.import_batch">
                                     <template v-slot:activator="{ on }">
                                         <v-btn text small color="secondary" @click.stop="selectedBatch = item.import_batch; dialogType = 'data'; showBatchDialog = true" v-on="on">
@@ -170,6 +173,7 @@ cs:
       fromDate: {required: false},
       month: {required: false},
       counterVersion: {required: false},
+      attemptId: {required: false},
     },
     data () {
       return {
@@ -189,6 +193,9 @@ cs:
     },
     computed: {
       listUrl () {
+        if (this.attemptId) {
+          return `/api/sushi-fetch-attempt/${this.attemptId}`
+        }
         if (!(this.organization || this.platform || this.report)) {
           return ''
         }
@@ -230,6 +237,10 @@ cs:
           {
             text: this.$t('title_fields.processed'),
             value: 'is_processed'
+          },
+          {
+            text: this.$t('title_fields.queued'),
+            value: 'queued'
           },
           {
             text: this.$t('timestamp'),
@@ -281,7 +292,10 @@ cs:
         this.attempts = []
         try {
           let response = await axios.get(this.listUrl)
-          this.attempts = response.data
+          if (this.attemptId)
+            this.attempts = [response.data]
+          else
+            this.attempts = response.data
         } catch (error) {
           this.showSnackbar({content: 'Error fetching SUSHI attempt data: ' + error, color: 'error'})
         } finally {
