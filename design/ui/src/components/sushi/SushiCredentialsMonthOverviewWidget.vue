@@ -1,5 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
-<i18n>
+<i18n lang="yaml">
 en:
   hide_successful: Hide successful rows
 
@@ -74,12 +74,7 @@ cs:
                                 <CheckMark :value="item.outside_consortium" false-color="secondary" true-color="secondary"/>
                             </template>
                             <template v-for="rt in usedReportTypes" v-slot:[slotName(rt)]="{item}">
-                        <span v-if="item[rt.code]" :key="`${rt.code}-${item.credentials_id}`">
-                            <v-icon v-if="item[rt.code].queued" color="secondary">far fa-clock</v-icon>
-                            <v-icon v-else-if="item[rt.code].import_batch" color="success">far fa-check-circle</v-icon>
-                            <v-icon v-else-if="item[rt.code].error_code" color="red lighten-2">fa fa-exclamation-circle</v-icon>
-                            <v-icon v-else color="warning">far fa-question-circle</v-icon>
-                        </span>
+                                <SushiAttemptStateIcon :attempt="item[rt.code]" :key="`${rt.code}-${item.credentials_id}`" />
                             </template>
 
                         </v-data-table>
@@ -101,19 +96,20 @@ cs:
 </template>
 
 <script>
-  import axios from 'axios'
-  import { mapActions, mapGetters, mapState } from 'vuex'
-  import debounce from 'lodash/debounce'
-  import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
-  import CheckMark from '@/components/CheckMark'
-  import startOfMonth from 'date-fns/startOfMonth'
-  import addDays from 'date-fns/addDays'
-  import { ymDateFormat } from '@/libs/dates'
+import axios from 'axios'
+import { mapActions, mapGetters } from 'vuex'
+import debounce from 'lodash/debounce'
+import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
+import CheckMark from '@/components/CheckMark'
+import startOfMonth from 'date-fns/startOfMonth'
+import addDays from 'date-fns/addDays'
+import { ymDateFormat } from '@/libs/dates'
+import SushiAttemptStateIcon from '@/components/sushi/SushiAttemptStateIcon'
 
-  export default {
+export default {
     name: "SushiCredentialsMonthOverviewWidget",
 
-    components: {SushiAttemptListWidget, CheckMark},
+    components: {SushiAttemptStateIcon, SushiAttemptListWidget, CheckMark},
 
     props: {
       dialogMaxWidth: {
@@ -309,6 +305,3 @@ cs:
     }
   }
 </script>
-
-<style lang="scss">
-</style>
