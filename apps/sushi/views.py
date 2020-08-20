@@ -187,7 +187,7 @@ class SushiFetchAttemptViewSet(ModelViewSet):
         else:
             qs = SushiFetchAttempt.objects.all()
         return qs.filter(**filter_params).select_related(
-            'counter_report', 'credentials__organization'
+            'counter_report', 'credentials__organization', 'credentials__platform',
         )
 
     @action(methods=['POST'], detail=False, url_path='cleanup')

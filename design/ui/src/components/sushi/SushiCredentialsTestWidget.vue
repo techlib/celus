@@ -3,19 +3,23 @@
 en:
     select_dates_text: Select date range for SUSHI credentials test. A shorter period usually takes
                        less time to process, so using only one month is advisable.
+    credentials_count: Number of credentials to test
+    report_count: Number of reports to test
 
 cs:
     select_dates_text: Vyberte rozsah měsíců pro test přihlašovacích údajů. Kratší období je většinou
                        rychleji zpracováno, takže je vhodné vybrat jen jeden měsíc.
+    credentials_count: Počet přihlašovacích údajů k otestování
+    report_count: Počet reportů k otestování
 </i18n>
 
 <template>
-    <v-container>
+    <v-container class="pb-0">
         <v-row>
             <v-col>{{ $t('select_dates_text') }}</v-col>
         </v-row>
-        <v-row>
-            <v-col>
+        <v-row align="center">
+            <v-col cols="6" md="4">
                 <v-menu
                         v-model="startDateMenu"
                         :close-on-content-click="false"
@@ -42,7 +46,7 @@ cs:
                     ></v-date-picker>
                 </v-menu>
             </v-col>
-            <v-col>
+            <v-col cols="6" md="4">
                 <v-menu
                         v-model="endDateMenu"
                         :close-on-content-click="false"
@@ -69,12 +73,25 @@ cs:
                     ></v-date-picker>
                 </v-menu>
             </v-col>
-        </v-row>
-        <v-row v-if="!started">
-            <v-col>
-                <v-btn @click="createAttempts()" v-text="$t('actions.start_test')"></v-btn>
+            <v-col cols="6" md="4" lg="2" v-if="!started">
+                <v-btn
+                        @click="createAttempts()"
+                        v-text="$t('actions.start_test')"
+                        color="primary"
+                        class=""
+                        width="100%"
+                ></v-btn>
             </v-col>
         </v-row>
+
+
+        <v-row v-if="!started">
+            <v-col>
+                <strong>{{ $t('credentials_count') }}</strong>: {{ credentials.length }}<br>
+                <strong>{{ $t('report_count') }}</strong>: {{ totalReportCount }}
+            </v-col>
+        </v-row>
+
         <v-row v-else no-gutters>
             <v-expansion-panels>
                 <SushiCredentialsStatusWidget
@@ -82,6 +99,9 @@ cs:
                         :attempt-id="attemptId"
                         :key="attemptId"
                         ref="attemptStatus"
+                        :retryInterval="retryInterval"
+                        :show-organization="showOrganization"
+                        :show-platform="showPlatform"
                 >
                 </SushiCredentialsStatusWidget>
             </v-expansion-panels>
@@ -99,11 +119,16 @@ cs:
 
   export default {
     name: 'SushiCredentialsTestWidget',
+
     components: {SushiCredentialsStatusWidget},
+
     props: {
-      credentials: {required: true, type: Object},
-      reportTypes: {required: true, type: Array},
+      credentials: {required: true, type: Array},
+      retryInterval: {default: 1000, type: Number},
+      showOrganization: {default: false, type: Boolean},
+      showPlatform: {default: false, type: Boolean},
     },
+
     data () {
       return {
         attemptIds: [], //11757, 11758],
@@ -114,24 +139,37 @@ cs:
         endDateMenu: null,
       }
     },
+
+    computed: {
+      totalReportCount () {
+        let total = 0
+        for (let cred of this.credentials) {
+          total += cred.active_counter_reports.length
+        }
+        return total
+      },
+    },
+
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
       async createAttempts () {
-        for (let rt of this.reportTypes) {
-          this.createAttempt(rt)
+        for (let cred of this.credentials) {
+          for (let rt of cred.active_counter_reports) {
+            await this.createAttempt(cred, rt)
+          }
+          this.started = true
         }
-        this.started = true
       },
-      async createAttempt (reportType) {
+      async createAttempt (credentials, reportType) {
         try {
           let response = await axios.post(
             `/api/sushi-fetch-attempt/`,
             {
               start_date: this.startDate + '-01',
               end_date: this.endDate + '-01',
-              credentials: this.credentials.pk,
+              credentials: credentials.pk,
               counter_report: reportType,
             }
           )
@@ -165,6 +203,7 @@ cs:
         this.attemptIds = []
       }
     },
+
     mounted () {
       if (this.startDate === null) {
         this.startDate = ymDateFormat(addMonths(new Date(), -1))

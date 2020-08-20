@@ -24,7 +24,9 @@ cs:
                     v-else-if="attemptData.in_progress"
             >
                     <v-col cols="auto">
+                        <span v-if="showPlatform">{{ attemptData.platform.name }} &gt; </span>
                         <strong v-text="attemptData.counter_report_verbose.code"></strong>
+                        <div v-if="showOrganization" class="font-weight-light font-italic" v-text="attemptData.organization.name"></div>
                     </v-col>
                     <v-col>
                         <v-progress-linear
@@ -38,7 +40,9 @@ cs:
                 </v-row>
             <v-row v-else>
                 <v-col cols="auto">
+                    <span v-if="showPlatform">{{ attemptData.platform.name }} &gt; </span>
                     <strong v-text="attemptData.counter_report_verbose.code"></strong>
+                    <div v-if="showOrganization" class="font-weight-light font-italic" v-text="attemptData.organization.name"></div>
                 </v-col>
                 <v-col>
                     {{ $t('title_fields.download_success') }}:
@@ -80,14 +84,16 @@ cs:
       attemptId: {
         required: true,
         type: Number,
-      }
+      },
+      retryInterval: {default: 1000, type: Number},
+      showOrganization: {default: false, type: Boolean},
+      showPlatform: {default: false, type: Boolean},
     },
     data () {
       return {
         attemptData: null,
         startTime: null,
         now: null,
-        retryInterval: 1000,
         lastCheck: null,
         inactive: false,
       }

@@ -99,6 +99,7 @@ class SushiFetchAttemptSerializer(ModelSerializer):
 
     counter_report_verbose = CounterReportTypeSerializer(read_only=True, source='counter_report')
     organization = OrganizationSerializer(read_only=True, source='credentials.organization')
+    platform = PlatformSerializer(read_only=True, source='credentials.platform')
 
     class Meta:
         model = SushiFetchAttempt
@@ -118,6 +119,7 @@ class SushiFetchAttemptSerializer(ModelSerializer):
             'log',
             'organization',
             'pk',
+            'platform',
             'processing_success',
             'queued',
             'start_date',

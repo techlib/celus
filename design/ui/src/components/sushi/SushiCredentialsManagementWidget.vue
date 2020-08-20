@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 <i18n lang="yaml">
 en:
     add_new: Add new SUSHI
@@ -7,6 +8,8 @@ en:
     cannot_edit: You cannot edit them.
     can_edit: Because of your priviledges, you can still edit them.
     can_lock: You may lock/unlock these credentials - click to do so.
+    test_checked: Test checked
+    test_dialog: Test SUSHI credentials
 cs:
     add_new: Přidat nové SUSHI
     is_locked: Tyto přístupové údaje jsou uzamčené.
@@ -14,39 +17,70 @@ cs:
     cannot_edit: Nemůžete je editovat.
     can_edit: Vaše oprávnění Vám umožňují je přesto editovat.
     can_lock: Kliknutím můžete tyto údaje uzamknout/odemknout.
+    test_checked: Otestuj vybrané
+    test_dialog: Test přihlašovacích údajů SUSHI
 </i18n>
 
 <template>
     <v-layout>
         <v-card>
             <v-card-title>
-                <v-btn
-                        @click="activateCreateDialog()"
-                        color="warning"
-                >
-                    <v-icon small class="mr-2">fa-plus</v-icon>
-                    {{ $t('add_new') }}
-                </v-btn>
-                <v-spacer></v-spacer>
-                <v-text-field
-                        v-model="searchDebounced"
-                        append-icon="fa-search"
-                        :label="$t('labels.search')"
-                        single-line
-                        hide-details
-                        clearable
-                        clear-icon="fa-times"
-                ></v-text-field>
+                <v-container fluid>
+                    <v-row>
+                        <v-col cols="auto" align-self="center">
+                            <v-btn
+                                    @click="activateCreateDialog()"
+                                    color="warning"
+                            >
+                                <v-icon small class="mr-2">fa-plus</v-icon>
+                                {{ $t('add_new') }}
+                            </v-btn>
+                        </v-col>
+                        <v-col cols="auto" align-self="center">
+                            <v-btn
+                                    :disabled="!checkedCredentials.length"
+                                    @click="testChecked()"
+                            >
+                                {{ $t('test_checked') }}
+                                ({{ checkedCredentials.length }})
+                            </v-btn>
+                        </v-col>
+                        <v-spacer></v-spacer>
+
+                        <v-col cols="3" :md="2" :xl="1">
+                            <v-select
+                                    :items="[{text: '4 + 5', value: null}, {text: '4', value: 4}, {text: '5', value: 5}]"
+                                    v-model="counterVersion"
+                                    :label="$t('labels.counter_version')"
+                            ></v-select>
+                        </v-col>
+                        <v-col cols="auto">
+                            <v-text-field
+                                    v-model="searchDebounced"
+                                    append-icon="fa-search"
+                                    :label="$t('labels.search')"
+                                    single-line
+                                    hide-details
+                                    clearable
+                                    clear-icon="fa-times"
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
+                </v-container>
             </v-card-title>
+
             <v-data-table
-                    :items="sushiCredentialsList"
+                    v-model="checkedRows"
+                    :items="visibleSushiCredentials"
                     :headers="headers"
-                    :search="search"
                     :items-per-page.sync="itemsPerPage"
                     :sort-by="orderBy"
                     multi-sort
                     :footer-props="{itemsPerPageOptions: [10, 25, 50, 100]}"
                     :loading="loading"
+                    show-select
+                    item-key="pk"
+                    ref="credentialsTable"
             >
                 <template v-slot:item.active_counter_reports="{item}">
                     <v-tooltip
@@ -113,6 +147,7 @@ cs:
                 </template>
             </v-data-table>
         </v-card>
+
         <v-dialog v-model="showEditDialog" :max-width="dialogMaxWidth">
             <SushiCredentialsEditDialog
                     :credentials-object="selectedCredentials"
@@ -122,6 +157,7 @@ cs:
                     key="edit"
             ></SushiCredentialsEditDialog>
         </v-dialog>
+
         <v-dialog v-model="showCreateDialog" :max-width="dialogMaxWidth">
             <SushiCredentialsEditDialog
                     v-model="showCreateDialog"
@@ -131,6 +167,7 @@ cs:
                     :fixed-platform="platformId"
             ></SushiCredentialsEditDialog>
         </v-dialog>
+
         <v-dialog v-model="showDetailsDialog">
             <SushiAttemptListWidget
                     v-if="selectedCredentials"
@@ -140,6 +177,30 @@ cs:
                     @close="closeDetailsDialog"
             >
             </SushiAttemptListWidget>
+        </v-dialog>
+
+        <v-dialog
+                v-model="showTestDialog"
+                max-width="1000px"
+        >
+            <v-card>
+                <v-card-title>{{ $t('test_dialog') }}</v-card-title>
+                <v-card-text class="pb-0">
+                    <SushiCredentialsTestWidget
+                            v-if="showTestDialog"
+                            :credentials="checkedCredentials"
+                            ref="testWidget"
+                            :retry-interval="5000"
+                            :show-platform="true"
+                            :show-organization="true"
+                    >
+                    </SushiCredentialsTestWidget>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="secondary" @click="stopTestDialog()" class="mb-5 mr-5">{{ $t('close') }}</v-btn>
+                </v-card-actions>
+            </v-card>
         </v-dialog>
     </v-layout>
 </template>
@@ -151,11 +212,17 @@ cs:
   import SushiCredentialsEditDialog from '@/components/sushi/SushiCredentialsEditDialog'
   import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
   import CheckMark from '@/components/CheckMark'
+  import SushiCredentialsTestWidget from '@/components/sushi/SushiCredentialsTestWidget'
 
   export default {
     name: "SushiCredentialsManagementWidget",
 
-    components: {SushiCredentialsEditDialog, SushiAttemptListWidget, CheckMark},
+    components: {
+      SushiCredentialsTestWidget,
+      SushiCredentialsEditDialog,
+      SushiAttemptListWidget,
+      CheckMark
+    },
 
     props: {
       dialogMaxWidth: {
@@ -185,6 +252,9 @@ cs:
         showCreateDialog: false,
         orderBy: ['organization.name', 'platform.name', 'counter_version'],
         loading: false,
+        counterVersion: null,
+        checkedRows: [],
+        showTestDialog: false,
       }
     },
     computed: {
@@ -251,8 +321,29 @@ cs:
           base += `&platform=${this.platformId}`
         }
         return base
+      },
+      visibleSushiCredentials () {
+        return this.sushiCredentialsList
+          .filter(item => this.counterVersion === null || this.counterVersion === item.counter_version)
+          .filter(item => {
+            if (!this.search) {
+              return true
+            } else {
+              if (item.organization.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1) {
+                return true
+              } else if (item.platform.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1) {
+                return true
+              }
+            }
+            return false
+          })
+      },
+      checkedCredentials () {
+        let visibleIds = new Set(this.visibleSushiCredentials.map(item => item.pk))
+        return this.checkedRows.filter(item => visibleIds.has(item.pk))
       }
     },
+
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
@@ -308,7 +399,18 @@ cs:
       activateCreateDialog () {
         this.showCreateDialog = true
       },
+      testChecked () {
+        console.log('testing', this.checkedCredentials)
+        this.showTestDialog = true
+      },
+      stopTestDialog () {
+        if (this.$refs.testWidget) {
+          this.$refs.testWidget.clean()
+        }
+        this.showTestDialog = false
+      },
     },
+
     watch: {
       showEditDialog (value) {
         if (!value) {

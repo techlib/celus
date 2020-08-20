@@ -287,8 +287,7 @@ cs:
                 <v-card-text>
                     <SushiCredentialsTestWidget
                             v-if="showTestDialog"
-                            :credentials="credentials"
-                            :report-types="selectedReportTypes"
+                            :credentials="[credentials]"
                             ref="testWidget"
 
                     >
