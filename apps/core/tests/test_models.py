@@ -1,5 +1,7 @@
 import pytest
+from allauth.account.models import EmailAddress
 
+from core.models import User
 from test_fixtures.scenarios.basic import *  # noqa
 
 
@@ -72,3 +74,20 @@ def test_accessible_platforms(basic1):  # noqa
         basic1["platforms"]["master"],  # API source => public
         basic1["platforms"]["shared"],  # no source => public
     ]
+
+
+@pytest.mark.django_db
+class TestUserModel(object):
+    def test_email_verification_case_mismatch(self):
+        """
+        Test that email is considered verified even if the case is changed
+        """
+        user = User.objects.create(username='foo', email='foo@bar.baz')
+        EmailAddress.objects.create(user=user, email=user.email, verified=True)
+        assert user.email_verified
+        # now change the case of the email in one place
+        user.email = user.email.capitalize()
+        user.save()
+        # .email_verified is a cached property, we need new User instance
+        user = User.objects.get(pk=user.pk)
+        assert user.email_verified, 'the email should be verified even if case does not match'

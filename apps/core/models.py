@@ -193,7 +193,7 @@ class User(AbstractUser):
         }
         try:
             # get current email address from allauth
-            email_address: EmailAddress = self.emailaddress_set.get(email=self.email)
+            email_address: EmailAddress = self.emailaddress_set.get(email__iexact=self.email)
             res["status"] = (
                 self.EMAIL_VERIFICATION_STATUS_VERIFIED
                 if email_address.verified
