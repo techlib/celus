@@ -8,6 +8,7 @@ from logs.tasks import (
     smart_interest_sync_task,
     sync_materialized_reports_task,
 )
+from recache.tasks import remove_old_cached_queries_task
 from sushi.tasks import (
     fetch_new_sushi_data_task,
     retry_queued_attempts_task,
@@ -31,6 +32,7 @@ class Command(BaseCommand):
         'smart_interest_sync_task': smart_interest_sync_task,
         'fail_intentionally_task': fail_intentionally_task,
         'sync_materialized_reports_task': sync_materialized_reports_task,
+        'remove_old_cached_queries_task': remove_old_cached_queries_task,
     }
 
     def add_arguments(self, parser):

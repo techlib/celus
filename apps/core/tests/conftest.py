@@ -26,15 +26,17 @@ def master_identity():
     user = get_user_model().objects.create(username='master')
     Identity.objects.create(user=user, identity=id_string)
     user.organizations.add(
-        Organization.objects.create(
+        Organization.objects.get_or_create(
             internal_id=settings.MASTER_ORGANIZATIONS[0],
-            ext_id=100,
-            parent=None,
-            ico='12345',
-            name_cs='šéf',
-            name_en='boss',
-            short_name='master',
-        )
+            defaults=dict(
+                ext_id=100,
+                parent=None,
+                ico='12345',
+                name_cs='šéf',
+                name_en='boss',
+                short_name='master',
+            ),
+        )[0]
     )
     yield id_string
 

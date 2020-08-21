@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
 
@@ -20,6 +22,8 @@ from core.tests.conftest import (
     authenticated_client,
     authentication_headers,
     invalid_identity,
+    master_client,
+    master_identity,
 )
 from publications.models import PlatformInterestReport
 from test_fixtures.scenarios.basic import *
@@ -540,3 +544,134 @@ class TestAllPlatformsAPI:
         assert resp.status_code in status
         if available is not None:
             assert [e["pk"] for e in resp.json()] == [platforms[e].pk for e in sorted(available)]
+
+
+@pytest.fixture
+def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, interest_rt):
+    organization = organizations["root"]
+    platform = platforms["root"]
+    OrganizationPlatform.objects.create(organization=organization, platform=platform)
+    rt = report_type_nd(0)
+    ig = InterestGroup.objects.create(short_name='interest1', position=1)
+    metric = Metric.objects.create(short_name='m1', name='Metric1')
+    ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
+    PlatformInterestReport.objects.create(report_type=rt, platform=platform)
+    import_batch = ImportBatch.objects.create(
+        platform=platform, organization=organization, report_type=rt
+    )
+    accesslog_basics = {
+        'report_type': rt,
+        'metric': metric,
+        'platform': platform,
+        'import_batch': import_batch,
+    }
+    accesslogs = [
+        AccessLog.objects.create(
+            target=titles[0],
+            value=1,
+            date='2019-01-01',
+            organization=organization,
+            **accesslog_basics,
+        ),
+        AccessLog.objects.create(
+            target=titles[0],
+            value=2,
+            date='2019-02-01',
+            organization=organization,
+            **accesslog_basics,
+        ),
+        AccessLog.objects.create(
+            target=titles[1],
+            value=4,
+            date='2019-02-01',
+            organization=organization,
+            **accesslog_basics,
+        ),
+        AccessLog.objects.create(
+            target=titles[0],
+            value=8,
+            date='2019-02-01',
+            organization=organizations["master"],
+            **accesslog_basics,
+        ),
+    ]
+    create_platformtitle_links_from_accesslogs(accesslogs)
+    sync_interest_by_import_batches()
+    return {
+        key: val for key, val in locals().items() if key in ('accesslogs', 'titles', 'organization')
+    }
+
+
+@pytest.mark.django_db
+class TestTopTitleInterestViewSet(object):
+    def test_all_organizations(self, accesslogs_with_interest, master_client):
+        titles = accesslogs_with_interest['titles']
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = master_client.get(
+                reverse('top-title-interest-list', args=['-1']), {'order_by': 'interest1'}
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2, 'we have two titles'
+        assert data[0]['isbn'] == titles[0].isbn
+        assert data[0]['name'] == titles[0].name
+        assert data[0]['interests']['interest1'] == 11  # 8 + 2 + 1
+        assert data[1]['isbn'] == titles[1].isbn
+        assert data[1]['name'] == titles[1].name
+        assert data[1]['interests']['interest1'] == 4  # 4
+
+    def test_one_organization(self, accesslogs_with_interest, master_client):
+        organization = accesslogs_with_interest['organization']
+        titles = accesslogs_with_interest['titles']
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = master_client.get(
+                reverse('top-title-interest-list', args=[organization.pk]),
+                {'order_by': 'interest1'},
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2, 'we have two titles'
+        assert data[0]['isbn'] == titles[1].isbn
+        assert data[0]['name'] == titles[1].name
+        assert data[0]['interests']['interest1'] == 4  # 4
+        assert data[1]['isbn'] == titles[0].isbn
+        assert data[1]['interests']['interest1'] == 3  # 2 + 1
+
+    def test_all_organizations_date_filter(self, accesslogs_with_interest, master_client):
+        titles = accesslogs_with_interest['titles']
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = master_client.get(
+                reverse('top-title-interest-list', args=['-1']),
+                {'order_by': 'interest1', 'start': '2019-02'},
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2, 'we have two titles'
+        assert data[0]['isbn'] == titles[0].isbn
+        assert data[0]['name'] == titles[0].name
+        assert data[0]['interests']['interest1'] == 10  # 8 + 2
+        assert data[1]['isbn'] == titles[1].isbn
+        assert data[1]['name'] == titles[1].name
+        assert data[1]['interests']['interest1'] == 4  # 4
+
+    def test_all_organizations_pub_type_filter(self, accesslogs_with_interest, master_client):
+        titles = accesslogs_with_interest['titles']
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = master_client.get(
+                reverse('top-title-interest-list', args=['-1']),
+                {'order_by': 'interest1', 'pub_type': 'J'},
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, 'we have one title with type J'
+        assert data[0]['issn'] == titles[1].issn
+        assert data[0]['name'] == titles[1].name
+        assert data[0]['interests']['interest1'] == 4  # 4

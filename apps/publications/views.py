@@ -1,7 +1,6 @@
 from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
 from django.db.models.functions import Coalesce
 from pandas import DataFrame
-from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -11,6 +10,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 
 from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
+from core.exceptions import BadRequestException
 from core.logic.dates import date_filter_from_params
 from core.pagination import SmartPageNumberPagination
 from core.permissions import (
@@ -22,13 +22,14 @@ from logs.logic.queries import (
     interest_annotation_params,
     replace_report_type_with_materialized,
 )
-from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, Metric
+from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, DimensionText
 from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
-from publications.models import Platform, Title, PlatformTitle
 from organizations.models import Organization
+from publications.models import Platform, Title, PlatformTitle
 from publications.serializers import TitleCountSerializer
+from recache.util import recache_queryset
 from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
 
@@ -557,6 +558,64 @@ class TitleInterestViewSet(TitleInterestMixin, BaseTitleViewSet):
 
     serializer_class = TitleCountSerializer
     pagination_class = SmartResultsSetPagination
+
+
+class TopTitleInterestViewSet(ReadOnlyModelViewSet):
+    """
+    Optimized view to get top 10 titles for a particular type of interest.
+
+    It does the same as `TitleInterestViewSet` but uses a simplified query. The reason is
+    not so much to be faster, but to get around a bug in Django, which prevents `recache_query`
+    from working properly for `TitleInterestViewSet`. Details about the error are available
+    here: https://code.djangoproject.com/ticket/31926
+    """
+
+    serializer_class = TitleCountSerializer
+
+    def get_queryset(self):
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_type_dim = interest_rt.dimensions_sorted[0]
+        interest_type_name = self.request.query_params.get('order_by', 'full_text')
+
+        filters = {}
+        # -- title filters --
+        # publication type filter
+        pub_type_arg = self.request.query_params.get('pub_type')
+        if pub_type_arg:
+            filters['pub_type'] = pub_type_arg
+
+        # -- accesslog filters --
+        # filtering only interest related accesslogs
+        try:
+            interest_type_id = interest_type_dim.dimensiontext_set.get(text=interest_type_name).pk
+        except DimensionText.DoesNotExist:
+            raise BadRequestException(detail=f'Interest type "{interest_type_name}" does not exist')
+        filters['accesslog__report_type_id'] = interest_rt.pk
+        filters['accesslog__dim1'] = interest_type_id
+        # organization filter
+        org_filter = organization_filter_from_org_id(
+            self.kwargs.get('organization_pk'), self.request.user
+        )
+        if org_filter:
+            filters['accesslog__organization_id'] = org_filter.get('organization__pk')
+        # date filter
+        date_filter = extend_query_filter(date_filter_from_params(self.request.GET), 'accesslog__')
+
+        interest_annot_params = {interest_type_name: Coalesce(Sum('accesslog__value'), 0)}
+
+        records = (
+            Title.objects.all()
+            .filter(**date_filter, **filters)
+            .annotate(**interest_annot_params)
+            .order_by(f'-{interest_type_name}')
+        )[:10]
+        # we recache the final queryset so that the results are automatically re-evaluated in the
+        # background when needed
+        records = recache_queryset(records, origin=f'top-10-titles-{interest_type_name}')
+
+        for record in records:
+            record.interests = {interest_type_name: getattr(record, interest_type_name)}
+        return records
 
 
 class StartERMSSyncPlatformsTask(APIView):

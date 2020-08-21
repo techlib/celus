@@ -119,7 +119,7 @@ cs:
         if (this.url) {
           try {
             let response = await axios.get(this.url)
-            this.titles = response.data.results.filter(item => item.interests[this.interestGroup.short_name] > 0)
+            this.titles = response.data.filter(item => item.interests[this.interestGroup.short_name] > 0)
           } catch (error) {
             this.showSnackbar({
               content: 'Error loading interesting titles: ' + error,

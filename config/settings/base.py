@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'activity.apps.ActivityConfig',
     'deployment.apps.DeploymentConfig',
     'api.apps.ApiConfig',
+    'recache.apps.RecacheConfig',
     'rest_pandas',
     'error_report',
     'django_prometheus',
@@ -291,6 +292,10 @@ CELERY_BEAT_SCHEDULE = {
     'fetch_new_sushi_data_task': {
         'task': 'sushi.tasks.fetch_new_sushi_data_task',
         'schedule': crontab(minute=13, hour=3),  # every day at 3:13
+    },
+    'remove_old_cached_queries_task': {
+        'task': 'recache.tasks.remove_old_cached_queries_task',
+        'schedule': crontab(minute=17, hour=2),  # every day at 2:17
     },
 }
 

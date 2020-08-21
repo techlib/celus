@@ -176,7 +176,7 @@ cs:
       },
       titleInterestBaseUrl () {
         if (this.organizationId) {
-          return `/api/organization/${this.organizationId}/title-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&page_size=10&desc=true&page=1`
+          return `/api/organization/${this.organizationId}/top-title-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&page_size=10&desc=true&page=1&simple`
         }
         return null
       },
