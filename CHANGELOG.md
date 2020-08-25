@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+#### UI
+
+- fix error when assigning second chart to report type in the charts tab on
+  maintenance page
+
 #### Backend
 
 - case is now ignored when checking if email address is verified which makes it

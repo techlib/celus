@@ -229,7 +229,7 @@ export default {
     },
     addLink (viewId, chartId) {
       // find a free position
-      let maxPosition = Math.max(...Array.from(this.reportViewToChart.values()).filter(item => item.report_data_view == viewId).map(item => item.position)) || -1
+      let maxPosition = Math.max(...Array.from(this.reportViewToChart.values()).filter(item => item.report_data_view == viewId).map(item => item.position))
       if (maxPosition < 0) {
         // in case of empty array Math.max returns -Infinity, we convert it to -1 here
         maxPosition = -1
