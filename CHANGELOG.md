@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix error when assigning second chart to report type in the charts tab on
   maintenance page
+- fix error displaying wrong platform name in sushi edit dialog when editing
+  existing credentials
 
 #### Backend
 

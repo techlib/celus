@@ -81,7 +81,7 @@ cs:
                     <v-col cols="12" :md="4">
                         <v-text-field
                                 v-if="credentials || fixedPlatform"
-                                :value="platform.name"
+                                :value="activePlatform.name"
                                 :label="$t('platform')"
                                 disabled
                         >
@@ -361,6 +361,14 @@ cs:
           return this.savedCredentials
         }
         return null
+      },
+      activePlatform () {
+        if (this.credentials) {
+          return this.credentials.platform
+        } else if (this.fixedPlatform) {
+          return this.fixedPlatform
+        }
+        return this.platform
       },
       apiData () {
         let extraParams = {}
