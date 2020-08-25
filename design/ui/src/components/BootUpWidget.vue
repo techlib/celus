@@ -26,7 +26,7 @@ cs:
 </template>
 
 <script>
-  import LoaderWidget from './LoaderWidget'
+  import LoaderWidget from '@/components/util/LoaderWidget'
   import { mapState } from 'vuex'
   export default {
     name: 'BootUpWidget',

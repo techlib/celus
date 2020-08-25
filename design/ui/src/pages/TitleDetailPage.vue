@@ -187,11 +187,11 @@ cs:
 <script>
   import {mapActions, mapGetters, mapState} from 'vuex'
   import axios from 'axios'
-  import CounterChartSet from '../components/CounterChartSet'
-  import DataExportWidget from '../components/DataExportWidget'
-  import AnnotationsWidget from '../components/AnnotationsWidget'
+  import CounterChartSet from '@/components/CounterChartSet'
+  import DataExportWidget from '@/components/DataExportWidget'
+  import AnnotationsWidget from '@/components/AnnotationsWidget'
   import goTo from 'vuetify/es5/services/goto'
-  import {formatInteger} from '../libs/numbers'
+  import {formatInteger} from '@/libs/numbers'
 
   export default {
     name: 'TitleDetailPage',

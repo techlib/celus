@@ -76,7 +76,7 @@ cs:
 
 <script>
   import axios from 'axios'
-  import {isoDateTimeFormat} from '../libs/dates'
+  import {isoDateTimeFormat} from '@/libs/dates'
   import {mapState, mapGetters} from 'vuex'
 
   export default {

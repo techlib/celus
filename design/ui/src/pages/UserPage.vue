@@ -90,7 +90,7 @@ cs:
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
   import VGravatar from 'vue-gravatar'
-  import CheckMark from '../components/CheckMark'
+  import CheckMark from '@/components/util/CheckMark'
   import axios from 'axios'
 
   export default {

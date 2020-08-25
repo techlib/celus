@@ -52,7 +52,7 @@ cs:
   import VeHeatmap from 'v-charts/lib/heatmap.common'
   import { mapActions, mapGetters } from 'vuex'
   import axios from 'axios'
-  import LoaderWidget from './LoaderWidget'
+  import LoaderWidget from '@/components/util/LoaderWidget'
 
   export default {
     name: 'OrganizationPlatformInterestHeatmap',

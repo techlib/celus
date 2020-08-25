@@ -19,7 +19,7 @@ cs:
 
 <script>
   import OrganizationPlatformInterestHeatmap
-    from '../components/OrganizationPlatformInterestHeatmap'
+    from '@/components/OrganizationPlatformInterestHeatmap'
   export default {
     name: 'OrganizationPlatformInterestOverviewPage',
     components: {

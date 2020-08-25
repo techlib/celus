@@ -160,7 +160,7 @@ cs:
   import axios from 'axios'
   import AccessLogList from '../AccessLogList'
   import ImportBatchChart from '../ImportBatchChart'
-  import CheckMark from '../CheckMark'
+  import CheckMark from '@/components/util/CheckMark'
   import FetchAttemptModeFilter from './FetchAttemptModeFilter'
 
   export default {

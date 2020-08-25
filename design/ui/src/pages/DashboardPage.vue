@@ -124,15 +124,15 @@ cs:
 
 <script>
 
-  import APIChart from '../components/APIChart'
+  import APIChart from '@/components/APIChart'
   import {mapActions, mapGetters, mapState} from 'vuex'
   import axios from 'axios'
-  import LargeSpinner from '../components/LargeSpinner'
-  import {formatInteger, smartFormatFloat} from '../libs/numbers'
+  import LargeSpinner from '@/components/util/LargeSpinner'
+  import {formatInteger, smartFormatFloat} from '@/libs/numbers'
   import VeHistogram from 'v-charts/lib/histogram.common'
-  import LoaderWidget from '../components/LoaderWidget'
-  import {pubTypes} from '../libs/pub-types'
-  import TopTenDashboardWidget from '../components/TopTenDashboardWidget'
+  import LoaderWidget from '@/components/util/LoaderWidget'
+  import {pubTypes} from '@/libs/pub-types'
+  import TopTenDashboardWidget from '@/components/TopTenDashboardWidget'
   import IntroPage from './IntroPage'
 
   export default {

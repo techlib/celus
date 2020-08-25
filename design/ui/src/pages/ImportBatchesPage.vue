@@ -69,11 +69,11 @@
 
   import axios from 'axios'
   import {mapActions} from 'vuex'
-  import AccessLogList from '../components/AccessLogList'
-  import ImportBatchChart from '../components/ImportBatchChart'
-  import {isoDateTimeFormat, parseDateTime} from '../libs/dates'
+  import AccessLogList from '@/components/AccessLogList'
+  import ImportBatchChart from '@/components/ImportBatchChart'
+  import {isoDateTimeFormat, parseDateTime} from '@/libs/dates'
   import debounce from 'lodash/debounce'
-  import {userToString} from '../libs/user'
+  import {userToString} from '@/libs/user'
 
   export default {
     name: "ImportBatchesPage",

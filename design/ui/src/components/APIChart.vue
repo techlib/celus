@@ -138,7 +138,7 @@
   import axios from 'axios'
   import { mapActions, mapGetters, mapState } from 'vuex'
   import 'echarts/lib/component/markLine'
-  import LoaderWidget from './LoaderWidget'
+  import LoaderWidget from '@/components/util/LoaderWidget'
   import { pivot } from '../libs/pivot'
   import ChartDataTable from './ChartDataTable'
 

@@ -21,8 +21,8 @@
   import { mapActions, mapGetters, mapState } from 'vuex'
   import InvalidUserPage from './InvalidUserPage'
   import StandardLayout from './StandardLayout'
-  import BootUpWidget from '../components/BootUpWidget'
-  import LoginDialog from '../components/account/LoginDialog'
+  import BootUpWidget from '@/components/BootUpWidget'
+  import LoginDialog from '@/components/account/LoginDialog'
 
   export default {
     name: 'Dashboard',

@@ -249,12 +249,12 @@ cs:
 <script>
   import axios from 'axios'
   import {mapActions, mapState} from 'vuex'
-  import ImportBatchChart from '../components/ImportBatchChart'
-  import AccessLogList from '../components/AccessLogList'
-  import ReportTypeCreateWidget from '../components/ReportTypeCreateWidget'
-  import LargeSpinner from '../components/LargeSpinner'
-  import CustomUploadInfoWidget from '../components/CustomUploadInfoWidget'
-  import ReportTypeInfoWidget from '../components/ReportTypeInfoWidget'
+  import ImportBatchChart from '@/components/ImportBatchChart'
+  import AccessLogList from '@/components/AccessLogList'
+  import ReportTypeCreateWidget from '@/components/ReportTypeCreateWidget'
+  import LargeSpinner from '@/components/util/LargeSpinner'
+  import CustomUploadInfoWidget from '@/components/CustomUploadInfoWidget'
+  import ReportTypeInfoWidget from '@/components/ReportTypeInfoWidget'
   import ImportPreflightDataWidget from './ImportPreflightDataWidget'
 
   export default {

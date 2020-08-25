@@ -101,8 +101,8 @@
 </template>
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import OrganizationSelector from '../components/OrganizationSelector'
-  import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
+  import OrganizationSelector from '@/components/OrganizationSelector'
+  import SelectedDateRangeWidget from '@/components/SelectedDateRangeWidget'
 
   export default {
     name: 'SidePanel',

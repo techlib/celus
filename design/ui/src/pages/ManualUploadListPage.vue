@@ -37,9 +37,9 @@ cs:
 </template>
 
 <script>
-  import ManualUploadListTable from '../components/ManualUploadListTable'
+  import ManualUploadListTable from '@/components/ManualUploadListTable'
   import { mapGetters } from 'vuex'
-  import ManualUploadButton from '../components/ManualUploadButton'
+  import ManualUploadButton from '@/components/ManualUploadButton'
 
   export default {
     name: "ManualUploadListPage",

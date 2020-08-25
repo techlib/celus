@@ -211,7 +211,7 @@ cs:
   import debounce from 'lodash/debounce'
   import SushiCredentialsEditDialog from '@/components/sushi/SushiCredentialsEditDialog'
   import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
-  import CheckMark from '@/components/CheckMark'
+  import CheckMark from '@/components/util/CheckMark'
   import SushiCredentialsTestWidget from '@/components/sushi/SushiCredentialsTestWidget'
 
   export default {

@@ -62,15 +62,15 @@
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
   import axios from 'axios'
-  import { formatInteger } from '../libs/numbers'
-  import { createEmptyInterestRecord, createLoadingInterestRecord, } from '../libs/interest'
-  import AnnotationsWidget from '../components/AnnotationsWidget'
-  import AddAnnotationButton from '../components/AddAnnotationButton'
-  import InterestGroupSelector from '../components/InterestGroupSelector'
-  import PlatformInterestChart from '../components/PlatformInterestChart'
-  import PlatformCostList from '../components/PlatformCostList'
-  import PlatformList from '../components/PlatformList'
-  import ManualUploadButton from '../components/ManualUploadButton'
+  import { formatInteger } from '@/libs/numbers'
+  import { createEmptyInterestRecord, createLoadingInterestRecord, } from '@/libs/interest'
+  import AnnotationsWidget from '@/components/AnnotationsWidget'
+  import AddAnnotationButton from '@/components/AddAnnotationButton'
+  import InterestGroupSelector from '@/components/InterestGroupSelector'
+  import PlatformInterestChart from '@/components/PlatformInterestChart'
+  import PlatformCostList from '@/components/PlatformCostList'
+  import PlatformList from '@/components/PlatformList'
+  import ManualUploadButton from '@/components/ManualUploadButton'
 
   export default {
     name: 'PlatformListPage',

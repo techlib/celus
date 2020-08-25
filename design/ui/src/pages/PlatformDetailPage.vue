@@ -187,14 +187,14 @@ cs:
 
 <script>
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import TitleList from '../components/TitleList'
+  import TitleList from '@/components/TitleList'
   import axios from 'axios'
-  import CounterChartSet from '../components/CounterChartSet'
+  import CounterChartSet from '@/components/CounterChartSet'
   import {formatInteger} from '@/libs/numbers'
-  import AnnotationsWidget from '../components/AnnotationsWidget'
-  import AddAnnotationButton from '../components/AddAnnotationButton'
-  import InterestGroupSelector from '../components/InterestGroupSelector'
-  import RawDataExportWidget from '../components/RawDataExportWidget'
+  import AnnotationsWidget from '@/components/AnnotationsWidget'
+  import AddAnnotationButton from '@/components/AddAnnotationButton'
+  import InterestGroupSelector from '@/components/InterestGroupSelector'
+  import RawDataExportWidget from '@/components/RawDataExportWidget'
   import SushiCredentialsManagementWidget
     from '@/components/sushi/SushiCredentialsManagementWidget'
 

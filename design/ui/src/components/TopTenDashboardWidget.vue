@@ -72,8 +72,8 @@ cs:
 
 </template>
 <script>
-  import LargeSpinner from '../components/LargeSpinner'
-  import {formatInteger} from '../libs/numbers'
+  import LargeSpinner from '@/components/util/LargeSpinner'
+  import {formatInteger} from '@/libs/numbers'
   import axios from 'axios'
   import {mapActions} from 'vuex'
 

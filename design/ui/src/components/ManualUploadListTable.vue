@@ -214,7 +214,7 @@ cs:
   import AccessLogList from './AccessLogList'
   import ImportBatchChart from './ImportBatchChart'
   import {isoDateTimeFormat, isoDateTimeFormatSpans} from '../libs/dates'
-  import CheckMark from './CheckMark'
+  import CheckMark from '@/components/util/CheckMark'
   import {userToString} from '../libs/user'
 
   export default {

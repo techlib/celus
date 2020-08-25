@@ -47,7 +47,7 @@ cs:
 
 <script>
 
-  import UndefinedInterestWidget from '../components/UndefinedInterestWidget'
+  import UndefinedInterestWidget from '@/components/UndefinedInterestWidget'
   import ReportViewToChartManagementWidget
     from '@/components/admin/ReportViewToChartManagementWidget'
   export default {

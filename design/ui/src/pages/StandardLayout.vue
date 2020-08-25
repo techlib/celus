@@ -143,12 +143,12 @@ cs:
 <script>
   import SidePanel from './SidePanel'
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import OrganizationSelector from '../components/OrganizationSelector'
-  import SelectedDateRangeWidget from '../components/SelectedDateRangeWidget'
-  import LoginDialog from '../components/account/LoginDialog'
+  import OrganizationSelector from '@/components/OrganizationSelector'
+  import SelectedDateRangeWidget from '@/components/SelectedDateRangeWidget'
+  import LoginDialog from '@/components/account/LoginDialog'
   import VGravatar from 'vue-gravatar'
-  import CreateOrganizationDialog from '../components/account/CreateOrganizationDialog'
-  import UITour from '../components/help/UITour'
+  import CreateOrganizationDialog from '@/components/account/CreateOrganizationDialog'
+  import UITour from '@/components/help/UITour'
 
   export default {
     name: 'Dashboard',

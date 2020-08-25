@@ -30,7 +30,7 @@ cs:
 
 <script>
   import { mapActions, mapState } from 'vuex'
-  import CheckMark from './CheckMark'
+  import CheckMark from '@/components/util/CheckMark'
 
   export default {
     name: 'UndefinedInterestWidget',

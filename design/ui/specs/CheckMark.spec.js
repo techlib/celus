@@ -4,7 +4,7 @@ import Vuetify from 'vuetify'
 import { mount, createLocalVue } from '@vue/test-utils'
 
 // stuff to check
-import CheckMark from '@/components/CheckMark'
+import CheckMark from '@/components/util/CheckMark'
 
 // basic setup
 Vue.use(Vuetify)

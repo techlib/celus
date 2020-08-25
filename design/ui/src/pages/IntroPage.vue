@@ -7,7 +7,7 @@
 </template>
 
 <script>
-  import FirstSushiHelpWidget from '../components/help/FirstSushiHelpWidget'
+  import FirstSushiHelpWidget from '@/components/help/FirstSushiHelpWidget'
   export default {
     name: 'IntroPage',
     components: {FirstSushiHelpWidget}

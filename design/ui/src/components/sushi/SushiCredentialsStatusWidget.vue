@@ -75,7 +75,7 @@ cs:
 <script>
   import { mapActions } from 'vuex'
   import axios from 'axios'
-  import CheckMark from '../CheckMark'
+  import CheckMark from '@/components/util/CheckMark'
 
   export default {
     name: 'SushiCredentialsStatusWidget',
