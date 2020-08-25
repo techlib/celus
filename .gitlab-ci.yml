@@ -1,5 +1,5 @@
 stages:
-  - push
+  - export
   - image
   - lints
   - tests
@@ -9,6 +9,7 @@ stages:
 include:
   - local: /.gitlab/github-export.yml
   - local: /.gitlab/test-image.yml
+  - local: /.gitlab/build-image.yml
   - local: /.gitlab/pre-commit.yml
   - local: /.gitlab/build-vue.yml
   - local: /.gitlab/run-tests.yml

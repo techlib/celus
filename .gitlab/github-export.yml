@@ -10,8 +10,9 @@
     - git remote add github "${CELUS_GITHUB_REPO}" || true
     - git fetch github
 
-github_push_branch:
-  stage: push
+export:github_push_branch:
+  stage: export
+  needs: []
   <<: *prepare_git
   script:
     - git branch -v
@@ -25,8 +26,9 @@ github_push_branch:
   tags:
     - bdd
 
-github_push_tag:
-  stage: push
+export:github_push_tag:
+  stage: export
+  needs: []
   <<: *prepare_git
   script:
     - git log --decorate=full -1 "tags/${CI_COMMIT_TAG}" --oneline

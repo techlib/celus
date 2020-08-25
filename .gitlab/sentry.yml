@@ -1,5 +1,6 @@
-sentry_release:
+release:sentry:
   stage: release
+  needs: ["build:vue"]
   image:
     name: getsentry/sentry-cli
   variables:

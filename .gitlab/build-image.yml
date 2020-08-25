@@ -1,4 +1,4 @@
-docker_images:
+image:docker_images:
   stage: image
   before_script:
     - docker info

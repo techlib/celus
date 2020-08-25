@@ -1,5 +1,6 @@
-build_vue:
+build:vue:
   stage: build
+  needs: ["tests:run_tests", "lints:pre_commit"]
   image: node:12.18
   before_script:
     - export "BUILD=yes"

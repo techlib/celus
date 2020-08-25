@@ -1,5 +1,6 @@
-pre-commit:
+lints:pre_commit:
   stage: lints
+  needs: []
   image: registry.gitlab.com/big-dig-data/celus/celus-test:latest
   before_script:
     - poetry install
@@ -7,5 +8,3 @@ pre-commit:
     - poetry run pre-commit run --hook-stage push --all-files
   tags:
     - bdd
-  dependencies:
-    - test_image

@@ -1,5 +1,6 @@
-run_tests:
+tests:run_tests:
   stage: tests
+  needs: []
   image: registry.gitlab.com/big-dig-data/celus/celus-test:latest
   services:
     - postgres
@@ -23,5 +24,3 @@ run_tests:
   coverage: /^TOTAL.*\s+([^\s]+)%$/
   tags:
     - bdd
-  dependencies:
-    - test_image
