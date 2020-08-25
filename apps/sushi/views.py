@@ -17,8 +17,13 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from reversion.views import create_revision
 
 from core.logic.dates import month_start, month_end
+from core.logic.url import extract_field_from_request
 from core.models import UL_CONS_STAFF, REL_ORG_ADMIN
-from core.permissions import SuperuserOrAdminPermission, OrganizationRelatedPermissionMixin
+from core.permissions import (
+    SuperuserOrAdminPermission,
+    OrganizationRelatedPermissionMixin,
+    AdminAccessForOrganization,
+)
 from organizations.logic.queries import organization_filter_from_org_id
 from sushi.models import CounterReportType, SushiFetchAttempt
 from sushi.serializers import (
@@ -164,7 +169,8 @@ class SushiFetchAttemptViewSet(ModelViewSet):
     def get_queryset(self):
         organizations = self.request.user.accessible_organizations()
         filter_params = {}
-        if 'organization' in self.request.query_params:
+        organization = self.request.query_params.get("organization")
+        if organization and organization != "-1":
             filter_params['credentials__organization'] = get_object_or_404(
                 organizations, pk=self.request.query_params['organization']
             )
@@ -196,20 +202,13 @@ class SushiFetchAttemptViewSet(ModelViewSet):
             'counter_report', 'credentials__organization', 'credentials__platform',
         )
 
-    def _cleanup_pks(self) -> typing.List[int]:
-        queryset = self.filter_queryset(self.get_queryset())
-        return [
-            e.pk
-            for e in queryset.filter(import_batch__isnull=True)
-            if e.status in ['FAILURE', 'BROKEN']
-        ]
-
     @action(
         methods=['POST', 'GET'],
         detail=False,
         url_path='cleanup',
         serializer_class=SushiCleanupCountSerializer,
         filter_backends=(CleanupFilterBackend,),
+        permission_classes=[AdminAccessForOrganization],
     )
     def cleanup(self, request):
         """
@@ -220,6 +219,12 @@ class SushiFetchAttemptViewSet(ModelViewSet):
         Return how many attempts (will be / were) deleted
         """
         queryset = self.filter_queryset(self.get_queryset())
+
+        # apply organization filter if needed
+        organization_id = extract_field_from_request(request, "organization")
+        if organization_id and organization_id != -1:
+            queryset = queryset.filter(credentials__organization_id=organization_id)
+
         pks = [
             e.pk
             for e in queryset.filter(import_batch__isnull=True)

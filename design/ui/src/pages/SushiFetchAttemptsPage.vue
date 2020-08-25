@@ -112,7 +112,7 @@ cs:
                     {{ $t('refresh') }}
                 </v-btn>
             </v-col>
-            <v-col cols="auto">
+            <v-col cols="auto" v-if="showAdminStuff">
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                 <v-btn @click="showCleanup()" color="warning" v-bind="attrs" v-on="on">
@@ -188,9 +188,9 @@ cs:
 
   import axios from 'axios'
   import { mapActions, mapGetters, mapState } from 'vuex'
-  import SushiAttemptListWidget from '@/components/SushiAttemptListWidget'
-  import FetchAttemptModeFilter from '@components/sushi/FetchAttemptModeFilter'
-  import SushiAttemptCleanupWidget from '@components/sushi/SushiAttemptCleanupWidget'
+  import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
+  import FetchAttemptModeFilter from '@/components/sushi/FetchAttemptModeFilter'
+  import SushiAttemptCleanupWidget from '@/components/sushi/SushiAttemptCleanupWidget'
 
   export default {
     name: "SushiFetchAttemptsPage",
@@ -222,6 +222,7 @@ cs:
       ...mapGetters({
         organizationSelected: 'organizationSelected',
         selectedOrganization: 'selectedOrganization',
+        showAdminStuff: 'showAdminStuff',
       }),
       statsUrl () {
         let base = `/api/sushi-fetch-attempt-stats/?x=${this.x}&y=${this.y}&success_metric=${this.successMetric}&mode=${this.mode}`

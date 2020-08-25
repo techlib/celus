@@ -1,76 +1,71 @@
-from unittest.mock import patch
+import json
+import pytest
 
 from datetime import timedelta
-
-import pytest
-from django.urls import reverse
-from django.utils import timezone
+from unittest.mock import patch
 from urllib.parse import quote
 
-from core.models import UL_ORG_ADMIN, UL_CONS_STAFF, Identity
+from django.urls import reverse
+from django.utils import timezone
+
+from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, Identity
 from logs.models import ImportBatch
 from organizations.models import UserOrganization
+from organizations.tests.conftest import identity_by_user_type
 from sushi.models import SushiCredentials, SushiFetchAttempt
-from organizations.tests.conftest import organizations, identity_by_user_type
-from publications.tests.conftest import platforms
-from core.tests.conftest import (
-    master_client,
-    master_identity,
-    valid_identity,
-    authenticated_client,
-    authentication_headers,
-    admin_identity,
-    invalid_identity,
+
+from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.scenarios.basic import (
+    basic1,
+    clients,
+    data_sources,
+    identities,
+    organizations,
+    platforms,
+    users,
 )
 
 
 @pytest.mark.django_db()
-class TestSushiCredentialsViewSet(object):
-    def test_lock_action(self, master_client, organizations, platforms):
+class TestSushiCredentialsViewSet:
+    def test_lock_action(self, basic1, organizations, platforms, clients):
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["master"],
+            platform=platforms["master"],
             counter_version=5,
             lock_level=SushiCredentials.UNLOCKED,
         )
         url = reverse('sushi-credentials-lock', args=(credentials.pk,))
-        resp = master_client.post(url, {})
+        resp = clients["master"].post(url, {})
         assert resp.status_code == 200
         credentials.refresh_from_db()
         assert credentials.lock_level == UL_CONS_STAFF
 
-    def test_lock_action_no_permission(
-        self, organizations, platforms, valid_identity, authenticated_client
-    ):
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(user=identity.user, organization=organizations[0])
+    def test_lock_action_no_permission(self, basic1, organizations, platforms, clients):
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=5,
             lock_level=UL_CONS_STAFF,
         )
         url = reverse('sushi-credentials-lock', args=(credentials.pk,))
-        resp = authenticated_client.post(url, {})
+        resp = clients["user1"].post(url, {})
         assert resp.status_code == 403
         credentials.refresh_from_db()
         assert credentials.lock_level == UL_CONS_STAFF
 
     def test_create_action(
-        self, organizations, platforms, valid_identity, authenticated_client, counter_report_type
+        self, basic1, organizations, platforms, clients, users, counter_report_type
     ):
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(user=identity.user, organization=organizations[0])
-
         url = reverse('sushi-credentials-list')
 
         title = 'Foo bar credentials'
-        resp = authenticated_client.post(
+        resp = clients["admin1"].post(
             url,
             {
                 'title': title,
-                'platform_id': platforms[0].pk,
-                'organization_id': organizations[0].pk,
+                'platform_id': platforms["root"].pk,
+                'organization_id': organizations["root"].pk,
                 'url': 'http://foo.bar.baz',
                 'requestor_id': 'xxxxxxx',
                 'customer_id': 'yyyyy',
@@ -80,18 +75,14 @@ class TestSushiCredentialsViewSet(object):
         )
         assert resp.status_code == 201
         sc = SushiCredentials.objects.get()
-        assert sc.last_updated_by == identity.user
+        assert sc.last_updated_by == users["admin1"]
         assert sc.active_counter_reports.count() == 1
         assert sc.title == title
 
-    def test_edit_action(self, organizations, platforms, valid_identity, authenticated_client):
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(
-            user=identity.user, organization=organizations[0], is_admin=True
-        )
+    def test_edit_action(self, basic1, organizations, platforms, clients):
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["root"],
+            platform=platforms["root"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
@@ -100,76 +91,55 @@ class TestSushiCredentialsViewSet(object):
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         new_url = 'http://x.y.com/'
         new_title = 'New title'
-        resp = authenticated_client.patch(
-            url, {'url': new_url, 'title': new_title}, content_type='application/json'
-        )
+        resp = clients["admin1"].patch(url, {'url': new_url, 'title': new_title})
         assert resp.status_code == 200
         credentials.refresh_from_db()
         assert credentials.url == new_url
         assert credentials.title == new_title
 
-    def test_edit_action_locked(
-        self, organizations, platforms, valid_identity, authenticated_client
-    ):
+    def test_edit_action_locked(self, basic1, organizations, platforms, clients):
         """
         The API for updating sushi credentials is accessed by a normal user and thus permission
         denied is returned
         """
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(user=identity.user, organization=organizations[0])
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["branch"],
+            platform=platforms["branch"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
         )
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         new_url = 'http://x.y.com/'
-        resp = authenticated_client.patch(url, {'url': new_url}, content_type='application/json')
+        resp = clients["user1"].patch(url, {'url': new_url})
         assert resp.status_code == 403
 
-    def test_edit_action_locked_higher(
-        self, organizations, platforms, valid_identity, authenticated_client
-    ):
+    def test_edit_action_locked_higher(self, basic1, organizations, platforms, clients):
         """
         The object is locked with consortium staff level lock, so the organization admin cannot
         edit it
         """
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(
-            user=identity.user, organization=organizations[0], is_admin=True
-        )
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["root"],
+            platform=platforms["root"],
             counter_version=5,
             lock_level=UL_CONS_STAFF,
             url='http://a.b.c/',
         )
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         new_url = 'http://x.y.com/'
-        resp = authenticated_client.patch(url, {'url': new_url}, content_type='application/json')
+        resp = clients["admin1"].patch(url, {'url': new_url})
         assert resp.status_code == 403
 
     def test_edit_action_with_report_types(
-        self,
-        organizations,
-        platforms,
-        valid_identity,
-        authenticated_client,
-        counter_report_type_named,
+        self, basic1, organizations, platforms, clients, counter_report_type_named,
     ):
         """
         Test changing report types using the API update action works
         """
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(
-            user=identity.user, organization=organizations[0], is_admin=True
-        )
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["root"],
+            platform=platforms["root"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
@@ -177,11 +147,7 @@ class TestSushiCredentialsViewSet(object):
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         new_rt1 = counter_report_type_named('new1')
         new_rt2 = counter_report_type_named('new2')
-        resp = authenticated_client.patch(
-            url,
-            {'active_counter_reports': [new_rt1.pk, new_rt2.pk]},
-            content_type='application/json',
-        )
+        resp = clients["admin1"].patch(url, {'active_counter_reports': [new_rt1.pk, new_rt2.pk]},)
         assert resp.status_code == 200
         credentials.refresh_from_db()
         assert credentials.active_counter_reports.count() == 2
@@ -190,71 +156,59 @@ class TestSushiCredentialsViewSet(object):
             new_rt2.pk,
         }
 
-    def test_destroy_locked_higher(
-        self, organizations, platforms, valid_identity, authenticated_client
-    ):
+    def test_destroy_locked_higher(self, basic1, organizations, platforms, clients):
         """
         The object is locked with consortium staff level lock, so the organization admin cannot
         remove it
         """
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(
-            user=identity.user, organization=organizations[0], is_admin=True
-        )
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["root"],
+            platform=platforms["root"],
             counter_version=5,
             lock_level=UL_CONS_STAFF,
             url='http://a.b.c/',
         )
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         assert SushiCredentials.objects.count() == 1
-        resp = authenticated_client.delete(url)
+        resp = clients["admin1"].delete(url)
         assert resp.status_code == 403
         assert SushiCredentials.objects.count() == 1
 
-    def test_destroy_locked_lower(
-        self, organizations, platforms, valid_identity, authenticated_client
-    ):
+    def test_destroy_locked_lower(self, basic1, organizations, platforms, clients):
         """
         The object is locked with consortium staff level lock, so the organization admin cannot
         remove it
         """
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(
-            user=identity.user, organization=organizations[0], is_admin=True
-        )
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["root"],
+            platform=platforms["root"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
         )
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         assert SushiCredentials.objects.count() == 1
-        resp = authenticated_client.delete(url)
+        resp = clients["admin1"].delete(url)
         assert resp.status_code == 204
         assert SushiCredentials.objects.count() == 0
 
-    def test_month_overview_no_month(self, master_client):
+    def test_month_overview_no_month(self, basic1, clients):
         """
         Test the month-overview custom action - month attr should be given
         """
         url = reverse('sushi-credentials-month-overview')
-        resp = master_client.get(url)
+        resp = clients["master"].get(url)
         assert resp.status_code == 400, 'Month URL param must be present'
 
     def test_month_overview(
-        self, organizations, platforms, counter_report_type_named, master_client
+        self, basic1, organizations, platforms, counter_report_type_named, clients
     ):
         """
         Test the month-overview custom action
         """
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
@@ -276,7 +230,7 @@ class TestSushiCredentialsViewSet(object):
             counter_report=new_rt1,
         )
         url = reverse('sushi-credentials-month-overview')
-        resp = master_client.get(url, {'month': '2020-01'})
+        resp = clients["master"].get(url, {'month': '2020-01'})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, 'there should be one record for one set of credentials'
@@ -287,17 +241,17 @@ class TestSushiCredentialsViewSet(object):
 
 
 @pytest.mark.django_db()
-class TestSushiFetchAttemptStatsView(object):
+class TestSushiFetchAttemptStatsView:
     def test_no_dates_mode_all(
-        self, organizations, platforms, counter_report_type_named, master_client
+        self, basic1, organizations, platforms, clients, counter_report_type_named
     ):
         """
         Test that the api view works when the requested data does not contain dates and all
         attempts are requested
         """
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
@@ -312,22 +266,22 @@ class TestSushiFetchAttemptStatsView(object):
         )
         assert SushiFetchAttempt.objects.count() == 1
         url = reverse('sushi-fetch-attempt-stats')
-        resp = master_client.get(url + '?mode=all')
+        resp = clients["master"].get(url + '?mode=all')
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]['failure_count'] == 1
 
     def test_no_dates_mode_current(
-        self, organizations, platforms, counter_report_type_named, master_client
+        self, basic1, organizations, platforms, clients, counter_report_type_named
     ):
         """
         Test that the api view works when the requested data does not contain dates and all
         attempts are requested
         """
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
@@ -347,21 +301,21 @@ class TestSushiFetchAttemptStatsView(object):
         credentials.save()
         # let's try it - there should be nothing
         url = reverse('sushi-fetch-attempt-stats')
-        resp = master_client.get(url + '?mode=current')
+        resp = clients["master"].get(url + '?mode=current')
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 0
 
     def test_no_dates_mode_current_2(
-        self, organizations, platforms, counter_report_type_named, master_client
+        self, basic1, organizations, platforms, clients, counter_report_type_named
     ):
         """
         Test that the api view works when the requested data does not contain dates and all
         attempts are requested
         """
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
@@ -390,28 +344,28 @@ class TestSushiFetchAttemptStatsView(object):
         assert SushiFetchAttempt.objects.count() == 2
         # let's try it - there should be nothing
         url = reverse('sushi-fetch-attempt-stats')
-        resp = master_client.get(url + '?mode=current')
+        resp = clients["master"].get(url + '?mode=current')
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]['failure_count'] == 1
         # let's check that with mode=all there would be two
-        resp = master_client.get(url + '?mode=all')
+        resp = clients["master"].get(url + '?mode=all')
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]['failure_count'] == 2
 
     def test_no_dates_mode_success_and_current(
-        self, organizations, platforms, counter_report_type_named, master_client
+        self, basic1, organizations, platforms, clients, counter_report_type_named
     ):
         """
         Test that the api view works when the requested data does not contain dates and all
         attempts are requested
         """
         credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
@@ -453,21 +407,21 @@ class TestSushiFetchAttemptStatsView(object):
         assert SushiFetchAttempt.objects.count() == 3
         # let's try it - there should be nothing
         url = reverse('sushi-fetch-attempt-stats')
-        resp = master_client.get(url + '?mode=success_and_current&success_metric=contains_data')
+        resp = clients["master"].get(url + '?mode=success_and_current&success_metric=contains_data')
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]['success_count'] == 1
         assert data[0]['failure_count'] == 1
         # let's check that with mode=current there would be only one
-        resp = master_client.get(url + '?mode=current&success_metric=contains_data')
+        resp = clients["master"].get(url + '?mode=current&success_metric=contains_data')
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]['success_count'] == 0
         assert data[0]['failure_count'] == 1
         # let's check that with mode=all there would be three
-        resp = master_client.get(url + '?mode=all&success_metric=contains_data')
+        resp = clients["master"].get(url + '?mode=all&success_metric=contains_data')
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -476,12 +430,16 @@ class TestSushiFetchAttemptStatsView(object):
 
 
 @pytest.mark.django_db()
-class TestSushiFetchAttemptView(object):
-    def test_create(self, master_client, credentials, counter_report_type):
+class TestSushiFetchAttemptView:
+    def test_create(self, basic1, organizations, platforms, clients, counter_report_type):
+        credentials = CredentialsFactory(
+            organization=organizations["root"], platform=platforms["root"],
+        )
+
         # we must patch the run_sushi_fetch_attempt_task task in order to prevent stalling
         # during tests by CI
         with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
-            resp = master_client.post(
+            resp = clients["master"].post(
                 reverse('sushi-fetch-attempt-list'),
                 {
                     'credentials': credentials.pk,
@@ -495,32 +453,34 @@ class TestSushiFetchAttemptView(object):
             assert 'pk' in resp.json()
 
     @pytest.mark.parametrize(
-        ['user_type', 'can_create', 'return_code'],
+        ['user', 'can_create', 'return_code'],
         [
-            ['no_user', False, 401],
+            ['unauthenticated', False, 401],
             ['invalid', False, 401],
-            ['unrelated', False, 403],
-            ['related_user', False, 403],
-            ['related_admin', True, 201],
-            ['master_user', True, 201],
-            ['superuser', True, 201],
+            ['user1', False, 403],
+            ['user2', False, 403],
+            ['admin2', True, 201],
+            ['master', True, 201],
+            ['su', True, 201],
         ],
     )
     def test_create_api_access(
         self,
-        user_type,
+        user,
         can_create,
         return_code,
-        client,
-        authentication_headers,
-        credentials,
+        basic1,
+        organizations,
+        platforms,
+        clients,
         counter_report_type,
-        identity_by_user_type,
     ):
-        identity, org = identity_by_user_type(user_type)
+        credentials = CredentialsFactory(
+            organization=organizations["standalone"], platform=platforms["standalone"],
+        )
 
         with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
-            resp = client.post(
+            resp = clients[user].post(
                 reverse('sushi-fetch-attempt-list'),
                 {
                     'credentials': credentials.pk,
@@ -528,7 +488,6 @@ class TestSushiFetchAttemptView(object):
                     'end_date': '2020-01-31',
                     'counter_report': counter_report_type.pk,
                 },
-                **authentication_headers(identity),
             )
             assert resp.status_code == return_code
             if can_create:
@@ -536,14 +495,20 @@ class TestSushiFetchAttemptView(object):
             else:
                 assert task_mock.apply_async.call_count == 0
 
-    def test_detail_available_after_create(self, master_client, credentials, counter_report_type):
+    def test_detail_available_after_create(
+        self, basic1, clients, organizations, platforms, counter_report_type
+    ):
         """
         Check that if we create an attempt, it will be available using the same API later.
         This test was created because after introducing default filtering of attempts
         to successful+current, this was not true
         """
+        credentials = CredentialsFactory(
+            organization=organizations["standalone"], platform=platforms["standalone"],
+        )
+
         with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
-            resp = master_client.post(
+            resp = clients["master"].post(
                 reverse('sushi-fetch-attempt-list'),
                 {
                     'credentials': credentials.pk,
@@ -557,31 +522,31 @@ class TestSushiFetchAttemptView(object):
         create_data = resp.json()
         pk = create_data['pk']
         # now get the details of the attempt using GET
-        resp = master_client.get(reverse('sushi-fetch-attempt-detail', args=(pk,)))
+        resp = clients["master"].get(reverse('sushi-fetch-attempt-detail', args=(pk,)))
         assert resp.status_code == 200
         assert resp.json() == create_data
 
     @pytest.mark.parametrize(
-        'batch_present,other_org,download_success,contains_data,processing_success,queued,remained,older_than',
+        'batch_present,download_success,contains_data,processing_success,queued,remained,older_than',
         (
-            (True, False, False, False, False, False, True, None),  # has data
-            (False, True, False, False, False, False, True, None),  # other org
-            (False, False, False, False, False, False, False, None),  # all failed
-            (False, False, True, False, False, False, False, None),  # download ok processing failed
-            (False, False, False, False, True, False, False, None),  # download failed processing ok
-            (False, False, True, False, True, False, True, None),  # download ok processing ok
-            (False, False, False, False, False, False, True, -1),  # not old enough
-            (False, False, False, False, False, False, False, 1),  # old enough
+            (True, False, False, False, False, True, None),  # has data
+            (False, False, False, False, False, False, None),  # all failed
+            (False, True, False, False, False, False, None),  # download ok processing failed
+            (False, False, False, True, False, False, None),  # download failed processing ok
+            (False, True, False, True, False, True, None),  # download ok processing ok
+            (False, False, False, False, False, True, -1),  # not old enough
+            (False, False, False, False, False, False, 1),  # old enough
         ),
     )
     def test_cleanup(
         self,
+        basic1,
         organizations,
         platforms,
+        clients,
+        users,
         counter_report_type,
-        authenticated_client,
         batch_present,
-        other_org,
         download_success,
         contains_data,
         processing_success,
@@ -591,28 +556,21 @@ class TestSushiFetchAttemptView(object):
     ):
         batch = (
             ImportBatch.objects.create(
-                platform=platforms[0],
-                organization=organizations[0],
+                platform=platforms["standalone"],
+                organization=organizations["standalone"],
                 report_type=counter_report_type.report_type,
             )
             if batch_present
             else None
         )
 
-        #  assign user to organization
-        user = authenticated_client.user
-        if other_org:
-            UserOrganization.objects.filter(user=user, organization=organizations[0]).delete()
-        else:
-            UserOrganization.objects.get_or_create(user=user, organization=organizations[0])
-
-        credentials = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platforms[0],
+        credentials = CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=platforms["standalone"],
             counter_version=5,
             url='http://a.b.c/',
         )
-        attempt = SushiFetchAttempt.objects.create(
+        SushiFetchAttempt.objects.create(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -626,15 +584,15 @@ class TestSushiFetchAttemptView(object):
         )
 
         url = reverse('sushi-fetch-attempt-cleanup')
-        if older_than:
-            ot = (timezone.now() + timedelta(minutes=older_than)).isoformat()
-            get_resp = authenticated_client.get(url, {"older_than": ot})
-            post_resp = authenticated_client.post(url, {"older_than": ot})
-        else:
-            get_resp = authenticated_client.get(url)
-            post_resp = authenticated_client.post(url)
+        params = {"organization": organizations["standalone"].pk}
 
+        if older_than:
+            params["older_than"] = (timezone.now() + timedelta(minutes=older_than)).isoformat()
+
+        get_resp = clients["admin2"].get(url, params)
         assert get_resp.status_code == 200
+
+        post_resp = clients["admin2"].post(url, params)
         assert post_resp.status_code == 200
 
         # is attempt present
@@ -644,3 +602,48 @@ class TestSushiFetchAttemptView(object):
         else:
             assert get_resp.json() == post_resp.json() == {"count": 1}
             assert SushiFetchAttempt.objects.count() == 0
+
+    @pytest.mark.parametrize(
+        ['client', "organization", 'return_code'],
+        [
+            # particular standalone organization
+            ['unauthenticated', "standalone", 401],
+            ['invalid', "standalone", 401],
+            ['user1', "standalone", 403],
+            ['user2', "standalone", 403],
+            ['admin2', "standalone", 200],
+            ['master', "standalone", 200],
+            ['su', "standalone", 200],
+            # all organizations (organization not defined)
+            ['unauthenticated', None, 401],
+            ['invalid', None, 401],
+            ['user1', None, 403],
+            ['user2', None, 403],
+            ['admin2', None, 403],
+            ['master', None, 200],
+            ['su', None, 200],
+            # all organizations (special -1 organization)
+            ['unauthenticated', -1, 401],
+            ['invalid', -1, 401],
+            ['user1', -1, 403],
+            ['user2', -1, 403],
+            ['admin2', -1, 403],
+            ['master', -1, 200],
+            ['su', -1, 200],
+        ],
+    )
+    def test_cleanup_permissions(
+        self, basic1, client, organization, return_code, organizations, clients,
+    ):
+        url = reverse('sushi-fetch-attempt-cleanup')
+        params = {}
+        if organization == -1:
+            params = {"organization": "-1"}
+        elif organization is not None:
+            params = {"organization": organizations["standalone"].pk}
+
+        get_resp = clients[client].get(url, params)
+        assert get_resp.status_code == return_code
+
+        post_resp = clients[client].post(url, params)
+        assert post_resp.status_code == return_code

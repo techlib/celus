@@ -185,6 +185,9 @@ class User(AbstractUser):
                     return REL_ORG_ADMIN
             return REL_UNREL_USER
 
+    def has_organization_admin_permission(self, org_id: int):
+        return self.organization_relationship(org_id) >= REL_ORG_ADMIN
+
     @cached_property
     def email_verification(self) -> dict:
         res = {

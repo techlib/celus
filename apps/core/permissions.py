@@ -1,7 +1,7 @@
 from django.conf import settings
 from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
 
-from core.logic.url import extract_organization_id_from_request_data
+from core.logic.url import extract_organization_id_from_request_data, extract_field_from_request
 from organizations.models import UserOrganization
 
 
@@ -100,6 +100,23 @@ class CanAccessOrganizationFromGETAttrs(BasePermission):
             return request.user.is_superuser or request.user.is_from_master_organization
         else:
             return request.user.accessible_organizations().filter(pk=organization).exists()
+
+
+class AdminAccessForOrganization(BasePermission):
+    """ Checks whether the user has admin access for organization obtained via GET or POST
+    """
+
+    def has_permission(self, request, view):
+        organization = int(extract_field_from_request(request, 'organization') or 0)
+
+        if not request.user.is_authenticated:
+            return False
+
+        if not organization or organization == -1:
+            # master use required to access all organizations
+            return request.user.is_superuser or request.user.is_from_master_organization
+
+        return request.user.has_organization_admin_permission(organization)
 
 
 class OrganizationRequiredInDataForNonSuperusers(BasePermission):

@@ -29,6 +29,7 @@ def users():
     master = UserFactory(username="master")
     admin1 = UserFactory(username="admin1")
     admin2 = UserFactory(username="admin2")
+    su = UserFactory(username="su", is_superuser=True)
     return locals()
 
 
@@ -67,6 +68,7 @@ def identities(users):
     master = IdentityFactory(user=users["master"])
     admin1 = IdentityFactory(user=users["admin1"])
     admin2 = IdentityFactory(user=users["admin2"])
+    su = IdentityFactory(user=users["su"])
     del users
     return locals()
 
@@ -83,20 +85,24 @@ def platforms(data_sources):
     return locals()
 
 
-def make_client(identity: Identity) -> APIClient:
+def make_client(identity: Identity, login: bool = False) -> APIClient:
     client = APIClient()
-    client.force_login(identity.user)
+    client.defaults[settings.EDUID_IDENTITY_HEADER] = identity
+    if login:
+        client.force_login(identity.user)
     return client
 
 
 @pytest.fixture
 def clients(identities):
     unauthenticated = APIClient()
+    invalid = make_client("invalid@celus.test", False)
     user1 = make_client(identities["user1"])
     user2 = make_client(identities["user2"])
     master = make_client(identities["master"])
     admin1 = make_client(identities["admin1"])
     admin2 = make_client(identities["admin2"])
+    su = make_client(identities["su"])
     del identities
     return locals()
 
