@@ -87,16 +87,16 @@ cs:
                                 :loading="loading"
                         >
                             <template #item.download_success="{item}">
-                                <CheckMark :value="item.download_success" />
+                                <CheckMark :value="item.download_success" true-color="success" false-color="warning"/>
                             </template>
                             <template #item.processing_success="{item}">
-                                <CheckMark :value="item.processing_success" />
+                                <CheckMark :value="item.processing_success" true-color="success" false-color="warning"/>
                             </template>
                             <template #item.contains_data="{item}">
-                                <CheckMark :value="item.contains_data" />
+                                <CheckMark :value="item.contains_data" true-color="success" false-color="error"/>
                             </template>
                             <template #item.is_processed="{item}">
-                                <CheckMark :value="item.is_processed" />
+                                <CheckMark :value="item.is_processed" true-color="success" />
                             </template>
                             <template #item.queued="{item}">
                                 <CheckMark :value="item.queued" />

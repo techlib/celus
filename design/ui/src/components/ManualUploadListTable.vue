@@ -103,7 +103,7 @@ cs:
         </template>
 
         <template #item.is_processed="{item}">
-            <CheckMark :value="item.is_processed" />
+            <CheckMark :value="item.is_processed" true-color="success" />
         </template>
 
     </v-data-table>

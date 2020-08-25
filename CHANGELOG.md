@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - a caching mechanism with automatic renewal called `recache` was implemented for selected long running database queries
 - a specialized view for top 10 titles was implemented using `recache`
 
+### Changes
+
+#### UI
+
+- the way yes-no style icons are presented in the UI was changed to avoid colors
+  where the color conveyed incorrect connotation
+
 ### Fixes
 
 #### UI

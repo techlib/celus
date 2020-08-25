@@ -46,11 +46,11 @@ cs:
                 </v-col>
                 <v-col>
                     {{ $t('title_fields.download_success') }}:
-                    <CheckMark :value="attemptData.download_success" extra-classes="fa-fw"></CheckMark>
+                    <GoodBadMark :value="attemptData.download_success" extra-classes="fa-fw"></GoodBadMark>
                     {{ $t('title_fields.processing_success') }}:
-                    <CheckMark :value="attemptData.processing_success" extra-classes="fa-fw"></CheckMark>
+                    <GoodBadMark :value="attemptData.processing_success" extra-classes="fa-fw"></GoodBadMark>
                     {{ $t('title_fields.contains_data') }}:
-                    <CheckMark :value="attemptData.contains_data" extra-classes="fa-fw"></CheckMark>
+                    <GoodBadMark :value="attemptData.contains_data" extra-classes="fa-fw"></GoodBadMark>
                 </v-col>
             </v-row>
         </v-expansion-panel-header>
@@ -75,11 +75,11 @@ cs:
 <script>
   import { mapActions } from 'vuex'
   import axios from 'axios'
-  import CheckMark from '@/components/util/CheckMark'
+  import GoodBadMark from '@/components/util/GoodBadMark'
 
   export default {
     name: 'SushiCredentialsStatusWidget',
-    components: {CheckMark},
+    components: {GoodBadMark},
     props: {
       attemptId: {
         required: true,
