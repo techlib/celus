@@ -5,6 +5,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+
+### Added
+
+#### UI
+
+- new month based view of SUSHI fetching success was introduced to help in debugging
+- the SUSHI management page was extended to allow starting test of more than one
+  set of credentials
+
+#### Backend
+
+- a caching mechanism with automatic renewal called `recache` was implemented for selected long running database queries
+- a specialized view for top 10 titles was implemented using `recache`
+
+### Fixes
+
+#### Backend
+
+- case is now ignored when checking if email address is verified which makes it
+  consistent with the rest of the login/password reset system
+
+
+
 ## [2.1.2] (2020-08-19)
 
 ### Fixes
