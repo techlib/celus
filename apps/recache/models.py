@@ -30,13 +30,12 @@ class CachedQueryQuerySet(models.QuerySet):
         origin='',
     ):
         qs_hash = CachedQuery.compute_queryset_hash(queryset)
-        query_pickle = pickle.dumps(queryset.query)
         queryset_pickle = pickle.dumps(queryset)
+
         return self.create(
             model=ContentType.objects.get_for_model(queryset.model),
             query_hash=qs_hash,
             query_string=str(queryset.query),
-            query_pickle=query_pickle,
             queryset_pickle=queryset_pickle,
             django_version=django.get_version(),
             timeout=timeout,
@@ -82,7 +81,6 @@ class CachedQuery(models.Model):
         max_length=BLAKE_HASH_SIZE * 2, help_text='Hash of the query string', unique=True,
     )
     query_string = models.TextField()
-    query_pickle = models.BinaryField(help_text='Pickle of the query to allow reruns')
     queryset_pickle = models.BinaryField(help_text='Pickle of the evaluated queryset with results')
     django_version = models.CharField(
         max_length=16, help_text='Version of Django that created the last pickle'
@@ -157,10 +155,8 @@ class CachedQuery(models.Model):
         """
         Returns a new, unevaluated queryset based on the stored data
         """
-        cls = self.model.model_class()
-        queryset = cls.objects.all()
-        queryset.query = pickle.loads(self.query_pickle)
-        return queryset
+        # all creates a fresh copy of the queryset
+        return self.get_cached_queryset().all()
 
     def get_cached_queryset(self):
         """

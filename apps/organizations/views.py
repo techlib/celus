@@ -20,6 +20,7 @@ from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
+from recache.util import recache_queryset
 from sushi.models import SushiCredentials
 from .models import UserOrganization
 from .serializers import OrganizationSerializer, OrganizationSimpleSerializer
@@ -106,10 +107,29 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
         accesslog_filter_params = {'report_type': interest_rt, **org_filter, **date_filter}
         replace_report_type_with_materialized(accesslog_filter_params)
-        data = AccessLog.objects.filter(**accesslog_filter_params).aggregate(
-            interest_sum=Sum('value'), min_date=Min('date'), max_date=Max('date')
+        # The following is a more natural query for this data, but because aggregate
+        # returns a dict in Django, it would not be possible to recache the result
+        # (we need a queryset for this).
+        #
+        # data = AccessLog.objects.filter(**accesslog_filter_params).aggregate(
+        #     interest_sum=Sum('value'), min_date=Min('date'), max_date=Max('date')
+        # )
+        #
+        # This is why we use the following hack where the .values call does group by
+        # a column that has a NULL value for all records and thus returns the same data
+        # as the previous aggregate but in the form of a queryset
+        data = recache_queryset(
+            AccessLog.objects.filter(**accesslog_filter_params)
+            .values('dim7')
+            .annotate(interest_sum=Sum('value'), min_date=Min('date'), max_date=Max('date')),
+            origin='organization-interest',
         )
-        if data['max_date']:
+        if data:
+            data = data[0]
+            del data['dim7']  # residue after grouping, not needed
+        else:
+            data = {}
+        if data.get('max_date'):
             # the date might be None and then we do not want to do the math ;)
             data['max_date'] = month_end(data['max_date'])
             data['days'] = (data['max_date'] - data['min_date']).days + 1

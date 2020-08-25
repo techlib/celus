@@ -1,11 +1,14 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
 
 from charts.models import ReportDataView, ChartDefinition, ReportViewToChartType
 from core.tests.conftest import master_client, master_identity, authenticated_client, valid_identity
+from logs.logic.data_import import import_counter_records
 from logs.models import OrganizationPlatform, AccessLog, Metric, ImportBatch
-from logs.tests.conftest import report_type_nd
-from publications.models import Title
+from logs.tests.conftest import report_type_nd, counter_records_0d
+from publications.models import Title, Platform
 from publications.tests.conftest import platform
 from organizations.tests.conftest import organizations
 
@@ -242,3 +245,68 @@ class TestChartDataAPIView(object):
         assert response.status_code == 400
         error = response.json()['error']
         assert 'foobar' in error
+
+    def test_with_data_no_dashboard(
+        self, counter_records_0d, organizations, report_type_nd, authenticated_client, platform
+    ):
+        """
+        Test that recache is not used for normal queries
+        """
+        organization = organizations[0]
+        report_type = report_type_nd(0)  # type: ReportType
+        import_batch = ImportBatch.objects.create(
+            organization=organization, platform=platform, report_type=report_type
+        )
+        import_counter_records(
+            report_type, organization, platform, counter_records_0d, import_batch
+        )
+        assert AccessLog.objects.count() == 1
+        metric = Metric.objects.get()
+        report_view = ReportDataView.objects.create(base_report_type=report_type)
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = authenticated_client.get(
+                reverse('chart_data', args=(report_view.pk,)),
+                {
+                    'organization': organization.pk,
+                    'metric': metric.pk,
+                    'platform': platform.pk,
+                    'prim_dim': 'date',
+                },
+            )
+            renewal_task.apply_async.assert_not_called()
+        assert resp.status_code == 200
+        assert 'data' in resp.json()
+
+    def test_with_data_dashboard(
+        self, counter_records_0d, organizations, report_type_nd, authenticated_client, platform
+    ):
+        """
+        Test that recache is used for queries marked with the `dashboard` attribute
+        """
+        organization = organizations[0]
+        report_type = report_type_nd(0)  # type: ReportType
+        import_batch = ImportBatch.objects.create(
+            organization=organization, platform=platform, report_type=report_type
+        )
+        import_counter_records(
+            report_type, organization, platform, counter_records_0d, import_batch
+        )
+        assert AccessLog.objects.count() == 1
+        metric = Metric.objects.get()
+        report_view = ReportDataView.objects.create(base_report_type=report_type)
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = authenticated_client.get(
+                reverse('chart_data', args=(report_view.pk,)),
+                {
+                    'organization': organization.pk,
+                    'metric': metric.pk,
+                    'platform': platform.pk,
+                    'prim_dim': 'date',
+                    'dashboard': True,
+                },
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        assert 'data' in resp.json()

@@ -139,7 +139,7 @@
   import { mapActions, mapGetters, mapState } from 'vuex'
   import 'echarts/lib/component/markLine'
   import LoaderWidget from '@/components/util/LoaderWidget'
-  import { pivot } from '../libs/pivot'
+  import { pivot } from '@/libs/pivot'
   import ChartDataTable from './ChartDataTable'
 
   export default {
@@ -217,6 +217,10 @@
         default: true,
         type: Boolean,
       },
+      dashboardChart: {
+        default: false,
+        type: Boolean,
+      }
     },
     data () {
       return {
@@ -267,6 +271,9 @@
           url += `&target=${this.title}`
         if (this.importBatch)
           url += `&import_batch=${this.importBatch}`
+        if (this.dashboardChart) {
+          url += '&dashboard=true'
+        }
         return url
       },
       columns () {

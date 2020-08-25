@@ -43,6 +43,7 @@ cs:
                                 secondary-dimension="Interest_Type"
                                 raw-report-type
                                 stack
+                                dashboard-chart
                         >
                         </APIChart>
                     </v-card-text>

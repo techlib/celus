@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.db.models import Count
 from django.utils.timezone import now
 
 from recache.models import CachedQuery, DEFAULT_TIMEOUT
@@ -89,3 +90,12 @@ class TestCachedQuery(object):
         cq.renew()
         assert cq.last_updated > last_updated, "should be renewed"
         assert len(cq.query_durations) == 1, 'query was renewed once'
+
+    def test_annotations_work(self):
+        UserFactory.create_batch(3)
+        queryset = User.objects.values('is_staff').annotate(count=Count('pk'))
+        data = list(queryset)
+        cq = CachedQuery.objects.create_from_queryset(queryset)
+        cq.force_renew()
+        data2 = list(cq.get_cached_queryset())
+        assert data == data2

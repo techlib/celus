@@ -53,8 +53,11 @@ class ChartDataView(APIView):
         report_view = get_object_or_404(ReportDataView, pk=report_view_id)
         computer = StatsComputer()
         start = monotonic()
+        # special attribute signaling that this view is used on dashboard and thus we
+        # want to cache the data for extra speed using recache
+        dashboard_view = 'dashboard' in request.GET
         try:
-            data = computer.get_data(report_view, request.GET, request.user)
+            data = computer.get_data(report_view, request.GET, request.user, recache=dashboard_view)
         except TooMuchDataError:
             return Response({'too_much_data': True})
         except BadRequestError as exc:

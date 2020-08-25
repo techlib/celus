@@ -1,8 +1,8 @@
 """
 Functions that help in constructing django queries
 """
-from typing import Iterable, Optional
 import logging
+from typing import Iterable, Optional
 
 from django.db import models
 from django.db.models import Sum, Q
@@ -12,7 +12,8 @@ from django.shortcuts import get_object_or_404
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
-from logs.models import InterestGroup, AccessLog, ReportType, Dimension, DimensionText, Metric
+from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric
+from recache.util import recache_queryset
 
 logger = logging.getLogger(__name__)
 
@@ -198,10 +199,10 @@ class StatsComputer(object):
     hard_result_count_limit = 20_000
 
     def __init__(self):
-        self.io_prim_dim_name = None  # name of dimension that was requested and will be outputed
+        self.io_prim_dim_name = None  # name of dimension that was requested and will be outputted
         self.prim_dim_name = None
         self.prim_dim_obj = None
-        self.io_sec_dim_name = None  # name of dimension that was requested and will be outputed
+        self.io_sec_dim_name = None  # name of dimension that was requested and will be outputted
         self.sec_dim_name = None
         self.sec_dim_obj = None
         self.dim_raw_name_to_name = {}
@@ -263,14 +264,15 @@ class StatsComputer(object):
             secondary_dim
         )
 
-    def get_data(self, report_type: ReportType, params: dict, user):
+    def get_data(self, report_type: ReportType, params: dict, user, recache=False):
         """
         This method encapsulates most of the stuff that is done by this view.
         Based on report_type_id and the request object, it loads, post-processes, etc. the data
         and returns it
         :param report_type:
         :param params: dict with parameters, usually request.GET
-        :user user: the user doing the querying
+        :param user: the user doing the querying
+        :param recache: should recache be used to cache the database query?
         :return:
         """
         secondary_dim = params.get('sec_dim')
@@ -296,6 +298,8 @@ class StatsComputer(object):
                 .values(self.prim_dim_name, 'count')
                 .order_by(self.prim_dim_name)
             )
+        if recache:
+            data = recache_queryset(data, origin='chart-data')
         if len(data) > self.hard_result_count_limit:
             logger.warning(
                 'Result size of %d exceeded the limit of %d records',

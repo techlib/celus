@@ -18,21 +18,16 @@ class CachedQueryAdmin(admin.ModelAdmin):
         'last_queried',
         'hit_count',
         'avg_query_duration_str',
-        'query_pickle_size',
         'queryset_pickle_size',
     ]
 
     actions = ['force_renew', 'renew']
 
     @classmethod
-    def query_pickle_size(cls, obj: CachedQuery):
-        return len(obj.query_pickle)
-
-    @classmethod
     def queryset_pickle_size(cls, obj: CachedQuery):
         return len(obj.queryset_pickle)
 
-    def current_django(cls, obj: CachedQuery):
+    def current_django(self, obj: CachedQuery):
         return obj.django_version == django.get_version()
 
     current_django.boolean = True

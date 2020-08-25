@@ -1,7 +1,10 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
 
 from core.models import Identity, User
+from logs.models import AccessLog, Metric, ImportBatch
 from organizations.models import UserOrganization, Organization
 from core.tests.conftest import (
     authenticated_client,
@@ -10,6 +13,7 @@ from core.tests.conftest import (
     valid_identity,
 )
 from organizations.views import OrganizationViewSet
+from publications.tests.conftest import interest_rt
 
 
 @pytest.mark.django_db
@@ -128,3 +132,83 @@ class TestOrganizationAPI(object):
         assert authenticated_client.user.organizations.count() == 1
         admin_user = User.objects.get(is_superuser=True)
         assert admin_user.organizations.count() == 1
+
+    def test_organization_interest_no_data(self, master_client, interest_rt):
+        """
+        Test the `interest` custom action of organization ViewSet without any data
+        """
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = master_client.get(reverse('organization-interest', args=('-1',)))
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        assert resp.json() == {'days': 0}
+
+    def test_organization_interest_data(self, master_client, interest_rt):
+        """
+        Test the `interest` custom action of organization ViewSet with some data
+        """
+        metric = Metric.objects.create(short_name='a', name='a')
+        ib = ImportBatch.objects.create(report_type=interest_rt)
+        AccessLog.objects.create(
+            report_type=interest_rt, value=5, date='2020-01-01', metric=metric, import_batch=ib
+        )
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = master_client.get(reverse('organization-interest', args=('-1',)))
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        assert resp.json() == {
+            'days': 31,
+            'interest_sum': 5,
+            'max_date': '2020-01-31',
+            'min_date': '2020-01-01',
+        }
+
+    def test_organization_interest_data_organizations(
+        self, master_client, interest_rt, organizations
+    ):
+        """
+        Test the `interest` custom action of organization ViewSet with some data and a specific
+        organization
+        """
+        metric = Metric.objects.create(short_name='a', name='a')
+        ib = ImportBatch.objects.create(report_type=interest_rt)
+        AccessLog.objects.create(
+            report_type=interest_rt,
+            value=5,
+            date='2020-01-01',
+            metric=metric,
+            import_batch=ib,
+            organization=organizations[0],
+        )
+        AccessLog.objects.create(
+            report_type=interest_rt,
+            value=7,
+            date='2020-02-01',
+            metric=metric,
+            import_batch=ib,
+            organization=organizations[1],
+        )
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = master_client.get(reverse('organization-interest', args=(organizations[0].pk,)))
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        assert resp.json() == {
+            'days': 31,
+            'interest_sum': 5,
+            'max_date': '2020-01-31',
+            'min_date': '2020-01-01',
+        }
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = master_client.get(reverse('organization-interest', args=(organizations[1].pk,)))
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        assert resp.json() == {
+            'days': 29,
+            'interest_sum': 7,
+            'max_date': '2020-02-29',
+            'min_date': '2020-02-01',
+        }

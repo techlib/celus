@@ -45,18 +45,54 @@ class TestChartDataAPI(object):
         )
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
-        resp = authenticated_client.get(
-            reverse('chart_data_raw', args=(report_type.pk,)),
-            {
-                'organization': organization.pk,
-                'metric': metric.pk,
-                'platform': platform.pk,
-                'prim_dim': 'date',
-            },
-        )
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = authenticated_client.get(
+                reverse('chart_data_raw', args=(report_type.pk,)),
+                {
+                    'organization': organization.pk,
+                    'metric': metric.pk,
+                    'platform': platform.pk,
+                    'prim_dim': 'date',
+                },
+            )
+            # make sure recache is not used here
+            renewal_task.apply_async.assert_not_called()
         assert resp.status_code == 200
-        data = json.loads(resp.content)
-        assert 'data' in data
+        assert 'data' in resp.json()
+
+    def test_api_simple_data_0d_with_recache(
+        self, counter_records_0d, organizations, report_type_nd, authenticated_client
+    ):
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
+        organization = organizations[0]
+        report_type = report_type_nd(0)  # type: ReportType
+        import_batch = ImportBatch.objects.create(
+            organization=organization, platform=platform, report_type=report_type
+        )
+        import_counter_records(
+            report_type, organization, platform, counter_records_0d, import_batch
+        )
+        assert AccessLog.objects.count() == 1
+        metric = Metric.objects.get()
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            # the following is necessary so that it does not hang in Gitlab
+            resp = authenticated_client.get(
+                reverse('chart_data_raw', args=(report_type.pk,)),
+                {
+                    'organization': organization.pk,
+                    'metric': metric.pk,
+                    'platform': platform.pk,
+                    'prim_dim': 'date',
+                    'dashboard': True,
+                },
+            )
+            # make sure recache is not used here
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        assert 'data' in resp.json()
 
     @pytest.mark.parametrize(
         'primary_dim, secondary_dim, count',
