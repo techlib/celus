@@ -1,14 +1,12 @@
-import pytest
-
 from pathlib import Path
+
+import pytest
+from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
 from django.db.models import Sum
-
-from core.models import UL_ORG_ADMIN
-from organizations.tests.conftest import organizations
-from publications.tests.conftest import platforms
-from sushi.tests.conftest import counter_report_type_named, credentials, counter_report_type
-from sushi.models import SushiFetchAttempt, SushiCredentials
+from sushi.models import SushiCredentials, SushiFetchAttempt
+from sushi.tests.conftest import counter_report_type, counter_report_type_named
+from test_fixtures.scenarios.basic import data_sources, organizations, platforms
 
 from ..logic.attempt_import import import_one_sushi_attempt
 
@@ -19,12 +17,12 @@ class TestAttemptImport:
     Test functionality for import attempts
     """
 
-    def test_counter4_br2_import(self, organizations, counter_report_type_named, platform):
+    def test_counter4_br2_import(self, organizations, counter_report_type_named, platforms):
         cr_type = counter_report_type_named('BR2', version=4)
 
         creds = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platform,
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=4,
             lock_level=UL_ORG_ADMIN,
             url="http://a.b.c/",
@@ -54,12 +52,12 @@ class TestAttemptImport:
         assert fetch_attempt.import_batch is not None
         assert fetch_attempt.import_batch.accesslog_set.count() == 60
 
-    def test_counter4_jr2_import(self, organizations, counter_report_type_named, platform):
+    def test_counter4_jr2_import(self, organizations, counter_report_type_named, platforms):
         cr_type = counter_report_type_named('JR2', version=4)
 
         creds = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platform,
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=4,
             lock_level=UL_ORG_ADMIN,
             url="http://a.b.c/",
@@ -105,16 +103,26 @@ class TestAttemptImport:
         is_processed,
         contains_data,
         import_crashed,
-        credentials,
         counter_report_type,
+        organizations,
+        platforms,
     ):
+
+        creds = SushiCredentials.objects.create(
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url="http://a.b.c/",
+        )
+
         fetch_attempt = SushiFetchAttempt.objects.create(
-            credentials=credentials,
+            credentials=creds,
             counter_report=counter_report_type,
             start_date="2018-01-01",
             end_date="2018-12-31",
             data_file=None,
-            credentials_version_hash=credentials.compute_version_hash(),
+            credentials_version_hash=creds.compute_version_hash(),
             download_success=download_success,
             is_processed=is_processed,
             contains_data=contains_data,
@@ -124,12 +132,12 @@ class TestAttemptImport:
         with pytest.raises(ValueError):
             import_one_sushi_attempt(fetch_attempt)
 
-    def test_counter5_tr_warning(self, organizations, counter_report_type_named, platform):
+    def test_counter5_tr_warning(self, organizations, counter_report_type_named, platforms):
         cr_type = counter_report_type_named('TR', version=5)
 
         creds = SushiCredentials.objects.create(
-            organization=organizations[0],
-            platform=platform,
+            organization=organizations["empty"],
+            platform=platforms["empty"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
             url="http://a.b.c/",
