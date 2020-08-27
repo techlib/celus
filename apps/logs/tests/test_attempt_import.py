@@ -88,6 +88,40 @@ class TestAttemptImport:
         assert fetch_attempt.import_batch.accesslog_set.count() == 2
         assert fetch_attempt.import_batch.accesslog_set.aggregate(total=Sum('value'))['total'] == 5
 
+    def test_counter4_jr1_empty_import(self, organizations, counter_report_type_named, platforms):
+        cr_type = counter_report_type_named('JR1', version=4)
+
+        creds = SushiCredentials.objects.create(
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=4,
+            lock_level=UL_ORG_ADMIN,
+            url="http://a.b.c/",
+        )
+
+        with (Path(__file__).parent / "data/counter4/counter4_jr1_empty.tsv").open() as f:
+
+            data_file = ContentFile(f.read())
+            data_file.name = f"something.tsv"
+
+        fetch_attempt = SushiFetchAttempt.objects.create(
+            credentials=creds,
+            counter_report=cr_type,
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            data_file=data_file,
+            credentials_version_hash=creds.compute_version_hash(),
+            download_success=True,
+            is_processed=False,
+            import_crashed=False,
+            contains_data=True,
+        )
+
+        import_one_sushi_attempt(fetch_attempt)
+
+        assert fetch_attempt.import_crashed is False
+        assert fetch_attempt.import_batch is None
+
     @pytest.mark.parametrize(
         "download_success,is_processed,contains_data,import_crashed",
         (
