@@ -40,7 +40,7 @@ pillow==7.2.0
 prometheus-client==0.8.0
 psutil==5.7.2
 psycopg2-binary==2.8.5
--e git+https://github.com/beda42/pycounter.git@4c67a80f63e78d996a8ce0624aac46e221bb88aa#egg=pycounter
+-e git+https://github.com/beda42/pycounter.git@5c6a28fc1334b9beeed05fde8197ad5bc5905a51#egg=pycounter
 python-dateutil==2.8.1
 python-decouple==3.3
 python-magic==0.4.18

@@ -1241,7 +1241,7 @@ docs = ["sphinx", "sphinx-rtd-theme"]
 tests = ["coverage", "httmock", "mock", "pytest"]
 
 [package.source]
-reference = "4c67a80f63e78d996a8ce0624aac46e221bb88aa"
+reference = "5c6a28fc1334b9beeed05fde8197ad5bc5905a51"
 type = "git"
 url = "https://github.com/beda42/pycounter.git"
 [[package]]
