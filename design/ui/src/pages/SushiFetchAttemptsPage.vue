@@ -172,12 +172,13 @@ cs:
                 <v-card-text>
                     <SushiAttemptCleanupWidget
                         @close="closeCleanup"
+                        ref="cleanupWidget"
                     >
                     </SushiAttemptCleanupWidget>
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="secondary" @click="closeCleanup()">{{ $t('close') }}</v-btn>
+                    <v-btn color="secondary" @click="closeCleanup()" class="mr-2 mb-2">{{ $t('close') }}</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -328,6 +329,7 @@ cs:
       },
       showCleanup () {
         this.showCleanupDialog = true
+        this.$refs.cleanupWidget.startup()
       },
       closeDetails () {
         this.selectedItem = {}

@@ -2,7 +2,7 @@
 <i18n lang="yaml">
 en:
     cleanup:
-        older_than: Attempts are supposed to be older than
+        older_than: Remove attempts older than
         older_date: Date
         older_time: Time
         button: Delete
@@ -11,7 +11,7 @@ en:
 
 cs:
     cleanup:
-        older_than: Pokusy musí být starší než
+        older_than: Smazat pokusy starší než
         older_date: Datum
         older_time: Čas
         button: Vymazat
@@ -21,7 +21,7 @@ cs:
 </i18n>
 
 <template>
-    <v-container>
+    <v-container class="pa-0">
         <v-row>
             <v-col>{{ $t('cleanup.older_than') }}</v-col>
         </v-row>
@@ -84,11 +84,26 @@ cs:
             </v-col>
         </v-row>
         <v-row>
-            <v-col>{{ $tc('cleanup.text', toDeleteCount ) }}</v-col>
-        </v-row>
-        <v-row v-if="!started && toDeleteCount > 0">
             <v-col>
-                <v-btn @click="cleanupAttempts()" v-text="$t('cleanup.button')"></v-btn>
+                <span v-if="started">
+                    <v-progress-linear
+                            color="primary"
+                            indeterminate
+                    ></v-progress-linear>
+                </span>
+                <span v-else>{{ $tc('cleanup.text', toDeleteCount ) }}</span>
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col cols="auto">
+                <v-btn
+                        @click="cleanupAttempts()"
+                        v-text="$t('cleanup.button')"
+                        :disabled="started || toDeleteCount === 0"
+                ></v-btn>
+            </v-col>
+            <v-col class="text--primary align-self-center">
+                <span class="success--text bold">{{ lastSuccess }}</span>
             </v-col>
         </v-row>
     </v-container>
@@ -100,8 +115,11 @@ cs:
 
   export default {
     name: 'SushiAttemptCleanupWidget',
+
     components: {},
+
     props: {},
+
     data () {
       return {
         time: null,
@@ -111,24 +129,27 @@ cs:
         olderThenDateMenu: null,
         olderThenTime: new Date().toTimeString().substr(0, 5),
         olderThenTimeMenu: null,
+        lastSuccess: '',
       }
     },
+
     computed: {
         ...mapState({
           organizationId: 'selectedOrganizationId',
         }),
-        older_than () {
+        olderThan () {
             let calculated_date = new Date(`${this.olderThenDate}T${this.olderThenTime}:00`)
             return calculated_date.toISOString()
         },
     },
+
     methods: {
       ...mapActions({
         showSnackbar: 'showSnackbar',
       }),
       async numberOfAttempsToCleanup() {
         this.started = true
-        let params = { older_than: this.older_than }
+        let params = { older_than: this.olderThan }
         if (this.organizationId && this.organizationId >= 0) {
             params["organization"] = this.organizationId
         }
@@ -140,13 +161,14 @@ cs:
         } catch (error) {
           this.showSnackbar({content: 'Error starting attempt cleanup: ' + error, color: 'error'})
         } finally {
-            this.started = false
+          this.started = false
         }
 
       },
       async cleanupAttempts () {
         this.started = true
-        let data = {older_than: this.older_than}
+        this.lastSuccess = ''
+        let data = {older_than: this.olderThan}
         if (this.organizationId && this.organizationId >= 0) {
             data.organization = this.organizationId
         }
@@ -154,7 +176,7 @@ cs:
           let response = await axios.post(
             `/api/sushi-fetch-attempt/cleanup/`, data, {}
           )
-          this.showSnackbar({content: this.$tc('cleanup.done', response.data.count), color: 'success'})
+          this.lastSuccess = this.$tc('cleanup.done', response.data.count)
         } catch (error) {
           this.showSnackbar({content: 'Error starting attempt cleanup: ' + error, color: 'error'})
         } finally {
@@ -162,9 +184,14 @@ cs:
         }
         await this.numberOfAttempsToCleanup()
       },
+      async startup () {
+        this.lastSuccess = ''
+        await this.numberOfAttempsToCleanup()
+      }
     },
+
     mounted() {
-      this.numberOfAttempsToCleanup()
+      this.startup()
     }
   }
 </script>
