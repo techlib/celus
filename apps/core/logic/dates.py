@@ -77,3 +77,13 @@ def date_filter_from_params(params: dict, key_start='', str_date=False) -> dict:
             end_date = str(end_date)
         result[key_start + 'date__lte'] = end_date
     return result
+
+
+def parse_date(date_str: str) -> datetime.date:
+    """ Converts '2020-01-01' to date(2020, 1, 1)
+
+    raises an exception if string is not in given format
+
+    :param date_str: string in `YYYY-mm-dd` format
+    """
+    return datetime.datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=None).date()

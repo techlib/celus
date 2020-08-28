@@ -1,11 +1,11 @@
 import pytest
-
-from django.core.files.base import ContentFile
-
 from core.models import UL_ORG_ADMIN
+from django.core.files.base import ContentFile
+from freezegun import freeze_time
 from organizations.models import Organization
 from publications.models import Platform
-from sushi.models import SushiFetchAttempt, SushiCredentials
+from sushi.models import SushiCredentials, SushiFetchAttempt
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 
 
 @pytest.mark.django_db
@@ -122,3 +122,21 @@ class TestSushiFetchAttemptModel(object):
         # results should be symmetrical - fa conflicts with fa2, fa2 conflicts with fa
         assert fa.conflicting().get().pk == fa2.pk
         assert fa2.conflicting().get().pk == fa.pk
+
+    @pytest.mark.parametrize(
+        ('end_date', 'timestamp', 'is_fetched_near_end_date'),
+        (
+            ('2020-01-01', '2020-02-14 23:59:59', True),  # within 15 days
+            ('2020-01-01', '2020-02-15 00:00:00', False),  # after 15 days
+        ),
+    )
+    def test_fetched_near_end_date(self, end_date, timestamp, is_fetched_near_end_date):
+        with freeze_time(timestamp):
+            attempt = FetchAttemptFactory(end_date=end_date,)
+
+        attempt.refresh_from_db()  # will convert strings to datetimes
+
+        assert attempt.is_fetched_near_end_date is is_fetched_near_end_date
+        assert (
+            SushiFetchAttempt.objects.fetched_near_end_date().exists() is is_fetched_near_end_date
+        )

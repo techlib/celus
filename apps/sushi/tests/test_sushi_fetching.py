@@ -3,14 +3,22 @@ from pathlib import Path
 
 import pytest
 import requests_mock
+from freezegun import freeze_time
 
 from logs.logic.attempt_import import import_one_sushi_attempt
 from sushi.models import SushiFetchAttempt
-from nigiri.exceptions import SushiException
+from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.scenarios.basic import (
+    counter_report_types,
+    data_sources,
+    report_types,
+    organizations,
+    platforms,
+)
 
 
 @pytest.mark.django_db
-class TestSushiFetching(object):
+class TestSushiFetching:
     @pytest.mark.parametrize(
         ('path', 'download_success', 'contains_data', 'import_crashed', 'log'),
         (
@@ -50,22 +58,23 @@ class TestSushiFetching(object):
     )
     def test_c5_pr(
         self,
-        report_type_nd,
-        credentials,
-        counter_report_type_wrap_report_type,
         path,
         download_success,
         contains_data,
         import_crashed,
         log,
+        counter_report_types,
+        organizations,
+        platforms,
     ):
-        rt = report_type_nd(2, short_name='PR', name='Platform report')
-        counter_rt = counter_report_type_wrap_report_type(rt, code='PR', name='Platform report')
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+        )
         with requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
                 m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_rt, start_date='2019-04-01', end_date='2019-04-30'
+                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
             )
             assert m.called
             assert attempt.download_success is download_success
@@ -79,3 +88,41 @@ class TestSushiFetching(object):
             else:
                 with pytest.raises(ValueError):
                     import_one_sushi_attempt(attempt)
+
+    @pytest.mark.parametrize(('time', 'queued'), (('2020-08-01', False), ('2020-06-15', True),))
+    def test_c4_3030(self, counter_report_types, organizations, platforms, time, queued):
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
+        )
+        credentials.active_counter_reports.add(counter_report_types["db1"])
+        with requests_mock.Mocker() as m, freeze_time(time):
+            with open(Path(__file__).parent / 'data/counter4/sushi_3030.xml') as datafile:
+                m.post(re.compile(f'^{credentials.url}.*'), text=datafile.read())
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                counter_report_types["db1"], start_date='2020-05-01', end_date='2020-05-31'
+            )
+            assert m.called
+            assert attempt.download_success is True
+            assert attempt.contains_data is False
+            assert attempt.queued is queued
+            assert attempt.is_processed is not queued
+
+    @pytest.mark.parametrize(('time', 'queued'), (('2017-04-01', False), ('2017-02-15', True),))
+    def test_c5_3030(self, counter_report_types, organizations, platforms, time, queued):
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+        )
+        credentials.active_counter_reports.add(counter_report_types["tr"])
+        with requests_mock.Mocker() as m, freeze_time(time):
+            with open(
+                Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral_exception.json'
+            ) as datafile:
+                m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read())
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                counter_report_types["pr"], start_date='2017-01-01', end_date='2017-01-31'
+            )
+            assert m.called
+            assert attempt.download_success is True
+            assert attempt.contains_data is False
+            assert attempt.queued is queued
+            assert attempt.is_processed is not queued

@@ -3,11 +3,11 @@ import json
 import logging
 import traceback
 from copy import deepcopy
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from hashlib import blake2b
 from itertools import takewhile
 from tempfile import TemporaryFile
-from typing import Optional, Dict, Iterable, IO
+from typing import Optional, Dict, Iterable, IO, Union
 
 import requests
 import reversion
@@ -21,7 +21,7 @@ from django.utils.timezone import now
 from pycounter.exceptions import SushiException
 from rest_framework.exceptions import PermissionDenied
 
-from core.logic.dates import month_end
+from core.logic.dates import month_end, parse_date
 from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, User
 from core.task_support import cache_based_lock
 from logs.models import ImportBatch
@@ -71,6 +71,9 @@ COUNTER_REPORTS = (
     ('PR', 5, Counter5PRReport),
     ('DR', 5, Counter5DRReport),
 )
+
+
+NO_DATA_RETRY_PERIOD = timedelta(days=45)  # cca month and half
 
 
 class CounterReportType(models.Model):
@@ -272,8 +275,8 @@ class SushiCredentials(models.Model):
     def fetch_report(
         self,
         counter_report: CounterReportType,
-        start_date,
-        end_date,
+        start_date: Union[str, date],
+        end_date: Union[str, date],
         fetch_attempt: 'SushiFetchAttempt' = None,
         use_url_lock=True,
     ) -> 'SushiFetchAttempt':
@@ -287,6 +290,13 @@ class SushiCredentials(models.Model):
                              to one URL
         :return:
         """
+
+        if isinstance(start_date, str):
+            start_date = parse_date(start_date)
+
+        if isinstance(end_date, str):
+            end_date = parse_date(end_date)
+
         client = self.create_sushi_client()
         output_file = TemporaryFile("w+b")
         fetch_m = self._fetch_report_v4 if self.counter_version == 4 else self._fetch_report_v5
@@ -319,6 +329,8 @@ class SushiCredentials(models.Model):
         contains_data = False
         download_success = False
         processing_success = False
+        is_processed = False
+        when_processed = None
         log = ''
         error_code = ''
         queued = False
@@ -336,12 +348,23 @@ class SushiCredentials(models.Model):
             errors = client.extract_errors_from_data(file_data)
             if errors:
                 error_code = errors[0].code
-                error_explanation = client.explain_error_code(error_code)
+                error_explanation = client.explain_error_code(
+                    error_code, SushiFetchAttempt.fetched_near_end_date(end_date, datetime.now())
+                )
                 queued = error_explanation.should_retry and error_explanation.setup_ok
-                download_success = not (
-                    error_explanation.needs_checking and error_explanation.setup_ok
+                download_success = (
+                    not error_explanation.needs_checking and error_explanation.setup_ok
                 )
                 processing_success = download_success
+
+                # mark as processed (for outdated 3030 reports)
+                if (
+                    error_explanation.setup_ok
+                    and not error_explanation.should_retry
+                    and not error_explanation.needs_checking
+                ):
+                    is_processed = True
+                    when_processed = now()
             log = '\n'.join(error.full_log for error in errors)
             filename = 'foo.xml'  # we just need the extension
         except Exception as e:
@@ -378,6 +401,8 @@ class SushiCredentials(models.Model):
             contains_data=contains_data,
             queued=queued,
             when_queued=when_queued,
+            is_processed=is_processed,
+            when_processed=when_processed,
         )
 
     def _fetch_report_v5(
@@ -386,6 +411,8 @@ class SushiCredentials(models.Model):
         contains_data = False
         download_success = False
         processing_success = False
+        is_processed = False
+        when_processed = None
         filename = 'foo.json'
         queued = False
         error_code = ''
@@ -424,11 +451,22 @@ class SushiCredentials(models.Model):
                 else:
                     log = 'Warnings: ' + '; '.join(str(e) for e in report.warnings)
                     error_code = report.warnings[0].code
-                error_explanation = client.explain_error_code(error_code)
-                queued = error_explanation.should_retry and error_explanation.setup_ok
-                processing_success = not (
-                    error_explanation.needs_checking and error_explanation.setup_ok
+                error_explanation = client.explain_error_code(
+                    error_code, SushiFetchAttempt.fetched_near_end_date(end_date, datetime.now())
                 )
+                queued = error_explanation.should_retry and error_explanation.setup_ok
+                processing_success = (
+                    not error_explanation.needs_checking and error_explanation.setup_ok
+                )
+
+                # mark as processed (for outdated 3030 reports)
+                if (
+                    error_explanation.setup_ok
+                    and not error_explanation.should_retry
+                    and not error_explanation.needs_checking
+                ):
+                    is_processed = True
+                    when_processed = now()
             else:
                 processing_success = True
                 queued = report.queued
@@ -452,6 +490,8 @@ class SushiCredentials(models.Model):
             contains_data=contains_data,
             processing_success=processing_success,
             when_queued=when_queued,
+            is_processed=is_processed,
+            when_processed=when_processed,
         )
 
 
@@ -481,6 +521,13 @@ class SushiFetchAttemptQuerySet(models.QuerySet):
 
     def current_or_successful(self, success_measure='is_processed'):
         return self.current() | self.successful(success_measure=success_measure)
+
+    def fetched_near_end_date(self) -> models.QuerySet:
+        """ Attempts which were fetchted near to end_date
+
+        there is a chance that the provider doesn't have the data for requested period yet
+        """
+        return self.filter(end_date__gt=F('timestamp') - NO_DATA_RETRY_PERIOD)
 
 
 class SushiFetchAttempt(models.Model):
@@ -553,6 +600,18 @@ class SushiFetchAttempt(models.Model):
             and self.contains_data
             and not self.import_crashed
         )
+
+    @classmethod
+    def fetched_near_end_date(cls, end_date: date, when_triggered: datetime) -> bool:
+        return end_date > when_triggered.date() - NO_DATA_RETRY_PERIOD
+
+    @property
+    def is_fetched_near_end_date(self) -> bool:
+        """ Is attempt triggered close to end_data
+
+        there is a chance that the provider doesn't have the data for requested period yet
+        """
+        return self.fetched_near_end_date(self.end_date, self.timestamp)
 
     @property
     def status(self):
@@ -658,7 +717,7 @@ class SushiFetchAttempt(models.Model):
         return delta
 
     def error_explanation(self) -> SushiErrorMeaning:
-        exp = SushiClientBase.explain_error_code(self.error_code)
+        exp = SushiClientBase.explain_error_code(self.error_code, self.is_fetched_near_end_date)
         return exp
 
     def retry_interval(self) -> Optional[timedelta]:

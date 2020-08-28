@@ -14,11 +14,13 @@ import pytest
 
 from rest_framework.test import APIClient
 from django.conf import settings
+from ..entities.counter_report_types import CounterReportTypeFactory
+from ..entities.data_souces import DataSourceFactory, DataSource
 from ..entities.identities import IdentityFactory, Identity
-from ..entities.users import UserFactory
 from ..entities.organizations import OrganizationFactory
 from ..entities.platforms import PlatformFactory
-from ..entities.data_souces import DataSourceFactory, DataSource
+from ..entities.report_types import ReportTypeFactory
+from ..entities.users import UserFactory
 
 
 @pytest.fixture
@@ -120,4 +122,88 @@ def basic1(users, organizations, platforms, data_sources, identities, clients): 
         organizations["standalone"], through_defaults=dict(is_admin=False)
     )
 
+    return locals()
+
+
+@pytest.fixture
+def report_types():
+    # Counter 5
+    tr = ReportTypeFactory(name="Counter 5 - Title report", short_name="TR")
+    dr = ReportTypeFactory(name="Counter 5 - Database report", short_name="DR")
+    pr = ReportTypeFactory(name="Counter 5 - Platform report", short_name="PR")
+
+    # Counter 4
+    br1 = ReportTypeFactory(name="Counter 4 - Book report 1", short_name="BR1")
+    br2 = ReportTypeFactory(name="Counter 4 - Book report 2", short_name="BR2")
+    br3 = ReportTypeFactory(name="Counter 4 - Book report 3", short_name="BR3")
+
+    db1 = ReportTypeFactory(name="Counter 4 - Database report 1", short_name="DB1")
+    db2 = ReportTypeFactory(name="Counter 4 - Database report 2", short_name="DB2")
+
+    jr1 = ReportTypeFactory(name="Counter 4 - Journal report 1", short_name="JR1")
+    jr1goa = ReportTypeFactory(
+        name="Counter 4 - Journal report 1 Gold Open Access", short_name="JR1GOA"
+    )
+    jr1a = ReportTypeFactory(name="Counter 4 - Journal report 1 Archive Access", short_name="JR1a")
+    jr2 = ReportTypeFactory(name="Counter 4 - Journal report 2", short_name="JR2")
+    jr5 = ReportTypeFactory(name="Counter 4 - Journal report 5", short_name="JR5")
+
+    pr1 = ReportTypeFactory(name="Counter 4 - Platform report 1", short_name="PR1")
+
+    return locals()
+
+
+@pytest.fixture
+def counter_report_types(report_types):
+    # counter 5
+    tr = CounterReportTypeFactory(
+        counter_version=5, code=report_types["tr"].short_name, report_type=report_types["tr"],
+    )
+    dr = CounterReportTypeFactory(
+        counter_version=5, code=report_types["dr"].short_name, report_type=report_types["dr"],
+    )
+    pr = CounterReportTypeFactory(
+        counter_version=5, code=report_types["pr"].short_name, report_type=report_types["pr"],
+    )
+
+    # counter 4
+    br1 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["br1"].short_name, report_type=report_types["br1"],
+    )
+    br2 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["br2"].short_name, report_type=report_types["br2"],
+    )
+    br3 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["br3"].short_name, report_type=report_types["br3"],
+    )
+
+    db1 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["db1"].short_name, report_type=report_types["db1"],
+    )
+    db2 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["db2"].short_name, report_type=report_types["db2"],
+    )
+
+    # counter 4
+    jr1 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["jr1"].short_name, report_type=report_types["jr1"],
+    )
+    jr1goa = CounterReportTypeFactory(
+        counter_version=4,
+        code=report_types["jr1goa"].short_name,
+        report_type=report_types["jr1goa"],
+    )
+    jr1a = CounterReportTypeFactory(
+        counter_version=4, code=report_types["jr1a"].short_name, report_type=report_types["jr1a"],
+    )
+    jr2 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["jr2"].short_name, report_type=report_types["jr2"],
+    )
+    jr5 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["jr5"].short_name, report_type=report_types["jr5"],
+    )
+
+    pr1 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["pr1"].short_name, report_type=report_types["pr1"],
+    )
     return locals()

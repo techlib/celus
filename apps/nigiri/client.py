@@ -4,9 +4,8 @@ import logging
 import traceback
 import typing
 import urllib
-from datetime import datetime, timedelta
+from datetime import timedelta
 from io import StringIO, BytesIO
-from urllib.parse import urljoin
 from xml.etree import ElementTree as ET
 
 import requests
@@ -22,7 +21,6 @@ from .counter5 import (
 from .exceptions import SushiException
 
 logger = logging.getLogger(__name__)
-
 
 ns_soap = 'http://schemas.xmlsoap.org/soap/envelope/'
 ns_sushi = 'http://www.niso.org/schemas/sushi'
@@ -129,7 +127,15 @@ class SushiClientBase(object):
         raise NotImplementedError()
 
     @classmethod
-    def explain_error_code(cls, error_code) -> SushiErrorMeaning:
+    def explain_error_code(
+        cls, error_code: typing.Union[int, str], contains_recent_data: bool
+    ) -> SushiErrorMeaning:
+        """ Tries to figure out a meaning of an error code
+        :param error_code: Sushi error code
+        :param contains_recent_data: are data relatively new to download date
+
+        :returns: the meaning
+        """
         try:
             error_code = int(error_code)
         except ValueError:
@@ -143,7 +149,7 @@ class SushiClientBase(object):
             # unfortunately, some providers, such as Clarivate (Web Of Science) use this
             # wrongly in cases when 3031 should be used, so we need to treat it like this
             return SushiErrorMeaning(
-                should_retry=True,
+                should_retry=contains_recent_data,  # reschedule only for "recent" data
                 needs_checking=False,
                 setup_ok=True,
                 retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS,

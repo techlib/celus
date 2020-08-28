@@ -12,6 +12,6 @@ class PlatformFactory(factory.DjangoModelFactory):
         model = Platform
 
     ext_id = factory.Sequence(lambda n: n)
-    name = factory.Faker('platform')
+    name = factory.Faker('name')
     short_name = factory.LazyAttribute(lambda x: x.name[:10])
     url = factory.Faker('url')
