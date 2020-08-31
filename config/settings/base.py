@@ -419,6 +419,7 @@ EXPORTED_SETTINGS = [
     'ALLOW_EMAIL_LOGIN',
     'ALLOW_EDUID_LOGIN',
     'USES_ERMS',
+    'LANGUAGES',
 ]
 
 # Need to disable prometheus migrations when collecting static without DB

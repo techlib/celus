@@ -208,7 +208,14 @@ export default new Vuex.Store({
     emailVerified (state) {
       return state.user && state.user.email_verification_status === 'verified'
     },
+    activeLanguageCodes (state) {
+      if ('LANGUAGES' in state.basicInfo) {
+        return state.basicInfo['LANGUAGES'].map(item => item[0])
+      }
+      return ['en']
+    }
   },
+
   actions: {
     async start ({dispatch, getters, state}) {
       axios.defaults.xsrfCookieName = 'csrftoken'
@@ -417,6 +424,7 @@ export default new Vuex.Store({
       }
     },
   },
+
   mutations: {
     setSnackbarShow(state, {show, color}) {
       Vue.set(state, 'snackbarColor', color)

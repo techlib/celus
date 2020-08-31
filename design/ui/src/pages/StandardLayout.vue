@@ -43,8 +43,9 @@ cs:
             <v-spacer></v-spacer>
 
             <v-select
+                    v-if="showLanguageSelector"
                     v-model="appLanguage"
-                    :items="['cs','en']"
+                    :items="activeLanguageCodes"
                     prepend-icon="fa-globe"
                     class="short"
                     shrink
@@ -187,6 +188,7 @@ cs:
         tourFinished: 'tourFinished',
         tourNeverSeen: 'tourNeverSeen',
         showCreateOrganizationDialog: 'showCreateOrganizationDialog',
+        activeLanguageCodes: 'activeLanguageCodes',
       }),
       snackbarShow: {
         get () {
@@ -208,8 +210,12 @@ cs:
       },
       userBasicTourFinished () {
         return this.tourFinished(this.basicsTourName)
+      },
+      showLanguageSelector () {
+        return this.activeLanguageCodes.length > 1
       }
     },
+
     methods: {
       ...mapActions({
         hideSnackbar: 'hideSnackbar',
