@@ -3,10 +3,12 @@
 en:
   hide_successful: Hide successful rows
   stats: Statistics
+  no_data_yet: No attempts were made for the selected month
 
 cs:
   hide_successful: Skrýt úspěšné řádky
   stats: Statistika
+  no_data_yet: Pro vybraný měsíc nebyla zatím stažena žádná data
 </i18n>
 
 
@@ -28,7 +30,14 @@ cs:
                                         prepend-icon="fa-calendar"
                                         readonly
                                         v-on="on"
-                                ></v-text-field>
+                                >
+                                    <template #prepend-inner>
+                                        <IconButton @click="shiftMonth(-1)">fa-caret-left</IconButton>
+                                    </template>
+                                    <template #append>
+                                        <IconButton @click="shiftMonth(1)">fa-caret-right</IconButton>
+                                    </template>
+                                </v-text-field>
                             </template>
                             <v-date-picker
                                     v-model="selectedMonth"
@@ -48,6 +57,16 @@ cs:
                         ></v-select>
                     </v-col>
                     <v-col>
+                        <v-select
+                                :label="$t('platform')"
+                                v-model="selectedPlatform"
+                                :items="usedPlatforms"
+                                item-value="pk"
+                                item-text="name"
+                        >
+                        </v-select>
+                    </v-col>
+                    <v-col>
                         <v-switch
                                 v-model="hideSuccessful"
                                 :label="$t('hide_successful')"
@@ -60,11 +79,14 @@ cs:
                 <v-row>
                     <v-col>
                         <div class="stats">
-                        <h4 class="d-inline-block mr-5">{{ $t('stats') }}:</h4>
-                        <span v-for="[state, count] in stateStats" class="mr-3" :key="state">
-                            <SushiAttemptStateIcon :force-state="state"/>
-                            {{ count }}
-                        </span>
+                            <h4 class="d-inline-block mr-5">{{ $t('stats') }}:</h4>
+                            <span v-if="stateStats.length">
+                                <span v-for="[state, count] in stateStats" class="mr-3" :key="state">
+                                    <SushiAttemptStateIcon :force-state="state"/>
+                                    {{ count }}
+                                </span>
+                            </span>
+                            <span v-else v-text="$t('no_data_yet')"></span>
                         </div>
                     </v-col>
                 </v-row>
@@ -113,17 +135,18 @@ import axios from 'axios'
 import { mapActions, mapGetters } from 'vuex'
 import debounce from 'lodash/debounce'
 import SushiAttemptListWidget from '@/components/sushi/SushiAttemptListWidget'
-import CheckMark from '@/components/util/CheckMark'
 import startOfMonth from 'date-fns/startOfMonth'
 import addDays from 'date-fns/addDays'
-import { ymDateFormat } from '@/libs/dates'
+import addMonths from 'date-fns/addMonths'
+import { parseDateTime, ymDateFormat } from '@/libs/dates'
 import SushiAttemptStateIcon from '@/components/sushi/SushiAttemptStateIcon'
-import { ATTEMPT_ERROR, ATTEMPT_SUCCESS, attemptState } from '@/libs/attempt-state'
+import { attemptState } from '@/libs/attempt-state'
+import IconButton from '@/components/sushi/IconButton'
 
 export default {
     name: "SushiCredentialsMonthOverviewWidget",
 
-    components: {SushiAttemptStateIcon, SushiAttemptListWidget, CheckMark},
+    components: {IconButton, SushiAttemptStateIcon, SushiAttemptListWidget},
 
     props: {
       dialogMaxWidth: {
@@ -135,11 +158,6 @@ export default {
         type: Number,
         required: false,
       },
-      platformId: {
-        default: null,
-        type: Number,
-        required: false,
-      }
     },
 
     data () {
@@ -154,10 +172,11 @@ export default {
         showDetailsDialog: false,
         orderBy: ['platform.name', 'organization.name'],
         loading: false,
-        selectedMonth: ymDateFormat(addDays(startOfMonth(new Date()), -15)),
+        selectedMonth: this.$route.query.month || ymDateFormat(addDays(startOfMonth(new Date()), -15)),
         showMonthMenu: false,
         counterVersion: null,
         hideSuccessful: false,
+        selectedPlatform: null,
       }
     },
     computed: {
@@ -185,14 +204,6 @@ export default {
             value: 'counter_version',
             align: 'end',
           },
-          /*{
-            text: this.$i18n.t('title_fields.outside_consortium'),
-            value: 'outside_consortium',
-          },
-          {
-            text: this.$i18n.t('title_fields.enabled'),
-            value: 'enabled',
-          },*/
         ]
         for (let reportType of this.usedReportTypes) {
           allHeaders.push({
@@ -212,40 +223,61 @@ export default {
         }, 500)
       },
       credentialsUrl () {
-        let base = `/api/sushi-credentials/?organization=${this.organizationId}`
-        if (this.platformId) {
-          base += `&platform=${this.platformId}`
-        }
-        return base
+        return `/api/sushi-credentials/?organization=${this.organizationId}`
       },
       attemptsUrl () {
         if (!this.selectedMonth) {
           return null
         }
-        let base = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.selectedMonth}`
-        if (this.platformId) {
-          base += `&platform=${this.platformId}`
-        }
-        return base
+        return `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.selectedMonth}`
       },
       usedReportTypes () {
-        let usedRTIds = new Set(this.attemptData
-          .filter(item =>
-            this.counterVersion === null || item.counter_version === this.counterVersion)
-          .map(item => item.counter_report_id))
+        let usedRTIds = new Set()
+        for (let cred of this.sushiCredentialsWithAttempts) {
+          for (let rt of cred.active_counter_reports) {
+            usedRTIds.add(rt)
+          }
+        }
         return this.reportTypes.filter(item => usedRTIds.has(item.id))
       },
+      usedPlatforms () {
+        let usedPlatforms = new Set(this.sushiCredentialsList
+          .filter(item =>
+            this.counterVersion === null || item.counter_version === this.counterVersion)
+          .map(item => item.platform))
+        return [{name: '-', pk: null}, ...usedPlatforms].sort((a, b) => a.name > b.name)
+      },
       activeAttempts () {
-        return this.attemptData.filter(item => this.counterVersion === null || item.counter_version === this.counterVersion)
+        let attempts = []
+        for (let cred of this.sushiCredentialsWithAttempts) {
+          for (let rt of cred.active_counter_reports_long) {
+            if (cred.hasOwnProperty(rt.code)) {
+              attempts.push(cred[rt.code])
+            }
+          }
+        }
+        return attempts
+
+        let activeCredentials = new Set(this.sushiCredentialsWithAttempts.map(item => item.pk))
+        return this.attemptData.filter(item => activeCredentials.has(item.credentials_id))
+
       },
       sushiCredentialsWithAttempts () {
-        return this.sushiCredentialsList.map(item => {
-          for (let reportType of this.usedReportTypes) {
-            item[reportType.code] = this.attemptMap.get(`${item.pk}-${reportType.id}`)
-          }
-          return item
-        })
+        return this.sushiCredentialsList
+          .filter(item => item.enabled)
           .filter(item => this.counterVersion === null || item.counter_version === this.counterVersion)
+          .filter(item => this.selectedPlatform === null || item.platform.pk === this.selectedPlatform)
+          .map(item => {
+            for (let reportType of item.active_counter_reports_long) {
+              let key = `${item.pk}-${reportType.id}`
+              if (this.attemptMap.has(key)) {
+                item[reportType.code] = this.attemptMap.get(key)
+              } else {
+                item[reportType.code] = {untried: true}
+              }
+            }
+            return item
+          })
           .filter(item => !this.hideSuccessful || this.usedReportTypes.filter(rt => item[rt.code] && item[rt.code].import_batch).length != this.usedReportTypes.filter(rt => item[rt.code]).length)
       },
       stateStats () {
@@ -258,8 +290,7 @@ export default {
           }
         }
         return [...stats.entries()]
-      }
-
+      },
     },
 
     methods: {
@@ -318,10 +349,21 @@ export default {
       showAttempt (attempt) {
         this.selectedAttempt = attempt
         this.showDetailsDialog = true
-      }
+      },
+      shiftMonth (months) {
+        let date = parseDateTime(this.selectedMonth)
+        this.selectedMonth = ymDateFormat(addMonths(date, months))
+      },
     },
 
     watch: {
+      selectedMonth () {
+        history.pushState(
+          {},
+          null,
+          this.$route.path + `?month=${this.selectedMonth}`
+        )
+      },
       dataUrl () {
         this.loadSushiCredentialsList()
       },
