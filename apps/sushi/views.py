@@ -4,7 +4,7 @@ import typing
 
 import dateparser
 import reversion
-from django.db.models import Count, Q, Max, Min, F
+from django.db.models import Count, Q, Max, Min, F, Subquery
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -203,6 +203,10 @@ class SushiFetchAttemptViewSet(ModelViewSet):
             qs = SushiFetchAttempt.objects.current()
         else:
             qs = SushiFetchAttempt.objects.all()
+
+        # Show only latest in the chain
+        qs = qs.last_queued()
+
         return qs.filter(**filter_params).select_related(
             'counter_report', 'credentials__organization', 'credentials__platform',
         )
@@ -230,14 +234,26 @@ class SushiFetchAttemptViewSet(ModelViewSet):
         if organization_id and organization_id != -1:
             queryset = queryset.filter(credentials__organization_id=organization_id)
 
-        pks = [
+        pks = {
             e.pk
             for e in queryset.filter(import_batch__isnull=True)
             if e.status in ['FAILURE', 'BROKEN']
-        ]
+        }
 
         if request.method == "POST":
-            count, _ = SushiFetchAttempt.objects.filter(pk__in=pks).delete()
+            # show count only for related exact pks
+            count = SushiFetchAttempt.objects.filter(pk__in=pks).count()
+            # delete attemtps in the same queues
+            SushiFetchAttempt.objects.filter(
+                Q(pk__in=pks)
+                | Q(
+                    queue_id__in=Subquery(
+                        SushiFetchAttempt.objects.filter(pk__in=pks, queue_id__isnull=False).values(
+                            'queue_id'
+                        )
+                    )
+                )
+            ).delete()
         elif request.method == "GET":
             count = SushiFetchAttempt.objects.filter(pk__in=pks).count()
 
@@ -352,6 +368,7 @@ class SushiFetchAttemptStatsView(APIView):
         # now get the output
         qs = (
             SushiFetchAttempt.objects.filter(*filter_params)
+            .last_queued()
             .values(*values)
             .annotate(
                 success_count=Count('pk', filter=Q(**{success_metric: True})),

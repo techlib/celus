@@ -647,3 +647,117 @@ class TestSushiFetchAttemptView:
 
         post_resp = clients[client].post(url, params)
         assert post_resp.status_code == return_code
+
+    def test_cleanup_queue(
+        basic1, organizations, platforms, clients, counter_report_type,
+    ):
+        credentials = CredentialsFactory(
+            organization=organizations["standalone"], platform=platforms["standalone"],
+        )
+
+        # Failed chain
+        a1 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=counter_report_type,
+            import_batch=None,
+            download_success=True,
+            contains_data=False,
+            queued=True,
+            processing_success=True,
+        )
+        a1.queue_id = a1.pk
+        a1.save()
+
+        a2 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=counter_report_type,
+            import_batch=None,
+            download_success=True,
+            contains_data=False,
+            queued=True,
+            processing_success=True,
+            queue_id=a1.queue_id,
+            queue_previous=a1,
+        )
+
+        a3 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=counter_report_type,
+            import_batch=None,
+            download_success=False,
+            contains_data=False,
+            queued=False,
+            processing_success=True,
+            queue_id=a1.queue_id,
+            queue_previous=a2,
+        )
+
+        # ongoing chain
+        b1 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=counter_report_type,
+            import_batch=None,
+            download_success=True,
+            contains_data=False,
+            queued=True,
+            processing_success=True,
+        )
+        b1.queue_id = b1.pk
+        b1.save()
+
+        b2 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=counter_report_type,
+            import_batch=None,
+            download_success=True,
+            contains_data=False,
+            queued=True,
+            processing_success=True,
+            queue_id=b1.queue_id,
+            queue_previous=b1,
+        )
+
+        # non chain
+        c1 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=counter_report_type,
+            import_batch=None,
+            download_success=True,
+            contains_data=False,
+            queued=False,
+            processing_success=True,
+        )
+
+        assert SushiFetchAttempt.objects.all().count() == 6
+
+        url = reverse('sushi-fetch-attempt-cleanup')
+
+        get_resp = clients["su"].get(url, {})
+        assert get_resp.status_code == 200
+
+        post_resp = clients["su"].post(url, {})
+        assert post_resp.status_code == 200
+
+        # count = 1 - only unique chains
+        assert get_resp.json() == post_resp.json() == {"count": 1}
+
+        # three attempts actually removed
+        assert {e.pk for e in SushiFetchAttempt.objects.all()} == {b1.pk, b2.pk, c1.pk}

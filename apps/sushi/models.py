@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.files.base import ContentFile, File
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Exists, OuterRef
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from pycounter.exceptions import SushiException
@@ -507,6 +507,12 @@ def where_to_store(instance: 'SushiFetchAttempt', filename):
 
 
 class SushiFetchAttemptQuerySet(models.QuerySet):
+    def last_queued(self):
+        res = self.annotate(
+            is_previous=Exists(SushiFetchAttempt.objects.filter(queue_previous=OuterRef('pk')))
+        ).filter(is_previous=False)
+        return res
+
     def current(self):
         return self.filter(credentials_version_hash=F('credentials__version_hash'))
 
@@ -564,6 +570,9 @@ class SushiFetchAttempt(models.Model):
         help_text='Was the attempt queued by the provider and should be ' 'refetched?',
     )
     when_queued = models.DateTimeField(null=True, blank=True)
+    queue_id = models.IntegerField(
+        null=True, blank=True, help_text='Identifier for attempt queue',
+    )  # None if attempt is not queued
     queue_previous = models.ForeignKey(
         'self',
         null=True,
@@ -685,13 +694,20 @@ class SushiFetchAttempt(models.Model):
         ).exclude(pk=self.pk)
 
     def retry(self):
-        attempt = self.credentials.fetch_report(
-            counter_report=self.counter_report,
-            start_date=self.start_date,
-            end_date=month_end(self.end_date),
-        )
-        attempt.queue_previous = self
-        attempt.save()
+        with atomic:
+            # set queue queue_id if not already set
+            if not self.queue_id:
+                self.queue_id = self.pk
+                self.save()
+
+            attempt = self.credentials.fetch_report(
+                counter_report=self.counter_report,
+                start_date=self.start_date,
+                end_date=month_end(self.end_date),
+            )
+            attempt.queue_previous = self
+            attempt.queue_id = self.queue_id
+            attempt.save()
         return attempt
 
     def previous_attempt_count(self):

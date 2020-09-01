@@ -73,6 +73,7 @@ class TestSushiFetchAttemptModelManager:
         SushiFetchAttempt.objects.all()
         SushiFetchAttempt.objects.current()
         SushiFetchAttempt.objects.current_or_successful()
+        SushiFetchAttempt.objects.last_queued()
 
     def test_custom_manager_methods_exist_on_queryset(self):
         """
@@ -80,6 +81,43 @@ class TestSushiFetchAttemptModelManager:
         """
         SushiFetchAttempt.objects.filter(download_success=True).current()
         SushiFetchAttempt.objects.filter(download_success=True).current_or_successful()
+        SushiFetchAttempt.objects.filter(download_success=True).last_queued()
+
+    def test_last_queued(self, credentials, counter_report_type):
+        fa1 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+        )
+
+        fa2 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            queue_previous=fa1,
+        )
+
+        fa3 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            queue_previous=fa2,
+        )
+
+        fa4 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+        )
+
+        assert SushiFetchAttempt.objects.last_queued().count() == 2
+        assert {fa4.pk, fa3.pk} == set(
+            SushiFetchAttempt.objects.last_queued().values_list('pk', flat=True)
+        )
 
 
 @pytest.mark.django_db
