@@ -84,7 +84,7 @@ export default {
       if (this.forceState) {
         return this.forceState
       } else if (this.attempt) {
-        return attemptState(this.attempt)
+        return this.attempt.state ? this.attempt.state : attemptState(this.attempt)
       }
       return null
     }

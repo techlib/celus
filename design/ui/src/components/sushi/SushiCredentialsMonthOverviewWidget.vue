@@ -140,7 +140,7 @@ import addDays from 'date-fns/addDays'
 import addMonths from 'date-fns/addMonths'
 import { parseDateTime, ymDateFormat } from '@/libs/dates'
 import SushiAttemptStateIcon from '@/components/sushi/SushiAttemptStateIcon'
-import { attemptState } from '@/libs/attempt-state'
+import { attemptState, ATTEMPT_SUCCESS } from '@/libs/attempt-state'
 import IconButton from '@/components/sushi/IconButton'
 
 export default {
@@ -260,13 +260,9 @@ export default {
 
         let activeCredentials = new Set(this.sushiCredentialsWithAttempts.map(item => item.pk))
         return this.attemptData.filter(item => activeCredentials.has(item.credentials_id))
-
       },
-      sushiCredentialsWithAttempts () {
+      allSushiCredentialsWithAttempts () {
         return this.sushiCredentialsList
-          .filter(item => item.enabled)
-          .filter(item => this.counterVersion === null || item.counter_version === this.counterVersion)
-          .filter(item => this.selectedPlatform === null || item.platform.pk === this.selectedPlatform)
           .map(item => {
             for (let reportType of item.active_counter_reports_long) {
               let key = `${item.pk}-${reportType.id}`
@@ -278,11 +274,20 @@ export default {
             }
             return item
           })
-          .filter(item => !this.hideSuccessful || this.usedReportTypes.filter(rt => item[rt.code] && item[rt.code].import_batch).length != this.usedReportTypes.filter(rt => item[rt.code]).length)
+      },
+      sushiCredentialsWithAttempts () {
+        let list = this.allSushiCredentialsWithAttempts
+          .filter(item => item.enabled)
+          .filter(item => this.counterVersion === null || item.counter_version === this.counterVersion)
+          .filter(item => this.selectedPlatform === null || item.platform.pk === this.selectedPlatform)
+        if (this.hideSuccessful) {
+          list = list.filter(item => item.active_counter_reports_long.filter(rt => item[rt.code] && item[rt.code].state === ATTEMPT_SUCCESS).length != item.active_counter_reports_long.length)
+        }
+        return list
       },
       stateStats () {
         let stats = new Map()
-        for (let state of this.activeAttempts.map(attemptState)) {
+        for (let state of this.activeAttempts.map(attempt => attempt.state)) {
           if (stats.has(state)) {
             stats.set(state, stats.get(state) + 1)
           } else {
@@ -318,6 +323,7 @@ export default {
           this.attemptData = response.data
           // create a map to easily find the attempt data
           let attemptMap = new Map()
+          this.attemptData.forEach(item => item.state = attemptState(item))
           this.attemptData.forEach(item => attemptMap.set(`${item.credentials_id}-${item.counter_report_id}`, item))
           this.attemptMap = attemptMap
         } catch (error) {
