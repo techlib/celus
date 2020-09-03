@@ -109,7 +109,7 @@ cs:
                                     :key="`${rt.code}-${item.credentials_id}`"
                                     @click="showAttempt(item[rt.code])"
                             >
-                                <SushiAttemptStateIcon :attempt="item[rt.code]"/>
+                                <SushiAttemptStateIcon :attempt="item[rt.code]" latest/>
                             </span>
                         </template>
 

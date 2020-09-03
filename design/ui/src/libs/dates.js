@@ -14,6 +14,9 @@ function parseDateTime (text) {
 }
 
 function isoDateTimeFormat (date) {
+  if (typeof date === 'string') {
+    date = parseDateTime(date)
+  }
   return format(date, 'yyyy-MM-dd HH:mm:ss')
 }
 

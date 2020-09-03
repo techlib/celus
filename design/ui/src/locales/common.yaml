@@ -47,6 +47,7 @@ en:
     outside_consortium: Outside consortium
     uploaded: Uploaded
     queued: Queued
+    status: Status
   titles: Titles
   overview: Overview
   chart:
@@ -159,6 +160,7 @@ cs:
     outside_consortium: Mimo konzorcium
     uploaded: Nahráno
     queued: Odloženo
+    status: Stav
   titles: Tituly
   overview: Přehled
   chart:

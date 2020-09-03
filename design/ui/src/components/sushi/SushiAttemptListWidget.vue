@@ -28,7 +28,7 @@ cs:
         <v-card-text>
             <v-container fluid>
                 <v-row v-if="!attemptId">
-                    <v-col cols="12" md="6" lg="5">
+                    <v-col cols="12" md="6">
                         <table class="overview">
                             <tr v-if="organization">
                                 <th class="text-left">{{ $t('organization') }}:</th>
@@ -57,18 +57,18 @@ cs:
                         </table>
                     </v-col>
                     <v-spacer></v-spacer>
-                    <v-col cols="12" lg="7">
+                    <v-col cols="12" md="6">
                         <v-container fluid class="pa-0">
                             <v-row justify="end">
                                 <v-col cols="auto" class="py-0">
                                     <FetchAttemptModeFilter v-model="historyMode"/>
                                 </v-col>
-                                <v-col cols="auto" class="py-0">
+                                <!--v-col cols="auto" class="py-0">
                                     <v-switch v-model="showSuccess" :label="$t('show_success')" color="success" dense></v-switch>
                                 </v-col>
                                 <v-col cols="auto" class="py-0">
                                     <v-switch v-model="showFailure" :label="$t('show_failure')" color="error" dense></v-switch>
-                                </v-col>
+                                </v-col-->
                             </v-row>
                         </v-container>
                     </v-col>
@@ -86,6 +86,12 @@ cs:
                                 :items-per-page="5"
                                 :loading="loading"
                         >
+                            <template #item.status="{item}">
+                                <SushiAttemptStateIcon :attempt="item" />
+                            </template>
+                            <template #item.timestamp="{item}">
+                                <span v-html="formatDateTime(item.timestamp)"></span>
+                            </template>
                             <template #item.download_success="{item}">
                                 <CheckMark :value="item.download_success" true-color="success" false-color="warning"/>
                             </template>
@@ -162,10 +168,18 @@ cs:
   import ImportBatchChart from '../ImportBatchChart'
   import CheckMark from '@/components/util/CheckMark'
   import FetchAttemptModeFilter from './FetchAttemptModeFilter'
+  import SushiAttemptStateIcon from '@/components/sushi/SushiAttemptStateIcon'
+  import { isoDateTimeFormatSpans } from '@/libs/dates'
 
   export default {
     name: "SushiAttemptListWidget",
-    components: {AccessLogList, ImportBatchChart, CheckMark, FetchAttemptModeFilter},
+    components: {
+      SushiAttemptStateIcon,
+      AccessLogList,
+      ImportBatchChart,
+      CheckMark,
+      FetchAttemptModeFilter
+    },
     props: {
       organization: {required: false},
       platform: {required: false},
@@ -223,6 +237,10 @@ cs:
       headers () {
         let ret = [
           {
+            text: this.$t('title_fields.status'),
+            value: 'status'
+          },
+          /*{
             text: this.$t('title_fields.download_success'),
             value: 'download_success'
           },
@@ -241,7 +259,7 @@ cs:
           {
             text: this.$t('title_fields.queued'),
             value: 'queued'
-          },
+          },*/
           {
             text: this.$t('timestamp'),
             value: 'timestamp'
@@ -302,7 +320,11 @@ cs:
           this.loading = false
         }
       },
+      formatDateTime (value) {
+        return isoDateTimeFormatSpans(value)
+      }
     },
+
     watch: {
       listUrl () {
         this.loadAttempts()
@@ -314,7 +336,7 @@ cs:
   }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 
     table.overview {
         th {
@@ -326,5 +348,10 @@ cs:
         font-family: Courier, monospace;
         color: #666666;
         white-space: pre-wrap;
+    }
+
+    span.time {
+        font-weight: 300;
+        font-size: 87.5%;
     }
 </style>

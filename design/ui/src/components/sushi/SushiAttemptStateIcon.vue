@@ -6,7 +6,8 @@ en:
   attempt_state_success: Data were successfully downloaded and ingested into Celus.
   attempt_state_missing: Data retrieval was not yet performed.
   details: Details
-  field_timestamp: Last attempt
+  field_timestamp: Time
+  field_timestamp_latest: Last attempt
   field_error_code: Error code
 
 cs:
@@ -16,7 +17,8 @@ cs:
   attempt_state_success: Data byla úspěšně stažená a uložená v systému.
   attempt_state_missing: Stažení dat zatím nebylo provedeno.
   details: Detaily
-  field_timestamp: Poslední pokus
+  field_timestamp: Čas
+  field_timestamp_latest: Poslední pokus
   field_error_code: Chybový kód
 </i18n>
 
@@ -40,7 +42,7 @@ cs:
                 <div v-if="attempt && attemptState !== stateUntried">
                     <h4 v-text="$t('details')" class="mt-3"></h4>
                     <ul>
-                        <li><strong>{{ $t('field_timestamp') }}</strong>: {{ formatDateTime(attempt.timestamp) }}</li>
+                        <li><strong>{{ latest ? $t('field_timestamp_latest') : $t('field_timestamp') }}</strong>: {{ formatDateTime(attempt.timestamp) }}</li>
                         <li v-if="attempt.error_code"><strong>{{ $t('field_error_code') }}</strong>: {{ attempt.error_code }}</li>
                     </ul>
                 </div>
@@ -56,13 +58,15 @@ import {
   ATTEMPT_ERROR,
   ATTEMPT_NOT_MADE
 } from '@/libs/attempt-state'
-import { parseDateTime, isoDateTimeFormat } from '@/libs/dates'
+import { isoDateTimeFormat } from '@/libs/dates'
 
 export default {
   name: 'SushiAttemptStateIcon',
 
   props: {
     attempt: {required: false},
+    // when set to true, this attempt is last of several and the wording should reflect it
+    latest: {default: false, type: Boolean},
     forceState: {required: false, default: null, type: String}
   },
 
@@ -88,9 +92,8 @@ export default {
 
   methods: {
     formatDateTime (value) {
-      let date = parseDateTime(value)
-      if (date) {
-        return isoDateTimeFormat(date)
+      if (value) {
+        return isoDateTimeFormat(value)
       }
       return ''
     }
