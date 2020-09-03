@@ -5,7 +5,7 @@ from test_fixtures.entities.organizations import OrganizationFactory
 
 
 @pytest.mark.django_db
-class TestDb(object):
+class TestDb:
     def test_organization_factory(self):
         assert Organization.objects.count() == 0
         OrganizationFactory.create()

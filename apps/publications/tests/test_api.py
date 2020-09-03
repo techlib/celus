@@ -30,7 +30,7 @@ from test_fixtures.scenarios.basic import *
 
 
 @pytest.mark.django_db
-class TestPlatformAPI(object):
+class TestPlatformAPI:
     def test_unauthorized_user(
         self, client, invalid_identity, authentication_headers, organizations
     ):
@@ -98,7 +98,7 @@ class TestPlatformAPI(object):
 
 
 @pytest.mark.django_db
-class TestPlatformDetailedAPI(object):
+class TestPlatformDetailedAPI:
     def test_unauthorized_user(
         self, client, invalid_identity, authentication_headers, organizations
     ):
@@ -227,7 +227,7 @@ class TestPlatformDetailedAPI(object):
 
 
 @pytest.mark.django_db
-class TestPlatformTitleAPI(object):
+class TestPlatformTitleAPI:
     def test_unauthorized_user(
         self, client, invalid_identity, authentication_headers, organizations, platforms
     ):
@@ -603,7 +603,7 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
 
 
 @pytest.mark.django_db
-class TestTopTitleInterestViewSet(object):
+class TestTopTitleInterestViewSet:
     def test_all_organizations(self, accesslogs_with_interest, master_client):
         titles = accesslogs_with_interest['titles']
         with patch('recache.util.renew_cached_query_task') as renewal_task:

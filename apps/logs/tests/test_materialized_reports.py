@@ -21,7 +21,7 @@ from publications.tests.conftest import platform
 
 
 @pytest.mark.django_db()
-class TestMaterializedReport(object):
+class TestMaterializedReport:
     def test_not_title(self, counter_records, organizations, report_type_nd, platform):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
@@ -187,7 +187,7 @@ class TestMaterializedReport(object):
 
 
 @pytest.mark.django_db()
-class TestMaterializedReportManagementCommands(object):
+class TestMaterializedReportManagementCommands:
     def test_recompute_materialized_reports(
         self, counter_records, organizations, report_type_nd, platform
     ):

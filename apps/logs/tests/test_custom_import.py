@@ -16,7 +16,7 @@ from publications.tests.conftest import platforms, interest_rt, titles
 
 
 @pytest.mark.django_db
-class TestCustomImport(object):
+class TestCustomImport:
 
     """
     Tests functionality of the logic.custom_import module

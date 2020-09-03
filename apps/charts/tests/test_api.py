@@ -28,7 +28,7 @@ def simple_report_view(report_type_nd):
 
 
 @pytest.mark.django_db
-class TestReportViewToChartAPI(object):
+class TestReportViewToChartAPI:
     def test_api_list_simple(self, master_client):
         resp = master_client.get(reverse('report-view-to-chart-list'))
         assert resp.status_code == 200
@@ -87,7 +87,7 @@ class TestReportViewToChartAPI(object):
 
 
 @pytest.mark.django_db
-class TestReportViewAPI(object):
+class TestReportViewAPI:
     def test_api_list_simple(self, master_client):
         resp = master_client.get(reverse('report-view-list'))
         assert resp.status_code == 200
@@ -205,7 +205,7 @@ class TestReportViewAPI(object):
 
 
 @pytest.mark.django_db
-class TestChartsAPI(object):
+class TestChartsAPI:
     def test_api_list_simple(self, master_client):
         """
         Simply test that the endpoint exists and returns some response
@@ -226,7 +226,7 @@ class TestChartsAPI(object):
 
 
 @pytest.mark.django_db
-class TestChartDataAPIView(object):
+class TestChartDataAPIView:
     def test_working_data(self, authenticated_client, simple_report_view):
         """
         Simply test that the endpoint exists and returns some response

@@ -13,7 +13,7 @@ class ERMSError(Exception):
     pass
 
 
-class ERMS(object):
+class ERMS:
 
     """
     Possible queries:

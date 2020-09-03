@@ -21,7 +21,7 @@ class OwnerLevelBasedPermissions(BasePermission):
         return True
 
 
-class OrganizationRelatedPermissionMixin(object):
+class OrganizationRelatedPermissionMixin:
 
     """
     Base class for permissions that have to check if user is related to an organization and how

@@ -7,7 +7,7 @@ from organizations.models import OrganizationAltName
 
 
 @pytest.mark.django_db
-class TestOrganizationAltName(object):
+class TestOrganizationAltName:
     def test_name_uniqueness(self, organizations):
         OrganizationAltName.objects.create(organization=organizations[0], name='foo')
         with pytest.raises(IntegrityError):

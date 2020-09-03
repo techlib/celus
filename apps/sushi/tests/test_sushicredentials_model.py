@@ -16,7 +16,7 @@ from core.tests.conftest import master_identity, valid_identity
 
 
 @pytest.mark.django_db
-class TestLocking(object):
+class TestLocking:
     @pytest.mark.parametrize(
         ['user_code', 'can_lock_super', 'can_lock_staff', 'can_lock_org_admin'],
         (
@@ -109,7 +109,7 @@ class TestLocking(object):
 
 
 @pytest.mark.django_db
-class TestCredentialsVersioning(object):
+class TestCredentialsVersioning:
     def test_version_hash_is_stored(self, organizations):
         """
         Tests that version_hash is computed and store on save

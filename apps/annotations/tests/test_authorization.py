@@ -8,7 +8,7 @@ from organizations.tests.conftest import organizations
 
 
 @pytest.mark.django_db
-class TestAuthorization(object):
+class TestAuthorization:
 
     """
     What we should test:

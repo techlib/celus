@@ -4,7 +4,7 @@ from logs.models import ReportType, Dimension, ReportTypeToDimension
 
 
 @pytest.mark.django_db
-class TestReportType(object):
+class TestReportType:
 
     """
     Tests basic methods of the TestReport model

@@ -28,7 +28,7 @@ from .models import (
 )
 
 
-class OrganizationSourceExtractingMixin(object):
+class OrganizationSourceExtractingMixin:
     def _get_organization_data_source(self):
         organization_id = self.context['view'].kwargs.get('organization_pk')
         if (

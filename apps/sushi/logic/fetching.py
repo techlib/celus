@@ -120,7 +120,7 @@ def process_fetch_units_wrapper(args, **kwargs):
         logger.debug('Unlocked %s', lock_name)
 
 
-class FetchUnit(object):
+class FetchUnit:
 
     """
     Represents one combination of platform, organization and report type which should

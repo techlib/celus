@@ -63,7 +63,7 @@ def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organ
 
 
 @pytest.mark.django_db
-class TestAuthorization(object):
+class TestAuthorization:
 
     """
     What we should test:

@@ -13,7 +13,7 @@ from logs.tests.conftest import report_type_nd
 
 
 @pytest.mark.django_db
-class TestURLComposition(object):
+class TestURLComposition:
     def test_extra_params_is_not_polluted_by_extra_data(
         self, organizations, report_type_nd, monkeypatch
     ):

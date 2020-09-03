@@ -11,7 +11,7 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-class TestRecacheQueryset(object):
+class TestRecacheQueryset:
     """
     Tests the `recache_queryset` util function
     """

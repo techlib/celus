@@ -187,7 +187,7 @@ def replace_report_type_with_materialized(
     return False
 
 
-class StatsComputer(object):
+class StatsComputer:
 
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'import_batch']
     input_dim_to_query_dim = {'interest': 'metric'}

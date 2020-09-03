@@ -12,7 +12,7 @@ from organizations.tests.conftest import organizations
 
 
 @pytest.mark.django_db
-class TestDataImport(object):
+class TestDataImport:
 
     """
     Tests functionality of the logic.data_import module
@@ -155,7 +155,7 @@ class TestDataImport(object):
 
 
 @pytest.mark.django_db
-class TestCounter4Import(object):
+class TestCounter4Import:
     def test_import_br2_tsv(self, organizations, report_type_nd, platform):
         rt = report_type_nd(1, dimension_names=['Publisher'])
         from pycounter import report

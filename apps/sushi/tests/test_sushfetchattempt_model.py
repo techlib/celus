@@ -65,7 +65,7 @@ class TestFileName:
 
 
 @pytest.mark.django_db
-class TestSushiFetchAttemptModelManager(object):
+class TestSushiFetchAttemptModelManager:
     def test_custom_manager_methods_exist(self):
         """
         Test that custom manager methods exist at all
@@ -83,7 +83,7 @@ class TestSushiFetchAttemptModelManager(object):
 
 
 @pytest.mark.django_db
-class TestSushiFetchAttemptModel(object):
+class TestSushiFetchAttemptModel:
     def test_conflicting_fully_enclosing(self, credentials, counter_report_type):
         fa = SushiFetchAttempt.objects.create(
             credentials=credentials,

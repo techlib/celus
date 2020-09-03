@@ -14,7 +14,7 @@ class SyncerError(Exception):
     pass
 
 
-class Syncer(object):
+class Syncer:
 
     attr_map = {}
     primary_id = 'id'  # used to find if a value is in the database or not

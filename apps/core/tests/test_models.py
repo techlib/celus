@@ -77,7 +77,7 @@ def test_accessible_platforms(basic1):  # noqa
 
 
 @pytest.mark.django_db
-class TestUserModel(object):
+class TestUserModel:
     def test_email_verification_case_mismatch(self):
         """
         Test that email is considered verified even if the case is changed

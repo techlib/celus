@@ -17,7 +17,7 @@ from publications.tests.conftest import interest_rt
 
 
 @pytest.mark.django_db
-class TestOrganizationAPI(object):
+class TestOrganizationAPI:
     def test_unauthorized_user(self, client, invalid_identity, authentication_headers):
         resp = client.get(reverse('organization-list'), **authentication_headers(invalid_identity))
         assert resp.status_code in (403, 401)  # depends on auth backend

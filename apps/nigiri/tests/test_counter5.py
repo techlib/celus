@@ -6,7 +6,7 @@ from ..counter5 import Counter5ReportBase, Counter5TRReport
 from ..exceptions import SushiException
 
 
-class TestCounter5Reading(object):
+class TestCounter5Reading:
     def test_record_simple(self):
         reader = Counter5ReportBase()
         records = [

@@ -5,7 +5,7 @@ from publications.models import Title
 
 
 @pytest.mark.django_db
-class TestTitleManager(object):
+class TestTitleManager:
     def test_mangled_isbn(self):
         """
         Test for a bug that TitleManager looks for data in database with non-normalized isbn

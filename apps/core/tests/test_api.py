@@ -13,7 +13,7 @@ from core.models import Identity, User
 
 
 @pytest.mark.django_db
-class TestUserAPI(object):
+class TestUserAPI:
     def test_authenticated(self, authenticated_client):
         resp = authenticated_client.get(reverse('user_api_view'))
         assert resp.status_code == 200
@@ -174,7 +174,7 @@ class TestUserAPI(object):
 
 
 @pytest.mark.django_db
-class TestAccountCreationAPI(object):
+class TestAccountCreationAPI:
     test_user_data = {
         'email': 'foo@bar.baz',
         'password1': 'verysecret666',
@@ -292,7 +292,7 @@ class TestAccountCreationAPI(object):
 
 
 @pytest.mark.django_db
-class TestBasicInfoAPI(object):
+class TestBasicInfoAPI:
     def test_system_info_api_view(self, client, settings):
         resp = client.get(reverse('system_info_api_view'))
         assert resp.status_code == 200
@@ -306,7 +306,7 @@ class TestBasicInfoAPI(object):
 
 
 @pytest.mark.django_db
-class TestInvitationAndPasswordResetAPI(object):
+class TestInvitationAndPasswordResetAPI:
     def test_password_reset_email_is_sent(self, client, mailoutbox):
         """
         Test that the API endpoint for sending password reset emails works and really sends out

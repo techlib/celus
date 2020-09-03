@@ -3,7 +3,7 @@ from django.urls import reverse
 
 
 @pytest.mark.django_db
-class TestAuthentication(object):
+class TestAuthentication:
     def test_valid_identity_api_access(self, valid_identity, client, authentication_headers):
         url = reverse('report-type-list')
         resp = client.get(url, **authentication_headers(valid_identity))

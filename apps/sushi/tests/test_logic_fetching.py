@@ -24,7 +24,7 @@ from logs.tests.conftest import report_type_nd
 from ..tasks import retry_holes_with_new_credentials_task
 
 
-class TestHelperFunctions(object):
+class TestHelperFunctions:
     def test_months_to_cover_no_first_month(self, settings):
         today = now().date()
         # set the date to 4 months before today
@@ -37,7 +37,7 @@ class TestHelperFunctions(object):
 
 
 @pytest.mark.django_db
-class TestHoleFillingMachinery(object):
+class TestHoleFillingMachinery:
     def test_find_holes_in_data(self, settings, organizations, report_type_nd, monkeypatch):
         """
         Tests the `find_holes_in_data` function.
@@ -187,7 +187,7 @@ class TestHoleFillingMachinery(object):
 
 
 @pytest.mark.django_db
-class TestSushiFetching(object):
+class TestSushiFetching:
     def test_create_fetch_units(self, credentials, counter_report_type):
         fus = create_fetch_units()
         assert len(fus) == 0, 'no fetchunits until credentails have some report type active'
@@ -331,7 +331,7 @@ class TestSushiFetching(object):
 
 
 @pytest.mark.django_db
-class TestFetchUnit(object):
+class TestFetchUnit:
     def test_find_conflicting(self, fetch_unit: FetchUnit):
         """
         Tests that the `FetchUnit.find_conflicting` works as expected. Simple version.

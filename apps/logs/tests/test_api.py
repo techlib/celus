@@ -23,7 +23,7 @@ from core.tests.conftest import (
 
 
 @pytest.mark.django_db
-class TestChartDataAPI(object):
+class TestChartDataAPI:
 
     """
     Tests functionality of the view chart-data
@@ -424,7 +424,7 @@ class TestChartDataAPI(object):
 
 
 @pytest.mark.django_db
-class TestManualDataUpload(object):
+class TestManualDataUpload:
     def test_can_create_manual_data_upload(
         self, organizations, master_client, report_type_nd, tmp_path, settings
     ):
@@ -452,7 +452,7 @@ class TestManualDataUpload(object):
 
 
 @pytest.mark.django_db
-class TestReportTypeAPI(object):
+class TestReportTypeAPI:
     def test_create_report_type_400(self, organizations, authenticated_client):
         organization = organizations[0]
         assert ReportType.objects.count() == 0
@@ -541,7 +541,7 @@ class TestReportTypeAPI(object):
 
 
 @pytest.mark.django_db
-class TestRawDataExport(object):
+class TestRawDataExport:
     @pytest.mark.parametrize(
         ['user_type', 'can_access'],
         [

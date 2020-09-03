@@ -8,7 +8,7 @@ from organizations.models import Organization
 
 
 @pytest.mark.django_db
-class TestLogicSync(object):
+class TestLogicSync:
 
     src_data = [
         {

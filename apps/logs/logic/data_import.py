@@ -34,7 +34,7 @@ def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=No
 TitleRec = namedtuple('TitleRec', ('name', 'pub_type', 'issn', 'eissn', 'isbn', 'doi'))
 
 
-class TitleManager(object):
+class TitleManager:
     def __init__(self):
         self.key_to_title_id_and_pub_type = {}
         self.stats = Counter()

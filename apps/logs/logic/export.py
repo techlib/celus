@@ -17,7 +17,7 @@ from ..models import AccessLog, DimensionText, ReportType
 logger = logging.getLogger(__name__)
 
 
-class CSVExport(object):
+class CSVExport:
 
     implicit_dims = {
         'platform': 'name',

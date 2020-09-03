@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-class TestCachedQuery(object):
+class TestCachedQuery:
     def test_objects_create_from_queryset(self):
         UserFactory.create_batch(1)
         queryset = User.objects.all()

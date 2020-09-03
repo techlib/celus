@@ -34,7 +34,7 @@ namespaces = {
 }
 
 
-class SushiError(object):
+class SushiError:
     def __init__(self, code='', text='', full_log='', raw_data=None, severity=None):
         self.code = code
         self.severity = severity
@@ -46,7 +46,7 @@ class SushiError(object):
         return self.full_log
 
 
-class SushiErrorMeaning(object):
+class SushiErrorMeaning:
 
     RETRY_IN_MINUTES = 1
     RETRY_IN_HOURS = 2
@@ -102,7 +102,7 @@ def recursive_finder(
             yield element
 
 
-class SushiClientBase(object):
+class SushiClientBase:
     def __init__(self, url, requestor_id, customer_id=None, extra_params=None, auth=None):
         self.url = url
         self.requestor_id = requestor_id

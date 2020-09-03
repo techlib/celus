@@ -13,7 +13,7 @@ from .exceptions import SushiException
 
 # TODO we can try to use  data classes https://docs.python.org/3/library/dataclasses.html
 # but newer version o python >= 3.7 is required here
-class CounterRecord(object):
+class CounterRecord:
     __slots__ = (
         "platform_name",
         "start",
@@ -51,7 +51,7 @@ class CounterRecord(object):
         return (e for e in empty)
 
 
-class CounterError(object):
+class CounterError:
     def __init__(self, code=None, severity=None, message=None, data=None):
         self.code = code
         self.severity = severity
@@ -77,7 +77,7 @@ class CounterError(object):
         raise SushiException(str(self), content=self.data)
 
 
-class Counter5ReportBase(object):
+class Counter5ReportBase:
 
     dimensions = []  # this should be redefined in subclasses
     allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']

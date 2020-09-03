@@ -7,7 +7,7 @@ from publications.models import Platform
 
 
 @pytest.mark.django_db
-class TestERMSSynchronization(object):
+class TestERMSSynchronization:
     def test_dict_syncer(self):
         data = [
             {

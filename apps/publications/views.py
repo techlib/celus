@@ -389,7 +389,7 @@ class PlatformTitleViewSet(BaseTitleViewSet):
         return filters
 
 
-class TitleInterestMixin(object):
+class TitleInterestMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.interest_rt = None

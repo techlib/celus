@@ -11,7 +11,7 @@ from pycounter.report import CounterEresource, CounterReport
 from .counter5 import CounterRecord
 
 
-class Counter4ReportBase(object):
+class Counter4ReportBase:
 
     dimensions = []  # this should be redefined in subclasses
     allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']

@@ -21,7 +21,7 @@ from organizations.tests.conftest import organizations
 
 
 @pytest.mark.django_db()
-class TestInterestCalculation(object):
+class TestInterestCalculation:
     def test_simple(self, counter_records, organizations, report_type_nd):
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
@@ -172,7 +172,7 @@ class TestInterestCalculation(object):
 
 
 @pytest.mark.django_db()
-class TestInterestRecomputationDetection(object):
+class TestInterestRecomputationDetection:
     """
     Tests that code to detect ImportBatches that need to have their interest recomputed
     works properly
@@ -527,7 +527,7 @@ class TestInterestRecomputationDetection(object):
         ), 'old interest should be removed'
 
 
-class TestSupportCode(object):
+class TestSupportCode:
     def test_fast_compare_existing_and_new_records(self):
         old_records = [
             {'a': 10, 'b': 20, 'pk': 1},

@@ -6,7 +6,7 @@ from sushi.models import SushiCredentials, SushiFetchAttempt
 
 
 @pytest.mark.django_db
-class TestFindMissingAttemptFiles(object):
+class TestFindMissingAttemptFiles:
     """
     Tests the `find_missing_attempt_files` management command
     """

@@ -7,7 +7,7 @@ from organizations.tests.conftest import organizations
 
 
 @pytest.mark.django_db
-class TestLogicDataImport(object):
+class TestLogicDataImport:
     def test_sushi_import(self, organizations):
         assert SushiCredentials.objects.count() == 0
         data = [
