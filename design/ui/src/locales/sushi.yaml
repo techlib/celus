@@ -1,0 +1,9 @@
+en:
+  sushi:
+    enabled: Automatic harvesting
+    enabled_tooltip: When turned on, data for these credentials get automatically downloaded each month.
+
+cs:
+  sushi:
+    enabled: Automatické stahování
+    enabled_tooltip: Pokud je tato volba zapnutá, budou se data pro tyto přihlašovací údaje pravidelně automaticky stahovat.

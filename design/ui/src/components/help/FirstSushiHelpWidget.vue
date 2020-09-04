@@ -35,7 +35,7 @@ en:
     step5: Enable automatic harvesting
     step5_text: |
         When you have tested that your credentials work, we recommend activating automated
-        harvesting of data using the <strong>Enabled</strong> toggle. For "enabled" credentials,
+        harvesting of data using the <strong>Automatic harvesting</strong> toggle. For such credentials,
         Celus will automatically harvest data including past usage.
     step5_text_2: |
         <em>Note</em>: Please note that Celus does not start harvesting data immediately, but

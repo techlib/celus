@@ -1,5 +1,6 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 <i18n lang="yaml">
 en:
     add_new: Add new SUSHI
@@ -8,7 +9,8 @@ en:
     cannot_edit: You cannot edit them.
     can_edit: Because of your priviledges, you can still edit them.
     can_lock: You may lock/unlock these credentials - click to do so.
-    test_checked: Test checked
+    test_checked: Harvest selected
+    test_checked_tooltip: Opens a dialog for one-off harvesting of data for all selected SUSHI credentials.
     test_dialog: Test SUSHI credentials
 cs:
     add_new: Přidat nové SUSHI
@@ -17,7 +19,8 @@ cs:
     cannot_edit: Nemůžete je editovat.
     can_edit: Vaše oprávnění Vám umožňují je přesto editovat.
     can_lock: Kliknutím můžete tyto údaje uzamknout/odemknout.
-    test_checked: Otestuj vybrané
+    test_checked: Stáhni označené
+    test_checked_tooltip: Otevře dialog pro jednorázové stažení dat pro všechny vybrané přístupové údaje SUSHI.
     test_dialog: Test přihlašovacích údajů SUSHI
 </i18n>
 
@@ -37,13 +40,19 @@ cs:
                             </v-btn>
                         </v-col>
                         <v-col cols="auto" align-self="center">
-                            <v-btn
-                                    :disabled="!checkedCredentials.length"
-                                    @click="testChecked()"
-                            >
-                                {{ $t('test_checked') }}
-                                ({{ checkedCredentials.length }})
-                            </v-btn>
+                            <v-tooltip bottom>
+                                <template #activator="{ on }">
+                                    <v-btn
+                                            :disabled="!checkedCredentials.length"
+                                            @click="testChecked()"
+                                            v-on="on"
+                                    >
+                                        {{ $t('test_checked') }}
+                                        ({{ checkedCredentials.length }})
+                                    </v-btn>
+                                </template>
+                                {{ $t('test_checked_tooltip') }}
+                            </v-tooltip>
                         </v-col>
                         <v-spacer></v-spacer>
 
@@ -290,14 +299,16 @@ cs:
           {
             text: this.$i18n.t('title_fields.outside_consortium'),
             value: 'outside_consortium',
+            show: this.consortialInstall,
           },
           {
-            text: this.$i18n.t('title_fields.enabled'),
+            text: this.$i18n.t('sushi.enabled'),
             value: 'enabled',
           },
           {
             text: this.$i18n.t('title_fields.lock'),
             value: 'locked',
+            show: this.consortialInstall,
           },
           {
             text: this.$i18n.t('title_fields.actions'),
@@ -305,7 +316,7 @@ cs:
             sortable: false,
           },
         ]
-        return allHeaders.filter(row => row.value !== 'outside_consortium' || this.consortialInstall)
+        return allHeaders.filter(row => !row.hasOwnProperty('show') || row.show)
       },
       searchDebounced: {
         get () {
