@@ -359,6 +359,7 @@ Django = ">=2"
 reference = "154ec37662e3ed20687d7710660856c3e5e95116"
 type = "git"
 url = "https://github.com/beda42/django-cachalot.git"
+
 [[package]]
 category = "main"
 description = "Celery result backends for Django."
@@ -1237,7 +1238,7 @@ version = "2.8.5"
 [[package]]
 category = "dev"
 description = "Run a subprocess in a pseudo terminal"
-marker = "sys_platform != \"win32\" or os_name != \"nt\" or python_version >= \"3.3\" and sys_platform != \"win32\""
+marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\" or os_name != \"nt\" or python_version >= \"3.3\" and sys_platform != \"win32\" and (python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\")"
 name = "ptyprocess"
 optional = false
 python-versions = "*"
@@ -1272,7 +1273,7 @@ docs = ["sphinx", "sphinx-rtd-theme"]
 tests = ["coverage", "httmock", "mock", "pytest"]
 
 [package.source]
-reference = "5c6a28fc1334b9beeed05fde8197ad5bc5905a51"
+reference = "c9149ff3cf05602e61f4768e1d90d2fdc9d25e7f"
 type = "git"
 url = "https://github.com/beda42/pycounter.git"
 [[package]]
@@ -1970,7 +1971,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "ff8fda030a1937b7fd3636f6ba3a6a7bdba85690f5277254262844e2a44b1fa5"
+content-hash = "979b02574cbd81e8e676f52f07385f5e43b73f8ddb61f8ddabbdbe81b9191a1a"
 lock-version = "1.0"
 python-versions = "^3.6.8"
 
