@@ -33,7 +33,7 @@ django-reversion = "~3.0.7"
 djangorestframework = "~3.11.0"
 drf-nested-routers = "~0.91.0"
 lz4 = "~3.0.2"
-pycounter = {git = "https://github.com/beda42/pycounter.git", rev = "c9149ff3cf05602e61f4768e1d90d2fdc9d25e7f"}
+pycounter = {git = "https://github.com/beda42/pycounter.git", rev = "b9553632edcf3693bfbebae80d0a1792e2128472"}
 python-magic = "~0.4.15"
 pytz = "*"
 psutil = "~5.7.0"
