@@ -15,3 +15,5 @@ release:sentry:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ $SENTRY_RELEASE_BRANCHES && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
+  tags:
+    - bdd
