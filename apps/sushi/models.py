@@ -694,7 +694,7 @@ class SushiFetchAttempt(models.Model):
         ).exclude(pk=self.pk)
 
     def retry(self):
-        with atomic:
+        with atomic():
             # set queue queue_id if not already set
             if not self.queue_id:
                 self.queue_id = self.pk
