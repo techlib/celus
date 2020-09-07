@@ -581,7 +581,7 @@ class SushiFetchAttempt(models.Model):
         related_query_name='queue_following',
         related_name='queue_following',
     )
-    data_file = models.FileField(upload_to=where_to_store, blank=True, null=True)
+    data_file = models.FileField(upload_to=where_to_store, blank=True, null=True, max_length=256)
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
     is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
