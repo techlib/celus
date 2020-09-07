@@ -1,6 +1,8 @@
 import pytest
 from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
+from django.conf import settings
+from django.utils import timezone
 from freezegun import freeze_time
 from organizations.models import Organization
 from publications.models import Platform
@@ -180,3 +182,68 @@ class TestSushiFetchAttemptModel:
         assert (
             SushiFetchAttempt.objects.fetched_near_end_date().exists() is is_fetched_near_end_date
         )
+
+    @pytest.mark.parametrize(
+        ("end_date", "timestamp", "scheduled_time", "prev_count"),
+        (
+            (
+                "2019-12-31",
+                "2020-01-01 12:00:00+0000",
+                None,
+                settings.QUEUED_SUSHI_MAX_RETRY_COUNT + 1,
+            ),
+            # start of the month
+            ("2019-12-31", "2020-01-01 00:00:00+0000", "2020-01-08 00:00:00+0000", 0),
+            ("2019-11-30", "2020-01-01 00:00:00+0000", "2020-01-08 00:00:00+0000", 0),
+            ("2020-01-31", "2020-01-01 00:00:00+0000", "2020-01-08 00:00:00+0000", 0),
+            # within few dates
+            ("2019-12-31", "2020-01-05 00:00:00+0000", "2020-01-12 00:00:00+0000", 0),
+            ("2019-11-30", "2020-01-05 00:00:00+0000", "2020-01-12 00:00:00+0000", 0),
+            ("2020-01-31", "2020-01-05 00:00:00+0000", "2020-01-12 00:00:00+0000", 0),
+            # in the middle
+            ("2019-12-31", "2020-01-15 00:00:00+0000", "2020-01-22 00:00:00+0000", 0),
+            ("2019-11-30", "2020-01-15 00:00:00+0000", "2020-01-22 00:00:00+0000", 0),
+            ("2020-01-31", "2020-01-15 00:00:00+0000", "2020-01-22 00:00:00+0000", 0),
+            # at the end of the month
+            ("2019-12-31", "2020-01-31 00:00:00+0000", "2020-02-07 00:00:00+0000", 0),
+            ("2019-11-30", "2020-01-31 00:00:00+0000", "2020-02-07 00:00:00+0000", 0),
+            ("2020-01-31", "2020-01-31 00:00:00+0000", "2020-02-07 00:00:00+0000", 0),
+            # iterate through counts ready
+            ("2019-12-31", "2020-01-01 00:00:00+0000", "2020-01-15 00:00:00+0000", 1),
+            ("2019-12-31", "2020-01-01 00:00:00+0000", "2020-01-29 00:00:00+0000", 2),
+            ("2019-12-31", "2020-01-01 00:00:00+0000", "2020-02-26 00:00:00+0000", 3),
+            ("2019-12-31", "2020-01-01 00:00:00+0000", "2020-04-22 00:00:00+0000", 4),
+            ("2019-12-31", "2020-01-01 00:00:00+0000", "2020-08-12 00:00:00+0000", 5),
+            # iterate through counts noready
+            ("2020-01-31", "2020-01-05 00:00:00+0000", "2020-01-19 00:00:00+0000", 1),
+            ("2020-01-31", "2020-01-05 00:00:00+0000", "2020-02-02 00:00:00+0000", 2),
+            ("2020-01-31", "2020-01-05 00:00:00+0000", "2020-03-01 00:00:00+0000", 3),
+            ("2020-01-31", "2020-01-05 00:00:00+0000", "2020-04-26 00:00:00+0000", 4),
+            ("2020-01-31", "2020-01-05 00:00:00+0000", "2020-08-16 00:00:00+0000", 5),
+        ),
+    )
+    def test_when_to_retry(self, end_date, timestamp, scheduled_time, prev_count):
+        with freeze_time(timestamp):
+            attempt = FetchAttemptFactory(
+                end_date=end_date,
+                when_queued=timestamp,
+                error_code="3031",
+                processing_success=True,
+            )
+            attempt.refresh_from_db()
+            for _ in range(prev_count):
+                attempt = FetchAttemptFactory(
+                    credentials=attempt.credentials,
+                    counter_report=attempt.counter_report,
+                    end_date=end_date,
+                    when_queued=timestamp,
+                    error_code="3031",
+                    processing_success=True,
+                    queue_previous=attempt,
+                )
+
+            attempt.refresh_from_db()
+            if scheduled_time:
+                assert attempt.when_to_retry().strftime("%Y-%m-%d %H:%M:%S%z") == scheduled_time
+            else:
+                assert attempt.when_to_retry() is None

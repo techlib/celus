@@ -19,7 +19,12 @@ from django.utils.timezone import now
 
 from core.logic.dates import month_start, month_end
 from core.task_support import cache_based_lock
-from sushi.models import SushiFetchAttempt, SushiCredentials, CounterReportType
+from sushi.models import (
+    NO_DATA_READY_PERIOD,
+    SushiFetchAttempt,
+    SushiCredentials,
+    CounterReportType,
+)
 
 logger = logging.getLogger(__name__)
 conflict_strategies = ['continue', 'skip', 'stop']
@@ -84,7 +89,9 @@ def fetch_new_sushi_data(credentials: Optional[SushiCredentials] = None):
     if credentials:
         fetch_units = filter_fetch_units_by_credentials(fetch_units, credentials)
     lock_name_to_units = split_fetch_units_by_url_lock_name(fetch_units)
-    start_date = month_start(month_start(now().date()) - timedelta(days=15))  # start of prev month
+    start_date = month_start(
+        month_start((now() - NO_DATA_READY_PERIOD).date()) - timedelta(days=15)
+    )  # start of prev month
     end_date = month_start(parse_date(settings.SUSHI_ATTEMPT_LAST_DATE))
     # do not use lock, we lock the whole queue with same URL
     processing_fn = partial(

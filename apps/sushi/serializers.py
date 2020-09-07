@@ -10,15 +10,16 @@ from rest_framework.fields import (
     IntegerField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import ModelSerializer, Serializer
+from rest_framework.serializers import ModelSerializer, Serializer, ValidationError
 
 
+from core.logic.dates import month_end
 from core.models import UL_CONS_STAFF
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
 from publications.serializers import PlatformSerializer
-from .models import SushiCredentials, CounterReportType, SushiFetchAttempt
+from .models import SushiCredentials, CounterReportType, SushiFetchAttempt, NO_DATA_READY_PERIOD
 
 
 class CounterReportTypeSerializer(ModelSerializer):
@@ -104,6 +105,15 @@ class SushiFetchAttemptSerializer(ModelSerializer):
     counter_report_verbose = CounterReportTypeSerializer(read_only=True, source='counter_report')
     organization = OrganizationSerializer(read_only=True, source='credentials.organization')
     platform = PlatformSerializer(read_only=True, source='credentials.platform')
+
+    def validate_end_date(self, value):
+        value = month_end(value)
+        current_date = timezone.now().date()
+        not_before = value + NO_DATA_READY_PERIOD
+        # it doesn't make sense to download data which are probably missing
+        if not_before >= current_date:
+            raise ValidationError(f"Should be performed after {not_before.strftime('%Y-%m-%d')}")
+        return value
 
     class Meta:
         model = SushiFetchAttempt

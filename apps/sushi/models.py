@@ -17,7 +17,7 @@ from django.core.files.base import ContentFile, File
 from django.db import models
 from django.db.models import F, Exists, OuterRef
 from django.db.transaction import atomic
-from django.utils.timezone import now
+from django.utils.timezone import now, utc
 from pycounter.exceptions import SushiException
 from rest_framework.exceptions import PermissionDenied
 
@@ -74,6 +74,7 @@ COUNTER_REPORTS = (
 
 
 NO_DATA_RETRY_PERIOD = timedelta(days=45)  # cca month and half
+NO_DATA_READY_PERIOD = timedelta(days=7)
 
 
 class CounterReportType(models.Model):

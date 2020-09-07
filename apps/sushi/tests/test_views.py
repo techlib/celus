@@ -1,6 +1,7 @@
 import json
 import pytest
 
+from freezegun import freeze_time
 from datetime import timedelta
 from unittest.mock import patch
 from urllib.parse import quote
@@ -23,6 +24,8 @@ from test_fixtures.scenarios.basic import (
     organizations,
     platforms,
     users,
+    counter_report_types,
+    report_types,
 )
 
 
@@ -55,7 +58,7 @@ class TestSushiCredentialsViewSet:
         assert credentials.lock_level == UL_CONS_STAFF
 
     def test_create_action(
-        self, basic1, organizations, platforms, clients, users, counter_report_type
+        self, basic1, organizations, platforms, clients, users, counter_report_types
     ):
         url = reverse('sushi-credentials-list')
 
@@ -70,7 +73,7 @@ class TestSushiCredentialsViewSet:
                 'requestor_id': 'xxxxxxx',
                 'customer_id': 'yyyyy',
                 'counter_version': '5',
-                'active_counter_reports': [counter_report_type.pk],
+                'active_counter_reports': [counter_report_types["tr"].pk],
             },
         )
         assert resp.status_code == 201
@@ -431,7 +434,7 @@ class TestSushiFetchAttemptStatsView:
 
 @pytest.mark.django_db()
 class TestSushiFetchAttemptView:
-    def test_create(self, basic1, organizations, platforms, clients, counter_report_type):
+    def test_create(self, basic1, organizations, platforms, clients, counter_report_types):
         credentials = CredentialsFactory(
             organization=organizations["root"], platform=platforms["root"],
         )
@@ -445,7 +448,7 @@ class TestSushiFetchAttemptView:
                     'credentials': credentials.pk,
                     'start_date': '2020-01-01',
                     'end_date': '2020-01-31',
-                    'counter_report': counter_report_type.pk,
+                    'counter_report': counter_report_types["tr"].pk,
                 },
             )
             assert task_mock.apply_async.call_count == 1
@@ -473,7 +476,7 @@ class TestSushiFetchAttemptView:
         organizations,
         platforms,
         clients,
-        counter_report_type,
+        counter_report_types,
     ):
         credentials = CredentialsFactory(
             organization=organizations["standalone"], platform=platforms["standalone"],
@@ -486,7 +489,7 @@ class TestSushiFetchAttemptView:
                     'credentials': credentials.pk,
                     'start_date': '2020-01-01',
                     'end_date': '2020-01-31',
-                    'counter_report': counter_report_type.pk,
+                    'counter_report': counter_report_types["tr"].pk,
                 },
             )
             assert resp.status_code == return_code
@@ -495,8 +498,54 @@ class TestSushiFetchAttemptView:
             else:
                 assert task_mock.apply_async.call_count == 0
 
+    def test_create_in_no_data_period(
+        self, basic1, organizations, platforms, clients, counter_report_types
+    ):
+        credentials = CredentialsFactory(
+            organization=organizations["root"], platform=platforms["root"],
+        )
+
+        with freeze_time("2020-01-31"):
+            with patch('sushi.views.run_sushi_fetch_attempt_task'):
+                resp = clients["master"].post(
+                    reverse('sushi-fetch-attempt-list'),
+                    {
+                        'credentials': credentials.pk,
+                        'start_date': '2020-01-01',
+                        'end_date': '2020-01-31',
+                        'counter_report': counter_report_types["tr"].pk,
+                    },
+                )
+                assert resp.status_code == 400
+
+        with freeze_time("2020-02-07"):
+            with patch('sushi.views.run_sushi_fetch_attempt_task'):
+                resp = clients["master"].post(
+                    reverse('sushi-fetch-attempt-list'),
+                    {
+                        'credentials': credentials.pk,
+                        'start_date': '2020-01-01',
+                        'end_date': '2020-01-31',
+                        'counter_report': counter_report_types["tr"].pk,
+                    },
+                )
+                assert resp.status_code == 400
+
+        with freeze_time("2020-02-08"):
+            with patch('sushi.views.run_sushi_fetch_attempt_task'):
+                resp = clients["master"].post(
+                    reverse('sushi-fetch-attempt-list'),
+                    {
+                        'credentials': credentials.pk,
+                        'start_date': '2020-01-01',
+                        'end_date': '2020-01-31',
+                        'counter_report': counter_report_types["tr"].pk,
+                    },
+                )
+                assert resp.status_code == 201
+
     def test_detail_available_after_create(
-        self, basic1, clients, organizations, platforms, counter_report_type
+        self, basic1, clients, organizations, platforms, counter_report_types
     ):
         """
         Check that if we create an attempt, it will be available using the same API later.
@@ -514,7 +563,7 @@ class TestSushiFetchAttemptView:
                     'credentials': credentials.pk,
                     'start_date': '2020-01-01',
                     'end_date': '2020-01-31',
-                    'counter_report': counter_report_type.pk,
+                    'counter_report': counter_report_types["tr"].pk,
                 },
             )
             assert task_mock.apply_async.call_count == 1
@@ -545,7 +594,7 @@ class TestSushiFetchAttemptView:
         platforms,
         clients,
         users,
-        counter_report_type,
+        counter_report_types,
         batch_present,
         download_success,
         contains_data,
@@ -558,7 +607,7 @@ class TestSushiFetchAttemptView:
             ImportBatch.objects.create(
                 platform=platforms["standalone"],
                 organization=organizations["standalone"],
-                report_type=counter_report_type.report_type,
+                report_type=counter_report_types["tr"].report_type,
             )
             if batch_present
             else None
@@ -575,7 +624,7 @@ class TestSushiFetchAttemptView:
             start_date='2020-01-01',
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
-            counter_report=counter_report_type,
+            counter_report=counter_report_types["tr"],
             import_batch=batch,
             download_success=download_success,
             contains_data=contains_data,
@@ -649,7 +698,7 @@ class TestSushiFetchAttemptView:
         assert post_resp.status_code == return_code
 
     def test_cleanup_queue(
-        basic1, organizations, platforms, clients, counter_report_type,
+        basic1, organizations, platforms, clients, counter_report_types,
     ):
         credentials = CredentialsFactory(
             organization=organizations["standalone"], platform=platforms["standalone"],
@@ -661,7 +710,7 @@ class TestSushiFetchAttemptView:
             start_date='2020-01-01',
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
-            counter_report=counter_report_type,
+            counter_report=counter_report_types["tr"],
             import_batch=None,
             download_success=True,
             contains_data=False,
@@ -676,7 +725,7 @@ class TestSushiFetchAttemptView:
             start_date='2020-01-01',
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
-            counter_report=counter_report_type,
+            counter_report=counter_report_types["tr"],
             import_batch=None,
             download_success=True,
             contains_data=False,
@@ -691,7 +740,7 @@ class TestSushiFetchAttemptView:
             start_date='2020-01-01',
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
-            counter_report=counter_report_type,
+            counter_report=counter_report_types["tr"],
             import_batch=None,
             download_success=False,
             contains_data=False,
@@ -707,7 +756,7 @@ class TestSushiFetchAttemptView:
             start_date='2020-01-01',
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
-            counter_report=counter_report_type,
+            counter_report=counter_report_types["tr"],
             import_batch=None,
             download_success=True,
             contains_data=False,
@@ -722,7 +771,7 @@ class TestSushiFetchAttemptView:
             start_date='2020-01-01',
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
-            counter_report=counter_report_type,
+            counter_report=counter_report_types["tr"],
             import_batch=None,
             download_success=True,
             contains_data=False,
@@ -738,7 +787,7 @@ class TestSushiFetchAttemptView:
             start_date='2020-01-01',
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
-            counter_report=counter_report_type,
+            counter_report=counter_report_types["tr"],
             import_batch=None,
             download_success=True,
             contains_data=False,
