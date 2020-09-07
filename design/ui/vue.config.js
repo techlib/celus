@@ -3,6 +3,10 @@ let devURLBase = 'http://localhost:8015/'
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const webpack = require('webpack')
 
+// stuff beginning with VUE_APP_ gets automatically exported into the environment
+// and thus can be used elsewhere in the code
+process.env.VUE_APP_VERSION = require('./package.json').version
+
 module.exports = {
   runtimeCompiler: true,
 

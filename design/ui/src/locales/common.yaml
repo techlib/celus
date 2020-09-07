@@ -110,6 +110,7 @@ en:
   cover_image: Cover image
   interest: Interest
   charts: Charts
+  celus_version: Celus version
 
 cs:
   pages:
@@ -223,3 +224,4 @@ cs:
   cover_image: Obrázek obálky
   interest: Zájem
   charts: Grafy
+  celus_version: Celus verze

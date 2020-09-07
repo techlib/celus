@@ -96,6 +96,9 @@
                         @click="activateTour({name: tourName})"
                 ></v-btn>
             </div>
+            <div class="small subdued text-center">
+                {{ $t('celus_version') }}: {{ celusVersion }}
+            </div>
         </template>
     </v-navigation-drawer>
 </template>
@@ -130,6 +133,7 @@
           allowManualDataUpload: 'allowManualDataUpload',
           consortialInstall: 'consortialInstall',
           tourByName: 'tourByName',
+          celusVersion: 'celusVersion',
         }),
         tourToShow () {
           return this.tourByName(this.tourName)
@@ -164,7 +168,7 @@
       },
       activeGroups () {
         return this.groups.filter(group => group.show)
-      }
+      },
     },
 
     methods: {

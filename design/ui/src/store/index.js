@@ -213,6 +213,9 @@ export default new Vuex.Store({
         return state.basicInfo['LANGUAGES'].map(item => item[0])
       }
       return ['en']
+    },
+    celusVersion () {
+      return process.env.VUE_APP_VERSION
     }
   },
 
