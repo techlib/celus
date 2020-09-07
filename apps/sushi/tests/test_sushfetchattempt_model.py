@@ -6,6 +6,17 @@ from organizations.models import Organization
 from publications.models import Platform
 from sushi.models import SushiCredentials, SushiFetchAttempt
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.platforms import PlatformFactory
+from test_fixtures.entities.organizations import OrganizationFactory
+from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.scenarios.basic import (
+    credentials,
+    data_sources,
+    organizations,
+    report_types,
+    platforms,
+    counter_report_types,
+)
 
 
 @pytest.mark.django_db
@@ -15,34 +26,24 @@ class TestFileName:
     """
 
     @pytest.mark.parametrize(
-        ('internal_id', 'platform_name', 'version', 'code', 'ext'),
+        ('internal_id', 'platform_name', 'code', 'ext'),
         (
-            ('internal1', 'platform_1', 5, 'TR', 'json'),
-            (None, 'platform_2', 5, 'TR', 'json'),
-            (None, 'platform_1', 4, 'JR1', 'tsv'),
-            ('internal2', 'platform_1', 4, 'JR1', 'tsv'),
+            ('internal1', 'platform_1', 'tr', 'json'),
+            (None, 'platform_2', 'tr', 'json'),
+            (None, 'platform_1', 'jr1', 'tsv'),
+            ('internal2', 'platform_1', 'jr1', 'tsv'),
         ),
     )
-    def test_file_name(
-        self, counter_report_type_named, internal_id, platform_name, version, code, ext,
-    ):
-        counter_report_type = counter_report_type_named(code, version)
-        platform = Platform.objects.create(short_name=platform_name, name=platform_name, ext_id=10)
+    def test_file_name(self, internal_id, platform_name, code, ext, counter_report_types):
+        platform = PlatformFactory(short_name=platform_name, name=platform_name)
 
-        organization = Organization.objects.create(
-            # ext_id=1,
-            # parent=None,
-            internal_id=internal_id,
-            # ico='123',
-            # name_cs='AAA',
-            # name_en='AAA',
-            # short_name='AA',
-        )
+        organization = OrganizationFactory(internal_id=internal_id,)
+        counter_report_type = counter_report_types[code]
 
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organization,
             platform=platform,
-            counter_version=version,
+            counter_version=counter_report_type.counter_version,
             lock_level=UL_ORG_ADMIN,
             url='http://a.b.c/',
         )
@@ -60,7 +61,8 @@ class TestFileName:
         )
 
         assert fetch_attempt.data_file.name.startswith(
-            f"counter/{internal_id or organization.pk}/{ platform_name }/{ version }_{code}"
+            f"counter/{internal_id or organization.pk}/{platform_name}/"
+            f"{counter_report_type.counter_version}_{counter_report_type.code.upper()}"
         )
 
 
@@ -83,33 +85,33 @@ class TestSushiFetchAttemptModelManager:
         SushiFetchAttempt.objects.filter(download_success=True).current_or_successful()
         SushiFetchAttempt.objects.filter(download_success=True).last_queued()
 
-    def test_last_queued(self, credentials, counter_report_type):
+    def test_last_queued(self, credentials, counter_report_types):
         fa1 = SushiFetchAttempt.objects.create(
-            credentials=credentials,
-            counter_report=counter_report_type,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-01-31',
         )
 
         fa2 = SushiFetchAttempt.objects.create(
-            credentials=credentials,
-            counter_report=counter_report_type,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-01-31',
             queue_previous=fa1,
         )
 
         fa3 = SushiFetchAttempt.objects.create(
-            credentials=credentials,
-            counter_report=counter_report_type,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-01-31',
             queue_previous=fa2,
         )
 
         fa4 = SushiFetchAttempt.objects.create(
-            credentials=credentials,
-            counter_report=counter_report_type,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-01-31',
         )
@@ -122,17 +124,17 @@ class TestSushiFetchAttemptModelManager:
 
 @pytest.mark.django_db
 class TestSushiFetchAttemptModel:
-    def test_conflicting_fully_enclosing(self, credentials, counter_report_type):
+    def test_conflicting_fully_enclosing(self, credentials, counter_report_types):
         fa = SushiFetchAttempt.objects.create(
-            credentials=credentials,
-            counter_report=counter_report_type,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-01-31',
         )
         assert fa.conflicting(fully_enclosing=True).count() == 0, 'no conflicts'
         fa2 = SushiFetchAttempt.objects.create(
-            credentials=credentials,
-            counter_report=counter_report_type,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-03-31',
         )
@@ -141,18 +143,18 @@ class TestSushiFetchAttemptModel:
         assert fa.conflicting(fully_enclosing=True).get().pk == fa2.pk
         assert fa2.conflicting(fully_enclosing=True).count() == 0
 
-    def test_conflicting_not_fully_enclosing(self, credentials, counter_report_type):
+    def test_conflicting_not_fully_enclosing(self, credentials, counter_report_types):
         fa = SushiFetchAttempt.objects.create(
-            credentials=credentials,
-            counter_report=counter_report_type,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-01-31',
         )
         # fully_enclosing is False by default, so no need to specify it
         assert fa.conflicting().count() == 0, 'no conflicts'
         fa2 = SushiFetchAttempt.objects.create(
-            credentials=credentials,
-            counter_report=counter_report_type,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-03-31',
         )

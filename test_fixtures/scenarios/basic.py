@@ -15,6 +15,7 @@ import pytest
 from rest_framework.test import APIClient
 from django.conf import settings
 from ..entities.counter_report_types import CounterReportTypeFactory
+from ..entities.credentials import CredentialsFactory
 from ..entities.data_souces import DataSourceFactory, DataSource
 from ..entities.identities import IdentityFactory, Identity
 from ..entities.organizations import OrganizationFactory
@@ -206,4 +207,25 @@ def counter_report_types(report_types):
     pr1 = CounterReportTypeFactory(
         counter_version=4, code=report_types["pr1"].short_name, report_type=report_types["pr1"],
     )
+    return locals()
+
+
+@pytest.fixture
+def credentials(counter_report_types, organizations, platforms):
+    standalone_tr = CredentialsFactory(
+        organization=organizations["standalone"],
+        platform=platforms["standalone"],
+        url="https://c5.standalone.example.com/",
+        counter_version=5,
+    )
+    standalone_tr.active_counter_reports.add(counter_report_types["tr"])
+
+    standalone_br1_jr1 = CredentialsFactory(
+        organization=organizations["standalone"],
+        platform=platforms["standalone"],
+        url="https://c4.standalone.example.com/",
+        counter_version=4,
+    )
+    standalone_br1_jr1.active_counter_reports.add(counter_report_types["br1"])
+    standalone_br1_jr1.active_counter_reports.add(counter_report_types["jr1"])
     return locals()
