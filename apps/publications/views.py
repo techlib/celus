@@ -30,7 +30,12 @@ from organizations.models import Organization
 from publications.models import Platform, Title, PlatformTitle
 from publications.serializers import TitleCountSerializer
 from recache.util import recache_queryset
-from .serializers import PlatformSerializer, DetailedPlatformSerializer, TitleSerializer
+from .serializers import (
+    PlatformSerializer,
+    DetailedPlatformSerializer,
+    TitleSerializer,
+    PlatformKnowledgebaseSerializer,
+)
 from .tasks import erms_sync_platforms_task
 
 
@@ -77,6 +82,15 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         #         filter(pk__in=AccessLog.objects.filter(report_type=rt, platform=platform).
         #                values('metric').distinct())
         return Response(ReportTypeExtendedSerializer(report_types, many=True).data)
+
+    @action(detail=True, url_path='knowledgebase')
+    def knowledgebase(self, request, pk, organization_pk):
+        """ Get knowledgebase information about the platform """
+        organization = self._organization_pk_to_obj(organization_pk)
+        platform = get_object_or_404(
+            request.user.accessible_platforms(organization=organization), pk=pk
+        )
+        return Response(PlatformKnowledgebaseSerializer(platform).data)
 
 
 class PlatformViewSet(ReadOnlyModelViewSet):

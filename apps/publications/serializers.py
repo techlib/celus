@@ -1,7 +1,7 @@
 from rest_framework.fields import (
-    FloatField,
+    CharField,
+    ListField,
     JSONField,
-    ChoiceField,
     SerializerMethodField,
     BooleanField,
 )
@@ -79,3 +79,11 @@ class TitleCountSerializer(ModelSerializer):
 
     def get_pub_type_name(self, obj: Title):
         return obj.get_pub_type_display()
+
+
+class PlatformKnowledgebaseSerializer(ModelSerializer):
+    knowledgebase = JSONField(read_only=True)
+
+    class Meta:
+        model = Platform
+        fields = ("knowledgebase",)

@@ -13,6 +13,7 @@ def test_accessible_platforms(basic1):  # noqa
     )
 
     assert list(basic1["users"]["admin1"].accessible_platforms()) == [
+        basic1["platforms"]["brain"],  # API source => public
         basic1["platforms"]["branch"],  # suborganization of root
         basic1["platforms"]["empty"],  # no source => public
         basic1["platforms"]["master"],  # API source => public
@@ -21,6 +22,7 @@ def test_accessible_platforms(basic1):  # noqa
     ]
 
     assert list(basic1["users"]["admin2"].accessible_platforms()) == [
+        basic1["platforms"]["brain"],  # API source => public
         basic1["platforms"]["empty"],  # no source => public
         basic1["platforms"]["master"],  # API source => public
         basic1["platforms"]["shared"],  # no source => public
@@ -28,6 +30,7 @@ def test_accessible_platforms(basic1):  # noqa
     ]
 
     assert list(basic1["users"]["user1"].accessible_platforms()) == [
+        basic1["platforms"]["brain"],  # API source => public
         basic1["platforms"]["branch"],  # member of branch organization
         basic1["platforms"]["empty"],  # no source => public
         basic1["platforms"]["master"],  # API source => public
@@ -35,6 +38,7 @@ def test_accessible_platforms(basic1):  # noqa
     ]
 
     assert list(basic1["users"]["user2"].accessible_platforms()) == [
+        basic1["platforms"]["brain"],  # API source => public
         basic1["platforms"]["empty"],  # no source => public
         basic1["platforms"]["master"],  # API source => public
         basic1["platforms"]["shared"],  # no source => public
@@ -45,6 +49,7 @@ def test_accessible_platforms(basic1):  # noqa
     assert list(
         basic1["users"]["user2"].accessible_platforms(basic1["organizations"]["standalone"])
     ) == [
+        basic1["platforms"]["brain"],  # API source => public
         basic1["platforms"]["empty"],  # no source => public
         basic1["platforms"]["master"],  # API source => public
         basic1["platforms"]["shared"],  # no source => public
@@ -52,6 +57,7 @@ def test_accessible_platforms(basic1):  # noqa
     ]
 
     assert list(basic1["users"]["user2"].accessible_platforms(basic1["organizations"]["root"])) == [
+        basic1["platforms"]["brain"],  # API source => public
         basic1["platforms"]["empty"],  # no source => public
         basic1["platforms"]["master"],  # API source => public
         basic1["platforms"]["shared"],  # no source => public
@@ -60,6 +66,7 @@ def test_accessible_platforms(basic1):  # noqa
     assert list(
         basic1["users"]["admin1"].accessible_platforms(basic1["organizations"]["root"])
     ) == [
+        basic1["platforms"]["brain"],  # API source => public
         basic1["platforms"]["empty"],  # no source => public
         basic1["platforms"]["master"],  # API source => public
         basic1["platforms"]["root"],  # admin of root
@@ -69,6 +76,7 @@ def test_accessible_platforms(basic1):  # noqa
     assert list(
         basic1["users"]["admin1"].accessible_platforms(basic1["organizations"]["branch"])
     ) == [
+        basic1["platforms"]["brain"],  # API source => public
         basic1["platforms"]["branch"],  # suborganization of root
         basic1["platforms"]["empty"],  # no source => public
         basic1["platforms"]["master"],  # API source => public

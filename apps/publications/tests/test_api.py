@@ -26,6 +26,7 @@ from core.tests.conftest import (
     master_identity,
 )
 from publications.models import PlatformInterestReport
+from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.scenarios.basic import *
 
 
@@ -453,11 +454,11 @@ class TestAllPlatformsAPI:
         ["client", "status", "organization", "available"],
         [
             ["unauthenticated", (401, 403), "empty", None],
-            ["master", (200,), "empty", ["empty", "master", "shared"]],
-            ["admin1", (200,), "root", ["master", "empty", "root", "shared"]],
-            ["admin2", (200,), "master", ["master", "empty", "shared"]],
-            ["user1", (200,), "branch", ["master", "empty", "branch", "shared"]],
-            ["user2", (200,), "standalone", ["master", "empty", "standalone", "shared"]],
+            ["master", (200,), "empty", ["brain", "empty", "master", "shared"]],
+            ["admin1", (200,), "root", ["brain", "master", "empty", "root", "shared"]],
+            ["admin2", (200,), "master", ["brain", "master", "empty", "shared"]],
+            ["user1", (200,), "branch", ["brain", "master", "empty", "branch", "shared"]],
+            ["user2", (200,), "standalone", ["brain", "master", "empty", "standalone", "shared"]],
         ],
         ids=[
             "unauthenticated-empty",
@@ -484,11 +485,11 @@ class TestAllPlatformsAPI:
         ["client", "organization", "available"],
         [
             ["unauthenticated", "empty", set()],
-            ["master", "empty", {"empty", "master", "shared"}],
-            ["admin1", "root", {"master", "empty", "root", "shared"}],
-            ["admin2", "master", {"master", "empty", "shared"}],
-            ["user1", "branch", {"master", "empty", "branch", "shared"}],
-            ["user2", "standalone", {"master", "empty", "standalone", "shared"}],
+            ["master", "empty", {"brain", "empty", "master", "shared"}],
+            ["admin1", "root", {"brain", "master", "empty", "root", "shared"}],
+            ["admin2", "master", {"brain", "master", "empty", "shared"}],
+            ["user1", "branch", {"brain", "master", "empty", "branch", "shared"}],
+            ["user2", "standalone", {"brain", "master", "empty", "standalone", "shared"}],
         ],
         ids=[
             "unauthenticated-empty",
@@ -516,12 +517,16 @@ class TestAllPlatformsAPI:
         ["client", "status", "available"],
         [
             ["unauthenticated", (401, 403), None],
-            ["master", (200,), ["empty", "master", "shared", "root", "branch", "standalone"]],
+            [
+                "master",
+                (200,),
+                ["brain", "empty", "master", "shared", "root", "branch", "standalone"],
+            ],
             # root org has access to branch org
-            ["admin1", (200,), ["master", "empty", "root", "shared", "branch"]],
-            ["admin2", (200,), ["master", "empty", "shared", "standalone"]],
-            ["user1", (200,), ["master", "empty", "branch", "shared"]],
-            ["user2", (200,), ["master", "empty", "standalone", "shared"]],
+            ["admin1", (200,), ["brain", "master", "empty", "root", "shared", "branch"]],
+            ["admin2", (200,), ["brain", "master", "empty", "shared", "standalone"]],
+            ["user1", (200,), ["brain", "master", "empty", "branch", "shared"]],
+            ["user2", (200,), ["brain", "master", "empty", "standalone", "shared"]],
         ],
         ids=[
             "unauthenticated-empty",
@@ -544,6 +549,90 @@ class TestAllPlatformsAPI:
         assert resp.status_code in status
         if available is not None:
             assert [e["pk"] for e in resp.json()] == [platforms[e].pk for e in sorted(available)]
+
+    def test_all_platfrom_knowledgebase(self, platforms, clients, organizations):
+
+        # any organiztion
+        resp = clients["user2"].get(
+            reverse("all-platforms-knowledgebase", args=[-1, platforms["standalone"].pk])
+        )
+        assert resp.status_code == 200
+        assert {"knowledgebase": None} == resp.json()
+
+        # no credentials
+        resp = clients["admin1"].get(
+            reverse(
+                "all-platforms-knowledgebase",
+                args=[organizations["root"].pk, platforms["root"].pk],
+            )
+        )
+        assert resp.status_code == 200
+        assert {"knowledgebase": None} == resp.json()
+
+        # unaccessible organization
+        resp = clients["user2"].get(
+            reverse(
+                "all-platforms-knowledgebase",
+                args=[organizations["branch"].pk, platforms["branch"].pk],
+            )
+        )
+        assert resp.status_code == 404
+
+        # same organization
+        resp = clients["user1"].get(
+            reverse(
+                "all-platforms-knowledgebase",
+                args=[organizations["branch"].pk, platforms["brain"].pk],
+            )
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {
+            'knowledgebase': {
+                'providers': [
+                    {
+                        'assigned_report_types': [
+                            {
+                                'not_valid_after': None,
+                                'not_valid_before': None,
+                                'report_type': 'JR1',
+                            }
+                        ],
+                        'counter_version': 4,
+                        'provider': {
+                            'extra': {},
+                            'monthly': None,
+                            'name': 'c4.brain.celus.net',
+                            'pk': 10,
+                            'url': 'http://c4.brain.celus.net',
+                            'yearly': None,
+                        },
+                    },
+                    {
+                        'assigned_report_types': [
+                            {
+                                'not_valid_after': None,
+                                'not_valid_before': None,
+                                'report_type': 'TR',
+                            },
+                            {
+                                'not_valid_after': None,
+                                'not_valid_before': None,
+                                'report_type': 'DR',
+                            },
+                        ],
+                        'counter_version': 5,
+                        'provider': {
+                            'extra': {},
+                            'monthly': None,
+                            'name': 'c5.brain.celus.net',
+                            'pk': 11,
+                            'url': 'https://c5.brain.celus.net/sushi',
+                            'yearly': None,
+                        },
+                    },
+                ]
+            }
+        }
 
 
 @pytest.fixture

@@ -49,6 +49,11 @@ def organizations():
 @pytest.fixture
 def data_sources(organizations):
     api = DataSourceFactory(short_name='api', type=DataSource.TYPE_API)
+
+    brain = DataSourceFactory(
+        short_name='brain.celus.net', type=DataSource.TYPE_API, url='https://brain.celus.net'
+    )
+
     root = DataSourceFactory(
         short_name="root", type=DataSource.TYPE_ORGANIZATION, organization=organizations["root"]
     )
@@ -80,6 +85,44 @@ def identities(users):
 def platforms(data_sources):
     empty = PlatformFactory(name="empty")
     master = PlatformFactory(name="master", source=data_sources["api"])
+    brain = PlatformFactory(
+        name="brain",
+        source=data_sources["brain"],
+        knowledgebase={
+            "providers": [
+                {
+                    "assigned_report_types": [
+                        {"not_valid_after": None, "not_valid_before": None, "report_type": "JR1"}
+                    ],
+                    "counter_version": 4,
+                    "provider": {
+                        "extra": {},
+                        "monthly": None,
+                        "name": "c4.brain.celus.net",
+                        "pk": 10,
+                        "url": "http://c4.brain.celus.net",
+                        "yearly": None,
+                    },
+                },
+                {
+                    "assigned_report_types": [
+                        {"not_valid_after": None, "not_valid_before": None, "report_type": "TR"},
+                        {"not_valid_after": None, "not_valid_before": None, "report_type": "DR"},
+                    ],
+                    "counter_version": 5,
+                    "provider": {
+                        "extra": {},
+                        "monthly": None,
+                        "name": "c5.brain.celus.net",
+                        "pk": 11,
+                        "url": "https://c5.brain.celus.net/sushi",
+                        "yearly": None,
+                    },
+                },
+            ]
+        },
+    )
+
     root = PlatformFactory(name="root", source=data_sources["root"])
     branch = PlatformFactory(name="branch", source=data_sources["branch"])
     standalone = PlatformFactory(name="standalone", source=data_sources["standalone"])
