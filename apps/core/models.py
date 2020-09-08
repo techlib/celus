@@ -86,7 +86,7 @@ class User(AbstractUser):
     language = models.CharField(
         max_length=2,
         choices=settings.AVAILABLE_LANGUAGES,
-        default=settings.AVAILABLE_LANGUAGES[-1][0],
+        default=settings.LANGUAGES[0][0],
         help_text='User\'s preferred language',
     )
     extra_data = JSONField(
