@@ -183,15 +183,15 @@ cs:
         if (end) {
           return value <= end
         }
-        return value <= ymDateFormat(new Date())
+        return value < ymDateFormat(new Date())
       },
       allowedEndMonths (value) {
         let now = ymDateFormat(new Date())
         let start = this.startDate
         if (start) {
-          return (start <= value) && (value <= now)
+          return (start <= value) && (value < now)
         }
-        return value <= now
+        return value < now
       },
       clean () {
         this.started = false
