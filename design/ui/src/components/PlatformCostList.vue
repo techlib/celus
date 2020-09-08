@@ -403,10 +403,6 @@ cs:
 </script>
 <style lang="scss">
 
-    .subdued {
-        color: #888888;
-    }
-
     span.align-top .v-icon {
         vertical-align: baseline;
     }

@@ -117,9 +117,6 @@ cs:
     .small {
         font-size: 0.875rem;
     }
-    .subdued {
-        color: #888888;
-    }
 
     span.input-like {
         color: rgba(0, 0, 0, 0.6);

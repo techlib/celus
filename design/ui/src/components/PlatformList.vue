@@ -179,10 +179,3 @@ cs:
     }
   }
 </script>
-<style lang="scss">
-
-    .subdued {
-        color: #888888;
-    }
-
-</style>

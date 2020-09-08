@@ -106,4 +106,7 @@
         }
     }
 
+    .subdued {
+      color: #888888;
+    }
 </style>

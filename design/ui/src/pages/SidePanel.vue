@@ -96,7 +96,7 @@
                         @click="activateTour({name: tourName})"
                 ></v-btn>
             </div>
-            <div class="small subdued text-center">
+            <div class="small subdued text-center mb-2">
                 {{ $t('celus_version') }}: {{ celusVersion }}
             </div>
         </template>
