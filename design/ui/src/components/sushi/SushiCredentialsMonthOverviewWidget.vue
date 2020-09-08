@@ -4,11 +4,19 @@ en:
   hide_successful: Hide successful rows
   stats: Statistics
   no_data_yet: No attempts were made for the selected month
+  show_inactive: Show inactive
+  show_inactive_tooltip: Also shows credentials that are not automatically harvested
+  enabled: Automatically harvested
+  not_enabled: Not automatically harvested
 
 cs:
   hide_successful: Skrýt úspěšné řádky
   stats: Statistika
   no_data_yet: Pro vybraný měsíc nebyla zatím stažena žádná data
+  show_inactive: Zobrazit neaktivní
+  show_inactive_tooltip: Zobrazí také přihlašovací údaje, pro které nejsou data automaticky stahována
+  enabled: Automaticky stahováno
+  not_enabled: Není automaticky stahováno
 </i18n>
 
 
@@ -48,7 +56,7 @@ cs:
                             ></v-date-picker>
                         </v-menu>
                     </v-col>
-                    <v-col cols="2">
+                    <v-col cols="6" sm="4" md="3" lg="2">
                         <v-select
                                 :items="[{text: '4 + 5', value: null}, {text: '4', value: 4}, {text: '5', value: 5}]"
                                 v-model="counterVersion"
@@ -56,7 +64,7 @@ cs:
                                 class="short"
                         ></v-select>
                     </v-col>
-                    <v-col>
+                    <v-col cols="12" sm="6" md="4" lg="3">
                         <v-select
                                 :label="$t('platform')"
                                 v-model="selectedPlatform"
@@ -66,13 +74,27 @@ cs:
                         >
                         </v-select>
                     </v-col>
-                    <v-col>
+                    <v-col cols="6" md="4" lg="3">
                         <v-switch
                                 v-model="hideSuccessful"
                                 :label="$t('hide_successful')"
                         >
 
                         </v-switch>
+                    </v-col>
+                    <v-col cols="6" md="4" lg="3">
+                        <v-tooltip bottom>
+                            <template #activator="{ on }">
+                                <span v-on="on">
+                                    <v-switch
+                                            v-model="showInactive"
+                                            :label="$t('show_inactive')"
+                                    >
+                                    </v-switch>
+                                </span>
+                            </template>
+                            {{ $t('show_inactive_tooltip') }}
+                        </v-tooltip>
                     </v-col>
                 </v-row>
 
@@ -113,7 +135,18 @@ cs:
                                 <SushiAttemptStateIcon :attempt="item[rt.code]" latest/>
                             </span>
                         </template>
-
+                        <template #item.counter_version="{item}">
+                            <v-tooltip bottom>
+                                <template #activator="{ on }">
+                                    <span class="pl-5" :class="item.enabled ? '' : 'red--text'" v-on="on">
+                                        <v-icon v-if="!item.enabled" x-small>fa fa-unlink</v-icon>
+                                        {{ item.counter_version }}
+                                    </span>
+                                </template>
+                                <span v-if="item.enabled" v-text="$t('enabled')"></span>
+                                <span v-else v-text="$t('not_enabled')"></span>
+                            </v-tooltip>
+                        </template>
                     </v-data-table>
                 </v-row>
             </v-container>
@@ -179,6 +212,7 @@ export default {
         counterVersion: null,
         hideSuccessful: false,
         selectedPlatform: null,
+        showInactive: false,
       }
     },
     computed: {
@@ -231,7 +265,11 @@ export default {
         if (!this.selectedMonth) {
           return null
         }
-        return `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.selectedMonth}`
+        let url = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.selectedMonth}`
+        if (this.showInactive) {
+          url += '&disabled=true'
+        }
+        return url
       },
       usedReportTypes () {
         let usedRTIds = new Set()
@@ -240,8 +278,7 @@ export default {
             usedRTIds.add(rt)
           }
         }
-        return this.reportTypes.filter(item => usedRTIds.has(item.id))
-      },
+        return this.reportTypes.filter(item => usedRTIds.has(item.id))      },
       usedPlatforms () {
         let usedPlatforms = new Set(this.sushiCredentialsList
           .filter(item =>
@@ -279,7 +316,7 @@ export default {
       },
       sushiCredentialsWithAttempts () {
         let list = this.allSushiCredentialsWithAttempts
-          .filter(item => item.enabled)
+          .filter(item => this.showInactive || item.enabled)
           .filter(item => this.counterVersion === null || item.counter_version === this.counterVersion)
           .filter(item => this.selectedPlatform === null || item.platform.pk === this.selectedPlatform)
         if (this.hideSuccessful) {

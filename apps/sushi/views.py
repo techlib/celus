@@ -139,6 +139,9 @@ class SushiCredentialsViewSet(ModelViewSet):
         start = month_start(month_date)
         end = month_end(month_date)
         credentials = self.get_queryset()
+        enabled_attr = (
+            {'credentials__enabled': True} if 'disabled' not in request.query_params else {}
+        )
         query = (
             SushiFetchAttempt.objects.filter(
                 start_date=start,
@@ -146,7 +149,7 @@ class SushiCredentialsViewSet(ModelViewSet):
                 credentials_id__in=credentials,
                 in_progress=False,
                 counter_report__in=F('credentials__active_counter_reports'),
-                credentials__enabled=True,
+                **enabled_attr,
             )
             .order_by("credentials_id", "counter_report_id", "-timestamp")
             .distinct("credentials_id", "counter_report_id")

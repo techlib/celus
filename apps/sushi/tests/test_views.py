@@ -241,6 +241,14 @@ class TestSushiCredentialsViewSet:
         assert rec['credentials_id'] == credentials.pk
         assert rec['counter_report_id'] == new_rt1.pk
         assert rec['pk'] == attempt2.pk, 'the second (newer) attempt should be reported'
+        # now disable the credentials and observe the result
+        credentials.enabled = False
+        credentials.save()
+        resp = clients["master"].get(url, {'month': '2020-01'})
+        assert len(resp.json()) == 0
+        # now add param that says disabled should be included
+        resp = clients["master"].get(url, {'month': '2020-01', 'disabled': 'true'})
+        assert len(resp.json()) == 1
 
 
 @pytest.mark.django_db()
