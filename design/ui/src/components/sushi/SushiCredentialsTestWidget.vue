@@ -73,7 +73,7 @@ cs:
                     ></v-date-picker>
                 </v-menu>
             </v-col>
-            <v-col cols="6" md="4" lg="2" v-if="!started">
+            <v-col cols="6" md="4" lg="3" v-if="!started">
                 <v-btn
                         @click="createAttempts()"
                         v-text="$t('actions.start_test')"
