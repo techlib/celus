@@ -10,6 +10,8 @@ import vuetify from './plugins/vuetify';
 import VueTour from 'vue-tour'
 import * as Sentry from '@sentry/browser';
 import { Vue as VueIntegration  } from '@sentry/integrations';
+import VuetifyConfirm from 'vuetify-confirm'
+
 
 Sentry.init({
     dsn: SENTRY_URL,
@@ -21,6 +23,18 @@ Sentry.init({
 require('vue-tour/dist/vue-tour.css')
 
 Vue.use(VueTour)
+
+Vue.use(VuetifyConfirm, {
+  vuetify,
+  buttonTrueText: 'Accept',
+  buttonFalseText: 'Cancel',
+  color: 'warning',
+  icon: 'fa fa-exclamation-triangle',
+  title: 'Warning',
+  width: 350,
+  property: '$confirm'
+})
+
 Vue.config.productionTip = false
 
 const titleBase = 'Celus'

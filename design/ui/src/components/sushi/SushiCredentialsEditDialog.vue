@@ -21,6 +21,8 @@ en:
     title_in_conflict: <strong>Use a different title</strong>. When creating more than one set of credentials for the same organization, platform and COUNTER version, you need to use distinct titles in order to distinguish between the sets.
     optional_args: Extra attributes - fill only if instructed by provider
     optional_args_tooltip: The following section is used for attributes which are only used by some providers. If the credentials given to you by the provider contain fields that do not correspond to any of the fields above, you can fill them in here.
+    really_delete: Do you really want to delete these credentials? (Downloaded data will be preserved)
+    confirm_delete: Confirm delete
 
 cs:
     add_custom_param: Přidat vlastní parametr
@@ -40,6 +42,8 @@ cs:
     title_in_conflict: <strong>Použijte jiný název</strong>. Pokud vytváříte více přihlašovacích údajů pro stejnout organizaci, platformu a verzi COUNTER, musíte použít různé názvy, aby bylo možné přihlašovací údaje rozlišit.
     optional_args: Další parametry - vyplňte pouze pokud to poskytovatel vyžaduje
     optional_args_tooltip: Následující sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
+    really_delete: Chcete opravdu smazat tyto přihlašovací údaje? (Stažená data budou zachována)
+    confirm_delete: Potvrďte smazání
 </i18n>
 
 
@@ -639,13 +643,26 @@ cs:
       },
       async deleteObject () {
         if (this.credentials) {
-          try {
-            await axios.delete(`/api/sushi-credentials/${this.credentials.pk}/`)
-            this.$emit('deleted', {id: this.credentials.pk})
-            this.$emit('input', false)
-            this.showSnackbar({content: this.$t('delete_success'), color: 'success'})
-          } catch (error) {
-            this.showSnackbar({content: 'Error deleting SUSHI credentials: ' + error, color: 'error'})
+          const res = await this.$confirm(
+            this.$t('really_delete'),
+            {
+              title: this.$t('confirm_delete'),
+              buttonTrueText: this.$t('delete'),
+              buttonFalseText: this.$t('cancel'),
+            }
+            )
+          if (res) {
+            try {
+              await axios.delete(`/api/sushi-credentials/${this.credentials.pk}/`)
+              this.$emit('deleted', {id: this.credentials.pk})
+              this.$emit('input', false)
+              this.showSnackbar({content: this.$t('delete_success'), color: 'success'})
+            } catch (error) {
+              this.showSnackbar({
+                content: 'Error deleting SUSHI credentials: ' + error,
+                color: 'error'
+              })
+            }
           }
         }
       },
