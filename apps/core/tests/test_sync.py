@@ -67,7 +67,6 @@ class TestUserSync:
         assert stats['removed'][0] == 1
         assert User.objects.count() == 2
 
-    @pytest.mark.now
     def test_sync_users_with_user_org_link_removal(self, data_source):
         """
         Test that after a user gets removed from an organization, the link is properly removed
