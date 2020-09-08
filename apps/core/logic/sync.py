@@ -97,6 +97,7 @@ class UserSyncer(ERMSObjectSyncer):
             )
         }
         org_ext_id_to_db_obj = {org.ext_id: org for org in Organization.objects.all()}
+        seen_user_orgs = set()
         for (org_ext_id, user_ext_id), is_admin in self._org_user_status.items():
             uo = org_user_to_db_obj.get((org_ext_id, user_ext_id))
             if not uo:
@@ -116,6 +117,7 @@ class UserSyncer(ERMSObjectSyncer):
                     user=user, organization=organization, is_admin=is_admin, source=self.data_source
                 )
                 org_user_to_db_obj[(org_ext_id, user_ext_id)] = uo
+                seen_user_orgs.add(uo.pk)
                 stats['User-Org created'] += 1
             else:
                 if uo.is_admin != is_admin:
@@ -124,6 +126,13 @@ class UserSyncer(ERMSObjectSyncer):
                     stats['User-Org synced'] += 1
                 else:
                     stats['User-Org unchanged'] += 1
+                seen_user_orgs.add(uo.pk)
+        deleted, _details = (
+            UserOrganization.objects.filter(source=self.data_source)
+            .exclude(pk__in=seen_user_orgs)
+            .delete()
+        )
+        stats['User-Org deleted'] = deleted
         return stats
 
 

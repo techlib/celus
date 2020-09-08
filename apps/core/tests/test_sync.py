@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from core.logic.sync import sync_identities
 from core.models import Identity, DataSource
 from erms.sync import ERMSObjectSyncer
+from organizations.models import Organization, UserOrganization
 from ..logic.sync import sync_users
 
 
@@ -65,6 +66,33 @@ class TestUserSync:
         assert stats[ERMSObjectSyncer.Status.UNCHANGED] == 2
         assert stats['removed'][0] == 1
         assert User.objects.count() == 2
+
+    @pytest.mark.now
+    def test_sync_users_with_user_org_link_removal(self, data_source):
+        """
+        Test that after a user gets removed from an organization, the link is properly removed
+        """
+        User = get_user_model()
+        assert User.objects.count() == 0
+        Organization.objects.create(ext_id=10, name='Org 1', short_name='org_1')
+        Organization.objects.create(ext_id=100, name='Org 2', short_name='org_2')
+        input_data = [
+            {'id': 1, 'vals': {'name@cs': ['John Doe']}, 'refs': {'employee of': [10, 100]}},
+        ]
+        stats = sync_users(data_source, input_data)
+        assert stats['removed'][0] == 0
+        assert stats[ERMSObjectSyncer.Status.NEW] == 1
+        assert User.objects.count() == 1
+        assert UserOrganization.objects.count() == 2
+        # now remove one of the organizations
+        input_data[0]['refs']['employee of'].remove(10)
+        stats = sync_users(data_source, input_data)
+        assert stats[ERMSObjectSyncer.Status.NEW] == 0
+        assert stats[ERMSObjectSyncer.Status.UNCHANGED] == 1
+        assert stats['removed'][0] == 0
+        assert stats['User-Org deleted'] == 1
+        assert User.objects.count() == 1
+        assert UserOrganization.objects.count() == 1
 
 
 @pytest.mark.django_db
