@@ -5,6 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+
+### Added
+
+#### Frontend
+
+- show Celus version number in the side-panel
+
+### Fixes
+
+#### Backend
+
+- language not active for specific Celus installation cannot become users default language
+- when synchronizing users with ERMS, properly disconnect organizations when user is no longer
+  associated with them
+
+
+
 ## [2.2.1]
 
 ### Fixes
