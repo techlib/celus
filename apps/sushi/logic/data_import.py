@@ -69,6 +69,8 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
         if 'api_key' in extra_attrs:
             optional['api_key'] = extra_attrs['api_key']
             del extra_attrs['api_key']
+        elif 'api_key' in record:
+            optional['api_key'] = record['api_key']
         else:
             optional['api_key'] = ''
         if key in db_credentials:
