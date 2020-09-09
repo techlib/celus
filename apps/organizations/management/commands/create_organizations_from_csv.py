@@ -30,6 +30,8 @@ class Command(BaseCommand):
                 name = name.strip()
                 short_name = row.get('short_name', name)
                 org_params = {'short_name': short_name}
+                if 'name_cs' in row:
+                    org_params['name_cs'] = row['name_cs']
                 user, created = Organization.objects.update_or_create(
                     name=name, defaults=org_params,
                 )
