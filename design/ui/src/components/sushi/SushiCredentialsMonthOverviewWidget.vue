@@ -107,7 +107,8 @@ cs:
                         <template v-for="rt in usedReportTypes" v-slot:[slotName(rt)]="{item}">
                             <span
                                     :key="`${rt.code}-${item.credentials_id}`"
-                                    @click="showAttempt(item[rt.code])"
+                                    @click="item[rt.code] && item[rt.code].pk && showAttempt(item[rt.code]) || null"
+                                    :class="{clickable: item[rt.code] && item[rt.code].pk}"
                             >
                                 <SushiAttemptStateIcon :attempt="item[rt.code]" latest/>
                             </span>
@@ -123,6 +124,7 @@ cs:
                     v-if="selectedAttempt"
                     :attempt-id="selectedAttempt.pk"
                     @close="closeDetailsDialog"
+                    ref="attemptListWidget"
             >
             </SushiAttemptListWidget>
         </v-dialog>
@@ -140,7 +142,7 @@ import addDays from 'date-fns/addDays'
 import addMonths from 'date-fns/addMonths'
 import { parseDateTime, ymDateFormat } from '@/libs/dates'
 import SushiAttemptStateIcon from '@/components/sushi/SushiAttemptStateIcon'
-import { attemptState, ATTEMPT_SUCCESS } from '@/libs/attempt-state'
+import { attemptState, ATTEMPT_SUCCESS, ATTEMPT_NOT_MADE } from '@/libs/attempt-state'
 import IconButton from '@/components/sushi/IconButton'
 
 export default {
@@ -269,7 +271,7 @@ export default {
               if (this.attemptMap.has(key)) {
                 item[reportType.code] = this.attemptMap.get(key)
               } else {
-                item[reportType.code] = {untried: true}
+                item[reportType.code] = {untried: true, state: ATTEMPT_NOT_MADE}
               }
             }
             return item
@@ -345,6 +347,8 @@ export default {
       },
       closeDetailsDialog () {
         this.selectedCredentials = null
+        this.$refs['attemptListWidget'].cleanup()
+        this.selectedAttempt = null
         this.showDetailsDialog = false
       },
       allowedMonths (value) {
@@ -392,6 +396,10 @@ div.stats {
   background-color: #efefef;
   padding: 0.5rem 1rem;
   border-radius: 5px;
+}
+
+.clickable {
+  cursor: pointer;
 }
 
 </style>
