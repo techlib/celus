@@ -79,7 +79,7 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
             to_sync = dict(
                 customer_id=record.get('customer_id'),
                 requestor_id=record.get('requestor_id'),
-                url=record.get('URL'),
+                url=record.get('URL') or record.get('url'),
                 extra_params=extra_attrs,
                 **optional,
             )
@@ -106,7 +106,7 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
                     counter_version=version,
                     customer_id=record.get('customer_id'),
                     requestor_id=record.get('requestor_id'),
-                    url=record.get('URL'),
+                    url=record.get('URL') or record.get('url'),
                     extra_params=extra_attrs,
                     **optional,
                 )
