@@ -2,7 +2,6 @@
 Module dealing with data in the COUNTER5 format.
 """
 import json
-import io
 import typing
 from copy import copy
 
@@ -77,18 +76,29 @@ class CounterError:
         raise SushiException(str(self), content=self.data)
 
 
+class TransportError:
+    def __init__(self, http_status=None, message=None):
+        self.http_status = http_status
+        self.message = message
+
+    def __str__(self):
+        http = f' [HTTP {self.http_status}]' if self.http_status else ''
+        return f'Transport error{http}: {self.message}'
+
+
 class Counter5ReportBase:
 
     dimensions = []  # this should be redefined in subclasses
     allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']
 
-    def __init__(self, report: typing.Optional[typing.IO[bytes]] = None):
+    def __init__(self, report: typing.Optional[typing.IO[bytes]] = None, http_status_code=None):
         self.records = []
         self.queued = False
         self.record_found: bool = False  # is populated once `fd_to_dicts` is called
         self.header = {}
-        self.errors: typing.List[CounterError] = []
-        self.warnings: typing.List[CounterError] = []
+        self.errors: typing.List[typing.Union[CounterError, TransportError]] = []
+        self.warnings: typing.List[typing.Union[CounterError, TransportError]] = []
+        self.http_status_code = http_status_code
 
         # Parse it for the first time to extract errors and warnings
         if report:
@@ -99,8 +109,6 @@ class Counter5ReportBase:
     ) -> typing.Generator[CounterRecord, None, None]:
         """
         Reads in the report as returned by the API using Sushi5Client
-        :param report:
-        :return:
         """
 
         self.header = header
@@ -151,8 +159,9 @@ class Counter5ReportBase:
         fd.seek(0)
 
         # first check whether it is not an error report
+        # skip potential leading whitespace
         first_character = fd.read(1)  # type: bytes
-        while first_character not in b'[{"':
+        while first_character.isspace():
             first_character = fd.read(1)
         fd.seek(0)
 
@@ -167,6 +176,12 @@ class Counter5ReportBase:
             data = json.loads(json_string)
             self.extract_errors(data)
             return data, empty_generator()
+
+        elif first_character != b'{':
+            self.errors.append(
+                TransportError(http_status=self.http_status_code, message='Non SUSHI data returned')
+            )
+            return {}, empty_generator()
 
         # try to read the header
         header = dict(ijson.kvitems(fd, "Report_Header"))

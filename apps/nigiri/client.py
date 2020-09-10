@@ -11,6 +11,7 @@ from xml.etree import ElementTree as ET
 import requests
 from pycounter import sushi
 from pycounter import report
+from requests import Response
 
 from .counter5 import (
     Counter5TRReport,
@@ -282,16 +283,17 @@ class Sushi5Client(SushiClientBase):
         reports = self.report_to_data(content)
         return reports
 
-    def get_report(
+    def fetch_report_data(
         self,
         report_type,
         begin_date,
         end_date,
         dump_file: typing.Optional[typing.IO] = None,
         params=None,
-    ):
+    ) -> Response:
         """
-        Return a SUSHI report based on the provided params
+        Makes a request for the data, stores the resulting data into `dump_file` and returns
+        the response object for further inspection
         :param report_type:
         :param begin_date:
         :param end_date:
@@ -309,7 +311,7 @@ class Sushi5Client(SushiClientBase):
             for data in response.iter_content(1024 * 1024):
                 dump_file.write(data)
             dump_file.seek(0)
-        response.raise_for_status()
+        return response
 
     def get_report_data(
         self,
@@ -319,17 +321,25 @@ class Sushi5Client(SushiClientBase):
         output_content: typing.Optional[typing.IO] = None,
         params=None,
     ) -> Counter5ReportBase:
-        self.get_report(report_type, begin_date, end_date, params=params, dump_file=output_content)
-        if report_type.lower() == 'tr':
-            report_class = Counter5TRReport
-        elif report_type.lower() == 'dr':
-            report_class = Counter5DRReport
-        else:
-            report_class = Counter5ReportBase
+        response = self.fetch_report_data(
+            report_type, begin_date, end_date, params=params, dump_file=output_content
+        )
+        if 200 <= response.status_code < 300 or 400 <= response.status_code < 500:
+            # status codes in the 4xx range may be OK and just provide additional signal
+            # about an issue - we need to parse the result in case there is more info
+            # in the body
+            if report_type.lower() == 'tr':
+                report_class = Counter5TRReport
+            elif report_type.lower() == 'dr':
+                report_class = Counter5DRReport
+            else:
+                report_class = Counter5ReportBase
 
-        if output_content:
-            output_content.seek(0)
-        return report_class(output_content)
+            if output_content:
+                output_content.seek(0)
+            return report_class(output_content, http_status_code=response.status_code)
+        # response code most probably 5xx - we raise an error
+        response.raise_for_status()
 
     def report_to_data(self, report: bytes, validate=True) -> typing.Generator[dict, None, None]:
         try:

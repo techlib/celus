@@ -85,6 +85,7 @@ class TestSushiFetching:
             if attempt.can_import_data:
                 import_one_sushi_attempt(attempt)
                 assert attempt.import_crashed is import_crashed
+                assert attempt.http_status_code == 200
             else:
                 with pytest.raises(ValueError):
                     import_one_sushi_attempt(attempt)
@@ -126,3 +127,39 @@ class TestSushiFetching:
             assert attempt.contains_data is False
             assert attempt.queued is queued
             assert attempt.is_processed is not queued
+
+    @pytest.mark.parametrize(
+        ('path', 'http_status', 'error_code', 'download_success'),
+        (
+            ('naked_error_3000.json', 400, 3000, True,),
+            ('naked_error_3000.json', 200, 3000, True,),
+            ('no_json.txt', 400, 'non-sushi', False),
+        ),
+    )
+    def test_c5_with_http_error_codes(
+        self,
+        path,
+        http_status,
+        error_code,
+        download_success,
+        counter_report_types,
+        organizations,
+        platforms,
+    ):
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+        )
+        with requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
+                m.get(
+                    re.compile(f'^{credentials.url}.*'),
+                    text=datafile.read(),
+                    status_code=http_status,
+                )
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+            )
+            assert m.called
+            assert attempt.download_success is download_success
+            assert attempt.error_code == error_code
+            assert attempt.http_status_code == http_status

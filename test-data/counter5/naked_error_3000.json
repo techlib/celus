@@ -1,0 +1,6 @@
+{
+  "Code":3000,
+  "Severity":"Error",
+  "Message":"Report Not Supported",
+  "Data":"Unknown report requested: [REPORT-ID]"
+}

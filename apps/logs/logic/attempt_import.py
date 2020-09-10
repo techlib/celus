@@ -8,7 +8,7 @@ from django.db.transaction import atomic
 from logs.logic.data_import import import_counter_records
 from logs.models import OrganizationPlatform, ImportBatch
 from nigiri.client import Sushi5Client, SushiException, SushiError
-from nigiri.counter5 import CounterError, Counter5ReportBase
+from nigiri.counter5 import CounterError, Counter5ReportBase, TransportError
 from nigiri.counter4 import Counter4ReportBase
 from sushi.models import SushiFetchAttempt
 
@@ -106,8 +106,29 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             op.platform,
         )
 
+    # check errors first - there are cases when partial data is returned together with
+    # a SUSHI exception. We do not want to ingest such data
+    if counter_version == 5 and reader.errors:
+        error = reader.errors[0]
+        attempt.log = '; '.join(str(e) for e in reader.errors)
+        logger.warning('Found errors: %s', attempt.log)
+        if isinstance(error, TransportError):
+            attempt.download_success = False
+            attempt.contains_data = False
+            attempt.queued = False
+            attempt.processing_success = False
+        else:
+            attempt.error_code = error.code
+            attempt.download_success = True
+            attempt.contains_data = False
+            error_explanation = Sushi5Client.explain_error_code(attempt.error_code)
+            attempt.queued = error_explanation.should_retry and error_explanation.setup_ok
+            attempt.processing_success = not (
+                error_explanation.needs_checking and error_explanation.setup_ok
+            )
+        attempt.save()
     # now read the data and import it
-    if reader.record_found:
+    elif reader.record_found:
         import_batch = ImportBatch.objects.create(
             platform=attempt.credentials.platform,
             organization=attempt.credentials.organization,
@@ -129,26 +150,12 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         logger.info('Import stats: %s', stats)
     else:
         # Process errors for counter5
-        if counter_version == 5 and (reader.errors or reader.warnings):
-            if reader.errors:
-                attempt.log = '; '.join(str(e) for e in reader.errors)
-                logger.warning('Found errors: %s', attempt.log)
-                attempt.error_code = reader.errors[0].code
-            else:
-                attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
-                attempt.error_code = reader.warnings[0].code
-            attempt.download_success = True
-            attempt.contains_data = False
-            error_explanation = Sushi5Client.explain_error_code(attempt.error_code)
-            attempt.queued = error_explanation.should_retry and error_explanation.setup_ok
-            attempt.processing_success = not (
-                error_explanation.needs_checking and error_explanation.setup_ok
-            )
-            attempt.save()
+        if counter_version == 5 and reader.warnings:
+            attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
         else:
-            attempt.contains_data = False
             attempt.log = 'No data found during import'
-            attempt.save()
+        attempt.contains_data = False
+        attempt.save()
         logger.warning('No records found!')
     attempt.mark_processed()
 

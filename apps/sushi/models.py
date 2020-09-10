@@ -42,7 +42,7 @@ from nigiri.counter4 import (
     Counter4DB2Report,
     Counter4BR3Report,
 )
-from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
+from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport, TransportError
 from organizations.models import Organization
 from publications.models import Platform
 
@@ -421,10 +421,12 @@ class SushiCredentials(models.Model):
         params = deepcopy(client.EXTRA_PARAMS['maximum_split'].get(counter_report.code.lower(), {}))
         extra = self.extra_params or {}
         params.update(extra)
+        http_status_code = None
         try:
             report = client.get_report_data(
                 counter_report.code, start_date, end_date, output_content=file_data, params=params
             )
+            http_status_code = report.http_status_code
         except requests.exceptions.ConnectionError as e:
             logger.warning('Connection error: %s', e)
             error_code = 'connection'
@@ -447,26 +449,37 @@ class SushiCredentials(models.Model):
                 if report.errors:
                     logger.warning('Found errors: %s', report.errors)
                     log = '; '.join(str(e) for e in report.errors)
-                    error_code = report.errors[0].code
+                    error_obj = report.errors[0]
                 else:
                     log = 'Warnings: ' + '; '.join(str(e) for e in report.warnings)
-                    error_code = report.warnings[0].code
-                error_explanation = client.explain_error_code(
-                    error_code, SushiFetchAttempt.fetched_near_end_date(end_date, datetime.now())
-                )
-                queued = error_explanation.should_retry and error_explanation.setup_ok
-                processing_success = (
-                    not error_explanation.needs_checking and error_explanation.setup_ok
-                )
+                    error_obj = report.warnings[0]
 
-                # mark as processed (for outdated 3030 reports)
-                if (
-                    error_explanation.setup_ok
-                    and not error_explanation.should_retry
-                    and not error_explanation.needs_checking
-                ):
-                    is_processed = True
-                    when_processed = now()
+                if isinstance(error_obj, TransportError):
+                    # transport error means something bad and no valid json in response
+                    queued = False
+                    processing_success = False
+                    download_success = False
+                    error_code = 'non-sushi'
+                else:
+                    error_code = error_obj.code if hasattr(error_obj, 'code') else ''
+
+                    error_explanation = client.explain_error_code(
+                        error_code,
+                        SushiFetchAttempt.fetched_near_end_date(end_date, datetime.now()),
+                    )
+                    queued = error_explanation.should_retry and error_explanation.setup_ok
+                    processing_success = (
+                        not error_explanation.needs_checking and error_explanation.setup_ok
+                    )
+
+                    # mark as processed (for outdated 3030 reports)
+                    if (
+                        error_explanation.setup_ok
+                        and not error_explanation.should_retry
+                        and not error_explanation.needs_checking
+                    ):
+                        is_processed = True
+                        when_processed = now()
             else:
                 processing_success = True
                 queued = report.queued
@@ -492,6 +505,7 @@ class SushiCredentials(models.Model):
             when_queued=when_queued,
             is_processed=is_processed,
             when_processed=when_processed,
+            http_status_code=http_status_code,
         )
 
 
@@ -584,6 +598,7 @@ class SushiFetchAttempt(models.Model):
     data_file = models.FileField(upload_to=where_to_store, blank=True, null=True, max_length=256)
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
+    http_status_code = models.PositiveSmallIntegerField(null=True)
     is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
