@@ -1,9 +1,10 @@
+import django
 import pytest
 from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.utils.timezone import now
 
-from recache.models import CachedQuery, DEFAULT_TIMEOUT
+from recache.models import CachedQuery, DEFAULT_TIMEOUT, RenewalError
 from test_fixtures.entities.users import UserFactory
 
 User = get_user_model()
@@ -99,3 +100,42 @@ class TestCachedQuery:
         cq.force_renew()
         data2 = list(cq.get_cached_queryset())
         assert data == data2
+
+    def test_renew_with_different_django_version(self):
+        """
+        Test that when a cached query for older django version is renewed the `django_version`
+        attr is updated.
+        """
+        UserFactory.create_batch(1)
+        queryset = User.objects.all()
+        cq = CachedQuery.objects.create_from_queryset(queryset)
+        fake_django_version = '2.2.foobar'
+        cq.django_version = fake_django_version
+        cq.save()
+        cq.renew()
+        assert cq.django_version != fake_django_version, "django_version should change"
+        assert cq.django_version == django.get_version()
+        assert CachedQuery.objects.count() == 1, 'there should be only one cache'
+
+    def test_renew_with_clashing_django_version(self):
+        """
+        Test that when a cached query for older django version is renewed and there is already a
+        cache for the current version, the current cache gets deleted.
+        This is to allow 'upgrade' of caches to newer django but at the same time prevent
+        unique together related errors
+        """
+        UserFactory.create_batch(1)
+        queryset = User.objects.all()
+        cq_orig = CachedQuery.objects.create_from_queryset(queryset)
+        fake_django_version = '2.2.foobar'
+        cq_orig.django_version = fake_django_version
+        cq_orig.save()
+        # now create the clashing current CachedQuery
+        cq_new = CachedQuery.objects.create_from_queryset(queryset)
+        assert CachedQuery.objects.count() == 2, 'there should be the old and the new cache'
+        # let's try to renew the old one
+        with pytest.raises(RenewalError):
+            cq_orig.renew()
+        assert cq_orig.django_version == fake_django_version, "django_version should be the same"
+        assert cq_new.django_version == django.get_version()
+        assert CachedQuery.objects.count() == 2, 'there should still be the old and the new cache'

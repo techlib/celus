@@ -7,8 +7,9 @@ from time import monotonic
 import django
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models import F, ExpressionWrapper, DateTimeField
+from django.db.transaction import atomic
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 
@@ -17,10 +18,14 @@ DEFAULT_TIMEOUT = timedelta(seconds=60 * 60)  # 1 hour
 DEFAULT_LIFETIME = timedelta(days=30)  # 30 days
 
 
+class RenewalError(Exception):
+    pass
+
+
 class CachedQueryQuerySet(models.QuerySet):
     def get_for_queryset(self, queryset):
         qs_hash = CachedQuery.compute_queryset_hash(queryset)
-        return self.get(query_hash=qs_hash)
+        return self.get(query_hash=qs_hash, django_version=django.get_version())
 
     def create_from_queryset(
         self,
@@ -78,7 +83,7 @@ class CachedQuery(models.Model):
     )
     model = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     query_hash = models.CharField(
-        max_length=BLAKE_HASH_SIZE * 2, help_text='Hash of the query string', unique=True,
+        max_length=BLAKE_HASH_SIZE * 2, help_text='Hash of the query string',
     )
     query_string = models.TextField()
     queryset_pickle = models.BinaryField(help_text='Pickle of the evaluated queryset with results')
@@ -110,6 +115,7 @@ class CachedQuery(models.Model):
 
     class Meta:
         verbose_name_plural = 'Cached queries'
+        unique_together = [('query_hash', 'django_version')]
 
     def __str__(self):
         return self.query_hash
@@ -137,7 +143,7 @@ class CachedQuery(models.Model):
         """
         Checks if the query should already be renewed and renews if needed.
         """
-        if self.valid_until < now():
+        if self.valid_until < now() or self.django_version != django.get_version():
             self.force_renew()
 
     def force_renew(self):
@@ -149,13 +155,24 @@ class CachedQuery(models.Model):
         self.queryset_pickle = pickle.dumps(queryset)
         self.last_updated = now()
         self.query_durations.append(monotonic() - start)
-        self.save()
+        orig_django_version = self.django_version
+        self.django_version = django.get_version()
+        try:
+            with atomic():
+                self.save()
+        except IntegrityError:
+            # the only reason this can happen now is if there already is cached query
+            # for the same hash and the current django version
+
+            # we restore the original django version in order not to pollute the object at hand
+            self.django_version = orig_django_version
+            raise RenewalError('CachedQuery with current django version already exists')
 
     def get_fresh_queryset(self):
         """
         Returns a new, unevaluated queryset based on the stored data
         """
-        # all creates a fresh copy of the queryset
+        # .all() creates a fresh copy of the queryset
         return self.get_cached_queryset().all()
 
     def get_cached_queryset(self):
