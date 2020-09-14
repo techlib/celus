@@ -5,6 +5,7 @@ en:
   attempt_state_error: There was an error downloading data.
   attempt_state_success: Data were successfully downloaded and ingested into Celus.
   attempt_state_missing: Data retrieval was not yet performed.
+  attempt_state_empty_data: Data was successfully harvested, but no usage was recorded at the time in question.
   details: Details
   field_timestamp: Time
   field_timestamp_latest: Last attempt
@@ -16,6 +17,7 @@ cs:
   attempt_state_error: Došlo k chybě při stahování dat.
   attempt_state_success: Data byla úspěšně stažená a uložená v systému.
   attempt_state_missing: Stažení dat zatím nebylo provedeno.
+  attempt_state_empty_data: Data byla úspěšně stažena, ale pro dané obdobi nebylo zaznamenáno žádné využití.
   details: Detaily
   field_timestamp: Čas
   field_timestamp_latest: Poslední pokus
@@ -30,6 +32,7 @@ cs:
                     <v-icon v-if="attemptState === stateUntried" color="secondary">far fa-clock</v-icon>
                     <v-icon v-else-if="attemptState === stateQueued" color="secondary">far fa-pause-circle</v-icon>
                     <v-icon v-else-if="attemptState === stateSuccess" color="success">far fa-check-circle</v-icon>
+                    <v-icon v-else-if="attemptState === stateEmpty" color="success">far fa-circle</v-icon>
                     <v-icon v-else-if="attemptState === stateError" color="red lighten-2">fa fa-exclamation-circle</v-icon>
                     <v-icon v-else color="warning">far fa-question-circle</v-icon>
                 </span>
@@ -56,7 +59,8 @@ import {
   ATTEMPT_QUEUED,
   ATTEMPT_SUCCESS,
   ATTEMPT_ERROR,
-  ATTEMPT_NOT_MADE
+  ATTEMPT_NOT_MADE,
+  ATTEMPT_EMPTY_DATA,
 } from '@/libs/attempt-state'
 import { isoDateTimeFormat } from '@/libs/dates'
 
@@ -76,6 +80,7 @@ export default {
       stateSuccess: ATTEMPT_SUCCESS,
       stateError: ATTEMPT_ERROR,
       stateUntried: ATTEMPT_NOT_MADE,
+      stateEmpty: ATTEMPT_EMPTY_DATA,
     }
   },
 
