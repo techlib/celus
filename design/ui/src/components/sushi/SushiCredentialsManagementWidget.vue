@@ -385,6 +385,10 @@ cs:
           // we did not find the corresponding record - we add it at the end
           this.sushiCredentialsList.push(credentials)
         }
+        // update the model used by the edit dialog
+        if (this.selectedCredentials) {
+          this.selectedCredentials = credentials
+        }
       },
       deleteCredentials ({id}) {
         this.sushiCredentialsList = this.sushiCredentialsList.filter(item => item.pk !== id)
