@@ -27,7 +27,7 @@ en:
     step4: Test your credentials
     step4_text: After you put your credentials into Celus, we strongly advise to test them
         immediately. You can do so by clicking the
-        <strong>Save and test credentials</strong>
+        <strong>Save & test harvesting</strong>
         button in the SUSHI credentials edit dialog. Then select one month in the near past
         and try to download the data. You will get a progress-bar for each download and
         very quickly receive a reply from the server. If there is any problem, please get back
