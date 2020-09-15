@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.files.base import ContentFile, File
 from django.db import models
-from django.db.models import F, Exists, OuterRef
+from django.db.models import Count, F, Exists, OuterRef
 from django.db.transaction import atomic
 from django.utils.timezone import now, utc
 from pycounter.exceptions import SushiException
@@ -24,7 +24,7 @@ from rest_framework.exceptions import PermissionDenied
 from core.logic.dates import month_end, parse_date
 from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, User
 from core.task_support import cache_based_lock
-from logs.models import ImportBatch
+from logs.models import AccessLog, ImportBatch
 from nigiri.client import (
     Sushi5Client,
     Sushi4Client,
@@ -105,7 +105,21 @@ class CounterReportType(models.Model):
         return None
 
 
+class SushiCredentialsQuerySet(models.QuerySet):
+    def working(self):
+        """ Were these credentials working? Do we have any data? """
+        return self.annotate(
+            has_access_log=Exists(
+                AccessLog.objects.filter(
+                    import_batch__sushifetchattempt__credentials_id=OuterRef('pk')
+                )
+            )
+        ).filter(has_access_log=True)
+
+
 class SushiCredentials(models.Model):
+
+    objects = SushiCredentialsQuerySet.as_manager()
 
     UNLOCKED = 0
 

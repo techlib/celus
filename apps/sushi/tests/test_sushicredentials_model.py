@@ -1,3 +1,4 @@
+from django.utils import timezone
 import pytest
 from rest_framework.exceptions import PermissionDenied
 from pycounter.report import CounterReport
@@ -13,6 +14,11 @@ from publications.models import Platform
 from organizations.tests.conftest import organizations
 from publications.tests.conftest import platforms
 from core.tests.conftest import master_identity, valid_identity
+
+from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.scenarios.basic import counter_report_types, report_types
+from logs.models import ImportBatch, AccessLog, Metric
 
 
 @pytest.mark.django_db
@@ -271,3 +277,46 @@ class TestCredentialsVersioning:
         assert 'credentials_version' in attempt.processing_info
         assert attempt.credentials_version_hash != ''
         assert attempt.credentials_version_hash == cr1.version_hash
+
+
+@pytest.mark.django_db
+class TestCredentialsQuerySet:
+    def test_working(self, report_types, counter_report_types):
+        # empty
+        CredentialsFactory()
+
+        # no data
+        no_data = CredentialsFactory()
+        FetchAttemptFactory(
+            counter_report=counter_report_types["tr"],
+            credentials=no_data,
+            import_batch=ImportBatch.objects.create(
+                report_type=report_types["tr"],
+                organization=no_data.organization,
+                platform=no_data.platform,
+            ),
+        )
+
+        has_data = CredentialsFactory()
+        ib_with_data = ImportBatch.objects.create(
+            report_type=report_types["tr"],
+            organization=no_data.organization,
+            platform=no_data.platform,
+        )
+        metric = Metric.objects.create()
+        AccessLog.objects.create(
+            report_type=report_types["tr"],
+            import_batch=ib_with_data,
+            organization=no_data.organization,
+            platform=no_data.platform,
+            value=10,
+            date=timezone.now().date(),
+            metric=metric,
+        )
+        FetchAttemptFactory(
+            import_batch=ib_with_data,
+            credentials=has_data,
+            counter_report=counter_report_types["tr"],
+        )
+
+        assert SushiCredentials.objects.all().working().count() == 1
