@@ -60,7 +60,7 @@ from .tasks import export_raw_data_task
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 100
     page_size_query_param = 'page_size'
-    max_page_size = 1000
+    max_page_size = 5000
 
 
 class Counter5DataView(APIView):

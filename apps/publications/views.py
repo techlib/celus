@@ -363,6 +363,28 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         result = self._postprocess(result.order_by('name', 'pub_type'))
         return result
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+
+            if self.request.GET.get('format') in ('csv', 'xlsx'):
+                # for CSV and XLSX formats, we return a DataFrame and DRF takes care of the rest
+                data = []
+                for rec in serializer.data:
+                    # inline interests
+                    interest = rec.pop('interests')
+                    rec.update(interest)
+                    data.append(rec)
+                data = DataFrame(data)
+                return Response(data)
+
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def paginate_queryset(self, queryset):
         qs = super().paginate_queryset(queryset)
         return self._postprocess_paginated(qs)
