@@ -34,6 +34,11 @@ REL_ORG_USER = 200  # user from related organization
 REL_UNREL_USER = 100  # unrelated user - not from this organization
 REL_NO_USER = 0  # no user
 
+# data source types
+DATA_SOURCE_TYPE_API = 1
+DATA_SOURCE_TYPE_ORGANIZATION = 2
+DATA_SOURCE_TYPE_KNOWLEDGEBASE = 3
+
 
 class DataSource(models.Model):
 
@@ -43,16 +48,20 @@ class DataSource(models.Model):
     from and not to mix user created and ERMS provided data.
     """
 
-    TYPE_API = 1
-    TYPE_ORGANIZATION = 2
+    # Keep the source types here as well to keep compatiblity with older versions
+    TYPE_API = DATA_SOURCE_TYPE_API
+    TYPE_ORGANIZATION = DATA_SOURCE_TYPE_ORGANIZATION
+    TYPE_KNOWLEDGEBASE = DATA_SOURCE_TYPE_KNOWLEDGEBASE
     TYPE_CHOICES = (
         (TYPE_API, 'API'),
         (TYPE_ORGANIZATION, 'Organization'),
+        (TYPE_KNOWLEDGEBASE, 'Knowledgebase'),
     )
 
     short_name = models.SlugField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     url = models.URLField(blank=True)
+    token = models.CharField(max_length=64, null=True, blank=True)
     organization = models.OneToOneField(
         'organizations.Organization',
         on_delete=models.CASCADE,
@@ -61,6 +70,24 @@ class DataSource(models.Model):
         related_name='private_data_source',
         help_text='Used to define data sources private to an ' 'organization',
     )
+
+    class Meta:
+        constraints = (
+            models.CheckConstraint(
+                check=(
+                    models.Q(type=DATA_SOURCE_TYPE_KNOWLEDGEBASE)
+                    & models.Q(token__isnull=False)  # token set
+                    & ~models.Q(url__exact="")  # non-empty url
+                )
+                | ~models.Q(type=DATA_SOURCE_TYPE_KNOWLEDGEBASE),
+                name='knowledgebase-requirements',
+            ),
+            models.UniqueConstraint(
+                fields=('url',),
+                condition=models.Q(type=DATA_SOURCE_TYPE_KNOWLEDGEBASE),
+                name='unique-url-for-knowledgebase',
+            ),
+        )
 
     def __str__(self):
         if self.organization and self.type == self.TYPE_ORGANIZATION:

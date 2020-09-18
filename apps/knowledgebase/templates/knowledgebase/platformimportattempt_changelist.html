@@ -1,0 +1,19 @@
+{% extends 'admin/change_list.html' %}
+
+{% block object-tools %}
+    <div>
+        <form action="run-sync/" method="POST">
+            {% csrf_token %}
+            <select name="source">
+            {% for source in knowledgebase_data_sources %}
+                <option value="{{ source.pk }}">{{ source.short_name }}</option>
+            {% endfor %}
+            </select>
+
+
+                <button type="submit" class="button" style="padding:8px;">Run Sync</button>
+        </form>
+    </div>
+    <br />
+    {{ block.super }}
+{% endblock %}

@@ -10,6 +10,7 @@ class PlatformAdmin(TranslationAdmin):
     list_display = ['short_name', 'name', 'provider', 'url']
     ordering = ['short_name']
     search_fields = ['short_name', 'name', 'provider']
+    readonly_fields = ['knowledgebase']
 
 
 @admin.register(models.PlatformInterestReport)

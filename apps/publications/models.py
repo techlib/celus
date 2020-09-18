@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import JSONField
 from django.utils.translation import gettext_lazy as _
 
 from core.models import DataSource
@@ -14,7 +15,7 @@ class PlatformInterestReport(models.Model):
 
 class Platform(models.Model):
 
-    ext_id = models.PositiveIntegerField(unique=True, blank=True, null=True)
+    ext_id = models.PositiveIntegerField(blank=True, null=True)
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     provider = models.CharField(max_length=250)
@@ -25,9 +26,11 @@ class Platform(models.Model):
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+    knowledgebase = JSONField(blank=True, null=True)
 
     class Meta:
         ordering = ('short_name',)
+        unique_together = (('ext_id', 'source',),)
 
     def __str__(self):
         return self.short_name

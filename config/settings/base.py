@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'deployment.apps.DeploymentConfig',
     'api.apps.ApiConfig',
     'recache.apps.RecacheConfig',
+    'knowledgebase.apps.KnowledgebaseConfig',
     'rest_pandas',
     'error_report',
     'django_prometheus',
