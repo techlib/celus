@@ -5,22 +5,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased
+## [2.3.0]
 
 ### Added
 
 #### Frontend
 
 - show Celus version number in the side-panel
+- add a toggle to show status of credentials that are not automatically harvested in the
+  SUSHI status view
+
+### Changes
+
+#### Frontend
+
+- attempts to fetch SUSHI resulting in error 3030 are not longer shown as unsuccessful
+- confirmation dialog is shown when deleting SUSHI credentials
+- unfinished months are no longer available when selecting months for manual SUSHI harvesting
+
+#### Backend
+
+- SUSHI responses with non-200 no longer automatically lead to a "non-sushi" error code - valid
+  SUSHI error codes are extracted even from these replies.
+
 
 ### Fixes
+
+#### Frontend
+
+- error was fixed that caused changes in selected report types not being reflected in an
+  immediately started test
+- the wizard about SUSHI was updated to reflect the new wording introduced in 2.2.0 in the
+  SUSHI credentials edit dialog
 
 #### Backend
 
 - language not active for specific Celus installation cannot become users default language
 - when synchronizing users with ERMS, properly disconnect organizations when user is no longer
   associated with them
-
+- recache did not properly check for Django version when looking for cached data
 
 
 ## [2.2.1]
