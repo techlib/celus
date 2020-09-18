@@ -25,7 +25,7 @@ cs:
         <v-card-text>
             <v-container fluid>
                 <v-row>
-                    <v-col cols="auto">
+                    <v-col cols="6" sm="4" md="3" lg="2">
                         <v-menu
                                 v-model="showMonthMenu"
                                 transition="scale-transition"
@@ -43,7 +43,7 @@ cs:
                                         <IconButton @click="shiftMonth(-1)">fa-caret-left</IconButton>
                                     </template>
                                     <template #append>
-                                        <IconButton @click="shiftMonth(1)">fa-caret-right</IconButton>
+                                        <IconButton @click="shiftMonth(1)" :disabled="selectedMonth >= lastMonth">fa-caret-right</IconButton>
                                     </template>
                                 </v-text-field>
                             </template>
@@ -56,7 +56,7 @@ cs:
                             ></v-date-picker>
                         </v-menu>
                     </v-col>
-                    <v-col cols="6" sm="4" md="3" lg="2">
+                    <v-col cols="6" sm="4" md="3" lg="2" xl="1">
                         <v-select
                                 :items="[{text: '4 + 5', value: null}, {text: '4', value: 4}, {text: '5', value: 5}]"
                                 v-model="counterVersion"
@@ -74,7 +74,7 @@ cs:
                         >
                         </v-select>
                     </v-col>
-                    <v-col cols="6" md="4" lg="3">
+                    <v-col cols="6" md="auto">
                         <v-switch
                                 v-model="hideSuccessful"
                                 :label="$t('hide_successful')"
@@ -82,7 +82,7 @@ cs:
 
                         </v-switch>
                     </v-col>
-                    <v-col cols="6" md="4" lg="3">
+                    <v-col cols="6" md="auto">
                         <v-tooltip bottom>
                             <template #activator="{ on }">
                                 <span v-on="on">
@@ -335,6 +335,9 @@ export default {
         }
         return [...stats.entries()]
       },
+      lastMonth () {
+        return ymDateFormat(addDays(startOfMonth(new Date()), -15))
+      },
     },
 
     methods: {
@@ -399,7 +402,10 @@ export default {
       },
       shiftMonth (months) {
         let date = parseDateTime(this.selectedMonth)
-        this.selectedMonth = ymDateFormat(addMonths(date, months))
+        const shifted = ymDateFormat(addMonths(date, months))
+        if (this.allowedMonths(shifted)) {
+          this.selectedMonth = shifted
+        }
       },
     },
 
