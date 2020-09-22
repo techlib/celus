@@ -1,7 +1,6 @@
-import axios from 'axios'
+import axios from "axios";
 
 export default {
-
   state: {
     noInterestPlatformsCount: 0,
     noInterestPlatformsWithDataCount: 0,
@@ -9,56 +8,64 @@ export default {
   },
 
   getters: {
-    getNotifications (state) {
+    getNotifications(state) {
       // returns an object mapping URL name to an object describing the notifications to show
-      let ret = {}
+      let ret = {};
       if (state.noInterestPlatformsWithDataCount > 0) {
-        ret['maintenance'] = {
-          tooltip: 'no_interest_platforms_with_data_present',
-          level: 'warning',
-        }
+        ret["maintenance"] = {
+          tooltip: "no_interest_platforms_with_data_present",
+          level: "warning",
+        };
       } else if (state.noInterestPlatformsCount > 0) {
-        ret['maintenance'] = {
-          tooltip: 'no_interest_platforms_present',
-          level: 'info',
-        }
+        ret["maintenance"] = {
+          tooltip: "no_interest_platforms_present",
+          level: "info",
+        };
       }
-      return ret
-    }
+      return ret;
+    },
   },
 
   actions: {
-    async fetchNoInterestPlatforms ({commit, dispatch, rootState}) {
-      const url = `/api/organization/-1/platform/no-interest-defined/`
+    async fetchNoInterestPlatforms({ commit, dispatch, rootState }) {
+      const url = `/api/organization/-1/platform/no-interest-defined/`;
       try {
-        const response = await axios.get(url)
-        commit('setNoInterestPlatformsCount', {count: response.data.length})
-        commit('setNoInterestPlatformsWithDataCount', {count: response.data.filter(item => item.has_data).length})
-        return response.data
+        const response = await axios.get(url);
+        commit("setNoInterestPlatformsCount", { count: response.data.length });
+        commit("setNoInterestPlatformsWithDataCount", {
+          count: response.data.filter((item) => item.has_data).length,
+        });
+        return response.data;
       } catch (error) {
-        dispatch('showSnackbar', {content: 'Error fetching data: ' + error, color: 'error'})
+        dispatch("showSnackbar", {
+          content: "Error fetching data: " + error,
+          color: "error",
+        });
       }
-      return []
+      return [];
     },
-    async loadSushiCredentialsCount ({commit, dispatch}) {
+    async loadSushiCredentialsCount({ commit, dispatch }) {
       try {
-        let response = await axios.get('/api/sushi-credentials/count/')
-        commit('setSushiCredentialsCount', response.data)
-      } catch(error) {
-        dispatch('showSnackbar', {content: 'Error loading sushi credentials count: ' + error, color: 'error'})
+        let response = await axios.get("/api/sushi-credentials/count/");
+        commit("setSushiCredentialsCount", response.data);
+      } catch (error) {
+        dispatch("showSnackbar", {
+          content: "Error loading sushi credentials count: " + error,
+          color: "error",
+        });
       }
     },
   },
 
   mutations: {
-    setNoInterestPlatformsCount (state, {count}) {
-      state.noInterestPlatformsCount = count
+    setNoInterestPlatformsCount(state, { count }) {
+      state.noInterestPlatformsCount = count;
     },
-    setNoInterestPlatformsWithDataCount (state, {count}) {
-      state.noInterestPlatformsWithDataCount = count
+    setNoInterestPlatformsWithDataCount(state, { count }) {
+      state.noInterestPlatformsWithDataCount = count;
     },
-    setSushiCredentialsCount (state, {count}) {
-      state.sushiCredentialsCount = count
-    }
-  }
-}
+    setSushiCredentialsCount(state, { count }) {
+      state.sushiCredentialsCount = count;
+    },
+  },
+};

@@ -1,25 +1,23 @@
-function userToString (user) {
+function userToString(user) {
   if (!user) {
-    return '-'
+    return "-";
   }
   if (user.last_name) {
     if (user.first_name) {
-      return `${user.last_name}, ${user.first_name}`
+      return `${user.last_name}, ${user.first_name}`;
     }
-    return user.last_name
+    return user.last_name;
   }
   if (user.email) {
-    return user.email
+    return user.email;
   }
   if (user.username) {
-    return user.username
+    return user.username;
   }
   if (user.pk) {
-    return user.pk.toString()
+    return user.pk.toString();
   }
-  return '-'
+  return "-";
 }
 
-export {
-  userToString
-}
+export { userToString };

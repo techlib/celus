@@ -1,40 +1,38 @@
 <template>
-    <div>
-        <span v-on:mouseenter="on" @mouseleave="off">
-            <slot></slot>
-        </span>
-        <span :class="{hidden: !isOn}">
-            <slot name="hover"></slot>
-        </span>
-    </div>
+  <div>
+    <span v-on:mouseenter="on" @mouseleave="off">
+      <slot></slot>
+    </span>
+    <span :class="{ hidden: !isOn }">
+      <slot name="hover"></slot>
+    </span>
+  </div>
 </template>
 
 <script>
-  export default {
-    name: "HoverText",
+export default {
+  name: "HoverText",
 
-    data () {
-      return {
-        isOn: false,
-      }
+  data() {
+    return {
+      isOn: false,
+    };
+  },
+
+  methods: {
+    on() {
+      this.isOn = true;
     },
 
-    methods: {
-      on () {
-        this.isOn = true
-      },
-
-      off () {
-        this.isOn = false
-      }
-    }
-  }
+    off() {
+      this.isOn = false;
+    },
+  },
+};
 </script>
 
 <style scoped>
-
-    .hidden {
-        display: none;
-    }
-
+.hidden {
+  display: none;
+}
 </style>

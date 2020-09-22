@@ -7,279 +7,268 @@ cs:
 </i18n>
 
 <template>
-    <v-app>
-        <SidePanel
-                v-model="showSidePanel"
-                data-tour="side-panel"
-                :tour-name="userBasicTourFinished ? 'basic' : null"
+  <v-app>
+    <SidePanel
+      v-model="showSidePanel"
+      data-tour="side-panel"
+      :tour-name="userBasicTourFinished ? 'basic' : null"
+    />
+
+    <v-app-bar app clipped-left data-tour="app-bar">
+      <v-toolbar-title class="flex-sm-shrink-0">
+        <img
+          :src="
+            siteLogo ? siteLogo.img : require('../assets/celus-plus-dark.svg')
+          "
+          :alt="siteLogo ? siteLogo.alt_text : 'Celus'"
+          id="logo-image"
         />
+      </v-toolbar-title>
 
-        <v-app-bar app clipped-left data-tour="app-bar">
-            <v-toolbar-title class="flex-sm-shrink-0">
-                <img
-                        :src="siteLogo ? siteLogo.img : require('../assets/celus-plus-dark.svg')"
-                        :alt="siteLogo ? siteLogo.alt_text : 'Celus'"
-                        id="logo-image">
-            </v-toolbar-title>
+      <v-divider class="mx-3 d-none d-md-block" inset vertical></v-divider>
 
-            <v-divider
-                    class="mx-3 d-none d-md-block"
-                    inset
-                    vertical
-            ></v-divider>
+      <OrganizationSelector
+        internal-label
+        :lang="appLanguage"
+        v-if="$vuetify.breakpoint.mdAndUp"
+        class="d-flex"
+      />
+      <SelectedDateRangeWidget
+        input-like-label
+        class="d-flex"
+        v-if="$vuetify.breakpoint.smAndUp"
+      />
 
-            <OrganizationSelector
-                    internal-label
-                    :lang="appLanguage"
-                    v-if="$vuetify.breakpoint.mdAndUp"
-                    class="d-flex"
-            />
-            <SelectedDateRangeWidget
-                    input-like-label
-                    class="d-flex"
-                    v-if="$vuetify.breakpoint.smAndUp"
-            />
+      <v-spacer></v-spacer>
 
-            <v-spacer></v-spacer>
+      <v-select
+        v-if="showLanguageSelector"
+        v-model="appLanguage"
+        :items="activeLanguageCodes"
+        prepend-icon="fa-globe"
+        class="short"
+        shrink
+      >
+      </v-select>
 
-            <v-select
-                    v-if="showLanguageSelector"
-                    v-model="appLanguage"
-                    :items="activeLanguageCodes"
-                    prepend-icon="fa-globe"
-                    class="short"
-                    shrink
-            >
-            </v-select>
+      <!-- user icon -->
+      <v-toolbar-items>
+        <v-divider class="mx-3" inset vertical></v-divider>
 
-            <!-- user icon -->
-            <v-toolbar-items>
-                <v-divider
-                        class="mx-3"
-                        inset
-                        vertical
-                ></v-divider>
+        <v-tooltip bottom v-if="!emailVerified">
+          <template v-slot:activator="{ on }">
+            <span v-on="on">
+              <router-link :to="{ name: 'user-page' }">
+                <v-icon class="mx-2 mt-5" color="warning"
+                  >fa fa-exclamation-triangle</v-icon
+                >
+              </router-link>
+            </span>
+          </template>
+          {{ $t("email_not_verified") }}
+        </v-tooltip>
 
-                <v-tooltip bottom v-if="!emailVerified">
-                    <template v-slot:activator="{ on }">
-                        <span v-on="on">
-                            <router-link :to="{name: 'user-page'}">
-                                <v-icon class="mx-2 mt-5" color="warning">fa fa-exclamation-triangle</v-icon>
-                            </router-link>
-                        </span>
-                    </template>
-                    {{ $t('email_not_verified') }}
-                </v-tooltip>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <span v-on="on">
+              <router-link :to="{ name: 'user-page' }">
+                <v-avatar color="primary" class="mt-2" data-tour="user-avatar">
+                  <v-gravatar
+                    v-if="loggedIn && user"
+                    :email="user.email"
+                    :alt="avatarText"
+                    default-img="mp"
+                  >
+                  </v-gravatar>
+                  <v-icon v-else dark>fa-user</v-icon>
+                </v-avatar>
+              </router-link>
+            </span>
+          </template>
+          <span>{{ usernameText }}</span>
+        </v-tooltip>
+      </v-toolbar-items>
 
-                <v-tooltip bottom>
-                    <template v-slot:activator="{ on }">
-                        <span v-on="on" >
-                            <router-link :to="{name: 'user-page'}">
-                                <v-avatar color="primary" class="mt-2" data-tour="user-avatar">
-                                    <v-gravatar
-                                            v-if="loggedIn && user"
-                                            :email="user.email"
-                                            :alt="avatarText"
-                                            default-img="mp"
-                                    >
-                                    </v-gravatar>
-                                    <v-icon
-                                            v-else
-                                            dark
-                                    >fa-user</v-icon>
-                                </v-avatar>
-                            </router-link>
-                        </span>
-                    </template>
-                    <span>{{ usernameText }}</span>
-                </v-tooltip>
-            </v-toolbar-items>
+      <v-btn
+        @click.stop="showSidePanel = !showSidePanel"
+        icon
+        data-tour="menu-show-button"
+      >
+        <v-icon>fa fa-bars</v-icon>
+      </v-btn>
+    </v-app-bar>
 
-            <v-btn
-                    @click.stop="showSidePanel=!showSidePanel"
-                    icon
-                    data-tour="menu-show-button"
-            >
-                <v-icon>fa fa-bars</v-icon>
-            </v-btn>
+    <v-main>
+      <v-container fluid pa-0 pa-sm-2>
+        <router-view :key="$route.fullPath" v-if="loggedIn" />
 
-        </v-app-bar>
-
-        <v-main>
-            <v-container fluid pa-0 pa-sm-2>
-
-                <router-view :key="$route.fullPath" v-if="loggedIn"/>
-
-                <!--keep-alive max="5">
+        <!--keep-alive max="5">
                     <router-view :key="$route.fullPath"/>
                 </keep-alive-->
 
-                <v-snackbar v-model="snackbarShow" :color="snackbarColor">
-                    {{ snackbarText }}
-                    <v-btn dark text @click="hideSnackbar">
-                        Close
-                    </v-btn>
-                </v-snackbar>
-            </v-container>
-        </v-main>
-        <v-footer app absolute inset height="128px" v-if="footerImages.length">
-            <v-container fluid>
-                <v-row no-gutters wrap>
-                    <v-col cols="auto" v-for="(image, index) of footerImages" :key="index">
-                        <img :src="image.img" :alt="image.alt_text" class="logow">
-                    </v-col>
-                </v-row>
-            </v-container>
-        </v-footer>
+        <v-snackbar v-model="snackbarShow" :color="snackbarColor">
+          {{ snackbarText }}
+          <v-btn dark text @click="hideSnackbar"> Close </v-btn>
+        </v-snackbar>
+      </v-container>
+    </v-main>
+    <v-footer app absolute inset height="128px" v-if="footerImages.length">
+      <v-container fluid>
+        <v-row no-gutters wrap>
+          <v-col
+            cols="auto"
+            v-for="(image, index) of footerImages"
+            :key="index"
+          >
+            <img :src="image.img" :alt="image.alt_text" class="logow" />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-footer>
 
-        <LoginDialog />
-        <CreateOrganizationDialog
-                v-if="showCreateOrganizationDialog"
-        />
+    <LoginDialog />
+    <CreateOrganizationDialog v-if="showCreateOrganizationDialog" />
 
-        <UITour name="basic" />
-    </v-app>
+    <UITour name="basic" />
+  </v-app>
 </template>
 
 <script>
-  import SidePanel from './SidePanel'
-  import { mapActions, mapGetters, mapState } from 'vuex'
-  import OrganizationSelector from '@/components/OrganizationSelector'
-  import SelectedDateRangeWidget from '@/components/SelectedDateRangeWidget'
-  import LoginDialog from '@/components/account/LoginDialog'
-  import VGravatar from 'vue-gravatar'
-  import CreateOrganizationDialog from '@/components/account/CreateOrganizationDialog'
-  import UITour from '@/components/help/UITour'
+import SidePanel from "./SidePanel";
+import { mapActions, mapGetters, mapState } from "vuex";
+import OrganizationSelector from "@/components/OrganizationSelector";
+import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
+import LoginDialog from "@/components/account/LoginDialog";
+import VGravatar from "vue-gravatar";
+import CreateOrganizationDialog from "@/components/account/CreateOrganizationDialog";
+import UITour from "@/components/help/UITour";
 
-  export default {
-    name: 'Dashboard',
-    components: {
-      UITour,
-      CreateOrganizationDialog,
-      LoginDialog,
-      SelectedDateRangeWidget,
-      OrganizationSelector,
-      SidePanel,
-      VGravatar,
-    },
-    data () {
-      return {
-        navbarExpanded: false,
-        showSidePanel: true,
-        basicsTourName: 'basic',
-      }
-    },
-    computed: {
-      ...mapState({
-        snackbarText: 'snackbarContent',
-        snackbarColor: 'snackbarColor',
-        user: 'user',
-        siteLogo: state => state.siteConfig.siteLogo,
-        siteName: state => state.siteConfig.siteName,
-        footerImages: state => state.siteConfig.footerImages,
-      }),
-      ...mapGetters({
-        loggedIn: 'loggedIn',
-        avatarText: 'avatarText',
-        avatarImg: 'avatarImg',
-        usernameText: 'usernameText',
-        bootUpFinished: 'bootUpFinished',
-        emailVerified: 'emailVerified',
-        tourFinished: 'tourFinished',
-        tourNeverSeen: 'tourNeverSeen',
-        showCreateOrganizationDialog: 'showCreateOrganizationDialog',
-        activeLanguageCodes: 'activeLanguageCodes',
-      }),
-      snackbarShow: {
-        get () {
-          return this.$store.state.snackbarShow
-        },
-        set (newValue) {
-          if (newValue === false)
-            this.hideSnackbar()
-        }
+export default {
+  name: "Dashboard",
+  components: {
+    UITour,
+    CreateOrganizationDialog,
+    LoginDialog,
+    SelectedDateRangeWidget,
+    OrganizationSelector,
+    SidePanel,
+    VGravatar,
+  },
+  data() {
+    return {
+      navbarExpanded: false,
+      showSidePanel: true,
+      basicsTourName: "basic",
+    };
+  },
+  computed: {
+    ...mapState({
+      snackbarText: "snackbarContent",
+      snackbarColor: "snackbarColor",
+      user: "user",
+      siteLogo: (state) => state.siteConfig.siteLogo,
+      siteName: (state) => state.siteConfig.siteName,
+      footerImages: (state) => state.siteConfig.footerImages,
+    }),
+    ...mapGetters({
+      loggedIn: "loggedIn",
+      avatarText: "avatarText",
+      avatarImg: "avatarImg",
+      usernameText: "usernameText",
+      bootUpFinished: "bootUpFinished",
+      emailVerified: "emailVerified",
+      tourFinished: "tourFinished",
+      tourNeverSeen: "tourNeverSeen",
+      showCreateOrganizationDialog: "showCreateOrganizationDialog",
+      activeLanguageCodes: "activeLanguageCodes",
+    }),
+    snackbarShow: {
+      get() {
+        return this.$store.state.snackbarShow;
       },
-      appLanguage: {
-        get () {
-          return this.$store.state.appLanguage
-        },
-        set: async function (newValue) {
-          await this.$store.dispatch('setAppLanguage', {lang: newValue})
-          this.$router.go()
-        }
-      },
-      userBasicTourFinished () {
-        return this.tourFinished(this.basicsTourName)
-      },
-      showLanguageSelector () {
-        return this.activeLanguageCodes.length > 1
-      }
-    },
-
-    methods: {
-      ...mapActions({
-        hideSnackbar: 'hideSnackbar',
-        start: 'start',
-        backstageChangeTourStatus: 'backstageChangeTourStatus',
-      }),
-      toggleNavbar () {
-        this.navbarExpanded = !this.navbarExpanded
+      set(newValue) {
+        if (newValue === false) this.hideSnackbar();
       },
     },
-
-    created() {
-      this.start()
+    appLanguage: {
+      get() {
+        return this.$store.state.appLanguage;
+      },
+      set: async function (newValue) {
+        await this.$store.dispatch("setAppLanguage", { lang: newValue });
+        this.$router.go();
+      },
     },
-
-    async mounted () {
-      this.$i18n.locale = this.appLanguage
-      if (!this.userBasicTourFinished && !this.showCreateOrganizationDialog) {
-        this.$tours[this.basicsTourName].start()
-      }
+    userBasicTourFinished() {
+      return this.tourFinished(this.basicsTourName);
     },
+    showLanguageSelector() {
+      return this.activeLanguageCodes.length > 1;
+    },
+  },
 
-    watch: {
-      appLanguage () {
-        this.$i18n.locale = this.appLanguage
-      },
+  methods: {
+    ...mapActions({
+      hideSnackbar: "hideSnackbar",
+      start: "start",
+      backstageChangeTourStatus: "backstageChangeTourStatus",
+    }),
+    toggleNavbar() {
+      this.navbarExpanded = !this.navbarExpanded;
+    },
+  },
 
-      userBasicTourFinished () {
-        if (!this.userBasicTourFinished) {
-          this.$tours[this.basicsTourName].start()
-        }
-      },
+  created() {
+    this.start();
+  },
 
-      showCreateOrganizationDialog () {
-        if (!this.showCreateOrganizationDialog && !this.userBasicTourFinished) {
-          this.$tours[this.basicsTourName].start()
-        }
-      },
+  async mounted() {
+    this.$i18n.locale = this.appLanguage;
+    if (!this.userBasicTourFinished && !this.showCreateOrganizationDialog) {
+      this.$tours[this.basicsTourName].start();
     }
+  },
 
-  }
+  watch: {
+    appLanguage() {
+      this.$i18n.locale = this.appLanguage;
+    },
+
+    userBasicTourFinished() {
+      if (!this.userBasicTourFinished) {
+        this.$tours[this.basicsTourName].start();
+      }
+    },
+
+    showCreateOrganizationDialog() {
+      if (!this.showCreateOrganizationDialog && !this.userBasicTourFinished) {
+        this.$tours[this.basicsTourName].start();
+      }
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
+#logo-image {
+  @media only screen and (max-width: 600px) {
+    width: 20vw;
+  }
+  max-width: 128px;
+  max-height: 48px;
+}
 
-    #logo-image {
-        @media only screen and (max-width:600px) {
-            width: 20vw;
-        }
-        max-width: 128px;
-        max-height: 48px;
-    }
+img.logo {
+  max-width: 20vw;
+}
 
-    img.logo {
-        max-width: 20vw;
-    }
+img.logow {
+  max-height: 92px;
+}
 
-    img.logow {
-        max-height: 92px;
-    }
-
-    .v-navigation-drawer {
-        &.v-tour__target--relative {
-            position: fixed;
-        }
-    }
+.v-navigation-drawer {
+  &.v-tour__target--relative {
+    position: fixed;
+  }
+}
 </style>

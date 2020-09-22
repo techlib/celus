@@ -42,92 +42,92 @@ cs:
 </i18n>
 
 <template>
-    <v-tour
-            :name="name"
-            :steps="tourSteps"
-            :options="{highlight: true, debug: false}"
-            :callbacks="{onFinish: onTourFinished, onSkip: onSkipTour}"
-    ></v-tour>
+  <v-tour
+    :name="name"
+    :steps="tourSteps"
+    :options="{ highlight: true, debug: false }"
+    :callbacks="{ onFinish: onTourFinished, onSkip: onSkipTour }"
+  ></v-tour>
 </template>
 <script>
-  import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters } from "vuex";
 
-  export default {
-    name: 'UITour',
-    props: {
-      name: {required: true},
-    },
+export default {
+  name: "UITour",
+  props: {
+    name: { required: true },
+  },
 
-    data () {
-      return {
-        allSteps: {
-          basic: [
-            {
-              element: 'app-bar',
-              placement: 'bottom',
-              _filter: context => context.tourNeverSeen,
-            },
-            {
-              element: 'side-panel',
-              placement: 'right',
-            },
-            {
-              element: 'organization-select',
-              placement: 'bottom-start',
-              _filter: context => context.consortialInstall,
-            },
-            {
-              element: 'date-range',
-              placement: 'bottom',
-            },
-            {
-              element: 'user-avatar',
-              placement: 'left-start',
-            },
-            {
-              element: 'menu-show-button',
-              placement: 'left-start',
-            }
-          ]
-        }
-      }
-    },
-
-    computed: {
-      ...mapGetters({
-        tourFinished: 'tourFinished',
-        consortialInstall: 'consortialInstall',
-        tourNeverSeen: 'tourNeverSeen',
-      }),
-      tourSteps () {
-        let context = {
-          consortialInstall: this.consortialInstall,
-          tourNeverSeen: this.tourNeverSeen(this.name),
-        }
-        return this.allSteps[this.name].filter(
-          item => '_filter' in item ? item._filter(context) : true
-        ).map(item => {return {
-          target: `[data-tour="${item.element}"]`,
-          content: this.$t(`tour_text_${item.element}`),
-          params: {
-            placement: item.placement || 'auto'
-          }
-        }
-        })
-      }
-    },
-
-    methods: {
-      ...mapActions({
-        backstageChangeTourStatus: 'backstageChangeTourStatus',
-      }),
-      onTourFinished () {
-        this.backstageChangeTourStatus({tourName: this.name, status: true})
+  data() {
+    return {
+      allSteps: {
+        basic: [
+          {
+            element: "app-bar",
+            placement: "bottom",
+            _filter: (context) => context.tourNeverSeen,
+          },
+          {
+            element: "side-panel",
+            placement: "right",
+          },
+          {
+            element: "organization-select",
+            placement: "bottom-start",
+            _filter: (context) => context.consortialInstall,
+          },
+          {
+            element: "date-range",
+            placement: "bottom",
+          },
+          {
+            element: "user-avatar",
+            placement: "left-start",
+          },
+          {
+            element: "menu-show-button",
+            placement: "left-start",
+          },
+        ],
       },
-      onSkipTour () {
-        this.backstageChangeTourStatus({tourName: this.name, status: true})
-      }
-    }
+    };
+  },
 
-  }
+  computed: {
+    ...mapGetters({
+      tourFinished: "tourFinished",
+      consortialInstall: "consortialInstall",
+      tourNeverSeen: "tourNeverSeen",
+    }),
+    tourSteps() {
+      let context = {
+        consortialInstall: this.consortialInstall,
+        tourNeverSeen: this.tourNeverSeen(this.name),
+      };
+      return this.allSteps[this.name]
+        .filter((item) => ("_filter" in item ? item._filter(context) : true))
+        .map((item) => {
+          return {
+            target: `[data-tour="${item.element}"]`,
+            content: this.$t(`tour_text_${item.element}`),
+            params: {
+              placement: item.placement || "auto",
+            },
+          };
+        });
+    },
+  },
+
+  methods: {
+    ...mapActions({
+      backstageChangeTourStatus: "backstageChangeTourStatus",
+    }),
+    onTourFinished() {
+      this.backstageChangeTourStatus({ tourName: this.name, status: true });
+    },
+    onSkipTour() {
+      this.backstageChangeTourStatus({ tourName: this.name, status: true });
+    },
+  },
+};
 </script>

@@ -1,28 +1,24 @@
 <template>
-    <SushiCredentialsManagementWidget
-            :organization-id="organizationId"
-    />
+  <SushiCredentialsManagementWidget :organization-id="organizationId" />
 </template>
 
 <script>
-  import SushiCredentialsManagementWidget from '@/components/sushi/SushiCredentialsManagementWidget'
-  import { mapState } from 'vuex'
+import SushiCredentialsManagementWidget from "@/components/sushi/SushiCredentialsManagementWidget";
+import { mapState } from "vuex";
 
-  export default {
-    name: "SushiCredentialsManagementPage",
+export default {
+  name: "SushiCredentialsManagementPage",
 
-    components: {
-      SushiCredentialsManagementWidget,
-    },
+  components: {
+    SushiCredentialsManagementWidget,
+  },
 
-    computed: {
-      ...mapState({
-        organizationId: 'selectedOrganizationId',
-      })
-    }
-
-  }
+  computed: {
+    ...mapState({
+      organizationId: "selectedOrganizationId",
+    }),
+  },
+};
 </script>
 
-<style lang="scss">
-</style>
+<style lang="scss"></style>

@@ -13,103 +13,100 @@ cs:
 </i18n>
 
 <template>
-    <v-app>
+  <v-app>
     <v-container class="center">
+      <v-row>
+        <v-col>
+          <img
+            src="../assets/celus-plus-white-vertical-nobg.svg"
+            height="158"
+            alt="Celus Logo"
+          />
+        </v-col>
+      </v-row>
 
-        <v-row>
-            <v-col>
-                <img src="../assets/celus-plus-white-vertical-nobg.svg" height="158" alt="Celus Logo">
-            </v-col>
-        </v-row>
+      <v-row>
+        <v-col v-if="!attemptFinished && key">
+          Verifying your email <v-icon class="ml-4">fa-spinner fa-spin</v-icon>
+        </v-col>
+      </v-row>
 
-        <v-row>
-            <v-col v-if="!attemptFinished && key">
-                Verifying your email <v-icon class="ml-4">fa-spinner fa-spin</v-icon>
-            </v-col>
-        </v-row>
-
-        <v-row>
-            <v-col>
-                <v-alert
-                        v-if="!key"
-                        type="error"
-                >
-                    {{ $t('no_such_key') }}
-                </v-alert>
-                <v-alert
-                        v-else-if="error"
-                        type="error"
-                >
-                    {{ $t(error, {error: errorObj}) }}
-                </v-alert>
-                <v-alert
-                        v-else-if="emailVerified"
-                        type="success"
-                >
-                    <div v-html="$t('success')"></div>
-                    <div><router-link :to="{'name': 'dashboard'}" class="continue">{{ $t('go_to_celus') }}</router-link></div>
-                </v-alert>
-            </v-col>
-        </v-row>
-
+      <v-row>
+        <v-col>
+          <v-alert v-if="!key" type="error">
+            {{ $t("no_such_key") }}
+          </v-alert>
+          <v-alert v-else-if="error" type="error">
+            {{ $t(error, { error: errorObj }) }}
+          </v-alert>
+          <v-alert v-else-if="emailVerified" type="success">
+            <div v-html="$t('success')"></div>
+            <div>
+              <router-link :to="{ name: 'dashboard' }" class="continue">{{
+                $t("go_to_celus")
+              }}</router-link>
+            </div>
+          </v-alert>
+        </v-col>
+      </v-row>
     </v-container>
-    </v-app>
+  </v-app>
 </template>
 
 <script>
-  import axios from 'axios'
+import axios from "axios";
 
-  export default {
-    name: 'VerifyEmailPage',
+export default {
+  name: "VerifyEmailPage",
 
-    data () {
-      return {
-        key: this.$route.query.key,
-        emailVerified: false,
-        error: null,
-        errorObj: null,
-        attemptFinished: false,
-      }
-    },
+  data() {
+    return {
+      key: this.$route.query.key,
+      emailVerified: false,
+      error: null,
+      errorObj: null,
+      attemptFinished: false,
+    };
+  },
 
-    methods: {
-      async verifyEmail () {
-        try {
-          await axios.post(
-            `/api/rest-auth/registration/verify-email/`,
-            {key: this.key},
-            {privileged: true})
-          this.attemptFinished = true
-          this.emailVerified = true
-        } catch (error) {
-          this.errorObj = error
-          if (error.response.status === 404 && 'detail' in error.response.data) {
-            this.error = 'no_such_key'
-          } else {
-            this.error = 'some_error'
-          }
-          this.attemptFinished = true
+  methods: {
+    async verifyEmail() {
+      try {
+        await axios.post(
+          `/api/rest-auth/registration/verify-email/`,
+          { key: this.key },
+          { privileged: true }
+        );
+        this.attemptFinished = true;
+        this.emailVerified = true;
+      } catch (error) {
+        this.errorObj = error;
+        if (error.response.status === 404 && "detail" in error.response.data) {
+          this.error = "no_such_key";
+        } else {
+          this.error = "some_error";
         }
+        this.attemptFinished = true;
       }
     },
+  },
 
-    mounted () {
-      if (this.key) {
-        this.verifyEmail()
-      }
+  mounted() {
+    if (this.key) {
+      this.verifyEmail();
     }
-  }
+  },
+};
 </script>
 
 <style scoped lang="scss">
 .center {
-    text-align: center;
+  text-align: center;
 }
 
 a.continue {
-    font-size: 125%;
-    color: white;
-    font-weight: 900;
+  font-size: 125%;
+  color: white;
+  font-weight: 900;
 }
-
 </style>

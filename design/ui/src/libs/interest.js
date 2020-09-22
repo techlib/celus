@@ -1,15 +1,11 @@
-
-function createEmptyInterestRecord () {
-  return {}
+function createEmptyInterestRecord() {
+  return {};
 }
 
-function createLoadingInterestRecord () {
-  let out = createEmptyInterestRecord()
-  out['loading'] = true
-  return out
+function createLoadingInterestRecord() {
+  let out = createEmptyInterestRecord();
+  out["loading"] = true;
+  return out;
 }
 
-export {
-  createEmptyInterestRecord,
-  createLoadingInterestRecord,
-}
+export { createEmptyInterestRecord, createLoadingInterestRecord };

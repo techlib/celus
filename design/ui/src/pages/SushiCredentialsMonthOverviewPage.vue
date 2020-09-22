@@ -1,28 +1,24 @@
 <template>
-    <SushiCredentialsMonthOverviewWidget
-            :organization-id="organizationId"
-    />
+  <SushiCredentialsMonthOverviewWidget :organization-id="organizationId" />
 </template>
 
 <script>
-  import SushiCredentialsMonthOverviewWidget from '@/components/sushi/SushiCredentialsMonthOverviewWidget'
-  import { mapState } from 'vuex'
+import SushiCredentialsMonthOverviewWidget from "@/components/sushi/SushiCredentialsMonthOverviewWidget";
+import { mapState } from "vuex";
 
-  export default {
-    name: "SushiCredentialsMonthOverviewPage",
+export default {
+  name: "SushiCredentialsMonthOverviewPage",
 
-    components: {
-      SushiCredentialsMonthOverviewWidget
-    },
+  components: {
+    SushiCredentialsMonthOverviewWidget,
+  },
 
-    computed: {
-      ...mapState({
-        organizationId: 'selectedOrganizationId',
-      })
-    }
-
-  }
+  computed: {
+    ...mapState({
+      organizationId: "selectedOrganizationId",
+    }),
+  },
+};
 </script>
 
-<style lang="scss">
-</style>
+<style lang="scss"></style>

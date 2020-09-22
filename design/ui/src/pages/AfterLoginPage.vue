@@ -1,34 +1,31 @@
 <template>
-    <div></div>
+  <div></div>
 </template>
 
 <script>
-  import { mapActions, mapState } from 'vuex'
+import { mapActions, mapState } from "vuex";
 
-  export default {
-    name: 'AfterLoginPage',
-    computed: {
-      ...mapState({
-        user: 'user',
-        }),
+export default {
+  name: "AfterLoginPage",
+  computed: {
+    ...mapState({
+      user: "user",
+    }),
+  },
+  methods: {
+    ...mapActions({
+      loadUserData: "loadUserData",
+    }),
+  },
+  mounted() {
+    this.loadUserData();
+  },
+  watch: {
+    user() {
+      if (this.user) this.$router.push({ name: "home" });
     },
-    methods: {
-      ...mapActions({
-        loadUserData: 'loadUserData',
-      })
-    },
-    mounted () {
-      this.loadUserData()
-    },
-    watch: {
-      user () {
-        if (this.user)
-          this.$router.push({name: 'home'})
-      }
-    }
-  }
+  },
+};
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
