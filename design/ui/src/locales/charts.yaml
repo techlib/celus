@@ -1,74 +1,74 @@
 en:
-    chart:
-        date_metric: Metric over time
-        accesstype: Access Type
-        accessmethod: Access Method
-        datatype: Publication type
-        sectiontype: Publication part
-        metric: Metrics
-        yop: Year of publication
-        platform: Platform
-        organization: Organization
-        interest_in_time: Interest in time
-        interest_type: Interest type
-        interest_type_in_time: Interest type in time
-        toolbox:
-            save_as_image: Save as image
-            zoom: Zoom
-            zoom_back: Back
-            export_csv: Export CSV
-        no_data: Sorry, no data available
-        too_much_data: Sorry, there is too much data and it cannot be displayed
-        my_org: My organization
-        log_scale: Logarithmic scale
-        loading_data: Loading data
-        preparing_data: Crunching data
-        crunching_records: Crunching {n} record | Crunching {n} records
-        request_error: Could not load data due to an error
-    chart_view:
-        table: Table view
-        chart: Chart view
-    x_axis:
-        linear: Linear X axis
-        year_months: Group data by months - creates separate bars for each year
-    interest_metrics_only: This view uses interest-defining metrics only.
-    reported_metrics_tooltip: "Only the following metrics were used to compute the displayed values:"
-    reported_metrics_tooltip_many: The resulting value is a sum of the individual displayed metrics.
-    available_charts: Choose a chart
+  chart:
+    date_metric: Metric over time
+    accesstype: Access Type
+    accessmethod: Access Method
+    datatype: Publication type
+    sectiontype: Publication part
+    metric: Metrics
+    yop: Year of publication
+    platform: Platform
+    organization: Organization
+    interest_in_time: Interest in time
+    interest_type: Interest type
+    interest_type_in_time: Interest type in time
+    toolbox:
+      save_as_image: Save as image
+      zoom: Zoom
+      zoom_back: Back
+      export_csv: Export CSV
+    no_data: Sorry, no data available
+    too_much_data: Sorry, there is too much data and it cannot be displayed
+    my_org: My organization
+    log_scale: Logarithmic scale
+    loading_data: Loading data
+    preparing_data: Crunching data
+    crunching_records: Crunching {n} record | Crunching {n} records
+    request_error: Could not load data due to an error
+  chart_view:
+    table: Table view
+    chart: Chart view
+  x_axis:
+    linear: Linear X axis
+    year_months: Group data by months - creates separate bars for each year
+  interest_metrics_only: This view uses interest-defining metrics only.
+  reported_metrics_tooltip: "Only the following metrics were used to compute the displayed values:"
+  reported_metrics_tooltip_many: The resulting value is a sum of the individual displayed metrics.
+  available_charts: Choose a chart
 cs:
-    chart:
-        date_metric: Metrika v čase
-        accesstype: Typ přístupu
-        accessmethod: Způsob přístupu
-        datatype: Typ publikace
-        sectiontype: Část publikace
-        metric: Metriky
-        yop: Rok vydání
-        platform: Platforma
-        organization: Organizace
-        interest_in_time: Zájem v čase
-        interest_type: Typ zájmu
-        interest_type_in_time: Typ zájmu v čase
-        toolbox:
-            save_as_image: Uložit jako obrázek
-            zoom: Zoomovat
-            zoom_back: Zpět
-            export_csv: Export CSV
-        no_data: Je nám líto, ale nemáme data k zobrazení
-        too_much_data: Je nám líto, ale dat je příliš mnoho a nelze je zobrazit
-        my_org: Moje organizace
-        log_scale: Logaritmická škála
-        loading_data: Nahrávám data
-        preparing_data: Zpracovávám data
-        crunching_records: Zpracovávám {n} záznam | Zpracovávám {n} záznamů
-        request_error: Nebylo možné nahrát data kvůli chybě
-    chart_view:
-        table: Tabulkové zobrazení
-        chart: Zobrazení v grafu
-    x_axis:
-        linear: Lineární osa X
-        year_months: Seskupení dat po měsících - vytvoří sloupce pro jednotlivé roky
-    interest_metrics_only: Tento pohled využívá pouze metriky, které definují zájem.
-    reported_metrics_tooltip: "Při výpočtu dat pro tento graf byly použity pouze tyto metriky:"
-    reported_metrics_tooltip_many: Výsledná hodnota je součtem jednotlivých uvedených metrik.
-    available_charts: Vyberte graf
+  chart:
+    date_metric: Metrika v čase
+    accesstype: Typ přístupu
+    accessmethod: Způsob přístupu
+    datatype: Typ publikace
+    sectiontype: Část publikace
+    metric: Metriky
+    yop: Rok vydání
+    platform: Platforma
+    organization: Organizace
+    interest_in_time: Zájem v čase
+    interest_type: Typ zájmu
+    interest_type_in_time: Typ zájmu v čase
+    toolbox:
+      save_as_image: Uložit jako obrázek
+      zoom: Zoomovat
+      zoom_back: Zpět
+      export_csv: Export CSV
+    no_data: Je nám líto, ale nemáme data k zobrazení
+    too_much_data: Je nám líto, ale dat je příliš mnoho a nelze je zobrazit
+    my_org: Moje organizace
+    log_scale: Logaritmická škála
+    loading_data: Nahrávám data
+    preparing_data: Zpracovávám data
+    crunching_records: Zpracovávám {n} záznam | Zpracovávám {n} záznamů
+    request_error: Nebylo možné nahrát data kvůli chybě
+  chart_view:
+    table: Tabulkové zobrazení
+    chart: Zobrazení v grafu
+  x_axis:
+    linear: Lineární osa X
+    year_months: Seskupení dat po měsících - vytvoří sloupce pro jednotlivé roky
+  interest_metrics_only: Tento pohled využívá pouze metriky, které definují zájem.
+  reported_metrics_tooltip: "Při výpočtu dat pro tento graf byly použity pouze tyto metriky:"
+  reported_metrics_tooltip_many: Výsledná hodnota je součtem jednotlivých uvedených metrik.
+  available_charts: Vyberte graf

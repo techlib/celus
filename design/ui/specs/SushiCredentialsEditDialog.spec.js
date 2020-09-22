@@ -1,38 +1,34 @@
 // basic imports
-import Vue from 'vue'
-import Vuetify from 'vuetify'
-import { mount, createLocalVue } from '@vue/test-utils'
+import Vue from "vue";
+import Vuetify from "vuetify";
+import { mount, createLocalVue } from "@vue/test-utils";
 
 // stuff to check
-import SushiCredentialsEditDialog from '@/components/sushi/SushiCredentialsEditDialog'
+import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
 
 // basic setup
-Vue.use(Vuetify)
-const localVue = createLocalVue()
+Vue.use(Vuetify);
+const localVue = createLocalVue();
 
-describe('CheckMark', () => {
-
+describe("CheckMark", () => {
   // vuetify setup before each test
-  let vuetify
+  let vuetify;
   beforeEach(() => {
-    vuetify = new Vuetify()
-  })
+    vuetify = new Vuetify();
+  });
 
   // the tests themselves
-  test('check validity', () => {
+  test("check validity", () => {
     const wrapper = mount(SushiCredentialsEditDialog, {
       localVue,
       vuetify,
-      propsData: {
-      }
-    })
+      propsData: {},
+    });
     wrapper.setData({
       organizationId: 1,
       counterVersion: 5,
-      customerId: 'cusid',
-    })
-    expect(wrapper.vm.valid).toBeFalsy()
-
-  })
-
-})
+      customerId: "cusid",
+    });
+    expect(wrapper.vm.valid).toBeFalsy();
+  });
+});
