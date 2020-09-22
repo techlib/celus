@@ -3,27 +3,32 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.4.0
     hooks:
-    - id: trailing-whitespace
-      exclude: '^.*\.(tsv|json|svg)'
-    - id: end-of-file-fixer
-      exclude: '^.*\.(tsv|json|svg)'
-    - id: check-yaml
-    - id: check-added-large-files
+      - id: trailing-whitespace
+        exclude: '^.*\.(tsv|json|svg)'
+      - id: end-of-file-fixer
+        exclude: '^.*\.(tsv|json|svg)'
+      - id: check-yaml
+      - id: check-added-large-files
 
   - repo: local
     hooks:
-    - id: dependencies
-      name: Check whether requirements/*.txt are up-to-date
-      entry: make update_requirements
-      language: system
-      files: poetry.lock
-    - id: black
-      name: Black formatter
-      entry: poetry run black --check
-      language: system
-      types: [python]
-    - id: pytestnow
-      name: Check that no tests marked with 'now' exist
-      entry: "@pytest.mark.now"
-      language: pygrep
-      types: [python]
+      - id: dependencies
+        name: Check whether requirements/*.txt are up-to-date
+        entry: make update_requirements
+        language: system
+        files: poetry.lock
+      - id: black
+        name: Black formatter
+        entry: poetry run black --check
+        language: system
+        types: [python]
+      - id: pytestnow
+        name: Check that no tests marked with 'now' exist
+        entry: "@pytest.mark.now"
+        language: pygrep
+        types: [python]
+
+  - repo: https://github.com/prettier/prettier
+    rev: "" # Use the sha or tag you want to point at
+    hooks:
+      - id: prettier
