@@ -250,6 +250,60 @@ class TestSushiCredentialsViewSet:
         resp = clients["master"].get(url, {'month': '2020-01', 'disabled': 'true'})
         assert len(resp.json()) == 1
 
+    def test_month_overview_long_attempts(
+        self, basic1, organizations, platforms, counter_report_type_named, clients
+    ):
+        """
+        Test the month-overview custom action in presence of sushi fetch attempts that span
+        more than one month
+        """
+        credentials = SushiCredentials.objects.create(
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url='http://a.b.c/',
+        )
+        new_rt1 = counter_report_type_named('new1')
+        credentials.active_counter_reports.add(new_rt1)
+        attempt1 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-03-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+        )
+        attempt2 = SushiFetchAttempt.objects.create(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            credentials_version_hash=credentials.version_hash,
+            counter_report=new_rt1,
+        )
+        url = reverse('sushi-credentials-month-overview')
+        # 2020-01 - there are two attempts for this month
+        resp = clients["master"].get(url, {'month': '2020-01'})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, 'there should be one record for this period'
+        rec = data[0]
+        assert rec['pk'] == attempt2.pk, 'the second (newer) attempt should be reported'
+        # 2020-02 - there is one attempt for this month
+        resp = clients["master"].get(url, {'month': '2020-02'})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, 'there should be one record for this period'
+        rec = data[0]
+        assert rec['pk'] == attempt1.pk, 'the attempt spanning to this month should be reported'
+        # 2020-03 - there is one attempt for this month
+        resp = clients["master"].get(url, {'month': '2020-03'})
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1, 'there should be one record for this period'
+        # 2020-04 - no attempt for this month
+        resp = clients["master"].get(url, {'month': '2020-04'})
+        assert resp.status_code == 200
+        assert len(resp.json()) == 0, 'there should be no record for this period'
+
 
 @pytest.mark.django_db()
 class TestSushiFetchAttemptStatsView:
