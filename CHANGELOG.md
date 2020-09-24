@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - it was not possible to save credentials with title after running the test without changing
   the title
 
+#### Backend
+
+- properly report attempts to fetch SUSHI data that span more than one month in the monthly overview (SUSHI status)
+
 
 ## [2.3.0]
 
