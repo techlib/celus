@@ -9,9 +9,12 @@ from django.conf import settings
 
 from core.models import DataSource
 from knowledgebase.models import PlatformImportAttempt
+from logs.models import ReportType
 from publications.models import Platform
 
-from test_fixtures.scenarios.basic import data_sources, organizations
+from test_fixtures.scenarios.basic import data_sources, organizations, report_types
+from test_fixtures.entities.platforms import PlatformFactory
+from test_fixtures.entities.data_souces import DataSourceFactory
 
 
 INPUT_DATA = [
@@ -207,12 +210,18 @@ class TestPlatformImportAttempt:
         assert attempt.failed == failed
         assert attempt.success == success
 
-    def test_process(self, data_sources):
+    def test_process(self, data_sources, report_types):
 
         attempt = PlatformImportAttempt(source=data_sources["brain"])
         attempt.save()
 
         attempt.process(INPUT_DATA)
+
+        default_rt_pks = set(
+            ReportType.objects.filter(default_platform_interest=True).values_list(
+                'short_name', flat=True
+            )
+        )
 
         # Check update
         assert attempt.stats == {"created": 3, "total": 3}
@@ -224,6 +233,14 @@ class TestPlatformImportAttempt:
         assert platform1.name == "AAP - American Academy of Pediatrics"
         assert platform1.ext_id == 328
         assert platform1.knowledgebase["providers"] == INPUT_DATA[0]["providers"]
+        assert (
+            set(
+                platform1.platforminterestreport_set.values_list(
+                    'report_type__short_name', flat=True
+                )
+            )
+            == default_rt_pks
+        ), "Interest report types created check"
 
         platform2 = Platform.objects.get(short_name="AACR")
         assert platform2.url == "https://www.aacr.org/"
@@ -231,6 +248,14 @@ class TestPlatformImportAttempt:
         assert platform2.name == "American Association for Cancer Research"
         assert platform2.ext_id == 327
         assert platform2.knowledgebase["providers"] == INPUT_DATA[1]["providers"]
+        assert (
+            set(
+                platform2.platforminterestreport_set.values_list(
+                    'report_type__short_name', flat=True
+                )
+            )
+            == default_rt_pks
+        ), "Interest report types created check"
 
         platform3 = Platform.objects.get(short_name="APS")
         assert platform3.url == "https://www.journals.aps.org/"
@@ -238,6 +263,14 @@ class TestPlatformImportAttempt:
         assert platform3.name == "APS"
         assert platform3.ext_id == 339
         assert platform3.knowledgebase["providers"] == []
+        assert (
+            set(
+                platform3.platforminterestreport_set.values_list(
+                    'report_type__short_name', flat=True
+                )
+            )
+            == default_rt_pks
+        ), "Interest report types created check"
 
         # Same data
         attempt = PlatformImportAttempt(source=data_sources["brain"])
@@ -254,7 +287,77 @@ class TestPlatformImportAttempt:
         platform = Platform.objects.get(short_name="AACR")
         assert platform.knowledgebase["providers"] == []
 
-    def test_perform(self, data_sources):
+    @pytest.mark.parametrize(
+        "strategy,count,no_source,erms",
+        (
+            (PlatformImportAttempt.MergeStrategy.NONE, 7, False, False),
+            (PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE, 6, True, False),
+            (PlatformImportAttempt.MergeStrategy.ALL, 5, True, True),
+        ),
+    )
+    def test_process_merge_strategies(
+        self, strategy, count, no_source, erms, data_sources, report_types
+    ):
+        other_data_source = DataSourceFactory(
+            type=DataSource.TYPE_KNOWLEDGEBASE,
+            short_name="other",
+            url="https://other.example.com",
+            token="f" * 64,
+        )
+        PlatformFactory(short_name="new")
+        platform_no_source = PlatformFactory(source=None, short_name="AAP")
+        platform_erms = PlatformFactory(source=data_sources["api"], short_name="AACR")
+        platform_other_knowledgebase = PlatformFactory(source=other_data_source, short_name="APS")
+        other_source = platform_other_knowledgebase.source
+        other_ext_id = platform_other_knowledgebase.ext_id
+
+        PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
+            INPUT_DATA, strategy
+        )
+
+        assert Platform.objects.count() == count
+        if no_source:
+            platform_no_source.refresh_from_db()
+            assert platform_no_source.ext_id == 328
+            assert platform_no_source.source == data_sources["brain"]
+
+        if erms:
+            platform_erms.refresh_from_db()
+            assert platform_erms.ext_id == 327
+            assert platform_erms.source == data_sources["brain"]
+
+        # make sure that records from other knowledgebase remains the same
+        platform_other_knowledgebase.refresh_from_db()
+        assert platform_other_knowledgebase.ext_id == other_ext_id
+        assert platform_other_knowledgebase.source == other_source
+
+    def test_process_merge_strategies_more_that_one_record(self, data_sources, report_types):
+
+        # Create multiple for ALL strategy
+        platform_no_source1 = PlatformFactory(source=None, short_name="AAP")
+        no_source1_values = Platform.objects.values().get(pk=platform_no_source1.pk)
+        platform_erms = PlatformFactory(source=data_sources["api"], short_name="AAP")
+        erms_values = Platform.objects.values().get(pk=platform_erms.pk)
+
+        PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
+            INPUT_DATA, PlatformImportAttempt.MergeStrategy.ALL,
+        )
+        assert Platform.objects.count() == 4
+        assert Platform.objects.values().get(pk=platform_no_source1.pk) == no_source1_values
+        assert Platform.objects.values().get(pk=platform_erms.pk) == erms_values
+
+        # Create multiple for EMPTY_SOURCE strategy
+        platform_no_source2 = PlatformFactory(source=None, short_name="AAP")
+        no_source2_values = Platform.objects.values().get(pk=platform_no_source2.pk)
+        PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
+            INPUT_DATA, PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE,
+        )
+        assert Platform.objects.count() == 5
+        assert Platform.objects.values().get(pk=platform_no_source1.pk) == no_source1_values
+        assert Platform.objects.values().get(pk=platform_no_source2.pk) == no_source2_values
+        assert Platform.objects.values().get(pk=platform_erms.pk) == erms_values
+
+    def test_perform(self, data_sources, report_types):
         with requests_mock.Mocker() as m:
             m.get(re.compile(f'^{data_sources["brain"].url}.*'), text=json.dumps(INPUT_DATA))
             attempt1 = PlatformImportAttempt(source=data_sources["brain"])

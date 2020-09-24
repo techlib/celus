@@ -6,15 +6,16 @@ import traceback
 import typing
 
 from collections import Counter
-from urllib.parse import urljoin, urlparse
 from enum import Enum, auto
+from urllib.parse import urljoin, urlparse
 
 from django.db import models, transaction
 from django.contrib.postgres.fields import JSONField
 from django.utils import timezone
 
 from core.models import DataSource
-from publications.models import Platform
+from logs.models import ReportType
+from publications.models import Platform, PlatformInterestReport
 
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,11 @@ class ImportAttempt(models.Model):
         SKIPPED = auto()
         SUCCESS = auto()
         FAILED = auto()
+
+    class MergeStrategy(Enum):
+        NONE = auto()  # No merging is performed
+        EMPTY_SOURCE = auto()  # Merges by short_name only when source is empty
+        ALL = auto()  # Merges by short_name regardless of the source
 
     KIND_PLATFORM = 'platform'
 
@@ -103,8 +109,11 @@ class ImportAttempt(models.Model):
         res.update(self.request_headers_extra)
         return res
 
-    def perform(self):
-        """ Downloads data from knowledgebase and imports it """
+    def perform(self, merge=MergeStrategy.NONE):
+        """ Downloads data from knowledgebase and imports it
+
+        :param merge: Try to merge with existing platforms without a source (should be used rarely)
+        """
         self.started_timestamp = timezone.now()
         self.save()
 
@@ -138,7 +147,7 @@ class ImportAttempt(models.Model):
             if not latest_download or latest_download.data_hash != self.data_hash:
                 self.processing_timestamp = timezone.now()
                 self.save()
-                self.process(data)
+                self.process(data, merge)
 
         except Exception as e:
             logger.warning("An error occured: %s", e)
@@ -161,7 +170,7 @@ class PlatformImportAttempt(ImportAttempt):
         update_platforms.delay(self.pk)
 
     @transaction.atomic
-    def process(self, data: typing.List[dict]):
+    def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.NONE):
         counter: typing.Counter[str] = Counter()
 
         counter["total"] = len(data)
@@ -176,20 +185,64 @@ class PlatformImportAttempt(ImportAttempt):
                 url=record["url"],
                 knowledgebase={"providers": record["providers"]},
             )
-            platform, created = Platform.objects.get_or_create(
-                defaults=updatable, ext_id=record["pk"], source=self.source,
-            )
+
+            if merge == ImportAttempt.MergeStrategy.NONE:
+                # Only new or existing with the same soure
+                platform, created = Platform.objects.get_or_create(
+                    defaults=updatable, ext_id=record["pk"], source=self.source,
+                )
+            elif merge in [
+                ImportAttempt.MergeStrategy.EMPTY_SOURCE,
+                ImportAttempt.MergeStrategy.ALL,
+            ]:
+                try:
+                    # Try to get existing record (non-knowledgebase) record
+                    query_args = models.Q(short_name=record["short_name"]) & ~models.Q(
+                        source__type=DataSource.TYPE_KNOWLEDGEBASE,
+                    )
+                    if merge == ImportAttempt.MergeStrategy.EMPTY_SOURCE:
+                        query_args = query_args & models.Q(source__isnull=True)
+                    platform = Platform.objects.get(query_args)
+
+                    # update existing platform
+                    platform.source = self.source
+                    platform.ext_id = record["pk"]
+                    platform.save()
+                    created = False
+
+                except Platform.DoesNotExist:
+                    platform, created = Platform.objects.get_or_create(
+                        defaults=updatable, ext_id=record["pk"], source=self.source,
+                    )
+                except Platform.MultipleObjectsReturned:
+                    # if multiple objects are returned we are not sure which one to merge
+                    # so lets skip it and don't update platform
+                    logger.warning(
+                        "Multiple platforms with '%s' in db. Not sure which one to merge => skip",
+                        record["short_name"],
+                    )
+                    counter["skipped"] += 1
+                    continue
+
+            else:
+                raise ValueError(f'Unsupported value for "merge": {merge}')
 
             needs_update = any(updatable[e] != getattr(platform, e) for e in UPDATABLE_FIELDS)
             if created:
+                logger.info("Platform '%s' created", record["short_name"])
                 counter["created"] += 1
+
             elif needs_update:
                 for e in UPDATABLE_FIELDS:
                     setattr(platform, e, updatable[e])
                 platform.save()
+                logger.info("Platform '%s' updated", record["short_name"])
                 counter["updated"] += 1
+
             else:
+                logger.info("Platform '%s' remained the same", record["short_name"])
                 counter["same"] += 1
+
         self.stats = dict(counter)
 
         self.save()
