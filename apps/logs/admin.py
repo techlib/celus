@@ -58,6 +58,7 @@ class MetricAdmin(TranslationAdmin):
 
     list_display = ['short_name', 'active', 'name']
     list_editable = ['active']
+    list_filter = ['active']
 
 
 @admin.register(models.ReportInterestMetric)

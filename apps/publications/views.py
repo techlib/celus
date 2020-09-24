@@ -406,7 +406,13 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
             **extend_query_filter(self.date_filter, 'platformtitle__'),
             **extend_query_filter(self.org_filter, 'platformtitle__'),
             **extra_filters,
-        ).distinct()
+        )
+        if 'multiplatform' in self.request.query_params:
+            base_title_query = base_title_query.annotate(
+                platform_count=Count('platformtitle__platform_id', distinct=True)
+            ).filter(platform_count__gt=1)
+
+        base_title_query = base_title_query.distinct()
         result = title_qs.filter(pk__in=base_title_query)
         annot = self._annotations()
         if annot:
