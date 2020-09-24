@@ -528,7 +528,8 @@ export default {
           (cred) =>
             cred.organization.pk === this.organization.pk &&
             cred.platform.pk === this.platform.pk &&
-            cred.counter_version === this.counterVersion
+            cred.counter_version === this.counterVersion &&
+            (!this.credentials || cred.pk !== this.credentials.pk)
         );
       }
       return [];
