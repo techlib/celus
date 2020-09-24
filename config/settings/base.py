@@ -398,6 +398,10 @@ ALLOW_MANUAL_UPLOAD = config('ALLOW_MANUAL_UPLOAD', cast=bool, default=True)
 # user authentication and registration
 # should users be allowed to create accounts themselves
 ALLOW_USER_REGISTRATION = config('ALLOW_USER_REGISTRATION', cast=bool, default=False)
+
+# Allow user to create platforms
+ALLOW_USER_CREATED_PLATFORMS = config('ALLOW_USER_REGISTRATION', cast=bool, default=False)
+
 # social authentication providers
 SOCIAL_ACCOUNTS_SUPPORTED = config('SOCIAL_ACCOUNTS_SUPPORTED', cast=Csv(), default='')
 SITE_ID = config('SITE_ID', cast=int, default=1)
@@ -413,6 +417,7 @@ CELUS_ADMIN_SITE_PATH = config('CELUS_ADMIN_SITE_PATH', default='wsEc67YNV2sq/')
 EXPORTED_SETTINGS = [
     'REFERENCE_CURRENCY',
     'ALLOW_USER_REGISTRATION',
+    'ALLOW_USER_CREATED_PLATFORMS',
     'SOCIAL_ACCOUNTS_SUPPORTED',
     'CONSORTIAL_INSTALLATION',
     'ALLOW_MANUAL_UPLOAD',

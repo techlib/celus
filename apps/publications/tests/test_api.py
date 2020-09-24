@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
+from django.conf import settings
 
 from core.models import Identity
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
@@ -25,7 +26,7 @@ from core.tests.conftest import (
     master_client,
     master_identity,
 )
-from publications.models import PlatformInterestReport
+from publications.models import PlatformInterestReport, Platform
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.scenarios.basic import *
 
@@ -96,6 +97,84 @@ class TestPlatformAPI:
         )
         resp = authenticated_client.get(reverse('platform-list', args=[organizations["root"].pk]))
         assert resp.status_code == 404
+
+    @pytest.mark.parametrize(
+        "client,organization,code",
+        (
+            ("su", "standalone", 201),  # superuser
+            ("master", "standalone", 201),  # master
+            ("admin2", "standalone", 201),  # this admin
+            ("admin1", "standalone", 403),  # other admin
+            ("user2", "standalone", 403),  # other user
+        ),
+    )
+    def test_create_platform_for_organization(
+        self,
+        basic1,
+        clients,
+        organizations,
+        client,
+        organization,
+        code,
+        data_sources,
+        report_types,
+    ):
+
+        # su client
+        resp = clients[client].post(
+            reverse('platform-list', args=[organizations[organization].pk],),
+            {
+                'ext_id': 122,  # ext_id may not be present and will be overriden to None
+                'short_name': 'platform',
+                'name': "long_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+            },
+        )
+        assert resp.status_code == code
+        if resp.status_code // 100 == 2:
+            new_platform = Platform.objects.order_by('pk').last()
+            assert new_platform.source == data_sources["standalone"]
+            assert new_platform.ext_id is None
+            assert new_platform.short_name == 'platform'
+            assert new_platform.name == 'long_platform'
+            assert new_platform.provider == 'provider'
+            assert new_platform.url == 'https://example.com'
+            assert set(
+                new_platform.platforminterestreport_set.values_list(
+                    'report_type__short_name', flat=True
+                )
+            ) == {'TR', 'DR', 'JR1', 'BR2', 'DB1'}, "Interest report types created check"
+
+    def test_create_platform_for_organization_with_no_data_source(
+        self, basic1, clients, organizations, client,
+    ):
+        resp = clients["su"].post(
+            reverse('platform-list', args=[organizations["master"].pk],),
+            {
+                'short_name': 'platform',
+                'name': "long_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+            },
+        )
+        assert resp.status_code == 404
+
+    def test_create_platform_when_disabled(
+        self, basic1, clients, organizations, client,
+    ):
+        settings.ALLOW_USER_CREATED_PLATFORMS = False
+
+        resp = clients["su"].post(
+            reverse('platform-list', args=[organizations["standalone"].pk],),
+            {
+                'short_name': 'platform',
+                'name': "long_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+            },
+        )
+        assert resp.status_code == 403
 
 
 @pytest.mark.django_db

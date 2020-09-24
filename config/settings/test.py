@@ -11,3 +11,5 @@ DATABASES["default"]["PASSWORD"] = os.environ.get("POSTGRES_PASSWORD", "celus")
 DATABASES["default"]["HOST"] = os.environ.get("POSTGRES_HOST", "127.0.0.1")
 
 CACHES["default"]["LOCATION"] = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1")
+
+ALLOW_USER_CREATED_PLATFORMS = True

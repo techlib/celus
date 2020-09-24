@@ -35,6 +35,30 @@ class Platform(models.Model):
     def __str__(self):
         return self.short_name
 
+    def create_default_interests(self):
+        from logs.models import ReportType
+
+        # Create platform interest reports
+        PlatformInterestReport.objects.bulk_create(
+            [
+                PlatformInterestReport(
+                    platform=self, report_type=ReportType.objects.get(short_name='TR')
+                ),
+                PlatformInterestReport(
+                    platform=self, report_type=ReportType.objects.get(short_name='DR')
+                ),
+                PlatformInterestReport(
+                    platform=self, report_type=ReportType.objects.get(short_name='JR1')
+                ),
+                PlatformInterestReport(
+                    platform=self, report_type=ReportType.objects.get(short_name='BR2')
+                ),
+                PlatformInterestReport(
+                    platform=self, report_type=ReportType.objects.get(short_name='DB1')
+                ),
+            ]
+        )
+
 
 class Title(models.Model):
 
