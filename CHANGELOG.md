@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+
+### Fixes
+
+#### Frontend
+
+- it was not possible to save credentials with title after running the test without changing
+  the title
+
+
 ## [2.3.0]
 
 ### Added
