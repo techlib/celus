@@ -53,6 +53,7 @@ class ReportType(models.Model):
     materialization_spec = models.ForeignKey(
         'ReportMaterializationSpec', null=True, blank=True, on_delete=models.SET_NULL
     )
+    default_platform_interest = models.BooleanField(default=False)
 
     class Meta:
         unique_together = (('short_name', 'source'),)

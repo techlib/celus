@@ -1,3 +1,5 @@
+from collections import Counter
+
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.utils.translation import gettext_lazy as _
@@ -35,29 +37,21 @@ class Platform(models.Model):
     def __str__(self):
         return self.short_name
 
-    def create_default_interests(self):
+    def create_default_interests(self) -> Counter:
         from logs.models import ReportType
 
-        # Create platform interest reports
-        PlatformInterestReport.objects.bulk_create(
-            [
-                PlatformInterestReport(
-                    platform=self, report_type=ReportType.objects.get(short_name='TR')
-                ),
-                PlatformInterestReport(
-                    platform=self, report_type=ReportType.objects.get(short_name='DR')
-                ),
-                PlatformInterestReport(
-                    platform=self, report_type=ReportType.objects.get(short_name='JR1')
-                ),
-                PlatformInterestReport(
-                    platform=self, report_type=ReportType.objects.get(short_name='BR2')
-                ),
-                PlatformInterestReport(
-                    platform=self, report_type=ReportType.objects.get(short_name='DB1')
-                ),
-            ]
-        )
+        stats: Counter = Counter()
+
+        for report_type in ReportType.objects.filter(default_platform_interest=True):
+            _, created = PlatformInterestReport.objects.get_or_create(
+                platform=self, report_type=report_type
+            )
+            if created:
+                stats['created'] += 1
+            else:
+                stats['existing'] += 1
+
+        return stats
 
 
 class Title(models.Model):

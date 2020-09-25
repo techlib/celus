@@ -133,7 +133,6 @@ class PlatformViewSet(ReadOnlyModelViewSet, CreateModelMixin):
 
         with transaction.atomic():
             platform = serializer.save(ext_id=None, source=source)
-            platform.create_default_interests()
 
     def get_queryset(self):
         """

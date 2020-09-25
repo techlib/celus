@@ -172,19 +172,29 @@ def basic1(users, organizations, platforms, data_sources, identities, clients): 
 @pytest.fixture
 def report_types():
     # Counter 5
-    tr = ReportTypeFactory(name="Counter 5 - Title report", short_name="TR")
-    dr = ReportTypeFactory(name="Counter 5 - Database report", short_name="DR")
+    tr = ReportTypeFactory(
+        name="Counter 5 - Title report", short_name="TR", default_platform_interest=True
+    )
+    dr = ReportTypeFactory(
+        name="Counter 5 - Database report", short_name="DR", default_platform_interest=True
+    )
     pr = ReportTypeFactory(name="Counter 5 - Platform report", short_name="PR")
 
     # Counter 4
     br1 = ReportTypeFactory(name="Counter 4 - Book report 1", short_name="BR1")
-    br2 = ReportTypeFactory(name="Counter 4 - Book report 2", short_name="BR2")
+    br2 = ReportTypeFactory(
+        name="Counter 4 - Book report 2", short_name="BR2", default_platform_interest=True
+    )
     br3 = ReportTypeFactory(name="Counter 4 - Book report 3", short_name="BR3")
 
-    db1 = ReportTypeFactory(name="Counter 4 - Database report 1", short_name="DB1")
+    db1 = ReportTypeFactory(
+        name="Counter 4 - Database report 1", short_name="DB1", default_platform_interest=True
+    )
     db2 = ReportTypeFactory(name="Counter 4 - Database report 2", short_name="DB2")
 
-    jr1 = ReportTypeFactory(name="Counter 4 - Journal report 1", short_name="JR1")
+    jr1 = ReportTypeFactory(
+        name="Counter 4 - Journal report 1", short_name="JR1", default_platform_interest=True
+    )
     jr1goa = ReportTypeFactory(
         name="Counter 4 - Journal report 1 Gold Open Access", short_name="JR1GOA"
     )
