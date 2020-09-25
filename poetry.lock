@@ -1273,7 +1273,7 @@ docs = ["sphinx", "sphinx-rtd-theme"]
 tests = ["coverage", "httmock", "mock", "pytest"]
 
 [package.source]
-reference = "b9553632edcf3693bfbebae80d0a1792e2128472"
+reference = "013acc5ac19f18166c9aba189595f7c2e0a8cba7"
 type = "git"
 url = "https://github.com/beda42/pycounter.git"
 [[package]]
@@ -1971,7 +1971,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "d060f02e19d67dc7e13f2a44a07c69ad0ae93cbc6d647145e20e802147fb9fd9"
+content-hash = "c9f4a971d6c835b1303255f69c03177bc75c82536c58a2887da1b9982591353b"
 lock-version = "1.0"
 python-versions = "^3.6.8"
 
@@ -2599,8 +2599,6 @@ pillow = [
     {file = "Pillow-7.2.0-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:5e51ee2b8114def244384eda1c82b10e307ad9778dac5c83fb0943775a653cd8"},
     {file = "Pillow-7.2.0-cp38-cp38-win32.whl", hash = "sha256:725aa6cfc66ce2857d585f06e9519a1cc0ef6d13f186ff3447ab6dff0a09bc7f"},
     {file = "Pillow-7.2.0-cp38-cp38-win_amd64.whl", hash = "sha256:a060cf8aa332052df2158e5a119303965be92c3da6f2d93b6878f0ebca80b2f6"},
-    {file = "Pillow-7.2.0-pp36-pypy36_pp73-macosx_10_10_x86_64.whl", hash = "sha256:9c87ef410a58dd54b92424ffd7e28fd2ec65d2f7fc02b76f5e9b2067e355ebf6"},
-    {file = "Pillow-7.2.0-pp36-pypy36_pp73-manylinux2010_x86_64.whl", hash = "sha256:e901964262a56d9ea3c2693df68bc9860b8bdda2b04768821e4c44ae797de117"},
     {file = "Pillow-7.2.0-pp36-pypy36_pp73-win32.whl", hash = "sha256:25930fadde8019f374400f7986e8404c8b781ce519da27792cbe46eabec00c4d"},
     {file = "Pillow-7.2.0.tar.gz", hash = "sha256:97f9e7953a77d5a70f49b9a48da7776dc51e9b738151b22dacf101641594a626"},
 ]
