@@ -21,7 +21,9 @@ from decouple import config, Csv
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import ignore_logger
 from sentry_sdk.integrations.redis import RedisIntegration
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / 'apps'))
@@ -444,3 +446,5 @@ if SENTRY_URL:
         environment=SENTRY_ENVIRONMENT,
         release=f"celus-{SENTRY_RELEASE}" if SENTRY_RELEASE else None,
     )
+    # ignore pycounter errors
+    ignore_logger("pycounter.sushi")
