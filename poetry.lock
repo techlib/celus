@@ -1273,7 +1273,7 @@ docs = ["sphinx", "sphinx-rtd-theme"]
 tests = ["coverage", "httmock", "mock", "pytest"]
 
 [package.source]
-reference = "013acc5ac19f18166c9aba189595f7c2e0a8cba7"
+reference = "13f12b15a5f89040d48e22f628673ecb9a301966"
 type = "git"
 url = "https://github.com/beda42/pycounter.git"
 [[package]]
@@ -1971,7 +1971,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "c9f4a971d6c835b1303255f69c03177bc75c82536c58a2887da1b9982591353b"
+content-hash = "39425b0448a815a095d82b7252040014efc1f511efb42cd8d0a10f236833ba5a"
 lock-version = "1.0"
 python-versions = "^3.6.8"
 
