@@ -359,7 +359,7 @@ class SushiCredentials(models.Model):
                 counter_report.code, start_date, end_date, output_content=file_data, params=params,
             )
         except SushiException as e:
-            logger.error("Error: %s", e)
+            logger.warning("pycounter Error: %s", e)
             errors = client.extract_errors_from_data(file_data)
             if errors:
                 error_code = errors[0].code
