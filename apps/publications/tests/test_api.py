@@ -26,7 +26,7 @@ from core.tests.conftest import (
     master_client,
     master_identity,
 )
-from publications.models import PlatformInterestReport, Platform
+from publications.models import PlatformInterestReport, Platform, PlatformTitle
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.scenarios.basic import *
 
@@ -395,7 +395,7 @@ class TestPlatformTitleAPI:
         assert resp.json()[0]['isbn'] == titles[0].isbn
         assert resp.json()[0]['name'] == titles[0].name
 
-    def test_authorized_user_accessible_platforms_titles_count(
+    def test_authorized_user_accessible_platforms_titles_count_and_interest(
         self,
         authenticated_client,
         organizations,
@@ -524,6 +524,48 @@ class TestPlatformTitleAPI:
         assert data[0]['isbn'] == titles[0].isbn
         assert data[0]['name'] == titles[0].name
         assert data[0]['interests']['interest1'] == 3
+
+    def test_authorized_user_accessible_platforms_interest_by_platform(
+        self, authenticated_client, accesslogs_with_interest, valid_identity
+    ):
+        """
+        Tests the view that returns interest summed up by platform for each title
+        """
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        organization = accesslogs_with_interest['organization']
+        platform = accesslogs_with_interest['platform']
+        UserOrganization.objects.create(user=identity.user, organization=organization)
+        resp = authenticated_client.get(
+            reverse('title-interest-by-platform-list', args=[organization.pk])
+        )
+        assert resp.status_code == 200
+        assert 'results' in resp.json()
+        data = resp.json()['results']
+        assert len(data) == 2
+        assert platform.short_name in data[0]['interests']
+
+    def test_authorized_user_accessible_platforms_interest_by_platform_more_platforms(
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+    ):
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        organization = accesslogs_with_interest['organization']
+        platform = accesslogs_with_interest['platform']
+        titles = accesslogs_with_interest['titles']
+        UserOrganization.objects.create(user=identity.user, organization=organization)
+        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
+        PlatformTitle.objects.create(
+            platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
+        )
+        resp = authenticated_client.get(
+            reverse('title-interest-by-platform-list', args=[organization.pk])
+        )
+        assert resp.status_code == 200
+        assert 'results' in resp.json()
+        data = resp.json()['results']
+        assert len(data) == 2
+        assert len(data[0]['interests']) == 2, 'there should be interest for two platforms'
+        assert platform.short_name in data[0]['interests']
+        assert platform2.short_name in data[0]['interests']
 
 
 @pytest.mark.django_db
@@ -766,7 +808,9 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
     create_platformtitle_links_from_accesslogs(accesslogs)
     sync_interest_by_import_batches()
     return {
-        key: val for key, val in locals().items() if key in ('accesslogs', 'titles', 'organization')
+        key: val
+        for key, val in locals().items()
+        if key in ('accesslogs', 'titles', 'organization', 'platform')
     }
 
 

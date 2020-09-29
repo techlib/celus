@@ -1,3 +1,4 @@
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
 from django.db.models.functions import Coalesce
@@ -342,6 +343,9 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         super().__init__(*args, **kwargs)
         self.org_filter = None
         self.date_filter = None
+        # the queryset used to select relevant titles - stored for usage elsewhere,
+        # e.g. in postprocessing
+        self.title_selection_query = None
 
     def _extra_filters(self):
         return {}
@@ -356,6 +360,21 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         return result
 
     def _postprocess_paginated(self, result):
+        if not result:
+            return result
+        # the stored .title_selection_query contains annotation with platform_count and
+        # platform_ids
+        # here we use it to add this information to the title objects after pagination
+        result_title_ids = [title.pk for title in result]
+        title_info = {
+            record['pk']: record
+            for record in self.title_selection_query.filter(pk__in=result_title_ids).values(
+                'pk', 'platform_count', 'platform_ids'
+            )
+        }
+        for record in result:
+            record.platform_count = title_info[record.pk]['platform_count']
+            record.platform_ids = title_info[record.pk]['platform_ids']
         return result
 
     def _before_queryset(self):
@@ -406,13 +425,15 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
             **extend_query_filter(self.date_filter, 'platformtitle__'),
             **extend_query_filter(self.org_filter, 'platformtitle__'),
             **extra_filters,
+        ).annotate(
+            platform_count=Count('platformtitle__platform_id', distinct=True),
+            platform_ids=ArrayAgg('platformtitle__platform_id', distinct=True),
         )
         if 'multiplatform' in self.request.query_params:
-            base_title_query = base_title_query.annotate(
-                platform_count=Count('platformtitle__platform_id', distinct=True)
-            ).filter(platform_count__gt=1)
+            base_title_query = base_title_query.filter(platform_count__gt=1)
 
-        base_title_query = base_title_query.distinct()
+        base_title_query = base_title_query.distinct().order_by()
+        self.title_selection_query = base_title_query
         result = title_qs.filter(pk__in=base_title_query)
         annot = self._annotations()
         if annot:
@@ -509,6 +530,7 @@ class TitleInterestMixin:
         return annotations
 
     def _postprocess_paginated(self, result):
+        result = super()._postprocess_paginated(result)
         interest_types = {
             interest_type.text
             for interest_type in self.interest_type_dim.dimensiontext_set.filter(
@@ -632,7 +654,7 @@ class TitleViewSet(BaseTitleViewSet):
 
 class TitleInterestViewSet(TitleInterestMixin, BaseTitleViewSet):
     """
-    View for all titles for selected organization
+    View for all titles with interest annotation
     """
 
     serializer_class = TitleCountSerializer
@@ -695,6 +717,66 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
         for record in records:
             record.interests = {interest_type_name: getattr(record, interest_type_name)}
         return records
+
+
+class InterestByPlatformMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.interest_rt = None
+        self.all_platforms = Platform.objects.all()
+
+    def _before_queryset(self):
+        self.interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+
+    def _extra_accesslog_filters(self):
+        filters = super()._extra_accesslog_filters()
+        filters['accesslog__report_type_id'] = self.interest_rt.pk
+        if self.org_filter:
+            filters['accesslog__organization_id'] = self.org_filter.get('organization__pk')
+        return filters
+
+    def _annotations(self):
+        annotations = super()._annotations()
+        interest_annot_params = {
+            f'pl_{platform.pk}': Coalesce(
+                Sum(
+                    'relevant_accesslogs__value',
+                    filter=Q(relevant_accesslogs__platform_id=platform.pk),
+                ),
+                0,
+            )
+            for platform in self.all_platforms
+        }
+        annotations.update(interest_annot_params)
+        annotations['total_interest'] = Coalesce(Sum('relevant_accesslogs__value'), 0)
+        return annotations
+
+    def _postprocess_paginated(self, result):
+        result = super()._postprocess_paginated(result)
+        for record in result:
+            record.interests = {
+                pl.short_name: getattr(record, f'pl_{pl.pk}')
+                for pl in self.all_platforms
+                if pl.pk in record.platform_ids
+            }
+        return result
+
+    def _postprocess(self, result):
+        order_by = self.request.query_params.get('order_by')
+        desc = self.request.query_params.get('desc', 'true')
+        if order_by:
+            prefix = '-' if desc == 'true' else ''
+            result = result.order_by(prefix + order_by)
+        return result
+
+
+class TitleInterestByPlatformViewSet(InterestByPlatformMixin, BaseTitleViewSet):
+    """
+    View for all titles with interest summed up by platform
+    """
+
+    serializer_class = TitleCountSerializer
+    pagination_class = SmartResultsSetPagination
 
 
 class StartERMSSyncPlatformsTask(APIView):

@@ -27,6 +27,11 @@ org_sub_router.register(r'title-interest', views.TitleInterestViewSet, basename=
 org_sub_router.register(
     r'top-title-interest', views.TopTitleInterestViewSet, basename='top-title-interest'
 )
+org_sub_router.register(
+    r'title-interest-by-platform',
+    views.TitleInterestByPlatformViewSet,
+    basename='title-interest-by-platform',
+)
 
 org_sub_router.register(r'dimensions', CustomDimensionsViewSet, basename='organization-dimensions')
 org_sub_router.register(
