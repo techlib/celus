@@ -767,6 +767,7 @@ class InterestByPlatformMixin:
         if order_by:
             prefix = '-' if desc == 'true' else ''
             result = result.order_by(prefix + order_by)
+        # result = result.filter(**{f'pl_{platform.pk}__gt': 0 for platform in self.all_platforms})
         return result
 
 

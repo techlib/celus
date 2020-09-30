@@ -210,7 +210,7 @@ export default {
         });
         base.push({
           text: this.$i18n.t("total_interest"),
-          value: "interest_total",
+          value: "total_interest",
           align: "right",
         });
       } else {
@@ -322,16 +322,7 @@ export default {
         }),
       ];
     },
-    postprocessData() {
-      if (this.interestByPlatform) {
-        this.titles.forEach(
-          (item) =>
-            (item.interest_total = Object.values(item.interests).reduce(
-              (x, y) => x + y
-            ))
-        );
-      }
-    },
+    postprocessData() {},
     slotName: (ig) => "item.interests." + ig.short_name,
   },
   watch: {
