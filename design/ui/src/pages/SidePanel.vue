@@ -175,6 +175,17 @@ export default {
           show: true,
         },
         {
+          title: this.$i18n.t("pages.analytics"),
+          items: [
+            {
+              title: this.$i18n.t("pages.overlap_analysis"),
+              icon: "fa fa-layer-group",
+              linkTo: "overlap-analysis",
+            },
+          ],
+          show: true,
+        },
+        {
           title: this.$i18n.t("pages.admin"),
           items: [
             {

@@ -103,6 +103,24 @@ cs:
           {{ formatInteger(item.interests[ig.short_name]) }}
         </span>
       </template>
+      <template v-slot:item.platforms="{ item }">
+        <SimplePie
+          size="32"
+          :parts="
+            Object.values(item.interests).map((item) => {
+              return { size: item };
+            })
+          "
+        />
+        <span class="ml-2"></span>
+        <span
+          v-for="([platform, interest], index) of Object.entries(
+            item.interests
+          )"
+          :key="index"
+          >{{ platform }} ({{ interest }}),
+        </span>
+      </template>
     </v-data-table>
   </v-card>
 </template>
@@ -114,14 +132,16 @@ import debounce from "lodash/debounce";
 import { formatInteger } from "../libs/numbers";
 import { iconForPubType, pubTypes, titleForPubType } from "../libs/pub-types";
 import ShortenText from "./ShortenText";
+import SimplePie from "@/components/util/SimplePie";
 
 export default {
   name: "TitleList",
-  components: { ShortenText },
+  components: { ShortenText, SimplePie },
   props: {
     url: { required: true },
     platformId: { required: false },
     orderInterest: { required: false, default: null, type: String },
+    interestByPlatform: { default: false, type: Boolean },
   },
   data() {
     return {
@@ -140,6 +160,7 @@ export default {
       cancelTokenSource: null,
     };
   },
+
   computed: {
     ...mapGetters({
       activeInterestGroups: "selectedGroupObjects",
@@ -181,13 +202,26 @@ export default {
           value: "doi",
         });
       }
-      for (let ig of this.activeInterestGroups) {
+      if (this.interestByPlatform) {
         base.push({
-          text: ig.name,
-          value: "interests." + ig.short_name,
-          class: "wrap text-xs-right",
+          text: this.$i18n.t("platforms"),
+          value: "platforms",
+          sortable: false,
+        });
+        base.push({
+          text: this.$i18n.t("total_interest"),
+          value: "interest_total",
           align: "right",
         });
+      } else {
+        for (let ig of this.activeInterestGroups) {
+          base.push({
+            text: ig.name,
+            value: "interests." + ig.short_name,
+            class: "wrap text-xs-right",
+            align: "right",
+          });
+        }
       }
       return base;
     },
@@ -220,6 +254,7 @@ export default {
       return this.url;
     },
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
@@ -247,6 +282,7 @@ export default {
           });
           this.titles = response.data.results;
           this.totalTitleCount = response.data.count;
+          this.postprocessData();
           this.loading = false;
         } catch (error) {
           if (axios.isCancel(error)) {
@@ -285,6 +321,16 @@ export default {
           };
         }),
       ];
+    },
+    postprocessData() {
+      if (this.interestByPlatform) {
+        this.titles.forEach(
+          (item) =>
+            (item.interest_total = Object.values(item.interests).reduce(
+              (x, y) => x + y
+            ))
+        );
+      }
     },
     slotName: (ig) => "item.interests." + ig.short_name,
   },
