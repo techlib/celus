@@ -19,7 +19,13 @@ from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
 from publications.serializers import PlatformSerializer
-from .models import SushiCredentials, CounterReportType, SushiFetchAttempt, NO_DATA_READY_PERIOD
+from .models import (
+    SushiCredentials,
+    CounterReportType,
+    SushiFetchAttempt,
+    NO_DATA_READY_PERIOD,
+    CounterReportsToCredentials,
+)
 
 
 class CounterReportTypeSerializer(ModelSerializer):
@@ -32,8 +38,11 @@ class SushiCredentialsSerializer(ModelSerializer):
 
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
-    active_counter_reports_long = CounterReportTypeSerializer(
-        many=True, source='active_counter_reports', read_only=True
+    counter_reports = PrimaryKeyRelatedField(
+        queryset=CounterReportType.objects.all(), many=True, read_only=False
+    )
+    counter_reports_long = CounterReportTypeSerializer(
+        many=True, source='counter_reports', read_only=True
     )
     organization_id = PrimaryKeyRelatedField(
         source='organization', write_only=True, queryset=Organization.objects.all()
@@ -62,8 +71,8 @@ class SushiCredentialsSerializer(ModelSerializer):
             'http_password',
             'api_key',
             'extra_params',
-            'active_counter_reports',
-            'active_counter_reports_long',
+            'counter_reports',
+            'counter_reports_long',
             'organization_id',
             'platform_id',
             'submitter',

@@ -146,7 +146,7 @@ export default {
     totalReportCount() {
       let total = 0;
       for (let cred of this.credentials) {
-        total += cred.active_counter_reports.length;
+        total += cred.counter_reports.length;
       }
       return total;
     },
@@ -158,7 +158,7 @@ export default {
     }),
     async createAttempts() {
       for (let cred of this.credentials) {
-        for (let rt of cred.active_counter_reports) {
+        for (let rt of cred.counter_reports) {
           await this.createAttempt(cred, rt);
         }
         this.started = true;

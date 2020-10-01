@@ -92,10 +92,10 @@ cs:
         item-key="pk"
         ref="credentialsTable"
       >
-        <template v-slot:item.active_counter_reports="{ item }">
+        <template v-slot:item.counter_reports="{ item }">
           <v-tooltip
             bottom
-            v-for="(report, index) in item.active_counter_reports_long"
+            v-for="(report, index) in item.counter_reports_long"
             :key="index"
           >
             <template v-slot:activator="{ on }">
@@ -315,7 +315,7 @@ export default {
         },
         {
           text: this.$i18n.t("title_fields.active_reports"),
-          value: "active_counter_reports",
+          value: "counter_reports",
           sortable: false,
         },
         {

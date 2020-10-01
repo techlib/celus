@@ -271,7 +271,7 @@ def credentials(counter_report_types, organizations, platforms):
         url="https://c5.standalone.example.com/",
         counter_version=5,
     )
-    standalone_tr.active_counter_reports.add(counter_report_types["tr"])
+    standalone_tr.counter_reports.add(counter_report_types["tr"])
 
     standalone_br1_jr1 = CredentialsFactory(
         organization=organizations["standalone"],
@@ -279,6 +279,6 @@ def credentials(counter_report_types, organizations, platforms):
         url="https://c4.standalone.example.com/",
         counter_version=4,
     )
-    standalone_br1_jr1.active_counter_reports.add(counter_report_types["br1"])
-    standalone_br1_jr1.active_counter_reports.add(counter_report_types["jr1"])
+    standalone_br1_jr1.counter_reports.add(counter_report_types["br1"])
+    standalone_br1_jr1.counter_reports.add(counter_report_types["jr1"])
     return locals()

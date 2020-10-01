@@ -298,7 +298,7 @@ export default {
     usedReportTypes() {
       let usedRTIds = new Set();
       for (let cred of this.sushiCredentialsWithAttempts) {
-        for (let rt of cred.active_counter_reports) {
+        for (let rt of cred.counter_reports) {
           usedRTIds.add(rt);
         }
       }
@@ -321,7 +321,7 @@ export default {
     activeAttempts() {
       let attempts = [];
       for (let cred of this.sushiCredentialsWithAttempts) {
-        for (let rt of cred.active_counter_reports_long) {
+        for (let rt of cred.counter_reports_long) {
           if (cred.hasOwnProperty(rt.code)) {
             attempts.push(cred[rt.code]);
           }
@@ -338,7 +338,7 @@ export default {
     },
     allSushiCredentialsWithAttempts() {
       return this.sushiCredentialsList.map((item) => {
-        for (let reportType of item.active_counter_reports_long) {
+        for (let reportType of item.counter_reports_long) {
           let key = `${item.pk}-${reportType.id}`;
           if (this.attemptMap.has(key)) {
             item[reportType.code] = this.attemptMap.get(key);
@@ -365,9 +365,9 @@ export default {
       if (this.hideSuccessful) {
         list = list.filter(
           (item) =>
-            item.active_counter_reports_long.filter(
+            item.counter_reports_long.filter(
               (rt) => item[rt.code] && item[rt.code].state === ATTEMPT_SUCCESS
-            ).length != item.active_counter_reports_long.length
+            ).length != item.counter_reports_long.length
         );
       }
       return list;

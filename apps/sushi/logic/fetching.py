@@ -373,7 +373,7 @@ def find_holes_in_data() -> [DataHole]:
     months = months_to_cover()
     result = []
     for credentials in SushiCredentials.objects.filter(enabled=True):  # type: SushiCredentials
-        for report_type in credentials.active_counter_reports.all():
+        for report_type in credentials.counter_reports.all():
             attempts = SushiFetchAttempt.objects.filter(
                 credentials=credentials, counter_report=report_type
             )

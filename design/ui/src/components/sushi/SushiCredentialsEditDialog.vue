@@ -459,7 +459,7 @@ export default {
         http_username: this.httpUsername,
         http_password: this.httpPassword,
         extra_params: extraParams,
-        active_counter_reports: this.selectedReportTypes,
+        counter_reports: this.selectedReportTypes,
         enabled: this.enabled,
         outside_consortium: this.outsideConsortium,
       };
@@ -591,7 +591,7 @@ export default {
         this.httpPassword = credentials.http_password;
         this.apiKey = credentials.api_key;
         this.extraParams = extraParams;
-        this.selectedReportTypes = [...credentials.active_counter_reports];
+        this.selectedReportTypes = [...credentials.counter_reports];
         this.enabled = credentials.enabled;
         this.outsideConsortium = credentials.outside_consortium;
       }

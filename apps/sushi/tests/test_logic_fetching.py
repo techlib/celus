@@ -65,7 +65,7 @@ class TestHoleFillingMachinery:
         report = CounterReportType.objects.create(
             code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
         )
-        cr1.active_counter_reports.add(report)
+        cr1.counter_reports.add(report)
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
@@ -125,7 +125,7 @@ class TestHoleFillingMachinery:
         report = CounterReportType.objects.create(
             code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
         )
-        cr1.active_counter_reports.add(report)
+        cr1.counter_reports.add(report)
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
@@ -170,7 +170,7 @@ class TestHoleFillingMachinery:
         report = CounterReportType.objects.create(
             code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
         )
-        cr1.active_counter_reports.add(report)
+        cr1.counter_reports.add(report)
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
@@ -191,7 +191,7 @@ class TestSushiFetching:
     def test_create_fetch_units(self, credentials, counter_report_type):
         fus = create_fetch_units()
         assert len(fus) == 0, 'no fetchunits until credentails have some report type active'
-        credentials.active_counter_reports.add(counter_report_type)
+        credentials.counter_reports.add(counter_report_type)
         fus = create_fetch_units()
         assert len(fus) == 1
 

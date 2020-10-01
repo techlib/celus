@@ -55,7 +55,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         qs = (
             SushiCredentials.objects.filter(organization__in=user_organizations)
             .select_related('organization', 'platform')
-            .prefetch_related('active_counter_reports')
+            .prefetch_related('counter_reports')
         )
         organization_id = self.request.query_params.get('organization')
         if organization_id:
@@ -148,7 +148,7 @@ class SushiCredentialsViewSet(ModelViewSet):
                 end_date__gte=end,
                 credentials_id__in=credentials,
                 in_progress=False,
-                counter_report__in=F('credentials__active_counter_reports'),
+                counter_report__in=F('credentials__counter_reports'),
                 **enabled_attr,
             )
             .order_by("credentials_id", "counter_report_id", "-timestamp")

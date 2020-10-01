@@ -51,5 +51,5 @@ def credentials(organizations, platforms):
 
 @pytest.fixture()
 def fetch_unit(credentials, counter_report_type):
-    credentials.active_counter_reports.add(counter_report_type)
+    credentials.counter_reports.add(counter_report_type)
     yield FetchUnit(credentials=credentials, report_type=counter_report_type)

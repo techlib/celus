@@ -143,7 +143,12 @@ class SushiCredentials(models.Model):
     api_key = models.CharField(max_length=128, blank=True)
     extra_params = JSONField(default=dict, blank=True)
     enabled = models.BooleanField(default=True)
-    active_counter_reports = models.ManyToManyField(CounterReportType)
+    counter_reports = models.ManyToManyField(
+        CounterReportType,
+        through='CounterReportsToCredentials',
+        through_fields=('credentials', 'counter_report'),
+        related_name='sushicredentials_set',
+    )
     outside_consortium = models.BooleanField(
         default=False,
         help_text='True if these credentials belong to access bought outside of the consortium - '
@@ -533,6 +538,14 @@ def where_to_store(instance: 'SushiFetchAttempt', filename):
         f'{instance.credentials.platform.short_name}/'
         f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
     )
+
+
+class CounterReportsToCredentials(models.Model):
+    credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
+    counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('credentials', 'counter_report'),)
 
 
 class SushiFetchAttemptQuerySet(models.QuerySet):

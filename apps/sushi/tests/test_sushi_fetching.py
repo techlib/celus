@@ -95,7 +95,7 @@ class TestSushiFetching:
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
         )
-        credentials.active_counter_reports.add(counter_report_types["db1"])
+        credentials.counter_reports.add(counter_report_types["db1"])
         with requests_mock.Mocker() as m, freeze_time(time):
             with open(Path(__file__).parent / 'data/counter4/sushi_3030.xml') as datafile:
                 m.post(re.compile(f'^{credentials.url}.*'), text=datafile.read())
@@ -113,7 +113,7 @@ class TestSushiFetching:
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
         )
-        credentials.active_counter_reports.add(counter_report_types["tr"])
+        credentials.counter_reports.add(counter_report_types["tr"])
         with requests_mock.Mocker() as m, freeze_time(time):
             with open(
                 Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral_exception.json'

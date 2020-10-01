@@ -73,13 +73,13 @@ class TestSushiCredentialsViewSet:
                 'requestor_id': 'xxxxxxx',
                 'customer_id': 'yyyyy',
                 'counter_version': '5',
-                'active_counter_reports': [counter_report_types["tr"].pk],
+                'counter_reports': [counter_report_types["tr"].pk],
             },
         )
         assert resp.status_code == 201
         sc = SushiCredentials.objects.get()
         assert sc.last_updated_by == users["admin1"]
-        assert sc.active_counter_reports.count() == 1
+        assert sc.counter_reports.count() == 1
         assert sc.title == title
 
     def test_edit_action(self, basic1, organizations, platforms, clients):
@@ -150,11 +150,11 @@ class TestSushiCredentialsViewSet:
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         new_rt1 = counter_report_type_named('new1')
         new_rt2 = counter_report_type_named('new2')
-        resp = clients["admin1"].patch(url, {'active_counter_reports': [new_rt1.pk, new_rt2.pk]},)
+        resp = clients["admin1"].patch(url, {'counter_reports': [new_rt1.pk, new_rt2.pk]},)
         assert resp.status_code == 200
         credentials.refresh_from_db()
-        assert credentials.active_counter_reports.count() == 2
-        assert {cr.pk for cr in credentials.active_counter_reports.all()} == {
+        assert credentials.counter_reports.count() == 2
+        assert {cr.pk for cr in credentials.counter_reports.all()} == {
             new_rt1.pk,
             new_rt2.pk,
         }
@@ -217,7 +217,7 @@ class TestSushiCredentialsViewSet:
             url='http://a.b.c/',
         )
         new_rt1 = counter_report_type_named('new1')
-        credentials.active_counter_reports.add(new_rt1)
+        credentials.counter_reports.add(new_rt1)
         SushiFetchAttempt.objects.create(
             credentials=credentials,
             start_date='2020-01-01',
@@ -265,7 +265,7 @@ class TestSushiCredentialsViewSet:
             url='http://a.b.c/',
         )
         new_rt1 = counter_report_type_named('new1')
-        credentials.active_counter_reports.add(new_rt1)
+        credentials.counter_reports.add(new_rt1)
         attempt1 = SushiFetchAttempt.objects.create(
             credentials=credentials,
             start_date='2020-01-01',

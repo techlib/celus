@@ -131,7 +131,7 @@ class Command(BaseCommand):
                         sc_count = 0
                         for sc in platform.sushicredentials_set.filter(counter_version=counter_ver):
                             with reversion.create_revision():
-                                sc.active_counter_reports.set(report_objs)
+                                sc.counter_reports.set(report_objs)
                                 reversion.set_comment(
                                     'Active reports synced by load_platform_' 'report_table command'
                                 )
