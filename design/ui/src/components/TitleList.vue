@@ -103,22 +103,26 @@ cs:
           {{ formatInteger(item.interests[ig.short_name]) }}
         </span>
       </template>
-      <template v-slot:item.platforms="{ item }">
+      <template v-slot:item.ratios="{ item }">
         <SimplePie
           size="32"
           :parts="
-            Object.values(item.interests).map((item) => {
-              return { size: item };
+            Object.values(item.interests).map((item, index) => {
+              return { size: item, color: color(index) };
             })
           "
         />
-        <span class="ml-2"></span>
+      </template>
+      <template v-slot:item.platforms="{ item }">
         <span
           v-for="([platform, interest], index) of Object.entries(
             item.interests
           )"
           :key="index"
-          >{{ platform }} ({{ interest }}),
+        >
+          <span class="coma" v-if="index > 0">, </span>
+          <span :style="{ color: color(index) }">{{ platform }}</span>
+          <span class="interest ml-1">{{ interest }}</span>
         </span>
       </template>
     </v-data-table>
@@ -133,6 +137,7 @@ import { formatInteger } from "../libs/numbers";
 import { iconForPubType, pubTypes, titleForPubType } from "../libs/pub-types";
 import ShortenText from "./ShortenText";
 import SimplePie from "@/components/util/SimplePie";
+import { echartPalette } from "@/libs/palettes";
 
 export default {
   name: "TitleList",
@@ -204,12 +209,21 @@ export default {
       }
       if (this.interestByPlatform) {
         base.push({
-          text: this.$i18n.t("platforms"),
+          text: this.$i18n.t("title_fields.ratios"),
+          value: "ratios",
+          sortable: false,
+        });
+        base.push({
+          text: this.$i18n.t("title_fields.platforms"),
           value: "platforms",
           sortable: false,
         });
         base.push({
-          text: this.$i18n.t("total_interest"),
+          text: this.$i18n.t("title_fields.nonzero_platforms"),
+          value: "nonzero_platform_count",
+        });
+        base.push({
+          text: this.$i18n.t("title_fields.total_interest"),
           value: "total_interest",
           align: "right",
         });
@@ -252,6 +266,9 @@ export default {
         );
       }
       return this.url;
+    },
+    palette() {
+      return echartPalette;
     },
   },
 
@@ -324,6 +341,7 @@ export default {
     },
     postprocessData() {},
     slotName: (ig) => "item.interests." + ig.short_name,
+    color: (index) => echartPalette[index % echartPalette.length],
   },
   watch: {
     fullUrl() {
@@ -337,4 +355,17 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+span.interest {
+  font-weight: bold;
+  color: #555555;
+  font-size: 75%;
+}
+span.coma {
+  color: #999999;
+}
+div.ddd {
+  vertical-align: top;
+  //height: 100%;
+}
+</style>

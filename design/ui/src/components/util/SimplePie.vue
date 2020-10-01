@@ -18,6 +18,8 @@
 </template>
 
 <script>
+import { echartPalette } from "@/libs/palettes";
+
 export default {
   name: "PieChart",
 
@@ -33,7 +35,7 @@ export default {
 
   data() {
     return {
-      colors: ["#5ab1ef", "#fa6e86", "#ffb980", "#19d4ae", "#0067a6"],
+      colors: echartPalette,
     };
   },
 

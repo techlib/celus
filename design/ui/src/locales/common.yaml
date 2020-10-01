@@ -50,6 +50,10 @@ en:
     uploaded: Uploaded
     queued: Queued
     status: Status
+    platforms: Platforms
+    nonzero_platforms: Non-zero interest platforms
+    total_interest: Total interest
+    ratios: Ratio
   titles: Titles
   overview: Overview
   chart:
@@ -166,6 +170,10 @@ cs:
     uploaded: Nahráno
     queued: Odloženo
     status: Stav
+    platforms: Platformy
+    nonzero_platforms: Platformy s nenulovým zájmem
+    total_interest: Celkový zájem
+    ratios: Rozložení
   titles: Tituly
   overview: Přehled
   chart:

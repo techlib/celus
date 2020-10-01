@@ -749,6 +749,9 @@ class InterestByPlatformMixin:
         }
         annotations.update(interest_annot_params)
         annotations['total_interest'] = Coalesce(Sum('relevant_accesslogs__value'), 0)
+        annotations['nonzero_platform_count'] = Count(
+            'relevant_accesslogs__platform', distinct=True
+        )
         return annotations
 
     def _postprocess_paginated(self, result):

@@ -33,31 +33,6 @@ cs:
             </v-col>
         </v-row-->
     <v-row>
-      <v-col>
-        <SimplePie :parts="[{ size: 10 }, { size: 30 }]" size="100" :key="1" />
-        <SimplePie
-          :parts="[{ size: 10 }, { size: 60 }, { size: 20 }]"
-          size="50"
-        />
-        <SimplePie
-          :parts="[{ size: 10 }, { size: 300 }, { size: 120 }]"
-          size="100"
-          :key="3"
-        />
-        <SimplePie
-          :parts="[
-            { size: 30 },
-            { size: 300 },
-            { size: 120 },
-            { size: 100 },
-            { size: 300 },
-            { size: 120 },
-            { size: 20 },
-          ]"
-          size="100"
-          :key="4"
-        />
-      </v-col>
       <v-col cols="12" lg="6">
         <v-card min-height="480">
           <v-card-title
