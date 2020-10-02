@@ -1,5 +1,10 @@
-<i18n lang="yaml" src="../locales/charts.yaml"></i18n>
-<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml">
+en:
+  multiplatform_titles: Titles available from more than one platform
+
+cs:
+  multiplatform_titles: Tituly dostupné na více než jedné platformě
+</i18n>
 
 <template>
   <div>
