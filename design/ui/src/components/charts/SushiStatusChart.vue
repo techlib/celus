@@ -3,10 +3,10 @@
 <template>
   <LoaderWidget v-if="loading" icon-name="fa-cog" />
   <ve-pie
+    v-else
     :data="chartData"
     :extend="chartExtend"
     :settings="chartSettings"
-    v-else
   />
 </template>
 
@@ -51,6 +51,7 @@ export default {
       rawData: null,
       statusCounter: new Map(),
       loading: false,
+      sushiCredentialsList: [],
       states: [
         ATTEMPT_NOT_MADE,
         ATTEMPT_QUEUED,
@@ -72,6 +73,9 @@ export default {
   },
 
   computed: {
+    credentialsUrl() {
+      return `/api/sushi-credentials/?organization=${this.organizationId}`;
+    },
     statsUrl() {
       let url = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.month}`;
       if (this.showInactive) {
@@ -128,6 +132,23 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    async loadSushiCredentialsList() {
+      this.loading = true;
+      try {
+        let response = await axios.get(this.credentialsUrl);
+        this.sushiCredentialsList = response.data;
+        if (this.rawData) {
+          this.prepareData();
+        }
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error loading credentials list: " + error,
+          color: "error",
+        });
+      } finally {
+        this.loading = false;
+      }
+    },
     async fetchData() {
       if (!this.statsUrl) {
         return;
@@ -136,7 +157,10 @@ export default {
       try {
         let response = await axios.get(this.statsUrl);
         this.rawData = response.data;
-        this.prepareData();
+        this.rawData.forEach((item) => (item.state = attemptState(item)));
+        if (this.sushiCredentialsList) {
+          this.prepareData();
+        }
       } catch (error) {
         this.showSnackbar({
           content: "Error loading stats: " + error,
@@ -147,10 +171,22 @@ export default {
       }
     },
     prepareData() {
+      // create a map to easily find the attempt data
+      let attemptMap = new Map();
+      this.rawData.forEach((item) =>
+        attemptMap.set(`${item.credentials_id}-${item.counter_report_id}`, item)
+      );
+
       let statusCounter = new Map();
-      this.rawData.forEach((item) => {
-        const state = attemptState(item);
-        statusCounter.set(state, (statusCounter.get(state) | 0) + 1);
+      this.sushiCredentialsList.forEach((item) => {
+        for (let reportType of item.counter_reports_long) {
+          let key = `${item.pk}-${reportType.id}`;
+          let state = ATTEMPT_NOT_MADE;
+          if (attemptMap.has(key)) {
+            state = attemptMap.get(key).state;
+          }
+          statusCounter.set(state, (statusCounter.get(state) | 0) + 1);
+        }
       });
       this.statusCounter = statusCounter;
     },
@@ -158,11 +194,13 @@ export default {
 
   watch: {
     statsUrl() {
+      this.loadSushiCredentialsList();
       this.fetchData();
     },
   },
 
   mounted() {
+    this.loadSushiCredentialsList();
     this.fetchData();
   },
 };

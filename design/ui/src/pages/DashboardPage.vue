@@ -11,7 +11,8 @@ en:
   histogram_tooltip:
     SUSHI data very seldom contains data about titles for which there was no
     access recorded, so titles with zero count are likely heavily underrepresented.
-  sushi_status: SUSHI status
+  sushi_status: SUSHI harvesting status
+  sushi_status_info: Result of download for each automatically harvested report
 
 cs:
   total_interest: Celkový zájem
@@ -23,7 +24,8 @@ cs:
   histogram_tooltip:
     SUSHI data zřídka obsahují informace o titulech, pro které nebyl zaznamenán
     žádný zájem. Z toho důvodu je počet titulů s nulovým zájmem pravděpodobně silně podhodnocen.
-  sushi_status: Stav SUSHI
+  sushi_status: Stav sklízení SUSHI
+  sushi_status_info: Čísla představují počty reportů
 </i18n>
 
 <template>
@@ -36,7 +38,7 @@ cs:
         </v-row-->
     <v-row>
       <v-col cols="12" lg="6">
-        <v-card min-height="480">
+        <v-card height="480">
           <v-card-title
             v-text="$t('interest')"
             class="float-left"
@@ -58,30 +60,39 @@ cs:
       </v-col>
 
       <v-col cols="12" lg="6">
-        <v-card min-height="480">
+        <v-card height="480">
           <v-card-title
             v-text="$t('sushi_status')"
             class="float-left"
           ></v-card-title>
           <v-card-text class="pt-3">
-            <v-btn-toggle v-model="sushiMonth" mandatory dense>
-              <v-btn
-                v-for="month in sushiMonths"
-                :key="month"
-                :value="month"
-                v-text="month"
-              ></v-btn>
-            </v-btn-toggle>
+            <div class="text-right">
+              <v-btn-toggle v-model="sushiMonth" mandatory dense>
+                <v-btn
+                  v-for="month in sushiMonths"
+                  :key="month"
+                  :value="month"
+                  v-text="month"
+                ></v-btn>
+              </v-btn-toggle>
+            </div>
             <SushiStatusChart
               :month="sushiMonth"
               :organization-id="organizationId"
             />
-            <div>Numbers represent counts of reports</div>
+            <div
+              class="font-weight-light"
+              v-text="$t('sushi_status_info')"
+            ></div>
           </v-card-text>
         </v-card>
       </v-col>
 
-      <v-col cols="12" lg="6">
+      <!--
+      TODO: remove the following and the corresponding functionality if we decide not to use it anymore
+      BTW, maybe we could extract it into a separate independent component for easy reuse later.
+      -->
+      <!--v-col cols="12" lg="6">
         <v-card min-height="480">
           <v-card-title>
             <span v-text="$t('title_interest_histogram')"></span>
@@ -119,7 +130,7 @@ cs:
             <LoaderWidget v-else height="400px" />
           </v-card-text>
         </v-card>
-      </v-col>
+      </v-col-->
     </v-row>
     <v-row class="align-stretch">
       <v-col cols="auto">
