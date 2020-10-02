@@ -2,8 +2,36 @@ en:
   sushi:
     enabled: Automatic harvesting
     enabled_tooltip: When turned on, data for these credentials get automatically downloaded each month.
+    state:
+      unknown: Unknown
+      queued: Waiting
+      error: Error
+      success: Success
+      missing: Not harvested yet
+      empty_data: Empty data
+    state_desc:
+      unknown: The state is not clear. There was not obvious error but no data were imported.
+      queued: Data was not yet available so future attempts were queued.
+      error: There was an error downloading data.
+      success: Data were successfully downloaded and ingested into Celus.
+      missing: Data retrieval was not yet performed.
+      empty_data: Data was successfully harvested, but no usage was recorded at the time in question.
 
 cs:
   sushi:
     enabled: Automatické stahování
     enabled_tooltip: Pokud je tato volba zapnutá, budou se data pro tyto přihlašovací údaje pravidelně automaticky stahovat.
+    state:
+      unknown: Neznámý
+      queued: Odloženo
+      error: Chyba
+      success: Úspěšně staženo
+      missing: Dosud nestaženo
+      empty_data: Prázdná data
+    state_desc:
+      unknown: Stav není jednoznačný. Nedošlo ke zjevné chybě, ale import neobsahoval žádná data.
+      queued: Data zatím nebyla k dispozici, bylo naplánováno další stažení v budoucnosti.
+      error: Došlo k chybě při stahování dat.
+      success: Data byla úspěšně stažená a uložená v systému.
+      missing: Stažení dat zatím nebylo provedeno.
+      empty_data: Data byla úspěšně stažena, ale pro dané obdobi nebylo zaznamenáno žádné využití.

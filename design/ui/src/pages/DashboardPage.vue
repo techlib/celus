@@ -11,6 +11,7 @@ en:
   histogram_tooltip:
     SUSHI data very seldom contains data about titles for which there was no
     access recorded, so titles with zero count are likely heavily underrepresented.
+  sushi_status: SUSHI status
 
 cs:
   total_interest: Celkový zájem
@@ -22,6 +23,7 @@ cs:
   histogram_tooltip:
     SUSHI data zřídka obsahují informace o titulech, pro které nebyl zaznamenán
     žádný zájem. Z toho důvodu je počet titulů s nulovým zájmem pravděpodobně silně podhodnocen.
+  sushi_status: Stav SUSHI
 </i18n>
 
 <template>
@@ -51,6 +53,30 @@ cs:
               dashboard-chart
             >
             </APIChart>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" lg="6">
+        <v-card min-height="480">
+          <v-card-title
+            v-text="$t('sushi_status')"
+            class="float-left"
+          ></v-card-title>
+          <v-card-text class="pt-3">
+            <v-btn-toggle v-model="sushiMonth" mandatory dense>
+              <v-btn
+                v-for="month in sushiMonths"
+                :key="month"
+                :value="month"
+                v-text="month"
+              ></v-btn>
+            </v-btn-toggle>
+            <SushiStatusChart
+              :month="sushiMonth"
+              :organization-id="organizationId"
+            />
+            <div>Numbers represent counts of reports</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -156,11 +182,16 @@ import { pubTypes } from "@/libs/pub-types";
 import TopTenDashboardWidget from "@/components/TopTenDashboardWidget";
 import IntroPage from "./IntroPage";
 import SimplePie from "@/components/util/SimplePie";
+import SushiStatusChart from "@/components/charts/SushiStatusChart";
+import startOfMonth from "date-fns/startOfMonth";
+import addDays from "date-fns/addDays";
+import { ymDateFormat } from "@/libs/dates";
 
 export default {
   name: "DashboardPage",
 
   components: {
+    SushiStatusChart,
     IntroPage,
     TopTenDashboardWidget,
     LargeSpinner,
@@ -171,11 +202,17 @@ export default {
   },
 
   data() {
+    const lastMonth = ymDateFormat(addDays(startOfMonth(new Date()), -15));
+    const monthBeforeLast = ymDateFormat(
+      addDays(startOfMonth(new Date()), -45)
+    );
     return {
       interestReportType: null,
       totalInterestData: null,
       histogramData: null,
       histogramLogScale: false,
+      sushiMonths: [lastMonth, monthBeforeLast],
+      sushiMonth: lastMonth,
     };
   },
 

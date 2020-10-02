@@ -1,23 +1,12 @@
+<i18n lang="yaml" src="@/locales/sushi.yaml" />
 <i18n lang="yaml">
 en:
-  attempt_state_unknown: The state is not clear. There was not obvious error but no data were imported.
-  attempt_state_queued: Data was not yet available so future attempts were queued.
-  attempt_state_error: There was an error downloading data.
-  attempt_state_success: Data were successfully downloaded and ingested into Celus.
-  attempt_state_missing: Data retrieval was not yet performed.
-  attempt_state_empty_data: Data was successfully harvested, but no usage was recorded at the time in question.
   details: Details
   field_timestamp: Time
   field_timestamp_latest: Last attempt
   field_error_code: Error code
 
 cs:
-  attempt_state_unknown: Stav není jednoznačný. Nedošlo ke zjevné chybě, ale import neobsahoval žádná data.
-  attempt_state_queued: Data zatím nebyla k dispozici, bylo naplánováno další stažení v budoucnosti.
-  attempt_state_error: Došlo k chybě při stahování dat.
-  attempt_state_success: Data byla úspěšně stažená a uložená v systému.
-  attempt_state_missing: Stažení dat zatím nebylo provedeno.
-  attempt_state_empty_data: Data byla úspěšně stažena, ale pro dané obdobi nebylo zaznamenáno žádné využití.
   details: Detaily
   field_timestamp: Čas
   field_timestamp_latest: Poslední pokus
@@ -50,7 +39,7 @@ cs:
 
       <div>
         <div class="explanation">
-          {{ $t(`attempt_state_${attemptState}`) }}
+          {{ $t(`sushi.state_desc.${attemptState}`) }}
         </div>
         <div v-if="attempt && attemptState !== stateUntried">
           <h4 v-text="$t('details')" class="mt-3"></h4>
