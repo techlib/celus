@@ -12,7 +12,8 @@ en:
     SUSHI data very seldom contains data about titles for which there was no
     access recorded, so titles with zero count are likely heavily underrepresented.
   sushi_status: SUSHI harvesting status
-  sushi_status_info: Result of download for each automatically harvested report
+  sushi_status_info: Result of download for each automatically harvested report.
+  details_here: Details here
 
 cs:
   total_interest: Celkový zájem
@@ -25,7 +26,8 @@ cs:
     SUSHI data zřídka obsahují informace o titulech, pro které nebyl zaznamenán
     žádný zájem. Z toho důvodu je počet titulů s nulovým zájmem pravděpodobně silně podhodnocen.
   sushi_status: Stav sklízení SUSHI
-  sushi_status_info: Čísla představují počty reportů
+  sushi_status_info: Souhrn výsledku stahování pro všechny automaticky sklízené reporty.
+  details_here: Podrobnosti zde
 </i18n>
 
 <template>
@@ -80,10 +82,19 @@ cs:
               :month="sushiMonth"
               :organization-id="organizationId"
             />
-            <div
-              class="font-weight-light"
-              v-text="$t('sushi_status_info')"
-            ></div>
+            <div class="font-weight-light pt-6">
+              <span v-text="$t('sushi_status_info')" class="pr-1"></span>
+              <span>
+                <router-link
+                  :to="{
+                    name: 'sushi-monthly-overview',
+                    query: { month: sushiMonth },
+                  }"
+                >
+                  <span v-text="$t('details_here')"></span>
+                </router-link>
+              </span>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>

@@ -7,11 +7,12 @@
     :data="chartData"
     :extend="chartExtend"
     :settings="chartSettings"
+    :height="height"
   />
 </template>
 
 <script>
-import VePie from "v-charts/lib/pie.common";
+import VePie from "v-charts/lib/pie";
 import axios from "axios";
 import {
   attemptState,
@@ -47,11 +48,12 @@ export default {
 
   data() {
     let data = {
-      showInactive: true,
+      showInactive: false,
       rawData: null,
       statusCounter: new Map(),
       loading: false,
       sushiCredentialsList: [],
+      height: "370px",
       states: [
         ATTEMPT_NOT_MADE,
         ATTEMPT_QUEUED,
