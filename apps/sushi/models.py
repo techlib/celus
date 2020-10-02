@@ -15,9 +15,9 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.files.base import ContentFile, File
 from django.db import models
-from django.db.models import Count, F, Exists, OuterRef
+from django.db.models import F, Exists, Max, OuterRef
 from django.db.transaction import atomic
-from django.utils.timezone import now, utc
+from django.utils.timezone import now
 from pycounter.exceptions import SushiException
 from rest_framework.exceptions import PermissionDenied
 
@@ -43,6 +43,7 @@ from nigiri.counter4 import (
     Counter4BR3Report,
 )
 from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport, TransportError
+from nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
 
@@ -75,6 +76,43 @@ COUNTER_REPORTS = (
 
 NO_DATA_RETRY_PERIOD = timedelta(days=45)  # cca month and half
 NO_DATA_READY_PERIOD = timedelta(days=7)
+
+
+class BrokenCredentialsMixin(models.Model):
+    BROKEN_HTTP = 'http'
+    BROKEN_SUSHI = 'sushi'
+
+    BROKEN_CHOICES = (
+        (BROKEN_HTTP, 'HTTP'),
+        (BROKEN_SUSHI, 'SUSHI'),
+    )
+
+    first_broken_attempt = models.OneToOneField(
+        'SushiFetchAttempt',
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="Indicator whether the report type is broken",
+    )
+    broken = models.CharField(
+        max_length=20,
+        choices=BROKEN_CHOICES,
+        null=True,
+        help_text="Indication that credentails are broken",
+    )
+
+    def set_broken(self, attempt: 'SushiFetchAttempt', broken_type: str):
+        if self.first_broken_attempt is None:
+            self.first_broken_attempt = attempt
+        self.broken = broken_type
+        self.save()
+
+    def unset_broken(self):
+        self.broken = None
+        self.first_broken_attempt = None
+        self.save()
+
+    class Meta:
+        abstract = True
 
 
 class CounterReportType(models.Model):
@@ -117,7 +155,7 @@ class SushiCredentialsQuerySet(models.QuerySet):
         ).filter(has_access_log=True)
 
 
-class SushiCredentials(models.Model):
+class SushiCredentials(BrokenCredentialsMixin):
 
     objects = SushiCredentialsQuerySet.as_manager()
 
@@ -178,8 +216,20 @@ class SushiCredentials(models.Model):
         """
         We override the parent save method to make sure `version_hash` is recomputed on each save
         """
-        self.version_hash = self.compute_version_hash()
-        super().save(*args, **kwargs)
+        computed_hash = self.compute_version_hash()
+        with atomic():
+            if self.version_hash != computed_hash:
+                self.version_hash = computed_hash
+                # remove broken flag
+                self.broken = None
+                self.first_broken_attempt = None
+
+                # remove broken from all reports to credentials
+                CounterReportsToCredentials.objects.filter(credentials=self).update(
+                    first_broken_attempt=None, broken=None,
+                )
+
+            super().save(*args, **kwargs)
 
     def change_lock(self, user: User, level: int):
         """
@@ -334,14 +384,16 @@ class SushiCredentials(models.Model):
                 setattr(fetch_attempt, key, value)
             fetch_attempt.processing_info['credentials_version'] = self.version_dict()
             fetch_attempt.save()
-            return fetch_attempt
         else:
             if 'processing_info' in attempt_params:
                 attempt_params['processing_info']['credentials_version'] = self.version_dict()
             else:
                 attempt_params['processing_info'] = {'credentials_version': self.version_dict()}
-            attempt = SushiFetchAttempt.objects.create(**attempt_params)
-            return attempt
+            fetch_attempt = SushiFetchAttempt.objects.create(**attempt_params)
+
+        fetch_attempt.update_broken()
+
+        return fetch_attempt
 
     def _fetch_report_v4(
         self, client, counter_report, start_date, end_date, file_data: IO[bytes]
@@ -540,14 +592,6 @@ def where_to_store(instance: 'SushiFetchAttempt', filename):
     )
 
 
-class CounterReportsToCredentials(models.Model):
-    credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
-    counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = (('credentials', 'counter_report'),)
-
-
 class SushiFetchAttemptQuerySet(models.QuerySet):
     def last_queued(self):
         res = self.annotate(
@@ -635,6 +679,12 @@ class SushiFetchAttempt(models.Model):
         help_text='Hash computed from the credentials at the time this attempt was made',
     )
     processing_info = JSONField(default=dict, help_text='Internal info')
+    triggered_by = models.ForeignKey(
+        User,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="User who triggered the attempt or null if attempt was triggered by e.g. cron",
+    )
 
     def __str__(self):
         return f'{self.status}: {self.credentials}, {self.counter_report}'
@@ -750,6 +800,7 @@ class SushiFetchAttempt(models.Model):
             )
             attempt.queue_previous = self
             attempt.queue_id = self.queue_id
+            attempt.triggered_by = self.triggered_by
             attempt.save()
         return attempt
 
@@ -832,3 +883,69 @@ class SushiFetchAttempt(models.Model):
             del self.processing_info['import_crash_traceback']
         self.save()
         return stats
+
+    @atomic
+    def update_broken(self):
+        if self.credentials.version_hash != self.credentials_version_hash:
+            # credentials changed -> result of this fetch attempt is irrelevant
+            return
+
+        if self.status in ('BROKEN', 'FAILURE'):
+            self.update_broken_credentials()
+            self.update_broken_report_type()
+
+    def any_success_lately(self, days: int = 15) -> bool:
+        for attempt in SushiFetchAttempt.objects.filter(
+            credentials=self.credentials, credentials_version_hash=self.credentials_version_hash,
+        ).filter(when_processed__gte=now() - timedelta(days=days)):
+            if attempt.status in ('NO_DATA', 'SUCCESS'):
+                return True
+
+        return False
+
+    def update_broken_credentials(self):
+        # Check http status code
+        if self.http_status_code in (401, 403):
+            self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
+            return
+
+        if self.http_status_code in (500, 400):
+            if not self.any_success_lately():
+                self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
+                return
+
+        # Check for sushi error
+        if self.error_code in (ErrorCode.NOT_AUTHORIZED, ErrorCode.INVALID_API_KEY):
+            self.credentials.set_broken(self, SushiCredentials.BROKEN_SUSHI)
+            return
+
+    def update_broken_report_type(self):
+        def mark_broken(broken_type: str):
+            # try to get the report
+            try:
+                cr2c = CounterReportsToCredentials.objects.get(
+                    credentials=self.credentials, counter_report=self.counter_report
+                )
+                cr2c.set_broken(self, broken_type)
+            except CounterReportsToCredentials.DoesNotExist:
+                # Counter report was removed from credentials
+                return
+
+        if self.http_status_code in (404,):
+            mark_broken(SushiCredentials.BROKEN_HTTP)
+            return
+
+        if self.error_code in (
+            ErrorCode.REPORT_NOT_SUPPORTED,
+            ErrorCode.REPORT_VERSION_NOT_SUPPORTED,
+        ):
+            mark_broken(SushiCredentials.BROKEN_SUSHI)
+            return
+
+
+class CounterReportsToCredentials(BrokenCredentialsMixin):
+    credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
+    counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('credentials', 'counter_report'),)

@@ -496,7 +496,7 @@ class TestSushiFetchAttemptStatsView:
 
 @pytest.mark.django_db()
 class TestSushiFetchAttemptView:
-    def test_create(self, basic1, organizations, platforms, clients, counter_report_types):
+    def test_create(self, basic1, organizations, platforms, clients, users, counter_report_types):
         credentials = CredentialsFactory(
             organization=organizations["root"], platform=platforms["root"],
         )
@@ -516,6 +516,8 @@ class TestSushiFetchAttemptView:
             assert task_mock.apply_async.call_count == 1
             assert resp.status_code == 201
             assert 'pk' in resp.json()
+            attempt = SushiFetchAttempt.objects.last()
+            assert attempt.triggered_by == users["master"]
 
     @pytest.mark.parametrize(
         ['user', 'can_create', 'return_code'],

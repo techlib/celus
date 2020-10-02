@@ -1,0 +1,29 @@
+from enum import Enum
+
+
+class ErrorCode(Enum):
+    SERVICE_NOT_AVAILABLE = 1000
+    SERVICE_BUSY = 1010
+    SERVICE_BUSY2 = 1011  # non standard
+    TOO_MANY_REQUESTS = 1020
+    INSUFFICIENT_DATA = 1030
+    NOT_AUTHORIZED = 2000
+    INVALID_API_KEY = 2020
+    REPORT_NOT_SUPPORTED = 3000
+    REPORT_VERSION_NOT_SUPPORTED = 3010
+    INVALID_DATE_ARGS = 3020
+    NO_DATA_FOR_DATE_ARGS = 3030
+    DATA_NOT_READY_FOR_DATE_ARGS = 3031
+    PARTIAL_DATA_RETURNED = 3040
+    PARAMETER_NOT_RECOGNIZED = 3050
+    INVALID_REPORT_FILTER = 3060
+    INCONGRUOUS_REPORT_FILTER = 3061
+    MISSING_REPORT_FILTER = 3070
+    MISSING_REPORT_ATTRIBUTE = 3071
+    RETURN_DATA_LIMIT_REACHED = 3080
+
+    def __eq__(self, o):
+        if isinstance(o, int):
+            return self.value == o
+        else:
+            return super().__eq__(o)

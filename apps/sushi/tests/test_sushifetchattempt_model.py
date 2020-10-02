@@ -1,24 +1,31 @@
+from datetime import timedelta
+
 import pytest
 from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
 from django.conf import settings
 from django.utils import timezone
 from freezegun import freeze_time
-from organizations.models import Organization
-from publications.models import Platform
-from sushi.models import SushiCredentials, SushiFetchAttempt
+from sushi.models import (
+    SushiFetchAttempt,
+    CounterReportsToCredentials,
+    BrokenCredentialsMixin as BC,
+)
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.scenarios.basic import (
     credentials,
+    counter_report_types,
     data_sources,
     organizations,
     report_types,
     platforms,
     counter_report_types,
 )
+
+from nigiri.error_codes import ErrorCode
 
 
 @pytest.mark.django_db
@@ -247,3 +254,212 @@ class TestSushiFetchAttemptModel:
                 assert attempt.when_to_retry().strftime("%Y-%m-%d %H:%M:%S%z") == scheduled_time
             else:
                 assert attempt.when_to_retry() is None
+
+    def test_any_success_lately(self, credentials, counter_report_types):
+        now = timezone.now()
+
+        with freeze_time(now):
+            # add unsuccessful attempt which happened right now
+            attempt = FetchAttemptFactory(
+                credentials=credentials["standalone_tr"],
+                end_date="2020-01-31",
+                when_processed=now,
+                download_success=False,
+                processing_success=False,
+                queued=False,
+                counter_report=counter_report_types["tr"],
+            )
+            assert attempt.any_success_lately() is False
+
+            # add unsuccessful in lately period
+            attempt = FetchAttemptFactory(
+                credentials=credentials["standalone_tr"],
+                end_date="2020-01-31",
+                when_processed=now - timedelta(days=5),
+                download_success=False,
+                processing_success=False,
+                queued=False,
+                counter_report=counter_report_types["tr"],
+            )
+            assert attempt.any_success_lately() is False
+
+            # successful after lately period
+            attempt = FetchAttemptFactory(
+                credentials=credentials["standalone_tr"],
+                end_date="2020-01-31",
+                when_processed=now - timedelta(days=16),
+                download_success=False,
+                processing_success=False,
+                queued=False,
+                counter_report=counter_report_types["tr"],
+            )
+            assert attempt.any_success_lately() is False
+
+            # successful in lately period
+            attempt = FetchAttemptFactory(
+                credentials=credentials["standalone_tr"],
+                end_date="2020-01-31",
+                when_processed=now - timedelta(days=15),
+                download_success=True,
+                processing_success=True,
+                queued=False,
+                counter_report=counter_report_types["tr"],
+            )
+            assert attempt.any_success_lately() is True
+
+    @pytest.mark.parametrize(
+        "status,http_status,sushi_status,lately,broken_credentials,broken_cr2c",
+        (
+            ("NO_DATA", 400, ErrorCode.INVALID_API_KEY, False, None, None),
+            ("SUCCESS", 401, ErrorCode.REPORT_NOT_SUPPORTED, False, None, None),
+            ("QUEUED", 400, ErrorCode.NOT_AUTHORIZED, False, None, None),
+            # cred broken testing
+            ("FAILURE", 401, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
+            ("BROKEN", 403, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
+            ("FAILURE", 500, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
+            ("BROKEN", 400, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
+            ("FAILURE", 500, ErrorCode.TOO_MANY_REQUESTS, True, None, None),
+            ("BROKEN", 400, ErrorCode.TOO_MANY_REQUESTS, True, None, None),
+            ("FAILURE", 200, ErrorCode.NOT_AUTHORIZED, False, BC.BROKEN_SUSHI, None),
+            ("BROKEN", 200, ErrorCode.INVALID_API_KEY, False, BC.BROKEN_SUSHI, None),
+            # cred to report type testing
+            ("FAILURE", 404, ErrorCode.TOO_MANY_REQUESTS, False, None, BC.BROKEN_HTTP),
+            ("BROKEN", 200, ErrorCode.REPORT_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
+            ("FAILURE", 200, ErrorCode.REPORT_VERSION_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
+        ),
+    )
+    def test_update_broken(
+        self,
+        status,
+        http_status,
+        sushi_status,
+        lately,
+        broken_credentials,
+        broken_cr2c,
+        credentials,
+        counter_report_types,
+    ):
+        creds = credentials["standalone_br1_jr1"]
+        assert creds.broken is None
+        assert creds.first_broken_attempt is None
+
+        cr2c = CounterReportsToCredentials.objects.get(
+            counter_report=counter_report_types["br1"], credentials=creds
+        )
+        assert cr2c.broken is None
+        assert cr2c.first_broken_attempt is None
+
+        # Different credentials
+        FetchAttemptFactory(
+            credentials=credentials["standalone_tr"],
+            end_date="2020-01-31",
+            when_processed=timezone.now() - timedelta(days=1),
+            download_success=True,
+            processing_success=True,
+            queued=False,
+            counter_report=counter_report_types["jr1"],
+        )
+
+        if lately:
+            FetchAttemptFactory(
+                credentials=creds,
+                end_date="2020-01-31",
+                when_processed=timezone.now() - timedelta(days=1),
+                download_success=True,
+                processing_success=True,
+                queued=False,
+                counter_report=counter_report_types["br1"],
+                http_status_code=200,
+            )
+
+        if status == 'SUCCESS':
+            kwargs = {
+                "download_success": True,
+                "processing_success": True,
+                "contains_data": True,
+                "queued": False,
+            }
+        elif status == 'NO_DATA':
+            kwargs = {
+                "download_success": True,
+                "processing_success": True,
+                "contains_data": False,
+                "queued": False,
+            }
+        elif status == 'QUEUED':
+            kwargs = {
+                "download_success": True,
+                "processing_success": True,
+                "contains_data": False,
+                "queued": True,
+            }
+        elif status == 'BROKEN':
+            kwargs = {
+                "download_success": True,
+                "processing_success": False,
+                "contains_data": False,
+                "queued": False,
+            }
+        elif status == 'FAILURE':
+            kwargs = {
+                "download_success": False,
+                "processing_success": False,
+                "contains_data": False,
+                "queued": False,
+            }
+        else:
+            raise NotImplementedError()
+
+        # First broken attempt
+        attempt = FetchAttemptFactory(
+            credentials=creds,
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            counter_report=counter_report_types["br1"],
+            error_code=sushi_status.value,
+            http_status_code=http_status,
+            **kwargs,
+        )
+        attempt.update_broken()
+        creds.refresh_from_db()
+        cr2c.refresh_from_db()
+        assert creds.broken == broken_credentials
+        assert creds.first_broken_attempt == (attempt if broken_credentials else None)
+        assert cr2c.broken == broken_cr2c
+        assert cr2c.first_broken_attempt == (attempt if broken_cr2c else None)
+
+        # Test whether first_broken_attempt is not overriden
+        second_attempt = FetchAttemptFactory(
+            credentials=creds,
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            counter_report=counter_report_types["br1"],
+            error_code=sushi_status.value,
+            http_status_code=http_status,
+            **kwargs,
+        )
+        second_attempt.update_broken()
+        creds.refresh_from_db()
+        cr2c.refresh_from_db()
+        assert creds.broken == broken_credentials
+        assert creds.first_broken_attempt == (attempt if broken_credentials else None)
+        assert cr2c.broken == broken_cr2c
+        assert cr2c.first_broken_attempt == (attempt if broken_cr2c else None)
+
+        # Change credentials hash => all will be unbroken
+        creds.url += "/something/"
+        creds.save()
+        cr2c.refresh_from_db()
+        assert creds.broken is None
+        assert creds.first_broken_attempt is None
+        assert cr2c.broken is None
+        assert cr2c.first_broken_attempt is None
+
+        # Rerun update broken should keep the creds and cr2c unbroken
+        attempt.update_broken()
+        creds.refresh_from_db()
+        cr2c.refresh_from_db()
+        assert creds.broken is None
+        assert creds.first_broken_attempt is None
+        assert cr2c.broken is None
+        assert cr2c.first_broken_attempt is None

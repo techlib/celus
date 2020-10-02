@@ -19,6 +19,7 @@ from .counter5 import (
     Counter5ReportBase,
     CounterError,
 )
+from .error_codes import ErrorCode
 from .exceptions import SushiException
 
 logger = logging.getLogger(__name__)
@@ -142,10 +143,10 @@ class SushiClientBase:
         except ValueError:
             return SushiErrorMeaning(should_retry=True, needs_checking=True, setup_ok=False)
 
-        if error_code in (3000, 3010):
+        if error_code in (ErrorCode.REPORT_NOT_SUPPORTED, ErrorCode.REPORT_VERSION_NOT_SUPPORTED):
             # report is not supported, so it was successful, but no data
             return SushiErrorMeaning(should_retry=False, needs_checking=False, setup_ok=False)
-        elif error_code in (3030,):
+        elif error_code in (ErrorCode.NO_DATA_FOR_DATE_ARGS,):
             # no usage data for the requested period, it is success, but again no data
             # unfortunately, some providers, such as Clarivate (Web Of Science) use this
             # wrongly in cases when 3031 should be used, so we need to treat it like this
@@ -155,7 +156,11 @@ class SushiClientBase:
                 setup_ok=True,
                 retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS,
             )
-        elif error_code in (1010, 1011, 1020):
+        elif error_code in (
+            ErrorCode.SERVICE_BUSY,
+            ErrorCode.SERVICE_BUSY2,
+            ErrorCode.TOO_MANY_REQUESTS,
+        ):
             # some forms of 'try it later' errors
             return SushiErrorMeaning(
                 should_retry=True,
@@ -163,7 +168,7 @@ class SushiClientBase:
                 setup_ok=True,
                 retry_interval=SushiErrorMeaning.RETRY_IN_MINUTES,
             )
-        elif error_code in (3031,):
+        elif error_code in (ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS,):
             # the data is not yet available - usually some months are missing
             return SushiErrorMeaning(
                 should_retry=True,
