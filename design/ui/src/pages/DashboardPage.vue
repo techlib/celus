@@ -25,7 +25,7 @@ cs:
   histogram_tooltip:
     SUSHI data zřídka obsahují informace o titulech, pro které nebyl zaznamenán
     žádný zájem. Z toho důvodu je počet titulů s nulovým zájmem pravděpodobně silně podhodnocen.
-  sushi_status: Stav sklízení SUSHI
+  sushi_status: Stav stahování SUSHI
   sushi_status_info: Souhrn výsledku stahování pro všechny automaticky sklízené reporty.
   details_here: Podrobnosti zde
 </i18n>

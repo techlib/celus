@@ -4,7 +4,7 @@ en:
     enabled_tooltip: When turned on, data for these credentials get automatically downloaded each month.
     state:
       unknown: Unknown
-      queued: Waiting
+      queued: Waiting for data
       error: Error
       success: Success
       missing: Not harvested yet
@@ -23,7 +23,7 @@ cs:
     enabled_tooltip: Pokud je tato volba zapnutá, budou se data pro tyto přihlašovací údaje pravidelně automaticky stahovat.
     state:
       unknown: Neznámý
-      queued: Odloženo
+      queued: Čekáme na data
       error: Chyba
       success: Úspěšně staženo
       missing: Dosud nestaženo
