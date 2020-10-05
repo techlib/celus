@@ -8,6 +8,7 @@ en:
   show_inactive_tooltip: Also shows credentials that are not automatically harvested
   enabled: Automatically harvested
   not_enabled: Not automatically harvested
+  all_platforms: All platforms
 
 cs:
   hide_successful: Skrýt úspěšné řádky
@@ -17,6 +18,7 @@ cs:
   show_inactive_tooltip: Zobrazí také přihlašovací údaje, pro které nejsou data automaticky stahována
   enabled: Automaticky stahováno
   not_enabled: Není automaticky stahováno
+  all_platforms: Všechny platformy
 </i18n>
 
 <template>
@@ -314,9 +316,10 @@ export default {
           )
           .map((item) => item.platform)
       );
-      return [{ name: "-", pk: null }, ...usedPlatforms].sort(
-        (a, b) => a.name > b.name
-      );
+      return [
+        { name: this.$t("all_platforms"), pk: null },
+        ...[...usedPlatforms].sort((a, b) => a.name > b.name),
+      ];
     },
     activeAttempts() {
       let attempts = [];
