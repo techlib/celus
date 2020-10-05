@@ -11,7 +11,7 @@ en:
   histogram_tooltip:
     SUSHI data very seldom contains data about titles for which there was no
     access recorded, so titles with zero count are likely heavily underrepresented.
-  sushi_status: SUSHI harvesting status
+  sushi_status: SUSHI automated harvesting status
   sushi_status_info: Result of download for each automatically harvested report.
   details_here: Details here
 
@@ -25,7 +25,7 @@ cs:
   histogram_tooltip:
     SUSHI data zřídka obsahují informace o titulech, pro které nebyl zaznamenán
     žádný zájem. Z toho důvodu je počet titulů s nulovým zájmem pravděpodobně silně podhodnocen.
-  sushi_status: Stav stahování SUSHI
+  sushi_status: Stav automatického stahování SUSHI
   sushi_status_info: Souhrn výsledku stahování pro všechny automaticky sklízené reporty.
   details_here: Podrobnosti zde
 </i18n>

@@ -112,9 +112,8 @@ export default {
       const that = this;
       return {
         series(item) {
-          let serIdx = 0;
           for (let ser of item) {
-            ser.data = ser.data.map((v, index) => ({
+            ser.data = ser.data.map((v) => ({
               ...v,
               // name: that.$t(`sushi.state.${v.name}`),
               // value: v.value,
@@ -122,7 +121,6 @@ export default {
                 color: that.statusToColor[v.name],
               },
             }));
-            serIdx++;
           }
           return item;
         },
@@ -180,16 +178,18 @@ export default {
       );
 
       let statusCounter = new Map();
-      this.sushiCredentialsList.forEach((item) => {
-        for (let reportType of item.counter_reports_long) {
-          let key = `${item.pk}-${reportType.id}`;
-          let state = ATTEMPT_NOT_MADE;
-          if (attemptMap.has(key)) {
-            state = attemptMap.get(key).state;
+      this.sushiCredentialsList
+        .filter((item) => item.enabled)
+        .forEach((item) => {
+          for (let reportType of item.counter_reports_long) {
+            let key = `${item.pk}-${reportType.id}`;
+            let state = ATTEMPT_NOT_MADE;
+            if (attemptMap.has(key)) {
+              state = attemptMap.get(key).state;
+            }
+            statusCounter.set(state, (statusCounter.get(state) | 0) + 1);
           }
-          statusCounter.set(state, (statusCounter.get(state) | 0) + 1);
-        }
-      });
+        });
       this.statusCounter = statusCounter;
     },
   },
