@@ -104,7 +104,7 @@ cs:
               disabled
             >
             </v-text-field>
-            <v-select
+            <v-autocomplete
               v-else
               v-model="platform"
               :items="allowedPlatforms"
@@ -113,7 +113,7 @@ cs:
               return-object
               :loading="loadingPlatforms"
             >
-            </v-select>
+            </v-autocomplete>
           </v-col>
         </v-row>
 
