@@ -198,12 +198,9 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import axios from "axios";
 import LargeSpinner from "@/components/util/LargeSpinner";
 import { formatInteger, smartFormatFloat } from "@/libs/numbers";
-import VeHistogram from "v-charts/lib/histogram.common";
-import LoaderWidget from "@/components/util/LoaderWidget";
 import { pubTypes } from "@/libs/pub-types";
 import TopTenDashboardWidget from "@/components/TopTenDashboardWidget";
 import IntroPage from "./IntroPage";
-import SimplePie from "@/components/util/SimplePie";
 import SushiStatusChart from "@/components/charts/SushiStatusChart";
 import startOfMonth from "date-fns/startOfMonth";
 import addDays from "date-fns/addDays";
@@ -218,9 +215,6 @@ export default {
     TopTenDashboardWidget,
     LargeSpinner,
     APIChart,
-    VeHistogram,
-    LoaderWidget,
-    SimplePie,
   },
 
   data() {
@@ -298,6 +292,7 @@ export default {
     ...mapActions({
       fetchInterestReportType: "fetchInterestReportType",
       showSnackbar: "showSnackbar",
+      loadSushiCredentialsCount: "loadSushiCredentialsCount",
     }),
     formatInteger,
     smartFormatFloat,
@@ -350,6 +345,7 @@ export default {
   },
 
   mounted() {
+    this.loadSushiCredentialsCount();
     this.fetchReportTypes();
     this.fetchTotalInterest();
     this.fetchHistogramData();
