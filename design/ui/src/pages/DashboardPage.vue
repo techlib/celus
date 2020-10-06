@@ -40,7 +40,7 @@ cs:
         </v-row-->
     <v-row>
       <v-col cols="12" lg="6">
-        <v-card height="480">
+        <v-card min-height="480">
           <v-card-title
             v-text="$t('interest')"
             class="float-left"
@@ -62,7 +62,7 @@ cs:
       </v-col>
 
       <v-col cols="12" lg="6">
-        <v-card height="480">
+        <v-card min-height="480">
           <v-card-title
             v-text="$t('sushi_status')"
             class="float-left"

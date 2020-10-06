@@ -124,6 +124,7 @@
         :rows="chartData.rows"
         :columns="chartData.columns"
         :primary-dimension="shownPrimaryDimension"
+        :items-per-page="dashboardChart ? 8 : 12"
         v-else
       >
       </ChartDataTable>

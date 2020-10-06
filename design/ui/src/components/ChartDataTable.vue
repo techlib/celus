@@ -10,8 +10,12 @@ cs:
   <v-data-table
     :headers="headers"
     :items="formattedRows"
-    :footer-props="{ disableItemsPerPage: true, itemsPerPageOptions: [12] }"
+    :footer-props="{
+      disableItemsPerPage: true,
+      itemsPerPageOptions: [this.itemsPerPage],
+    }"
     dense
+    class="chart-data-table"
   >
     <template #body.append="{ headers }">
       <tr class="totals">
@@ -40,6 +44,10 @@ export default {
       required: true,
     },
     primaryDimension: {},
+    itemsPerPage: {
+      default: 12,
+      type: Number,
+    },
   },
 
   computed: {
@@ -78,8 +86,14 @@ export default {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 tr.totals th {
   font-size: 0.875rem;
+}
+
+.chart-data-table {
+  .v-data-table__wrapper {
+    width: 100%;
+  }
 }
 </style>
