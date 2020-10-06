@@ -7,6 +7,10 @@ function formatInteger(integer) {
   return numeral(integer).format("0,0").replace(/,/g, "\xa0");
 }
 
+function padIntegerWithZeros(integer, format = "00") {
+  return numeral(integer).format(format);
+}
+
 function smartFormatFloat(number, digits = 3) {
   if (number == null) {
     return "-";
@@ -28,4 +32,4 @@ function smartFormatFloat(number, digits = 3) {
     .replace(/,/g, "\xa0");
 }
 
-export { formatInteger, smartFormatFloat };
+export { formatInteger, padIntegerWithZeros, smartFormatFloat };
