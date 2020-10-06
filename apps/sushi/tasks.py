@@ -15,7 +15,12 @@ from logs.tasks import (
     smart_interest_sync_task,
     sync_materialized_reports_task,
 )
-from sushi.models import SushiFetchAttempt, SushiCredentials, CounterReportType
+from sushi.models import (
+    SushiFetchAttempt,
+    SushiCredentials,
+    CounterReportType,
+    CounterReportsToCredentials,
+)
 from .logic.fetching import retry_queued, fetch_new_sushi_data, find_holes_in_data
 
 logger = logging.getLogger(__name__)
@@ -31,6 +36,19 @@ def run_sushi_fetch_attempt_task(attempt_id: int, import_data: bool = False):
         # sushi attempt was deleted in the meantime
         # e.g. someone could remove credentials
         return
+
+    if attempt.credentials.broken is not None:
+        logger.warning("Sushi attempt '%s' has broken credentials; aborting.", attempt_id)
+        return
+
+    if CounterReportsToCredentials.objects.filter(
+        credentials=attempt.credentials, counter_report=attempt.counter_report, broken__isnull=False
+    ).exists():
+        logger.warning(
+            "Sushi attempt '%s' has broken report type for credentials; aborting.", attempt_id
+        )
+        return
+
     attempt.credentials.fetch_report(
         counter_report=attempt.counter_report,
         start_date=attempt.start_date,
@@ -95,7 +113,18 @@ def make_fetch_attempt_task(
     if delay:
         logger.warning('Cannot start fetch attempt for another %d s; aborting', delay)
         return
+
+    if credentials.broken is not None:
+        logger.warning('Cannot start fetch attempt for broken credentails; aborting')
+        return
+
     counter_report = CounterReportType.objects.get(pk=counter_report_id)
+    if CounterReportsToCredentials.objects.filter(
+        credentials=credentials, counter_report=counter_report, broken__isnull=False
+    ).exists():
+        logger.warning("Cannot start fetch attempt for credentials; aborting.")
+        return
+
     credentials.fetch_report(counter_report, start_date, end_date, use_url_lock=True)
 
 
