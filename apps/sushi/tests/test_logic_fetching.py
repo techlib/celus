@@ -6,8 +6,10 @@ from django.utils.timezone import now
 
 from core.logic.dates import month_start, month_end
 from core.models import UL_ORG_ADMIN
-from nigiri.client import Sushi5Client
+from nigiri.client import Sushi5Client, Sushi4Client
 from nigiri.counter5 import Counter5ReportBase
+from nigiri.counter4 import CounterReport
+from nigiri.error_codes import ErrorCode
 from publications.models import Platform
 from ..logic.data_import import import_sushi_credentials
 from ..logic.fetching import (
@@ -17,12 +19,14 @@ from ..logic.fetching import (
     create_fetch_units,
     FetchUnit,
     process_fetch_units,
+    retry_queued,
 )
 from sushi.models import (
     CounterReportType,
     SushiCredentials,
     SushiFetchAttempt,
     CounterReportsToCredentials,
+    BrokenCredentialsMixin as BC,
 )
 from organizations.tests.conftest import organizations
 from publications.tests.conftest import platforms
@@ -438,3 +442,76 @@ class TestFetchUnit:
         assert (
             fetch_unit.find_conflicting(start_date, end_date).pk == fa.pk
         ), 'should report successful attempt with old version of credentials'
+
+
+@pytest.mark.django_db
+class TestQueued:
+    def test_retry_queued(self, counter_report_types, credentials, monkeypatch):
+        credentials["standalone_tr"].broken = BC.BROKEN_HTTP
+        credentials["standalone_tr"].save()
+
+        cr2c = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+        )
+        cr2c.broken = BC.BROKEN_SUSHI
+        cr2c.save()
+
+        kwargs = {
+            "start_date": "2020-01-01",
+            "end_date": "2020-01-31",
+            "download_success": True,
+            "processing_success": True,
+            "contains_data": True,
+            "queued": True,
+            "error_code": ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,
+            "when_queued": now() - timedelta(days=120),  # random date long ago
+        }
+
+        # mock fetching
+        def mock_get_report_data_5(*args, **kwargs):
+            return Counter5ReportBase()
+
+        monkeypatch.setattr(Sushi5Client, 'get_report_data', mock_get_report_data_5)
+
+        def mock_get_report_data_4(*args, **kwargs):
+            report = CounterReport(report_type=args[1], period=(args[2], args[3]))
+            return report
+
+        monkeypatch.setattr(Sushi4Client, 'get_report_data', mock_get_report_data_4)
+
+        # no broken
+        FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+            **kwargs,
+        )
+        counter = retry_queued()
+        assert counter == {'retry_SUCCESS': 1}
+
+        # broken credentials
+        FetchAttemptFactory(
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            **kwargs,
+        )
+        counter = retry_queued()
+        assert counter == {}, "nothing queued"
+
+        # broken report type
+        FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+            **kwargs,
+        )
+        counter = retry_queued()
+        assert counter == {}, "nothing queued"
+
+        # lets try to update broken statuses
+        credentials["standalone_tr"].broken = None
+        credentials["standalone_tr"].save()
+        cr2c.broken = None
+        cr2c.save()
+
+        counter = retry_queued()
+        assert counter == {'retry_SUCCESS': 1, 'retry_NO_DATA': 1}, "all planned"

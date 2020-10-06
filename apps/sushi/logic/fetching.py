@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 from dateparser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.db.models import Count
+from django.db.models import Count, Exists, OuterRef
 from django.utils.timezone import now
 
 from core.logic.dates import month_start, month_end
@@ -40,11 +40,23 @@ def retry_queued(number=0, sleep_interval=0) -> Counter:
     # no reason redownloading those where download was not successful - this has to be done
     # manually
     qs = (
-        SushiFetchAttempt.objects.filter(queued=True, processing_success=True)
-        .annotate(following_count=Count('queue_following'))
-        .filter(following_count=0)
+        SushiFetchAttempt.objects.filter(
+            queued=True, processing_success=True, credentials__broken__isnull=True
+        )
+        .annotate(
+            following_count=Count('queue_following'),
+            broken_report_type=Exists(
+                CounterReportsToCredentials.objects.filter(
+                    credentials=OuterRef('credentials'),
+                    counter_report=OuterRef('counter_report'),
+                    broken__isnull=False,
+                )
+            ),
+        )
+        .filter(following_count=0, broken_report_type=False)
         .order_by('-when_queued')
     )
+
     logger.debug('Found %s attempts to retry', qs.count())
     last_platform = None
     stats = Counter()
