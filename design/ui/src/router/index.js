@@ -100,6 +100,11 @@ export default new Router({
       component: () => import("../pages/OverlapAnalysisPage.vue"),
     },
     {
+      path: "/analytics/platform-overlap",
+      name: "platform-overlap-analysis",
+      component: () => import("../pages/PlatformOverlapAnalysisPage"),
+    },
+    {
       path: "/admin/management/",
       name: "management",
       component: () => import("../pages/ManagementPage.vue"),

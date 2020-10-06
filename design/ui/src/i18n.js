@@ -24,4 +24,11 @@ export default new VueI18n({
   locale: "cs",
   fallbackLocale: process.env.VUE_APP_I18N_FALLBACK_LOCALE || "en",
   messages: loadLocaleMessages(),
+  pluralizationRules: {
+    cs: (choice) => {
+      if (choice === 1) return 0;
+      if (choice >= 2 && choice <= 4) return 1;
+      return 2;
+    },
+  },
 });

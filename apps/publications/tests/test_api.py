@@ -567,6 +567,75 @@ class TestPlatformTitleAPI:
         assert platform.short_name in data[0]['interests']
         assert platform2.short_name in data[0]['interests']
 
+    def test_organization_platforms_overlap(
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+    ):
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        organization = accesslogs_with_interest['organization']
+        platform = accesslogs_with_interest['platform']
+        titles = accesslogs_with_interest['titles']
+        UserOrganization.objects.create(user=identity.user, organization=organization)
+        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
+        PlatformTitle.objects.create(
+            platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
+        )
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            resp = authenticated_client.get(
+                reverse('organization-platform-overlap', args=[organization.pk])
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        assert 'overlap' in resp.json()
+        data = resp.json()['overlap']
+        assert len(data) == 4, '4 overlap records in total'
+        assert (
+            len([rec for rec in data if rec['platform1'] == rec['platform2']]) == 2
+        ), '2 records for self-overlap'
+        assert (
+            len([rec for rec in data if rec['platform1'] != rec['platform2']]) == 2
+        ), '2 records for other-overlap'
+        check_rec = [
+            rec
+            for rec in data
+            if rec['platform1'] == platform.pk and rec['platform2'] == platform2.pk
+        ][0]
+        assert check_rec['overlap'] == 1
+
+    def test_organization_platforms_overlap_with_date_filter(
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+    ):
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        organization = accesslogs_with_interest['organization']
+        platform = accesslogs_with_interest['platform']
+        titles = accesslogs_with_interest['titles']
+        UserOrganization.objects.create(user=identity.user, organization=organization)
+        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
+        PlatformTitle.objects.create(
+            platform=platform2, title=titles[0], organization=organization, date='2019-03-01'
+        )
+        # first with start_date allowing all records in
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            resp = authenticated_client.get(
+                reverse('organization-platform-overlap', args=[organization.pk]),
+                {'start': '2019-01'},
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        assert len(resp.json()['overlap']) == 4
+        # then with start_date which removes the overlapping records
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            resp = authenticated_client.get(
+                reverse('organization-platform-overlap', args=[organization.pk]),
+                {'start': '2019-03'},
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        data = resp.json()['overlap']
+        assert len(data) == 1, 'only 1 self overlap'
+        assert (
+            len([rec for rec in data if rec['platform1'] == rec['platform2']]) == 1
+        ), '1 self-overlap'
+
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("basic1")

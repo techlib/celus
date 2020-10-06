@@ -22,7 +22,7 @@ import TitleList from "@/components/TitleList";
 import InterestGroupSelector from "@/components/InterestGroupSelector";
 
 export default {
-  name: "AllTitlesListPage",
+  name: "OverlapAnalysisPage",
   components: {
     TitleList,
     InterestGroupSelector,

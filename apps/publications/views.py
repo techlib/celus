@@ -1,29 +1,28 @@
+from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
 from django.db.models.functions import Coalesce
-from django.conf import settings
-
 from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import CreateModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
-from rest_framework.permissions import IsAuthenticated
 
 from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
 from core.logic.dates import date_filter_from_params
+from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
 from core.permissions import (
     SuperuserOrAdminPermission,
     ViewPlatformPermission,
 )
-from core.models import DataSource
 from logs.logic.queries import (
     extract_interests_from_objects,
     interest_annotation_params,

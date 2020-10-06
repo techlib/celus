@@ -178,9 +178,14 @@ export default {
           title: this.$i18n.t("pages.analytics"),
           items: [
             {
-              title: this.$i18n.t("pages.overlap_analysis"),
+              title: this.$i18n.t("pages.overlap_analysis_titles"),
               icon: "fa fa-layer-group",
               linkTo: "overlap-analysis",
+            },
+            {
+              title: this.$i18n.t("pages.overlap_analysis_platforms"),
+              icon: "fa fa-th",
+              linkTo: "platform-overlap-analysis",
             },
           ],
           show: true,

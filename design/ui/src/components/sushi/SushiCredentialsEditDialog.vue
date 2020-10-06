@@ -17,7 +17,6 @@ en:
   delete_success: Sushi credentials were successfully removed
   title_label: Title
   title_tooltip: You can give the credentials a descriptive title for easier identification. A title is required when you have more than one set of credentials for the same SUSHI server.
-  credentials_conflict: "|{n} record for same platform/version|{n} records for same platform/version"
   title_in_conflict: <strong>Use a different title</strong>. When creating more than one set of credentials for the same organization, platform and COUNTER version, you need to use distinct titles in order to distinguish between the sets.
   optional_args: Extra attributes - fill only if instructed by provider
   optional_args_tooltip: The following section is used for attributes which are only used by some providers. If the credentials given to you by the provider contain fields that do not correspond to any of the fields above, you can fill them in here.
@@ -38,7 +37,6 @@ cs:
   delete_success: Přihlašovací údaje byly úspěšně odstraněny
   title_label: Název
   title_tooltip: Přihlašovacím údajům můžete přiřadit název pro lepší identifikaci. Název je také vyžadován v případě, že máte více než jednu sadu přihlašovacích údajů pro stejný SUSHI server.
-  credentials_conflict: "|{n} záznam pro stejnou platformu/verzi|{n} záznamy pro stejnou platformu/verzi|{n} záznamů pro stejnou platformu/verzi"
   title_in_conflict: <strong>Použijte jiný název</strong>. Pokud vytváříte více přihlašovacích údajů pro stejnout organizaci, platformu a verzi COUNTER, musíte použít různé názvy, aby bylo možné přihlašovací údaje rozlišit.
   optional_args: Další parametry - vyplňte pouze pokud to poskytovatel vyžaduje
   optional_args_tooltip: Následující sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
@@ -142,7 +140,6 @@ cs:
               :items="allowedCounterVersions"
               :disabled="!!credentials"
               :no-data-text="$t('all_versions_used')"
-              :hint="versionHint"
             >
             </v-select>
           </v-col>
@@ -499,15 +496,6 @@ export default {
     },
     allowedCounterVersions() {
       return [4, 5];
-    },
-    versionHint() {
-      if (!this.existingCredentials) {
-        return null;
-      }
-      if (this.similarCredentials > 0) {
-        return this.$tc("credentials_conflict", this.similarCredentials.length);
-      }
-      return null;
     },
     conflictingCredentials() {
       /*

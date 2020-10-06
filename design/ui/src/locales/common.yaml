@@ -15,7 +15,8 @@ en:
     dashboard: Dashboard
     sushi_monthly_overview: SUSHI status
     analytics: Analytics
-    overlap_analysis: Overlap analysis
+    overlap_analysis_titles: Titles on multiple platforms
+    overlap_analysis_platforms: Platform overlap
   menu: Menu
   organization: Organization
   platform: Platform

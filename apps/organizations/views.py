@@ -2,7 +2,7 @@ import json
 from collections import Counter
 
 from django.conf import settings
-from django.db.models import Count, Q, Sum, Max, Min
+from django.db.models import Count, Q, Sum, Max, Min, F
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
 from django.utils.text import slugify
@@ -20,6 +20,8 @@ from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
+from publications.models import PlatformTitle, Platform
+from publications.serializers import PlatformSerializer
 from recache.util import recache_queryset
 from sushi.models import SushiCredentials
 from .models import UserOrganization
@@ -202,6 +204,42 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             user=request.user, organization=org, is_admin=True, source=data_source
         )
         return Response(OrganizationSerializer(org).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, url_path='platform-overlap')
+    def platform_overlap(self, request, pk):
+        """
+        API that returns a specific reply for platform-platform overlap analysis
+        """
+        org_filter = organization_filter_from_org_id(pk, request.user)
+        date_filter_params1 = date_filter_from_params(request.GET)
+        date_filter_params2 = date_filter_from_params(
+            request.GET, key_start='title__platformtitle__'
+        )
+        query = (
+            PlatformTitle.objects.filter(**org_filter, **date_filter_params1)
+            .filter(
+                title=F("title__platformtitle__title"),
+                organization=F("title__platformtitle__organization"),
+                **date_filter_params2,
+            )
+            .values("platform", "title__platformtitle__platform_id")
+            .annotate(count=Count("title_id", distinct=True))
+        )
+        query = recache_queryset(query, origin='overlap-analysis')
+        overlap = [
+            {
+                'platform1': rec['platform'],
+                'platform2': rec['title__platformtitle__platform_id'],
+                'overlap': rec['count'],
+            }
+            for rec in query
+        ]
+        platforms = Platform.objects.all()
+        result = {
+            'overlap': overlap,
+            'platforms': PlatformSerializer(platforms, many=True).data,
+        }
+        return Response(result)
 
 
 class StartERMSSyncOrganizationsTask(APIView):
