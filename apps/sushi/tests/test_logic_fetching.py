@@ -5,6 +5,7 @@ import pytest
 from django.utils.timezone import now
 
 from core.logic.dates import month_start, month_end
+from core.models import UL_ORG_ADMIN
 from nigiri.client import Sushi5Client
 from nigiri.counter5 import Counter5ReportBase
 from publications.models import Platform
@@ -17,11 +18,31 @@ from ..logic.fetching import (
     FetchUnit,
     process_fetch_units,
 )
-from sushi.models import CounterReportType, SushiCredentials, SushiFetchAttempt
+from sushi.models import (
+    CounterReportType,
+    SushiCredentials,
+    SushiFetchAttempt,
+    CounterReportsToCredentials,
+)
 from organizations.tests.conftest import organizations
 from publications.tests.conftest import platforms
-from logs.tests.conftest import report_type_nd
+from test_fixtures.scenarios.basic import (
+    counter_report_types,
+    report_types,
+    organizations,
+    platforms,
+    data_sources,
+    credentials,
+)
+from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+
 from ..tasks import retry_holes_with_new_credentials_task
+
+
+@pytest.fixture
+def fetch_unit(credentials, counter_report_types) -> FetchUnit:
+    return FetchUnit(credentials["standalone_tr"], report_type=counter_report_types["tr"])
 
 
 class TestHelperFunctions:
@@ -38,7 +59,7 @@ class TestHelperFunctions:
 
 @pytest.mark.django_db
 class TestHoleFillingMachinery:
-    def test_find_holes_in_data(self, settings, organizations, report_type_nd, monkeypatch):
+    def test_find_holes_in_data(self, settings, organizations, counter_report_types, monkeypatch):
         """
         Tests the `find_holes_in_data` function.
         """
@@ -49,7 +70,7 @@ class TestHoleFillingMachinery:
         data = [
             {
                 'platform': 'XXX',
-                'organization': organizations[1].internal_id,
+                'organization': organizations["standalone"].internal_id,
                 'customer_id': 'BBB',
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
@@ -62,10 +83,7 @@ class TestHoleFillingMachinery:
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         cr1.create_sushi_client()
-        report = CounterReportType.objects.create(
-            code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
-        )
-        cr1.counter_reports.add(report)
+        cr1.counter_reports.add(counter_report_types['tr'])
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
@@ -75,13 +93,17 @@ class TestHoleFillingMachinery:
         holes = find_holes_in_data()
         assert len(holes) == 3
         # add an attempt and try again
-        attempt = cr1.fetch_report(report, start_date=first_month, end_date=month_end(first_month))
+        attempt = cr1.fetch_report(
+            counter_report_types['tr'], start_date=first_month, end_date=month_end(first_month)
+        )
         assert attempt.processing_success
         holes = find_holes_in_data()
         assert len(holes) == 2
         assert holes[0].attempt_count == 0
         # add a failed attempt for the same month
-        attempt = cr1.fetch_report(report, start_date=first_month, end_date=month_end(first_month))
+        attempt = cr1.fetch_report(
+            counter_report_types['tr'], start_date=first_month, end_date=month_end(first_month)
+        )
         attempt.processing_success = False
         attempt.save()
         holes = find_holes_in_data()
@@ -89,7 +111,9 @@ class TestHoleFillingMachinery:
         assert holes[0].attempt_count == 0
         # add a failed attempt for the next month
         next_month = month_start(first_month + timedelta(days=45))
-        attempt = cr1.fetch_report(report, start_date=next_month, end_date=month_end(next_month))
+        attempt = cr1.fetch_report(
+            counter_report_types['tr'], start_date=next_month, end_date=month_end(next_month)
+        )
         attempt.processing_success = False
         attempt.save()
         holes = find_holes_in_data()
@@ -97,7 +121,7 @@ class TestHoleFillingMachinery:
         assert holes[0].attempt_count == 1
 
     def test_retry_holes_with_new_credentials(
-        self, settings, organizations, report_type_nd, monkeypatch
+        self, settings, organizations, counter_report_types, monkeypatch
     ):
         """
         Tests the `find_holes_in_data` function.
@@ -109,7 +133,7 @@ class TestHoleFillingMachinery:
         data = [
             {
                 'platform': 'XXX',
-                'organization': organizations[1].internal_id,
+                'organization': organizations["standalone"].internal_id,
                 'customer_id': 'BBB',
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
@@ -122,10 +146,7 @@ class TestHoleFillingMachinery:
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         cr1.create_sushi_client()
-        report = CounterReportType.objects.create(
-            code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
-        )
-        cr1.counter_reports.add(report)
+        cr1.counter_reports.add(counter_report_types["tr"])
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
@@ -142,7 +163,7 @@ class TestHoleFillingMachinery:
         assert len(holes) == 0
 
     def test_retry_holes_with_new_credentials_task(
-        self, settings, organizations, report_type_nd, monkeypatch
+        self, settings, organizations, counter_report_types, monkeypatch
     ):
         """
         Tests the task based version of trying data holes
@@ -154,7 +175,7 @@ class TestHoleFillingMachinery:
         data = [
             {
                 'platform': 'XXX',
-                'organization': organizations[1].internal_id,
+                'organization': organizations["standalone"].internal_id,
                 'customer_id': 'BBB',
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
@@ -167,10 +188,7 @@ class TestHoleFillingMachinery:
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         cr1.create_sushi_client()
-        report = CounterReportType.objects.create(
-            code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
-        )
-        cr1.counter_reports.add(report)
+        cr1.counter_reports.add(counter_report_types['tr'])
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
@@ -188,12 +206,37 @@ class TestHoleFillingMachinery:
 
 @pytest.mark.django_db
 class TestSushiFetching:
-    def test_create_fetch_units(self, credentials, counter_report_type):
+    def test_create_fetch_units(self, organizations, platforms, counter_report_types):
+        creds = CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=platforms["standalone"],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url='http://a.b.c/',
+        )
         fus = create_fetch_units()
         assert len(fus) == 0, 'no fetchunits until credentails have some report type active'
-        credentials.counter_reports.add(counter_report_type)
+        creds.counter_reports.add(counter_report_types["tr"])
         fus = create_fetch_units()
-        assert len(fus) == 1
+        assert len(fus) == 1, 'newly added report'
+
+        # break credentials
+        creds.broken = creds.BROKEN_HTTP
+        creds.save()
+        fus = create_fetch_units()
+        assert len(fus) == 0, 'no fetch units for broken credentials'
+
+        # break report_type to credential
+        creds.broken = None
+        creds.save()
+        cr2c = CounterReportsToCredentials.objects.get(
+            credentials=creds, counter_report=counter_report_types["tr"]
+        )
+        cr2c.broken = cr2c.BROKEN_SUSHI
+        cr2c.save()
+
+        fus = create_fetch_units()
+        assert len(fus) == 0, 'no fetch units for broken report_type for credentials'
 
     def test_process_fetch_units_broken(self, fetch_unit: FetchUnit, monkeypatch):
         """
@@ -207,7 +250,7 @@ class TestSushiFetching:
             mock_download.called = (
                 mock_download.called + 1 if hasattr(mock_download, 'called') else 1
             )
-            return SushiFetchAttempt.objects.create(
+            return FetchAttemptFactory(
                 credentials=self_.credentials,
                 counter_report=self_.report_type,
                 start_date=start_date,
@@ -231,7 +274,7 @@ class TestSushiFetching:
             mock_download.called = (
                 mock_download.called + 1 if hasattr(mock_download, 'called') else 1
             )
-            return SushiFetchAttempt.objects.create(
+            return FetchAttemptFactory(
                 credentials=self_.credentials,
                 counter_report=self_.report_type,
                 start_date=start_date,
@@ -250,9 +293,10 @@ class TestSushiFetching:
         Test that `process_fetch_units` skips attempts if successful conflicting attempt is
         already present.
         """
+
         start_date = date(2020, 1, 1)
         end_date = date(2020, 1, 31)
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=fetch_unit.credentials,
             counter_report=fetch_unit.report_type,
             start_date=start_date,
@@ -276,7 +320,7 @@ class TestSushiFetching:
         """
         start_date = date(2020, 1, 1)
         end_date = date(2020, 1, 31)
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=fetch_unit.credentials,
             counter_report=fetch_unit.report_type,
             start_date=start_date,
@@ -302,7 +346,7 @@ class TestSushiFetching:
         """
         start_date = date(2020, 1, 1)
         end_date = date(2020, 1, 31)
-        sfa = SushiFetchAttempt.objects.create(
+        sfa = FetchAttemptFactory(
             credentials=fetch_unit.credentials,
             counter_report=fetch_unit.report_type,
             start_date=start_date,
@@ -318,7 +362,7 @@ class TestSushiFetching:
 
         def mock_download(self_, start, end, **kwargs):
             mock_download.called = True
-            return SushiFetchAttempt.objects.create(
+            return FetchAttemptFactory(
                 credentials=self_.credentials,
                 counter_report=self_.report_type,
                 start_date=start,
@@ -339,7 +383,7 @@ class TestFetchUnit:
         start_date = date(2020, 1, 1)
         end_date = date(2020, 1, 31)
         assert fetch_unit.find_conflicting(start_date, end_date) is None
-        fa = SushiFetchAttempt.objects.create(
+        fa = FetchAttemptFactory(
             credentials=fetch_unit.credentials,
             counter_report=fetch_unit.report_type,
             start_date=start_date,
@@ -358,7 +402,7 @@ class TestFetchUnit:
         start_date = date(2020, 1, 1)
         end_date = date(2020, 1, 31)
         assert fetch_unit.find_conflicting(start_date, end_date) is None
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=fetch_unit.credentials,
             counter_report=fetch_unit.report_type,
             start_date=start_date,
@@ -381,7 +425,7 @@ class TestFetchUnit:
         start_date = date(2020, 1, 1)
         end_date = date(2020, 1, 31)
         assert fetch_unit.find_conflicting(start_date, end_date) is None
-        fa = SushiFetchAttempt.objects.create(
+        fa = FetchAttemptFactory(
             credentials=fetch_unit.credentials,
             counter_report=fetch_unit.report_type,
             start_date=start_date,

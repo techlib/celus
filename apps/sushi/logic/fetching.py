@@ -24,6 +24,7 @@ from sushi.models import (
     SushiFetchAttempt,
     SushiCredentials,
     CounterReportType,
+    CounterReportsToCredentials,
 )
 
 logger = logging.getLogger(__name__)
@@ -191,9 +192,13 @@ def create_fetch_units() -> [FetchUnit]:
     # only downgrade to C4 if C5 was missing. However, it proved non-transparent
     # and so we decided to download all data
     fetch_units = []
-    for rt in CounterReportType.objects.filter(active=True):
-        for credentials in rt.sushicredentials_set.filter(enabled=True):
-            fetch_units.append(FetchUnit(credentials, rt))
+    for cr2c in CounterReportsToCredentials.objects.filter(
+        credentials__enabled=True,
+        credentials__broken__isnull=True,
+        counter_report__active=True,
+        broken__isnull=True,
+    ):
+        fetch_units.append(FetchUnit(cr2c.credentials, cr2c.counter_report))
     return fetch_units
 
 
