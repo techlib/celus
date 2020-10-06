@@ -118,6 +118,7 @@
         :toolbox="chartToolbox"
         :data-zoom="dataZoom"
         :mark-line="markLine"
+        :xAxis="xAxis"
       >
       </component>
       <ChartDataTable
@@ -136,7 +137,9 @@ import VeHistogram from "v-charts/lib/histogram.common";
 import VeBar from "v-charts/lib/bar.common";
 import VeLine from "v-charts/lib/line.common";
 // the following two imports are here to ensure the components at hand will be bundled
+// noinspection ES6UnusedImports
 import _dataZoom from "echarts/lib/component/dataZoom";
+// noinspection ES6UnusedImports
 import _toolBox from "echarts/lib/component/toolbox";
 // other imports
 import axios from "axios";
@@ -145,6 +148,11 @@ import "echarts/lib/component/markLine";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import { pivot } from "@/libs/pivot";
 import ChartDataTable from "./ChartDataTable";
+import { padIntegerWithZeros } from "@/libs/numbers";
+import Color from "color";
+import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
+
+const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export default {
   name: "APIChart",
@@ -253,6 +261,13 @@ export default {
       dateRangeEnd: "dateRangeEndText",
       selectedOrganization: "selectedOrganization",
     }),
+    monthNames() {
+      return months.map((item) =>
+        new Date(2020, item - 1, 1).toLocaleString(this.$i18n.locale, {
+          month: "short",
+        })
+      );
+    },
     dataURL() {
       if (!this.user) {
         return null;
@@ -301,11 +316,12 @@ export default {
     },
     chartExtend() {
       let colors = ["#ff0000", "#ff8844", "#ff4488", "#ff4444"];
-      if (this.shownPrimaryDimension === "organization") {
+      if (this.shownPrimaryDimension === "organization" || this.regroupByYear) {
         let that = this;
         return {
           series(item) {
             let organizationRowNum = that.organizationRow;
+            let regroupByYear = that.regroupByYear;
             if (organizationRowNum !== null) {
               let serIdx = 0;
               for (let ser of item) {
@@ -319,6 +335,29 @@ export default {
                 serIdx++;
               }
             }
+            // Note: the following does gradual lightening of color for year-year chart
+            //       I am preserving it in comment for possible future reference and use
+            // if (regroupByYear) {
+            //   let serIdx = 0;
+            //   const yearNum = that.dataYears.length;
+            //   for (let ser of item) {
+            //     ser.data = ser.data.map((v, index) => ({
+            //       value: v,
+            //       itemStyle: {
+            //         color: Color(
+            //           DEFAULT_VCHARTS_COLORS[
+            //             serIdx % DEFAULT_VCHARTS_COLORS.length
+            //           ]
+            //         )
+            //           .lighten(
+            //             (0.1 / yearNum) * (yearNum - (index % yearNum) - 1)
+            //           )
+            //           .hex(),
+            //       },
+            //     }));
+            //     serIdx++;
+            //   }
+            // }
             return item;
           },
         };
@@ -382,29 +421,72 @@ export default {
           count: this.$i18n.t("chart.count"),
         };
       } else {
-        if (this.rows && this.rows.length) {
-          if (this.regroupByYear) {
-            let stack = {};
-            for (let key of Object.keys(this.rows[0])) {
-              let year = key.substring(0, 4);
-              if (!(year in stack)) {
-                stack[year] = [];
-              }
-              stack[year].push(key);
-            }
-            out["stack"] = stack;
-          } else if (this.stack) {
-            out["stack"] = {
-              all: [
-                ...Object.keys(this.rows[0]).filter(
-                  (item) => item !== this.shownPrimaryDimension
-                ),
-              ],
-            };
-          }
+        if (this.stack) {
+          out["stack"] = {
+            all: [
+              ...Object.keys(this.rows[0]).filter(
+                (item) => item !== this.shownPrimaryDimension
+              ),
+            ],
+          };
         }
       }
       return out;
+    },
+    dataYears() {
+      let yearSet = new Set();
+      this.rawData.forEach((item) => yearSet.add(item.date.substring(0, 4)));
+      return [...yearSet].sort();
+    },
+    xAxis() {
+      if (this.regroupByYear) {
+        const years = this.dataYears;
+        let axis1 = [];
+        for (let month of months) {
+          for (let year of years) {
+            axis1.push(`${year}`);
+          }
+        }
+        return [
+          {
+            data: axis1,
+            axisLabel: {
+              show: false,
+            },
+          },
+          {
+            data: this.monthNames,
+            position: "top",
+            offset: -30,
+            splitLine: {
+              show: true,
+              lineStyle: {
+                color: "#cccccc",
+                width: 1,
+              },
+            },
+            splitArea: {
+              show: true,
+              areaStyle: {
+                color: ["#e0efff88", "#fffdee88"],
+              },
+            },
+          },
+          {
+            data: this.monthNames,
+            position: "bottom",
+            axisTick: {
+              show: true,
+              inside: false,
+              length: 10,
+              lineStyle: {
+                color: "#cccccc",
+              },
+            },
+          },
+        ];
+      }
+      return null;
     },
     chartToolbox() {
       let toolbox = {
@@ -440,7 +522,7 @@ export default {
       return toolbox;
     },
     dataZoom() {
-      if (this.zoom) {
+      if (this.zoom && !this.regroupByYear) {
         return [
           {
             type: "slider",
@@ -485,10 +567,11 @@ export default {
       return this.primaryDimension;
     },
     shownSecondaryDimension() {
-      if (this.regroupByYear) return "year";
+      // if (this.regroupByYear) return "year";
       return this.secondaryDimension;
     },
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
@@ -524,10 +607,10 @@ export default {
       if (this.regroupByYear) {
         this.dataRaw.forEach((dict) => {
           dict["year"] = dict["date"].substring(0, 4);
-          if (this.secondaryDimension) {
-            dict.year += ": " + dict[this.secondaryDimension];
-          }
-          dict["month"] = Number.parseInt(dict["date"].substring(5, 7), 10);
+          // if (this.secondaryDimension) {
+          //   dict.year = dict[this.secondaryDimension];
+          // }
+          dict["month"] = dict["date"].substring(5, 7) + "-" + dict.year;
         });
       }
       // secondary dimension
@@ -549,14 +632,32 @@ export default {
           out.sort((a, b) => sum(a) - sum(b));
         }
         if (this.regroupByYear && this.shownPrimaryDimension === "month") {
-          out.forEach(
-            (dict) =>
-              (dict.month = new Date(
-                2020,
-                dict.month - 1,
-                1
-              ).toLocaleString(this.$i18n.locale, { month: "short" }))
-          );
+          // we need to ensure that months for which there are no data are properly populated
+          // by empty records, because the display depends on it
+          let filled = [];
+          const keys = [...Object.keys(out[0])];
+          for (let month of months) {
+            for (let year of this.dataYears) {
+              let found = false;
+              const monthStr = `${padIntegerWithZeros(month)}-${year}`;
+              for (let rec of out) {
+                if (rec.month === monthStr) {
+                  filled.push(rec);
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) {
+                let rec = { month: monthStr };
+                keys.forEach((key) =>
+                  key !== "month" ? (rec[key] = 0) : null
+                );
+                filled.push(rec);
+              }
+            }
+          }
+          out = filled;
+          // out.sort((a, b) => a.month > b.month);
         }
         this.displayData = out;
       } else {
