@@ -9,7 +9,7 @@ target-version = ["py36"]
 
 [tool.poetry]
 name = "celus"
-version = "2.3.1"
+version = "2.4.0"
 description = "web application for harvesting and visualization of usage data of electronic information sources"
 authors = ["Beda Kosata <beda@bigdigdata.com>", "Stepan Henek <stepan@bigdigdata.com>"]
 license = "MIT"

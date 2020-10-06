@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0]
+
+### Added
+
+#### Frontend
+
+- new dashboard panel with SUSHI status chart for last two month replaces the "Interest histogram" panel
+- new menu section "Analytics" was added with the "Overlap analysis" page showing titles available from more than one
+  platform
+
+#### Backend
+
+- it is possible to mark report types as default for interest calculation. Such reports are automatically added
+  as interest reports to newly created platforms
+
+### Changes
+
+#### Frontend
+
+- platform selector in SUSHI credentials dialog is now filterable
+
+### Fixes
+
+#### Frontend
+
+- SUSHI intro wizard displayed when no SUSHI credentials are defined correctly disappears when credentials are added
+  outside of the wizard
+
+#### Backend
+
+- processing of COUNTER 4 BR3, JR1a and JR1GOA reports was fixed
+
+
 
 ## [2.3.1]
 
