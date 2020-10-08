@@ -1,4 +1,8 @@
+import json
+
+from django import forms
 from django.contrib import admin
+from django.utils.html import format_html
 from modeltranslation.admin import TranslationAdmin
 
 from . import models
@@ -10,7 +14,17 @@ class PlatformAdmin(TranslationAdmin):
     list_display = ['short_name', 'name', 'provider', 'url']
     ordering = ['short_name']
     search_fields = ['short_name', 'name', 'provider']
-    readonly_fields = ['knowledgebase']
+    readonly_fields = ['pretty_knowledgebase']
+    exclude = ['knowledgebase']
+
+    def pretty_knowledgebase(self, obj):
+        return format_html(
+            "<div style='max-height: 30em;overflow-y:scroll'><pre>{}</pre></div>",
+            json.dumps(obj.knowledgebase, indent=2),
+        )
+
+    pretty_knowledgebase.allow_tags = True
+    pretty_knowledgebase.short_description = "Knowledgebase"
 
 
 @admin.register(models.PlatformInterestReport)
