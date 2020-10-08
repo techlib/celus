@@ -42,7 +42,7 @@ cs:
                   params: { platformId: null, titleId: title.pk },
                 }"
               >
-                {{ title.name }}
+                <ShortenText :text="title.name" :length="40" />
               </router-link>
             </td>
             <td class="text-right">
@@ -67,10 +67,11 @@ import LargeSpinner from "@/components/util/LargeSpinner";
 import { formatInteger } from "@/libs/numbers";
 import axios from "axios";
 import { mapActions } from "vuex";
+import ShortenText from "@/components/ShortenText";
 
 export default {
   name: "TopTenDashboardWidget",
-  components: { LargeSpinner },
+  components: { ShortenText, LargeSpinner },
   props: {
     urlBase: { required: true, type: String },
     pubTypes: { default: () => [] },
