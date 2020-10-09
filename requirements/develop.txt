@@ -95,7 +95,7 @@ psutil==5.7.2
 psycopg2-binary==2.8.5
 ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32" or os_name != "nt" or python_version >= "3.3" and sys_platform != "win32" and (python_version >= "3.3" and sys_platform != "win32" or sys_platform != "win32")
 py==1.9.0
--e git+https://github.com/beda42/pycounter.git@fef2ab29958cfc796fb24f0d227bf22dd31915a0#egg=pycounter
+-e git+https://github.com/beda42/pycounter.git@13f12b15a5f89040d48e22f628673ecb9a301966#egg=pycounter
 pyfakefs==4.0.2
 pygments==2.6.1
 pyparsing==2.4.7
