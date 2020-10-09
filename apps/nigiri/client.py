@@ -374,7 +374,7 @@ class Sushi4Client(SushiClientBase):
     @staticmethod
     def to_pycounter_report_type(celus_report_type: str) -> str:
         """ Celus and pycounter report types may differ """
-        CONVERSIONS = {"JR1GOA": "JR1 GOA"}
+        CONVERSIONS = {"JR1GOA": "JR1GOA"}
         return CONVERSIONS.get(celus_report_type, celus_report_type)
 
     # remap of extra params into names that have special meaning for the pycounter client
