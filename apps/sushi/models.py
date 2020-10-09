@@ -580,6 +580,11 @@ class SushiCredentials(BrokenCredentialsMixin):
             http_status_code=http_status_code,
         )
 
+    def broken_report_types(self):
+        return CounterReportsToCredentials.objects.filter(
+            credentials=self, broken__isnull=False
+        ).annotate(code=F('counter_report__code'))
+
 
 def where_to_store(instance: 'SushiFetchAttempt', filename):
     root, ext = os.path.splitext(filename)

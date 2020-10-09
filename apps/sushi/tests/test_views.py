@@ -314,7 +314,6 @@ class TestSushiCredentialsViewSet:
 
     def test_unset_broken(self, credentials, clients, counter_report_types):
 
-        # unset entire credentials (both reports and mappings are unset)
         attempt_tr = FetchAttemptFactory(
             credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
         )
@@ -327,6 +326,8 @@ class TestSushiCredentialsViewSet:
         cr2c_tr.broken = BS.BROKEN_SUSHI
         cr2c_tr.first_broken_attempt = attempt_tr
         cr2c_tr.save()
+
+        # unset entire credentials (both reports and mappings are unset)
         url = reverse('sushi-credentials-unset-broken', args=(credentials["standalone_tr"].pk,))
         resp = clients["master"].post(url, None)
         assert resp.status_code == 200
@@ -391,6 +392,26 @@ class TestSushiCredentialsViewSet:
         url = reverse('sushi-credentials-unset-broken', args=(0,))
         resp = clients["master"].post(url, {"counter_reports": ["JR1"]})
         assert resp.status_code == 404
+
+    def test_credential_details(self, basic1, credentials, clients, counter_report_types):
+        attempt_br1 = FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+        )
+        cr2c_br1 = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"
+        )
+        cr2c_br1.broken = BS.BROKEN_SUSHI
+        cr2c_br1.first_broken_attempt = attempt_br1
+        cr2c_br1.save()
+
+        url = reverse('sushi-credentials-detail', args=(credentials["standalone_br1_jr1"].pk,))
+        resp = clients["master"].get(url)
+        assert resp.status_code == 200
+
+        data = resp.json()
+        assert data['broken'] is None
+        assert data['broken_report_types'] == ['BR1']
 
 
 @pytest.mark.django_db()

@@ -1,6 +1,5 @@
 import json
 from datetime import timedelta
-import typing
 
 import dateparser
 import reversion

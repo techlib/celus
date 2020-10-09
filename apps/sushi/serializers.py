@@ -56,6 +56,10 @@ class SushiCredentialsSerializer(ModelSerializer):
     counter_reports = PrimaryKeyRelatedField(
         queryset=CounterReportType.objects.all(), many=True, read_only=False
     )
+
+    broken_report_types = SlugRelatedField(
+        many=True, slug_field='code', required=False, read_only=True,
+    )
     counter_reports_long = CounterReportTypeSerializer(
         many=True, source='counter_reports', read_only=True
     )
@@ -96,6 +100,8 @@ class SushiCredentialsSerializer(ModelSerializer):
             'can_lock',
             'locked',
             'outside_consortium',
+            'broken',
+            'broken_report_types',
         )
 
     def get_locked(self, obj: SushiCredentials):
