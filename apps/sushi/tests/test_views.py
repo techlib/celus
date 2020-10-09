@@ -628,6 +628,63 @@ class TestSushiFetchAttemptView:
             attempt = SushiFetchAttempt.objects.last()
             assert attempt.triggered_by == users["master"]
 
+    def test_create_broken(self, basic1, clients, counter_report_types, credentials):
+        # broken credentials
+        attempt_tr = FetchAttemptFactory(
+            credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
+        )
+        credentials["standalone_tr"].broken = BS.BROKEN_HTTP
+        credentials["standalone_tr"].first_broken_attempt = attempt_tr
+        credentials["standalone_tr"].save()
+
+        resp = clients["master"].post(
+            reverse('sushi-fetch-attempt-list'),
+            {
+                'credentials': credentials["standalone_tr"].pk,
+                'start_date': '2020-01-01',
+                'end_date': '2020-01-31',
+                'counter_report': counter_report_types["tr"].pk,
+            },
+        )
+        assert resp.status_code == 400
+
+        # broken report type
+        attempt_br1 = FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+        )
+        cr2c_br1 = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"
+        )
+        cr2c_br1.broken = BS.BROKEN_SUSHI
+        cr2c_br1.first_broken_attempt = attempt_br1
+        cr2c_br1.save()
+
+        resp = clients["master"].post(
+            reverse('sushi-fetch-attempt-list'),
+            {
+                'credentials': credentials["standalone_br1_jr1"].pk,
+                'start_date': '2020-01-01',
+                'end_date': '2020-01-31',
+                'counter_report': counter_report_types["br1"].pk,
+            },
+        )
+        assert resp.status_code == 400
+
+        # other report type still working
+        with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
+            resp = clients["master"].post(
+                reverse('sushi-fetch-attempt-list'),
+                {
+                    'credentials': credentials["standalone_br1_jr1"].pk,
+                    'start_date': '2020-01-01',
+                    'end_date': '2020-01-31',
+                    'counter_report': counter_report_types["jr1"].pk,
+                },
+            )
+            assert task_mock.apply_async.call_count == 1
+        assert resp.status_code == 201
+
     @pytest.mark.parametrize(
         ['user', 'can_create', 'return_code'],
         [

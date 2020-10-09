@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -298,6 +298,16 @@ class SushiFetchAttemptViewSet(ModelViewSet):
     def perform_create(self, serializer: SushiFetchAttemptSerializer):
         # check that the user is allowed to create attempts for this organization
         credentials = serializer.validated_data['credentials']
+        counter_report = serializer.validated_data['counter_report']
+        # check whether the credentials are not broken
+        if (
+            credentials.broken
+            or credentials.counterreportstocredentials_set.filter(
+                broken__isnull=False, counter_report=counter_report
+            ).exists()
+        ):
+            raise ValidationError('Credentials seems to be broken.')
+
         org_relation = self.request.user.organization_relationship(credentials.organization_id)
         if org_relation < REL_ORG_ADMIN:
             raise PermissionDenied(
