@@ -25,23 +25,26 @@ from core.permissions import (
     AdminAccessForOrganization,
 )
 from organizations.logic.queries import organization_filter_from_org_id
-from sushi.models import CounterReportType, SushiFetchAttempt
-from sushi.serializers import (
+
+from .filters import CleanupFilterBackend
+from .models import (
+    SushiCredentials,
+    CounterReportType,
+    SushiFetchAttempt,
+    CounterReportsToCredentials,
+)
+from .serializers import (
     CounterReportTypeSerializer,
+    SushiCredentialsSerializer,
+    SushiCleanupCountSerializer,
     SushiFetchAttemptSerializer,
     SushiFetchAttemptSimpleSerializer,
+    UnsetBrokenSerializer,
 )
-from sushi.tasks import (
+from .tasks import (
     run_sushi_fetch_attempt_task,
     fetch_new_sushi_data_task,
     fetch_new_sushi_data_for_credentials_task,
-)
-from .filters import CleanupFilterBackend
-from .models import SushiCredentials
-from .serializers import (
-    SushiCredentialsSerializer,
-    SushiCleanupSerializer,
-    SushiCleanupCountSerializer,
 )
 
 
@@ -117,6 +120,34 @@ class SushiCredentialsViewSet(ModelViewSet):
                 'locked': credentials.lock_level >= UL_CONS_STAFF,
             }
         )
+
+    @action(
+        detail=True,
+        methods=['post'],
+        url_path="unset-broken",
+        serializer_class=UnsetBrokenSerializer,
+    )
+    def unset_broken(self, request, pk):
+        """
+        Custom action to unset that SushiCredentials are broken
+        """
+        credentials = get_object_or_404(SushiCredentials, pk=pk)
+
+        request_serializer = UnsetBrokenSerializer(instance=credentials, data=dict(request.data))
+        request_serializer.is_valid(raise_exception=True)
+
+        if 'counter_reports' in request_serializer.validated_data:
+            for cr2c in CounterReportsToCredentials.objects.filter(
+                credentials=credentials,
+                counter_report__in=request_serializer.validated_data['counter_reports'],
+            ):
+                cr2c.unset_broken()
+        else:
+            credentials.unset_broken()
+            for cr2c in CounterReportsToCredentials.objects.filter(credentials=credentials):
+                cr2c.unset_broken()
+
+        return Response()
 
     @action(detail=False, methods=['get'])
     def count(self, request):

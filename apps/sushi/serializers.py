@@ -10,7 +10,12 @@ from rest_framework.fields import (
     IntegerField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import ModelSerializer, Serializer, ValidationError
+from rest_framework.serializers import (
+    ModelSerializer,
+    Serializer,
+    ValidationError,
+    SlugRelatedField,
+)
 
 
 from core.logic.dates import month_end
@@ -26,6 +31,16 @@ from .models import (
     NO_DATA_READY_PERIOD,
     CounterReportsToCredentials,
 )
+
+
+class UnsetBrokenSerializer(Serializer):
+    counter_reports = SlugRelatedField(
+        queryset=CounterReportType.objects, many=True, slug_field='code', required=False
+    )
+
+    class Meta:
+        model = SushiCredentials
+        fields = ('counter_reports',)
 
 
 class CounterReportTypeSerializer(ModelSerializer):

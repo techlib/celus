@@ -13,9 +13,15 @@ from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, Identity
 from logs.models import ImportBatch
 from organizations.models import UserOrganization
 from organizations.tests.conftest import identity_by_user_type
-from sushi.models import SushiCredentials, SushiFetchAttempt
+from sushi.models import (
+    SushiCredentials,
+    SushiFetchAttempt,
+    BrokenCredentialsMixin as BS,
+    CounterReportsToCredentials,
+)
 
 from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.scenarios.basic import (
     basic1,
     clients,
@@ -26,13 +32,14 @@ from test_fixtures.scenarios.basic import (
     users,
     counter_report_types,
     report_types,
+    credentials,
 )
 
 
 @pytest.mark.django_db()
 class TestSushiCredentialsViewSet:
     def test_lock_action(self, basic1, organizations, platforms, clients):
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["master"],
             platform=platforms["master"],
             counter_version=5,
@@ -45,7 +52,7 @@ class TestSushiCredentialsViewSet:
         assert credentials.lock_level == UL_CONS_STAFF
 
     def test_lock_action_no_permission(self, basic1, organizations, platforms, clients):
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["empty"],
             platform=platforms["empty"],
             counter_version=5,
@@ -83,7 +90,8 @@ class TestSushiCredentialsViewSet:
         assert sc.title == title
 
     def test_edit_action(self, basic1, organizations, platforms, clients):
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
+            title='',
             organization=organizations["root"],
             platform=platforms["root"],
             counter_version=5,
@@ -105,7 +113,7 @@ class TestSushiCredentialsViewSet:
         The API for updating sushi credentials is accessed by a normal user and thus permission
         denied is returned
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["branch"],
             platform=platforms["branch"],
             counter_version=5,
@@ -122,7 +130,7 @@ class TestSushiCredentialsViewSet:
         The object is locked with consortium staff level lock, so the organization admin cannot
         edit it
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["root"],
             platform=platforms["root"],
             counter_version=5,
@@ -140,7 +148,7 @@ class TestSushiCredentialsViewSet:
         """
         Test changing report types using the API update action works
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["root"],
             platform=platforms["root"],
             counter_version=5,
@@ -164,7 +172,7 @@ class TestSushiCredentialsViewSet:
         The object is locked with consortium staff level lock, so the organization admin cannot
         remove it
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["root"],
             platform=platforms["root"],
             counter_version=5,
@@ -182,7 +190,7 @@ class TestSushiCredentialsViewSet:
         The object is locked with consortium staff level lock, so the organization admin cannot
         remove it
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["root"],
             platform=platforms["root"],
             counter_version=5,
@@ -209,7 +217,7 @@ class TestSushiCredentialsViewSet:
         """
         Test the month-overview custom action
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["empty"],
             platform=platforms["empty"],
             counter_version=5,
@@ -218,14 +226,14 @@ class TestSushiCredentialsViewSet:
         )
         new_rt1 = counter_report_type_named('new1')
         credentials.counter_reports.add(new_rt1)
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
         )
-        attempt2 = SushiFetchAttempt.objects.create(
+        attempt2 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -257,7 +265,7 @@ class TestSushiCredentialsViewSet:
         Test the month-overview custom action in presence of sushi fetch attempts that span
         more than one month
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["empty"],
             platform=platforms["empty"],
             counter_version=5,
@@ -266,14 +274,14 @@ class TestSushiCredentialsViewSet:
         )
         new_rt1 = counter_report_type_named('new1')
         credentials.counter_reports.add(new_rt1)
-        attempt1 = SushiFetchAttempt.objects.create(
+        attempt1 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-03-31',
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
         )
-        attempt2 = SushiFetchAttempt.objects.create(
+        attempt2 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -304,6 +312,86 @@ class TestSushiCredentialsViewSet:
         assert resp.status_code == 200
         assert len(resp.json()) == 0, 'there should be no record for this period'
 
+    def test_unset_broken(self, credentials, clients, counter_report_types):
+
+        # unset entire credentials (both reports and mappings are unset)
+        attempt_tr = FetchAttemptFactory(
+            credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
+        )
+        credentials["standalone_tr"].broken = BS.BROKEN_HTTP
+        credentials["standalone_tr"].first_broken_attempt = attempt_tr
+        credentials["standalone_tr"].save()
+        cr2c_tr = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_tr"], counter_report__code="TR"
+        )
+        cr2c_tr.broken = BS.BROKEN_SUSHI
+        cr2c_tr.first_broken_attempt = attempt_tr
+        cr2c_tr.save()
+        url = reverse('sushi-credentials-unset-broken', args=(credentials["standalone_tr"].pk,))
+        resp = clients["master"].post(url, None)
+        assert resp.status_code == 200
+        credentials["standalone_tr"].refresh_from_db()
+        assert credentials["standalone_tr"].broken is None
+        assert credentials["standalone_tr"].first_broken_attempt is None
+        cr2c_tr.refresh_from_db()
+        assert cr2c_tr.broken is None
+        assert cr2c_tr.first_broken_attempt is None
+
+        # Broken credentials mapping (only selected mappings are unset
+        attempt_jr1 = FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+        )
+        attempt_br1 = FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+        )
+        credentials["standalone_br1_jr1"].broken = BS.BROKEN_SUSHI
+        credentials["standalone_br1_jr1"].first_broken_attempt = attempt_br1
+        credentials["standalone_br1_jr1"].save()
+        cr2c_br1 = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"
+        )
+        cr2c_br1.broken = BS.BROKEN_SUSHI
+        cr2c_br1.first_broken_attempt = attempt_br1
+        cr2c_br1.save()
+        cr2c_jr1 = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_br1_jr1"], counter_report__code="JR1"
+        )
+        cr2c_jr1.broken = BS.BROKEN_SUSHI
+        cr2c_jr1.first_broken_attempt = attempt_jr1
+        cr2c_jr1.save()
+        url = reverse(
+            'sushi-credentials-unset-broken', args=(credentials["standalone_br1_jr1"].pk,)
+        )
+        resp = clients["master"].post(url, {"counter_reports": ["JR1"]})
+        assert resp.status_code == 200
+        credentials["standalone_br1_jr1"].refresh_from_db()
+        assert credentials["standalone_br1_jr1"].broken == BS.BROKEN_SUSHI
+        assert credentials["standalone_br1_jr1"].first_broken_attempt == attempt_br1
+        cr2c_br1.refresh_from_db()
+        assert cr2c_br1.broken == BS.BROKEN_SUSHI
+        assert cr2c_br1.first_broken_attempt == attempt_br1
+        cr2c_jr1.refresh_from_db()
+        assert cr2c_jr1.broken is None
+        assert cr2c_jr1.first_broken_attempt is None
+
+        # Wrong type
+        resp = clients["master"].post(url, {"counter_reports": ["WRONG_TYPE"]})
+        assert resp.status_code == 400
+
+        # Non not assigned report type
+        resp = clients["master"].post(url, {"counter_reports": ["BR1", "DB1"]})
+        assert resp.status_code == 200
+        cr2c_br1.refresh_from_db()
+        assert cr2c_br1.broken is None
+        assert cr2c_br1.first_broken_attempt is None
+
+        # Credentials not found
+        url = reverse('sushi-credentials-unset-broken', args=(0,))
+        resp = clients["master"].post(url, {"counter_reports": ["JR1"]})
+        assert resp.status_code == 404
+
 
 @pytest.mark.django_db()
 class TestSushiFetchAttemptStatsView:
@@ -314,7 +402,7 @@ class TestSushiFetchAttemptStatsView:
         Test that the api view works when the requested data does not contain dates and all
         attempts are requested
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["empty"],
             platform=platforms["empty"],
             counter_version=5,
@@ -322,7 +410,7 @@ class TestSushiFetchAttemptStatsView:
             url='http://a.b.c/',
         )
         new_rt1 = counter_report_type_named('new1')
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -344,7 +432,7 @@ class TestSushiFetchAttemptStatsView:
         Test that the api view works when the requested data does not contain dates and all
         attempts are requested
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["empty"],
             platform=platforms["empty"],
             counter_version=5,
@@ -352,7 +440,7 @@ class TestSushiFetchAttemptStatsView:
             url='http://a.b.c/',
         )
         new_rt1 = counter_report_type_named('new1')
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -378,7 +466,7 @@ class TestSushiFetchAttemptStatsView:
         Test that the api view works when the requested data does not contain dates and all
         attempts are requested
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["empty"],
             platform=platforms["empty"],
             counter_version=5,
@@ -386,7 +474,7 @@ class TestSushiFetchAttemptStatsView:
             url='http://a.b.c/',
         )
         new_rt1 = counter_report_type_named('new1')
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -399,7 +487,7 @@ class TestSushiFetchAttemptStatsView:
         credentials.customer_id = 'new_id'
         credentials.save()
         # create a second attempt, this one with current version
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -428,7 +516,7 @@ class TestSushiFetchAttemptStatsView:
         Test that the api view works when the requested data does not contain dates and all
         attempts are requested
         """
-        credentials = SushiCredentials.objects.create(
+        credentials = CredentialsFactory(
             organization=organizations["empty"],
             platform=platforms["empty"],
             counter_version=5,
@@ -437,7 +525,7 @@ class TestSushiFetchAttemptStatsView:
         )
         new_rt1 = counter_report_type_named('new1')
         # one success
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -446,7 +534,7 @@ class TestSushiFetchAttemptStatsView:
             contains_data=True,
         )
         # one failure
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -461,7 +549,7 @@ class TestSushiFetchAttemptStatsView:
         credentials.save()
         # create a second attempt, this one with current version
         # one new failure
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -683,7 +771,7 @@ class TestSushiFetchAttemptView:
             counter_version=5,
             url='http://a.b.c/',
         )
-        SushiFetchAttempt.objects.create(
+        FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -769,7 +857,7 @@ class TestSushiFetchAttemptView:
         )
 
         # Failed chain
-        a1 = SushiFetchAttempt.objects.create(
+        a1 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -784,7 +872,7 @@ class TestSushiFetchAttemptView:
         a1.queue_id = a1.pk
         a1.save()
 
-        a2 = SushiFetchAttempt.objects.create(
+        a2 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -799,7 +887,7 @@ class TestSushiFetchAttemptView:
             queue_previous=a1,
         )
 
-        a3 = SushiFetchAttempt.objects.create(
+        a3 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -815,7 +903,7 @@ class TestSushiFetchAttemptView:
         )
 
         # ongoing chain
-        b1 = SushiFetchAttempt.objects.create(
+        b1 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -830,7 +918,7 @@ class TestSushiFetchAttemptView:
         b1.queue_id = b1.pk
         b1.save()
 
-        b2 = SushiFetchAttempt.objects.create(
+        b2 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -846,7 +934,7 @@ class TestSushiFetchAttemptView:
         )
 
         # non chain
-        c1 = SushiFetchAttempt.objects.create(
+        c1 = FetchAttemptFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',

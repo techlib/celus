@@ -91,7 +91,7 @@ class BrokenCredentialsMixin(models.Model):
         'SushiFetchAttempt',
         null=True,
         on_delete=models.SET_NULL,
-        help_text="Indicator whether the report type is broken",
+        help_text="Which was the first broken attempt",
     )
     broken = models.CharField(
         max_length=20,
