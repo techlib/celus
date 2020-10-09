@@ -1,46 +1,45 @@
-amqp==2.6.0
+amqp==2.6.1
 billiard==3.6.3.0
-celery==4.4.6
+celery==4.4.7
 certifi==2020.6.20
 chardet==3.0.4
 click==7.1.2
 dateparser==0.7.6
 defusedxml==0.6.0
-django==2.2.14
+django==2.2.16
 django-allauth==0.41.0
 django-anymail==7.1.0
 -e git+https://github.com/beda42/django-cachalot.git@154ec37662e3ed20687d7710660856c3e5e95116#egg=django-cachalot
 django-celery-results==1.2.1
 django-error-report==0.2.0
 django-js-asset==1.2.2
-django-modeltranslation==0.15.1
+django-modeltranslation==0.15.2
 django-mptt==0.11.0
 django-prometheus==2.0.0
 django-redis==4.11.0
 django-rest-auth==0.9.5
-django-reversion==3.0.7
-djangorestframework==3.11.0
+django-reversion==3.0.8
+djangorestframework==3.11.2
 drf-nested-routers==0.91
 et-xmlfile==1.0.1
-future==0.18.2
 idna==2.10
-ijson==3.1.post0
-importlib-metadata==1.7.0; python_version < "3.8"
+ijson==3.1.2
+importlib-metadata==2.0.0; python_version < "3.8"
 isbnlib==3.10.3
 jdcal==1.4.1
 kombu==4.6.11
 lxml==4.5.2
 lz4==3.0.2
-numpy==1.19.0
+numpy==1.19.2
 oauthlib==3.1.0
-openpyxl==3.0.4
-pandas==1.0.5
-pendulum==2.1.1
+openpyxl==3.0.5
+pandas==1.1.3
+pendulum==2.1.2
 pillow==7.2.0
 prometheus-client==0.8.0
 psutil==5.7.2
-psycopg2-binary==2.8.5
--e git+https://github.com/beda42/pycounter.git@13f12b15a5f89040d48e22f628673ecb9a301966#egg=pycounter
+psycopg2-binary==2.8.6
+-e git+https://github.com/beda42/pycounter.git@1b85369dc88b6dde1f3546a707a315f5ac0f32cd#egg=pycounter
 python-dateutil==2.8.1
 python-decouple==3.3
 python-magic==0.4.18
@@ -48,14 +47,14 @@ python3-openid==3.2.0
 pytz==2020.1
 pytzdata==2020.1
 redis==3.5.3
-regex==2020.7.14
+regex==2020.9.27
 requests==2.24.0
 requests-oauthlib==1.3.0
 rest-pandas==1.1.0
-sentry-sdk==0.16.1
+sentry-sdk==0.16.5
 six==1.15.0
-sqlparse==0.3.1
+sqlparse==0.4.1
 tzlocal==2.1
-urllib3==1.25.9
+urllib3==1.25.10
 vine==1.3.0
-zipp==3.1.0; python_version < "3.8"
+zipp==3.3.0; python_version < "3.8"
