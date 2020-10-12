@@ -300,8 +300,8 @@ export default {
     usedReportTypes() {
       let usedRTIds = new Set();
       for (let cred of this.sushiCredentialsWithAttempts) {
-        for (let rt of cred.counter_reports) {
-          usedRTIds.add(rt);
+        for (let rt of cred.counter_reports_long) {
+          usedRTIds.add(rt.id);
         }
       }
       return this.reportTypes.filter((item) => usedRTIds.has(item.id));

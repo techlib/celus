@@ -12,6 +12,9 @@ en:
   test_checked: Harvest selected
   test_checked_tooltip: Opens a dialog for one-off harvesting of data for all selected SUSHI credentials.
   test_dialog: Manual SUSHI harvesting
+  is_broken:
+    These credentials have been marked as broken because of harvesting failures.
+    Automatic harvesting was postponed until the credentials are manually fixed.
 cs:
   add_new: Přidat nové SUSHI
   is_locked: Tyto přístupové údaje jsou uzamčené.
@@ -22,6 +25,9 @@ cs:
   test_checked: Stáhni označené
   test_checked_tooltip: Otevře dialog pro jednorázové stažení dat pro všechny vybrané přístupové údaje SUSHI.
   test_dialog: Manuální stahování SUSHI
+  is_broken:
+    Tyto přihlašovací údaje byly označeny jako nefunkční, kvůli neúspěchům při stahování. Automatické stahování
+    bylo pozastaveno do doby než budou údaje ručně opraveny.
 </i18n>
 
 <template>
@@ -53,6 +59,12 @@ cs:
             </v-col>
             <v-spacer></v-spacer>
 
+            <v-col cols="auto">
+              <v-switch
+                v-model="brokenOnly"
+                :label="$t('labels.broken_only')"
+              ></v-switch>
+            </v-col>
             <v-col cols="3" :md="2" :xl="1">
               <v-select
                 :items="[
@@ -64,7 +76,7 @@ cs:
                 :label="$t('labels.counter_version')"
               ></v-select>
             </v-col>
-            <v-col cols="auto">
+            <v-col cols="auto" class="ml-auto">
               <v-text-field
                 v-model="searchDebounced"
                 append-icon="fa-search"
@@ -93,21 +105,16 @@ cs:
         ref="credentialsTable"
       >
         <template v-slot:item.counter_reports="{ item }">
-          <v-tooltip
-            bottom
+          <v-chip
             v-for="(report, index) in item.counter_reports_long"
             :key="index"
+            class="mr-1 px-2"
+            :color="report.broken ? '#888888' : 'teal'"
+            outlined
+            label
           >
-            <template v-slot:activator="{ on }">
-              <v-chip class="mr-1" color="teal" outlined label v-on="on">
-                {{ report.code }}
-              </v-chip>
-            </template>
-            <span>
-              <span v-if="report.name">{{ report.name }}</span>
-              <span v-else>{{ report.code }}</span>
-            </span>
-          </v-tooltip>
+            <SushiReportIndicator :report="report" />
+          </v-chip>
         </template>
         <template v-slot:item.actions="{ item }">
           <v-btn
@@ -137,7 +144,21 @@ cs:
           </v-btn>
         </template>
         <template v-slot:item.enabled="{ item }">
-          <CheckMark :value="item.enabled" />
+          <CheckMark
+            :value="item.enabled"
+            true-color="error"
+            false-color="error"
+            v-if="item.broken"
+          />
+          <CheckMark :value="item.enabled" v-else />
+          <v-tooltip bottom v-if="item.broken" max-width="400">
+            <template v-slot:activator="{ on }">
+              <v-btn text icon v-on="on"
+                ><v-icon small color="error">fa-exclamation-triangle</v-icon>
+              </v-btn>
+            </template>
+            {{ $t("is_broken") }}
+          </v-tooltip>
         </template>
         <template v-slot:item.outside_consortium="{ item }">
           <CheckMark :value="item.outside_consortium" />
@@ -183,6 +204,7 @@ cs:
         v-model="showEditDialog"
         @update-credentials="updateCredentials"
         @deleted="deleteCredentials"
+        @set-dirty="reloadSelectedCredentials"
         key="edit"
       ></SushiCredentialsEditDialog>
     </v-dialog>
@@ -191,6 +213,7 @@ cs:
       <SushiCredentialsEditDialog
         v-model="showCreateDialog"
         @update-credentials="updateCredentials"
+        @set-dirty="reloadSelectedCredentials"
         :existing-credentials="sushiCredentialsList"
         key="create"
         :fixed-platform="platformId"
@@ -238,17 +261,19 @@ cs:
 
 <script>
 import axios from "axios";
-import { mapActions, mapGetters, mapState } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 import debounce from "lodash/debounce";
 import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
 import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import CheckMark from "@/components/util/CheckMark";
 import SushiCredentialsTestWidget from "@/components/sushi/SushiCredentialsTestWidget";
+import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 
 export default {
   name: "SushiCredentialsManagementWidget",
 
   components: {
+    SushiReportIndicator,
     SushiCredentialsTestWidget,
     SushiCredentialsEditDialog,
     SushiAttemptListWidget,
@@ -270,6 +295,10 @@ export default {
       type: Number,
       required: false,
     },
+    showBrokenOnly: {
+      default: false,
+      type: Boolean,
+    },
   },
 
   data() {
@@ -286,6 +315,7 @@ export default {
       counterVersion: null,
       checkedRows: [],
       showTestDialog: false,
+      brokenOnly: this.showBrokenOnly,
     };
   },
   computed: {
@@ -359,6 +389,9 @@ export default {
     },
     visibleSushiCredentials() {
       return this.sushiCredentialsList
+        .filter((item) =>
+          this.brokenOnly ? item.broken || item.has_broken_reports : true
+        )
         .filter(
           (item) =>
             this.counterVersion === null ||
@@ -402,6 +435,9 @@ export default {
       try {
         let response = await axios.get(this.dataUrl);
         this.sushiCredentialsList = response.data;
+        this.sushiCredentialsList.forEach((item) =>
+          this.preprocessCredentials(item)
+        );
       } catch (error) {
         this.showSnackbar({
           content: "Error loading credentials list: " + error,
@@ -410,7 +446,23 @@ export default {
         this.loading = false;
       }
     },
+    async reloadSelectedCredentials() {
+      if (this.selectedCredentials) {
+        try {
+          let response = await axios.get(
+            `/api/sushi-credentials/${this.selectedCredentials.pk}/`
+          );
+          this.updateCredentials(response.data);
+        } catch (error) {
+          this.showSnackbar({
+            content: "Could not reload credentials: " + error,
+            color: "error",
+          });
+        }
+      }
+    },
     updateCredentials(credentials) {
+      this.preprocessCredentials(credentials);
       // the new credentials as returned by the edit dialog
       // we put them at the right place in the list of credentials
       let found = false;
@@ -434,6 +486,12 @@ export default {
       this.sushiCredentialsList = this.sushiCredentialsList.filter(
         (item) => item.pk !== id
       );
+    },
+    preprocessCredentials(item) {
+      item["has_broken_reports"] = !!item.counter_reports_long.filter(
+        (report) => report.broken
+      ).length;
+      item["isSelectable"] = !item.broken;
     },
     async toggleLock(credentials) {
       let newLockLevel = 400;
@@ -462,7 +520,6 @@ export default {
       this.showCreateDialog = true;
     },
     testChecked() {
-      console.log("testing", this.checkedCredentials);
       this.showTestDialog = true;
     },
     stopTestDialog() {
@@ -470,6 +527,7 @@ export default {
         this.$refs.testWidget.clean();
       }
       this.showTestDialog = false;
+      this.loadSushiCredentialsList();
     },
   },
 

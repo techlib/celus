@@ -91,6 +91,7 @@ en:
     chart: Chart
     report_view: Report
     position: Position
+    broken_only: Problematic only
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -137,7 +138,8 @@ cs:
     dashboard: Přehled
     sushi_monthly_overview: Stav SUSHI
     analytics: Analytické nástroje
-    overlap_analysis: Analýza překryvu
+    overlap_analysis_titles: Tituly na více platformách
+    overlap_analysis_platforms: Překryv platforem
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -212,6 +214,7 @@ cs:
     chart: Graf
     report_view: Report
     position: Pozice
+    broken_only: Jen problematické
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

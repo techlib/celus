@@ -157,11 +157,9 @@ export default {
 
   computed: {
     totalReportCount() {
-      let total = 0;
-      for (let cred of this.credentials) {
-        total += cred.counter_reports.length;
-      }
-      return total;
+      return this.credentials
+        .map((cred) => cred.counter_reports_long.length)
+        .reduce((a, b) => a + b);
     },
   },
 
@@ -171,8 +169,8 @@ export default {
     }),
     async createAttempts() {
       for (let cred of this.credentials) {
-        for (let rt of cred.counter_reports) {
-          await this.createAttempt(cred, rt);
+        for (let rt of cred.counter_reports_long) {
+          await this.createAttempt(cred, rt.id);
         }
         this.started = true;
       }

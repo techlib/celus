@@ -16,6 +16,11 @@ en:
       success: Data were successfully downloaded and ingested into Celus.
       missing: Data retrieval was not yet performed.
       empty_data: Data was successfully harvested, but no usage was recorded at the time in question.
+    broken: Broken
+    broken_report_type_desc:
+      This report was marked as broken for these credentials. This is usually result of errors
+      during harvesting of data which indicate credentials are correct, but report is not supported.
+      Automatic harvesting is disabled for such reports.
 
 cs:
   sushi:
@@ -35,3 +40,8 @@ cs:
       success: Data byla úspěšně stažená a uložená v systému.
       missing: Stažení dat zatím nebylo provedeno.
       empty_data: Data byla úspěšně stažena, ale pro dané obdobi nebylo zaznamenáno žádné využití.
+    broken: Nefunkční
+    broken_report_type_desc:
+      Tento report byl označen jako nefunkční. Většinou je to způsobeno chybami při stahování, které indikují, že
+      přihlašovací údaje jsou funkční, ale report není podporovaný.
+      Automatické stahování je pro tyto reporty vypnuté.

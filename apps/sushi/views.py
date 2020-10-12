@@ -144,8 +144,8 @@ class SushiCredentialsViewSet(ModelViewSet):
             credentials.unset_broken()
             for cr2c in CounterReportsToCredentials.objects.filter(credentials=credentials):
                 cr2c.unset_broken()
-
-        return Response()
+        credentials.refresh_from_db()
+        return Response(SushiCredentialsSerializer(credentials).data)
 
     @action(detail=False, methods=['get'])
     def count(self, request):

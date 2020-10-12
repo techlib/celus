@@ -22,6 +22,13 @@ en:
   optional_args_tooltip: The following section is used for attributes which are only used by some providers. If the credentials given to you by the provider contain fields that do not correspond to any of the fields above, you can fill them in here.
   really_delete: Do you really want to delete these credentials? (Downloaded data will be preserved)
   confirm_delete: Confirm delete
+  broken: These credentials were marked as broken. Harvesting will be disabled until the credentials are changed.
+  broken_unbreak_manually:
+    If you think that the credentials should not be marked as broken anymore (for example because there
+    were connection issues that have been resolved in the meantime), you can manually mark them as fixed.
+  mark_fixed: Mark fixed
+  mark_fixed_success: Credentials were marked as fixed
+  broken_reports_warning: Some active reports have been marked as broken by Celus - they are probably not supported by this platform. Fix it by deactivating them.
 
 cs:
   add_custom_param: Přidat vlastní parametr
@@ -29,6 +36,9 @@ cs:
   test_dialog: Test přihlašovacích údajů SUSHI
   all_versions_used: Pro tuto platformu a organizaci jsou již všechny verze použity - pro změnu editujte příslušný záznam
   save_and_test: Uložit a otestovat stahování
+  save_and_test_tooltip:
+    Uloží tuto verzi přihlašovacích údajů a zobrazí dialog pro stahování dat za vybrané období. Tato funkce
+    je velmi užitečná pro <strong>ověření správnosti přihlašovacích údajů a/nebo manuální stahování dat</strong>.
   outside: Nákup mimo konzorcium
   outside_tooltip: Označuje přístupové údaje k nákupům mimo konzorcium.
   only_managers_can_change: Jen správci mohou měnit tuto hodnotu.
@@ -42,6 +52,13 @@ cs:
   optional_args_tooltip: Následující sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
   really_delete: Chcete opravdu smazat tyto přihlašovací údaje? (Stažená data budou zachována)
   confirm_delete: Potvrďte smazání
+  broken: Tyto přihlašovací údaje byly označené jako nefunkční. Stahování bude vypnuto dokud nebudou údaje upraveny.
+  broken_unbreak_manually:
+    Pokud se domníváte, že by údaje neměly být označeny jako nefunkční (např. protože byl vyřešen problém s konektivitou
+    který mohl způsobit jejich označení), můžete je ručně označit jako opravené.
+  mark_fixed: Označit jako opravené
+  mark_fixed_success: Přihlašovací údaje byly označeny jako opravené
+  broken_reports_warning: Některé aktivní reporty Celus označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací.
 </i18n>
 
 <template>
@@ -50,6 +67,16 @@ cs:
       $t("title.edit_sushi_credentials")
     }}</v-card-title>
     <v-card-text>
+      <v-alert v-if="credentials && credentials.broken" type="error" outlined>
+        <p class="bold">{{ $t("broken") }}</p>
+        <p>{{ $t("broken_unbreak_manually") }}</p>
+        <div>
+          <v-btn color="error" outlined @click="markFixed()">{{
+            $t("mark_fixed")
+          }}</v-btn>
+        </div>
+      </v-alert>
+
       <v-container fluid>
         <v-row>
           <v-col cols="12" :md="4">
@@ -256,17 +283,31 @@ cs:
           <v-col cols="12" class="pt-4 pb-0">
             <h4>Active report types</h4>
           </v-col>
-          <v-col cols="12">
+          <v-col cols="auto">
             <v-btn-toggle multiple v-model="selectedReportTypes">
-              <v-tooltip v-for="report in reportTypes" bottom :key="report.id">
-                <template #activator="{ on }">
-                  <v-btn :value="report.id" outlined color="primary" v-on="on">
-                    {{ report.code }}
-                  </v-btn>
-                </template>
-                {{ report.name || report.code }}
-              </v-tooltip>
+              <v-btn
+                v-for="report in reportTypes"
+                bottom
+                :key="report.id"
+                :value="report.id"
+                outlined
+                :color="isBroken(report) ? '#4db685' : 'primary'"
+              >
+                <SushiReportIndicator
+                  :report="report"
+                  :broken-fn="
+                    selectedReportTypes.indexOf(report.id) >= 0
+                      ? isBroken
+                      : false
+                  "
+                />
+              </v-btn>
             </v-btn-toggle>
+          </v-col>
+          <v-col v-if="anyBrokenReports">
+            <v-alert type="warning" outlined>
+              {{ $t("broken_reports_warning") }}
+            </v-alert>
           </v-col>
         </v-row>
       </v-container>
@@ -377,10 +418,12 @@ cs:
 import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
 import SushiCredentialsTestWidget from "./SushiCredentialsTestWidget";
+import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 
 export default {
   name: "SushiCredentialsEditDialog",
   components: {
+    SushiReportIndicator,
     SushiCredentialsTestWidget,
   },
   props: {
@@ -533,7 +576,16 @@ export default {
       }
       return null;
     },
+    anyBrokenReports() {
+      if (this.credentials) {
+        return !!this.selectedReportTypes.filter((item) =>
+          this.isBroken({ id: item })
+        ).length;
+      }
+      return false;
+    },
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
@@ -578,7 +630,9 @@ export default {
         this.httpPassword = credentials.http_password;
         this.apiKey = credentials.api_key;
         this.extraParams = extraParams;
-        this.selectedReportTypes = [...credentials.counter_reports];
+        this.selectedReportTypes = [
+          ...credentials.counter_reports_long.map((item) => item.id),
+        ];
         this.enabled = credentials.enabled;
         this.outsideConsortium = credentials.outside_consortium;
       }
@@ -702,6 +756,25 @@ export default {
         }
       }
     },
+    async markFixed() {
+      if (this.credentials) {
+        try {
+          let response = await axios.post(
+            `/api/sushi-credentials/${this.credentials.pk}/unset-broken/`
+          );
+          this.showSnackbar({
+            content: this.$t("mark_fixed_success"),
+            color: "success",
+          });
+          this.$emit("update-credentials", response.data);
+        } catch (error) {
+          this.showSnackbar({
+            content: "Error marking SUSHI credentials as fixed: " + error,
+            color: "error",
+          });
+        }
+      }
+    },
     processErrors(errors) {
       this.errors = errors;
     },
@@ -725,6 +798,17 @@ export default {
         this.$refs.testWidget.clean();
       }
       this.showTestDialog = false;
+      this.$emit("set-dirty");
+    },
+    isBroken(report) {
+      if (this.credentials) {
+        for (let rt of this.credentials.counter_reports_long) {
+          if (rt.id === report.id) {
+            return !!rt.broken;
+          }
+        }
+      }
+      return false;
     },
     init() {
       this.savedCredentials = null;
