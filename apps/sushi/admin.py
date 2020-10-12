@@ -21,13 +21,14 @@ class SushiCredentialsAdmin(VersionAdmin):
         'requestor_id',
         'enabled',
     ]
-    list_filter = ['enabled', 'counter_version', 'organization', 'platform']
+    list_filter = ['enabled', 'broken', 'counter_version', 'organization', 'platform']
     search_fields = [
         'organization__name',
         'platform__name',
         'pk',
         'url',
     ]
+    readonly_fields = ['first_broken_attempt']
 
     @classmethod
     def organization_internal_id(cls, obj: models.SushiCredentials):
@@ -184,3 +185,11 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         return obj.import_batch is not None
 
     has_import_batch.boolean = True
+
+
+@admin.register(models.CounterReportsToCredentials)
+class CounterReportsToCredentialsAdmin(admin.ModelAdmin):
+
+    list_display = ['credentials', 'counter_report', 'broken']
+    list_filter = ['broken', 'counter_report', 'credentials__platform', 'credentials__organization']
+    readonly_fields = ['first_broken_attempt', 'credentials', 'counter_report']

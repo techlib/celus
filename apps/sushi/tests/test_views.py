@@ -411,7 +411,11 @@ class TestSushiCredentialsViewSet:
 
         data = resp.json()
         assert data['broken'] is None
-        assert data['broken_report_types'] == ['BR1']
+        for rec in data['counter_reports_long']:
+            if rec['code'] != 'BR1':
+                assert rec['broken'] is None
+            else:
+                assert rec['broken'] == BS.BROKEN_SUSHI
 
 
 @pytest.mark.django_db()

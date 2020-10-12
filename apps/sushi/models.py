@@ -954,3 +954,4 @@ class CounterReportsToCredentials(BrokenCredentialsMixin):
 
     class Meta:
         unique_together = (('credentials', 'counter_report'),)
+        verbose_name_plural = 'Counter reports to credentials'

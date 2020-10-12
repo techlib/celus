@@ -8,6 +8,7 @@ from rest_framework.fields import (
     IntegerField,
     SerializerMethodField,
     IntegerField,
+    ReadOnlyField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import (
@@ -49,19 +50,28 @@ class CounterReportTypeSerializer(ModelSerializer):
         fields = ('id', 'code', 'name', 'counter_version')
 
 
+class CounterReportsToCredentialsSerializer(ModelSerializer):
+
+    id = ReadOnlyField(source='counter_report_id')
+    code = ReadOnlyField(source='counter_report.code')
+    name = ReadOnlyField(source='counter_report.name')
+    counter_version = ReadOnlyField(source='counter_report.counter_version')
+
+    class Meta:
+        model = CounterReportsToCredentials
+        fields = ('id', 'code', 'name', 'counter_version', 'broken')
+
+
 class SushiCredentialsSerializer(ModelSerializer):
 
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
     counter_reports = PrimaryKeyRelatedField(
-        queryset=CounterReportType.objects.all(), many=True, read_only=False
+        queryset=CounterReportType.objects.all(), many=True, read_only=False, write_only=True,
     )
 
-    broken_report_types = SlugRelatedField(
-        many=True, slug_field='code', required=False, read_only=True,
-    )
-    counter_reports_long = CounterReportTypeSerializer(
-        many=True, source='counter_reports', read_only=True
+    counter_reports_long = CounterReportsToCredentialsSerializer(
+        many=True, source='counterreportstocredentials_set', read_only=True
     )
     organization_id = PrimaryKeyRelatedField(
         source='organization', write_only=True, queryset=Organization.objects.all()
@@ -101,7 +111,6 @@ class SushiCredentialsSerializer(ModelSerializer):
             'locked',
             'outside_consortium',
             'broken',
-            'broken_report_types',
         )
 
     def get_locked(self, obj: SushiCredentials):

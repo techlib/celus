@@ -54,11 +54,7 @@ class SushiCredentialsViewSet(ModelViewSet):
 
     def get_queryset(self):
         user_organizations = self.request.user.accessible_organizations()
-        qs = (
-            SushiCredentials.objects.filter(organization__in=user_organizations)
-            .select_related('organization', 'platform')
-            .prefetch_related('counter_reports')
-        )
+        qs = SushiCredentials.objects.filter(organization__in=user_organizations)
         organization_id = self.request.query_params.get('organization')
         if organization_id:
             qs = qs.filter(**organization_filter_from_org_id(organization_id, self.request.user))
@@ -66,6 +62,9 @@ class SushiCredentialsViewSet(ModelViewSet):
         platform_id = self.request.query_params.get('platform')
         if platform_id:
             qs = qs.filter(platform_id=platform_id)
+        qs = qs.prefetch_related('counterreportstocredentials_set__counter_report').select_related(
+            'organization', 'platform'
+        )
         # we add info about locked status for current user
         org_to_level = {}
         for sc in qs:  # type: SushiCredentials
