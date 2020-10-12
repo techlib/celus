@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'sushi.apps.SushiConfig',
     'charts.apps.ChartsConfig',
     'annotations.apps.AnnotationsConfig',
+    'scheduler.apps.SchedulerConfig',
     'cost.apps.CostConfig',
     'activity.apps.ActivityConfig',
     'deployment.apps.DeploymentConfig',
@@ -299,6 +300,10 @@ CELERY_BEAT_SCHEDULE = {
     'remove_old_cached_queries_task': {
         'task': 'recache.tasks.remove_old_cached_queries_task',
         'schedule': crontab(minute=17, hour=2),  # every day at 2:17
+    },
+    'scheduler_plan_fetching': {
+        'task': 'scheduler.tasks.plan_schedulers_triggering',
+        'schedule': schedule(run_every=timedelta(minutes=1)),
     },
 }
 

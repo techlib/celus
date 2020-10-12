@@ -78,6 +78,15 @@ NO_DATA_RETRY_PERIOD = timedelta(days=45)  # cca month and half
 NO_DATA_READY_PERIOD = timedelta(days=7)
 
 
+class CreatedUpdatedMixin(models.Model):
+    created = models.DateTimeField(default=now)
+    last_updated = models.DateTimeField(auto_now=True)
+    last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        abstract = True
+
+
 class BrokenCredentialsMixin(models.Model):
     BROKEN_HTTP = 'http'
     BROKEN_SUSHI = 'sushi'
@@ -155,7 +164,7 @@ class SushiCredentialsQuerySet(models.QuerySet):
         ).filter(has_access_log=True)
 
 
-class SushiCredentials(BrokenCredentialsMixin):
+class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
     objects = SushiCredentialsQuerySet.as_manager()
 
@@ -193,9 +202,6 @@ class SushiCredentials(BrokenCredentialsMixin):
         'necessary for proper cost calculation',
     )
     # meta info
-    created = models.DateTimeField(default=now)
-    last_updated = models.DateTimeField(auto_now=True)
-    last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     lock_level = models.PositiveSmallIntegerField(
         choices=LOCK_LEVEL_CHOICES,
         default=UL_ORG_ADMIN,

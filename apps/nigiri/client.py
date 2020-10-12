@@ -158,7 +158,7 @@ class SushiClientBase:
             )
         elif error_code in (
             ErrorCode.SERVICE_BUSY,
-            ErrorCode.SERVICE_BUSY2,
+            ErrorCode.PREPARING_DATA,
             ErrorCode.TOO_MANY_REQUESTS,
         ):
             # some forms of 'try it later' errors

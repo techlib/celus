@@ -4,7 +4,7 @@ from enum import Enum
 class ErrorCode(Enum):
     SERVICE_NOT_AVAILABLE = 1000
     SERVICE_BUSY = 1010
-    SERVICE_BUSY2 = 1011  # non standard
+    PREPARING_DATA = 1011
     TOO_MANY_REQUESTS = 1020
     INSUFFICIENT_DATA = 1030
     NOT_AUTHORIZED = 2000
