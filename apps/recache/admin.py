@@ -18,6 +18,7 @@ class CachedQueryAdmin(admin.ModelAdmin):
         'last_queried',
         'hit_count',
         'avg_query_duration_str',
+        'last_query_duration_str',
         'queryset_pickle_size',
     ]
 
@@ -36,6 +37,11 @@ class CachedQueryAdmin(admin.ModelAdmin):
         return obj.avg_query_duration or '-'
 
     avg_query_duration_str.short_description = 'Avg duration'
+
+    def last_query_duration_str(self, obj: CachedQuery):
+        return obj.query_durations[-1] if obj.query_durations else '-'
+
+    last_query_duration_str.short_description = 'Last duration'
 
     def renew(self, request, queryset):
         for obj in queryset:
