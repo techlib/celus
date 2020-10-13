@@ -1,24 +1,32 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  select_dates_text:
+  select_dates_text: Select date range for manual SUSHI harvesting.
+  select_dates_text_test:
     Select date range for SUSHI credentials test. A shorter period usually takes
     less time to process, so using only one month is advisable.
-  credentials_count: Number of credentials to test
-  report_count: Number of reports to test
+  credentials_count: Number of credentials to harvest
+  credentials_count_test: Number of credentials to test
+  report_count: Number of reports to harvest
+  report_count_test: Number of reports to test
 
 cs:
-  select_dates_text:
+  select_dates_text: Vyberte rozsah měsíců pro manuální stahování SUSHI.
+  select_dates_text_test:
     Vyberte rozsah měsíců pro test přihlašovacích údajů. Kratší období je většinou
     rychleji zpracováno, takže je vhodné vybrat jen jeden měsíc.
-  credentials_count: Počet přihlašovacích údajů k otestování
-  report_count: Počet reportů k otestování
+  credentials_count: Počet přihlašovacích údajů ke stažení
+  credentials_count_test: Počet přihlašovacích údajů k otestování
+  report_count: Počet reportů ke stažení
+  report_count_text: Počet reportů k otestování
 </i18n>
 
 <template>
   <v-container class="pb-0">
     <v-row>
-      <v-col>{{ $t("select_dates_text") }}</v-col>
+      <v-col
+        v-text="test ? $t('select_dates_text_test') : $t('select_dates_text')"
+      ></v-col>
     </v-row>
     <v-row align="center">
       <v-col cols="6" md="4">
@@ -78,7 +86,9 @@ cs:
       <v-col cols="6" md="4" lg="3" v-if="!started">
         <v-btn
           @click="createAttempts()"
-          v-text="$t('actions.start_test')"
+          v-text="
+            test ? $t('actions.start_test') : $t('actions.start_harvesting')
+          "
           color="primary"
           class=""
           width="100%"
@@ -88,7 +98,9 @@ cs:
 
     <v-row v-if="!started">
       <v-col>
-        <strong>{{ $t("credentials_count") }}</strong
+        <strong
+          v-text="test ? $t('credentials_count_test') : $t('credentials_count')"
+        ></strong
         >: {{ credentials.length }}<br />
         <strong>{{ $t("report_count") }}</strong
         >: {{ totalReportCount }}
@@ -129,6 +141,7 @@ export default {
     retryInterval: { default: 1000, type: Number },
     showOrganization: { default: false, type: Boolean },
     showPlatform: { default: false, type: Boolean },
+    test: { default: false, type: Boolean }, // is this dialog used for testing? Influences wording.
   },
 
   data() {

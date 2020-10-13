@@ -11,7 +11,7 @@ en:
   can_lock: You may lock/unlock these credentials - click to do so.
   test_checked: Harvest selected
   test_checked_tooltip: Opens a dialog for one-off harvesting of data for all selected SUSHI credentials.
-  test_dialog: Test SUSHI credentials
+  test_dialog: Manual SUSHI harvesting
 cs:
   add_new: Přidat nové SUSHI
   is_locked: Tyto přístupové údaje jsou uzamčené.
@@ -21,7 +21,7 @@ cs:
   can_lock: Kliknutím můžete tyto údaje uzamknout/odemknout.
   test_checked: Stáhni označené
   test_checked_tooltip: Otevře dialog pro jednorázové stažení dat pro všechny vybrané přístupové údaje SUSHI.
-  test_dialog: Test přihlašovacích údajů SUSHI
+  test_dialog: Manuální stahování SUSHI
 </i18n>
 
 <template>

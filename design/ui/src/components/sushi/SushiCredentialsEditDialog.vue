@@ -360,6 +360,7 @@ cs:
             v-if="showTestDialog"
             :credentials="[credentials]"
             ref="testWidget"
+            test
           >
           </SushiCredentialsTestWidget>
         </v-card-text>

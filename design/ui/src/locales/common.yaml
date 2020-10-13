@@ -108,6 +108,7 @@ en:
     cancel: Cancel
     show_attempts: Downloads
     start_test: Start test
+    start_harvesting: Start harvesting
     show_raw_data: Show raw data
     show_chart: Show charts
     delete: Delete
@@ -228,6 +229,7 @@ cs:
     cancel: Zrušit
     show_attempts: Stažení
     start_test: Spustit test
+    start_harvesting: Spustit stahování
     show_raw_data: Zobrazit data
     show_chart: Zobrazit grafy
     delete: Smazat
