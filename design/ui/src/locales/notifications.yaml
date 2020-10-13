@@ -2,8 +2,17 @@ en:
   notifications:
     no_interest_platforms_present: There are platforms without interest defined
     no_interest_platforms_with_data_present: There are platforms with data but without interest defined
+    broken_credentials_present:
+      "Some SUSHI credentials have been marked as broken by Celus. These will not be
+      automatically harvested. Please review and fix them. <br><b>Note</b>: This warning is related to all organizations
+      you have access to and does not take currently selected organization into account."
 
 cs:
   notifications:
     no_interest_platforms_present: Některé platformy nemají definovaný zájem
     no_interest_platforms_with_data_present: Některé platformy nemají definovaný zájem, přestože pro ně existují data
+    broken_credentials_present:
+      "Celus označil některé přihlašovací údaje SUSHI jako nefunkční a nebudou pro ně
+      automaticky stahována data. Prosím zkontrolujte a opravte je.
+      <br><b>Pozor</b>: Toto upozornění se týká všech organizací, ke kterým máte přistup a nebere v potaz aktuálně
+      vybranou organizaci."

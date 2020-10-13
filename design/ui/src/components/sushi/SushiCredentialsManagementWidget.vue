@@ -429,6 +429,7 @@ export default {
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
+      loadSushiCredentialsCount: "loadSushiCredentialsCount",
     }),
     async loadSushiCredentialsList() {
       this.loading = true;
@@ -528,6 +529,7 @@ export default {
       }
       this.showTestDialog = false;
       this.loadSushiCredentialsList();
+      this.loadSushiCredentialsCount();
     },
   },
 
@@ -535,11 +537,13 @@ export default {
     showEditDialog(value) {
       if (!value) {
         this.selectedCredentials = null;
+        this.loadSushiCredentialsCount();
       }
     },
     showCreateDialog(value) {
       if (!value) {
         this.selectedCredentials = null;
+        this.loadSushiCredentialsCount();
       }
     },
     dataUrl() {

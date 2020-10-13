@@ -5,6 +5,8 @@ export default {
     noInterestPlatformsCount: 0,
     noInterestPlatformsWithDataCount: 0,
     sushiCredentialsCount: 0,
+    sushiCredentialsBrokenCount: 0,
+    sushiCredentialsBrokenReportCount: 0,
   },
 
   getters: {
@@ -20,6 +22,15 @@ export default {
         ret["maintenance"] = {
           tooltip: "no_interest_platforms_present",
           level: "info",
+        };
+      }
+      if (
+        state.sushiCredentialsBrokenCount > 0 ||
+        state.sushiCredentialsBrokenReportCount > 0
+      ) {
+        ret["sushi-credentials-list"] = {
+          tooltip: "broken_credentials_present",
+          level: "warning",
         };
       }
       return ret;
@@ -64,8 +75,10 @@ export default {
     setNoInterestPlatformsWithDataCount(state, { count }) {
       state.noInterestPlatformsWithDataCount = count;
     },
-    setSushiCredentialsCount(state, { count }) {
+    setSushiCredentialsCount(state, { count, broken, broken_reports }) {
       state.sushiCredentialsCount = count;
+      state.sushiCredentialsBrokenCount = broken;
+      state.sushiCredentialsBrokenReportCount = broken_reports;
     },
   },
 };

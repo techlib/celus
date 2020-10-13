@@ -417,6 +417,27 @@ class TestSushiCredentialsViewSet:
             else:
                 assert rec['broken'] == BS.BROKEN_SUSHI
 
+    def test_count_api(self, basic1, credentials, clients, counter_report_types):
+        """
+        Test that the /count/ special api endpoint works
+        """
+        attempt_br1 = FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+        )
+        cr2c_br1 = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"
+        )
+        cr2c_br1.broken = BS.BROKEN_SUSHI
+        cr2c_br1.first_broken_attempt = attempt_br1
+        cr2c_br1.save()
+        credentials['standalone_tr'].broken = BS.BROKEN_HTTP
+        credentials['standalone_tr'].save()
+
+        resp = clients["master"].get(reverse('sushi-credentials-count'))
+        assert resp.status_code == 200
+        assert resp.json() == {'count': 2, 'broken': 1, 'broken_reports': 1}
+
 
 @pytest.mark.django_db()
 class TestSushiFetchAttemptStatsView:

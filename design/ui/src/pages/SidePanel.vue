@@ -66,7 +66,11 @@
         <v-list-item-content>
           <v-list-item-title>
             {{ item.title }}
-            <v-tooltip bottom v-if="item.linkTo in notifications">
+            <v-tooltip
+              bottom
+              v-if="item.linkTo in notifications"
+              max-width="400"
+            >
               <template v-slot:activator="{ on }">
                 <v-icon
                   v-on="on"
@@ -83,7 +87,7 @@
                 </v-icon>
               </template>
               <span
-                v-text="
+                v-html="
                   $t('notifications.' + notifications[item.linkTo].tooltip)
                 "
               ></span>

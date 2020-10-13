@@ -153,8 +153,14 @@ class SushiCredentialsViewSet(ModelViewSet):
         Just simple count of SushiCredentials
         """
         user_organizations = self.request.user.accessible_organizations()
-        qs = SushiCredentials.objects.filter(organization__in=user_organizations)
-        return Response({'count': qs.count(),})
+        count = SushiCredentials.objects.filter(organization__in=user_organizations).count()
+        broken = SushiCredentials.objects.filter(
+            organization__in=user_organizations, broken__isnull=False
+        ).count()
+        broken_reports = CounterReportsToCredentials.objects.filter(
+            credentials__organization__in=user_organizations, broken__isnull=False
+        ).count()
+        return Response({'count': count, 'broken': broken, 'broken_reports': broken_reports})
 
     @action(detail=False, methods=['get'], url_name='month-overview', url_path='month-overview')
     def month_overview(self, request):
