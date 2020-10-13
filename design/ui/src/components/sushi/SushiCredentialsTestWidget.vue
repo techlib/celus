@@ -9,6 +9,10 @@ en:
   credentials_count_test: Number of credentials to test
   report_count: Number of reports to harvest
   report_count_test: Number of reports to test
+  broken_report_count: Number of broken reports (not harvested)
+  broken_reports_tooltip:
+    These reports have been marked as broken by Celus and will not be harvested. Switch them off
+    by editing corresponding credentials.
 
 cs:
   select_dates_text: Vyberte rozsah měsíců pro manuální stahování SUSHI.
@@ -19,6 +23,10 @@ cs:
   credentials_count_test: Počet přihlašovacích údajů k otestování
   report_count: Počet reportů ke stažení
   report_count_text: Počet reportů k otestování
+  broken_report_count: Počet nefunkčních reportů (nebudou stahovány)
+  broken_reports_tooltip:
+    Celus tyto reporty označil za nefunkční a nebudou staženy. Vypněte je editací
+    příslušných přihlašovacích údajů.
 </i18n>
 
 <template>
@@ -92,6 +100,7 @@ cs:
           color="primary"
           class=""
           width="100%"
+          :disabled="!totalReportCount"
         ></v-btn>
       </v-col>
     </v-row>
@@ -103,7 +112,19 @@ cs:
         ></strong
         >: {{ credentials.length }}<br />
         <strong>{{ $t("report_count") }}</strong
-        >: {{ totalReportCount }}
+        >:
+        <span :class="totalReportCount == 0 ? 'error--text' : ''">{{
+          totalReportCount
+        }}</span>
+        <br />
+        <strong>{{ $t("broken_report_count") }}</strong
+        >: {{ brokenReportCount }}
+        <v-tooltip v-if="brokenReportCount" bottom max-width="400">
+          <template #activator="{ on }">
+            <v-icon v-on="on" color="warning" small>fa-info-circle</v-icon>
+          </template>
+          {{ $t("broken_reports_tooltip") }}
+        </v-tooltip>
       </v-col>
     </v-row>
 
@@ -158,7 +179,18 @@ export default {
   computed: {
     totalReportCount() {
       return this.credentials
-        .map((cred) => cred.counter_reports_long.length)
+        .map(
+          (cred) =>
+            cred.counter_reports_long.filter((item) => !item.broken).length
+        )
+        .reduce((a, b) => a + b);
+    },
+    brokenReportCount() {
+      return this.credentials
+        .map(
+          (cred) =>
+            cred.counter_reports_long.filter((item) => item.broken).length
+        )
         .reduce((a, b) => a + b);
     },
   },
@@ -170,7 +202,9 @@ export default {
     async createAttempts() {
       for (let cred of this.credentials) {
         for (let rt of cred.counter_reports_long) {
-          await this.createAttempt(cred, rt.id);
+          if (!rt.broken) {
+            await this.createAttempt(cred, rt.id);
+          }
         }
         this.started = true;
       }
