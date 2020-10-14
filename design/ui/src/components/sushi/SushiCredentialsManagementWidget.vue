@@ -205,6 +205,7 @@ cs:
         @update-credentials="updateCredentials"
         @deleted="deleteCredentials"
         @set-dirty="reloadSelectedCredentials"
+        :existing-credentials="sushiCredentialsList"
         key="edit"
       ></SushiCredentialsEditDialog>
     </v-dialog>

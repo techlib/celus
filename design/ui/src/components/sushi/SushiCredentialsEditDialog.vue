@@ -557,6 +557,7 @@ export default {
         return this.existingCredentials.filter(
           (cred) =>
             cred.organization.pk === this.organization.pk &&
+            this.platform &&
             cred.platform.pk === this.platform.pk &&
             cred.counter_version === this.counterVersion &&
             (!this.credentials || cred.pk !== this.credentials.pk)
@@ -685,7 +686,18 @@ export default {
           try {
             let result = await axios.get(this.platformsBaseUrl);
             this.platforms = result.data;
-            this.platform = this.platforms[0];
+            if (!this.platform) {
+              this.platform = this.platforms[0];
+            } else {
+              const machingPlatforms = this.platforms.filter(
+                (item) => item.pk === this.platform.pk
+              );
+              if (machingPlatforms) {
+                this.platform = machingPlatforms[0];
+              } else {
+                this.platform = this.platforms[0];
+              }
+            }
           } catch (error) {
             this.showSnackbar({ content: "Error loading platforms: " + error });
           } finally {
@@ -813,7 +825,7 @@ export default {
     init() {
       this.savedCredentials = null;
       this.credentialsPropToData();
-      if (this.credentials == null) {
+      if (!this.credentials) {
         this.loadOrganizations();
         this.loadPlatforms();
       }
@@ -826,8 +838,10 @@ export default {
   },
 
   watch: {
-    credentialsObject() {
-      this.init();
+    credentialsObject(value) {
+      if (value) {
+        this.init();
+      }
     },
     value(value) {
       if (value === true) this.init();
