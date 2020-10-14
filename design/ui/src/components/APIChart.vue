@@ -130,6 +130,13 @@
         :data-zoom="dataZoom"
         :mark-line="markLine"
         :xAxis="xAxis"
+        :legend="{
+          icon:
+            'path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z',
+          itemWidth: 16,
+          itemGap: 16,
+          itemHeight: 16,
+        }"
       >
       </component>
       <ChartDataTable
@@ -266,7 +273,7 @@ export default {
       user: "user",
     }),
     ...mapGetters({
-      dateRangeStart: "dateRangeStartText",
+      date: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
       selectedOrganization: "selectedOrganization",
     }),
