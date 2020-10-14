@@ -43,7 +43,7 @@ cs:
         <v-card min-height="480">
           <v-card-title
             v-text="$t('interest')"
-            class="float-left"
+            class="float-left pt-3"
           ></v-card-title>
           <v-card-text class="pt-3">
             <APIChart

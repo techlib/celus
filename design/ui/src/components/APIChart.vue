@@ -60,7 +60,7 @@
             </v-tooltip>
           </v-btn-toggle>
         </v-col>
-        <v-col v-if="allowYearAsSeries" cols="auto" class="pl-5 py-0">
+        <v-col v-if="showYearToYear" cols="auto" class="pl-5 py-0">
           <v-btn-toggle v-model="yearAsSeries" mandatory borderless>
             <v-tooltip bottom>
               <template #activator="{ on }">
@@ -76,7 +76,7 @@
                   :value="true"
                   small
                   v-on="on"
-                  :disabled="primaryDimension !== 'date'"
+                  :disabled="!showYearToYear"
                 >
                   <v-icon x-small>fa fa-layer-group</v-icon>
                 </v-btn>
@@ -85,7 +85,18 @@
             </v-tooltip>
           </v-btn-toggle>
         </v-col>
-        <v-spacer></v-spacer>
+        <v-col
+          class="pt-1 pb-1 font-weight-normal ml-4 mr-4 text-center"
+          :class="showYearToYear ? 'subtitle-parent' : ''"
+        >
+          <span
+            v-if="showYearToYear"
+            class="chart-subtitle pt-2 px-5"
+            v-text="
+              yearAsSeries ? $t('x_axis.year_months') : $t('x_axis.linear')
+            "
+          ></span>
+        </v-col>
         <v-col
           cols="auto"
           shrink
@@ -149,8 +160,6 @@ import LoaderWidget from "@/components/util/LoaderWidget";
 import { pivot } from "@/libs/pivot";
 import ChartDataTable from "./ChartDataTable";
 import { padIntegerWithZeros } from "@/libs/numbers";
-import Color from "color";
-import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
 
 const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
@@ -570,6 +579,9 @@ export default {
       // if (this.regroupByYear) return "year";
       return this.secondaryDimension;
     },
+    showYearToYear() {
+      return this.allowYearAsSeries && this.primaryDimension === "date";
+    },
   },
 
   methods: {
@@ -771,5 +783,15 @@ export default {
   div.infotext {
     font-size: 26px;
   }
+}
+
+.chart-subtitle {
+  color: #777777;
+  letter-spacing: 1.5px;
+}
+
+.subtitle-parent {
+  border-bottom: solid 1px #dddddd;
+  border-top: solid 1px #dddddd;
 }
 </style>
