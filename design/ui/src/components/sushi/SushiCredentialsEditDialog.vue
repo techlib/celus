@@ -200,53 +200,51 @@ cs:
                   $t("labels.extra_params")
                 }}</v-expansion-panel-header>
                 <v-expansion-panel-content>
-                  <v-layout row>
-                    <v-flex xs12 px-5>
-                      <v-text-field
-                        v-model="apiKey"
-                        :label="$t('labels.api_key')"
-                      >
-                      </v-text-field>
-                    </v-flex>
-                  </v-layout>
-                  <v-layout
-                    row
-                    v-for="(param, index) in extraParams"
-                    :key="index"
-                  >
-                    <v-flex xs12 sm6 px-5>
-                      <v-text-field
-                        v-model="param.key"
-                        :label="$t('labels.variable')"
-                      >
-                      </v-text-field>
-                    </v-flex>
-                    <v-flex xs12 sm6 px-5>
-                      <v-text-field
-                        v-model="param.value"
-                        :label="$t('labels.variable_value')"
-                      >
-                      </v-text-field>
-                    </v-flex>
-                  </v-layout>
-                  <v-layout>
-                    <v-flex xs12 px-2 pt-2>
-                      <v-tooltip bottom>
-                        <template #activator="{ on }">
-                          <v-btn
-                            v-on="on"
-                            @click="extraParams.push({})"
-                            outlined
-                            color="green"
-                          >
-                            <v-icon left x-small>fa-plus</v-icon>
-                            {{ $t("add_custom_param") }}
-                          </v-btn>
-                        </template>
-                        {{ $t("add_custom_param_tooltip") }}
-                      </v-tooltip>
-                    </v-flex>
-                  </v-layout>
+                  <v-container fluid>
+                    <v-row>
+                      <v-col cols="12" class="py-0">
+                        <v-text-field
+                          v-model="apiKey"
+                          :label="$t('labels.api_key')"
+                        >
+                        </v-text-field>
+                      </v-col>
+                    </v-row>
+                    <v-row v-for="(param, index) in extraParams" :key="index">
+                      <v-col cols="12" sm="6" class="py-0">
+                        <v-text-field
+                          v-model="param.key"
+                          :label="$t('labels.variable')"
+                        >
+                        </v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" class="py-0">
+                        <v-text-field
+                          v-model="param.value"
+                          :label="$t('labels.variable_value')"
+                        >
+                        </v-text-field>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col cols="12" class="py-0">
+                        <v-tooltip bottom>
+                          <template #activator="{ on }">
+                            <v-btn
+                              v-on="on"
+                              @click="extraParams.push({})"
+                              outlined
+                              color="green"
+                            >
+                              <v-icon left x-small>fa-plus</v-icon>
+                              {{ $t("add_custom_param") }}
+                            </v-btn>
+                          </template>
+                          {{ $t("add_custom_param_tooltip") }}
+                        </v-tooltip>
+                      </v-col>
+                    </v-row>
+                  </v-container>
                 </v-expansion-panel-content>
               </v-expansion-panel>
             </v-expansion-panels>

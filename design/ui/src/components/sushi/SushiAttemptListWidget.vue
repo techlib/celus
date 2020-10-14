@@ -25,7 +25,7 @@ cs:
 <template>
   <v-card>
     <v-card-title>{{ $t("sushi_fetch_attempts") }}</v-card-title>
-    <v-card-text>
+    <v-card-text class="pb-0">
       <v-container fluid>
         <v-row v-if="!attemptId">
           <v-col cols="12" md="6">
@@ -178,27 +178,28 @@ cs:
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn @click="$emit('close')">{{ $t("close") }}</v-btn>
+      <v-btn @click="$emit('close')" class="mb-3 mr-4">{{ $t("close") }}</v-btn>
     </v-card-actions>
 
     <v-dialog v-model="showBatchDialog">
       <v-card>
-        <v-card-text>
-          <AccessLogList
-            v-if="dialogType === 'data'"
-            :import-batch="selectedBatch"
-          />
-          <ImportBatchChart
-            v-else-if="dialogType === 'chart'"
-            :import-batch-id="selectedBatch"
-          />
+        <v-card-text class="pb-0">
+          <div class="pt-5">
+            <AccessLogList
+              v-if="dialogType === 'data'"
+              :import-batch="selectedBatch"
+            />
+            <ImportBatchChart
+              v-else-if="dialogType === 'chart'"
+              :import-batch-id="selectedBatch"
+            />
+          </div>
         </v-card-text>
         <v-card-actions>
-          <v-layout pb-3 pr-5 justify-end>
-            <v-btn @click="showBatchDialog = false">{{
-              $t("actions.close")
-            }}</v-btn>
-          </v-layout>
+          <v-spacer></v-spacer>
+          <v-btn @click="showBatchDialog = false" class="mb-3 mr-4">{{
+            $t("actions.close")
+          }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

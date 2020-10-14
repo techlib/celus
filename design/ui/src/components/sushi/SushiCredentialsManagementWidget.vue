@@ -25,7 +25,7 @@ cs:
 </i18n>
 
 <template>
-  <v-layout>
+  <v-container>
     <v-card>
       <v-card-title>
         <v-container fluid>
@@ -233,7 +233,7 @@ cs:
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-layout>
+  </v-container>
 </template>
 
 <script>

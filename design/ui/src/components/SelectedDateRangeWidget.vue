@@ -20,15 +20,14 @@ cs:
       <v-col cols="auto" class="py-0" data-tour="date-range">
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
-            <v-layout
+            <div
               @click="showDialog = true"
-              class="clickable"
+              class="clickable align-center d-flex"
               v-on="on"
-              align-center
             >
-              <v-layout column>
-                <v-flex>{{ rangeName }}</v-flex>
-                <v-flex class="small subdued">{{ rangeValueText }}</v-flex>
+              <v-container>
+                <v-row>{{ rangeName }}</v-row>
+                <v-row class="small subdued">{{ rangeValueText }}</v-row>
 
                 <v-dialog v-model="showDialog" max-width="520px">
                   <v-card>
@@ -45,9 +44,9 @@ cs:
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
-              </v-layout>
-              <v-flex class="pl-2"><v-icon>fa-caret-down</v-icon></v-flex>
-            </v-layout>
+              </v-container>
+              <div class="pl-2"><v-icon>fa-caret-down</v-icon></div>
+            </div>
           </template>
           <span v-text="$t('tooltip')"></span>
         </v-tooltip>
