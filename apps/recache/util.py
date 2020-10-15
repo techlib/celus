@@ -50,8 +50,9 @@ def recache_queryset(
             return cq.get_cached_queryset()
         if not cq.is_too_old:
             logger.debug('Cache slightly stale - returning cached version and sheduling renewal')
+            qs = cq.get_cached_queryset()
             renew_cached_query_task.apply_async(args=(cq.pk,), countdown=5)
-            return cq.get_cached_queryset()
+            return qs
         # it is too old, we need to re-evaluate before returning data
         logger.debug('Stale cache - renewing cache, scheduling next renew and returning new data')
         cq.renew()
