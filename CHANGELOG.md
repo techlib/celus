@@ -4,7 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+
+## [2.5.0]
 
 ### Added
 
@@ -12,11 +13,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - "broken" credentials are reported to the user using a warning icon in the side menu
 - support for identifying and handling "broken" credentials on the SUSHI management page was added
+- subtitle was added to charts with date on X-axis to distinguish between normal and year-to-year view
+- Platform overlap table was added as an overall view of how many titles are shared amongst platforms
 
 #### Backend
 
 - specific errors during SUSHI harvesting result in credentials being marked as "broken". Such credentials are not
   automatically harvested and have to be fixed by the user.
+
+
+### Changes
+
+#### Frontend
+
+- legend icons in charts were changed to make it obvious they can be selected and unselected
+- manual harvesting dialog title and text was fixed (it referred to testing)
+
+
+### Fixes
+
+#### Frontend
+
+- SUSHI credentials edit dialog checks for credentials on the same platform with the same name even when editing
+  existing credentials
+- display of the SUSHI management page on large screens was fixed
+
+#### Backend
+
+- harvesting of COUNTER 4 JR1GOA reports was fixed
+
+
+## [2.4.1]
+
+### Changes
+
+#### Frontend
+
+- year-to-year comparison chart was reworked to reduce the number of colors and make it more
+  readable
+- title names are shortened in cards on dashboard page
 
 
 ## [2.4.0]
