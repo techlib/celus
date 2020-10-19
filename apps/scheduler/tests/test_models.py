@@ -7,6 +7,7 @@ import pytest
 
 from freezegun import freeze_time
 
+from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory, SchedulerFactory
 from test_fixtures.scenarios.basic import (
@@ -20,8 +21,9 @@ from test_fixtures.scenarios.basic import (
 )
 
 from scheduler import tasks
-from scheduler.models import FetchIntention, Scheduler, RunResponse
-from sushi.models import SushiCredentials
+from scheduler.models import FetchIntention, ProcessResponse, RunResponse, Scheduler
+from sushi.models import SushiCredentials, CounterReportsToCredentials
+from sushi.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
 
 
@@ -66,13 +68,90 @@ class TestFetchIntention:
 
         when_processed = datetime(2020, 1, 1, 0, 0, 0, tzinfo=current_tz)
         fi = FetchIntentionFactory(when_processed=when_processed, scheduler=sch)
-        fi.process()
+        assert fi.process() == ProcessResponse.ALREADY_PROCESSED
         assert when_processed == fi.when_processed
+
+    def test_process_broken(self, counter_report_types):
+        sch = SchedulerFactory()
+
+        # credentials broken
+        creds1 = CredentialsFactory()
+        creds1.set_broken(
+            FetchAttemptFactory(counter_report=counter_report_types["tr"], credentials=creds1),
+            broken_type=SushiCredentials.BROKEN_HTTP,
+        )
+        CounterReportsToCredentials.objects.create(
+            broken=None, credentials=creds1, counter_report=counter_report_types["tr"]
+        )
+        fi1 = FetchIntentionFactory(
+            credentials=creds1, scheduler=sch, counter_report=counter_report_types["tr"],
+        )
+        assert fi1.process() == ProcessResponse.BROKEN
+
+        # missing mapping
+        creds2 = CredentialsFactory(broken=None)
+        fi2 = FetchIntentionFactory(
+            credentials=creds2, scheduler=sch, counter_report=counter_report_types["tr"]
+        )
+        assert fi2.process() == ProcessResponse.BROKEN
+
+        # mapping broken
+        creds3 = CredentialsFactory(broken=SushiCredentials.BROKEN_HTTP)
+        CounterReportsToCredentials.objects.create(
+            broken=SushiCredentials.BROKEN_SUSHI,
+            credentials=creds3,
+            counter_report=counter_report_types["tr"],
+        )
+        fi3 = FetchIntentionFactory(
+            credentials=creds3, scheduler=sch, counter_report=counter_report_types["tr"]
+        )
+        assert fi3.process() == ProcessResponse.BROKEN
 
     def test_process_without_scheduler(self):
         fi = FetchIntentionFactory(when_processed=None, scheduler=None, attempt=None)
         with pytest.raises(ValueError):
             fi.process()
+
+    def test_process_with_planned_duplicities(
+        self, counter_report_types, credentials, monkeypatch,
+    ):
+        scheduler = SchedulerFactory()
+
+        def mocked_fetch_report(
+            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True,
+        ):
+            return FetchAttemptFactory(
+                error_code="",
+                credentials=self,
+                counter_report=counter_report,
+                start_date=start_date,
+                end_date=end_date,
+                contains_data=True,
+                is_processed=False,
+                download_success=True,
+                import_crashed=False,
+            )
+
+        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+        monkeypatch.setattr(import_one_sushi_attempt_task, 'delay', lambda x: None)
+
+        fi1 = FetchIntentionFactory(
+            not_before=timezone.now() - timedelta(minutes=1),
+            scheduler=scheduler,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+        )
+        fi2 = FetchIntentionFactory(
+            not_before=timezone.now() + timedelta(minutes=1),
+            scheduler=scheduler,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+        )
+        assert fi1.process() == ProcessResponse.SUCCESS
+        fi2.refresh_from_db()
+        assert fi2.attempt is not None
+        assert fi2.attempt == fi1.attempt
+        assert fi2.when_processed == fi1.when_processed
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     @pytest.mark.parametrize(
@@ -135,7 +214,7 @@ class TestFetchIntention:
             service_busy_retry=4,
             last_updated_by=users["user1"],
         )
-        fi.process()
+        assert fi.process() == ProcessResponse.SUCCESS
         assert fi.attempt.triggered_by == users["user1"]
         assert fi.when_processed == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz)
 
@@ -409,6 +488,26 @@ class TestScheduler:
                 counter_report=counter_report_types["tr"],
             )
             assert scheduler.run_next() == RunResponse.IDLE
+
+            # Test broken
+            credentials["standalone_tr"].set_broken(
+                FetchAttemptFactory(
+                    counter_report=counter_report_types["tr"],
+                    credentials=credentials["standalone_tr"],
+                ),
+                broken_type=SushiCredentials.BROKEN_HTTP,
+            )
+            FetchIntentionFactory(
+                not_before=datetime(2020, 1, 2, 0, 0, 0, tzinfo=current_tz),
+                scheduler=None,
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                priority=FetchIntention.PRIORITY_NOW,
+            )
+            assert scheduler.run_next() == RunResponse.BROKEN
+
+            # unbreak and process
+            credentials["standalone_tr"].unset_broken()
             FetchIntentionFactory(
                 not_before=datetime(2020, 1, 2, 0, 0, 0, tzinfo=current_tz),
                 scheduler=None,

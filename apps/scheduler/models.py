@@ -11,7 +11,13 @@ from django.utils import timezone
 
 from core.models import User
 from nigiri.error_codes import ErrorCode
-from sushi.models import SushiCredentials, SushiFetchAttempt, CounterReportType, CreatedUpdatedMixin
+from sushi.models import (
+    SushiCredentials,
+    SushiFetchAttempt,
+    CounterReportType,
+    CounterReportsToCredentials,
+    CreatedUpdatedMixin,
+)
 
 from core.models import User
 from logs.tasks import import_one_sushi_attempt_task
@@ -28,6 +34,13 @@ class RunResponse(Enum):
     COOLDOWN = auto()  # triggered too soon (make sense to replan in celery)
     BUSY = auto()  # is currently processing a request
     PROCESSED = auto()  # FetchIntention was processed
+    BROKEN = auto()  # FetchIntention credentials are broken
+
+
+class ProcessResponse(Enum):
+    SUCCESS = auto()  # Downloading was triggered
+    ALREADY_PROCESSED = auto()  # FetchIntention was already processed
+    BROKEN = auto()  # Credentials of FetchIntetion are marked as broken
 
 
 # TODO scheduler cleanup (to many invalid urls)
@@ -64,7 +77,6 @@ class Scheduler(models.Model):
 
     def run_next(self) -> RunResponse:
         """ This function can take a while so it should be run only in celery """
-
         # Check whether scheduler is in cooldown period
         if self.last_time:
             last_plus_cooldown = self.last_time + timedelta(seconds=self.cooldown)
@@ -102,7 +114,11 @@ class Scheduler(models.Model):
                     intention.save()
 
                     # Process the intetion
-                    intention.process()
+                    # Not than intention can't be `PROCESSED` because
+                    # it was selected with when_processed__isnull=True
+                    if intention.process() == ProcessResponse.BROKEN:
+                        # Credentails are broken
+                        return RunResponse.BROKEN
 
                     # Add cooldown period to when_ready
                     self.when_ready = timezone.now() + timedelta(seconds=self.cooldown)
@@ -182,6 +198,17 @@ class FetchIntention(CreatedUpdatedMixin):
     def is_processed(self):
         return self.when_processed is not None
 
+    @property
+    def broken_credentials(self) -> bool:
+        return (
+            self.credentials.broken
+            or not CounterReportsToCredentials.objects.filter(
+                broken__isnull=True,
+                credentials=self.credentials,
+                counter_report=self.counter_report,
+            ).exists()  # skip broken or non existing counter report to credentials mapping
+        )
+
     @classmethod
     def get_handler(
         cls, error_code_str: typing.Optional[str]
@@ -205,13 +232,19 @@ class FetchIntention(CreatedUpdatedMixin):
 
         return None
 
-    def process(self):
-        """ Should be run only from celery """
-        if self.is_processed:
-            return  # already processed
+    def process(self) -> ProcessResponse:
+        """ Should be run only from celery
 
+        :returns: None if processed, False if credentials are broken, True on success
+        """
         if not self.scheduler:
             raise ValueError("Trying to process intetion without configured scheduler")
+
+        if self.is_processed:
+            return ProcessResponse.ALREADY_PROCESSED
+
+        if self.broken_credentials:
+            return ProcessResponse.BROKEN
 
         # fetch attempt
         attempt: SushiFetchAttempt = self.credentials.fetch_report(
@@ -230,7 +263,9 @@ class FetchIntention(CreatedUpdatedMixin):
 
         # plan data import
         if attempt.can_import_data:
-            import_one_sushi_attempt_task.delay(attempt.id)
+            import_one_sushi_attempt_task.delay(attempt.pk)
+
+        return ProcessResponse.SUCCESS
 
     @staticmethod
     def next_exponential(

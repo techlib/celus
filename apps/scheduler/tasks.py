@@ -27,7 +27,9 @@ def trigger_scheduler(url: str, finish: bool = False):
         logger.info("Creating scheduler with url %s", url)
 
     res = scheduler.run_next()
-    if res == RunResponse.COOLDOWN or (res == RunResponse.PROCESSED and finish):
+    if res == RunResponse.COOLDOWN or (
+        res in (RunResponse.PROCESSED, RunResponse.BROKEN) and finish
+    ):
         # replan if in cooldown
         # or if previous was successful and finish is set
         trigger_scheduler.apply_async((url, finish), eta=scheduler.when_ready)
