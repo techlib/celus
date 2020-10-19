@@ -1,8 +1,9 @@
-import pytest
-
+from uuid import uuid4
 from datetime import datetime, timedelta, date
+
 from django.utils import timezone
-from django.db import transaction
+
+import pytest
 
 from freezegun import freeze_time
 
@@ -15,6 +16,7 @@ from test_fixtures.scenarios.basic import (
     platforms,
     organizations,
     data_sources,
+    users,
 )
 
 from scheduler import tasks
@@ -102,6 +104,7 @@ class TestFetchIntention:
         monkeypatch,
         counter_report_types,
         credentials,
+        users,
     ):
         error_code = str(error_code)
         sch = SchedulerFactory(
@@ -130,6 +133,7 @@ class TestFetchIntention:
             data_not_ready_retry=2,
             service_not_available_retry=3,
             service_busy_retry=4,
+            last_updated_by=users["user1"],
         )
         fi.process()
         assert fi.attempt.triggered_by == users["user1"]
@@ -142,6 +146,7 @@ class TestFetchIntention:
             assert (last.not_before - fi.not_before).total_seconds() == seconds_not_before
         else:
             assert last.pk == fi.pk
+        assert last.last_updated_by == users["user1"]
 
         # test scheduler's when_ready updates
         assert sch.when_ready == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz) + timedelta(
@@ -201,7 +206,65 @@ class TestFetchIntention:
             e.pk for e in FetchIntention.objects.schedulers_to_trigger()
         }
 
-    def test_plan_fetching(self, counter_report_types, credentials, monkeypatch):
+    def test_stats(self, counter_report_types, credentials):
+        uuid1 = uuid4()
+        uuid2 = uuid4()
+
+        FetchIntentionFactory(
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            start_date="2020-02-01",
+            end_date="2020-02-29",
+            when_processed=None,
+            group_id=uuid1,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            group_id=uuid1,
+        )
+
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            group_id=uuid2,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=None,
+            group_id=uuid2,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            group_id=uuid2,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+            start_date="2020-02-01",
+            end_date="2020-02-29",
+            when_processed=None,
+            group_id=uuid2,
+        )
+
+        assert FetchIntention.objects.stats() == (3, 5)
+        assert FetchIntention.objects.filter(group_id=uuid1).stats() == (1, 2)
+        assert FetchIntention.objects.filter(group_id=uuid2).stats() == (2, 3)
+
+    def test_plan_fetching(self, counter_report_types, credentials, monkeypatch, users):
         urls = set()
 
         def mocked_trigger_scheduler(
@@ -256,11 +319,18 @@ class TestFetchIntention:
         ]
         assert (
             FetchIntention.plan_fetching(
-                intentions, group_id=group_id, priority=FetchIntention.PRIORITY_NOW
+                intentions,
+                group_id=group_id,
+                priority=FetchIntention.PRIORITY_NOW,
+                user=users["user1"],
             )
             == group_id
         )
         assert FetchIntention.objects.filter(group_id=group_id).count() == 6
+        assert (
+            FetchIntention.objects.filter(group_id=group_id, last_updated_by=users["user1"]).count()
+            == 3
+        )
 
         assert urls == {credentials["standalone_tr"].url, credentials["standalone_br1_jr1"].url}
 

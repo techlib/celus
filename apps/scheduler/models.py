@@ -8,6 +8,8 @@ from enum import Enum, auto
 from django.db import models, transaction, DatabaseError
 from django.conf import settings
 from django.utils import timezone
+
+from core.models import User
 from nigiri.error_codes import ErrorCode
 from sushi.models import SushiCredentials, SushiFetchAttempt, CounterReportType, CreatedUpdatedMixin
 
@@ -120,6 +122,31 @@ class FetchIntentionQuerySet(models.QuerySet):
                 res.add(scheduler)
 
         return list(res)
+
+    def stats(self) -> typing.Tuple[int, int]:
+        """ Returns how many intentions are finished.
+        Note that it considers replaned intentions as one
+
+        :returns: unprocessed, total
+        """
+
+        qs = self.annotate(
+            unique_field=models.functions.Concat(
+                models.F('credentials__version_hash'),
+                models.F('counter_report__code'),
+                models.F('start_date'),
+                models.F('end_date'),
+            )
+        )
+
+        total = qs.aggregate(total=models.Count('unique_field', distinct=True))["total"] or 0
+        unprocessed = (
+            qs.filter(when_processed=None).aggregate(
+                total=models.Count('unique_field', distinct=True)
+            )["total"]
+            or 0
+        )
+        return unprocessed, total
 
 
 class FetchIntention(CreatedUpdatedMixin):
@@ -251,6 +278,7 @@ class FetchIntention(CreatedUpdatedMixin):
             start_date=self.start_date,
             end_date=self.end_date,
             group_id=self.group_id,
+            last_updated_by=self.last_updated_by,
             **kwargs,
         )
 
@@ -347,7 +375,7 @@ class FetchIntention(CreatedUpdatedMixin):
         priority: int = PRIORITY_NORMAL,
         user: typing.Optional[User] = None,
     ) -> UUID:
-        """ Plans fetching of FetchIntentions
+        """  Plans fetching of FetchIntentions
 
         :param intentions: unsaved FetchIntentions (for batch_create)
         :param group_id: id of fetching group, if not given random uuid will be used
@@ -363,6 +391,7 @@ class FetchIntention(CreatedUpdatedMixin):
             urls.add(intention.credentials.url)
             intention.group_id = group_id
             intention.priority = priority
+            intention.last_updated_by = user
 
         FetchIntention.objects.bulk_create(intentions)
 
