@@ -1,4 +1,3 @@
-from uuid import uuid4
 from datetime import datetime, timedelta, date
 
 from django.utils import timezone
@@ -9,7 +8,7 @@ from freezegun import freeze_time
 
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory, SchedulerFactory
+from test_fixtures.entities.scheduler import FetchIntentionFactory, HarvestFactory, SchedulerFactory
 from test_fixtures.scenarios.basic import (
     counter_report_types,
     report_types,
@@ -23,7 +22,7 @@ from test_fixtures.scenarios.basic import (
 from logs.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
 from scheduler import tasks
-from scheduler.models import FetchIntention, ProcessResponse, RunResponse, Scheduler
+from scheduler.models import FetchIntention, Harvest, ProcessResponse, RunResponse, Scheduler
 from sushi.models import SushiCredentials, CounterReportsToCredentials
 from sushi.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
@@ -213,7 +212,7 @@ class TestFetchIntention:
             data_not_ready_retry=2,
             service_not_available_retry=3,
             service_busy_retry=4,
-            last_updated_by=users["user1"],
+            harvest__last_updated_by=users["user1"],
         )
         assert fi.process() == ProcessResponse.SUCCESS
         assert fi.attempt.triggered_by == users["user1"]
@@ -226,7 +225,6 @@ class TestFetchIntention:
             assert (last.not_before - fi.not_before).total_seconds() == seconds_not_before
         else:
             assert last.pk == fi.pk
-        assert last.last_updated_by == users["user1"]
 
         # test scheduler's when_ready updates
         assert sch.when_ready == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz) + timedelta(
@@ -285,134 +283,6 @@ class TestFetchIntention:
         assert {new_sch.pk, old_sch.pk} == {
             e.pk for e in FetchIntention.objects.schedulers_to_trigger()
         }
-
-    def test_stats(self, counter_report_types, credentials):
-        uuid1 = uuid4()
-        uuid2 = uuid4()
-
-        FetchIntentionFactory(
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            start_date="2020-02-01",
-            end_date="2020-02-29",
-            when_processed=None,
-            group_id=uuid1,
-        )
-        FetchIntentionFactory(
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            start_date="2020-01-01",
-            end_date="2020-01-31",
-            when_processed=timezone.now(),
-            group_id=uuid1,
-        )
-
-        FetchIntentionFactory(
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["br1"],
-            start_date="2020-01-01",
-            end_date="2020-01-31",
-            when_processed=timezone.now(),
-            group_id=uuid2,
-        )
-        FetchIntentionFactory(
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["jr1"],
-            start_date="2020-01-01",
-            end_date="2020-01-31",
-            when_processed=None,
-            group_id=uuid2,
-        )
-        FetchIntentionFactory(
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["jr1"],
-            start_date="2020-01-01",
-            end_date="2020-01-31",
-            when_processed=timezone.now(),
-            group_id=uuid2,
-        )
-        FetchIntentionFactory(
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["br1"],
-            start_date="2020-02-01",
-            end_date="2020-02-29",
-            when_processed=None,
-            group_id=uuid2,
-        )
-
-        assert FetchIntention.objects.stats() == (3, 5)
-        assert FetchIntention.objects.filter(group_id=uuid1).stats() == (1, 2)
-        assert FetchIntention.objects.filter(group_id=uuid2).stats() == (2, 3)
-
-    def test_plan_fetching(self, counter_report_types, credentials, monkeypatch, users):
-        urls = set()
-
-        def mocked_trigger_scheduler(
-            url, fihish,
-        ):
-            urls.add(url)
-
-        monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
-
-        intentions = [
-            FetchIntention(
-                credentials=credentials["standalone_br1_jr1"],
-                counter_report=counter_report_types["jr1"],
-                start_date=date(2020, 1, 1),
-                end_date=date(2020, 1, 31),
-            ),
-            FetchIntention(
-                credentials=credentials["standalone_br1_jr1"],
-                counter_report=counter_report_types["br1"],
-                start_date=date(2020, 1, 1),
-                end_date=date(2020, 1, 31),
-            ),
-            FetchIntention(
-                credentials=credentials["standalone_tr"],
-                counter_report=counter_report_types["tr"],
-                start_date=date(2020, 1, 1),
-                end_date=date(2020, 1, 31),
-            ),
-        ]
-        group_id = FetchIntention.plan_fetching(intentions)
-        assert FetchIntention.objects.filter(group_id=group_id).count() == 3
-
-        intentions = [
-            FetchIntention(
-                credentials=credentials["standalone_br1_jr1"],
-                counter_report=counter_report_types["jr1"],
-                start_date=date(2020, 2, 1),
-                end_date=date(2020, 2, 29),
-            ),
-            FetchIntention(
-                credentials=credentials["standalone_br1_jr1"],
-                counter_report=counter_report_types["br1"],
-                start_date=date(2020, 2, 1),
-                end_date=date(2020, 2, 29),
-            ),
-            FetchIntention(
-                credentials=credentials["standalone_tr"],
-                counter_report=counter_report_types["tr"],
-                start_date=date(2020, 2, 1),
-                end_date=date(2020, 2, 29),
-            ),
-        ]
-        assert (
-            FetchIntention.plan_fetching(
-                intentions,
-                group_id=group_id,
-                priority=FetchIntention.PRIORITY_NOW,
-                user=users["user1"],
-            )
-            == group_id
-        )
-        assert FetchIntention.objects.filter(group_id=group_id).count() == 6
-        assert (
-            FetchIntention.objects.filter(group_id=group_id, last_updated_by=users["user1"]).count()
-            == 3
-        )
-
-        assert urls == {credentials["standalone_tr"].url, credentials["standalone_br1_jr1"].url}
 
 
 @pytest.mark.django_db
@@ -517,3 +387,130 @@ class TestScheduler:
                 priority=FetchIntention.PRIORITY_NOW,
             )
             assert scheduler.run_next() == RunResponse.PROCESSED
+
+
+@pytest.mark.django_db
+class TestHarvest:
+    def test_plan_harvesting(self, counter_report_types, credentials, monkeypatch, users):
+        urls = set()
+
+        def mocked_trigger_scheduler(
+            url, fihish,
+        ):
+            urls.add(url)
+
+        monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
+
+        intentions = [
+            FetchIntention(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["jr1"],
+                start_date=date(2020, 1, 1),
+                end_date=date(2020, 1, 31),
+            ),
+            FetchIntention(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["br1"],
+                start_date=date(2020, 1, 1),
+                end_date=date(2020, 1, 31),
+            ),
+            FetchIntention(
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                start_date=date(2020, 1, 1),
+                end_date=date(2020, 1, 31),
+            ),
+        ]
+        harvest = Harvest.plan_harvesting(intentions)
+        assert FetchIntention.objects.filter(harvest=harvest).count() == 3
+
+        intentions = [
+            FetchIntention(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["jr1"],
+                start_date=date(2020, 2, 1),
+                end_date=date(2020, 2, 29),
+            ),
+            FetchIntention(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["br1"],
+                start_date=date(2020, 2, 1),
+                end_date=date(2020, 2, 29),
+            ),
+            FetchIntention(
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                start_date=date(2020, 2, 1),
+                end_date=date(2020, 2, 29),
+            ),
+        ]
+        assert (
+            Harvest.plan_harvesting(
+                intentions,
+                harvest=harvest,
+                priority=FetchIntention.PRIORITY_NOW,
+                user=users["user1"],
+            )
+            == harvest
+        )
+        assert harvest.last_updated_by == users["user1"]
+        assert FetchIntention.objects.filter(harvest=harvest).count() == 6
+
+        assert urls == {credentials["standalone_tr"].url, credentials["standalone_br1_jr1"].url}
+
+    def test_stats(self, counter_report_types, credentials):
+        harvest1 = HarvestFactory()
+        harvest2 = HarvestFactory()
+
+        FetchIntentionFactory(
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            start_date="2020-02-01",
+            end_date="2020-02-29",
+            when_processed=None,
+            harvest=harvest1,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            harvest=harvest1,
+        )
+
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            harvest=harvest2,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=None,
+            harvest=harvest2,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            harvest=harvest2,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+            start_date="2020-02-01",
+            end_date="2020-02-29",
+            when_processed=None,
+            harvest=harvest2,
+        )
+
+        assert harvest1.stats() == (1, 2)
+        assert harvest2.stats() == (2, 3)

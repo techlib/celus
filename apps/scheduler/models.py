@@ -1,7 +1,5 @@
 import typing
 
-from uuid import uuid4, UUID
-
 from datetime import datetime, timedelta
 from enum import Enum, auto
 
@@ -18,8 +16,6 @@ from sushi.models import (
     CounterReportsToCredentials,
     CreatedUpdatedMixin,
 )
-
-from core.models import User
 from logs.tasks import import_one_sushi_attempt_task
 
 
@@ -143,33 +139,8 @@ class FetchIntentionQuerySet(models.QuerySet):
 
         return list(res)
 
-    def stats(self) -> typing.Tuple[int, int]:
-        """ Returns how many intentions are finished.
-        Note that it considers replaned intentions as one
 
-        :returns: unprocessed, total
-        """
-
-        qs = self.annotate(
-            unique_field=models.functions.Concat(
-                models.F('credentials__version_hash'),
-                models.F('counter_report__code'),
-                models.F('start_date'),
-                models.F('end_date'),
-            )
-        )
-
-        total = qs.aggregate(total=models.Count('unique_field', distinct=True))["total"] or 0
-        unprocessed = (
-            qs.filter(when_processed=None).aggregate(
-                total=models.Count('unique_field', distinct=True)
-            )["total"]
-            or 0
-        )
-        return unprocessed, total
-
-
-class FetchIntention(CreatedUpdatedMixin):
+class FetchIntention(models.Model):
 
     PRIORITY_NOW = 100
     PRIORITY_NORMAL = 50
@@ -190,7 +161,7 @@ class FetchIntention(CreatedUpdatedMixin):
     end_date = models.DateField()
     when_processed = models.DateTimeField(help_text="When fetch unit was processed", null=True)
     attempt = models.ForeignKey(SushiFetchAttempt, null=True, on_delete=models.SET_NULL)
-    group_id = models.UUIDField(help_text="every fetchattempt is planned as a part of a group")
+    harvest = models.ForeignKey('scheduler.Harvest', on_delete=models.CASCADE)
 
     # Retry counters
     data_not_ready_retry = models.SmallIntegerField(default=0)
@@ -260,7 +231,7 @@ class FetchIntention(CreatedUpdatedMixin):
         attempt: SushiFetchAttempt = self.credentials.fetch_report(
             self.counter_report, self.start_date, self.end_date
         )
-        attempt.triggered_by = self.last_updated_by
+        attempt.triggered_by = self.harvest.last_updated_by
         attempt.save()
 
         self.attempt = attempt
@@ -333,8 +304,7 @@ class FetchIntention(CreatedUpdatedMixin):
             counter_report=self.counter_report,
             start_date=self.start_date,
             end_date=self.end_date,
-            group_id=self.group_id,
-            last_updated_by=self.last_updated_by,
+            harvest=self.harvest,
             **kwargs,
         )
 
@@ -422,39 +392,67 @@ class FetchIntention(CreatedUpdatedMixin):
         # prepare retry
         self._create_retry(self.scheduler.when_ready)
 
+
+class Harvest(CreatedUpdatedMixin):
+    def stats(self) -> typing.Tuple[int, int]:
+        """ Returns how many intentions are finished.
+        Note that it considers replaned intentions as one
+
+        :returns: unprocessed, total
+        """
+
+        qs = self.fetchintention_set.annotate(
+            unique_field=models.functions.Concat(
+                models.F('credentials__version_hash'),
+                models.F('counter_report__code'),
+                models.F('start_date'),
+                models.F('end_date'),
+            )
+        )
+
+        total = qs.aggregate(total=models.Count('unique_field', distinct=True))["total"] or 0
+        unprocessed = (
+            qs.filter(when_processed=None).aggregate(
+                total=models.Count('unique_field', distinct=True)
+            )["total"]
+            or 0
+        )
+        return unprocessed, total
+
     @classmethod
     @transaction.atomic
-    def plan_fetching(
+    def plan_harvesting(
         cls,
         intentions: typing.List['FetchIntention'],
-        group_id: typing.Optional[UUID] = None,
-        priority: int = PRIORITY_NORMAL,
+        harvest: typing.Optional['Harvest'] = None,
+        priority: int = FetchIntention.PRIORITY_NORMAL,
         user: typing.Optional[User] = None,
-    ) -> UUID:
+    ) -> 'Harvest':
         """  Plans fetching of FetchIntentions
 
         :param intentions: unsaved FetchIntentions (for batch_create)
-        :param group_id: id of fetching group, if not given random uuid will be used
+        :param harvest: id of harvest which is used to fetch groups of fetch intentions
         :param priority: priority of planned tasks
         :param user: user who triggered the fetching (or None if planned by e.g. cron)
 
-        :returns: group_id
+        :returns: releated harvest
         """
-        group_id = group_id or uuid4()
+        harvest = harvest or Harvest.objects.create()
+        harvest.last_updated_by = user
+        harvest.save()
         urls = set()
 
         for intention in intentions:
             urls.add(intention.credentials.url)
-            intention.group_id = group_id
+            intention.harvest = harvest
             intention.priority = priority
-            intention.last_updated_by = user
 
         FetchIntention.objects.bulk_create(intentions)
 
-        if priority >= cls.PRIORITY_NOW:
+        if priority >= FetchIntention.PRIORITY_NOW:
             from .tasks import trigger_scheduler
 
             for url in urls:
                 trigger_scheduler.delay(url, True)
 
-        return group_id
+        return harvest

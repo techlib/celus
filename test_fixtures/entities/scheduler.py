@@ -4,13 +4,20 @@ import factory
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 
-from scheduler.models import Scheduler, FetchIntention
+from scheduler.models import FetchIntention, Harvest, Scheduler
 from .credentials import CredentialsFactory
 from .counter_report_types import CounterReportTypeFactory
+from .users import UserFactory
+
+
+class HarvestFactory(factory.DjangoModelFactory):
+    last_updated_by = factory.SubFactory(UserFactory)
+
+    class Meta:
+        model = Harvest
 
 
 class SchedulerFactory(factory.DjangoModelFactory):
-
     url = factory.Faker('url')
 
     class Meta:
@@ -18,6 +25,7 @@ class SchedulerFactory(factory.DjangoModelFactory):
 
 
 class FetchIntentionFactory(factory.DjangoModelFactory):
+    harvest = factory.SubFactory(HarvestFactory)
     not_before = timezone.now()
     credentials = factory.SubFactory(CredentialsFactory)
     counter_report = factory.SubFactory(CounterReportTypeFactory)
@@ -25,7 +33,6 @@ class FetchIntentionFactory(factory.DjangoModelFactory):
     end_date = factory.LazyAttribute(
         lambda x: x.start_date + relativedelta(months=1) - relativedelta(days=1)
     )
-    group_id = factory.Faker('uuid4')
 
     class Meta:
         model = FetchIntention
