@@ -436,7 +436,7 @@ class TestSushiCredentialsViewSet:
 
         resp = clients["master"].get(reverse('sushi-credentials-count'))
         assert resp.status_code == 200
-        assert resp.json() == {'count': 2, 'broken': 1, 'broken_reports': 1}
+        assert resp.json() == {'count': 3, 'broken': 1, 'broken_reports': 1}
 
 
 @pytest.mark.django_db()

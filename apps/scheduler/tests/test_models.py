@@ -17,6 +17,8 @@ from test_fixtures.scenarios.basic import (
     organizations,
     data_sources,
     users,
+    harvests,
+    schedulers,
 )
 
 from logs.tasks import import_one_sushi_attempt_task
@@ -514,3 +516,9 @@ class TestHarvest:
 
         assert harvest1.stats() == (1, 2)
         assert harvest2.stats() == (2, 3)
+
+    def test_latest_intentions(self, harvests):
+        assert harvests["anonymous"].intentions.count() == 4
+        assert harvests["anonymous"].latest_intentions.count() == 3
+        assert harvests["user1"].intentions.count() == 2
+        assert harvests["user1"].latest_intentions.count() == 2

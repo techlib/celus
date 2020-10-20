@@ -9,19 +9,22 @@ Platforms:
     TODO description
 
 """
-
+from datetime import timedelta
 import pytest
 
 from rest_framework.test import APIClient
 from django.conf import settings
+from django.utils import timezone
 from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
+from ..entities.fetchattempts import FetchAttemptFactory
 from ..entities.data_souces import DataSourceFactory, DataSource
 from ..entities.identities import IdentityFactory, Identity
 from ..entities.organizations import OrganizationFactory
 from ..entities.platforms import PlatformFactory
 from ..entities.report_types import ReportTypeFactory
 from ..entities.users import UserFactory
+from ..entities.scheduler import HarvestFactory, FetchIntentionFactory, SchedulerFactory
 
 
 @pytest.fixture
@@ -281,4 +284,78 @@ def credentials(counter_report_types, organizations, platforms):
     )
     standalone_br1_jr1.counter_reports.add(counter_report_types["br1"])
     standalone_br1_jr1.counter_reports.add(counter_report_types["jr1"])
+
+    branch_pr = CredentialsFactory(
+        organization=organizations["branch"],
+        platform=platforms["branch"],
+        url="https://c5.standalone.example.com/",
+        counter_version=5,
+    )
+    branch_pr.counter_reports.add(counter_report_types["pr"])
+
+    return locals()
+
+
+@pytest.fixture
+def schedulers(credentials):
+    standalone_br1_jr1 = SchedulerFactory(url=credentials["standalone_br1_jr1"].url)
+    standalone_tr = SchedulerFactory(url=credentials["standalone_tr"].url)
+    return locals()
+
+
+@pytest.fixture
+def harvests(users, credentials, counter_report_types, schedulers):
+    # anynymous harvest
+    anonymous = HarvestFactory(
+        last_updated_by=None,
+        intentions=(
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                scheduler=schedulers["standalone_tr"],
+                when_processed=timezone.now() - timedelta(minutes=1),
+                attempt=FetchAttemptFactory(
+                    credentials=credentials["standalone_tr"],
+                    counter_report=counter_report_types["tr"],
+                ),
+            ),
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["br1"],
+            ),
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["jr1"],
+                scheduler=schedulers["standalone_br1_jr1"],
+                when_processed=timezone.now() - timedelta(minutes=1),
+                attempt=FetchAttemptFactory(
+                    credentials=credentials["standalone_br1_jr1"],
+                    counter_report=counter_report_types["jr1"],
+                ),
+            ),
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["jr1"],
+            ),  # retry fetch attempt
+        ),
+    )
+    user1 = HarvestFactory(
+        last_updated_by=users["user1"],
+        intentions=(
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["br1"],
+                scheduler=schedulers["standalone_br1_jr1"],
+                when_processed=timezone.now() - timedelta(minutes=2),
+                attempt=FetchAttemptFactory(
+                    credentials=credentials["standalone_br1_jr1"],
+                    counter_report=counter_report_types["br1"],
+                ),
+            ),
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["jr1"],
+            ),
+        ),
+    )
     return locals()

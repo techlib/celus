@@ -161,7 +161,9 @@ class FetchIntention(models.Model):
     end_date = models.DateField()
     when_processed = models.DateTimeField(help_text="When fetch unit was processed", null=True)
     attempt = models.ForeignKey(SushiFetchAttempt, null=True, on_delete=models.SET_NULL)
-    harvest = models.ForeignKey('scheduler.Harvest', on_delete=models.CASCADE)
+    harvest = models.ForeignKey(
+        'scheduler.Harvest', on_delete=models.CASCADE, related_name="intentions"
+    )
 
     # Retry counters
     data_not_ready_retry = models.SmallIntegerField(default=0)
@@ -401,8 +403,9 @@ class Harvest(CreatedUpdatedMixin):
         :returns: unprocessed, total
         """
 
-        qs = self.fetchintention_set.annotate(
+        qs = self.intentions.annotate(
             unique_field=models.functions.Concat(
+                models.F('credentials_id'),
                 models.F('credentials__version_hash'),
                 models.F('counter_report__code'),
                 models.F('start_date'),
@@ -456,3 +459,25 @@ class Harvest(CreatedUpdatedMixin):
                 trigger_scheduler.delay(url, True)
 
         return harvest
+
+    @property
+    def latest_intentions(self):
+        """ Only latest intentions, retried intentions are skipped """
+
+        latest_pks = (
+            self.intentions.annotate(
+                unique_field=models.functions.Concat(
+                    models.F('credentials_id'),
+                    models.F('credentials__version_hash'),
+                    models.F('counter_report__code'),
+                    models.F('start_date'),
+                    models.F('end_date'),
+                    output_field=models.CharField(),
+                ),
+            )
+            .values('unique_field')
+            .annotate(max_pk=models.Max('pk'))
+            .values_list('max_pk', flat=True)
+        )
+
+        return self.intentions.filter(pk__in=latest_pks)

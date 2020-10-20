@@ -16,6 +16,16 @@ class HarvestFactory(factory.DjangoModelFactory):
     class Meta:
         model = Harvest
 
+    @factory.post_generation
+    def intentions(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for intention in extracted:
+                intention.harvest = self
+                intention.save()
+
 
 class SchedulerFactory(factory.DjangoModelFactory):
     url = factory.Faker('url')

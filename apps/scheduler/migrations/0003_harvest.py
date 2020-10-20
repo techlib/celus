@@ -50,7 +50,10 @@ class Migration(migrations.Migration):
             model_name='fetchintention',
             name='harvest',
             field=models.ForeignKey(
-                default=None, on_delete=django.db.models.deletion.CASCADE, to='scheduler.Harvest'
+                default=None,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='scheduler.Harvest',
+                related_name='intentions',
             ),
             preserve_default=False,
         ),
