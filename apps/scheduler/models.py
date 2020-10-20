@@ -41,6 +41,7 @@ class ProcessResponse(Enum):
     SUCCESS = auto()  # Downloading was triggered
     ALREADY_PROCESSED = auto()  # FetchIntention was already processed
     BROKEN = auto()  # Credentials of FetchIntetion are marked as broken
+    DUPLICATE = auto()  # FetchIntention was marked as duplicate
 
 
 # TODO scheduler cleanup (to many invalid urls)
@@ -98,6 +99,7 @@ class Scheduler(models.Model):
                 intention = (
                     FetchIntention.objects.select_for_update(skip_locked=True)
                     .filter(
+                        duplicate_of__isnull=True,
                         credentials__url=self.url,
                         when_processed__isnull=True,
                         not_before__lte=timezone.now(),
@@ -132,7 +134,9 @@ class Scheduler(models.Model):
 class FetchIntentionQuerySet(models.QuerySet):
     def schedulers_to_trigger(self) -> typing.List[Scheduler]:
         res: typing.Set[Scheduler] = set()
-        for fi in self.filter(not_before__lt=timezone.now(), scheduler__isnull=True):
+        for fi in self.filter(
+            not_before__lt=timezone.now(), scheduler__isnull=True, duplicate_of__isnull=True
+        ):
             (scheduler, _) = Scheduler.objects.get_or_create(url=fi.credentials.url)
             if scheduler.when_ready < timezone.now() or fi.priority_now:
                 res.add(scheduler)
@@ -172,6 +176,9 @@ class FetchIntention(CreatedUpdatedMixin):
 
     objects = FetchIntentionQuerySet.as_manager()
 
+    duplicate_of = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL, related_name="duplicates"
+    )
     not_before = models.DateTimeField(help_text="Don't plan before", default=timezone.now)
     priority = models.SmallIntegerField(default=PRIORITY_NORMAL)
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
@@ -246,6 +253,9 @@ class FetchIntention(CreatedUpdatedMixin):
         if self.broken_credentials:
             return ProcessResponse.BROKEN
 
+        if self.duplicate_of:
+            return ProcessResponse.DUPLICATE
+
         # fetch attempt
         attempt: SushiFetchAttempt = self.credentials.fetch_report(
             self.counter_report, self.start_date, self.end_date
@@ -263,6 +273,17 @@ class FetchIntention(CreatedUpdatedMixin):
 
         # plan data import
         if attempt.can_import_data:
+            # Mark planned fetch intention with the same requirements as
+            # processed
+            FetchIntention.objects.filter(
+                when_processed__isnull=True,
+                credentials=self.credentials,
+                counter_report=self.counter_report,
+                start_date=self.start_date,
+                end_date=self.end_date,
+            ).update(duplicate_of=self)
+
+            # Plan data synchronization
             import_one_sushi_attempt_task.delay(attempt.pk)
 
         return ProcessResponse.SUCCESS

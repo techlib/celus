@@ -20,6 +20,8 @@ from test_fixtures.scenarios.basic import (
     users,
 )
 
+from logs.tasks import import_one_sushi_attempt_task
+from nigiri.error_codes import ErrorCode
 from scheduler import tasks
 from scheduler.models import FetchIntention, ProcessResponse, RunResponse, Scheduler
 from sushi.models import SushiCredentials, CounterReportsToCredentials
@@ -112,7 +114,7 @@ class TestFetchIntention:
         with pytest.raises(ValueError):
             fi.process()
 
-    def test_process_with_planned_duplicities(
+    def test_process_with_planned_duplicates(
         self, counter_report_types, credentials, monkeypatch,
     ):
         scheduler = SchedulerFactory()
@@ -149,9 +151,8 @@ class TestFetchIntention:
         )
         assert fi1.process() == ProcessResponse.SUCCESS
         fi2.refresh_from_db()
-        assert fi2.attempt is not None
-        assert fi2.attempt == fi1.attempt
-        assert fi2.when_processed == fi1.when_processed
+        assert fi2.duplicate_of == fi1
+        assert fi2.process() == ProcessResponse.DUPLICATE
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     @pytest.mark.parametrize(
