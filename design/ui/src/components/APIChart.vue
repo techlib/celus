@@ -273,7 +273,7 @@ export default {
       user: "user",
     }),
     ...mapGetters({
-      date: "dateRangeStartText",
+      dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
       selectedOrganization: "selectedOrganization",
     }),
