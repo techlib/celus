@@ -298,7 +298,7 @@ class SushiCredentials(BrokenCredentialsMixin):
         if too_many_attempts:
             seconds = base_wait_unit * 2 ** len(too_many_attempts)
             last_timestamp = too_many_attempts[0]['timestamp']
-            diff = (last_timestamp + timedelta(seconds=seconds) - now()).seconds
+            diff = (last_timestamp + timedelta(seconds=seconds) - now()).total_seconds()
             if diff > 0:
                 return diff
         return 0
