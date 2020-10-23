@@ -19,6 +19,7 @@ class SushiCredentialsAdmin(VersionAdmin):
         'customer_id',
         'requestor_id',
         'enabled',
+        'when_can_access',
     ]
     list_filter = ['enabled', 'counter_version', 'organization', 'platform']
 
