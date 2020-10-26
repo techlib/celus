@@ -3,6 +3,7 @@ amqp==2.6.1
 appdirs==1.4.4
 appnope==0.1.0; python_version >= "3.3" and sys_platform == "darwin" or platform_system == "Darwin"
 argon2-cffi==20.1.0
+asgiref==3.3.0
 async-generator==1.10
 atomicwrites==1.4.0; sys_platform == "win32"
 attrs==20.2.0
@@ -24,10 +25,10 @@ dateparser==0.7.6
 decorator==4.4.2
 defusedxml==0.6.0
 distlib==0.3.1
-django==2.2.16
+django==3.0.10
 django-allauth==0.41.0
 django-anymail==7.1.0
--e git+https://github.com/beda42/django-cachalot.git@154ec37662e3ed20687d7710660856c3e5e95116#egg=django-cachalot
+django-cachalot==2.3.2
 django-celery-results==1.2.1
 django-debug-toolbar==2.2
 django-error-report==0.2.0
@@ -51,10 +52,10 @@ filelock==3.0.12
 freezegun==0.3.15
 identify==1.5.6
 idna==2.10
-ijson==3.1.2
+ijson==3.1.2.post0
 imagesize==1.2.0
 importlib-metadata==2.0.0; python_version < "3.8"
-importlib-resources==3.0.0; python_version < "3.7"
+importlib-resources==3.3.0; python_version < "3.7"
 ipykernel==5.3.4
 ipython==7.16.1
 ipython-genutils==0.2.0
@@ -70,23 +71,23 @@ jupyter-console==6.2.0
 jupyter-core==4.6.3
 jupyterlab-pygments==0.1.2
 kombu==4.6.11
-lxml==4.5.2
+lxml==4.6.1
 lz4==3.0.2
 markupsafe==1.1.1
 mistune==0.8.4
 more-itertools==8.5.0
-nbclient==0.5.0
+nbclient==0.5.1
 nbconvert==6.0.7
-nbformat==5.0.7
-nest-asyncio==1.4.1
+nbformat==5.0.8
+nest-asyncio==1.4.2
 nodeenv==1.5.0
 notebook==6.1.4
-numpy==1.19.2
+numpy==1.19.3
 oauthlib==3.1.0
 openpyxl==3.0.5
 packaging==20.4
 pandas==1.1.3
-pandocfilters==1.4.2
+pandocfilters==1.4.3
 parso==0.7.1; python_version >= "3.3"
 pathspec==0.8.0
 pendulum==2.1.2
@@ -97,14 +98,14 @@ pluggy==0.13.1
 pre-commit==2.4.0
 prometheus-client==0.8.0
 prompt-toolkit==3.0.8
-psutil==5.7.2
+psutil==5.7.3
 psycopg2-binary==2.8.6
 ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or os_name != "nt"
 py==1.9.0
 -e git+https://github.com/beda42/pycounter.git@1b85369dc88b6dde1f3546a707a315f5ac0f32cd#egg=pycounter
 pycparser==2.20
 pyfakefs==4.0.2
-pygments==2.7.1
+pygments==2.7.2
 pyparsing==2.4.7
 pyrsistent==0.17.3
 pytest==5.4.3
@@ -124,7 +125,7 @@ pyzmq==19.0.2
 qtconsole==4.7.7
 qtpy==1.9.0
 redis==3.5.3
-regex==2020.10.11
+regex==2020.10.28
 requests==2.24.0
 requests-mock==1.8.0
 requests-oauthlib==1.3.0
@@ -150,13 +151,13 @@ tornado==6.0.4
 traitlets==4.3.3
 typed-ast==1.4.1
 tzlocal==2.1
-urllib3==1.25.10
+urllib3==1.25.11
 vine==1.3.0
-virtualenv==20.0.34
+virtualenv==20.1.0
 waitress==1.4.4
 wcwidth==0.2.5
 webencodings==0.5.1
 webob==1.8.6
 webtest==2.0.35
 widgetsnbextension==3.5.1
-zipp==3.3.0; python_version < "3.8"
+zipp==3.4.0; python_version < "3.8"

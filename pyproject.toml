@@ -19,11 +19,11 @@ python = "^3.6.8"
 
 celery = "~4.4.2"
 dateparser = "~0.7.4"
-Django = "~2.2.0"
+Django = "~3.0.10"
 django-allauth = "~0.41.0"
 django-anymail = "~7.1.0"
 django-celery-results = "~1.2.0"
-django-cachalot = {git = "https://github.com/beda42/django-cachalot.git", rev = "154ec37662e"}
+django-cachalot =  "2.3.2" #{git = "https://github.com/beda42/django-cachalot.git", rev = "154ec37662e"}
 django-error-report = "~0.2.0"
 django-modeltranslation = "~0.15.0"
 django-mptt = "~0.11.0"
