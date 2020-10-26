@@ -2,7 +2,7 @@ import json
 from collections import Counter
 
 from django.conf import settings
-from django.db.models import Count, Q, Sum, Max, Min, F
+from django.db.models import Count, Q, Sum, Max, Min, F, Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
 from django.utils.text import slugify
@@ -17,7 +17,7 @@ from core.logic.dates import date_filter_from_params, month_end
 from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import ReportType, AccessLog
+from logs.models import ReportType, AccessLog, InterestGroup
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
 from publications.models import PlatformTitle, Platform
@@ -226,7 +226,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             .annotate(count=Count("title_id", distinct=True))
         )
         query = recache_queryset(query, origin='overlap-analysis')
-        overlap = [
+        result = [
             {
                 'platform1': rec['platform'],
                 'platform2': rec['title__platformtitle__platform_id'],
@@ -234,11 +234,78 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             }
             for rec in query
         ]
-        platforms = Platform.objects.all()
-        result = {
-            'overlap': overlap,
-            'platforms': PlatformSerializer(platforms, many=True).data,
+        return Response(result)
+
+    @action(detail=True, url_path='all-platforms-overlap')
+    def all_platforms_overlap(self, request, pk):
+        """
+        API that returns a specific reply for platform overlap with all other platforms
+        """
+        org_filter = organization_filter_from_org_id(pk, request.user)
+        date_filter_params1 = date_filter_from_params(request.GET)
+        is_on_other_platform = PlatformTitle.objects.filter(
+            title_id=OuterRef('title_id'),
+            organization_id=OuterRef('organization_id'),
+            **date_filter_params1,
+        ).exclude(platform_id=OuterRef('platform_id'))
+        query = (
+            PlatformTitle.objects.filter(**org_filter, **date_filter_params1)
+            .annotate(elsewhere=Exists(is_on_other_platform))
+            .values("platform")
+            .annotate(count=Count("title_id", filter=Q(elsewhere=True), distinct=True))
+        )
+        # APO = 'all platform overlap'
+        query = recache_queryset(query, origin='APO-titles')
+
+        # interest for the titles
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        title_id_filter = {
+            'target_id__in': PlatformTitle.objects.filter(**org_filter, **date_filter_params1)
+            .filter(Exists(is_on_other_platform))
+            .values("title_id")
+            .distinct()
         }
+        accesslog_filter = {
+            'report_type': interest_rt,
+            **org_filter,
+            **date_filter_params1,
+            **title_id_filter,
+        }
+        replace_report_type_with_materialized(accesslog_filter)
+        overlap_interests = (
+            AccessLog.objects.filter(**accesslog_filter)
+            .values('platform')
+            .annotate(interest=Coalesce(Sum('value'), 0))
+        )
+        overlap_interests = recache_queryset(overlap_interests, origin='APO-interest')
+        pk_to_interest = {rec['platform']: rec['interest'] for rec in overlap_interests}
+
+        # overall interest
+        accesslog_filter = {
+            'report_type': interest_rt,
+            **org_filter,
+            **date_filter_params1,
+        }
+        replace_report_type_with_materialized(accesslog_filter)
+        total_overlap_interests = (
+            AccessLog.objects.filter(**accesslog_filter)
+            .values('platform')
+            .annotate(interest=Coalesce(Sum('value'), 0))
+        )
+        total_overlap_interests = recache_queryset(
+            total_overlap_interests, origin='APO-total-interest'
+        )
+        pk_to_total_interest = {rec['platform']: rec['interest'] for rec in total_overlap_interests}
+
+        result = [
+            {
+                'platform': rec['platform'],
+                'overlap': rec['count'],
+                'overlap_interest': pk_to_interest.get(rec['platform'], 0),
+                'total_interest': pk_to_total_interest.get(rec['platform'], 0),
+            }
+            for rec in query
+        ]
         return Response(result)
 
 

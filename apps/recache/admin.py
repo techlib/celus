@@ -22,6 +22,8 @@ class CachedQueryAdmin(admin.ModelAdmin):
         'queryset_pickle_size',
     ]
 
+    list_filter = ['django_version', 'origin']
+
     actions = ['force_renew', 'renew']
 
     @classmethod

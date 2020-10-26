@@ -1,8 +1,8 @@
 import numeral from "numeral";
 
-function formatInteger(integer) {
+function formatInteger(integer, empty = "-") {
   if (integer == null) {
-    return "-";
+    return empty;
   }
   return numeral(integer).format("0,0").replace(/,/g, "\xa0");
 }

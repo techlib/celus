@@ -183,7 +183,7 @@ class SushiCredentialsViewSet(ModelViewSet):
                 end_date__gte=end,
                 credentials_id__in=credentials,
                 in_progress=False,
-                counter_report__in=F('credentials__counter_reports'),
+                counter_report=F('credentials__counter_reports'),
                 **enabled_attr,
             )
             .order_by("credentials_id", "counter_report_id", "-timestamp")

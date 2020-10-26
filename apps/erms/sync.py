@@ -6,6 +6,8 @@ and an external source
 from collections import Counter
 from enum import Enum
 
+from django.db import models
+
 from core.models import DataSource
 
 
@@ -67,7 +69,7 @@ class Syncer:
             obj = self.db_key_to_obj[pid]
             save = False
             for key, value in record.items():
-                if type(value) is not dict:
+                if type(value) is not dict and not isinstance(value, models.Model):
                     # we do not translate value for dicts as it messes the JSON field somehow
                     value = self.object_class._meta._forward_fields_map[key].get_prep_value(value)
                 if getattr(obj, key) != value:

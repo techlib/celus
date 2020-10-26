@@ -16,7 +16,7 @@ def recache_queryset(
     queryset,
     timeout: timedelta = DEFAULT_TIMEOUT,
     lifetime: timedelta = DEFAULT_LIFETIME,
-    origin='',
+    origin: str = '',
 ):
     """
     Given a queryset, it returns an evaluated queryset and does all the necessary caching stuff

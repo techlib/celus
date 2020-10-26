@@ -92,6 +92,9 @@ en:
     report_view: Report
     position: Position
     broken_only: Problematic only
+    overlap: Overlap
+    relative: Relative
+    total: Total
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -215,6 +218,9 @@ cs:
     report_view: Report
     position: Pozice
     broken_only: Jen problematické
+    overlap: Překryv
+    relative: Relativně
+    total: Celkem
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

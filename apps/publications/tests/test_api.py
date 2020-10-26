@@ -585,8 +585,7 @@ class TestPlatformTitleAPI:
             )
             renewal_task.apply_async.assert_called()
         assert resp.status_code == 200
-        assert 'overlap' in resp.json()
-        data = resp.json()['overlap']
+        data = resp.json()
         assert len(data) == 4, '4 overlap records in total'
         assert (
             len([rec for rec in data if rec['platform1'] == rec['platform2']]) == 2
@@ -621,7 +620,7 @@ class TestPlatformTitleAPI:
             )
             renewal_task.apply_async.assert_called()
         assert resp.status_code == 200
-        assert len(resp.json()['overlap']) == 4
+        assert len(resp.json()) == 4
         # then with start_date which removes the overlapping records
         with patch('recache.util.renew_cached_query_task') as renewal_task:
             resp = authenticated_client.get(
@@ -630,11 +629,65 @@ class TestPlatformTitleAPI:
             )
             renewal_task.apply_async.assert_called()
         assert resp.status_code == 200
-        data = resp.json()['overlap']
+        data = resp.json()
         assert len(data) == 1, 'only 1 self overlap'
         assert (
             len([rec for rec in data if rec['platform1'] == rec['platform2']]) == 1
         ), '1 self-overlap'
+
+    def test_organization_all_platform_overlap(
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+    ):
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        organization = accesslogs_with_interest['organization']
+        platform = accesslogs_with_interest['platform']
+        titles = accesslogs_with_interest['titles']
+        UserOrganization.objects.create(user=identity.user, organization=organization)
+        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
+        PlatformTitle.objects.create(
+            platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
+        )
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            resp = authenticated_client.get(
+                reverse('organization-all-platforms-overlap', args=[organization.pk])
+            )
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2, '2 records for 2 platforms'
+        for rec in data:
+            assert rec['overlap'] == 1, 'both platforms share the same title'
+            if rec['platform'] == platform.pk:
+                assert rec['overlap_interest'] == 3
+                assert rec['total_interest'] == 7
+            else:
+                assert rec['overlap_interest'] == 0, 'no interest on platform 2'
+                assert rec['total_interest'] == 0, 'no interest on platform 2'
+
+    def test_organization_all_platform_overlap_all_orgs(
+        self, master_client, accesslogs_with_interest, platforms,
+    ):
+        organization = accesslogs_with_interest['organization']
+        platform = accesslogs_with_interest['platform']
+        titles = accesslogs_with_interest['titles']
+        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
+        PlatformTitle.objects.create(
+            platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
+        )
+        with patch('recache.util.renew_cached_query_task') as renewal_task:
+            resp = master_client.get(reverse('organization-all-platforms-overlap', args=['-1']))
+            renewal_task.apply_async.assert_called()
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2, '2 records for 2 platforms'
+        for rec in data:
+            assert rec['overlap'] == 1, 'both platforms share the same title'
+            if rec['platform'] == platform.pk:
+                assert rec['overlap_interest'] == 11
+                assert rec['total_interest'] == 15
+            else:
+                assert rec['overlap_interest'] == 0, 'no interest on platform 2'
+                assert rec['total_interest'] == 0, 'no interest on platform 2'
 
 
 @pytest.mark.django_db

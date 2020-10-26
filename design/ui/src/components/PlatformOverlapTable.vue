@@ -6,6 +6,7 @@ en:
   titles: title | titles
   absolute_numbers: Absolute numbers
   relative_numbers: Relative numbers in %
+  no_overlap_data: There are no overlapping platforms
 
 cs:
   loading_data: "Prosíme o chvilku strpení, než Celus přechroupe data. Musí zpracovat záznamy o všech titulech a to nějakou dobu zabere."
@@ -14,14 +15,21 @@ cs:
   titles: "titul | tituly | titulů"
   absolute_numbers: Absolutní čísla
   relative_numbers: Relativní vyjádření v %
+  no_overlap_data: Žádné platformy nemají překryv
 </i18n>
 
 <template>
   <LoaderWidget
-    v-if="loading"
+    v-if="loading || platformsLoading"
     height="300"
     :text="$t('loading_data')"
     icon-name="fa-cog"
+  />
+  <ErrorPlaceholder
+    v-else-if="usedPlatforms.length === 0"
+    :text="$t('no_overlap_data')"
+    color="#33aa33"
+    icon="fa fa-info-circle"
   />
   <table v-else class="overlap">
     <thead>
@@ -115,11 +123,12 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import { smartFormatFloat } from "@/libs/numbers";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import Color from "color";
+import ErrorPlaceholder from "@/components/util/ErrorPlaceholder";
 
 export default {
   name: "PlatformOverlapTable",
 
-  components: { LoaderWidget },
+  components: { ErrorPlaceholder, LoaderWidget },
 
   data() {
     return {
@@ -128,6 +137,7 @@ export default {
       platforms: new Map(),
       loading: false,
       relative: false,
+      platformsLoading: false,
     };
   },
 
@@ -141,7 +151,13 @@ export default {
     }),
     overlapDataUrl() {
       if (this.selectedOrganizationId) {
-        return `/api/organization/${this.selectedOrganizationId}/platform-overlap?start=${this.dateStart}&end=${this.dateEnd}`;
+        return `/api/organization/${this.selectedOrganizationId}/platform-overlap/?start=${this.dateStart}&end=${this.dateEnd}`;
+      }
+      return null;
+    },
+    platformListUrl() {
+      if (this.selectedOrganizationId) {
+        return `/api/organization/${this.selectedOrganizationId}/platform/`;
       }
       return null;
     },
@@ -154,10 +170,12 @@ export default {
         }
       });
       let usedPlatforms = [];
-      platformIds.forEach((item) =>
-        usedPlatforms.push(this.platforms.get(item))
-      );
-      return usedPlatforms;
+      platformIds.forEach((item) => {
+        if (this.platforms.has(item)) {
+          usedPlatforms.push(this.platforms.get(item));
+        }
+      });
+      return usedPlatforms.sort((a, b) => a.name > b.name);
     },
   },
 
@@ -182,8 +200,27 @@ export default {
         this.loading = false;
       }
     },
+    async fetchPlatformList() {
+      if (!this.platformListUrl) {
+        return;
+      }
+      this.platformsLoading = true;
+      try {
+        let result = await axios.get(this.platformListUrl);
+        let platforms = new Map();
+        result.data.forEach((item) => platforms.set(item.pk, item));
+        this.platforms = platforms;
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error getting platform list " + error,
+          color: "error",
+        });
+      } finally {
+        this.platformsLoading = false;
+      }
+    },
     prepareData(response) {
-      this.overlapData = response.data.overlap;
+      this.overlapData = response.data;
       // overlap map
       let overlapMap = new Map();
       this.overlapData.forEach((item) => {
@@ -194,10 +231,6 @@ export default {
         }
       });
       this.overlapMap = overlapMap;
-      // platforms
-      let platformMap = new Map();
-      response.data.platforms.forEach((item) => platformMap.set(item.pk, item));
-      this.platforms = platformMap;
     },
     overlapValue(platform1, platform2, relative = false) {
       let overlapAbs = this.overlapMap.get(`${platform1.pk}-${platform2.pk}`);
@@ -230,11 +263,15 @@ export default {
 
   mounted() {
     this.fetchOverlapData();
+    this.fetchPlatformList();
   },
 
   watch: {
     overlapDataUrl() {
       this.fetchOverlapData();
+    },
+    platformListUrl() {
+      this.fetchPlatformList();
     },
   },
 };

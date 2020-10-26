@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import models, transaction, DatabaseError
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.conf import settings
+from django.db.models import TextField
 from django.utils import timezone
 
 from core.models import User
@@ -421,6 +422,7 @@ class Harvest(CreatedUpdatedMixin):
                 models.F('counter_report__code'),
                 models.F('start_date'),
                 models.F('end_date'),
+                output_field=TextField(),
             )
         )
 

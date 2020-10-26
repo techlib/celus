@@ -15,6 +15,8 @@ import pytest
 from rest_framework.test import APIClient
 from django.conf import settings
 from django.utils import timezone
+
+from organizations.models import Organization
 from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
 from ..entities.fetchattempts import FetchAttemptFactory
@@ -42,7 +44,12 @@ def users():
 @pytest.fixture
 def organizations():
     empty = OrganizationFactory(name="empty")
-    master = OrganizationFactory(name="master", internal_id=settings.MASTER_ORGANIZATIONS[0])
+    # sometimes this fixture is called twice and there is an error because the internal_id is unique,
+    # we deal with it here
+    try:
+        master = Organization.objects.get(internal_id=settings.MASTER_ORGANIZATIONS[0])
+    except Organization.DoesNotExist:
+        master = OrganizationFactory(name="master", internal_id=settings.MASTER_ORGANIZATIONS[0])
     root = OrganizationFactory(name="root")
     branch = OrganizationFactory(name="branch", parent=root)
     standalone = OrganizationFactory(name="standalone")
