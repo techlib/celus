@@ -4,9 +4,10 @@ import factory
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 
-from scheduler.models import FetchIntention, Harvest, Scheduler
+from scheduler.models import Automatic, FetchIntention, Harvest, Scheduler
 from .credentials import CredentialsFactory
 from .counter_report_types import CounterReportTypeFactory
+from .organizations import OrganizationFactory
 from .users import UserFactory
 
 
@@ -46,3 +47,12 @@ class FetchIntentionFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = FetchIntention
+
+
+class AutomaticFactory(factory.DjangoModelFactory):
+    month = date(2020, 1, 1)
+    organization = factory.SubFactory(OrganizationFactory)
+    harvest = factory.SubFactory(HarvestFactory)
+
+    class Meta:
+        model = Automatic

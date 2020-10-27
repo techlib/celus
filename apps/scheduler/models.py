@@ -1,14 +1,20 @@
 import typing
 
-from datetime import datetime, timedelta
+from collections import Counter
+
+from datetime import datetime, timedelta, date
 from enum import Enum, auto
 
+from dateutil.relativedelta import relativedelta
 from django.db import models, transaction, DatabaseError
+from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.conf import settings
 from django.utils import timezone
 
 from core.models import User
+from core.logic.dates import month_start, month_end
 from nigiri.error_codes import ErrorCode
+from organizations.models import Organization
 from sushi.models import (
     SushiCredentials,
     SushiFetchAttempt,
@@ -115,7 +121,7 @@ class Scheduler(models.Model):
                     # Not than intention can't be `PROCESSED` because
                     # it was selected with when_processed__isnull=True
                     if intention.process() == ProcessResponse.BROKEN:
-                        # Credentails are broken
+                        # Credentials are broken
                         return RunResponse.BROKEN
 
                     # Add cooldown period to when_ready
@@ -169,6 +175,11 @@ class FetchIntention(models.Model):
     data_not_ready_retry = models.SmallIntegerField(default=0)
     service_not_available_retry = models.SmallIntegerField(default=0)
     service_busy_retry = models.SmallIntegerField(default=0)
+
+    class Meta:
+        constraints = (
+            CheckConstraint(check=models.Q(start_date__lt=models.F('end_date')), name='timeline'),
+        )
 
     @property
     def priority_now(self) -> bool:
@@ -481,3 +492,138 @@ class Harvest(CreatedUpdatedMixin):
         )
 
         return self.intentions.filter(pk__in=latest_pks)
+
+
+class Automatic(models.Model):
+    month = models.DateField()
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='automatic_harvest'
+    )
+    harvest = models.OneToOneField(Harvest, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = (
+            CheckConstraint(check=models.Q(month__day=1), name='fist_month_day'),
+            UniqueConstraint(fields=['month', 'organization'], name='unique_month_organization'),
+        )
+
+    @staticmethod
+    def _cmp_intentions(
+        new: typing.List[FetchIntention], existing: typing.List[FetchIntention]
+    ) -> typing.Tuple[typing.List[FetchIntention], typing.List[FetchIntention]]:
+        """
+        Compares intentions from existing to those which are
+        supposed to be created
+
+        :returns: intentions which need to be added, deleted and stats
+        """
+        new_map = {
+            (e.start_date, e.end_date, e.counter_report.pk, e.credentials.pk): e for e in new
+        }
+        existing_map = {
+            (e.start_date, e.end_date, e.counter_report.pk, e.credentials.pk): e for e in existing
+        }
+
+        # remove those which were e.g. disabled (no in new list)
+        to_delete: typing.List[FetchIntention] = []
+        for ekey, intention in existing_map.items():
+            if ekey not in new_map:
+                to_delete.append(intention)
+
+        # add those which are not in list
+        to_add: typing.List[FetchIntention] = []
+        for nkey, intention in new_map.items():
+            if nkey not in existing_map:
+                to_add.append(intention)
+
+        return (to_add, to_delete)
+
+    @classmethod
+    @transaction.atomic
+    def update_for_next_month(cls) -> Counter:
+        """ Updates automatic harvesting for next month """
+        counter = Counter({"added": 0, "deleted": 0})
+
+        next_month = cls.next_month()
+        next_month_end = month_end(next_month)
+
+        new_intentions: typing.List[FetchIntention] = []
+        for cr2c in CounterReportsToCredentials.objects.filter(
+            credentials__enabled=True, broken__isnull=True, credentials__broken__isnull=True
+        ):
+            new_intentions.append(
+                FetchIntention(
+                    not_before=datetime.combine(
+                        next_month, datetime.min.time(), tzinfo=timezone.get_current_timezone(),
+                    )
+                    + timedelta(days=2),  # TODO customizable delta per scheduler
+                    priority=FetchIntention.PRIORITY_NORMAL,
+                    credentials=cr2c.credentials,
+                    counter_report=cr2c.counter_report,
+                    start_date=next_month,
+                    end_date=next_month_end,
+                )
+            )
+
+        # group by organization
+        organization_to_intentions = {
+            e.organization: []
+            for e in Automatic.objects.filter(month=next_month)  # prefill with allready planned
+        }
+
+        for intention in new_intentions:
+            org_intentions = organization_to_intentions.get(intention.credentials.organization, [])
+            org_intentions.append(intention)
+            organization_to_intentions[intention.credentials.organization] = org_intentions
+
+        # compare and unschedule disabled
+        for organization, intentions in organization_to_intentions.items():
+            try:
+                automatic = Automatic.objects.get(month=next_month, organization=organization)
+            except Automatic.DoesNotExist:
+                automatic = None
+            if automatic:
+                # delete missing
+                existing_intentions = list(
+                    FetchIntention.objects.select_for_update().filter(
+                        start_date=next_month,
+                        end_date=next_month_end,
+                        credentials__organization=organization,
+                        when_processed__isnull=True,
+                    )
+                )
+                to_add, to_delete = cls._cmp_intentions(intentions, existing_intentions)
+                counter.update({"added": len(to_add), "deleted": len(to_delete)})
+                # Delete extra intentions
+                FetchIntention.objects.filter(pk__in=[e.pk for e in to_delete]).delete()
+
+                # Extends harvest with new intentions
+                Harvest.plan_harvesting(to_add, automatic.harvest)
+
+            else:
+                # plan right away
+                harvest = Harvest.plan_harvesting(intentions)
+                counter.update({"added": len(intentions)})
+                Automatic.objects.create(
+                    month=next_month, organization=organization, harvest=harvest
+                )
+
+        return counter
+
+    @classmethod
+    def get_or_create(cls, month: date, organization: Organization) -> 'Automatic':
+        month = month.replace(day=1)  # normalize month
+        try:
+            return cls.objects.get(month=month, organization=organization)
+        except cls.DoesNotExist:
+            return cls.objects.create(
+                month=month, organization=organization, harvest=Harvest.objects.create()
+            )
+
+    @property
+    def month_end(self):
+        return month_end(self.month)
+
+    @staticmethod
+    def next_month():
+        return month_start(timezone.now()) + relativedelta(months=1)

@@ -2,8 +2,9 @@ import typing
 
 from rest_framework import serializers
 
-from .models import FetchIntention, Harvest
+from .models import Automatic, FetchIntention, Harvest
 from sushi.serializers import SushiFetchAttemptSerializer
+from organizations.serializers import OrganizationSerializer
 
 
 class StatsSerializer(serializers.Serializer):
@@ -61,12 +62,26 @@ class ListHarvestSerializer(serializers.ModelSerializer):
             'last_updated',
             'last_updated_by',
             'stats',
+            'automatic',
+        )
+
+
+class AutomaticInHarvestSerializer(serializers.ModelSerializer):
+    organization = OrganizationSerializer()
+
+    class Meta:
+        model = Automatic
+        fields = (
+            'pk',
+            'month',
+            'organization',
         )
 
 
 class RetrieveHarvestSerializer(serializers.ModelSerializer):
     intentions = FetchIntentionSerializer(source="latest_intentions", many=True, read_only=True)
     stats = StatsSerializer()
+    automatic = AutomaticInHarvestSerializer()
 
     class Meta:
         model = Harvest
@@ -77,6 +92,7 @@ class RetrieveHarvestSerializer(serializers.ModelSerializer):
             'last_updated',
             'last_updated_by',
             'stats',
+            'automatic',
         )
 
 

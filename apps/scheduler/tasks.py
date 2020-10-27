@@ -1,10 +1,11 @@
 import logging
 
 import celery
+from django.conf import settings
 
 from core.logic.error_reporting import email_if_fails
 
-from .models import FetchIntention, Scheduler, RunResponse
+from .models import FetchIntention, Scheduler, RunResponse, Automatic
 
 
 logger = logging.getLogger(__name__)
@@ -37,3 +38,10 @@ def trigger_scheduler(url: str, finish: bool = False):
         # if scheduler is busy or idle or we don't need to finish the scheduler
         # we don't need to plan new task
         pass
+
+
+@celery.shared_task
+@email_if_fails
+def update_automatic_harvesting():
+    if settings.AUTOMATIC_HARVESTING_ENABLED:
+        Automatic.update_for_next_month()

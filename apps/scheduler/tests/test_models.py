@@ -24,7 +24,15 @@ from test_fixtures.scenarios.basic import (
 from logs.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
 from scheduler import tasks
-from scheduler.models import FetchIntention, Harvest, ProcessResponse, RunResponse, Scheduler
+from scheduler.models import (
+    Automatic,
+    FetchIntention,
+    Harvest,
+    ProcessResponse,
+    RunResponse,
+    Scheduler,
+)
+from scheduler import signals
 from sushi.models import SushiCredentials, CounterReportsToCredentials
 from sushi.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
@@ -522,3 +530,170 @@ class TestHarvest:
         assert harvests["anonymous"].latest_intentions.count() == 3
         assert harvests["user1"].intentions.count() == 2
         assert harvests["user1"].latest_intentions.count() == 2
+
+
+@pytest.mark.django_db
+class TestAutomatic:
+    @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
+    def test_update_for_next_month(
+        self, credentials, organizations, counter_report_types, disable_automatic_scheduling,
+    ):
+
+        # all empty
+        assert FetchIntention.objects.count() == 0
+        assert Automatic.update_for_next_month() == {"added": 4, "deleted": 0}
+        assert FetchIntention.objects.count() == 4
+
+        # mark credentials broken
+        credentials["branch_pr"].set_broken(
+            attempt=FetchAttemptFactory(
+                counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"]
+            ),
+            broken_type=SushiCredentials.BROKEN_SUSHI,
+        )
+
+        # mark mapping broken
+        CounterReportsToCredentials.objects.get(
+            counter_report=counter_report_types["jr1"]
+        ).set_broken(
+            attempt=FetchAttemptFactory(
+                counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"]
+            ),
+            broken_type=SushiCredentials.BROKEN_HTTP,
+        )
+
+        # remove mapping
+        CounterReportsToCredentials.objects.filter(
+            counter_report=counter_report_types["tr"]
+        ).delete()
+
+        assert Automatic.update_for_next_month() == {"deleted": 3, "added": 0}
+        assert FetchIntention.objects.count() == 1
+        remained = FetchIntention.objects.last()
+        assert remained.counter_report == counter_report_types["br1"]
+        # create mapping
+        CounterReportsToCredentials.objects.create(
+            credentials=credentials["standalone_tr"], counter_report=counter_report_types["pr"],
+        )
+
+        # create broken mapping
+        CounterReportsToCredentials.objects.create(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["db1"],
+        ).set_broken(
+            FetchAttemptFactory(
+                counter_report=counter_report_types["db1"],
+                credentials=credentials["standalone_br1_jr1"],
+            ),
+            broken_type=SushiCredentials.BROKEN_HTTP,
+        )
+
+        # create credentials for other organiation
+        creds1 = CredentialsFactory(enabled=True)
+        CounterReportsToCredentials.objects.create(
+            broken=None, credentials=creds1, counter_report=counter_report_types["tr"]
+        )
+
+        # create broken credentials for other organization
+        creds2 = CredentialsFactory(enabled=True)
+        creds2.set_broken(
+            FetchAttemptFactory(counter_report=counter_report_types["tr"], credentials=creds2),
+            broken_type=SushiCredentials.BROKEN_HTTP,
+        )
+        CounterReportsToCredentials.objects.create(
+            broken=None, credentials=creds2, counter_report=counter_report_types["tr"]
+        )
+
+        # create credentials with broken mapping
+        creds3 = CredentialsFactory(enabled=True)
+        creds3.set_broken(
+            FetchAttemptFactory(counter_report=counter_report_types["tr"], credentials=creds2),
+            broken_type=SushiCredentials.BROKEN_HTTP,
+        )
+        CounterReportsToCredentials.objects.create(
+            broken=None, credentials=creds3, counter_report=counter_report_types["tr"]
+        ).set_broken(
+            FetchAttemptFactory(counter_report=counter_report_types["tr"], credentials=creds2),
+            broken_type=SushiCredentials.BROKEN_SUSHI,
+        )
+
+        assert Automatic.update_for_next_month() == {"deleted": 0, "added": 2}
+        assert FetchIntention.objects.count() == 3
+
+    def test_credentials_signals(
+        self, counter_report_types, credentials, enable_automatic_scheduling
+    ):
+        """ Test whether automatic harvests are update when
+            credentials or credentails to counter report mapping
+            changes
+        """
+
+        # Save credentials
+        assert FetchIntention.objects.all().count() == 0
+        assert Automatic.objects.all().count() == 0
+
+        credentials["branch_pr"].save()
+        assert Automatic.objects.all().count() == 1
+        automatic_branch = Automatic.objects.first()
+        assert automatic_branch.harvest.intentions.count() == 1
+
+        credentials["standalone_br1_jr1"].save()
+        assert Automatic.objects.all().count() == 2
+        automatic_standalone = Automatic.objects.order_by('pk').last()
+        assert automatic_standalone.harvest.intentions.count() == 2
+
+        credentials["standalone_tr"].save()
+        assert automatic_standalone.harvest.intentions.count() == 3
+
+        # Create new mapping
+        new_mapping = CounterReportsToCredentials.objects.create(
+            credentials=credentials["branch_pr"],
+            counter_report=counter_report_types["tr"],
+            broken=None,
+        )
+        assert FetchIntention.objects.all().count() == 5
+
+        # Set credentials broken
+        credentials["branch_pr"].set_broken(
+            FetchAttemptFactory(
+                counter_report=counter_report_types["tr"], credentials=credentials["branch_pr"]
+            ),
+            broken_type=SushiCredentials.BROKEN_HTTP,
+        )
+        assert automatic_branch.harvest.intentions.count() == 0
+
+        # Unset credentials broken
+        credentials["branch_pr"].unset_broken()
+        assert automatic_branch.harvest.intentions.count() == 2
+
+        # Unset credentials enabled
+        credentials["branch_pr"].enabled = False
+        credentials["branch_pr"].save()
+        assert automatic_branch.harvest.intentions.count() == 0
+
+        # Set credentials enabled
+        credentials["branch_pr"].enabled = True
+        credentials["branch_pr"].save()
+        assert automatic_branch.harvest.intentions.count() == 2
+
+        # Set broken mapping
+        new_mapping.set_broken(
+            FetchAttemptFactory(
+                counter_report=counter_report_types["tr"], credentials=credentials["branch_pr"]
+            ),
+            broken_type=SushiCredentials.BROKEN_SUSHI,
+        )
+        assert automatic_branch.harvest.intentions.count() == 1
+
+        # Unset broken mapping
+        new_mapping.unset_broken()
+        assert automatic_branch.harvest.intentions.count() == 2
+
+        # Remove mapping
+        new_mapping.delete()
+        assert automatic_branch.harvest.intentions.count() == 1
+
+        # Remove credentials
+        assert automatic_standalone.harvest.intentions.count() == 3
+        credentials["standalone_br1_jr1"].delete()
+        assert automatic_standalone.harvest.intentions.count() == 1

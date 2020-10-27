@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
-import os
 import sys
 
 from datetime import timedelta
@@ -305,6 +304,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'scheduler.tasks.plan_schedulers_triggering',
         'schedule': schedule(run_every=timedelta(minutes=1)),
     },
+    'scheduler_update_automatic_harvesting': {
+        'task': 'scheduler.tasks.update_automatic_harvesting',
+        'schedule': crontab(minute=50, hour=23),  # every day at 23:50
+    },
 }
 
 ERMS_CELERY_SCHEDULE = {
@@ -434,6 +437,10 @@ EXPORTED_SETTINGS = [
     'USES_ERMS',
     'LANGUAGES',
 ]
+
+# Enables Automatic harvesting
+# TODO it can be changed to True once we migrate to new system
+AUTOMATIC_HARVESTING_ENABLED = False
 
 # Need to disable prometheus migrations when collecting static without DB
 # see https://github.com/korfuri/django-prometheus/issues/34

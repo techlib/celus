@@ -4,7 +4,7 @@ import json
 from django.urls import reverse
 
 from scheduler import tasks
-from scheduler.models import FetchIntention
+from scheduler.models import Automatic, FetchIntention
 from sushi.models import BrokenCredentialsMixin as BS, CounterReportsToCredentials
 
 from test_fixtures.scenarios.basic import (
@@ -298,6 +298,39 @@ class TestHarvestAPI:
             content_type='application/json',
         )
         assert resp.status_code == 400
+
+    def test_automatic(
+        self, basic1, clients, credentials,
+    ):
+
+        url = reverse('harvest-list')
+        resp = clients["master"].get(url, {})
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 0
+
+        # this should create automatic harvests
+        Automatic.update_for_next_month()
+
+        url = reverse('harvest-list')
+        resp = clients["master"].get(url, {})
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 2
+        assert isinstance(data[0]['automatic'], int)
+        assert isinstance(data[1]['automatic'], int)
+
+        # check whether atomic is are present in details
+        url = reverse('harvest-detail', args=(data[0]['pk'],))
+        resp = clients["master"].get(url, {})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["automatic"] is not None
+        assert 'month' in data["automatic"]
+        assert 'organization' in data["automatic"]
+        assert 'pk' in data['automatic']['organization']
+        assert 'name' in data['automatic']['organization']
+        assert 'short_name' in data['automatic']['organization']
 
 
 @pytest.mark.django_db()
