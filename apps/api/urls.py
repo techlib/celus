@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 urlpatterns = [
     path('rest-auth/', include('rest_auth.urls')),
-    path('rest-auth/registration/', include('rest_auth.registration.urls')),
     path('', include('logs.urls')),
     path('', include('organizations.urls')),
     path('', include('publications.urls')),
@@ -25,6 +24,10 @@ urlpatterns = [
     path('scheduler/', include('scheduler.urls')),
     path('deployment/', include('deployment.urls')),
 ]
+
+if settings.ALLOW_USER_REGISTRATION:
+    urlpatterns.append(path('rest-auth/registration/', include('rest_auth.registration.urls')))
+
 
 if settings.DEBUG:
 
