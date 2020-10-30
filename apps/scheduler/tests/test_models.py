@@ -233,6 +233,9 @@ class TestFetchIntention:
         if seconds_not_before:
             assert last.pk != fi.pk
             assert (last.not_before - fi.not_before).total_seconds() == seconds_not_before
+            assert last.retry_id == fi.pk
+            assert fi.retry_id == fi.pk
+            assert fi.attempt.queue_id == fi.pk
         else:
             assert last.pk == fi.pk
 

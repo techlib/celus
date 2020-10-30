@@ -171,6 +171,7 @@ class FetchIntention(models.Model):
     harvest = models.ForeignKey(
         'scheduler.Harvest', on_delete=models.CASCADE, related_name="intentions"
     )
+    retry_id = models.IntegerField(null=True, blank=True, help_text='Identifier of retry queue',)
 
     # Retry counters
     data_not_ready_retry = models.SmallIntegerField(default=0)
@@ -246,6 +247,7 @@ class FetchIntention(models.Model):
             self.counter_report, self.start_date, self.end_date
         )
         attempt.triggered_by = self.harvest.last_updated_by
+        attempt.queue_id = self.retry_id
         attempt.save()
 
         self.attempt = attempt
@@ -311,6 +313,13 @@ class FetchIntention(models.Model):
         if inc_service_not_available_retry:
             kwargs['service_not_available_retry'] = self.service_not_available_retry + 1
 
+        with transaction.atomic():
+            if not self.retry_id:
+                self.retry_id = self.pk
+                self.save()
+                self.attempt.queue_id = self.retry_id
+                self.attempt.save()
+
         return FetchIntention.objects.create(
             not_before=not_before,
             priority=self.priority,
@@ -319,6 +328,7 @@ class FetchIntention(models.Model):
             start_date=self.start_date,
             end_date=self.end_date,
             harvest=self.harvest,
+            retry_id=self.retry_id,
             **kwargs,
         )
 
