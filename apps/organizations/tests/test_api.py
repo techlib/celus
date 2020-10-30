@@ -137,10 +137,7 @@ class TestOrganizationAPI:
         """
         Test the `interest` custom action of organization ViewSet without any data
         """
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = master_client.get(reverse('organization-interest', args=('-1',)))
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(reverse('organization-interest', args=('-1',)))
         assert resp.status_code == 200
         assert resp.json() == {'days': 0}
 
@@ -153,10 +150,7 @@ class TestOrganizationAPI:
         AccessLog.objects.create(
             report_type=interest_rt, value=5, date='2020-01-01', metric=metric, import_batch=ib
         )
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = master_client.get(reverse('organization-interest', args=('-1',)))
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(reverse('organization-interest', args=('-1',)))
         assert resp.status_code == 200
         assert resp.json() == {
             'days': 31,
@@ -190,10 +184,7 @@ class TestOrganizationAPI:
             import_batch=ib,
             organization=organizations[1],
         )
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = master_client.get(reverse('organization-interest', args=(organizations[0].pk,)))
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(reverse('organization-interest', args=(organizations[0].pk,)))
         assert resp.status_code == 200
         assert resp.json() == {
             'days': 31,
@@ -201,10 +192,7 @@ class TestOrganizationAPI:
             'max_date': '2020-01-31',
             'min_date': '2020-01-01',
         }
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = master_client.get(reverse('organization-interest', args=(organizations[1].pk,)))
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(reverse('organization-interest', args=(organizations[1].pk,)))
         assert resp.status_code == 200
         assert resp.json() == {
             'days': 29,

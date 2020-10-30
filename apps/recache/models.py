@@ -24,6 +24,9 @@ class RenewalError(Exception):
 
 class CachedQueryQuerySet(models.QuerySet):
     def get_for_queryset(self, queryset):
+        """
+        Gets `CachedQuery` for a query represented by the `queryset` object
+        """
         qs_hash = CachedQuery.compute_queryset_hash(queryset)
         return self.get(query_hash=qs_hash, django_version=django.get_version())
 
@@ -53,11 +56,13 @@ class CachedQueryQuerySet(models.QuerySet):
         Returns objects that are past timeout (`last_update` + `timeout` is in the past) and have
         to be re-evaluated
         """
+        # the name 'valid_until' is used by a property of CachedQuery, so it cannot be used here
+        # therefore we use the `valid_until_db` attr
         return self.annotate(
-            valid_until=ExpressionWrapper(
+            valid_until_db=ExpressionWrapper(
                 F('last_updated') + F('timeout'), output_field=DateTimeField()
             )
-        ).filter(valid_until__lt=now())
+        ).filter(valid_until_db__lt=now())
 
     def past_lifetime(self):
         """
@@ -144,13 +149,23 @@ class CachedQuery(models.Model):
         Checks if the query should already be renewed and renews if needed.
         """
         if self.valid_until < now() or self.django_version != django.get_version():
-            self.force_renew()
+            self.force_renew(catch_refresh_errors=self.django_version != django.get_version())
 
-    def force_renew(self):
+    def force_renew(self, catch_refresh_errors: bool = False):
         """
         Re-evaluates the stored queryset and stores the new result
+
+        :arg catch_refresh_errors: when True, potential `get_fresh_queryset` exceptions will be caught and re-raised
+          as `RenewError`. This is useful when renewing querysets from old Django versions which raise errors due to
+          queryset interface changes.
         """
-        queryset = self.get_fresh_queryset()
+        try:
+            queryset = self.get_fresh_queryset()
+        except Exception as exc:
+            if catch_refresh_errors:
+                raise RenewalError(f'Could not renew queryset because of error: {exc}')
+            raise
+
         start = monotonic()
         self.queryset_pickle = pickle.dumps(queryset)
         self.last_updated = now()
@@ -173,15 +188,18 @@ class CachedQuery(models.Model):
         Returns a new, unevaluated queryset based on the stored data
         """
         # .all() creates a fresh copy of the queryset
-        return self.get_cached_queryset().all()
+        return self.get_cached_queryset(record_hit=False).all()
 
-    def get_cached_queryset(self):
+    def get_cached_queryset(self, record_hit=True):
         """
         Returns the cached queryset including all results
+
+        :arg record_hit: When true, the `hit_count` field will be increased and `last_queried` updated
         """
-        self.last_queried = now()
-        self.hit_count = F('hit_count') + 1
-        self.save(update_fields=('last_queried', 'hit_count'))
+        if record_hit:
+            self.last_queried = now()
+            self.hit_count = F('hit_count') + 1
+            self.save(update_fields=('last_queried', 'hit_count'))
         return pickle.loads(self.queryset_pickle)
 
     @cached_property

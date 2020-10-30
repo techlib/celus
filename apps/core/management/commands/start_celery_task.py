@@ -8,7 +8,7 @@ from logs.tasks import (
     smart_interest_sync_task,
     sync_materialized_reports_task,
 )
-from recache.tasks import remove_old_cached_queries_task
+from recache.tasks import remove_old_cached_queries_task, find_and_renew_first_due_cached_query_task
 from sushi.tasks import (
     fetch_new_sushi_data_task,
     retry_queued_attempts_task,
@@ -33,6 +33,7 @@ class Command(BaseCommand):
         'fail_intentionally_task': fail_intentionally_task,
         'sync_materialized_reports_task': sync_materialized_reports_task,
         'remove_old_cached_queries_task': remove_old_cached_queries_task,
+        'find_and_renew_first_due_cached_query_task': find_and_renew_first_due_cached_query_task,
     }
 
     def add_arguments(self, parser):

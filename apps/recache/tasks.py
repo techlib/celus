@@ -1,4 +1,5 @@
 import logging
+from time import monotonic
 
 import celery
 import django
@@ -27,8 +28,29 @@ def renew_cached_query_task(pk: int):
         except RenewalError as exc:
             logger.warning('Renewal error (%s), deleting cache: %s', exc, cq)
             cq.delete()
-        else:
-            renew_cached_query_task.apply_async(args=(cq.pk,), eta=cq.valid_until)
+
+
+@celery.shared_task
+@email_if_fails
+def find_and_renew_first_due_cached_query_task():
+    """
+    Finds the first `CachedQuery` that needs renewing, renews it and calls itself to process more caches
+    """
+    cq = CachedQuery.objects.past_timeout().first()
+    if not cq:
+        logger.debug('No CachedQuery for renewal found')
+        return
+    start = monotonic()
+    try:
+        cq.renew()
+    except RenewalError as exc:
+        logger.warning('Renewal error (%s), deleting cache: %s', exc, cq)
+        cq.delete()
+    else:
+        logger.debug('Renewed cached query "%s" in %.2f s', cq, monotonic() - start)
+    # call self (until no candidate is found)
+    logger.debug('Looking for more due cached queries')
+    find_and_renew_first_due_cached_query_task.apply_async()
 
 
 @celery.shared_task

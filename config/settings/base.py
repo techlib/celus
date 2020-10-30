@@ -272,6 +272,7 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.import_one_sushi_attempt_task': {'queue': 'import'},
     'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
     'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
+    'recache.tasks.find_and_renew_first_due_cached_query_task': {'queue': 'normal'},
     'core.tasks.test': {'queue': 'normal'},
 }
 
@@ -299,6 +300,10 @@ CELERY_BEAT_SCHEDULE = {
     'remove_old_cached_queries_task': {
         'task': 'recache.tasks.remove_old_cached_queries_task',
         'schedule': crontab(minute=17, hour=2),  # every day at 2:17
+    },
+    'find_and_renew_first_due_cached_query_task': {
+        'task': 'recache.tasks.find_and_renew_first_due_cached_query_task',
+        'schedule': schedule(run_every=timedelta(minutes=3)),
     },
 }
 

@@ -295,18 +295,15 @@ class TestChartDataAPIView:
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
         report_view = ReportDataView.objects.create(base_report_type=report_type)
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = authenticated_client.get(
-                reverse('chart_data', args=(report_view.pk,)),
-                {
-                    'organization': organization.pk,
-                    'metric': metric.pk,
-                    'platform': platform.pk,
-                    'prim_dim': 'date',
-                    'dashboard': True,
-                },
-            )
-            renewal_task.apply_async.assert_called()
+        resp = authenticated_client.get(
+            reverse('chart_data', args=(report_view.pk,)),
+            {
+                'organization': organization.pk,
+                'metric': metric.pk,
+                'platform': platform.pk,
+                'prim_dim': 'date',
+                'dashboard': True,
+            },
+        )
         assert resp.status_code == 200
         assert 'data' in resp.json()
