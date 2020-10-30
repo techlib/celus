@@ -303,7 +303,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'find_and_renew_first_due_cached_query_task': {
         'task': 'recache.tasks.find_and_renew_first_due_cached_query_task',
-        'schedule': schedule(run_every=timedelta(minutes=3)),
+        'schedule': schedule(run_every=timedelta(minutes=29)),
     },
     'scheduler_plan_fetching': {
         'task': 'scheduler.tasks.plan_schedulers_triggering',
