@@ -6,7 +6,7 @@ from django.db import IntegrityError
 from django.db.transaction import atomic
 
 from .models import DEFAULT_TIMEOUT, DEFAULT_LIFETIME, CachedQuery
-from .tasks import renew_cached_query_task
+from .tasks import renew_cached_query_task, find_and_renew_first_due_cached_query_task
 
 logger = logging.getLogger(__name__)
 
@@ -41,28 +41,23 @@ def recache_queryset(
             )
             # delete should be thread safe because select_for_update() above locked the db row
             cq.delete()
-            cq = safe_create_cached_query(queryset, timeout, lifetime, origin)
-            if cq:
-                schedule_renewal(cq)
+            safe_create_cached_query(queryset, timeout, lifetime, origin)
             return queryset
         if cq.is_valid:
             logger.debug('Returning valid cached version')
             return cq.get_cached_queryset()
         if not cq.is_too_old:
-            logger.debug('Cache slightly stale - returning cached version and sheduling renewal')
+            logger.debug('Cache slightly stale - returning cached version and scheduling renewal')
             qs = cq.get_cached_queryset()
-            renew_cached_query_task.apply_async(args=(cq.pk,), countdown=5)
+            find_and_renew_first_due_cached_query_task.apply_async()
             return qs
         # it is too old, we need to re-evaluate before returning data
         logger.debug('Stale cache - renewing cache, scheduling next renew and returning new data')
         cq.renew()
-        schedule_renewal(cq)  # schedule the next renewal
         return cq.get_cached_queryset()
     except CachedQuery.DoesNotExist:
         logger.debug('Creating new cache and scheduling its update')
-        cq = safe_create_cached_query(queryset, timeout, lifetime, origin)
-        if cq:
-            schedule_renewal(cq)
+        safe_create_cached_query(queryset, timeout, lifetime, origin)
         return queryset
 
 
@@ -82,7 +77,3 @@ def safe_create_cached_query(queryset, timeout, lifetime, origin):
             'Could not create CachedQuery, probably due to race condition in its creation: %s', exc,
         )
     return None
-
-
-def schedule_renewal(cq: CachedQuery):
-    renew_cached_query_task.apply_async(args=(cq.pk,), eta=cq.valid_until)

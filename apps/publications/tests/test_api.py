@@ -579,11 +579,9 @@ class TestPlatformTitleAPI:
         PlatformTitle.objects.create(
             platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
         )
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            resp = authenticated_client.get(
-                reverse('organization-platform-overlap', args=[organization.pk])
-            )
-            renewal_task.apply_async.assert_called()
+        resp = authenticated_client.get(
+            reverse('organization-platform-overlap', args=[organization.pk])
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 4, '4 overlap records in total'
@@ -613,21 +611,15 @@ class TestPlatformTitleAPI:
             platform=platform2, title=titles[0], organization=organization, date='2019-03-01'
         )
         # first with start_date allowing all records in
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            resp = authenticated_client.get(
-                reverse('organization-platform-overlap', args=[organization.pk]),
-                {'start': '2019-01'},
-            )
-            renewal_task.apply_async.assert_called()
+        resp = authenticated_client.get(
+            reverse('organization-platform-overlap', args=[organization.pk]), {'start': '2019-01'},
+        )
         assert resp.status_code == 200
         assert len(resp.json()) == 4
         # then with start_date which removes the overlapping records
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            resp = authenticated_client.get(
-                reverse('organization-platform-overlap', args=[organization.pk]),
-                {'start': '2019-03'},
-            )
-            renewal_task.apply_async.assert_called()
+        resp = authenticated_client.get(
+            reverse('organization-platform-overlap', args=[organization.pk]), {'start': '2019-03'},
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, 'only 1 self overlap'
@@ -647,11 +639,9 @@ class TestPlatformTitleAPI:
         PlatformTitle.objects.create(
             platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
         )
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            resp = authenticated_client.get(
-                reverse('organization-all-platforms-overlap', args=[organization.pk])
-            )
-            renewal_task.apply_async.assert_called()
+        resp = authenticated_client.get(
+            reverse('organization-all-platforms-overlap', args=[organization.pk])
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2, '2 records for 2 platforms'
@@ -674,9 +664,7 @@ class TestPlatformTitleAPI:
         PlatformTitle.objects.create(
             platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
         )
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            resp = master_client.get(reverse('organization-all-platforms-overlap', args=['-1']))
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(reverse('organization-all-platforms-overlap', args=['-1']))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2, '2 records for 2 platforms'
@@ -940,12 +928,9 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
 class TestTopTitleInterestViewSet:
     def test_all_organizations(self, accesslogs_with_interest, master_client):
         titles = accesslogs_with_interest['titles']
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = master_client.get(
-                reverse('top-title-interest-list', args=['-1']), {'order_by': 'interest1'}
-            )
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(
+            reverse('top-title-interest-list', args=['-1']), {'order_by': 'interest1'}
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2, 'we have two titles'
@@ -959,13 +944,9 @@ class TestTopTitleInterestViewSet:
     def test_one_organization(self, accesslogs_with_interest, master_client):
         organization = accesslogs_with_interest['organization']
         titles = accesslogs_with_interest['titles']
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = master_client.get(
-                reverse('top-title-interest-list', args=[organization.pk]),
-                {'order_by': 'interest1'},
-            )
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(
+            reverse('top-title-interest-list', args=[organization.pk]), {'order_by': 'interest1'},
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2, 'we have two titles'
@@ -977,13 +958,10 @@ class TestTopTitleInterestViewSet:
 
     def test_all_organizations_date_filter(self, accesslogs_with_interest, master_client):
         titles = accesslogs_with_interest['titles']
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = master_client.get(
-                reverse('top-title-interest-list', args=['-1']),
-                {'order_by': 'interest1', 'start': '2019-02'},
-            )
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(
+            reverse('top-title-interest-list', args=['-1']),
+            {'order_by': 'interest1', 'start': '2019-02'},
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2, 'we have two titles'
@@ -996,13 +974,10 @@ class TestTopTitleInterestViewSet:
 
     def test_all_organizations_pub_type_filter(self, accesslogs_with_interest, master_client):
         titles = accesslogs_with_interest['titles']
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = master_client.get(
-                reverse('top-title-interest-list', args=['-1']),
-                {'order_by': 'interest1', 'pub_type': 'J'},
-            )
-            renewal_task.apply_async.assert_called()
+        resp = master_client.get(
+            reverse('top-title-interest-list', args=['-1']),
+            {'order_by': 'interest1', 'pub_type': 'J'},
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, 'we have one title with type J'

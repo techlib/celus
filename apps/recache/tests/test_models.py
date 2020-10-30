@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.utils.timezone import now
 
-from recache.models import CachedQuery, DEFAULT_TIMEOUT, RenewalError
+from recache.models import CachedQuery, DEFAULT_TIMEOUT, RenewalError, DEFAULT_LIFETIME
 from test_fixtures.entities.users import UserFactory
 
 User = get_user_model()
@@ -39,15 +39,21 @@ class TestCachedQuery:
         queryset = User.objects.all()
         cq = CachedQuery.objects.create_from_queryset(queryset)
         assert CachedQuery.objects.past_timeout().count() == 0
-        cq.last_updated = now() - 2 * DEFAULT_TIMEOUT
+        cq.last_updated = now() - DEFAULT_TIMEOUT
         cq.save()
         assert CachedQuery.objects.past_timeout().count() == 1
+        assert CachedQuery.objects.past_timeout().first() == cq
 
     def test_objects_past_lifetime(self):
         UserFactory.create_batch(1)
         queryset = User.objects.all()
-        CachedQuery.objects.create_from_queryset(queryset)
+        cq = CachedQuery.objects.create_from_queryset(queryset)
         assert CachedQuery.objects.past_lifetime().count() == 0
+        cq.last_queried = now() - DEFAULT_LIFETIME
+        cq.save()
+        assert CachedQuery.objects.past_lifetime().count() == 1
+        assert CachedQuery.objects.past_lifetime().first() == cq
+        assert CachedQuery.objects.past_lifetime().delete()[0] == 1
 
     def test_get_fresh_queryset(self):
         UserFactory.create_batch(5)

@@ -51,4 +51,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'logs.tasks.sync_interest_task',
         'schedule': schedule(run_every=timedelta(days=1)),
     },
+    'find_and_renew_first_due_cached_query_task': {
+        'task': 'recache.tasks.find_and_renew_first_due_cached_query_task',
+        'schedule': schedule(run_every=timedelta(minutes=3)),
+    },
 }
