@@ -24,7 +24,7 @@ from test_fixtures.scenarios.basic import (
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 class TestHarvestAPI:
     def test_list(self, basic1, clients, harvests):
         url = reverse('harvest-list')
@@ -53,6 +53,7 @@ class TestHarvestAPI:
         assert data["stats"] == {"total": 2, "planned": 1}
         assert len(data["intentions"]) == 2
 
+    @pytest.mark.django_db(transaction=True)
     def test_create(
         self, basic1, clients, harvests, credentials, counter_report_types, users, monkeypatch
     ):
@@ -379,6 +380,49 @@ class TestFetchIntentionAPI:
 
         resp = clients["master"].get(url, {})
         assert resp.status_code == 404
+
+    def test_retry(self, basic1, clients, harvests):
+        """
+        Tests that when a fetch intention creates a new one as a retry, access to the old one
+        will be preserved
+        """
+        url = reverse(
+            'harvest-intention-detail',
+            args=(harvests['anonymous'].pk, harvests['anonymous'].latest_intentions.first().pk),
+        )
+        resp = clients["master"].get(url, {})
+        assert resp.status_code == 200
+        # create new intention by setting .pk to None and saving
+        old_pk = resp.json()['pk']
+        intention = FetchIntention.objects.get(pk=old_pk)
+        intention.retry_id = intention.pk
+        intention.pk = None
+        intention.data_not_ready_retry = 1
+        intention.attempt = None
+        intention.save()
+
+        # try to get old and new intentions via get
+        resp = clients['master'].get(
+            reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, intention.pk),)
+        )
+        assert resp.status_code == 200, 'new intention should be reachable'
+        resp = clients['master'].get(
+            reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, old_pk),)
+        )
+        assert resp.status_code == 200, 'old intention should be reachable as well'
+
+        # try to get old and new intentions via list
+        resp = clients['master'].get(
+            reverse('harvest-intention-list', args=(harvests['anonymous'].pk,),)
+        )
+        assert resp.status_code == 200
+        assert old_pk not in [e["pk"] for e in resp.json()], 'by default old should be hidden'
+
+        resp = clients['master'].get(
+            reverse('harvest-intention-list', args=(harvests['anonymous'].pk,),) + '?list_all=1'
+        )
+        assert resp.status_code == 200
+        assert old_pk in [e["pk"] for e in resp.json()], '"list_all" param will show all'
 
     @pytest.mark.parametrize(
         "user,anonymous_status,user1_status",

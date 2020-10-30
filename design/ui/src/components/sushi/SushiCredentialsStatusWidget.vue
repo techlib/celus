@@ -2,11 +2,13 @@
 <i18n lang="yaml">
 en:
   in_progress: Fetching data
+  waiting: Waiting for download slot
   fetching_details: Fetching details
   no_data_yet: There are no data yet, please wait until the download finishes. It can take from seconds to minutes.
 
 cs:
   in_progress: Stahuji data
+  waiting: Čekám, až bude možné stahovat data
   fetching_details: Stahuji informace
   no_data_yet: Data ještě nejsou k dispozici - vyčkejte prosím, až budou stáhnutá. Může to trvat od sekund po jednotky minut.
 </i18n>
@@ -14,52 +16,57 @@ cs:
   <v-expansion-panel>
     <v-expansion-panel-header v-slot="{ open }">
       <v-progress-linear
-        v-if="attemptData === null"
+        v-if="intentionData === null"
         height="1.5rem"
         indeterminate
       >
         <span v-text="$t('fetching_details')"></span>
       </v-progress-linear>
-      <v-row v-else-if="attemptData.in_progress">
+      <v-row v-else-if="!intentionData.attempt || intentionData.attempt.in_progress">
         <v-col cols="auto">
-          <span v-if="showPlatform">{{ attemptData.platform.name }} &gt; </span>
-          <strong v-text="attemptData.counter_report_verbose.code"></strong>
+          <span v-if="showPlatform">{{ intentionData.platform_name }} &gt; </span>
+          <strong v-text="intentionData.counter_report_code"></strong>
           <div
             v-if="showOrganization"
             class="font-weight-light font-italic"
-            v-text="attemptData.organization.name"
+            v-text="intentionData.organization_name"
           ></div>
         </v-col>
         <v-col>
           <v-progress-linear height="1.5rem" indeterminate>
-            <span>{{ $t("in_progress") }}, {{ elapsedTime }} s</span>
+            <span v-if="intentionData.attempt">
+            {{ $t("in_progress") }}, {{ elapsedTime }} s
+            </span>
+            <span v-else>
+            {{ $t("waiting") }}, {{ elapsedTime }} s
+            </span>
           </v-progress-linear>
         </v-col>
       </v-row>
-      <v-row v-else>
+      <v-row v-else-if="intentionData.attempt">
         <v-col cols="auto">
-          <span v-if="showPlatform">{{ attemptData.platform.name }} &gt; </span>
-          <strong v-text="attemptData.counter_report_verbose.code"></strong>
+          <span v-if="showPlatform">{{ intentionData.platform_name }} &gt; </span>
+          <strong v-text="intentionData.counter_report_code"></strong>
           <div
             v-if="showOrganization"
             class="font-weight-light font-italic"
-            v-text="attemptData.organization.name"
+            v-text="intentionData.organization_name"
           ></div>
         </v-col>
         <v-col>
           {{ $t("title_fields.download_success") }}:
           <GoodBadMark
-            :value="attemptData.download_success"
+            :value="intentionData.attempt.download_success"
             extra-classes="fa-fw"
           ></GoodBadMark>
           {{ $t("title_fields.processing_success") }}:
           <GoodBadMark
-            :value="attemptData.processing_success"
+            :value="intentionData.attempt.processing_success"
             extra-classes="fa-fw"
           ></GoodBadMark>
           {{ $t("title_fields.contains_data") }}:
           <GoodBadMark
-            :value="attemptData.contains_data"
+            :value="intentionData.attempt.contains_data"
             extra-classes="fa-fw"
           ></GoodBadMark>
         </v-col>
@@ -67,24 +74,24 @@ cs:
     </v-expansion-panel-header>
     <v-expansion-panel-content>
       <span
-        v-if="!attemptData || attemptData.in_progress"
+        v-if="!intentionData || !intentionData.attempt || intentionData.attempt.in_progress"
         v-text="$t('no_data_yet')"
       ></span>
       <div v-else>
-        <div v-if="attemptData.data_file">
+        <div v-if="intentionData.attempt.data_file">
           <strong>{{ $t("title_fields.data_file") }}</strong
           >:
-          <a :href="attemptData.data_file" target="_blank">{{
-            attemptData.data_file
+          <a :href="intentionData.attempt.data_file" target="_blank">{{
+            intentionData.attempt.data_file
           }}</a>
         </div>
-        <div v-if="attemptData.error_code">
+        <div v-if="intentionData.attempt.error_code">
           <strong>{{ $t("title_fields.error_code") }}</strong
-          >: {{ attemptData.error_code }}
+          >: {{ intentionData.attempt.error_code }}
         </div>
-        <div v-if="attemptData.log">
+        <div v-if="intentionData.attempt.log">
           <strong>{{ $t("title_fields.log") }}</strong
-          >: {{ attemptData.log }}
+          >: {{ intentionData.attempt.log }}
         </div>
       </div>
     </v-expansion-panel-content>
@@ -100,7 +107,11 @@ export default {
   name: "SushiCredentialsStatusWidget",
   components: { GoodBadMark },
   props: {
-    attemptId: {
+    intentionId: {
+      required: true,
+      type: Number,
+    },
+    harvestId: {
       required: true,
       type: Number,
     },
@@ -110,7 +121,7 @@ export default {
   },
   data() {
     return {
-      attemptData: null,
+      intentionData: null,
       startTime: null,
       now: null,
       lastCheck: null,
@@ -129,10 +140,10 @@ export default {
     async check() {
       try {
         let response = await axios.get(
-          `/api/sushi-fetch-attempt/${this.attemptId}/`
+          `/api/scheduler/harvest/${this.harvestId}/intention/${this.intentionId}/`
         );
-        this.attemptData = response.data;
-        if (this.attemptData.in_progress && !this.inactive) {
+        this.intentionData = response.data;
+        if ((!this.intentionData || !this.intentionData.attempt || this.intentionData.attempt.in_progress) && !this.inactive) {
           setTimeout(this.check, this.retryInterval);
         }
       } catch (error) {

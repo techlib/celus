@@ -1,4 +1,6 @@
 import format from "date-fns/format";
+import getYear from "date-fns/getYear";
+import getMonth from "date-fns/getMonth";
 import parseISO from "date-fns/parseISO";
 
 function isoDateFormat(date) {
@@ -7,6 +9,16 @@ function isoDateFormat(date) {
 
 function ymDateFormat(date) {
   return format(date, "yyyy-MM");
+}
+
+function ymFirstDay(ymdate) {
+	let parsed = parseISO(ymdate, "yyyy-MM", Date());
+	return format(new Date(getYear(parsed), getMonth(parsed), 1), "yyyy-MM-dd");
+}
+
+function ymLastDay(ymdate) {
+	let parsed = parseISO(ymdate, "yyyy-MM", Date());
+	return format(new Date(getYear(parsed), getMonth(parsed) + 1, 0), "yyyy-MM-dd");
 }
 
 function parseDateTime(text) {
@@ -33,6 +45,8 @@ function isoDateTimeFormatSpans(date) {
 export {
   isoDateFormat,
   ymDateFormat,
+  ymFirstDay,
+  ymLastDay,
   parseDateTime,
   isoDateTimeFormat,
   isoDateTimeFormatSpans,

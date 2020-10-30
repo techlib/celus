@@ -404,6 +404,7 @@ class TestScheduler:
 
 @pytest.mark.django_db
 class TestHarvest:
+    @pytest.mark.django_db(transaction=True)
     def test_plan_harvesting(self, counter_report_types, credentials, monkeypatch, users):
         urls = set()
 

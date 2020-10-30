@@ -93,7 +93,7 @@ cs:
       </v-col>
       <v-col cols="6" md="4" lg="3" v-if="!started">
         <v-btn
-          @click="createAttempts()"
+          @click="createIntentions()"
           v-text="
             test ? $t('actions.start_test') : $t('actions.start_harvesting')
           "
@@ -131,9 +131,10 @@ cs:
     <v-row v-else no-gutters>
       <v-expansion-panels>
         <SushiCredentialsStatusWidget
-          v-for="attemptId in attemptIds"
-          :attempt-id="attemptId"
-          :key="attemptId"
+          v-for="intentionId in intentionIds"
+          :intention-id="intentionId"
+          :harvest-id="harvestId"
+          :key="intentionId"
           ref="attemptStatus"
           :retryInterval="retryInterval"
           :show-organization="showOrganization"
@@ -148,7 +149,7 @@ cs:
 <script>
 import { mapActions } from "vuex";
 import axios from "axios";
-import { ymDateFormat } from "@/libs/dates";
+import { ymDateFormat, ymFirstDay, ymLastDay } from "@/libs/dates";
 import SushiCredentialsStatusWidget from "./SushiCredentialsStatusWidget";
 import addMonths from "date-fns/addMonths";
 
@@ -167,7 +168,8 @@ export default {
 
   data() {
     return {
-      attemptIds: [], //11757, 11758],
+      intentionIds: [], //11757, 11758],
+      harvestId: null,
       startDate: null,
       endDate: null,
       started: false,
@@ -199,25 +201,34 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
-    async createAttempts() {
+    async createIntentions() {
+
+      let intentions = [];
+      let startDate = ymFirstDay(this.startDate);
+      let endDate = ymLastDay(this.endDate);
+
       for (let cred of this.credentials) {
         for (let rt of cred.counter_reports_long) {
           if (!rt.broken) {
-            await this.createAttempt(cred, rt.id);
+            intentions.push({
+                start_date: startDate,
+                end_date: endDate,
+                credentials: cred.pk,
+                counter_report: rt.id,
+            });
           }
         }
-        this.started = true;
       }
-    },
-    async createAttempt(credentials, reportType) {
+      this.started = true;
+
       try {
-        let response = await axios.post(`/api/sushi-fetch-attempt/`, {
-          start_date: this.startDate + "-01",
-          end_date: this.endDate + "-01",
-          credentials: credentials.pk,
-          counter_report: reportType,
+        let response = await axios.post(`/api/scheduler/harvest/`, {
+            intentions: intentions,
         });
-        this.attemptIds.push(response.data.pk);
+        this.harvestId = response.data.pk;
+        for (let intention of response.data.intentions) {
+            this.intentionIds.push(intention.pk);
+        }
       } catch (error) {
         this.showSnackbar({
           content: "Error starting SUSHI test: " + error,

@@ -271,7 +271,7 @@ class FetchIntention(models.Model):
             ).update(duplicate_of=self)
 
             # Plan data synchronization
-            import_one_sushi_attempt_task.delay(attempt.pk)
+            transaction.on_commit(lambda: import_one_sushi_attempt_task.delay(attempt.pk))
 
         return ProcessResponse.SUCCESS
 
@@ -416,6 +416,18 @@ class FetchIntention(models.Model):
         # prepare retry
         self._create_retry(self.scheduler.when_ready)
 
+    @property
+    def platform_name(self):
+        return self.credentials.platform.name
+
+    @property
+    def organization_name(self):
+        return self.credentials.organization.name
+
+    @property
+    def counter_report_code(self):
+        return self.counter_report.code
+
 
 class Harvest(CreatedUpdatedMixin):
     def stats(self) -> typing.Tuple[int, int]:
@@ -478,8 +490,13 @@ class Harvest(CreatedUpdatedMixin):
         if priority >= FetchIntention.PRIORITY_NOW:
             from .tasks import trigger_scheduler
 
-            for url in urls:
-                trigger_scheduler.delay(url, True)
+            # We need to plan to trigger the schedulers
+            # after this transaction is terminated
+            def plan_schedulers():
+                for url in urls:
+                    trigger_scheduler.delay(url, True)
+
+            transaction.on_commit(plan_schedulers)
 
         return harvest
 

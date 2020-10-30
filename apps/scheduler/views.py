@@ -109,4 +109,8 @@ class IntentionViewSet(ReadOnlyModelViewSet):
             kwargs["last_updated_by"] = self.request.user
 
         harvest = get_object_or_404(Harvest, **kwargs)
-        return harvest.latest_intentions
+
+        if self.action == 'list' and not bool(self.request.query_params.get('list_all', False)):
+            return harvest.latest_intentions
+        else:
+            return harvest.intentions

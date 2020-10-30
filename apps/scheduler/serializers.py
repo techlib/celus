@@ -24,7 +24,6 @@ class CreateFetchIntentionSerializer(serializers.ModelSerializer):
             'counter_report',
             'start_date',
             'end_date',
-            'when_processed',
         )
 
 
@@ -34,9 +33,13 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
     class Meta:
         model = FetchIntention
         fields = (
+            'pk',
             'not_before',
             'credentials',
             'counter_report',
+            'platform_name',
+            'organization_name',
+            'counter_report_code',
             'attempt',
             'start_date',
             'end_date',
@@ -97,7 +100,7 @@ class RetrieveHarvestSerializer(serializers.ModelSerializer):
 
 
 class CreateHarvestSerializer(serializers.ModelSerializer):
-    intentions = FetchIntentionSerializer(many=True, write_only=True)
+    intentions = CreateFetchIntentionSerializer(many=True, write_only=True)
 
     class Meta:
         model = Harvest
