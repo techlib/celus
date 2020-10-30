@@ -432,13 +432,15 @@ table.overlap {
     border: solid 1px #ccc;
     text-align: right;
     padding: 3px;
-    width: 5rem;
+    min-width: 5rem;
     font-size: 81.25%;
 
     &.spacer {
       border-top: none;
       border-bottom: none;
       width: 1rem;
+      max-width: 1rem;
+      min-width: 1rem;
     }
   }
 

@@ -31,90 +31,94 @@ cs:
     color="#33aa33"
     icon="fa fa-info-circle"
   />
-  <table v-else class="overlap">
-    <thead>
-      <tr>
-        <th class="pt-8 bottom">
-          <v-btn-toggle v-model="relative" mandatory dense>
+  <div v-else class="overflow-auto mr-6">
+    <table class="overlap">
+      <thead>
+        <tr>
+          <th class="pt-8 bottom">
+            <v-btn-toggle v-model="relative" mandatory dense>
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <v-btn :value="false" small v-on="on">123</v-btn>
+                </template>
+                {{ $t("absolute_numbers") }}
+              </v-tooltip>
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <v-btn :value="true" small v-on="on">%</v-btn>
+                </template>
+                {{ $t("relative_numbers") }}
+              </v-tooltip>
+            </v-btn-toggle>
+          </th>
+          <th
+            v-for="platform of usedPlatforms"
+            :key="`plcol-${platform.pk}`"
+            class="rotated"
+          >
+            <div>
+              <span>{{ platform.short_name }}</span>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="loading">
+          <th>loading</th>
+        </tr>
+        <tr v-for="platform1 of usedPlatforms" :key="`plrow-${platform1.pk}`">
+          <th>{{ platform1.short_name }}</th>
+          <td
+            v-for="platform2 of usedPlatforms"
+            :key="`${platform1.pk}-${platform2.pk}`"
+            :class="{ 'self-overlap': platform1.pk === platform2.pk }"
+            :style="{ backgroundColor: overlapColor(platform1, platform2) }"
+          >
             <v-tooltip bottom>
               <template #activator="{ on }">
-                <v-btn :value="false" small v-on="on">123</v-btn>
+                <span v-on="on" class="full">
+                  {{ overlapValue(platform1, platform2, relative) }}
+                </span>
               </template>
-              {{ $t("absolute_numbers") }}
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-btn :value="true" small v-on="on">%</v-btn>
-              </template>
-              {{ $t("relative_numbers") }}
-            </v-tooltip>
-          </v-btn-toggle>
-        </th>
-        <th
-          v-for="platform of usedPlatforms"
-          :key="`plcol-${platform.pk}`"
-          class="rotated"
-        >
-          <div>
-            <span>{{ platform.short_name }}</span>
-          </div>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-if="loading">
-        <th>loading</th>
-      </tr>
-      <tr v-for="platform1 of usedPlatforms" :key="`plrow-${platform1.pk}`">
-        <th>{{ platform1.short_name }}</th>
-        <td
-          v-for="platform2 of usedPlatforms"
-          :key="`${platform1.pk}-${platform2.pk}`"
-          :class="{ 'self-overlap': platform1.pk === platform2.pk }"
-          :style="{ backgroundColor: overlapColor(platform1, platform2) }"
-        >
-          <v-tooltip bottom>
-            <template #activator="{ on }">
-              <span v-on="on" class="full">
-                {{ overlapValue(platform1, platform2, relative) }}
+              <span v-if="platform1.pk !== platform2.pk">
+                <i18n path="tooltip_two_platforms" tag="span">
+                  <template v-slot:absValue>
+                    {{ overlapValue(platform1, platform2, false) }}
+                  </template>
+                  <template v-slot:relValue>{{
+                    overlapValue(platform1, platform2, true)
+                  }}</template>
+                  <template v-slot:platformName1>
+                    <strong>{{ platform1.short_name }}</strong>
+                  </template>
+                  <template v-slot:platformName2>
+                    <strong>{{ platform2.short_name }}</strong>
+                  </template>
+                  <template v-slot:is_also_available>
+                    {{
+                      $tc(
+                        "is_also_available",
+                        overlapValue(platform1, platform2, false)
+                      )
+                    }}
+                  </template>
+                  <template v-slot:titles>
+                    {{
+                      $tc("titles", overlapValue(platform1, platform2, false))
+                    }}
+                  </template>
+                </i18n>
               </span>
-            </template>
-            <span v-if="platform1.pk !== platform2.pk">
-              <i18n path="tooltip_two_platforms" tag="span">
-                <template v-slot:absValue>
-                  {{ overlapValue(platform1, platform2, false) }}
-                </template>
-                <template v-slot:relValue>{{
-                  overlapValue(platform1, platform2, true)
-                }}</template>
-                <template v-slot:platformName1>
-                  <strong>{{ platform1.short_name }}</strong>
-                </template>
-                <template v-slot:platformName2>
-                  <strong>{{ platform2.short_name }}</strong>
-                </template>
-                <template v-slot:is_also_available>
-                  {{
-                    $tc(
-                      "is_also_available",
-                      overlapValue(platform1, platform2, false)
-                    )
-                  }}
-                </template>
-                <template v-slot:titles>
-                  {{ $tc("titles", overlapValue(platform1, platform2, false)) }}
-                </template>
-              </i18n>
-            </span>
-            <span v-else>
-              <strong>{{ platform1.short_name }}</strong> has
-              {{ overlapValue(platform1, platform2, false) }} titles
-            </span>
-          </v-tooltip>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+              <span v-else>
+                <strong>{{ platform1.short_name }}</strong> has
+                {{ overlapValue(platform1, platform2, false) }} titles
+              </span>
+            </v-tooltip>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </template>
 
 <script>
@@ -295,18 +299,13 @@ table.overlap {
         width: 30px;
       }
     }
-
-    &.bottom {
-      vertical-align: bottom;
-      padding-bottom: 1rem;
-    }
   }
 
   td {
     border: solid 1px #ccc;
     text-align: right;
     padding: 3px;
-    width: 5rem;
+    min-width: 3rem;
     font-weight: bold;
     font-size: 81.25%;
 

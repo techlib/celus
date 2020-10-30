@@ -32,73 +32,85 @@ cs:
 
 <template>
   <v-container v-if="selectedOrganizationId" fluid>
-    <v-row>
+    <!--v-row>
       <v-col>
         <h3 class="pt-3 text-h5">{{ $t("platform_overlap") }}</h3>
       </v-col>
-    </v-row>
+    </v-row-->
     <v-row>
       <v-col>
-        <v-tabs v-model="tab" dark background-color="primary">
-          <v-tab href="#one-vs-all" v-text="$t('platform_vs_all_overlap')">
-          </v-tab>
-          <v-tab href="#one-vs-one" v-text="$t('platform_vs_platform_overlap')">
-          </v-tab>
+        <v-card elevation="4">
+          <v-tabs
+            v-model="tab"
+            dark
+            background-color="indigo"
+            centered
+            slider-color="pink"
+          >
+            <v-tab href="#one-vs-all" v-text="$t('platform_vs_all_overlap')">
+            </v-tab>
+            <v-tab
+              href="#one-vs-one"
+              v-text="$t('platform_vs_platform_overlap')"
+            >
+            </v-tab>
 
-          <v-tab-item value="one-vs-one">
-            <v-container>
-              <v-row>
-                <v-col cols="12" lg="10" xl="7" v-text="$t('info')"></v-col>
-                <v-col cols="12" lg="10" xl="7" class="pb-0">
-                  <v-alert
-                    type="info"
-                    colored-border
-                    border="left"
-                    elevation="4"
-                  >
-                    <div>
-                      {{ $t("info2") }}
-                    </div>
-                  </v-alert>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col class="overflow-auto">
-                  <PlatformOverlapTable />
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-tab-item>
-          <v-tab-item value="one-vs-all">
-            <v-container>
-              <v-row>
-                <v-col
-                  cols="12"
-                  lg="10"
-                  xl="7"
-                  v-text="$t('info_vs_all')"
-                ></v-col>
-                <v-col cols="12" lg="10" xl="7" class="pb-0">
-                  <v-alert
-                    type="info"
-                    colored-border
-                    border="left"
-                    elevation="4"
-                  >
-                    <div>
-                      {{ $t("info_vs_all2") }}
-                    </div>
-                  </v-alert>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col class="overflow-auto">
-                  <PlatformVsAllOverlapTable />
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-tab-item>
-        </v-tabs>
+            <v-tab-item value="one-vs-all">
+              <v-container class="mx-4 pb-10">
+                <v-row>
+                  <v-col
+                    cols="12"
+                    lg="10"
+                    xl="7"
+                    v-text="$t('info_vs_all')"
+                  ></v-col>
+                  <v-col cols="12" lg="10" xl="7" class="pb-0">
+                    <v-alert
+                      type="info"
+                      colored-border
+                      border="left"
+                      elevation="4"
+                    >
+                      <div>
+                        {{ $t("info_vs_all2") }}
+                      </div>
+                    </v-alert>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col class="overflow-auto">
+                    <PlatformVsAllOverlapTable />
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-tab-item>
+
+            <v-tab-item value="one-vs-one">
+              <v-container class="mx-4 pb-10">
+                <v-row>
+                  <v-col cols="12" lg="10" xl="7" v-text="$t('info')"></v-col>
+                  <v-col cols="12" lg="10" xl="7" class="pb-0">
+                    <v-alert
+                      type="info"
+                      colored-border
+                      border="left"
+                      elevation="4"
+                    >
+                      <div>
+                        {{ $t("info2") }}
+                      </div>
+                    </v-alert>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col>
+                    <PlatformOverlapTable />
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-tab-item>
+          </v-tabs>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
