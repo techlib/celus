@@ -798,6 +798,14 @@ class SushiFetchAttempt(models.Model):
         ).exclude(pk=self.pk)
 
     def retry(self):
+        # This function will be depracated in the future
+        from scheduler.models import FetchIntention
+
+        # Attempts planned with FetchIntention have retries planned
+        # within FetchIntention class
+        if FetchIntention.objects.filter(attempt=self).exists():
+            return self
+
         with atomic():
             # set queue queue_id if not already set
             if not self.queue_id:

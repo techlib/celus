@@ -167,7 +167,7 @@ class FetchIntention(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     when_processed = models.DateTimeField(help_text="When fetch unit was processed", null=True)
-    attempt = models.ForeignKey(SushiFetchAttempt, null=True, on_delete=models.SET_NULL)
+    attempt = models.OneToOneField(SushiFetchAttempt, null=True, on_delete=models.SET_NULL)
     harvest = models.ForeignKey(
         'scheduler.Harvest', on_delete=models.CASCADE, related_name="intentions"
     )
