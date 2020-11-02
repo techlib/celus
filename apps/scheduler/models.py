@@ -68,6 +68,12 @@ class Scheduler(models.Model):
     service_not_available_delay = models.IntegerField(default=DEFAULT_SERVICE_NOT_AVAILABLE_DELAY)
     service_busy_delay = models.IntegerField(default=DEFAULT_SERVICE_BUSY_DELAY)
 
+    def __repr__(self):
+        return f'Scheduler #{self.pk} for "{self.url}"'
+
+    def __str__(self):
+        return self.url
+
     @property
     def last_time(self) -> typing.Optional[datetime]:
         intetion = (
@@ -430,6 +436,9 @@ class FetchIntention(models.Model):
 
 
 class Harvest(CreatedUpdatedMixin):
+    def __str__(self):
+        return f'Harvest #{self.pk}'
+
     def stats(self) -> typing.Tuple[int, int]:
         """ Returns how many intentions are finished.
         Note that it considers replaned intentions as one
