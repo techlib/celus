@@ -1,8 +1,19 @@
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.5.4]
+
+### Changes
+
+#### Backend
+
+- recache re-evaluation is done periodically by a celerybeat task rather than each object planning
+  its renewal separately. This should get rid of multiplication of celery tasks as observed
+  in some installations.
 
 ## [2.5.3]
 
