@@ -29,6 +29,7 @@ class CreateFetchIntentionSerializer(serializers.ModelSerializer):
 
 class FetchIntentionSerializer(serializers.ModelSerializer):
     attempt = SushiFetchAttemptSerializer(required=False)
+    fetching_data = serializers.BooleanField()
 
     class Meta:
         model = FetchIntention
@@ -40,6 +41,7 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
             'platform_name',
             'organization_name',
             'counter_report_code',
+            'fetching_data',
             'attempt',
             'start_date',
             'end_date',

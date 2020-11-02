@@ -190,6 +190,14 @@ class FetchIntention(models.Model):
         )
 
     @property
+    def fetching_data(self) -> bool:
+        try:
+            FetchIntention.objects.select_for_update(nowait=True).get(pk=self.pk)  # noqa
+            return False
+        except DatabaseError:
+            return True
+
+    @property
     def priority_now(self) -> bool:
         return self.priority >= FetchIntention.PRIORITY_NOW
 

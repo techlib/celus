@@ -22,7 +22,7 @@ cs:
       >
         <span v-text="$t('fetching_details')"></span>
       </v-progress-linear>
-      <v-row v-else-if="!intentionData.attempt || intentionData.attempt.in_progress">
+      <v-row v-else-if="!intentionData.attempt">
         <v-col cols="auto">
           <span v-if="showPlatform">{{ intentionData.platform_name }} &gt; </span>
           <strong v-text="intentionData.counter_report_code"></strong>
@@ -34,7 +34,7 @@ cs:
         </v-col>
         <v-col>
           <v-progress-linear height="1.5rem" indeterminate>
-            <span v-if="intentionData.attempt">
+            <span v-if="intentionData.fetching_data">
             {{ $t("in_progress") }}, {{ elapsedTime }} s
             </span>
             <span v-else>
@@ -74,22 +74,22 @@ cs:
     </v-expansion-panel-header>
     <v-expansion-panel-content>
       <span
-        v-if="!intentionData || !intentionData.attempt || intentionData.attempt.in_progress"
+        v-if="!intentionData || intentionData.fetching_data"
         v-text="$t('no_data_yet')"
       ></span>
       <div v-else>
-        <div v-if="intentionData.attempt.data_file">
+        <div v-if="intentionData.attempt && intentionData.attempt.data_file">
           <strong>{{ $t("title_fields.data_file") }}</strong
           >:
           <a :href="intentionData.attempt.data_file" target="_blank">{{
             intentionData.attempt.data_file
           }}</a>
         </div>
-        <div v-if="intentionData.attempt.error_code">
+        <div v-if="intentionData.attempt && intentionData.attempt.error_code">
           <strong>{{ $t("title_fields.error_code") }}</strong
           >: {{ intentionData.attempt.error_code }}
         </div>
-        <div v-if="intentionData.attempt.log">
+        <div v-if="intentionData.attempt && intentionData.attempt.log">
           <strong>{{ $t("title_fields.log") }}</strong
           >: {{ intentionData.attempt.log }}
         </div>
@@ -143,7 +143,7 @@ export default {
           `/api/scheduler/harvest/${this.harvestId}/intention/${this.intentionId}/`
         );
         this.intentionData = response.data;
-        if ((!this.intentionData || !this.intentionData.attempt || this.intentionData.attempt.in_progress) && !this.inactive) {
+        if ((!this.intentionData || !this.intentionData.attempt || this.intentionData.fetching_data) && !this.inactive) {
           setTimeout(this.check, this.retryInterval);
         }
       } catch (error) {
