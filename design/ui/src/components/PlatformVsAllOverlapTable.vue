@@ -253,7 +253,9 @@ export default {
       platformIds.forEach((item) =>
         usedPlatforms.push(this.platforms.get(item))
       );
-      return usedPlatforms.sort((a, b) => a.name > b.name);
+      return usedPlatforms.sort((a, b) =>
+        a.short_name.localeCompare(b.short_name)
+      );
     },
   },
 
