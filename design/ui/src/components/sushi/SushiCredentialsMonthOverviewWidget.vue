@@ -318,7 +318,7 @@ export default {
       );
       return [
         { name: this.$t("all_platforms"), pk: null },
-        ...[...usedPlatforms].sort((a, b) => a.name > b.name),
+        ...[...usedPlatforms].sort((a, b) => a.name.localeCompare(b.name)),
       ];
     },
     activeAttempts() {

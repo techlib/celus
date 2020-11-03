@@ -115,7 +115,7 @@ export default {
         .map(([key, value]) => {
           return { name: key, value: value };
         })
-        .sort((a, b) => a.name > b.name);
+        .sort((a, b) => a.name.localeCompare(b.name));
     },
 
     metricsSorted() {
@@ -123,7 +123,7 @@ export default {
         .map(([key, value]) => {
           return { name: key, value: value };
         })
-        .sort((a, b) => a.value < b.value);
+        .sort((a, b) => a.value - b.value);
     },
 
     titleCount() {
