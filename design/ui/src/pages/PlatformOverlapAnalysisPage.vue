@@ -43,9 +43,10 @@ cs:
           <v-tabs
             v-model="tab"
             dark
-            background-color="indigo"
+            background-color="info"
             centered
-            slider-color="pink"
+            slider-color="#ffffff33"
+            slider-size="48"
           >
             <v-tab href="#one-vs-all" v-text="$t('platform_vs_all_overlap')">
             </v-tab>
