@@ -1,11 +1,16 @@
 """
 Celery tasks related to SUSHI fetching
 """
+
 import logging
+import typing
+
 from collections import Counter
 from datetime import datetime
+from functools import wraps
 
 import celery
+from django.conf import settings
 
 from core.logic.dates import month_end
 from core.logic.error_reporting import email_if_fails
@@ -15,6 +20,7 @@ from logs.tasks import (
     smart_interest_sync_task,
     sync_materialized_reports_task,
 )
+from scheduler.models import FetchIntention, Harvest
 from sushi.models import (
     SushiFetchAttempt,
     SushiCredentials,
@@ -26,8 +32,21 @@ from .logic.fetching import retry_queued, fetch_new_sushi_data, find_holes_in_da
 logger = logging.getLogger(__name__)
 
 
+def new_harvest_check(function: typing.Callable) -> typing.Callable:
+    @wraps(function)
+    def inner(*args, **kwargs):
+        if settings.AUTOMATIC_HARVESTING_ENABLED:
+            logger.warning("Fetching should be triggered only within scheduler app -> skipping")
+            return
+        else:
+            return function(*args, **kwargs)
+
+    return inner
+
+
 @celery.shared_task
 @email_if_fails
+@new_harvest_check
 def run_sushi_fetch_attempt_task(attempt_id: int, import_data: bool = False):
     try:
         attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
@@ -65,6 +84,7 @@ def run_sushi_fetch_attempt_task(attempt_id: int, import_data: bool = False):
 
 @celery.shared_task
 @email_if_fails
+@new_harvest_check
 def retry_queued_attempts_task():
     """
     Retry downloading data for attempts that were queued
@@ -75,6 +95,7 @@ def retry_queued_attempts_task():
 
 @celery.shared_task
 @email_if_fails
+@new_harvest_check
 def fetch_new_sushi_data_task():
     """
     Fetch sushi data for dates and platforms where they are not available
@@ -85,6 +106,7 @@ def fetch_new_sushi_data_task():
 
 @celery.shared_task
 @email_if_fails
+@new_harvest_check
 def fetch_new_sushi_data_for_credentials_task(credentials_id: int):
     """
     Fetch sushi data for dates and platforms where they are not available - only for specific
@@ -131,6 +153,73 @@ def make_fetch_attempt_task(
 @celery.shared_task
 @email_if_fails
 def retry_holes_with_new_credentials_task():
+    if settings.AUTOMATIC_HARVESTING_ENABLED:
+        retry_holes_with_new_credentials_task_new()
+    else:
+        retry_holes_with_new_credentials_task_old()
+
+
+def retry_holes_with_new_credentials_task_new():
+    stats = Counter()
+
+    holes = find_holes_in_data()
+    if len(holes) == 0:
+        logger.debug('No holes found; aborting')
+        return  # No holes
+    logger.debug('Found %d holes to retry', len(holes))
+
+    intentions: typing.List[FetchIntention] = []
+    for hole in holes:
+
+        # skip broken
+        if hole.credentials.broken:
+            logger.debug("Broken credentials (pk=%s); skipping", hole.credentials.pk)
+            stats["broken"] += 1
+            continue
+
+        if CounterReportsToCredentials.objects.filter(
+            credentials=hole.credentials, counter_report=hole.counter_report, broken__isnull=False
+        ).exists():
+            logger.debug(
+                "Counter report (code=%s) for credentials (pk=%s) is broken; skipping",
+                hole.counter_report.code,
+                hole.credentials.pk,
+            )
+            stats["broken"] += 1
+            continue
+
+        # Missing mapping
+        if not CounterReportsToCredentials.objects.filter(
+            credentials=hole.credentials, counter_report=hole.counter_report, broken__isnull=True
+        ).exists():
+            logger.debug(
+                "Counter report (code=%s) for credentials (pk=%s) is missing; skipping",
+                hole.counter_report.code,
+                hole.credentials.pk,
+            )
+            stats["missing"] += 1
+            continue
+
+        logger.debug('Trying to fill hole: %s / %s', hole.credentials, hole.date)
+        intentions.append(
+            FetchIntention(
+                credentials=hole.credentials,
+                counter_report=hole.counter_report,
+                start_date=hole.date.isoformat(),
+                end_date=month_end(hole.date).isoformat(),
+            )
+        )
+        stats["planned"] += 1
+
+    # plan harvest for missing holes
+    # probably we can keep Normal priority here
+    # we don't need to trigger downloads right away
+    Harvest.plan_harvesting(intentions)
+
+    logger.debug('Hole filling stats: %s', stats)
+
+
+def retry_holes_with_new_credentials_task_old():
     """
     Finds holes in data using `find_holes_in_data` and runs redownload tasks for them.
     """

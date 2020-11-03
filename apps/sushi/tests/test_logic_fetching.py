@@ -21,6 +21,7 @@ from ..logic.fetching import (
     process_fetch_units,
     retry_queued,
 )
+from scheduler.models import FetchIntention
 from sushi.models import (
     CounterReportType,
     SushiCredentials,
@@ -166,12 +167,16 @@ class TestHoleFillingMachinery:
         holes = find_holes_in_data()
         assert len(holes) == 0
 
+    @pytest.mark.parametrize("new_harvest", (True, False))
     def test_retry_holes_with_new_credentials_task(
-        self, settings, organizations, counter_report_types, monkeypatch
+        self, settings, organizations, counter_report_types, monkeypatch, new_harvest
     ):
         """
         Tests the task based version of trying data holes
         """
+
+        settings.AUTOMATIC_HARVESTING_ENABLED = new_harvest
+
         # set the date to 3 months before today
         first_month = month_start(month_start(now().date()) - timedelta(days=80))
         settings.SUSHI_ATTEMPT_LAST_DATE = first_month.isoformat()[:7]
@@ -205,7 +210,10 @@ class TestHoleFillingMachinery:
         assert SushiFetchAttempt.objects.count() == 0
         with patch('sushi.tasks.make_fetch_attempt_task') as task_mock:
             retry_holes_with_new_credentials_task()
-            assert task_mock.apply_async.call_count == 3
+            if new_harvest:
+                assert FetchIntention.objects.count() == 3
+            else:
+                assert task_mock.apply_async.call_count == 3
 
 
 @pytest.mark.django_db
