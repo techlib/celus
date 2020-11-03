@@ -63,7 +63,16 @@ export default {
     },
     rows() {
       let rows = this.platforms.map((platform) => {
-        return { name: platform.name, ...platform.interests };
+        let interests = { ...platform.interests };
+        // we have to remove 0 values from log-scale view
+        if (this.logScale) {
+          for (let key of Object.keys(interests)) {
+            if (interests[key] === 0) {
+              interests[key] = null;
+            }
+          }
+        }
+        return { name: platform.name, ...interests };
       });
       rows.reverse();
       return rows;
