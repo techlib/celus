@@ -654,6 +654,67 @@ class TestPlatformTitleAPI:
                 assert rec['overlap_interest'] == 0, 'no interest on platform 2'
                 assert rec['total_interest'] == 0, 'no interest on platform 2'
 
+    def test_organization_all_platform_overlap_2(
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+    ):
+        """
+        Create two identical sets of access logs but for different platforms and see what the overlap would be
+        """
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        organization = accesslogs_with_interest['organization']
+        platform = accesslogs_with_interest['platform']
+        titles = accesslogs_with_interest['titles']
+        import_batch = accesslogs_with_interest['import_batch']
+        metric = accesslogs_with_interest['metric']
+        import_batch2 = ImportBatch.objects.create(
+            platform=platform, organization=organization, report_type=import_batch.report_type
+        )
+        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
+        # here we create the same accesslogs for a different platform
+        accesslog_basics = {
+            'report_type': import_batch.report_type,
+            'metric': metric,
+            'platform': platform2,
+            'import_batch': import_batch2,
+        }
+        accesslogs = [
+            AccessLog.objects.create(
+                target=titles[0],
+                value=1,
+                date='2019-01-01',
+                organization=organization,
+                **accesslog_basics,
+            ),
+            AccessLog.objects.create(
+                target=titles[0],
+                value=2,
+                date='2019-02-01',
+                organization=organization,
+                **accesslog_basics,
+            ),
+            AccessLog.objects.create(
+                target=titles[1],
+                value=4,
+                date='2019-02-01',
+                organization=organization,
+                **accesslog_basics,
+            ),
+        ]
+        create_platformtitle_links_from_accesslogs(accesslogs)
+        sync_interest_by_import_batches()
+
+        UserOrganization.objects.create(user=identity.user, organization=organization)
+        resp = authenticated_client.get(
+            reverse('organization-all-platforms-overlap', args=[organization.pk])
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2, '2 records for 2 platforms'
+        for rec in data:
+            assert rec['overlap'] == 2, 'both platforms share the same 2 titles'
+            assert rec['overlap_interest'] == 7
+            assert rec['total_interest'] == 7
+
     def test_organization_all_platform_overlap_all_orgs(
         self, master_client, accesslogs_with_interest, platforms,
     ):
@@ -920,7 +981,7 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
     return {
         key: val
         for key, val in locals().items()
-        if key in ('accesslogs', 'titles', 'organization', 'platform')
+        if key in ('accesslogs', 'titles', 'organization', 'platform', 'import_batch', 'metric')
     }
 
 
