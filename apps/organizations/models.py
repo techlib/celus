@@ -35,7 +35,7 @@ class Organization(MPTTModel):
     address = JSONField(default=dict, blank=True)
     source = models.ForeignKey(
         'core.DataSource',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='defined_organizations',
@@ -64,7 +64,7 @@ class OrganizationAltName(models.Model):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     name = models.CharField(max_length=250)
-    source = models.ForeignKey('core.DataSource', on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey('core.DataSource', on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -92,7 +92,7 @@ class UserOrganization(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     is_admin = models.BooleanField(default=False)
-    source = models.ForeignKey('core.DataSource', on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey('core.DataSource', on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 

@@ -43,7 +43,7 @@ class ReportType(models.Model):
     dimensions = models.ManyToManyField(
         'Dimension', related_name='report_types', through='ReportTypeToDimension'
     )
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     interest_metrics = models.ManyToManyField(
         'Metric', through='ReportInterestMetric', through_fields=('report_type', 'metric')
     )
@@ -183,7 +183,7 @@ class Metric(models.Model):
     active = models.BooleanField(
         default=True, help_text='Only active metrics are reported to users'
     )
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         unique_together = (('short_name', 'source'),)
@@ -237,7 +237,7 @@ class Dimension(models.Model):
     name = models.CharField(max_length=250)
     type = models.PositiveSmallIntegerField(choices=DIMENSION_TYPE_CHOICES, default=TYPE_TEXT)
     desc = models.TextField(blank=True)
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         ordering = ('reporttypetodimension',)

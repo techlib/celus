@@ -109,7 +109,7 @@ class User(AbstractUser):
     ext_id = models.PositiveIntegerField(
         null=True, blank=True, help_text='ID used in original source of this user data'
     )
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     language = models.CharField(
         max_length=2,
         choices=settings.AVAILABLE_LANGUAGES,
@@ -251,7 +251,7 @@ class Identity(models.Model):
         db_index=True,
         help_text='External identifier of the person, usually email',
     )
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 

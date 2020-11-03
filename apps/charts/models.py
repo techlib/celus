@@ -21,7 +21,7 @@ class ReportDataView(models.Model):
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     metric_allowed_values = JSONField(default=list, blank=True)
     primary_dimension = models.ForeignKey(
         Dimension, null=True, on_delete=models.SET_NULL, blank=True

@@ -25,7 +25,7 @@ class Platform(models.Model):
     interest_reports = models.ManyToManyField(
         'logs.ReportType', through=PlatformInterestReport, related_name='interest_platforms'
     )
-    source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
+    source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     knowledgebase = JSONField(blank=True, null=True)
