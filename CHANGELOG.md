@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [2.6.0]
+
+### Added
+
+#### Frontend
+
+- view for platform overlap with all other platforms was added including interest overlap
+
+#### Backend
+
+- new mechanism for planning SUSHI harvesting was added. It will replace the currently used code
+  in release 2.7.0
+
+
+### Changes
+
+#### Frontend
+
+- manual harvesting uses the new code for SUSHI harvesting
+- platform-platform overlap view was polished and improved
+
+#### Backend
+
+- API urls for user registration were completely disabled for installations without user registration
+- deleting DataSource no longer deletes objects created from that source
+
+### Fixed
+
+#### Frontend
+
+- logarithmic scale for platform interest chart was fixed
+
+
 ## [2.5.4]
 
 ### Changes
