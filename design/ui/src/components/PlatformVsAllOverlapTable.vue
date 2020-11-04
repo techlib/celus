@@ -420,7 +420,7 @@ table.overlap {
   border-collapse: collapse;
 
   th {
-    font-size: 87.5%;
+    font-size: 81.25%;
     text-align: right;
     padding-right: 0.5rem;
   }

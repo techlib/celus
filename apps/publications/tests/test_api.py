@@ -738,6 +738,74 @@ class TestPlatformTitleAPI:
                 assert rec['overlap_interest'] == 0, 'no interest on platform 2'
                 assert rec['total_interest'] == 0, 'no interest on platform 2'
 
+    def test_platform_title_ids_list(self, master_client, accesslogs_with_interest):
+        """
+        Test the 'title-ids-list' custom action of platform viewset
+        """
+        url = reverse('platform-title-ids-list', args=[-1])
+        resp = master_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        platform = accesslogs_with_interest['platform']
+        assert str(platform.pk) in data
+        assert set(data[str(platform.pk)]) == {
+            title.pk for title in accesslogs_with_interest['titles']
+        }
+
+    def test_platform_title_ids_list_one_organization(
+        self, master_client, accesslogs_with_interest
+    ):
+        """
+        Test the 'title-ids-list' custom action of platform viewset
+        """
+        organization = accesslogs_with_interest['organization']
+        url = reverse('platform-title-ids-list', args=[organization.pk])
+        resp = master_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        platform = accesslogs_with_interest['platform']
+        assert str(platform.pk) in data
+        assert set(data[str(platform.pk)]) == {
+            title.pk for title in accesslogs_with_interest['titles']
+        }
+
+    def test_platform_title_ids_list_with_filter(self, master_client, accesslogs_with_interest):
+        """
+        Test the 'title-ids-list' custom action of platform viewset with publication type filter
+        """
+        url = reverse('platform-title-ids-list', args=[-1])
+        resp = master_client.get(url + '?pub_type=U')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 0
+
+    def test_platform_title_count(self, master_client, accesslogs_with_interest):
+        """
+        Test the 'title-count' custom action of platform viewset
+        """
+        url = reverse('platform-title-count', args=[-1])
+        resp = master_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        record = data[0]
+        platform = accesslogs_with_interest['platform']
+        assert record['platform'] == platform.pk
+        assert record['title_count'] == len(accesslogs_with_interest['titles'])
+
+    def test_platform_title_count_detail(self, master_client, accesslogs_with_interest):
+        """
+        Test the 'title-count' detail custom action of platform viewset
+        """
+        platform = accesslogs_with_interest['platform']
+        url = reverse('platform-title-count', args=[-1, platform.pk])
+        resp = master_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['title_count'] == 2
+
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("basic1")
@@ -1045,3 +1113,47 @@ class TestTopTitleInterestViewSet:
         assert data[0]['issn'] == titles[1].issn
         assert data[0]['name'] == titles[1].name
         assert data[0]['interests']['interest1'] == 4  # 4
+
+
+@pytest.mark.django_db
+class TestTitleInterestBrief:
+    def test_list(self, master_client, accesslogs_with_interest):
+        resp = master_client.get(reverse('title-interest-brief-list', args=[-1]))
+        assert resp.status_code == 200
+        data = resp.json()
+        titles = accesslogs_with_interest['titles']
+        assert len(data) == len(titles)
+        for rec in data:
+            if rec['target_id'] == titles[0].pk:
+                assert rec['interest'] == 11  # 1 + 2 + 8
+            elif rec['target_id'] == titles[1].pk:
+                assert rec['interest'] == 4
+            else:
+                assert False, 'such record should not exist'
+
+    def test_list_one_org(self, master_client, accesslogs_with_interest):
+        organization = accesslogs_with_interest['organization']
+        resp = master_client.get(reverse('title-interest-brief-list', args=[organization.pk]))
+        assert resp.status_code == 200
+        data = resp.json()
+        titles = accesslogs_with_interest['titles']
+        assert len(data) == len(titles)
+        for rec in data:
+            if rec['target_id'] == titles[0].pk:
+                assert rec['interest'] == 3  # 1 + 2
+            elif rec['target_id'] == titles[1].pk:
+                assert rec['interest'] == 4
+            else:
+                assert False, 'such record should not exist'
+
+    def test_detail(self, master_client, accesslogs_with_interest):
+        organization = accesslogs_with_interest['organization']
+        title = accesslogs_with_interest['titles'][0]
+        resp = master_client.get(
+            reverse('title-interest-brief-detail', args=[organization.pk, title.pk])
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert type(data) is dict
+        assert len(data) == 1, 'just "interest" key'
+        assert data['interest'] == 3  # 1 + 2

@@ -32,4 +32,17 @@ function smartFormatFloat(number, digits = 3) {
     .replace(/,/g, "\xa0");
 }
 
-export { formatInteger, padIntegerWithZeros, smartFormatFloat };
+function formatFloat(number, decimalPlaces = 3) {
+  if (number === null) {
+    return "-";
+  }
+  let decPart = "";
+  for (let i = 0; i < decimalPlaces; i++) {
+    decPart += "0";
+  }
+  return numeral(number)
+    .format("0,0." + decPart)
+    .replace(/,/g, "\xa0");
+}
+
+export { formatInteger, padIntegerWithZeros, smartFormatFloat, formatFloat };

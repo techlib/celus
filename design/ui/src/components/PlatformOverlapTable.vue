@@ -31,7 +31,7 @@ cs:
     color="#33aa33"
     icon="fa fa-info-circle"
   />
-  <div v-else class="overflow-auto mr-6">
+  <div v-else class="overflow-auto">
     <table class="overlap">
       <thead>
         <tr>
@@ -288,7 +288,7 @@ table.overlap {
   border-collapse: collapse;
 
   th {
-    font-size: 87.5%;
+    font-size: 81.25%;
     text-align: right;
     padding-right: 0.5rem;
 

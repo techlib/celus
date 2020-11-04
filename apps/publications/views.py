@@ -1,8 +1,11 @@
+import json
+
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
-from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
+from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation, F
 from django.db.models.functions import Coalesce
+from django.http import HttpResponse
 from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound
@@ -152,7 +155,7 @@ class PlatformViewSet(ReadOnlyModelViewSet, CreateModelMixin):
         )
         return Response(DetailedPlatformSerializer(qs, many=True).data)
 
-    @action(methods=['GET'], url_path='title-count', detail=False)
+    @action(methods=['GET'], url_path='title-count', url_name='title-count', detail=False)
     def title_count(self, request, organization_pk):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         date_filter_params = date_filter_from_params(request.GET)
@@ -163,7 +166,7 @@ class PlatformViewSet(ReadOnlyModelViewSet, CreateModelMixin):
         )
         return Response(qs)
 
-    @action(methods=['GET'], url_path='title-count', detail=True)
+    @action(methods=['GET'], url_path='title-count', url_name='title-count', detail=True)
     def title_count_detail(self, request, organization_pk, pk):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         date_filter_params = date_filter_from_params(request.GET)
@@ -178,6 +181,26 @@ class PlatformViewSet(ReadOnlyModelViewSet, CreateModelMixin):
         except PlatformTitle.DoesNotExist:
             title_count = 0
         return Response({'title_count': title_count})
+
+    @action(methods=['GET'], url_path='title-ids-list', url_name='title-ids-list', detail=False)
+    def title_id_list(self, request, organization_pk):
+        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        date_filter_params = date_filter_from_params(request.GET)
+        pub_type_arg = self.request.query_params.get('pub_type')
+        search_filters = []
+        if pub_type_arg:
+            search_filters.append(Q(title__pub_type__in=pub_type_arg.split(',')))
+        qs = (
+            PlatformTitle.objects.filter(*search_filters, **org_filter, **date_filter_params)
+            .values_list('platform_id', 'title_id')
+            .distinct()
+        )
+        result = {}
+        for platform_id, title_id in qs:
+            if platform_id not in result:
+                result[platform_id] = []
+            result[platform_id].append(title_id)
+        return Response(result)
 
 
 class DetailedPlatformViewSet(ReadOnlyModelViewSet):
@@ -471,6 +494,41 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         self._postprocess_paginated([instance])
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+
+class TitleInterestBriefViewSet(ReadOnlyModelViewSet):
+    def get_queryset(self):
+        """
+        Should return only titles for specific organization and platform
+        """
+        org_filter = organization_filter_from_org_id(
+            self.kwargs.get('organization_pk'), self.request.user
+        )
+        date_filter = date_filter_from_params(self.request.GET)
+        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        search_filters = []
+        pub_type_arg = self.request.query_params.get('pub_type')
+        if pub_type_arg:
+            search_filters.append(Q(target__pub_type__in=pub_type_arg.split(',')))
+        queryset = (
+            AccessLog.objects.filter(
+                report_type=interest_rt, *search_filters, **date_filter, **org_filter
+            )
+            .values('target_id')
+            .exclude(target_id__isnull=True)
+            .annotate(interest=Sum('value'))
+        )
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = queryset.filter(interest__gt=0).order_by().values('target_id', 'interest')
+        return Response(data)
+
+    def retrieve(self, request, pk, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = get_object_or_404(queryset.order_by().values('interest'), target_id=pk)
+        return Response(data)
 
 
 class PlatformTitleViewSet(BaseTitleViewSet):

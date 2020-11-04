@@ -4,6 +4,12 @@
     class="loader"
   >
     <i class="fas fa-spin" :class="iconName"></i>
+    <v-progress-linear
+      v-if="showProgress"
+      :value="progress"
+      :color="color"
+      class="my-6"
+    />
     <p class="text">{{ text }}</p>
   </div>
 </template>
@@ -17,6 +23,14 @@ export default {
     text: { default: "", required: false },
     iconName: { default: "fa-cog" },
     paddingTop: { default: "160px" },
+    showProgress: {
+      default: false,
+      type: Boolean,
+    },
+    progress: {
+      default: null,
+      required: false,
+    },
   },
 };
 </script>

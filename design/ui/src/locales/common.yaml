@@ -81,6 +81,7 @@ en:
     value: Value
     provider: Provider
     title_count: Title count
+    title_count_short: Title count
     date: Date
     user: User
     report_type: Report type
@@ -95,6 +96,7 @@ en:
     overlap: Overlap
     relative: Relative
     total: Total
+    platform: Platform
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -207,6 +209,7 @@ cs:
     value: Hodnota
     provider: Poskytovatel
     title_count: Počet titulů a databází
+    title_count_short: Počet titulů
     date: Datum
     user: Uživatel
     report_type: Typ reportu
@@ -221,6 +224,7 @@ cs:
     overlap: Překryv
     relative: Relativně
     total: Celkem
+    platform: Platforma
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

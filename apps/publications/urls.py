@@ -25,6 +25,9 @@ org_sub_router.register(
 org_sub_router.register('title', views.TitleViewSet, basename='title')
 org_sub_router.register(r'title-interest', views.TitleInterestViewSet, basename='title-interest')
 org_sub_router.register(
+    r'title-interest-brief', views.TitleInterestBriefViewSet, basename='title-interest-brief'
+)
+org_sub_router.register(
     r'top-title-interest', views.TopTitleInterestViewSet, basename='top-title-interest'
 )
 org_sub_router.register(
