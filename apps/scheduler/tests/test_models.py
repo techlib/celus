@@ -558,6 +558,9 @@ class TestHarvest:
     def test_stats(self, counter_report_types, credentials):
         harvest1 = HarvestFactory()
         harvest2 = HarvestFactory()
+        harvest3 = HarvestFactory()
+        harvest4 = HarvestFactory()
+        harvest5 = HarvestFactory()
 
         FetchIntentionFactory(
             credentials=credentials["standalone_tr"],
@@ -566,6 +569,7 @@ class TestHarvest:
             end_date="2020-02-29",
             when_processed=None,
             harvest=harvest1,
+            duplicate_of=None,
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_tr"],
@@ -574,6 +578,7 @@ class TestHarvest:
             end_date="2020-01-31",
             when_processed=timezone.now(),
             harvest=harvest1,
+            duplicate_of=None,
         )
 
         FetchIntentionFactory(
@@ -583,6 +588,7 @@ class TestHarvest:
             end_date="2020-01-31",
             when_processed=timezone.now(),
             harvest=harvest2,
+            duplicate_of=None,
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
@@ -591,6 +597,7 @@ class TestHarvest:
             end_date="2020-01-31",
             when_processed=None,
             harvest=harvest2,
+            duplicate_of=None,
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
@@ -599,6 +606,7 @@ class TestHarvest:
             end_date="2020-01-31",
             when_processed=timezone.now(),
             harvest=harvest2,
+            duplicate_of=None,
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
@@ -607,10 +615,45 @@ class TestHarvest:
             end_date="2020-02-29",
             when_processed=None,
             harvest=harvest2,
+            duplicate_of=None,
+        )
+
+        original_fi = FetchIntentionFactory(
+            credentials=credentials["branch_pr"],
+            counter_report=counter_report_types["pr"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=timezone.now(),
+            harvest=harvest3,
+            duplicate_of=None,
+        )
+        FetchIntentionFactory(
+            credentials=credentials["branch_pr"],
+            counter_report=counter_report_types["pr"],
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            when_processed=None,
+            harvest=harvest4,
+            duplicate_of=original_fi,
         )
 
         assert harvest1.stats() == (1, 2)
         assert harvest2.stats() == (2, 3)
+        assert harvest3.stats() == (0, 1)
+        assert harvest4.stats() == (0, 1)
+        assert harvest5.stats() == (0, 0)
+
+        assert list(
+            Harvest.objects.annotate_stats()
+            .order_by('pk')
+            .values_list('pk', 'unprocessed', 'total')
+        ) == [
+            (harvest1.pk, 1, 2),
+            (harvest2.pk, 2, 3),
+            (harvest3.pk, 0, 1),
+            (harvest4.pk, 0, 1),
+            (harvest5.pk, 0, 0),
+        ]
 
     def test_latest_intentions(self, harvests):
         assert harvests["anonymous"].intentions.count() == 4

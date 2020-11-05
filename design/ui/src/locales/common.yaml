@@ -55,6 +55,7 @@ en:
     nonzero_platforms: Non-zero interest platforms
     total_interest: Total interest
     ratios: Ratio
+    organizations: Organizations
   titles: Titles
   overview: Overview
   chart:
@@ -183,6 +184,7 @@ cs:
     nonzero_platforms: Platformy s nenulovým zájmem
     total_interest: Celkový zájem
     ratios: Rozložení
+    organizations: Organizace
   titles: Tituly
   overview: Přehled
   chart:

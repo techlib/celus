@@ -1,7 +1,9 @@
 import typing
 
 from rest_framework import serializers
+from rest_framework.fields import DateTimeField
 
+from publications.serializers import PlatformSerializer
 from .models import Automatic, FetchIntention, Harvest
 from sushi.serializers import SushiFetchAttemptSerializer
 from organizations.serializers import OrganizationSerializer
@@ -27,9 +29,30 @@ class CreateFetchIntentionSerializer(serializers.ModelSerializer):
         )
 
 
+class DuplicateFetchIntentionSerializer(serializers.ModelSerializer):
+    attempt = SushiFetchAttemptSerializer(required=True)  # duplicate should have data
+
+    class Meta:
+        model = FetchIntention
+        fields = (
+            'pk',
+            'not_before',
+            'credentials',
+            'counter_report',
+            'platform_name',
+            'organization_name',
+            'counter_report_code',
+            'attempt',
+            'start_date',
+            'end_date',
+            'when_processed',
+        )
+
+
 class FetchIntentionSerializer(serializers.ModelSerializer):
     attempt = SushiFetchAttemptSerializer(required=False)
     fetching_data = serializers.BooleanField()
+    duplicate_of = DuplicateFetchIntentionSerializer(required=False)
 
     class Meta:
         model = FetchIntention
@@ -49,14 +72,18 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
             'data_not_ready_retry',
             'service_not_available_retry',
             'service_busy_retry',
+            'duplicate_of',
         )
 
 
 class ListHarvestSerializer(serializers.ModelSerializer):
     intentions = serializers.PrimaryKeyRelatedField(
-        source='latest_intentions', many=True, read_only=True
+        source='prefetched_latest_intentions', many=True, read_only=True
     )
     stats = StatsSerializer()
+    organizations = OrganizationSerializer(many=True, read_only=True)
+    platforms = PlatformSerializer(many=True, read_only=True)
+    last_attempt_date = DateTimeField(read_only=True)
 
     class Meta:
         model = Harvest
@@ -68,6 +95,9 @@ class ListHarvestSerializer(serializers.ModelSerializer):
             'last_updated_by',
             'stats',
             'automatic',
+            'organizations',
+            'platforms',
+            'last_attempt_date',
         )
 
 
@@ -87,6 +117,7 @@ class RetrieveHarvestSerializer(serializers.ModelSerializer):
     intentions = FetchIntentionSerializer(source="latest_intentions", many=True, read_only=True)
     stats = StatsSerializer()
     automatic = AutomaticInHarvestSerializer()
+    organizations = OrganizationSerializer(many=True, read_only=True)
 
     class Meta:
         model = Harvest
@@ -98,6 +129,7 @@ class RetrieveHarvestSerializer(serializers.ModelSerializer):
             'last_updated_by',
             'stats',
             'automatic',
+            'organizations',
         )
 
 

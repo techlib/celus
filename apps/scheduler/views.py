@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import Q, Exists, OuterRef, Prefetch, Max
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.pagination import LimitOffsetPagination
@@ -8,7 +9,10 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
 from core.permissions import SuperuserOrAdminPermission
 from core.models import REL_ORG_USER
+from logs.views import StandardResultsSetPagination
+from publications.models import Platform
 from sushi.models import SushiCredentials, CounterReportsToCredentials
+from organizations.models import Organization
 
 from .serializers import (
     FetchIntentionSerializer,
@@ -19,25 +23,63 @@ from .serializers import (
 from .models import FetchIntention, Harvest
 
 
-class HarvestViewSetPagination(LimitOffsetPagination):
-    default_limit = 100
-    max_limit = 1000
-
-
 class HarvestViewSet(
     mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericViewSet
 ):
 
     serializer_class = RetrieveHarvestSerializer
-    pagination_class = HarvestViewSetPagination
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         if SuperuserOrAdminPermission().has_permission(self.request, self):
             qs = Harvest.objects.all()
         else:
-            qs = Harvest.objects.filter(last_updated_by=self.request.user)
+            qs = Harvest.objects.filter(
+                Q(last_updated_by=self.request.user)
+                | Q(automatic__organization__in=self.request.user.admin_organizations())
+            )
 
-        qs = qs.order_by('-pk')
+        qs = (
+            qs.annotate_stats()
+            .prefetch_related(
+                'automatic',
+                Prefetch(
+                    'intentions',
+                    queryset=FetchIntention.objects.latest_intentions(within_harvest=True),
+                    to_attr='prefetched_latest_intentions',
+                ),
+                Prefetch(
+                    'intentions',
+                    queryset=FetchIntention.objects.all().select_related(
+                        'credentials__platform', 'credentials__organization'
+                    ),
+                    to_attr='intentions_credentials',
+                ),
+                'intentions__duplicate_of',
+            )
+            .annotate(
+                last_attempt_date=Max(
+                    'intentions__not_before', filter=Q(intentions__duplicate_of__isnull=True)
+                )
+            )
+        )
+
+        finished = self.request.query_params.get('finished', None)
+        unprocessed_intention_query = FetchIntention.objects.filter(
+            harvest=OuterRef('pk'), when_processed__isnull=True, duplicate_of__isnull=True,
+        )
+        if finished == "1":
+            qs = qs.filter(~Exists(unprocessed_intention_query))
+        elif finished == "0":
+            qs = qs.filter(Exists(unprocessed_intention_query))
+
+        order_by = self.request.query_params.get('order_by', 'pk')
+        order_desc = self.request.query_params.get('desc', 'false') == 'true'
+        if order_by not in ('created', 'pk', 'automatic', 'finished', 'last_attempt_date'):
+            order_by = 'pk'
+        if order_desc:
+            order_by = '-' + order_by
+        qs = qs.order_by(order_by)
 
         return qs
 
@@ -97,7 +139,7 @@ class HarvestViewSet(
         return Response(response_serialzer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class IntentionViewSet(ReadOnlyModelViewSet):
+class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 
     serializer_class = FetchIntentionSerializer
 
@@ -114,3 +156,14 @@ class IntentionViewSet(ReadOnlyModelViewSet):
             return harvest.latest_intentions
         else:
             return harvest.intentions
+
+
+class IntentionViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = FetchIntentionSerializer
+
+    def get_queryset(self):
+        org_perm_args = [
+            Q(credentials__organization__in=self.request.user.accessible_organizations())
+        ]
+        return FetchIntention.objects.filter(*org_perm_args)

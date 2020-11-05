@@ -18,6 +18,7 @@ import siteConfig from "./modules/site-config";
 import { ConcurrencyManager } from "axios-concurrency";
 import isEqual from "lodash/isEqual";
 import sleep from "@/libs/sleep";
+import { cs } from "date-fns/locale";
 
 Vue.use(Vuex);
 
@@ -89,6 +90,7 @@ export default new Vuex.Store({
     backendReady: false,
     bootUpMessage: "loading_basic_data",
   },
+
   getters: {
     avatarImg: (state) => {
       return null;
@@ -230,6 +232,13 @@ export default new Vuex.Store({
     },
     celusVersion() {
       return process.env.VUE_APP_VERSION;
+    },
+    dateFnOptions(state) {
+      let options = {};
+      if (state.appLanguage === "cs") {
+        options["locale"] = cs;
+      }
+      return options;
     },
   },
 

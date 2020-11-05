@@ -25,9 +25,12 @@ class HarvestAdmin(admin.ModelAdmin):
 
     list_select_related = ['last_updated_by', 'automatic']
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate_stats()
+
     def stats_text(self, obj: models.Harvest):
-        x, y = obj.stats()
-        return f'{y-x}/{y}'
+        return f'{obj.total - obj.unprocessed}/{obj.total}'
 
     stats_text.short_description = 'Processed'
 

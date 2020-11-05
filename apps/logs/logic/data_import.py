@@ -23,7 +23,7 @@ def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=No
         data = {attr_name: attr_value}
         if other_attrs:
             data.update(other_attrs)
-        obj = model.objects.create(**data)
+        obj, created = model.objects.get_or_create(**data)
         data["pk"] = obj.pk
         mapping[attr_value] = data
         return obj.pk

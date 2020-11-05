@@ -1,3 +1,5 @@
+from itertools import product
+
 import pytest
 import json
 
@@ -31,12 +33,52 @@ class TestHarvestAPI:
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
-        assert len(data) == 2
-        assert len(data[0]["intentions"]) == 2
-        assert data[0]["stats"] == {"total": 2, "planned": 1}
-        assert len(data[1]["intentions"]) == 3
-        assert data[1]["stats"] == {"total": 3, "planned": 2}
-        assert data[0]["pk"] > data[1]["pk"], "highest harvest pk first"
+        assert len(data) == 3
+        assert data[0]["pk"] < data[1]["pk"] < data[2]["pk"], "default sort by pk asc"
+        assert len(data[0]["intentions"]) == 3
+        assert data[0]["stats"] == {"total": 3, "planned": 2}
+        assert len(data[1]["intentions"]) == 2
+        assert data[1]["stats"] == {"total": 2, "planned": 1}
+        assert len(data[2]["intentions"]) == 2
+        assert data[2]["stats"] == {"total": 2, "planned": 1}
+
+    @pytest.mark.parametrize(
+        ['column', 'desc'], list(product(['pk', 'created'], ['true', 'false']))
+    )
+    def test_list_order_by(self, basic1, clients, harvests, desc, column):
+        url = reverse('harvest-list')
+        resp = clients["master"].get(url, {'order_by': column, 'desc': desc})
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 3
+        if desc == 'true':
+            assert (
+                data[0][column] > data[1][column] > data[2][column]
+            ), "desc sorting should be active"
+        else:
+            assert (
+                data[0][column] < data[1][column] < data[2][column]
+            ), "asc sorting should be active"
+
+    def test_list_finished(self, basic1, clients, harvests):
+
+        # remove unfinished from one harvest
+        harvests["anonymous"].intentions.filter(when_processed__isnull=True).delete()
+
+        url = reverse('harvest-list')
+        # test finished filter
+        resp = clients["master"].get(url + "?finished=1", {})
+        assert resp.status_code == 200
+        data1 = resp.json()["results"]
+        assert len(data1) == 1
+
+        resp = clients["master"].get(url + "?finished=0", {})
+        assert resp.status_code == 200
+        data2 = resp.json()["results"]
+        assert len(data2) == 2
+
+        assert data1[0]["pk"] != data2[0]["pk"]
+        assert data1[0]["pk"] != data2[1]["pk"]
 
     def test_get(self, basic1, clients, harvests):
         url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
@@ -52,6 +94,16 @@ class TestHarvestAPI:
         data = resp.json()
         assert data["stats"] == {"total": 2, "planned": 1}
         assert len(data["intentions"]) == 2
+
+        url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
+        resp = clients["master"].get(url, {})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["stats"] == {"total": 2, "planned": 1}
+        assert len(data["intentions"]) == 2
+        assert "duplicate_of" in data["intentions"][1]
+        duplicate = data["intentions"][1]["duplicate_of"]
+        assert duplicate["attempt"] is not None
 
     @pytest.mark.django_db(transaction=True)
     def test_create(
@@ -105,7 +157,9 @@ class TestHarvestAPI:
             credentials["standalone_br1_jr1"].url,
         }
 
-    @pytest.mark.parametrize("user,length", (("master", 2), ("user1", 1), ("user2", 0),))
+    @pytest.mark.parametrize(
+        "user,length", (("master", 3), ("admin1", 0), ("admin2", 1), ("user1", 1), ("user2", 0),)
+    )
     def test_list_filtering(self, basic1, harvests, clients, user, length):
         url = reverse('harvest-list')
         resp = clients[user].get(url, {})
@@ -114,13 +168,25 @@ class TestHarvestAPI:
         assert len(data) == length
 
     @pytest.mark.parametrize(
-        "user,anonymous_status,user1_status",
-        (("master", 200, 200), ("user1", 404, 200), ("user2", 404, 404),),
+        "user,anonymous_status,automatic_status,user1_status",
+        (
+            ("master", 200, 200, 200),
+            ("admin1", 404, 404, 404),
+            ("admin2", 404, 200, 404),
+            ("user1", 404, 404, 200),
+            ("user2", 404, 404, 404),
+        ),
     )
-    def test_get_permissions(self, basic1, harvests, clients, user, anonymous_status, user1_status):
+    def test_get_permissions(
+        self, basic1, harvests, clients, user, anonymous_status, automatic_status, user1_status
+    ):
         url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
         resp = clients[user].get(url, {})
         assert resp.status_code == anonymous_status
+
+        url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
+        resp = clients[user].get(url, {})
+        assert resp.status_code == automatic_status
 
         url = reverse('harvest-detail', args=(harvests["user1"].pk,))
         resp = clients[user].get(url, {})

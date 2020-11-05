@@ -26,7 +26,12 @@ from ..entities.organizations import OrganizationFactory
 from ..entities.platforms import PlatformFactory
 from ..entities.report_types import ReportTypeFactory
 from ..entities.users import UserFactory
-from ..entities.scheduler import HarvestFactory, FetchIntentionFactory, SchedulerFactory
+from ..entities.scheduler import (
+    AutomaticFactory,
+    HarvestFactory,
+    FetchIntentionFactory,
+    SchedulerFactory,
+)
 
 
 @pytest.fixture
@@ -319,8 +324,7 @@ def schedulers(credentials):
 
 
 @pytest.fixture
-def harvests(users, credentials, counter_report_types, schedulers):
-    # anynymous harvest
+def harvests(users, credentials, counter_report_types, schedulers, organizations):
     anonymous = HarvestFactory(
         last_updated_by=None,
         intentions=(
@@ -347,6 +351,8 @@ def harvests(users, credentials, counter_report_types, schedulers):
                     credentials=credentials["standalone_br1_jr1"],
                     counter_report=counter_report_types["jr1"],
                 ),
+                start_date="2020-01-01",
+                end_date="2020-01-31",
             ),
             FetchIntentionFactory.build(
                 credentials=credentials["standalone_br1_jr1"],
@@ -354,6 +360,36 @@ def harvests(users, credentials, counter_report_types, schedulers):
             ),  # retry fetch attempt
         ),
     )
+
+    automatic = HarvestFactory(
+        last_updated_by=None,
+        intentions=(
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["br1"],
+                start_date="2020-01-01",
+                end_date="2020-01-31",
+                when_processed=None,
+            ),
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["jr1"],
+                start_date="2020-01-01",
+                end_date="2020-01-31",
+                when_processed=None,
+                duplicate_of=anonymous.intentions.filter(
+                    credentials=credentials["standalone_br1_jr1"],
+                    counter_report=counter_report_types["jr1"],
+                )
+                .order_by('pk')
+                .first(),
+            ),  # dulicate
+        ),
+    )
+    AutomaticFactory(
+        harvest=automatic, month="2020-01-01", organization=organizations["standalone"],
+    )
+
     user1 = HarvestFactory(
         last_updated_by=users["user1"],
         intentions=(

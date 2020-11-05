@@ -8,14 +8,17 @@ from enum import Enum, auto
 from dateutil.relativedelta import relativedelta
 from django.db import models, transaction, DatabaseError
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
+from django.db.models.functions import Coalesce
 from django.conf import settings
-from django.db.models import TextField
+from django.db.models import TextField, Max, IntegerField, F
 from django.utils import timezone
+from django.utils.functional import cached_property
 
 from core.models import User
 from core.logic.dates import month_start, month_end
 from nigiri.error_codes import ErrorCode
 from organizations.models import Organization
+from publications.models import Platform
 from sushi.models import (
     SushiCredentials,
     SushiFetchAttempt,
@@ -141,6 +144,37 @@ class Scheduler(models.Model):
 
 
 class FetchIntentionQuerySet(models.QuerySet):
+    def annotate_unique(self) -> models.QuerySet:
+        return self.annotate(
+            unique_field=models.functions.Concat(
+                models.F('credentials_id'),
+                models.F('credentials__version_hash'),
+                models.F('counter_report__code'),
+                models.F('start_date'),
+                models.F('end_date'),
+                output_field=TextField(),
+            )
+        )
+
+    def aggregate_stats(self) -> typing.Dict[str, int]:
+        qs = self.annotate_unique()
+
+        res = qs.aggregate(
+            total=Coalesce(models.Count('unique_field', distinct=True), 0),
+            unprocessed=Coalesce(
+                models.Count(
+                    'unique_field',
+                    distinct=True,
+                    filter=models.Q(when_processed__isnull=True)
+                    & models.Q(duplicate_of__isnull=True),
+                ),
+                0,
+            ),
+        )
+        res['finished'] = res['total'] - res['unprocessed']
+
+        return res
+
     def schedulers_to_trigger(self) -> typing.List[Scheduler]:
         res: typing.Set[Scheduler] = set()
         for fi in self.filter(
@@ -151,6 +185,26 @@ class FetchIntentionQuerySet(models.QuerySet):
                 res.add(scheduler)
 
         return list(res)
+
+    def latest_intentions(self, within_harvest=False) -> models.QuerySet:
+        """ Only latest intentions, retried intentions are skipped """
+
+        extra_filters = {"harvest": models.OuterRef('harvest')} if within_harvest else {}
+
+        return (
+            self.annotate_unique()
+            .annotate(
+                max_pk=models.Subquery(
+                    self.annotate_unique()
+                    .filter(unique_field=models.OuterRef('unique_field'), **extra_filters)
+                    .values('unique_field')
+                    .annotate(max_pk=models.Max('pk'))
+                    .values("max_pk")[:1],
+                    output_field=IntegerField(),
+                )
+            )
+            .filter(pk=models.F('max_pk'))
+        )
 
 
 class FetchIntention(models.Model):
@@ -168,11 +222,13 @@ class FetchIntention(models.Model):
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
     scheduler = models.ForeignKey(
-        Scheduler, related_name="intentions", on_delete=models.CASCADE, null=True
+        Scheduler, related_name="intentions", on_delete=models.CASCADE, null=True, blank=True,
     )
     start_date = models.DateField()
     end_date = models.DateField()
-    when_processed = models.DateTimeField(help_text="When fetch unit was processed", null=True)
+    when_processed = models.DateTimeField(
+        help_text="When fetch unit was processed", null=True, blank=True
+    )
     attempt = models.OneToOneField(SushiFetchAttempt, null=True, on_delete=models.SET_NULL)
     harvest = models.ForeignKey(
         'scheduler.Harvest', on_delete=models.CASCADE, related_name="intentions"
@@ -192,7 +248,8 @@ class FetchIntention(models.Model):
     @property
     def fetching_data(self) -> bool:
         try:
-            FetchIntention.objects.select_for_update(nowait=True).get(pk=self.pk)  # noqa
+            with transaction.atomic():
+                FetchIntention.objects.select_for_update(nowait=True).get(pk=self.pk)  # noqa
             return False
         except DatabaseError:
             return True
@@ -443,7 +500,44 @@ class FetchIntention(models.Model):
         return self.counter_report.code
 
 
+class HarvestQuerySet(models.QuerySet):
+    def annotate_stats(self):
+        return self.annotate(
+            unprocessed=Coalesce(
+                models.Subquery(
+                    FetchIntention.objects.filter(harvest=models.OuterRef('pk'))
+                    .annotate_unique()
+                    .values('harvest')
+                    .annotate(
+                        count=models.Count(
+                            'unique_field',
+                            distinct=True,
+                            filter=models.Q(when_processed__isnull=True)
+                            & models.Q(duplicate_of__isnull=True),
+                        )
+                    )
+                    .values('count')
+                ),
+                0,
+            ),
+            total=Coalesce(
+                models.Subquery(
+                    FetchIntention.objects.filter(harvest=models.OuterRef('pk'))
+                    .annotate_unique()
+                    .values('harvest')
+                    .annotate(count=models.Count('unique_field', distinct=True))
+                    .values('count')
+                ),
+                0,
+            ),
+            finished=F('total') - F('unprocessed'),
+        )
+
+
 class Harvest(CreatedUpdatedMixin):
+
+    objects = HarvestQuerySet.as_manager()
+
     def __str__(self):
         return f'Harvest #{self.pk}'
 
@@ -454,25 +548,44 @@ class Harvest(CreatedUpdatedMixin):
         :returns: unprocessed, total
         """
 
-        qs = self.intentions.annotate(
-            unique_field=models.functions.Concat(
-                models.F('credentials_id'),
-                models.F('credentials__version_hash'),
-                models.F('counter_report__code'),
-                models.F('start_date'),
-                models.F('end_date'),
-                output_field=TextField(),
+        # Harvest obtained via annotated query
+        # No need to perform extra query
+        if hasattr(self, 'total') and hasattr(self, 'unprocessed'):
+            return self.unprocessed, self.total
+
+        # query for stats
+        qs = self.intentions.aggregate_stats()
+        return qs["unprocessed"], qs["total"]
+
+    def organizations(self) -> typing.List[Organization]:
+        if hasattr(self, 'intentions_credentials'):
+            organizations = list({i.credentials.organization for i in self.intentions_credentials})
+            organizations.sort(key=lambda e: e.pk)
+            return organizations
+
+        return list(
+            Organization.objects.filter(
+                pk__in=self.intentions.all().values('credentials__organization_id')
             )
+            .order_by()
+            .distinct()
         )
 
-        total = qs.aggregate(total=models.Count('unique_field', distinct=True))["total"] or 0
-        unprocessed = (
-            qs.filter(when_processed=None).aggregate(
-                total=models.Count('unique_field', distinct=True)
-            )["total"]
-            or 0
+    def platforms(self) -> typing.List[Platform]:
+        if hasattr(self, 'intentions_credentials'):
+            platforms = list({i.credentials.platform for i in self.intentions_credentials})
+            platforms.sort(key=lambda e: e.pk)
+            return platforms
+
+        return (
+            Platform.objects.filter(pk__in=self.intentions.all().values('credentials__platform_id'))
+            .order_by()
+            .distinct()
         )
-        return unprocessed, total
+
+    @cached_property
+    def max_not_before(self):
+        return self.intentions.aggregate(max=Max('not_before'))['max']
 
     @classmethod
     @transaction.atomic
@@ -520,24 +633,7 @@ class Harvest(CreatedUpdatedMixin):
     @property
     def latest_intentions(self):
         """ Only latest intentions, retried intentions are skipped """
-
-        latest_pks = (
-            self.intentions.annotate(
-                unique_field=models.functions.Concat(
-                    models.F('credentials_id'),
-                    models.F('credentials__version_hash'),
-                    models.F('counter_report__code'),
-                    models.F('start_date'),
-                    models.F('end_date'),
-                    output_field=models.CharField(),
-                ),
-            )
-            .values('unique_field')
-            .annotate(max_pk=models.Max('pk'))
-            .values_list('max_pk', flat=True)
-        )
-
-        return self.intentions.filter(pk__in=latest_pks)
+        return self.intentions.latest_intentions(within_harvest=True)
 
 
 class Automatic(models.Model):

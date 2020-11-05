@@ -212,6 +212,15 @@ class User(AbstractUser):
                     return REL_ORG_ADMIN
             return REL_UNREL_USER
 
+    def admin_organizations(self):
+        from organizations.models import UserOrganization, Organization
+
+        return Organization.objects.filter(
+            pk__in=UserOrganization.objects.filter(user=self, is_admin=True).values_list(
+                'organization_id', flat=True
+            )
+        )
+
     def has_organization_admin_permission(self, org_id: int):
         return self.organization_relationship(org_id) >= REL_ORG_ADMIN
 
