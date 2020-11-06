@@ -42,7 +42,13 @@ from nigiri.counter4 import (
     Counter4DB2Report,
     Counter4BR3Report,
 )
-from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport, TransportError
+from nigiri.counter5 import (
+    Counter5DRReport,
+    Counter5PRReport,
+    Counter5TRReport,
+    Counter5IRReport,
+    TransportError,
+)
 from nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
@@ -71,6 +77,7 @@ COUNTER_REPORTS = (
     ('TR', 5, Counter5TRReport),
     ('PR', 5, Counter5PRReport),
     ('DR', 5, Counter5DRReport),
+    ('IR', 5, Counter5IRReport),
 )
 
 

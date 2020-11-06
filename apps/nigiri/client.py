@@ -16,7 +16,9 @@ from requests import Response
 from .counter5 import (
     Counter5TRReport,
     Counter5DRReport,
+    Counter5PRReport,
     Counter5ReportBase,
+    Counter5IRReport,
     CounterError,
 )
 from .error_codes import ErrorCode
@@ -227,6 +229,7 @@ class Sushi5Client(SushiClientBase):
         # split data in TR report to most possible dimensions for most granular data
         'maximum_split': {
             'tr': {'attributes_to_show': 'YOP|Access_Method|Access_Type|Data_Type|Section_Type'},
+            'ir': {'attributes_to_show': 'YOP|Access_Method|Access_Type|Data_Type'},
             'pr': {'attributes_to_show': 'Access_Method|Data_Type'},
             'dr': {'attributes_to_show': 'Access_Method|Data_Type'},
         }
@@ -333,12 +336,17 @@ class Sushi5Client(SushiClientBase):
             # status codes in the 4xx range may be OK and just provide additional signal
             # about an issue - we need to parse the result in case there is more info
             # in the body
+            report_class: typing.Type[Counter5ReportBase]
             if report_type.lower() == 'tr':
                 report_class = Counter5TRReport
             elif report_type.lower() == 'dr':
                 report_class = Counter5DRReport
+            elif report_type.lower() == 'pr':
+                report_class = Counter5PRReport
+            elif report_type.lower() == 'ir':
+                report_class = Counter5IRReport
             else:
-                report_class = Counter5ReportBase
+                raise NotImplementedError()
 
             if output_content:
                 output_content.seek(0)

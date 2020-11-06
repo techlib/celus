@@ -463,6 +463,25 @@
   }
 },
 {
+  "model": "charts.reportdataview",
+  "pk": 24,
+  "fields": {
+    "base_report_type": 40,
+    "short_name": "IR_FULL",
+    "name": "Item Report - Full",
+    "name_en": "Item Report - Full",
+    "name_cs": "Item Report - Full",
+    "desc": "Fully customizable view of the COUNTER 5 Item Report",
+    "desc_en": "Fully customizable view of the COUNTER 5 Item Report",
+    "desc_cs": "Pln\u011b variabiln\u00ed pohled na COUNTER 5 Item Report",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": false,
+    "position": 100
+  }
+},
+{
   "model": "charts.dimensionfilter",
   "pk": 1,
   "fields": {
@@ -1397,6 +1416,7 @@
   "pk": 1,
   "fields": {
     "short_name": "TR",
+    "default_platform_interest": true,
     "name": "Counter 5 - Title report",
     "name_en": "Counter 5 - Title report",
     "name_cs": "Counter 5 - Title report",
@@ -1412,6 +1432,7 @@
   "pk": 2,
   "fields": {
     "short_name": "DR",
+    "default_platform_interest": true,
     "name": "Counter 5 - Database report",
     "name_en": "Counter 5 - Database report",
     "name_cs": "Counter 5 - Database report",
@@ -1427,6 +1448,7 @@
   "pk": 3,
   "fields": {
     "short_name": "JR1",
+    "default_platform_interest": true,
     "name": "Counter 4 - Journal Report 1",
     "name_en": "Counter 4 - Journal Report 1",
     "name_cs": "Counter 4 - Journal Report 1",
@@ -1517,6 +1539,7 @@
   "pk": 9,
   "fields": {
     "short_name": "BR2",
+    "default_platform_interest": true,
     "name": "Counter 4 - Book Report 2",
     "name_en": "Counter 4 - Book Report 2",
     "name_cs": "Counter 4 - Book Report 2",
@@ -1547,6 +1570,7 @@
   "pk": 11,
   "fields": {
     "short_name": "DB1",
+    "default_platform_interest": true,
     "name": "Counter 4 - Database Report 1",
     "name_en": "Counter 4 - Database Report 1",
     "name_cs": "Counter 4 - Database Report 1",
@@ -1745,6 +1769,21 @@
     "name": "UpToDate - custom",
     "name_en": "UpToDate - custom",
     "name_cs": "UpToDate - custom",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
+  "model": "logs.reporttype",
+  "pk": 40,
+  "fields": {
+    "short_name": "IR",
+    "name": "Counter 5 - Item report",
+    "name_en": "Counter 5 - Item report",
+    "name_cs": "Counter 5 - Item report",
     "desc": "",
     "desc_en": "",
     "desc_cs": "",
@@ -3139,6 +3178,51 @@
     "report_type": 30,
     "dimension": 29,
     "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 29,
+  "fields": {
+    "report_type": 40,
+    "dimension": 1,
+    "position": 0
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 30,
+  "fields": {
+    "report_type": 40,
+    "dimension": 2,
+    "position": 1
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 31,
+  "fields": {
+    "report_type": 40,
+    "dimension": 3,
+    "position": 2
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 32,
+  "fields": {
+    "report_type": 40,
+    "dimension": 5,
+    "position": 3
+  }
+},
+{
+  "model": "logs.reporttypetodimension",
+  "pk": 33,
+  "fields": {
+    "report_type": 40,
+    "dimension": 6,
+    "position": 4
   }
 },
 {
@@ -5488,6 +5572,17 @@
     "name": "Counter 4: Platform report 1",
     "counter_version": 4,
     "report_type": 28,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 14,
+  "fields": {
+    "code": "IR",
+    "name": "Item report",
+    "counter_version": 5,
+    "report_type": 40,
     "active": true
   }
 },

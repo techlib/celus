@@ -189,6 +189,7 @@ def report_types():
         name="Counter 5 - Database report", short_name="DR", default_platform_interest=True
     )
     pr = ReportTypeFactory(name="Counter 5 - Platform report", short_name="PR")
+    ir = ReportTypeFactory(name="Counter 5 - Item report", short_name="IR")
 
     # Counter 4
     br1 = ReportTypeFactory(name="Counter 4 - Book report 1", short_name="BR1")
@@ -228,6 +229,9 @@ def counter_report_types(report_types):
     )
     pr = CounterReportTypeFactory(
         counter_version=5, code=report_types["pr"].short_name, report_type=report_types["pr"],
+    )
+    ir = CounterReportTypeFactory(
+        counter_version=5, code=report_types["ir"].short_name, report_type=report_types["ir"],
     )
 
     # counter 4
