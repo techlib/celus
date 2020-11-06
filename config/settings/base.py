@@ -447,7 +447,7 @@ EXPORTED_SETTINGS = [
 
 # Enables Automatic harvesting
 # TODO it can be changed to True once we migrate to new system
-AUTOMATIC_HARVESTING_ENABLED = False
+AUTOMATIC_HARVESTING_ENABLED = config('AUTOMATIC_HARVESTING_ENABLED', cast=bool, default=False)
 
 # Need to disable prometheus migrations when collecting static without DB
 # see https://github.com/korfuri/django-prometheus/issues/34
