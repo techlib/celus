@@ -1,5 +1,7 @@
 import logging
 
+from datetime import timedelta
+
 import celery
 from django.conf import settings
 
@@ -33,13 +35,19 @@ def trigger_scheduler(url: str, finish: bool = False):
 
     res = scheduler.run_next()
     logger.debug("Sheduler returned %s", res)
-    if res == RunResponse.COOLDOWN or (
-        res in (RunResponse.PROCESSED, RunResponse.BROKEN) and finish
-    ):
+    if res == RunResponse.COOLDOWN or (finish and res != RunResponse.IDLE):
         # replan if in cooldown
-        # or if previous was successful and finish is set
+        # or when finish is set and there are still tasks to perform
         logger.info("Scheduler with url %s replaned for later.", url)
-        trigger_scheduler.apply_async((url, finish), eta=scheduler.when_ready)
+        timeout: timedelta
+        if res == RunResponse.BUSY:
+            # Add extra timeout when scheduler is BUSY
+            # so it don't gets retriggered to often
+            timeout = timedelta(seconds=scheduler.cooldown)
+        else:
+            timeout = timedelta(seconds=0)
+
+        trigger_scheduler.apply_async((url, finish), eta=scheduler.when_ready + timeout)
     else:
         # if scheduler is busy or idle or we don't need to finish the scheduler
         # we don't need to plan new task
