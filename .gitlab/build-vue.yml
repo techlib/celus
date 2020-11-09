@@ -1,6 +1,6 @@
 build:vue:
   stage: build
-  needs: ["tests:run_tests"]
+  needs: ["tests:run_tests", "tests:load_initial_data"]
   image: node:12.18
   before_script:
     - export "BUILD=yes"

@@ -24,3 +24,26 @@ tests:run_tests:
   coverage: /^TOTAL.*\s+([^\s]+)%$/
   tags:
     - bdd
+
+tests:load_initial_data:
+  stage: tests
+  needs: []
+  image: registry.gitlab.com/big-dig-data/celus/celus-test:latest
+  services:
+    - postgres
+    - redis
+  variables:
+    DJANGO_SETTINGS_MODULE: config.settings.test
+    POSTGRES_DB: celus_loaddata
+    POSTGRES_USER: celus_loaddata
+    POSTGRES_PASSWORD: celus_loaddata
+    POSTGRES_HOST: postgres
+    REDIS_URL: "redis://redis:6379/1"
+  before_script:
+    - poetry install
+  script:
+    - cp .env.example .env
+    - poetry run python manage.py migrate
+    - poetry run python manage.py loaddata data/initial-data.json
+  tags:
+    - bdd
