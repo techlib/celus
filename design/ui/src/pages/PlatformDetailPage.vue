@@ -273,6 +273,12 @@ export default {
       }
       return null;
     },
+    platformDetailUrl() {
+      if (this.selectedOrganizationId) {
+        return `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/`;
+      }
+      return null;
+    },
     breadcrumbs() {
       return [
         {
@@ -292,20 +298,22 @@ export default {
       return null;
     },
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
     formatInteger: formatInteger,
     async loadPlatform() {
-      if (this.selectedOrganizationId) {
+      if (this.platformDetailUrl) {
         try {
-          let response = await axios.get(
-            `/api/organization/${this.selectedOrganizationId}/platform/${this.platformId}/`
-          );
+          let response = await axios.get(this.platformDetailUrl);
           this.platform = response.data;
-          this.loadPlatformTitleCount();
-          this.loadPlatformInterest();
+          this.$set(this.platform, "interests", { loading: false });
+          await Promise.all([
+            this.loadPlatformTitleCount(),
+            this.loadPlatformInterest(),
+          ]);
         } catch (error) {
           this.showSnackbar({ content: "Error loading platforms: " + error });
         }
@@ -349,7 +357,7 @@ export default {
     this.loadPlatform();
   },
   watch: {
-    selectedOrganizationId() {
+    platformDetailUrl() {
       this.loadPlatform();
     },
     platformInterestUrl() {

@@ -347,7 +347,26 @@ export default {
     canEdit() {
       return this.showAdminStuff && this.organizationSelected;
     },
+    interestUrl() {
+      if (this.selectedOrganizationId) {
+        return `/api/organization/${this.selectedOrganizationId}/platform-interest/by-year`;
+      }
+      return null;
+    },
+    paymentsUrl() {
+      if (this.selectedOrganizationId) {
+        let url = `/api/organization/${this.selectedOrganizationId}/payments/`;
+        if (!this.organizationSelected) {
+          // if organization is not selected, we need to aggregate data by year,
+          // so we use a different endpoint
+          url += "by-year/";
+        }
+        return url;
+      }
+      return null;
+    },
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
@@ -363,11 +382,9 @@ export default {
       return "item.pricePerInterest." + ig.short_name;
     },
     async fetchInterest() {
-      if (this.selectedOrganizationId) {
+      if (this.interestUrl) {
         try {
-          const response = await axios.get(
-            `/api/organization/${this.selectedOrganizationId}/platform-interest/by-year`
-          );
+          const response = await axios.get(this.interestUrl);
           this.interestData = response.data;
           this.availableYears = [
             ...new Set(this.interestData.map((item) => item.date__year)),
@@ -386,15 +403,9 @@ export default {
       }
     },
     async fetchPayments() {
-      if (this.selectedOrganizationId) {
-        let url = `/api/organization/${this.selectedOrganizationId}/payments/`;
-        if (!this.organizationSelected) {
-          // if organization is not selected, we need to aggregate data by year,
-          // so we use a different endpoint
-          url += "by-year/";
-        }
+      if (this.paymentsUrl) {
         try {
-          const response = await axios.get(url);
+          const response = await axios.get(this.paymentsUrl);
           this.paymentData = response.data;
         } catch (error) {
           this.showSnackbar({
@@ -474,8 +485,10 @@ export default {
     this.syncInterestWeights();
   },
   watch: {
-    selectedOrganizationId() {
+    interestUrl() {
       this.fetchInterest();
+    },
+    paymentsUrl() {
       this.fetchPayments();
     },
     activeInterestGroups() {

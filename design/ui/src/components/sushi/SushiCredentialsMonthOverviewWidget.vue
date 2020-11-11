@@ -488,6 +488,9 @@ export default {
     attemptsUrl() {
       this.loadAttempts();
     },
+    credentialsUrl() {
+      this.loadSushiCredentialsList();
+    },
   },
 
   mounted() {

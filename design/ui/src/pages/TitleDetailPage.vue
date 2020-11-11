@@ -331,15 +331,6 @@ export default {
       }
       return null;
     },
-    hasAnnotations() {
-      if (this.$refs.annotationsWidget) {
-        let annots = this.$refs.annotationsWidget.annotations;
-        if (annots.length) {
-          return true;
-        }
-      }
-      return false;
-    },
   },
   methods: {
     ...mapActions({

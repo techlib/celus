@@ -151,10 +151,12 @@ export default {
             item.title_count = "loading";
             return item;
           });
-          this.loadPlatformInterest();
-          this.loadPlatformTitleCount();
-          this.loadPlatformSushiCounts();
-          this.loadAnnotations();
+          await Promise.all([
+            this.loadPlatformInterest(),
+            this.loadPlatformTitleCount(),
+            this.loadPlatformSushiCounts(),
+            this.loadAnnotations(),
+          ]);
         } catch (error) {
           this.showSnackbar({
             content: "Error loading platforms: " + error,
@@ -268,7 +270,7 @@ export default {
     this.loadPlatforms();
   },
   watch: {
-    selectedOrganizationId() {
+    platformsURL() {
       this.loadPlatforms();
     },
     dateRangeStart() {

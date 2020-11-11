@@ -56,8 +56,6 @@ export default {
       },
       set(value) {
         this.selectOrganization({ id: value });
-        this.$router.push({ name: "home" }).catch(() => {}); // catch but ignore -
-        // it is harmless (https://github.com/vuejs/vue-router/issues/2873)
       },
     },
     label() {
