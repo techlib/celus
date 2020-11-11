@@ -9,6 +9,8 @@ en:
       success: Success
       missing: Not harvested yet
       empty_data: Empty data
+      broken: Broken credentials
+      broken_report: Broken report
     state_desc:
       unknown: The state is not clear. There was not obvious error but no data were imported.
       queued: Data was not yet available so future attempts were queued.
@@ -16,6 +18,8 @@ en:
       success: Data were successfully downloaded and ingested into Celus.
       missing: Data retrieval was not yet performed.
       empty_data: Data was successfully harvested, but no usage was recorded at the time in question.
+      broken: The credentials are marked as broken and thus automatic harvesting is turned off.
+      broken_report: The report is marked as broken and thus automatic harvesting is turned off.
     broken: Broken
     broken_report_type_desc:
       This report was marked as broken for these credentials. This is usually result of errors
@@ -33,6 +37,8 @@ cs:
       success: Úspěšně staženo
       missing: Dosud nestaženo
       empty_data: Prázdná data
+      broken: Nefunkční přihlašovací údaje
+      broken_report: Nefunkční report
     state_desc:
       unknown: Stav není jednoznačný. Nedošlo ke zjevné chybě, ale import neobsahoval žádná data.
       queued: Data zatím nebyla k dispozici, bylo naplánováno další stažení v budoucnosti.
@@ -40,6 +46,8 @@ cs:
       success: Data byla úspěšně stažená a uložená v systému.
       missing: Stažení dat zatím nebylo provedeno.
       empty_data: Data byla úspěšně stažena, ale pro dané obdobi nebylo zaznamenáno žádné využití.
+      broken: Přihlašovací údaje byly označeny jako nefunkční a automatické stahování pro ně bylo vypnuto.
+      broken_report: Report byl označeny jako nefunkční a automatické stahování pro něj bylo vypnuto.
     broken: Nefunkční
     broken_report_type_desc:
       Tento report byl označen jako nefunkční. Většinou je to způsobeno chybami při stahování, které indikují, že

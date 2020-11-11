@@ -22,6 +22,8 @@ import {
   ATTEMPT_NOT_MADE,
   ATTEMPT_EMPTY_DATA,
   ATTEMPT_UNKNOWN,
+  BROKEN_REPORT,
+  BROKEN_CREDENTIALS,
 } from "@/libs/attempt-state";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import { mapActions } from "vuex";
@@ -61,6 +63,8 @@ export default {
         ATTEMPT_EMPTY_DATA,
         ATTEMPT_UNKNOWN,
         ATTEMPT_ERROR,
+        BROKEN_REPORT,
+        BROKEN_CREDENTIALS,
       ],
       statusToColor: {},
     };
@@ -71,6 +75,9 @@ export default {
     data.statusToColor[this.$t(`sushi.state.${ATTEMPT_EMPTY_DATA}`)] =
       "#a6cea7";
     data.statusToColor[this.$t(`sushi.state.${ATTEMPT_UNKNOWN}`)] = "#f8b765";
+    data.statusToColor[this.$t(`sushi.state.${BROKEN_CREDENTIALS}`)] =
+      "#bb4652";
+    data.statusToColor[this.$t(`sushi.state.${BROKEN_REPORT}`)] = "#c2545f";
     return data;
   },
 
@@ -184,7 +191,11 @@ export default {
           for (let reportType of item.counter_reports_long) {
             let key = `${item.pk}-${reportType.id}`;
             let state = ATTEMPT_NOT_MADE;
-            if (attemptMap.has(key)) {
+            if (item.broken !== null) {
+              state = BROKEN_CREDENTIALS;
+            } else if (reportType.broken !== null) {
+              state = BROKEN_REPORT;
+            } else if (attemptMap.has(key)) {
               state = attemptMap.get(key).state;
             }
             statusCounter.set(state, (statusCounter.get(state) ?? 0) + 1);

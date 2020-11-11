@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 <i18n lang="yaml">
 en:
   hide_successful: Hide successful rows
@@ -147,7 +148,12 @@ cs:
                 "
                 :class="{ clickable: item[rt.code] && item[rt.code].pk }"
               >
-                <SushiAttemptStateIcon :attempt="item[rt.code]" latest />
+                <SushiAttemptStateIcon
+                  :attempt="item[rt.code]"
+                  latest
+                  :broken-report="hasBrokenReport(item[rt.code])"
+                  :broken-credentials="!!item.broken"
+                />
               </span>
             </template>
             <template #item.counter_version="{ item }">
@@ -155,14 +161,22 @@ cs:
                 <template #activator="{ on }">
                   <span
                     class="pl-5"
-                    :class="item.enabled ? '' : 'red--text'"
+                    :class="!item.enabled || item.broken ? 'red--text' : ''"
                     v-on="on"
                   >
+                    <v-icon v-if="item.broken" small color="warning"
+                      >fa fa-exclamation-triangle</v-icon
+                    >
                     <v-icon v-if="!item.enabled" x-small>fa fa-unlink</v-icon>
                     {{ item.counter_version }}
                   </span>
                 </template>
-                <span v-if="item.enabled" v-text="$t('enabled')"></span>
+                <span v-if="item.broken">
+                  <strong v-text="$t('sushi.broken')"></strong>
+                  <br />
+                  <span v-text="$t('sushi.state_desc.broken')"></span>
+                </span>
+                <span v-else-if="item.enabled" v-text="$t('enabled')"></span>
                 <span v-else v-text="$t('not_enabled')"></span>
               </v-tooltip>
             </template>
@@ -331,13 +345,6 @@ export default {
         }
       }
       return attempts;
-
-      let activeCredentials = new Set(
-        this.sushiCredentialsWithAttempts.map((item) => item.pk)
-      );
-      return this.attemptData.filter((item) =>
-        activeCredentials.has(item.credentials_id)
-      );
     },
     allSushiCredentialsWithAttempts() {
       return this.sushiCredentialsList.map((item) => {
@@ -370,7 +377,7 @@ export default {
           (item) =>
             item.counter_reports_long.filter(
               (rt) => item[rt.code] && item[rt.code].state === ATTEMPT_SUCCESS
-            ).length != item.counter_reports_long.length
+            ).length !== item.counter_reports_long.length
         );
       }
       return list;
@@ -388,6 +395,17 @@ export default {
     },
     lastMonth() {
       return ymDateFormat(addDays(startOfMonth(new Date()), -15));
+    },
+    brokenReports() {
+      let brokenReports = new Map();
+      this.sushiCredentialsList.forEach((cred) =>
+        cred.counter_reports_long
+          .filter((report) => !!report.broken)
+          .forEach((report) =>
+            brokenReports.set(`${cred.pk}-${report.id}`, true)
+          )
+      );
+      return brokenReports;
     },
   },
 
@@ -471,6 +489,14 @@ export default {
       if (this.allowedMonths(shifted)) {
         this.selectedMonth = shifted;
       }
+    },
+    hasBrokenReport(attempt) {
+      if (!attempt) {
+        return false;
+      }
+      return this.brokenReports.has(
+        `${attempt.credentials_id}-${attempt.counter_report_id}`
+      );
     },
   },
 

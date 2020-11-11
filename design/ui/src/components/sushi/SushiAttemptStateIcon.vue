@@ -34,12 +34,26 @@ cs:
             >fa fa-exclamation-circle</v-icon
           >
           <v-icon v-else color="warning">far fa-question-circle</v-icon>
+
+          <!-- show additional icon when credentials are broken -->
+          <v-icon v-if="brokenCredentials" x-small color="warning" class="pl-1">
+            fa fa-exclamation
+          </v-icon>
+          <v-icon v-else-if="brokenReport" x-small color="warning" class="pl-1">
+            fa fa-exclamation
+          </v-icon>
         </span>
       </template>
 
       <div>
         <div class="explanation">
           {{ $t(`sushi.state_desc.${attemptState}`) }}
+        </div>
+        <div v-if="brokenReport">
+          {{ $t("sushi.state_desc.broken_report") }}
+        </div>
+        <div v-if="brokenCredentials">
+          {{ $t("sushi.state_desc.broken") }}
         </div>
         <div v-if="attempt && attemptState !== stateUntried">
           <h4 v-text="$t('details')" class="mt-3"></h4>
@@ -79,6 +93,8 @@ export default {
     // when set to true, this attempt is last of several and the wording should reflect it
     latest: { default: false, type: Boolean },
     forceState: { required: false, default: null, type: String },
+    brokenReport: { default: false, type: Boolean },
+    brokenCredentials: { default: false, type: Boolean },
   },
 
   data() {

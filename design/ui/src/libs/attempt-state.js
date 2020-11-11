@@ -4,6 +4,8 @@ const ATTEMPT_ERROR = "error";
 const ATTEMPT_QUEUED = "queued";
 const ATTEMPT_NOT_MADE = "missing";
 const ATTEMPT_EMPTY_DATA = "empty_data";
+const BROKEN_CREDENTIALS = "broken";
+const BROKEN_REPORT = "broken_report";
 
 function attemptState(attempt) {
   if (attempt.untried) {
@@ -29,4 +31,6 @@ export {
   ATTEMPT_QUEUED,
   ATTEMPT_NOT_MADE,
   ATTEMPT_EMPTY_DATA,
+  BROKEN_CREDENTIALS,
+  BROKEN_REPORT,
 };
