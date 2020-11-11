@@ -1,10 +1,10 @@
 <i18n lang="yaml">
 en:
   is_superuser: Superuser
-  is_from_master_organization: CzechELib staff
+  is_from_master_organization: Consortium staff
   associated_organizations: Associated organizations
   associated_organizations_note:
-    Super users and CzechELib users have access to all available organizations, but only
+    Super users and consortium staff users have access to all available organizations, but only
     those listed below are explicitly associated with this account
   organization: Organization
   is_admin: Admin
@@ -17,10 +17,10 @@ en:
 
 cs:
   is_superuser: Superuživatel
-  is_from_master_organization: Člen CzechELib týmu
+  is_from_master_organization: Člen konzorciálního týmu
   associated_organizations: Přiřazené organizace
   associated_organizations_note:
-    Superuživatelé a členové CzechELib týmu mají přístup ke všem organizacím. Níže jsou
+    Superuživatelé a členové konzorciálního týmu mají přístup ke všem organizacím. Níže jsou
     uvedené jen ty, ke kterým je uživatel explicitně přiřazen.
   organization: Organizace
   is_admin: Administrátor
