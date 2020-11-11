@@ -187,7 +187,7 @@ export default {
             if (attemptMap.has(key)) {
               state = attemptMap.get(key).state;
             }
-            statusCounter.set(state, (statusCounter.get(state) | 0) + 1);
+            statusCounter.set(state, (statusCounter.get(state) ?? 0) + 1);
           }
         });
       this.statusCounter = statusCounter;
