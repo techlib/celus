@@ -1,5 +1,8 @@
 <template>
-  <SushiCredentialsManagementWidget :organization-id="organizationId" />
+  <SushiCredentialsManagementWidget
+    :organization-id="organizationId"
+    :show-broken-only="brokenOnly"
+  />
 </template>
 
 <script>
@@ -17,6 +20,9 @@ export default {
     ...mapState({
       organizationId: "selectedOrganizationId",
     }),
+    brokenOnly() {
+      return "broken" in this.$route.query;
+    },
   },
 };
 </script>

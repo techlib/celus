@@ -14,6 +14,8 @@ en:
   sushi_status: SUSHI automated harvesting status
   sushi_status_info: Result of download for each automatically harvested report.
   details_here: Details here
+  interest_totals: Interest summary
+  sushi_overview: SUSHI overview
 
 cs:
   total_interest: Celkový zájem
@@ -28,6 +30,8 @@ cs:
   sushi_status: Stav automatického stahování SUSHI
   sushi_status_info: Souhrn výsledku stahování pro všechny automaticky sklízené reporty.
   details_here: Podrobnosti zde
+  interest_totals: Celkový zájem
+  sushi_overview: Přehled SUSHI
 </i18n>
 
 <template>
@@ -98,69 +102,27 @@ cs:
           </v-card-text>
         </v-card>
       </v-col>
-
-      <!--
-      TODO: remove the following and the corresponding functionality if we decide not to use it anymore
-      BTW, maybe we could extract it into a separate independent component for easy reuse later.
-      -->
-      <!--v-col cols="12" lg="6">
-        <v-card min-height="480">
-          <v-card-title>
-            <span v-text="$t('title_interest_histogram')"></span>
-            <v-spacer></v-spacer>
-            <v-tooltip bottom max-width="400px">
-              <template #activator="{ on }">
-                <v-icon class="ml-2" v-on="on">fa fa-info-circle</v-icon>
-              </template>
-              {{ $t("histogram_tooltip") }}
-            </v-tooltip>
-          </v-card-title>
-          <v-card-text>
-            <div v-if="histogramChartData" style="position: relative">
-              <v-checkbox
-                v-model="histogramLogScale"
-                :label="$t('log')"
-                style="position: absolute; bottom: 0; left: 1rem; z-index: 1"
-              />
-              <ve-histogram
-                :data="histogramChartData"
-                :xAxis="{
-                  type: 'category',
-                  axisLabel: { rotate: 90 },
-                  data: histogramChartXAxisData,
-                }"
-                :yAxis="{
-                  type: histogramLogScale ? 'log' : 'value',
-                  min: histogramLogScale ? 0.1 : 0,
-                }"
-                :settings="{ labelMap: { count: this.$t('title_count') } }"
-                height="400px"
-              >
-              </ve-histogram>
-            </div>
-            <LoaderWidget v-else height="400px" />
-          </v-card-text>
-        </v-card>
-      </v-col-->
     </v-row>
+
     <v-row class="align-stretch">
       <v-col cols="auto">
         <v-card height="100%" min-height="320">
+          <v-card-title v-text="$t('interest_totals')"></v-card-title>
           <v-card-text>
             <div v-if="totalInterestData" class="text-center ma-5">
               <div v-text="$t('total_interest')"></div>
               <div
-                class="large-number"
+                class="text-h4"
                 v-text="formatInteger(totalInterestData.interest_sum)"
               ></div>
               <div class="mt-8" v-text="$t('number_of_days')"></div>
               <div
-                class="big-number"
+                class="text-h5"
                 v-text="formatInteger(totalInterestData.days)"
               ></div>
               <div class="mt-8" v-text="$t('interest_per_day')"></div>
               <div
-                class="large-number"
+                class="text-h4"
                 v-text="
                   smartFormatFloat(
                     totalInterestData.interest_sum / totalInterestData.days
@@ -169,6 +131,15 @@ cs:
               ></div>
             </div>
             <LargeSpinner v-else />
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="auto">
+        <v-card height="100%" min-height="320" min-width="200">
+          <v-card-title v-text="$t('sushi_overview')"></v-card-title>
+          <v-card-text>
+            <SushiStatsDashboardWidget class="mx-3 mt-5" />
           </v-card-text>
         </v-card>
       </v-col>
@@ -205,11 +176,13 @@ import SushiStatusChart from "@/components/charts/SushiStatusChart";
 import startOfMonth from "date-fns/startOfMonth";
 import addDays from "date-fns/addDays";
 import { ymDateFormat } from "@/libs/dates";
+import SushiStatsDashboardWidget from "@/components/sushi/SushiStatsDashboardWidget";
 
 export default {
   name: "DashboardPage",
 
   components: {
+    SushiStatsDashboardWidget,
     SushiStatusChart,
     IntroPage,
     TopTenDashboardWidget,
@@ -376,18 +349,6 @@ table.dashboard {
   td {
     text-align: right;
   }
-}
-
-div.large-number {
-  font-size: 1.75rem;
-  margin-top: 0.375rem;
-  font-weight: bold;
-}
-
-div.big-number {
-  font-size: 1.375rem;
-  margin-top: 0.25rem;
-  font-weight: bold;
 }
 
 .top-col {
