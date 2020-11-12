@@ -230,6 +230,7 @@ class PlatformImportAttempt(ImportAttempt):
             needs_update = any(updatable[e] != getattr(platform, e) for e in UPDATABLE_FIELDS)
             if created:
                 logger.info("Platform '%s' created", record["short_name"])
+                platform.create_default_interests()
                 counter["created"] += 1
 
             elif needs_update:

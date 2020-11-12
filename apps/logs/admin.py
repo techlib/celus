@@ -41,7 +41,7 @@ class ReportTypeAdmin(TranslationAdmin):
         'materialized',
     ]
     ordering = ['short_name']
-    list_filter = ['source', IsMaterialized]
+    list_filter = ['source', IsMaterialized, 'default_platform_interest']
 
     @classmethod
     def dimension_list(cls, obj: models.ReportType):

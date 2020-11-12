@@ -8,6 +8,14 @@ from modeltranslation.admin import TranslationAdmin
 from . import models
 
 
+def create_default_interests(modeladmin, request, queryset):
+    for platform in queryset:
+        platform.create_default_interests()
+
+
+create_default_interests.short_description = "Create default interest for selected platforms"
+
+
 @admin.register(models.Platform)
 class PlatformAdmin(TranslationAdmin):
 
@@ -16,6 +24,7 @@ class PlatformAdmin(TranslationAdmin):
     search_fields = ['short_name', 'name', 'provider']
     readonly_fields = ['pretty_knowledgebase']
     exclude = ['knowledgebase']
+    actions = (create_default_interests,)
 
     def pretty_knowledgebase(self, obj):
         return format_html(
