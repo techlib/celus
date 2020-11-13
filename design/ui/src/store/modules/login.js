@@ -88,6 +88,14 @@ export default {
         { headers: { "X-CSRFToken": csrftoken }, privileged: true }
       );
     },
+    async changePassword({ commit, dispatch }, { password }) {
+      let csrftoken = Cookies.get("csrftoken");
+      await axios.post(
+        "/api/rest-auth/password/change/",
+        { new_password1: password, new_password2: password },
+        { headers: { "X-CSRFToken": csrftoken } }
+      );
+    },
   },
 
   mutations: {

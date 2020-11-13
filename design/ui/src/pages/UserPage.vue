@@ -14,6 +14,7 @@ en:
   resend_verification_email: Resend verification email
   verification_resent: Verification email was resent
   logout: Log out
+  change_password: Change password
 
 cs:
   is_superuser: Superuživatel
@@ -30,53 +31,95 @@ cs:
   resend_verification_email: Znovu zaslat ověřovací email
   verification_resent: Ověřovací email byl znovu zaslán
   logout: Odhlásit se
+  change_password: Změnit heslo
 </i18n>
 
 <template>
-  <div v-if="loggedIn && user" class="text-center">
-    <v-avatar color="primary" class="mt-10" size="80">
-      <v-gravatar :email="user.email" :alt="avatarText" default-img="mp">
-      </v-gravatar>
-    </v-avatar>
+  <v-container v-if="loggedIn && user" class="text-center">
+    <v-row>
+      <v-col>
+        <v-alert
+          v-if="!emailVerified"
+          type="warning"
+          class="ma-3 pa-5"
+          outlined
+        >
+          {{ $t("unverified_email") }}
+          <div>
+            <v-btn
+              color="primary"
+              @click="resendVerificationEmail()"
+              class="my-5"
+            >
+              {{ $t("resend_verification_email") }}
+            </v-btn>
+          </div>
+        </v-alert>
+      </v-col>
+    </v-row>
 
-    <h3 v-if="user.first_name || user.last_name" class="subdued mt-3">
-      {{ user.first_name ? user.first_name : "" }}
-      {{ user.last_name ? user.last_name : "" }}
-    </h3>
-    <h4 v-if="user.email" class="font-weight-light mb-1">{{ user.email }}</h4>
+    <v-row no-gutters>
+      <v-col>
+        <v-avatar color="primary" class="mt-10" size="80">
+          <v-gravatar :email="user.email" :alt="avatarText" default-img="mp">
+          </v-gravatar>
+        </v-avatar>
+      </v-col>
+    </v-row>
 
-    <div class="py-2" v-if="canLogout">
-      <v-btn @click="logout" v-text="$t('logout')"></v-btn>
-    </div>
+    <v-row no-gutters>
+      <v-col>
+        <h3 v-if="user.first_name || user.last_name" class="subdued mt-3">
+          {{ user.first_name ? user.first_name : "" }}
+          {{ user.last_name ? user.last_name : "" }}
+        </h3>
+        <h4 v-if="user.email" class="font-weight-light mb-1">
+          {{ user.email }}
+        </h4>
+        <div class="font-weight-black">
+          <span v-if="user.is_superuser" v-text="$t('is_superuser')"></span>
+          <span
+            v-else-if="user.is_from_master_organization"
+            v-text="$t('is_from_master_organization')"
+          ></span>
+        </div>
+      </v-col>
+    </v-row>
 
-    <v-alert v-if="!emailVerified" type="warning" class="my-3 py-5" outlined>
-      {{ $t("unverified_email") }}
-      <v-btn color="primary" @click="resendVerificationEmail()" class="my-5">
-        {{ $t("resend_verification_email") }}
-      </v-btn>
-    </v-alert>
+    <v-row class="mb-8" justify="center">
+      <v-col v-if="canLogout" class="text-right">
+        <v-btn @click="logout" v-text="$t('logout')"></v-btn>
+      </v-col>
+      <v-col v-if="usesPasswordLogin" class="text-left">
+        <v-btn
+          @click="showPasswordChangeDialog = true"
+          v-text="$t('change_password')"
+        ></v-btn>
+        <PasswordChangeDialog v-model="showPasswordChangeDialog" />
+      </v-col>
+    </v-row>
 
-    <div class="mb-10 font-weight-black">
-      <span v-if="user.is_superuser" v-text="$t('is_superuser')"></span>
-      <span
-        v-else-if="user.is_from_master_organization"
-        v-text="$t('is_from_master_organization')"
-      ></span>
-    </div>
+    <v-row>
+      <v-col>
+        <h2 v-text="$t('associated_organizations')"></h2>
+        <div
+          class="font-weight-light mt-2 mb-4"
+          v-if="user.is_superuser || user.is_from_master_organization"
+          v-text="'* ' + $t('associated_organizations_note')"
+        ></div>
+      </v-col>
+    </v-row>
 
-    <h2 v-text="$t('associated_organizations')"></h2>
-    <div
-      class="font-weight-light mt-2 mb-4"
-      v-if="user.is_superuser || user.is_from_master_organization"
-      v-text="'* ' + $t('associated_organizations_note')"
-    ></div>
-
-    <v-data-table :items="organizationList" :headers="headers">
-      <template v-slot:item.is_admin="{ item }">
-        <CheckMark :value="item.is_admin" />
-      </template>
-    </v-data-table>
-  </div>
+    <v-row>
+      <v-col>
+        <v-data-table :items="organizationList" :headers="headers">
+          <template v-slot:item.is_admin="{ item }">
+            <CheckMark :value="item.is_admin" />
+          </template>
+        </v-data-table>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -84,12 +127,15 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import VGravatar from "vue-gravatar";
 import CheckMark from "@/components/util/CheckMark";
 import axios from "axios";
+import PasswordChangeDialog from "@/components/account/PasswordChangeDialog";
 
 export default {
   name: "UserPage",
-  components: { VGravatar, CheckMark },
+  components: { PasswordChangeDialog, VGravatar, CheckMark },
   data() {
-    return {};
+    return {
+      showPasswordChangeDialog: false,
+    };
   },
   computed: {
     ...mapState({
@@ -102,6 +148,7 @@ export default {
       usernameText: "usernameText",
       canLogout: "canLogout",
       emailVerified: "emailVerified",
+      usesPasswordLogin: "usesPasswordLogin",
     }),
     headers() {
       return [
