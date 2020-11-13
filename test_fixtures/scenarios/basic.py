@@ -214,6 +214,7 @@ def report_types():
     jr5 = ReportTypeFactory(name="Counter 4 - Journal report 5", short_name="JR5")
 
     pr1 = ReportTypeFactory(name="Counter 4 - Platform report 1", short_name="PR1")
+    mr1 = ReportTypeFactory(name="Counter 4 - Multimedia report 1", short_name="MR1")
 
     return locals()
 
@@ -252,7 +253,6 @@ def counter_report_types(report_types):
         counter_version=4, code=report_types["db2"].short_name, report_type=report_types["db2"],
     )
 
-    # counter 4
     jr1 = CounterReportTypeFactory(
         counter_version=4, code=report_types["jr1"].short_name, report_type=report_types["jr1"],
     )
@@ -273,6 +273,10 @@ def counter_report_types(report_types):
 
     pr1 = CounterReportTypeFactory(
         counter_version=4, code=report_types["pr1"].short_name, report_type=report_types["pr1"],
+    )
+
+    mr1 = CounterReportTypeFactory(
+        counter_version=4, code=report_types["mr1"].short_name, report_type=report_types["mr1"],
     )
     return locals()
 

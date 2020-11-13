@@ -3,7 +3,6 @@ Module dealing with data in the COUNTER4 format as provided by the pycounter lib
 """
 
 import typing
-from copy import copy
 
 from pycounter import report
 from pycounter.report import CounterEresource, CounterReport
@@ -18,6 +17,7 @@ class Counter4ReportBase:
 
     dimension_to_attr = {
         'Publisher': 'publisher',
+        'Content Provider': 'content_provider',
     }
     title_id_to_attr = {
         'Print_ISSN': 'issn',
@@ -45,7 +45,7 @@ class Counter4ReportBase:
             for start, metric, value in journal:
                 record = CounterRecord()
                 record.platform_name = journal.platform
-                record.title = journal.title
+                record.title = self._extract_title(journal)
                 record.title_ids = self._extract_title_ids(journal)
                 record.dimension_data = self._extract_dimension_data(self.dimensions, journal)
                 record.start = start
@@ -61,6 +61,9 @@ class Counter4ReportBase:
     @classmethod
     def file_to_input(cls, filename: str):
         return report.parse(filename)
+
+    def _extract_title(self, record: CounterEresource) -> str:
+        return record.collection if hasattr(record, "collection") else record.title
 
     def _extract_title_ids(self, record) -> dict:
         ret = {}
@@ -118,3 +121,8 @@ class Counter4DB2Report(Counter4ReportBase):
 class Counter4PR1Report(Counter4ReportBase):
 
     dimensions = ['Publisher']
+
+
+class Counter4MR1Report(Counter4ReportBase):
+
+    dimensions = ['Content Provider']

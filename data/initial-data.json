@@ -482,6 +482,25 @@
   }
 },
 {
+  "model": "charts.reportdataview",
+  "pk": 25,
+  "fields": {
+    "base_report_type": 41,
+    "short_name": "MR1",
+    "name": "Multimedia Report 1",
+    "name_en": "Multimedia Report 1",
+    "name_cs": "Multimedia Report 1",
+    "desc": "Number of Successful Multimedia Full Content Unit Requests by Month and Collection",
+    "desc_en": "Number of Successful Multimedia Full Content Unit Requests by Month and Collection",
+    "desc_cs": "",
+    "source": null,
+    "metric_allowed_values": [],
+    "primary_dimension": null,
+    "is_standard_view": false,
+    "position": 100
+  }
+},
+{
   "model": "charts.dimensionfilter",
   "pk": 1,
   "fields": {
@@ -1792,6 +1811,21 @@
   }
 },
 {
+  "model": "logs.reporttype",
+  "pk": 41,
+  "fields": {
+    "short_name": "MR1",
+    "name": "Counter 4 - Multimedia report 1",
+    "name_en": "Counter 4 - Multimedia report 1",
+    "name_cs": "Counter 4 - Multimedia report 1",
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null,
+    "superseeded_by": null
+  }
+},
+{
   "model": "logs.interestgroup",
   "pk": 1,
   "fields": {
@@ -2983,6 +3017,21 @@
   }
 },
 {
+  "model": "logs.dimension",
+  "pk": 30,
+  "fields": {
+    "short_name": "Content_Provider",
+    "name": "Content Provider",
+    "name_en": "Content Provider",
+    "name_cs": "Poskytovatel obsahu",
+    "type": 2,
+    "desc": "",
+    "desc_en": "",
+    "desc_cs": "",
+    "source": null
+  }
+},
+{
   "model": "logs.reporttypetodimension",
   "pk": 1,
   "fields": {
@@ -3226,6 +3275,15 @@
   }
 },
 {
+  "model": "logs.reporttypetodimension",
+  "pk": 34,
+  "fields": {
+    "report_type": 41,
+    "dimension": 30,
+    "position": 0
+  }
+},
+{
   "model": "logs.dimensiontext",
   "pk": 1556,
   "fields": {
@@ -3289,6 +3347,17 @@
     "text_local": "Other",
     "text_local_en": "Other",
     "text_local_cs": "Jin\u00fd"
+  }
+},
+{
+  "model": "logs.dimensiontext",
+  "pk": 19957,
+  "fields": {
+    "dimension": 30,
+    "text": "content_provider",
+    "text_local": "Content Provider",
+    "text_local_en": "Content Provider",
+    "text_local_cs": "Poskytovatel obsahu"
   }
 },
 {
@@ -5583,6 +5652,17 @@
     "name": "Item report",
     "counter_version": 5,
     "report_type": 40,
+    "active": true
+  }
+},
+{
+  "model": "sushi.counterreporttype",
+  "pk": 15,
+  "fields": {
+    "code": "MR1",
+    "name": "Counter 4: Platform report 1",
+    "counter_version": 4,
+    "report_type": 41,
     "active": true
   }
 },

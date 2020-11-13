@@ -41,6 +41,7 @@ from nigiri.counter4 import (
     Counter4JR2Report,
     Counter4DB2Report,
     Counter4BR3Report,
+    Counter4MR1Report,
 )
 from nigiri.counter5 import (
     Counter5DRReport,
@@ -73,6 +74,7 @@ COUNTER_REPORTS = (
     ('DB1', 4, Counter4DB1Report),
     ('DB2', 4, Counter4DB2Report),
     ('PR1', 4, Counter4PR1Report),
+    ('MR1', 4, Counter4MR1Report),
     # version 5
     ('TR', 5, Counter5TRReport),
     ('PR', 5, Counter5PRReport),
