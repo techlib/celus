@@ -585,6 +585,14 @@ class Automatic(models.Model):
         return (to_add, to_delete)
 
     @classmethod
+    def next_month_trigger_time(cls):
+        return datetime.combine(
+            cls.next_month(), datetime.min.time(), tzinfo=timezone.get_current_timezone(),
+        ) + timedelta(
+            days=2
+        )  # TODO customizable delta per scheduler
+
+    @classmethod
     @transaction.atomic
     def update_for_next_month(cls) -> Counter:
         """ Updates automatic harvesting for next month """
@@ -599,10 +607,7 @@ class Automatic(models.Model):
         ):
             new_intentions.append(
                 FetchIntention(
-                    not_before=datetime.combine(
-                        next_month, datetime.min.time(), tzinfo=timezone.get_current_timezone(),
-                    )
-                    + timedelta(days=2),  # TODO customizable delta per scheduler
+                    not_before=cls.next_month_trigger_time(),
                     priority=FetchIntention.PRIORITY_NORMAL,
                     credentials=cr2c.credentials,
                     counter_report=cr2c.counter_report,

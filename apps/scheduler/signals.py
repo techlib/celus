@@ -1,3 +1,5 @@
+import datetime
+
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
@@ -15,6 +17,7 @@ def _update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
     if cr2c.credentials.enabled and cr2c.broken is None and cr2c.credentials.broken is None:
         # add intention
         FetchIntention.objects.get_or_create(
+            not_before=Automatic.next_month_trigger_time(),
             harvest=automatic.harvest,
             start_date=automatic.month,
             end_date=automatic.month_end,

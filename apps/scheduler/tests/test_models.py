@@ -1,3 +1,5 @@
+import typing
+
 from datetime import datetime, timedelta, date
 
 from django.utils import timezone
@@ -297,6 +299,87 @@ class TestFetchIntention:
             e.pk for e in FetchIntention.objects.schedulers_to_trigger()
         }
 
+    @pytest.mark.parametrize(
+        "error_code,delays",
+        (
+            (
+                ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,
+                [
+                    timedelta(days=1),
+                    timedelta(days=2),
+                    timedelta(days=4),
+                    timedelta(days=8),
+                    timedelta(days=16),
+                    timedelta(days=32),
+                    timedelta(days=64),
+                    None,
+                ],
+            ),
+            (
+                ErrorCode.NO_DATA_FOR_DATE_ARGS.value,
+                [
+                    timedelta(days=1),
+                    timedelta(days=2),
+                    timedelta(days=4),
+                    timedelta(days=8),
+                    timedelta(days=16),
+                    timedelta(days=32),
+                    None,
+                ],
+            ),
+        ),
+        ids=("not_ready", "no_data",),
+    )
+    def test_process_retry_chain(
+        self, credentials, counter_report_types, monkeypatch, error_code, delays, settings,
+    ):
+        settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
+        scheduler = SchedulerFactory(url=credentials["standalone_tr"].url)
+
+        def mocked_fetch_report(
+            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True,
+        ):
+
+            return FetchAttemptFactory(
+                error_code=error_code,
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+            )
+
+        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+
+        def check_retry(fi: FetchIntention, expected: typing.Optional[datetime]) -> FetchIntention:
+            with freeze_time(fi.not_before):
+                fi.scheduler = scheduler
+                assert fi.process() == ProcessResponse.SUCCESS
+            new_fi = FetchIntention.objects.order_by('pk').last()
+            assert new_fi is not None
+
+            if expected:
+                assert fi.pk != new_fi.pk, "new intention created"
+                assert new_fi.not_before == expected, "new planned date matches"
+            else:
+                assert fi.pk == fi.pk, "no new intention created"
+
+            return new_fi
+
+        start = datetime(2020, 1, 2, 0, 0, 0, 0, tzinfo=current_tz)
+
+        with freeze_time(start):
+            fi = FetchIntentionFactory(
+                not_before=timezone.now(),
+                scheduler=scheduler,
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                data_not_ready_retry=0,
+                when_processed=None,
+            )
+
+        for delay in delays:
+            fi = check_retry(fi, start + delay if delay else None)
+            if delay:
+                start += delay
+
 
 @pytest.mark.django_db
 class TestScheduler:
@@ -542,11 +625,13 @@ class TestAutomatic:
     def test_update_for_next_month(
         self, credentials, organizations, counter_report_types, disable_automatic_scheduling,
     ):
+        start_time = datetime(2020, 1, 3, 0, 0, 0, 0, tzinfo=current_tz)
 
         # all empty
         assert FetchIntention.objects.count() == 0
         assert Automatic.update_for_next_month() == {"added": 4, "deleted": 0}
         assert FetchIntention.objects.count() == 4
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
         # mark credentials broken
         credentials["branch_pr"].set_broken(
@@ -623,7 +708,9 @@ class TestAutomatic:
 
         assert Automatic.update_for_next_month() == {"deleted": 0, "added": 2}
         assert FetchIntention.objects.count() == 3
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
+    @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
         self, counter_report_types, credentials, enable_automatic_scheduling
     ):
@@ -631,6 +718,7 @@ class TestAutomatic:
             credentials or credentails to counter report mapping
             changes
         """
+        start_time = datetime(2020, 1, 3, 0, 0, 0, 0, tzinfo=current_tz)
 
         # Save credentials
         assert FetchIntention.objects.all().count() == 0
@@ -640,14 +728,17 @@ class TestAutomatic:
         assert Automatic.objects.all().count() == 1
         automatic_branch = Automatic.objects.first()
         assert automatic_branch.harvest.intentions.count() == 1
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
         credentials["standalone_br1_jr1"].save()
         assert Automatic.objects.all().count() == 2
         automatic_standalone = Automatic.objects.order_by('pk').last()
         assert automatic_standalone.harvest.intentions.count() == 2
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
         credentials["standalone_tr"].save()
         assert automatic_standalone.harvest.intentions.count() == 3
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
         # Create new mapping
         new_mapping = CounterReportsToCredentials.objects.create(
@@ -656,6 +747,7 @@ class TestAutomatic:
             broken=None,
         )
         assert FetchIntention.objects.all().count() == 5
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
         # Set credentials broken
         credentials["branch_pr"].set_broken(
@@ -669,6 +761,7 @@ class TestAutomatic:
         # Unset credentials broken
         credentials["branch_pr"].unset_broken()
         assert automatic_branch.harvest.intentions.count() == 2
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
         # Unset credentials enabled
         credentials["branch_pr"].enabled = False
@@ -679,6 +772,7 @@ class TestAutomatic:
         credentials["branch_pr"].enabled = True
         credentials["branch_pr"].save()
         assert automatic_branch.harvest.intentions.count() == 2
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
         # Set broken mapping
         new_mapping.set_broken(
@@ -692,6 +786,7 @@ class TestAutomatic:
         # Unset broken mapping
         new_mapping.unset_broken()
         assert automatic_branch.harvest.intentions.count() == 2
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
 
         # Remove mapping
         new_mapping.delete()
@@ -701,3 +796,4 @@ class TestAutomatic:
         assert automatic_standalone.harvest.intentions.count() == 3
         credentials["standalone_br1_jr1"].delete()
         assert automatic_standalone.harvest.intentions.count() == 1
+        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
