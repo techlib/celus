@@ -255,7 +255,7 @@ export default {
     width: 20vw;
   }
   max-width: 128px;
-  max-height: 48px;
+  height: 36px;
 }
 
 img.logo {
