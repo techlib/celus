@@ -70,10 +70,31 @@ cs:
             slider-color="#ffffff33"
             slider-size="48"
           >
-            <v-tab href="#attempts" v-text="$t('attempts_view')"> </v-tab>
             <v-tab href="#harvests" v-text="$t('harvests_view')"> </v-tab>
+            <v-tab
+              href="#attempts"
+              v-text="$t('attempts_view')"
+              v-if="showManagementStuff"
+            >
+            </v-tab>
 
-            <v-tab-item value="attempts">
+            <v-tab-item value="harvests">
+              <v-container fluid>
+                <v-row>
+                  <v-col class="mx-3" v-html="$t('harvest_intro')"> </v-col>
+                </v-row>
+                <v-row>
+                  <v-col class="overflow-auto">
+                    <HarvestsTable
+                      :show-organization="showManagementStuff"
+                      show-platform
+                    />
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-tab-item>
+
+            <v-tab-item value="attempts" v-if="showManagementStuff">
               <v-container>
                 <v-row>
                   <v-col>
@@ -246,21 +267,6 @@ cs:
                 </v-dialog>
               </v-container>
             </v-tab-item>
-            <v-tab-item value="harvests">
-              <v-container fluid>
-                <v-row>
-                  <v-col class="mx-3" v-html="$t('harvest_intro')"> </v-col>
-                </v-row>
-                <v-row>
-                  <v-col class="overflow-auto">
-                    <HarvestsTable
-                      :show-organization="showAdminStuff"
-                      show-platform
-                    />
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-tab-item>
           </v-tabs>
         </v-card>
       </v-col>
@@ -302,7 +308,7 @@ export default {
       successMetric: "contains_data",
       allOrganizations: false,
       mode: "success_and_current",
-      tab: "attempts",
+      tab: "harvests",
     };
   },
   computed: {
@@ -313,6 +319,7 @@ export default {
       organizationSelected: "organizationSelected",
       selectedOrganization: "selectedOrganization",
       showAdminStuff: "showAdminStuff",
+      showManagementStuff: "showManagementStuff",
     }),
     statsUrl() {
       let base = `/api/sushi-fetch-attempt-stats/?x=${this.x}&y=${this.y}&success_metric=${this.successMetric}&mode=${this.mode}`;
