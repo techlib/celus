@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.7.0]
+
+### Added
+
+#### Frontend
+
+- two new views for platform overlap analysis were added
+  - "portfolio optimization" which finds the platforms most important for covering user interest
+  - "cancellation simulation" which allows interactive simulation of the impact of removing a platform or platforms
+- new dashboard card with SUSHI overview was added showing the number of credentials and their status
+- password change dialog was added to the user page
+
+#### Backend
+
+- new mechanism for planning SUSHI harvesting introduced in 2.6.0 was improved and is used for manual data harvesting. Automatic harvesting will switch to the new code in release 2.8.0
+- support for COUNTER 5 IR and COUNTER 4 MR1 reports was added
+
+
+### Changes
+
+#### Frontend
+
+- changing organization in the toolbar does not lead to reload and redirect to dashboard. The current page updates automatically instead.
+- references to CzechELib on the user page were replaced by more generic wording
+- broken credentials are now shown separately in the SUSHI status dashboard chart
+- new Celus logo was introduced
+
+
+### Fixed
+
+#### Backend
+
+- reading of PR reports was fixed to use fields specific to the PR report
+
+
+
+
 ## [2.6.1]
 
 ### Fixes
