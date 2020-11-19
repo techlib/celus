@@ -943,7 +943,10 @@ class SushiFetchAttempt(models.Model):
                 return
 
         # Check for sushi error
-        if self.error_code in (ErrorCode.NOT_AUTHORIZED, ErrorCode.INVALID_API_KEY):
+        if str(self.error_code) in (
+            str(ErrorCode.NOT_AUTHORIZED.value),
+            str(ErrorCode.INVALID_API_KEY.value),
+        ):
             self.credentials.set_broken(self, SushiCredentials.BROKEN_SUSHI)
             return
 
@@ -963,9 +966,9 @@ class SushiFetchAttempt(models.Model):
             mark_broken(SushiCredentials.BROKEN_HTTP)
             return
 
-        if self.error_code in (
-            ErrorCode.REPORT_NOT_SUPPORTED,
-            ErrorCode.REPORT_VERSION_NOT_SUPPORTED,
+        if str(self.error_code) in (
+            str(ErrorCode.REPORT_NOT_SUPPORTED.value),
+            str(ErrorCode.REPORT_VERSION_NOT_SUPPORTED.value),
         ):
             mark_broken(SushiCredentials.BROKEN_SUSHI)
             return
