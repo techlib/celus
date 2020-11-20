@@ -12,7 +12,6 @@ from typing import Optional, Dict, Iterable, IO, Union
 import requests
 import reversion
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.core.files.base import ContentFile, File
 from django.db import models
 from django.db.models import F, Exists, Max, OuterRef
@@ -197,7 +196,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     http_username = models.CharField(max_length=128, blank=True)
     http_password = models.CharField(max_length=128, blank=True)
     api_key = models.CharField(max_length=128, blank=True)
-    extra_params = JSONField(default=dict, blank=True)
+    extra_params = models.JSONField(default=dict, blank=True)
     enabled = models.BooleanField(default=True)
     counter_reports = models.ManyToManyField(
         CounterReportType,
@@ -698,7 +697,7 @@ class SushiFetchAttempt(models.Model):
         max_length=2 * SushiCredentials.BLAKE_HASH_SIZE,
         help_text='Hash computed from the credentials at the time this attempt was made',
     )
-    processing_info = JSONField(default=dict, help_text='Internal info')
+    processing_info = models.JSONField(default=dict, help_text='Internal info')
     triggered_by = models.ForeignKey(
         User,
         null=True,

@@ -10,7 +10,6 @@ from enum import Enum, auto
 from urllib.parse import urljoin, urlparse
 
 from django.db import models, transaction
-from django.contrib.postgres.fields import JSONField
 from django.utils import timezone
 
 from core.models import DataSource
@@ -54,7 +53,7 @@ class ImportAttempt(models.Model):
     data_hash = models.CharField(
         max_length=64, help_text="SHA-256 hash of attempt", null=True, blank=True
     )
-    stats = JSONField(null=True, blank=True)
+    stats = models.JSONField(null=True, blank=True)
     error = models.TextField(blank=True, null=True)
 
     @property

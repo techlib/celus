@@ -6,7 +6,6 @@ import typing
 import magic
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
@@ -25,7 +24,7 @@ class OrganizationPlatform(models.Model):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
-    sushi_credentials = JSONField(default=list)
+    sushi_credentials = models.JSONField(default=list)
 
     def __str__(self):
         return f'{self.organization} | {self.platform}'
@@ -294,7 +293,7 @@ class ImportBatch(models.Model):
     interest_timestamp = models.DateTimeField(
         null=True, blank=True, help_text='When was interest processed for this batch'
     )
-    materialization_data = JSONField(
+    materialization_data = models.JSONField(
         default=dict,
         blank=True,
         help_text='Internal information about materialized report ' 'data in this batch',
@@ -433,7 +432,7 @@ class ManualDataUpload(models.Model):
     is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
-    extra = JSONField(
+    extra = models.JSONField(
         default=dict, blank=True, help_text='Internal data related to processing of the upload'
     )
 

@@ -1,7 +1,6 @@
 from collections import Counter
 
 from django.db import models
-from django.contrib.postgres.fields import JSONField
 from django.utils.translation import gettext_lazy as _
 
 from core.models import DataSource
@@ -28,7 +27,7 @@ class Platform(models.Model):
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
-    knowledgebase = JSONField(blank=True, null=True)
+    knowledgebase = models.JSONField(blank=True, null=True)
 
     class Meta:
         ordering = ('short_name',)

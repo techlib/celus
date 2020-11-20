@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import UniqueConstraint, Q
 from mptt.fields import TreeForeignKey
@@ -32,7 +31,7 @@ class Organization(MPTTModel):
     fte = models.PositiveIntegerField(
         help_text='Last available FTE number for organization', default=0
     )
-    address = JSONField(default=dict, blank=True)
+    address = models.JSONField(default=dict, blank=True)
     source = models.ForeignKey(
         'core.DataSource',
         on_delete=models.SET_NULL,

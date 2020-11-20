@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -22,7 +21,7 @@ class ReportDataView(models.Model):
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
-    metric_allowed_values = JSONField(default=list, blank=True)
+    metric_allowed_values = models.JSONField(default=list, blank=True)
     primary_dimension = models.ForeignKey(
         Dimension, null=True, on_delete=models.SET_NULL, blank=True
     )
@@ -82,7 +81,7 @@ class DimensionFilter(models.Model):
         ReportDataView, on_delete=models.CASCADE, related_name='dimension_filters'
     )
     dimension = models.ForeignKey(Dimension, on_delete=models.CASCADE)
-    allowed_values = JSONField(default=list, blank=True)
+    allowed_values = models.JSONField(default=list, blank=True)
 
 
 class ChartDefinition(models.Model):
