@@ -28,15 +28,30 @@ logger = logging.getLogger(__name__)
 
 
 class SushiError:
-    def __init__(self, code='', text='', full_log='', raw_data=None, severity=None):
+    def __init__(self, code='', text='', full_log='', raw_data=None, severity=None, data=None):
         self.code = code
         self.severity = severity
         self.text = text
         self.full_log = full_log
+        self.data = data
         self.raw_data = raw_data
 
     def __str__(self):
         return self.full_log
+
+    @property
+    def is_warning(self):
+        if self.severity:
+            return self.severity.lower() == "warning"
+
+        return False
+
+    @property
+    def is_info(self):
+        if self.severity:
+            return self.severity.lower() == "info"
+
+        return False
 
 
 class SushiErrorMeaning:
@@ -120,7 +135,8 @@ class SushiClientBase:
         self.extra_params = extra_params
         self.auth = auth
 
-    def extract_errors_from_data(self, report_data) -> [SushiError]:
+    @classmethod
+    def extract_errors_from_data(cls, report_data) -> [SushiError]:
         raise NotImplementedError()
 
     def report_to_string(self, report_data):
@@ -390,38 +406,51 @@ class Sushi5Client(SushiClientBase):
         # log warnings
         for warning in warnings:
             logging.warning(
-                "Warning Exception in COUNTER 5 report: %s",
-                cls._format_error(warning.to_sushi_dict()),
+                "Warning Exception in report: %s", cls._format_error(warning.to_sushi_dict()),
             )
 
-    def extract_errors_from_data(self, report_data: dict):
-        if 'Exception' in report_data:
-            exc = report_data['Exception']
-            return self._format_error(exc)
-        if 'Severity' in report_data and report_data['Severity'] == 'Error':
-            return self._format_error(report_data)
-        header = report_data.get('Report_Header', {})
-        errors = []
-        for exception in header.get('Exceptions', []):
-            if exception.get('Severity') in ('Info', 'Warning'):
-                logging.warning(
-                    "Warning Exception in COUNTER 5 report: %s", self._format_error(exception)
-                )
-            else:
-                errors.append(self._format_error(exception))
+    @classmethod
+    def extract_errors_from_data(cls, report_data: typing.Union[dict, list]):
+        errors: typing.List[SushiError] = []
+
+        # extract exceptions from list
+        if isinstance(report_data, list):
+            errors = []
+            for item in report_data:
+                errors += cls.extract_errors_from_data(item)
+            return errors
+
+        # exceptions in Exception object
+        for exception in recursive_finder(report_data, ["Exception"]):
+            errors.append(cls._format_error(exception))
+
+        if not errors:
+            # naked exception in root
+            naked = cls._format_error(report_data)
+
+            # at least severity and code needs to be present
+            if naked.code and naked.severity:
+                errors.append(naked)
+
         return errors
 
     @classmethod
     def _format_error(cls, exc: dict):
-        message = '{Severity} error {Code}: {Message}'.format(**exc)
-        if 'Data' in exc:
-            message += '; {}'.format(exc['Data'])
+        severity = next(recursive_finder(exc, ["Severity"]), "Unknown")
+        code = next(recursive_finder(exc, ["Code"]), None)
+        text = next(recursive_finder(exc, ["Message"]), "")
+        data = next(recursive_finder(exc, ["Data"]), "")
+
+        if code is None:
+            # Some responses contains "number" instead of "code"
+            code = next(recursive_finder(exc, ["number"]), "")
+
+        message = f'{severity} error {code}: {text}'
+        if data:
+            message += f'; {data}'
+
         error = SushiError(
-            code=exc.get('Code', ''),
-            text=exc.get('Message' ''),
-            full_log=message,
-            severity=exc.get('Severity'),
-            raw_data=exc,
+            code=code, text=text, full_log=message, severity=severity, raw_data=exc, data=data
         )
         return error
 
@@ -497,7 +526,8 @@ class Sushi4Client(SushiClientBase):
         )
         return report
 
-    def extract_errors_from_data(self, report_data: typing.IO[bytes]):
+    @classmethod
+    def extract_errors_from_data(cls, report_data: typing.IO[bytes]):
         try:
             report_data.seek(0)  # set to start
             content = report_data.read().decode('utf8', 'ignore')

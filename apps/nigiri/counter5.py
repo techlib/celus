@@ -8,6 +8,7 @@ from copy import copy
 import ijson.backends.python as ijson  # TODO yalj2 backend can be faster...
 
 from .exceptions import SushiException
+from .error_codes import ErrorCode
 
 
 # TODO we can try to use  data classes https://docs.python.org/3/library/dataclasses.html
@@ -56,6 +57,15 @@ class CounterError:
         self.severity = severity
         self.message = message
         self.data = data
+
+    @classmethod
+    def from_sushi_error(cls, sushi_error):
+        return cls(
+            code=sushi_error.code,
+            severity=sushi_error.severity,
+            message=sushi_error.text,
+            data=sushi_error.data,
+        )
 
     @classmethod
     def from_sushi_dict(cls, rec):
@@ -131,22 +141,20 @@ class Counter5ReportBase:
                     yield this_rec
 
     def extract_errors(self, data):
-        if type(data) is list:
-            [self.extract_errors(item) for item in data]
-        else:
-            if 'Exceptions' in data:
-                return self.extract_errors(data['Exceptions'])
-            elif 'Exception' in data:
-                return self.extract_errors(data['Exception'])
-            if 'Code' in data or 'Severity' in data:
-                error = CounterError.from_sushi_dict(data)
-                if error.severity in ('Warning', 'Info'):
-                    self.warnings.append(error)
-                    if error.code and int(error.code) == 1011:
-                        # special warning telling us we should retry later
-                        self.queued = True
-                else:
-                    self.errors.append(error)
+        from .client import Sushi5Client
+
+        sushi_errors = Sushi5Client.extract_errors_from_data(data)
+
+        if any(str(e.code) == str(ErrorCode.PREPARING_DATA.value) for e in sushi_errors):
+            # special status telling us we should retry later
+            self.queued = True
+
+        for sushi_error in sushi_errors:
+            counter_error = CounterError.from_sushi_error(sushi_error)
+            if sushi_error.is_info or sushi_error.is_warning:
+                self.warnings.append(counter_error)
+            else:
+                self.errors.append(counter_error)
 
     def fd_to_dicts(
         self, fd: typing.IO[bytes]
