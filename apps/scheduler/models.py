@@ -111,10 +111,22 @@ class Scheduler(models.Model):
                 intention = (
                     FetchIntention.objects.select_for_update(skip_locked=True)
                     .filter(
-                        duplicate_of__isnull=True,
-                        credentials__url=self.url,
-                        when_processed__isnull=True,
-                        not_before__lte=timezone.now(),
+                        models.Q(
+                            duplicate_of__isnull=True,
+                            credentials__url=self.url,
+                            credentials__broken__isnull=True,
+                            when_processed__isnull=True,
+                            not_before__lte=timezone.now(),
+                        )
+                        & models.Q(
+                            models.Exists(
+                                CounterReportsToCredentials.objects.filter(
+                                    counter_report=models.OuterRef('counter_report'),
+                                    credentials=models.OuterRef('credentials'),
+                                    broken__isnull=True,
+                                )
+                            )
+                        )
                     )
                     .order_by('-priority', 'not_before')
                     .first()

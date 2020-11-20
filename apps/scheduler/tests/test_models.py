@@ -471,7 +471,8 @@ class TestScheduler:
                 counter_report=counter_report_types["tr"],
                 priority=FetchIntention.PRIORITY_NOW,
             )
-            assert scheduler.run_next() == RunResponse.BROKEN
+            # broken should not be run
+            assert scheduler.run_next() == RunResponse.IDLE
 
             # unbreak and process
             credentials["standalone_tr"].unset_broken()
