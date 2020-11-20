@@ -87,6 +87,7 @@ class TestHarvestAPI:
         data = resp.json()
         assert data["stats"] == {"total": 3, "planned": 2}
         assert len(data["intentions"]) == 3
+        assert "broken_credentials" in data["intentions"][0]
 
         url = reverse('harvest-detail', args=(harvests["user1"].pk,))
         resp = clients["master"].get(url, {})
@@ -94,6 +95,7 @@ class TestHarvestAPI:
         data = resp.json()
         assert data["stats"] == {"total": 2, "planned": 1}
         assert len(data["intentions"]) == 2
+        assert "broken_credentials" in data["intentions"][0]
 
         url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
         resp = clients["master"].get(url, {})
@@ -104,6 +106,7 @@ class TestHarvestAPI:
         assert "duplicate_of" in data["intentions"][1]
         duplicate = data["intentions"][1]["duplicate_of"]
         assert duplicate["attempt"] is not None
+        assert "broken_credentials" in data["intentions"][0]
 
     @pytest.mark.django_db(transaction=True)
     def test_create(
@@ -409,12 +412,14 @@ class TestFetchIntentionAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 3
+        assert "broken_credentials" in data[0]
 
         url = reverse('harvest-intention-list', args=(harvests["user1"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2
+        assert "broken_credentials" in data[0]
 
     @pytest.mark.parametrize(
         "user,anonymous_status,user1_status",
@@ -438,6 +443,8 @@ class TestFetchIntentionAPI:
         )
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
+        data = resp.json()
+        assert "broken_credentials" in data
 
         url = reverse(
             'harvest-intention-detail',

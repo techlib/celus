@@ -156,6 +156,24 @@ class Scheduler(models.Model):
 
 
 class FetchIntentionQuerySet(models.QuerySet):
+    def annotate_credentials_state(self) -> models.QuerySet:
+        return self.annotate(
+            broken_creds=F('credentials__broken'),
+            broken_mapping=models.Exists(
+                CounterReportsToCredentials.objects.filter(
+                    counter_report=models.OuterRef('counter_report'),
+                    credentials=models.OuterRef('credentials'),
+                    broken__isnull=False,
+                )
+            ),
+            missing_mapping=~models.Exists(
+                CounterReportsToCredentials.objects.filter(
+                    counter_report=models.OuterRef('counter_report'),
+                    credentials=models.OuterRef('credentials'),
+                )
+            ),
+        )
+
     def annotate_unique(self) -> models.QuerySet:
         return self.annotate(
             unique_field=models.functions.Concat(
@@ -276,6 +294,13 @@ class FetchIntention(models.Model):
 
     @property
     def broken_credentials(self) -> bool:
+        if (
+            hasattr(self, 'broken_creds')
+            and hasattr(self, 'broken_mapping')
+            and hasattr(self, 'missing_mapping')
+        ):
+            return self.broken_creds or self.broken_mapping or self.missing_mapping
+
         return (
             self.credentials.broken
             or not CounterReportsToCredentials.objects.filter(
@@ -645,7 +670,23 @@ class Harvest(CreatedUpdatedMixin):
     @property
     def latest_intentions(self):
         """ Only latest intentions, retried intentions are skipped """
-        return self.intentions.latest_intentions(within_harvest=True)
+        return (
+            self.intentions.latest_intentions(within_harvest=True)
+            .annotate_credentials_state()
+            .select_related(
+                'attempt',
+                'attempt__counter_report',
+                'attempt__credentials',
+                'attempt__credentials__organization',
+                'attempt__credentials__platform',
+                'attempt__import_batch',
+                'counter_report',
+                'credentials',
+                'credentials__platform',
+                'credentials__organization',
+                'duplicate_of',
+            )
+        )
 
 
 class Automatic(models.Model):

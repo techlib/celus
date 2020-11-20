@@ -59,6 +59,7 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
         fields = (
             'pk',
             'not_before',
+            'broken_credentials',
             'credentials',
             'counter_report',
             'platform_name',
