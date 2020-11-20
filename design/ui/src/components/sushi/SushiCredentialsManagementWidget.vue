@@ -232,7 +232,11 @@ cs:
       </SushiAttemptListWidget>
     </v-dialog>
 
-    <v-dialog v-model="showTestDialog" max-width="1000px">
+    <v-dialog
+      v-model="showTestDialog"
+      max-width="1320px"
+      content-class="top-dialog"
+    >
       <v-card>
         <v-card-title>{{ $t("test_dialog") }}</v-card-title>
         <v-card-text class="pb-0">
@@ -493,7 +497,11 @@ export default {
       item["has_broken_reports"] = !!item.counter_reports_long.filter(
         (report) => report.broken
       ).length;
-      item["isSelectable"] = !item.broken;
+      //tem["isSelectable"] = !item.broken;
+      if (item.broken) {
+        // we need to make sure a broken item is not checked
+        this.checkedRows = this.checkedRows.filter((row) => row.pk !== item.pk);
+      }
     },
     async toggleLock(credentials) {
       let newLockLevel = 400;

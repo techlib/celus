@@ -101,4 +101,13 @@ div.v-input {
 .subdued {
   color: #888888;
 }
+
+.top-dialog {
+  position: absolute !important;
+  top: 0 !important;
+
+  @media screen and (min-height: 720px) {
+    top: 10vh !important;
+  }
+}
 </style>

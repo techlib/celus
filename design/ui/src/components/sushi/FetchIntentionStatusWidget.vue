@@ -146,13 +146,13 @@ cs:
     </v-expansion-panel-header>
 
     <v-expansion-panel-content>
+      <span v-if="intentionData === null"></span>
       <span
-        v-if="
-          !intentionData ||
-          (!intentionData.when_processed &&
-            !intentionData.fetching_data &&
-            !isDuplicate &&
-            !intentionData.broken_credentials)
+        v-else-if="
+          !intentionData.when_processed &&
+          !intentionData.fetching_data &&
+          !isDuplicate &&
+          !intentionData.broken_credentials
         "
       >
         <i18n
@@ -172,7 +172,11 @@ cs:
           />
         </v-expansion-panels>
       </span>
-      <span v-else-if="intentionData.broken_credentials && !intentionData.when_processed">
+      <span
+        v-else-if="
+          intentionData.broken_credentials && !intentionData.when_processed
+        "
+      >
         <i18n path="broken_credentials_hint">
           <template #link>
             <router-link

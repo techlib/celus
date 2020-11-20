@@ -1,25 +1,20 @@
-from django.shortcuts import get_object_or_404
 from django.db.models import Q, Exists, OuterRef, Prefetch, Max
-
-from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
-from core.permissions import SuperuserOrAdminPermission
 from core.models import REL_ORG_USER
+from core.permissions import SuperuserOrAdminPermission
 from logs.views import StandardResultsSetPagination
-from publications.models import Platform
-from sushi.models import SushiCredentials, CounterReportsToCredentials
-from organizations.models import Organization
-
+from sushi.models import CounterReportsToCredentials
+from .models import Automatic, FetchIntention, Harvest
 from .serializers import (
     FetchIntentionSerializer,
     CreateHarvestSerializer,
     HarvestSerializer,
 )
-from .models import Automatic, FetchIntention, Harvest
 
 
 class HarvestViewSet(
@@ -109,19 +104,24 @@ class HarvestViewSet(
         for intention in serializer.validated_data["intentions"]:
             credentials = intention["credentials"]
             if credentials.broken:
-                raise ValidationError(f'Credentials (pk={credentials.pk}) seems to be broken.')
+                raise ValidationError({credentials.pk: f'Credentials are broken.'})
             try:
                 cr2c = credentials.counterreportstocredentials_set.get(
                     counter_report=intention["counter_report"]
                 )
             except CounterReportsToCredentials.DoesNotExist:
                 raise ValidationError(
-                    f'Counter report type (pk={intention["counter_report"].pk}) is not set for Credentials (pk={credentials.pk})'
+                    {
+                        credentials.pk: f'Counter report {intention["counter_report"].code} is not active for'
+                        f' credentials'
+                    }
                 )
 
             if cr2c.broken:
                 raise ValidationError(
-                    f'Counter report type (pk={intention["counter_report"].pk}) seems to be broken for credentials (pk={credentials.pk}).'
+                    {
+                        credentials.pk: f'Counter report {intention["counter_report"].code} is broken for credentials'
+                    }
                 )
 
     def create(self, request, *args, **kwargs):

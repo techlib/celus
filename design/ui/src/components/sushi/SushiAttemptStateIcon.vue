@@ -18,29 +18,13 @@ cs:
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <span v-on="on">
-          <v-icon v-if="attemptState === stateUntried" color="secondary"
-            >far fa-clock</v-icon
-          >
-          <v-icon v-else-if="attemptState === stateQueued" color="secondary"
-            >far fa-pause-circle</v-icon
-          >
-          <v-icon v-else-if="attemptState === stateSuccess" color="success"
-            >far fa-check-circle</v-icon
-          >
-          <v-icon v-else-if="attemptState === stateEmpty" color="success"
-            >far fa-circle</v-icon
-          >
-          <v-icon v-else-if="attemptState === stateError" color="red lighten-2"
-            >fa fa-exclamation-circle</v-icon
-          >
-          <v-icon v-else color="warning">far fa-question-circle</v-icon>
-
+          <v-icon :color="icon.color">{{ icon.icon }} fa-fw</v-icon>
           <!-- show additional icon when credentials are broken -->
           <v-icon v-if="brokenCredentials" x-small color="warning" class="pl-1">
-            fa fa-exclamation
+            fa-exclamation fa-fw
           </v-icon>
           <v-icon v-else-if="brokenReport" x-small color="warning" class="pl-1">
-            fa fa-exclamation
+            fa-exclamation fa-fw
           </v-icon>
         </span>
       </template>
@@ -82,6 +66,7 @@ import {
   ATTEMPT_ERROR,
   ATTEMPT_NOT_MADE,
   ATTEMPT_EMPTY_DATA,
+  attemptStateToIcon,
 } from "@/libs/attempt-state";
 import { isoDateTimeFormat } from "@/libs/dates";
 
@@ -99,11 +84,7 @@ export default {
 
   data() {
     return {
-      stateQueued: ATTEMPT_QUEUED,
-      stateSuccess: ATTEMPT_SUCCESS,
-      stateError: ATTEMPT_ERROR,
       stateUntried: ATTEMPT_NOT_MADE,
-      stateEmpty: ATTEMPT_EMPTY_DATA,
     };
   },
 
@@ -117,6 +98,9 @@ export default {
           : attemptState(this.attempt);
       }
       return null;
+    },
+    icon() {
+      return attemptStateToIcon(this.attemptState);
     },
   },
 

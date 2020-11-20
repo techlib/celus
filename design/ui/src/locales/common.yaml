@@ -98,6 +98,7 @@ en:
     relative: Relative
     total: Total
     platform: Platform
+    finished: Finished
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -229,6 +230,7 @@ cs:
     relative: Relativně
     total: Celkem
     platform: Platforma
+    finished: Dokončeno
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

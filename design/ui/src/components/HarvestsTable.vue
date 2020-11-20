@@ -63,8 +63,7 @@ cs:
               small
               color="secondary"
               @click.stop="
-                currentHarvest = item;
-                fetchHarvestData(item.pk);
+                selectHarvest(item.pk);
                 showHarvestDialog = true;
               "
             >
@@ -96,7 +95,12 @@ cs:
           </template>
         </v-data-table>
 
-        <v-dialog v-model="showHarvestDialog" v-if="currentHarvest">
+        <v-dialog
+          v-model="showHarvestDialog"
+          v-if="currentHarvest"
+          content-class="top-dialog"
+          max-width="1320px"
+        >
           <v-card>
             <v-card-text class="pb-0">
               <v-row>
@@ -104,21 +108,11 @@ cs:
                   <h3 class="pt-3 text-h5">{{ $t("downloads") }}</h3>
                 </v-col>
               </v-row>
-              <div class="pt-5">
-                <v-expansion-panels>
-                  <FetchIntentionStatusWidget
-                    v-for="intention in currentIntentions"
-                    :intention-id="intention.pk"
-                    :harvest-id="currentHarvest.pk"
-                    :key="intention.pk"
-                    :retryInterval="retryInterval"
-                    :show-organization="showOrganization"
-                    :show-platform="showPlatform"
-                    :initialIntentionData="intention"
-                    clearable
-                  >
-                  </FetchIntentionStatusWidget>
-                </v-expansion-panels>
+              <div>
+                <SushiFetchIntentionsListWidget
+                  :harvest-id="currentHarvest.pk"
+                  ref="intentionsList"
+                />
               </div>
             </v-card-text>
             <v-card-actions>
@@ -150,13 +144,13 @@ import {
 } from "@/libs/dates";
 import CheckMark from "@/components/util/CheckMark";
 import formatRelative from "date-fns/formatRelative";
-import FetchIntentionStatusWidget from "@/components/sushi/FetchIntentionStatusWidget";
+import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 
 export default {
   name: "HarvestsTable",
 
   components: {
-    FetchIntentionStatusWidget,
+    SushiFetchIntentionsListWidget,
     CheckMark,
   },
 
@@ -297,18 +291,10 @@ export default {
         this.loading = false;
       }
     },
-    async fetchHarvestData(id) {
-      this.loadingHarvest = true;
-      try {
-        let result = await axios.get(`/api/scheduler/harvest/${id}/intention/`);
-        this.currentIntentions = result.data;
-      } catch (error) {
-        this.showSnackbar({
-          content: "Error getting harvest " + error,
-          color: "error",
-        });
-      } finally {
-        this.loadingHarvest = false;
+    async selectHarvest(id) {
+      const candidates = this.harvestsData.filter((item) => item.pk === id);
+      if (candidates.length > 0) {
+        this.currentHarvest = candidates[0];
       }
     },
     dataToTable(harvests) {
@@ -370,8 +356,7 @@ export default {
     },
     showHarvestDialog() {
       if (!this.showHarvestDialog) {
-        this.currentHarvest = null;
-        this.currentIntentions = null;
+        this.$refs.intentionsList.stop();
         this.fetchHarvestsData();
       }
     },

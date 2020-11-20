@@ -16,7 +16,7 @@ cs:
     older_time: Čas
     button: Vymazat
     done: "Nebylo potřeba mazat pokusy.|{n} pokus byl úspěšně vymazán.|{n} pokusy byly úspěšně vymazány.|{n} pokusů bylo úspěšně vymazáno."
-    text: "Žádný neúspěšný pokus nenalezen.|Určitě chcete smazat {n} neúspěšný pokus.|Určitě chcete smazat {n} neúspěšné pokusy?|Určitě chcete smazat {n} neúspěšných pokusů."
+    text: "Žádný neúspěšný pokus nenalezen.|Určitě chcete smazat {n} neúspěšný pokus?|Určitě chcete smazat {n} neúspěšné pokusy?|Určitě chcete smazat {n} neúspěšných pokusů?"
 </i18n>
 
 <template>
