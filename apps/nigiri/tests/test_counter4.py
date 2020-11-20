@@ -14,6 +14,7 @@ class TestErrors:
             ("4_BR2_service_not_available1.xml", 1000),
             ("4_BR2_unauthorized1.xml", 2000),
             ("4_BR2_unauthorized2.xml", 2010),
+            ("4_PR1_invalid_requestor.xml", 2000),
             ("sushi_1111.xml", 1111),
             ("sushi_3030.xml", 3030),
         ),

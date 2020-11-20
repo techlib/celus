@@ -6,12 +6,12 @@ import typing
 import urllib
 from datetime import timedelta
 from io import StringIO, BytesIO
-from xml.etree import ElementTree as ET
 
 import requests
 from pycounter import sushi
 from pycounter import report
 from requests import Response
+import xmltodict
 
 from .counter5 import (
     Counter5TRReport,
@@ -25,17 +25,6 @@ from .error_codes import ErrorCode
 from .exceptions import SushiException
 
 logger = logging.getLogger(__name__)
-
-ns_soap = 'http://schemas.xmlsoap.org/soap/envelope/'
-ns_sushi = 'http://www.niso.org/schemas/sushi'
-ns_counter = 'http://www.niso.org/schemas/sushi/counter'
-
-namespaces = {
-    's': ns_soap,
-    'sushi': ns_sushi,
-    'sushi_alt': f"{ns_sushi}/",  # sushi alternative with / in the end
-    'counter': ns_counter,
-}
 
 
 class SushiError:
@@ -93,17 +82,34 @@ class SushiErrorMeaning:
         return self.RETRY_INTERVAL_TO_TIMEDELTA.get(self.retry_interval)
 
 
+def convert_key(key: str) -> str:
+    # remove namespace
+    key = key.split(":", 1)[-1]
+
+    # to lower
+    key = key.lower()
+
+    return key
+
+
 def recursive_finder(
-    et: ET.Element, names: typing.List[str], namespaces: typing.Dict[str, str]
-) -> typing.Generator[ET.Element, None, None]:
+    data: typing.Any, names: typing.List[str]
+) -> typing.Generator[typing.Any, None, None]:
+    lower_names = [e.lower() for e in names]
 
-    for name in names:
-        for element in et.findall(name, namespaces):
-            yield element
+    if isinstance(data, list):
+        for e in data:
+            for found in recursive_finder(e, names):
+                yield found
+    elif isinstance(data, dict):
 
-    for e in et:
-        for element in recursive_finder(e, names, namespaces):
-            yield element
+        for key, data in data.items():
+            if convert_key(key) in lower_names:
+                yield data
+
+            if isinstance(data, (list, dict)):
+                for found in recursive_finder(data, names):
+                    yield found
 
 
 class SushiClientBase:
@@ -495,48 +501,31 @@ class Sushi4Client(SushiClientBase):
         try:
             report_data.seek(0)  # set to start
             content = report_data.read().decode('utf8', 'ignore')
-            envelope = ET.fromstring(content)
-            body = envelope[0]
-            response = body[0] if len(body) > 0 else None
+            parsed = xmltodict.parse(content)
         except Exception as e:
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             return [SushiError(code='non-sushi', text=str(e), full_log=log, severity='Exception',)]
         else:
-            errors = []
-            if response is not None:
-                for exception in recursive_finder(
-                    response, ['sushi:Exception', 'sushi_alt:Exception'], namespaces
-                ):
-                    code = exception.find('sushi:Number', namespaces)
-                    code = exception.find('sushi_alt:Number', namespaces) if code is None else code
-                    code = code.text if code is not None else ''
+            errors: typing.List[SushiError] = []
+            for exception in recursive_finder(parsed, ["Exception"]):
+                if not isinstance(exception, dict):
+                    # skip non-object exceptions
+                    continue
+                code = next(recursive_finder(exception, ["Number"]), "")
+                message = next(recursive_finder(exception, ["Message"]), "")
+                severity = next(recursive_finder(exception, ["Severity"]), "Unknown")
 
-                    message = exception.find('sushi:Message', namespaces)
-                    message = (
-                        exception.find('sushi_alt:Message', namespaces)
-                        if message is None
-                        else message
+                full_log = f'{severity}: #{code}; {message}'
+                errors.append(
+                    SushiError(
+                        code=code,
+                        text=message,
+                        severity=severity,
+                        full_log=full_log,
+                        raw_data=exception,
                     )
-                    message = message.text if message is not None else ''
+                )
 
-                    severity = exception.find('sushi:Severity', namespaces)
-                    severity = (
-                        exception.find('sushi_alt:Severity', namespaces)
-                        if severity is None
-                        else severity
-                    )
-                    severity = severity.text if severity is not None else 'Unknown'
-
-                    full_log = f'{severity}: #{code}; {message}'
-                    errors.append(
-                        SushiError(
-                            code=code,
-                            text=message,
-                            severity=severity,
-                            full_log=full_log,
-                            raw_data=str(exception),
-                        )
-                    )
             if not errors:
                 errors.append(
                     SushiError(

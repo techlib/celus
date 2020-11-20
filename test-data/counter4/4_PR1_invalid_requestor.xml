@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://www.niso.org/schemas/sushi/counter"><SOAP-ENV:Body><ReportResponse xmlns="http://www.niso.org/schemas/sushi/counter">
+  <Exception>
+    <Number>2000</Number>
+    <Severity>Error</Severity>
+    <Message>Unknown or invalid requestor ID</Message>
+  </Exception>
+</ReportResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
