@@ -1,18 +1,21 @@
 import typing
+import logging
 
 from collections import Counter
 
 from datetime import datetime, timedelta, date
 from enum import Enum, auto
 
+from celery import states
 from dateutil.relativedelta import relativedelta
 from django.db import models, transaction, DatabaseError
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.models.functions import Coalesce
 from django.conf import settings
-from django.db.models import TextField, Max, IntegerField, F
+from django.db.models import TextField, Max, IntegerField, F, Q
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django_celery_results.models import TaskResult
 
 from core.models import User
 from core.logic.dates import month_start, month_end
@@ -27,6 +30,9 @@ from sushi.models import (
     CreatedUpdatedMixin,
 )
 from logs.tasks import import_one_sushi_attempt_task
+
+
+logger = logging.getLogger(__name__)
 
 
 NO_DATA_RETRY_PERIOD = timedelta(days=45)  # cca month and half
@@ -46,7 +52,7 @@ class RunResponse(Enum):
 class ProcessResponse(Enum):
     SUCCESS = auto()  # Downloading was triggered
     ALREADY_PROCESSED = auto()  # FetchIntention was already processed
-    BROKEN = auto()  # Credentials of FetchIntetion are marked as broken
+    BROKEN = auto()  # Credentials of FetchIntention are marked as broken
     DUPLICATE = auto()  # FetchIntention was marked as duplicate
 
 
@@ -59,6 +65,8 @@ class Scheduler(models.Model):
     DEFAULT_SERVICE_NOT_AVAILABLE_DELAY = 60 * 60  # in seconds
     DEFAULT_SERVICE_BUSY_DELAY = 60  # in seconds
 
+    JOB_TIME_LIMIT = 60 * 60  # in seconds
+
     url = models.URLField(unique=True)
     when_ready = models.DateTimeField(default=timezone.now)
 
@@ -70,6 +78,16 @@ class Scheduler(models.Model):
     too_many_requests_delay = models.IntegerField(default=DEFAULT_TOO_MANY_REQUESTS_DELAY)
     service_not_available_delay = models.IntegerField(default=DEFAULT_SERVICE_NOT_AVAILABLE_DELAY)
     service_busy_delay = models.IntegerField(default=DEFAULT_SERVICE_BUSY_DELAY)
+
+    current_intention = models.OneToOneField(
+        'scheduler.FetchIntention',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='current_scheduler',
+    )
+    current_celery_task_id = models.UUIDField(null=True, blank=True)
+    current_start = models.DateTimeField(null=True, blank=True)
 
     def __repr__(self):
         return f'Scheduler #{self.pk} for "{self.url}"'
@@ -88,8 +106,11 @@ class Scheduler(models.Model):
 
     # TODO it would be nice to display some kind of scheduler statistics
 
-    def run_next(self) -> RunResponse:
-        """ This function can take a while so it should be run only in celery """
+    def run_next(self, celery_task_id: typing.Optional[str] = None) -> RunResponse:
+        """
+        This function can take a while so it should be run only in celery.
+        And should not be run within transaction.
+        """
         # Check whether scheduler is in cooldown period
         if self.last_time:
             last_plus_cooldown = self.last_time + timedelta(seconds=self.cooldown)
@@ -98,11 +119,14 @@ class Scheduler(models.Model):
                 self.save()
                 return RunResponse.COOLDOWN
 
+        # Locking scheduler
         with transaction.atomic():
             try:
                 # lock this instance by evaluating select_for_update query
-                sch_lock = Scheduler.objects.select_for_update(nowait=True).get(pk=self.pk)  # noqa
-            except DatabaseError:
+                Scheduler.objects.select_for_update(nowait=True).get(
+                    pk=self.pk, current_intention__isnull=True, current_celery_task_id__isnull=True,
+                )
+            except (Scheduler.DoesNotExist, DatabaseError):
                 # Locked - currently processing data
                 return RunResponse.BUSY
 
@@ -112,6 +136,7 @@ class Scheduler(models.Model):
                     FetchIntention.objects.select_for_update(skip_locked=True)
                     .filter(
                         models.Q(
+                            scheduler__isnull=True,
                             duplicate_of__isnull=True,
                             credentials__url=self.url,
                             credentials__broken__isnull=True,
@@ -131,28 +156,102 @@ class Scheduler(models.Model):
                     .order_by('-priority', 'not_before')
                     .first()
                 )
+
                 if not intention:
                     return RunResponse.IDLE
 
                 # Check whether scheduler is ready or has sufficient priority
                 if self.when_ready <= timezone.now() or intention.priority_now:
+                    # Assign intention to scheduler which will cause that the scheduler
+                    # would become "locked" (unable to process other fetch intentions)
                     intention.scheduler = self
                     intention.save()
-
-                    # Process the intetion
-                    # Not than intention can't be `PROCESSED` because
-                    # it was selected with when_processed__isnull=True
-                    if intention.process() == ProcessResponse.BROKEN:
-                        # Credentials are broken
-                        return RunResponse.BROKEN
-
-                    # Add cooldown period to when_ready
-                    self.when_ready = timezone.now() + timedelta(seconds=self.cooldown)
+                    self.current_intention = intention
+                    self.current_celery_task_id = celery_task_id
+                    self.current_start = timezone.now()
                     self.save()
+                else:
+                    return RunResponse.IDLE
 
-                    return RunResponse.PROCESSED
+        # processing fetch intention
+        with transaction.atomic(savepoint=True):
 
-        return RunResponse.IDLE
+            # It may take so time to process the intetion
+            # (download the data)
+            process_response = intention.process()
+
+            # lock scheduler
+            Scheduler.objects.select_for_update().get(pk=self.pk)
+
+            # There is a slight chance that this scheduler
+            # was unlocked using cron job at this point
+            self.refresh_from_db()
+            if str(self.current_celery_task_id) != str(celery_task_id):
+                # Discard results of this this run,
+                # another celery task might be already running to process the intention
+                logger.warning(
+                    "Unlocked Scheduler's FetchIntention was finished; Performing rollback"
+                )
+                transaction.set_rollback(True)
+                return RunResponse.PROCESSED
+
+            # Analyze the process result
+            if process_response == ProcessResponse.BROKEN:
+                # Credentials are broken
+                res = RunResponse.BROKEN
+            else:
+                # Update cooldown delay
+                self.when_ready = timezone.now() + timedelta(seconds=self.cooldown)
+                res = RunResponse.PROCESSED
+
+            self.unassign_intention()
+            self.save()
+
+        return res
+
+    def unassign_intention(self):
+        self.current_intention = None
+        self.current_celery_task_id = None
+        self.current_start = None
+        self.save()
+
+    @classmethod
+    def unlock_stucked_schedulers(cls):
+        with transaction.atomic():
+
+            def update_intention(scheduler: 'Scheduler'):
+                # Remove scheduler for unprocessed intention
+                # so it can be rescheduled
+                if (
+                    scheduler.current_intention
+                    and scheduler.current_intention.when_processed is None
+                ):
+                    scheduler.current_intention.scheduler = None
+                    # put intention back in the intention queue
+                    scheduler.current_intention.not_before = max(
+                        timezone.now(), scheduler.current_intention.not_before
+                    )
+                    scheduler.current_intention.save()
+
+            # unlock based on celery task id
+            for scheduler in cls.objects.select_for_update().filter(
+                Q(current_celery_task_id__isnull=False)
+            ):
+                if TaskResult.objects.filter(
+                    task_id__iexact=str(scheduler.current_celery_task_id),
+                    status__in=states.READY_STATES,
+                ).exists():
+                    update_intention(scheduler)
+                    scheduler.unassign_intention()
+                logger.info("Scheduler %s was unlocked (task finished)", scheduler)
+
+            # unlocked based on time
+            for scheduler in cls.objects.select_for_update().filter(
+                Q(current_start__lt=timezone.now() - timedelta(seconds=cls.JOB_TIME_LIMIT))
+            ):
+                update_intention(scheduler)
+                scheduler.unassign_intention()
+                logger.info("Scheduler %s was unlocked (timeout)", scheduler)
 
 
 class FetchIntentionQuerySet(models.QuerySet):
@@ -211,7 +310,11 @@ class FetchIntentionQuerySet(models.QuerySet):
             not_before__lt=timezone.now(), scheduler__isnull=True, duplicate_of__isnull=True
         ):
             (scheduler, _) = Scheduler.objects.get_or_create(url=fi.credentials.url)
-            if scheduler.when_ready < timezone.now() or fi.priority_now:
+            if (
+                scheduler.current_celery_task_id is None
+                and scheduler.current_intention is None
+                and (scheduler.when_ready < timezone.now() or fi.priority_now)
+            ):
                 res.add(scheduler)
 
         return list(res)
@@ -257,7 +360,7 @@ class FetchIntention(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     when_processed = models.DateTimeField(
-        help_text="When fetch unit was processed", null=True, blank=True
+        help_text="When fetch intention was processed", null=True, blank=True
     )
     attempt = models.OneToOneField(SushiFetchAttempt, null=True, on_delete=models.SET_NULL)
     harvest = models.ForeignKey(
@@ -278,11 +381,10 @@ class FetchIntention(models.Model):
     @property
     def fetching_data(self) -> bool:
         try:
-            with transaction.atomic():
-                FetchIntention.objects.select_for_update(nowait=True).get(pk=self.pk)  # noqa
-            return False
-        except DatabaseError:
+            self.current_scheduler
             return True
+        except Scheduler.DoesNotExist:
+            return False
 
     @property
     def priority_now(self) -> bool:

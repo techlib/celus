@@ -56,6 +56,7 @@ class HarvestViewSet(
                     to_attr='intentions_credentials',
                 ),
                 'intentions__duplicate_of',
+                'intentions__current_scheduler',
             )
             .annotate(
                 last_attempt_date=Max(

@@ -1,4 +1,5 @@
 import typing
+import uuid
 
 from datetime import datetime, timedelta, date
 
@@ -380,6 +381,31 @@ class TestFetchIntention:
             if delay:
                 start += delay
 
+    def test_fetching_data(self, credentials, counter_report_types):
+        scheduler1 = SchedulerFactory(
+            url=credentials["standalone_tr"].url,
+            cooldown=10,
+            when_ready=datetime(2020, 1, 1, 0, 0, 0, tzinfo=current_tz),
+            current_celery_task_id=uuid.uuid4(),
+        )
+        intention1 = FetchIntentionFactory(
+            not_before=datetime(2020, 1, 2, 0, 0, 0, tzinfo=current_tz),
+            scheduler=scheduler1,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            priority=FetchIntention.PRIORITY_NOW,
+            when_processed=datetime(2020, 1, 3, 0, 0, 0, tzinfo=current_tz),
+        )
+        scheduler1.current_intention = intention1
+        scheduler1.current_start = datetime(2020, 1, 3, 0, 0, 0, tzinfo=current_tz)
+        scheduler1.save()
+        assert intention1.fetching_data is True
+
+        scheduler1.unassign_intention()
+        intention1.refresh_from_db()
+
+        assert intention1.fetching_data is False
+
 
 @pytest.mark.django_db
 class TestScheduler:
@@ -484,6 +510,99 @@ class TestScheduler:
                 priority=FetchIntention.PRIORITY_NOW,
             )
             assert scheduler.run_next() == RunResponse.PROCESSED
+
+    def test_unlock_stucked_schedulers(self, credentials, counter_report_types):
+
+        scheduler1 = SchedulerFactory(
+            url="https://scheduler1.example.com",
+            cooldown=10,
+            when_ready=datetime(2020, 1, 1, 0, 0, 0, tzinfo=current_tz),
+            current_celery_task_id=uuid.uuid4(),
+        )
+        intention1 = FetchIntentionFactory(
+            not_before=datetime(2020, 1, 2, 0, 0, 0, tzinfo=current_tz),
+            scheduler=scheduler1,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            priority=FetchIntention.PRIORITY_NOW,
+            when_processed=datetime(2020, 1, 3, 0, 0, 0, tzinfo=current_tz),
+        )
+        scheduler1.current_intention = intention1
+        scheduler1.current_start = datetime(2020, 1, 3, 0, 0, 0, tzinfo=current_tz)
+        scheduler1.save()
+        assert intention1.current_scheduler == scheduler1
+        assert intention1.scheduler == scheduler1
+
+        scheduler2 = SchedulerFactory(
+            url="https://scheduler2.example.com",
+            cooldown=10,
+            when_ready=datetime(2020, 1, 1, 0, 0, 0, tzinfo=current_tz),
+            current_celery_task_id=uuid.uuid4(),
+        )
+        intention2 = FetchIntentionFactory(
+            not_before=datetime(2020, 1, 2, 0, 0, 0, tzinfo=current_tz),
+            scheduler=scheduler2,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            priority=FetchIntention.PRIORITY_NOW,
+            when_processed=None,
+        )
+        scheduler2.current_intention = intention2
+        scheduler2.current_start = datetime(2020, 1, 3, 0, 0, 0, tzinfo=current_tz)
+        scheduler2.save()
+        assert intention2.current_scheduler == scheduler2
+        assert intention2.scheduler == scheduler2
+
+        scheduler3 = SchedulerFactory(
+            url="https://scheduler3.example.com",
+            cooldown=10,
+            when_ready=datetime(2020, 1, 1, 0, 0, 0, tzinfo=current_tz),
+            current_celery_task_id=uuid.uuid4(),
+        )
+        intention3 = FetchIntentionFactory(
+            not_before=datetime.now(),
+            scheduler=scheduler3,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            priority=FetchIntention.PRIORITY_NOW,
+            when_processed=None,
+        )
+        scheduler3.current_intention = intention3
+        scheduler3.current_start = timezone.now()
+        scheduler3.save()
+        assert intention3.current_scheduler == scheduler3
+        assert intention3.scheduler == scheduler3
+
+        Scheduler.unlock_stucked_schedulers()
+
+        # First is unlocked
+        scheduler1.refresh_from_db()
+        intention1.refresh_from_db()
+        assert scheduler1.current_intention is None
+        assert scheduler1.current_start is None
+        assert scheduler1.current_celery_task_id is None
+        assert intention1.scheduler == scheduler1
+        with pytest.raises(Scheduler.DoesNotExist):
+            intention1.current_scheduler
+
+        # Seconds is unlocked
+        scheduler2.refresh_from_db()
+        intention2.refresh_from_db()
+        assert scheduler2.current_intention is None
+        assert scheduler2.current_start is None
+        assert scheduler2.current_celery_task_id is None
+        assert intention2.scheduler is None
+        with pytest.raises(Scheduler.DoesNotExist):
+            intention2.current_scheduler
+
+        # Third doesn't need to be unlocked
+        scheduler3.refresh_from_db()
+        intention3.refresh_from_db()
+        assert scheduler3.current_intention == intention3
+        assert scheduler3.current_start is not None
+        assert scheduler3.current_celery_task_id is not None
+        assert intention3.scheduler == scheduler3
+        assert intention3.current_scheduler == scheduler3
 
 
 @pytest.mark.django_db
