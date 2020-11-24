@@ -172,7 +172,7 @@ cs:
           />
         </v-expansion-panels>
       </span>
-      <span v-else-if="intentionData.broken_credentials">
+      <span v-else-if="intentionData.broken_credentials && !intentionData.when_processed">
         <i18n path="broken_credentials_hint">
           <template #link>
             <router-link
