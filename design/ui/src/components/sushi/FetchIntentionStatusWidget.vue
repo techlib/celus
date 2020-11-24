@@ -14,6 +14,8 @@ en:
   start: start in
   future_start_info: Harvesting is currently waiting for free slot in the download queue.
   is_duplicate: This harvesting attempt duplicates an already planned one, so it was removed from harvesting. Click to see info on the related attempt.
+  broken_credentials: The SUSHI credentials were marked as broken. Download is postponed until the credentials are fixed.
+  broken_credentials_hint: You can fix the credentials on the {link} page. This link automatically applies filter limiting displayed credentials to only the broken ones.
 
 cs:
   in_progress: Stahuji data
@@ -29,6 +31,8 @@ cs:
   start: začátek za
   future_start_info: Stahování aktuálně čeká na uvolnění místa ve frontě.
   is_duplicate: Tento pokus o stažení duplikuje již naplánované stahování a byl tedy odstraněn z plánu. Klikněte pro informace o přidruženém stahování.
+  broken_credentials: Přihlašovací údaje pro SUSHI byly označeny jako nefunkční. Stahování bylo pozastaveno dokud nebudou přihlašovací údaje opraveny.
+  broken_credentials_hint: Přihlašovací údaje můžete opravit na stránce {link}. Tento odkaz automaticky zapne filtr, který zobrazí jen problematické přihlašovací údaje.
 </i18n>
 <template>
   <v-expansion-panel>
@@ -74,6 +78,10 @@ cs:
           <span v-else-if="isDuplicate">
             <v-icon small color="warning">fa fa-ban</v-icon>
             {{ $t("is_duplicate") }}
+          </span>
+          <span v-else-if="intentionData.broken_credentials">
+            <v-icon small color="error">fa fa-bug</v-icon>
+            {{ $t("broken_credentials") }}
           </span>
           <span v-else>
             <v-progress-circular
@@ -143,7 +151,8 @@ cs:
           !intentionData ||
           (!intentionData.when_processed &&
             !intentionData.fetching_data &&
-            !isDuplicate)
+            !isDuplicate &&
+            !intentionData.broken_credentials)
         "
       >
         <i18n
@@ -156,12 +165,22 @@ cs:
       </span>
       <span v-else-if="isDuplicate">
         <v-expansion-panels>
-          <SushiCredentialsStatusWidget
+          <FetchIntentionStatusWidget
             :intention-id="intentionData.duplicate_of.pk"
             :show-organization="showOrganization"
             :show-platform="showPlatform"
           />
         </v-expansion-panels>
+      </span>
+      <span v-else-if="intentionData.broken_credentials">
+        <i18n path="broken_credentials_hint">
+          <template #link>
+            <router-link
+              :to="{ name: 'sushi-credentials-list', query: { broken: 1 } }"
+              >{{ $t("pages.sushi_management") }}</router-link
+            >
+          </template>
+        </i18n>
       </span>
       <span
         v-else-if="!intentionData.when_processed"
@@ -205,7 +224,7 @@ import intervalToDuration from "date-fns/intervalToDuration";
 import formatDuration from "date-fns/formatDuration";
 
 export default {
-  name: "SushiCredentialsStatusWidget",
+  name: "FetchIntentionStatusWidget",
   components: { GoodBadMark },
   props: {
     initialIntentionData: {
@@ -301,7 +320,8 @@ export default {
         if (
           (!this.intentionData || !this.intentionData.when_processed) &&
           !this.isDuplicate &&
-          !this.inactive
+          !this.inactive &&
+          !this.intentionData.broken_credentials
         ) {
           // plan refresh - for stuff planned in future refresh at notBefore, for stuff planned in past use retryInterval
           const naturalTimout = differenceInMilliseconds(

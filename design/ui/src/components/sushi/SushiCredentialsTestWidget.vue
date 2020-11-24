@@ -130,7 +130,7 @@ cs:
 
     <v-row v-else no-gutters>
       <v-expansion-panels>
-        <SushiCredentialsStatusWidget
+        <FetchIntentionStatusWidget
           v-for="intentionId in intentionIds"
           :intention-id="intentionId"
           :harvest-id="harvestId"
@@ -140,7 +140,7 @@ cs:
           :show-organization="showOrganization"
           :show-platform="showPlatform"
         >
-        </SushiCredentialsStatusWidget>
+        </FetchIntentionStatusWidget>
       </v-expansion-panels>
     </v-row>
   </v-container>
@@ -150,13 +150,13 @@ cs:
 import { mapActions } from "vuex";
 import axios from "axios";
 import { ymDateFormat, ymFirstDay, ymLastDay } from "@/libs/dates";
-import SushiCredentialsStatusWidget from "./SushiCredentialsStatusWidget";
+import FetchIntentionStatusWidget from "./FetchIntentionStatusWidget";
 import addMonths from "date-fns/addMonths";
 
 export default {
   name: "SushiCredentialsTestWidget",
 
-  components: { SushiCredentialsStatusWidget },
+  components: { FetchIntentionStatusWidget },
 
   props: {
     credentials: { required: true, type: Array },
@@ -202,7 +202,6 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     async createIntentions() {
-
       let intentions = [];
       let startDate = ymFirstDay(this.startDate);
       let endDate = ymLastDay(this.endDate);
@@ -211,10 +210,10 @@ export default {
         for (let rt of cred.counter_reports_long) {
           if (!rt.broken) {
             intentions.push({
-                start_date: startDate,
-                end_date: endDate,
-                credentials: cred.pk,
-                counter_report: rt.id,
+              start_date: startDate,
+              end_date: endDate,
+              credentials: cred.pk,
+              counter_report: rt.id,
             });
           }
         }
@@ -223,11 +222,11 @@ export default {
 
       try {
         let response = await axios.post(`/api/scheduler/harvest/`, {
-            intentions: intentions,
+          intentions: intentions,
         });
         this.harvestId = response.data.pk;
         for (let intention of response.data.intentions) {
-            this.intentionIds.push(intention.pk);
+          this.intentionIds.push(intention.pk);
         }
       } catch (error) {
         this.showSnackbar({

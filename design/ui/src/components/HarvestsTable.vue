@@ -94,6 +94,7 @@ cs:
             </v-tooltip>
           </template>
         </v-data-table>
+
         <v-dialog v-model="showHarvestDialog" v-if="currentHarvest">
           <v-card>
             <v-card-text class="pb-0">
@@ -104,7 +105,7 @@ cs:
               </v-row>
               <div class="pt-5">
                 <v-expansion-panels>
-                  <SushiCredentialsStatusWidget
+                  <FetchIntentionStatusWidget
                     v-for="intention in currentHarvest.intentions"
                     :intention-id="intention.pk"
                     :harvest-id="currentHarvest.pk"
@@ -115,7 +116,7 @@ cs:
                     :initialIntentionData="intention"
                     clearable
                   >
-                  </SushiCredentialsStatusWidget>
+                  </FetchIntentionStatusWidget>
                 </v-expansion-panels>
               </div>
             </v-card-text>
@@ -146,14 +147,14 @@ import {
   parseDateTime,
 } from "@/libs/dates";
 import CheckMark from "@/components/util/CheckMark";
-import SushiCredentialsStatusWidget from "./sushi/SushiCredentialsStatusWidget";
 import formatRelative from "date-fns/formatRelative";
+import FetchIntentionStatusWidget from "@/components/sushi/FetchIntentionStatusWidget";
 
 export default {
   name: "HarvestsTable",
 
   components: {
-    SushiCredentialsStatusWidget,
+    FetchIntentionStatusWidget,
     CheckMark,
   },
 
@@ -348,6 +349,11 @@ export default {
   watch: {
     harvestsUrl() {
       this.fetchHarvestsData();
+    },
+    showHarvestDialog() {
+      if (!this.showHarvestDialog) {
+        this.currentHarvest = null;
+      }
     },
   },
 };

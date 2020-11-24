@@ -9,6 +9,7 @@ from logs.tasks import (
     sync_materialized_reports_task,
 )
 from recache.tasks import remove_old_cached_queries_task, find_and_renew_first_due_cached_query_task
+from scheduler.tasks import plan_schedulers_triggering, update_automatic_harvesting
 from sushi.tasks import (
     fetch_new_sushi_data_task,
     retry_queued_attempts_task,
@@ -34,6 +35,8 @@ class Command(BaseCommand):
         'sync_materialized_reports_task': sync_materialized_reports_task,
         'remove_old_cached_queries_task': remove_old_cached_queries_task,
         'find_and_renew_first_due_cached_query_task': find_and_renew_first_due_cached_query_task,
+        'plan_schedulers_triggering': plan_schedulers_triggering,
+        'update_automatic_harvesting': update_automatic_harvesting,
     }
 
     def add_arguments(self, parser):
