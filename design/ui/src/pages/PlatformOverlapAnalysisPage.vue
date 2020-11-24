@@ -71,6 +71,23 @@ cs:
     Následující tabulka ukazuje, kolik titulů platforma sdílí s ostatními platformami. Pravá část tabulky pak ukazuje
     zájem o tituly, které se překrývají s ostaními platformami.
   info_vs_all2: Můžete použít tooltipy k jednotlivým buňkám pro vysvětlení jejich významu.
+  info_pyramid:
+    "<p>Tento pohled simuluje vytvoření portfolia ze současně dostupných platforem. Začíná prázdnou tabulkou, do které
+    přidá platformu s nejvyšším součtem zájmů v obsažených titulech. Jako druhá se přídá platforma, která má nejvyšší
+    součet zájmu v nově přidaných titulech (titulech, které nejsou dostupné na první přidané platformě). Tento proces
+    se pak opakuje dokud nejsou do tabulky přidané všechny platformy.
+    </p>
+    <p>
+    Výsledkem je seznam platforem seřazený podle toho, jak moc nového a zajímavého obsahu přinášejí do portfolia.
+    </p>
+    <p>
+    Pokud byste měli za úkol vybrat podmnožinu současného portfolia, která pokrývá maximum současného zájmu,
+    stačilo by prostě určit jak velkou část zájmu chcete pokrýt ze sloupce <em>Kumulovaný zájem</em> a ponechat všechny
+    platformy, které jsou nad tímto řádkem.
+    </p>
+    <p><strong>Poznámka</strong>: Můžete omezit zobrazená data je na specifické typy titulů a odlišit tak zájem o databáze,
+    časopisy nebo knihy.
+    </p>"
   info_cancel:
     "<p>Tento pohled obsahuje interaktivní tabulku, která umožňuje simulovat dopad zrušení předplatného k jedné nebo více
     platformám. Stačí odstranit zaškrtnutí platformy v tabulce a tabulka interaktivně přepočítá data pro ostatní platformy
@@ -176,7 +193,7 @@ cs:
                     cols="12"
                     lg="12"
                     xl="8"
-                    v-html="$t('info_cancel')"
+                    v-html="$t('info_pyramid')"
                   ></v-col>
                 </v-row>
                 <v-row>

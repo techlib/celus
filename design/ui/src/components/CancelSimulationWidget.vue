@@ -26,9 +26,9 @@ cs:
     <div class="mb-4">
       <TitleTypeFilterWidget v-model="selectedPubTypes" />
     </div>
-    <div v-if="selectedPubTypes.length === 0">
-      Select at least one publication type
-    </div>
+    <v-alert v-if="selectedPubTypes.length === 0" type="info" outlined>
+      {{ $t("warnings.select_one_title_type") }}
+    </v-alert>
 
     <div v-else>
       <div v-if="loading || preparingData">

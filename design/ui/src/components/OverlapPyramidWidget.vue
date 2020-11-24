@@ -1,3 +1,4 @@
+<i18n lang="yaml" src="@/locales/common.yaml" />
 <i18n lang="yaml">
 en:
   preparing_data: Preparing data. Please wait, it may take a while.
@@ -18,7 +19,7 @@ cs:
   new_titles: Přidané tituly
   new_interest_perc: Přidaný zájem %
   cum_interest: Kumulativní zájem
-  new_interest_tooltip: Zájem o tituly, která tato platforma přidává oproti platformám na předchozích rádcích
+  new_interest_tt: Zájem o tituly, která tato platforma přidává oproti platformám na předchozích rádcích
   new_interest_value_tt: "{platform} přidává {value} k zájmu z předchozích řádků"
   new_interest_value_tt_first: "{platform} přidává největší zájem ze všech ({value}) a je proto první"
   new_titles_tt: Unikátní tituly které tato platforma přidává oproti platformám na předchozích řádcích
@@ -30,101 +31,107 @@ cs:
   <div>
     <TitleTypeFilterWidget class="mb-6" v-model="selectedPubTypes" />
 
-    <LoaderWidget
-      v-if="loading || preparingData"
-      :text="$t('preparing_data')"
-      show-progress
-      :progress="loadingProgress"
-    />
+    <v-alert v-if="selectedPubTypes.length === 0" type="info" outlined>
+      {{ $t("warnings.select_one_title_type") }}
+    </v-alert>
 
     <div v-else>
-      <div class="pb-3">
-        <span class="font-weight-bold">Total interest</span>:
-        {{ formatInteger(this.totalInterest) }}
-      </div>
+      <LoaderWidget
+        v-if="loading || preparingData"
+        :text="$t('preparing_data')"
+        show-progress
+        :progress="loadingProgress"
+      />
 
-      <table v-if="pyramid" class="pyramid">
-        <thead>
-          <tr>
-            <th></th>
-            <th>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <span v-on="on">{{ $t("new_interest") }}</span>
-                </template>
-                {{ $t("new_interest_tt") }}
-              </v-tooltip>
-            </th>
-            <th>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <span v-on="on">{{ $t("new_titles") }}</span>
-                </template>
-                {{ $t("new_titles_tt") }}
-              </v-tooltip>
-            </th>
-            <th>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <span v-on="on">{{ $t("new_interest_perc") }}</span>
-                </template>
-                {{ $t("new_interest_perc_tt") }}
-              </v-tooltip>
-            </th>
+      <div v-else>
+        <div class="pb-3">
+          <span class="font-weight-bold">Total interest</span>:
+          {{ formatInteger(this.totalInterest) }}
+        </div>
 
-            <th>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <span v-on="on">{{ $t("cum_interest") }}</span>
-                </template>
-                {{ $t("cum_interest_tt") }}
-              </v-tooltip>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(level, index) in pyramid" :key="level.platform.pk">
-            <th>{{ level.platform.short_name }}</th>
-            <td class="text-right">
-              <v-tooltip bottom max-width="360px">
-                <template #activator="{ on }">
-                  <span v-on="on">{{ formatInteger(level.score) }}</span>
-                </template>
-                <i18n
-                  :path="
-                    index === 0
-                      ? 'new_interest_value_tt_first'
-                      : 'new_interest_value_tt'
-                  "
-                  tag="span"
+        <table v-if="pyramid" class="pyramid">
+          <thead>
+            <tr>
+              <th></th>
+              <th>
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <span v-on="on">{{ $t("new_interest") }}</span>
+                  </template>
+                  {{ $t("new_interest_tt") }}
+                </v-tooltip>
+              </th>
+              <th>
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <span v-on="on">{{ $t("new_titles") }}</span>
+                  </template>
+                  {{ $t("new_titles_tt") }}
+                </v-tooltip>
+              </th>
+              <th>
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <span v-on="on">{{ $t("new_interest_perc") }}</span>
+                  </template>
+                  {{ $t("new_interest_perc_tt") }}
+                </v-tooltip>
+              </th>
+
+              <th>
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <span v-on="on">{{ $t("cum_interest") }}</span>
+                  </template>
+                  {{ $t("cum_interest_tt") }}
+                </v-tooltip>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(level, index) in pyramid" :key="level.platform.pk">
+              <th>{{ level.platform.short_name }}</th>
+              <td class="text-right">
+                <v-tooltip bottom max-width="360px">
+                  <template #activator="{ on }">
+                    <span v-on="on">{{ formatInteger(level.score) }}</span>
+                  </template>
+                  <i18n
+                    :path="
+                      index === 0
+                        ? 'new_interest_value_tt_first'
+                        : 'new_interest_value_tt'
+                    "
+                    tag="span"
+                  >
+                    <template #platform>
+                      {{ level.platform.short_name }}
+                    </template>
+                    <template #value>
+                      {{ formatInteger(level.score) }}
+                    </template>
+                  </i18n>
+                </v-tooltip>
+              </td>
+              <td class="text-right">{{ formatInteger(level.newTitles) }}</td>
+              <td class="text-right">{{ level.relativeScoreStr }}</td>
+              <td class="borderless pl-2" style="min-width: 100px">
+                <v-progress-linear
+                  color="orange darken-1"
+                  height="16"
+                  :buffer-value="100 * level.relativeScoreCum"
+                  :value="100 * (level.relativeScoreCum - level.relativeScore)"
+                  dark
                 >
-                  <template #platform>
-                    {{ level.platform.short_name }}
-                  </template>
-                  <template #value>
-                    {{ formatInteger(level.score) }}
-                  </template>
-                </i18n>
-              </v-tooltip>
-            </td>
-            <td class="text-right">{{ formatInteger(level.newTitles) }}</td>
-            <td class="text-right">{{ level.relativeScoreStr }}</td>
-            <td class="borderless pl-2" style="min-width: 100px">
-              <v-progress-linear
-                color="orange darken-1"
-                height="16"
-                :buffer-value="100 * level.relativeScoreCum"
-                :value="100 * (level.relativeScoreCum - level.relativeScore)"
-                dark
-              >
-                <span class="small contrast">
-                  {{ level.relativeScoreCumStr }}
-                </span>
-              </v-progress-linear>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  <span class="small contrast">
+                    {{ level.relativeScoreCumStr }}
+                  </span>
+                </v-progress-linear>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>

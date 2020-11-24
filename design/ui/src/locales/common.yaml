@@ -126,6 +126,8 @@ en:
   interest: Interest
   charts: Charts
   celus_version: Celus version
+  warnings:
+    select_one_title_type: Select at least one publication type
 
 cs:
   pages:
@@ -255,3 +257,5 @@ cs:
   interest: Zájem
   charts: Grafy
   celus_version: Celus verze
+  warnings:
+    select_one_title_type: Vyberte alespoň jeden typ publikace
