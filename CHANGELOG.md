@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.7.2]
+
+### Changes
+
+#### Frontend
+
+- favicon was replaced with new logo
+- 'Portfolio optimization' tab on 'Platform overlap analysis' page tells user to select at least one publication type if none was selected
+
+#### Backend
+
+- Django updated to the 3.1 branch (3.1.3)
+
+### Fixes
+
+#### Frontend
+
+- text on 'Portfolio optimization' tab on 'Platform overlap analysis' page was replaced by the correct one
+- fetch intentions with broken credentials are not properly identified and described in harvest detail dialog
+
+#### Backend
+
+- add more robust detection of Exception codes from COUNTER 5 SUSHI data - ignores even more common mistakes providers make.
+- broken credentials are properly skipped when processing scheduled harvests
+
+
 ## [2.7.1]
 
 ### Fixes
