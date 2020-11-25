@@ -145,7 +145,16 @@ class PlatformViewSet(ReadOnlyModelViewSet, CreateModelMixin):
         org_filter = organization_filter_from_org_id(
             self.kwargs.get('organization_pk'), self.request.user
         )
-        return Platform.objects.filter(**org_filter)
+        if org_filter:
+            return Platform.objects.filter(
+                Q(**org_filter) | Q(**extend_query_filter(org_filter, 'sushicredentials__'))
+            ).distinct()
+        # only those that have an organization connected
+        if 'used_only' in self.request.query_params:
+            return Platform.objects.filter(
+                Q(organization__isnull=False) | Q(sushicredentials__isnull=False)
+            ).distinct()
+        return Platform.objects.all()
 
     @action(methods=['GET'], url_path='no-interest-defined', detail=False)
     def without_interest_definition(self, request, organization_pk):

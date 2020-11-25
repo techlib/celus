@@ -27,6 +27,7 @@ from core.tests.conftest import (
     master_identity,
 )
 from publications.models import PlatformInterestReport, Platform, PlatformTitle
+from sushi.models import SushiCredentials
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.scenarios.basic import *
 
@@ -82,6 +83,25 @@ class TestPlatformAPI:
             organization=organizations["root"], platform=platforms["root"]
         )
         resp = authenticated_client.get(reverse('platform-list', args=[organizations["root"].pk]))
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
+        assert resp.json()[0]['pk'] == platforms["root"].pk
+
+    def test_authorized_user_accessible_platforms_through_sushi(
+        self, authenticated_client, organizations, platforms, valid_identity
+    ):
+        """
+        Test that sushi credentials based link between organization and platform is enough to make the platform
+        accessible through the API
+        """
+        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        UserOrganization.objects.create(user=identity.user, organization=organizations["root"])
+        SushiCredentials.objects.create(
+            organization=organizations['root'], platform=platforms['root'], counter_version=5
+        )
+        resp = authenticated_client.get(
+            reverse('platform-list', args=[organizations["root"].pk]), {'used_only': 1}
+        )
         assert resp.status_code == 200
         assert len(resp.json()) == 1
         assert resp.json()[0]['pk'] == platforms["root"].pk

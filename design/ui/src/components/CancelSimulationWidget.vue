@@ -213,7 +213,7 @@ export default {
     },
     platformsUrl() {
       if (this.selectedOrganizationId) {
-        return `/api/organization/${this.selectedOrganizationId}/platform/`;
+        return `/api/organization/${this.selectedOrganizationId}/platform/?used_only`;
       }
       return null;
     },

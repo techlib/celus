@@ -120,7 +120,7 @@ export default {
       allowManualDataUpload: "allowManualDataUpload",
     }),
     platformsURL() {
-      return `/api/organization/${this.selectedOrganizationId}/platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
+      return `/api/organization/${this.selectedOrganizationId}/platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&used_only`;
     },
     platformInterestURL() {
       return `/api/organization/${this.selectedOrganizationId}/platform-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
