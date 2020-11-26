@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - favicon was replaced with new logo
 - 'Portfolio optimization' tab on 'Platform overlap analysis' page tells user to select at least one publication type if none was selected
+- List of platforms was reduced to only those with usage data or SUSHI credentials even when all
+  organizations are selected to make it consistent with single-organization view
 
 #### Backend
 
