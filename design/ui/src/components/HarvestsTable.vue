@@ -162,6 +162,7 @@ export default {
     retryInterval: { default: 1000, type: Number },
     showOrganization: { default: false, type: Boolean },
     showPlatform: { default: false, type: Boolean },
+    refreshInterval: { default: 10000, type: Number },
   },
 
   data() {
@@ -180,6 +181,8 @@ export default {
         sortBy: ["pk"],
         sortDesc: [true],
       },
+      lastFetchedTime: null,
+      lastFetchTimer: null,
     };
   },
 
@@ -281,6 +284,7 @@ export default {
         this.totalCount = result.data.count;
         this.harvestsData = result.data.results;
         this.dataToTable(result.data.results);
+        this.lastFetchedTime = new Date();
       } catch (error) {
         this.showSnackbar({
           content: "Error getting harvest list " + error,
@@ -350,9 +354,21 @@ export default {
     harvestsUrl() {
       this.fetchHarvestsData();
     },
+    lastFetchedTime() {
+        if (this.lastFetchTimer) {
+            clearTimeout(this.lastFetchTimer);
+        }
+        this.lastFetchTimer = setTimeout(
+            () => {
+                this.fetchHarvestsData();
+            },
+            this.refreshInterval,
+        )
+    },
     showHarvestDialog() {
       if (!this.showHarvestDialog) {
         this.currentHarvest = null;
+        this.fetchHarvestsData();
       }
     },
   },
