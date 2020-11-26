@@ -1,9 +1,11 @@
 <i18n lang="yaml">
 en:
   multiplatform_titles: Titles available from more than one platform
+  no_overlap_titles: There are no titles available from more than one platform
 
 cs:
   multiplatform_titles: Tituly dostupné na více než jedné platformě
+  no_overlap_titles: Nebyly nalezeny žádné tituly dostupné na více platformách
 </i18n>
 
 <template>
@@ -11,7 +13,11 @@ cs:
     <section v-if="selectedOrganizationId">
       <h3 class="pt-3">{{ $t("multiplatform_titles") }}</h3>
 
-      <TitleList :url="titleListURL" :interest-by-platform="true"></TitleList>
+      <TitleList
+        :url="titleListURL"
+        :interest-by-platform="true"
+        :no-data-text="$t('no_overlap_titles')"
+      ></TitleList>
     </section>
   </div>
 </template>

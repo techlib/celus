@@ -6,11 +6,13 @@ en:
     interest: Interest
   show_doi: Show DOI
   pub_type_filter: Publication type filter
+  no_records: No matching titles were found
 cs:
   columns:
     interest: Zájem
   show_doi: Zobrazit DOI
   pub_type_filter: Filtr typu publikace
+  no_records: Nebyly nalezeny žádné odpovídající tituly
 </i18n>
 
 <template>
@@ -60,6 +62,7 @@ cs:
       sort-by="name"
       :page="1"
       :options.sync="options"
+      :no-data-text="emptyDataText"
     >
       <template v-slot:item.name="{ item }">
         <router-link
@@ -147,6 +150,7 @@ export default {
     platformId: { required: false },
     orderInterest: { required: false, default: null, type: String },
     interestByPlatform: { default: false, type: Boolean },
+    noDataText: { default: null, type: String },
   },
   data() {
     return {
@@ -177,6 +181,9 @@ export default {
       set: debounce(function (value) {
         this.search = value;
       }, 500),
+    },
+    emptyDataText() {
+      return this.noDataText ?? this.$t("no_records");
     },
     headers() {
       let base = [
