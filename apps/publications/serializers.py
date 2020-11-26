@@ -13,7 +13,7 @@ from .models import Platform, Title
 class PlatformSerializer(ModelSerializer):
     class Meta:
         model = Platform
-        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url')
+        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url', 'knowledgebase')
 
 
 class DetailedPlatformSerializer(ModelSerializer):

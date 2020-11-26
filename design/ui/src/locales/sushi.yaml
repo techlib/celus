@@ -25,6 +25,8 @@ en:
       This report was marked as broken for these credentials. This is usually result of errors
       during harvesting of data which indicate credentials are correct, but report is not supported.
       Automatic harvesting is disabled for such reports.
+    knowledgebase_report_type_desc:
+      It is verified that this report type is supported for this platform.
 
 cs:
   sushi:
@@ -53,3 +55,5 @@ cs:
       Tento report byl označen jako nefunkční. Většinou je to způsobeno chybami při stahování, které indikují, že
       přihlašovací údaje jsou funkční, ale report není podporovaný.
       Automatické stahování je pro tyto reporty vypnuté.
+    knowledgebase_report_type_desc:
+      Je ověřeno, že tento report je podporován na této platformě.

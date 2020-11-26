@@ -291,7 +291,7 @@ cs:
                 :key="report.id"
                 :value="report.id"
                 outlined
-                :color="isBroken(report) ? '#4db685' : 'primary'"
+                :color="isBroken(report) ? '#4db685' : ( inKnowledgebase(report) ? 'success' : 'primary' )"
               >
                 <SushiReportIndicator
                   :report="report"
@@ -299,6 +299,9 @@ cs:
                     selectedReportTypes.indexOf(report.id) >= 0
                       ? isBroken
                       : false
+                  "
+                  :knowledgebase-fn="
+                    inKnowledgebase
                   "
                 />
               </v-btn>
@@ -441,7 +444,7 @@ export default {
       platform: "",
       requestorId: "",
       customerId: "",
-      counterVersion: null,
+      counterVersion: 5,
       url: "",
       httpUsername: "",
       httpPassword: "",
@@ -514,6 +517,22 @@ export default {
       return this.allReportTypes.filter(
         (item) => item.counter_version === this.counterVersion
       );
+    },
+    currentKnowledgebase() {
+      if (this.activePlatform) {
+        return this.activePlatform.knowledgebase;
+      } else {
+        return null;
+      }
+    },
+    knowledgebaseReportTypes() {
+      if (this.currentKnowledgebase) {
+        let providers = this.activePlatform.knowledgebase.providers.filter(provider => provider.counter_version == this.counterVersion);
+        if (providers.length > 0) {
+          return providers[0].assigned_report_types.map(e => e.report_type);
+        }
+      }
+      return [];
     },
     valid() {
       if (this.conflictingCredentials) {
@@ -602,7 +621,7 @@ export default {
         this.platform = { name: "" };
         this.requestorId = "";
         this.customerId = "";
-        this.counterVersion = null;
+        this.counterVersion = 5;
         this.url = "";
         this.httpUsername = "";
         this.httpPassword = "";
@@ -822,6 +841,9 @@ export default {
       }
       return false;
     },
+    inKnowledgebase(report) {
+      return this.knowledgebaseReportTypes.includes(report.code);
+    },
     init() {
       this.savedCredentials = null;
       this.credentialsPropToData();
@@ -830,6 +852,17 @@ export default {
         this.loadPlatforms();
       }
     },
+    guessUrlFromKnowledgebase() {
+      if (this.currentKnowledgebase) {
+        let providers = this.currentKnowledgebase.providers.filter(provider => provider.counter_version == this.counterVersion);
+        if (providers.length > 0) {
+          // provider found lets perform update
+          this.url = providers[0].provider.url;
+          return;
+        }
+      }
+      this.url = "";
+    }
   },
 
   mounted() {
@@ -849,6 +882,16 @@ export default {
     platformsBaseUrl() {
       this.loadPlatforms();
     },
+    activePlatform() {
+      if (!this.credentials) {
+        this.guessUrlFromKnowledgebase();
+      }
+    },
+    counterVersion() {
+      if (!this.credentials) {
+        this.guessUrlFromKnowledgebase();
+      }
+    }
   },
 };
 </script>

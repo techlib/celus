@@ -8,11 +8,18 @@
         <v-icon v-if="isBroken" x-small color="error" class="pl-1"
           >fa-exclamation</v-icon
         >
+        <v-icon v-else-if="inKnowledgebase" x-small color="success" class="pl-1"
+          >fa-user-check</v-icon
+        >
       </span>
     </template>
     <span>
       <strong v-if="report.name">{{ report.name }}</strong>
       <strong v-else>{{ report.code }}</strong>
+      <div v-if="inKnowledgebase">
+        <v-icon small color="success">fa-user-check</v-icon>
+        {{ $t("sushi.knowledgebase_report_type_desc") }}
+      </div>
       <div v-if="isBroken">
         <v-icon small color="error">fa-exclamation-triangle</v-icon>
         {{ $t("sushi.broken_report_type_desc") }}
@@ -35,6 +42,11 @@ export default {
       required: false,
       default: null,
     },
+    knowledgebaseFn: {
+      // function to call with report instance to get its broken status
+      required: false,
+      default: null,
+    },
   },
 
   computed: {
@@ -45,6 +57,13 @@ export default {
         return this.brokenFn(this.report);
       } else {
         return this.report.broken;
+      }
+    },
+    inKnowledgebase() {
+      if (this.knowledgebaseFn === false || this.knowledgebaseFn === null) {
+        return false;
+      } else {
+        return this.knowledgebaseFn(this.report);
       }
     },
   },
