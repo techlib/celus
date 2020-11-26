@@ -772,6 +772,10 @@ class Harvest(CreatedUpdatedMixin):
     @property
     def latest_intentions(self):
         """ Only latest intentions, retried intentions are skipped """
+
+        if hasattr(self, 'prefetched_latest_intentions'):
+            return self.prefetched_latest_intentions
+
         return (
             self.intentions.latest_intentions(within_harvest=True)
             .annotate_credentials_state()

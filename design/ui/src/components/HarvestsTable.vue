@@ -63,6 +63,7 @@ cs:
               small
               color="secondary"
               @click.stop="
+                currentHarvest = item;
                 fetchHarvestData(item.pk);
                 showHarvestDialog = true;
               "
@@ -106,7 +107,7 @@ cs:
               <div class="pt-5">
                 <v-expansion-panels>
                   <FetchIntentionStatusWidget
-                    v-for="intention in currentHarvest.intentions"
+                    v-for="intention in currentIntentions"
                     :intention-id="intention.pk"
                     :harvest-id="currentHarvest.pk"
                     :key="intention.pk"
@@ -126,6 +127,7 @@ cs:
                 @click="
                   showHarvestDialog = false;
                   currentHarvest = null;
+                  currentIntentions = null;
                 "
                 class="mb-3 mr-4"
                 >{{ $t("actions.close") }}</v-btn
@@ -171,6 +173,7 @@ export default {
       tableData: [], // processed data
       showHarvestDialog: false,
       currentHarvest: null,
+      currentIntentions: null,
       orderBy: ["harvest.pk"],
       loading: false,
       loadingHarvest: false,
@@ -297,8 +300,8 @@ export default {
     async fetchHarvestData(id) {
       this.loadingHarvest = true;
       try {
-        let result = await axios.get(`/api/scheduler/harvest/${id}/`);
-        this.currentHarvest = result.data;
+        let result = await axios.get(`/api/scheduler/harvest/${id}/intention/`);
+        this.currentIntentions = result.data;
       } catch (error) {
         this.showSnackbar({
           content: "Error getting harvest " + error,
@@ -368,6 +371,7 @@ export default {
     showHarvestDialog() {
       if (!this.showHarvestDialog) {
         this.currentHarvest = null;
+        this.currentIntentions = null;
         this.fetchHarvestsData();
       }
     },

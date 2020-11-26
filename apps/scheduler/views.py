@@ -16,18 +16,17 @@ from organizations.models import Organization
 
 from .serializers import (
     FetchIntentionSerializer,
-    RetrieveHarvestSerializer,
     CreateHarvestSerializer,
-    ListHarvestSerializer,
+    HarvestSerializer,
 )
-from .models import FetchIntention, Harvest
+from .models import Automatic, FetchIntention, Harvest
 
 
 class HarvestViewSet(
     mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericViewSet
 ):
 
-    serializer_class = RetrieveHarvestSerializer
+    serializer_class = HarvestSerializer
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
@@ -42,10 +41,12 @@ class HarvestViewSet(
         qs = (
             qs.annotate_stats()
             .prefetch_related(
-                'automatic',
+                Prefetch('automatic', queryset=Automatic.objects.select_related('organization')),
                 Prefetch(
                     'intentions',
-                    queryset=FetchIntention.objects.latest_intentions(within_harvest=True),
+                    queryset=FetchIntention.objects.latest_intentions(
+                        within_harvest=True
+                    ).annotate_credentials_state(),
                     to_attr='prefetched_latest_intentions',
                 ),
                 Prefetch(
@@ -55,8 +56,6 @@ class HarvestViewSet(
                     ),
                     to_attr='intentions_credentials',
                 ),
-                'intentions__duplicate_of',
-                'intentions__current_scheduler',
             )
             .annotate(
                 last_attempt_date=Max(
@@ -85,10 +84,8 @@ class HarvestViewSet(
         return qs
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return ListHarvestSerializer
-        elif self.action == 'retrieve':
-            return RetrieveHarvestSerializer
+        if self.action in ['retrieve', 'list']:
+            return HarvestSerializer
         elif self.action == 'create':
             return CreateHarvestSerializer
         else:
@@ -135,7 +132,7 @@ class HarvestViewSet(
         headers = self.get_success_headers(serializer.data)
 
         # put created instance into response
-        response_serialzer = RetrieveHarvestSerializer(serializer.instance)
+        response_serialzer = HarvestSerializer(serializer.instance)
 
         return Response(response_serialzer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -154,9 +151,11 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
         harvest = get_object_or_404(Harvest, **kwargs)
 
         if self.action == 'list' and not bool(self.request.query_params.get('list_all', False)):
-            return harvest.latest_intentions
+            qs = harvest.latest_intentions
         else:
-            return harvest.intentions
+            qs = harvest.intentions
+
+        return qs.select_related('current_scheduler')
 
 
 class IntentionViewSet(ReadOnlyModelViewSet):

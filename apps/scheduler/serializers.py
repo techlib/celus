@@ -77,14 +77,27 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
         )
 
 
-class ListHarvestSerializer(serializers.ModelSerializer):
+class AutomaticInHarvestSerializer(serializers.ModelSerializer):
+    organization = OrganizationSerializer()
+
+    class Meta:
+        model = Automatic
+        fields = (
+            'pk',
+            'month',
+            'organization',
+        )
+
+
+class HarvestSerializer(serializers.ModelSerializer):
     intentions = serializers.PrimaryKeyRelatedField(
-        source='prefetched_latest_intentions', many=True, read_only=True
+        source='latest_intentions', many=True, read_only=True
     )
     stats = StatsSerializer()
     organizations = OrganizationSerializer(many=True, read_only=True)
     platforms = PlatformSerializer(many=True, read_only=True)
     last_attempt_date = DateTimeField(read_only=True)
+    automatic = AutomaticInHarvestSerializer()
 
     class Meta:
         model = Harvest
@@ -99,38 +112,6 @@ class ListHarvestSerializer(serializers.ModelSerializer):
             'organizations',
             'platforms',
             'last_attempt_date',
-        )
-
-
-class AutomaticInHarvestSerializer(serializers.ModelSerializer):
-    organization = OrganizationSerializer()
-
-    class Meta:
-        model = Automatic
-        fields = (
-            'pk',
-            'month',
-            'organization',
-        )
-
-
-class RetrieveHarvestSerializer(serializers.ModelSerializer):
-    intentions = FetchIntentionSerializer(source="latest_intentions", many=True, read_only=True)
-    stats = StatsSerializer()
-    automatic = AutomaticInHarvestSerializer()
-    organizations = OrganizationSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Harvest
-        fields = (
-            'pk',
-            'intentions',
-            'created',
-            'last_updated',
-            'last_updated_by',
-            'stats',
-            'automatic',
-            'organizations',
         )
 
 
