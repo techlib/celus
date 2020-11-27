@@ -1,2 +1,2 @@
 #!/bin/sh
-celery beat -A config -l DEBUG
+celery -A config beat -l DEBUG
