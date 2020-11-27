@@ -29,6 +29,7 @@ en:
   mark_fixed: Mark fixed
   mark_fixed_success: Credentials were marked as fixed
   broken_reports_warning: Some active reports have been marked as broken by Celus - they are probably not supported by this platform. Fix it by deactivating them.
+  url_hint:  "URL should not contain the '/report/' part and anything beyond this. For example 'https://x.y.z/sushi5/report/tr?customer_id=1' should be cropped to 'https://x.y.z/sushi5/'"
 
 cs:
   add_custom_param: Přidat vlastní parametr
@@ -59,6 +60,7 @@ cs:
   mark_fixed: Označit jako opravené
   mark_fixed_success: Přihlašovací údaje byly označeny jako opravené
   broken_reports_warning: Některé aktivní reporty Celus označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací.
+  url_hint:  "URL by neměla obsahovat část s '/report/' a cokoliv po ní. Např. 'https://x.y.z/sushi5/report/tr?customer_id=1' by mělo být zkráceno na 'https://x.y.z/sushi5/'"
 </i18n>
 
 <template>
@@ -174,6 +176,9 @@ cs:
             <v-text-field
               v-model="url"
               :label="$t('labels.url')"
+              :hint="this.urlHelpText"
+              :placeholder="this.urlPlaceholder"
+              persistent-hint
               :error-messages="errors.url"
             >
             </v-text-field>
@@ -604,6 +609,34 @@ export default {
       }
       return false;
     },
+    urlHelpText() {
+      // empty url check
+      if (!this.url) {
+        return "";
+      }
+
+      try {
+        let parsed = new URL(this.url);
+        if (parsed.search || (this.counterVersion == "5" && /^.*\/report\/[0-9a-zA-Z]+\/{0,1}$/.test(this.url))) {
+          return this.$t("url_hint");
+        } else {
+          return "";
+        }
+      } catch (error) {
+        return "";
+      }
+    },
+    urlPlaceholder() {
+      console.log(this.counterVersion);
+      switch (this.counterVersion) {
+        case 4:
+          return "https://sushi.example.com/c4/";
+        case 5:
+          return "https://sushi.example.com/c5/";
+        default:
+          return "";
+      }
+    }
   },
 
   methods: {
@@ -891,7 +924,7 @@ export default {
       if (!this.credentials) {
         this.guessUrlFromKnowledgebase();
       }
-    }
+    },
   },
 };
 </script>

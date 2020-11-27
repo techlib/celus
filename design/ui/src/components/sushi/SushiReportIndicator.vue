@@ -43,7 +43,8 @@ export default {
       default: null,
     },
     knowledgebaseFn: {
-      // function to call with report instance to get its broken status
+      // function to call with report instance to find out whether
+      // the report type is in the knowledgebase
       required: false,
       default: null,
     },
