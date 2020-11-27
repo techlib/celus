@@ -226,7 +226,7 @@ export default {
         });
         this.harvestId = response.data.pk;
         for (let intention of response.data.intentions) {
-          this.intentionIds.push(intention.pk);
+          this.intentionIds.push(intention);
         }
       } catch (error) {
         this.showSnackbar({
