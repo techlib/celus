@@ -15,6 +15,7 @@ from test_fixtures.scenarios.basic import (
     data_sources,
     harvests,
     identities,
+    import_batches,
     organizations,
     platforms,
     users,
@@ -33,7 +34,7 @@ class TestHarvestAPI:
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
-        assert len(data) == 3
+        assert len(data) == 4
         assert data[0]["pk"] < data[1]["pk"] < data[2]["pk"], "default sort by pk asc"
         assert len(data[0]["intentions"]) == 3
         assert data[0]["stats"] == {"total": 3, "planned": 2}
@@ -41,6 +42,8 @@ class TestHarvestAPI:
         assert data[1]["stats"] == {"total": 2, "planned": 1}
         assert len(data[2]["intentions"]) == 2
         assert data[2]["stats"] == {"total": 2, "planned": 1}
+        assert len(data[3]["intentions"]) == 2
+        assert data[3]["stats"] == {"total": 2, "planned": 1}
 
     @pytest.mark.parametrize(
         ['column', 'desc'], list(product(['pk', 'created'], ['true', 'false']))
@@ -50,7 +53,7 @@ class TestHarvestAPI:
         resp = clients["master"].get(url, {'order_by': column, 'desc': desc})
         assert resp.status_code == 200
         data = resp.json()["results"]
-        assert len(data) == 3
+        assert len(data) == 4
         if desc == 'true':
             assert (
                 data[0][column] > data[1][column] > data[2][column]
@@ -75,7 +78,7 @@ class TestHarvestAPI:
         resp = clients["master"].get(url + "?finished=0", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
-        assert len(data2) == 2
+        assert len(data2) == 3
 
         assert data1[0]["pk"] != data2[0]["pk"]
         assert data1[0]["pk"] != data2[1]["pk"]
@@ -96,6 +99,13 @@ class TestHarvestAPI:
         assert len(data["intentions"]) == 2
 
         url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
+        resp = clients["master"].get(url, {})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["stats"] == {"total": 2, "planned": 1}
+        assert len(data["intentions"]) == 2
+
+        url = reverse('harvest-detail', args=(harvests["user2"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
@@ -155,7 +165,7 @@ class TestHarvestAPI:
         }
 
     @pytest.mark.parametrize(
-        "user,length", (("master", 3), ("admin1", 0), ("admin2", 1), ("user1", 1), ("user2", 0),)
+        "user,length", (("master", 4), ("admin1", 0), ("admin2", 1), ("user1", 1), ("user2", 1),)
     )
     def test_list_filtering(self, basic1, harvests, clients, user, length):
         url = reverse('harvest-list')

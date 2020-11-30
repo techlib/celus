@@ -155,7 +155,7 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
         else:
             qs = harvest.intentions
 
-        return qs.select_related('current_scheduler')
+        return qs.select_related('current_scheduler').order_by('pk')
 
 
 class IntentionViewSet(ReadOnlyModelViewSet):

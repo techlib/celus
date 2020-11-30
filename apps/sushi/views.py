@@ -1,12 +1,16 @@
 import json
-from datetime import timedelta
+
+from datetime import timedelta, date
 
 import dateparser
 import reversion
+
+from dateutil.relativedelta import relativedelta
 from django.db.models import Count, Q, Max, Min, F, Subquery
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -27,6 +31,7 @@ from organizations.logic.queries import organization_filter_from_org_id
 
 from .filters import CleanupFilterBackend
 from .models import (
+    COUNTER_REPORTS,
     SushiCredentials,
     CounterReportType,
     SushiFetchAttempt,
@@ -35,6 +40,7 @@ from .models import (
 from .serializers import (
     CounterReportTypeSerializer,
     SushiCredentialsSerializer,
+    SushiCredentialsDataSerializer,
     SushiCleanupCountSerializer,
     SushiFetchAttemptSerializer,
     SushiFetchAttemptSimpleSerializer,
@@ -146,6 +152,100 @@ class SushiCredentialsViewSet(ModelViewSet):
                 cr2c.unset_broken()
         credentials.refresh_from_db()
         return Response(SushiCredentialsSerializer(credentials).data)
+
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path="data",
+        serializer_class=SushiCredentialsDataSerializer,
+    )
+    def data(self, request, pk):
+        """ Display data for given set of credentials """
+        credentials = get_object_or_404(SushiCredentials, pk=pk)
+
+        # TODO perhaps we might add some year filter here
+
+        current_time = timezone.now()
+        start_year = (
+            credentials.sushifetchattempt_set.aggregate(min_start=Min('start_date'))["min_start"]
+            or current_time
+        ).year
+        end_year = current_time.year
+
+        report_types_and_broken = [
+            (e.counter_report, e.is_broken())
+            for e in credentials.counterreportstocredentials_set.all()
+        ]
+        report_types = [e[0] for e in report_types_and_broken]
+
+        result = {}
+        # initialize matrix with empty values
+        for year in range(start_year, end_year + 1):
+            year_result = {"year": year}
+            for i in range(1, 13):
+                year_result[f"{i:02d}"] = {
+                    rt.code: {
+                        "status": "untried",
+                        "planned": False,
+                        "broken": broken,
+                        "counter_report": {"id": rt.pk, "name": rt.name, "code": rt.code,},
+                    }
+                    for (rt, broken) in report_types_and_broken
+                }
+            result[year] = year_result
+
+        # update planned
+        for intention in credentials.fetchintention_set.filter(
+            counter_report__in=report_types, when_processed__isnull=True,
+        ).select_related('counter_report'):
+            start = intention.start_date
+            end = intention.end_date
+            report_type = intention.counter_report.code
+
+            # iterate through months
+            while start <= end:
+                if start.year in result:
+                    result[start.year][f"{start.month:02d}"][report_type]["planned"] = True
+                start += relativedelta(months=1)
+
+        # iterate through attempts
+        for attempt in credentials.sushifetchattempt_set.filter(
+            counter_report__in=report_types
+        ).select_related('counter_report'):
+            start = attempt.start_date
+            end = attempt.end_date
+            report_type = attempt.counter_report.code
+            status = attempt.status
+
+            # iterate through months
+            while start <= end:
+                if start.year in result:
+                    before = result[start.year][f"{start.month:02d}"][report_type]["status"]
+                    if status in ['FAILURE', 'BROKEN'] and before in "untried":
+                        # untried => failed
+                        result[start.year][f"{start.month:02d}"][report_type]["status"] = "failed"
+                    elif status in ['NO_DATA'] and before in ["untried", "failed"]:
+                        # failed, untried => no_data
+                        result[start.year][f"{start.month:02d}"][report_type]["status"] = "no_data"
+                    elif status == 'SUCCESS' and before in [
+                        "untried",
+                        "failed",
+                        "no_data",
+                    ]:
+                        # failed, untried, no_data => success
+                        result[start.year][f"{start.month:02d}"][report_type]["status"] = "success"
+                start += relativedelta(months=1)
+
+        # reformat for serializer (dict => list)
+        reformatted = list(result.values())
+        for year_result in reformatted:
+            for i in range(1, 13):
+                key = f"{i:02d}"
+                year_result[key] = list(year_result[key].values())
+
+        serializer = SushiCredentialsDataSerializer(data=reformatted, many=True)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def count(self, request):

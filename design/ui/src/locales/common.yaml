@@ -27,6 +27,7 @@ en:
   title: Title
   report: Report
   month: Month
+  year: Year
   title_fields:
     id: ID
     name: Name
@@ -119,6 +120,8 @@ en:
     upload_data: Upload data
     cancel: Cancel
     show_attempts: Downloads
+    show_overview: Overview
+    show_overview_details: Yearly overview of downloaded data
     start_test: Start test
     start_harvesting: Start harvesting
     show_raw_data: Show raw data
@@ -163,6 +166,7 @@ cs:
   title: Titul
   report: Report
   month: Měsíc
+  year: Rok
   title_fields:
     id: ID
     name: Název
@@ -255,6 +259,8 @@ cs:
     upload_data: Nahrát data
     cancel: Zrušit
     show_attempts: Stažení
+    show_overview: Přehled
+    show_overview_details: Roční přehled stažených dat
     start_test: Spustit test
     start_harvesting: Spustit stahování
     show_raw_data: Zobrazit data

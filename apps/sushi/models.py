@@ -130,6 +130,9 @@ class BrokenCredentialsMixin(models.Model):
         self.first_broken_attempt = None
         self.save()
 
+    def is_broken(self):
+        return True if self.broken is not None else False
+
     class Meta:
         abstract = True
 

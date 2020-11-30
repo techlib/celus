@@ -142,6 +142,24 @@ cs:
             <v-icon left x-small>fa-list</v-icon>
             {{ $t("actions.show_attempts") }}
           </v-btn>
+          <v-tooltip left>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-on="on"
+                text
+                small
+                color="secondary"
+                @click.stop="
+                  selectedCredentials = item;
+                  showDataDialog = true;
+                "
+              >
+                <v-icon left x-small>far fa-calendar-alt</v-icon>
+                {{ $t("actions.show_overview") }}
+              </v-btn>
+            </template>
+            {{ $t("actions.show_overview_details") }}
+          </v-tooltip>
         </template>
         <template v-slot:item.enabled="{ item }">
           <CheckMark
@@ -261,6 +279,15 @@ cs:
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="showDataDialog" :max-width="dialogMaxWidth">
+      <SushiCredentialsDataDialog
+        v-if="showDataDialog"
+        :credentials="selectedCredentials"
+        @close="closeDataDialog"
+      ></SushiCredentialsDataDialog>
+    </v-dialog>
+
   </v-container>
 </template>
 
@@ -273,6 +300,7 @@ import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import CheckMark from "@/components/util/CheckMark";
 import SushiCredentialsTestWidget from "@/components/sushi/SushiCredentialsTestWidget";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
+import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
 
 export default {
   name: "SushiCredentialsManagementWidget",
@@ -282,6 +310,7 @@ export default {
     SushiCredentialsTestWidget,
     SushiCredentialsEditDialog,
     SushiAttemptListWidget,
+    SushiCredentialsDataDialog,
     CheckMark,
   },
 
@@ -315,6 +344,7 @@ export default {
       showEditDialog: false,
       showDetailsDialog: false,
       showCreateDialog: false,
+      showDataDialog: false,
       orderBy: ["organization.name", "platform.name", "counter_version"],
       loading: false,
       counterVersion: null,
@@ -506,6 +536,10 @@ export default {
     closeDetailsDialog() {
       this.selectedCredentials = null;
       this.showDetailsDialog = false;
+    },
+    closeDataDialog() {
+      this.selectedCredentials = null;
+      this.showDataDialog = false;
     },
     activateCreateDialog() {
       this.showCreateDialog = true;

@@ -29,32 +29,14 @@ cs:
       <v-container fluid>
         <v-row v-if="!attemptId">
           <v-col cols="12" md="6">
-            <table class="overview">
-              <tr v-if="organization">
-                <th class="text-left">{{ $t("organization") }}:</th>
-                <td>{{ organization.name }}</td>
-              </tr>
-              <tr v-if="platform">
-                <th class="text-left">{{ $t("platform") }}:</th>
-                <td>{{ platform.name }}</td>
-              </tr>
-              <tr v-if="report">
-                <th class="text-left">{{ $t("labels.report_type") }}:</th>
-                <td>{{ report.name }}</td>
-              </tr>
-              <tr v-if="counterVersion">
-                <th class="text-left">{{ $t("labels.counter_version") }}:</th>
-                <td>{{ counterVersion }}</td>
-              </tr>
-              <tr v-if="month">
-                <th class="text-left">{{ $t("month") }}:</th>
-                <td>{{ month.name }}</td>
-              </tr>
-              <tr v-if="fromDate">
-                <th class="text-left">{{ $t("not_older_than") }}:</th>
-                <td>{{ fromDate }}</td>
-              </tr>
-            </table>
+            <SushiCredentialsOverviewHeaderWidget
+              :organization="organization"
+              :platform="platform"
+              :report="report"
+              :counter-version="counterVersion"
+              :month="month"
+              :from-date="fromDate"
+            />
           </v-col>
           <v-spacer></v-spacer>
           <v-col cols="12" md="6">
@@ -214,6 +196,7 @@ import ImportBatchChart from "../ImportBatchChart";
 import CheckMark from "@/components/util/CheckMark";
 import FetchAttemptModeFilter from "./FetchAttemptModeFilter";
 import SushiAttemptStateIcon from "@/components/sushi/SushiAttemptStateIcon";
+import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 
 export default {
@@ -224,6 +207,7 @@ export default {
     ImportBatchChart,
     CheckMark,
     FetchAttemptModeFilter,
+    SushiCredentialsOverviewHeaderWidget,
   },
   props: {
     organization: { required: false },

@@ -22,6 +22,7 @@ from ..entities.credentials import CredentialsFactory
 from ..entities.fetchattempts import FetchAttemptFactory
 from ..entities.data_souces import DataSourceFactory, DataSource
 from ..entities.identities import IdentityFactory, Identity
+from ..entities.logs import ImportBatchFactory
 from ..entities.organizations import OrganizationFactory
 from ..entities.platforms import PlatformFactory
 from ..entities.report_types import ReportTypeFactory
@@ -287,6 +288,12 @@ def counter_report_types(report_types):
 
 
 @pytest.fixture
+def import_batches(report_types):
+    pr = ImportBatchFactory(report_type=report_types["pr"])
+    return locals()
+
+
+@pytest.fixture
 def credentials(counter_report_types, organizations, platforms):
     standalone_tr = CredentialsFactory(
         organization=organizations["standalone"],
@@ -308,7 +315,7 @@ def credentials(counter_report_types, organizations, platforms):
     branch_pr = CredentialsFactory(
         organization=organizations["branch"],
         platform=platforms["branch"],
-        url="https://c5.standalone.example.com/",
+        url="https://c5.branch.example.com/",
         counter_version=5,
     )
     branch_pr.counter_reports.add(counter_report_types["pr"])
@@ -320,22 +327,30 @@ def credentials(counter_report_types, organizations, platforms):
 def schedulers(credentials):
     standalone_br1_jr1 = SchedulerFactory(url=credentials["standalone_br1_jr1"].url)
     standalone_tr = SchedulerFactory(url=credentials["standalone_tr"].url)
+    branch_pr = SchedulerFactory(url=credentials["branch_pr"].url)
     return locals()
 
 
 @pytest.fixture
-def harvests(users, credentials, counter_report_types, schedulers, organizations):
+def harvests(users, credentials, counter_report_types, schedulers, organizations, import_batches):
     anonymous = HarvestFactory(
         last_updated_by=None,
         intentions=(
             FetchIntentionFactory.build(
+                start_date="2020-01-01",
+                end_date="2020-01-31",
                 credentials=credentials["standalone_tr"],
                 counter_report=counter_report_types["tr"],
                 scheduler=schedulers["standalone_tr"],
                 when_processed=timezone.now() - timedelta(minutes=1),
                 attempt=FetchAttemptFactory(
+                    start_date="2020-01-01",
+                    end_date="2020-01-31",
                     credentials=credentials["standalone_tr"],
                     counter_report=counter_report_types["tr"],
+                    download_success=False,
+                    processing_success=False,
+                    contains_data=False,
                 ),
             ),
             FetchIntentionFactory.build(
@@ -350,6 +365,9 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 attempt=FetchAttemptFactory(
                     credentials=credentials["standalone_br1_jr1"],
                     counter_report=counter_report_types["jr1"],
+                    download_success=True,
+                    processing_success=False,
+                    contains_data=False,
                 ),
                 start_date="2020-01-01",
                 end_date="2020-01-31",
@@ -377,12 +395,11 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 start_date="2020-01-01",
                 end_date="2020-01-31",
                 when_processed=None,
-                duplicate_of=anonymous.intentions.filter(
+                duplicate_of=anonymous.intentions.get(
                     credentials=credentials["standalone_br1_jr1"],
                     counter_report=counter_report_types["jr1"],
-                )
-                .order_by('pk')
-                .first(),
+                    attempt__isnull=False,
+                ),
             ),  # dulicate
         ),
     )
@@ -390,8 +407,8 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
         harvest=automatic, month="2020-01-01", organization=organizations["standalone"],
     )
 
-    user1 = HarvestFactory(
-        last_updated_by=users["user1"],
+    user2 = HarvestFactory(
+        last_updated_by=users["user2"],
         intentions=(
             FetchIntentionFactory.build(
                 credentials=credentials["standalone_br1_jr1"],
@@ -401,6 +418,9 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 attempt=FetchAttemptFactory(
                     credentials=credentials["standalone_br1_jr1"],
                     counter_report=counter_report_types["br1"],
+                    download_success=True,
+                    processing_success=True,
+                    contains_data=False,
                 ),
             ),
             FetchIntentionFactory.build(
@@ -409,4 +429,31 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
             ),
         ),
     )
+
+    user1 = HarvestFactory(
+        last_updated_by=users["user1"],
+        intentions=(
+            FetchIntentionFactory.build(
+                credentials=credentials["branch_pr"],
+                counter_report=counter_report_types["pr"],
+                scheduler=schedulers["branch_pr"],
+                when_processed=timezone.now() - timedelta(minutes=2),
+                attempt=FetchAttemptFactory(
+                    credentials=credentials["branch_pr"],
+                    counter_report=counter_report_types["pr"],
+                    download_success=True,
+                    processing_success=True,
+                    contains_data=True,
+                    import_batch=import_batches["pr"],
+                ),
+            ),
+            FetchIntentionFactory.build(
+                start_date="2020-03-01",
+                end_date="2020-03-31",
+                credentials=credentials["branch_pr"],
+                counter_report=counter_report_types["pr"],
+            ),
+        ),
+    )
+
     return locals()

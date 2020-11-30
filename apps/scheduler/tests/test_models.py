@@ -17,6 +17,7 @@ from test_fixtures.scenarios.basic import (
     report_types,
     credentials,
     platforms,
+    import_batches,
     organizations,
     data_sources,
     users,

@@ -123,7 +123,6 @@ cs:
                 @click="
                   showHarvestDialog = false;
                   currentHarvest = null;
-                  currentIntentions = null;
                 "
                 class="mb-3 mr-4"
                 >{{ $t("actions.close") }}</v-btn
@@ -169,7 +168,6 @@ export default {
       tableData: [], // processed data
       showHarvestDialog: false,
       currentHarvest: null,
-      currentIntentions: null,
       orderBy: ["harvest.pk"],
       loading: false,
       loadingHarvest: false,

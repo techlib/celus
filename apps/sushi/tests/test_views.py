@@ -25,14 +25,17 @@ from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.scenarios.basic import (
     basic1,
     clients,
+    counter_report_types,
+    credentials,
     data_sources,
+    harvests,
     identities,
+    import_batches,
     organizations,
     platforms,
-    users,
-    counter_report_types,
     report_types,
-    credentials,
+    schedulers,
+    users,
 )
 
 
@@ -437,6 +440,89 @@ class TestSushiCredentialsViewSet:
         resp = clients["master"].get(reverse('sushi-credentials-count'))
         assert resp.status_code == 200
         assert resp.json() == {'count': 3, 'broken': 1, 'broken_reports': 1}
+
+    @freeze_time("2020-06-01")
+    def test_downloads(self, basic1, credentials, clients, harvests, counter_report_types):
+
+        # mark credentials
+        attempt_tr = FetchAttemptFactory(
+            credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
+        )
+        credentials["standalone_tr"].set_broken(attempt_tr, BS.BROKEN_HTTP)
+
+        # mark broken mapping
+        attempt_br1 = FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+        )
+        cr2c_br1 = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"
+        )
+        cr2c_br1.set_broken(attempt_br1, BS.BROKEN_SUSHI)
+
+        # Just test premade scenarios
+        resp = clients["master"].get(
+            reverse('sushi-credentials-data', args=(credentials["standalone_tr"].pk,))
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+
+        assert len(data) == 1
+        assert data[0]["year"] == timezone.now().year
+        for i in range(1, 13):
+            month = f"{i:02d}"
+            assert len(data[0][month]) == 1
+            assert data[0][month][0]["planned"] is False
+            assert data[0][month][0]["broken"] is False, "mapping not broken, but creds are"
+            if month in ["01"]:
+                assert data[0][month][0]["status"] == "failed"
+            else:
+                assert data[0][month][0]["status"] == "untried"
+
+        resp = clients["master"].get(
+            reverse('sushi-credentials-data', args=(credentials["standalone_br1_jr1"].pk,))
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data[0]["year"] == timezone.now().year
+        assert len(data) == 1
+        for i in range(1, 13):
+            month = f"{i:02d}"
+            assert len(data[0][month]) == 2
+            assert data[0][month][0]["broken"] is False
+            assert data[0][month][1]["broken"] is True, "mapping broken"
+            if month in ["01"]:
+                assert data[0][month][0]["status"] == "failed"
+                assert data[0][month][1]["status"] == "no_data"
+                assert data[0][month][0]["planned"] is True
+                assert data[0][month][1]["planned"] is True
+            else:
+                assert data[0][month][0]["status"] == "untried"
+                assert data[0][month][1]["status"] == "untried"
+                assert data[0][month][0]["planned"] is False
+                assert data[0][month][1]["planned"] is False
+
+        resp = clients["master"].get(
+            reverse('sushi-credentials-data', args=(credentials["branch_pr"].pk,))
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+
+        assert len(data) == 1
+        assert data[0]["year"] == timezone.now().year
+        for i in range(1, 13):
+            month = f"{i:02d}"
+            assert len(data[0][month]) == 1
+            assert data[0][month][0]["broken"] is False
+            if month in ["01"]:
+                assert data[0][month][0]["status"] == "success"
+                assert data[0][month][0]["planned"] is False
+            elif month in ["03"]:
+                assert data[0][month][0]["status"] == "untried"
+                assert data[0][month][0]["planned"] is True
+            else:
+                assert data[0][month][0]["status"] == "untried"
+                assert data[0][month][0]["planned"] is False
 
 
 @pytest.mark.django_db()

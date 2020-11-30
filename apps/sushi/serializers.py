@@ -3,11 +3,13 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import (
     BooleanField,
     CurrentUserDefault,
+    ChoiceField,
+    CharField,
     DateTimeField,
+    DateField,
     HiddenField,
     IntegerField,
     SerializerMethodField,
-    IntegerField,
     ReadOnlyField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
@@ -26,6 +28,7 @@ from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
 from publications.serializers import PlatformSerializer
 from .models import (
+    COUNTER_REPORTS,
     SushiCredentials,
     CounterReportType,
     SushiFetchAttempt,
@@ -137,6 +140,25 @@ class SushiCredentialsSerializer(ModelSerializer):
         result.can_lock = submitter_level >= UL_CONS_STAFF
         result.locked_for_me = submitter_level < result.lock_level
         return result
+
+
+class SushiCredentialsDataCounterReportSerializer(Serializer):
+    id = IntegerField(required=True)
+    code = ChoiceField(choices=[e[0] for e in COUNTER_REPORTS], required=True)
+    name = CharField(allow_blank=True)
+
+
+class SushiCredentialsDataReportSerializer(Serializer):
+    status = ChoiceField(choices=('success', 'no_data', 'failed', 'untried'), required=True)
+    planned = BooleanField(required=True)
+    broken = BooleanField()
+    counter_report = SushiCredentialsDataCounterReportSerializer()
+
+
+class SushiCredentialsDataSerializer(Serializer):
+    year = IntegerField(required=True, max_value=3000, min_value=2000)
+    for month in range(1, 13):
+        locals()[f"{month:02d}"] = SushiCredentialsDataReportSerializer(many=True)
 
 
 class SushiFetchAttemptSerializer(ModelSerializer):
