@@ -2,19 +2,11 @@
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  in_progress: Fetching data
-  waiting: Waiting until download is possible
-  fetching_details: Fetching details
   currently_downloading: There are no data yet, please wait until the download finishes. It can take from seconds to minutes.
   planned_to_download: Fetching of data was planned, but attempt hasn't been executed yet.
   planned_for_retry: "Based on result of previous attempt, later retry was planned. The new attempt is planned for {date}. "
-  deleted: Deleted
   attempt_deleted: Download was executed but information about the download were deleted.
-  planned_for_later: Planned for later
-  retry_planned_for_later: Retry planned for later
-  start: start in
   future_start_info: Harvesting is currently waiting for free slot in the download queue.
-  is_duplicate: This harvesting attempt duplicates an already planned one, so it was removed from harvesting. Click to see info on the related attempt.
   finished_filter: Filter by finished
   finished: Finished only
   unfinished: Unfinished only
@@ -25,19 +17,15 @@ en:
   status: Status
 
 cs:
-  in_progress: Stahuji data
-  waiting: Čekám, až bude možné stahovat data
-  fetching_details: Stahuji informace
   currently_downloading: Data ještě nejsou k dispozici - vyčkejte prosím, až budou stáhnutá. Může to trvat od sekund po jednotky minut.
   planned_to_download: Stahování dat bylo naplánováno, ale zatím nebylo provedeno.
   planned_for_retry: "Na základě předchozího pokusu bylo naplánováno pozdější stažení. Nový pokus je naplánovaný na {date}. "
-  deleted: Smazáno
   attempt_deleted: Stahování proběhlo, ale informace o stahování byly smazány.
-  planned_for_later: Naplánováno na později
-  retry_planned_for_later: Opakování naplánováno na později
-  start: začátek za
   future_start_info: Stahování aktuálně čeká na uvolnění místa ve frontě.
-  is_duplicate: Tento pokus o stažení duplikuje již naplánované stahování a byl tedy odstraněn z plánu. Klikněte pro informace o přidruženém stahování.
+  finished_filter: Filtr podle dokončení
+  finished: Pouze dokončené
+  unfinished: Pouze nedokončené
+  all: Všechny
   broken_credentials_hint: Přihlašovací údaje můžete opravit na stránce {link}. Tento odkaz automaticky zapne filtr, který zobrazí jen problematické přihlašovací údaje.
   progress: Dokončeno
   stats: Statistika

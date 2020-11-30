@@ -15,7 +15,7 @@
 import { intentionStateToIcon } from "@/libs/intention-state";
 
 export default {
-  name: "FetchIntentionStatusWidget",
+  name: "FetchIntentionStatusIcon",
 
   props: {
     fetchIntention: {

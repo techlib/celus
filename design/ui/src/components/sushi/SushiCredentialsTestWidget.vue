@@ -167,7 +167,6 @@ cs:
 import { mapActions } from "vuex";
 import axios from "axios";
 import { ymDateFormat, ymFirstDay, ymLastDay } from "@/libs/dates";
-import FetchIntentionStatusWidget from "./FetchIntentionStatusWidget";
 import addMonths from "date-fns/addMonths";
 import HarvestsTable from "@/components/HarvestsTable";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
@@ -178,7 +177,6 @@ export default {
   components: {
     SushiFetchIntentionsListWidget,
     HarvestsTable,
-    FetchIntentionStatusWidget,
   },
 
   props: {
