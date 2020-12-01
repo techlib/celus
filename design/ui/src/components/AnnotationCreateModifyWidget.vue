@@ -50,6 +50,7 @@ cs:
             item-text="name"
             item-value="pk"
             :loading="loadingPlatforms"
+            :disabled="fixPlatform && platform !== null"
           >
             <template v-slot:item="{ item }">
               <span :class="{ bold: item.extra }">{{ item.name }}</span>
@@ -227,6 +228,7 @@ export default {
   props: {
     platform: { required: false, type: Object },
     annotation: { required: false, type: Object },
+    fixPlatform: { type: Boolean, default: false },
   },
   data() {
     return {

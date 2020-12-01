@@ -26,6 +26,7 @@ cs:
           <AnnotationCreateModifyWidget
             ref="widget"
             :platform="platform"
+            :fix-platform="fixPlatform"
             @saved="annotationSaved"
             @cancel="cancelEdit"
             @deleted="annotationSaved"
@@ -45,6 +46,7 @@ export default {
     platform: {},
     text: { type: Boolean, default: false },
     small: { type: Boolean, default: false },
+    fixPlatform: { type: Boolean, default: false },
   },
   data() {
     return {

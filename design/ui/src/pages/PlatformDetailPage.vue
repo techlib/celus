@@ -109,6 +109,7 @@ cs:
               <div v-if="showAdminStuff">
                 <AddAnnotationButton
                   :platform="platform"
+                  fix-platform
                   @update="refreshAnnotations()"
                   text
                   small
@@ -130,6 +131,7 @@ cs:
       <AnnotationsWidget
         :platform="platform"
         :allow-add="showAdminStuff"
+        fix-platform
         ref="annotWidget"
       >
       </AnnotationsWidget>

@@ -100,6 +100,7 @@ cs:
             <AnnotationCreateModifyWidget
               :platform="platform"
               :annotation="selectedAnnotation"
+              :fix-platform="fixPlatform"
               @saved="annotationSaved()"
               @cancel="cancelEdit()"
               @deleted="annotationSaved()"
@@ -124,6 +125,7 @@ export default {
   props: {
     platform: { required: false, type: Object },
     allowAdd: { required: false, default: false, type: Boolean },
+    fixPlatform: { type: Boolean, default: false },
   },
   data() {
     return {
