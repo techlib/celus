@@ -106,7 +106,7 @@ cs:
                   {{ $t("actions.upload_custom_data") }}
                 </v-btn>
               </div>
-              <div v-if="organizationSelected">
+              <div v-if="showAdminStuff">
                 <AddAnnotationButton
                   :platform="platform"
                   @update="refreshAnnotations()"

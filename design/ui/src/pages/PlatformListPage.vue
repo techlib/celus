@@ -3,21 +3,21 @@
 <template>
   <v-container fluid>
     <v-row>
-      <v-col>
+      <v-col class="py-0">
         <h2>{{ $t("pages.platforms") }}</h2>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col
-        v-if="showAdminStuff && organizationSelected"
-        cols="auto"
-        class="d-none d-sm-block"
-      >
-        <v-container fluid pa-0>
+      <v-col v-if="showAdminStuff" cols="auto" class="d-none d-sm-block py-0">
+        <v-container fluid class="py-0">
           <v-row>
-            <v-col cols="auto" class="pa-1" v-if="allowManualDataUpload">
+            <v-col
+              cols="auto"
+              class="pa-1"
+              v-if="allowManualDataUpload && organizationSelected"
+            >
               <ManualUploadButton />
             </v-col>
-            <v-col cols="auto" class="pa-1">
+            <v-col cols="auto" class="pa-1 pr-0">
               <AddAnnotationButton @update="refreshAnnotations()" />
             </v-col>
           </v-row>
@@ -25,7 +25,13 @@
       </v-col>
     </v-row>
     <v-row>
-      <AnnotationsWidget :allow-add="showAdminStuff" ref="annotWidget" />
+      <v-col class="py-0">
+        <AnnotationsWidget
+          :allow-add="showAdminStuff"
+          ref="annotWidget"
+          class="pt-4"
+        />
+      </v-col>
     </v-row>
     <v-row>
       <v-col>

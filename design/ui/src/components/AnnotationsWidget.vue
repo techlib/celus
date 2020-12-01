@@ -12,128 +12,103 @@ cs:
 </i18n>
 
 <template>
-  <v-container v-if="annotations.length" fluid>
-    <v-row>
-      <v-col cols="auto">
-        <h3 v-text="$t('labels.annotations')"></h3>
-      </v-col>
-      <v-spacer></v-spacer>
-      <v-col cols="auto" v-if="allowAdd">
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              @click="showAddDialog = true"
+  <div v-if="annotations.length">
+    <v-expansion-panels v-model="panel" multiple accordion>
+      <v-expansion-panel v-for="annot in annotations" :key="annot.pk">
+        <v-expansion-panel-header>
+          <span>
+            <v-icon
+              v-if="annot.level === 'important'"
+              color="warning"
+              class="mr-3"
               small
-              dark
-              fab
-              color="primary"
-              v-on="on"
+              >fa-exclamation-triangle</v-icon
             >
-              <v-icon small>fa-plus</v-icon>
-            </v-btn>
-          </template>
-          {{ $t("add") }}
-        </v-tooltip>
-      </v-col>
-    </v-row>
-    <div>
-      <v-expansion-panels v-model="panel" multiple accordion>
-        <v-expansion-panel v-for="annot in annotations" :key="annot.pk">
-          <v-expansion-panel-header>
-            <span>
-              <v-icon
-                v-if="annot.level === 'important'"
-                color="warning"
-                class="mr-3"
-                small
-                >fa-exclamation-triangle</v-icon
-              >
-              <v-icon v-else color="info" class="mr-3" small
-                >fa-info-circle</v-icon
-              >
-              <span>{{ annot.subject }}</span>
-            </span>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <v-row>
-              <v-col>
-                <table class="overview">
-                  <tr v-if="annot.platform">
-                    <td v-text="$t('platform') + ':'" class="pr-2"></td>
-                    <th v-text="annot.platform.name"></th>
-                  </tr>
-                  <tr v-if="annot.organization">
-                    <td v-text="$t('organization') + ':'" class="pr-2"></td>
-                    <th v-text="annot.organization.name"></th>
-                  </tr>
-                  <tr v-if="annot.start_date">
-                    <td
-                      v-text="$t('title_fields.start_date') + ':'"
-                      class="pr-2"
-                    ></td>
-                    <th v-text="annot.start_date"></th>
-                  </tr>
-                  <tr v-if="annot.end_date">
-                    <td
-                      v-text="$t('title_fields.end_date') + ':'"
-                      class="pr-2"
-                    ></td>
-                    <th v-text="annot.end_date"></th>
-                  </tr>
-                </table>
-                <p v-if="annot.short_message" class="pt-2">
-                  {{ annot.short_message }}
-                </p>
-                <p v-text="annot.message" v-if="annot.message"></p>
-              </v-col>
-              <v-col cols="auto" v-if="allowAdd">
-                <v-tooltip bottom v-if="annot.can_edit">
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      color="blue"
-                      fab
-                      dark
-                      small
-                      v-on="on"
-                      @click="startEditAnnotation(annot)"
+            <v-icon v-else color="info" class="mr-3" small
+              >fa-info-circle</v-icon
+            >
+            <span>{{ annot.subject }}</span>
+          </span>
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <v-row>
+            <v-col>
+              <table class="overview">
+                <tr v-if="annot.platform">
+                  <td v-text="$t('platform') + ':'" class="pr-2"></td>
+                  <th v-text="annot.platform.name"></th>
+                </tr>
+                <tr v-if="annot.organization">
+                  <td v-text="$t('organization') + ':'" class="pr-2"></td>
+                  <th v-text="annot.organization.name"></th>
+                </tr>
+                <tr v-if="annot.start_date">
+                  <td
+                    v-text="$t('title_fields.start_date') + ':'"
+                    class="pr-2"
+                  ></td>
+                  <th v-text="annot.start_date"></th>
+                </tr>
+                <tr v-if="annot.end_date">
+                  <td
+                    v-text="$t('title_fields.end_date') + ':'"
+                    class="pr-2"
+                  ></td>
+                  <th v-text="annot.end_date"></th>
+                </tr>
+              </table>
+              <p v-if="annot.short_message" class="pt-2">
+                {{ annot.short_message }}
+              </p>
+              <p v-text="annot.message" v-if="annot.message"></p>
+            </v-col>
+            <v-col cols="auto" v-if="allowAdd">
+              <v-tooltip bottom v-if="annot.can_edit">
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    color="blue"
+                    fab
+                    dark
+                    small
+                    v-on="on"
+                    @click="startEditAnnotation(annot)"
+                    ><v-icon small>fa-edit</v-icon></v-btn
+                  >
+                </template>
+                {{ $t("edit") }}
+              </v-tooltip>
+              <v-tooltip bottom v-else>
+                <template v-slot:activator="{ on }">
+                  <span v-on="on">
+                    <v-btn disabled fab small
                       ><v-icon small>fa-edit</v-icon></v-btn
                     >
-                  </template>
-                  {{ $t("edit") }}
-                </v-tooltip>
-                <v-tooltip bottom v-else>
-                  <template v-slot:activator="{ on }">
-                    <span v-on="on">
-                      <v-btn disabled fab small
-                        ><v-icon small>fa-edit</v-icon></v-btn
-                      >
-                    </span>
-                  </template>
-                  {{ $t("cannot_edit") }}
-                </v-tooltip>
-              </v-col>
-            </v-row>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
-      <div v-if="allowAdd">
-        <v-dialog v-model="showAddDialog" max-width="1240px">
-          <v-card>
-            <v-card-title v-text="$t('add')"></v-card-title>
-            <v-card-text>
-              <AnnotationCreateModifyWidget
-                :platform="platform"
-                :annotation="selectedAnnotation"
-                @saved="annotationSaved()"
-                @cancel="cancelEdit()"
-                @deleted="annotationSaved()"
-              />
-            </v-card-text>
-          </v-card>
-        </v-dialog>
-      </div>
+                  </span>
+                </template>
+                {{ $t("cannot_edit") }}
+              </v-tooltip>
+            </v-col>
+          </v-row>
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+    </v-expansion-panels>
+    <div v-if="allowAdd">
+      <v-dialog v-model="showAddDialog" max-width="1240px">
+        <v-card>
+          <v-card-title v-text="$t('edit')"></v-card-title>
+          <v-card-text>
+            <AnnotationCreateModifyWidget
+              :platform="platform"
+              :annotation="selectedAnnotation"
+              @saved="annotationSaved()"
+              @cancel="cancelEdit()"
+              @deleted="annotationSaved()"
+            />
+          </v-card-text>
+        </v-card>
+      </v-dialog>
     </div>
-  </v-container>
+  </div>
 </template>
 
 <script>

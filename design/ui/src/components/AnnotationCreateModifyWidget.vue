@@ -29,7 +29,7 @@ cs:
 
 <template>
   <v-form ref="form">
-    <v-container>
+    <v-container fluid>
       <v-row>
         <v-col>
           <v-autocomplete

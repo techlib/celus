@@ -3,14 +3,12 @@
 
 <i18n lang="yaml">
 en:
-  has_annotations: There are some annotations which might be related to this title. Click to scroll to them.
   available_from_platforms: Available from platforms
   this_title_on_platform: Link to this title on the selected platform
   this_title_no_platform: Link to all data for this title without platform filter
   current_platform: Current platform
   no_platform: Regardless of platform
 cs:
-  has_annotations: Jsou dostupné poznámky, které mohou být relevantní pro tento titul. Klikněte pro zobrazení.
   available_from_platforms: Dostupné na platformách
   this_title_on_platform: Odkaz na tento titul na uvedené platformě
   this_title_no_platform: Odkaz na souhrná data pro tento titul bez ohledu na platformu
@@ -184,20 +182,18 @@ cs:
       </v-col>
     </v-row>
 
+    <section class="my-4" id="annotations">
+      <AnnotationsWidget
+        v-if="platformData"
+        :platform="platformData"
+        @loaded="annotationsLoaded"
+      ></AnnotationsWidget>
+    </section>
+
     <section v-if="isReady">
       <v-row>
         <v-col>
           <h3>{{ $t("overview") }}</h3>
-        </v-col>
-        <v-col cols="auto" v-if="annotationsCount">
-          <v-btn @click="goTo('#annotations')" fab dark small color="warning">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-icon small v-on="on">fa-exclamation-triangle</v-icon>
-              </template>
-              <span v-text="$t('has_annotations')"></span>
-            </v-tooltip>
-          </v-btn>
         </v-col>
         <v-col cols="auto">
           <data-export-widget :title="titleId" :platform="platformId">
@@ -212,14 +208,6 @@ cs:
         scope="title"
       >
       </CounterChartSet>
-    </section>
-
-    <section class="mt-8" id="annotations">
-      <AnnotationsWidget
-        v-if="platformData"
-        :platform="platformData"
-        @loaded="annotationsLoaded"
-      ></AnnotationsWidget>
     </section>
   </v-container>
 </template>
