@@ -29,7 +29,7 @@ en:
   mark_fixed: Mark fixed
   mark_fixed_success: Credentials were marked as fixed
   broken_reports_warning: Some active reports have been marked as broken by Celus - they are probably not supported by this platform. Fix it by deactivating them.
-  url_hint:  "URL should not contain the '/report/' part and anything beyond this. For example 'https://x.y.z/sushi5/report/tr?customer_id=1' should be cropped to 'https://x.y.z/sushi5/'"
+  url_hint: "URL should not contain the '/report/' part and anything beyond this. For example 'https://x.y.z/sushi5/report/tr?customer_id=1' should be cropped to 'https://x.y.z/sushi5/'"
 
 cs:
   add_custom_param: Přidat vlastní parametr
@@ -60,7 +60,7 @@ cs:
   mark_fixed: Označit jako opravené
   mark_fixed_success: Přihlašovací údaje byly označeny jako opravené
   broken_reports_warning: Některé aktivní reporty Celus označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací.
-  url_hint:  "URL by neměla obsahovat část s '/report/' a cokoliv po ní. Např. 'https://x.y.z/sushi5/report/tr?customer_id=1' by mělo být zkráceno na 'https://x.y.z/sushi5/'"
+  url_hint: "URL by neměla obsahovat část s '/report/' a cokoliv po ní. Např. 'https://x.y.z/sushi5/report/tr?customer_id=1' by mělo být zkráceno na 'https://x.y.z/sushi5/'"
 </i18n>
 
 <template>
@@ -185,8 +185,8 @@ cs:
           </v-col>
         </v-row>
 
-        <v-row>
-          <v-col class="pb-1" cols="auto">
+        <v-row class="pb-3 mx-0">
+          <v-col class="pb-4 elevation-2 rounded" cols="12">
             <v-tooltip bottom max-width="600px">
               <template #activator="{ on }">
                 <h4
@@ -197,93 +197,75 @@ cs:
               </template>
               {{ $t("optional_args_tooltip") }}
             </v-tooltip>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12" class="pt-0">
-            <v-expansion-panels>
-              <v-expansion-panel>
-                <v-expansion-panel-header>{{
-                  $t("labels.http_authentication")
-                }}</v-expansion-panel-header>
-                <v-expansion-panel-content>
-                  <v-container>
-                    <v-row>
-                      <v-col cols="12" :sm="6">
-                        <v-text-field
-                          v-model="httpUsername"
-                          :label="$t('labels.http_username')"
-                        >
-                        </v-text-field>
-                      </v-col>
-                      <v-col cols="12" :sm="6">
-                        <v-text-field
-                          v-model="httpPassword"
-                          :label="$t('labels.http_password')"
-                        >
-                        </v-text-field>
-                      </v-col>
-                    </v-row>
-                  </v-container>
-                </v-expansion-panel-content>
-              </v-expansion-panel>
-              <v-expansion-panel>
-                <v-expansion-panel-header>{{
-                  $t("labels.extra_params")
-                }}</v-expansion-panel-header>
-                <v-expansion-panel-content>
-                  <v-container fluid>
-                    <v-row>
-                      <v-col cols="12" class="py-0">
-                        <v-text-field
-                          v-model="apiKey"
-                          :label="$t('labels.api_key')"
-                        >
-                        </v-text-field>
-                      </v-col>
-                    </v-row>
-                    <v-row v-for="(param, index) in extraParams" :key="index">
-                      <v-col cols="12" sm="6" class="py-0">
-                        <v-text-field
-                          v-model="param.key"
-                          :label="$t('labels.variable')"
-                        >
-                        </v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="6" class="py-0">
-                        <v-text-field
-                          v-model="param.value"
-                          :label="$t('labels.variable_value')"
-                        >
-                        </v-text-field>
-                      </v-col>
-                    </v-row>
-                    <v-row>
-                      <v-col cols="12" class="py-0">
-                        <v-tooltip bottom>
-                          <template #activator="{ on }">
-                            <v-btn
-                              v-on="on"
-                              @click="extraParams.push({})"
-                              outlined
-                              color="green"
-                            >
-                              <v-icon left x-small>fa-plus</v-icon>
-                              {{ $t("add_custom_param") }}
-                            </v-btn>
-                          </template>
-                          {{ $t("add_custom_param_tooltip") }}
-                        </v-tooltip>
-                      </v-col>
-                    </v-row>
-                  </v-container>
-                </v-expansion-panel-content>
-              </v-expansion-panel>
-            </v-expansion-panels>
+
+            <v-container fluid class="pa-0 pl-md-8">
+              <v-row v-if="counterVersion === 4">
+                <v-col cols="auto" class="mt-6 py-0">
+                  <span class="font-weight-light">{{
+                    $t("labels.http_authentication")
+                  }}</span>
+                </v-col>
+                <v-col md="3" class="py-0">
+                  <v-text-field
+                    v-model="httpUsername"
+                    :label="$t('labels.http_username')"
+                  >
+                  </v-text-field>
+                </v-col>
+                <v-col md="4" class="py-0">
+                  <v-text-field
+                    v-model="httpPassword"
+                    :label="$t('labels.http_password')"
+                  >
+                  </v-text-field>
+                </v-col>
+              </v-row>
+              <v-row v-if="counterVersion === 5">
+                <v-col class="py-0" cols="12" md="8">
+                  <v-text-field v-model="apiKey" :label="$t('labels.api_key')">
+                  </v-text-field>
+                </v-col>
+              </v-row>
+              <v-row v-for="(param, index) in extraParams" :key="index">
+                <v-col cols="12" sm="5" md="3" class="py-0">
+                  <v-text-field
+                    v-model="param.key"
+                    :label="$t('labels.variable')"
+                  >
+                  </v-text-field>
+                </v-col>
+                <v-col cols="12" sm="7" md="5" class="py-0">
+                  <v-text-field
+                    v-model="param.value"
+                    :label="$t('labels.variable_value')"
+                  >
+                  </v-text-field>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col cols="12" class="py-0">
+                  <v-tooltip bottom>
+                    <template #activator="{ on }">
+                      <v-btn
+                        v-on="on"
+                        @click="extraParams.push({})"
+                        outlined
+                        text
+                        color="secondary"
+                      >
+                        <v-icon left x-small>fa-plus</v-icon>
+                        {{ $t("add_custom_param") }}
+                      </v-btn>
+                    </template>
+                    {{ $t("add_custom_param_tooltip") }}
+                  </v-tooltip>
+                </v-col>
+              </v-row>
+            </v-container>
           </v-col>
         </v-row>
 
-        <v-divider />
+        <!--v-divider /-->
         <v-row>
           <v-col cols="12" class="pt-4 pb-0">
             <h4>Active report types</h4>
@@ -296,7 +278,13 @@ cs:
                 :key="report.id"
                 :value="report.id"
                 outlined
-                :color="isBroken(report) ? '#4db685' : ( inKnowledgebase(report) ? 'success' : 'primary' )"
+                :color="
+                  isBroken(report)
+                    ? '#4db685'
+                    : inKnowledgebase(report)
+                    ? 'success'
+                    : 'primary'
+                "
               >
                 <SushiReportIndicator
                   :report="report"
@@ -305,9 +293,7 @@ cs:
                       ? isBroken
                       : false
                   "
-                  :knowledgebase-fn="
-                    inKnowledgebase
-                  "
+                  :knowledgebase-fn="inKnowledgebase"
                 />
               </v-btn>
             </v-btn-toggle>
@@ -532,9 +518,11 @@ export default {
     },
     knowledgebaseReportTypes() {
       if (this.currentKnowledgebase) {
-        let providers = this.activePlatform.knowledgebase.providers.filter(provider => provider.counter_version == this.counterVersion);
+        let providers = this.activePlatform.knowledgebase.providers.filter(
+          (provider) => provider.counter_version == this.counterVersion
+        );
         if (providers.length > 0) {
-          return providers[0].assigned_report_types.map(e => e.report_type);
+          return providers[0].assigned_report_types.map((e) => e.report_type);
         }
       }
       return [];
@@ -617,7 +605,11 @@ export default {
 
       try {
         let parsed = new URL(this.url);
-        if (parsed.search || (this.counterVersion == "5" && /^.*\/report\/[0-9a-zA-Z]+\/{0,1}$/.test(this.url))) {
+        if (
+          parsed.search ||
+          (this.counterVersion == "5" &&
+            /^.*\/report\/[0-9a-zA-Z]+\/{0,1}$/.test(this.url))
+        ) {
           return this.$t("url_hint");
         } else {
           return "";
@@ -636,7 +628,7 @@ export default {
         default:
           return "";
       }
-    }
+    },
   },
 
   methods: {
@@ -887,7 +879,9 @@ export default {
     },
     guessUrlFromKnowledgebase() {
       if (this.currentKnowledgebase) {
-        let providers = this.currentKnowledgebase.providers.filter(provider => provider.counter_version == this.counterVersion);
+        let providers = this.currentKnowledgebase.providers.filter(
+          (provider) => provider.counter_version == this.counterVersion
+        );
         if (providers.length > 0) {
           // provider found lets perform update
           this.url = providers[0].provider.url;
@@ -895,7 +889,7 @@ export default {
         }
       }
       this.url = "";
-    }
+    },
   },
 
   mounted() {
