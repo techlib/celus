@@ -18,6 +18,7 @@ en:
   title_label: Title
   title_tooltip: You can give the credentials a descriptive title for easier identification. A title is required when you have more than one set of credentials for the same SUSHI server.
   title_in_conflict: <strong>Use a different title</strong>. When creating more than one set of credentials for the same organization, platform and COUNTER version, you need to use distinct titles in order to distinguish between the sets.
+  title_in_conflict_hint: Unique title is required
   optional_args: Extra attributes - fill only if instructed by provider
   optional_args_tooltip: The following section is used for attributes which are only used by some providers. If the credentials given to you by the provider contain fields that do not correspond to any of the fields above, you can fill them in here.
   really_delete: Do you really want to delete these credentials? (Downloaded data will be preserved)
@@ -30,6 +31,11 @@ en:
   mark_fixed_success: Credentials were marked as fixed
   broken_reports_warning: Some active reports have been marked as broken by Celus - they are probably not supported by this platform. Fix it by deactivating them.
   url_hint: "URL should not contain the '/report/' part and anything beyond this. For example 'https://x.y.z/sushi5/report/tr?customer_id=1' should be cropped to 'https://x.y.z/sushi5/'"
+  url_hint_no_query: "URL should not contain any query parameters, i. e. there should be no '{search}' part"
+  invalid_url: Please enter a valid URL
+  duplicate: Name must be unique
+  active_report_types: Active report types
+  error_saving: It was not possible to save the credentials. Please review the entered values.
 
 cs:
   add_custom_param: Přidat vlastní parametr
@@ -49,6 +55,7 @@ cs:
   title_label: Název
   title_tooltip: Přihlašovacím údajům můžete přiřadit název pro lepší identifikaci. Název je také vyžadován v případě, že máte více než jednu sadu přihlašovacích údajů pro stejný SUSHI server.
   title_in_conflict: <strong>Použijte jiný název</strong>. Pokud vytváříte více přihlašovacích údajů pro stejnout organizaci, platformu a verzi COUNTER, musíte použít různé názvy, aby bylo možné přihlašovací údaje rozlišit.
+  title_in_conflict_hint: Je vyžadován unikátní název
   optional_args: Další parametry - vyplňte pouze pokud to poskytovatel vyžaduje
   optional_args_tooltip: Následující sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
   really_delete: Chcete opravdu smazat tyto přihlašovací údaje? (Stažená data budou zachována)
@@ -61,351 +68,378 @@ cs:
   mark_fixed_success: Přihlašovací údaje byly označeny jako opravené
   broken_reports_warning: Některé aktivní reporty Celus označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací.
   url_hint: "URL by neměla obsahovat část s '/report/' a cokoliv po ní. Např. 'https://x.y.z/sushi5/report/tr?customer_id=1' by mělo být zkráceno na 'https://x.y.z/sushi5/'"
+  url_hint_no_query: "URL nesmí obsahovat query parametry, tedy část '{search}'"
+  invalid_url: Prosím zadejte platné URL
+  duplicate: Název musí být unikátní
+  active_report_types: Aktivní typy reportů
+  error_saving: Přihlašovací údaje nebylo možné uložit. Zkontrolujte prosím zadané hodnoty.
 </i18n>
 
 <template>
-  <v-card>
-    <v-card-title class="headline">{{
-      $t("title.edit_sushi_credentials")
-    }}</v-card-title>
-    <v-card-text>
-      <v-alert v-if="credentials && credentials.broken" type="error" outlined>
-        <p class="bold">{{ $t("broken") }}</p>
-        <p>{{ $t("broken_unbreak_manually") }}</p>
-        <div>
-          <v-btn color="error" outlined @click="markFixed()">{{
-            $t("mark_fixed")
-          }}</v-btn>
-        </div>
-      </v-alert>
+  <v-form v-model="valid" ref="form">
+    <v-card>
+      <v-card-title class="headline">{{
+        $t("title.edit_sushi_credentials")
+      }}</v-card-title>
+      <v-card-text>
+        <v-alert v-if="credentials && credentials.broken" type="error" outlined>
+          <p class="bold">{{ $t("broken") }}</p>
+          <p>{{ $t("broken_unbreak_manually") }}</p>
+          <div>
+            <v-btn color="error" outlined @click="markFixed()">{{
+              $t("mark_fixed")
+            }}</v-btn>
+          </div>
+        </v-alert>
 
-      <v-container fluid>
-        <v-row>
-          <v-col cols="12" :md="4">
-            <v-tooltip bottom max-width="600px">
-              <template #activator="{ on }">
-                <v-text-field
-                  v-model="title"
-                  :label="$t('title_label')"
-                  v-on="on"
-                >
-                  <template v-slot:append v-if="titleHint">
-                    <v-tooltip bottom v-if="titleHint">
-                      <template #activator="{ on }">
-                        <v-icon v-on="on" small color="warning"
-                          >fa-exclamation-triangle</v-icon
-                        >
-                      </template>
-                      <div v-html="titleHint" style="max-width: 400px"></div>
-                    </v-tooltip>
-                  </template>
-                </v-text-field>
-              </template>
-              {{ $t("title_tooltip") }}
-            </v-tooltip>
-          </v-col>
-          <v-col cols="12" :md="4">
-            <v-text-field
-              v-if="credentials"
-              :value="organization.name"
-              :label="$t('organization')"
-              disabled
-            >
-            </v-text-field>
-            <v-select
-              v-else
-              v-model="organization"
-              :items="organizations"
-              item-text="name"
-              :label="$t('organization')"
-              return-object
-              :disabled="organizationSelected"
-            >
-            </v-select>
-          </v-col>
-          <v-col cols="12" :md="4">
-            <v-text-field
-              v-if="credentials || fixedPlatform"
-              :value="activePlatform.name"
-              :label="$t('platform')"
-              disabled
-            >
-            </v-text-field>
-            <v-autocomplete
-              v-else
-              v-model="platform"
-              :items="allowedPlatforms"
-              item-text="name"
-              :label="$t('platform')"
-              return-object
-              :loading="loadingPlatforms"
-            >
-            </v-autocomplete>
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12" :sm="6">
-            <v-text-field
-              v-model="requestorId"
-              :label="$t('labels.requestor_id')"
-            >
-            </v-text-field>
-          </v-col>
-          <v-col cols="12" :sm="6">
-            <v-text-field
-              v-model="customerId"
-              :label="$t('labels.customer_id')"
-            >
-            </v-text-field>
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="6" :sm="3">
-            <v-select
-              v-model="counterVersion"
-              :label="$t('labels.counter_version')"
-              :items="allowedCounterVersions"
-              :disabled="!!credentials"
-              :no-data-text="$t('all_versions_used')"
-            >
-            </v-select>
-          </v-col>
-          <v-col cols="12" :sm="9">
-            <v-text-field
-              v-model="url"
-              :label="$t('labels.url')"
-              :hint="this.urlHelpText"
-              :placeholder="this.urlPlaceholder"
-              persistent-hint
-              :error-messages="errors.url"
-            >
-            </v-text-field>
-          </v-col>
-        </v-row>
-
-        <v-row class="pb-3 mx-0">
-          <v-col class="pb-4 elevation-2 rounded" cols="12">
-            <v-tooltip bottom max-width="600px">
-              <template #activator="{ on }">
-                <h4
-                  v-on="on"
-                  class="font-weight-light pl-2"
-                  v-text="$t('optional_args')"
-                ></h4>
-              </template>
-              {{ $t("optional_args_tooltip") }}
-            </v-tooltip>
-
-            <v-container fluid class="pa-0 pl-md-8">
-              <v-row v-if="counterVersion === 4">
-                <v-col cols="auto" class="mt-6 py-0">
-                  <span class="font-weight-light">{{
-                    $t("labels.http_authentication")
-                  }}</span>
-                </v-col>
-                <v-col md="3" class="py-0">
+        <v-container fluid class="pb-0">
+          <v-row>
+            <v-col cols="12" :md="4">
+              <v-tooltip bottom max-width="600px">
+                <template #activator="{ on }">
                   <v-text-field
-                    v-model="httpUsername"
-                    :label="$t('labels.http_username')"
+                    v-model="title"
+                    :label="$t('title_label')"
+                    v-on="on"
+                    :rules="[ruleNoConflictingCredentials]"
                   >
-                  </v-text-field>
-                </v-col>
-                <v-col md="4" class="py-0">
-                  <v-text-field
-                    v-model="httpPassword"
-                    :label="$t('labels.http_password')"
-                  >
-                  </v-text-field>
-                </v-col>
-              </v-row>
-              <v-row v-if="counterVersion === 5">
-                <v-col class="py-0" cols="12" md="8">
-                  <v-text-field v-model="apiKey" :label="$t('labels.api_key')">
-                  </v-text-field>
-                </v-col>
-              </v-row>
-              <v-row v-for="(param, index) in extraParams" :key="index">
-                <v-col cols="12" sm="5" md="3" class="py-0">
-                  <v-text-field
-                    v-model="param.key"
-                    :label="$t('labels.variable')"
-                  >
-                  </v-text-field>
-                </v-col>
-                <v-col cols="12" sm="7" md="5" class="py-0">
-                  <v-text-field
-                    v-model="param.value"
-                    :label="$t('labels.variable_value')"
-                  >
-                  </v-text-field>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="12" class="py-0">
-                  <v-tooltip bottom>
-                    <template #activator="{ on }">
-                      <v-btn
-                        v-on="on"
-                        @click="extraParams.push({})"
-                        outlined
-                        text
-                        color="secondary"
-                      >
-                        <v-icon left x-small>fa-plus</v-icon>
-                        {{ $t("add_custom_param") }}
-                      </v-btn>
+                    <template v-slot:append v-if="titleHint">
+                      <v-tooltip bottom v-if="titleHint">
+                        <template #activator="{ on }">
+                          <v-icon v-on="on" small color="warning"
+                            >fa-exclamation-triangle</v-icon
+                          >
+                        </template>
+                        <div v-html="titleHint" style="max-width: 400px"></div>
+                      </v-tooltip>
                     </template>
-                    {{ $t("add_custom_param_tooltip") }}
-                  </v-tooltip>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-col>
-        </v-row>
-
-        <!--v-divider /-->
-        <v-row>
-          <v-col cols="12" class="pt-4 pb-0">
-            <h4>Active report types</h4>
-          </v-col>
-          <v-col cols="auto">
-            <v-btn-toggle multiple v-model="selectedReportTypes">
-              <v-btn
-                v-for="report in reportTypes"
-                bottom
-                :key="report.id"
-                :value="report.id"
-                outlined
-                :color="
-                  isBroken(report)
-                    ? '#4db685'
-                    : inKnowledgebase(report)
-                    ? 'success'
-                    : 'primary'
-                "
+                  </v-text-field>
+                </template>
+                {{ $t("title_tooltip") }}
+              </v-tooltip>
+            </v-col>
+            <v-col cols="12" :md="4">
+              <v-text-field
+                v-if="credentials"
+                :value="organization.name"
+                :label="$t('organization')"
+                disabled
               >
-                <SushiReportIndicator
-                  :report="report"
-                  :broken-fn="
-                    selectedReportTypes.indexOf(report.id) >= 0
-                      ? isBroken
-                      : false
-                  "
-                  :knowledgebase-fn="inKnowledgebase"
-                />
-              </v-btn>
-            </v-btn-toggle>
-          </v-col>
-          <v-col v-if="anyBrokenReports">
-            <v-alert type="warning" outlined>
-              {{ $t("broken_reports_warning") }}
-            </v-alert>
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-card-text>
-    <v-card-actions>
-      <v-container fluid mx-2>
-        <v-row no-gutters>
-          <v-col cols="auto">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <span v-on="on">
-                  <v-switch
-                    v-model="enabled"
-                    :label="$t('sushi.enabled')"
-                    class="pl-2 my-0"
-                  ></v-switch>
-                </span>
-              </template>
-              <span>{{ $t("sushi.enabled_tooltip") }}</span>
-            </v-tooltip>
-          </v-col>
-          <v-col cols="auto" class="ml-6" v-if="consortialInstall">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <span v-on="on">
-                  <v-switch
-                    v-model="outsideConsortium"
-                    :label="$t('outside')"
-                    class="pl-2 my-0"
-                    :disabled="!userIsManager"
-                  ></v-switch>
-                </span>
-              </template>
-              <span>
-                {{ $t("outside_tooltip") }}
-                {{ userIsManager ? "" : $t("only_managers_can_change") }}
-              </span>
-            </v-tooltip>
-          </v-col>
-          <v-spacer></v-spacer>
-          <v-col cols="auto">
-            <v-btn
-              v-if="credentials"
-              color="error"
-              @click="deleteObject()"
-              class="mr-8"
-            >
-              <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
-              {{ $t("delete") }}
-            </v-btn>
-            <v-btn color="secondary" @click="closeDialog()" class="mr-2">
-              <v-icon small class="mr-1">fa fa-times</v-icon>
-              {{ $t("close") }}
-            </v-btn>
-            <v-tooltip bottom max-width="600px">
-              <template #activator="{ on }">
-                <v-btn
-                  color="warning"
-                  @click="saveAndTest()"
-                  :disabled="!valid"
-                  class="mr-2"
-                  v-on="on"
-                >
-                  <v-icon small class="mr-1">fa fa-play</v-icon>
-                  {{ $t("save_and_test") }}
-                </v-btn>
-              </template>
-              <span v-html="$t('save_and_test_tooltip')"></span>
-            </v-tooltip>
-            <v-btn
-              color="primary"
-              @click="saveAndClose()"
-              :disabled="!valid"
-              class="mr-2"
-            >
-              <v-icon small class="mr-1">fa fa-save</v-icon>
-              {{ $t("save") }}
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-card-actions>
+              </v-text-field>
+              <v-select
+                v-else
+                v-model="organization"
+                :items="organizations"
+                item-text="name"
+                :label="$t('organization')"
+                return-object
+                :disabled="organizationSelected"
+                :rules="[ruleRequired]"
+              >
+              </v-select>
+            </v-col>
+            <v-col cols="12" :md="4">
+              <v-text-field
+                v-if="credentials || fixedPlatform"
+                :value="activePlatform.name"
+                :label="$t('platform')"
+                disabled
+              >
+              </v-text-field>
+              <v-autocomplete
+                v-else
+                v-model="platform"
+                :items="allowedPlatforms"
+                item-text="name"
+                :label="$t('platform')"
+                return-object
+                :loading="loadingPlatforms"
+                :rules="[ruleRequired]"
+              >
+              </v-autocomplete>
+            </v-col>
+          </v-row>
 
-    <v-dialog v-model="showTestDialog" max-width="800px">
-      <v-card>
-        <v-card-title>{{ $t("test_dialog") }}</v-card-title>
-        <v-card-text>
-          <SushiCredentialsTestWidget
-            v-if="showTestDialog"
-            :credentials="[credentials]"
-            ref="testWidget"
-            test
-          >
-          </SushiCredentialsTestWidget>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="secondary" @click="stopTestDialog()">{{
-            $t("close")
-          }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-card>
+          <v-row>
+            <v-col cols="12" :sm="6">
+              <v-text-field
+                v-model="requestorId"
+                :label="$t('labels.requestor_id')"
+              >
+              </v-text-field>
+            </v-col>
+            <v-col cols="12" :sm="6">
+              <v-text-field
+                v-model="customerId"
+                :label="$t('labels.customer_id')"
+                :rules="[ruleRequired]"
+              >
+              </v-text-field>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="6" sm="3" md="2">
+              <v-select
+                v-model="counterVersion"
+                :label="$t('labels.counter_version')"
+                :items="allowedCounterVersions"
+                :disabled="!!credentials"
+                :no-data-text="$t('all_versions_used')"
+              >
+              </v-select>
+            </v-col>
+            <v-col cols="12" sm="9" md="5">
+              <v-text-field
+                v-model="url"
+                :label="$t('labels.url')"
+                :placeholder="this.urlPlaceholder"
+                :rules="[
+                  ruleRequired,
+                  ruleUrlValid,
+                  ruleUrlC5NoReport,
+                  ruleUrlC5NoQueryParams,
+                ]"
+                validate-on-blur
+                :error-messages="errors.url"
+              >
+              </v-text-field>
+            </v-col>
+            <v-col cols="12" md="5">
+              <v-autocomplete
+                v-model="selectedReportTypes"
+                :items="reportTypes"
+                :label="$t('active_report_types')"
+                chips
+                small-chips
+                multiple
+                item-text="code"
+                item-value="id"
+                :rules="[ruleAtLeastOne]"
+              >
+                <template #item="{ item }">
+                  <v-list-item-content>
+                    <SushiReportIndicator
+                      :report="item"
+                      :broken-fn="isBroken"
+                      :knowledgebase-fn="inKnowledgebase"
+                      show-name
+                    />
+                  </v-list-item-content>
+                </template>
+                <template #selection="{ item, attrs, selected }">
+                  <v-chip
+                    v-bind="attrs"
+                    :input-value="selected"
+                    small
+                    label
+                    :color="isBroken(item) ? 'secondary' : 'primary'"
+                  >
+                    <SushiReportIndicator
+                      :report="item"
+                      :broken-fn="isBroken"
+                      :knowledgebase-fn="inKnowledgebase"
+                    />
+                  </v-chip>
+                </template>
+              </v-autocomplete>
+            </v-col>
+          </v-row>
+
+          <v-row class="pb-3 mx-0 pt-2">
+            <v-col class="pb-4 subdued-section" cols="12">
+              <v-tooltip bottom max-width="600px">
+                <template #activator="{ on }">
+                  <h4
+                    v-on="on"
+                    class="font-weight-light pl-2"
+                    v-text="$t('optional_args')"
+                  ></h4>
+                </template>
+                {{ $t("optional_args_tooltip") }}
+              </v-tooltip>
+
+              <v-container fluid class="pa-0 pl-md-8">
+                <v-row v-if="counterVersion === 4">
+                  <v-col cols="auto" class="mt-6 py-0">
+                    <span class="font-weight-light">{{
+                      $t("labels.http_authentication")
+                    }}</span>
+                  </v-col>
+                  <v-col md="3" class="py-0">
+                    <v-text-field
+                      v-model="httpUsername"
+                      :label="$t('labels.http_username')"
+                    >
+                    </v-text-field>
+                  </v-col>
+                  <v-col md="4" class="py-0">
+                    <v-text-field
+                      v-model="httpPassword"
+                      :label="$t('labels.http_password')"
+                    >
+                    </v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row v-if="counterVersion === 5">
+                  <v-col class="py-0" cols="12" md="8">
+                    <v-text-field
+                      v-model="apiKey"
+                      :label="$t('labels.api_key')"
+                    >
+                    </v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row v-for="(param, index) in extraParams" :key="index">
+                  <v-col cols="10" sm="4" md="3" class="py-0">
+                    <v-text-field
+                      v-model="param.key"
+                      :label="$t('labels.variable')"
+                      :rules="[ruleExtraNoDuplicateKey]"
+                    >
+                    </v-text-field>
+                  </v-col>
+                  <v-col cols="10" sm="6" md="5" class="py-0">
+                    <v-text-field
+                      v-model="param.value"
+                      :label="$t('labels.variable_value')"
+                      :rules="[ruleRequired]"
+                    >
+                    </v-text-field>
+                  </v-col>
+                  <v-col cols="auto">
+                    <v-btn @click="removeExtraParam(index)" icon color="error">
+                      <v-icon>fa-times</v-icon>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="12" class="py-0">
+                    <v-tooltip bottom>
+                      <template #activator="{ on }">
+                        <v-btn
+                          v-on="on"
+                          @click="addExtraParam()"
+                          outlined
+                          text
+                          color="secondary"
+                        >
+                          <v-icon left x-small>fa-plus</v-icon>
+                          {{ $t("add_custom_param") }}
+                        </v-btn>
+                      </template>
+                      {{ $t("add_custom_param_tooltip") }}
+                    </v-tooltip>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col v-if="anyBrokenReports">
+              <v-alert type="warning" outlined class="mb-0">
+                {{ $t("broken_reports_warning") }}
+              </v-alert>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-card-text>
+      <v-card-actions>
+        <v-container fluid mx-2>
+          <v-row no-gutters>
+            <v-col cols="auto">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                  <span v-on="on">
+                    <v-switch
+                      v-model="enabled"
+                      :label="$t('sushi.enabled')"
+                      class="pl-2 my-0"
+                    ></v-switch>
+                  </span>
+                </template>
+                <span>{{ $t("sushi.enabled_tooltip") }}</span>
+              </v-tooltip>
+            </v-col>
+            <v-col cols="auto" class="ml-6" v-if="consortialInstall">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                  <span v-on="on">
+                    <v-switch
+                      v-model="outsideConsortium"
+                      :label="$t('outside')"
+                      class="pl-2 my-0"
+                      :disabled="!userIsManager"
+                    ></v-switch>
+                  </span>
+                </template>
+                <span>
+                  {{ $t("outside_tooltip") }}
+                  {{ userIsManager ? "" : $t("only_managers_can_change") }}
+                </span>
+              </v-tooltip>
+            </v-col>
+            <v-spacer></v-spacer>
+            <v-col cols="auto">
+              <v-btn
+                v-if="credentials"
+                color="error"
+                @click="deleteObject()"
+                class="mr-8"
+              >
+                <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
+                {{ $t("delete") }}
+              </v-btn>
+              <v-btn color="secondary" @click="closeDialog()" class="mr-2">
+                <v-icon small class="mr-1">fa fa-times</v-icon>
+                {{ $t("close") }}
+              </v-btn>
+              <v-tooltip bottom max-width="600px">
+                <template #activator="{ on }">
+                  <v-btn
+                    color="warning"
+                    @click="saveAndTest()"
+                    class="mr-2"
+                    v-on="on"
+                  >
+                    <v-icon small class="mr-1">fa fa-play</v-icon>
+                    {{ $t("save_and_test") }}
+                  </v-btn>
+                </template>
+                <span v-html="$t('save_and_test_tooltip')"></span>
+              </v-tooltip>
+              <v-btn color="primary" @click="saveAndClose()" class="mr-2">
+                <v-icon small class="mr-1">fa fa-save</v-icon>
+                {{ $t("save") }}
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-card-actions>
+
+      <v-dialog v-model="showTestDialog" max-width="800px">
+        <v-card>
+          <v-card-title>{{ $t("test_dialog") }}</v-card-title>
+          <v-card-text>
+            <SushiCredentialsTestWidget
+              v-if="showTestDialog"
+              :credentials="[credentials]"
+              ref="testWidget"
+              test
+            >
+            </SushiCredentialsTestWidget>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="secondary" @click="stopTestDialog()">{{
+              $t("close")
+            }}</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-card>
+  </v-form>
 </template>
 
 <script>
@@ -413,6 +447,7 @@ import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
 import SushiCredentialsTestWidget from "./SushiCredentialsTestWidget";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
+import validate from "validate.js";
 
 export default {
   name: "SushiCredentialsEditDialog",
@@ -451,6 +486,7 @@ export default {
       outsideConsortium: true,
       title: "",
       loadingPlatforms: false,
+      valid: false,
     };
   },
   computed: {
@@ -527,23 +563,8 @@ export default {
       }
       return [];
     },
-    valid() {
-      if (this.conflictingCredentials) {
-        return false;
-      }
-      if (this.credentials) {
-        return (
-          this.selectedReportTypes.length > 0 && this.url && this.customerId
-        );
-      } else {
-        return (
-          this.selectedReportTypes.length > 0 &&
-          this.url &&
-          this.customerId &&
-          this.platform !== null &&
-          this.counterVersion
-        );
-      }
+    isValid() {
+      return this.valid;
     },
     allowedPlatforms() {
       return this.platforms;
@@ -597,29 +618,7 @@ export default {
       }
       return false;
     },
-    urlHelpText() {
-      // empty url check
-      if (!this.url) {
-        return "";
-      }
-
-      try {
-        let parsed = new URL(this.url);
-        if (
-          parsed.search ||
-          (this.counterVersion == "5" &&
-            /^.*\/report\/[0-9a-zA-Z]+\/{0,1}$/.test(this.url))
-        ) {
-          return this.$t("url_hint");
-        } else {
-          return "";
-        }
-      } catch (error) {
-        return "";
-      }
-    },
     urlPlaceholder() {
-      console.log(this.counterVersion);
       switch (this.counterVersion) {
         case 4:
           return "https://sushi.example.com/c4/";
@@ -686,6 +685,12 @@ export default {
       try {
         let result = await axios.get("/api/counter-report-type/");
         this.allReportTypes = result.data;
+        this.allReportTypes.forEach(
+          (item) =>
+            (item.long_name = item.name
+              ? `${item.code}: ${item.name}`
+              : item.code)
+        );
       } catch (error) {
         this.showSnackbar({ content: "Error loading report types: " + error });
       }
@@ -730,9 +735,7 @@ export default {
           try {
             let result = await axios.get(this.platformsBaseUrl);
             this.platforms = result.data;
-            if (!this.platform) {
-              this.platform = this.platforms[0];
-            } else {
+            if (this.platform) {
               const machingPlatforms = this.platforms.filter(
                 (item) => item.pk === this.platform.pk
               );
@@ -776,7 +779,7 @@ export default {
         return true;
       } catch (error) {
         this.showSnackbar({
-          content: "Error saving SUSHI credentials: " + error,
+          content: this.$t("error_saving"),
           color: "error",
         });
         if (error.response != null) {
@@ -835,18 +838,24 @@ export default {
       this.errors = errors;
     },
     async saveAndClose() {
-      let ok = await this.saveData();
-      if (ok) {
-        this.$emit("input", false);
+      this.$refs.form.validate();
+      if (this.isValid) {
+        let ok = await this.saveData();
+        if (ok) {
+          this.$emit("input", false);
+        }
       }
     },
     async saveAndTest() {
-      let ok = await this.saveData();
-      if (ok) {
-        if (this.$refs.testWidget) {
-          this.$refs.testWidget.clean();
+      this.$refs.form.validate();
+      if (this.isValid) {
+        let ok = await this.saveData();
+        if (ok) {
+          if (this.$refs.testWidget) {
+            this.$refs.testWidget.clean();
+          }
+          this.showTestDialog = true;
         }
-        this.showTestDialog = true;
       }
     },
     stopTestDialog() {
@@ -869,12 +878,15 @@ export default {
     inKnowledgebase(report) {
       return this.knowledgebaseReportTypes.includes(report.code);
     },
-    init() {
+    async init() {
       this.savedCredentials = null;
       this.credentialsPropToData();
       if (!this.credentials) {
-        this.loadOrganizations();
-        this.loadPlatforms();
+        await this.loadOrganizations();
+        await this.loadPlatforms();
+      }
+      if (this.$refs.form) {
+        this.$refs.form.resetValidation();
       }
     },
     guessUrlFromKnowledgebase() {
@@ -887,8 +899,58 @@ export default {
           this.url = providers[0].provider.url;
           return;
         }
+        this.url = "";
       }
-      this.url = "";
+    },
+    addExtraParam() {
+      this.extraParams.push({ key: "", value: "" });
+    },
+    removeExtraParam(index) {
+      this.extraParams.splice(index, 1);
+    },
+    ruleRequired(value) {
+      return !!value || this.$t("required");
+    },
+    ruleAtLeastOne(value) {
+      return value.length > 0 || this.$t("required");
+    },
+    ruleExtraNoDuplicateKey(value) {
+      return (
+        this.extraParams.filter((item) => item.key.trim() === value.trim())
+          .length <= 1 || this.$t("duplicate")
+      );
+    },
+    ruleNoConflictingCredentials() {
+      if (this.conflictingCredentials) {
+        return this.$t("title_in_conflict_hint");
+      }
+      return true;
+    },
+    ruleUrlC5NoReport() {
+      if (this.counterVersion == "5" && /\/report/.test(this.url))
+        return this.$t("url_hint");
+      return true;
+    },
+    ruleUrlC5NoQueryParams() {
+      try {
+        let parsed = new URL(this.url);
+        if (parsed.search) {
+          return this.$t("url_hint_no_query", { search: parsed.search });
+        }
+      } catch (error) {
+        return true;
+      }
+      return true;
+    },
+    ruleUrlValid() {
+      const result = validate(
+        { website: this.url },
+        { website: { url: true } }
+      );
+      if (result && result.website) {
+        return this.$t("invalid_url");
+      }
+      return true;
     },
   },
 
@@ -915,12 +977,22 @@ export default {
       }
     },
     counterVersion() {
+      this.selectedReportTypes = [];
       if (!this.credentials) {
         this.guessUrlFromKnowledgebase();
       }
+    },
+    url() {
+      delete this.errors.url;
     },
   },
 };
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+.subdued-section {
+  //border: solid 1px #eeeeee;
+  border-radius: 5px;
+  background-color: #f5f5f5;
+}
+</style>

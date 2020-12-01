@@ -4,7 +4,10 @@
   <v-tooltip bottom max-width="400">
     <template v-slot:activator="{ on }">
       <span v-on="on">
-        {{ report.code }}
+        <span>{{ report.code }}</span>
+        <span v-if="showName && report.name" class="font-weight-light"
+          >: {{ report.name }}</span
+        >
         <v-icon v-if="isBroken" x-small color="error" class="pl-1"
           >fa-exclamation</v-icon
         >
@@ -47,6 +50,10 @@ export default {
       // the report type is in the knowledgebase
       required: false,
       default: null,
+    },
+    showName: {
+      default: false,
+      type: Boolean,
     },
   },
 

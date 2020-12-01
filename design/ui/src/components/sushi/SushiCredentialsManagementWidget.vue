@@ -288,7 +288,7 @@ export default {
   props: {
     dialogMaxWidth: {
       required: false,
-      default: "1000px",
+      default: "1200px",
     },
     organizationId: {
       default: -1,
@@ -402,26 +402,7 @@ export default {
             this.counterVersion === null ||
             this.counterVersion === item.counter_version
         )
-        .filter((item) => {
-          if (!this.search) {
-            return true;
-          } else {
-            if (
-              item.organization.name
-                .toLowerCase()
-                .indexOf(this.search.toLowerCase()) > -1
-            ) {
-              return true;
-            } else if (
-              item.platform.name
-                .toLowerCase()
-                .indexOf(this.search.toLowerCase()) > -1
-            ) {
-              return true;
-            }
-          }
-          return false;
-        });
+        .filter(this.createSearchFilter());
     },
     checkedCredentials() {
       let visibleIds = new Set(
@@ -539,6 +520,28 @@ export default {
       this.showTestDialog = false;
       this.loadSushiCredentialsList();
       this.loadSushiCredentialsCount();
+    },
+    createSearchFilter() {
+      const words = this.search.toLowerCase().split(/ /);
+      function filter(item) {
+        for (let word of words) {
+          let match = false;
+          if (item.title.toLowerCase().indexOf(word) >= 0) match = true;
+          if (item.organization.short_name.toLowerCase().indexOf(word) >= 0)
+            match = true;
+          if (item.organization.name.toLowerCase().indexOf(word) >= 0)
+            match = true;
+          if (item.platform.name.toLowerCase().indexOf(word) >= 0) match = true;
+          if (item.platform.short_name.toLowerCase().indexOf(word) >= 0)
+            match = true;
+          if (!match) {
+            // no match for this word
+            return false;
+          }
+        }
+        return true;
+      }
+      return filter;
     },
   },
 
