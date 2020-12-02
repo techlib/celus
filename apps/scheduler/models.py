@@ -481,7 +481,7 @@ class FetchIntention(models.Model):
             ).update(duplicate_of=self)
 
             # Plan data synchronization
-            # transaction.on_commit(lambda: import_one_sushi_attempt_task.delay(attempt.pk))
+            transaction.on_commit(lambda: import_one_sushi_attempt_task.delay(attempt.pk))
 
         return ProcessResponse.SUCCESS
 
