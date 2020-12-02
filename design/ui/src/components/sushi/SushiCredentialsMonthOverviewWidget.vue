@@ -10,6 +10,7 @@ en:
   enabled: Automatically harvested
   not_enabled: Not automatically harvested
   all_platforms: All platforms
+  stats_tip: "Tip: you can click the stats icons to filter shown rows"
 
 cs:
   hide_successful: Skrýt úspěšné řádky
@@ -20,6 +21,7 @@ cs:
   enabled: Automaticky stahováno
   not_enabled: Není automaticky stahováno
   all_platforms: Všechny platformy
+  stats_tip: "Tip: kliknutím na ikony můžete filtrovat zobrazené řádky"
 </i18n>
 
 <template>
@@ -110,8 +112,12 @@ cs:
               <span v-if="stateStats.length">
                 <span
                   v-for="[state, count] in stateStats"
-                  class="mr-3"
+                  class="mr-3 clickable"
                   :key="state"
+                  @click="switchStateFilter(state)"
+                  :class="
+                    stateFilter !== null && stateFilter !== state ? 'alpha' : ''
+                  "
                 >
                   <SushiAttemptStateIcon :force-state="state" />
                   {{ count }}
@@ -119,6 +125,10 @@ cs:
               </span>
               <span v-else v-text="$t('no_data_yet')"></span>
             </div>
+          </v-col>
+          <v-col class="hidden-md-and-down mt-2 font-weight-light">
+            <v-icon small>fa fa-angle-double-left</v-icon>
+            {{ $t("stats_tip") }}
           </v-col>
         </v-row>
 
@@ -146,7 +156,13 @@ cs:
                     showAttempt(item[rt.code])) ||
                     null
                 "
-                :class="{ clickable: item[rt.code] && item[rt.code].pk }"
+                :class="{
+                  clickable: item[rt.code] && item[rt.code].pk,
+                  alpha:
+                    stateFilter &&
+                    item[rt.code] &&
+                    stateFilter !== item[rt.code].state,
+                }"
               >
                 <SushiAttemptStateIcon
                   :attempt="item[rt.code]"
@@ -251,6 +267,7 @@ export default {
       hideSuccessful: false,
       selectedPlatform: null,
       showInactive: false,
+      stateFilter: null,
     };
   },
   computed: {
@@ -337,7 +354,7 @@ export default {
     },
     activeAttempts() {
       let attempts = [];
-      for (let cred of this.sushiCredentialsWithAttempts) {
+      for (let cred of this.sushiCredentialsWithAttemptsAfterFilter) {
         for (let rt of cred.counter_reports_long) {
           if (cred.hasOwnProperty(rt.code)) {
             attempts.push(cred[rt.code]);
@@ -359,7 +376,7 @@ export default {
         return item;
       });
     },
-    sushiCredentialsWithAttempts() {
+    sushiCredentialsWithAttemptsAfterFilter() {
       let list = this.allSushiCredentialsWithAttempts
         .filter((item) => this.showInactive || item.enabled)
         .filter(
@@ -378,6 +395,18 @@ export default {
             item.counter_reports_long.filter(
               (rt) => item[rt.code] && item[rt.code].state === ATTEMPT_SUCCESS
             ).length !== item.counter_reports_long.length
+        );
+      }
+      return list;
+    },
+    sushiCredentialsWithAttempts() {
+      let list = this.sushiCredentialsWithAttemptsAfterFilter;
+      if (this.stateFilter) {
+        list = list.filter(
+          (item) =>
+            item.counter_reports_long.filter(
+              (rt) => item[rt.code] && item[rt.code].state === this.stateFilter
+            ).length > 0
         );
       }
       return list;
@@ -498,6 +527,13 @@ export default {
         `${attempt.credentials_id}-${attempt.counter_report_id}`
       );
     },
+    switchStateFilter(state) {
+      if (this.stateFilter === state) {
+        this.stateFilter = null;
+      } else {
+        this.stateFilter = state;
+      }
+    },
   },
 
   watch: {
@@ -536,5 +572,8 @@ div.stats {
 
 .clickable {
   cursor: pointer;
+}
+.alpha {
+  opacity: 0.3;
 }
 </style>

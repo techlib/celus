@@ -103,12 +103,15 @@ cs:
               </v-row>
             </v-container>
           </template>
+
           <template #item.status="{ item }">
             <FetchIntentionStatusIcon :fetch-intention="item" />
           </template>
+
           <template #item.isFinished="{ item }">
             <CheckMark :value="item.isFinished" />
           </template>
+
           <template #expanded-item="{ headers, item }">
             <td></td>
             <td :colspan="headers.length - 1" class="py-2">
@@ -391,12 +394,6 @@ export default {
       } else {
         this.stateFilter = state;
       }
-    },
-    tweakColor(color, state) {
-      if (this.stateFilter !== null && this.stateFilter !== state) {
-        return `${color} lighten-4`;
-      }
-      return color;
     },
   },
 
