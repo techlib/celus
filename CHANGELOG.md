@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0]
+
+### Added
+
+#### Frontend
+
+- more transparent form validation was added to the SUSHI edit dialog
+- new view for individual harvest progress was added and used for SUSHI testing dialog and harvest
+  detail view
+- SUSHI server URL is filled in automatically when data is available from knowledge-base
+- highlight supported report types when corresponding data is available from knowledge-base
+- icons in statistics row on monthly overview page are clickable and allow filtering of table rows
+
+
+### Changes
+
+#### Frontend
+
+- the SUSHI edit dialog was overhauled for clarity and simplicity
+
+#### Backend
+
+- detection of currently running harvests was optimized for speed (by using explicit attributes
+  rather then transaction state)
+- Celery was updated to new major version 5.0 (5.0.2)
+
+
+### Fixed
+
+#### Frontend
+
+- it is now possible to add annotations from platform list and platform detail pages even when
+  no existing annotations are present
+
+
 
 ## [2.7.2]
 
