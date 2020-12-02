@@ -295,7 +295,7 @@ cs:
                     <v-text-field
                       v-model="param.key"
                       :label="$t('labels.variable')"
-                      :rules="[ruleExtraNoDuplicateKey]"
+                      :rules="[ruleRequired, ruleExtraNoDuplicateKey]"
                     >
                     </v-text-field>
                   </v-col>
