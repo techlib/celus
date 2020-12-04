@@ -282,7 +282,7 @@ export default {
         }
       });
       if (timeouts.length > 0) {
-        return timeouts.sort()[timeouts.length - 1];
+        return timeouts.sort()[0];
       }
       return null;
     },
