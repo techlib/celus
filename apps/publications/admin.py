@@ -13,18 +13,30 @@ def create_default_interests(modeladmin, request, queryset):
         platform.create_default_interests()
 
 
+def flush_knowledgebase(modeladmin, request, queryset):
+    queryset.update(knowledgebase=None)
+
+
 create_default_interests.short_description = "Create default interest for selected platforms"
 
 
 @admin.register(models.Platform)
 class PlatformAdmin(TranslationAdmin):
 
-    list_display = ['short_name', 'name', 'provider', 'url']
+    list_display = ['short_name', 'name', 'provider', 'url', 'has_knowledgebase', 'source']
+    list_select_related = ['source']
+    list_filter = [('knowledgebase', admin.EmptyFieldListFilter), 'source']
     ordering = ['short_name']
     search_fields = ['short_name', 'name', 'provider']
     readonly_fields = ['pretty_knowledgebase']
     exclude = ['knowledgebase']
-    actions = (create_default_interests,)
+    actions = (create_default_interests, flush_knowledgebase)
+
+    def has_knowledgebase(self, obj):
+        return bool(obj.knowledgebase)
+
+    has_knowledgebase.boolean = True
+    has_knowledgebase.admin_order_field = 'knowledgebase'
 
     def pretty_knowledgebase(self, obj):
         return format_html(
