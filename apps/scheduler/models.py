@@ -290,15 +290,7 @@ class FetchIntentionQuerySet(models.QuerySet):
 
         res = qs.aggregate(
             total=Coalesce(models.Count('unique_field', distinct=True), 0),
-            unprocessed=Coalesce(
-                models.Count(
-                    'unique_field',
-                    distinct=True,
-                    filter=models.Q(when_processed__isnull=True)
-                    & models.Q(duplicate_of__isnull=True),
-                ),
-                0,
-            ),
+            unprocessed=self.unprocessed_count_query(),
         )
         res['finished'] = res['total'] - res['unprocessed']
 
@@ -337,6 +329,21 @@ class FetchIntentionQuerySet(models.QuerySet):
                 )
             )
             .filter(pk=models.F('max_pk'))
+        )
+
+    @classmethod
+    def unprocessed_count_query(cls):
+        return Coalesce(
+            models.Count(
+                'unique_field',
+                distinct=True,
+                filter=models.Q(when_processed__isnull=True) & models.Q(duplicate_of__isnull=True)
+                | (
+                    models.Q(attempt__import_batch__isnull=True)  # no import batch +
+                    & models.Q(attempt__contains_data=True)  # data => not imported yet
+                ),
+            ),
+            0,
         )
 
 
@@ -647,14 +654,7 @@ class HarvestQuerySet(models.QuerySet):
                     FetchIntention.objects.filter(harvest=models.OuterRef('pk'))
                     .annotate_unique()
                     .values('harvest')
-                    .annotate(
-                        count=models.Count(
-                            'unique_field',
-                            distinct=True,
-                            filter=models.Q(when_processed__isnull=True)
-                            & models.Q(duplicate_of__isnull=True),
-                        )
-                    )
+                    .annotate(count=FetchIntentionQuerySet.unprocessed_count_query())
                     .values('count')
                 ),
                 0,
