@@ -66,7 +66,7 @@ jupyter-client==6.1.6
 jupyter-console==6.1.0
 jupyter-core==4.6.3
 kombu==4.6.11
-lxml==4.5.2
+lxml==4.6.2
 lz4==3.0.2
 markupsafe==1.1.1
 mistune==0.8.4

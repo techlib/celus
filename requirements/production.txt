@@ -29,7 +29,7 @@ importlib-metadata==1.7.0; python_version < "3.8"
 isbnlib==3.10.3
 jdcal==1.4.1
 kombu==4.6.11
-lxml==4.5.2
+lxml==4.6.2
 lz4==3.0.2
 numpy==1.19.0
 oauthlib==3.1.0
