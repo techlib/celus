@@ -175,6 +175,11 @@ export default new Vuex.Store({
       }
       return false;
     },
+    allowUserCreatePlatforms(state) {
+      if ("ALLOW_USER_CREATED_PLATFORMS" in state.basicInfo) {
+          return state.basicInfo["ALLOW_USER_CREATED_PLATFORMS"];
+      }
+    },
     consortialInstall(state) {
       if ("CONSORTIAL_INSTALLATION" in state.basicInfo) {
         return state.basicInfo["CONSORTIAL_INSTALLATION"];

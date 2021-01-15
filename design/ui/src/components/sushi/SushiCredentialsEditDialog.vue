@@ -154,6 +154,14 @@ cs:
                 :loading="loadingPlatforms"
                 :rules="[ruleRequired]"
               >
+                <template v-slot:prepend-item>
+                  <AddPlatformButton
+                    v-if="allowUserCreatePlatforms && (!credentials || !credentials.pk)"
+                    @update-platforms="preselectCreatedPlatform"
+                    :text="true"
+                  />
+                </template>
+
               </v-autocomplete>
             </v-col>
           </v-row>
@@ -444,6 +452,7 @@ cs:
 import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
 import SushiCredentialsTestWidget from "./SushiCredentialsTestWidget";
+import AddPlatformButton from "@/components/AddPlatformButton";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import validate from "validate.js";
 
@@ -452,6 +461,7 @@ export default {
   components: {
     SushiReportIndicator,
     SushiCredentialsTestWidget,
+    AddPlatformButton,
   },
   props: {
     credentialsObject: {},
@@ -493,6 +503,7 @@ export default {
       organizationSelected: "organizationSelected",
       userIsManager: "showManagementStuff",
       consortialInstall: "consortialInstall",
+      allowUserCreatePlatforms: "allowUserCreatePlatforms",
     }),
     credentials() {
       if (this.credentialsObject) {
@@ -752,6 +763,10 @@ export default {
           }
         }
       }
+    },
+    async preselectCreatedPlatform(platform) {
+      await this.loadPlatforms();
+      this.platform = platform;
     },
     closeDialog() {
       this.$emit("input", false);

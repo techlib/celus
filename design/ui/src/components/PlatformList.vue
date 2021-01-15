@@ -9,6 +9,7 @@ en:
     title_count: Title / database count
     sushi_available: SUSHI active
     notes: " "
+    actions: Actions
   sushi_present: SUSHI is available and active for this platform
   no_sushi: SUSHI is not activated for this platform and selected organization
   sushi_for_version: "SUSHI for COUNTER version {version} is available"
@@ -25,6 +26,7 @@ cs:
     title_count: Počet titulů a databází
     sushi_available: Aktivní SUSHI
     notes: " "
+    actions: Akce
   sushi_present: SUSHI je pro tuto platformu aktivní
   no_sushi: SUSHI není pro tuto platformu a vybranou organizaci aktivní
   sushi_for_version: "SUSHI pro verzi {version} COUNTERu je k dispozici"
@@ -75,6 +77,21 @@ cs:
             <span v-else>
               {{ formatInteger(item.title_count) }}
             </span>
+          </template>
+          <template v-slot:item.actions="{ item }">
+            <v-btn
+              v-if="item.source && item.source.organization"
+              text
+              small
+              color="secondary"
+              @click.stop="
+                selectedPlatform = item;
+                showEditDialog = true;
+              "
+            >
+              <v-icon left x-small>fa-edit</v-icon>
+              {{ $t("actions.edit") }}
+            </v-btn>
           </template>
           <template
             v-for="ig in activeInterestGroups"
@@ -130,27 +147,48 @@ cs:
         </v-data-table>
       </v-col>
     </v-row>
+    <v-dialog v-model="showEditDialog" :max-width="dialogMaxWidth">
+      <PlatformEditDialog
+        ref="widget"
+        :platform-id="selectedPlatform && selectedPlatform.pk"
+        v-if="showEditDialog"
+        @close="closeEditDialog()"
+        @saved="editDialogSaved"
+        key="edit"
+      ></PlatformEditDialog>
+    </v-dialog>
   </v-container>
 </template>
 <script>
 import { mapGetters } from "vuex";
 import { formatInteger } from "../libs/numbers";
+import PlatformEditDialog from "@/components/PlatformEditDialog";
 
 export default {
   name: "PlatformList",
+  components: {
+      PlatformEditDialog,
+  },
   props: {
+    dialogMaxWidth: {
+      required: false,
+      default: "1200px",
+    },
     loading: {},
     platforms: {},
   },
   data() {
     return {
       search: "",
+      showEditDialog: false,
+      selectedPlatform: null,
     };
   },
   computed: {
     ...mapGetters({
       formatNumber: "formatNumber",
       activeInterestGroups: "selectedGroupObjects",
+      allowUserCreatePlatforms: "allowUserCreatePlatforms",
     }),
     headers() {
       let base = [
@@ -187,10 +225,32 @@ export default {
         value: "sushi_credentials_versions",
         sortable: false,
       });
+      if (this.allowUserCreatePlatforms) {
+        base.push({
+          text: this.$i18n.t("columns.actions"),
+          value: "actions",
+          sortable: false,
+        });
+      }
       return base;
     },
   },
+  watch: {
+    showEditDialog(value) {
+      if (!value) {
+        this.selectedPlatform = null;
+      }
+    },
+  },
   methods: {
+    editDialogSaved(platform) {
+      console.log(platform);
+      this.showEditDialog = false;
+      this.$emit("update-platforms", platform);
+    },
+    closeEditDialog() {
+      this.showEditDialog = false;
+    },
     formatInteger: formatInteger,
     slotName(ig) {
       return "item.interests." + ig.short_name;

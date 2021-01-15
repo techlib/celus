@@ -425,7 +425,7 @@ ALLOW_MANUAL_UPLOAD = config('ALLOW_MANUAL_UPLOAD', cast=bool, default=True)
 ALLOW_USER_REGISTRATION = config('ALLOW_USER_REGISTRATION', cast=bool, default=False)
 
 # Allow user to create platforms
-ALLOW_USER_CREATED_PLATFORMS = config('ALLOW_USER_REGISTRATION', cast=bool, default=False)
+ALLOW_USER_CREATED_PLATFORMS = config('ALLOW_USER_CREATED_PLATFORMS', cast=bool, default=False)
 
 # social authentication providers
 SOCIAL_ACCOUNTS_SUPPORTED = config('SOCIAL_ACCOUNTS_SUPPORTED', cast=Csv(), default='')

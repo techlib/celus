@@ -2,9 +2,8 @@ from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
-from django.conf import settings
 
-from core.models import Identity
+from core.models import DataSource, Identity
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import (
@@ -17,7 +16,6 @@ from logs.models import (
 )
 from logs.tests.conftest import report_type_nd
 from organizations.models import UserOrganization
-from organizations.tests.conftest import organizations
 from core.tests.conftest import (
     valid_identity,
     authenticated_client,
@@ -69,8 +67,8 @@ class TestPlatformAPI:
         self, authenticated_client, organizations, platforms, valid_identity
     ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(user=identity.user, organization=organizations["root"])
-        resp = authenticated_client.get(reverse('platform-list', args=[organizations["root"].pk]))
+        UserOrganization.objects.create(user=identity.user, organization=organizations["empty"])
+        resp = authenticated_client.get(reverse('platform-list', args=[organizations["empty"].pk]))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -169,6 +167,8 @@ class TestPlatformAPI:
     def test_create_platform_for_organization_with_no_data_source(
         self, basic1, clients, organizations, client,
     ):
+        assert organizations["master"].source is None
+
         resp = clients["su"].post(
             reverse('platform-list', args=[organizations["master"].pk],),
             {
@@ -178,13 +178,122 @@ class TestPlatformAPI:
                 "provider": "provider",
             },
         )
-        assert resp.status_code == 404
+        assert resp.status_code == 201
 
-    def test_create_platform_when_disabled(self, clients, organizations):
+        organizations["master"].refresh_from_db()
+        assert organizations["master"].source.organization == organizations["master"]
+        assert organizations["master"].source.type == DataSource.TYPE_ORGANIZATION
+
+    def test_create_platform_when_disabled(
+        self, basic1, clients, organizations, client, settings,
+    ):
         settings.ALLOW_USER_CREATED_PLATFORMS = False
 
         resp = clients["su"].post(
             reverse('platform-list', args=[organizations["standalone"].pk],),
+            {
+                'short_name': 'platform',
+                'name': "long_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+            },
+        )
+        assert resp.status_code == 403
+
+    def test_list_platforms_for_all_organization(
+        self, basic1, clients, organizations, client,
+    ):
+        resp = clients["master"].get(reverse('platform-list', args=[-1],))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 7
+        mapped = {e["short_name"]: e for e in data}
+        assert mapped["brain"]["source"]["organization"] is None
+        assert mapped["branch"]["source"]["organization"]["name"] == "branch"
+        assert mapped["empty"]["source"] is None
+        assert mapped["master"]["source"]["organization"] is None
+        assert mapped["root"]["source"]["organization"]["name"] == "root"
+        assert mapped["shared"]["source"] is None
+        assert mapped["standalone"]["source"]["organization"]["name"] == "standalone"
+
+        resp = clients["master"].get(reverse('platform-list', args=[-1],) + "?used_only")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 3
+        # only those platforms with organization source
+        mapped = {e["short_name"]: e for e in data}
+        assert mapped["branch"]["source"]["organization"]["name"] == "branch"
+        assert mapped["root"]["source"]["organization"]["name"] == "root"
+        assert mapped["standalone"]["source"]["organization"]["name"] == "standalone"
+
+    @pytest.mark.parametrize(
+        "client,organization,platform,code",
+        (
+            ("su", "standalone", "standalone", 200),  # superuser
+            ("master", "standalone", "standalone", 200),  # master
+            ("admin2", "standalone", "standalone", 200),  # this admin
+            ("admin1", "standalone", "standalone", 403),  # other admin
+            ("user2", "standalone", "standalone", 403),  # other user
+        ),
+    )
+    def test_update_platform_for_organization(
+        self,
+        basic1,
+        clients,
+        organizations,
+        client,
+        organization,
+        code,
+        data_sources,
+        report_types,
+        platform,
+        platforms,
+    ):
+        resp = clients[client].patch(
+            reverse(
+                'platform-detail', args=[organizations[organization].pk, platforms[platform].pk],
+            ),
+            {
+                'ext_id': 122,  # ext_id may not be present and will be overriden to None
+                'short_name': 'platform',
+                'name': "long_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+            },
+        )
+        assert resp.status_code == code
+        if resp.status_code // 100 == 2:
+            platform = Platform.objects.get(short_name="platform")
+            assert platform.source == data_sources["standalone"]
+            assert platform.ext_id is None
+            assert platform.name == 'long_platform'
+            assert platform.provider == 'provider'
+            assert platform.url == 'https://example.com'
+
+    def test_update_platform_for_organization_with_no_data_source(
+        self, basic1, clients, organizations, client, platforms
+    ):
+        resp = clients["su"].patch(
+            reverse('platform-detail', args=[organizations["master"].pk, platforms["master"].pk],),
+            {
+                'short_name': 'platform',
+                'name': "long_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+            },
+        )
+        assert resp.status_code == 403
+
+    def test_update_platform_when_disabled(
+        self, basic1, clients, organizations, client, platforms, settings
+    ):
+        settings.ALLOW_USER_CREATED_PLATFORMS = False
+
+        resp = clients["su"].patch(
+            reverse(
+                'platform-detail',
+                args=[organizations["standalone"].pk, platforms["standalone"].pk],
+            ),
             {
                 'short_name': 'platform',
                 'name': "long_platform",

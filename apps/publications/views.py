@@ -10,7 +10,7 @@ from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.generics import get_object_or_404
-from rest_framework.mixins import CreateModelMixin
+from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -103,41 +103,60 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         return Response(PlatformKnowledgebaseSerializer(platform).data)
 
 
-class PlatformViewSet(CreateModelMixin, ReadOnlyModelViewSet):
+class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 
     serializer_class = PlatformSerializer
 
     def get_permissions(self):
         permission_classes = list(self.permission_classes)
 
-        if self.action == 'create':
-            organization_id = self.kwargs['organization_pk']
-
+        def generate_permission(organization_id: int):
             # Create admin permission for given organization
-
-            class PlatformCreatePermission(IsAuthenticated):
+            class Permission(IsAuthenticated):
                 def has_permission(self, request, *args, **kwargs):
                     if not settings.ALLOW_USER_CREATED_PLATFORMS:
                         return False
                     return request.user.has_organization_admin_permission(int(organization_id))
 
-            permission_classes = [e & PlatformCreatePermission for e in permission_classes]
+            return Permission
+
+        if self.action == 'create':
+            organization_id = self.kwargs['organization_pk']
+            Permission = generate_permission(organization_id)
+            permission_classes = [e & Permission for e in permission_classes]
+        elif self.action in ['update', 'partial_update']:
+            obj = get_object_or_404(Platform, pk=self.kwargs['pk'])
+            if obj.source and obj.source.organization:
+                Permission = generate_permission(obj.source.organization.pk)
+                permission_classes = [e & Permission for e in permission_classes]
+            else:
+                # dissallow updating platform without organization
+                class Permission:
+                    def has_permission(self, *args, **kwargs):
+                        return False
+
+                permission_classes = [Permission]
 
         return [permission() for permission in permission_classes]
 
+    @transaction.atomic
     def perform_create(self, serializer):
-        # get the source of the organization
-        organization_id = self.kwargs['organization_pk']
-        try:
-            source = DataSource.objects.get(
-                organization_id=organization_id, type=DataSource.TYPE_ORGANIZATION
+        organization = get_object_or_404(Organization, pk=self.kwargs['organization_pk'])
+        if organization.source is None:
+            # get the soruce of the organization
+            source, _ = DataSource.objects.get_or_create(
+                organization_id=self.kwargs['organization_pk'], type=DataSource.TYPE_ORGANIZATION
             )
-        except DataSource.DoesNotExist:
-            raise NotFound({"msg": f"no data source found for organization {organization_id}"})
+            organization.source = source
+            organization.save()
 
-        with transaction.atomic():
-            platform = serializer.save(ext_id=None, source=source)
-            platform.create_default_interests()
+        platform = serializer.save(ext_id=None, source=source)
+        platform.create_default_interests()
+
+    def perform_update(self, serializer):
+        serializer.save(
+            ext_id=None, source=self.get_object().source
+        )  # source can be selected only on create
 
     def get_queryset(self):
         """
@@ -148,12 +167,16 @@ class PlatformViewSet(CreateModelMixin, ReadOnlyModelViewSet):
         )
         if org_filter:
             return Platform.objects.filter(
-                Q(**org_filter) | Q(**extend_query_filter(org_filter, 'sushicredentials__'))
+                Q(**org_filter)
+                | Q(**extend_query_filter(org_filter, 'sushicredentials__'))
+                | Q(**extend_query_filter(org_filter, 'source__'))
             ).distinct()
         # only those that have an organization connected
         if 'used_only' in self.request.query_params:
             return Platform.objects.filter(
-                Q(organization__isnull=False) | Q(sushicredentials__isnull=False)
+                Q(organization__isnull=False)
+                | Q(sushicredentials__isnull=False)
+                | Q(source__organization__isnull=False)
             ).distinct()
         return Platform.objects.all()
 

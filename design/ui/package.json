@@ -28,6 +28,7 @@
     "regenerator-runtime": "^0.13.7",
     "sass": "^1.32.4",
     "sass-loader": "^9.0.3",
+    "string-similarity": "^4.0.4",
     "v-charts": "^1.19.0",
     "validate.js": "^0.13.1",
     "vue": "^2.6.12",

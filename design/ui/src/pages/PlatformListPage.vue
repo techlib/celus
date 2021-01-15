@@ -10,6 +10,9 @@
       <v-col v-if="showAdminStuff" cols="auto" class="d-none d-sm-block py-0">
         <v-container fluid class="py-0">
           <v-row>
+            <v-col v-if="allowUserCreatePlatforms" cols="auto" class="pa-1 pr-0">
+              <AddPlatformButton @update-platforms="loadPlatforms()" />
+            </v-col>
             <v-col
               cols="auto"
               class="pa-1"
@@ -66,7 +69,11 @@
             </div>
             <div v-else>
               <InterestGroupSelector />
-              <PlatformList :loading="loading" :platforms="platforms" />
+              <PlatformList
+                :loading="loading"
+                :platforms="platforms"
+                @update-platforms="loadPlatforms()"
+              />
             </div>
           </v-card-text>
         </v-card>
@@ -85,6 +92,7 @@ import {
 } from "@/libs/interest";
 import AnnotationsWidget from "@/components/AnnotationsWidget";
 import AddAnnotationButton from "@/components/AddAnnotationButton";
+import AddPlatformButton from "@/components/AddPlatformButton";
 import InterestGroupSelector from "@/components/InterestGroupSelector";
 import PlatformInterestChart from "@/components/PlatformInterestChart";
 import PlatformCostList from "@/components/PlatformCostList";
@@ -99,6 +107,7 @@ export default {
     ManualUploadButton,
     AnnotationsWidget,
     AddAnnotationButton,
+    AddPlatformButton,
     InterestGroupSelector,
     PlatformInterestChart,
   },
@@ -124,6 +133,7 @@ export default {
       organizationSelected: "organizationSelected",
       activeInterestGroups: "selectedGroupObjects",
       allowManualDataUpload: "allowManualDataUpload",
+      allowUserCreatePlatforms: "allowUserCreatePlatforms",
     }),
     platformsURL() {
       return `/api/organization/${this.selectedOrganizationId}/platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&used_only`;

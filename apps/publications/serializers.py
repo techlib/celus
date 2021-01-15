@@ -7,6 +7,9 @@ from rest_framework.fields import (
 )
 from rest_framework.serializers import ModelSerializer, IntegerField
 
+from core.models import DataSource
+from organizations.serializers import OrganizationSerializer
+
 from .models import Platform, Title
 
 
@@ -16,10 +19,30 @@ class SimplePlatformSerializer(ModelSerializer):
         fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url')
 
 
+class DataSourceSerializer(ModelSerializer):
+    organization = OrganizationSerializer()
+
+    class Meta:
+        model = DataSource
+        fields = ('short_name', 'organization', 'type')
+
+
 class PlatformSerializer(ModelSerializer):
+    ext_id = IntegerField(read_only=True)
+    source = DataSourceSerializer(read_only=True)
+
     class Meta:
         model = Platform
-        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url', 'knowledgebase')
+        fields = (
+            'pk',
+            'ext_id',
+            'short_name',
+            'name',
+            'provider',
+            'url',
+            'knowledgebase',
+            'source',
+        )
 
 
 class DetailedPlatformSerializer(ModelSerializer):
