@@ -359,6 +359,7 @@ LOGGING = {
         'pycounter': {'level': 'INFO',},
         'requests': {'level': 'INFO',},
         'django': {'level': 'ERROR', 'handlers': ['errorlog', 'mail_admins'], 'propagate': True,},
+        'logs.logic.materialized_interest': {'level': 'INFO',},
     },
     'root': {'level': 'DEBUG', 'handlers': ['console'],},
 }

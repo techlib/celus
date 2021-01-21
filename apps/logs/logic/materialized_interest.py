@@ -227,7 +227,11 @@ def remove_interest_from_import_batch(
     return Counter({'deleted_accesslogs': deleted[0]})
 
 
-def recompute_interest_by_batch(queryset=None):
+def recompute_interest_by_batch(queryset=None, verbose=False):
+    """
+    Using `verbose` reports potential discrepancies between old and recomputed interest values.
+    It requires 2 extra queries for each import batch, so it should be used with caution.
+    """
     with cache_based_lock('sync_interest_task', blocking_timeout=10):
         # we share the lock with sync_interest_task because the two could compete for the
         # same data
@@ -244,11 +248,33 @@ def recompute_interest_by_batch(queryset=None):
         logger.info('Going to recompute interest for %d batches', total_count)
         stats = Counter()
         for i, import_batch in enumerate(queryset.iterator()):
+            old_sum = (
+                import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
+                    sum=Sum('value')
+                )['sum']
+                if verbose
+                else 0
+            )
             stats += sync_interest_for_import_batch(import_batch, interest_rt)
-            if i % 20 == 0:
-                logger.debug(
+            if i % 100 == 0:
+                logger.info(
                     'Recomputed interest for %d out of %d batches, stats: %s', i, total_count, stats
                 )
+            if verbose:
+                new_sum = import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
+                    sum=Sum('value')
+                )['sum']
+                if new_sum != old_sum:
+                    logger.warning(
+                        'Mismatched interest sum: %d vs %d (%.1f) [%s]',
+                        old_sum,
+                        new_sum,
+                        old_sum / new_sum,
+                        import_batch,
+                    )
+                    stats['mismatch'] += 1
+                else:
+                    stats['match'] += 1
         return stats
 
 

@@ -2,7 +2,6 @@ import logging
 from time import time
 
 from django.core.management.base import BaseCommand
-from django.db import connection
 
 from logs.logic.materialized_interest import recompute_interest_by_batch
 from logs.models import ImportBatch
@@ -16,15 +15,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-p', dest='platform', help='short name of the platform to process')
+        parser.add_argument(
+            '-r', dest='report_type', help='short name of the report_type to process'
+        )
+        parser.add_argument('--verbose', dest='verbose', action='store_true')
 
     def handle(self, *args, **options):
+        filters = {}
         if options['platform']:
-            qs = ImportBatch.objects.filter(platform__short_name=options['platform'])
-        else:
-            qs = ImportBatch.objects.all()
+            filters['platform__short_name'] = options['platform']
+        if options['report_type']:
+            filters['report_type__short_name'] = options['report_type']
+        qs = ImportBatch.objects.filter(**filters)
         start = time()
-        stats = recompute_interest_by_batch(qs)
+        stats = recompute_interest_by_batch(qs, verbose=options['verbose'])
         logger.info('Duration: %s, Stats: %s', time() - start, stats)
-        logger.info('Query count: %d', len(connection.queries))
-        for query in connection.queries:
-            print('{sql}\t{time}'.format(**query))
