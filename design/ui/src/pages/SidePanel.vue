@@ -204,21 +204,28 @@ export default {
           show: this.showAdminStuff,
         },
         {
-          title: this.$i18n.t("pages.configuration"),
+          title: this.$i18n.t("pages.admin"),
           icon: "fa fa-tools",
           show: this.showAdminStuff,
           items: [
             {
-              title: this.$i18n.t("pages.management"),
-              icon: "fas fa-tools",
-              linkTo: "management",
-              show: this.showManagementStuff,
-            },
-            {
-              title: this.$t("pages.maintenance"),
-              icon: "fa fa-toolbox",
-              linkTo: "maintenance",
-              show: this.showManagementStuff,
+              title: this.$i18n.t("pages.configuration"),
+              icon: "fa fa-tools",
+              show: this.showAdminStuff,
+              items: [
+                {
+                  title: this.$i18n.t("pages.management"),
+                  icon: "fas fa-tools",
+                  linkTo: "management",
+                  show: this.showManagementStuff,
+                },
+                {
+                  title: this.$t("pages.maintenance"),
+                  icon: "fa fa-toolbox",
+                  linkTo: "maintenance",
+                  show: this.showManagementStuff,
+                },
+              ],
             },
           ],
         },
