@@ -1,4 +1,5 @@
 import pytest
+from django.db.models import Sum
 from django.utils.timezone import now
 
 from logs.logic.data_import import import_counter_records
@@ -14,7 +15,18 @@ from logs.logic.materialized_interest import (
     smart_interest_sync,
     recompute_interest_by_batch,
 )
-from logs.models import ImportBatch, AccessLog, ReportInterestMetric, Metric, InterestGroup
+from logs.logic.materialized_reports import (
+    sync_materialized_reports,
+    create_materialized_accesslogs,
+)
+from logs.models import (
+    ImportBatch,
+    AccessLog,
+    ReportInterestMetric,
+    Metric,
+    InterestGroup,
+    ReportMaterializationSpec,
+)
 from logs.models import ReportType
 from publications.models import Platform, PlatformInterestReport
 from organizations.tests.conftest import organizations
@@ -52,6 +64,7 @@ class TestInterestCalculation:
         )
         sync_interest_for_import_batch(ib, interest_rt)
         assert interest_rt.accesslog_set.count() == 3, 'now it should work'
+        assert interest_rt.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
 
     def test_superseeded_report_types(self, counter_records, organizations, report_type_nd):
         """
@@ -169,6 +182,50 @@ class TestInterestCalculation:
         assert interest_rt.accesslog_set.count() == 0, '0 of 3 should make it to interest'
         sync_interest_for_import_batch(ib_new, interest_rt)
         assert interest_rt.accesslog_set.count() == 3, '3 of 3 should make it to interest'
+
+    def test_with_materialized_reports(self, counter_records, organizations, report_type_nd):
+        """
+        Test that when there are materialized report data present in import batch that they
+        are not counted into interest.
+        """
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
+        data1 = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title2', '2018-01-01', '1v2', 2],
+            ['Title3', '2018-01-01', '1v2', 4],
+        ]
+        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        ib = ImportBatch.objects.create(
+            organization=organization, platform=platform, report_type=report_type
+        )
+        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        assert AccessLog.objects.count() == 3
+        # create materialized report
+        mat_def = ReportMaterializationSpec.objects.create(
+            base_report_type=report_type, keep_dim1=False
+        )
+        mat_rt = ReportType.objects.create(short_name='materialized', materialization_spec=mat_def)
+        mat_rec_count = create_materialized_accesslogs(mat_rt)
+        assert mat_rec_count == 3
+        assert ib.accesslog_set.count() == 6
+        # now define the interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        sync_interest_for_import_batch(ib, interest_rt)
+        assert interest_rt.accesslog_set.count() == 0, 'no interest platform and metric yet'
+        # now improve it and retry
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        ReportInterestMetric.objects.create(
+            report_type=report_type,
+            metric=Metric.objects.get(short_name='Hits'),
+            interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
+        )
+        sync_interest_for_import_batch(ib, interest_rt)
+        assert interest_rt.accesslog_set.count() == 3, 'now it should work'
+        assert interest_rt.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
 
 
 @pytest.mark.django_db()

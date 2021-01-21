@@ -187,7 +187,9 @@ def extract_interest_from_import_batch(
                 ).values('date')
             }
     for new_log_dict in (
-        import_batch.accesslog_set.filter(metric_id__in=interest_metrics)
+        import_batch.accesslog_set.filter(
+            report_type=import_batch.report_type, metric_id__in=interest_metrics
+        )
         .exclude(date__in=clashing_dates)
         .values('organization_id', 'metric_id', 'platform_id', 'target_id', 'date')
         .annotate(value=Sum('value'))
