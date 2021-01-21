@@ -50,51 +50,15 @@
     >
       <v-subheader>{{ group.title }}</v-subheader>
 
-      <v-list-item
+      <MenuListItem
         v-for="item in group.items.filter((item) =>
           item.show == null ? true : item.show
         )"
+        :item="item"
         :key="item.title"
-        :to="{ name: item.linkTo }"
+        :notifications="notifications"
       >
-        <!-- exact - use this attr on v-list-tile to prevent matching / -->
-
-        <v-list-item-action>
-          <v-icon class="fa-fw">{{ item.icon }}</v-icon>
-        </v-list-item-action>
-
-        <v-list-item-content>
-          <v-list-item-title>
-            {{ item.title }}
-            <v-tooltip
-              bottom
-              v-if="item.linkTo in notifications"
-              max-width="400"
-            >
-              <template v-slot:activator="{ on }">
-                <v-icon
-                  v-on="on"
-                  x-small
-                  :color="notifications[item.linkTo].level"
-                  class="float-right"
-                >
-                  fa
-                  {{
-                    notifications[item.linkTo].level === "warning"
-                      ? "fa-exclamation-triangle"
-                      : "fa-info-circle"
-                  }}
-                </v-icon>
-              </template>
-              <span
-                v-html="
-                  $t('notifications.' + notifications[item.linkTo].tooltip)
-                "
-              ></span>
-            </v-tooltip>
-          </v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
+      </MenuListItem>
     </v-list>
 
     <template #append>
@@ -117,10 +81,11 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 import OrganizationSelector from "@/components/OrganizationSelector";
 import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
+import MenuListItem from "@/components/util/MenuListItem";
 
 export default {
   name: "SidePanel",
-  components: { SelectedDateRangeWidget, OrganizationSelector },
+  components: { MenuListItem, SelectedDateRangeWidget, OrganizationSelector },
   props: {
     value: { default: true, type: Boolean },
     tourName: { default: null, required: false, type: String },
@@ -182,20 +147,66 @@ export default {
           title: this.$i18n.t("pages.analytics"),
           items: [
             {
-              title: this.$i18n.t("pages.overlap_analysis_titles"),
+              title: "Subscriptions",
               icon: "fa fa-layer-group",
-              linkTo: "overlap-analysis",
-            },
-            {
-              title: this.$i18n.t("pages.overlap_analysis_platforms"),
-              icon: "fa fa-th",
-              linkTo: "platform-overlap-analysis",
+              items: [
+                {
+                  title: this.$i18n.t("pages.overlap_analysis_titles"),
+                  icon: "fa fa-layer-group",
+                  linkTo: "overlap-analysis",
+                },
+                {
+                  title: this.$i18n.t("pages.overlap_analysis_platforms"),
+                  icon: "fa fa-th",
+                  linkTo: "platform-overlap-analysis",
+                },
+              ],
             },
           ],
           show: true,
         },
         {
-          title: this.$i18n.t("pages.admin"),
+          title: this.$i18n.t("pages.data_management"),
+          items: [
+            {
+              title: this.$i18n.t("pages.sushi"),
+              icon: "fa fa-angle-double-down",
+              show: this.showAdminStuff,
+              items: [
+                {
+                  title: this.$i18n.t("pages.sushi_monthly_overview"),
+                  icon: "far fa-calendar-check",
+                  linkTo: "sushi-monthly-overview",
+                  show: this.showAdminStuff,
+                },
+                {
+                  title: this.$i18n.t("pages.sushi_management"),
+                  icon: "far fa-arrow-alt-circle-down",
+                  linkTo: "sushi-credentials-list",
+                  show: this.showAdminStuff,
+                },
+                {
+                  title: this.$t("pages.sushi_fetch_attempts"),
+                  icon: "fa-retweet",
+                  linkTo: "sushi-fetch-attempts",
+                  show: this.showAdminStuff,
+                },
+              ],
+            },
+            {
+              title: this.$t("pages.manual_data_uploads"),
+              icon: "fa-upload",
+              linkTo: "manual-data-upload-list",
+              show: this.showAdminStuff && this.allowManualDataUpload,
+            },
+            //{ title: this.$t('pages.import_batches'), icon: 'fa-file-import', linkTo: 'import-batch-list', show: this.showAdminStuff },
+          ],
+          show: this.showAdminStuff,
+        },
+        {
+          title: this.$i18n.t("pages.configuration"),
+          icon: "fa fa-tools",
+          show: this.showAdminStuff,
           items: [
             {
               title: this.$i18n.t("pages.management"),
@@ -209,33 +220,7 @@ export default {
               linkTo: "maintenance",
               show: this.showManagementStuff,
             },
-            {
-              title: this.$i18n.t("pages.sushi_monthly_overview"),
-              icon: "far fa-calendar-check",
-              linkTo: "sushi-monthly-overview",
-              show: this.showAdminStuff,
-            },
-            {
-              title: this.$i18n.t("pages.sushi_management"),
-              icon: "far fa-arrow-alt-circle-down",
-              linkTo: "sushi-credentials-list",
-              show: this.showAdminStuff,
-            },
-            {
-              title: this.$t("pages.sushi_fetch_attempts"),
-              icon: "fa-retweet",
-              linkTo: "sushi-fetch-attempts",
-              show: this.showAdminStuff,
-            },
-            {
-              title: this.$t("pages.manual_data_uploads"),
-              icon: "fa-upload",
-              linkTo: "manual-data-upload-list",
-              show: this.showAdminStuff && this.allowManualDataUpload,
-            },
-            //{ title: this.$t('pages.import_batches'), icon: 'fa-file-import', linkTo: 'import-batch-list', show: this.showAdminStuff },
           ],
-          show: this.showAdminStuff,
         },
       ];
     },

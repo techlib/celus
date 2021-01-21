@@ -17,6 +17,9 @@ en:
     analytics: Analytics
     overlap_analysis_titles: Titles on multiple platforms
     overlap_analysis_platforms: Platform overlap
+    sushi: SUSHI
+    configuration: Configuration
+    data_management: Data management
   menu: Menu
   organization: Organization
   platform: Platform
@@ -149,6 +152,9 @@ cs:
     analytics: Analytické nástroje
     overlap_analysis_titles: Tituly na více platformách
     overlap_analysis_platforms: Překryv platforem
+    sushi: SUSHI
+    configuration: Konfigurace
+    data_management: Správa dat
   menu: Menu
   organization: Organizace
   platform: Platforma
