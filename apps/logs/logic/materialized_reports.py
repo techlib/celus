@@ -22,7 +22,7 @@ def sync_materialized_reports():
         create_materialized_accesslogs(mat_rt)
 
 
-def create_materialized_accesslogs(rt: ReportType, batch_size=None):
+def create_materialized_accesslogs(rt: ReportType, batch_size=None) -> int:
     """
     Given an input materialized report type, it creates all the missing accesslogs. It detects
     what is missing by using data from individual ImportBatches.
@@ -38,13 +38,16 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None):
         logger.debug('Guessing batch_size for "%s": %d', rt, batch_size)
     # construct query
     to_process = materialized_import_batch_queryset(rt)[:batch_size]
+    total = 0
     while to_process:
         start = monotonic()
         size = create_materialized_accesslogs_for_importbatches(rt, to_process)
         logger.debug(
             'Batch materialization took %.1f s; records created: %d', monotonic() - start, size
         )
+        total += size
         to_process = materialized_import_batch_queryset(rt)[:batch_size]
+    return total
 
 
 def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=25_000):
