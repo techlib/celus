@@ -12,7 +12,7 @@
       </v-list-item-content>
     </template>
     <MenuListItem
-      v-for="subitem in item.items"
+      v-for="subitem in visibleSubItems"
       :key="subitem.title"
       :item="subitem"
       :notifications="notifications"
@@ -66,6 +66,12 @@ export default {
     item: { required: true, type: Object },
     notifications: { required: true, type: Object },
     level: { default: 0, type: Number },
+  },
+
+  computed: {
+    visibleSubItems() {
+      return this.item.items.filter((item) => item.show ?? true);
+    },
   },
 };
 </script>

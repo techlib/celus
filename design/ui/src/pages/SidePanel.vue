@@ -147,7 +147,7 @@ export default {
           title: this.$i18n.t("pages.analytics"),
           items: [
             {
-              title: "Subscriptions",
+              title: this.$t("pages.subscriptions"),
               icon: "fa fa-layer-group",
               items: [
                 {
@@ -170,7 +170,7 @@ export default {
           items: [
             {
               title: this.$i18n.t("pages.sushi"),
-              icon: "fa fa-angle-double-down",
+              icon: "fa fa-cloud-download-alt",
               show: this.showAdminStuff,
               items: [
                 {
@@ -189,7 +189,7 @@ export default {
                   title: this.$t("pages.sushi_fetch_attempts"),
                   icon: "fa-retweet",
                   linkTo: "sushi-fetch-attempts",
-                  show: this.showAdminStuff,
+                  show: this.showManagementStuff,
                 },
               ],
             },
@@ -206,12 +206,12 @@ export default {
         {
           title: this.$i18n.t("pages.admin"),
           icon: "fa fa-tools",
-          show: this.showAdminStuff,
+          show: this.showManagementStuff,
           items: [
             {
               title: this.$i18n.t("pages.configuration"),
               icon: "fa fa-tools",
-              show: this.showAdminStuff,
+              show: this.showManagementStuff,
               items: [
                 {
                   title: this.$i18n.t("pages.management"),
