@@ -269,7 +269,7 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
                         'Mismatched interest sum: %d vs %d (%.1f) [%s]',
                         old_sum,
                         new_sum,
-                        old_sum / new_sum,
+                        old_sum / new_sum if old_sum and new_sum else 0,
                         import_batch,
                     )
                     stats['mismatch'] += 1
