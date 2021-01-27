@@ -37,6 +37,9 @@ function parseDateTime(text) {
 }
 
 function isoDateTimeFormat(date) {
+  if (!date) {
+    return "-";
+  }
   if (typeof date === "string") {
     date = parseDateTime(date);
   }
