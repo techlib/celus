@@ -10,6 +10,7 @@ en:
   tooltip:
     automatic: Automatically planned harvesting.
     manual: Manually planned harvesting.
+    date_not_set: Date is not set.
   filter:
     finished:
       title: Finished
@@ -27,6 +28,7 @@ cs:
   tooltip:
     automatic: Automaticky naplánované stahování.
     manual: Manuálně naplánované stahování.
+    date_not_set: Datum není určeno.
   filter:
     finished:
       title: Dokončeno
@@ -321,10 +323,16 @@ export default {
       return isoDateTimeFormatSpans(value);
     },
     formatDateTimePlain(value) {
-      return isoDateTimeFormat(value);
+      if (value) {
+        return isoDateTimeFormat(value);
+      }
+      return this.$t("tooltip.date_not_set");
     },
     formatDateTimeRelative(value) {
-      return formatRelative(value, this.now, this.dateFnOptions);
+      if (value) {
+        return formatRelative(value, this.now, this.dateFnOptions);
+      }
+      return "-";
     },
   },
 
@@ -344,15 +352,12 @@ export default {
       this.fetchHarvestsData();
     },
     lastFetchedTime() {
-        if (this.lastFetchTimer) {
-            clearTimeout(this.lastFetchTimer);
-        }
-        this.lastFetchTimer = setTimeout(
-            () => {
-                this.fetchHarvestsData();
-            },
-            this.refreshInterval,
-        )
+      if (this.lastFetchTimer) {
+        clearTimeout(this.lastFetchTimer);
+      }
+      this.lastFetchTimer = setTimeout(() => {
+        this.fetchHarvestsData();
+      }, this.refreshInterval);
     },
     showHarvestDialog() {
       if (!this.showHarvestDialog) {
