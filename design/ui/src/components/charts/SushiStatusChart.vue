@@ -1,7 +1,7 @@
 <i18n lang="yaml" src="@/locales/sushi.yaml" />
 
 <template>
-  <LoaderWidget v-if="loading" icon-name="fa-cog" />
+  <LoaderWidget v-if="loading" icon-name="fa-cog" height="370px" />
   <ve-pie
     v-else
     :data="chartData"
