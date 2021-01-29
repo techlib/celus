@@ -13,7 +13,7 @@ cs:
     <v-card-title>{{ $t("select_platform") }}</v-card-title>
     <v-card-text>
       <v-autocomplete
-        :items="platforms"
+        :items="availablePlatforms"
         item-value="pk"
         item-text="name"
         :label="$t('select_platform')"
@@ -56,6 +56,11 @@ export default {
     ...mapState({
       selectedOrganizationId: "selectedOrganizationId",
     }),
+    availablePlatforms() {
+      return this.platforms.sort((a, b) =>
+        a.name ? a.name.localeCompare(b.name) : -1
+      );
+    },
   },
 
   methods: {
