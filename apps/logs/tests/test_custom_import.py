@@ -3,6 +3,7 @@ from io import StringIO
 
 import pytest
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.urls import reverse
 
 from core.models import Identity, UL_ORG_ADMIN, UL_CONS_STAFF
@@ -231,3 +232,25 @@ class TestCustomImport:
         mdu.refresh_from_db()
         assert mdu.import_batch is not None
         assert mdu.import_batch.owner_level == mdu.owner_level
+
+    @pytest.mark.parametrize(['content_prefix'], [[''], ['\ufeff']])
+    def test_mdu_data_to_records(
+        self, organizations, report_type_nd, tmp_path, settings, content_prefix
+    ):
+        """
+        Check that CSV data are correctly ingested - regardless of BOM presence
+        """
+        report_type = report_type_nd(0)
+        organization = organizations[0]
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
+        csv_content = f'{content_prefix}Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
+        file = ContentFile(csv_content)
+        file.name = f"something.csv"
+        settings.MEDIA_ROOT = tmp_path
+
+        mdu = ManualDataUpload.objects.create(
+            report_type=report_type, organization=organization, platform=platform, data_file=file,
+        )
+        assert len(list(mdu.data_to_records())) == 6

@@ -451,7 +451,7 @@ class ManualDataUpload(models.Model):
             self.save()
 
     def to_record_dicts(self) -> [dict]:
-        reader = csv.DictReader(codecs.iterdecode(self.data_file.file, 'utf-8'))
+        reader = csv.DictReader(codecs.iterdecode(self.data_file.file, 'utf-8-sig'))
         data = list(reader)
         return data
 
