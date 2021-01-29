@@ -37,6 +37,7 @@ cs:
             :items="organizations"
             item-text="name"
             item-value="pk"
+            :label="$t('organization')"
           >
             <template v-slot:item="{ item }">
               <span :class="{ bold: item.extra }">{{ item.name }}</span>
@@ -46,11 +47,12 @@ cs:
         <v-col>
           <v-autocomplete
             v-model="platformId"
-            :items="platforms"
+            :items="availablePlatforms"
             item-text="name"
             item-value="pk"
             :loading="loadingPlatforms"
             :disabled="fixPlatform && platform !== null"
+            :label="$t('platform')"
           >
             <template v-slot:item="{ item }">
               <span :class="{ bold: item.extra }">{{ item.name }}</span>
@@ -308,7 +310,15 @@ export default {
       }
       return null;
     },
+    availablePlatforms() {
+      let result = this.platforms.sort((a, b) =>
+        a.name ? a.name.localeCompare(b.name) : -1
+      );
+      result.unshift({ name: this.$t("all"), pk: null, extra: true });
+      return result;
+    },
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
@@ -373,7 +383,6 @@ export default {
       try {
         let response = await axios.get(this.availablePlatformsUrl);
         this.platforms = response.data;
-        this.platforms.unshift({ name: this.$t("all"), pk: null, extra: true });
       } catch (error) {
         this.showSnackbar({
           content: "Error loading platform list: " + error,
@@ -439,6 +448,7 @@ export default {
       this.$refs.form.resetValidation();
     },
   },
+
   watch: {
     annotation() {
       this.annotationObjectToData();

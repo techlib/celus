@@ -567,7 +567,9 @@ export default {
       return this.valid;
     },
     allowedPlatforms() {
-      return this.platforms;
+      return this.platforms.sort((a, b) =>
+        a.name ? a.name.localeCompare(b.name) : -1
+      );
     },
     allowedCounterVersions() {
       return [4, 5];
