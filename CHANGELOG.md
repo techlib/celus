@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2.8.3]
+
+### Fixed
+
+#### Frontend
+
+- ordering of platforms in several menus was fixed
+- SUSHI status dashboard widget size when loading data was fixed (it was too high and thus caused
+  "jumping" of the content during data loading)
+- empty dates in harvest overview table no longer cause the table to get stuck
+
+#### Backend
+
+- manual data CSV files containing BOM (Byte Order Mark) are properly parsed
+
 ## [2.8.2]
 
 ### Fixed
