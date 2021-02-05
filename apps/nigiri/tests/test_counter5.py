@@ -2,7 +2,7 @@ import pytest
 
 from pathlib import Path
 
-from ..counter5 import Counter5ReportBase, Counter5TRReport
+from ..counter5 import Counter5ReportBase, Counter5TRReport, Counter5TableReport
 from ..exceptions import SushiException
 
 
@@ -168,3 +168,41 @@ class TestCounter5Reading:
         assert len(reader.errors) == 1
         error = reader.errors[0]
         assert str(error.code) == '2090'
+
+
+@pytest.mark.django_db
+class TestCounter5TableReports:
+    def test_dr_csv(self):
+        reader = Counter5TableReport()
+        records = list(
+            reader.file_to_records(Path(__file__).parent / 'data/counter5/counter5_table_dr.csv')
+        )
+        assert len(records) == 121
+        assert records[0].value == 42
+        assert records[-1].value == 1
+
+    def test_dr_tsv(self):
+        reader = Counter5TableReport()
+        records = list(
+            reader.file_to_records(Path(__file__).parent / 'data/counter5/counter5_table_dr.tsv')
+        )
+        assert len(records) == 121
+        assert records[0].value == 42
+        assert records[-1].value == 1
+
+    @pytest.mark.parametrize(
+        ['rt', 'count', 'first_number'], [('PR', 42, 10), ('TR', 24, 100), ('DR', 30, 1),]
+    )
+    def test_official_example(self, rt, count, first_number):
+        """
+        Takes slightly modified version of the official example reports from COUNTER and tries
+        to read them.
+        """
+        reader = Counter5TableReport()
+        records = list(
+            reader.file_to_records(
+                Path(__file__).parent / f'data/counter5/COUNTER_R5_Report_Examples_{rt}.csv'
+            )
+        )
+        assert len(records) == count
+        assert records[0].value == first_number

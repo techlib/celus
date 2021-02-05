@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from core.logic.dates import month_end
+from core.logic.dates import month_end, parse_counter_month
 from core.logic.dates import parse_month
 
 
@@ -32,3 +32,20 @@ class TestMonthEnd:
     )
     def test_month_end(self, value, result):
         assert month_end(value) == result
+
+
+class TestParseCounterMonth:
+    @pytest.mark.parametrize(
+        ['text', 'output'],
+        [
+            ('Jun-2020', date(2020, 6, 1)),
+            ('Jun-20', date(2020, 6, 1)),
+            ('Jul-89', date(1989, 7, 1)),
+            ('Apr-1234', date(1234, 4, 1)),
+            ('Dec-2080', date(2080, 12, 1)),
+            ('Foo-2020', None),
+            ('adfjldskfj', None),
+        ],
+    )
+    def test_parse(self, text, output):
+        assert parse_counter_month(text) == output

@@ -4,6 +4,7 @@ import calendar
 from typing import Optional
 
 month_matcher = re.compile(r'^(?P<year>\d{4})-(?P<month>\d{1,2})(-\d{1,2})?$')
+counter_month_matcher = re.compile(r'^(?P<month>\w{3})-(?P<year>\d{2}(\d{2})?)$')
 
 
 def parse_month(text: str) -> Optional[datetime.date]:
@@ -22,6 +23,32 @@ def parse_month(text: str) -> Optional[datetime.date]:
         except ValueError:
             return None
     return None
+
+
+def parse_counter_month(text: str) -> Optional[datetime.date]:
+    """
+    Returns a date object extracted from date formatted according to the specification of COUNTER 5
+    i. e. Mmm-YYYY. It also allows Mmm-YY to be more flexible
+    :param text:
+    :return:
+    """
+    if not text:
+        return None
+    m = counter_month_matcher.match(text)
+    if m:
+        year = int(m.group('year'))
+        month = m.group('month')
+        if year < 50:
+            year += 2000
+        elif 50 <= year < 100:
+            year += 1900
+        month_abbrs = list(calendar.month_abbr)
+        if month not in month_abbrs:
+            return None
+        try:
+            return datetime.date(year, month_abbrs.index(month), 1)
+        except ValueError:
+            return None
 
 
 def month_end(date: datetime.date) -> datetime.date:

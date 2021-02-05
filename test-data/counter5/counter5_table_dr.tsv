@@ -1,0 +1,25 @@
+Report_Name	Database Master Report																
+Report_ID	DR																
+Release	5																
+Institution_Name	BigDigData																
+Institution_ID	whatever																
+Metric_Types																	
+Report_Filters																	
+Report_Attributes																	
+Exceptions																	
+Reporting_Period	Begin_Date=2019-02-01; End_Date=2019-12-31																
+Created	2021-02-02T17:16:34Z																
+Created_By	FooBarBaz Ltd.																
+																	
+Database	Publisher	Publisher_ID	Platform	Proprietary_ID	Metric_Type	Reporting_Period_Total	Feb-19	Mar-19	Apr-19	May-19	Jun-19	Jul-19	Aug-19	Sep-19	Oct-19	Nov-19	Dec-19
+ARTICLES	Hogwarts Publishing House		FooBar		No_License	846	42	57	162	37	38	67	9	108	111	146	69
+ARTICLES	Hogwarts Publishing House		FooBar		Total_Item_Investigations	29	3	4	11	2	0	2	0	0	1	2	4
+ARTICLES	Hogwarts Publishing House		FooBar		Total_Item_Requests	29	3	4	11	2	0	2	0	0	1	2	4
+ARTICLES	Hogwarts Publishing House		FooBar		Unique_Item_Investigations	26	2	4	10	1	0	2	0	0	1	2	4
+ARTICLES	Hogwarts Publishing House		FooBar		Unique_Item_Requests	26	2	4	10	1	0	2	0	0	1	2	4
+BOOKS	Hogwarts Publishing House		BarBaz		No_License	27	2	0	3	0	0	3	0	1	6	10	2
+BOOKS	Hogwarts Publishing House		BarBaz		Searches_Automated	31	6	6	12	0	0	1	0	0	4	2	0
+BOOKS	Hogwarts Publishing House		BarBaz		Searches_Regular	89	9	11	15	0	2	11	0	5	11	17	8
+BOOKS	Hogwarts Publishing House		BarBaz		Total_Item_Investigations	613	39	32	127	26	19	40	12	65	82	124	47
+BOOKS	Hogwarts Publishing House		BarBaz		Unique_Item_Investigations	498	37	29	106	20	16	35	10	52	61	93	39
+BOOKS	Hogwarts Publishing House		BarBaz		No_License	10	2	1	0	0	1	1	0	0	0	4	1

@@ -1,0 +1,18 @@
+Report_Name,Title Master Report,,,,,,,,,,,,,,,,,,,,,
+Report_ID,TR,,,,,,,,,,,,,,,,,,,,,
+Release,5,,,,,,,,,,,,,,,,,,,,,
+Institution_Name,Sample University,,,,,,,,,,,,,,,,,,,,,
+Institution_ID,isni=1234567890,,,,,,,,,,,,,,,,,,,,,
+Metric_Types,as selected,,,,,,,,,,,,,,,,,,,,,
+Report_Filters,as selected,,,,,,,,,,,,,,,,,,,,,
+Report_Attributes,as selected,,,,,,,,,,,,,,,,,,,,,
+Exceptions,,,,,,,,,,,,,,,,,,,,,,
+Reporting_Period,2017-01-01 to 2017-06-30,,,,,,,,,,,,,,,,,,,,,
+Created,2017-05-25,,,,,,,,,,,,,,,,,,,,,
+Created_By,Publisher Platform Alpha,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,
+Title,Publisher,Publisher_ID,Platform,DOI,Proprietary_ID,ISBN,Print_ISSN,Online_ISSN,URI,Data_Type,Section_Type,YOP,Access_Type,Access_Method,Metric_Type,Reporting_Period_Total,Jan-2017,Feb-2017,Mar-2017,Apr-2017,May-2017,Jun-2017
+Journal Six,Gamma,1234_gam,PPα,10.1000/ xyz123,xyz123,,,1110987654321,,Journal,Article,2016,Controlled,Regular,Total_ Item_Investigations,450,100,90,80,70,60,50
+Journal Six,Gamma,1234_gam,PPα,10.1000/ xyz124,xyz124,,,1110987654321,,Journal,Article,2016,Controlled,Regular,Unique_Item_Investigations,456,101,91,81,71,61,51
+Journal Six,Gamma,1234_gam,PPα,10.1000/ xyz126,xyz126,,,1110987654321,,Journal,Article,2016,Controlled,Regular,Total_ Item_Requests,462,102,92,82,72,62,52
+Journal Six,Gamma,1234_gam,PPα,10.1000/ xyz127,xyz127,,,1110987654321,,Journal,Article,2016,Controlled,Regular,Unique_ Item_Requests,468,103,93,83,73,63,53

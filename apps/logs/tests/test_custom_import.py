@@ -254,3 +254,34 @@ class TestCustomImport:
             report_type=report_type, organization=organization, platform=platform, data_file=file,
         )
         assert len(list(mdu.data_to_records())) == 6
+
+    @pytest.mark.parametrize(
+        ['content', 'is_json'],
+        [
+            ['Whatever', False],
+            ['  !', False],
+            ['  {', True],
+            ['  [', True],
+            ['[', True],
+            ['{', True],
+            ['\t[', True],
+            ['\t{', True],
+        ],
+    )
+    def test_mdu_json(self, organizations, report_type_nd, tmp_path, settings, content, is_json):
+        """
+        Check that CSV data are correctly ingested - regardless of BOM presence
+        """
+        report_type = report_type_nd(0)
+        organization = organizations[0]
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
+        file = ContentFile(content)
+        file.name = f"something.csv"
+        settings.MEDIA_ROOT = tmp_path
+
+        mdu = ManualDataUpload.objects.create(
+            report_type=report_type, organization=organization, platform=platform, data_file=file,
+        )
+        assert mdu.file_is_json() == is_json

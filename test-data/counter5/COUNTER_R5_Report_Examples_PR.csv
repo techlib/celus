@@ -1,0 +1,21 @@
+Report_Name,Platform Master Report,,,,,,,,,
+Report_ID,PR,,,,,,,,,
+Release,5,,,,,,,,,
+Institution_Name,Sample University,,,,,,,,,
+Institution_ID,isni=1234567890,,,,,,,,,
+Metric_Types,as selected,,,,,,,,,
+Report_Filters,as selected,,,,,,,,,
+Report_Attributes,as selected,,,,,,,,,
+Exceptions,,,,,,,,,,
+Reporting_Period,2017-01-01 to 2017-06-30,,,,,,,,,
+Created,2017-05-25,,,,,,,,,
+Created_By,Publisher Platform Alpha,,,,,,,,,
+,,,,,,,,,,
+Platform,Data_Type,Access_Method,Metric_Type,Reporting_Period_Total,Jan-2017,Feb-2017,Mar-2017,Apr-2017,May-2017,Jun-2017
+PPα,Journal,Regular,Total_Item_ Investigations,210,10,20,30,40,50,60
+PPα,Journal,Regular,Unique_Item_Investigations,216,11,21,31,41,51,61
+PPα,Book,Regular,Unique_Title_ Investigations,222,12,22,32,42,52,62
+PPα,Book,Regular,Total_Item_Investigations,228,13,23,33,43,53,63
+PPα,Book,Regular,Unique_Item_Investigations,234,14,24,34,44,54,64
+PPα,Book,Regular,Unique_Title_Investigations,240,15,25,35,45,55,65
+PPα,Database,Regular,Searches_Platform,246,16,26,36,46,56,66
