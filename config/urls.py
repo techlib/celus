@@ -30,7 +30,6 @@ urlpatterns = [
     path('wsEc67YNV2sq/', admin.site.urls),
     path('error/', include('error_report.urls')),
     path('', include('django_prometheus.urls')),
-    path('api/rest-auth/', include('rest_auth.urls')),
 ]
 
 if settings.DEBUG:

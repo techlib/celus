@@ -173,7 +173,6 @@ export default new Vuex.Store({
             (error.response.status === 401 || error.response.status === 403)
           ) {
             // if there is 401 error, try to (re)authenticate
-            axios.post("/api/rest-auth/logout/", {}, { privileged: true });
             dispatch("setShowLoginDialog", { show: true });
           } else if (typeof error.response === "undefined") {
             // we are getting redirected to the EduID login page, but 302 is transparent for us
