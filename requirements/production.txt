@@ -8,7 +8,7 @@ dateparser==0.7.6; (python_version >= "2.7" and python_full_version < "3.0.0") o
 defusedxml==0.6.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 django-allauth==0.41.0
 django-anymail==7.1.0
-django-cachalot @ git+https://github.com/beda42/django-cachalot.git@154ec37662e
+django-cachalot==2.3.3
 django-celery-results==1.2.1
 django-error-report==0.2.0
 django-js-asset==1.2.2; python_version >= "3.5"
