@@ -11,6 +11,9 @@
         <v-list-item-title>{{ item.title }}</v-list-item-title>
       </v-list-item-content>
     </template>
+    <template #appendIcon>
+      <v-icon small>fa fa-caret-down</v-icon>
+    </template>
     <MenuListItem
       v-for="subitem in visibleSubItems"
       :key="subitem.title"
