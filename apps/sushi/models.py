@@ -281,7 +281,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         extra = self.extra_params or {}
         if self.api_key:
             extra['api_key'] = self.api_key
-        if self.http_password and self.http_username:
+        if self.http_password and self.http_username and self.counter_version == 4:
             attrs['auth'] = (self.http_username, self.http_password)
         if self.counter_version == 4:
             return Sushi4Client(extra_params=extra, **attrs)
