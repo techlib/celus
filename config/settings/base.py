@@ -276,6 +276,7 @@ CELERY_TASK_ROUTES = {
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'core.tasks.test': {'queue': 'normal'},
+    'logs.tasks.export_raw_data_task': {'queue': 'export'},
 }
 
 CELERY_BEAT_SCHEDULE = {
