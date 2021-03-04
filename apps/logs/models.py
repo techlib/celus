@@ -53,6 +53,11 @@ class ReportType(models.Model):
         'ReportMaterializationSpec', null=True, blank=True, on_delete=models.SET_NULL
     )
     default_platform_interest = models.BooleanField(default=False)
+    materialization_date = models.DateTimeField(
+        default=now,
+        help_text="All data materialized before this data will be recomputed - can be used to "
+        "force recomputation",
+    )
 
     class Meta:
         unique_together = (('short_name', 'source'),)

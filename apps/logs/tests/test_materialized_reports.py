@@ -1,9 +1,13 @@
 import pytest
 from django.core.management import call_command
+from django.utils.timezone import now
 
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch
-from logs.logic.materialized_reports import sync_materialized_reports
+from logs.logic.materialized_reports import (
+    sync_materialized_reports,
+    materialized_import_batch_queryset,
+)
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import (
     ImportBatch,
@@ -184,6 +188,41 @@ class TestMaterializedReport:
         ib.refresh_from_db()
         assert old_mat_pks != {al.pk for al in mat_report.accesslog_set.all()}
         assert mat_report.accesslog_set.count() == 2, '2 access logs without title for metric m2'
+
+    def test_recomputation_after_date_change(
+        self, organizations, report_type_nd, platform, counter_records
+    ):
+        """
+        Tests that when `materialization_date` changes, older data will be recomputed
+        """
+        data1 = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title2', '2018-01-01', '1v2', 2],
+            ['Title3', '2018-01-01', '1v2', 4],
+        ]
+        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        ib = ImportBatch.objects.create(
+            organization=organization, platform=platform, report_type=report_type
+        )
+        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        assert AccessLog.objects.count() == 3
+        # now define materialized report
+        spec = ReportMaterializationSpec.objects.create(
+            base_report_type=report_type, keep_dim1=False, keep_target=False
+        )
+        mat_report = ReportType.objects.create(materialization_spec=spec, short_name='m', name='m')
+        assert mat_report.accesslog_set.count() == 0
+        # let's calculate the data
+        sync_materialized_reports()
+        # test it
+        assert mat_report.accesslog_set.count() == 1
+        assert materialized_import_batch_queryset(mat_report).count() == 0
+        # update the date and test again
+        mat_report.materialization_date = now()
+        mat_report.save()
+        assert materialized_import_batch_queryset(mat_report).count() == 1
 
 
 @pytest.mark.django_db()
