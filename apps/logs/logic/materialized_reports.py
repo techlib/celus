@@ -129,14 +129,21 @@ def materialized_import_batch_queryset(rt: ReportType) -> QuerySet:
         stale_materialization = Q(
             interest_ts__gte=Cast(RawSQL('materialization_data->%s', (f'r{rt.pk}',)), FloatField())
         )
+        updated_materialization = Q(
+            **{f'materialization_data__r{rt.pk}__lt': rt.materialization_date.timestamp()}
+        )
         # bellow we use RawSQL rather than Extract('interest_timestamp', 'epoch') because it
         # returns the timestamp in active timezone rather than in UTC as time() is presented
         # and thus even new data could appear stale due to the timezone shift :/
         return ImportBatch.objects.annotate(
             interest_ts=Cast(RawSQL('EXTRACT(EPOCH FROM interest_timestamp)', ()), FloatField())
-        ).filter(stale_materialization | no_materialization)
+        ).filter(stale_materialization | updated_materialization | no_materialization)
     else:
-        return ImportBatch.objects.filter(**{f'materialization_data__r{rt.pk}__isnull': True})
+        no_materialization = Q(**{f'materialization_data__r{rt.pk}__isnull': True})
+        updated_materialization = Q(
+            **{f'materialization_data__r{rt.pk}__lt': rt.materialization_date.timestamp()}
+        )
+        return ImportBatch.objects.filter(no_materialization | updated_materialization)
 
 
 @atomic
