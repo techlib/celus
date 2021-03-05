@@ -366,6 +366,8 @@ class StatsComputer(object):
         rt_change = replace_report_type_with_materialized(
             query_params, other_used_dimensions=extra_dims
         )
+        # we preserve the original value of used_report_type for use in later code
+        original_used_report_type = self.used_report_type
         if rt_change:
             self.used_report_type = query_params.get('report_type')
 
@@ -385,7 +387,7 @@ class StatsComputer(object):
             # (2500 ms instead of 60 ms is a test case) - this is why we get the pks of the metrics
             # first and then use the "in" filter.
             self.reported_metrics = {
-                im.pk: im for im in self.used_report_type.interest_metrics.order_by()
+                im.pk: im for im in original_used_report_type.interest_metrics.order_by()
             }
             if self.reported_metrics:
                 query = query.filter(metric_id__in=self.reported_metrics.keys())
