@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import pytest
 from django.contrib.auth import get_user_model
 
@@ -67,7 +65,6 @@ class TestUserSync(object):
         assert stats['removed'][0] == 1
         assert User.objects.count() == 2
 
-    @pytest.mark.now
     def test_sync_users_with_user_org_link_removal(self, data_source):
         """
         Test that after a user gets removed from an organization, the link is properly removed
@@ -93,6 +90,34 @@ class TestUserSync(object):
         assert stats['User-Org deleted'] == 1
         assert User.objects.count() == 1
         assert UserOrganization.objects.count() == 1
+
+    @pytest.mark.now
+    def test_sync_of_one_user(self, data_source):
+        """
+        Test that when we sync only one user, the other user-org links are not removed
+        """
+        User = get_user_model()
+        assert User.objects.count() == 0
+        Organization.objects.create(ext_id=5, name='Org 1', short_name='org_1')
+        Organization.objects.create(ext_id=10, name='Org 2', short_name='org_2')
+        input_data = [
+            {'id': 4, 'vals': {'name@cs': ['John Doe']}, 'refs': {'employee of': [10]}},
+        ]
+        sync_users(data_source, self.user_data + input_data)
+        assert User.objects.count() == 4
+        assert UserOrganization.objects.count() == 2, "one from user #1 and one from #4"
+        user1 = User.objects.get(ext_id=1)
+        assert user1.organizations.count() == 1
+        # now only sync one of the users
+        sync_users(data_source, input_data, partial_data=True)
+        print(user1.pk)
+        assert user1.organizations.count() == 1
+        assert UserOrganization.objects.count() == 2, "still one from user #1 and one from #4"
+        # let's remove the ref to 10 and try again
+        del input_data[0]['refs']
+        sync_users(data_source, input_data, partial_data=True)
+        assert UserOrganization.objects.count() == 1, "only the one from user #1"
+        assert user1.organizations.count() == 1, "user 1 still has the link"
 
 
 @pytest.mark.django_db

@@ -28,6 +28,7 @@ class Syncer(object):
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
         self.db_key_to_obj = {}
+        self._seen_pks = set()
 
     def prefetch_db_objects(self):
         if self.object_class:
@@ -65,6 +66,7 @@ class Syncer(object):
         pid = record[self.primary_id]
         if pid in self.db_key_to_obj:
             obj = self.db_key_to_obj[pid]
+            self._seen_pks.add(obj.pk)
             save = False
             for key, value in record.items():
                 if type(value) is not dict:
@@ -80,6 +82,7 @@ class Syncer(object):
         else:
             obj = self.object_class.objects.create(source=self.data_source, **record)
             self.db_key_to_obj[pid] = obj
+            self._seen_pks.add(obj.pk)
             return self.Status.NEW
 
     def _screen_records(self, records: [dict]) -> None:
