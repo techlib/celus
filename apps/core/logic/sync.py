@@ -127,10 +127,11 @@ class UserSyncer(ERMSObjectSyncer):
                 else:
                     stats['User-Org unchanged'] += 1
                 seen_user_orgs.add(uo.pk)
+        # now delete extra UserOrganizations - only for users we have seen in the data
+        # those that were not seen should be removed altogether elsewhere
+        uo_filter = {'source': self.data_source, 'user_id__in': self._seen_pks}
         deleted, _details = (
-            UserOrganization.objects.filter(source=self.data_source)
-            .exclude(pk__in=seen_user_orgs)
-            .delete()
+            UserOrganization.objects.exclude(pk__in=seen_user_orgs).filter(**uo_filter).delete()
         )
         stats['User-Org deleted'] = deleted
         return stats
@@ -142,21 +143,28 @@ def sync_users_with_erms(data_source: DataSource) -> dict:
     return sync_users(data_source, erms_persons)
 
 
-def sync_users(data_source: DataSource, records: [dict]) -> dict:
+def sync_users(data_source: DataSource, records: [dict], partial_data: bool = False) -> dict:
+    """
+    :param data_source:
+    :param records:
+    :param partial_data: If true, records is not for all data, so extra users should not be deleted
+    :return:
+    """
     syncer = UserSyncer(data_source)
     stats = syncer.sync_data(records)
     # let's deal with users that are no longer present in the ERMS
     # we remove them, but only those from the same data_source
     # this means that manually created users will not be removed
     # and users from other source neither
-    seen_external_ids = {int(rec['id']) for rec in records}
-    info = (
-        get_user_model()
-        .objects.filter(source=data_source)
-        .exclude(ext_id__in=seen_external_ids)
-        .delete()
-    )
-    stats['removed'] = info
+    if not partial_data:
+        seen_external_ids = {int(rec['id']) for rec in records}
+        info = (
+            get_user_model()
+            .objects.filter(source=data_source)
+            .exclude(ext_id__in=seen_external_ids)
+            .delete()
+        )
+        stats['removed'] = info
     return stats
 
 
