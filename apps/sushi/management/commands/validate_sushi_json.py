@@ -48,7 +48,7 @@ class Command(BaseCommand):
     def item_to_key(cls, item):
         key_keys = ['Title', 'Platform']
         item_key = [item.get(key) for key in key_keys]
-        item_ids = item.get('Item_ID', [])
+        item_ids = item.get('Item_ID') or []
         for key in Counter5TRReport.allowed_item_ids:
             for item_id in item_ids:
                 if item_id.get('Type') == key:
