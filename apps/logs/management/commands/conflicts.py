@@ -1,6 +1,7 @@
 import logging
 
 from django.core.management.base import BaseCommand
+from django.db import connection
 
 from logs.logic import conflicts
 
@@ -22,3 +23,4 @@ class Command(BaseCommand):
         conflicts.print_conflicts(
             options["organization_id"], options["platform_id"], options["report_type_id"],
         )
+        print('Queries:', len(connection.queries))

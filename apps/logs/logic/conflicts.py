@@ -39,10 +39,9 @@ def get_conflicts(
 
     qs = (
         AccessLog.objects.filter(date__gte=start_date, date__lt=end_date, import_batch__in=ib_pks,)
-        .values('import_batch')
-        .annotate(count=models.Count('pk'))
+        .values('import_batch', 'import_batch__created')
+        .annotate(count=models.Count('pk'), score=models.Sum('value'))
         .filter(count__gt=0)
-        .values_list('import_batch', flat=True)
     )
 
     non_empty = list(qs)
@@ -105,7 +104,7 @@ def print_conflicts(
         for date, ib_pks in record.items():
             counter["total"] += 1
             if len(ib_pks) > 1:
-                counter["overlaping"] += 1
+                counter["overlapping"] += 1
                 conflicts = get_conflicts(date, organization, platform, report_type, ib_pks)
                 if conflicts:
                     counter["conflicts"] += 1
@@ -119,7 +118,12 @@ def print_conflicts(
                         )
                         header_printed = True
 
-                    print(f"{date[0]:04}-{date[1]:02}|{report_type_obj}: {conflicts}")
+                    conflict_text = '; '.join(
+                        f'#{c["import_batch"]} (recs:{c["count"]}, score:{c["score"]}, '
+                        f'{c["import_batch__created"].date()})'
+                        for c in conflicts
+                    )
+                    print(f"{date[0]:04}-{date[1]:02}|{report_type_obj}: {conflict_text}")
 
         if header_printed:
             print()
