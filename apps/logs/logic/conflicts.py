@@ -40,11 +40,18 @@ def get_conflicts(
     qs = (
         AccessLog.objects.filter(date__gte=start_date, date__lt=end_date, import_batch__in=ib_pks,)
         .values('import_batch', 'import_batch__created')
-        .annotate(count=models.Count('pk'), score=models.Sum('value'))
+        .annotate(count=models.Count('pk'), score=models.Sum('value'),)
         .filter(count__gt=0)
     )
 
     non_empty = list(qs)
+    for rec in non_empty:
+        # we must add the min, max dates here because the previous query is already date filtered
+        rec.update(
+            AccessLog.objects.filter(import_batch_id=rec['import_batch']).aggregate(
+                min_date=models.Min('date'), max_date=models.Max('date')
+            )
+        )
 
     # Only one IB should contain data
     # Otherwise data are mixed from different import batches
@@ -114,16 +121,40 @@ def print_conflicts(
                         platform_obj = Platform.objects.get(pk=platform)
                         organization_obj = Organization.objects.get(pk=organization)
                         print(
-                            f"## {platform_obj}({platform_obj.pk}) - {organization_obj}({organization_obj.pk})"
+                            f"## {platform_obj}({platform_obj.pk}) - "
+                            f"{organization_obj}({organization_obj.pk})"
                         )
                         header_printed = True
-
-                    conflict_text = '; '.join(
-                        f'#{c["import_batch"]} (recs:{c["count"]}, score:{c["score"]}, '
-                        f'{c["import_batch__created"].date()})'
-                        for c in conflicts
-                    )
-                    print(f"{date[0]:04}-{date[1]:02}|{report_type_obj}: {conflict_text}")
+                    start = f"{date[0]:04}-{date[1]:02}|{report_type_obj}"
+                    # sort conflicts by pk so that oldest batch goes first
+                    conflicts.sort(key=lambda x: x['import_batch'])
+                    for i, c in enumerate(conflicts):
+                        if i != 0:
+                            start = len(start) * " "
+                        next_c = conflicts[i + 1] if i < len(conflicts) - 1 else None
+                        fully_included = (
+                            (
+                                c['min_date'] >= next_c['min_date']
+                                and c['max_date'] <= next_c['max_date']
+                            )
+                            if next_c
+                            else None
+                        )
+                        included = ' '
+                        if fully_included:
+                            counter['fully included'] += 1
+                            included = 'Y'
+                        elif fully_included is False:
+                            counter['not fully included'] += 1
+                            included = 'N'
+                        ib_date = c["import_batch__created"].date()
+                        conflict_text = (
+                            '#{import_batch:5} (recs:{count:5}, score:{score:6}, {ib_date}) '
+                            'replacable:{included} [{min_date} - {max_date}]'.format(
+                                ib_date=ib_date, included=included, **c
+                            )
+                        )
+                        print(f"{start}: {conflict_text}")
 
         if header_printed:
             print()
