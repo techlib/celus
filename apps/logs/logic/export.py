@@ -6,7 +6,6 @@ from time import monotonic
 from typing import IO
 from zipfile import ZipFile, ZIP_DEFLATED
 
-from cachalot.api import cachalot_disabled
 from django.conf import settings
 from django.db.models import QuerySet
 from django.core.cache import cache
@@ -122,28 +121,25 @@ class CSVExport(object):
         # crate the writer
         writer = csv.DictWriter(stream, field_names)
         writer.writeheader()
+        # disable cachalot for this query
+        logger.debug('Disabling cachalot for this query')
+        queryset.query.cachalot_do_not_cache = True
         logger.debug('Finished preparing CSV writer: %.2f s', monotonic() - start)
         # write the records
         rec_num = 0
-        with cachalot_disabled(True):
-            # disable cachalot for this query because it returns a potentially huge number of records
-            # and would clog the cache
-            for rec_num, log in enumerate(queryset.values(*values).iterator()):  # type: int, dict
-                record = {
-                    attr_out: log.get(attr_in) for attr_in, attr_out in field_name_map.items()
-                }
-                record['value'] = log['value']
-                record['date'] = log['date']
-                for i, dim in enumerate(rt_to_dimensions[log['report_type_id']]):
-                    value = log.get(f'dim{i+1}')
-                    if dim.type == dim.TYPE_TEXT:
-                        record[dim.short_name] = text_id_to_text.get(value, value)
-                    else:
-                        record[dim.short_name] = value
-                writer.writerow(record)
-                if rec_num % 999 == 0:
-                    self.store_progress(rec_num + 1)
-                if rec_num % 99999 == 0:
-                    logger.debug('Stored %d records: %.2f s', rec_num, monotonic() - start)
-
+        for rec_num, log in enumerate(queryset.values(*values).iterator()):  # type: int, dict
+            record = {attr_out: log.get(attr_in) for attr_in, attr_out in field_name_map.items()}
+            record['value'] = log['value']
+            record['date'] = log['date']
+            for i, dim in enumerate(rt_to_dimensions[log['report_type_id']]):
+                value = log.get(f'dim{i+1}')
+                if dim.type == dim.TYPE_TEXT:
+                    record[dim.short_name] = text_id_to_text.get(value, value)
+                else:
+                    record[dim.short_name] = value
+            writer.writerow(record)
+            if rec_num % 999 == 0:
+                self.store_progress(rec_num + 1)
+            if rec_num % 99999 == 0:
+                logger.debug('Stored %d records: %.2f s', rec_num, monotonic() - start)
         self.store_progress(rec_num + 1)
