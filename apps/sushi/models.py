@@ -107,6 +107,7 @@ class BrokenCredentialsMixin(models.Model):
     first_broken_attempt = models.OneToOneField(
         'SushiFetchAttempt',
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         help_text="Which was the first broken attempt",
     )
@@ -114,6 +115,7 @@ class BrokenCredentialsMixin(models.Model):
         max_length=20,
         choices=BROKEN_CHOICES,
         null=True,
+        blank=True,
         help_text="Indication that credentails are broken",
     )
 
