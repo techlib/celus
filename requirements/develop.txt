@@ -30,7 +30,7 @@ defusedxml==0.6.0; python_version >= "3.6" and python_full_version < "3.0.0" or 
 distlib==0.3.1; python_full_version >= "3.6.1"
 django-allauth==0.41.0
 django-anymail==7.1.0
-django-cachalot==2.3.2
+django-cachalot @ git+https://github.com/noripyt/django-cachalot.git@6826ec6e4db4b4d886d8f50fc5ea36d925ea479b
 django-celery-results==2.0.1
 django-debug-toolbar==2.2; python_version >= "3.5"
 django-error-report==0.2.0

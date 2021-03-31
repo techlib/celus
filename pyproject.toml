@@ -23,7 +23,7 @@ Django = "~3.1.3"
 django-allauth = "~0.41.0"
 django-anymail = "~7.1.0"
 django-celery-results = "~2.0.0"
-django-cachalot =  "2.3.2" #{git = "https://github.com/beda42/django-cachalot.git", rev = "154ec37662e"}
+django-cachalot = {git = "https://github.com/noripyt/django-cachalot.git", rev = "6826ec6e4db4b4d886d8f50fc5ea36d925ea479b"}
 django-error-report = "~0.2.0"
 django-modeltranslation = "~0.15.0"
 django-mptt = "~0.11.0"
