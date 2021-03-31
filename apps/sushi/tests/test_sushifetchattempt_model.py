@@ -326,6 +326,7 @@ class TestSushiFetchAttemptModel:
             ("FAILURE", 404, ErrorCode.TOO_MANY_REQUESTS, False, None, BC.BROKEN_HTTP),
             ("BROKEN", 200, ErrorCode.REPORT_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
             ("FAILURE", 200, ErrorCode.REPORT_VERSION_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
+            ("FAILURE", 400, ErrorCode.INVALID_REPORT_FILTER, False, None, BC.BROKEN_SUSHI),
         ),
     )
     def test_update_broken(
