@@ -66,5 +66,7 @@ class TitleAdmin(admin.ModelAdmin):
 @admin.register(models.PlatformTitle)
 class PlatformTitleAdmin(admin.ModelAdmin):
 
-    list_display = ['platform', 'organization', 'title']
+    list_display = ['platform', 'organization', 'title', 'date']
     list_filter = ['platform', 'organization']
+    readonly_fields = ['platform', 'organization', 'title', 'date']
+    search_fields = ['platform__name', 'title__name']
