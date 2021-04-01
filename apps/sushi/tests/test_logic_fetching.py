@@ -138,7 +138,6 @@ class TestHoleFillingMachinery(object):
         holes = find_holes_in_data()
         assert len(holes) == 0
 
-    @pytest.mark.now
     def test_retry_holes_with_new_credentials_task(
         self, settings, organizations, report_type_nd, celery_session_worker
     ):

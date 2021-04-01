@@ -91,7 +91,6 @@ class TestUserSync(object):
         assert User.objects.count() == 1
         assert UserOrganization.objects.count() == 1
 
-    @pytest.mark.now
     def test_sync_of_one_user(self, data_source):
         """
         Test that when we sync only one user, the other user-org links are not removed
