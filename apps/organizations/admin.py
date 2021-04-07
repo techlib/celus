@@ -7,7 +7,7 @@ from . import models
 @admin.register(models.Organization)
 class OrganizationAdmin(MPTTModelAdmin):
 
-    list_display = ['internal_id', 'short_name', 'name', 'ico', 'source']
+    list_display = ['short_name', 'internal_id', 'name', 'ico', 'source']
     search_fields = ['internal_id', 'short_name', 'name', 'ico']
     list_filter = ['source']
     list_select_related = ['source']
