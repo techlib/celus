@@ -1,3 +1,5 @@
+<i18n lang="yaml" src="@/locales/dialog.yaml" />
+
 <i18n>
 en:
     email_not_verified: Your email is not verified
@@ -108,7 +110,11 @@ cs:
 
         <v-snackbar v-model="snackbarShow" :color="snackbarColor">
           {{ snackbarText }}
-          <v-btn dark text @click="hideSnackbar"> Close </v-btn>
+          <template #action="{ attrs }">
+            <v-btn dark text @click="hideSnackbar" v-bind="attrs">{{
+              $t("close")
+            }}</v-btn>
+          </template>
         </v-snackbar>
       </v-container>
     </v-main>

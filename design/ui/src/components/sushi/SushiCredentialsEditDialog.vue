@@ -22,7 +22,6 @@ en:
   optional_args: Extra attributes - fill only if instructed by provider
   optional_args_tooltip: The following section is used for attributes which are only used by some providers. If the credentials given to you by the provider contain fields that do not correspond to any of the fields above, you can fill them in here.
   really_delete: Do you really want to delete these credentials? (Downloaded data will be preserved)
-  confirm_delete: Confirm delete
   broken: These credentials were marked as broken. Harvesting will be disabled until the credentials are changed.
   broken_unbreak_manually:
     If you think that the credentials should not be marked as broken anymore (for example because there
@@ -59,7 +58,6 @@ cs:
   optional_args: Další parametry - vyplňte pouze pokud to poskytovatel vyžaduje
   optional_args_tooltip: Následující sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
   really_delete: Chcete opravdu smazat tyto přihlašovací údaje? (Stažená data budou zachována)
-  confirm_delete: Potvrďte smazání
   broken: Tyto přihlašovací údaje byly označené jako nefunkční. Stahování bude vypnuto dokud nebudou údaje upraveny.
   broken_unbreak_manually:
     Pokud se domníváte, že by údaje neměly být označeny jako nefunkční (např. protože byl vyřešen problém s konektivitou

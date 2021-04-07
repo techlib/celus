@@ -17,10 +17,14 @@ en:
     analytics: Analytics
     overlap_analysis_titles: Titles on multiple platforms
     overlap_analysis_platforms: Platform overlap
+    flexitable: Advanced reporting
     sushi: SUSHI
     configuration: Configuration
     data_management: Data management
     subscriptions: Subscriptions
+    exports: Exports
+    ad_hoc_report: Ad hoc report
+    flexi_reports: Reports
   menu: Menu
   organization: Organization
   platform: Platform
@@ -61,6 +65,8 @@ en:
     total_interest: Total interest
     ratios: Ratio
     organizations: Organizations
+    primary_dimension: Rows
+    access_level: Access level
   titles: Titles
   overview: Overview
   chart:
@@ -104,6 +110,16 @@ en:
     total: Total
     platform: Platform
     finished: Finished
+    year: Year
+    year_and_month: Year and month
+    organization: Organization
+    filters: Filters
+    filter_settings: Filter settings
+    rows: Rows
+    columns: Columns
+    file_size: File size
+    exported_data: Exported data
+    report_output: Report output
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -128,6 +144,8 @@ en:
     show_chart: Show charts
     delete: Delete
     save: Save
+    save_changes: Save changes
+    save_report: Save report
   in_czech: Czech
   in_english: English
   cover_image: Cover image
@@ -136,6 +154,7 @@ en:
   celus_version: Celus version
   warnings:
     select_one_title_type: Select at least one publication type
+  blank_value: -- blank --
 
 cs:
   pages:
@@ -156,10 +175,14 @@ cs:
     analytics: Analytické nástroje
     overlap_analysis_titles: Tituly na více platformách
     overlap_analysis_platforms: Překryv platforem
+    flexitable: Pokročilý reporting
     sushi: SUSHI
     configuration: Konfigurace
     data_management: Správa dat
     subscriptions: Předplatné
+    exports: Exporty
+    ad_hoc_report: Ad hoc report
+    flexi_reports: Reporty
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -200,6 +223,8 @@ cs:
     total_interest: Celkový zájem
     ratios: Rozložení
     organizations: Organizace
+    primary_dimension: Řádky
+    access_level: Úroveň přístupu
   titles: Tituly
   overview: Přehled
   chart:
@@ -243,6 +268,16 @@ cs:
     total: Celkem
     platform: Platforma
     finished: Dokončeno
+    year: Rok
+    year_and_month: Rok a měsíc
+    organization: Organizace
+    filters: Filtry
+    filter_settings: Nastavení filtrů
+    rows: Řádky
+    columns: Sloupce
+    file_size: Velikost souboru
+    exported_data: Exportovaná data
+    report_output: Výstup reportu
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu
@@ -267,6 +302,8 @@ cs:
     show_chart: Zobrazit grafy
     delete: Smazat
     save: Uložit
+    save_changes: Uložit změny
+    save_report: Uložit report
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky
@@ -275,3 +312,4 @@ cs:
   celus_version: Celus verze
   warnings:
     select_one_title_type: Vyberte alespoň jeden typ publikace
+  blank_value: -- prázdná hodnota --

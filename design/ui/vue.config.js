@@ -16,20 +16,21 @@ module.exports = {
       "/api/": {
         target: devURLBase,
         changeOrigin: true,
-        ws: true,
+        ws: true
       },
       "/static/": {
         target: devURLBase,
         changeOrigin: true,
-        ws: true,
+        ws: true
       },
       "/media/": {
         target: devURLBase,
         changeOrigin: true,
-        ws: true,
-      },
+        ws: true
+      }
     },
     overlay: process.env.BUILD == "yes" ? false : { errors: false },
+    port: process.env.DEV_SERVER_PORT
   },
 
   //filenameHashing: false,
@@ -40,8 +41,8 @@ module.exports = {
       locale: "en",
       fallbackLocale: "en",
       localeDir: "locales",
-      enableInSFC: true,
-    },
+      enableInSFC: true
+    }
   },
 
   configureWebpack: {
@@ -56,12 +57,12 @@ module.exports = {
         SENTRY_URL: JSON.stringify(`${process.env.SENTRY_URL_JS || ""}`),
         SENTRY_ENVIRONMENT: JSON.stringify(
           `${process.env.SENTRY_ENVIRONMENT || ""}`
-        ),
-      }),
-    ],
+        )
+      })
+    ]
   },
 
-  chainWebpack: (config) => {
+  chainWebpack: config => {
     config.module
       .rule("i18n")
       .resourceQuery(/blockType=i18n/)
@@ -76,5 +77,5 @@ module.exports = {
 
   transpileDependencies: ["vuex-persist", "vuetify"], //'lodash', 'lodash.*'],
 
-  lintOnSave: false,
+  lintOnSave: false
 };

@@ -113,9 +113,12 @@ en:
 
 <script>
 import axios from "axios";
+import formRulesMixin from "@/mixins/formRulesMixin";
 
 export default {
   name: "PasswordResetPage",
+
+  mixins: [formRulesMixin],
 
   data() {
     return {
@@ -126,10 +129,6 @@ export default {
       errorObj: null,
       password: "",
       showPassword: false,
-      rules: {
-        required: (value) => !!value || this.$t("required"),
-        min: (v) => v.length >= 8 || this.$t("min_pwd_length"),
-      },
       success: false,
       attemptFinished: false, // was attempt to reset made?
     };

@@ -7,6 +7,7 @@ from logs.tasks import (
     import_new_sushi_attempts_task,
     smart_interest_sync_task,
     sync_materialized_reports_task,
+    update_report_approx_record_count_task,
 )
 from recache.tasks import remove_old_cached_queries_task, find_and_renew_first_due_cached_query_task
 from scheduler.tasks import plan_schedulers_triggering, update_automatic_harvesting
@@ -37,6 +38,7 @@ class Command(BaseCommand):
         'find_and_renew_first_due_cached_query_task': find_and_renew_first_due_cached_query_task,
         'plan_schedulers_triggering': plan_schedulers_triggering,
         'update_automatic_harvesting': update_automatic_harvesting,
+        'update_report_approx_record_count_task': update_report_approx_record_count_task,
     }
 
     def add_arguments(self, parser):

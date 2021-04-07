@@ -9,6 +9,8 @@ router.register(r'metric', views.MetricViewSet)
 router.register(r'import-batch', views.ImportBatchViewSet)
 router.register(r'manual-data-upload', views.ManualDataUploadViewSet, basename='manual-data-upload')
 router.register(r'interest-groups', views.InterestGroupViewSet)
+router.register(r'dimension-text', views.DimensionTextViewSet, basename='dimension-text')
+router.register(r'flexible-report', views.FlexibleReportViewSet, basename='flexible-report')
 
 urlpatterns = [
     path(
@@ -20,6 +22,12 @@ urlpatterns = [
         'raw-data-export/progress/<handle>',
         views.RawDataDelayedExportProgressView.as_view(),
         name='raw_data_export_progress',
+    ),
+    path('flexible-slicer/', views.FlexibleSlicerView.as_view(), name='flexible-slicer'),
+    path(
+        'flexible-slicer/possible-values/',
+        views.FlexibleSlicerPossibleValuesView.as_view(),
+        name='flexible-slicer-possible-values',
     ),
 ]
 

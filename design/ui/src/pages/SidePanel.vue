@@ -162,6 +162,24 @@ export default {
                 },
               ],
             },
+            {
+              title: this.$i18n.t("pages.flexitable"),
+              icon: "fa fa-border-all",
+              items: [
+                {
+                  title: this.$i18n.t("pages.flexi_reports"),
+                  linkTo: "flexireports",
+                },
+                {
+                  title: this.$i18n.t("pages.ad_hoc_report"),
+                  linkTo: "flexitable",
+                },
+                {
+                  title: this.$t("pages.exports"),
+                  linkTo: "exports",
+                },
+              ],
+            },
           ],
           show: true,
         },

@@ -10,6 +10,12 @@ from rest_framework.serializers import ModelSerializer, IntegerField
 from .models import Platform, Title
 
 
+class SimplePlatformSerializer(ModelSerializer):
+    class Meta:
+        model = Platform
+        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url')
+
+
 class PlatformSerializer(ModelSerializer):
     class Meta:
         model = Platform

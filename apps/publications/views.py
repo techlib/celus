@@ -19,6 +19,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
+from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
 from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
@@ -37,7 +38,7 @@ from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from organizations.models import Organization
 from publications.models import Platform, Title, PlatformTitle
-from publications.serializers import TitleCountSerializer
+from publications.serializers import TitleCountSerializer, SimplePlatformSerializer
 from recache.util import recache_queryset
 from .serializers import (
     PlatformSerializer,
@@ -102,7 +103,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         return Response(PlatformKnowledgebaseSerializer(platform).data)
 
 
-class PlatformViewSet(ReadOnlyModelViewSet, CreateModelMixin):
+class PlatformViewSet(CreateModelMixin, ReadOnlyModelViewSet):
 
     serializer_class = PlatformSerializer
 
@@ -125,7 +126,7 @@ class PlatformViewSet(ReadOnlyModelViewSet, CreateModelMixin):
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
-        # get the soruce of the organization
+        # get the source of the organization
         organization_id = self.kwargs['organization_pk']
         try:
             source = DataSource.objects.get(
@@ -211,68 +212,6 @@ class PlatformViewSet(ReadOnlyModelViewSet, CreateModelMixin):
                 result[platform_id] = []
             result[platform_id].append(title_id)
         return Response(result)
-
-
-class DetailedPlatformViewSet(ReadOnlyModelViewSet):
-
-    serializer_class = DetailedPlatformSerializer
-
-    def get_queryset(self):
-        """
-        Should return only platforms for the requested organization.
-        Should include title_count which counts titles on the platform
-        """
-        try:
-            interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
-        except ReportType.DoesNotExist:
-            raise ValueError('No interest report type exists')
-        org_filter = organization_filter_from_org_id(
-            self.kwargs.get('organization_pk'), self.request.user
-        )
-        # filters for the suitable access logs
-        count_filter = extend_query_filter(org_filter, 'accesslog__')
-        # we prefilter using the same filter as for count annotation
-        # but without the interest_group filter
-        prefilter = dict(count_filter)
-        # parameters for annotation defining an annotation for each of the interest groups
-        interest_annot_params = interest_annotation_params(count_filter, interest_rt)
-        # add more filters for dates
-        date_filter_params = date_filter_from_params(self.request.GET, key_start='accesslog__')
-        if date_filter_params:
-            count_filter.update(date_filter_params)
-            prefilter.update(date_filter_params)
-
-        # the following creates the interest dict attr from the interest annotations
-        if self.lookup_field not in self.kwargs:
-            # we are not filtering by id, so we are getting a list and thus adding interest here
-            # otherwise we will do it in get_object
-            # also we filter only platforms that have some data for the organization at hand
-            result = (
-                Platform.objects.filter(**org_filter)
-                .filter(**prefilter)
-                .annotate(
-                    title_count=Count('accesslog__target', distinct=True, filter=Q(**count_filter)),
-                    **interest_annot_params,
-                )
-            )
-            extract_interests_from_objects(interest_rt, result)
-        else:
-            # we are filtering by ID and thus getting only one object
-            # in this case we drop the prefilter so that it is possible to get data
-            # for platforms that are not connected to the organization
-            result = Platform.objects.filter(**org_filter).annotate(
-                title_count=Count('accesslog__target', distinct=True, filter=Q(**count_filter)),
-                **interest_annot_params,
-            )
-        return result
-
-    def get_object(self):
-        # we need to enrich the result here as the interests added in get_queryset would not
-        # survive the filtering done super().get_object()
-        obj = super().get_object()
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
-        extract_interests_from_objects(interest_rt, [obj])
-        return obj
 
 
 class PlatformInterestViewSet(ViewSet):
@@ -364,6 +303,31 @@ class PlatformInterestViewSet(ViewSet):
             .annotate(**interest_annot_params)
         )
         return Response(result)
+
+
+class GlobalPlatformsViewSet(ReadOnlyModelViewSet):
+
+    permission_classes = [ViewPlatformPermission]
+    serializer_class = SimplePlatformSerializer
+    queryset = Platform.objects.all()
+    filter_backends = [PkMultiValueFilterBackend]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.filter(pk__in=self.request.user.accessible_platforms())
+        return qs.order_by('name')
+
+
+class GlobalTitleViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = TitleSerializer
+    queryset = Title.objects.all()
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [PkMultiValueFilterBackend]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.order_by('name')
 
 
 class BaseTitleViewSet(ReadOnlyModelViewSet):

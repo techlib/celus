@@ -15,10 +15,6 @@ root_router = SimpleRouter()
 org_sub_router = NestedSimpleRouter(organization_router, r'organization', lookup='organization')
 org_sub_router.register(r'platform', views.PlatformViewSet, basename='platform')
 org_sub_router.register(r'all-platform', views.AllPlatformsViewSet, basename='all-platforms')
-# TODO: following is not used anymore
-org_sub_router.register(
-    r'detailed-platform', views.DetailedPlatformViewSet, basename='detailed-platform'
-)
 org_sub_router.register(
     r'platform-interest', views.PlatformInterestViewSet, basename='platform-interest'
 )
@@ -67,6 +63,9 @@ platform_title_sub_router.register(
     views.PlatformTitleReportDataViewViewSet,
     basename='platform-title-report-data-views',
 )
+
+root_router.register(r'platform', views.GlobalPlatformsViewSet, basename='global-platforms')
+root_router.register(r'title', views.GlobalTitleViewSet, basename='global-titles')
 
 urlpatterns = [path('run-task/erms-sync-platforms', views.StartERMSSyncPlatformsTask.as_view())]
 

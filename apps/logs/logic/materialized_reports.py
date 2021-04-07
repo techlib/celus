@@ -2,7 +2,7 @@ import logging
 from time import time, monotonic
 from typing import Iterable, Callable
 
-from django.db.models import Sum, Q, QuerySet, FloatField
+from django.db.models import Sum, Q, QuerySet, FloatField, Count
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Cast
 from django.db.transaction import atomic
@@ -181,3 +181,12 @@ def recompute_materialized_reports(progress_callback: Callable[[int], None] = No
     """
     remove_materialized_accesslogs(progress_callback=progress_callback)
     sync_materialized_reports()
+
+
+def update_report_approx_record_count():
+    """
+    Synchronizes the `approx_record_count` values for all report types
+    """
+    for rt in ReportType.objects.all().annotate(record_count=Count('accesslog')):
+        rt.approx_record_count = rt.record_count
+        rt.save()

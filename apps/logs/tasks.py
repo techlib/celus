@@ -13,7 +13,10 @@ from logs.logic.materialized_interest import (
     recompute_interest_by_batch,
     smart_interest_sync,
 )
-from logs.logic.materialized_reports import sync_materialized_reports
+from logs.logic.materialized_reports import (
+    sync_materialized_reports,
+    update_report_approx_record_count,
+)
 from sushi.models import SushiFetchAttempt
 
 
@@ -99,3 +102,13 @@ def sync_materialized_reports_task():
     """
     with cache_based_lock('sync_materialized_reports_task', blocking_timeout=10):
         sync_materialized_reports()
+
+
+@celery.shared_task
+@email_if_fails
+def update_report_approx_record_count_task():
+    """
+    Synchronizes the `approx_record_count` values for all report types
+    """
+    with cache_based_lock('update_report_approx_record_count_task', blocking_timeout=10):
+        update_report_approx_record_count()

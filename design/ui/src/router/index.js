@@ -105,6 +105,29 @@ export default new Router({
       component: () => import("../pages/PlatformOverlapAnalysisPage"),
     },
     {
+      path: "/analytics/flexitable",
+      name: "flexitable",
+      component: () => import("../pages/FlexiTablePage.vue"),
+    },
+    {
+      path: "/analytics/flexible-reports/:reportId",
+      name: "flexireport",
+      component: () => import("../pages/FlexiTablePage.vue"),
+      props: (route) => ({
+        reportId: Number.parseInt(route.params.reportId, 10),
+      }),
+    },
+    {
+      path: "/analytics/flexible-reports",
+      name: "flexireports",
+      component: () => import("../pages/FlexibleReportsPage.vue"),
+    },
+    {
+      path: "/analytics/exports",
+      name: "exports",
+      component: () => import("../pages/ExportOverviewPage.vue"),
+    },
+    {
       path: "/admin/management/",
       name: "management",
       component: () => import("../pages/ManagementPage.vue"),

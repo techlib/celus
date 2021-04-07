@@ -25,6 +25,8 @@ from .models import (
     ImportBatch,
     ReportTypeToDimension,
     ReportInterestMetric,
+    DimensionText,
+    FlexibleReport,
 )
 
 
@@ -360,4 +362,29 @@ class ManualDataUploadVerboseSerializer(ModelSerializer):
             'extra',
             'can_edit',
             'owner_level',
+        )
+
+
+class DimensionTextSerializer(ModelSerializer):
+    class Meta:
+        model = DimensionText
+        fields = ('pk', 'text', 'text_local', 'text_local_en', 'text_local_cs')
+
+
+class FlexibleReportSerializer(ModelSerializer):
+
+    last_updated_by = HiddenField(default=CurrentUserDefault())
+
+    class Meta:
+        model = FlexibleReport
+        fields = (
+            'pk',
+            'name',
+            'owner',
+            'owner_organization',
+            'last_updated',
+            'last_updated_by',
+            'created',
+            'report_config',
+            'config',
         )

@@ -21,6 +21,7 @@ urlpatterns = [
     path('', include('charts.urls')),
     path('', include('annotations.urls')),
     path('', include('cost.urls')),
+    path('export/', include('export.urls')),
     path('scheduler/', include('scheduler.urls')),
     path('deployment/', include('deployment.urls')),
 ]

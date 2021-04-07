@@ -1,0 +1,22 @@
+en:
+  access_level_tt:
+    user: Personal report - visible only to you
+    org: Organization level report - visible to members of one organization
+    sys: Consortium level report - visible to everone
+  access_level:
+    user: Personal
+    org: Organization
+    sys: Consortium
+  run_report_tt: Show report output in table
+  export_tt: Export report into CSV
+  view_report_tt: View report definition details
+  edit_report_tt: Edit report definition
+  copy_report_tt: Create copy of report
+  copy_report: Create report copy
+  really_delete: Do you really want to delete report <b>{title}</b>? <br/><br/>This action cannot be undone.
+  delete_success: Report was deleted
+  change_name: Change title
+  copy_success: Report was successfully copied
+  copy_error: Error copying report
+  original_title: Original title
+  new_title: New title

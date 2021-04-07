@@ -5,7 +5,7 @@ export default {
   state: {
     email: "",
     loginError: null,
-    authenticated: false,
+    authenticated: false
   },
 
   getters: {
@@ -25,7 +25,7 @@ export default {
     },
     canLogout(state, getters) {
       return getters.usesPasswordLogin; // we only know how to log-out when password login is used
-    },
+    }
   },
 
   actions: {
@@ -41,7 +41,7 @@ export default {
         );
 
         commit("setAuthenticated", true);
-        dispatch("setShowLoginDialog", false);
+        dispatch("setShowLoginDialog", { show: false });
         dispatch("loadUserData");
       } catch (error) {
         commit("setLoginError", { error: error });
@@ -58,7 +58,7 @@ export default {
       } catch (error) {
         dispatch("showSnackbar", {
           content: "Error logging out:" + error,
-          color: "error",
+          color: "error"
         });
         return;
       }
@@ -71,7 +71,7 @@ export default {
         {
           email: email,
           password1: password1,
-          password2: password2,
+          password2: password2
         },
         { privileged: true }
       );
@@ -95,7 +95,7 @@ export default {
         { new_password1: password, new_password2: password },
         { headers: { "X-CSRFToken": csrftoken } }
       );
-    },
+    }
   },
 
   mutations: {
@@ -104,6 +104,6 @@ export default {
     },
     setAuthenticated(state, authenticated) {
       state.authenticated = authenticated;
-    },
-  },
+    }
+  }
 };

@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'recache.apps.RecacheConfig',
     'knowledgebase.apps.KnowledgebaseConfig',
+    'export.apps.ExportConfig',
     'rest_pandas',
     'error_report',
     'django_prometheus',
@@ -276,6 +277,7 @@ CELERY_TASK_ROUTES = {
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'core.tasks.test': {'queue': 'normal'},
+    'update_report_approx_record_count_task': {'queue': 'interest'},
     'logs.tasks.export_raw_data_task': {'queue': 'export'},
 }
 
@@ -315,6 +317,10 @@ CELERY_BEAT_SCHEDULE = {
     'scheduler_update_automatic_harvesting': {
         'task': 'scheduler.tasks.update_automatic_harvesting',
         'schedule': crontab(minute=50, hour=23),  # every day at 23:50
+    },
+    'update_report_approx_record_count_task': {
+        'task': 'update_report_approx_record_count_task',
+        'schedule': crontab(hour=1, minute=13),  # every day at 1:13
     },
 }
 

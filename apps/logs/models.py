@@ -1,15 +1,17 @@
 import codecs
 import csv
 import os
+import re
 import typing
+from copy import deepcopy
+from enum import Enum
 
 import magic
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
-from django.db.models import Sum, Index
+from django.db.models import Index, UniqueConstraint, Q
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
@@ -58,6 +60,10 @@ class ReportType(models.Model):
         help_text="All data materialized before this data will be recomputed - can be used to "
         "force recomputation",
     )
+    approx_record_count = models.PositiveBigIntegerField(
+        default=0,
+        help_text='Automatically filled in by periodic check to have some fast measure of the record count',
+    )
 
     class Meta:
         unique_together = (('short_name', 'source'),)
@@ -71,6 +77,8 @@ class ReportType(models.Model):
 
     @cached_property
     def dimensions_sorted(self):
+        if self.materialization_spec:
+            return self.materialization_spec.base_report_type.dimensions_sorted
         return list(self.dimensions.all())
 
     def validate_unique(self, exclude=None):
@@ -85,6 +93,20 @@ class ReportType(models.Model):
     @property
     def public(self):
         return self.source is None
+
+    def dimension_by_attr_name(self, attr_name: str) -> 'Dimension':
+        """
+        Given an attribute name like `dim1` return the appropriate dimension instance
+        """
+        m = re.match(r'dim(\d)', attr_name)
+        if m:
+            idx = int(m.group(1)) - 1
+            return self.dimensions_sorted[idx] if idx < len(self.dimensions_sorted) else None
+        return None
+
+    @classmethod
+    def is_explicit_dimension(cls, dim_name: str) -> bool:
+        return bool(re.match(r'dim(\d)', dim_name))
 
 
 class ReportMaterializationSpec(models.Model):
@@ -123,6 +145,14 @@ class ReportMaterializationSpec(models.Model):
     def description(self):
         _keep, missing = self.split_attributes()
         return ' -' + ' -'.join(missing)
+
+    @cached_property
+    def kept_dimensions(self):
+        return self.split_attributes()[0]
+
+    @cached_property
+    def removed_dimensions(self):
+        return self.split_attributes()[1]
 
     def split_attributes(self, add_id_postfix=False) -> ([], []):
         """
@@ -245,7 +275,14 @@ class Dimension(models.Model):
 
     class Meta:
         ordering = ('reporttypetodimension',)
-        unique_together = (('short_name', 'source'),)
+        # the following make name and source unique together even if source is NULL which is not
+        # the case when simply using unique_together
+        constraints = [
+            UniqueConstraint(fields=['short_name', 'source'], name='short_name_source_not_null'),
+            UniqueConstraint(
+                fields=['short_name'], condition=Q(source=None), name='short_name_source_null'
+            ),
+        ]
 
     def __str__(self):
         return '{} ({})'.format(self.short_name, self.get_type_display())
@@ -500,3 +537,158 @@ class ManualDataUpload(models.Model):
         if char in b'[{':
             return True
         return False
+
+
+class FlexibleReport(models.Model):
+    class Level(Enum):
+        PRIVATE = 1
+        ORGANIZATION = 2
+        CONSORTIUM = 3
+
+    name = models.CharField(max_length=120)
+    created = models.DateTimeField(default=now)
+    last_updated = models.DateTimeField(auto_now=True)
+    last_updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='owned_flexible_reports',
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
+    )
+    owner_organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, null=True, blank=True
+    )
+    report_config = models.JSONField(
+        default=dict, help_text='Serialized configuration of the report', blank=True
+    )
+
+    serialization_models = {
+        'report_type': {'model': ReportType, 'key': 'short_name'},
+        'metric': {'model': Metric, 'key': 'short_name'},
+        **{f'dim{i}': {'model': DimensionText, 'key': 'text'} for i in range(1, 8)},
+    }
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def access_level(self):
+        if self.owner_organization:
+            return self.Level.ORGANIZATION
+        elif self.owner:
+            return self.Level.PRIVATE
+        return self.Level.CONSORTIUM
+
+    @classmethod
+    def create_from_slicer(cls, slicer: 'FlexibleDataSlicer', **kwargs):
+        return FlexibleReport.objects.create(
+            report_config=cls.serialize_slicer_config(slicer.config()), **kwargs
+        )
+
+    @classmethod
+    def serialize_slicer_config(cls, config: dict):
+        """
+        Prepares the slicer config for storage. The most important thing is that we need to
+        translate primary keys to some more robust identifier in order to allow copying of
+        public reports between Celus instances.
+        """
+        new_config = {
+            **config,
+            'filters': [cls.serialize_slicer_filter(fltr) for fltr in config['filters']],
+            # TODO: turn on after demo
+            #'order_by': cls.resolve_order_by(config)
+        }
+        return new_config
+
+    @classmethod
+    def serialize_slicer_filter(cls, fltr: dict):
+        model_desc = cls.serialization_models.get(fltr['dimension'])
+        if model_desc:
+            model_cls = model_desc['model']
+            key_attr = model_desc['key']
+            fltr['values'] = [
+                obj[key_attr]
+                for obj in model_cls.objects.filter(pk__in=fltr['values']).values(key_attr)
+            ]
+        return fltr
+
+    def deserialize_slicer_config(self):
+        config = deepcopy(self.report_config)
+        for fltr in config.get('filters', []):
+            dim_name = fltr['dimension']
+            model_desc = self.serialization_models.get(dim_name)
+            if model_desc:
+                model_cls = model_desc['model']
+                key_attr = model_desc['key']
+                extra_filters = {}
+                if ReportType.is_explicit_dimension(dim_name):
+                    # explicit dimensions need an extra query parameter to properly resolve text
+                    # back to pk
+                    dim = self.resolve_explicit_dimension(dim_name)
+                    if dim:
+                        extra_filters = {'dimension_id': dim.pk}
+                fltr['values'] = list(
+                    model_cls.objects.filter(
+                        **{f'{key_attr}__in': fltr['values']}, **extra_filters
+                    ).values_list('pk', flat=True)
+                )
+        return config
+
+    @property
+    def config(self):
+        return self.deserialize_slicer_config()
+
+    def resolve_explicit_dimension(self, dim_name: str) -> Dimension:
+        """
+        When dimension is called `dimX`, its meaning cannot be resolved without checking which
+        report_type is active for this report. This is what we do here.
+        """
+        if dim_name.startswith('dim'):
+            # this is an explicit dimension
+            rts = self.used_report_types()
+            if len(rts) == 1:
+                return rts[0].dimension_by_attr_name(dim_name)
+        return None
+
+    @classmethod
+    def resolve_order_by(cls, config):
+        """
+        Order by may be something like `grp-10` or `grp-20,2020`. We need to map it similarly as
+        filters, etc.
+        :return:
+        """
+        ret = []
+        order_by = config.get('order_by')
+        if not order_by:
+            return []
+        ob_parts = order_by.split(',')
+        for i, ob in enumerate(ob_parts):
+            # group_by and order_by should be of the same length
+            if ob.startswith('grp-'):
+                groups = config.get('group_by')
+                if i < len(groups):
+                    group = groups[i]
+                    pk = int(ob[4:])
+                    ser_model = cls.serialization_models.get(group)
+                    if ser_model:
+                        obj = ser_model['model'].objects.get(pk=pk)
+                        ret.append(getattr(obj, ser_model['key']))
+                    else:
+                        raise ValueError(f'unsupported order by: {ob}')
+                else:
+                    raise ValueError(f'unexpected ordering without matching group: {ob}')
+            else:
+                ret.append(ob)
+        return ret
+
+    def used_report_types(self) -> [ReportType]:
+        rt_filters = [
+            f for f in self.report_config.get('filters', []) if f['dimension'] == 'report_type'
+        ]
+        rts = []
+        for rt_filter in rt_filters:
+            rts += list(ReportType.objects.filter(short_name__in=rt_filter['values']))
+        return rts

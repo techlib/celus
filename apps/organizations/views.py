@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework import status
 
+from core.filters import PkMultiValueFilterBackend
 from core.logic.bins import bin_hits
 from core.logic.dates import date_filter_from_params, month_end
 from core.models import DataSource
@@ -24,7 +25,7 @@ from publications.models import PlatformTitle, Platform
 from publications.serializers import PlatformSerializer
 from recache.util import recache_queryset
 from sushi.models import SushiCredentials
-from .models import UserOrganization
+from .models import UserOrganization, Organization
 from .serializers import OrganizationSerializer, OrganizationSimpleSerializer
 
 
@@ -43,27 +44,23 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         (201, 500),
         (501, 1000),
     ]
+    queryset = Organization.objects.all()
+    filter_backends = [PkMultiValueFilterBackend]
 
     def get_queryset(self):
         """
         Should return only organizations associated with the current user
         :return:
         """
-        return (
-            self.request.user.accessible_organizations()
-            .annotate(
-                is_admin=Count(
-                    'userorganization',
-                    filter=Q(
-                        userorganization__is_admin=True, userorganization__user=self.request.user
-                    ),
-                ),
-                is_member=Count(
-                    'userorganization', filter=Q(userorganization__user=self.request.user)
-                ),
-            )
-            .order_by('name')
-        )
+        qs = super().get_queryset()
+        qs = qs.filter(pk__in=self.request.user.accessible_organizations())
+        return qs.annotate(
+            is_admin=Count(
+                'userorganization',
+                filter=Q(userorganization__is_admin=True, userorganization__user=self.request.user),
+            ),
+            is_member=Count('userorganization', filter=Q(userorganization__user=self.request.user)),
+        ).order_by('name')
 
     @action(detail=True, url_path='sushi-credentials-versions')
     def sushi_credentials_versions(self, request, pk):

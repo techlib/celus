@@ -9,6 +9,9 @@ en:
   min_pwd_length: Minimum 8 characters
   required: This value cannot be empty
   confirm: Confirm
+  confirm_delete: Confirm delete
+  copy: Copy
+  email_required: Please enter a valid email address
 
 cs:
   value_required: Toto pole je povinné
@@ -21,3 +24,6 @@ cs:
   min_pwd_length: Minimálně 8 znaků
   required: Toto pole nesmí být prázdné
   confirm: Potvrdit
+  confirm_delete: Potvrďte smazání
+  copy: Vytvořit kopii
+  email_required: Zadejte platnou emailovou adresu

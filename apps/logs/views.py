@@ -1,24 +1,28 @@
 import traceback
+from pprint import pprint
 from time import monotonic
 
 from django.core.cache import cache
 from django.core.mail import mail_admins
-from django.db.models import Count
+from django.db.models import Count, Q, Exists, OuterRef
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
 from pandas import DataFrame
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import get_object_or_404, ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_200_OK
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_pandas import PandasView
 
+from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
-from core.models import DataSource
+from core.models import DataSource, REL_ORG_ADMIN
 from core.permissions import (
     OrganizationRequiredInDataForNonSuperusers,
     SuperuserOrAdminPermission,
@@ -31,7 +35,12 @@ from core.permissions import (
 from core.prometheus import report_access_time_summary, report_access_total_counter
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
-from logs.logic.queries import extract_accesslog_attr_query_params, StatsComputer
+from logs.logic.queries import (
+    extract_accesslog_attr_query_params,
+    StatsComputer,
+    FlexibleDataSlicer,
+    SlicerConfigError,
+)
 from logs.models import (
     AccessLog,
     ReportType,
@@ -41,6 +50,7 @@ from logs.models import (
     ImportBatch,
     ManualDataUpload,
     InterestGroup,
+    FlexibleReport,
 )
 from logs.serializers import (
     DimensionSerializer,
@@ -52,6 +62,8 @@ from logs.serializers import (
     ManualDataUploadSerializer,
     InterestGroupSerializer,
     ManualDataUploadVerboseSerializer,
+    DimensionTextSerializer,
+    FlexibleReportSerializer,
 )
 from organizations.logic.queries import organization_filter_from_org_id
 from .tasks import export_raw_data_task
@@ -110,13 +122,48 @@ class Counter5DataView(APIView):
 class ReportTypeViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ReportTypeSerializer
-    queryset = ReportType.objects.all()
+    queryset = ReportType.objects.filter(materialization_spec__isnull=True)
+    filter_backends = [PkMultiValueFilterBackend]
+
+    def get_queryset(self):
+        if 'nonzero-only' in self.request.query_params:
+            return self.queryset.filter(
+                Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk')))
+            )
+        return self.queryset
 
 
 class MetricViewSet(ReadOnlyModelViewSet):
 
     serializer_class = MetricSerializer
     queryset = Metric.objects.all()
+    filter_backends = [PkMultiValueFilterBackend]
+
+
+class DimensionTextViewSet(ReadOnlyModelViewSet):
+
+    serializer_class = DimensionTextSerializer
+    queryset = DimensionText.objects.all()
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [PkMultiValueFilterBackend]
+
+    @property
+    def paginator(self):
+        if 'pks' in self.request.query_params:
+            # if 'pks' are explicitly given, do not paginate and return all
+            return None
+        return super().paginator
+
+    def post(self, request):
+        """
+        To get around possible limits in query string length, we also provide a POST interface
+        for getting data for a list of IDs.
+        It only works if 'pks' attribute is given and does not use pagination
+        """
+        pks = request.data.get('pks', [])
+        dts = DimensionText.objects.filter(pk__in=pks)
+        # we do not paginate when using post
+        return Response(self.get_serializer(dts, many=True).data)
 
 
 class RawDataExportView(PandasView):
@@ -361,3 +408,177 @@ class InterestGroupViewSet(ReadOnlyModelViewSet):
 
     queryset = InterestGroup.objects.all()
     serializer_class = InterestGroupSerializer
+
+
+class FlexibleSlicerView(APIView):
+    def get(self, request):
+        try:
+            slicer = FlexibleDataSlicer.create_from_params(request.query_params)
+            print(slicer.filters)
+            pprint(slicer.config())
+            data = slicer.get_data()
+        except SlicerConfigError as e:
+            return Response(
+                {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
+                status=HTTP_400_BAD_REQUEST,
+            )
+        pagination = StandardResultsSetPagination()
+        page = pagination.paginate_queryset(data, request)
+        return pagination.get_paginated_response(page)
+
+
+class FlexibleSlicerPossibleValuesView(APIView):
+    def get(self, request):
+        dimension = request.query_params.get('dimension')
+        if not dimension:
+            return Response(
+                {'error': {'message': 'the "dimension" param is required', 'code': 'E105'}},
+                status=HTTP_400_BAD_REQUEST,
+            )
+        try:
+            slicer = FlexibleDataSlicer.create_from_params(request.query_params)
+            pprint(slicer.config())
+            q = request.query_params.get('q')
+            pks = None
+            pks_value = request.query_params.get('pks')
+            if pks_value:
+                try:
+                    pks = list(map(int, pks_value.split(',')))
+                except ValueError as e:
+                    return Response({'error': {'message': str(e)}})
+            return Response(
+                slicer.get_possible_dimension_values(
+                    dimension, ignore_self=True, text_filter=q, pks=pks
+                )
+            )
+        except SlicerConfigError as e:
+            return Response(
+                {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+
+class FlexibleReportViewSet(ModelViewSet):
+
+    queryset = FlexibleReport.objects.none()
+    serializer_class = FlexibleReportSerializer
+
+    def get_queryset(self):
+        return FlexibleReport.objects.filter(
+            Q(owner=self.request.user)  # owned by user
+            | Q(owner__isnull=True, owner_organization__isnull=True)  # completely public
+            | Q(
+                owner_organization__in=self.request.user.accessible_organizations()
+            )  # assigned to owner's organization
+        )
+
+    def _preprocess_config(self, request):
+        if 'config' not in request.data:
+            return None
+        slicer = FlexibleDataSlicer.create_from_params(request.data.get('config'))
+        return FlexibleReport.serialize_slicer_config(slicer.config())
+
+    def _get_basic_data(self, request):
+        owner = request.user.pk if 'owner' not in request.data else request.data.get('owner')
+        return {
+            'owner': owner,
+            'owner_organization': (request.data.get('owner_organization')),
+            'name': request.data.get('name'),
+        }
+
+    def _check_write_permissions(self, request, owner, owner_organization):
+        # only superuser can set other user as owner
+        if not (request.user.is_superuser or request.user.is_from_master_organization):
+            if owner not in (None, request.user.pk):
+                raise PermissionDenied(f'Not allowed to set owner {owner}')
+        if owner_organization:
+            rel = request.user.organization_relationship(owner_organization)
+            if rel < REL_ORG_ADMIN:
+                raise PermissionDenied(
+                    f'Not allowed to set owner_organization {owner_organization}'
+                )
+        if not owner and not owner_organization:
+            # this should be consortial access level
+            if not (request.user.is_superuser or request.user.is_from_master_organization):
+                raise PermissionDenied(f'Not allowed to create consortial level report')
+
+    def create(self, request, *args, **kwargs):
+        config = self._preprocess_config(request)
+        if config is None:
+            return Response(
+                {'error': 'Missing "config" parameter for the report'}, status=HTTP_400_BAD_REQUEST
+            )
+        data = {
+            **self._get_basic_data(request),
+            'report_config': config,
+        }
+        self._check_write_permissions(request, data['owner'], data['owner_organization'])
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=HTTP_201_CREATED, headers=headers)
+
+    def _check_update_permissions(self, request, obj: FlexibleReport, delete=False):
+        user = request.user
+
+        # generic permission to edit based on current access_level
+        if obj.access_level == FlexibleReport.Level.PRIVATE:
+            # only owner or superuser may edit
+            if not (user == obj.owner or user.is_superuser or user.is_from_master_organization):
+                raise PermissionDenied(f'Not allowed to change private report')
+        elif obj.access_level == FlexibleReport.Level.ORGANIZATION:
+            # only admin of owner_organization or superuser may edit
+            if not (user.is_superuser or user.is_from_master_organization):
+                rel = request.user.organization_relationship(obj.owner_organization_id)
+                if rel < REL_ORG_ADMIN:
+                    raise PermissionDenied(f'Not allowed to change organization report')
+        else:
+            # only superuser may edit consortium level reports
+            if not (user.is_superuser or user.is_from_master_organization):
+                raise PermissionDenied(f'Not allowed to change consortial report')
+
+        if not delete:
+            # now more specific permissions about who can change access level
+            # we deduce what the owner and owner_organization would be after the update takes place
+            # and check if the current user is allowed to create such a report
+            owner = request.data.get('owner') if 'owner' in request.data else obj.owner_id
+            owner_organization = (
+                request.data.get('owner_organization')
+                if 'owner_organization' in request.data
+                else obj.owner_organization_id
+            )
+            self._check_write_permissions(request, owner, owner_organization)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Permissions for this view should be:
+
+        * private reports (owner != None)
+          - only owner may see and change
+          - only if the owner is org admin or superuser he may raise the access level to
+            organization or consortium
+
+        * organization reports (owner_organization != None)
+          - only admin of organization or superuser may change
+          - only admin of organization or superuser may change accesslevel
+
+        * consortial reports (owner == None and owner_organization == None)
+          - only superuser may change
+          - only superuser may change accesslevel
+        """
+        config = self._preprocess_config(request)
+        report = self.get_object()
+        self._check_update_permissions(request, report)
+        data = {**request.data}
+        if config:
+            data['report_config'] = config
+        serializer = self.get_serializer(report, data=data, partial=kwargs.get('partial'))
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=HTTP_200_OK, headers=headers)
+
+    def destroy(self, request, *args, **kwargs):
+        self._check_update_permissions(request, self.get_object(), delete=True)
+        return super().destroy(request, *args, **kwargs)

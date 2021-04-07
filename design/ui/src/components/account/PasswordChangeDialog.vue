@@ -49,21 +49,20 @@ cs:
 </template>
 <script>
 import { mapActions } from "vuex";
-import validateEmail from "@/libs/email-validation";
+import formRulesMixin from "@/mixins/formRulesMixin";
 
 export default {
   name: "PasswordChangeDialog",
+
+  mixins: [formRulesMixin],
+
   props: {
     value: {},
   },
+
   data() {
     return {
       password: "",
-      rules: {
-        required: (value) => !!value || this.$t("required"),
-        min: (v) => v.length >= 8 || this.$t("min_pwd_length"),
-        email: (v) => !!validateEmail(v) || this.$t("email_required"),
-      },
       showPassword: false,
       passwordEdited: false,
       requestInProgress: false, // if a request was just sent to the backend and is processed
@@ -71,6 +70,7 @@ export default {
       show: this.value,
     };
   },
+
   computed: {
     valid() {
       return this.password.length >= 8;

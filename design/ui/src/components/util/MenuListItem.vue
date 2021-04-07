@@ -79,4 +79,14 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style>
+/*
+the following overrides the default vuetify setting of min-width of 48px for the icon, which
+shortens the text before the icon unnecessarily
+*/
+.v-list-group
+  .v-list-group__header
+  .v-list-item__icon.v-list-group__header__append-icon {
+  min-width: 0;
+}
+</style>

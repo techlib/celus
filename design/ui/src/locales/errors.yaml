@@ -1,0 +1,19 @@
+en:
+  E100: It is not possible to use a report specific dimension for columns unless exactly one report type is selected by a filter.
+  E101: The number of possible columns is too large ({group_count}). Please refine the report configuration.
+  E102: The specified primary dimension ({dimension}) is not supported.
+  E103: The specified primary dimension ({dimension}) is not valid.
+  E104: The attribute 'primary_dimension' must be present in the request.
+  E105: The attribute 'dimension' must be present in the request.
+  E106: At least one dimension must be selected to define the output columns.
+  E107: The queried dimension is not supported.
+
+cs:
+  E100: Není možné vytvořit sloupce z rozměru, který je specifický pro report, pokud není vybrán právě jeden typ reportu.
+  E101: Počet sloupců je příliš velký ({group_count}). Upravte prosím nastavení reportu.
+  E102: Vybraný primární rozměr ({dimension}) není podporovaný.
+  E103: Vybraný primární rozměr ({dimension}) není platný.
+  E104: Požadavek musí obsahovat atribut 'primary_dimension'.
+  E105: Požadavek musí obsahovat atribut 'dimension'.
+  E106: Musí být vybrán alespoň jeden rozměr definující sloupce výstupu.
+  E107: Dotazovaný rozměr není podporovaný.

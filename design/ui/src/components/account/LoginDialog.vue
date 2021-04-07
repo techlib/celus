@@ -39,7 +39,6 @@ en:
   login_from_register: "Already have account? {login_here}"
   login_link: Login here.
   signup_error: Error during sign-up
-  email_required: Please enter a valid email address
 
 cs:
   not_logged_in: Přihlášení
@@ -71,7 +70,6 @@ cs:
   login_from_register: "Již máte účet? {login_here}"
   login_link: Přihlašte se zde.
   signup_error: Chyba při vytváření účtu
-  email_required: Zadejte platnou emailovou adresu
 </i18n>
 
 <template>
@@ -309,13 +307,17 @@ cs:
 </template>
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import validateEmail from "@/libs/email-validation";
+import formRulesMixin from "@/mixins/formRulesMixin";
 
 export default {
   name: "LoginDialog",
+
+  mixins: [formRulesMixin],
+
   props: {
     value: {},
   },
+
   data() {
     return {
       email: "",
@@ -327,11 +329,6 @@ export default {
           : "reset-password" in this.$route.query
           ? "reset-password"
           : "login",
-      rules: {
-        required: (value) => !!value || this.$t("required"),
-        min: (v) => v.length >= 8 || this.$t("min_pwd_length"),
-        email: (v) => !!validateEmail(v) || this.$t("email_required"),
-      },
       signupError: null,
       resetError: null,
       showPassword: false,
@@ -341,6 +338,7 @@ export default {
       resetSuccess: false, // reset email was sent
     };
   },
+
   computed: {
     ...mapState({
       loginError: (state) => state.login.loginError,

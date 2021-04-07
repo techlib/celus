@@ -39,9 +39,13 @@ class ReportTypeAdmin(TranslationAdmin):
         'source',
         'superseeded_by',
         'materialized',
+        'record_count',
     ]
     ordering = ['short_name']
     list_filter = ['source', IsMaterialized, 'default_platform_interest']
+
+    class Media:
+        css = {'all': ['css/report_type.css']}
 
     @classmethod
     def dimension_list(cls, obj: models.ReportType):
@@ -51,6 +55,10 @@ class ReportTypeAdmin(TranslationAdmin):
         return bool(obj.materialization_spec)
 
     materialized.boolean = True
+
+    @classmethod
+    def record_count(cls, obj: models.ReportType):
+        return f'{obj.approx_record_count:,}'
 
 
 @admin.register(models.Metric)
@@ -139,3 +147,9 @@ class ImportBatchAdmin(admin.ModelAdmin):
 class ReportMaterializationSpecAdmin(admin.ModelAdmin):
 
     list_display = ['name', 'base_report_type', 'description']
+
+
+@admin.register(models.FlexibleReport)
+class FlexibleReportAdmin(admin.ModelAdmin):
+
+    list_display = ['name', 'access_level', 'owner', 'owner_organization']
