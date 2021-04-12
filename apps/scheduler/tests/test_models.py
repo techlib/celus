@@ -741,6 +741,7 @@ class TestHarvest:
             when_processed=None,
             harvest=harvest2,
             duplicate_of=None,
+            queue_id=1,
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
@@ -750,6 +751,7 @@ class TestHarvest:
             when_processed=timezone.now(),
             harvest=harvest2,
             duplicate_of=None,
+            queue_id=1,
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],

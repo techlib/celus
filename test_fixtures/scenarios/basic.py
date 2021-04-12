@@ -17,6 +17,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from organizations.models import Organization
+from scheduler.models import FetchIntention
 from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
 from ..entities.fetchattempts import FetchAttemptFactory
@@ -343,6 +344,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 counter_report=counter_report_types["tr"],
                 scheduler=schedulers["standalone_tr"],
                 when_processed=timezone.now() - timedelta(minutes=1),
+                queue_id=1,
                 attempt=FetchAttemptFactory(
                     start_date="2020-01-01",
                     end_date="2020-01-31",
@@ -356,6 +358,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
             FetchIntentionFactory.build(
                 credentials=credentials["standalone_br1_jr1"],
                 counter_report=counter_report_types["br1"],
+                queue_id=2,
             ),
             FetchIntentionFactory.build(
                 credentials=credentials["standalone_br1_jr1"],
@@ -371,10 +374,12 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 ),
                 start_date="2020-01-01",
                 end_date="2020-01-31",
+                queue_id=3,
             ),
             FetchIntentionFactory.build(
                 credentials=credentials["standalone_br1_jr1"],
                 counter_report=counter_report_types["jr1"],
+                queue_id=3,
             ),  # retry fetch attempt
         ),
     )
@@ -388,6 +393,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 start_date="2020-01-01",
                 end_date="2020-01-31",
                 when_processed=None,
+                queue_id=4,
             ),
             FetchIntentionFactory.build(
                 credentials=credentials["standalone_br1_jr1"],
@@ -400,6 +406,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                     counter_report=counter_report_types["jr1"],
                     attempt__isnull=False,
                 ),
+                queue_id=5,
             ),  # dulicate
         ),
     )
@@ -422,10 +429,12 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                     processing_success=True,
                     contains_data=False,
                 ),
+                queue_id=6,
             ),
             FetchIntentionFactory.build(
                 credentials=credentials["standalone_br1_jr1"],
                 counter_report=counter_report_types["jr1"],
+                queue_id=7,
             ),
         ),
     )
@@ -446,12 +455,14 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                     contains_data=True,
                     import_batch=import_batches["pr"],
                 ),
+                queue_id=8,
             ),
             FetchIntentionFactory.build(
                 start_date="2020-03-01",
                 end_date="2020-03-31",
                 credentials=credentials["branch_pr"],
                 counter_report=counter_report_types["pr"],
+                queue_id=9,
             ),
         ),
     )

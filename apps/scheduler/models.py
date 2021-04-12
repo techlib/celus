@@ -273,23 +273,9 @@ class FetchIntentionQuerySet(models.QuerySet):
             ),
         )
 
-    def annotate_unique(self) -> models.QuerySet:
-        return self.annotate(
-            unique_field=models.functions.Concat(
-                models.F('credentials_id'),
-                models.F('credentials__version_hash'),
-                models.F('counter_report__code'),
-                models.F('start_date'),
-                models.F('end_date'),
-                output_field=TextField(),
-            )
-        )
-
     def aggregate_stats(self) -> typing.Dict[str, int]:
-        qs = self.annotate_unique()
-
-        res = qs.aggregate(
-            total=Coalesce(models.Count('unique_field', distinct=True), 0),
+        res = self.aggregate(
+            total=Coalesce(models.Count('queue_id', distinct=True), 0),
             unprocessed=self.unprocessed_count_query(),
         )
         res['finished'] = res['total'] - res['unprocessed']
@@ -316,26 +302,21 @@ class FetchIntentionQuerySet(models.QuerySet):
 
         extra_filters = {"harvest": models.OuterRef('harvest')} if within_harvest else {}
 
-        return (
-            self.annotate_unique()
-            .annotate(
-                max_pk=models.Subquery(
-                    self.annotate_unique()
-                    .filter(unique_field=models.OuterRef('unique_field'), **extra_filters)
-                    .values('unique_field')
-                    .annotate(max_pk=models.Max('pk'))
-                    .values("max_pk")[:1],
-                    output_field=IntegerField(),
-                )
+        return self.annotate(
+            max_pk=models.Subquery(
+                self.filter(queue_id=models.OuterRef('queue_id'), **extra_filters)
+                .values('queue_id')
+                .annotate(max_pk=models.Max('pk'))
+                .values("max_pk")[:1],
+                output_field=IntegerField(),
             )
-            .filter(pk=models.F('max_pk'))
-        )
+        ).filter(pk=models.F('max_pk'))
 
     @classmethod
     def unprocessed_count_query(cls):
         return Coalesce(
             models.Count(
-                'unique_field',
+                'queue_id',
                 distinct=True,
                 filter=models.Q(when_processed__isnull=True) & models.Q(duplicate_of__isnull=True)
                 | (
@@ -657,7 +638,6 @@ class HarvestQuerySet(models.QuerySet):
             unprocessed=Coalesce(
                 models.Subquery(
                     FetchIntention.objects.filter(harvest=models.OuterRef('pk'))
-                    .annotate_unique()
                     .values('harvest')
                     .annotate(count=FetchIntentionQuerySet.unprocessed_count_query())
                     .values('count')
@@ -667,9 +647,8 @@ class HarvestQuerySet(models.QuerySet):
             total=Coalesce(
                 models.Subquery(
                     FetchIntention.objects.filter(harvest=models.OuterRef('pk'))
-                    .annotate_unique()
                     .values('harvest')
-                    .annotate(count=models.Count('unique_field', distinct=True))
+                    .annotate(count=models.Count('queue_id', distinct=True))
                     .values('count')
                 ),
                 0,
@@ -760,6 +739,9 @@ class Harvest(CreatedUpdatedMixin):
             intention.priority = priority
 
         FetchIntention.objects.bulk_create(intentions)
+        # There is no signal if bulk_create is used
+        # We need to set a proper queue_id here
+        harvest.intentions.all().update(queue_id=models.F('pk'))
 
         if priority >= FetchIntention.PRIORITY_NOW:
             from .tasks import trigger_scheduler
