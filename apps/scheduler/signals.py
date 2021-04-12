@@ -92,3 +92,10 @@ def update_intentions_from_cr2c_post_delete(sender, instance, using, **kwargs):
             credentials=instance.credentials,
             counter_report=instance.counter_report,
         ).delete(),
+
+
+@receiver(post_save, sender=FetchIntention)
+def fill_in_queue_id(sender, instance, created, raw, using, update_fields, **kwargs):
+    if not instance.queue_id:
+        FetchIntention.objects.filter(pk=instance.pk).update(queue_id=instance.pk)
+        instance.queue_id = instance.pk

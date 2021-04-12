@@ -373,7 +373,7 @@ class FetchIntention(models.Model):
     harvest = models.ForeignKey(
         'scheduler.Harvest', on_delete=models.CASCADE, related_name="intentions"
     )
-    retry_id = models.IntegerField(null=True, blank=True, help_text='Identifier of retry queue',)
+    queue_id = models.IntegerField(null=True, blank=True, help_text='Identifier of retry queue',)
 
     # Retry counters
     data_not_ready_retry = models.SmallIntegerField(default=0)
@@ -383,6 +383,11 @@ class FetchIntention(models.Model):
     class Meta:
         constraints = (
             CheckConstraint(check=models.Q(start_date__lt=models.F('end_date')), name='timeline'),
+            UniqueConstraint(
+                fields=['queue_id'],
+                name='only_one_unprocessed_within_queue',
+                condition=models.Q(when_processed__isnull=True),
+            ),
         )
 
     @property
@@ -464,7 +469,7 @@ class FetchIntention(models.Model):
             self.counter_report, self.start_date, self.end_date
         )
         attempt.triggered_by = self.harvest.last_updated_by
-        attempt.queue_id = self.retry_id
+        attempt.queue_id = self.queue_id
         attempt.save()
 
         self.attempt = attempt
@@ -531,10 +536,10 @@ class FetchIntention(models.Model):
             kwargs['service_not_available_retry'] = self.service_not_available_retry + 1
 
         with transaction.atomic():
-            if not self.retry_id:
-                self.retry_id = self.pk
+            if not self.queue_id:
+                self.queue_id = self.pk
                 self.save()
-                self.attempt.queue_id = self.retry_id
+                self.attempt.queue_id = self.queue_id
                 self.attempt.save()
 
         return FetchIntention.objects.create(
@@ -545,7 +550,7 @@ class FetchIntention(models.Model):
             start_date=self.start_date,
             end_date=self.end_date,
             harvest=self.harvest,
-            retry_id=self.retry_id,
+            queue_id=self.queue_id,
             **kwargs,
         )
 

@@ -237,8 +237,8 @@ class TestFetchIntention:
         if seconds_not_before:
             assert last.pk != fi.pk
             assert (last.not_before - fi.not_before).total_seconds() == seconds_not_before
-            assert last.retry_id == fi.pk
-            assert fi.retry_id == fi.pk
+            assert last.queue_id == fi.pk
+            assert fi.queue_id == fi.pk
             assert fi.attempt.queue_id == fi.pk
         else:
             assert last.pk == fi.pk
@@ -406,6 +406,28 @@ class TestFetchIntention:
         intention1.refresh_from_db()
 
         assert intention1.fetching_data is False
+
+    def test_queue_id(self, credentials, counter_report_types):
+        sch = SchedulerFactory()
+        hr = HarvestFactory()
+        fi1 = FetchIntentionFactory.build(
+            when_processed=datetime(2020, 1, 2, 0, 0, 0, tzinfo=current_tz),
+            scheduler=sch,
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["jr1"],
+            harvest=hr,
+        )
+        fi1.save()
+        assert fi1.queue_id == fi1.pk
+        fi2 = FetchIntentionFactory.build(
+            scheduler=sch,
+            credentials=credentials["standalone_tr"],
+            queue_id=fi1.queue_id,
+            counter_report=counter_report_types["jr1"],
+            harvest=hr,
+        )
+        fi2.save()
+        assert fi2.queue_id == fi1.pk
 
 
 @pytest.mark.django_db

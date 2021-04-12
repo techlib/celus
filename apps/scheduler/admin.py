@@ -97,7 +97,7 @@ class FetchIntentionAdmin(admin.ModelAdmin):
         'code',
         'start_date',
         'end_date',
-        'retry_id',
+        'queue_id',
     )
 
     exclude = ('attempt',)
