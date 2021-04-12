@@ -35,6 +35,7 @@ from logs.logic.csv_utils import MappingDictWriter
 from logs.logic.remap import remap_dicts
 from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric
 from organizations.logic.queries import extend_query_filter
+from organizations.models import Organization
 from recache.util import recache_queryset
 
 logger = logging.getLogger(__name__)
@@ -609,6 +610,7 @@ class FlexibleDataSlicer:
         self.group_by = []
         self.order_by = []
         self._annotations = []
+        self.organization_filter = None
 
     def config(self):
         return {
@@ -634,7 +636,12 @@ class FlexibleDataSlicer:
         for df in self.dimension_filters:
             if df.dimension not in ignore_dimensions:
                 ret.update(df.query_params())
+        if self.organization_filter is not None:
+            ret['organization__in'] = self.organization_filter
         return ret
+
+    def add_extra_organization_filter(self, org_filter: Iterable):
+        self.organization_filter = org_filter
 
     def add_filter(self, dimension_filter: DimensionFilter, add_group=False):
         self.dimension_filters.append(dimension_filter)
@@ -682,8 +689,11 @@ class FlexibleDataSlicer:
         field, modifier = self.get_dimension_field(self.primary_dimension)
         if isinstance(field, ForeignKey):
             primary_cls = field.remote_field.model
+            qs = primary_cls.objects.all()
+            if primary_cls is Organization and self.organization_filter is not None:
+                qs = qs.filter(pk__in=self.organization_filter)
             qs = (
-                primary_cls.objects.filter(**self._primary_dimension_filter())
+                qs.filter(**self._primary_dimension_filter())
                 .annotate(
                     relevant_accesslogs=FilteredRelation(
                         'accesslog', condition=Q(**extend_query_filter(self.filters, 'accesslog__'))
@@ -1002,28 +1012,37 @@ class FlexibleDataSlicer:
 
 
 class FlexibleDataExporter:
+
+    object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn'],}}
+
     def __init__(self, slicer: FlexibleDataSlicer, column_parts_separator: str = ' / '):
         self.slicer = slicer
         self.involved_report_types = self.slicer.involved_report_types()
         self.column_parts_separator = column_parts_separator
-        explicit_prim_dim, self.remapped_prim_dim, prim_dim = self.resolve_dimension(
+        self.explicit_prim_dim, self.remapped_prim_dim, prim_dim = self.resolve_dimension(
             self.slicer.primary_dimension
         )
         # how the primary dimension is called in the query output
         self.prim_dim_key = self.slicer.primary_dimension
         if self.remapped_prim_dim:
-            if explicit_prim_dim:
+            if self.explicit_prim_dim:
                 self.prim_dim_remap = {
                     obj['pk']: obj['text']
                     for obj in DimensionText.objects.filter(dimension=prim_dim).values('pk', 'text')
                 }
             else:
                 self.prim_dim_remap = {
-                    obj['pk']: obj['name'] for obj in prim_dim.objects.all().values('pk', 'name')
+                    obj['pk']: obj
+                    for obj in prim_dim.objects.all().values('pk', *self.remapped_keys())
                 }
                 self.prim_dim_key = 'pk'
         else:
             self.prim_dim_remap = {}
+
+    def remapped_keys(self):
+        return self.object_remapped_dims.get(self.slicer.primary_dimension, {}).get(
+            'columns', ['name']
+        )
 
     def stream_data_to_sink(
         self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
@@ -1049,6 +1068,11 @@ class FlexibleDataExporter:
         except StopIteration:
             return 0
         fields = [(self.prim_dim_key, self.slicer.primary_dimension)]
+        # possible other remapped attrs of primary object
+        remap_keys = self.remapped_keys()
+        for key in remap_keys[1:]:
+            fields.append((key, key.upper()))
+        # fields from groups
         other_fields = []
         for key in row:
             if key.startswith('grp-'):
@@ -1070,9 +1094,20 @@ class FlexibleDataExporter:
 
     def writerow(self, writer, row):
         if self.remapped_prim_dim:
-            row[self.prim_dim_key] = self.prim_dim_remap.get(
-                row[self.prim_dim_key], row[self.prim_dim_key]
-            )
+            if self.explicit_prim_dim:
+                # remap to text using the DimensionText mapping - mapper converts directly to text
+                row[self.prim_dim_key] = self.prim_dim_remap.get(
+                    row[self.prim_dim_key], row[self.prim_dim_key]
+                )
+            else:
+                # mapper converts to dict
+                remap_data = self.prim_dim_remap.get(row[self.prim_dim_key], {})
+                # remap the first column
+                remap_keys = self.remapped_keys()
+                row[self.prim_dim_key] = remap_data.get(remap_keys[0], row[self.prim_dim_key])
+                for key in remap_keys[1:]:
+                    # remap all other keys
+                    row[key] = remap_data.get(key, '')
         writer.writerow(row)
 
     def remap_column_name(self, column):

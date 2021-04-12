@@ -1,11 +1,14 @@
 import pytest
+from django.db import DatabaseError
 
+from core.models import User
 from logs.logic.queries import (
     FlexibleDataSlicer,
     ForeignKeyDimensionFilter,
     ExplicitDimensionFilter,
 )
 from logs.models import ReportType, Dimension, ReportTypeToDimension, FlexibleReport, DimensionText
+from organizations.tests.conftest import organizations  # noqa
 
 
 @pytest.mark.django_db
@@ -36,6 +39,28 @@ class TestReportType:
 
 @pytest.mark.django_db
 class TestFlexibleReport:
+    @pytest.mark.parametrize(
+        ['owner', 'owner_organization', 'ok'],
+        [
+            (True, True, False),  # cannot set both owner and owner_organization
+            (True, False, True),  # all other options are allowed
+            (False, True, True),
+            (False, False, True),
+        ],
+    )
+    def test_constraints(self, owner, owner_organization, ok, organizations):
+        org = organizations[0]
+        params = {}
+        if owner:
+            params['owner'] = User.objects.create(username='aaa')
+        if owner_organization:
+            params['owner_organization'] = org
+        if ok:
+            FlexibleReport.objects.create(**params)
+        else:
+            with pytest.raises(DatabaseError):
+                FlexibleReport.objects.create(**params)
+
     def test_config_serialization_report_type(self, flexible_slicer_test_data):
         slicer = FlexibleDataSlicer(primary_dimension='platform')
         report_type = flexible_slicer_test_data['report_types'][0]

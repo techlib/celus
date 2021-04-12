@@ -150,7 +150,13 @@ cs:
                   dense
                   hide-details
                   class="mt-1"
-                  :disabled="item.id === row || !reportTypeSelected || readOnly"
+                  :disabled="
+                    item.id === row ||
+                    !reportTypeSelected ||
+                    readOnly ||
+                    (item.id === 'date' && columns.includes('date__year')) ||
+                    (item.id === 'date__year' && columns.includes('date'))
+                  "
                   :key="item.id"
                 >
                   <template #append v-if="columns.includes(item.id)">
@@ -593,7 +599,11 @@ export default {
       Object.entries(this.appliedFilters)
         .filter(([k, v]) => k !== "report_type")
         .forEach(([k, v]) => {
-          rt.filters.push({ dimension: rt.resolveDim(k), values: [...v] });
+          if (typeof v === "object") {
+            rt.filters.push({ dimension: rt.resolveDim(k), values: v });
+          } else {
+            rt.filters.push({ dimension: rt.resolveDim(k), values: [...v] });
+          }
         });
       rt.groupBy = this.appliedGroups.map((item) => rt.resolveDim(item));
       rt.orderBy = this.orderBy;
@@ -603,7 +613,9 @@ export default {
       return rt;
     },
     canEdit() {
-      return this.reportObject.canEdit(this.user, this.organizations);
+      return this.reportId
+        ? this.reportObject.canEdit(this.user, this.organizations)
+        : true;
     },
     accessLevel() {
       return this.owner ? "user" : this.ownerOrganization ? "org" : "sys";

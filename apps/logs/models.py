@@ -571,6 +571,18 @@ class FlexibleReport(models.Model):
         **{f'dim{i}': {'model': DimensionText, 'key': 'text'} for i in range(1, 8)},
     }
 
+    class Meta:
+        constraints = (
+            models.CheckConstraint(
+                check=(
+                    ~(
+                        models.Q(owner__isnull=False) & models.Q(owner_organization__isnull=False)
+                    )  # not owner and owner_organization
+                ),
+                name='only-one-owner-field',
+            ),
+        )
+
     def __str__(self):
         return self.name
 

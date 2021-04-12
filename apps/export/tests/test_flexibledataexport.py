@@ -57,3 +57,16 @@ class TestFlexibleDataExport:
             'Platform 2,16182,17478,18774,16218,17514,18810',
             'Platform 3,20070,21366,22662,20106,21402,22698',
         ]
+
+    def test_create_output_file_with_title(self, flexible_slicer_test_data, admin_user, settings):
+        """
+        Tests that using title as primary dimension also adds ISBN and other extra columns
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='target')
+        slicer.add_group_by('metric')
+        settings.DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        export.create_output_file()
+        assert export.output_file.size > 0
+        data = export.output_file.open('r').read()
+        assert data.splitlines()[0].startswith('target,ISSN,EISSN,ISBN,')

@@ -23,6 +23,7 @@ import { formatInteger } from "@/libs/numbers";
 import { mapActions } from "vuex";
 import translators from "@/mixins/translators";
 import { djangoToDataTableOrderBy } from "@/libs/sorting";
+import { isEqual } from "lodash";
 
 export default {
   name: "FlexiTableOutput",
@@ -44,6 +45,12 @@ export default {
       translatorsUpdating: false,
       headersFromData: [],
       options: { itemsPerPage: 20, page: 1 },
+      titleColumns: {
+        issn: true,
+        eissn: true,
+        isbn: true,
+        doi: false,
+      },
     };
   },
 
@@ -51,18 +58,32 @@ export default {
     loading() {
       return this.dataLoading || this.dataComputing || this.translatorsUpdating;
     },
+    activeTitleColumns() {
+      let titleHeaders = [];
+      if (this.report.primaryDimension.ref === "target") {
+        titleHeaders = Object.entries(this.titleColumns)
+          .filter(([key, value]) => value)
+          .map(([key, value]) => key);
+      }
+      return titleHeaders;
+    },
     tableHeaders() {
       if (this.report) {
         let headers = [];
-        this.headersFromData.forEach(item =>
+        this.headersFromData.forEach((item) =>
           headers.push({ ...item, sortable: !this.readonly })
         );
+        let titleHeaders = this.activeTitleColumns.map((key) => ({
+          text: this.$t("title_fields." + key),
+          value: key,
+        }));
         let ret = [
           {
             text: this.report.primaryDimension.getName(this.$i18n),
             value: this.report.primaryDimension.ref,
             sortable: !this.readonly,
           },
+          ...titleHeaders,
           ...headers,
         ];
         return ret;
@@ -90,8 +111,8 @@ export default {
       this.report = report;
       // update translators
       this.report.groupBy
-        .filter(item => item.isExplicit)
-        .forEach(item => {
+        .filter((item) => item.isExplicit)
+        .forEach((item) => {
           if (item.isMapped) {
             this.translators[item.ref] = this.translators.explicitDimension;
           } else {
@@ -151,17 +172,17 @@ export default {
       let promises = [];
       if (this.row && this.translators[this.row]) {
         // for implicit dimensions the key is 'pk' for explicit it is the name of the dim (e.g. dim1)
-        let pks = this.data.map(item => item.pk ?? item[this.row]);
+        let pks = this.data.map((item) => item.pk ?? item[this.row]);
         promises.push(this.translators[this.row].prepareTranslation(pks));
       }
       if (this.data.length > 0) {
         let pks_lists = Object.keys(this.data[0])
-          .filter(item => item !== "pk" && item !== this.row)
-          .filter(item => item.substr(0, 4) === "grp-")
-          .map(item => splitGroup(item));
+          .filter((item) => item !== "pk" && item !== this.row)
+          .filter((item) => item.substr(0, 4) === "grp-")
+          .map((item) => splitGroup(item));
         let i = 0;
         for (let group of this.report.groupBy) {
-          let pks = pks_lists.map(item => item[i]);
+          let pks = pks_lists.map((item) => item[i]);
           if (this.translators[group.ref]) {
             promises.push(this.translators[group.ref].prepareTranslation(pks));
           }
@@ -174,7 +195,7 @@ export default {
     recomputeData() {
       this.dataComputing = true;
       // process the data to translate the primary dimension
-      this.cleanData = this.data.map(item => {
+      this.cleanData = this.data.map((item) => {
         let newItem = { ...item };
         if (this.translators[this.row]) {
           newItem[this.row] =
@@ -182,6 +203,15 @@ export default {
               newItem.pk ?? newItem[this.row],
               this.$i18n.locale
             ) ?? this.$t("blank_value");
+          if (this.row === "target") {
+            // extra data for titles
+            let obj = this.translators[this.row].translateKey(
+              newItem.pk ?? newItem[this.row]
+            );
+            Object.keys(this.titleColumns).forEach((key) => {
+              newItem[key] = obj[key];
+            });
+          }
         }
         for (let key of Object.keys(newItem)) {
           if (key.substr(0, 4) === "grp-") {
@@ -194,7 +224,7 @@ export default {
       let headersFromData = [];
       if (this.data.length > 0) {
         for (let key of Object.keys(this.data[0]).filter(
-          item => item.substr(0, 4) === "grp-"
+          (item) => item.substr(0, 4) === "grp-"
         )) {
           let pks = splitGroup(key);
           let texts = [];
@@ -236,8 +266,10 @@ export default {
   watch: {
     options: {
       deep: true,
-      handler() {
-        this.fetchData();
+      handler(oldVal, newVal) {
+        if (!this.loading && !isEqual(newVal, oldVal)) {
+          this.fetchData();
+        }
       },
     },
   },

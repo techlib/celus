@@ -79,6 +79,7 @@ class FlexibleDataExport(ExportBase):
 
     def write_data(self, stream, progress_monitor=None) -> int:
         slicer = FlexibleDataSlicer.create_from_config(self.export_params)
+        slicer.add_extra_organization_filter(self.owner.accessible_organizations())
         exporter = FlexibleDataExporter(slicer)
         return exporter.stream_data_to_sink(stream, progress_monitor=progress_monitor)
 

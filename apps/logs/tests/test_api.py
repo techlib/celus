@@ -620,12 +620,12 @@ class TestFlexibleReportAPI:
         ['user', 'accessible_reports'],
         [
             ['user1', {'public', 'user1 report'}],
-            ['user2', {'public', 'org2+user2 report'}],
-            ['admin2', {'public', 'org1 report'}],
-            ['admin1', {'public', 'org2+user2 report'}],
-            ['empty', {'public', 'org2+user2 report', 'org1 report'}],
+            ['user2', {'public', 'user2 report'}],
+            ['admin1', {'public', 'org1 report'}],
+            ['admin2', {'public', 'org2 report'}],
+            ['empty', {'public', 'org1 report', 'org2 report'}],
             ['master', {'public'}],
-            ['su', {'public', 'org1 report', 'org2+user2 report'}],  # cannot see private
+            ['su', {'public', 'org1 report', 'org2 report'}],  # cannot see private
         ],
     )
     def test_list_access(self, client, users, organizations, user, accessible_reports):
@@ -633,14 +633,14 @@ class TestFlexibleReportAPI:
         organization2 = organizations[1]
         FlexibleReport.objects.create(name='public')
         FlexibleReport.objects.create(name='user1 report', owner=users['user1'])
+        FlexibleReport.objects.create(name='user2 report', owner=users['user2'])
         FlexibleReport.objects.create(name='org1 report', owner_organization=organization1)
-        FlexibleReport.objects.create(
-            name='org2+user2 report', owner_organization=organization2, owner=users['user2']
-        )
-        UserOrganization.objects.create(user=users['admin1'], organization=organization2)
-        UserOrganization.objects.create(user=users['admin2'], organization=organization1)
-        UserOrganization.objects.create(user=users['empty'], organization=organization2)
+        FlexibleReport.objects.create(name='org2 report', owner_organization=organization2)
+        UserOrganization.objects.create(user=users['admin1'], organization=organization1)
+        UserOrganization.objects.create(user=users['admin2'], organization=organization2)
         UserOrganization.objects.create(user=users['empty'], organization=organization1)
+        UserOrganization.objects.create(user=users['empty'], organization=organization2)
+
         url = reverse('flexible-report-list')
         client.force_login(users[user])
         resp = client.get(url)
@@ -1076,3 +1076,42 @@ class TestSlicerAPI:
         assert resp.status_code == 400
         assert 'error' in resp.json()
         assert resp.json()['error']['code'] == 'E106'
+
+    def test_user_organization_filtering_no_access(self, flexible_slicer_test_data, users, client):
+        """
+        Test that organizations in reporting API are properly filtered to only contain those
+        accessible by current user.
+        """
+        user = users['user1']
+        assert not user.is_superuser, 'user must be unprivileged'
+        assert not user.is_from_master_organization, 'user must be unprivileged'
+        client.force_login(user)
+        resp = client.get(
+            reverse('flexible-slicer'),
+            {'primary_dimension': 'organization', 'groups': b64json(['metric'])},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == 0
+        assert len(data['results']) == 0
+
+    def test_user_organization_filtering(self, flexible_slicer_test_data, client, users):
+        """
+        Test that organizations in reporting API are properly filtered to only contain those
+        accessible by current user.
+        """
+        organization = flexible_slicer_test_data['organizations'][1]
+        user = users['user1']
+        UserOrganization.objects.create(user=user, organization=organization)
+        assert not user.is_superuser, 'user must be unprivileged'
+        assert not user.is_from_master_organization, 'user must be unprivileged'
+        client.force_login(user)
+        resp = client.get(
+            reverse('flexible-slicer'),
+            {'primary_dimension': 'organization', 'groups': b64json(['metric'])},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == 1
+        assert len(data['results']) == 1
+        assert data['results'][0]['pk'] == organization.pk

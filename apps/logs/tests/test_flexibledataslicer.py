@@ -584,6 +584,7 @@ class TestFlexibleDataExporter:
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
+        slicer.order_by = ['date__year']
         exporter = FlexibleDataExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
@@ -602,6 +603,7 @@ class TestFlexibleDataExporter:
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
+        slicer.order_by = ['dim1']
         exporter = FlexibleDataExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
@@ -626,6 +628,7 @@ class TestFlexibleDataExporter:
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
+        slicer.order_by = ['dim1']
         exporter = FlexibleDataExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
@@ -663,3 +666,23 @@ class TestFlexibleDataExporter:
             str, DimensionText.objects.filter(dimension=dim1).values_list('pk', flat=True)
         )
         assert row_names == {'platform', *text_pks}
+
+    def test_org_sum_by_platform_with_org_extra_filter(self, flexible_slicer_test_data):
+        """
+        Primary dimension: organization
+        Group by: platform
+        DimensionFilter:
+        Extra filter: organization (simulates user with limited org access)
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        slicer.add_group_by('platform')
+        slicer.add_extra_organization_filter([flexible_slicer_test_data['organizations'][1].pk])
+        exporter = FlexibleDataExporter(slicer)
+        out = StringIO()
+        exporter.stream_data_to_sink(out)
+        output = out.getvalue()
+        assert len(output.splitlines()) == 2
+        assert output.splitlines() == [
+            'organization,Platform 1,Platform 2,Platform 3',
+            'Organization 2,1114182,1312470,1510758',
+        ]

@@ -414,6 +414,7 @@ class FlexibleSlicerView(APIView):
     def get(self, request):
         try:
             slicer = FlexibleDataSlicer.create_from_params(request.query_params)
+            slicer.add_extra_organization_filter(request.user.accessible_organizations())
             print(slicer.filters)
             pprint(slicer.config())
             data = slicer.get_data()
@@ -437,6 +438,7 @@ class FlexibleSlicerPossibleValuesView(APIView):
             )
         try:
             slicer = FlexibleDataSlicer.create_from_params(request.query_params)
+            slicer.add_extra_organization_filter(request.user.accessible_organizations())
             pprint(slicer.config())
             q = request.query_params.get('q')
             pks = None
