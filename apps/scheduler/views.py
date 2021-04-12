@@ -47,7 +47,9 @@ class HarvestViewSet(
                 Prefetch(
                     'intentions',
                     queryset=FetchIntention.objects.all().select_related(
-                        'credentials__platform', 'credentials__organization'
+                        'credentials__platform',
+                        'credentials__platform__source',
+                        'credentials__organization',
                     ),
                     to_attr='intentions_credentials',
                 ),
