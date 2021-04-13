@@ -36,13 +36,9 @@ class TestHarvestAPI:
         data = resp.json()["results"]
         assert len(data) == 4
         assert data[0]["pk"] < data[1]["pk"] < data[2]["pk"], "default sort by pk asc"
-        assert len(data[0]["intentions"]) == 3
         assert data[0]["stats"] == {"total": 3, "planned": 2}
-        assert len(data[1]["intentions"]) == 2
         assert data[1]["stats"] == {"total": 2, "planned": 1}
-        assert len(data[2]["intentions"]) == 2
         assert data[2]["stats"] == {"total": 2, "planned": 1}
-        assert len(data[3]["intentions"]) == 2
         assert data[3]["stats"] == {"total": 2, "planned": 1}
 
     @pytest.mark.parametrize(

@@ -3,10 +3,10 @@ import typing
 from rest_framework import serializers
 from rest_framework.fields import DateTimeField
 
-from publications.serializers import PlatformSerializer
+from publications.serializers import PlatformSerializer, SimplePlatformSerializer
 from .models import Automatic, FetchIntention, Harvest
 from sushi.serializers import SushiFetchAttemptSerializer
-from organizations.serializers import OrganizationSerializer
+from organizations.serializers import OrganizationSerializer, OrganizationShortSerializer
 
 
 class StatsSerializer(serializers.Serializer):
@@ -89,7 +89,7 @@ class AutomaticInHarvestSerializer(serializers.ModelSerializer):
         )
 
 
-class HarvestSerializer(serializers.ModelSerializer):
+class DetailHarvestSerializer(serializers.ModelSerializer):
     intentions = serializers.PrimaryKeyRelatedField(
         source='latest_intentions', many=True, read_only=True
     )
@@ -107,6 +107,26 @@ class HarvestSerializer(serializers.ModelSerializer):
             'created',
             'last_updated',
             'last_updated_by',
+            'stats',
+            'automatic',
+            'organizations',
+            'platforms',
+            'last_attempt_date',
+        )
+
+
+class ListHarvestSerializer(serializers.ModelSerializer):
+    stats = StatsSerializer()
+    organizations = OrganizationShortSerializer(many=True, read_only=True)
+    platforms = SimplePlatformSerializer(many=True, read_only=True)
+    last_attempt_date = DateTimeField(read_only=True)
+    automatic = AutomaticInHarvestSerializer()
+
+    class Meta:
+        model = Harvest
+        fields = (
+            'pk',
+            'created',
             'stats',
             'automatic',
             'organizations',

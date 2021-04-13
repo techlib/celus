@@ -13,7 +13,8 @@ from .models import Automatic, FetchIntention, Harvest
 from .serializers import (
     FetchIntentionSerializer,
     CreateHarvestSerializer,
-    HarvestSerializer,
+    DetailHarvestSerializer,
+    ListHarvestSerializer,
 )
 
 
@@ -21,7 +22,6 @@ class HarvestViewSet(
     mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericViewSet
 ):
 
-    serializer_class = HarvestSerializer
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
@@ -81,8 +81,10 @@ class HarvestViewSet(
         return qs
 
     def get_serializer_class(self):
-        if self.action in ['retrieve', 'list']:
-            return HarvestSerializer
+        if self.action == 'retrieve':
+            return DetailHarvestSerializer
+        if self.action == 'list':
+            return ListHarvestSerializer
         elif self.action == 'create':
             return CreateHarvestSerializer
         else:
@@ -134,7 +136,7 @@ class HarvestViewSet(
         headers = self.get_success_headers(serializer.data)
 
         # put created instance into response
-        response_serialzer = HarvestSerializer(serializer.instance)
+        response_serialzer = DetailHarvestSerializer(serializer.instance)
 
         return Response(response_serialzer.data, status=status.HTTP_201_CREATED, headers=headers)
 
