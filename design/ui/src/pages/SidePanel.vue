@@ -207,7 +207,7 @@ export default {
                   title: this.$t("pages.sushi_fetch_attempts"),
                   icon: "fa-retweet",
                   linkTo: "sushi-fetch-attempts",
-                  show: this.showManagementStuff,
+                  show: this.showAdminStuff,
                 },
               ],
             },
