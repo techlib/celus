@@ -270,6 +270,14 @@ export default {
           value: "counter_report_code",
         },
         {
+          text: this.$t("title_fields.start_date"),
+          value: "start_date",
+        },
+        {
+          text: this.$t("title_fields.end_date"),
+          value: "end_date",
+        },
+        {
           text: this.$t("labels.finished"),
           value: "isFinished",
         },
