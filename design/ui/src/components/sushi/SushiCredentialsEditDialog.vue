@@ -156,12 +156,14 @@ cs:
               >
                 <template v-slot:prepend-item>
                   <AddPlatformButton
-                    v-if="allowUserCreatePlatforms && (!credentials || !credentials.pk)"
+                    v-if="
+                      allowUserCreatePlatforms &&
+                      (!credentials || !credentials.pk)
+                    "
                     @update-platforms="preselectCreatedPlatform"
                     :text="true"
                   />
                 </template>
-
               </v-autocomplete>
             </v-col>
           </v-row>
@@ -992,7 +994,12 @@ export default {
       }
     },
     counterVersion() {
-      this.selectedReportTypes = [];
+      let currentReportTypes = this.allReportTypes
+        .filter((item) => item.counter_version === this.counterVersion)
+        .map((item) => item.id);
+      this.selectedReportTypes = this.selectedReportTypes.filter((item) =>
+        currentReportTypes.includes(item)
+      );
       if (!this.credentials) {
         this.guessUrlFromKnowledgebase();
       }
