@@ -287,7 +287,6 @@ cs:
         @close="closeDataDialog"
       ></SushiCredentialsDataDialog>
     </v-dialog>
-
   </v-container>
 </template>
 
@@ -556,7 +555,10 @@ export default {
       this.loadSushiCredentialsCount();
     },
     createSearchFilter() {
-      const words = this.search.toLowerCase().split(/ /);
+      let words = [];
+      if (this.search) {
+        words = this.search.toLowerCase().split(/ /);
+      }
       function filter(item) {
         for (let word of words) {
           let match = false;
