@@ -5,8 +5,8 @@ from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
 from django.db.models import Sum
 from sushi.models import SushiCredentials, SushiFetchAttempt
-from sushi.tests.conftest import counter_report_type, counter_report_type_named
-from test_fixtures.scenarios.basic import data_sources, organizations, platforms
+from sushi.tests.conftest import counter_report_type, counter_report_type_named  # noqa
+from test_fixtures.scenarios.basic import data_sources, organizations, platforms  # noqa
 
 from ..logic.attempt_import import import_one_sushi_attempt
 
@@ -155,7 +155,7 @@ class TestAttemptImport:
             counter_report=counter_report_type,
             start_date="2018-01-01",
             end_date="2018-12-31",
-            data_file=None,
+            data_file=ContentFile('{}', name=f"something.tsv"),
             credentials_version_hash=creds.compute_version_hash(),
             download_success=download_success,
             is_processed=is_processed,

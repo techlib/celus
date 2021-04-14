@@ -519,16 +519,13 @@ class ManualDataUpload(models.Model):
                 initial_data={'platform_name': self.platform.name, 'metric': default_metric.pk},
             )
         else:
-            if self.file_is_json():
-                reader = crt.get_reader_class()()
-            else:
-                reader = Counter5TableReport()
+            reader = crt.get_reader_class(json_format=self.file_is_json())()
             records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, self.data_file.name))
         return records
 
     def file_is_json(self) -> bool:
         """
-        Returns True if the files seems to be a JSON file.
+        Returns True if the file seems to be a JSON file.
         """
         char = self.data_file.read(1)
         while char and char.isspace():

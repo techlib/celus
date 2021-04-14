@@ -14,6 +14,7 @@ from publications.models import Platform
 from core.tests.conftest import *
 from organizations.tests.conftest import *
 from publications.tests.conftest import platforms, interest_rt, titles
+from sushi.models import CounterReportType
 
 
 @pytest.mark.django_db
