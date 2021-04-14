@@ -426,7 +426,7 @@ cs:
         </v-container>
       </v-card-actions>
 
-      <v-dialog v-model="showTestDialog" max-width="800px">
+      <v-dialog v-model="showTestDialog" max-width="1000px">
         <v-card>
           <v-card-title>{{ $t("test_dialog") }}</v-card-title>
           <v-card-text>

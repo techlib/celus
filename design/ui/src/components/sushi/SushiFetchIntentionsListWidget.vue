@@ -54,7 +54,7 @@ cs:
                   v-if="totalCount > 0"
                   cols="6"
                   sm="4"
-                  lg="2"
+                  lg="3"
                   class=""
                   align-self="center"
                 >
@@ -95,7 +95,7 @@ cs:
                   </v-tooltip>
                 </v-col>
 
-                <v-col cols="auto">
+                <v-col cols="6" sm="4" lg="3">
                   <v-select
                     :label="$t('finished_filter')"
                     :items="finishedFilterItems"
@@ -171,17 +171,17 @@ cs:
                   v-text="$t('future_start_info')"
                 ></span>
                 <div v-if="item.previousAttempt">
-                  <br/>
+                  <br />
                   <strong>{{ $t("previous_attempt") }}:</strong>
                   <ul>
-                  <li v-if="item.previousAttempt.error_code">
-                    <strong>{{ $t("title_fields.error_code") }}</strong
-                    >: {{ item.previousAttempt.error_code }}
-                  </li>
-                  <li v-if="item.previousAttempt.log">
-                    <strong>{{ $t("title_fields.log") }}</strong
-                  >: {{ item.previousAttempt.log }}
-                  </li>
+                    <li v-if="item.previousAttempt.error_code">
+                      <strong>{{ $t("title_fields.error_code") }}</strong
+                      >: {{ item.previousAttempt.error_code }}
+                    </li>
+                    <li v-if="item.previousAttempt.log">
+                      <strong>{{ $t("title_fields.log") }}</strong
+                      >: {{ item.previousAttempt.log }}
+                    </li>
                   </ul>
                 </div>
               </span>

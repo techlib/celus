@@ -3,8 +3,8 @@
 en:
   select_dates_text: Select date range for manual SUSHI harvesting.
   select_dates_text_test:
-    Select date range for SUSHI credentials test. A shorter period usually takes
-    less time to process, so using only one month is advisable.
+    "Select the month for SUSHI credentials test. <br /><strong>Note</strong>: we use one month for testing to make it as fast as possible.
+    If you want to download data for a longer period, use the 'Harvest selected' button on the SUSHI management page."
   credentials_count: Number of credentials to harvest
   credentials_count_test: Number of credentials to test
   report_count: Number of reports to harvest
@@ -15,12 +15,13 @@ en:
     by editing corresponding credentials.
   there_were_errors: " | It was not possible to start harvesting due to the following error: | It was not possible to start harvesting due to the following errors:"
   check_credentials: Please check selection of credentials after closing this dialog. Broken credentials will be automatically unselected.
+  test_date: Month to test on
 
 cs:
   select_dates_text: Vyberte rozsah měsíců pro manuální stahování SUSHI.
-  select_dates_text_test:
-    Vyberte rozsah měsíců pro test přihlašovacích údajů. Kratší období je většinou
-    rychleji zpracováno, takže je vhodné vybrat jen jeden měsíc.
+  select_dates_text_test: "Vyberte měsíc pro otestování přihlašovacích údajů.
+    <br /><strong>Poznámka</strong>: pro co nejrychlejší otestování stahujeme data pouze za jeden měsíc. Pokud chcete
+    stáhnout data za delší období, použijte tlačítko 'Stáhni označené' na stránce správy SUSHI."
   credentials_count: Počet přihlašovacích údajů ke stažení
   credentials_count_test: Počet přihlašovacích údajů k otestování
   report_count: Počet reportů ke stažení
@@ -37,7 +38,7 @@ cs:
   <v-container fluid class="pb-0">
     <v-row v-if="!started">
       <v-col
-        v-text="test ? $t('select_dates_text_test') : $t('select_dates_text')"
+        v-html="test ? $t('select_dates_text_test') : $t('select_dates_text')"
       ></v-col>
     </v-row>
     <v-row align="center" v-if="!started">
@@ -54,7 +55,7 @@ cs:
           <template v-slot:activator="{ on }">
             <v-text-field
               v-model="startDate"
-              :label="$t('title_fields.start_date')"
+              :label="test ? $t('test_date') : $t('title_fields.start_date')"
               prepend-icon="fa-calendar"
               readonly
               v-on="on"
@@ -69,7 +70,7 @@ cs:
           ></v-date-picker>
         </v-menu>
       </v-col>
-      <v-col cols="6" md="4">
+      <v-col cols="6" md="4" v-if="!test">
         <v-menu
           v-model="endDateMenu"
           :close-on-content-click="false"
@@ -113,24 +114,31 @@ cs:
 
     <v-row v-if="!started">
       <v-col>
-        <strong
-          v-text="test ? $t('credentials_count_test') : $t('credentials_count')"
-        ></strong
-        >: {{ credentials.length }}<br />
-        <strong>{{ $t("report_count") }}</strong
-        >:
-        <span :class="totalReportCount == 0 ? 'error--text' : ''">{{
-          totalReportCount
-        }}</span>
-        <br />
-        <strong>{{ $t("broken_report_count") }}</strong
-        >: {{ brokenReportCount }}
-        <v-tooltip v-if="brokenReportCount" bottom max-width="400">
-          <template #activator="{ on }">
-            <v-icon v-on="on" color="warning" small>fa-info-circle</v-icon>
-          </template>
-          {{ $t("broken_reports_tooltip") }}
-        </v-tooltip>
+        <div>
+          <strong
+            v-text="
+              test ? $t('credentials_count_test') : $t('credentials_count')
+            "
+          ></strong
+          >: {{ credentials.length }}
+        </div>
+        <div>
+          <strong>{{ $t("report_count") }}</strong
+          >:
+          <span :class="totalReportCount == 0 ? 'error--text' : ''">{{
+            totalReportCount
+          }}</span>
+        </div>
+        <div v-if="brokenReportCount">
+          <strong>{{ $t("broken_report_count") }}</strong
+          >: {{ brokenReportCount }}
+          <v-tooltip v-if="brokenReportCount" bottom max-width="400">
+            <template #activator="{ on }">
+              <v-icon v-on="on" color="warning" small>fa-info-circle</v-icon>
+            </template>
+            {{ $t("broken_reports_tooltip") }}
+          </v-tooltip>
+        </div>
       </v-col>
     </v-row>
 
@@ -184,7 +192,8 @@ export default {
     retryInterval: { default: 1000, type: Number },
     showOrganization: { default: false, type: Boolean },
     showPlatform: { default: false, type: Boolean },
-    test: { default: false, type: Boolean }, // is this dialog used for testing? Influences wording.
+    // is this dialog used for testing? Influences wording and the selection of months
+    test: { default: false, type: Boolean },
   },
 
   data() {
@@ -241,7 +250,7 @@ export default {
     async createIntentions() {
       let intentions = [];
       let startDate = ymFirstDay(this.startDate);
-      let endDate = ymLastDay(this.endDate);
+      let endDate = ymLastDay(this.test ? this.startDate : this.endDate);
 
       for (let cred of this.credentials) {
         for (let rt of cred.counter_reports_long) {
