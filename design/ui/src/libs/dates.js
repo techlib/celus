@@ -12,17 +12,24 @@ function ymDateFormat(date) {
   return format(date, "yyyy-MM");
 }
 
+function ymDateParse(ymdate) {
+  return parseISO(ymdate, "yyyy-MM", Date());
+}
+
 function ymFirstDay(ymdate) {
-  let parsed = parseISO(ymdate, "yyyy-MM", Date());
-  return format(new Date(getYear(parsed), getMonth(parsed), 1), "yyyy-MM-dd");
+  return monthFirstDay(ymDateParse(ymdate));
+}
+
+function monthFirstDay(date) {
+  return format(new Date(getYear(date), getMonth(date), 1), "yyyy-MM-dd");
+}
+
+function monthLastDay(date) {
+  return format(new Date(getYear(date), getMonth(date) + 1, 0), "yyyy-MM-dd");
 }
 
 function ymLastDay(ymdate) {
-  let parsed = parseISO(ymdate, "yyyy-MM", Date());
-  return format(
-    new Date(getYear(parsed), getMonth(parsed) + 1, 0),
-    "yyyy-MM-dd"
-  );
+  return monthLastDay(ymDateParse(ymdate));
 }
 
 function parseDateTime(text) {
@@ -58,7 +65,10 @@ function isoDateTimeFormatSpans(date) {
 
 export {
   isoDateFormat,
+  monthFirstDay,
+  monthLastDay,
   ymDateFormat,
+  ymDateParse,
   ymFirstDay,
   ymLastDay,
   parseDateTime,

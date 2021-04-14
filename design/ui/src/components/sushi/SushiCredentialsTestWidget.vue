@@ -16,6 +16,8 @@ en:
   there_were_errors: " | It was not possible to start harvesting due to the following error: | It was not possible to start harvesting due to the following errors:"
   check_credentials: Please check selection of credentials after closing this dialog. Broken credentials will be automatically unselected.
   test_date: Month to test on
+  months_to_cover: Months to cover
+  fetch_attempt_count: Number of individual downloads
 
 cs:
   select_dates_text: Vyberte rozsah měsíců pro manuální stahování SUSHI.
@@ -32,6 +34,8 @@ cs:
     příslušných přihlašovacích údajů.
   there_were_errors: "Nebylo možné zahájit harvesting kvůli následující chybě: | Nebylo možné zahájit harvesting kvůli následujícím chybám: | Nebylo možné zahájit harvesting kvůli následujícím chybám:"
   check_credentials: Po uzavření dialogu zkontrolujte prosím výběr přihlašovacích údajů. Označení nefunkčních bude automaticky zrušeno.
+  months_to_cover: Stahované měsíce
+  fetch_attempt_count: Počet jednotlivých stahování
 </i18n>
 
 <template>
@@ -139,6 +143,18 @@ cs:
             {{ $t("broken_reports_tooltip") }}
           </v-tooltip>
         </div>
+        <div>
+          <strong>{{ $t("months_to_cover") }}</strong
+          >:
+          {{ monthsToCoverCount }}
+        </div>
+        <div>
+          <strong>{{ $t("fetch_attempt_count") }}</strong
+          >: {{ totalAttemptCount }}
+          <span class="ml-3"
+            >({{ totalReportCount }} &times; {{ monthsToCoverCount }})</span
+          >
+        </div>
       </v-col>
     </v-row>
 
@@ -174,7 +190,12 @@ cs:
 <script>
 import { mapActions } from "vuex";
 import axios from "axios";
-import { ymDateFormat, ymFirstDay, ymLastDay } from "@/libs/dates";
+import {
+  monthFirstDay,
+  monthLastDay,
+  ymDateFormat,
+  ymDateParse,
+} from "@/libs/dates";
 import addMonths from "date-fns/addMonths";
 import HarvestsTable from "@/components/HarvestsTable";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
@@ -241,6 +262,25 @@ export default {
       }
       return [];
     },
+    monthsToCover() {
+      let start = ymDateParse(this.startDate);
+      let months = [start];
+      if (this.test) {
+        return months;
+      }
+      const endMonth = ymDateParse(this.endDate);
+      while (start < endMonth) {
+        start = addMonths(start, 1);
+        months.push(start);
+      }
+      return months;
+    },
+    monthsToCoverCount() {
+      return this.monthsToCover.length;
+    },
+    totalAttemptCount() {
+      return this.totalReportCount * this.monthsToCoverCount;
+    },
   },
 
   methods: {
@@ -249,18 +289,18 @@ export default {
     }),
     async createIntentions() {
       let intentions = [];
-      let startDate = ymFirstDay(this.startDate);
-      let endDate = ymLastDay(this.test ? this.startDate : this.endDate);
 
       for (let cred of this.credentials) {
         for (let rt of cred.counter_reports_long) {
           if (!rt.broken) {
-            intentions.push({
-              start_date: startDate,
-              end_date: endDate,
-              credentials: cred.pk,
-              counter_report: rt.id,
-            });
+            for (let month of this.monthsToCover) {
+              intentions.push({
+                start_date: monthFirstDay(month),
+                end_date: monthLastDay(month),
+                credentials: cred.pk,
+                counter_report: rt.id,
+              });
+            }
           }
         }
       }
