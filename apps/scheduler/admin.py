@@ -6,8 +6,45 @@ from sushi.models import SushiFetchAttempt
 from . import models
 
 
+class FetchIntentionInline(admin.TabularInline):
+    model = models.FetchIntention
+    readonly_fields = (
+        "intention_link",
+        "url",
+    )
+    fields = (
+        "intention_link",
+        "queue_id",
+        "url",
+        "when_processed",
+        "start_date",
+        "end_date",
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related('credentials')
+
+    def intention_link(self, obj: models.FetchIntention):
+        url = reverse('admin:scheduler_fetchintention_change', args=[obj.pk])
+        return format_html('<a href="{}">#{} - {}</a>', url, str(obj.pk), str(obj.credentials))
+
+    def url(self, obj: models.FetchIntention):
+        return obj.credentials.url
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(models.Harvest)
 class HarvestAdmin(admin.ModelAdmin):
+    inlines = (FetchIntentionInline,)
     search_fields = (
         'last_updated_by__email',
         'automatic__organization__name',
@@ -73,6 +110,7 @@ class AttemptInline(admin.StackedInline):
 @admin.register(models.FetchIntention)
 class FetchIntentionAdmin(admin.ModelAdmin):
     search_fields = (
+        'harvest__pk',
         'harvest__last_updated_by__email',
         'credentials__organization__name',
         'credentials__platform__name',
@@ -84,11 +122,13 @@ class FetchIntentionAdmin(admin.ModelAdmin):
         'credentials__organization',
         'credentials__platform',
         'scheduler',
+        ('when_processed', admin.EmptyFieldListFilter),
     )
 
     list_display = (
         'pk',
         'harvest_link',
+        'queue_id',
         'not_before_repr',
         'when_processed_repr',
         'priority',
@@ -97,11 +137,16 @@ class FetchIntentionAdmin(admin.ModelAdmin):
         'code',
         'start_date',
         'end_date',
-        'queue_id',
     )
 
     exclude = ('attempt',)
     readonly_fields = ('credentials', 'counter_report', 'attempt_link')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related(
+            'credentials', 'credentials__platform', 'counter_report', 'attempt', 'harvest',
+        )
 
     def attempt_link(self, obj: models.FetchIntention):
         if obj.attempt:
@@ -140,5 +185,6 @@ class FetchIntentionAdmin(admin.ModelAdmin):
         )
 
     harvest_link.short_description = "Harvest"
+    harvest_link.admin_order_field = 'harvest'
 
     harvest_link.allow_tags = True

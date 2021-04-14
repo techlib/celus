@@ -478,7 +478,6 @@ class TestFetchIntentionAPI:
         # create new intention by setting .pk to None and saving
         old_pk = resp.json()['pk']
         intention = FetchIntention.objects.get(pk=old_pk)
-        intention.retry_id = intention.pk
         intention.pk = None
         intention.data_not_ready_retry = 1
         intention.attempt = None
