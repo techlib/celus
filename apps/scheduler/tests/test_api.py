@@ -413,6 +413,7 @@ class TestFetchIntentionAPI:
         data = resp.json()
         assert len(data) == 3
         assert "broken_credentials" in data[0]
+        assert data[2]["previous_intention"] is not None
 
         url = reverse('harvest-intention-list', args=(harvests["user1"].pk,))
         resp = clients["master"].get(url, {})

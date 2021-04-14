@@ -40,6 +40,10 @@ function annotateIntention(intention) {
     intention.notBefore = intention.duplicate_of.notBefore;
     intention.brokenCredentials = intention.duplicate_of.brokenCredentials;
   }
+
+  if (!intention.hasAttempt) {
+    intention.previousAttempt = intention.previous_intention && intention.previous_intention.attempt;
+  }
   intention.state = intentionState(intention);
 }
 

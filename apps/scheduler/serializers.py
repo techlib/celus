@@ -53,6 +53,7 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
     attempt = SushiFetchAttemptSerializer(required=False)
     fetching_data = serializers.BooleanField()
     duplicate_of = DuplicateFetchIntentionSerializer(required=False)
+    previous_intention = DuplicateFetchIntentionSerializer(required=False)
 
     class Meta:
         model = FetchIntention
@@ -74,6 +75,7 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
             'service_not_available_retry',
             'service_busy_retry',
             'duplicate_of',
+            'previous_intention',
         )
 
 

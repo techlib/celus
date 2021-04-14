@@ -631,6 +631,16 @@ class FetchIntention(models.Model):
     def counter_report_code(self):
         return self.counter_report.code
 
+    @property
+    def previous_intention(self) -> typing.Optional['FetchIntention']:
+        if not self.queue_id:
+            return None
+        return (
+            FetchIntention.objects.filter(queue_id=self.queue_id, pk__lt=self.pk)
+            .order_by('-pk')
+            .first()
+        )
+
 
 class HarvestQuerySet(models.QuerySet):
     def annotate_stats(self):

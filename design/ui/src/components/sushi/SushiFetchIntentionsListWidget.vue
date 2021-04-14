@@ -15,6 +15,7 @@ en:
   progress: Finished
   stats: Statistics
   status: Status
+  previous_attempt: Previous attempt
 
 cs:
   currently_downloading: Data ještě nejsou k dispozici - vyčkejte prosím, až budou stáhnutá. Může to trvat od sekund po jednotky minut.
@@ -30,6 +31,7 @@ cs:
   progress: Dokončeno
   stats: Statistika
   status: Stav
+  previous_attempt: Předchozí pokus
 </i18n>
 <template>
   <v-container fluid class="pt-0 pb-0">
@@ -168,6 +170,20 @@ cs:
                   v-if="!futureStart"
                   v-text="$t('future_start_info')"
                 ></span>
+                <div v-if="item.previousAttempt">
+                  <br/>
+                  <strong>{{ $t("previous_attempt") }}:</strong>
+                  <ul>
+                  <li v-if="item.previousAttempt.error_code">
+                    <strong>{{ $t("title_fields.error_code") }}</strong
+                    >: {{ item.previousAttempt.error_code }}
+                  </li>
+                  <li v-if="item.previousAttempt.log">
+                    <strong>{{ $t("title_fields.log") }}</strong
+                  >: {{ item.previousAttempt.log }}
+                  </li>
+                  </ul>
+                </div>
               </span>
             </td>
           </template>
