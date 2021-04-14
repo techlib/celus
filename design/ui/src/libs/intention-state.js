@@ -47,6 +47,7 @@ const INTENTION_RUNNING = "running";
 const INTENTION_DELETED = "deleted";
 const INTENTION_BROKEN = "broken_sushi";
 const INTENTION_WAITING = "waiting";
+const INTENTION_QUEUED = "queued";
 
 function intentionState(intention) {
   if (intention.fetchingData) {
@@ -61,6 +62,9 @@ function intentionState(intention) {
   if (intention.attemptDeleted) {
     return INTENTION_DELETED;
   }
+  if (intention.isRetry) {
+      return INTENTION_QUEUED;
+  }
   return INTENTION_WAITING;
 }
 
@@ -72,6 +76,8 @@ function intentionStateToIcon(state) {
       return { icon: "fa-trash", color: "secondary" };
     case INTENTION_BROKEN:
       return { icon: "fa-bug", color: "error" };
+    case INTENTION_QUEUED:
+      return { icon: "far fa-pause-circle", color: "secondary" };
     case INTENTION_WAITING:
       return { icon: "far fa-clock", color: "secondary" };
     default:
