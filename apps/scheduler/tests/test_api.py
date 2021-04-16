@@ -380,7 +380,7 @@ class TestHarvestAPI:
         assert len(data) == 0
 
         # this should create automatic harvests
-        Automatic.update_for_next_month()
+        Automatic.update_for_this_month()
 
         url = reverse('harvest-list')
         resp = clients["master"].get(url, {})

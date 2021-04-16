@@ -6,8 +6,10 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.utils import timezone
 
 
+from core.logic.dates import month_start, month_end, next_month, this_month
 from sushi.models import SushiCredentials, CounterReportsToCredentials
 
 from .models import Automatic, FetchIntention
@@ -17,7 +19,7 @@ def _update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
     if cr2c.credentials.enabled and cr2c.broken is None and cr2c.credentials.broken is None:
         # add intention
         FetchIntention.objects.get_or_create(
-            not_before=Automatic.next_month_trigger_time(),
+            not_before=Automatic.trigger_time(automatic.month),
             harvest=automatic.harvest,
             start_date=automatic.month,
             end_date=automatic.month_end,
@@ -45,9 +47,7 @@ def update_intentions_from_cred_post_save(
 
     with transaction.atomic():
         if not created:
-            next_month = Automatic.next_month()
-
-            automatic = Automatic.get_or_create(next_month, instance.organization)
+            automatic = Automatic.get_or_create(next_month(), instance.organization)
             if instance.enabled and not instance.broken:
                 # Make sure that Automatic harvest is planned
                 for cr2c in instance.counterreportstocredentials_set.all():
@@ -69,7 +69,7 @@ def update_intentions_from_cr2c_post_save(
 
     with transaction.atomic():
         automatic = Automatic.get_or_create(
-            month=Automatic.next_month(), organization=instance.credentials.organization
+            month=next_month(), organization=instance.credentials.organization
         )
         _update_cr2c(automatic, instance)
 
@@ -82,8 +82,8 @@ def update_intentions_from_cr2c_post_delete(sender, instance, using, **kwargs):
         return
 
     with transaction.atomic():
-        start_date = Automatic.next_month()
-        end_date = (start_date + relativedelta(months=1)) - relativedelta(days=1)
+        start_date = next_month()
+        end_date = month_end(start_date)
         FetchIntention.objects.filter(
             harvest__automatic__isnull=False,
             start_date=start_date,

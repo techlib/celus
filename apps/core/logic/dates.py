@@ -3,6 +3,8 @@ import datetime
 import calendar
 from typing import Optional
 
+from django.utils import timezone
+
 month_matcher = re.compile(r'^(?P<year>\d{4})-(?P<month>\d{1,2})(-\d{1,2})?$')
 counter_month_matcher = re.compile(r'^(?P<month>\w{3})-(?P<year>\d{2}(\d{2})?)$')
 
@@ -65,6 +67,14 @@ def month_start(date: datetime.date) -> datetime.date:
     if isinstance(date, datetime.datetime):
         return date.replace(day=1).date()
     return date.replace(day=1)
+
+
+def this_month() -> datetime.date:
+    return month_start(timezone.now())
+
+
+def next_month() -> datetime.date:
+    return month_start(this_month() + datetime.timedelta(days=32))
 
 
 def date_range_from_params(params: dict) -> (datetime.date, datetime.date):

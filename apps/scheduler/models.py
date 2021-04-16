@@ -837,21 +837,23 @@ class Automatic(models.Model):
         return (to_add, to_delete)
 
     @classmethod
-    def next_month_trigger_time(cls):
-        return datetime.combine(
-            cls.next_month(), datetime.min.time(), tzinfo=timezone.get_current_timezone(),
-        ) + timedelta(
-            days=2
-        )  # TODO customizable delta per scheduler
+    def trigger_time(cls, month: date):
+        return (
+            datetime.combine(
+                month_start(month), datetime.min.time(), tzinfo=timezone.get_current_timezone(),
+            )
+            + timedelta(days=2,)  # TODO customizable delta per scheduler
+            + relativedelta(months=1)  # triger one month after
+        )
 
     @classmethod
     @transaction.atomic
-    def update_for_next_month(cls) -> Counter:
-        """ Updates automatic harvesting for next month """
+    def update_for_month(cls, month: date):
+        """ Updates automatic updates for selected month """
         counter = Counter({"added": 0, "deleted": 0})
 
-        next_month = cls.next_month()
-        next_month_end = month_end(next_month)
+        month = month_start(month)
+        month_last = month_end(month)
 
         new_intentions: typing.List[FetchIntention] = []
         for cr2c in CounterReportsToCredentials.objects.filter(
@@ -859,19 +861,19 @@ class Automatic(models.Model):
         ):
             new_intentions.append(
                 FetchIntention(
-                    not_before=cls.next_month_trigger_time(),
+                    not_before=cls.trigger_time(month_last),
                     priority=FetchIntention.PRIORITY_NORMAL,
                     credentials=cr2c.credentials,
                     counter_report=cr2c.counter_report,
-                    start_date=next_month,
-                    end_date=next_month_end,
+                    start_date=month,
+                    end_date=month_last,
                 )
             )
 
         # group by organization
         organization_to_intentions = {
             e.organization: []
-            for e in Automatic.objects.filter(month=next_month)  # prefill with allready planned
+            for e in Automatic.objects.filter(month=month)  # prefill with allready planned
         }
 
         for intention in new_intentions:
@@ -882,15 +884,15 @@ class Automatic(models.Model):
         # compare and unschedule disabled
         for organization, intentions in organization_to_intentions.items():
             try:
-                automatic = Automatic.objects.get(month=next_month, organization=organization)
+                automatic = Automatic.objects.get(month=month, organization=organization)
             except Automatic.DoesNotExist:
                 automatic = None
             if automatic:
                 # delete missing
                 existing_intentions = list(
                     FetchIntention.objects.select_for_update().filter(
-                        start_date=next_month,
-                        end_date=next_month_end,
+                        start_date=month,
+                        end_date=month_last,
                         credentials__organization=organization,
                         when_processed__isnull=True,
                     )
@@ -907,11 +909,16 @@ class Automatic(models.Model):
                 # plan right away
                 harvest = Harvest.plan_harvesting(intentions)
                 counter.update({"added": len(intentions)})
-                Automatic.objects.create(
-                    month=next_month, organization=organization, harvest=harvest
-                )
+                Automatic.objects.create(month=month, organization=organization, harvest=harvest)
 
         return counter
+
+    @classmethod
+    @transaction.atomic
+    def update_for_this_month(cls) -> Counter:
+        """ Updates automatic harvesting for current month """
+        this_month = month_start(datetime.now(timezone.get_current_timezone()))
+        return cls.update_for_month(this_month)
 
     @classmethod
     def get_or_create(cls, month: date, organization: Organization) -> 'Automatic':
@@ -926,7 +933,3 @@ class Automatic(models.Model):
     @property
     def month_end(self):
         return month_end(self.month)
-
-    @staticmethod
-    def next_month():
-        return month_start(timezone.now()) + relativedelta(months=1)

@@ -810,16 +810,20 @@ class TestHarvest:
 @pytest.mark.django_db
 class TestAutomatic:
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
-    def test_update_for_next_month(
+    def test_update_for_this_month(
         self, credentials, organizations, counter_report_types, disable_automatic_scheduling,
     ):
-        start_time = datetime(2020, 1, 3, 0, 0, 0, 0, tzinfo=current_tz)
+        start_date = date(2020, 2, 1)
 
         # all empty
         assert FetchIntention.objects.count() == 0
-        assert Automatic.update_for_next_month() == {"added": 4, "deleted": 0}
+        assert Automatic.update_for_this_month() == {"added": 4, "deleted": 0}
+        last = Automatic.objects.last()
+        assert last.month == date(2020, 1, 1)
+        assert last.harvest.intentions.count() == 1
+        assert last.harvest.intentions.last().not_before.date() > start_date
         assert FetchIntention.objects.count() == 4
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         # mark credentials broken
         credentials["branch_pr"].set_broken(
@@ -844,7 +848,7 @@ class TestAutomatic:
             counter_report=counter_report_types["tr"]
         ).delete()
 
-        assert Automatic.update_for_next_month() == {"deleted": 3, "added": 0}
+        assert Automatic.update_for_this_month() == {"deleted": 3, "added": 0}
         assert FetchIntention.objects.count() == 1
         remained = FetchIntention.objects.last()
         assert remained.counter_report == counter_report_types["br1"]
@@ -894,9 +898,9 @@ class TestAutomatic:
             broken_type=SushiCredentials.BROKEN_SUSHI,
         )
 
-        assert Automatic.update_for_next_month() == {"deleted": 0, "added": 2}
+        assert Automatic.update_for_this_month() == {"deleted": 0, "added": 2}
         assert FetchIntention.objects.count() == 3
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
@@ -906,7 +910,7 @@ class TestAutomatic:
             credentials or credentails to counter report mapping
             changes
         """
-        start_time = datetime(2020, 1, 3, 0, 0, 0, 0, tzinfo=current_tz)
+        start_date = date(2020, 2, 1)
 
         # Save credentials
         assert FetchIntention.objects.all().count() == 0
@@ -916,17 +920,17 @@ class TestAutomatic:
         assert Automatic.objects.all().count() == 1
         automatic_branch = Automatic.objects.first()
         assert automatic_branch.harvest.intentions.count() == 1
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         credentials["standalone_br1_jr1"].save()
         assert Automatic.objects.all().count() == 2
         automatic_standalone = Automatic.objects.order_by('pk').last()
         assert automatic_standalone.harvest.intentions.count() == 2
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         credentials["standalone_tr"].save()
         assert automatic_standalone.harvest.intentions.count() == 3
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         # Create new mapping
         new_mapping = CounterReportsToCredentials.objects.create(
@@ -935,7 +939,7 @@ class TestAutomatic:
             broken=None,
         )
         assert FetchIntention.objects.all().count() == 5
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         # Set credentials broken
         credentials["branch_pr"].set_broken(
@@ -949,7 +953,7 @@ class TestAutomatic:
         # Unset credentials broken
         credentials["branch_pr"].unset_broken()
         assert automatic_branch.harvest.intentions.count() == 2
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         # Unset credentials enabled
         credentials["branch_pr"].enabled = False
@@ -960,7 +964,7 @@ class TestAutomatic:
         credentials["branch_pr"].enabled = True
         credentials["branch_pr"].save()
         assert automatic_branch.harvest.intentions.count() == 2
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         # Set broken mapping
         new_mapping.set_broken(
@@ -974,7 +978,7 @@ class TestAutomatic:
         # Unset broken mapping
         new_mapping.unset_broken()
         assert automatic_branch.harvest.intentions.count() == 2
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         # Remove mapping
         new_mapping.delete()
@@ -984,4 +988,4 @@ class TestAutomatic:
         assert automatic_standalone.harvest.intentions.count() == 3
         credentials["standalone_br1_jr1"].delete()
         assert automatic_standalone.harvest.intentions.count() == 1
-        assert all(e.not_before == start_time for e in FetchIntention.objects.all())
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
