@@ -574,7 +574,8 @@ export default {
         let rts = this.allReportTypes.filter(
           (item) => item.pk === this.selectedReportTypes[0]
         );
-        return rts[0].dimensions_sorted;
+        let ret = rts[0].dimensionObjs;
+        return ret;
       }
       return [];
     },

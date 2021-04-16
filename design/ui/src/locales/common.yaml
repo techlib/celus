@@ -146,6 +146,8 @@ en:
     save: Save
     save_changes: Save changes
     save_report: Save report
+    refresh: Refresh
+    download: Download
   in_czech: Czech
   in_english: English
   cover_image: Cover image
@@ -304,6 +306,8 @@ cs:
     save: Uložit
     save_changes: Uložit změny
     save_report: Uložit report
+    refresh: Aktualizovat
+    download: Stáhnout
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky

@@ -71,7 +71,7 @@ class Dimension {
   }
 
   getName(i18n) {
-    if (this.names.length && this.names[i18n.locale]) {
+    if (this.names && this.names[i18n.locale]) {
       return this.names[i18n.locale];
     }
     if (this.name) {
@@ -236,4 +236,82 @@ class FlexiReport {
   }
 }
 
-export { Dimension, FlexiReport };
+class FlexiExport {
+  constructor() {
+    this.pk = null;
+    this.primaryDimension = null;
+    this.reportTypes = []; // these are filters as well, but we treat is differently
+    this.filters = [];
+    this.groupBy = [];
+    this.orderBy = [];
+    this.outputFile = null;
+  }
+
+  static async fromAPIObject(data, allReportTypes = null) {
+    let flexiExport = new FlexiExport();
+    flexiExport.pk = data.pk;
+    flexiExport.outputFile = data.output_file;
+    flexiExport.created = data.created;
+    flexiExport.fileSize = data.file_size;
+    await flexiExport.readConfig(data.export_params, allReportTypes);
+    return flexiExport;
+  }
+
+  async readConfig(config, allReportTypes = null) {
+    // when `allReportTypes` is given, it has to be a Map of id->reportType
+    // report types first as we need them later on to remap dimensions
+    let rtFilter = config.filters.find(
+      (item) => item.dimension === "report_type"
+    );
+    if (rtFilter) {
+      for (let rtId of rtFilter.values) {
+        this.reportTypes.push(
+          await this.resolveReportType(rtId, allReportTypes)
+        );
+      }
+    }
+    // primary dimension
+    this.primaryDimension = this.resolveDim(config.primary_dimension);
+    // filters
+    this.filters = config.filters
+      .filter((item) => item.dimension !== "report_type")
+      .map((item) => {
+        return {
+          values: item.values,
+          dimension: this.resolveDim(item.dimension),
+        };
+      });
+    // group by
+    this.groupBy = config.group_by.map((item) => this.resolveDim(item));
+    // order by
+    this.orderBy = config.order_by;
+  }
+
+  async resolveReportType(id, allReportTypes = null) {
+    if (allReportTypes) {
+      return allReportTypes.get(id);
+    }
+    return (await axios.get(`/api/report-type/${id}/`)).data;
+  }
+
+  resolveDim(ref) {
+    if (!Dimension.isNameExplicit(ref)) {
+      return Dimension.fromImplicit(ref);
+    }
+    // we have an explicit dimension, we need to run is through report type
+    // to see what it is
+    let idx = Dimension.explicitIndex(ref);
+    if (idx !== null) {
+      // we have an explicit dimension - we need to resolve it using the report_type, etc.
+      if (this.reportTypes.length === 1) {
+        return Dimension.fromObject(
+          ref,
+          this.reportTypes[0].dimensions_sorted[idx]
+        );
+      }
+    }
+    return new Dimension(ref);
+  }
+}
+
+export { Dimension, FlexiReport, FlexiExport };

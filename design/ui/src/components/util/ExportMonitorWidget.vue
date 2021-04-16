@@ -60,6 +60,7 @@ export default {
       exportDetails: null,
       forceProgress: false,
       doPoll: true,
+      reloaded: false, // true if at least one reload of data was made
     };
   },
 
@@ -115,6 +116,9 @@ export default {
         this.exportDetails = resp.data;
         if (this.doPoll && this.exportDetails.status !== 2) {
           setTimeout(this.fetchData, 500);
+          this.reloaded = true;
+        } else if (this.reloaded && this.exportDetails.status === 2) {
+          this.$emit("finished", true);
         }
       } catch (error) {
         this.showSnackbar({
