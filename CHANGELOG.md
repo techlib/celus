@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0]
+
+### Added
+
+#### Frontend
+
+* advanced reporting module - allows creation of custom reports by selecting desired output
+  rows and columns with possible filtering.
+* per credentials overview of harvested data was added. It shows harvests by years and allows
+  quick reharvesting of missing data.
+* it is now possible to create and edit platforms in the UI
+
+#### Backend
+
+* support for reading COUNTER 5 reports in table format was added
+* management command for detection of conflicting import batches was added
+* management command for removal of empty fetch attempts was added
+* management command for removal of obsolete platform-title links
+
+### Changes
+
+#### Frontend
+
+* the left sidebar was reworked using collapsible entries to save space
+* harvest overview was extended with more information
+* it is now possible to only download data for one month using the "Save and test" button in
+  the SUSHI credentials edit dialog
+* when using the "Harvest selected" button for manual harvesting, the harvest is split into
+  separate downloads for individual months
+* crashed data imports are now marked as a distinct state with its own icon
+
+#### Backend
+
+* harvest scheduling was switched to the new system by default. This means that future harvests
+  are planned automatically in advance and past data have to be explicitly harvested by the user.
+* HTTP authentication information was removed from COUNTER 5 SUSHI credentials as it is not used
+  there
+* better handling of SUSHI exceptions 1030, 2010 and 3060 was added. Errors 1030 and 2010 causes
+  credentials to be marked as broken
+* scheduler admin was improved
+
+### Fixed
+
+#### Frontend
+
+* fix reporting of used metrics for interest related charts when materialized reports are used
+  in the background
+* harvest view was optimized for speed
+* error when clearing search text on SUSHI management page using the "x" icon was fixed
+* error which caused reports types sometimes not appearing when editing SUSHI credentials was fixed
+
+#### Backend
+
+* update Cachalot to a newer version containing our fix for temporary disabling of Cachalot
+  - fixes memory problems when exporting large amounts of raw data
+* fix for error causing users to be disconnected from their organizations upon login of other user
+  when live ERMS sync was used was ported from 1.0.x
+* database constraints enforcing uniqueness in combination with `source` were fixed to properly
+  handle `source` being null.
+* scheduling of harvests for new months was fixed to wait until month end before attempting
+  to harvest data for that month
+* reevaluation of queries by recache was fixed - it did not occur because of wrong celery config
+
+
 
 ## [2.8.3]
 
