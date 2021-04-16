@@ -971,6 +971,7 @@ class SushiFetchAttempt(models.Model):
         # Check for sushi error
         if str(self.error_code) in (
             str(ErrorCode.NOT_AUTHORIZED.value),
+            str(ErrorCode.NOT_AUTHORIZED_INSTITUTION.value),
             str(ErrorCode.INVALID_API_KEY.value),
         ):
             self.credentials.set_broken(self, SushiCredentials.BROKEN_SUSHI)
