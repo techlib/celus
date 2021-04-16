@@ -133,7 +133,7 @@ class Command(BaseCommand):
                             with reversion.create_revision():
                                 sc.counter_reports.set(report_objs)
                                 reversion.set_comment(
-                                    'Active reports synced by load_platform_' 'report_table command'
+                                    'Active reports synced by load_platform_report_table command'
                                 )
                             sc_count += 1
                         rep_names = ', '.join(rep.code for rep in report_objs)
