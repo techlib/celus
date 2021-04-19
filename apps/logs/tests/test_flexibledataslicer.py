@@ -412,6 +412,22 @@ class TestFlexibleDataSlicerOther:
         assert metric_data['count'] == 2
         assert {rec['dim1'] for rec in metric_data['values']} == {dt.pk for dt in dts}
 
+    @pytest.mark.parametrize(
+        ['search_text', 'result_count'], [('2000', 1), ('200', 5), ('19', 1), ('18', 0)]
+    )
+    def test_get_possible_dimension_values_query_with_list_of_explicit_dim_int_values(
+        self, flexible_slicer_test_data2, search_text, result_count
+    ):
+        """
+        Tests that a list of integer values the queried dimension may be used by the slicer to limit
+        output of `get_possible_dimension_values`
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        report_type = flexible_slicer_test_data2['report_types'][1]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type.pk))
+        metric_data = slicer.get_possible_dimension_values('dim2', text_filter=search_text)
+        assert metric_data['count'] == result_count
+
     def test_create_from_config(self):
         """
         Test that slicer created from config has the same params as the original slicer

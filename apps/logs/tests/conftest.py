@@ -264,3 +264,92 @@ def flexible_slicer_test_data(report_type_nd):
         'dates': dates,
         'dimension_values': dimension_values,
     }
+
+
+@pytest.fixture
+def flexible_slicer_test_data2(report_type_nd):
+    """
+    Creates a 'cube' of AccessLogs for all combinations of organization, platform, report_type, etc.
+    This one is slightly different from `flexible_slicer_test_data` in that it uses one dimension
+    of type INT for one of the report types
+    """
+
+    organizations = [
+        Organization.objects.create(short_name='org1', name='Organization 1'),
+        Organization.objects.create(short_name='org2', name='Organization 2'),
+    ]
+    platforms = [
+        Platform.objects.create(short_name='pl1', name='Platform 1'),
+        Platform.objects.create(short_name='pl2', name='Platform 2'),
+    ]
+    metrics = [
+        Metric.objects.create(short_name='m1', name='Metric 1'),
+        Metric.objects.create(short_name='m2', name='Metric 2'),
+    ]
+    targets = [
+        Title.objects.create(name='Title 1', isbn='123456789'),
+        Title.objects.create(name='Title 2', issn='964326665'),
+    ]
+    report_types = [
+        report_type_nd(1, ['dim1name'], short_name='rt1', name='Report type 1'),
+        report_type_nd(2, ['dim1name', 'dim2name'], short_name='rt2', name='Report type 2'),
+    ]
+    # change the second dimension to type INT
+    report_types[1].dimensions_sorted[1].type = Dimension.TYPE_INT
+    report_types[1].dimensions_sorted[1].save()
+
+    dates = ['2019-12-01', '2020-01-01', '2020-02-01']
+    dimension_values = [
+        ['A', 'B', 'C'],
+        [1999, 2000, 2001, 2002, 2003, 2004],
+    ]
+    values = value_generator()
+    accesslogs = []
+    dimension_texts = {}
+    for rt in report_types:
+        ib = ImportBatch.objects.create(report_type=rt)
+        dim_count = rt.dimensions.count()
+        dim_options = dimension_values[:dim_count]
+        for i, dim in enumerate(rt.dimensions_sorted):
+            for value in dimension_values[i]:
+                if dim.type == Dimension.TYPE_TEXT:
+                    dimension_texts[(dim.pk, value)], _ = DimensionText.objects.get_or_create(
+                        dimension=dim, text=value
+                    )
+        for rec in product(organizations, platforms, metrics, targets, dates, *dim_options):
+            organization, platform, metric, target, date = rec[:5]
+            dim_data = {}
+            for i in range(dim_count):
+                attr = f'dim{i+1}'
+                value_str = rec[5 + i]
+                if (rt.dimensions_sorted[i].pk, value_str) in dimension_texts:
+                    # this is a remapped text value
+                    value_key = dimension_texts[(rt.dimensions_sorted[i].pk, value_str)]
+                    dim_data[attr] = value_key.pk
+                else:
+                    dim_data[attr] = value_str
+            value = next(values)
+            accesslogs.append(
+                AccessLog(
+                    report_type=rt,
+                    organization=organization,
+                    platform=platform,
+                    metric=metric,
+                    target=target,
+                    date=date,
+                    value=value,
+                    import_batch=ib,
+                    **dim_data,
+                )
+            )
+
+    AccessLog.objects.bulk_create(accesslogs)
+    return {
+        'report_types': report_types,
+        'organizations': organizations,
+        'platforms': platforms,
+        'metrics': metrics,
+        'targets': targets,
+        'dates': dates,
+        'dimension_values': dimension_values,
+    }

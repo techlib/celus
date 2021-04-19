@@ -23,8 +23,9 @@ from django.db.models import (
     OuterRef,
     Subquery,
     Model,
+    CharField,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Cast
 from django.shortcuts import get_object_or_404
 
 from charts.models import ReportDataView
@@ -791,26 +792,31 @@ class FlexibleDataSlicer:
             operator.or_, (Q(**{f'{text_field}__ilike': text}) for text_field in text_fields)
         )
 
-    @classmethod
-    def create_text_filter(cls, dimension, text_filter) -> dict:
+    def create_text_filter(self, dimension, text_filter) -> (dict, dict):
         """
         Creates a dict that can be used in queryset filter to filter only those instances of
         `dimension` which contain the text from `text_filter`.
         """
-        field, modifier = cls.get_dimension_field(dimension)
+        field, modifier = self.get_dimension_field(dimension)
         extra_filter = {}
+        extra_annot = {}
         if isinstance(field, ForeignKey):
             primary_cls = field.remote_field.model
-            subfilter = primary_cls.objects.filter(cls._text_to_filter(text_filter)).values('id')
+            subfilter = primary_cls.objects.filter(self._text_to_filter(text_filter)).values('id')
             extra_filter = {f'{dimension}_id__in': subfilter}
         elif field and dimension.startswith('dim'):
-            subfilter = DimensionText.objects.filter(
-                cls._text_to_filter(text_filter, text_fields=('text', 'text_local'))
-            ).values('id')
-            extra_filter = {f'{dimension}__in': subfilter}
+            dim = self.resolve_explicit_dimension(dimension)
+            if dim.type == Dimension.TYPE_TEXT:
+                subfilter = DimensionText.objects.filter(
+                    self._text_to_filter(text_filter, text_fields=('text', 'text_local'))
+                ).values('id')
+                extra_filter = {f'{dimension}__in': subfilter}
+            else:
+                extra_annot = {f'{dimension}_str': Cast(dimension, CharField())}
+                extra_filter = {f'{dimension}_str__contains': text_filter}
         else:
             raise SlicerConfigError('The requested dimension is not supported', 'E107')
-        return extra_filter
+        return extra_annot, extra_filter
 
     @classmethod
     def create_pk_filter(cls, dimension, pks: list) -> dict:
@@ -839,7 +845,10 @@ class FlexibleDataSlicer:
         query = self.get_possible_dimension_values_queryset(dimension, ignore_self=ignore_self)
         # add text filter
         if text_filter:
-            query = query.filter(**self.create_text_filter(dimension, text_filter))
+            extra_annot, extra_filter = self.create_text_filter(dimension, text_filter)
+            if extra_annot:
+                query = query.annotate(**extra_annot)
+            query = query.filter(**extra_filter)
         if pks:
             query = query.filter(**self.create_pk_filter(dimension, pks))
         # get count and decide if we need to sort
@@ -882,14 +891,12 @@ class FlexibleDataSlicer:
                 # because the mapping does not use a Foreign key relationship, we use a subquery
                 # but the dimension might be of type 'integer' and in such case we do not want to
                 # remap anything...
-                rts = self.involved_report_types()
-                if rts and len(rts) == 1:
-                    dim = rts[0].dimension_by_attr_name(ob)
-                    if dim.type == Dimension.TYPE_TEXT:
-                        dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values('text')[:1]
-                        qs = qs.annotate(**{ob + 'sort': Subquery(dt_query)})
-                        obs.append(prefix + ob + 'sort')
-                        dealt_with = True
+                dim = self.resolve_explicit_dimension(ob)
+                if dim.type == Dimension.TYPE_TEXT:
+                    dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values('text')[:1]
+                    qs = qs.annotate(**{ob + 'sort': Subquery(dt_query)})
+                    obs.append(prefix + ob + 'sort')
+                    dealt_with = True
             elif ob.startswith('grp-'):
                 if ob not in self._annotations:
                     # we ignore sort groups that are not in the data
@@ -899,6 +906,12 @@ class FlexibleDataSlicer:
                 obs.append(prefix + ob)
         qs = qs.order_by(*obs)
         return qs
+
+    def resolve_explicit_dimension(self, dim_ref: str):
+        rts = self.involved_report_types()
+        if rts and len(rts) == 1:
+            return rts[0].dimension_by_attr_name(dim_ref)
+        return None
 
     def involved_report_types(self) -> [ReportType]:
         """
