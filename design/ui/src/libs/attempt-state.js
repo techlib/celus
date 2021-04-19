@@ -4,6 +4,7 @@ const ATTEMPT_ERROR = "error";
 const ATTEMPT_QUEUED = "queued";
 const ATTEMPT_NOT_MADE = "missing";
 const ATTEMPT_EMPTY_DATA = "empty_data";
+const ATTEMPT_IMPORT_FAILED = "import_failed";
 const BROKEN_CREDENTIALS = "broken";
 const BROKEN_REPORT = "broken_report";
 const ATTEMPT_AWAITING_IMPORT = "awaiting_import";
@@ -13,6 +14,8 @@ function attemptState(attempt) {
     return ATTEMPT_NOT_MADE;
   } else if (attempt.queued) {
     return ATTEMPT_QUEUED;
+  } else if (attempt.import_crashed) {
+    return ATTEMPT_IMPORT_FAILED;
   } else if (attempt.import_batch) {
     return ATTEMPT_SUCCESS;
   } else if (attempt.error_code) {
@@ -41,6 +44,8 @@ function attemptStateToIcon(state) {
       return { color: "red lighten-2", icon: "fa-exclamation-circle" };
     case ATTEMPT_AWAITING_IMPORT:
       return { color: "blue", icon: "fa-cog fa-spin" };
+    case ATTEMPT_IMPORT_FAILED:
+      return { color: "error", icon: "fa-cog" };
     default:
       return { color: "warning", icon: "far fa-question-circle" };
   }

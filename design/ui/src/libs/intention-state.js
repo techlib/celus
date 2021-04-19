@@ -1,7 +1,6 @@
 import { parseDateTime } from "@/libs/dates";
 import {
   ATTEMPT_AWAITING_IMPORT,
-  ATTEMPT_SUCCESS,
   attemptState,
   attemptStateToIcon,
 } from "@/libs/attempt-state";

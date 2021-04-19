@@ -16,6 +16,8 @@ en:
       broken_sushi: Broken SUSHI credentials
       waiting: Waiting
       awaiting_import: Being imported
+      import_failed: Data import failed
+
     state_desc:
       unknown: The state is not clear. There was no obvious error but no data were imported.
       queued: Data was not yet available so future attempts were queued.
@@ -30,6 +32,7 @@ en:
       broken_sushi: The SUSHI credentials were marked as broken. Download is postponed until the credentials are fixed.
       waiting: Waiting for download - either planned for future or waiting for a free download slot.
       awaiting_import: Data was downloaded and is currently being imported into the database.
+      import_failed: Data was downloaded but importing it into database failed.
 
     broken: Broken
     broken_report_type_desc:
@@ -56,7 +59,9 @@ cs:
       deleted: Data byla smazána
       broken_sushi: Nefunkční přihlašovací údaje
       waiting: Čeká
-      awaiting_import: Importováno
+      awaiting_import: Právě se importuje
+      import_failed: Import dat selhal
+
     state_desc:
       unknown: Stav není jednoznačný. Nedošlo ke zjevné chybě, ale import neobsahoval žádná data.
       queued: Data zatím nebyla k dispozici, bylo naplánováno další stažení v budoucnosti.
@@ -71,6 +76,8 @@ cs:
       broken_sushi: Přihlašovací údaje pro SUSHI byly označeny jako nefunkční. Stahování bylo pozastaveno dokud nebudou přihlašovací údaje opraveny.
       waiting: Čeká na stahování - buď bylo naplánováno na později nebo čeká ve frontě.
       awaiting_import: Data byla stažena a nyní jsou importována do databáze.
+      import_failed: Data byla stažena, ale import dat do databáze selhal.
+
     broken: Nefunkční
     broken_report_type_desc:
       Tento report byl označen jako nefunkční. Většinou je to způsobeno chybami při stahování, které indikují, že

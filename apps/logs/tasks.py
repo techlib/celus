@@ -57,7 +57,12 @@ def import_one_sushi_attempt_task(attempt_id: int):
             # e.g. someone could remove credentials
             logger.warning("Sushi attempt '%s' was not found.", attempt_id)
             return
-        import_one_sushi_attempt(attempt)
+        try:
+            import_one_sushi_attempt(attempt)
+        except Exception as e:
+            # we catch any kind of error to make sure that there is no crash
+            logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
+            attempt.mark_crashed(e)
 
 
 @celery.shared_task
