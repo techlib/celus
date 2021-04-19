@@ -1,6 +1,7 @@
 from collections import Counter
 
 from django.db import models
+from django.db.models import UniqueConstraint, Q
 from django.utils.translation import gettext_lazy as _
 
 from core.models import DataSource
@@ -31,7 +32,12 @@ class Platform(models.Model):
 
     class Meta:
         ordering = ('short_name',)
-        unique_together = (('ext_id', 'source',),)
+        constraints = [
+            UniqueConstraint(fields=['ext_id', 'source'], name='ext_id_source_not_null'),
+            UniqueConstraint(
+                fields=['ext_id'], condition=Q(source=None), name='ext_id_source_null'
+            ),
+        ]
 
     def __str__(self):
         return self.short_name

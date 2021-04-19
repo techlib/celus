@@ -66,7 +66,16 @@ class ReportType(models.Model):
     )
 
     class Meta:
-        unique_together = (('short_name', 'source'),)
+        constraints = [
+            UniqueConstraint(
+                fields=['short_name', 'source'], name='report_type_short_name_source_not_null'
+            ),
+            UniqueConstraint(
+                fields=['short_name'],
+                condition=Q(source=None),
+                name='report_type_short_name_source_null',
+            ),
+        ]
 
     def __str__(self):
         return self.short_name
@@ -220,8 +229,17 @@ class Metric(models.Model):
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
-        unique_together = (('short_name', 'source'),)
         ordering = ('short_name', 'name')
+        constraints = [
+            UniqueConstraint(
+                fields=['short_name', 'source'], name='metric_short_name_source_not_null'
+            ),
+            UniqueConstraint(
+                fields=['short_name'],
+                condition=Q(source=None),
+                name='metric_short_name_source_null',
+            ),
+        ]
 
     def __str__(self):
         if self.name and self.name != self.short_name:
