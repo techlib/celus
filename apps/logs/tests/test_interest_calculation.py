@@ -296,8 +296,8 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
-        report_type = report_type_nd(1)  # type: ReportType
-        report_type2 = report_type_nd(1)  # type: ReportType
+        report_type = report_type_nd(1, short_name='rt1')  # type: ReportType
+        report_type2 = report_type_nd(1, short_name='rt2')  # type: ReportType
         assert report_type.pk != report_type2.pk
         # now define the interest
         pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
@@ -332,8 +332,8 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
-        report_type = report_type_nd(1)  # type: ReportType
-        report_type2 = report_type_nd(1)  # type: ReportType
+        report_type = report_type_nd(1, short_name='rt1')  # type: ReportType
+        report_type2 = report_type_nd(1, short_name='rt2')  # type: ReportType
         assert report_type.pk != report_type2.pk
         # now define the interest
         pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
