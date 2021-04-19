@@ -575,6 +575,7 @@ export default {
           (item) => item.pk === this.selectedReportTypes[0]
         );
         let ret = rts[0].dimensionObjs;
+        ret.forEach((item) => (item.id = item.ref));
         return ret;
       }
       return [];
