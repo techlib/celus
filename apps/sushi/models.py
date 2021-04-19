@@ -973,6 +973,7 @@ class SushiFetchAttempt(models.Model):
             str(ErrorCode.NOT_AUTHORIZED.value),
             str(ErrorCode.NOT_AUTHORIZED_INSTITUTION.value),
             str(ErrorCode.INVALID_API_KEY.value),
+            str(ErrorCode.INSUFFICIENT_DATA.value),
         ):
             self.credentials.set_broken(self, SushiCredentials.BROKEN_SUSHI)
             return

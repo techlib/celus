@@ -315,6 +315,7 @@ class TestSushiFetchAttemptModel:
             ("QUEUED", 400, ErrorCode.NOT_AUTHORIZED, False, None, None),
             ("NO_DATA", 400, ErrorCode.NOT_AUTHORIZED_INSTITUTION, False, None, None),
             ("SUCCESS", 400, ErrorCode.INVALID_API_KEY, False, None, None),
+            ("NO_DATA", 400, ErrorCode.INSUFFICIENT_DATA, False, None, None),
             # cred broken testing
             ("FAILURE", 401, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
             ("BROKEN", 403, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
@@ -325,7 +326,7 @@ class TestSushiFetchAttemptModel:
             ("FAILURE", 200, ErrorCode.NOT_AUTHORIZED, False, BC.BROKEN_SUSHI, None),
             ("BROKEN", 200, ErrorCode.INVALID_API_KEY, False, BC.BROKEN_SUSHI, None),
             ("FAILURE", 200, ErrorCode.NOT_AUTHORIZED_INSTITUTION, False, BC.BROKEN_SUSHI, None,),
-            ("BROKEN", 200, ErrorCode.INVALID_API_KEY, False, BC.BROKEN_SUSHI, None,),
+            ("BROKEN", 200, ErrorCode.INSUFFICIENT_DATA, False, BC.BROKEN_SUSHI, None,),
             # cred to report type testing
             ("FAILURE", 404, ErrorCode.TOO_MANY_REQUESTS, False, None, BC.BROKEN_HTTP),
             ("BROKEN", 200, ErrorCode.REPORT_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
