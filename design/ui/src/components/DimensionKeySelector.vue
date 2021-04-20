@@ -280,14 +280,16 @@ export default {
 
   async mounted() {
     if (this.readOnly) {
-      await this.translator.prepareTranslation(this.selectedValues);
-      this.possibleValues = this.selectedValues.map((id) => {
-        let rec = {
-          text: this.translator.translateKeyToString(id, this.$i18n.locale),
-        };
-        rec[this.dimension] = id;
-        return rec;
-      });
+      if (this.translator) {
+        await this.translator.prepareTranslation(this.selectedValues);
+        this.possibleValues = this.selectedValues.map((id) => {
+          let rec = {
+            text: this.translator.translateKeyToString(id, this.$i18n.locale),
+          };
+          rec[this.dimension] = id;
+          return rec;
+        });
+      }
     } else {
       await this.fetchPossibleValues();
     }

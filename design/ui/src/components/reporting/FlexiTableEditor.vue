@@ -192,7 +192,8 @@ cs:
                     (row.id === 'date' && filters.includes('date__year')) ||
                     (row.id === 'date__year' && filters.includes('date')) ||
                     !reportTypeSelected ||
-                    readOnly
+                    readOnly ||
+                    row.type === 1
                   "
                   :key="row.id"
                 ></v-checkbox>

@@ -92,6 +92,25 @@ class TestFlexibleReport:
         assert fr.report_config['filters'][1]['dimension'] == 'dim2'
         assert fr.report_config['filters'][1]['values'] == [dt2.text]
 
+    @pytest.mark.skip(
+        reason="We are disabling related functionality in the UI and will probably "
+        "resolve this problem using a different approach."
+    )
+    def test_config_serialization_explicit_dim_int_type(self, flexible_slicer_test_data2):
+        """
+        Tests that serialization of explicit dimension of type integer works as expected
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        dt1 = DimensionText.objects.get(text='A', dimension__short_name='dim1name')
+        slicer.add_filter(ExplicitDimensionFilter('dim1', dt1.pk))
+        slicer.add_filter(ExplicitDimensionFilter('dim2', [1999, 2003]))
+        slicer.add_group_by('metric')
+        fr = FlexibleReport.create_from_slicer(slicer)
+        assert fr.report_config['filters'][0]['dimension'] == 'dim1'
+        assert fr.report_config['filters'][0]['values'] == [dt1.text]
+        assert fr.report_config['filters'][1]['dimension'] == 'dim2'
+        assert fr.report_config['filters'][1]['values'] == [1999, 2003]
+
     def test_config_deserialization(self, flexible_slicer_test_data):
         report_type = flexible_slicer_test_data['report_types'][1]
         metric = flexible_slicer_test_data['metrics'][0]
