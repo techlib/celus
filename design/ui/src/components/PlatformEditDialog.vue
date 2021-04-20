@@ -10,17 +10,17 @@ en:
   form:
     short_name: Short Name
     name: Name
-    provider: Provider
-    url: Url
+    provider: Provider / Vendor
+    url: URL
     organization: Organization
     hint:
       short_name: Platform short name (e.g. CUP)
       name: Full platform name (e.g. Cambridge University Presss)
-      provider: Platfrom provider - who manages the platform
-      url: Website of the platform (e.g. https://www.cambridge.org/core/ )
+      provider: Platfrom provider (vendor) - who manages the platform
+      url: "Website of the platform (e.g. https://www.cambridge.org/core/). Note that this URL is not SUSHI URL."
     similar_platform_name: A platform with similar name already exists
   errors:
-    invalid_url: Invalid URL
+    invalid_url: "Invalid URL (valid URL starts with 'http(s)://', e.g. 'https://www.cambridge.org/core')"
     saving_error: Failed to save the platform.
 
 
@@ -34,17 +34,17 @@ cs:
   form:
     short_name: Krátké jméno
     name: Jméno
-    provider: Poskytovatel
-    url: Url
+    provider: Poskytovatel / Provozovatel
+    url: URL
     organization: Organizace
     hint:
       short_name: Krátké jméno platformy (např. CUP)
       name: Celé jméno platformy (např. Cambridge University Presss)
-      provider: Poskytovatel - kdo zajišťuje chod platformy
-      url: Webová stránka platformy (např. https://www.cambridge.org/core/ )
+      provider: Poskytovatel (provozovatel) - kdo zajišťuje chod platformy
+      url: "Webová stránka platformy (např. https://www.cambridge.org/core/). Pozn: tato URL není URL pro SUSHI."
     similar_platform_name: Platformy s podobným jménem už existuje
   errors:
-    invalid_url: Špatná URL
+    invalid_url: "Neplatná URL (platná URL začíná na 'http(s)://', např. 'https://www.cambridge.org/core')"
     saving_error: Nepodařilo se uložit platformu.
 </i18n>
 
