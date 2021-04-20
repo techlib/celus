@@ -179,6 +179,21 @@
               }}</v-icon>
             </v-btn>
           </template>
+
+          <template #body.append>
+            <tr>
+              <td colspan="1"></td>
+              <td>
+                <v-btn
+                  color="primary"
+                  :to="{ name: 'flexitable', query: { wantsSave: true } }"
+                >
+                  <v-icon small class="mr-2">fa fa-plus</v-icon>
+                  {{ $t("add_report") }}
+                </v-btn>
+              </td>
+            </tr>
+          </template>
         </v-data-table>
       </v-col>
     </v-row>

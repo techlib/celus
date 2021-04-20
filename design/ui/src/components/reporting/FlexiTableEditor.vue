@@ -4,22 +4,9 @@
 <i18n lang="yaml" src="@/locales/reporting.yaml" />
 <i18n lang="yaml">
 en:
-  basic_settings: Basic settings
-  common_dims: Common filters/columns
-  specific_dims: Report specific filters/columns
-  date_filter: Date filter/columns
-  no_row_selected: Dimension for table rows is not selected.
-  no_report_types_selected: No report types are selected.
-  selected_report_types: Report types | Report type | Report types
-  filter: Filter
-  rows: Table rows
   run_report: Run report
   run_export: Export
   not_empty: This field cannot be empty
-  only_for_one_report_type: These filters are only available when exactly one report type is selected.
-  no_date_filter: No filter - data for all dates will be used regardless of the global date selection.
-  split_by_year_tt: Data for individual years will form columns in the resulting table.
-  split_by_month_tt: Data for individual months will form columns in the resulting table.
   error: Error
   error_code: Error code
   error_intro: The following error was reported during the preparation of the report.
@@ -33,7 +20,21 @@ en:
   please_fill_in_title: Please fill in report title and access level and hit 'Save changes' again.
   select_at_least_one_column_dim: At least one column dimension must be selected.
 cs:
-  selected_report_types: Report | Reporty | Reporty
+  run_report: Spustit report
+  run_export: Exportovat
+  not_empty: Toto pole nesmí být prázdné
+  error: Chyba
+  error_code: Kód chyby
+  error_intro: Následující chyba byla nahlášena při přípravě požadovaného reportu.
+  detail: Detail
+  column_order_tt: Toto číslo ukazuje pořadí v jakém bude tento rozměr uveden v hlavičce sloupců. Číslo je dané pořadím v jakém byla políčka zaškrtnuta.
+  download_on_separate_page: Všechny exporty najdete na stránce {exports_page}.
+  select_report_type: Nejprve vyberte alespoň jeden typ reportu.
+  unlock_tt: Odemknout report pro editaci.
+  save_success: Report byl úspěšně uložen.
+  report_title: Název reportu
+  please_fill_in_title: Vyplňte prosím název reportu a úroveň přístupu výše a pak stiskněte tlačítko 'Uložit změny' znovu.
+  select_at_least_one_column_dim: Musí být vybrán alespoň jeden rozměr, který definuje sloupce.
 </i18n>
 
 <template>
@@ -481,7 +482,7 @@ export default {
       ownerOrganization: null,
       edit: !this.reportId || "edit" in this.$route.query,
       accessLevelParams: {},
-      wantsSave: !!this.reportId,
+      wantsSave: !!this.reportId || "wantsSave" in this.$route.query,
     };
   },
 

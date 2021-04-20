@@ -20,3 +20,28 @@ en:
   copy_error: Error copying report
   original_title: Original title
   new_title: New title
+  add_report: Add report
+
+cs:
+  access_level_tt:
+    user: Soukromý report - viditelný pouze pro vás
+    org: Report pro organizaci - viditelný pro všechny členy dané organizace
+    sys: Konzorciální report - viditelný všemi uživateli
+  access_level:
+    user: Osobní
+    org: Organizace
+    sys: Konzorcium
+  run_report_tt: Zobrazit výstup v tabulce
+  export_tt: Exportovat data to CSV
+  view_report_tt: Zobrazení detailu definice reportu
+  edit_report_tt: Úprava definice reportu
+  copy_report_tt: Vytvoří kopii existujícího reportu
+  copy_report: Vytvořit kopii reportu
+  really_delete: Opravdu chcete smazat report <b>{title}</b>? <br/><br/>Tuto akci není možné vrátit.
+  delete_success: Report byl smazán
+  change_name: Změnit titul
+  copy_success: Report byl úspěšně smazán
+  copy_error: Došlo k chybě při mazání reportu
+  original_title: Původní název
+  new_title: Nový název
+  add_report: Přidat report
