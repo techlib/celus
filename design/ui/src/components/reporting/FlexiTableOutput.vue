@@ -126,11 +126,9 @@ export default {
       if (clean) {
         this.data = [];
         this.cleanData = [];
-      }
-      await this.fetchData();
-      if (clean) {
         this.setOrdering(report);
       }
+      await this.fetchData();
     },
     async fetchData() {
       this.dataLoading = true;
