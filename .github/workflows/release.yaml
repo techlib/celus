@@ -32,8 +32,8 @@ jobs:
           export "GIT_COMMITHASH=${GITHUB_SHA}"
           export "GIT_BRANCH=${GITHUB_REF:-$GITHUB_SHA}"
           cd design/ui
-          npm install
-          npm run build
+          yarn install
+          yarn build
 
       - name: Upload Artefacts
         uses: actions/upload-artifact@v1

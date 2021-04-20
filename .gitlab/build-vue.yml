@@ -13,8 +13,8 @@ build:vue:
     - export "SENTRY_ENVIRONMENT=${!MAPPING_VAR_NAME}"
   script:
     - cd design/ui
-    - npm install
-    - npm run build
+    - yarn install
+    - yarn build
   artifacts:
     paths:
       - apps/core/static/
