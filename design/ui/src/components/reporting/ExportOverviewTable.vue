@@ -7,6 +7,8 @@
     :loading="loading"
     show-expand
     :expanded.sync="expandedRows"
+    :sort-by="['created']"
+    :sort-desc="[true]"
   >
     <template #item.outputFile="{ item }">
       <v-btn
