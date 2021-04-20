@@ -16,7 +16,7 @@ tests:run_tests:
     - poetry install
   script:
     - cp .env.example .env
-    - poetry run pytest -v --create-db --junitxml=report.xml --cov=activity --cov=annotations --cov=api --cov=charts --cov=core --cov=cost --cov=erms --cov=logs --cov=nigiri --cov=organizations --cov=publications --cov=sushi --cov=recache --cov=knowledgebase --cov-report=xml --cov-report=term apps/
+    - poetry run pytest -v -n 2 --create-db --junitxml=report.xml --cov=activity --cov=annotations --cov=api --cov=charts --cov=core --cov=cost --cov=erms --cov=logs --cov=nigiri --cov=organizations --cov=publications --cov=sushi --cov=recache --cov=knowledgebase --cov-report=xml --cov-report=term apps/
   artifacts:
     reports:
       junit: report.xml
