@@ -66,6 +66,7 @@ class HarvestAdmin(admin.ModelAdmin):
         'last_updated',
         'last_updated_by',
         'stats_text',
+        'attempts',
     )
 
     list_select_related = ['last_updated_by', 'automatic']
@@ -76,7 +77,12 @@ class HarvestAdmin(admin.ModelAdmin):
         return qs.annotate_stats()
 
     def stats_text(self, obj: models.Harvest):
-        return f'{obj.total - obj.unprocessed}/{obj.total}'
+        return f'{obj.finished}/{obj.total}'
+
+    def attempts(self, obj: models.Harvest):
+        return obj.attempt_count
+
+    attempts.admin_order_field = 'attempt_count'
 
     stats_text.short_description = 'Processed'
 

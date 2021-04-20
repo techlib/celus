@@ -1,19 +1,22 @@
-from django.db.models import Q, Exists, OuterRef, Prefetch, Max
+from django.db.models import Count, Exists, F, Max, Min, Prefetch, Q
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
+from core.logic.dates import parse_month
 from core.models import REL_ORG_USER
 from core.permissions import SuperuserOrAdminPermission
 from logs.views import StandardResultsSetPagination
 from sushi.models import CounterReportsToCredentials
+
 from .models import Automatic, FetchIntention, Harvest
 from .serializers import (
-    FetchIntentionSerializer,
     CreateHarvestSerializer,
     DetailHarvestSerializer,
+    FetchIntentionSerializer,
     ListHarvestSerializer,
 )
 
@@ -57,26 +60,73 @@ class HarvestViewSet(
             .annotate(
                 last_attempt_date=Max(
                     'intentions__not_before', filter=Q(intentions__duplicate_of__isnull=True)
-                )
+                ),
+                last_processed=Max('intentions__when_processed'),
+                start_date=Min('intentions__start_date'),
+                end_date=Max('intentions__end_date'),
+                broken=Coalesce(
+                    Count(
+                        'intentions',
+                        filter=(
+                            Q(intentions__credentials__broken__isnull=False)
+                            | (
+                                Q(
+                                    intentions__credentials__counterreportstocredentials__broken__isnull=False
+                                )
+                                & Q(
+                                    intentions__credentials__counterreportstocredentials__counter_report_id=F(
+                                        'intentions__counter_report'
+                                    )
+                                )
+                            )
+                        )
+                        & Q(
+                            intentions__when_processed__isnull=True
+                        ),  # broken that hasn't been downloaded yet
+                        distinct=True,
+                    ),
+                    0,
+                ),
             )
         )
 
         finished = self.request.query_params.get('finished', None)
-        unprocessed_intention_query = FetchIntention.objects.filter(
-            harvest=OuterRef('pk'), when_processed__isnull=True, duplicate_of__isnull=True,
-        )
         if finished == "1":
-            qs = qs.filter(~Exists(unprocessed_intention_query))
+            qs = qs.filter(planned=0)
         elif finished == "0":
-            qs = qs.filter(Exists(unprocessed_intention_query))
+            qs = qs.filter(planned__gt=0)
+
+        broken = self.request.query_params.get('broken', None)
+        if broken == "1":
+            qs = qs.filter(broken__gt=0)
+        elif broken == "0":
+            qs = qs.filter(broken=0)
+
+        automatic = self.request.query_params.get('automatic', None)
+        if automatic == "1":
+            qs = qs.filter(automatic__isnull=False)
+        elif automatic == "0":
+            qs = qs.filter(automatic__isnull=True)
+
+        month = self.request.query_params.get('month', None)
+        if month:
+            parsed_month = parse_month(month)
+            qs = qs.filter(start_date__lte=parsed_month, end_date__gte=parsed_month)
 
         order_by = self.request.query_params.get('order_by', 'pk')
-        order_desc = self.request.query_params.get('desc', 'false') == 'true'
-        if order_by not in ('created', 'pk', 'automatic', 'finished', 'last_attempt_date'):
+        order_desc = "desc" if self.request.query_params.get('desc', 'false') == 'true' else "asc"
+        if order_by not in (
+            'created',
+            'pk',
+            'automatic',
+            'finished',
+            'last_attempt_date',
+            'attempt_count',
+            'start_date',
+            'last_processed',
+        ):
             order_by = 'pk'
-        if order_desc:
-            order_by = '-' + order_by
-        qs = qs.order_by(order_by)
+        qs = qs.order_by(getattr(F(order_by), order_desc)(nulls_last=True))
 
         return qs
 

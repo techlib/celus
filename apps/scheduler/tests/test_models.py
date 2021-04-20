@@ -713,6 +713,9 @@ class TestHarvest:
             when_processed=None,
             harvest=harvest1,
             duplicate_of=None,
+            attempt=FetchAttemptFactory(
+                counter_report=counter_report_types["tr"], credentials=credentials["standalone_tr"]
+            ),
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_tr"],
@@ -752,6 +755,9 @@ class TestHarvest:
             harvest=harvest2,
             duplicate_of=None,
             queue_id=1,
+            attempt=FetchAttemptFactory(
+                counter_report=counter_report_types["tr"], credentials=credentials["standalone_tr"]
+            ),
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
@@ -771,6 +777,9 @@ class TestHarvest:
             when_processed=timezone.now(),
             harvest=harvest3,
             duplicate_of=None,
+            attempt=FetchAttemptFactory(
+                counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"]
+            ),
         )
         FetchIntentionFactory(
             credentials=credentials["branch_pr"],
@@ -782,16 +791,14 @@ class TestHarvest:
             duplicate_of=original_fi,
         )
 
-        assert harvest1.stats() == (1, 2)
-        assert harvest2.stats() == (2, 3)
-        assert harvest3.stats() == (0, 1)
-        assert harvest4.stats() == (0, 1)
-        assert harvest5.stats() == (0, 0)
+        assert harvest1.stats() == {"finished": 1, "planned": 1, "total": 2, "attempt_count": 1}
+        assert harvest2.stats() == {"finished": 1, "planned": 2, "total": 3, "attempt_count": 1}
+        assert harvest3.stats() == {"finished": 1, "planned": 0, "total": 1, "attempt_count": 1}
+        assert harvest4.stats() == {"finished": 1, "planned": 0, "total": 1, "attempt_count": 0}
+        assert harvest5.stats() == {"finished": 0, "planned": 0, "total": 0, "attempt_count": 0}
 
         assert list(
-            Harvest.objects.annotate_stats()
-            .order_by('pk')
-            .values_list('pk', 'unprocessed', 'total')
+            Harvest.objects.annotate_stats().order_by('pk').values_list('pk', 'planned', 'total')
         ) == [
             (harvest1.pk, 1, 2),
             (harvest2.pk, 2, 3),

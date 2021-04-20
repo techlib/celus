@@ -3,38 +3,70 @@
 en:
   table_header:
     created: Created
+    last_processed: Last download
     manual: Manually created
     finished: Finished
+    attempts: Attempts
     last_attempt: Finish planned
+    month: Month
   downloads: Downloads
   tooltip:
     automatic: Automatically planned harvesting.
     manual: Manually planned harvesting.
     date_not_set: Date is not set.
+    harvest_details: Show harvest details
+    broken_credentials: "|There is {n} record which can't be downloaded due to broken credentials.|There are {n} records which can't be downloaded due to broken credentials."
   filter:
     finished:
       title: Finished
       ready: Yes
       working: No
       all: All
+    manual:
+      title: Manually created
+      all: All
+      automatic: No
+      manual: Yes
+    broken:
+      title: Broken
+      all: All
+      no: No
+      yes: Yes
+    month: Harvested month
 
 cs:
   table_header:
     created: Vytvořeno
+    last_processed: Poslední stahování
     manual: Manuálně vytvořeno
     finished: Hotovo
     last_attempt: Dokončení plánováno
+    attempts: Pokusy
+    month: Měsíc
   downloads: Stahování
   tooltip:
     automatic: Automaticky naplánované stahování.
     manual: Manuálně naplánované stahování.
     date_not_set: Datum není určeno.
+    harvest_details: Zobraz detail stahování
+    broken_credentials: "|Obsahuje {n} záznam, který nemůže být stažen, kvůli rozbitým přístupovým údajům.|Obsahuje {n} záznamy, které nemohou být stažen, kvůli rozbitým přístupovým údajům.|Obsahuje {n} záznamů, které nemohou být stažen, kvůli rozbitým přístupovým údajům."
   filter:
     finished:
       title: Dokončeno
       ready: Ano
       working: Ne
       all: Všechno
+    manual:
+      title: Manuálně vytvořeno
+      all: Všechno
+      automatic: Ne
+      manual: Ano
+    broken:
+      title: Rozbité
+      all: Všechno
+      no: Ne
+      yes: Ano
+    month: Stahovaný měsíc
 </i18n>
 
 <template>
@@ -46,6 +78,26 @@ cs:
           v-model="filterFinished"
           :label="$t('filter.finished.title')"
         ></v-select>
+      </v-col>
+      <v-col cols="auto">
+        <v-select
+          :items="filterManualList"
+          v-model="filterManual"
+          :label="$t('filter.manual.title')"
+        ></v-select>
+      </v-col>
+      <v-col cols="auto">
+        <v-select
+          :items="filterBrokenList"
+          v-model="filterBroken"
+          :label="$t('filter.broken.title')"
+        ></v-select>
+      </v-col>
+      <v-col cols="auto">
+        <MonthEntry
+          v-model="filterMonth"
+          :label="$t('filter.month')"
+        ></MonthEntry>
       </v-col>
     </v-row>
     <v-row>
@@ -60,18 +112,33 @@ cs:
           :server-items-length="totalCount"
         >
           <template v-slot:item.pk="{ item }">
-            <v-btn
-              text
-              small
-              color="secondary"
-              @click.stop="
-                selectHarvest(item.pk);
-                showHarvestDialog = true;
-              "
-            >
-              <v-icon left small>fa-external-link-alt</v-icon>
-              <span>{{ item.pk }}</span>
-            </v-btn>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  text
+                  small
+                  color="secondary"
+                  @click.stop="
+                    selectHarvest(item.pk);
+                    showHarvestDialog = true;
+                  "
+                  v-on="on"
+                >
+                  <v-icon left small>fa-external-link-alt</v-icon>
+                  <span v-if="item.broken">
+                    <v-badge :content="item.broken" color="error">
+                    {{ item.pk }}
+                    </v-badge>
+                  </span>
+                  <span v-else>
+                  {{ item.pk }}
+                  </span>
+                </v-btn>
+              </template>
+              <span><strong>{{ $t('tooltip.harvest_details') }}</strong></span>
+              <br />
+              <span v-if="item.broken">{{ $tc('tooltip.broken_credentials', item.broken) }}</span>
+            </v-tooltip>
           </template>
           <template v-slot:item.manual="{ item }">
             <CheckMark
@@ -83,17 +150,18 @@ cs:
           <template v-slot:item.created="{ item }">
             <span v-html="formatDateTime(item.created)"></span>
           </template>
+          <template v-slot:item.last_processed="{ item }">
+            <span v-html="item.last_processed ? formatDateTime(item.last_processed) : '-'"></span>
+          </template>
+          <template v-slot:item.month="{ item }">
+            <span v-html="formatYM(item.start_date)"></span>
+            <div v-if="formatYM(item.start_date) != formatYM(item.end_date)">
+              <span v-html="' ' + formatYM(item.end_date)"></span>
+            </div>
+          </template>
           <template #item.lastAttempt="{ item }">
-            <span v-if="item.finished">-</span>
-            <v-tooltip bottom v-else>
-              <template #activator="{ on }">
-                <span
-                  v-html="formatDateTimeRelative(item.lastAttempt)"
-                  v-on="on"
-                ></span>
-              </template>
-              <span v-html="formatDateTimePlain(item.lastAttempt)"></span>
-            </v-tooltip>
+            <span v-if="item.finished || !item.lastAttempt">-</span>
+            <span v-else v-html="formatDateTime(item.lastAttempt)"></span>
           </template>
         </v-data-table>
 
@@ -142,8 +210,10 @@ import {
   isoDateTimeFormat,
   isoDateTimeFormatSpans,
   parseDateTime,
+  ymDateFormat,
 } from "@/libs/dates";
 import CheckMark from "@/components/util/CheckMark";
+import MonthEntry from "@/components/util/MonthEntry";
 import formatRelative from "date-fns/formatRelative";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 
@@ -153,6 +223,7 @@ export default {
   components: {
     SushiFetchIntentionsListWidget,
     CheckMark,
+    MonthEntry,
   },
 
   props: {
@@ -170,8 +241,10 @@ export default {
       currentHarvest: null,
       orderBy: ["harvest.pk"],
       loading: false,
-      loadingHarvest: false,
       filterFinished: "",
+      filterManual: "",
+      filterMonth: "",
+      filterBroken: "",
       now: new Date(),
       totalCount: 0,
       tableOptions: {
@@ -180,6 +253,7 @@ export default {
       },
       lastFetchedTime: null,
       lastFetchTimer: null,
+      cancelTokenSource: null,
     };
   },
 
@@ -197,19 +271,48 @@ export default {
           filterFinished = "&finished=1";
           break;
       }
+      let filterManual = "";
+      switch (this.filterManual) {
+        case "automatic":
+          filterManual = "&automatic=1";
+          break;
+        case "manual":
+          filterManual = "&automatic=0";
+          break;
+      }
+      let filterBroken = "";
+      switch (this.filterBroken) {
+        case "yes":
+          filterBroken = "&broken=1";
+          break;
+        case "no":
+          filterBroken = "&broken=0";
+          break;
+      }
+      let filterMonth = this.filterMonth ? `&month=${this.filterMonth}` : "";
       let sortBy = this.tableOptions.sortBy ? this.tableOptions.sortBy[0] : "";
       let sortDesc = this.tableOptions.sortDesc
         ? this.tableOptions.sortDesc[0]
         : false;
-      if (sortBy === "finishedRatio") {
-        sortBy = "finished";
-      } else if (sortBy === "manual") {
-        sortBy = "automatic";
-        sortDesc = !sortDesc;
-      } else if (sortBy === "lastAttempt") {
-        sortBy = "last_attempt_date";
+      switch (sortBy) {
+        case "finishedRatio":
+          sortBy = "finished";
+          break;
+        case "manual":
+          sortBy = "automatic";
+          sortDesc = !sortDesc;
+          break;
+        case "lastAttempt":
+          sortBy = "last_attempt_date";
+          break;
+        case "attempts":
+          sortBy = "attempt_count";
+          break;
+        case "month":
+          sortBy = "start_date";
+          break;
       }
-      return `/api/scheduler/harvest/?page=${this.tableOptions.page}&page_size=${this.tableOptions.itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}${filterFinished}`;
+      return `/api/scheduler/harvest/?page=${this.tableOptions.page}&page_size=${this.tableOptions.itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}${filterFinished}${filterManual}${filterMonth}${filterBroken}`;
     },
     headers() {
       const headersHead = [
@@ -231,13 +334,28 @@ export default {
           class: "wrap",
         },
         {
+          text: this.$t("table_header.last_processed"),
+          value: "last_processed",
+          class: "wrap",
+        },
+        {
           text: this.$t("table_header.manual"),
           value: "manual",
           class: "wrap",
         },
         {
+          text: this.$t("table_header.month"),
+          value: "month",
+          class: "wrap",
+        },
+        {
           text: this.$t("table_header.finished"),
           value: "finishedRatio",
+          align: "end",
+        },
+        {
+          text: this.$t("table_header.attempts"),
+          value: "attempts",
           align: "end",
         },
         { text: this.$t("table_header.last_attempt"), value: "lastAttempt" },
@@ -268,6 +386,38 @@ export default {
         },
       ];
     },
+    filterBrokenList() {
+      return [
+        {
+          value: "",
+          text: this.$t("filter.broken.all"),
+        },
+        {
+          value: "yes",
+          text: this.$t("filter.broken.yes"),
+        },
+        {
+          value: "no",
+          text: this.$t("filter.broken.no"),
+        },
+      ];
+    },
+    filterManualList() {
+      return [
+        {
+          value: "",
+          text: this.$t("filter.manual.all"),
+        },
+        {
+          value: "automatic",
+          text: this.$t("filter.manual.automatic"),
+        },
+        {
+          value: "manual",
+          text: this.$t("filter.manual.manual"),
+        },
+      ];
+    },
   },
 
   methods: {
@@ -275,20 +425,33 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     async fetchHarvestsData() {
+      // Cancel previous request to load the new request data
+      if (this.cancelTokenSource) {
+        this.cancelTokenSource.cancel("new data requested");
+        this.cancelTokenSource = null;
+      }
+
       this.loading = true;
+      this.cancelTokenSource = axios.CancelToken.source();
       try {
-        let result = await axios.get(this.harvestsUrl);
+        let result = await axios.get(
+          this.harvestsUrl, {cancelToken: this.cancelTokenSource.token}
+        );
         this.totalCount = result.data.count;
         this.harvestsData = result.data.results;
         this.dataToTable(result.data.results);
         this.lastFetchedTime = new Date();
-      } catch (error) {
-        this.showSnackbar({
-          content: "Error getting harvest list " + error,
-          color: "error",
-        });
-      } finally {
         this.loading = false;
+      } catch (error) {
+        if (axios.isCancel(error)) {
+          console.debug("Request cancelled");
+        } else {
+          this.showSnackbar({
+            content: "Error loading harvest list: " + error,
+            color: "error",
+          });
+          this.loading = false;
+        }
       }
     },
     async selectHarvest(id) {
@@ -302,17 +465,22 @@ export default {
       for (let rec of harvests) {
         res.push({
           pk: rec.pk,
-          created: rec.created,
+          created: parseDateTime(rec.created),
+          broken: rec.broken,
+          last_processed: parseDateTime(rec.last_processed),
           manual: rec.automatic === null,
-          finished: rec.stats.total === rec.stats.planned,
+          finished: 0 === rec.stats.planned,
           finishedRatio: `${rec.stats.total - rec.stats.planned}/${
             rec.stats.total
           }`,
+          attempts: rec.stats.attempt_count,
           organizations: rec.organizations
             .map((item) => item.short_name)
             .join(", "),
           platforms: rec.platforms.map((item) => item.short_name).join(", "),
           lastAttempt: parseDateTime(rec.last_attempt_date),
+          start_date: rec.start_date,
+          end_date: rec.end_date,
         });
       }
       this.tableData = res;
@@ -332,6 +500,12 @@ export default {
       }
       return "-";
     },
+    formatYM(value) {
+      if (value) {
+        return ymDateFormat(parseDateTime(value));
+      }
+      return '-';
+    }
   },
 
   created() {

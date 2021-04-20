@@ -1,20 +1,20 @@
-import typing
-
 from rest_framework import serializers
-from rest_framework.fields import DateTimeField
+from rest_framework.fields import DateField, DateTimeField
 
-from publications.serializers import PlatformSerializer, SimplePlatformSerializer
-from .models import Automatic, FetchIntention, Harvest
-from sushi.serializers import SushiFetchAttemptSerializer
 from organizations.serializers import OrganizationSerializer, OrganizationShortSerializer
+from publications.serializers import PlatformSerializer, SimplePlatformSerializer
+from sushi.serializers import SushiFetchAttemptSerializer
+
+from .models import Automatic, FetchIntention, Harvest
 
 
 class StatsSerializer(serializers.Serializer):
     total = serializers.IntegerField()
     planned = serializers.IntegerField()
+    attempt_count = serializers.IntegerField()
 
     def to_representation(self, instance):
-        return {"planned": instance[0], "total": instance[1]}
+        return {k: v for k, v in instance.items() if k in ("planned", "total", "attempt_count",)}
 
 
 class CreateFetchIntentionSerializer(serializers.ModelSerializer):
@@ -123,6 +123,10 @@ class ListHarvestSerializer(serializers.ModelSerializer):
     platforms = SimplePlatformSerializer(many=True, read_only=True)
     last_attempt_date = DateTimeField(read_only=True)
     automatic = AutomaticInHarvestSerializer()
+    start_date = DateField()
+    end_date = DateField()
+    last_processed = DateTimeField()
+    broken = serializers.IntegerField()
 
     class Meta:
         model = Harvest
@@ -134,6 +138,10 @@ class ListHarvestSerializer(serializers.ModelSerializer):
             'organizations',
             'platforms',
             'last_attempt_date',
+            'start_date',
+            'end_date',
+            'last_processed',
+            'broken',
         )
 
 

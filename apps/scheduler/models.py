@@ -275,11 +275,16 @@ class FetchIntentionQuerySet(models.QuerySet):
         )
 
     def aggregate_stats(self) -> typing.Dict[str, int]:
+        attrs = ("planned", "total", "attempt_count", "finished")
+        if all(hasattr(self, name) for name in attrs):
+            return {name: getattr(self, name) for name in attrs}
+
         res = self.aggregate(
             total=Coalesce(models.Count('queue_id', distinct=True), 0),
-            unprocessed=self.unprocessed_count_query(),
+            planned=self.unprocessed_count_query(),
+            attempt_count=Coalesce(models.Count('attempt__pk'), 0),
         )
-        res['finished'] = res['total'] - res['unprocessed']
+        res['finished'] = res['total'] - res['planned']
 
         return res
 
@@ -321,8 +326,10 @@ class FetchIntentionQuerySet(models.QuerySet):
                 distinct=True,
                 filter=models.Q(when_processed__isnull=True) & models.Q(duplicate_of__isnull=True)
                 | (
-                    models.Q(attempt__import_batch__isnull=True)  # no import batch +
-                    & models.Q(attempt__contains_data=True)  # data => not imported yet
+                    # contains data which were not imported yet
+                    models.Q(attempt__import_batch__isnull=True)
+                    & models.Q(attempt__contains_data=True)
+                    & models.Q(attempt__import_crashed=False)
                 ),
             ),
             0,
@@ -665,7 +672,7 @@ class HarvestQuerySet(models.QuerySet):
 
     def annotate_stats(self):
         return self.annotate(
-            unprocessed=Coalesce(
+            planned=Coalesce(
                 models.Subquery(
                     FetchIntention.objects.filter(harvest=models.OuterRef('pk'))
                     .values('harvest')
@@ -674,41 +681,46 @@ class HarvestQuerySet(models.QuerySet):
                 ),
                 0,
             ),
-            total=Coalesce(
-                models.Subquery(
-                    FetchIntention.objects.filter(harvest=models.OuterRef('pk'))
-                    .values('harvest')
-                    .annotate(count=models.Count('queue_id', distinct=True))
-                    .values('count')
-                ),
-                0,
-            ),
-            finished=F('total') - F('unprocessed'),
+            total=models.Count('intentions__queue_id', distinct=True),
+            finished=F('total') - F('planned'),
+            attempt_count=Coalesce(models.Count('intentions__attempt__pk', distinct=True), 0),
         )
 
 
 class Harvest(CreatedUpdatedMixin):
 
     objects = HarvestQuerySet.as_manager()
+    stats_attrs = ("planned", "total", "attempt_count", "finished")
 
     def __str__(self):
         return f'Harvest #{self.pk}'
 
-    def stats(self) -> typing.Tuple[int, int]:
+    @property
+    def stats_loaded(self):
+        return all(hasattr(self, name) for name in self.stats_attrs)
+
+    def stats_load(self):
+        if not self.stats_loaded:
+            # query for stats
+            stats = self.intentions.aggregate_stats()
+            for name, value in stats.items():
+                # update instance based on aggregated output
+
+                setattr(self, name, value)
+
+    def stats(self) -> typing.Tuple[dict, int]:
         """ Returns how many intentions are finished.
         Note that it considers replaned intentions as one
 
-        :returns: unprocessed, total
+        :returns: stats dict
         """
 
         # Harvest obtained via annotated query
         # No need to perform extra query
-        if hasattr(self, 'total') and hasattr(self, 'unprocessed'):
-            return self.unprocessed, self.total
+        if not self.stats_loaded:
+            self.stats_load()
 
-        # query for stats
-        qs = self.intentions.aggregate_stats()
-        return qs["unprocessed"], qs["total"]
+        return {name: getattr(self, name) for name in self.stats_attrs}
 
     def organizations(self) -> typing.List[Organization]:
         if hasattr(self, 'intentions_credentials'):

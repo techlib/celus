@@ -36,10 +36,34 @@ class TestHarvestAPI:
         data = resp.json()["results"]
         assert len(data) == 4
         assert data[0]["pk"] < data[1]["pk"] < data[2]["pk"], "default sort by pk asc"
-        assert data[0]["stats"] == {"total": 3, "planned": 2}
-        assert data[1]["stats"] == {"total": 2, "planned": 1}
-        assert data[2]["stats"] == {"total": 2, "planned": 1}
-        assert data[3]["stats"] == {"total": 2, "planned": 1}
+
+        # stats
+        assert data[0]["stats"] == {"total": 3, "planned": 2, "attempt_count": 2}
+        assert data[1]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0}
+        assert data[2]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
+        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
+
+        # start and end dates
+        assert data[0]["start_date"] == "2020-01-01"
+        assert data[0]["end_date"] == "2020-01-31"
+        assert data[1]["start_date"] == "2020-01-01"
+        assert data[1]["end_date"] == "2020-01-31"
+        assert data[2]["start_date"] == "2020-01-01"
+        assert data[2]["end_date"] == "2020-01-31"
+        assert data[3]["start_date"] == "2020-01-01"
+        assert data[3]["end_date"] == "2020-03-31"
+
+        # last processed fetch intention
+        assert data[0]["last_processed"] is not None
+        assert data[1]["last_processed"] is None
+        assert data[2]["last_processed"] is not None
+        assert data[3]["last_processed"] is not None
+
+        # test broken
+        assert data[0]["broken"] == 0
+        assert data[1]["broken"] == 0
+        assert data[2]["broken"] == 0
+        assert data[3]["broken"] == 0
 
     @pytest.mark.parametrize(
         ['column', 'desc'], list(product(['pk', 'created'], ['true', 'false']))
@@ -59,7 +83,7 @@ class TestHarvestAPI:
                 data[0][column] < data[1][column] < data[2][column]
             ), "asc sorting should be active"
 
-    def test_list_finished(self, basic1, clients, harvests):
+    def test_list_filter_finished(self, basic1, clients, harvests):
 
         # remove unfinished from one harvest
         harvests["anonymous"].intentions.filter(when_processed__isnull=True).delete()
@@ -79,33 +103,87 @@ class TestHarvestAPI:
         assert data1[0]["pk"] != data2[0]["pk"]
         assert data1[0]["pk"] != data2[1]["pk"]
 
+    def test_list_filter_automatic(self, basic1, clients, harvests):
+
+        url = reverse('harvest-list')
+        # test finished filter
+        resp = clients["master"].get(url + "?automatic=1", {})
+        assert resp.status_code == 200
+        data1 = resp.json()["results"]
+        assert len(data1) == 1
+
+        resp = clients["master"].get(url + "?automatic=0", {})
+        assert resp.status_code == 200
+        data2 = resp.json()["results"]
+        assert len(data2) == 3
+
+        assert data1[0]["pk"] != data2[0]["pk"]
+        assert data1[0]["pk"] != data2[1]["pk"]
+
+    def test_list_filter_broken(self, basic1, clients, harvests, credentials, counter_report_types):
+
+        # broken credentials
+        attempt_tr = FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+        )
+        credentials["standalone_br1_jr1"].broken = BS.BROKEN_HTTP
+        credentials["standalone_br1_jr1"].first_broken_attempt = attempt_tr
+        credentials["standalone_br1_jr1"].save()
+
+        url = reverse('harvest-list')
+        # test finished filter
+        resp = clients["master"].get(url + "?broken=1", {})
+        assert resp.status_code == 200
+        data1 = resp.json()["results"]
+        assert len(data1) == 3
+
+        resp = clients["master"].get(url + "?broken=0", {})
+        assert resp.status_code == 200
+        data2 = resp.json()["results"]
+        assert len(data2) == 2
+
+    def test_list_filter_month(self, basic1, clients, harvests):
+
+        url = reverse('harvest-list')
+        # test finished filter
+        resp = clients["master"].get(url + "?month=2020-01", {})
+        assert resp.status_code == 200
+        data1 = resp.json()["results"]
+        assert len(data1) == 4
+
+        resp = clients["master"].get(url + "?month=2020-03", {})
+        assert resp.status_code == 200
+        data2 = resp.json()["results"]
+        assert len(data2) == 1
+
     def test_get(self, basic1, clients, harvests):
         url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["stats"] == {"total": 3, "planned": 2}
+        assert data["stats"] == {"total": 3, "planned": 2, "attempt_count": 2}
         assert len(data["intentions"]) == 3
 
         url = reverse('harvest-detail', args=(harvests["user1"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["stats"] == {"total": 2, "planned": 1}
+        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
         assert len(data["intentions"]) == 2
 
         url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["stats"] == {"total": 2, "planned": 1}
+        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 0}
         assert len(data["intentions"]) == 2
 
         url = reverse('harvest-detail', args=(harvests["user2"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["stats"] == {"total": 2, "planned": 1}
+        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
         assert len(data["intentions"]) == 2
 
     @pytest.mark.django_db(transaction=True)
@@ -148,7 +226,7 @@ class TestHarvestAPI:
 
         assert resp.status_code == 201
         data = resp.json()
-        assert data["stats"] == {"total": 2, "planned": 2}
+        assert data["stats"] == {"total": 2, "planned": 2, "attempt_count": 0}
         assert len(data["intentions"]) == 2
         assert data["last_updated_by"] == users["master"].pk
         assert stored_intentions_count + 2 == FetchIntention.objects.count()

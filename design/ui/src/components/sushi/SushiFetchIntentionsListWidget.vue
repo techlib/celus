@@ -7,7 +7,7 @@ en:
   planned_for_retry: "Based on result of previous attempt, later retry was planned. The new attempt is planned for {date}. "
   attempt_deleted: Download was executed but information about the download were deleted.
   future_start_info: Harvesting is currently waiting for free slot in the download queue.
-  finished_filter: DimensionFilter by finished
+  finished_filter: Filter by finished
   finished: Finished only
   unfinished: Unfinished only
   all: All
