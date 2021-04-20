@@ -21,6 +21,12 @@ en:
   original_title: Original title
   new_title: New title
   add_report: Add report
+  error_details: Error details
+  export_status:
+    not_started: Not started
+    in_progress: In progress
+    finished: Finished
+    error: Error
 
 cs:
   access_level_tt:
@@ -45,3 +51,9 @@ cs:
   original_title: Původní název
   new_title: Nový název
   add_report: Přidat report
+  error_details: Detaily chyby
+  export_status:
+    not_started: Nespuštěno
+    in_progress: Probíhá export
+    finished: Dokončeno
+    error: Chyba

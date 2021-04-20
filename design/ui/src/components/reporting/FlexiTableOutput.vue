@@ -1,7 +1,22 @@
 <i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/errors.yaml" />
+<i18n lang="yaml">
+en:
+  detail: Detail
+  error: Error
+  error_code: Error code
+  error_intro: The following error was reported during the preparation of the report.
+
+cs:
+  detail: Detail
+  error: Chyba
+  error_code: Kód chyby
+  error_intro: Následující chyba byla nahlášena při přípravě požadovaného reportu.
+</i18n>
+
 <template>
   <v-data-table
-    v-if="cleanData.length || loading"
+    v-if="cleanData.length || (loading && !errorCode)"
     :items="cleanData"
     :headers="tableHeaders"
     item-key="pk"
@@ -15,6 +30,25 @@
       <v-skeleton-loader type="paragraph@10" loading class="py-10 px-5" />
     </template>
   </v-data-table>
+  <div v-else-if="errorCode">
+    <v-card>
+      <v-card-title>
+        <v-icon color="error" class="mr-2">fa fa-exclamation-triangle</v-icon>
+        {{ $t("error") }}
+      </v-card-title>
+      <v-card-text>
+        <p>{{ $t("error_intro") }}</p>
+        <p>
+          <strong>{{ $t("error_code") }}</strong
+          >: {{ errorCode }}
+        </p>
+        <p>
+          <strong>{{ $t("detail") }}</strong
+          >: {{ errorText }}
+        </p>
+      </v-card-text>
+    </v-card>
+  </div>
 </template>
 <script>
 import axios from "axios";
@@ -51,6 +85,8 @@ export default {
         isbn: true,
         doi: false,
       },
+      errorCode: null,
+      errorDetails: null,
     };
   },
 
@@ -102,6 +138,12 @@ export default {
         return { order_by: prefix + this.options.sortBy[0] };
       }
       return {};
+    },
+    errorText() {
+      if (this.errorCode) {
+        return this.$t(this.errorCode, this.errorDetails);
+      }
+      return "";
     },
   },
 
@@ -252,7 +294,6 @@ export default {
     showError(code, details) {
       this.errorCode = code;
       this.errorDetails = details;
-      this.showErrorDialog = true;
     },
     setOrdering(report) {
       let ob = djangoToDataTableOrderBy(report.orderBy);

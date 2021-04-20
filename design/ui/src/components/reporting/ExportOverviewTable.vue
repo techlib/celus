@@ -1,4 +1,6 @@
 <i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/reporting.yaml" />
+
 <template>
   <v-data-table
     :items="exports"
@@ -13,11 +15,13 @@
     <template #item.outputFile="{ item }">
       <v-btn
         :href="item.outputFile"
-        v-if="item.outputFile"
+        v-if="item.status === EXPORT_FINISHED"
         text
         color="primary"
-        >{{ $t("actions.download") }}</v-btn
       >
+        <v-icon small class="mr-2">fa fa-download</v-icon>
+        {{ $t("actions.download") }}
+      </v-btn>
       <ExportMonitorWidget v-else :export-id="item.pk" @finished="fetchData" />
     </template>
 
@@ -31,6 +35,10 @@
 
     <template #item.primaryDimension="{ item }">
       {{ item.primaryDimension.getName($i18n) }}
+    </template>
+
+    <template #item.statusText="{ item }">
+      {{ $t("export_status." + item.statusText) }}
     </template>
 
     <template #top>
@@ -66,6 +74,10 @@
               }}
             </td>
           </tr>
+          <tr v-if="item.status === EXPORT_ERROR">
+            <th>{{ $t("error_details") }}:</th>
+            <td>{{ item.errorInfo.detail }}</td>
+          </tr>
         </table>
       </td>
     </template>
@@ -88,6 +100,7 @@ import filesize from "filesize";
 import { FlexiExport } from "@/libs/flexi-reports";
 import reportTypes from "@/mixins/reportTypes";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
+import { EXPORT_ERROR, EXPORT_FINISHED } from "@/libs/flexi-reports";
 
 export default {
   name: "ExportOverviewTable",
@@ -99,6 +112,8 @@ export default {
       exports: [],
       loading: false,
       expandedRows: [],
+      EXPORT_ERROR,
+      EXPORT_FINISHED,
     };
   },
 
@@ -109,6 +124,10 @@ export default {
         {
           text: this.$t("labels.rows"),
           value: "primaryDimension",
+        },
+        {
+          text: this.$t("labels.status"),
+          value: "statusText",
         },
         {
           text: this.$t("labels.file_size"),

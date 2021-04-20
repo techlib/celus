@@ -1,16 +1,11 @@
 <i18n lang="yaml" src="@/locales/common.yaml" />
 <i18n lang="yaml" src="@/locales/dialog.yaml" />
-<i18n lang="yaml" src="@/locales/errors.yaml" />
 <i18n lang="yaml" src="@/locales/reporting.yaml" />
 <i18n lang="yaml">
 en:
   run_report: Run report
   run_export: Export
   not_empty: This field cannot be empty
-  error: Error
-  error_code: Error code
-  error_intro: The following error was reported during the preparation of the report.
-  detail: Detail
   column_order_tt: This number shows the position which this dimension will occupy in the column header. It is based on the order in which the checkboxes are checked.
   download_on_separate_page: You can find all exports on the {exports_page} page.
   select_report_type: First select at least one report type.
@@ -23,9 +18,6 @@ cs:
   run_report: Spustit report
   run_export: Exportovat
   not_empty: Toto pole nesmí být prázdné
-  error: Chyba
-  error_code: Kód chyby
-  error_intro: Následující chyba byla nahlášena při přípravě požadovaného reportu.
   detail: Detail
   column_order_tt: Toto číslo ukazuje pořadí v jakém bude tento rozměr uveden v hlavičce sloupců. Číslo je dané pořadím v jakém byla políčka zaškrtnuta.
   download_on_separate_page: Všechny exporty najdete na stránce {exports_page}.
@@ -384,34 +376,6 @@ cs:
         <FlexiTableOutput ref="outputTable" />
       </v-col>
     </v-row>
-
-    <v-dialog v-model="showErrorDialog" max-width="600px">
-      <v-card>
-        <v-card-title>
-          <v-icon color="error" class="mr-2">fa fa-exclamation-triangle</v-icon>
-          {{ $t("error") }}
-        </v-card-title>
-        <v-card-text>
-          <p>{{ $t("error_intro") }}</p>
-          <p>
-            <strong>{{ $t("error_code") }}</strong
-            >: {{ errorCode }}
-          </p>
-          <p>
-            <strong>{{ $t("detail") }}</strong
-            >: {{ errorText }}
-          </p>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <div class="ma-3">
-            <v-btn @click="showErrorDialog = false">{{
-              $t("actions.close")
-            }}</v-btn>
-          </div>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </v-container>
 </template>
 
@@ -472,8 +436,6 @@ export default {
       reportName: "",
       ignoreUrlFilteringParams: false,
       showErrorDialog: false,
-      errorCode: null,
-      errorDetails: null,
       reportTypeSetOnLoad: false, // helps guard against updates when loading data from a stored report
       reportPk: this.reportId,
       loading: false,
@@ -586,12 +548,6 @@ export default {
       return this.allReportTypes.filter(
         (item) => this.selectedReportTypes.indexOf(item.pk) >= 0
       );
-    },
-    errorText() {
-      if (this.errorCode) {
-        return this.$t(this.errorCode, this.errorDetails);
-      }
-      return "";
     },
     reportObject() {
       let rt = new FlexiReport();
@@ -720,11 +676,6 @@ export default {
           });
         }
       }
-    },
-    showError(code, details) {
-      this.errorCode = code;
-      this.errorDetails = details;
-      this.showErrorDialog = true;
     },
     async fetchSettings() {
       this.loading = true;

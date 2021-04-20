@@ -1,3 +1,4 @@
+<i18n lang="yaml" src="@/locales/reporting.yaml" />
 <i18n lang="yaml">
 en:
   progress_tt: "|{current} out of {total} row exported so far|{current} out of {total} rows exported so far"
@@ -13,7 +14,13 @@ cs:
 </i18n>
 
 <template>
-  <v-btn :href="outputFile" :color="color" :disabled="!outputFile" text>
+  <v-btn
+    :href="outputFile"
+    :color="color"
+    :disabled="disabled"
+    text
+    v-if="status !== EXPORT_ERROR"
+  >
     <v-tooltip bottom v-if="inProgress">
       <template #activator="{ on }">
         <span v-on="on">
@@ -41,11 +48,28 @@ cs:
       <span class="ml-2">{{ $t("download") }}</span>
     </span>
   </v-btn>
+  <span v-else>
+    <v-tooltip bottom>
+      <template #activator="{ on }">
+        <span v-on="on" class="ml-4 text-button">
+          <v-icon small color="warning">fa fa-exclamation-triangle</v-icon>
+          <span class="ml-2 text-warning">{{ $t("export_status.error") }}</span>
+        </span>
+      </template>
+      {{ errorText }}
+    </v-tooltip>
+  </span>
 </template>
 
 <script>
 import axios from "axios";
 import { mapActions } from "vuex";
+import {
+  EXPORT_ERROR,
+  EXPORT_FINISHED,
+  EXPORT_NOT_STARTED,
+  EXPORT_IN_PROGRESS,
+} from "@/libs/flexi-reports";
 
 export default {
   name: "ExportMonitorWidget",
@@ -61,6 +85,8 @@ export default {
       forceProgress: false,
       doPoll: true,
       reloaded: false, // true if at least one reload of data was made
+      EXPORT_ERROR,
+      EXPORT_FINISHED,
     };
   },
 
@@ -75,7 +101,11 @@ export default {
       return 0;
     },
     inProgress() {
-      return this.status === 0 || this.status === 1 || this.forceProgress;
+      return (
+        this.status === EXPORT_NOT_STARTED ||
+        this.status === EXPORT_IN_PROGRESS ||
+        this.forceProgress
+      );
     },
     progress() {
       if (this.exportDetails && this.exportDetails.progress[1] > 0) {
@@ -104,6 +134,12 @@ export default {
       }
       return null;
     },
+    disabled() {
+      return !this.outputFile || this.status === EXPORT_ERROR;
+    },
+    errorText() {
+      return this.exportDetails?.error_info?.detail ?? this.$t("error");
+    },
   },
 
   methods: {
@@ -114,10 +150,13 @@ export default {
       try {
         let resp = await axios.get(this.dataUrl);
         this.exportDetails = resp.data;
-        if (this.doPoll && this.exportDetails.status !== 2) {
+        if (this.doPoll && this.exportDetails.status < EXPORT_FINISHED) {
           setTimeout(this.fetchData, 500);
           this.reloaded = true;
-        } else if (this.reloaded && this.exportDetails.status === 2) {
+        } else if (
+          this.reloaded &&
+          this.exportDetails.status >= EXPORT_FINISHED
+        ) {
           this.$emit("finished", true);
         }
       } catch (error) {

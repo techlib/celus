@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.db import models
 from django.utils.timezone import now
 
-from logs.logic.queries import FlexibleDataSlicer, FlexibleDataExporter
+from logs.logic.queries import FlexibleDataSlicer, FlexibleDataExporter, SlicerConfigError
 
 
 class ExportBase(models.Model):
@@ -13,11 +13,13 @@ class ExportBase(models.Model):
     NOT_STARTED = 0
     IN_PROGRESS = 1
     FINISHED = 2
+    ERROR = 3
 
     STATUS_CHOICES = (
         (NOT_STARTED, 'not started'),
         (IN_PROGRESS, 'in progress'),
         (FINISHED, 'finished'),
+        (ERROR, 'error'),
     )
 
     created = models.DateTimeField(auto_now_add=True)
@@ -61,6 +63,11 @@ class ExportBase(models.Model):
             return self.output_file.size
         return 0
 
+    def error_info(self) -> dict:
+        error_detail = self.extra_info.get('error_detail')
+        error_code = self.extra_info.get('error_code')
+        return {'detail': error_detail, 'code': error_code}
+
 
 class FlexibleDataExport(ExportBase):
 
@@ -87,11 +94,20 @@ class FlexibleDataExport(ExportBase):
         self.status = self.IN_PROGRESS
         self.save()
         self.output_file.name = self.generate_filename()
-        with self.output_file.open('w') as outfile:
-            rec_count = self.write_data(outfile, progress_monitor=progress_monitor)
-        self.extra_info['record_count'] = rec_count
-        self.extra_info['file_size'] = self.output_file.size
-        self.status = self.FINISHED
+        try:
+            with self.output_file.open('w') as outfile:
+                rec_count = self.write_data(outfile, progress_monitor=progress_monitor)
+        except SlicerConfigError as e:
+            self.extra_info['error_detail'] = e.message
+            self.extra_info['error_code'] = e.code
+            self.status = self.ERROR
+        except Exception as e:
+            self.extra_info['error_detail'] = str(e)
+            self.status = self.ERROR
+        else:
+            self.extra_info['record_count'] = rec_count
+            self.extra_info['file_size'] = self.output_file.size
+            self.status = self.FINISHED
         self.save()
 
     def generate_filename(self):

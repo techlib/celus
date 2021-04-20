@@ -236,7 +236,19 @@ class FlexiReport {
   }
 }
 
+const EXPORT_ERROR = 3;
+const EXPORT_FINISHED = 2;
+const EXPORT_IN_PROGRESS = 1;
+const EXPORT_NOT_STARTED = 0;
+
 class FlexiExport {
+  static statusToText = {
+    0: "not_started",
+    1: "in_progress",
+    2: "finished",
+    3: "error",
+  };
+
   constructor() {
     this.pk = null;
     this.primaryDimension = null;
@@ -245,6 +257,8 @@ class FlexiExport {
     this.groupBy = [];
     this.orderBy = [];
     this.outputFile = null;
+    this.status = 0;
+    this.errorInfo = {};
   }
 
   static async fromAPIObject(data, allReportTypes = null) {
@@ -253,8 +267,14 @@ class FlexiExport {
     flexiExport.outputFile = data.output_file;
     flexiExport.created = data.created;
     flexiExport.fileSize = data.file_size;
+    flexiExport.status = data.status;
+    flexiExport.errorInfo = data.error_info;
     await flexiExport.readConfig(data.export_params, allReportTypes);
     return flexiExport;
+  }
+
+  get statusText() {
+    return FlexiExport.statusToText[this.status];
   }
 
   async readConfig(config, allReportTypes = null) {
@@ -314,4 +334,12 @@ class FlexiExport {
   }
 }
 
-export { Dimension, FlexiReport, FlexiExport };
+export {
+  Dimension,
+  FlexiReport,
+  FlexiExport,
+  EXPORT_ERROR,
+  EXPORT_FINISHED,
+  EXPORT_IN_PROGRESS,
+  EXPORT_NOT_STARTED,
+};

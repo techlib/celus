@@ -15,4 +15,5 @@ class FlexibleDataExportSerializer(ModelSerializer):
             'export_params',
             'progress',
             'file_size',
+            'error_info',
         )
