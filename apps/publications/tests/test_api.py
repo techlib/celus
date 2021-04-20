@@ -117,13 +117,13 @@ class TestPlatformAPI:
         assert resp.status_code == 404
 
     @pytest.mark.parametrize(
-        "client,organization,code",
+        "client,organization,data_source,code",
         (
-            ("su", "standalone", 201),  # superuser
-            ("master", "standalone", 201),  # master
-            ("admin2", "standalone", 201),  # this admin
-            ("admin1", "standalone", 403),  # other admin
-            ("user2", "standalone", 403),  # other user
+            ("su", "standalone", None, 201),  # superuser
+            ("master", "standalone", "standalone", 201),  # master
+            ("admin2", "standalone", None, 201),  # this admin
+            ("admin1", "standalone", "standalone", 403),  # other admin
+            ("user2", "standalone", None, 403),  # other user
         ),
     )
     def test_create_platform_for_organization(
@@ -135,8 +135,12 @@ class TestPlatformAPI:
         organization,
         code,
         data_sources,
+        data_source,
         report_types,
     ):
+        # Set data source for the organization
+        organizations[organization].source = data_sources[data_source] if data_source else None
+        organizations[organization].save()
 
         # su client
         resp = clients[client].post(

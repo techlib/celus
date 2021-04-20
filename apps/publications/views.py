@@ -149,6 +149,8 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
             )
             organization.source = source
             organization.save()
+        else:
+            source = organization.source
 
         platform = serializer.save(ext_id=None, source=source)
         platform.create_default_interests()
