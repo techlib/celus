@@ -429,21 +429,14 @@ sparkpost = ["sparkpost"]
 
 [[package]]
 name = "django-cachalot"
-version = "2.3.4"
+version = "2.3.5"
 description = "Caches your Django ORM queries and automatically invalidates them."
 category = "main"
 optional = false
 python-versions = "*"
-develop = false
 
 [package.dependencies]
 Django = ">=2"
-
-[package.source]
-type = "git"
-url = "https://github.com/noripyt/django-cachalot.git"
-reference = "6826ec6e4db4b4d886d8f50fc5ea36d925ea479b"
-resolved_reference = "6826ec6e4db4b4d886d8f50fc5ea36d925ea479b"
 
 [[package]]
 name = "django-celery-results"
@@ -2022,7 +2015,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "virtualenv"
-version = "20.4.3"
+version = "20.4.4"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
@@ -2132,7 +2125,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.8"
-content-hash = "056ca3bca08d8684417bc10a9e9217c09c1b80acb155d69ff90a2c02cdd6fa11"
+content-hash = "dd569bb27b492440f24a62015acb4ceef5a7afc8903d60567fe1dab7f8647d04"
 
 [metadata.files]
 alabaster = [
@@ -2372,7 +2365,10 @@ django-anymail = [
     {file = "django-anymail-7.1.0.tar.gz", hash = "sha256:a2bd7a40aa91a1033892630652d3ca8148de70fa2927eb4eebde239fe705f0f4"},
     {file = "django_anymail-7.1.0-py2.py3-none-any.whl", hash = "sha256:7af1076f383fb3b62b301949ea8f7d87a41376015309ffc35a246a1726060429"},
 ]
-django-cachalot = []
+django-cachalot = [
+    {file = "django-cachalot-2.3.5.tar.gz", hash = "sha256:02afabb6e83f5f06c87a7e6f01ebcdbc52a4156ec849da8e68b14498bc474d3e"},
+    {file = "django_cachalot-2.3.5-py3-none-any.whl", hash = "sha256:ed0782f9702ead95337692f0fae8bbb9352a106490f272d9b76e86b1da81c7e3"},
+]
 django-celery-results = [
     {file = "django_celery_results-2.0.1-py2.py3-none-any.whl", hash = "sha256:a2f7d172f7f57dd972538acc6e80a5bf50c673fb4d82fe027189c8659c60dfce"},
     {file = "django_celery_results-2.0.1.tar.gz", hash = "sha256:d625e324138e5b2ef46ffa9e89fa353c16d619420066ac8b240ef9247b293a84"},
@@ -3338,8 +3334,8 @@ vine = [
     {file = "vine-5.0.0.tar.gz", hash = "sha256:7d3b1624a953da82ef63462013bbd271d3eb75751489f9807598e8f340bd637e"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.4.3-py2.py3-none-any.whl", hash = "sha256:83f95875d382c7abafe06bd2a4cdd1b363e1bb77e02f155ebe8ac082a916b37c"},
-    {file = "virtualenv-20.4.3.tar.gz", hash = "sha256:49ec4eb4c224c6f7dd81bb6d0a28a09ecae5894f4e593c89b0db0885f565a107"},
+    {file = "virtualenv-20.4.4-py2.py3-none-any.whl", hash = "sha256:a935126db63128861987a7d5d30e23e8ec045a73840eeccb467c148514e29535"},
+    {file = "virtualenv-20.4.4.tar.gz", hash = "sha256:09c61377ef072f43568207dc8e46ddeac6bcdcaf288d49011bda0e7f4d38c4a2"},
 ]
 waitress = [
     {file = "waitress-2.0.0-py3-none-any.whl", hash = "sha256:29af5a53e9fb4e158f525367678b50053808ca6c21ba585754c77d790008c746"},
