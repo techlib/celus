@@ -273,7 +273,6 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.import_one_sushi_attempt_task': {'queue': 'import'},
     'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
     'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
-    'recache.tasks.find_and_renew_first_due_cached_query_task': {'queue': 'normal'},
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'core.tasks.test': {'queue': 'normal'},
