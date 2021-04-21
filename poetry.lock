@@ -563,6 +563,17 @@ python-versions = ">=3.6"
 django = ">=1.11"
 
 [[package]]
+name = "django-test-migrations"
+version = "1.1.0"
+description = "Test django schema and data migrations, including ordering"
+category = "main"
+optional = false
+python-versions = ">=3.6,<4.0"
+
+[package.dependencies]
+typing_extensions = ">=3.7.4,<4.0.0"
+
+[[package]]
 name = "django-webtest"
 version = "1.9.7"
 description = "Instant integration of Ian Bicking's WebTest (http://docs.pylonsproject.org/projects/webtest/) with django's testing framework."
@@ -2125,7 +2136,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.8"
-content-hash = "dd569bb27b492440f24a62015acb4ceef5a7afc8903d60567fe1dab7f8647d04"
+content-hash = "517c15fbbbe04f60c1f2cd0c80fcf90f5b6e3ab5a3de23418976257833eecd2b"
 
 [metadata.files]
 alabaster = [
@@ -2409,6 +2420,10 @@ django-rest-auth = [
 django-reversion = [
     {file = "django-reversion-3.0.9.tar.gz", hash = "sha256:a5af55f086a3f9c38be2f049c251e06005b9ed48ba7a109473736b1fc95a066f"},
     {file = "django_reversion-3.0.9-py3-none-any.whl", hash = "sha256:1b57127a136b969f4b843a915c72af271febe7f336469db6c27121f8adcad35c"},
+]
+django-test-migrations = [
+    {file = "django-test-migrations-1.1.0.tar.gz", hash = "sha256:27c0127552920bbdc339a84de360f1792abc8c353e2c8d2b86af92dc1ade6703"},
+    {file = "django_test_migrations-1.1.0-py3-none-any.whl", hash = "sha256:7ea17dac1a0b0c8084681899c6563d85f4262832f2fbb0c6240b12e554333934"},
 ]
 django-webtest = [
     {file = "django-webtest-1.9.7.tar.gz", hash = "sha256:c5a1e486a3d8d3623aa615b6db2f27de848aa7079303a84721e9a685f839796c"},
