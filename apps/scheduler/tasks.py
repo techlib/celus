@@ -65,5 +65,5 @@ def trigger_scheduler(self, url: str, finish: bool = False):
 def update_automatic_harvesting():
     if settings.AUTOMATIC_HARVESTING_ENABLED:
         logger.info("Updating planning of automatic harvesting for the next month")
-        Automatic.update_for_next_month()
+        Automatic.update_for_this_month()
         logger.info("Automatic planning for the next month updated")
