@@ -48,6 +48,24 @@ class TestMigrations:
             import_batch=ib,
         )
         assert DimensionText.objects.count() == 1
+        # create a materialized report to test that these are converted as well
+        # because they do not have their own links to dimensions but use the ones from parent
+        ReportMaterializationSpec = old_state.apps.get_model('logs', 'ReportMaterializationSpec')
+        rms = ReportMaterializationSpec.objects.create(base_report_type=rt, name="foo")
+        mrt = ReportType.objects.create(short_name='materialized', materialization_spec=rms)
+        # materialization does not work with old_state, so we create the materialized accesslog
+        # manually from the original
+        mal = AccessLog.objects.create(
+            report_type=mrt,
+            metric=m1,
+            platform=p1,
+            organization=org,
+            date='2020-01-01',
+            value=100,
+            dim1=dt1.pk,
+            dim2=1000,
+            import_batch=ib,
+        )
         # now migrate and check
         new_state = migrator.apply_tested_migration(('logs', '0045_dimension_int_to_str'))
         DimensionText = new_state.apps.get_model('logs', 'DimensionText')
@@ -60,3 +78,7 @@ class TestMigrations:
         assert al2.dim2 == dt2.pk, 'dim2 is remapped'
         assert al2.dim1 == dt1.pk, 'dim1 stays the same'
         assert Dimension.objects.get(pk=dim2.pk).type == 2, 'type of dim2 must change to 2'
+        # materialized record
+        mal2 = AccessLog.objects.get(pk=mal.pk)
+        assert mal2.dim2 == dt2.pk, 'dim2 is remapped'
+        assert mal2.dim1 == dt1.pk, 'dim1 stays the same'

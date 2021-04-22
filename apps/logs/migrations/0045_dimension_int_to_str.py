@@ -7,6 +7,7 @@ def convert_dim_int_to_str(apps, schema_editor):
     Dimension = apps.get_model('logs', 'Dimension')
     DimensionText = apps.get_model('logs', 'DimensionText')
     AccessLog = apps.get_model('logs', 'AccessLog')
+    ReportType = apps.get_model('logs', 'ReportType')
     for dim in Dimension.objects.filter(type=1):
         for rt in dim.report_types.all():
             rt2dim = dim.reporttypetodimension_set.filter(report_type=rt).get()
@@ -20,8 +21,11 @@ def convert_dim_int_to_str(apps, schema_editor):
                 value: DimensionText.objects.create(dimension=dim, text=str(value))
                 for value in values
             }
+            # we need to update materialized reports as well as they lack their own
+            # dimension assignment
+            rts = [rt] + list(ReportType.objects.filter(materialization_spec__base_report_type=rt))
             for value, obj in value_to_obj.items():
-                AccessLog.objects.filter(report_type=rt, **{dim_ref: value}).update(
+                AccessLog.objects.filter(report_type__in=rts, **{dim_ref: value}).update(
                     **{dim_ref: obj.pk}
                 )
         dim.type = 2
