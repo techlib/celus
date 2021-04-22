@@ -447,7 +447,7 @@ class FetchIntention(models.Model):
 
         # fetch attempt
         attempt: SushiFetchAttempt = self.credentials.fetch_report(
-            self.counter_report, self.start_date, self.end_date
+            self.counter_report, self.start_date, self.end_date, use_url_lock=False,
         )
         attempt.triggered_by = self.harvest.last_updated_by
         attempt.queue_id = self.queue_id
