@@ -806,6 +806,13 @@ class TestHarvest:
         assert harvests["user1"].intentions.count() == 2
         assert harvests["user1"].latest_intentions.count() == 2
 
+    def test_wipe(self, harvests):
+        assert Harvest.objects.filter(pk=harvests["user1"].pk).wipe() == {
+            "fetch_attemtps_deleted": (1, {"sushi.SushiFetchAttempt": 1}),
+            "harvests_deleted": (3, {"scheduler.FetchIntention": 2, "scheduler.Harvest": 1}),
+            "import_batches_deleted": (1, {'logs.ImportBatch': 1}),
+        }
+
 
 @pytest.mark.django_db
 class TestAutomatic:

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
+from logs.models import ImportBatch
 from sushi.models import SushiFetchAttempt
 from . import models
 
@@ -42,6 +43,13 @@ class FetchIntentionInline(admin.TabularInline):
         return False
 
 
+def wipe_harvest(modeladmin, request, queryset):
+    queryset.wipe()
+
+
+wipe_harvest.short_description = "Deletes harvest and also all related data"
+
+
 @admin.register(models.Harvest)
 class HarvestAdmin(admin.ModelAdmin):
     inlines = (FetchIntentionInline,)
@@ -61,6 +69,7 @@ class HarvestAdmin(admin.ModelAdmin):
     )
 
     list_select_related = ['last_updated_by', 'automatic']
+    actions = [wipe_harvest]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

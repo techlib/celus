@@ -29,6 +29,7 @@ from sushi.models import (
     CounterReportsToCredentials,
     CreatedUpdatedMixin,
 )
+from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
 
 
@@ -643,6 +644,25 @@ class FetchIntention(models.Model):
 
 
 class HarvestQuerySet(models.QuerySet):
+    def wipe(self):
+        """ Erases Harvests and all its related data
+
+            Note that by default SET_NULL is used when FetchIntention is deleted
+            So no data are deleted here.
+        """
+        # Remove ImportBatches -> should remove all AccessLogs
+        ib_stats = ImportBatch.objects.filter(
+            sushifetchattempt__fetchintention__harvest__in=self
+        ).delete()
+        # Remove FetchAttempts
+        fa_stats = SushiFetchAttempt.objects.filter(fetchintention__harvest__in=self).delete()
+        harvests_stats = self.delete()
+        return {
+            "import_batches_deleted": ib_stats,
+            "fetch_attemtps_deleted": fa_stats,
+            "harvests_deleted": harvests_stats,
+        }
+
     def annotate_stats(self):
         return self.annotate(
             unprocessed=Coalesce(
