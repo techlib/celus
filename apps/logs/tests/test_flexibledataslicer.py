@@ -239,6 +239,55 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'pl3', 'm1': 962496, 'm2': 1006560, 'm3': 1050624},
         ]
 
+    @pytest.mark.parametrize(['order_by'], (('platform',), ('-platform',)))
+    def test_platform_order_by_platform(self, flexible_slicer_test_data, order_by):
+        """
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter: None
+        Order by: platform (primary dimension)
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_group_by('metric')
+        slicer.order_by = [order_by]
+        data = list(slicer.get_data())
+        assert len(data) == Platform.objects.count()
+        remapped = [remap_row_keys_to_short_names(row, Platform, [Metric]) for row in data]
+        if order_by.startswith('-'):
+            assert remapped[0]['pk'] == 'pl3'
+        else:
+            assert remapped[0]['pk'] == 'pl1'
+
+    @pytest.fixture(params=["-", ""])
+    def order_by_sign(self, request):
+        return request.param
+
+    @pytest.mark.parametrize(
+        ['primary_dim'],
+        [
+            ("platform",),
+            ("metric",),
+            ("target",),
+            ("organization",),
+            ("dim1",),
+            ("dim2",),
+            ("date",),
+            ("date__year",),
+        ],
+    )
+    def test_order_by_primary_dim(self, flexible_slicer_test_data, primary_dim, order_by_sign):
+        """
+        Test that ordering by primary dimension works for any primary dimension - the purpose
+        of the test is to make sure it does not crash
+        """
+        slicer = FlexibleDataSlicer(primary_dimension=primary_dim)
+        report_type = flexible_slicer_test_data['report_types'][1]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        slicer.add_group_by('metric')
+        slicer.order_by = [order_by_sign + primary_dim]
+        data = list(slicer.get_data())
+        assert len(data) > 0
+
     def test_platform_sum_by_metric_dim1_filter_dim1(self, flexible_slicer_test_data):
         """
         Primary dimension: platform

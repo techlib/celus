@@ -417,7 +417,8 @@ class FlexibleSlicerView(APIView):
             slicer.add_extra_organization_filter(request.user.accessible_organizations())
             print(slicer.filters)
             pprint(slicer.config())
-            data = slicer.get_data()
+            print("LANG", request.user.language)
+            data = slicer.get_data(lang=request.user.language)
         except SlicerConfigError as e:
             return Response(
                 {'error': {'message': str(e), 'code': e.code, 'details': e.details}},

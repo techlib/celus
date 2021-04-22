@@ -24,8 +24,9 @@ from django.db.models import (
     Subquery,
     Model,
     CharField,
+    F,
 )
-from django.db.models.functions import Coalesce, Cast
+from django.db.models.functions import Coalesce, Cast, Concat
 from django.shortcuts import get_object_or_404
 
 from charts.models import ReportDataView
@@ -876,7 +877,7 @@ class FlexibleDataSlicer:
             return self.get_possible_dimension_values_queryset(self.group_by)
         return None
 
-    def get_data(self):
+    def get_data(self, lang='en'):
         # we do the following just before getting data in order to ensure the slicer is finalized
         # TODO: we could lock the slicer for further changes after that
         self._replace_report_type_with_materialized()
@@ -902,6 +903,16 @@ class FlexibleDataSlicer:
                     # we ignore sort groups that are not in the data
                     logger.debug('Ignoring unknown order by "%s"', ob)
                     dealt_with = True
+            elif ob == self.primary_dimension and not ob.startswith('date'):
+                if ob == 'target':
+                    # title does not have `short_name`, just `name`
+                    obs.append(prefix + 'name')
+                else:
+                    # if there is a name, we want name, if not, we want short_name
+                    # the following simulates this
+                    qs = qs.annotate(sort_name=Concat(F(f'name_{lang}'), F('short_name')))
+                    obs.append(prefix + 'sort_name')
+                dealt_with = True
             if not dealt_with:
                 obs.append(prefix + ob)
         qs = qs.order_by(*obs)

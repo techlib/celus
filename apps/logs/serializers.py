@@ -56,7 +56,7 @@ class InterestGroupSerializer(ModelSerializer):
 class MetricSerializer(ModelSerializer):
     class Meta:
         model = Metric
-        fields = ('pk', 'short_name', 'name')
+        fields = ('pk', 'short_name', 'name', 'name_en', 'name_cs')
 
 
 class DimensionSerializer(OrganizationSourceExtractingMixin, ModelSerializer):
