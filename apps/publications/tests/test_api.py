@@ -137,7 +137,9 @@ class TestPlatformAPI:
         data_sources,
         data_source,
         report_types,
+        settings,
     ):
+        settings.ALLOW_USER_CREATED_PLATFORMS = True
         # Set data source for the organization
         organizations[organization].source = data_sources[data_source] if data_source else None
         organizations[organization].save()
@@ -169,8 +171,9 @@ class TestPlatformAPI:
             ) == {'TR', 'DR', 'JR1', 'BR2', 'DB1'}, "Interest report types created check"
 
     def test_create_platform_for_organization_with_no_data_source(
-        self, basic1, clients, organizations, client,
+        self, basic1, clients, organizations, client, settings
     ):
+        settings.ALLOW_USER_CREATED_PLATFORMS = True
         assert organizations["master"].source is None
 
         resp = clients["su"].post(
@@ -252,7 +255,9 @@ class TestPlatformAPI:
         report_types,
         platform,
         platforms,
+        settings,
     ):
+        settings.ALLOW_USER_CREATED_PLATFORMS = True
         resp = clients[client].patch(
             reverse(
                 'platform-detail', args=[organizations[organization].pk, platforms[platform].pk],
