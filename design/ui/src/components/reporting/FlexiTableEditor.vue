@@ -396,6 +396,7 @@ import isEqual from "lodash/isEqual";
 import { dataTableToDjangoOrderBy } from "@/libs/sorting";
 import AccessLevelSelector from "@/components/reporting/AccessLevelSelector";
 import formRulesMixin from "@/mixins/formRulesMixin";
+import { parseDateTime, ymDateFormat } from "@/libs/dates";
 
 export default {
   name: "FlexiTableEditor",
@@ -737,6 +738,16 @@ export default {
               Number.parseInt(filter.dimension.substring(3, 4)) - 1
             ] = filter.values;
             this.filters.push(filter.dimension);
+          } else if (filter.dimension.startsWith("date")) {
+            const start = parseDateTime(filter.start);
+            const end = parseDateTime(filter.end);
+            this.selectedDateRange = {
+              start: start ? ymDateFormat(start) : null,
+              end: end ? ymDateFormat(end) : null,
+            };
+            this.filters.push(filter.dimension);
+          } else {
+            console.warn(`Unrecognized filter "${filter.dimension}"`);
           }
         }
       }

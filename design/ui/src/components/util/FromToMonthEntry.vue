@@ -15,12 +15,14 @@ cs:
         v-model="startDate"
         :label="textStart"
         :allowed-months="allowedStartMonths"
+        :disabled="disabled"
       ></MonthEntry>
     </span>
     <MonthEntry
       v-model="endDate"
       :label="textEnd"
       :allowed-months="allowedEndMonths"
+      :disabled="disabled"
     ></MonthEntry>
   </div>
 </template>
@@ -36,6 +38,7 @@ export default {
     value: { required: true, type: Object },
     startLabel: { required: false, type: String, default: null },
     endLabel: { required: false, type: String, default: null },
+    disabled: { required: false, type: Boolean, default: false },
   },
 
   data() {
@@ -75,6 +78,13 @@ export default {
     },
     endDate() {
       this.$emit("input", { start: this.startDate, end: this.endDate });
+    },
+    value: {
+      immediate: true,
+      handler() {
+        this.startDate = this.value.start;
+        this.endDate = this.value.end;
+      },
     },
   },
 };

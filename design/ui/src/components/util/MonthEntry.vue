@@ -4,6 +4,7 @@
     transition="scale-transition"
     offset-y
     min-width="290px"
+    :disabled="disabled"
   >
     <template v-slot:activator="{ on }">
       <v-text-field
@@ -14,6 +15,7 @@
         v-on="on"
         clearable
         clear-icon="fa fa-times"
+        :disabled="disabled"
       ></v-text-field>
     </template>
     <v-date-picker
@@ -36,6 +38,7 @@ export default {
     value: { required: true },
     label: { required: false, default: "", type: String },
     allowedMonths: { required: false, type: Function },
+    disabled: { required: false, type: Boolean, default: false },
   },
 
   data() {
