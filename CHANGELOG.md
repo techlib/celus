@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ordering reports by primary dimension was fixed
 - loading of date filter in report editor was fixed
 - filtering by YOP is now possible in reporting due to the above mentioned change of dimension type
+- adding filter for organization did not work properly when specific organization was selected
+  globally
 
 
 ## [3.0.0]
