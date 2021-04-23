@@ -279,6 +279,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.test': {'queue': 'normal'},
     'update_report_approx_record_count_task': {'queue': 'interest'},
     'logs.tasks.export_raw_data_task': {'queue': 'export'},
+    'export.tasks.process_flexible_export_task': {'queue': 'export'},
 }
 
 CELERY_BEAT_SCHEDULE = {
