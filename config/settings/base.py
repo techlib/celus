@@ -275,6 +275,7 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
+    'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
     'core.tasks.test': {'queue': 'normal'},
     'update_report_approx_record_count_task': {'queue': 'interest'},
     'logs.tasks.export_raw_data_task': {'queue': 'export'},
