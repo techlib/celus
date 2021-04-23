@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from core.tasks import fail_intentionally_task
+from export.tasks import process_flexible_export_task
 from logs.tasks import (
     sync_interest_task,
     recompute_interest_by_batch_task,
@@ -39,6 +40,7 @@ class Command(BaseCommand):
         'plan_schedulers_triggering': plan_schedulers_triggering,
         'update_automatic_harvesting': update_automatic_harvesting,
         'update_report_approx_record_count_task': update_report_approx_record_count_task,
+        'process_flexible_export_task': process_flexible_export_task,
     }
 
     def add_arguments(self, parser):
