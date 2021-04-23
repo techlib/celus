@@ -475,8 +475,11 @@ export default {
       if (this.selectedReportTypes.length > 0) {
         ret["report_type"] = this.selectedReportTypes;
       }
-      if (this.filters.includes("organization") && this.organizationSelected) {
-        ret["organization"] = this.selectedOrganizationId;
+      if (
+        this.filters.includes("organization") &&
+        this.selectedOrganizationId.length > 0
+      ) {
+        ret["organization"] = this.selectedOrganizations;
       }
       if (this.filters.includes("metric") && this.selectedMetrics.length > 0) {
         ret["metric"] = this.selectedMetrics;
