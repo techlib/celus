@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1]
+
+### Added
+
+#### Backend
+
+- removal of whole harvests in Django admin was implemented
+
+### Changes
+
+#### Backend
+
+- numerical dimensions (only YOP in TR for COUNTER) were migrated to text in order to simplify
+  code and database schema
+
+### Fixed
+
+#### Frontend
+
+- ordering reports by primary dimension was fixed
+- loading of date filter in report editor was fixed
+- filtering by YOP is now possible in reporting due to the above mentioned change of dimension type
+
+
 ## [3.0.0]
 
 ### Added
