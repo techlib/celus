@@ -842,7 +842,10 @@ class FlexibleDataSlicer:
         be filtered/grouped on.
         If `ignore_self` is True, the dimensions themselves will not be used in the filter.
         """
-        self._replace_report_type_with_materialized(extra_dimensions_to_preserve={dimension})
+        # we can ignore primary because it does not have any influence on the filtering
+        self._replace_report_type_with_materialized(
+            extra_dimensions_to_preserve={dimension}, ignore_primary=True
+        )
         query = self.get_possible_dimension_values_queryset(dimension, ignore_self=ignore_self)
         # add text filter
         if text_filter:
@@ -938,11 +941,14 @@ class FlexibleDataSlicer:
             return list(ReportType.objects.filter(**query_params))
         return list(ReportType.objects.filter(materialization_spec__isnull=True))
 
-    def _replace_report_type_with_materialized(self, extra_dimensions_to_preserve=None):
+    def _replace_report_type_with_materialized(
+        self, extra_dimensions_to_preserve=None, ignore_primary=False
+    ):
         rts = self.involved_report_types()
         for rt in rts:
             dimensions = {fltr.dimension for fltr in self.dimension_filters}
-            dimensions.add(self.primary_dimension)
+            if not ignore_primary:
+                dimensions.add(self.primary_dimension)
             dimensions |= {dim.lstrip('-') for dim in self.order_by}
             dimensions |= set(self.group_by)
             if extra_dimensions_to_preserve:
