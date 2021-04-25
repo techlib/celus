@@ -131,7 +131,9 @@ class TestMaterializedReport:
         spec = ReportMaterializationSpec.objects.create(
             base_report_type=report_type, keep_dim1=False, keep_target=False
         )
-        ReportType.objects.create(materialization_spec=spec, short_name='m', name='m')
+        ReportType.objects.create(
+            materialization_spec=spec, short_name='m', name='m', approx_record_count=1
+        )
         # test the result
         qp = {'report_type': report_type, **query_params}
         assert replace_report_type_with_materialized(qp, other_used_dimensions=other_dims) == result

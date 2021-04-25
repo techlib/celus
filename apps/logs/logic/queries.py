@@ -187,7 +187,11 @@ def find_best_materialized_view(rt: ReportType, used_dimensions: [str]) -> Optio
     Takes a report_type and a list of dimensions that are to be present in the view and returns
     the best materialized view to use instead of the report type or None if none is available
     """
-    candidates = ReportType.objects.filter(materialization_spec__base_report_type=rt)
+    # approx_record_count == 0 means that this is a new report type, not yet populated
+    # and it would thus report back incorrect data
+    candidates = ReportType.objects.filter(
+        materialization_spec__base_report_type=rt, approx_record_count__gt=0
+    )
     if candidates:
         used_dimensions = set(used_dimensions)
         final_candidates = []
