@@ -314,6 +314,11 @@ class Counter5IRReport(Counter5ReportBase):
         return item.get('Item')
 
 
+class Counter5IRM1Report(Counter5IRReport):
+
+    dimensions = ['Publisher']
+
+
 class Counter5TableReport:
     """
     Implements reading of C5 reports stored in a CSV/TSV tabular format
@@ -335,6 +340,7 @@ class Counter5TableReport:
         'TR': ['Access_Type', 'Access_Method', 'Data_Type', 'Section_Type', 'YOP', 'Publisher'],
         'PR': ['Access_Method', 'Data_Type'],
         'IR': ['Access_Type', 'Access_Method', 'Data_Type', 'YOP', 'Publisher'],
+        'IR_M1': ['Publisher'],
     }
 
     title_id_columns = ['DOI', 'ISBN', 'Print_ISSN', 'Online_ISSN']

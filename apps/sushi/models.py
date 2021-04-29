@@ -1,6 +1,6 @@
-import os
 import json
 import logging
+import os
 import traceback
 from copy import deepcopy
 from datetime import timedelta, datetime, date
@@ -14,7 +14,7 @@ import reversion
 from django.conf import settings
 from django.core.files.base import ContentFile, File
 from django.db import models
-from django.db.models import F, Exists, Max, OuterRef
+from django.db.models import F, Exists, OuterRef
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from pycounter.exceptions import SushiException
@@ -46,9 +46,9 @@ from nigiri.counter5 import (
     Counter5DRReport,
     Counter5PRReport,
     Counter5TRReport,
-    Counter5IRReport,
     TransportError,
     Counter5TableReport,
+    Counter5IRM1Report,
 )
 from nigiri.error_codes import ErrorCode
 from organizations.models import Organization
@@ -62,29 +62,29 @@ COUNTER_VERSIONS = (
 )
 
 COUNTER_REPORTS = (
-    # (code, version, json, reader)
+    # (code, version, json, reader, sushi_compatible)
     # version 4
-    ('JR1', 4, False, Counter4JR1Report),
-    ('JR1a', 4, False, Counter4JR1Report),
-    ('JR1GOA', 4, False, Counter4JR1Report),
-    ('JR2', 4, False, Counter4JR2Report),
-    # ('JR5', 4, False, , None),
-    ('BR1', 4, False, Counter4BR1Report),
-    ('BR2', 4, False, Counter4BR2Report),
-    ('BR3', 4, False, Counter4BR3Report),
-    ('DB1', 4, False, Counter4DB1Report),
-    ('DB2', 4, False, Counter4DB2Report),
-    ('PR1', 4, False, Counter4PR1Report),
-    ('MR1', 4, False, Counter4MR1Report),
+    ('JR1', 4, False, Counter4JR1Report, True),
+    ('JR1a', 4, False, Counter4JR1Report, True),
+    ('JR1GOA', 4, False, Counter4JR1Report, True),
+    ('JR2', 4, False, Counter4JR2Report, True),
+    # ('JR5', 4, False, , None, True),
+    ('BR1', 4, False, Counter4BR1Report, True),
+    ('BR2', 4, False, Counter4BR2Report, True),
+    ('BR3', 4, False, Counter4BR3Report, True),
+    ('DB1', 4, False, Counter4DB1Report, True),
+    ('DB2', 4, False, Counter4DB2Report, True),
+    ('PR1', 4, False, Counter4PR1Report, True),
+    ('MR1', 4, False, Counter4MR1Report, True),
     # version 5
-    ('TR', 5, True, Counter5TRReport),
-    ('PR', 5, True, Counter5PRReport),
-    ('DR', 5, True, Counter5DRReport),
-    ('IR', 5, True, Counter5IRReport),
-    ('TR', 5, False, Counter5TableReport),
-    ('PR', 5, False, Counter5TableReport),
-    ('DR', 5, False, Counter5TableReport),
-    ('IR', 5, False, Counter5TableReport),
+    ('TR', 5, True, Counter5TRReport, True),
+    ('PR', 5, True, Counter5PRReport, True),
+    ('DR', 5, True, Counter5DRReport, True),
+    ('IR_M1', 5, True, Counter5IRM1Report, True),
+    ('TR', 5, False, Counter5TableReport, False),
+    ('PR', 5, False, Counter5TableReport, False),
+    ('DR', 5, False, Counter5TableReport, False),
+    ('IR', 5, False, Counter5TableReport, False),
 )
 
 
@@ -145,7 +145,7 @@ class BrokenCredentialsMixin(models.Model):
 
 class CounterReportType(models.Model):
 
-    CODE_CHOICES = [(cr[0], cr[0]) for cr in COUNTER_REPORTS]
+    CODE_CHOICES = [(cr[0], cr[0]) for cr in COUNTER_REPORTS if cr[4]]
 
     code = models.CharField(max_length=10, choices=CODE_CHOICES)
     name = models.CharField(max_length=128, blank=True)
@@ -165,7 +165,7 @@ class CounterReportType(models.Model):
         return f'{self.code} ({self.counter_version}) - {self.name}'
 
     def get_reader_class(self, json_format: bool = False):
-        for code, version, reads_json, reader in COUNTER_REPORTS:
+        for code, version, reads_json, reader, sushi_compatible in COUNTER_REPORTS:
             if code == self.code and version == self.counter_version and reads_json is json_format:
                 return reader
         return None

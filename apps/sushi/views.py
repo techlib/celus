@@ -31,7 +31,6 @@ from organizations.logic.queries import organization_filter_from_org_id
 
 from .filters import CleanupFilterBackend
 from .models import (
-    COUNTER_REPORTS,
     SushiCredentials,
     CounterReportType,
     SushiFetchAttempt,

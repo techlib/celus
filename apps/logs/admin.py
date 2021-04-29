@@ -98,6 +98,7 @@ class ReportTypeToDimensionAdmin(admin.ModelAdmin):
 
     list_display = ['report_type', 'dimension', 'position']
     ordering = ['report_type__short_name', 'position']
+    list_filter = ['report_type', 'dimension']
 
 
 @admin.register(models.AccessLog)

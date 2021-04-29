@@ -20,6 +20,7 @@ from .counter5 import (
     Counter5ReportBase,
     Counter5IRReport,
     CounterError,
+    Counter5IRM1Report,
 )
 from .error_codes import ErrorCode
 from .exceptions import SushiException
@@ -359,14 +360,17 @@ class Sushi5Client(SushiClientBase):
             # about an issue - we need to parse the result in case there is more info
             # in the body
             report_class: typing.Type[Counter5ReportBase]
-            if report_type.lower() == 'tr':
+            report_id = report_type.lower()
+            if report_id == 'tr':
                 report_class = Counter5TRReport
-            elif report_type.lower() == 'dr':
+            elif report_id == 'dr':
                 report_class = Counter5DRReport
-            elif report_type.lower() == 'pr':
+            elif report_id == 'pr':
                 report_class = Counter5PRReport
-            elif report_type.lower() == 'ir':
+            elif report_id == 'ir':
                 report_class = Counter5IRReport
+            elif report_id == 'ir_m1':
+                report_class = Counter5IRM1Report
             else:
                 raise NotImplementedError()
 
