@@ -67,6 +67,7 @@ en:
     organizations: Organizations
     primary_dimension: Rows
     access_level: Access level
+    not_before: Cannot start until
   titles: Titles
   overview: Overview
   chart:
@@ -228,6 +229,7 @@ cs:
     organizations: Organizace
     primary_dimension: Řádky
     access_level: Úroveň přístupu
+    not_before: Stažení nejdříve
   titles: Tituly
   overview: Přehled
   chart:

@@ -3,7 +3,7 @@
 <i18n lang="yaml">
 en:
   currently_downloading: There are no data yet, please wait until the download finishes. It can take from seconds to minutes.
-  planned_to_download: Fetching of data was planned, but attempt hasn't been executed yet.
+  planned_to_download: "Fetching of data was planned for {date}, but attempt hasn't been executed yet."
   planned_for_retry: "Based on result of previous attempt, later retry was planned. The new attempt is planned for {date}. "
   attempt_deleted: Download was executed but information about the download were deleted.
   future_start_info: Harvesting is currently waiting for free slot in the download queue.
@@ -18,10 +18,17 @@ en:
   actions: Actions
   actions_force_run: Reschedule and start download right now.
   previous_attempt: Previous attempt
+  not_before_tooltip: Data might not be avialable or some ratelimit was reached.
+  runnable:
+    all: All
+    filter: Ready to run
+    now: Immediately
+    future: In the future
+    never: Can't be run
 
 cs:
   currently_downloading: Data ještě nejsou k dispozici - vyčkejte prosím, až budou stáhnutá. Může to trvat od sekund po jednotky minut.
-  planned_to_download: Stahování dat bylo naplánováno, ale zatím nebylo provedeno.
+  planned_to_download: "Stahování dat bylo naplánováno na {date}, ale zatím nebylo provedeno."
   planned_for_retry: "Na základě předchozího pokusu bylo naplánováno pozdější stažení. Nový pokus je naplánovaný na {date}. "
   attempt_deleted: Stahování proběhlo, ale informace o stahování byly smazány.
   future_start_info: Stahování aktuálně čeká na uvolnění místa ve frontě.
@@ -36,6 +43,13 @@ cs:
   actions: Akce
   actions_force_run: Přeplánovat a spustit stahování hned.
   previous_attempt: Předchozí pokus
+  not_before_tooltip: Data nemusí být dostupná nebo byl překročen limit stažení.
+  runnable:
+    all: Všechno
+    filter: Připraveno ke spuštění
+    now: Hned
+    future: V budoucnu
+    never: Nelze pustit
 </i18n>
 <template>
   <v-container fluid class="pt-0 pb-0">
@@ -51,6 +65,17 @@ cs:
           :loading="loading"
           dense
         >
+
+          <template v-for="h in headers" v-slot:[`header.${h.value}`]="{ header }">
+            <v-tooltip bottom v-if="header.tooltip">
+              <template v-slot:activator="{ on }">
+                <span v-on="on">{{h.text}}</span>
+              </template>
+                <span>{{h.tooltip}}</span>
+            </v-tooltip>
+            <span v-else>{{h.text}}</span>
+          </template>
+
           <template #top>
             <v-container fluid class="pa-0">
               <v-row>
@@ -114,8 +139,19 @@ cs:
                     v-model="finishedFilter"
                   ></v-select>
                 </v-col>
+                <v-col cols="6" sm="4" lg="3">
+                  <v-select
+                    :label="$t('runnable.filter')"
+                    :items="runnableFilterItems"
+                    v-model="runnableFilter"
+                  ></v-select>
+                </v-col>
               </v-row>
             </v-container>
+          </template>
+
+          <template v-slot:item.notBefore="{ item }">
+            <span v-html="formatDateTime(item.notBefore)" v-if="!item.isFinished"></span>
           </template>
 
           <template #item.status="{ item }">
@@ -239,6 +275,7 @@ import FetchIntentionStatusIcon from "@/components/sushi/FetchIntentionStatusIco
 import { annotateIntention } from "@/libs/intention-state";
 import CheckMark from "@/components/util/CheckMark";
 import { intentionStateToIcon } from "@/libs/intention-state";
+import { isoDateTimeFormatSpans } from "@/libs/dates";
 
 export default {
   name: "SushiFetchIntentionsListWidget",
@@ -273,6 +310,13 @@ export default {
         { value: "unfinished", text: this.$i18n.t("unfinished") },
         { value: "finished", text: this.$i18n.t("finished") },
       ],
+      runnableFilterItems: [
+        { value: "all", text: this.$i18n.t("runnable.all") },
+        { value: "now", text: this.$i18n.t("runnable.now") },
+        { value: "future", text: this.$i18n.t("runnable.future") },
+        { value: "never", text: this.$i18n.t("runnable.never") },
+      ],
+      runnableFilter: "all",
       stateFilter: null,
     };
   },
@@ -311,6 +355,11 @@ export default {
         {
           text: this.$t("title_fields.end_date"),
           value: "end_date",
+        },
+        {
+          text: this.$t("title_fields.not_before"),
+          value: "notBefore",
+          tooltip: this.$t("not_before_tooltip"),
         },
         {
           text: this.$t("labels.finished"),
@@ -359,6 +408,19 @@ export default {
             return item.isFinished;
           } else {
             return !item.isFinished;
+          }
+        })
+        .filter((item) => {
+          let now = new Date();
+          switch (this.runnableFilter) {
+            case "never":
+              return item.isFinished || item.brokenCredentials;
+            case "now":
+              return !(item.isFinished || item.brokenCredentials) && item.notBefore < now;
+            case "future":
+              return !(item.isFinished || item.brokenCredentials) >= now;
+            default:
+              return true;
           }
         })
         .filter(
@@ -417,6 +479,10 @@ export default {
       this.fetchIntentions(false);
     },
 
+    formatDateTime(value) {
+      return isoDateTimeFormatSpans(value);
+    },
+
     async fetchIntentions(showLoader = true) {
       if (!this.intentionsUrl) {
         return;
@@ -466,7 +532,6 @@ export default {
     async scheduleRecheck(showLoader = true) {
       // showLoader is used to only show loader on the first load, but not when doing updates later on
       await this.fetchIntentions(showLoader);
-      console.log("retry timeout:", this.retryTimeout);
 
       if (!this.inactive && this.retryTimeout) {
         // setTimeout delay (ms) can't be greater than 32bit integer
