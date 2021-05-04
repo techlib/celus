@@ -16,22 +16,6 @@ from sushi.models import SushiFetchAttempt
 logger = logging.getLogger(__name__)
 
 
-def import_new_sushi_attempts():
-    queryset = SushiFetchAttempt.objects.filter(
-        is_processed=False, download_success=True, contains_data=True, import_crashed=False
-    )
-    count = queryset.count()
-    logger.info('Found %d unprocessed successful download attempts matching criteria', count)
-    for i, attempt in enumerate(queryset):
-        logger.info('----- Importing attempt #%d (pk: %d) -----', i, attempt.pk)
-        try:
-            import_one_sushi_attempt(attempt)
-        except Exception as e:
-            # we catch any kind of error to make sure that the loop does not die
-            logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
-            attempt.mark_crashed(e)
-
-
 def validate_data_v5(report: Counter5ReportBase):
     Sushi5Client.validate_data(report.errors, report.warnings)
 
@@ -41,7 +25,7 @@ def validate_data_v4(report: Counter4ReportBase):
     return None
 
 
-def _check_importable_attempt(attempt: SushiFetchAttempt):
+def check_importable_attempt(attempt: SushiFetchAttempt):
     if attempt.is_processed:
         raise ValueError(f'Data already imported (attempt={attempt.pk})')
 
@@ -63,7 +47,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         logger.warning('Unsupported report type %s', attempt.counter_report.code)
         return
 
-    _check_importable_attempt(attempt)
+    check_importable_attempt(attempt)
 
     logger.debug('Processing file: %s', attempt.data_file.name)
 

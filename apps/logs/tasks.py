@@ -4,9 +4,12 @@ Celery tasks reside here
 import celery
 import logging
 
+from django.db import DatabaseError
+from django.db.transaction import atomic
+
 from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
-from logs.logic.attempt_import import import_new_sushi_attempts, import_one_sushi_attempt
+from logs.logic.attempt_import import import_one_sushi_attempt, check_importable_attempt
 from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import (
     sync_interest_by_import_batches,
@@ -35,34 +38,61 @@ def sync_interest_task():
 
 @celery.shared_task
 @email_if_fails
+@atomic
 def import_new_sushi_attempts_task():
     """
     Go over new sushi attempts that contain data and import them
     """
-    with cache_based_lock('import_new_sushi_attempts_task', blocking_timeout=10):
-        import_new_sushi_attempts()
+    try:
+        # select_for_update locks fetch attempts
+        attempts = SushiFetchAttempt.objects.select_for_update(nowait=True).filter(
+            is_processed=False, download_success=True, contains_data=True, import_crashed=False
+        )
+        count = attempts.count()
+        logger.info('Found %d unprocessed successful download attempts matching criteria', count)
+
+        for i, attempt in enumerate(attempts):
+            logger.info('----- Importing attempt #%d -----', i)
+            try:
+                import_one_sushi_attempt(attempt)
+            except Exception as e:
+                # we catch any kind of error to make sure that the loop does not die
+                logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
+                attempt.mark_crashed(e)
+
+    except DatabaseError:
+        logger.warning("Sushi import attempts are currently being processed.")
 
 
 @celery.shared_task
 @email_if_fails
+@atomic
 def import_one_sushi_attempt_task(attempt_id: int):
     """
     Tries to import a single sushi attempt task
     """
-    with cache_based_lock('import_new_sushi_attempts_task', blocking_timeout=10):
-        try:
-            attempt = SushiFetchAttempt.objects.get(pk=attempt_id)
-        except SushiFetchAttempt.DoesNotExist:
-            # sushi attempt was deleted in the meantime
-            # e.g. someone could remove credentials
-            logger.warning("Sushi attempt '%s' was not found.", attempt_id)
-            return
-        try:
-            import_one_sushi_attempt(attempt)
-        except Exception as e:
-            # we catch any kind of error to make sure that there is no crash
-            logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
-            attempt.mark_crashed(e)
+    try:
+        # select_for_update lock only a single fetch attempts
+        attempt = SushiFetchAttempt.objects.select_for_update(nowait=True).get(pk=attempt_id)
+    except SushiFetchAttempt.DoesNotExist:
+        # sushi attempt was deleted in the meantime
+        # e.g. someone could remove credentials
+        logger.warning("Sushi attempt '%s' was not found.", attempt_id)
+        return
+    except DatabaseError:
+        logger.warning("Sushi attempt '%s' is being processed somewhere else.", attempt_id)
+        return
+    try:
+        check_importable_attempt(attempt)
+    except ValueError as e:
+        logger.warning("Sushi attempt '%d' can't be imported: %s", attempt_id, str(e))
+        return
+    try:
+        import_one_sushi_attempt(attempt)
+    except Exception as e:
+        # we catch any kind of error to make sure that there is no crash
+        logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
+        attempt.mark_crashed(e)
 
 
 @celery.shared_task

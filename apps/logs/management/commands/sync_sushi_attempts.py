@@ -1,6 +1,7 @@
 import logging
 
 from django.core.management.base import BaseCommand
+from django.models.transaction import atomic
 
 from logs.logic.attempt_import import import_one_sushi_attempt
 from sushi.models import SushiFetchAttempt
@@ -18,8 +19,9 @@ class Command(BaseCommand):
             '-n', dest='number_of_items', type=int, help='number of attempts to process'
         )
 
+    @atomic
     def handle(self, *args, **options):
-        queryset = SushiFetchAttempt.objects.filter(
+        queryset = SushiFetchAttempt.objects.select_for_update(skip_locked=True).filter(
             is_processed=False, download_success=True, contains_data=True
         )
         if options['report_type']:

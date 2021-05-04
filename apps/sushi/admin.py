@@ -46,7 +46,7 @@ class CounterReportTypeAdmin(admin.ModelAdmin):
 
 def reimport(modeladmin, request, queryset):
     count = 0
-    for attempt in queryset:  # type: models.SushiFetchAttempt
+    for attempt in queryset.select_for_update(skip_locked=True, of=('self',)):
         reprocess_attempt(attempt)
         count += 1
     messages.info(request, f'{count} attempts reimported')
