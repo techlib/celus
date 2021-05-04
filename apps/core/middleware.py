@@ -1,8 +1,12 @@
+import logging
+
+from rest_framework import status
+
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth import load_backend
 from django.contrib.auth.middleware import RemoteUserMiddleware
-import logging
+from django.http import JsonResponse
 
 from apps.core.auth import EDUIdAuthenticationBackend
 
@@ -46,3 +50,22 @@ class EDUIdHeaderMiddleware(RemoteUserMiddleware):
         else:
             if isinstance(stored_backend, EDUIdAuthenticationBackend):
                 auth.logout(request)
+
+
+class CelusVersionHeaderMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if (
+            'CELUS-VERSION' in request.headers
+            and request.headers.get('CELUS-VERSION') != settings.CELUS_VERSION
+        ):
+            response = JsonResponse(
+                {'error': 'celus versions mismatched'}, status=status.HTTP_409_CONFLICT,
+            )
+        else:
+            response = self.get_response(request)
+
+        response['CELUS-VERSION'] = settings.CELUS_VERSION
+        return response

@@ -23,11 +23,14 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 from sentry_sdk.integrations.redis import RedisIntegration
 
+from . import get_version
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / 'apps'))
 
 USES_ERMS = config('USES_ERMS', cast=bool, default=False)
+
+CELUS_VERSION = get_version(BASE_DIR)
 
 # Application definition
 
@@ -86,6 +89,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'core.middleware.EDUIdHeaderMiddleware',
+    'core.middleware.CelusVersionHeaderMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',

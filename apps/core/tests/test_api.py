@@ -349,3 +349,31 @@ class TestInvitationAndPasswordResetAPI:
         assert user.password != old_pwd
         # one more thing - check that the user email is thus verified
         assert user.email_verified
+
+
+@pytest.mark.django_db
+class TestMiddleware:
+    @pytest.mark.parametrize(
+        "same_version,status",
+        (
+            (None, 200),  # Client doesn't return celus version
+            (True, 200),  # Client celus version == server celus version
+            (False, 409),  # Client celus version != celus server version
+        ),
+    )
+    def test_version(self, authenticated_client, same_version, status, settings):
+        if same_version is None:
+            resp = authenticated_client.get(reverse('user_api_view'))
+        else:
+            resp = authenticated_client.get(
+                reverse('user_api_view'),
+                HTTP_CELUS_VERSION=settings.CELUS_VERSION if same_version else "0.0.0",
+            )
+
+        assert resp.status_code == status
+        assert resp.has_header("CELUS-VERSION")
+        assert re.match(
+            r"^[0-9]+\.[0-9]+\.[0-9]+[0-9A-Za-z-]*$", resp["CELUS-VERSION"]
+        ), "Version follows semantic versioning"
+
+        assert resp["CELUS-VERSION"] == settings.CELUS_VERSION

@@ -85,6 +85,7 @@ export default new Vuex.Store({
       precision: 1,
     },
     showLoginDialog: false,
+    newCelusVersion: null,
     appLanguage: "en",
     basicInfo: {},
     backendReady: false,
@@ -251,8 +252,19 @@ export default new Vuex.Store({
     async start({ dispatch, getters, state }) {
       axios.defaults.xsrfCookieName = "csrftoken";
       axios.defaults.xsrfHeaderName = "X-CSRFToken";
+      axios.interceptors.request.use(
+        function (config) {
+          config.headers["celus-version"] = getters.celusVersion;
+          return config;
+        },
+        function (error) {
+          return Promise.reject(error);
+        }
+      );
       axios.interceptors.response.use(
         function (response) {
+          // Clear the version diaolog when no error is returned
+          dispatch("setNewCelusVersion", { new_version: null });
           // Do something with response data
           return response;
         },
@@ -266,6 +278,9 @@ export default new Vuex.Store({
           ) {
             // if there is 401 error, try to (re)authenticate
             dispatch("setShowLoginDialog", { show: true });
+          } else if (typeof error.response && error.response.status === 409) {
+            // Display new celus version dialog
+            dispatch("setNewCelusVersion", { new_version: error.response.headers["celus-version"] });
           } else if (typeof error.response === "undefined") {
             // we are getting redirected to the EduID login page, but 302 is transparent for us
             // (the browser handles it on its own) and the error we get does not have any response
@@ -469,6 +484,9 @@ export default new Vuex.Store({
     setShowLoginDialog(context, { show }) {
       context.commit("setShowLoginDialog", { show });
     },
+    setNewCelusVersion(context, { new_version }) {
+      context.commit("setNewCelusVersion", { new_version });
+    },
     async setAppLanguage(context, { lang }) {
       context.commit("setAppLanguage", { lang });
       try {
@@ -524,6 +542,9 @@ export default new Vuex.Store({
     },
     setShowLoginDialog(state, { show }) {
       state.showLoginDialog = show;
+    },
+    setNewCelusVersion(state, { new_version }) {
+      state.newCelusVersion = new_version;
     },
     setAppLanguage(state, { lang }) {
       state.appLanguage = lang;

@@ -1,5 +1,9 @@
 <template>
-  <router-view v-if="$route.meta.outsideNormalLayout"> </router-view>
+  <v-app v-if="newCelusVersion">
+    <NewCelusVersionDialog/>
+  </v-app>
+
+  <router-view v-else-if="$route.meta.outsideNormalLayout"> </router-view>
 
   <InvalidUserPage v-else-if="invalidUser" />
 
@@ -8,7 +12,7 @@
   <div v-else>
     <v-app>
       <BootUpWidget />
-      <LoginDialog v-if="showLoginDialog" />
+      <LoginDialog if="showLoginDialog" />
     </v-app>
   </div>
 </template>
@@ -19,6 +23,7 @@ import InvalidUserPage from "./InvalidUserPage";
 import StandardLayout from "./StandardLayout";
 import BootUpWidget from "@/components/BootUpWidget";
 import LoginDialog from "@/components/account/LoginDialog";
+import NewCelusVersionDialog from "@/components/NewCelusVersionDialog";
 
 export default {
   name: "Dashboard",
@@ -26,6 +31,7 @@ export default {
     LoginDialog,
     BootUpWidget,
     InvalidUserPage,
+    NewCelusVersionDialog,
     StandardLayout,
   },
   data() {
@@ -36,6 +42,7 @@ export default {
       invalidUser: "invalidUser",
       user: "user",
       showLoginDialog: "showLoginDialog",
+      newCelusVersion: "newCelusVersion",
     }),
     ...mapGetters({
       loggedIn: "loggedIn",
