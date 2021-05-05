@@ -87,7 +87,7 @@ class DimensionAdmin(TranslationAdmin):
 
 
 @admin.register(models.DimensionText)
-class DimensionTextAdmin(admin.ModelAdmin):
+class DimensionTextAdmin(TranslationAdmin):
 
     list_display = ['id', 'dimension', 'text', 'text_local']
     list_filter = ['dimension']
