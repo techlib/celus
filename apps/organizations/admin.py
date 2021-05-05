@@ -1,11 +1,13 @@
 from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
 
+from modeltranslation.admin import TranslationAdmin
+
 from . import models
 
 
 @admin.register(models.Organization)
-class OrganizationAdmin(MPTTModelAdmin):
+class OrganizationAdmin(MPTTModelAdmin, TranslationAdmin):
 
     list_display = ['short_name', 'internal_id', 'name', 'ico', 'source']
     search_fields = ['internal_id', 'short_name', 'name', 'ico']
