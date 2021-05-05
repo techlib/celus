@@ -240,7 +240,9 @@ class SushiCredentialsViewSet(ModelViewSet):
         for year_result in reformatted:
             for i in range(1, 13):
                 key = f"{i:02d}"
-                year_result[key] = list(year_result[key].values())
+                year_result[key] = sorted(
+                    year_result[key].values(), key=lambda x: x["counter_report"]["id"]
+                )
 
         serializer = SushiCredentialsDataSerializer(data=reformatted, many=True)
         serializer.is_valid(raise_exception=True)
