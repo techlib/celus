@@ -489,18 +489,18 @@ class TestSushiCredentialsViewSet:
         for i in range(1, 13):
             month = f"{i:02d}"
             assert len(data[0][month]) == 2
-            assert data[0][month][0]["broken"] is False
-            assert data[0][month][1]["broken"] is True, "mapping broken"
+            assert data[0][month][0]["broken"] is True, "mapping broken"
+            assert data[0][month][1]["broken"] is False
             if month in ["01"]:
-                assert data[0][month][0]["status"] == "failed"
-                assert data[0][month][1]["status"] == "no_data"
-                assert data[0][month][0]["planned"] is True
+                assert data[0][month][1]["status"] == "failed"
+                assert data[0][month][0]["status"] == "no_data"
                 assert data[0][month][1]["planned"] is True
+                assert data[0][month][0]["planned"] is True
             else:
-                assert data[0][month][0]["status"] == "untried"
                 assert data[0][month][1]["status"] == "untried"
-                assert data[0][month][0]["planned"] is False
+                assert data[0][month][0]["status"] == "untried"
                 assert data[0][month][1]["planned"] is False
+                assert data[0][month][0]["planned"] is False
 
         resp = clients["master"].get(
             reverse('sushi-credentials-data', args=(credentials["branch_pr"].pk,))
