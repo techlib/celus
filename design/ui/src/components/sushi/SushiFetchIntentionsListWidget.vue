@@ -15,6 +15,8 @@ en:
   progress: Finished
   stats: Statistics
   status: Status
+  actions: Actions
+  actions_force_run: Reschedule and start download right now.
   previous_attempt: Previous attempt
 
 cs:
@@ -31,6 +33,8 @@ cs:
   progress: Dokončeno
   stats: Statistika
   status: Stav
+  actions: Akce
+  actions_force_run: Přeplánovat a spustit stahování hned.
   previous_attempt: Předchozí pokus
 </i18n>
 <template>
@@ -116,6 +120,27 @@ cs:
 
           <template #item.status="{ item }">
             <FetchIntentionStatusIcon :fetch-intention="item" />
+          </template>
+
+          <template #item.actions="{ item }">
+            <v-tooltip
+              bottom
+            >
+              <template #activator="{ on }">
+                <v-btn
+                  v-if="item.isForceRunPossible"
+                  small
+                  icon
+                  :outlined="!loadingActions.trigger.includes(item.pk)"
+                  v-on="on"
+                  @click="forceRun(item)"
+                  :loading="loadingActions.trigger.includes(item.pk)"
+                >
+                <i class="fas fa-play"></i>
+                </v-btn>
+              </template>
+              <span>{{ $t('actions_force_run')}}</span>
+            </v-tooltip>
           </template>
 
           <template #item.isFinished="{ item }">
@@ -214,7 +239,6 @@ import FetchIntentionStatusIcon from "@/components/sushi/FetchIntentionStatusIco
 import { annotateIntention } from "@/libs/intention-state";
 import CheckMark from "@/components/util/CheckMark";
 import { intentionStateToIcon } from "@/libs/intention-state";
-import Color from "color";
 
 export default {
   name: "SushiFetchIntentionsListWidget",
@@ -233,6 +257,9 @@ export default {
   data() {
     return {
       loading: false,
+      loadingActions: {
+        trigger: [],
+      },
       intentionData: [],
       startTime: null,
       now: null,
@@ -292,6 +319,11 @@ export default {
         {
           text: this.$t("status"),
           value: "status",
+          sortable: false,
+        },
+        {
+          text: this.$t("actions"),
+          value: "actions",
           sortable: false,
         },
       ];
@@ -365,6 +397,26 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+
+    triggerUrl(pk) {
+      return `${this.intentionsUrl}/${pk}/trigger/`
+    },
+
+    async forceRun(intention) {
+      this.loadingActions.trigger.push(intention.pk)
+      try {
+        await axios.post(this.triggerUrl(intention.pk));
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error triggering intention: " + error,
+          color: "error",
+        });
+      } finally {
+        this.loadingActions.trigger = this.loadingActions.trigger.filter((x) => x !== intention.pk);
+      }
+      this.fetchIntentions(false);
+    },
+
     async fetchIntentions(showLoader = true) {
       if (!this.intentionsUrl) {
         return;

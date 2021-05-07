@@ -14,6 +14,7 @@ function annotateIntention(intention) {
 
   intention.notBefore = parseDateTime(intention.not_before);
   intention.whenProcessed = parseDateTime(intention.when_processed);
+  intention.endDate = parseDateTime(intention.end_date);
   intention.attemptDeleted = !!(intention.when_processed && !intention.attempt);
   intention.hasAttempt = !!intention.attempt;
   intention.fetchingData = intention.fetching_data;
@@ -44,6 +45,16 @@ function annotateIntention(intention) {
     intention.previousAttempt = intention.previous_intention && intention.previous_intention.attempt;
   }
   intention.state = intentionState(intention);
+
+  intention.isForceRunPossible = (
+    (intention.notBefore > new Date()) && // skip already planned
+    (intention.endDate < new Date()) && // skip for future data
+    (
+        intention.state == INTENTION_WAITING ||
+        intention.state == INTENTION_QUEUED
+    )
+  );
+  intention.loading = false;
 }
 
 const INTENTION_RUNNING = "running";

@@ -602,3 +602,37 @@ class TestFetchIntentionAPI:
         )
         resp = clients[user].get(url, {})
         assert resp.status_code == user1_status
+
+    @pytest.mark.parametrize(
+        "user,processed,status,planned",
+        (
+            ("master", False, 200, True),
+            ("master", True, 400, False),
+            ("user1", False, 200, True),
+            ("user1", True, 400, False),
+            ("user2", True, 404, False),
+            ("user2", False, 404, False),
+        ),
+    )
+    def test_trigger(
+        self, basic1, harvests, clients, monkeypatch, user, processed, status, planned
+    ):
+        if processed:
+            intention = harvests["user1"].latest_intentions.first()
+        else:
+            intention = harvests["user1"].latest_intentions.last()
+
+        url = reverse('harvest-intention-trigger', args=(intention.harvest.pk, intention.pk),)
+
+        planned_urls = set()
+
+        def mocked_trigger_scheduler(
+            url, fihish,
+        ):
+            planned_urls.add(url)
+
+        monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
+
+        resp = clients[user].post(url, {})
+        assert resp.status_code == status, "status code matches"
+        assert planned == bool(planned_urls), "schedulers triggering was planned"

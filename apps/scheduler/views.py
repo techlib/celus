@@ -1,7 +1,10 @@
 from django.db.models import Count, Exists, F, Max, Min, Prefetch, Q
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+
 from rest_framework import mixins, status
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
@@ -13,6 +16,7 @@ from logs.views import StandardResultsSetPagination
 from sushi.models import CounterReportsToCredentials
 
 from .models import Automatic, FetchIntention, Harvest
+from .tasks import trigger_scheduler
 from .serializers import (
     CreateHarvestSerializer,
     DetailHarvestSerializer,
@@ -210,6 +214,24 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
             qs = harvest.intentions
 
         return qs.select_related('current_scheduler').order_by('pk')
+
+    @action(methods=["POST"], detail=True, url_path='trigger')
+    def trigger(self, request, pk, harvest_pk):
+        intention = self.get_queryset().get(pk=pk)
+        if intention.is_processed:
+            return Response(
+                data={"error": f"intention {pk} was already processed"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        intention.not_before = timezone.now()
+        intention.priority = FetchIntention.PRIORITY_NOW
+        intention.save()
+
+        # Plan scheduler triggering so that it start processing intentions right now
+        trigger_scheduler.delay(intention.credentials.url, True)
+
+        return Response(status=status.HTTP_200_OK)
 
 
 class IntentionViewSet(ReadOnlyModelViewSet):
