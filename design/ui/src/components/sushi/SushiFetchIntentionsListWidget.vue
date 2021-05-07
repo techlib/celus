@@ -409,7 +409,8 @@ export default {
       console.log("retry timeout:", this.retryTimeout);
 
       if (!this.inactive && this.retryTimeout) {
-        setTimeout(() => this.scheduleRecheck(false), this.retryTimeout);
+        // setTimeout delay (ms) can't be greater than 32bit integer
+        setTimeout(() => this.scheduleRecheck(false), Math.min(1000 * 60 * 60, this.retryTimeout));
       }
     },
     switchStateFilter(state) {
