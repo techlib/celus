@@ -475,9 +475,11 @@ export default {
           }`,
           attempts: rec.stats.attempt_count,
           organizations: rec.organizations
-            .map((item) => item.short_name)
+            .map((item) => item.short_name || item.name)
             .join(", "),
-          platforms: rec.platforms.map((item) => item.short_name).join(", "),
+          platforms: rec.platforms
+            .map((item) => item.short_name || item.name)
+            .join(", "),
           lastAttempt: parseDateTime(rec.last_attempt_date),
           start_date: rec.start_date,
           end_date: rec.end_date,
