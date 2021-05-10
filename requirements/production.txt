@@ -18,14 +18,14 @@ django-prometheus==2.0.0
 django-redis==4.11.0; python_version >= "3.5"
 django-rest-auth==0.9.5
 django-reversion==3.0.9; python_version >= "3.6"
-django==2.2.19; python_version >= "3.5"
+django==2.2.22; python_version >= "3.5"
 djangorestframework==3.11.2; python_version >= "3.5"
 drf-nested-routers==0.91; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
-et-xmlfile==1.0.1; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
+et-xmlfile==1.1.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
 idna==2.10; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 ijson==3.1.4
-importlib-metadata==3.10.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "3.8" or python_full_version >= "3.5.0" and python_version < "3.8" and python_version >= "3.6"
-isbnlib==3.10.6
+importlib-metadata==4.0.1; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "3.8" or python_full_version >= "3.5.0" and python_version < "3.8" and python_version >= "3.6"
+isbnlib==3.10.8
 kombu==4.6.11; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 lxml==4.6.3; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 lz4==3.0.2; python_version >= "3.5"
@@ -35,7 +35,7 @@ openpyxl==3.0.7; python_version >= "3.6" and python_full_version < "3.0.0" or py
 pandas==1.1.5; python_full_version >= "3.6.1"
 pendulum==2.1.2; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 pillow==7.2.0; python_version >= "3.5"
-prometheus-client==0.9.0
+prometheus-client==0.10.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
 psutil==5.7.3; (python_version >= "2.6" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 psycopg2-binary==2.8.6; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 pycounter @ git+https://github.com/beda42/pycounter.git@1b85369dc88b6dde1f3546a707a315f5ac0f32cd ; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
@@ -46,14 +46,14 @@ python3-openid==3.2.0
 pytz==2021.1
 pytzdata==2020.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 redis==3.5.3; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
-regex==2021.3.17; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
+regex==2021.4.4; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 requests-oauthlib==1.3.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
 requests==2.25.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 rest-pandas==1.1.0
 sentry-sdk==0.16.5
-six==1.15.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
+six==1.16.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 sqlparse==0.4.1; python_version >= "3.5"
-typing-extensions==3.7.4.3; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "3.8" or python_full_version >= "3.5.0" and python_version < "3.8" and python_version >= "3.6"
+typing-extensions==3.10.0.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "3.8" or python_full_version >= "3.5.0" and python_version < "3.8" and python_version >= "3.6"
 tzlocal==2.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 urllib3==1.25.11; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0" and python_version < "4")
 vine==1.3.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
