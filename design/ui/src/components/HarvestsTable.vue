@@ -309,9 +309,11 @@ export default {
             rec.stats.total
           }`,
           organizations: rec.organizations
-            .map((item) => item.short_name)
+            .map((item) => item.short_name || item.name)
             .join(", "),
-          platforms: rec.platforms.map((item) => item.short_name).join(", "),
+          platforms: rec.platforms
+            .map((item) => item.short_name || item.name)
+            .join(", "),
           lastAttempt: parseDateTime(rec.last_attempt_date),
         });
       }
