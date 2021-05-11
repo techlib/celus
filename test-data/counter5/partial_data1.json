@@ -1,0 +1,178 @@
+{
+  "Report_Header": {
+    "Created": "2020-07-01T02:04:04Z",
+    "Created_By": "Someone",
+    "Customer_ID": "9999999",
+    "Report_ID": "TR",
+    "Release": "5",
+    "Report_Name": "Title Master Report",
+    "Institution_Name": "My Institution",
+    "Institution_ID": [
+      {
+        "Type": "Proprietary",
+        "Value": "XXX:9999999"
+      }
+    ],
+    "Report_Filters": [
+      {
+        "Name": "Begin_Date",
+        "Value": "2017-01-01"
+      },
+      {
+        "Name": "End_Date",
+        "Value": "2018-12-31"
+      }
+    ],
+    "Report_Attributes": [
+      {
+        "Name": "Attributes_To_Show",
+        "Value": "YOP|Access_Method|Access_Type|Data_Type|Section_Type"
+      }
+    ],
+    "Exceptions": [
+      {
+        "Code": 3210,
+        "Severity": "Test warnin",
+        "Message": "Test warning",
+        "Data": "Test warning..."
+      },
+      {
+        "Code" : 3040,
+        "Severity" : "Warning",
+        "Message" : "Partial Data Returned",
+        "Help_URL" : "https://support.jstor.org",
+        "Data" : "Requested 2017-01-01 to 2018-12-31, but only 2019-01-01 to 2021-02-28 is possible."
+      }
+    ]
+  },
+  "Report_Items": [
+    {
+      "Title": "First title",
+      "Publisher": "First Publisher",
+      "Publisher_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "XXX:XXX"
+        }
+      ],
+      "Item_ID": [
+        {
+          "Type": "Online_ISSN",
+          "Value": "1111-2222"
+        },
+        {
+          "Type": "Print_ISSN",
+          "Value": "2222-1111"
+        }
+      ],
+      "Section_Type": "Article",
+      "Platform": "My Platform",
+      "Data_Type": "Journal",
+      "YOP": "1112",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2018-12-01",
+            "End_Date": "2018-12-31"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "Second Title",
+      "Publisher": "My Publisher",
+      "Publisher_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "XXX:XXX"
+        }
+      ],
+      "Item_ID": [
+        {
+          "Type": "Online_ISSN",
+          "Value": "3333-4444"
+        },
+        {
+          "Type": "Print_ISSN",
+          "Value": "5555-6666"
+        }
+      ],
+      "Section_Type": "Article",
+      "Platform": "My Platform",
+      "Data_Type": "Journal",
+      "YOP": "1112",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2018-11-01",
+            "End_Date": "2018-11-30"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 8
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 11
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 8
+            },
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 11
+            }
+          ]
+        },
+        {
+          "Period": {
+            "Begin_Date": "2018-12-01",
+            "End_Date": "2018-12-31"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

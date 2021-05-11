@@ -424,9 +424,14 @@ class Sushi5Client(SushiClientBase):
                 errors += cls.extract_errors_from_data(item)
             return errors
 
-        # exceptions in Exception object
+        # exception in Exception object
         for exception in recursive_finder(report_data, ["Exception"]):
             errors.append(cls._format_error(exception))
+
+        # exceptions in Exceptions object
+        for exceptions in recursive_finder(report_data, ["Exceptions"]):
+            for exception in exceptions:
+                errors.append(cls._format_error(exception))
 
         if not errors:
             # naked exception in root

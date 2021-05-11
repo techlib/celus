@@ -220,18 +220,29 @@ class SushiCredentialsViewSet(ModelViewSet):
             while start <= end:
                 if start.year in result:
                     before = result[start.year][f"{start.month:02d}"][report_type]["status"]
-                    if status in ['FAILURE', 'BROKEN'] and before in "untried":
+                    if status in ['FAILURE', 'BROKEN'] and before in ["untried"]:
                         # untried => failed
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "failed"
-                    elif status in ['NO_DATA'] and before in ["untried", "failed"]:
-                        # failed, untried => no_data
+                    elif status == "PARTIAL_DATA" and before in [
+                        "untried",
+                        "failed",
+                        "success",
+                        "no_data",
+                    ]:
+                        # success. failed, success, no_data => partial_data
+                        result[start.year][f"{start.month:02d}"][report_type][
+                            "status"
+                        ] = "partial_data"
+                    elif status in ['NO_DATA'] and before in ["untried", "failed", "partial_data"]:
+                        # failed, untried, partial_data => no_data
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "no_data"
                     elif status == 'SUCCESS' and before in [
                         "untried",
                         "failed",
                         "no_data",
+                        "partial_data",
                     ]:
-                        # failed, untried, no_data => success
+                        # failed, untried, no_data, partial_data => success
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "success"
                 start += relativedelta(months=1)
 

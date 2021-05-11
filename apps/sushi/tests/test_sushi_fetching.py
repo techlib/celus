@@ -163,3 +163,30 @@ class TestSushiFetching:
             assert attempt.download_success is download_success
             assert attempt.error_code == error_code
             assert attempt.http_status_code == http_status
+
+    @pytest.mark.parametrize(
+        ('path', 'error_code', 'partial'),
+        (
+            ('partial_data1.json', 3210, True,),
+            ('partial_data2.json', 3210, True,),
+            ('5_TR_with_warning.json', '', True,),
+            ('data_simple.json', '', False,),
+        ),
+    )
+    def test_c5_partial_data(
+        self, path, error_code, partial, counter_report_types, organizations, platforms,
+    ):
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+        )
+        with requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
+                m.get(
+                    re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200,
+                )
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+            )
+            assert m.called
+            assert attempt.error_code == error_code
+            assert attempt.partial_data == partial

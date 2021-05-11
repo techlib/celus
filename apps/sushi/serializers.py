@@ -149,7 +149,9 @@ class SushiCredentialsDataCounterReportSerializer(Serializer):
 
 
 class SushiCredentialsDataReportSerializer(Serializer):
-    status = ChoiceField(choices=('success', 'no_data', 'failed', 'untried'), required=True)
+    status = ChoiceField(
+        choices=('success', 'no_data', 'failed', 'untried', 'partial_data'), required=True
+    )
     planned = BooleanField(required=True)
     broken = BooleanField()
     counter_report = SushiCredentialsDataCounterReportSerializer()
@@ -201,6 +203,7 @@ class SushiFetchAttemptSerializer(ModelSerializer):
             'timestamp',
             'when_processed',
             'when_queued',
+            'partial_data',
         )
 
 

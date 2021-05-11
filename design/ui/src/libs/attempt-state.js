@@ -4,6 +4,7 @@ const ATTEMPT_ERROR = "error";
 const ATTEMPT_QUEUED = "queued";
 const ATTEMPT_NOT_MADE = "missing";
 const ATTEMPT_EMPTY_DATA = "empty_data";
+const ATTEMPT_PARTIAL_DATA = "partial_data";
 const ATTEMPT_IMPORT_FAILED = "import_failed";
 const BROKEN_CREDENTIALS = "broken";
 const BROKEN_REPORT = "broken_report";
@@ -17,6 +18,9 @@ function attemptState(attempt) {
   } else if (attempt.import_crashed) {
     return ATTEMPT_IMPORT_FAILED;
   } else if (attempt.import_batch) {
+    if (attempt.partial_data) {
+      return ATTEMPT_PARTIAL_DATA;
+    }
     return ATTEMPT_SUCCESS;
   } else if (attempt.error_code) {
     if (attempt.error_code === "3030" && attempt.processing_success) {
@@ -46,6 +50,8 @@ function attemptStateToIcon(state) {
       return { color: "blue", icon: "fa-cog fa-spin" };
     case ATTEMPT_IMPORT_FAILED:
       return { color: "error", icon: "fa-cog" };
+    case ATTEMPT_PARTIAL_DATA:
+      return { color: "warning", icon: "fas fa-exclamation-triangle" };
     default:
       return { color: "warning", icon: "far fa-question-circle" };
   }
@@ -61,6 +67,7 @@ export {
   ATTEMPT_AWAITING_IMPORT,
   ATTEMPT_NOT_MADE,
   ATTEMPT_EMPTY_DATA,
+  ATTEMPT_PARTIAL_DATA,
   BROKEN_CREDENTIALS,
   BROKEN_REPORT,
 };

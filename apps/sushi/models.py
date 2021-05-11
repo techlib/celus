@@ -283,7 +283,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             return True
         return False
 
-    def create_sushi_client(self):
+    def create_sushi_client(self) -> SushiClientBase:
         attrs = {
             'url': self.url,
             'requestor_id': self.requestor_id,
@@ -394,7 +394,9 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
         client = self.create_sushi_client()
         output_file = TemporaryFile("w+b")
-        fetch_m = self._fetch_report_v4 if self.counter_version == 4 else self._fetch_report_v5
+        fetch_m = (
+            self._fetch_report_v4 if isinstance(client, Sushi4Client) else self._fetch_report_v5
+        )
         if use_url_lock:
             with cache_based_lock(self.url_lock_name):
                 attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
@@ -421,12 +423,13 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         return fetch_attempt
 
     def _fetch_report_v4(
-        self, client, counter_report, start_date, end_date, file_data: IO[bytes]
+        self, client: Sushi4Client, counter_report, start_date, end_date, file_data: IO[bytes]
     ) -> dict:
         contains_data = False
         download_success = False
         processing_success = False
         is_processed = False
+        partial_data = False
         when_processed = None
         log = ''
         error_code = ''
@@ -462,6 +465,18 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 ):
                     is_processed = True
                     when_processed = now()
+
+                # Check whether it contains partial data
+                if any(
+                    str(e.code)
+                    in (
+                        str(ErrorCode.PARTIAL_DATA_RETURNED.value),
+                        str(ErrorCode.NO_LONGER_AVAILABLE.value),
+                    )
+                    for e in errors
+                ):
+                    partial_data = True
+
             log = '\n'.join(error.full_log for error in errors)
             filename = 'foo.xml'  # we just need the extension
         except Exception as e:
@@ -500,16 +515,18 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             when_queued=when_queued,
             is_processed=is_processed,
             when_processed=when_processed,
+            partial_data=partial_data,
         )
 
     def _fetch_report_v5(
-        self, client, counter_report, start_date, end_date, file_data: IO[bytes]
+        self, client: Sushi5Client, counter_report, start_date, end_date, file_data: IO[bytes]
     ) -> dict:
         contains_data = False
         download_success = False
         processing_success = False
         is_processed = False
         when_processed = None
+        partial_data = False
         filename = 'foo.json'
         queued = False
         error_code = ''
@@ -539,6 +556,16 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         else:
             download_success = True
             contains_data = report.record_found
+
+            # Check for partial data
+            partial_data = any(
+                str(w.code)
+                in (
+                    str(ErrorCode.PARTIAL_DATA_RETURNED.value),
+                    str(ErrorCode.NO_LONGER_AVAILABLE.value),
+                )
+                for w in report.warnings
+            )
 
             error = report.errors or (report.warnings and not report.record_found)
             # check for errors
@@ -603,6 +630,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             is_processed=is_processed,
             when_processed=when_processed,
             http_status_code=http_status_code,
+            partial_data=partial_data,
         )
 
     def broken_report_types(self):
@@ -702,6 +730,7 @@ class SushiFetchAttempt(models.Model):
     error_code = models.CharField(max_length=12, blank=True)
     http_status_code = models.PositiveSmallIntegerField(null=True)
     is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
+    partial_data = models.BooleanField(default=False, help_text='Data may not be complete')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
     credentials_version_hash = models.CharField(
@@ -754,6 +783,8 @@ class SushiFetchAttempt(models.Model):
             status = 'BROKEN'
         elif not self.contains_data:
             status = 'NO_DATA'
+        elif self.partial_data:
+            status = 'PARTIAL_DATA'
         if self.queued:
             status = 'QUEUED'
         return status

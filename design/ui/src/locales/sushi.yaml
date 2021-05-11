@@ -17,6 +17,7 @@ en:
       waiting: Waiting
       awaiting_import: Being imported
       import_failed: Data import failed
+      partial_data: Partial data
 
     state_desc:
       unknown: The state is not clear. There was no obvious error but no data were imported.
@@ -33,6 +34,7 @@ en:
       waiting: Waiting for download - either planned for future or waiting for a free download slot.
       awaiting_import: Data was downloaded and is currently being imported into the database.
       import_failed: Data was downloaded but importing it into database failed.
+      partial_data: Data was downloaded and imported, but it might not be complete.
 
     broken: Broken
     broken_report_type_desc:
@@ -61,6 +63,7 @@ cs:
       waiting: Čeká
       awaiting_import: Právě se importuje
       import_failed: Import dat selhal
+      partial_data: Nekompletní data
 
     state_desc:
       unknown: Stav není jednoznačný. Nedošlo ke zjevné chybě, ale import neobsahoval žádná data.
@@ -77,6 +80,7 @@ cs:
       waiting: Čeká na stahování - buď bylo naplánováno na později nebo čeká ve frontě.
       awaiting_import: Data byla stažena a nyní jsou importována do databáze.
       import_failed: Data byla stažena, ale import dat do databáze selhal.
+      partial_data: Data byla stažena a naimportována, ale nemusí být kompletní.
 
     broken: Nefunkční
     broken_report_type_desc:

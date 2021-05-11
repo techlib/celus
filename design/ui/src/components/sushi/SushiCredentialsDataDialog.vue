@@ -1,5 +1,6 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 <i18n lang="yaml">
 en:
   title: Yearly overview
@@ -126,6 +127,9 @@ cs:
                       <span
                         v-else-if="row.item[month].status == 'untried'"
                       >{{ $t("status.untried") }}</span>
+                      <span
+                        v-else-if="row.item[month].status == 'partial_data'"
+                      >{{ $t("sushi.state_desc.partial_data") }}</span>
                       <span v-if="row.item[month].broken"><br />
                         <v-icon
                           small
