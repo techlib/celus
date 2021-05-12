@@ -21,7 +21,7 @@
     "js-cookie": "^2.2.1",
     "json-to-pivot-json": "^1.0.1",
     "lodash": "^4.17.20",
-    "mathjs": "^6.6.5",
+    "mathjs": "^7.5.1",
     "numeral": "^2.0.6",
     "sass": "^1.32.4",
     "sass-loader": "^8.0.2",
