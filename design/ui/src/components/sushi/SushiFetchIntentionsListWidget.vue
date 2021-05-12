@@ -63,6 +63,14 @@ cs:
                     height="1.5rem"
                     color="blue lighten-2"
                   >
+                    <v-progress-circular
+                      v-if="retryTimeout"
+                      size="16"
+                      color="#000044"
+                      width="2"
+                      indeterminate
+                      class="mr-2"
+                    />
                     {{ $t("progress") }}: {{ finishedCount }} / {{ totalCount }}
                   </v-progress-linear>
                 </v-col>
