@@ -70,7 +70,7 @@ cs:
 </i18n>
 
 <template>
-  <v-container>
+  <v-container fluid>
     <v-row class="px-3">
       <v-col cols="auto">
         <v-select
@@ -127,17 +127,21 @@ cs:
                   <v-icon left small>fa-external-link-alt</v-icon>
                   <span v-if="item.broken">
                     <v-badge :content="item.broken" color="error">
-                    {{ item.pk }}
+                      {{ item.pk }}
                     </v-badge>
                   </span>
                   <span v-else>
-                  {{ item.pk }}
+                    {{ item.pk }}
                   </span>
                 </v-btn>
               </template>
-              <span><strong>{{ $t('tooltip.harvest_details') }}</strong></span>
+              <span
+                ><strong>{{ $t("tooltip.harvest_details") }}</strong></span
+              >
               <br />
-              <span v-if="item.broken">{{ $tc('tooltip.broken_credentials', item.broken) }}</span>
+              <span v-if="item.broken">{{
+                $tc("tooltip.broken_credentials", item.broken)
+              }}</span>
             </v-tooltip>
           </template>
           <template v-slot:item.manual="{ item }">
@@ -151,7 +155,11 @@ cs:
             <span v-html="formatDateTime(item.created)"></span>
           </template>
           <template v-slot:item.last_processed="{ item }">
-            <span v-html="item.last_processed ? formatDateTime(item.last_processed) : '-'"></span>
+            <span
+              v-html="
+                item.last_processed ? formatDateTime(item.last_processed) : '-'
+              "
+            ></span>
           </template>
           <template v-slot:item.month="{ item }">
             <span v-html="formatYM(item.start_date)"></span>
@@ -205,7 +213,7 @@ cs:
 
 <script>
 import axios from "axios";
-import { mapActions, mapGetters, mapState } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 import {
   isoDateTimeFormat,
   isoDateTimeFormatSpans,
@@ -434,9 +442,9 @@ export default {
       this.loading = true;
       this.cancelTokenSource = axios.CancelToken.source();
       try {
-        let result = await axios.get(
-          this.harvestsUrl, {cancelToken: this.cancelTokenSource.token}
-        );
+        let result = await axios.get(this.harvestsUrl, {
+          cancelToken: this.cancelTokenSource.token,
+        });
         this.totalCount = result.data.count;
         this.harvestsData = result.data.results;
         this.dataToTable(result.data.results);
@@ -506,8 +514,8 @@ export default {
       if (value) {
         return ymDateFormat(parseDateTime(value));
       }
-      return '-';
-    }
+      return "-";
+    },
   },
 
   created() {
