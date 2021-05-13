@@ -971,9 +971,9 @@ export default {
     },
   },
 
-  mounted() {
-    this.loadReportTypes();
-    this.init();
+  async mounted() {
+    await this.loadReportTypes();
+    await this.init();
   },
 
   watch: {
