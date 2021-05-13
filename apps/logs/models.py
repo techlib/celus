@@ -15,7 +15,7 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 
 from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource
-from nigiri.counter5 import CounterRecord
+from nigiri.counter5 import CounterRecord, Counter5TableReport
 from organizations.models import Organization
 from publications.models import Platform, Title
 
@@ -479,6 +479,18 @@ class ManualDataUpload(models.Model):
                 initial_data={'platform_name': self.platform.name, 'metric': default_metric.pk},
             )
         else:
-            reader = crt.get_reader_class()()
+            reader = crt.get_reader_class(json_format=self.file_is_json())()
             records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, self.data_file.name))
         return records
+
+    def file_is_json(self) -> bool:
+        """
+        Returns True if the file seems to be a JSON file.
+        """
+        char = self.data_file.read(1)
+        while char and char.isspace():
+            char = self.data_file.read(1)
+        self.data_file.seek(0)
+        if char in b'[{':
+            return True
+        return False

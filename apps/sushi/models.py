@@ -42,7 +42,12 @@ from nigiri.counter4 import (
     Counter4DB2Report,
     Counter4BR3Report,
 )
-from nigiri.counter5 import Counter5DRReport, Counter5PRReport, Counter5TRReport
+from nigiri.counter5 import (
+    Counter5DRReport,
+    Counter5PRReport,
+    Counter5TRReport,
+    Counter5TableReport,
+)
 from organizations.models import Organization
 from publications.models import Platform
 
@@ -54,22 +59,25 @@ COUNTER_VERSIONS = (
 )
 
 COUNTER_REPORTS = (
+    # (code, version, json, reader)
     # version 4
-    ('JR1', 4, Counter4JR1Report),
-    ('JR1a', 4, Counter4JR1Report),
-    ('JR1GOA', 4, Counter4JR1Report),
-    ('JR2', 4, Counter4JR2Report),
-    # ('JR5', 4, None),
-    ('BR1', 4, Counter4BR1Report),
-    ('BR2', 4, Counter4BR2Report),
-    ('BR3', 4, Counter4BR3Report),
-    ('DB1', 4, Counter4DB1Report),
-    ('DB2', 4, Counter4DB2Report),
-    ('PR1', 4, Counter4PR1Report),
+    ('JR1', 4, False, Counter4JR1Report),
+    ('JR1a', 4, False, Counter4JR1Report),
+    ('JR1GOA', 4, False, Counter4JR1Report),
+    ('JR2', 4, False, Counter4JR2Report),
+    ('BR1', 4, False, Counter4BR1Report),
+    ('BR2', 4, False, Counter4BR2Report),
+    ('BR3', 4, False, Counter4BR3Report),
+    ('DB1', 4, False, Counter4DB1Report),
+    ('DB2', 4, False, Counter4DB2Report),
+    ('PR1', 4, False, Counter4PR1Report),
     # version 5
-    ('TR', 5, Counter5TRReport),
-    ('PR', 5, Counter5PRReport),
-    ('DR', 5, Counter5DRReport),
+    ('TR', 5, True, Counter5TRReport),
+    ('PR', 5, True, Counter5PRReport),
+    ('DR', 5, True, Counter5DRReport),
+    ('TR', 5, False, Counter5TableReport),
+    ('PR', 5, False, Counter5TableReport),
+    ('DR', 5, False, Counter5TableReport),
 )
 
 
@@ -94,9 +102,9 @@ class CounterReportType(models.Model):
     def __str__(self):
         return f'{self.code} ({self.counter_version}) - {self.name}'
 
-    def get_reader_class(self):
-        for code, version, reader in COUNTER_REPORTS:
-            if code == self.code and version == self.counter_version:
+    def get_reader_class(self, json_format: bool = False):
+        for code, version, reads_json, reader in COUNTER_REPORTS:
+            if code == self.code and version == self.counter_version and reads_json is json_format:
                 return reader
         return None
 
@@ -594,6 +602,20 @@ class SushiFetchAttempt(models.Model):
             else:
                 output.append('Should not retry automatically')
         return '\n'.join(output)
+
+    def file_is_json(self) -> Optional[bool]:
+        """
+        Returns True if the file seems to be a JSON file.
+        """
+        if not self.data_file:
+            return None
+        char = self.data_file.read(1)
+        while char and char.isspace():
+            char = self.data_file.read(1)
+        self.data_file.seek(0)
+        if char in b'[{':
+            return True
+        return False
 
     def retry(self):
         attempt = self.credentials.fetch_report(

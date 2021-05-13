@@ -1,9 +1,12 @@
 """
 Module dealing with data in the COUNTER5 format.
 """
+import csv
 import json
+import typing
 from copy import copy
 
+from core.logic.dates import parse_counter_month
 from .exceptions import SushiException
 
 
@@ -186,3 +189,101 @@ class Counter5PRReport(Counter5ReportBase):
     def _item_get_title(cls, item):
         # there are not titles in the platform report
         return None
+
+
+class Counter5TableReport:
+    """
+    Implements reading of C5 reports stored in a CSV/TSV tabular format
+    """
+
+    dimensions = []
+
+    column_map = {
+        'Metric_Type': 'metric',
+        'Organization': 'organization',
+        'Database': 'title',
+        'Platform': 'platform_name',
+        'Title': 'title',
+        'Item': 'title',
+    }
+
+    report_type_to_dimensions = {
+        'DR': ['Access_Method', 'Data_Type', 'Publisher'],
+        'TR': ['Access_Type', 'Access_Method', 'Data_Type', 'Section_Type', 'YOP', 'Publisher'],
+        'PR': ['Access_Method', 'Data_Type'],
+        'IR': ['Access_Type', 'Access_Method', 'Data_Type', 'YOP', 'Publisher'],
+    }
+
+    title_id_columns = ['DOI', 'ISBN', 'Print_ISSN', 'Online_ISSN']
+
+    ignored_columns = [
+        'Reporting_Period_Total',
+        'Publisher_ID',
+        'Proprietary_ID',
+        'Linking_ISSN',
+        'URI',
+    ]
+
+    def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
+        with open(filename, 'r') as infile:
+            for rec in self._fd_to_records(infile):
+                yield rec
+
+    def _fd_to_records(self, infile) -> typing.Generator[CounterRecord, None, None]:
+        # guess TSV or CSV
+        dialect = csv.Sniffer().sniff(infile.read(1024))
+        infile.seek(0)
+
+        # read the header
+        header = {}
+        reader = csv.reader(infile, dialect=dialect)
+        for header_line in reader:
+            if not header_line[0]:
+                # we break on empty line - it means end of header and start of data
+                break
+            header[header_line[0]] = header_line[1]
+        report_type = header.get('Report_ID')
+        if not report_type or report_type not in self.report_type_to_dimensions:
+            raise ValueError(f'Unsupported report type: {report_type}')
+        if header.get('Release') != '5':
+            raise ValueError(f'Unsupported COUNTER release: {header.get("Release")}')
+
+        # we continue reading using a dict reader
+        reader = csv.DictReader(infile, dialect=dialect)
+        extra_dims = self.report_type_to_dimensions[report_type]
+        # process the records
+        for record in reader:
+            implicit_dimensions = {}
+            explicit_dimensions = {}
+            monthly_values = {}
+            title_ids = {}
+            for key, value in record.items():
+                if not value.strip():
+                    continue
+                month = parse_counter_month(key)
+                if month:
+                    monthly_values[month] = int(value)
+                else:
+                    if not key.strip() or key in self.ignored_columns:
+                        pass
+                    elif key in self.column_map:
+                        implicit_dimensions[self.column_map[key]] = value
+                    elif key in extra_dims:
+                        explicit_dimensions[key] = value
+                    elif key in self.title_id_columns:
+                        title_ids[key] = value
+                    else:
+                        raise KeyError(f'We don\'t know how to interpret the column "{key}"')
+            # we put initial data into the data we read - these are usually dimensions that are fixed
+            # for the whole import and are not part of the data itself
+            # for key, value in initial_data.items():
+            #     if key not in implicit_dimensions:
+            #         implicit_dimensions[key] = value  # only update if the value is not present
+            for month, value in monthly_values.items():
+                yield CounterRecord(
+                    value=value,
+                    start=month,
+                    dimension_data=explicit_dimensions,
+                    title_ids=title_ids,
+                    **implicit_dimensions,
+                )

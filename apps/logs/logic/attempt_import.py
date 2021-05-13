@@ -41,7 +41,7 @@ def validate_data_v4(data):
 @atomic
 def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     counter_version = attempt.credentials.counter_version
-    reader_cls = attempt.counter_report.get_reader_class()
+    reader_cls = attempt.counter_report.get_reader_class(json_format=attempt.file_is_json())
     if not reader_cls:
         logger.warning('Unsupported report type %s', attempt.counter_report.code)
         return

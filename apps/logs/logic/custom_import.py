@@ -134,7 +134,7 @@ def histogram_with_count(iterable) -> Counter:
 
 
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    records = mdu.data_to_records()  # type: [CounterRecord]
+    records = list(mdu.data_to_records())  # type: [CounterRecord]
     return {
         'log_count': len(records),
         'hits_total': sum((record.value for record in records), 0),
@@ -146,7 +146,7 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
 
 @atomic
 def import_custom_data(mdu: ManualDataUpload, user) -> dict:
-    records = mdu.data_to_records()
+    records = list(mdu.data_to_records())
     # TODO: the owner level should be derived from the user and the organization at hand
     import_batch = ImportBatch.objects.create(
         platform=mdu.platform,
