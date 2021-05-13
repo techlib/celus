@@ -3,14 +3,22 @@
 <template>
   <v-container fluid>
     <v-row>
-      <v-col class="py-0">
+      <v-col class="pb-0">
         <h2>{{ $t("pages.platforms") }}</h2>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col v-if="showAdminStuff" cols="auto" class="d-none d-sm-block py-0">
+      <v-col
+        v-if="showAdminStuff"
+        cols="auto"
+        class="d-none d-sm-block pb-0 pt-4"
+      >
         <v-container fluid class="py-0">
           <v-row>
-            <v-col v-if="allowUserCreatePlatforms" cols="auto" class="pa-1 pr-0">
+            <v-col
+              v-if="allowUserCreatePlatforms"
+              cols="auto"
+              class="pa-1 pr-0"
+            >
               <AddPlatformButton @update-platforms="loadPlatforms()" />
             </v-col>
             <v-col
