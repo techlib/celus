@@ -132,6 +132,9 @@ class HarvestViewSet(
             order_by = 'pk'
         qs = qs.order_by(getattr(F(order_by), order_desc)(nulls_last=True))
 
+        # skip empty harvests
+        qs = qs.filter(total__gt=0)
+
         return qs
 
     def get_serializer_class(self):

@@ -141,7 +141,7 @@ class TestHarvestAPI:
         resp = clients["master"].get(url + "?broken=0", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
-        assert len(data2) == 2
+        assert len(data2) == 1
 
     def test_list_filter_month(self, basic1, clients, harvests):
 
