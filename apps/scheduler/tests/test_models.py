@@ -926,10 +926,10 @@ class TestAutomatic:
         """
         start_date = date(2020, 2, 1)
 
-        # Save credentials
         assert FetchIntention.objects.all().count() == 0
         assert Automatic.objects.all().count() == 0
 
+        # Save credentials
         credentials["branch_pr"].save()
         assert Automatic.objects.all().count() == 1
         automatic_branch = Automatic.objects.first()

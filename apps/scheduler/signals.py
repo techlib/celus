@@ -9,7 +9,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 
-from core.logic.dates import month_start, month_end, next_month, this_month
+from core.logic.dates import month_start, month_end, this_month
 from sushi.models import SushiCredentials, CounterReportsToCredentials
 
 from .models import Automatic, FetchIntention
@@ -47,7 +47,7 @@ def update_intentions_from_cred_post_save(
 
     with transaction.atomic():
         if not created:
-            automatic = Automatic.get_or_create(next_month(), instance.organization)
+            automatic = Automatic.get_or_create(this_month(), instance.organization)
             if instance.enabled and not instance.broken:
                 # Make sure that Automatic harvest is planned
                 for cr2c in instance.counterreportstocredentials_set.all():
@@ -69,7 +69,7 @@ def update_intentions_from_cr2c_post_save(
 
     with transaction.atomic():
         automatic = Automatic.get_or_create(
-            month=next_month(), organization=instance.credentials.organization
+            month=this_month(), organization=instance.credentials.organization
         )
         _update_cr2c(automatic, instance)
 
@@ -82,7 +82,7 @@ def update_intentions_from_cr2c_post_delete(sender, instance, using, **kwargs):
         return
 
     with transaction.atomic():
-        start_date = next_month()
+        start_date = this_month()
         end_date = month_end(start_date)
         FetchIntention.objects.filter(
             harvest__automatic__isnull=False,

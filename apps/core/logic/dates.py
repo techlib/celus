@@ -70,7 +70,9 @@ def month_start(date: datetime.date) -> datetime.date:
 
 
 def this_month() -> datetime.date:
-    return month_start(timezone.now())
+    # make sure that we are in current timezone
+    # timezone.now() returns UTC
+    return month_start(timezone.now().astimezone(timezone.get_current_timezone()))
 
 
 def next_month() -> datetime.date:
