@@ -128,7 +128,8 @@ class ReportTypeViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         if 'nonzero-only' in self.request.query_params:
             return self.queryset.filter(
-                Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk')))
+                Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk'))))
+                | Q(short_name='interest')
             )
         return self.queryset
 
