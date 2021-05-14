@@ -69,6 +69,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * harvests planning for the current month was fixed
 
 
+### Fixes
+
+#### Frontend
+
+- fixed regression in SUSHI credentials edit dialog which caused selected report types to
+  sometimes appear empty when viewing the first set of credentials
+- Interest is not longer missing from the list of report types in the Reporting module
+- position of 'Add annotation' and 'Add platform' buttons on the platform list page was adjusted
+  for full visibility
+- SUSHI harvesting progress dialog newly shows activity even between individual harvests
+- integer overflow error was fixed in code determining how long to wait for new data when
+  showing harvest progress
+- use organization and platform `short_name` if full name is not available in the harvest list view
+
+#### Backend
+
+- memory consumption of importing data from a very large JSON files was optimized by processing
+  files in chunks
+- translation admin is properly used for all models using database translations
+- uniform report type ordering is used in the SUSHI data view
+
+
 ## [3.0.2]
 
 ### Fixed
