@@ -3,7 +3,8 @@ billiard==3.6.4.0; python_version >= "2.7" and python_full_version < "3.0.0" or 
 celery==4.4.7; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 certifi==2020.12.5; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 chardet==4.0.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
-click==7.1.2; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
+click==8.0.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
+colorama==0.4.4; python_version >= "3.6" and python_full_version < "3.0.0" and platform_system == "Windows" or python_full_version >= "3.5.0" and python_version >= "3.6" and platform_system == "Windows"
 dateparser==0.7.6; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 defusedxml==0.7.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 django-allauth==0.41.0
@@ -18,7 +19,7 @@ django-prometheus==2.0.0
 django-redis==4.11.0; python_version >= "3.5"
 django-rest-auth==0.9.5
 django-reversion==3.0.9; python_version >= "3.6"
-django==2.2.22; python_version >= "3.5"
+django==2.2.23; python_version >= "3.5"
 djangorestframework==3.11.2; python_version >= "3.5"
 drf-nested-routers==0.91; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 et-xmlfile==1.1.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
