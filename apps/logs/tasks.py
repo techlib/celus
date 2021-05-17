@@ -67,13 +67,19 @@ def import_new_sushi_attempts_task():
 @celery.shared_task
 @email_if_fails
 @atomic
-def import_one_sushi_attempt_task(attempt_id: int):
+def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
     """
     Tries to import a single sushi attempt task
+
+    :attempt_id: pk of attempt to import
+    :reimport: removes data and marks attempt as unprocessed before import
     """
     try:
         # select_for_update lock only a single fetch attempts
         attempt = SushiFetchAttempt.objects.select_for_update(nowait=True).get(pk=attempt_id)
+        if reimport:
+            attempt.unprocess()
+
     except SushiFetchAttempt.DoesNotExist:
         # sushi attempt was deleted in the meantime
         # e.g. someone could remove credentials

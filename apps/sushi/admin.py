@@ -5,6 +5,7 @@ from reversion.admin import VersionAdmin
 
 from logs.logic.attempt_import import reprocess_attempt
 from logs.models import ImportBatch
+from logs.tasks import import_one_sushi_attempt_task
 from . import models
 
 
@@ -53,6 +54,22 @@ def reimport(modeladmin, request, queryset):
 
 
 reimport.short_description = 'Reimport data - deletes old and reparses the downloaded file'
+
+
+def reimport_delayed(modeladmin, request, queryset):
+    count = 0
+    total_count = queryset.count()
+    for attempt in queryset.select_for_update(skip_locked=True, of=('self',)):
+        import_one_sushi_attempt_task.delay(attempt.pk, reimport=True)
+        count += 1
+
+    already_running_text = (
+        f" ({total_count - count} imports already running.)" if total_count != count else ""
+    )
+    messages.info(request, f'{count} attempts planned to be reimported.{already_running_text}')
+
+
+reimport_delayed.short_description = 'Plan Reimport data - same as Reimport, but in celery'
 
 
 @atomic
@@ -158,7 +175,7 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         'pk',
         'credentials__url',
     ]
-    actions = [delete_with_data, reimport]
+    actions = [delete_with_data, reimport, reimport_delayed]
     list_select_related = [
         'credentials__platform',
         'credentials__organization',
