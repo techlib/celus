@@ -24,6 +24,17 @@
   django_manage: command=collectstatic app_path=/opt/{{ project_name }} virtualenv=/opt/virtualenvs/{{ project_name }} settings={{ settings_dir }}.settings.{{ settings_version }}
   tags: git_update
 
+- name: unpack static files from github
+  unarchive:
+    src: https://github.com/techlib/celus/releases/download/{{ project_branch }}/html-root.tar.gz
+    dest: /var/www/{{ project_name }}/static
+    remote_src: yes
+    extra_opts: ["--strip-components=1"]
+    owner: root
+    group: root
+  tags:
+      - git_update
+
 - name: fix access rights to project dir
   file: path=/opt/{{ project_name }} group=apache mode="g=rx"
 

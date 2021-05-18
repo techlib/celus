@@ -17,9 +17,22 @@
 - name: activate virtualenvwrapper
   template: src=etc_profiled_virtualenvwrapper.sh.j2 dest=/etc/profile.d/virtualenvwrapper.sh
 
-- name: get project source files from git
-  git: repo={{ project_git_path_base }}{{ project_name }}.git dest=/opt/{{ project_name }} accept_hostkey=true version={{ project_branch }} force=yes
-  tags: git_update
+- name: make sure python source dir exists
+  file: path=/opt/{{ project_name }}/ group=apache mode="g=rwx" state=directory
+  tags:
+      - git_update
+      - untar
+
+- name: unpack python source from github
+  unarchive:
+    src: https://github.com/techlib/celus/archive/{{ project_branch }}.tar.gz
+    dest: /opt/{{ project_name }}/
+    remote_src: yes
+    extra_opts: ["--strip-components=1"]
+    owner: root
+    group: apache
+  tags:
+    - git_update
   notify:
     - restart apache
     - restart celery
