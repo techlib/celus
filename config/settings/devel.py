@@ -3,7 +3,7 @@ import os
 from .base import *
 
 DATABASES['default']['NAME'] = 'celus'
-DATABASES['default']['PORT'] = 5434
+DATABASES['default']['PORT'] = 5432
 ALLOWED_HOSTS = ['*']
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

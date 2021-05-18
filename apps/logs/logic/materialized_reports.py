@@ -22,6 +22,16 @@ def sync_materialized_reports():
         create_materialized_accesslogs(mat_rt)
 
 
+def sync_materialized_reports_for_import_batch(ib: ImportBatch):
+    """
+    Create AccessLogs for all materialized report types for one import batch
+    """
+    for mat_rt in ReportType.objects.filter(
+        materialization_spec__isnull=False, materialization_spec__base_report_type=ib.report_type
+    ):
+        create_materialized_accesslogs_for_importbatches(mat_rt, [ib])
+
+
 def create_materialized_accesslogs(rt: ReportType, batch_size=None) -> int:
     """
     Given an input materialized report type, it creates all the missing accesslogs. It detects

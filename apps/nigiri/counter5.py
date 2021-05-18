@@ -238,10 +238,10 @@ class Counter5TableReport:
         header = {}
         reader = csv.reader(infile, dialect=dialect)
         for header_line in reader:
-            if not header_line[0]:
+            if not header_line[0].strip():
                 # we break on empty line - it means end of header and start of data
                 break
-            header[header_line[0]] = header_line[1]
+            header[header_line[0].strip()] = header_line[1].strip()
         report_type = header.get('Report_ID')
         if not report_type or report_type not in self.report_type_to_dimensions:
             raise ValueError(f'Unsupported report type: {report_type}')
@@ -258,13 +258,15 @@ class Counter5TableReport:
             monthly_values = {}
             title_ids = {}
             for key, value in record.items():
-                if not value.strip():
+                key = key.strip()
+                value = value.strip()
+                if not value:
                     continue
                 month = parse_counter_month(key)
                 if month:
                     monthly_values[month] = int(value)
                 else:
-                    if not key.strip() or key in self.ignored_columns:
+                    if not key or key in self.ignored_columns:
                         pass
                     elif key in self.column_map:
                         implicit_dimensions[self.column_map[key]] = value
