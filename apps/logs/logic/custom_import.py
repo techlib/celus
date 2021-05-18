@@ -10,6 +10,7 @@ from django.utils.translation import gettext as _
 
 from core.models import UL_ORG_ADMIN
 from logs.logic.data_import import import_counter_records
+from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from nigiri.counter5 import CounterRecord
 from logs.models import ImportBatch, ManualDataUpload, Metric, OrganizationPlatform
 
@@ -165,6 +166,7 @@ def import_custom_data(mdu: ManualDataUpload, user) -> dict:
     OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=mdu.organization)
     mdu.import_batch = import_batch
     mdu.mark_processed()
+    sync_materialized_reports_for_import_batch(import_batch)
     # the following could be used to debug the speed of this code chunk
     # qs = connection.queries
     # qs.sort(key=lambda x: -float(x['time']))
