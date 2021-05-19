@@ -54,6 +54,11 @@ function annotateIntention(intention) {
         intention.state == INTENTION_QUEUED
     )
   );
+  intention.isCancelPossible = (
+      intention.state == INTENTION_WAITING ||
+      intention.state == INTENTION_QUEUED
+  );
+  intention.isCanceled = intention.state == INTENTION_CANCELED;
   intention.loading = false;
 }
 
@@ -62,6 +67,7 @@ const INTENTION_DELETED = "deleted";
 const INTENTION_BROKEN = "broken_sushi";
 const INTENTION_WAITING = "waiting";
 const INTENTION_QUEUED = "queued";
+const INTENTION_CANCELED = "canceled";
 
 function intentionState(intention) {
   if (intention.fetchingData) {
@@ -73,11 +79,14 @@ function intentionState(intention) {
   if (intention.attempt) {
     return attemptState(intention.attempt);
   }
+  if (intention.canceled) {
+    return INTENTION_CANCELED;
+  }
   if (intention.attemptDeleted) {
     return INTENTION_DELETED;
   }
   if (intention.isRetry) {
-      return INTENTION_QUEUED;
+    return INTENTION_QUEUED;
   }
   return INTENTION_WAITING;
 }
@@ -94,6 +103,8 @@ function intentionStateToIcon(state) {
       return { icon: "far fa-pause-circle", color: "secondary" };
     case INTENTION_WAITING:
       return { icon: "far fa-clock", color: "secondary" };
+    case INTENTION_CANCELED:
+      return { icon: "fas fa-ban", color: "error" };
     default:
       return attemptStateToIcon(state);
   }

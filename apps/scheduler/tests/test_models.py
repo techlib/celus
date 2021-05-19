@@ -302,7 +302,7 @@ class TestFetchIntention:
         }
 
     @pytest.mark.parametrize(
-        "error_code,delays",
+        "error_code,delays,last_canceled",
         (
             (
                 ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,
@@ -316,6 +316,7 @@ class TestFetchIntention:
                     timedelta(days=64),
                     None,
                 ],
+                True,
             ),
             (
                 ErrorCode.NO_DATA_FOR_DATE_ARGS.value,
@@ -328,12 +329,20 @@ class TestFetchIntention:
                     timedelta(days=32),
                     None,
                 ],
+                False,
             ),
         ),
         ids=("not_ready", "no_data",),
     )
     def test_process_retry_chain(
-        self, credentials, counter_report_types, monkeypatch, error_code, delays, settings,
+        self,
+        credentials,
+        counter_report_types,
+        monkeypatch,
+        error_code,
+        delays,
+        last_canceled,
+        settings,
     ):
         settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
         scheduler = SchedulerFactory(url=credentials["standalone_tr"].url)
@@ -360,8 +369,15 @@ class TestFetchIntention:
             if expected:
                 assert fi.pk != new_fi.pk, "new intention created"
                 assert new_fi.not_before == expected, "new planned date matches"
+                assert not new_fi.is_processed, "new intention is not processed"
+                assert new_fi.canceled is False, "fetch not canceled"
             else:
-                assert fi.pk == fi.pk, "no new intention created"
+                if last_canceled:
+                    assert fi.pk != new_fi.pk, "new intention created"
+                    assert new_fi.canceled is True
+                else:
+                    assert new_fi.canceled is False
+                assert new_fi.is_processed, "marked as processed"
 
             return new_fi
 
@@ -381,6 +397,23 @@ class TestFetchIntention:
             fi = check_retry(fi, start + delay if delay else None)
             if delay:
                 start += delay
+
+    @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
+    def test_cancel(self, harvests):
+        processed = harvests["anonymous"].intentions.filter(queue_id=1).order_by('pk').last()
+        assert processed.is_processed
+        assert processed.cancel() is False
+        assert processed.canceled is False
+        assert processed.is_processed
+
+        unprocessed = harvests["anonymous"].intentions.filter(queue_id=3).order_by('pk').last()
+        assert not unprocessed.is_processed
+        assert unprocessed.cancel() is True
+        assert unprocessed.canceled is True
+        assert unprocessed.is_processed
+        assert unprocessed.cancel() is False
+        assert unprocessed.canceled is True
+        assert unprocessed.is_processed
 
     def test_fetching_data(self, credentials, counter_report_types):
         scheduler1 = SchedulerFactory(

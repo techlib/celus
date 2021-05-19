@@ -76,6 +76,7 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
             'service_busy_retry',
             'duplicate_of',
             'previous_intention',
+            'canceled',
         )
 
 

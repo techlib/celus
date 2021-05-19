@@ -492,6 +492,7 @@ class TestFetchIntentionAPI:
         assert len(data) == 3
         assert "broken_credentials" in data[0]
         assert data[2]["previous_intention"] is not None
+        assert all("canceled" in record for record in data)
 
         url = reverse('harvest-intention-list', args=(harvests["user1"].pk,))
         resp = clients["master"].get(url, {})
@@ -499,6 +500,7 @@ class TestFetchIntentionAPI:
         data = resp.json()
         assert len(data) == 2
         assert "broken_credentials" in data[0]
+        assert all("canceled" in record for record in data)
 
         url = reverse('harvest-intention-list', args=(harvests["automatic"].pk,))
         resp = clients["master"].get(url, {})
@@ -508,6 +510,7 @@ class TestFetchIntentionAPI:
         assert "broken_credentials" in data[0]
         duplicate = data[1]["duplicate_of"]
         assert duplicate["attempt"] is not None
+        assert all("canceled" in record for record in data)
 
     @pytest.mark.parametrize(
         "user,anonymous_status,user1_status",
@@ -636,3 +639,31 @@ class TestFetchIntentionAPI:
         resp = clients[user].post(url, {})
         assert resp.status_code == status, "status code matches"
         assert planned == bool(planned_urls), "schedulers triggering was planned"
+
+    @pytest.mark.parametrize(
+        "user,cancelable,status",
+        (
+            ("master", True, 200),
+            ("master", False, 400),
+            ("user1", True, 200),
+            ("user1", False, 400),
+            ("user2", False, 404),
+            ("user2", True, 404),
+        ),
+    )
+    def test_cancel(self, basic1, harvests, clients, user, cancelable, status):
+        if cancelable:
+            intention = harvests["user1"].intentions.filter(queue_id=9).latest_intentions().last()
+        else:
+            intention = harvests["user1"].intentions.filter(queue_id=8).latest_intentions().last()
+
+        url = reverse('harvest-intention-cancel', args=(intention.harvest.pk, intention.pk),)
+
+        resp = clients[user].post(url, {})
+        assert resp.status_code == status, "status code matches"
+
+        intention.refresh_from_db()
+        if cancelable and status // 100 == 2:
+            assert intention.canceled is True
+        else:
+            assert intention.canceled is False

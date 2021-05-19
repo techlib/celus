@@ -6,6 +6,7 @@ en:
   planned_to_download: "Fetching of data was planned for {date}, but attempt hasn't been executed yet."
   planned_for_retry: "Based on result of previous attempt, later retry was planned. The new attempt is planned for {date}. "
   attempt_deleted: Download was executed but information about the download were deleted.
+  attempt_canceled: Download was canceled.
   future_start_info: Harvesting is currently waiting for free slot in the download queue.
   finished_filter: Filter by finished
   finished: Finished only
@@ -15,8 +16,10 @@ en:
   progress: Finished
   stats: Statistics
   status: Status
-  actions: Actions
   actions_force_run: Reschedule and start download right now.
+  actions_cancel: Cancel download.
+  actions_cancel_title: Cancel
+  actions_force_run_title: Run
   previous_attempt: Previous attempt
   not_before_tooltip: Data might not be avialable or some ratelimit was reached.
   runnable:
@@ -31,6 +34,7 @@ cs:
   planned_to_download: "Stahování dat bylo naplánováno na {date}, ale zatím nebylo provedeno."
   planned_for_retry: "Na základě předchozího pokusu bylo naplánováno pozdější stažení. Nový pokus je naplánovaný na {date}. "
   attempt_deleted: Stahování proběhlo, ale informace o stahování byly smazány.
+  attempt_canceled: Stahování bylo zrušeno.
   future_start_info: Stahování aktuálně čeká na uvolnění místa ve frontě.
   finished_filter: Filtr podle dokončení
   finished: Pouze dokončené
@@ -42,6 +46,9 @@ cs:
   status: Stav
   actions: Akce
   actions_force_run: Přeplánovat a spustit stahování hned.
+  actions_cancel: Zrušit stahování.
+  actions_cancel_title: Zrušit
+  actions_force_run_title: Spustit
   previous_attempt: Předchozí pokus
   not_before_tooltip: Data nemusí být dostupná nebo byl překročen limit stažení.
   runnable:
@@ -158,37 +165,21 @@ cs:
             <FetchIntentionStatusIcon :fetch-intention="item" />
           </template>
 
-          <template #item.actions="{ item }">
-            <v-tooltip
-              bottom
-            >
-              <template #activator="{ on }">
-                <v-btn
-                  v-if="item.isForceRunPossible"
-                  small
-                  icon
-                  :outlined="!loadingActions.trigger.includes(item.pk)"
-                  v-on="on"
-                  @click="forceRun(item)"
-                  :loading="loadingActions.trigger.includes(item.pk)"
-                >
-                <i class="fas fa-play"></i>
-                </v-btn>
-              </template>
-              <span>{{ $t('actions_force_run')}}</span>
-            </v-tooltip>
-          </template>
-
           <template #item.isFinished="{ item }">
             <CheckMark :value="item.isFinished" />
           </template>
 
           <template #expanded-item="{ headers, item }">
-            <td></td>
-            <td :colspan="headers.length - 1" class="py-2">
+            <td>
+            </td>
+            <td :colspan="headers.length -1" class="py-2">
               <span
                 v-if="item.fetchingData"
                 v-text="$t('currently_downloading')"
+              ></span>
+              <span
+                v-else-if="item.isCanceled"
+                v-text="$t('attempt_canceled')"
               ></span>
               <span
                 v-else-if="item.attemptDeleted"
@@ -254,6 +245,45 @@ cs:
                   </ul>
                 </div>
               </span>
+              <div v-if="item.isForceRunPossible || item.isCancelPossible"><br /></div>
+              <v-tooltip
+                bottom
+              >
+                <template #activator="{ on }">
+                  <v-btn
+                    v-if="item.isForceRunPossible"
+                    text
+                    small
+                    v-on="on"
+                    @click="forceRun(item)"
+                    :loading="loadingActions.trigger.includes(item.pk)"
+                    color="primary"
+                  >
+                    <v-icon class="fas fa-play-circle" x-small left></v-icon>
+                    {{ $t('actions_force_run_title') }}
+                  </v-btn>
+                </template>
+                <span>{{ $t('actions_force_run')}}</span>
+              </v-tooltip>
+              <v-tooltip
+                bottom
+              >
+                <template #activator="{ on }">
+                  <v-btn
+                    v-if="item.isCancelPossible"
+                    text
+                    small
+                    v-on="on"
+                    @click="cancel(item)"
+                    :loading="loadingActions.cancel.includes(item.pk)"
+                    color="error"
+                  >
+                    <v-icon class="fas fa-ban" x-small left></v-icon>
+                    {{ $t('actions_cancel_title') }}
+                  </v-btn>
+                </template>
+                <span>{{ $t('actions_cancel')}}</span>
+              </v-tooltip>
             </td>
           </template>
         </v-data-table>
@@ -296,6 +326,7 @@ export default {
       loading: false,
       loadingActions: {
         trigger: [],
+        cancel: [],
       },
       intentionData: [],
       startTime: null,
@@ -368,11 +399,6 @@ export default {
         {
           text: this.$t("status"),
           value: "status",
-          sortable: false,
-        },
-        {
-          text: this.$t("actions"),
-          value: "actions",
           sortable: false,
         },
       ];
@@ -464,6 +490,10 @@ export default {
       return `${this.intentionsUrl}/${pk}/trigger/`
     },
 
+    cancelUrl(pk) {
+      return `${this.intentionsUrl}/${pk}/cancel/`
+    },
+
     async forceRun(intention) {
       this.loadingActions.trigger.push(intention.pk)
       try {
@@ -481,6 +511,21 @@ export default {
 
     formatDateTime(value) {
       return isoDateTimeFormatSpans(value);
+    },
+
+    async cancel(intention) {
+      this.loadingActions.cancel.push(intention.pk)
+      try {
+        await axios.post(this.cancelUrl(intention.pk));
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error cancelling intention: " + error,
+          color: "error",
+        });
+      } finally {
+        this.loadingActions.cancel = this.loadingActions.cancel.filter((x) => x !== intention.pk);
+      }
+      this.fetchIntentions(false);
     },
 
     async fetchIntentions(showLoader = true) {

@@ -358,6 +358,7 @@ class FetchIntention(models.Model):
     when_processed = models.DateTimeField(
         help_text="When fetch intention was processed", null=True, blank=True
     )
+    canceled = models.BooleanField(default=False)
     attempt = models.OneToOneField(SushiFetchAttempt, null=True, on_delete=models.SET_NULL)
     harvest = models.ForeignKey(
         'scheduler.Harvest', on_delete=models.CASCADE, related_name="intentions"
@@ -486,6 +487,19 @@ class FetchIntention(models.Model):
 
         return ProcessResponse.SUCCESS
 
+    def cancel(self) -> bool:
+        with transaction.atomic():
+            # lock self so the intention is not processed in a meantime
+            # and refresh it from db so we are sure that it is up-to-date
+            FetchIntention.objects.select_for_update().get(pk=self.pk)
+            if self.is_processed:
+                return False
+            self.canceled = True
+            self.when_processed = timezone.now()  # this will mark intention as processed
+            self.save()
+
+        return True
+
     @staticmethod
     def next_exponential(
         retry_number: int, initial_delay: int, max_delay: typing.Optional[int] = None
@@ -554,14 +568,13 @@ class FetchIntention(models.Model):
         self.scheduler.when_ready = next_time
         self.scheduler.save()
 
+        # prepare retry
+        retry = self._create_retry(next_time, inc_service_not_available_retry=True)
+
         # giving up for the next retry
         if max_reached:
+            retry.cancel()
             return
-
-        # prepare retry
-        self._create_retry(
-            next_time, inc_service_not_available_retry=True,
-        )
 
     def handle_service_busy(self):
         next_time, max_reached = FetchIntention.next_exponential(
@@ -574,28 +587,26 @@ class FetchIntention(models.Model):
         self.scheduler.when_ready = next_time
         self.scheduler.save()
 
+        # prepare retry
+        retry = self._create_retry(self.scheduler.when_ready, inc_service_busy_retry=True)
+
         # giving up for the next retry
         if max_reached:
+            retry.cancel()
             return
-
-        # prepare retry
-        self._create_retry(
-            self.scheduler.when_ready, inc_service_busy_retry=True,
-        )
 
     def handle_data_not_ready(self):
         next_time, _ = FetchIntention.next_exponential(
             self.data_not_ready_retry, DATA_NOT_READY_RETRY_PERIOD.total_seconds(),
         )
 
-        if self.data_not_ready_retry > settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
-            # giving up
-            return
-
         # prepare retry
-        self._create_retry(
-            next_time, inc_data_not_ready_retry=True,
-        )
+        retry = self._create_retry(next_time, inc_data_not_ready_retry=True)
+
+        if self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
+            # giving up
+            retry.cancel()
+            return
 
     def handle_no_data(self):
         """ Some vendors use no_data status as data_not_ready status """
@@ -609,13 +620,11 @@ class FetchIntention(models.Model):
             - datetime.combine(self.end_date, datetime.min.time(), tzinfo=next_time.tzinfo)
             > NO_DATA_RETRY_PERIOD
         ):
-            # giving up
+            # giving up last retry will be we showing empty data
             return
 
         # prepare retry
-        self._create_retry(
-            next_time, inc_data_not_ready_retry=True,
-        )
+        self._create_retry(next_time, inc_data_not_ready_retry=True)
 
     def handle_too_many_requests(self):
         # just add a constant delay set in scheduler

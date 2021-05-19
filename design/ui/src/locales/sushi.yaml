@@ -35,6 +35,7 @@ en:
       awaiting_import: Data was downloaded and is currently being imported into the database.
       import_failed: Data was downloaded but importing it into database failed.
       partial_data: Data was downloaded and imported, but it might not be complete.
+      canceled: Download was canceled.
 
     broken: Broken
     broken_report_type_desc:
@@ -81,6 +82,7 @@ cs:
       awaiting_import: Data byla stažena a nyní jsou importována do databáze.
       import_failed: Data byla stažena, ale import dat do databáze selhal.
       partial_data: Data byla stažena a naimportována, ale nemusí být kompletní.
+      canceled: Stahování bylo zrušeno.
 
     broken: Nefunkční
     broken_report_type_desc:
