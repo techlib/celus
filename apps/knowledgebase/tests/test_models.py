@@ -102,6 +102,17 @@ INPUT_DATA = [
     },
 ]
 
+INPUT_DATA2 = [
+    {
+        "name": "ABC",
+        "pk": 340,
+        "provider": "ABC",
+        "providers": [],
+        "short_name": "ABC",
+        "url": "https://www.journals.abc.org/",
+    },
+]
+
 
 @pytest.mark.django_db
 class TestPlatformImportAttempt:
@@ -347,14 +358,13 @@ class TestPlatformImportAttempt:
         assert Platform.objects.values().get(pk=platform_erms.pk) == erms_values
 
         # Create multiple for EMPTY_SOURCE strategy
-        platform_no_source2 = PlatformFactory(source=None, short_name="AAP")
-        no_source2_values = Platform.objects.values().get(pk=platform_no_source2.pk)
+        platform_no_source2 = PlatformFactory(source=None, short_name="ABC")
         PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
-            INPUT_DATA, PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE,
+            INPUT_DATA2, PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE,
         )
         assert Platform.objects.count() == 5
         assert Platform.objects.values().get(pk=platform_no_source1.pk) == no_source1_values
-        assert Platform.objects.values().get(pk=platform_no_source2.pk) == no_source2_values
+        assert Platform.objects.get(pk=platform_no_source2.pk).ext_id == INPUT_DATA2[0]["pk"]
         assert Platform.objects.values().get(pk=platform_erms.pk) == erms_values
 
     def test_perform(self, data_sources, report_types):

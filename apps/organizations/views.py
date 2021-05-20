@@ -2,6 +2,7 @@ import json
 from collections import Counter
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Count, Q, Sum, Max, Min, F, Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
@@ -166,6 +167,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         return Response(data)
 
     @action(detail=False, methods=['post'], url_path='create-user-default')
+    @transaction.atomic()
     def create_user_default(self, request):
         """
         Lets a user create an organization if account creation is allowed and this user does
@@ -184,17 +186,28 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             )
         serializer = OrganizationSimpleSerializer()
         valid_data = serializer.validate(request.data)
+        slugified_name = f"{slugify(request.user.username)}#{ slugify(valid_data['name']) }"[:50]
+        if DataSource.objects.filter(short_name=slugified_name).exists():
+            return HttpResponseBadRequest(
+                json.dumps({'error': f"'{valid_data['name']}' is already used"}),
+                content_type='application/json',
+            )
+
         org = serializer.create(valid_data)
         # update all language mutations
         # so the organization name is properly shown even when langage changes
         org.name_cs = valid_data["name"]
         org.name_en = valid_data["name"]
-        data_source = DataSource.objects.create(organization=org, type=DataSource.TYPE_ORGANIZATION)
+        org.short_name_cs = valid_data["name"][:100]
+        org.short_name_en = valid_data["name"][:100]
+        data_source = DataSource.objects.create(
+            organization=org, type=DataSource.TYPE_ORGANIZATION, short_name=slugified_name,
+        )
         # we add the just created data source as source for the organization itself
         # it looks strange, but it is a usable way how to say that this is a user-created
         # organization
         org.source = data_source
-        org.internal_id = f"{slugify(request.user.username)}#{ slugify(org.name) }"[:50]
+        org.internal_id = slugified_name
         org.save()
         # associate the user with this organization as admin
         UserOrganization.objects.create(

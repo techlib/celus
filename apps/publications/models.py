@@ -37,6 +37,18 @@ class Platform(models.Model):
             UniqueConstraint(
                 fields=['ext_id'], condition=Q(source=None), name='ext_id_source_null'
             ),
+            UniqueConstraint(
+                fields=('short_name',),
+                condition=models.Q(source__isnull=True),
+                name='platform_unique_global_shortname',
+            ),
+            UniqueConstraint(
+                fields=('short_name', 'source'),
+                name='platform_unique_short_name_source',
+                condition=models.Q(
+                    ext_id__isnull=True
+                ),  # external platforms might have empty short_name
+            ),
         ]
 
     def __str__(self):

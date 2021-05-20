@@ -49,6 +49,20 @@ class Organization(MPTTModel):
     class Meta:
         ordering = ('name',)
         unique_together = (('ico', 'level'),)  # duplicated ico can only be between parent and child
+        constraints = (
+            models.UniqueConstraint(
+                fields=('short_name',),
+                condition=models.Q(source__isnull=True),
+                name='organization_unique_global_shortname',
+            ),
+            models.UniqueConstraint(
+                fields=('short_name', 'source'),
+                name='organization_unique_short_name_source',
+                condition=models.Q(
+                    ext_id__isnull=True
+                ),  # external platforms might have empty short_name
+            ),
+        )
 
     def __str__(self):
         return self.name

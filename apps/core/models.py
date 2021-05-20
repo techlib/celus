@@ -67,7 +67,7 @@ class DataSource(models.Model):
         null=True,
         blank=True,
         related_name='private_data_source',
-        help_text='Used to define data sources private to an ' 'organization',
+        help_text='Used to define data sources private to an organization',
     )
 
     class Meta:
@@ -85,6 +85,11 @@ class DataSource(models.Model):
                 fields=('url',),
                 condition=models.Q(type=DATA_SOURCE_TYPE_KNOWLEDGEBASE),
                 name='unique-url-for-knowledgebase',
+            ),
+            models.UniqueConstraint(
+                fields=('short_name',),
+                condition=models.Q(type=DATA_SOURCE_TYPE_ORGANIZATION),
+                name='source-unique-global-short_name',
             ),
         )
 
