@@ -371,7 +371,7 @@
               dict[this.primaryDimension] = val1.substring(0, this.maxLabelLength) + '\u2026'
             }
             if (this.secondaryDimension) {
-              let val2 = dict[this.secondaryDimension]
+              let val2 = String(dict[this.secondaryDimension])
               if (val2.length > this.maxLabelLength + 3) {
                 dict[this.secondaryDimension] = val2.substring(0, this.maxLabelLength) + '\u2026'
               }
