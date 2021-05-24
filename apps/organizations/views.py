@@ -184,8 +184,9 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
                 json.dumps({'error': 'User is allowed to create only one organization'}),
                 content_type='application/json',
             )
-        serializer = OrganizationSimpleSerializer()
-        valid_data = serializer.validate(request.data)
+        serializer = OrganizationSimpleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        valid_data = serializer.validated_data
         slugified_name = f"{slugify(request.user.username)}#{ slugify(valid_data['name']) }"[:50]
         if DataSource.objects.filter(short_name=slugified_name).exists():
             return HttpResponseBadRequest(

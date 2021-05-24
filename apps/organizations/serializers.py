@@ -1,5 +1,5 @@
 from django.conf import settings
-from rest_framework.fields import BooleanField
+from rest_framework.fields import BooleanField, CharField
 from rest_framework.serializers import ModelSerializer
 
 from .models import Organization
@@ -26,6 +26,8 @@ class OrganizationSerializer(ModelSerializer):
 
 
 class OrganizationSimpleSerializer(ModelSerializer):
+    name = CharField(max_length=100)
+
     class Meta:
         model = Organization
         fields = (

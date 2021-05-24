@@ -26,6 +26,8 @@ cs:
           <v-text-field
             v-model="name"
             :label="$t('name') + '*'"
+            counter
+            maxlength="100"
             aria-required="true"
           ></v-text-field>
         </v-form>
