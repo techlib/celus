@@ -6,7 +6,7 @@ en:
     all_titles: All titles
     sushi_management: SUSHI management
     admin: Administration
-    sushi_fetch_attempts: SUSHI downloads
+    sushi_fetch_attempts: SUSHI harvests
     import_batches: Import batches
     management: Management
     maintenance: Maintenance
