@@ -8,7 +8,7 @@ cs:
 </i18n>
 
 <template>
-  <v-container>
+  <v-container fluid>
     <v-row>
       <v-col>
         <h2 v-text="$t('maintenance')"></h2>

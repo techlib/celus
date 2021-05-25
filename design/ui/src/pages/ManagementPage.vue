@@ -33,7 +33,7 @@ cs:
 </i18n>
 
 <template>
-  <v-container>
+  <v-container fluid>
     <!--h1 class="text-h3 mb-4">{{ $t('management_page') }}</h1-->
 
     <section v-if="user.is_superuser || user.is_staff">

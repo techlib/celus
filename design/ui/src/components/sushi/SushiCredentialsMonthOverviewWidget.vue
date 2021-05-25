@@ -45,15 +45,15 @@ cs:
                 >
                   <template #prepend-inner>
                     <IconButton @click="shiftMonth(-1)"
-                      >fa-caret-left</IconButton
-                    >
+                      >fa-caret-left
+                    </IconButton>
                   </template>
                   <template #append>
                     <IconButton
                       @click="shiftMonth(1)"
                       :disabled="selectedMonth >= lastMonth"
-                      >fa-caret-right</IconButton
-                    >
+                      >fa-caret-right
+                    </IconButton>
                   </template>
                 </v-text-field>
               </template>
@@ -133,70 +133,72 @@ cs:
         </v-row>
 
         <v-row>
-          <v-data-table
-            :items="sushiCredentialsWithAttempts"
-            :headers="headers"
-            :search="search"
-            :items-per-page.sync="itemsPerPage"
-            :sort-by="orderBy"
-            multi-sort
-            :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
-            :loading="loading"
-            dense
-          >
-            <template
-              v-for="rt in usedReportTypes"
-              v-slot:[slotName(rt)]="{ item }"
+          <v-col>
+            <v-data-table
+              :items="sushiCredentialsWithAttempts"
+              :headers="headers"
+              :search="search"
+              :items-per-page.sync="itemsPerPage"
+              :sort-by="orderBy"
+              multi-sort
+              :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
+              :loading="loading"
+              dense
             >
-              <span
-                :key="`${rt.code}-${item.credentials_id}`"
-                @click="
-                  (item[rt.code] &&
-                    item[rt.code].pk &&
-                    showAttempt(item[rt.code])) ||
-                    null
-                "
-                :class="{
-                  clickable: item[rt.code] && item[rt.code].pk,
-                  alpha:
-                    stateFilter &&
-                    item[rt.code] &&
-                    stateFilter !== item[rt.code].state,
-                }"
+              <template
+                v-for="rt in usedReportTypes"
+                v-slot:[slotName(rt)]="{ item }"
               >
-                <SushiAttemptStateIcon
-                  :attempt="item[rt.code]"
-                  latest
-                  :broken-report="hasBrokenReport(item[rt.code])"
-                  :broken-credentials="!!item.broken"
-                />
-              </span>
-            </template>
-            <template #item.counter_version="{ item }">
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <span
-                    class="pl-5"
-                    :class="!item.enabled || item.broken ? 'red--text' : ''"
-                    v-on="on"
-                  >
-                    <v-icon v-if="item.broken" small color="warning"
-                      >fa fa-exclamation-triangle</v-icon
-                    >
-                    <v-icon v-if="!item.enabled" x-small>fa fa-unlink</v-icon>
-                    {{ item.counter_version }}
-                  </span>
-                </template>
-                <span v-if="item.broken">
-                  <strong v-text="$t('sushi.broken')"></strong>
-                  <br />
-                  <span v-text="$t('sushi.state_desc.broken')"></span>
+                <span
+                  :key="`${rt.code}-${item.credentials_id}`"
+                  @click="
+                    (item[rt.code] &&
+                      item[rt.code].pk &&
+                      showAttempt(item[rt.code])) ||
+                      null
+                  "
+                  :class="{
+                    clickable: item[rt.code] && item[rt.code].pk,
+                    alpha:
+                      stateFilter &&
+                      item[rt.code] &&
+                      stateFilter !== item[rt.code].state,
+                  }"
+                >
+                  <SushiAttemptStateIcon
+                    :attempt="item[rt.code]"
+                    latest
+                    :broken-report="hasBrokenReport(item[rt.code])"
+                    :broken-credentials="!!item.broken"
+                  />
                 </span>
-                <span v-else-if="item.enabled" v-text="$t('enabled')"></span>
-                <span v-else v-text="$t('not_enabled')"></span>
-              </v-tooltip>
-            </template>
-          </v-data-table>
+              </template>
+              <template #item.counter_version="{ item }">
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <span
+                      class="pl-5"
+                      :class="!item.enabled || item.broken ? 'red--text' : ''"
+                      v-on="on"
+                    >
+                      <v-icon v-if="item.broken" small color="warning"
+                        >fa fa-exclamation-triangle</v-icon
+                      >
+                      <v-icon v-if="!item.enabled" x-small>fa fa-unlink</v-icon>
+                      {{ item.counter_version }}
+                    </span>
+                  </template>
+                  <span v-if="item.broken">
+                    <strong v-text="$t('sushi.broken')"></strong>
+                    <br />
+                    <span v-text="$t('sushi.state_desc.broken')"></span>
+                  </span>
+                  <span v-else-if="item.enabled" v-text="$t('enabled')"></span>
+                  <span v-else v-text="$t('not_enabled')"></span>
+                </v-tooltip>
+              </template>
+            </v-data-table>
+          </v-col>
         </v-row>
       </v-container>
     </v-card-text>
@@ -573,6 +575,7 @@ div.stats {
 .clickable {
   cursor: pointer;
 }
+
 .alpha {
   opacity: 0.3;
 }
