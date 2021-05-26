@@ -238,7 +238,3 @@ class SushiFetchAttemptSimpleSerializer(ModelSerializer):
 
 class SushiCleanupSerializer(Serializer):
     older_than = DateTimeField(required=False)
-
-
-class SushiCleanupCountSerializer(Serializer):
-    count = IntegerField(required=True)

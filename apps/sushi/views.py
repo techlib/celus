@@ -1,16 +1,14 @@
 import json
-
-from datetime import timedelta, date
+from datetime import timedelta
 
 import dateparser
 import reversion
-
 from dateutil.relativedelta import relativedelta
-from django.db.models import Count, Q, Max, Min, F, Subquery
+from django.db.models import Count, Q, Max, Min, F
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -20,16 +18,12 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from reversion.views import create_revision
 
 from core.logic.dates import month_start, month_end
-from core.logic.url import extract_field_from_request
 from core.models import UL_CONS_STAFF, REL_ORG_ADMIN
 from core.permissions import (
     SuperuserOrAdminPermission,
     OrganizationRelatedPermissionMixin,
-    AdminAccessForOrganization,
 )
 from organizations.logic.queries import organization_filter_from_org_id
-
-from .filters import CleanupFilterBackend
 from .models import (
     SushiCredentials,
     CounterReportType,
@@ -40,7 +34,6 @@ from .serializers import (
     CounterReportTypeSerializer,
     SushiCredentialsSerializer,
     SushiCredentialsDataSerializer,
-    SushiCleanupCountSerializer,
     SushiFetchAttemptSerializer,
     SushiFetchAttemptSimpleSerializer,
     UnsetBrokenSerializer,
@@ -361,57 +354,6 @@ class SushiFetchAttemptViewSet(ModelViewSet):
             'counter_report', 'credentials__organization', 'credentials__platform',
         )
 
-    @action(
-        methods=['POST', 'GET'],
-        detail=False,
-        url_path='cleanup',
-        serializer_class=SushiCleanupCountSerializer,
-        filter_backends=(CleanupFilterBackend,),
-        permission_classes=[AdminAccessForOrganization],
-    )
-    def cleanup(self, request):
-        """
-        Clean Sushi attempts (GET - just display the number POST - trigger deletion)
-
-        keep only those which contain data and remove failures
-
-        Return how many attempts (will be / were) deleted
-        """
-        queryset = self.filter_queryset(self.get_queryset())
-
-        # apply organization filter if needed
-        organization_id = extract_field_from_request(request, "organization")
-        if organization_id and organization_id != -1:
-            queryset = queryset.filter(credentials__organization_id=organization_id)
-
-        pks = {
-            e.pk
-            for e in queryset.filter(import_batch__isnull=True)
-            if e.status in ['FAILURE', 'BROKEN']
-        }
-
-        if request.method == "POST":
-            # show count only for related exact pks
-            count = SushiFetchAttempt.objects.filter(pk__in=pks).count()
-            # delete attemtps in the same queues
-            SushiFetchAttempt.objects.filter(
-                Q(pk__in=pks)
-                | Q(
-                    queue_id__in=Subquery(
-                        SushiFetchAttempt.objects.filter(pk__in=pks, queue_id__isnull=False).values(
-                            'queue_id'
-                        )
-                    )
-                )
-            ).delete()
-        elif request.method == "GET":
-            count = SushiFetchAttempt.objects.filter(pk__in=pks).count()
-
-        response_serializer = SushiCleanupCountSerializer(data={"count": count})
-        response_serializer.is_valid(raise_exception=True)
-
-        return Response(response_serializer.validated_data)
-
     def perform_create(self, serializer: SushiFetchAttemptSerializer):
         # check that the user is allowed to create attempts for this organization
         credentials = serializer.validated_data['credentials']
@@ -437,135 +379,6 @@ class SushiFetchAttemptViewSet(ModelViewSet):
         attempt.triggered_by = self.request.user
         attempt.save()
         run_sushi_fetch_attempt_task.apply_async(args=(attempt.pk, True), countdown=1)
-
-
-class SushiFetchAttemptStatsView(APIView):
-
-    attr_to_query_param_map = {
-        'report': ('counter_report', 'counter_report__code'),
-        'platform': ('credentials__platform', 'credentials__platform__name'),
-        'organization': ('credentials__organization', 'credentials__organization__name'),
-    }
-
-    modes = {
-        'current': '',  # only attempts that match the current version of their credentials
-        'success_and_current': '',  # all successful and unsuccessful for current version of creds
-        'all': '',  # all attempts
-    }
-    default_mode = 'current'
-
-    key_to_attr_map = {value[1]: key for key, value in attr_to_query_param_map.items()}
-    key_to_attr_map.update(
-        {value[0]: key + '_id' for key, value in attr_to_query_param_map.items()}
-    )
-    success_metrics = ['download_success', 'processing_success', 'contains_data', 'is_processed']
-
-    def get(self, request):
-        organizations = request.user.accessible_organizations()
-        filter_params = []
-        if 'organization' in request.query_params:
-            filter_params.append(
-                Q(
-                    credentials__organization=get_object_or_404(
-                        organizations, pk=request.query_params['organization']
-                    )
-                )
-            )
-        else:
-            filter_params.append(Q(credentials__organization__in=organizations))
-        if 'platform' in request.query_params:
-            filter_params.append(Q(credentials__platform_id=request.query_params['platform']))
-        if 'date_from' in request.query_params:
-            date_from = dateparser.parse(request.query_params['date_from'])
-            if date_from:
-                filter_params.append(Q(timestamp__date__gte=date_from))
-        if 'counter_version' in request.query_params:
-            counter_version = request.query_params['counter_version']
-            filter_params.append(Q(credentials__counter_version=counter_version))
-        # what should be in the result?
-        x = request.query_params.get('x', 'report')
-        y = request.query_params.get('y', 'platform')
-        # what attr on sushi attempt defines success
-        success_metric = request.query_params.get('success_metric', self.success_metrics[-1])
-        if success_metric not in self.success_metrics:
-            success_metric = self.success_metrics[-1]
-        # deal with mode - we need to add extra filters for some of the modes
-        mode = request.query_params.get('mode', self.default_mode)
-        if mode not in self.modes:
-            mode = self.default_mode
-        if mode == 'all':
-            # there is nothing to do here
-            pass
-        elif mode == 'current':
-            filter_params.append(Q(credentials_version_hash=F('credentials__version_hash')))
-        elif mode == 'success_and_current':
-            # all successful + other that match current version of credentials
-            filter_params.append(
-                Q(**{success_metric: True})
-                | Q(credentials_version_hash=F('credentials__version_hash'))
-            )
-        # fetch the data - we have different code in presence and absence of date in the data
-        if x != 'month' and y != 'month':
-            data = self.get_data_no_months(x, y, filter_params, success_metric)
-        else:
-            dim = x if y == 'month' else y
-            data = self.get_data_with_months(dim, filter_params, success_metric)
-        # rename the fields back to what was asked for
-        out = []
-        for obj in data:
-            out.append({self.key_to_attr_map.get(key, key): value for key, value in obj.items()})
-        return Response(out)
-
-    def get_data_no_months(self, x, y, filter_params: [], success_metric):
-        if x not in self.attr_to_query_param_map:
-            return HttpResponseBadRequest('unsupported x dimension: "{}"'.format(x))
-        if y not in self.attr_to_query_param_map:
-            return HttpResponseBadRequest('unsupported y dimension: "{}"'.format(y))
-        # we use 2 separate fields for both x and y in order to preserve both the ID of the
-        # related field and its text value
-        values = []
-        values.extend(self.attr_to_query_param_map[x])
-        values.extend(self.attr_to_query_param_map[y])
-        # now get the output
-        qs = (
-            SushiFetchAttempt.objects.filter(*filter_params)
-            .last_queued()
-            .values(*values)
-            .annotate(
-                success_count=Count('pk', filter=Q(**{success_metric: True})),
-                failure_count=Count('pk', filter=Q(**{success_metric: False})),
-            )
-        )
-        return qs
-
-    def get_data_with_months(self, dim, filter_params: [], success_metric):
-        if dim not in self.attr_to_query_param_map:
-            return HttpResponseBadRequest('unsupported dimension: "{}"'.format(dim))
-        # we use 2 separate fields for dim in order to preserve both the ID of the
-        # related field and its text value
-        values = self.attr_to_query_param_map[dim]
-        months = SushiFetchAttempt.objects.aggregate(start=Min('start_date'), end=Max('end_date'))
-        start = month_start(months['start'])
-        end = month_end(months['end'])
-        cur_date = start
-        output = []
-        while cur_date < end:
-            # now get the output
-            for rec in (
-                SushiFetchAttempt.objects.filter(*filter_params)
-                .filter(start_date__lte=cur_date, end_date__gte=cur_date)
-                .values(*values)
-                .annotate(
-                    success_count=Count('pk', filter=Q(**{success_metric: True})),
-                    failure_count=Count('pk', filter=Q(**{success_metric: False})),
-                )
-            ):
-                cur_date_str = '-'.join(str(cur_date).split('-')[:2])
-                rec['month'] = cur_date_str[2:]
-                rec['month_id'] = cur_date_str
-                output.append(rec)
-            cur_date = month_start(cur_date + timedelta(days=32))
-        return output
 
 
 class StartFetchNewSushiDataTask(APIView):
