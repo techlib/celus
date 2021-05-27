@@ -189,18 +189,26 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         valid_data = serializer.validated_data
         slugified_name = f"{slugify(request.user.username)}#{ slugify(valid_data['name']) }"[:50]
         if DataSource.objects.filter(short_name=slugified_name).exists():
+            conflicting_name = (
+                DataSource.objects.filter(short_name=slugified_name).first().short_name
+            )
             return HttpResponseBadRequest(
-                json.dumps({'error': f"'{valid_data['name']}' is already used"}),
+                json.dumps(
+                    {
+                        'error': f"'{valid_data['name']}' and existing '{conflicting_name}'"
+                        f" can't be used together because they both map to '{slugified_name}'"
+                    }
+                ),
                 content_type='application/json',
             )
 
         org = serializer.create(valid_data)
         # update all language mutations
         # so the organization name is properly shown even when langage changes
-        org.name_cs = valid_data["name"]
-        org.name_en = valid_data["name"]
-        org.short_name_cs = valid_data["name"][:100]
-        org.short_name_en = valid_data["name"][:100]
+        for lang in settings.MODELTRANSLATION_LANGUAGES:
+            setattr(org, f'name_{lang}', valid_data["name"])
+            setattr(org, f'short_name_{lang}', valid_data["name"][:100])
+
         data_source = DataSource.objects.create(
             organization=org, type=DataSource.TYPE_ORGANIZATION, short_name=slugified_name,
         )

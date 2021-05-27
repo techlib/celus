@@ -85,7 +85,10 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
             request.user.accessible_platforms(organization=organization), pk=pk
         )
         report_types = ReportType.objects.filter(interest_platforms=platform).prefetch_related(
-            'reportinterestmetric_set__metric', 'reportinterestmetric_set__interest_group'
+            'reportinterestmetric_set__metric',
+            'reportinterestmetric_set__interest_group',
+            'source',
+            'source__organization',
         )
         # for rt in report_types:
         #     rt.used_metrics = Metric.objects.\

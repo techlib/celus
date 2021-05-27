@@ -60,7 +60,7 @@ class Organization(MPTTModel):
                 name='organization_unique_short_name_source',
                 condition=models.Q(
                     ext_id__isnull=True
-                ),  # external platforms might have empty short_name
+                ),  # external organizations might have empty short_name
             ),
         )
 

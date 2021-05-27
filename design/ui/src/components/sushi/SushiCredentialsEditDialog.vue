@@ -1,5 +1,6 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 <i18n lang="yaml">
 en:
@@ -163,6 +164,22 @@ cs:
                     @update-platforms="preselectCreatedPlatform"
                     :text="true"
                   />
+                </template>
+                <template v-slot:item="{ item }">
+                  <v-tooltip bottom max-width="600px" v-if="badge(item)">
+                    <template #activator="{ on }">
+                      <span>{{ item.name }}</span>
+                      <v-badge inline :content="$t(badge(item).content)" :color="badge(item).color">
+                        <template v-slot:badge>
+                        <span v-on="on">{{ $t(badge(item).content) }}</span>
+                        </template>
+                      </v-badge>
+                    </template>
+                    <span>{{ $t(badge(item).tooltip) }}</span>
+                  </v-tooltip>
+                  <span v-else>
+                    {{ item.name }}
+                  </span>
                 </template>
               </v-autocomplete>
             </v-col>
@@ -453,6 +470,7 @@ cs:
 <script>
 import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
+import { badge } from "@/libs/sources.js";
 import SushiCredentialsTestWidget from "./SushiCredentialsTestWidget";
 import AddPlatformButton from "@/components/AddPlatformButton";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
@@ -968,6 +986,9 @@ export default {
         return this.$t("invalid_url");
       }
       return true;
+    },
+    badge(item) {
+      return badge(item);
     },
   },
 

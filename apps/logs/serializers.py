@@ -14,7 +14,7 @@ from core.models import DataSource, UL_CONS_STAFF
 from core.serializers import UserSerializer, UserSimpleSerializer
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
-from publications.serializers import PlatformSerializer
+from publications.serializers import PlatformSerializer, DataSourceSerializer
 from .models import (
     Metric,
     Dimension,
@@ -202,11 +202,13 @@ class ReportTypeExtendedSerializer(ModelSerializer):
     interest_metric_set = ReportInterestMetricSerializer(
         many=True, read_only=True, source='reportinterestmetric_set'
     )
+    source = DataSourceSerializer()
 
     class Meta:
         model = ReportType
         fields = (
             'pk',
+            'source',
             'short_name',
             'name',
             'name_cs',

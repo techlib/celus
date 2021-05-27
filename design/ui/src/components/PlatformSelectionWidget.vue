@@ -1,3 +1,4 @@
+<i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
 <i18n lang="yaml">
 en:
   select_platform: Select platform
@@ -18,7 +19,24 @@ cs:
         item-text="name"
         :label="$t('select_platform')"
         v-model="platformId"
+        :loading="loading"
       >
+        <template v-slot:item="{ item }">
+          <v-tooltip bottom max-width="600px" v-if="badge(item)">
+            <template #activator="{ on }">
+              <span>{{ item.name }}</span>
+              <v-badge inline :content="$t(badge(item).content)" :color="badge(item).color">
+                <template v-slot:badge>
+                <span v-on="on">{{ $t(badge(item).content) }}</span>
+                </template>
+              </v-badge>
+            </template>
+            <span>{{ $t(badge(item).tooltip) }}</span>
+          </v-tooltip>
+          <span v-else>
+            {{ item.name }}
+          </span>
+        </template>
       </v-autocomplete>
     </v-card-text>
     <v-card-actions>
@@ -43,12 +61,15 @@ cs:
 <script>
 import axios from "axios";
 import { mapActions, mapState } from "vuex";
+import { badge } from "@/libs/sources.js";
+
 export default {
   name: "PlatformSelectionWidget",
   data() {
     return {
       platformId: null,
       platforms: [],
+      loading: false,
     };
   },
 
@@ -69,14 +90,20 @@ export default {
     }),
     async loadPlatforms() {
       try {
+        this.loading = true;
         let response = await axios.get(
           `/api/organization/${this.selectedOrganizationId}/all-platform/`
         );
         this.platforms = response.data;
       } catch (error) {
         this.showSnackbar({ content: "Error loading platform list: " + error });
+      } finally {
+        this.loading = false;
       }
     },
+    badge(item) {
+      return badge(item);
+    }
   },
   mounted() {
     this.loadPlatforms();

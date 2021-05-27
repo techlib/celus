@@ -1,0 +1,13 @@
+en:
+  badge:
+    content:
+      organization: CUSTOM
+    tooltip:
+      organization: Manually added for this organization only
+
+cs:
+  badge:
+    content:
+      organization: VLASTNÍ
+    tooltip:
+      organization: Ručně přidáno pouze pro tuto organizaci

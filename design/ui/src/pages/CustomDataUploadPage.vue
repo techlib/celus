@@ -1,4 +1,5 @@
-<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
 <i18n lang="yaml">
 en:
   data_file: Data file to upload
@@ -107,8 +108,21 @@ cs:
                   :no-data-text="$t('no_report_types')"
                   :rules="[filledIn]"
                 >
-                  <template v-slot:item="props">
-                    <span>{{ props.item.name }}</span>
+                  <template v-slot:item="{ item }">
+                    <v-tooltip bottom max-width="600px" v-if="badge(item)">
+                      <template #activator="{ on }">
+                        <span>{{ item.name }}</span>
+                        <v-badge inline :content="$t(badge(item).content)" :color="badge(item).color">
+                          <template v-slot:badge>
+                          <span v-on="on">{{ $t(badge(item).content) }}</span>
+                          </template>
+                        </v-badge>
+                      </template>
+                      <span>{{ $t(badge(item).tooltip) }}</span>
+                    </v-tooltip>
+                    <span v-else>
+                      {{ item.name }}
+                    </span>
                   </template>
                 </v-select>
               </v-col>
@@ -262,6 +276,7 @@ import LargeSpinner from "@/components/util/LargeSpinner";
 import CustomUploadInfoWidget from "@/components/CustomUploadInfoWidget";
 import ReportTypeInfoWidget from "@/components/ReportTypeInfoWidget";
 import ImportPreflightDataWidget from "./ImportPreflightDataWidget";
+import { badge } from "@/libs/sources.js";
 
 export default {
   name: "CustomDataUploadPage",
@@ -334,6 +349,9 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    badge(item) {
+      return badge(item);
+    },
     async postData() {
       let formData = new FormData();
       formData.append("data_file", this.dataFile);
