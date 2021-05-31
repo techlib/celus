@@ -56,3 +56,8 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': schedule(run_every=timedelta(minutes=3)),
     },
 }
+
+
+QUERYCOUNT = {
+    'DISPLAY_DUPLICATES': 5,
+}

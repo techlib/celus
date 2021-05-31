@@ -376,12 +376,16 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 end_date="2020-01-31",
                 queue_id=3,
             ),
-            FetchIntentionFactory.build(
-                credentials=credentials["standalone_br1_jr1"],
-                counter_report=counter_report_types["jr1"],
-                queue_id=3,
-            ),  # retry fetch attempt
         ),
+    )
+    anonymous.intentions.add(
+        FetchIntentionFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["jr1"],
+            queue_id=3,
+            previous_intention=anonymous.intentions.filter(queue_id=3).last(),
+        ),  # retry fetch attempt
+        bulk=False,
     )
 
     automatic = HarvestFactory(

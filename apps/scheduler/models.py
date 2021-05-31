@@ -1,37 +1,33 @@
-import typing
 import logging
-
+import typing
 from collections import Counter
-
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from enum import Enum, auto
 
 from celery import states
+from core.logic.dates import month_end, month_start
+from core.models import User
 from dateutil.relativedelta import relativedelta
-from django.db import models, transaction, DatabaseError
+from django.conf import settings
+from django.db import DatabaseError, models, transaction
+from django.db.models import F, IntegerField, Max, Q
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.models.functions import Coalesce
-from django.conf import settings
-from django.db.models import TextField, Max, IntegerField, F, Q
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_celery_results.models import TaskResult
-
-from core.models import User
-from core.logic.dates import month_start, month_end
+from logs.models import ImportBatch
+from logs.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
 from sushi.models import (
+    CounterReportsToCredentials,
+    CounterReportType,
+    CreatedUpdatedMixin,
     SushiCredentials,
     SushiFetchAttempt,
-    CounterReportType,
-    CounterReportsToCredentials,
-    CreatedUpdatedMixin,
 )
-from logs.models import ImportBatch
-from logs.tasks import import_one_sushi_attempt_task
-
 
 logger = logging.getLogger(__name__)
 
@@ -346,6 +342,9 @@ class FetchIntention(models.Model):
     duplicate_of = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.SET_NULL, related_name="duplicates"
     )
+    previous_intention = models.OneToOneField(
+        'self', null=True, blank=True, on_delete=models.SET_NULL
+    )
     not_before = models.DateTimeField(help_text="Don't plan before", default=timezone.now)
     priority = models.SmallIntegerField(default=PRIORITY_NORMAL)
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
@@ -554,6 +553,7 @@ class FetchIntention(models.Model):
             end_date=self.end_date,
             harvest=self.harvest,
             queue_id=self.queue_id,
+            previous_intention=self,
             **kwargs,
         )
 
@@ -647,16 +647,6 @@ class FetchIntention(models.Model):
     @property
     def counter_report_code(self):
         return self.counter_report.code
-
-    @property
-    def previous_intention(self) -> typing.Optional['FetchIntention']:
-        if not self.queue_id:
-            return None
-        return (
-            FetchIntention.objects.filter(queue_id=self.queue_id, pk__lt=self.pk)
-            .order_by('-pk')
-            .first()
-        )
 
 
 class HarvestQuerySet(models.QuerySet):

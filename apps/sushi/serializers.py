@@ -236,5 +236,32 @@ class SushiFetchAttemptSimpleSerializer(ModelSerializer):
         )
 
 
+class SushiFetchAttemptFlatSerializer(ModelSerializer):
+    class Meta:
+        model = SushiFetchAttempt
+        fields = (
+            'contains_data',
+            'counter_report',
+            'credentials',
+            'data_file',
+            'download_success',
+            'end_date',
+            'error_code',
+            'import_batch',
+            'import_crashed',
+            'in_progress',
+            'is_processed',
+            'log',
+            'pk',
+            'processing_success',
+            'queued',
+            'start_date',
+            'timestamp',
+            'when_processed',
+            'when_queued',
+            'partial_data',
+        )
+
+
 class SushiCleanupSerializer(Serializer):
     older_than = DateTimeField(required=False)

@@ -216,7 +216,16 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
         else:
             qs = harvest.intentions
 
-        return qs.select_related('current_scheduler').order_by('pk')
+        return qs.select_related(
+            'current_scheduler',
+            'previous_intention',
+            'previous_intention__counter_report',
+            'previous_intention__credentials__organization',
+            'previous_intention__credentials__platform',
+            'attempt',
+            'previous_intention__attempt',
+            'previous_intention__attempt',
+        ).order_by('pk')
 
     @action(methods=["POST"], detail=True, url_path='trigger')
     def trigger(self, request, pk, harvest_pk):

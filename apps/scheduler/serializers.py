@@ -3,7 +3,7 @@ from rest_framework.fields import DateField, DateTimeField
 
 from organizations.serializers import OrganizationSerializer, OrganizationShortSerializer
 from publications.serializers import PlatformSerializer, SimplePlatformSerializer
-from sushi.serializers import SushiFetchAttemptSerializer
+from sushi.serializers import SushiFetchAttemptFlatSerializer
 
 from .models import Automatic, FetchIntention, Harvest
 
@@ -30,7 +30,7 @@ class CreateFetchIntentionSerializer(serializers.ModelSerializer):
 
 
 class DuplicateFetchIntentionSerializer(serializers.ModelSerializer):
-    attempt = SushiFetchAttemptSerializer(required=True)  # duplicate should have data
+    attempt = SushiFetchAttemptFlatSerializer(required=True)  # duplicate should have data
 
     class Meta:
         model = FetchIntention
@@ -50,7 +50,7 @@ class DuplicateFetchIntentionSerializer(serializers.ModelSerializer):
 
 
 class FetchIntentionSerializer(serializers.ModelSerializer):
-    attempt = SushiFetchAttemptSerializer(required=False)
+    attempt = SushiFetchAttemptFlatSerializer(required=False)
     fetching_data = serializers.BooleanField()
     duplicate_of = DuplicateFetchIntentionSerializer(required=False)
     previous_intention = DuplicateFetchIntentionSerializer(required=False)
