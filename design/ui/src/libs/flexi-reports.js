@@ -156,10 +156,13 @@ class FlexiReport {
     this.filters = config.filters
       .filter((item) => item.dimension !== "report_type")
       .map((item) => {
-        return {
-          values: item.values,
+        let res = {
           dimension: this.resolveDim(item.dimension),
         };
+        if (item.values) res["values"] = item.values;
+        if (item.start) res["start"] = item.start;
+        if (item.end) res["end"] = item.end;
+        return res;
       });
     // group by
     this.groupBy = config.group_by.map((item) => this.resolveDim(item));
@@ -195,7 +198,13 @@ class FlexiReport {
 
   urlParams() {
     let filters = {};
-    this.filters.forEach((item) => (filters[item.dimension.ref] = item.values));
+    this.filters.forEach((item) => {
+      if (item.start || item.end) {
+        filters[item.dimension.ref] = { start: item.start, end: item.end };
+      } else {
+        filters[item.dimension.ref] = item.values;
+      }
+    });
     filters["report_type"] = this.reportTypes.map((item) => item.pk);
     return {
       primary_dimension: this.primaryDimension.ref,
