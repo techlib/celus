@@ -13,6 +13,7 @@ from logs.models import (
     ImportBatch,
     InterestGroup,
     ReportInterestMetric,
+    ReportType,
 )
 from logs.tests.conftest import report_type_nd
 from organizations.models import UserOrganization
@@ -25,7 +26,7 @@ from core.tests.conftest import (
     master_identity,
 )
 from publications.models import PlatformInterestReport, Platform, PlatformTitle
-from sushi.models import SushiCredentials
+from sushi.models import SushiCredentials, CounterReportType
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.scenarios.basic import *
 
@@ -1055,6 +1056,36 @@ class TestAllPlatformsAPI:
                 ]
             }
         }
+
+    @pytest.mark.parametrize(['allow_noncounter'], ((True,), (False,)))
+    def test_all_platforms_detail_report_types(
+        self, basic1, report_type_nd, settings, allow_noncounter
+    ):
+        settings.ALLOW_NONCOUNTER_DATA = allow_noncounter  # override settings
+        # prepare data
+        client = basic1['clients']['admin2']
+        organization = basic1['organizations']['standalone']  # admin2 is admin of standalone
+        platform = basic1['platforms']['shared']
+        assert ReportType.objects.count() == 0, 'make sure not report are created upfront'
+        rt_counter = report_type_nd(0, short_name='counter')
+        rt_noncounter = report_type_nd(0, short_name='noncounter')
+        # connect the platform and reports
+        PlatformInterestReport.objects.create(platform=platform, report_type=rt_counter)
+        PlatformInterestReport.objects.create(platform=platform, report_type=rt_noncounter)
+        # create CounterReportType which marks the report as COUNTER report
+        CounterReportType.objects.create(
+            code='test', name='test', report_type=rt_counter, counter_version=5
+        )
+        # the test itself
+        resp = client.get(
+            reverse('all-platforms-get-report-types', args=(organization.pk, platform.pk))
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        if allow_noncounter:
+            assert {rec['pk'] for rec in data} == {rt_counter.pk, rt_noncounter.pk}
+        else:
+            assert {rec['pk'] for rec in data} == {rt_counter.pk}
 
 
 @pytest.mark.django_db

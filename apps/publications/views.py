@@ -90,10 +90,8 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
             'source',
             'source__organization',
         )
-        # for rt in report_types:
-        #     rt.used_metrics = Metric.objects.\
-        #         filter(pk__in=AccessLog.objects.filter(report_type=rt, platform=platform).
-        #                values('metric').distinct())
+        if not settings.ALLOW_NONCOUNTER_DATA:
+            report_types = report_types.filter(counterreporttype__isnull=False)
         return Response(ReportTypeExtendedSerializer(report_types, many=True).data)
 
     @action(detail=True, url_path='knowledgebase')
@@ -302,9 +300,6 @@ class PlatformInterestViewSet(ViewSet):
 
     @action(detail=True, url_path='by-year')
     def by_year(self, request, pk, organization_pk):
-        """
-        Provides a list of report types associated with this platform
-        """
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         accesslog_filter = {'report_type': interest_rt, 'platform_id': pk, **org_filter}
@@ -318,9 +313,6 @@ class PlatformInterestViewSet(ViewSet):
 
     @action(detail=False, url_path='by-year')
     def list_by_year(self, request, organization_pk):
-        """
-        Provides a list of report types associated with this platform
-        """
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         accesslog_filter = {'report_type': interest_rt, **org_filter}

@@ -1,6 +1,5 @@
 import json
 from io import StringIO
-from itertools import combinations
 from unittest.mock import patch
 
 import pytest
@@ -20,7 +19,7 @@ from organizations.models import UserOrganization
 from publications.models import Platform
 
 from ..logic.data_import import import_counter_records
-from organizations.tests.conftest import organizations, identity_by_user_type
+from organizations.tests.conftest import organizations, identity_by_user_type  # noqa
 from core.tests.conftest import (
     valid_identity,
     authenticated_client,
@@ -495,7 +494,6 @@ class TestReportTypeAPI:
             },
             content_type='application/json',
         )
-        print(response.content)
         assert response.status_code == 201
         assert ReportType.objects.count() == 1, 'a new ReportType was created'
         rt = ReportType.objects.get()
@@ -520,7 +518,6 @@ class TestReportTypeAPI:
             },
             content_type='application/json',
         )
-        print(response.content)
         assert response.status_code == 201
         assert ReportType.objects.count() == 1, 'a new ReportType was created'
         rt = ReportType.objects.get()

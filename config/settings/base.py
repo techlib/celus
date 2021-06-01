@@ -424,6 +424,7 @@ REFERENCE_CURRENCY = config('REFERENCE_CURRENCY', default='CZK')
 # is this installation intended for one consortium
 CONSORTIAL_INSTALLATION = config('CONSORTIAL_INSTALLATION', cast=bool, default=True)
 ALLOW_MANUAL_UPLOAD = config('ALLOW_MANUAL_UPLOAD', cast=bool, default=True)
+ALLOW_NONCOUNTER_DATA = config('ALLOW_NONCOUNTER_DATA', cast=bool, default=True)
 
 # user authentication and registration
 # should users be allowed to create accounts themselves
