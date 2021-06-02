@@ -549,8 +549,13 @@ export default {
     dataUrl() {
       this.loadSushiCredentialsList();
     },
-    attemptsUrl() {
-      this.loadAttempts();
+    async attemptsUrl() {
+      await this.loadAttempts();
+      // check that the filter is still valid in the new context
+      // if not - disable it to prevent showing empty data
+      if (this.sushiCredentialsWithAttempts.length === 0 && this.stateFilter) {
+        this.stateFilter = null;
+      }
     },
     credentialsUrl() {
       this.loadSushiCredentialsList();
