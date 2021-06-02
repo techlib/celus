@@ -11,7 +11,7 @@ const BROKEN_REPORT = "broken_report";
 const ATTEMPT_AWAITING_IMPORT = "awaiting_import";
 
 function attemptState(attempt) {
-  if (attempt.untried) {
+  if (attempt.status == "untried") {
     return ATTEMPT_NOT_MADE;
   } else if (attempt.queued) {
     return ATTEMPT_QUEUED;
