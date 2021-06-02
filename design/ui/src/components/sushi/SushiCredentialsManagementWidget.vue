@@ -15,6 +15,8 @@ en:
   is_broken:
     These credentials have been marked as broken because of harvesting failures.
     Automatic harvesting was postponed until the credentials are manually fixed.
+  no_credentials_selected: No credentials selected
+  select_at_least_one_credentials: Please select at least one set of SUSHI credentials using the checkboxes in the credentials list.
 cs:
   add_new: Přidat nové SUSHI
   is_locked: Tyto přístupové údaje jsou uzamčené.
@@ -28,6 +30,8 @@ cs:
   is_broken:
     Tyto přihlašovací údaje byly označeny jako nefunkční, kvůli neúspěchům při stahování. Automatické stahování
     bylo pozastaveno do doby než budou údaje ručně opraveny.
+  no_credentials_selected: Nejsou vybrány žádné přihlašovací údaje
+  select_at_least_one_credentials: Vyberte prosím alespoň jedny přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
 </i18n>
 
 <template>
@@ -45,11 +49,8 @@ cs:
             <v-col cols="auto" align-self="center">
               <v-tooltip bottom>
                 <template #activator="{ on }">
-                  <v-btn
-                    :disabled="!checkedCredentials.length"
-                    @click="testChecked()"
-                    v-on="on"
-                  >
+                  <v-btn @click="testChecked()" color="success" v-on="on">
+                    <v-icon small class="mr-2">fa fa-download</v-icon>
                     {{ $t("test_checked") }}
                     ({{ checkedCredentials.length }})
                   </v-btn>
@@ -544,7 +545,15 @@ export default {
       this.showCreateDialog = true;
     },
     testChecked() {
-      this.showTestDialog = true;
+      if (this.checkedCredentials.length > 0) {
+        this.showTestDialog = true;
+      } else {
+        this.$confirm(this.$t("select_at_least_one_credentials"), {
+          title: this.$t("no_credentials_selected"),
+          buttonTrueText: this.$t("close"),
+          buttonFalseText: null,
+        });
+      }
     },
     stopTestDialog() {
       if (this.$refs.testWidget) {
