@@ -260,7 +260,9 @@ export default {
       selectedAttempt: null,
       showDetailsDialog: false,
       orderBy: ["platform.name", "organization.name"],
-      loading: false,
+      loadingReportTypes: false,
+      loadingCredentials: false,
+      loadingAttempts: false,
       selectedMonth:
         this.$route.query.month ||
         ymDateFormat(addDays(startOfMonth(new Date()), -15)),
@@ -438,6 +440,13 @@ export default {
       );
       return brokenReports;
     },
+    loading() {
+      return (
+        this.loadingAttempts ||
+        this.loadingReportTypes ||
+        this.loadingCredentials
+      );
+    },
   },
 
   methods: {
@@ -445,7 +454,7 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     async loadSushiCredentialsList() {
-      this.loading = true;
+      this.loadingCredentials = true;
       try {
         let response = await axios.get(this.credentialsUrl);
         this.sushiCredentialsList = response.data;
@@ -455,14 +464,14 @@ export default {
           color: "error",
         });
       } finally {
-        this.loading = false;
+        this.loadingCredentials = false;
       }
     },
     async loadAttempts() {
       if (!this.attemptsUrl) {
         return;
       }
-      this.loading = true;
+      this.loadingAttempts = true;
       try {
         let response = await axios.get(this.attemptsUrl);
         this.attemptData = response.data;
@@ -482,11 +491,11 @@ export default {
           color: "error",
         });
       } finally {
-        this.loading = false;
+        this.loadingAttempts = false;
       }
     },
     async loadReportTypes() {
-      this.loading = true;
+      this.loadingReportTypes = true;
       try {
         let response = await axios.get("/api/counter-report-type/");
         this.reportTypes = response.data;
@@ -496,7 +505,7 @@ export default {
           color: "error",
         });
       } finally {
-        this.loading = false;
+        this.loadingReportTypes = false;
       }
     },
     closeDetailsDialog() {
