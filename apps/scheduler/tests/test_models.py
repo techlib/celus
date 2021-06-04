@@ -38,7 +38,6 @@ from scheduler.models import (
 )
 from scheduler import signals
 from sushi.models import SushiCredentials, CounterReportsToCredentials
-from sushi.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
 
 

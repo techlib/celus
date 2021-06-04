@@ -55,49 +55,6 @@ class SushiError:
         return False
 
 
-class SushiErrorMeaning:
-
-    RETRY_IN_MINUTES = 1
-    RETRY_IN_HOURS = 2
-    RETRY_IN_DAYS = 3
-    RETRY_IN_WEEKS = 4
-    RETRY_IN_MONTHS = 5
-    RETRY_AFTER_CHECKUP = 100
-
-    RETRY_INTERVAL_TO_TIMEDELTA = {
-        RETRY_IN_MINUTES: timedelta(minutes=1),
-        RETRY_IN_HOURS: timedelta(hours=1),
-        RETRY_IN_DAYS: timedelta(days=1),
-        RETRY_IN_WEEKS: timedelta(weeks=1),
-        RETRY_IN_MONTHS: timedelta(days=30),
-    }
-
-    def __init__(
-        self,
-        should_retry=False,
-        needs_checking=True,
-        setup_ok=False,
-        retry_interval=RETRY_AFTER_CHECKUP,
-    ):
-        """
-
-        :param should_retry:
-        :param needs_checking: the credentials or the whole setup should be checked - no sense
-            in retrying before changing something
-        :param retry_interval: how fast should be retry
-        :param setup_ok: if true, it means the credentials and report type are OK, just that there
-            was something other with the request (wrong date, etc.) - we can try other dates
-        """
-        self.should_retry = should_retry
-        self.needs_checking = needs_checking
-        self.retry_interval = retry_interval
-        self.setup_ok = setup_ok
-
-    @property
-    def retry_interval_timedelta(self):
-        return self.RETRY_INTERVAL_TO_TIMEDELTA.get(self.retry_interval)
-
-
 def convert_key(key: str) -> str:
     # remove namespace
     key = key.split(":", 1)[-1]
@@ -152,66 +109,6 @@ class SushiClientBase:
         params=None,
     ):
         raise NotImplementedError()
-
-    @classmethod
-    def explain_error_code(
-        cls, error_code: typing.Union[int, str], contains_recent_data: bool
-    ) -> SushiErrorMeaning:
-        """ Tries to figure out a meaning of an error code
-        :param error_code: Sushi error code
-        :param contains_recent_data: are data relatively new to download date
-
-        :returns: the meaning
-        """
-        try:
-            error_code = int(error_code)
-        except ValueError:
-            return SushiErrorMeaning(should_retry=True, needs_checking=True, setup_ok=False)
-
-        if error_code in (ErrorCode.REPORT_NOT_SUPPORTED, ErrorCode.REPORT_VERSION_NOT_SUPPORTED):
-            # report is not supported, so it was successful, but no data
-            return SushiErrorMeaning(should_retry=False, needs_checking=False, setup_ok=False)
-        elif error_code in (ErrorCode.NO_DATA_FOR_DATE_ARGS,):
-            # no usage data for the requested period, it is success, but again no data
-            # unfortunately, some providers, such as Clarivate (Web Of Science) use this
-            # wrongly in cases when 3031 should be used, so we need to treat it like this
-            return SushiErrorMeaning(
-                should_retry=contains_recent_data,  # reschedule only for "recent" data
-                needs_checking=False,
-                setup_ok=True,
-                retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS,
-            )
-        elif error_code in (
-            ErrorCode.SERVICE_BUSY,
-            ErrorCode.PREPARING_DATA,
-            ErrorCode.TOO_MANY_REQUESTS,
-        ):
-            # some forms of 'try it later' errors
-            return SushiErrorMeaning(
-                should_retry=True,
-                needs_checking=False,
-                setup_ok=True,
-                retry_interval=SushiErrorMeaning.RETRY_IN_MINUTES,
-            )
-        elif error_code in (ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS,):
-            # the data is not yet available - usually some months are missing
-            return SushiErrorMeaning(
-                should_retry=True,
-                needs_checking=False,
-                setup_ok=True,
-                retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS,
-            )
-        elif error_code >= 4000:
-            # some other stuff for which we want to check later if the data exists
-            # in the wild, we have seen 4010
-            return SushiErrorMeaning(
-                should_retry=True,
-                needs_checking=False,
-                setup_ok=True,
-                retry_interval=SushiErrorMeaning.RETRY_IN_WEEKS,
-            )
-        else:
-            return SushiErrorMeaning(should_retry=True, needs_checking=True, setup_ok=False)
 
 
 class Sushi5Client(SushiClientBase):

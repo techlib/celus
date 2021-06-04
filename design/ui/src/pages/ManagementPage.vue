@@ -8,7 +8,6 @@ en:
   erms_sync_organizations: Sync organizations with ERMS
   erms_sync_users_and_identities: Sync user accounts with ERMS
   erms_sync_platforms: Sync platforms with ERMS
-  fetch_new_sushi_data: Check for new SUSHI data
   task_success: Task was successfully submitted
   task_error: An error occurred during task submission
   management_page: Management page
@@ -24,7 +23,6 @@ cs:
   erms_sync_organizations: Synchronizace organizací s ERMS
   erms_sync_users_and_identities: Synchronizace uživatelských účtů s ERMS
   erms_sync_platforms: Synchronizace platforem s ERMS
-  fetch_new_sushi_data: Spustit stahování nových dat přes SUSHI
   task_success: Úloha byla úspěšně zadána
   task_error: Při zadávání úlohy došlo k chybě
   management_page: Správa systému
@@ -109,11 +107,6 @@ export default {
           title: this.$t("erms_sync_users_and_identities"),
           taskName: "erms-sync-users-and-identities",
           filter: (context) => context.uses_erms,
-        },
-        {
-          title: this.$t("fetch_new_sushi_data"),
-          taskName: "fetch-new-sushi-data",
-          icon: "fas fa-running",
         },
       ],
     };

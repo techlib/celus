@@ -29,7 +29,6 @@ from nigiri.client import (
     Sushi4Client,
     SushiException as SushiExceptionNigiri,
     SushiClientBase,
-    SushiErrorMeaning,
 )
 from nigiri.counter4 import (
     Counter4JR1Report,
@@ -86,10 +85,6 @@ COUNTER_REPORTS = (
     ('DR', 5, False, Counter5TableReport, False),
     ('IR', 5, False, Counter5TableReport, False),
 )
-
-
-NO_DATA_RETRY_PERIOD = timedelta(days=45)  # cca month and half
-NO_DATA_READY_PERIOD = timedelta(days=7)
 
 
 class CreatedUpdatedMixin(models.Model):
@@ -308,26 +303,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         url_hash = blake2b(self.url.encode('utf-8'), digest_size=16).hexdigest()
         return f'url-lock-{url_hash}'
 
-    def when_can_access(self, base_wait_unit=5) -> float:
-        """
-        Computes the number of seconds required to wait before we can download data
-        using the current credentials.
-        This is used to get around issues with providers who limit the number of attempts
-        per unit of time
-        :return:
-        """
-        last_attempts = self.sushifetchattempt_set.order_by('-timestamp').values(
-            'error_code', 'timestamp'
-        )[:16]
-        too_many_attempts = list(takewhile(lambda x: x['error_code'] == '1020', last_attempts))
-        if too_many_attempts:
-            seconds = base_wait_unit * 2 ** len(too_many_attempts)
-            last_timestamp = too_many_attempts[0]['timestamp']
-            diff = (last_timestamp + timedelta(seconds=seconds) - now()).total_seconds()
-            if diff > 0:
-                return diff
-        return 0
-
     def version_dict(self) -> Dict:
         """
         Returns a dictionary will all the attributes of this object that may be subject to
@@ -448,23 +423,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             errors = client.extract_errors_from_data(file_data)
             if errors:
                 error_code = errors[0].code
-                error_explanation = client.explain_error_code(
-                    error_code, SushiFetchAttempt.fetched_near_end_date(end_date, datetime.now())
-                )
-                queued = error_explanation.should_retry and error_explanation.setup_ok
-                download_success = (
-                    not error_explanation.needs_checking and error_explanation.setup_ok
-                )
-                processing_success = download_success
-
-                # mark as processed (for outdated 3030 reports)
-                if (
-                    error_explanation.setup_ok
-                    and not error_explanation.should_retry
-                    and not error_explanation.needs_checking
-                ):
-                    is_processed = True
-                    when_processed = now()
+                queued = False
+                download_success = False
+                processing_success = False
+                is_processed = True
+                when_processed = now()
 
                 # Check whether it contains partial data
                 if any(
@@ -554,7 +517,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
         else:
-            download_success = True
+            download_success = len(report.errors) == 0
             contains_data = report.record_found
 
             # Check for partial data
@@ -587,23 +550,10 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 else:
                     error_code = error_obj.code if hasattr(error_obj, 'code') else ''
 
-                    error_explanation = client.explain_error_code(
-                        error_code,
-                        SushiFetchAttempt.fetched_near_end_date(end_date, datetime.now()),
-                    )
-                    queued = error_explanation.should_retry and error_explanation.setup_ok
-                    processing_success = (
-                        not error_explanation.needs_checking and error_explanation.setup_ok
-                    )
-
-                    # mark as processed (for outdated 3030 reports)
-                    if (
-                        error_explanation.setup_ok
-                        and not error_explanation.should_retry
-                        and not error_explanation.needs_checking
-                    ):
-                        is_processed = True
-                        when_processed = now()
+                    queued = False
+                    processing_success = False
+                    is_processed = True
+                    when_processed = now()
             else:
                 processing_success = True
                 queued = report.queued
@@ -671,13 +621,6 @@ class SushiFetchAttemptQuerySet(models.QuerySet):
 
     def current_or_successful(self, success_measure='is_processed'):
         return self.current() | self.successful(success_measure=success_measure)
-
-    def fetched_near_end_date(self) -> models.QuerySet:
-        """ Attempts which were fetchted near to end_date
-
-        there is a chance that the provider doesn't have the data for requested period yet
-        """
-        return self.filter(end_date__gt=F('timestamp') - NO_DATA_RETRY_PERIOD)
 
 
 class SushiFetchAttempt(models.Model):
@@ -762,18 +705,6 @@ class SushiFetchAttempt(models.Model):
             and not self.import_crashed
         )
 
-    @classmethod
-    def fetched_near_end_date(cls, end_date: date, when_triggered: datetime) -> bool:
-        return end_date > when_triggered.date() - NO_DATA_RETRY_PERIOD
-
-    @property
-    def is_fetched_near_end_date(self) -> bool:
-        """ Is attempt triggered close to end_data
-
-        there is a chance that the provider doesn't have the data for requested period yet
-        """
-        return self.fetched_near_end_date(self.end_date, self.timestamp)
-
     @property
     def status(self):
         status = 'SUCCESS'
@@ -798,38 +729,6 @@ class SushiFetchAttempt(models.Model):
     @property
     def ok(self):
         return self.download_success and self.processing_success
-
-    @property
-    def queueing_explanation(self):
-        if not self.queued:
-            return 'Not queued'
-        following_count = self.queue_following.count()
-        if following_count:
-            return (
-                f'{following_count} following attempt(s) exist - no queueing applies for '
-                f'this attempt'
-            )
-        output = []
-        cred_based_delay = self.credentials.when_can_access()
-        cred_based_retry = now() + timedelta(seconds=cred_based_delay)
-        output.append(f'Credentials based retry date: {cred_based_retry}')
-        attempt_retry = self.when_to_retry()
-        output.append(f'Attempt retry date: {attempt_retry}')
-        if not attempt_retry:
-            when_retry = None
-        else:
-            when_retry = max(attempt_retry, cred_based_retry)
-        output.append('------------------')
-        if when_retry and when_retry <= now():
-            # we are ready to retry
-            output.append('Ready to retry')
-        else:
-            if when_retry:
-                retry_delay = when_retry - now()
-                output.append(f'Too soon to retry - need {retry_delay}')
-            else:
-                output.append('Should not retry automatically')
-        return '\n'.join(output)
 
     def file_is_json(self) -> Optional[bool]:
         """
@@ -860,83 +759,6 @@ class SushiFetchAttempt(models.Model):
             start_date__lte=max_start_date,
             end_date__gte=min_end_date,
         ).exclude(pk=self.pk)
-
-    def retry(self):
-        # This function will be depracated in the future
-        from scheduler.models import FetchIntention
-
-        # Attempts planned with FetchIntention have retries planned
-        # within FetchIntention class
-        if FetchIntention.objects.filter(attempt=self).exists():
-            return self
-
-        with atomic():
-            # set queue queue_id if not already set
-            if not self.queue_id:
-                self.queue_id = self.pk
-                self.save()
-
-            attempt = self.credentials.fetch_report(
-                counter_report=self.counter_report,
-                start_date=self.start_date,
-                end_date=month_end(self.end_date),
-            )
-            attempt.queue_previous = self
-            attempt.queue_id = self.queue_id
-            attempt.triggered_by = self.triggered_by
-            attempt.save()
-        return attempt
-
-    def previous_attempt_count(self):
-        """
-        Goes through the possible linked list of queue_previous and counts how long the list is.
-        """
-        count = 0
-        current = self
-        while current.queue_previous:
-            count += 1
-            current = current.queue_previous
-        return count
-
-    def retry_interval_simple(self) -> Optional[timedelta]:
-        """
-        Return the time interval after which it makes sense to retry. If None, it means no retry
-        should be made unless something is changed - there was no error or the error was permanent
-        """
-        if not self.error_code:
-            return None
-        exp = self.error_explanation()
-        delta = exp.retry_interval_timedelta if exp else timedelta(days=30)
-        return delta
-
-    def error_explanation(self) -> SushiErrorMeaning:
-        exp = SushiClientBase.explain_error_code(self.error_code, self.is_fetched_near_end_date)
-        return exp
-
-    def retry_interval(self) -> Optional[timedelta]:
-        """
-        Retry interval taking into account how many previous attempts there already were
-        by using exponential back-off
-        """
-        prev_count = self.previous_attempt_count()
-        interval = self.retry_interval_simple()
-        if not interval:
-            return None
-        if prev_count > settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
-            # we reached the maximum number of retries, we do not continue
-            return None
-        return interval * (2 ** prev_count)
-
-    def when_to_retry(self) -> Optional[datetime]:
-        """
-        Uses the information about error (by using self.retry_interval) and self.when_queued to
-        guess when (in absolute terms) it makes sense to retry
-        """
-        interval = self.retry_interval()
-        if not interval:
-            return None
-        ref_time = self.when_queued or self.timestamp
-        return ref_time + interval
 
     def mark_crashed(self, exception):
         if self.log:

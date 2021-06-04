@@ -105,10 +105,9 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.error_code = error.code
             attempt.download_success = True
             attempt.contains_data = False
-            error_explanation = Sushi5Client.explain_error_code(attempt.error_code)
-            attempt.queued = error_explanation.should_retry and error_explanation.setup_ok
-            attempt.processing_success = not (
-                error_explanation.needs_checking and error_explanation.setup_ok
+            attempt.queued = False  # queued logic was moved to scheduler
+            attempt.processing_success = (
+                False  # consider that processing has failed when an error occurs
             )
         attempt.save()
     # now read the data and import it

@@ -12,11 +12,6 @@ from logs.tasks import (
 )
 from recache.tasks import remove_old_cached_queries_task, find_and_renew_first_due_cached_query_task
 from scheduler.tasks import plan_schedulers_triggering, update_automatic_harvesting
-from sushi.tasks import (
-    fetch_new_sushi_data_task,
-    retry_queued_attempts_task,
-    fetch_new_sushi_data_for_credentials_task,
-)
 from publications.tasks import erms_sync_platforms_task
 
 
@@ -25,11 +20,8 @@ class Command(BaseCommand):
     help = 'Start the specified celery task'
 
     tasks = {
-        'fetch_new_sushi_data_task': fetch_new_sushi_data_task,
-        'fetch_new_sushi_data_for_credentials_task': fetch_new_sushi_data_for_credentials_task,
         'sync_interest_task': sync_interest_task,
         'recompute_interest_by_batch_task': recompute_interest_by_batch_task,
-        'retry_queued_attempts_task': retry_queued_attempts_task,
         'import_new_sushi_attempts_task': import_new_sushi_attempts_task,
         'erms_sync_platforms_task': erms_sync_platforms_task,
         'smart_interest_sync_task': smart_interest_sync_task,

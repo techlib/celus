@@ -40,14 +40,14 @@ class TestSushiFetching:
             ),
             (
                 '5_TR_ProQuestEbookCentral_exception.json',
-                True,
+                False,
                 False,
                 True,
                 'Error #3030: No Usage Available for Requested Dates.',
             ),
             (
                 'error-in-root.json',
-                True,
+                False,
                 False,
                 True,
                 'Error #2090: Got response code: 404 for request: https://example.com/path/path',
@@ -90,8 +90,8 @@ class TestSushiFetching:
                 with pytest.raises(ValueError):
                     import_one_sushi_attempt(attempt)
 
-    @pytest.mark.parametrize(('time', 'queued'), (('2020-08-01', False), ('2020-06-15', True),))
-    def test_c4_3030(self, counter_report_types, organizations, platforms, time, queued):
+    @pytest.mark.parametrize('time', ('2020-08-01', '2020-06-15'))
+    def test_c4_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
         )
@@ -103,13 +103,13 @@ class TestSushiFetching:
                 counter_report_types["db1"], start_date='2020-05-01', end_date='2020-05-31'
             )
             assert m.called
-            assert attempt.download_success is True
+            assert attempt.download_success is False
             assert attempt.contains_data is False
-            assert attempt.queued is queued
-            assert attempt.is_processed is not queued
+            assert attempt.queued is False
+            assert attempt.is_processed is True
 
-    @pytest.mark.parametrize(('time', 'queued'), (('2017-04-01', False), ('2017-02-15', True),))
-    def test_c5_3030(self, counter_report_types, organizations, platforms, time, queued):
+    @pytest.mark.parametrize('time', ('2017-04-01', '2017-02-15'))
+    def test_c5_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
         )
@@ -123,16 +123,16 @@ class TestSushiFetching:
                 counter_report_types["pr"], start_date='2017-01-01', end_date='2017-01-31'
             )
             assert m.called
-            assert attempt.download_success is True
+            assert attempt.download_success is False
             assert attempt.contains_data is False
-            assert attempt.queued is queued
-            assert attempt.is_processed is not queued
+            assert attempt.queued is False
+            assert attempt.is_processed is True
 
     @pytest.mark.parametrize(
         ('path', 'http_status', 'error_code', 'download_success'),
         (
-            ('naked_error_3000.json', 400, 3000, True,),
-            ('naked_error_3000.json', 200, 3000, True,),
+            ('naked_error_3000.json', 400, 3000, False,),
+            ('naked_error_3000.json', 200, 3000, False,),
             ('no_json.txt', 400, 'non-sushi', False),
         ),
     )

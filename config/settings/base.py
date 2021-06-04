@@ -269,11 +269,6 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_TASK_ROUTES = {
     'logs.tasks.sync_interest_task': {'queue': 'interest'},
     'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
-    'sushi.tasks.retry_queued_attempts_task': {'queue': 'sushi'},
-    'sushi.tasks.run_sushi_fetch_attempt_task': {'queue': 'sushi'},
-    'sushi.tasks.fetch_new_sushi_data_task': {'queue': 'sushi'},
-    'sushi.tasks.fetch_new_sushi_data_for_credentials_task': {'queue': 'sushi'},
-    'sushi.tasks.retry_holes_with_new_credentials_task': {'queue': 'sushi'},
     'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
     'logs.tasks.import_one_sushi_attempt_task': {'queue': 'import'},
     'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
@@ -296,17 +291,9 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'logs.tasks.sync_materialized_reports_task',
         'schedule': schedule(run_every=timedelta(minutes=7)),
     },
-    'retry_queued_attempts_task': {
-        'task': 'sushi.tasks.retry_queued_attempts_task',
-        'schedule': schedule(run_every=timedelta(minutes=30)),
-    },
     'import_new_sushi_attempts_task': {
         'task': 'logs.tasks.import_new_sushi_attempts_task',
         'schedule': schedule(run_every=timedelta(minutes=5)),
-    },
-    'fetch_new_sushi_data_task': {
-        'task': 'sushi.tasks.fetch_new_sushi_data_task',
-        'schedule': crontab(minute=13, hour=3),  # every day at 3:13
     },
     'remove_old_cached_queries_task': {
         'task': 'recache.tasks.remove_old_cached_queries_task',

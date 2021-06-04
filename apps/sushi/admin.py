@@ -60,7 +60,6 @@ class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
         'customer_id',
         'requestor_id',
         'enabled',
-        'when_can_access',
     ]
     list_filter = ['enabled', 'broken', 'counter_version', 'organization', 'platform']
     search_fields = [
@@ -207,7 +206,6 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         'data_file',
         'import_batch',
         'queue_previous',
-        'queueing_explanation',
     ]
     search_fields = [
         'credentials__organization__name',

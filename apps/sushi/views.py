@@ -39,11 +39,6 @@ from .serializers import (
     SushiFetchAttemptSimpleSerializer,
     UnsetBrokenSerializer,
 )
-from .tasks import (
-    run_sushi_fetch_attempt_task,
-    fetch_new_sushi_data_task,
-    fetch_new_sushi_data_for_credentials_task,
-)
 
 
 class SushiCredentialsViewSet(ModelViewSet):
@@ -312,7 +307,7 @@ class SushiFetchAttemptViewSet(ModelViewSet):
 
     serializer_class = SushiFetchAttemptSerializer
     queryset = SushiFetchAttempt.objects.none()
-    http_method_names = ['get', 'post', 'options', 'head']
+    http_method_names = ['get', 'options', 'head']
     pagination_class = StandardResultsSetPagination
 
     def get_object(self):
@@ -363,60 +358,3 @@ class SushiFetchAttemptViewSet(ModelViewSet):
             prefix = '-' if desc == 'true' else ''
             qs = qs.order_by(prefix + order_by)
         return qs
-
-    # TODO: is this still necessary? We do not seem to use it anymore from the UI
-    def perform_create(self, serializer: SushiFetchAttemptSerializer):
-        # check that the user is allowed to create attempts for this organization
-        credentials = serializer.validated_data['credentials']
-        counter_report = serializer.validated_data['counter_report']
-        # check whether the credentials are not broken
-        if (
-            credentials.broken
-            or credentials.counterreportstocredentials_set.filter(
-                broken__isnull=False, counter_report=counter_report
-            ).exists()
-        ):
-            raise ValidationError('Credentials seems to be broken.')
-
-        org_relation = self.request.user.organization_relationship(credentials.organization_id)
-        if org_relation < REL_ORG_ADMIN:
-            raise PermissionDenied(
-                'user is not allowed to start fetch attempts for this organization'
-            )
-        # proceed with creation
-        serializer.validated_data['in_progress'] = True
-        super().perform_create(serializer)
-        attempt = serializer.instance
-        attempt.triggered_by = self.request.user
-        attempt.save()
-        run_sushi_fetch_attempt_task.apply_async(args=(attempt.pk, True), countdown=1)
-
-
-class StartFetchNewSushiDataTask(APIView):
-
-    permission_classes = [SuperuserOrAdminPermission]
-
-    def post(self, request):
-        task = fetch_new_sushi_data_task.delay()
-        return Response({'id': task.id,})
-
-
-class StartFetchNewSushiDataForCredentialsTask(APIView):
-    def post(self, request, credentials_pk):
-        try:
-            credentials = SushiCredentials.objects.get(pk=credentials_pk)
-        except SushiCredentials.DoesNotExist:
-            return HttpResponseBadRequest(
-                json.dumps({'error': f'Credentials object with id={credentials_pk} does not exist'})
-            )
-        # let's check authorization
-        if request.user.is_superuser or request.user.is_from_master_organization:
-            pass
-        elif OrganizationRelatedPermissionMixin.has_org_access(
-            request.user, credentials.organization_id
-        ):
-            pass
-        else:
-            raise PermissionDenied('User is neither manager nor admin of related organization')
-        task = fetch_new_sushi_data_for_credentials_task.delay(credentials.pk)
-        return Response({'id': task.id,})

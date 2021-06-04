@@ -527,205 +527,57 @@ class TestSushiCredentialsViewSet:
 
 @pytest.mark.django_db()
 class TestSushiFetchAttemptView:
-    def test_create(self, basic1, organizations, platforms, clients, users, counter_report_types):
-        credentials = CredentialsFactory(
-            organization=organizations["root"], platform=platforms["root"],
-        )
-
-        # we must patch the run_sushi_fetch_attempt_task task in order to prevent stalling
-        # during tests by CI
-        with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
-            resp = clients["master"].post(
-                reverse('sushi-fetch-attempt-list'),
-                {
-                    'credentials': credentials.pk,
-                    'start_date': '2020-01-01',
-                    'end_date': '2020-01-31',
-                    'counter_report': counter_report_types["tr"].pk,
-                },
-            )
-            assert task_mock.apply_async.call_count == 1
-            assert resp.status_code == 201
-            assert 'pk' in resp.json()
-            attempt = SushiFetchAttempt.objects.last()
-            assert attempt.triggered_by == users["master"]
-
-    def test_create_broken(self, basic1, clients, counter_report_types, credentials):
-        # broken credentials
-        attempt_tr = FetchAttemptFactory(
-            credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
-        )
-        credentials["standalone_tr"].broken = BS.BROKEN_HTTP
-        credentials["standalone_tr"].first_broken_attempt = attempt_tr
-        credentials["standalone_tr"].save()
-
-        resp = clients["master"].post(
-            reverse('sushi-fetch-attempt-list'),
-            {
-                'credentials': credentials["standalone_tr"].pk,
-                'start_date': '2020-01-01',
-                'end_date': '2020-01-31',
-                'counter_report': counter_report_types["tr"].pk,
-            },
-        )
-        assert resp.status_code == 400
-
-        # broken report type
-        attempt_br1 = FetchAttemptFactory(
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["jr1"],
-        )
-        cr2c_br1 = CounterReportsToCredentials.objects.get(
-            credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"
-        )
-        cr2c_br1.broken = BS.BROKEN_SUSHI
-        cr2c_br1.first_broken_attempt = attempt_br1
-        cr2c_br1.save()
-
-        resp = clients["master"].post(
-            reverse('sushi-fetch-attempt-list'),
-            {
-                'credentials': credentials["standalone_br1_jr1"].pk,
-                'start_date': '2020-01-01',
-                'end_date': '2020-01-31',
-                'counter_report': counter_report_types["br1"].pk,
-            },
-        )
-        assert resp.status_code == 400
-
-        # other report type still working
-        with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
-            resp = clients["master"].post(
-                reverse('sushi-fetch-attempt-list'),
-                {
-                    'credentials': credentials["standalone_br1_jr1"].pk,
-                    'start_date': '2020-01-01',
-                    'end_date': '2020-01-31',
-                    'counter_report': counter_report_types["jr1"].pk,
-                },
-            )
-            assert task_mock.apply_async.call_count == 1
-        assert resp.status_code == 201
-
-    @pytest.mark.parametrize(
-        ['user', 'can_create', 'return_code'],
-        [
-            ['unauthenticated', False, 401],
-            ['invalid', False, 401],
-            ['user1', False, 403],
-            ['user2', False, 403],
-            ['admin2', True, 201],
-            ['master', True, 201],
-            ['su', True, 201],
-        ],
-    )
-    def test_create_api_access(
+    def test_list(
         self,
-        user,
-        can_create,
-        return_code,
         basic1,
+        clients,
         organizations,
         platforms,
-        clients,
         counter_report_types,
-    ):
-        credentials = CredentialsFactory(
-            organization=organizations["standalone"], platform=platforms["standalone"],
-        )
-
-        with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
-            resp = clients[user].post(
-                reverse('sushi-fetch-attempt-list'),
-                {
-                    'credentials': credentials.pk,
-                    'start_date': '2020-01-01',
-                    'end_date': '2020-01-31',
-                    'counter_report': counter_report_types["tr"].pk,
-                },
-            )
-            assert resp.status_code == return_code
-            if can_create:
-                assert task_mock.apply_async.call_count == 1
-            else:
-                assert task_mock.apply_async.call_count == 0
-
-    def test_create_in_no_data_period(
-        self, basic1, organizations, platforms, clients, counter_report_types
-    ):
-        credentials = CredentialsFactory(
-            organization=organizations["root"], platform=platforms["root"],
-        )
-
-        with freeze_time("2020-01-31"):
-            with patch('sushi.views.run_sushi_fetch_attempt_task'):
-                resp = clients["master"].post(
-                    reverse('sushi-fetch-attempt-list'),
-                    {
-                        'credentials': credentials.pk,
-                        'start_date': '2020-01-01',
-                        'end_date': '2020-01-31',
-                        'counter_report': counter_report_types["tr"].pk,
-                    },
-                )
-                assert resp.status_code == 400
-
-        with freeze_time("2020-02-07"):
-            with patch('sushi.views.run_sushi_fetch_attempt_task'):
-                resp = clients["master"].post(
-                    reverse('sushi-fetch-attempt-list'),
-                    {
-                        'credentials': credentials.pk,
-                        'start_date': '2020-01-01',
-                        'end_date': '2020-01-31',
-                        'counter_report': counter_report_types["tr"].pk,
-                    },
-                )
-                assert resp.status_code == 400
-
-        with freeze_time("2020-02-08"):
-            with patch('sushi.views.run_sushi_fetch_attempt_task'):
-                resp = clients["master"].post(
-                    reverse('sushi-fetch-attempt-list'),
-                    {
-                        'credentials': credentials.pk,
-                        'start_date': '2020-01-01',
-                        'end_date': '2020-01-31',
-                        'counter_report': counter_report_types["tr"].pk,
-                    },
-                )
-                assert resp.status_code == 201
-
-    def test_detail_available_after_create(
-        self, basic1, clients, organizations, platforms, counter_report_types
+        harvests,
+        credentials,
     ):
         """
-        Check that if we create an attempt, it will be available using the same API later.
-        This test was created because after introducing default filtering of attempts
-        to successful+current, this was not true
+        Check whether fetch attempts are properly listed
         """
-        credentials = CredentialsFactory(
-            organization=organizations["standalone"], platform=platforms["standalone"],
-        )
-
-        with patch('sushi.views.run_sushi_fetch_attempt_task') as task_mock:
-            resp = clients["master"].post(
-                reverse('sushi-fetch-attempt-list'),
-                {
-                    'credentials': credentials.pk,
-                    'start_date': '2020-01-01',
-                    'end_date': '2020-01-31',
-                    'counter_report': counter_report_types["tr"].pk,
-                },
-            )
-            assert task_mock.apply_async.call_count == 1
-        assert resp.status_code == 201
-        create_data = resp.json()
-        pk = create_data['pk']
-        # now get the details of the attempt using GET
-        resp = clients["master"].get(reverse('sushi-fetch-attempt-detail', args=(pk,)))
+        url = reverse('sushi-fetch-attempt-list',)
+        resp = clients["master"].get(reverse('sushi-fetch-attempt-list'),)
         assert resp.status_code == 200
-        assert resp.json() == create_data
+        data = resp.json()
+        assert len(data) == 4
+
+    @pytest.mark.parametrize(
+        ['user', 'status_code'],
+        [
+            ['unauthenticated', 401],
+            ['invalid', 401],
+            ['user1', 200],
+            ['user2', 404],
+            ['admin1', 200],
+            ['admin2', 404],
+            ['master', 200],
+            ['su', 200],
+        ],
+    )
+    def test_detail(
+        self,
+        basic1,
+        clients,
+        organizations,
+        platforms,
+        counter_report_types,
+        harvests,
+        credentials,
+        user,
+        status_code,
+    ):
+        """
+        Check whether displaying detail about fetch attempts works properly
+        """
+        attempt = harvests["user1"].intentions.get(queue_id=8).attempt
+        url = reverse('sushi-fetch-attempt-detail', args=(attempt.pk,))
+        resp = clients[user].get(url)
+        assert resp.status_code == status_code
 
     @pytest.mark.parametrize(['attempt_count'], [(1,), (2,), (10,)])
     def test_list(self, admin_client, attempt_count):

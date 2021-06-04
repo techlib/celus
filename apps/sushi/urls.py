@@ -10,12 +10,4 @@ router.register(
     r'sushi-fetch-attempt', views.SushiFetchAttemptViewSet, basename='sushi-fetch-attempt'
 )
 
-urlpatterns = [
-    path('run-task/fetch-new-sushi-data', views.StartFetchNewSushiDataTask.as_view()),
-    path(
-        'run-task/fetch-new-sushi-data/<int:credentials_pk>',
-        views.StartFetchNewSushiDataForCredentialsTask.as_view(),
-    ),
-]
-
-urlpatterns += router.urls
+urlpatterns = router.urls
