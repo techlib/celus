@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0]
+
+### Added
+
+#### Frontend
+
+* buttons for immediate harvesting and cancellation of harvests planned for later were added
+* partial-data status was added to `FetchAttempt` information
+* Celus frontend now checks the version of the backend and forces refresh if the versions do not
+  match
+
+#### Backend
+
+* support for IR_M1 report was added
+* ability to trigger postponed re-imports via celery was added to Django admin
+
+### Changes
+
+#### Frontend
+
+* harvest list view was extended and improved
+* the 'Harvest selected' button on 'SUSH management page' was changed for better visibility
+* harvest view uses a second progress bar to indicate activity even if individual steps take a
+  long time
+* all views were updated to stretch to the whole available space where the UI benefits from it
+* empty harvests were hidden from harvest views
+* obsolete `Attempt overview` view was removed from the UI
+* the name of the organization created by the user after registration is limited to 100 characters
+* user-created platforms and report types are marked with a special badge for easy recognition
+* if a status filter is active on the sushi monthly overview page, it is automatically disabled
+  when month is changed if there are no records with this status for the newly selected month
+
+#### Backend
+
+* django admin views using translatable fields were updated to properly display these fields
+* data import memory consumption for large files was optimized by reading data in batches
+* Celery task locking was switched from Redis-based locks to database locks where appropriate
+* extra whitespace is stripped from string values imported from C5 tabular format
+* obsolete backend code related to the `Attempt overview` view was removed
+* database unique constrains for `short_name` and `source` were reworked
+* a Django setting was added to selectively allow manual upload of COUNTER data only
+* speed and number of queries for listing harvest intentions was optimized
+
+### Fixed
+
+#### Frontend
+
+* display of selected report types when opening SUSHI credentials edit dialog was fixed -
+  it sometimes forgot which reports were active
+* interest is now available as report type in the reporting module
+* if `short_name` is not available in harvest view, use `name`
+* fix timeout overflow problems in views which use `setTimeout`
+* positioning of 'Add annotation' and 'Add platform' buttons on platform list page was improved
+* when changing selected organization, the list of available platforms on the `manual upload` page
+  is automatically refreshed
+* date related filters were not copied when a report was copied
+* 'untried' fetch-intention status was fixed to actually work
+* sushi monthly overview no longer prematurely hides the loading progress bar which was confusing
+
+#### Backend
+
+* harvests planning for the current month was fixed
+
+
 ## [3.0.2]
 
 ### Fixed
