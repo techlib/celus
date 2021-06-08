@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.functional import cached_property
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.apps import apps
 
@@ -97,6 +98,10 @@ class DataSource(models.Model):
         if self.organization and self.type == self.TYPE_ORGANIZATION:
             return f'Org: {self.organization}'
         return f'{self.short_name}: {self.get_type_display()}'
+
+    @classmethod
+    def create_default_short_name(cls, user: 'User', organization_name: str):
+        return f"{slugify(user.username)}#{ slugify(organization_name) }"[:50]
 
 
 class User(AbstractUser):

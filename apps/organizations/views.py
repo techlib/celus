@@ -6,12 +6,11 @@ from django.db import transaction
 from django.db.models import Count, Q, Sum, Max, Min, F, Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
-from django.utils.text import slugify
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework import status
 
 from core.filters import PkMultiValueFilterBackend
 from core.logic.bins import bin_hits
@@ -19,11 +18,10 @@ from core.logic.dates import date_filter_from_params, month_end
 from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import ReportType, AccessLog, InterestGroup
+from logs.models import ReportType, AccessLog
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
-from publications.models import PlatformTitle, Platform
-from publications.serializers import PlatformSerializer
+from publications.models import PlatformTitle
 from recache.util import recache_queryset
 from sushi.models import SushiCredentials
 from .models import UserOrganization, Organization
@@ -187,7 +185,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         serializer = OrganizationSimpleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         valid_data = serializer.validated_data
-        slugified_name = f"{slugify(request.user.username)}#{ slugify(valid_data['name']) }"[:50]
+        slugified_name = DataSource.create_default_short_name(request.user, valid_data['name'])
         if DataSource.objects.filter(short_name=slugified_name).exists():
             conflicting_name = (
                 DataSource.objects.filter(short_name=slugified_name).first().short_name
