@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [3.1.0]
 
 ### Added
@@ -27,8 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * harvest list view was extended and improved
 * the 'Harvest selected' button on 'SUSH management page' was changed for better visibility
-* harvest view uses a second progress bar to indicate activity even if individual steps take a
-  long time
 * all views were updated to stretch to the whole available space where the UI benefits from it
 * empty harvests were hidden from harvest views
 * obsolete `Attempt overview` view was removed from the UI
@@ -39,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-* django admin views using translatable fields were updated to properly display these fields
-* data import memory consumption for large files was optimized by reading data in batches
 * Celery task locking was switched from Redis-based locks to database locks where appropriate
 * extra whitespace is stripped from string values imported from C5 tabular format
 * obsolete backend code related to the `Attempt overview` view was removed
@@ -52,12 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-* display of selected report types when opening SUSHI credentials edit dialog was fixed -
-  it sometimes forgot which reports were active
-* interest is now available as report type in the reporting module
-* if `short_name` is not available in harvest view, use `name`
-* fix timeout overflow problems in views which use `setTimeout`
-* positioning of 'Add annotation' and 'Add platform' buttons on platform list page was improved
 * when changing selected organization, the list of available platforms on the `manual upload` page
   is automatically refreshed
 * date related filters were not copied when a report was copied
@@ -69,7 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * harvests planning for the current month was fixed
 
 
-### Fixes
+## [3.0.3]
+
+### Fixed
 
 #### Frontend
 
