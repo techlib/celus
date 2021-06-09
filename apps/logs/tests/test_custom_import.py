@@ -7,14 +7,12 @@ from django.core.files.base import ContentFile
 from django.urls import reverse
 
 from core.models import Identity, UL_ORG_ADMIN, UL_CONS_STAFF
+from core.tests.conftest import *  # noqa
+from organizations.tests.conftest import identity_by_user_type, organizations  # noqa
+from publications.tests.conftest import platforms  # noqa
 from logs.logic.custom_import import custom_data_to_records, import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload
 from publications.models import Platform
-
-from core.tests.conftest import *
-from organizations.tests.conftest import *
-from publications.tests.conftest import platforms, interest_rt, titles
-from sushi.models import CounterReportType
 
 
 @pytest.mark.django_db
@@ -200,6 +198,67 @@ class TestCustomImport:
         assert ManualDataUpload.objects.filter(pk=mdu.pk).count() == 0
         assert ImportBatch.objects.count() == 0
         assert AccessLog.objects.count() == 0
+
+    @pytest.mark.parametrize(
+        ['user_type', 'allowed'],
+        [
+            ['no_user', False],
+            ['invalid', False],
+            ['unrelated', False],
+            ['related_user', False],
+            ['related_admin', True],
+            ['master_user', True],
+            ['superuser', True],
+        ],
+    )
+    def test_custom_data_import_api_owner_level(
+        self,
+        user_type,
+        allowed,
+        settings,
+        tmp_path,
+        identity_by_user_type,
+        report_type_nd,
+        platforms,
+        client,
+        authentication_headers,
+    ):
+        identity, org = identity_by_user_type(user_type)
+        report_type = report_type_nd(0)
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
+        csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
+        file = StringIO(csv_content)
+        settings.MEDIA_ROOT = tmp_path
+
+        # upload the data
+        response = client.post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': org.pk,
+                'report_type': report_type.pk,
+                'data_file': file,
+            },
+            **authentication_headers(identity),
+        )
+        assert response.status_code == 201 if allowed else 403
+        if allowed:
+            mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+            # do the preflight check
+            response = client.get(
+                reverse('manual-data-upload-preflight-check', args=(mdu.pk,)),
+                **authentication_headers(identity),
+            )
+            assert response.status_code == (200 if allowed else 403)
+
+            # let's process the mdu
+            response = client.post(
+                reverse('manual-data-upload-process', args=(mdu.pk,)),
+                **authentication_headers(identity),
+            )
+            assert response.status_code == (200 if allowed else 403)
 
     @pytest.mark.parametrize(
         ['user_type', 'owner_level'],

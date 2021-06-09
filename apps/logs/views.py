@@ -11,7 +11,7 @@ from django.views import View
 from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import get_object_or_404, ListAPIView
+from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -311,6 +311,19 @@ class ManualDataUploadViewSet(ModelViewSet):
         )
     ]
 
+    extra_actions_permission_classes = [
+        IsAuthenticated
+        & ManualDataUploadEnabledPermission
+        & (
+            (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
+            | (
+                OwnerLevelBasedPermissions
+                & CanPostOrganizationDataPermission
+                & CanAccessOrganizationRelatedObjectPermission
+            )
+        )
+    ]
+
     @action(methods=['GET'], detail=True, url_path='preflight')
     def preflight_check(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
@@ -332,6 +345,12 @@ class ManualDataUploadViewSet(ModelViewSet):
         return Response(
             {'stats': stats, 'import_batch': ImportBatchSerializer(mdu.import_batch).data}
         )
+
+    def get_permissions(self):
+        if self.action in {_action.__name__ for _action in self.get_extra_actions()}:
+            return [permission() for permission in self.extra_actions_permission_classes]
+        else:
+            return super().get_permissions()
 
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
