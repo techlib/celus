@@ -325,9 +325,9 @@ export default {
     allowedStartMonths(value) {
       let end = this.endDate;
       if (end) {
-        return value <= end;
+        return value <= end && value > "2010";
       }
-      return value < ymDateFormat(new Date());
+      return value < ymDateFormat(new Date()) && value > "2010";
     },
     allowedEndMonths(value) {
       let now = ymDateFormat(new Date());
