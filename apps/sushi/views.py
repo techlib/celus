@@ -166,7 +166,9 @@ class SushiCredentialsViewSet(ModelViewSet):
 
         report_types_and_broken = [
             (e.counter_report, e.is_broken())
-            for e in credentials.counterreportstocredentials_set.all()
+            for e in credentials.counterreportstocredentials_set.all().select_related(
+                'counter_report'
+            )
         ]
         report_types = [e[0] for e in report_types_and_broken]
 

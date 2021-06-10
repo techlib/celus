@@ -158,7 +158,7 @@ class SushiCredentialsDataReportSerializer(Serializer):
 
 
 class SushiCredentialsDataSerializer(Serializer):
-    year = IntegerField(required=True, max_value=3000, min_value=2000)
+    year = IntegerField(required=True, max_value=3000, min_value=1970)
     for month in range(1, 13):
         locals()[f"{month:02d}"] = SushiCredentialsDataReportSerializer(many=True)
 
