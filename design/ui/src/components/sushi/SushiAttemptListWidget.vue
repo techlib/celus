@@ -63,10 +63,13 @@ cs:
               show-expand
               :expanded.sync="expandedRows"
               item-key="timestamp"
-              :sort-by="orderBy"
-              :sort-desc="orderDesc"
-              :items-per-page="5"
+              :sort-by.sync="orderBy"
+              :sort-desc.sync="orderDesc"
+              :items-per-page.sync="pageSize"
               :loading="loading"
+              :footer-props="{ itemsPerPageOptions: [5, 10, 25] }"
+              :server-items-length="attemptCount"
+              :page.sync="page"
             >
               <template #item.status="{ item }">
                 <SushiAttemptStateIcon :attempt="item" />
@@ -222,16 +225,23 @@ export default {
     return {
       attempts: [],
       expandedRows: [],
+      attemptCount: 0,
       showSuccess: true,
       showFailure: true,
-      orderBy: "timestamp",
-      orderDesc: true,
+      orderBy: ["timestamp"],
+      orderDesc: [true],
+      pageSize: 5,
+      page: 1,
       showBatchDialog: false,
       selectedBatch: null,
       dialogType: "",
       loading: false,
       hideObsolete: true,
       historyMode: "success_and_current",
+      orderingRemap: new Map([
+        ["counter_report_verbose.code", "counter_report__code"],
+        ["organization.name", "credentials__organization__name"],
+      ]),
     };
   },
   computed: {
@@ -261,6 +271,20 @@ export default {
       if (this.counterVersion) {
         base += `&counter_version=${this.counterVersion}`;
       }
+      // sorting
+      base += `&page_size=${this.pageSize}&page=${this.page}`;
+      if (this.orderBy.length) {
+        // some order_by's have to be remapped for the backend to understand it
+        let order_by_param =
+          typeof this.orderBy === "object" ? this.orderBy[0] : this.orderBy;
+        console.debug(order_by_param, this.orderingRemap.has(order_by_param));
+        if (this.orderingRemap.has(order_by_param))
+          order_by_param = this.orderingRemap.get(order_by_param);
+        base += `&order_by=${order_by_param}`;
+        if (this.orderDesc.length) {
+          base += `&desc=${this.orderDesc[0]}`;
+        }
+      }
       return base;
     },
     headers() {
@@ -268,27 +292,8 @@ export default {
         {
           text: this.$t("title_fields.status"),
           value: "status",
+          sortable: false,
         },
-        /*{
-            text: this.$t('title_fields.download_success'),
-            value: 'download_success'
-          },
-          {
-            text: this.$t('title_fields.processing_success'),
-            value: 'processing_success'
-          },
-          {
-            text: this.$t('title_fields.contains_data'),
-            value: 'contains_data'
-          },
-          {
-            text: this.$t('title_fields.processed'),
-            value: 'is_processed'
-          },
-          {
-            text: this.$t('title_fields.queued'),
-            value: 'queued'
-          },*/
         {
           text: this.$t("timestamp"),
           value: "timestamp",
@@ -315,7 +320,11 @@ export default {
           value: "counter_report_verbose.code",
         });
       }
-      ret.push({ text: this.$t("title_fields.actions"), value: "actions" });
+      ret.push({
+        text: this.$t("title_fields.actions"),
+        value: "actions",
+        sortable: false,
+      });
 
       return ret;
     },
@@ -339,12 +348,16 @@ export default {
         return;
       }
       this.loading = true;
-      this.attempts = [];
       try {
         let response = await axios.get(this.listUrl);
-        if (this.attemptId) this.attempts = [response.data];
-        else this.attempts = response.data;
+        if (this.attemptId) {
+          this.attempts = [response.data];
+        } else {
+          this.attempts = response.data.results;
+          this.attemptCount = response.data.count;
+        }
       } catch (error) {
+        this.attempts = [];
         this.showSnackbar({
           content: "Error fetching SUSHI attempt data: " + error,
           color: "error",

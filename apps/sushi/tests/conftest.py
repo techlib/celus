@@ -3,9 +3,9 @@ import pytest
 from core.models import UL_ORG_ADMIN
 from sushi.logic.fetching import FetchUnit
 from sushi.models import CounterReportType, SushiCredentials
-from organizations.tests.conftest import organizations
-from publications.tests.conftest import platforms
-from logs.tests.conftest import report_type_nd
+from organizations.tests.conftest import organizations  # noqa
+from publications.tests.conftest import platforms  # noqa
+from logs.tests.conftest import report_type_nd  # noqa
 
 
 @pytest.fixture()

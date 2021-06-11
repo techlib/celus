@@ -26,7 +26,7 @@ from core.models import UL_CONS_STAFF
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
-from publications.serializers import PlatformSerializer
+from publications.serializers import PlatformSerializer, SimplePlatformSerializer
 from .models import (
     COUNTER_REPORTS,
     SushiCredentials,
@@ -167,7 +167,7 @@ class SushiFetchAttemptSerializer(ModelSerializer):
 
     counter_report_verbose = CounterReportTypeSerializer(read_only=True, source='counter_report')
     organization = OrganizationSerializer(read_only=True, source='credentials.organization')
-    platform = PlatformSerializer(read_only=True, source='credentials.platform')
+    platform = SimplePlatformSerializer(read_only=True, source='credentials.platform')
 
     def validate_end_date(self, value):
         value = month_end(value)

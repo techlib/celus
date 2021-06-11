@@ -366,6 +366,8 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 scheduler=schedulers["standalone_br1_jr1"],
                 when_processed=timezone.now() - timedelta(minutes=1),
                 attempt=FetchAttemptFactory(
+                    start_date="2020-01-01",
+                    end_date="2020-01-31",
                     credentials=credentials["standalone_br1_jr1"],
                     counter_report=counter_report_types["jr1"],
                     download_success=True,
@@ -427,6 +429,8 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 scheduler=schedulers["standalone_br1_jr1"],
                 when_processed=timezone.now() - timedelta(minutes=2),
                 attempt=FetchAttemptFactory(
+                    start_date="2020-01-01",
+                    end_date="2020-01-31",
                     credentials=credentials["standalone_br1_jr1"],
                     counter_report=counter_report_types["br1"],
                     download_success=True,
@@ -452,6 +456,8 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 scheduler=schedulers["branch_pr"],
                 when_processed=timezone.now() - timedelta(minutes=2),
                 attempt=FetchAttemptFactory(
+                    start_date="2020-01-01",
+                    end_date="2020-01-31",
                     credentials=credentials["branch_pr"],
                     counter_report=counter_report_types["pr"],
                     download_success=True,

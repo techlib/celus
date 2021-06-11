@@ -8,6 +8,7 @@ from .report_types import ReportTypeFactory
 class CounterReportTypeFactory(factory.DjangoModelFactory):
     class Meta:
         model = CounterReportType
+        django_get_or_create = ('code',)
 
     code = 'TR'
     counter_version = 5

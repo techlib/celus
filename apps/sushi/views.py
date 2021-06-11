@@ -1,10 +1,9 @@
 import json
-from datetime import timedelta
 
 import dateparser
 import reversion
 from dateutil.relativedelta import relativedelta
-from django.db.models import Count, Q, Max, Min, F
+from django.db.models import Min, F
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -23,6 +22,7 @@ from core.permissions import (
     SuperuserOrAdminPermission,
     OrganizationRelatedPermissionMixin,
 )
+from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id
 from .models import (
     SushiCredentials,
@@ -312,6 +312,7 @@ class SushiFetchAttemptViewSet(ModelViewSet):
     serializer_class = SushiFetchAttemptSerializer
     queryset = SushiFetchAttempt.objects.none()
     http_method_names = ['get', 'post', 'options', 'head']
+    pagination_class = StandardResultsSetPagination
 
     def get_object(self):
         return super().get_object()
@@ -351,11 +352,18 @@ class SushiFetchAttemptViewSet(ModelViewSet):
 
         # Show only latest in the chain
         qs = qs.last_queued()
-
-        return qs.filter(**filter_params).select_related(
+        qs = qs.filter(**filter_params).select_related(
             'counter_report', 'credentials__organization', 'credentials__platform',
         )
+        # ordering
+        order_by = self.request.query_params.get('order_by')
+        desc = self.request.query_params.get('desc', 'false')
+        if order_by:
+            prefix = '-' if desc == 'true' else ''
+            qs = qs.order_by(prefix + order_by)
+        return qs
 
+    # TODO: is this still necessary? We do not seem to use it anymore from the UI
     def perform_create(self, serializer: SushiFetchAttemptSerializer):
         # check that the user is allowed to create attempts for this organization
         credentials = serializer.validated_data['credentials']

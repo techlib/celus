@@ -1,18 +1,15 @@
-import json
+from datetime import date
+
 import pytest
 
 from freezegun import freeze_time
-from datetime import timedelta
 from unittest.mock import patch
-from urllib.parse import quote
 
 from django.urls import reverse
 from django.utils import timezone
 
-from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, Identity
-from logs.models import ImportBatch
-from organizations.models import UserOrganization
-from organizations.tests.conftest import identity_by_user_type
+from core.models import UL_CONS_STAFF, UL_ORG_ADMIN
+from organizations.tests.conftest import identity_by_user_type  # noqa
 from sushi.models import (
     SushiCredentials,
     SushiFetchAttempt,
@@ -22,7 +19,7 @@ from sushi.models import (
 
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa
     basic1,
     clients,
     counter_report_types,
@@ -446,7 +443,9 @@ class TestSushiCredentialsViewSet:
 
         # mark credentials
         attempt_tr = FetchAttemptFactory(
-            credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            start_date=date(2020, 1, 1),
         )
         credentials["standalone_tr"].set_broken(attempt_tr, BS.BROKEN_HTTP)
 
@@ -454,6 +453,7 @@ class TestSushiCredentialsViewSet:
         attempt_br1 = FetchAttemptFactory(
             credentials=credentials["standalone_br1_jr1"],
             counter_report=counter_report_types["jr1"],
+            start_date=date(2020, 1, 1),
         )
         cr2c_br1 = CounterReportsToCredentials.objects.get(
             credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"
@@ -726,3 +726,74 @@ class TestSushiFetchAttemptView:
         resp = clients["master"].get(reverse('sushi-fetch-attempt-detail', args=(pk,)))
         assert resp.status_code == 200
         assert resp.json() == create_data
+
+    @pytest.mark.parametrize(['attempt_count'], [(1,), (2,), (10,)])
+    def test_list(self, admin_client, attempt_count):
+        cr = CredentialsFactory()
+        FetchAttemptFactory.create_batch(attempt_count, credentials=cr)
+        resp = admin_client.get(reverse('sushi-fetch-attempt-list'))
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == attempt_count
+
+    def test_list_filtering(self, admin_client):
+        cr = CredentialsFactory()
+        cr2 = CredentialsFactory()
+        assert cr.platform_id != cr2.platform_id
+        FetchAttemptFactory.create_batch(3, credentials=cr)
+        FetchAttemptFactory.create_batch(1, credentials=cr2)
+        # try without filter
+        resp = admin_client.get(reverse('sushi-fetch-attempt-list'))
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 4
+        # try with filter for platform
+        resp = admin_client.get(reverse('sushi-fetch-attempt-list'), {'platform': cr.platform_id})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 3
+
+    @pytest.mark.parametrize(
+        ['order_by'], (('start_date',), ('end_date',), ('timestamp',), ('error_code',))
+    )
+    @pytest.mark.parametrize(['desc'], ((True,), (False,), (None,)))
+    def test_list_sorting(self, admin_client, order_by, desc):
+        cr = CredentialsFactory()
+        FetchAttemptFactory.create_batch(30, credentials=cr)
+        params = {'order_by': order_by}
+        if desc is not None:
+            params['desc'] = 'true' if desc else 'false'
+        resp = admin_client.get(reverse('sushi-fetch-attempt-list'), params)
+        assert resp.status_code == 200
+        records = resp.json()['results']
+        assert len(records) == 30
+        values = [x[order_by] for x in records]
+        assert values == list(sorted(values, reverse=bool(desc)))
+
+    @pytest.mark.parametrize(
+        ['order_by', 'path'],
+        (
+            ('counter_report__code', ['counter_report_verbose', 'code']),
+            ('credentials__platform__short_name', ['platform', 'short_name']),
+            ('credentials__organization__short_name', ['organization', 'short_name']),
+        ),
+    )
+    @pytest.mark.parametrize(['desc'], ((True,), (False,), (None,)))
+    def test_list_sorting_nested_values(self, admin_client, order_by, path, desc):
+        cr = CredentialsFactory()
+        FetchAttemptFactory.create_batch(30, credentials=cr)
+        params = {'order_by': order_by}
+        if desc is not None:
+            params['desc'] = 'true' if desc else 'false'
+        resp = admin_client.get(reverse('sushi-fetch-attempt-list'), params)
+        assert resp.status_code == 200
+        records = resp.json()['results']
+        assert len(records) == 30
+        for part in path:
+            records = [x[part] for x in records]
+        assert records == list(sorted(records, reverse=bool(desc)))
+
+    @pytest.mark.parametrize(['page_size'], ((5,), (10,), (25,)))
+    def test_list_page_size(self, admin_client, page_size):
+        cr = CredentialsFactory()
+        FetchAttemptFactory.create_batch(30, credentials=cr)
+        resp = admin_client.get(reverse('sushi-fetch-attempt-list'), {'page_size': page_size})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == page_size
