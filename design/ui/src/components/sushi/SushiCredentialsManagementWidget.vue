@@ -358,6 +358,7 @@ export default {
       consortialInstall: "consortialInstall",
     }),
     headers() {
+      const large = this.$vuetify.breakpoint.lgAndUp;
       let allHeaders = [
         {
           text: this.$i18n.t("title"),
@@ -386,7 +387,7 @@ export default {
         {
           text: this.$i18n.t("title_fields.outside_consortium"),
           value: "outside_consortium",
-          show: this.consortialInstall,
+          show: this.consortialInstall && large,
         },
         {
           text: this.$i18n.t("sushi.enabled"),
@@ -395,7 +396,7 @@ export default {
         {
           text: this.$i18n.t("title_fields.lock"),
           value: "locked",
-          show: this.consortialInstall,
+          show: this.consortialInstall && large,
         },
         {
           text: this.$i18n.t("title_fields.actions"),
