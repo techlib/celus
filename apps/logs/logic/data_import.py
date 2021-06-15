@@ -151,6 +151,22 @@ class TitleManager:
         title_rec = self.counter_record_to_title_rec(record)
         return self.get_or_create(title_rec)
 
+    @classmethod
+    def resolve_unknown_title_pub_types_in_db(cls):
+        """
+        Assigns publication type to Title which have unknown type and the type can be deduced from
+        ISBN and ISSN values
+        :return:
+        """
+        # if there is ISBN and both ISSNs are empty -> it is a book
+        Title.objects.filter(pub_type=Title.PUB_TYPE_UNKNOWN, issn='', eissn='').exclude(
+            isbn=''
+        ).update(pub_type=Title.PUB_TYPE_BOOK)
+        # if there is no ISBN and at least one ISSN is there -> it is likely a Journal
+        Title.objects.filter(pub_type=Title.PUB_TYPE_UNKNOWN, isbn='').exclude(
+            issn='', eissn=''
+        ).update(pub_type=Title.PUB_TYPE_JOURNAL)
+
 
 def import_counter_records(
     report_type: ReportType,

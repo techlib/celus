@@ -213,7 +213,9 @@ class TestCounter4Import:
 @pytest.mark.django_db
 class TestTitleManager:
     def test_get_or_create(self):
-        """ Creating same title """
+        """
+        Creating same title
+        """
         tm = TitleManager()
         record = TitleRec("TITLE", Title.PUB_TYPE_BOOK, "", "", "977-481-83-13d6-2", "")
 
@@ -230,11 +232,9 @@ class TestTitleManager:
 
     def test_get_or_create_no_cache(self):
         """
-            creating same title with cache flushed
-            this may occur when ther are two same imports
-            running in paralel.
+        Creating same title with cache flushed -
+        this may occur when there are two same imports running in parallel.
         """
-
         tm = TitleManager()
         record = TitleRec("TITLE", Title.PUB_TYPE_BOOK, "", "", "977-481-83-13d6-2", "")
 
