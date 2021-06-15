@@ -141,9 +141,9 @@ class TitleManager:
             pub_type = Title.data_type_to_pub_type(data_type)
         if pub_type == Title.PUB_TYPE_UNKNOWN:
             # we try harder - based on isbn, issn, etc.
-            if (issn is not None or eissn is not None) and isbn is None:
+            if (issn or eissn) and not isbn:
                 pub_type = Title.PUB_TYPE_JOURNAL
-            elif isbn is not None and issn is None:
+            elif isbn and not issn:
                 pub_type = Title.PUB_TYPE_BOOK
         return pub_type
 

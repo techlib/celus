@@ -2,6 +2,8 @@ import pytest
 
 from pathlib import Path
 
+from django.db.models import Count
+
 from logs.logic.data_import import TitleManager, TitleRec
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 from nigiri.counter4 import Counter4BR2Report
@@ -185,11 +187,33 @@ class TestCounter4Import:
         assert len(values) == 12
         assert values == [1, 10, 2, 3, 5, 0, 0, 0, 0, 0, 0, 0]
 
+    def test_c4_import_title_types(self, organizations, report_type_nd, platform):
+        rt = report_type_nd(1, dimension_names=['Publisher'])
+        from pycounter import report
+
+        data = report.parse(str(Path(__file__).parent / 'data/counter4/counter4_br2.tsv'))
+        reader = Counter4BR2Report()
+        records = [e for e in reader.read_report(data)]
+        assert len(records) == 60  # 12 months, 5 titles
+        organization = organizations[0]
+        import_batch = ImportBatch.objects.create(
+            platform=platform, organization=organization, report_type=rt
+        )
+        assert Title.objects.count() == 0
+        import_counter_records(rt, organization, platform, (e for e in records), import_batch)
+        assert Title.objects.count() == 5
+        assert list(
+            Title.objects.order_by('pub_type').values('pub_type').annotate(count=Count('id'))
+        ) == [
+            {'pub_type': Title.PUB_TYPE_BOOK, 'count': 4},
+            {'pub_type': Title.PUB_TYPE_UNKNOWN, 'count': 1},
+        ]
+
 
 @pytest.mark.django_db
 class TestTitleManager:
     def test_get_or_create(self):
-        """ Creting same title """
+        """ Creating same title """
         tm = TitleManager()
         record = TitleRec("TITLE", Title.PUB_TYPE_BOOK, "", "", "977-481-83-13d6-2", "")
 
