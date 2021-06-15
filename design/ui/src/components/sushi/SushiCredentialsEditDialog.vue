@@ -169,9 +169,13 @@ cs:
                   <v-tooltip bottom max-width="600px" v-if="badge(item)">
                     <template #activator="{ on }">
                       <span>{{ item.name }}</span>
-                      <v-badge inline :content="$t(badge(item).content)" :color="badge(item).color">
+                      <v-badge
+                        inline
+                        :content="$t(badge(item).content)"
+                        :color="badge(item).color"
+                      >
                         <template v-slot:badge>
-                        <span v-on="on">{{ $t(badge(item).content) }}</span>
+                          <span v-on="on">{{ $t(badge(item).content) }}</span>
                         </template>
                       </v-badge>
                     </template>
@@ -241,6 +245,7 @@ cs:
                 item-text="code"
                 item-value="id"
                 :rules="[ruleAtLeastOne]"
+                :loading="loadingReportTypes"
               >
                 <template #item="{ item }">
                   <v-list-item-content>
@@ -514,6 +519,7 @@ export default {
       outsideConsortium: true,
       title: "",
       loadingPlatforms: false,
+      loadingReportTypes: false,
       valid: false,
     };
   },
@@ -713,6 +719,7 @@ export default {
       }
     },
     async loadReportTypes() {
+      this.loadingReportTypes = true;
       try {
         let result = await axios.get("/api/counter-report-type/");
         this.allReportTypes = result.data;
@@ -724,6 +731,8 @@ export default {
         );
       } catch (error) {
         this.showSnackbar({ content: "Error loading report types: " + error });
+      } finally {
+        this.loadingReportTypes = false;
       }
     },
     async loadOrganizations() {
