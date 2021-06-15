@@ -73,7 +73,11 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         """Returns Platforms which can be displayed to the user"""
         organization = self._organization_pk_to_obj(self.kwargs.get('organization_pk'))
-        return self.request.user.accessible_platforms(organization=organization).order_by('name')
+        return (
+            self.request.user.accessible_platforms(organization=organization)
+            .select_related('source')
+            .order_by('name')
+        )
 
     @action(detail=True, url_path='report-types')
     def get_report_types(self, request, pk, organization_pk):
@@ -169,19 +173,21 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
             self.kwargs.get('organization_pk'), self.request.user
         )
         if org_filter:
-            return Platform.objects.filter(
+            qs = Platform.objects.filter(
                 Q(**org_filter)
                 | Q(**extend_query_filter(org_filter, 'sushicredentials__'))
                 | Q(**extend_query_filter(org_filter, 'source__'))
             ).distinct()
         # only those that have an organization connected
-        if 'used_only' in self.request.query_params:
-            return Platform.objects.filter(
+        elif 'used_only' in self.request.query_params:
+            qs = Platform.objects.filter(
                 Q(organization__isnull=False)
                 | Q(sushicredentials__isnull=False)
                 | Q(source__organization__isnull=False)
             ).distinct()
-        return Platform.objects.all()
+        else:
+            qs = Platform.objects.all()
+        return qs.select_related('source')
 
     @action(methods=['GET'], url_path='no-interest-defined', detail=False)
     def without_interest_definition(self, request, organization_pk):
