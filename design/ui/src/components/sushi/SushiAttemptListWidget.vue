@@ -352,6 +352,7 @@ export default {
         let response = await axios.get(this.listUrl);
         if (this.attemptId) {
           this.attempts = [response.data];
+          this.attemptCount = 1;
         } else {
           this.attempts = response.data.results;
           this.attemptCount = response.data.count;
