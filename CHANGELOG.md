@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [3.1.1]
+
+
+### Changes
+
+#### Frontend
+
+* some less important columns are hidded from the SUSHI management page on smaller screens
+* year selection for harvesting of SUSHI data was limited to years after 2010
+
+### Fixed
+
+#### Frontend
+
+* slow loading of SUSHI fetch attempt data was fixed by using server-side pagination
+
+#### Backend
+
+* users with organization admin privileges are no longer denied access when manually importing data
+* automatic deduction of title type using ISBN and ISSN was fixed to work in more cases,
+  most notably for manually uploaded data
+* performance of several API endpoints was fixed by optimizing the number of database queries
+* data for SUSHI overview are correctly serialized even if harvested year is lower than 2000
+* state of SUSHI fetch attempts marked as crashed because they were already imported was fixed
+  (it no longer shows as crashed)
+
+
 ## [3.1.0]
 
 ### Added
