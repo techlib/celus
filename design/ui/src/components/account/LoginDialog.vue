@@ -319,16 +319,16 @@ export default {
   },
 
   data() {
+    const urlParams = new URLSearchParams(window.location.search);
     return {
       email: "",
       password: "",
       password2: "",
-      currentTab:
-        "register" in this.$route.query
-          ? "register"
-          : "reset-password" in this.$route.query
-          ? "reset-password"
-          : "login",
+      currentTab: urlParams.has("register")
+        ? "register"
+        : urlParams.has("reset-password")
+        ? "reset-password"
+        : "login",
       signupError: null,
       resetError: null,
       showPassword: false,
