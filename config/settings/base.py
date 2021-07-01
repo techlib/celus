@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'error_report',
     'cachalot',
     'django_prometheus',
+    'import_export',
 ]
 
 MIDDLEWARE = [

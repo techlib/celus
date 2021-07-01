@@ -1,6 +1,8 @@
 from django.contrib import admin, messages
 from django.db.transaction import atomic
-
+from import_export.admin import ExportActionMixin
+from import_export.fields import Field
+from import_export.resources import ModelResource
 from reversion.admin import VersionAdmin
 
 from logs.logic.attempt_import import reprocess_attempt
@@ -8,8 +10,47 @@ from logs.models import ImportBatch
 from . import models
 
 
+class SushiCredentialsResource(ModelResource):
+    """
+    This is used by django-import-export to facilitate CSV export in Django admin
+    """
+
+    platform__name = Field(attribute='platform__name', column_name='platform')
+    organization__name = Field(attribute='organization__name', column_name='organization')
+    active_counter_reports = Field(
+        attribute='active_counter_reports', column_name='counter_reports'
+    )
+
+    class Meta:
+        model = models.SushiCredentials
+        fields = (
+            'id',
+            'organization__name',
+            'platform__name',
+            'url',
+            'counter_version',
+            'requestor_id',
+            'customer_id',
+            'http_username',
+            'http_password',
+            'api_key',
+            'extra_params',
+            'active_counter_reports',
+        )
+        export_order = fields
+
+    def dehydrate_active_counter_reports(self, credentials: models.SushiCredentials):
+        return ', '.join([cr.code for cr in credentials.active_counter_reports.all()])
+
+    def dehydrate_platform__name(self, credentials: models.SushiCredentials):
+        return credentials.platform.name or credentials.platform.short_name
+
+    def dehydrate_organization__name(self, credentials: models.SushiCredentials):
+        return credentials.organization.name or credentials.organization.short_name
+
+
 @admin.register(models.SushiCredentials)
-class SushiCredentialsAdmin(VersionAdmin):
+class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
 
     list_display = [
         'organization',
@@ -22,6 +63,7 @@ class SushiCredentialsAdmin(VersionAdmin):
         'when_can_access',
     ]
     list_filter = ['enabled', 'counter_version', 'organization', 'platform']
+    resource_class = SushiCredentialsResource
 
     @classmethod
     def organization_internal_id(cls, obj: models.SushiCredentials):
