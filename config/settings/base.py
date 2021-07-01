@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'rest_pandas',
     'error_report',
     'django_prometheus',
+    'import_export',
     # allauth is at the end so that we can easily override its templates
     'allauth',
     'allauth.socialaccount',
