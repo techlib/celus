@@ -47,6 +47,11 @@ def organizations_random():
     return [parent1, parent2, child1]
 
 
+@pytest.fixture()
+def organization_random():
+    return OrganizationFactory.create()
+
+
 @pytest.fixture
 def identity_by_user_type(
     admin_identity, invalid_identity, master_identity, organizations, valid_identity

@@ -11,6 +11,14 @@ from . import views
 
 logger = logging.getLogger(__name__)
 
+local_urls = [
+    path(
+        'platform/<int:platform_id>/report/<str:report_type>',
+        views.PlatformReportView.as_view(),
+        name='api_platform_report_data',
+    ),
+]
+
 urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),  # contains link to reset password
     path('rest-auth/', include('dj_rest_auth.urls')),
@@ -22,6 +30,7 @@ urlpatterns = [
     path('', include('charts.urls')),
     path('', include('annotations.urls')),
     path('', include('cost.urls')),
+    *local_urls,
     path('export/', include('export.urls')),
     path('scheduler/', include('scheduler.urls')),
     path('deployment/', include('deployment.urls')),

@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'error_report',
     'django_prometheus',
     'import_export',
+    'rest_framework_api_key',
     # allauth is at the end so that we can easily override its templates
     'allauth',
     'allauth.socialaccount',

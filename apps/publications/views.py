@@ -1,21 +1,22 @@
-import json
-
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
-from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation, F
+from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
 from pandas import DataFrame
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
+from rest_framework_api_key.permissions import HasAPIKey
 
+from api.auth import extract_org_from_request_api_key
+from api.models import OrganizationAPIKey
+from api.permissions import HasOrganizationAPIKey
 from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
@@ -27,11 +28,7 @@ from core.permissions import (
     SuperuserOrAdminPermission,
     ViewPlatformPermission,
 )
-from logs.logic.queries import (
-    extract_interests_from_objects,
-    interest_annotation_params,
-    replace_report_type_with_materialized,
-)
+from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, DimensionText
 from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
@@ -349,14 +346,28 @@ class PlatformInterestViewSet(ViewSet):
 
 class GlobalPlatformsViewSet(ReadOnlyModelViewSet):
 
-    permission_classes = [ViewPlatformPermission]
+    permission_classes = [ViewPlatformPermission | HasOrganizationAPIKey]
     serializer_class = SimplePlatformSerializer
     queryset = Platform.objects.all()
     filter_backends = [PkMultiValueFilterBackend]
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(pk__in=self.request.user.accessible_platforms())
+        if self.request.user.is_anonymous:
+            # Anonymous user must use api-key based authentication otherwise he would not get here
+            organization = extract_org_from_request_api_key(self.request)
+            if organization:
+                return qs.filter(
+                    Q(organizationplatform__organization=organization)
+                    | Q(sushicredentials__organization=organization)
+                ).distinct()
+            else:
+                # this should not happen, but just to make sure
+                raise PermissionDenied(
+                    'cannot access the view without api key or session based authentication'
+                )
+        else:
+            qs = qs.filter(pk__in=self.request.user.accessible_platforms())
         return qs.order_by('name')
 
 

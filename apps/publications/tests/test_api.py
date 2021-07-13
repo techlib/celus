@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from django.urls import reverse
 
+from api.models import OrganizationAPIKey
 from core.models import DataSource, Identity
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
@@ -1143,10 +1144,32 @@ class TestGlobalPlatformsAPI:
         resp = clients[client].get(reverse("global-platforms-list"))
         assert resp.status_code in status
         if available is not None:
-            diff = {e["pk"] for e in resp.json()} ^ {platforms[e].pk for e in available}
-            print([key for key, value in platforms.items() if value.pk in diff])
             assert {e["pk"] for e in resp.json()} == {platforms[e].pk for e in available}
-        assert True
+
+    @pytest.mark.parametrize(
+        ['org_name', 'expected_platforms'],
+        [
+            ['root', ['standalone']],  # explicitly connected
+            ['master', []],  # not connected
+            ['standalone', ['standalone']],  # connected by sushi in the credentials fixture
+            ['branch', ['branch']],  # connected by sushi in the credentials fixture
+        ],
+    )
+    def test_all_platform_list_with_apikey(
+        self, client, platforms, organizations, org_name, expected_platforms, credentials
+    ):
+        OrganizationPlatform.objects.create(
+            organization=(organizations['root']), platform=platforms['standalone']
+        )
+        org = organizations[org_name]
+        api_key, key_val = OrganizationAPIKey.objects.create_key(organization=org, name='test')
+        resp = client.get(reverse('global-platforms-list'), HTTP_AUTHORIZATION=f'Api-Key {key_val}')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == len(expected_platforms)
+        visible_pks = {rec['pk'] for rec in data}
+        expected_pks = {platforms[name].pk for name in expected_platforms}
+        assert visible_pks == expected_pks
 
     @pytest.mark.parametrize(
         ["client", "available"],

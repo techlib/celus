@@ -17,8 +17,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from organizations.models import Organization
-from scheduler.models import FetchIntention
-from sushi.models import SushiFetchAttempt, AttemptStatus
+from sushi.models import AttemptStatus
 from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
 from ..entities.fetchattempts import FetchAttemptFactory
@@ -471,3 +470,21 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
     )
 
     return locals()
+
+
+__all__ = [
+    'platforms',
+    'report_types',
+    'counter_report_types',
+    'harvests',
+    'schedulers',
+    'credentials',
+    'import_batches',
+    'basic1',
+    'clients',
+    'make_client',
+    'identities',
+    'data_sources',
+    'organizations',
+    'users',
+]
