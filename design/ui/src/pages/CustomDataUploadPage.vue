@@ -112,9 +112,13 @@ cs:
                     <v-tooltip bottom max-width="600px" v-if="badge(item)">
                       <template #activator="{ on }">
                         <span>{{ item.name }}</span>
-                        <v-badge inline :content="$t(badge(item).content)" :color="badge(item).color">
+                        <v-badge
+                          inline
+                          :content="$t(badge(item).content)"
+                          :color="badge(item).color"
+                        >
                           <template v-slot:badge>
-                          <span v-on="on">{{ $t(badge(item).content) }}</span>
+                            <span v-on="on">{{ $t(badge(item).content) }}</span>
                           </template>
                         </v-badge>
                       </template>
@@ -404,7 +408,9 @@ export default {
       if (url) {
         try {
           const response = await axios.get(url);
-          this.reportTypes = response.data;
+          this.reportTypes = response.data.sort((a, b) =>
+            a.name.localeCompare(b.name)
+          );
           if (this.reportTypes.length > 0) {
             this.selectedReportType = this.reportTypes[0];
           }

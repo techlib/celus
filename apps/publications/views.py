@@ -82,17 +82,25 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
     @action(detail=True, url_path='report-types')
     def get_report_types(self, request, pk, organization_pk):
         """
-        Provides a list of report types associated with this platform
+        Provides a list of report types associated with this platform + list of all COUNTER reports.
+        This view represents all the reports that may be manually uploaded to a platform.
         """
         organization = self._organization_pk_to_obj(organization_pk)
         platform = get_object_or_404(
             request.user.accessible_platforms(organization=organization), pk=pk
         )
-        report_types = ReportType.objects.filter(interest_platforms=platform).prefetch_related(
-            'reportinterestmetric_set__metric',
-            'reportinterestmetric_set__interest_group',
-            'source',
-            'source__organization',
+        report_types = (
+            ReportType.objects.filter(
+                Q(interest_platforms=platform)
+                | Q(counterreporttype__isnull=False, source__isnull=True)
+            )
+            .distinct()
+            .prefetch_related(
+                'reportinterestmetric_set__metric',
+                'reportinterestmetric_set__interest_group',
+                'source',
+                'source__organization',
+            )
         )
         if not settings.ALLOW_NONCOUNTER_DATA:
             report_types = report_types.filter(counterreporttype__isnull=False)

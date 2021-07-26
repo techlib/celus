@@ -1068,6 +1068,7 @@ class TestAllPlatformsAPI:
         platform = basic1['platforms']['shared']
         assert ReportType.objects.count() == 0, 'make sure not report are created upfront'
         rt_counter = report_type_nd(0, short_name='counter')
+        rt_counter_no_interest = report_type_nd(0, short_name='counter no interest')
         rt_noncounter = report_type_nd(0, short_name='noncounter')
         # connect the platform and reports
         PlatformInterestReport.objects.create(platform=platform, report_type=rt_counter)
@@ -1076,6 +1077,9 @@ class TestAllPlatformsAPI:
         CounterReportType.objects.create(
             code='test', name='test', report_type=rt_counter, counter_version=5
         )
+        CounterReportType.objects.create(
+            code='test2', name='test 2', report_type=rt_counter_no_interest, counter_version=5
+        )
         # the test itself
         resp = client.get(
             reverse('all-platforms-get-report-types', args=(organization.pk, platform.pk))
@@ -1083,9 +1087,13 @@ class TestAllPlatformsAPI:
         assert resp.status_code == 200
         data = resp.json()
         if allow_noncounter:
-            assert {rec['pk'] for rec in data} == {rt_counter.pk, rt_noncounter.pk}
+            assert {rec['pk'] for rec in data} == {
+                rt_counter.pk,
+                rt_counter_no_interest.pk,
+                rt_noncounter.pk,
+            }
         else:
-            assert {rec['pk'] for rec in data} == {rt_counter.pk}
+            assert {rec['pk'] for rec in data} == {rt_counter.pk, rt_counter_no_interest.pk}
 
 
 @pytest.mark.django_db
