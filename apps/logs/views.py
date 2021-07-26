@@ -355,7 +355,7 @@ class ManualDataUploadViewSet(ModelViewSet):
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
     """
-    This version of the ManualDataUploadViewSet is fitered by organization and offerest
+    This version of the ManualDataUploadViewSet is filtered by organization and offers
     a verbose output but is read-only. For a less verbose, read-write access, there
     is the 'manual-data-upload' api view that is directly in the API root.
     """

@@ -342,7 +342,6 @@ class ManualDataUploadSerializer(ModelSerializer):
 class ManualDataUploadVerboseSerializer(ModelSerializer):
 
     user = UserSimpleSerializer(read_only=True)
-    import_batch = ImportBatchSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
     report_type = ReportTypeSimpleSerializer(read_only=True)

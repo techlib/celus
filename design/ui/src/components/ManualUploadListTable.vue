@@ -69,7 +69,7 @@ cs:
               small
               color="secondary"
               @click.stop="
-                selectedBatch = item.import_batch.pk;
+                selectedBatch = item.import_batch;
                 dialogType = 'data';
                 showBatchDialog = true;
               "
@@ -87,7 +87,7 @@ cs:
               small
               color="secondary"
               @click.stop="
-                selectedBatch = item.import_batch.pk;
+                selectedBatch = item.import_batch;
                 dialogType = 'chart';
                 showBatchDialog = true;
               "
