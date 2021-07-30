@@ -4,11 +4,11 @@ import pytest
 from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
 from django.db.models import Sum
-from sushi.models import SushiCredentials, SushiFetchAttempt
+from sushi.models import SushiCredentials, SushiFetchAttempt, AttemptStatus
 from sushi.tests.conftest import counter_report_type, counter_report_type_named  # noqa
 from test_fixtures.scenarios.basic import data_sources, organizations, platforms  # noqa
 
-from ..logic.attempt_import import import_one_sushi_attempt
+from ..logic.attempt_import import import_one_sushi_attempt, check_importable_attempt
 
 
 @pytest.mark.django_db
@@ -40,16 +40,12 @@ class TestAttemptImport:
             end_date="2018-12-31",
             data_file=data_file,
             credentials_version_hash=creds.compute_version_hash(),
-            download_success=True,
-            is_processed=False,
-            import_crashed=False,
-            contains_data=True,
+            status=AttemptStatus.IMPORTING,
         )
 
         import_one_sushi_attempt(fetch_attempt)
 
-        assert fetch_attempt.import_crashed is False
-        assert fetch_attempt.import_batch is not None
+        assert fetch_attempt.status == AttemptStatus.SUCCESS
         assert fetch_attempt.import_batch.accesslog_set.count() == 60
 
     def test_counter4_jr2_import(self, organizations, counter_report_type_named, platforms):
@@ -66,7 +62,7 @@ class TestAttemptImport:
         with (Path(__file__).parent / "data/counter4/4_JR2_denials.tsv").open() as f:
 
             data_file = ContentFile(f.read())
-            data_file.name = f"something.tsv"
+            data_file.name = "something.tsv"
 
         fetch_attempt = SushiFetchAttempt.objects.create(
             credentials=creds,
@@ -75,16 +71,12 @@ class TestAttemptImport:
             end_date="2018-12-31",
             data_file=data_file,
             credentials_version_hash=creds.compute_version_hash(),
-            download_success=True,
-            is_processed=False,
-            import_crashed=False,
-            contains_data=True,
+            status=AttemptStatus.IMPORTING,
         )
 
         import_one_sushi_attempt(fetch_attempt)
 
-        assert fetch_attempt.import_crashed is False
-        assert fetch_attempt.import_batch is not None
+        assert fetch_attempt.status == AttemptStatus.SUCCESS
         assert fetch_attempt.import_batch.accesslog_set.count() == 2
         assert fetch_attempt.import_batch.accesslog_set.aggregate(total=Sum('value'))['total'] == 5
 
@@ -111,35 +103,31 @@ class TestAttemptImport:
             end_date="2020-01-31",
             data_file=data_file,
             credentials_version_hash=creds.compute_version_hash(),
-            download_success=True,
-            is_processed=False,
-            import_crashed=False,
-            contains_data=True,
+            status=AttemptStatus.IMPORTING,
         )
 
         import_one_sushi_attempt(fetch_attempt)
 
-        assert fetch_attempt.import_crashed is False
-        assert fetch_attempt.import_batch is None
+        assert fetch_attempt.status == AttemptStatus.NO_DATA
 
     @pytest.mark.parametrize(
-        "download_success,is_processed,contains_data,import_crashed",
+        "status, passed",
         (
-            (False, False, True, False),
-            (True, True, True, False),
-            (True, False, False, False),
-            (True, False, True, True),
+            (AttemptStatus.INITIAL, False),
+            (AttemptStatus.DOWNLOADING, False),
+            (AttemptStatus.IMPORTING, True),
+            (AttemptStatus.SUCCESS, False),
+            (AttemptStatus.UNPROCESSED, True),
+            (AttemptStatus.NO_DATA, False),
+            (AttemptStatus.IMPORT_FAILED, False),
+            (AttemptStatus.PARSING_FAILED, False),
+            (AttemptStatus.DOWNLOAD_FAILED, False),
+            (AttemptStatus.CREDENTIALS_BROKEN, False),
+            (AttemptStatus.CANCELED, False),
         ),
     )
     def test_import_precondition_error(
-        self,
-        download_success,
-        is_processed,
-        contains_data,
-        import_crashed,
-        counter_report_type,
-        organizations,
-        platforms,
+        self, status, passed, counter_report_type, organizations, platforms,
     ):
 
         creds = SushiCredentials.objects.create(
@@ -155,16 +143,16 @@ class TestAttemptImport:
             counter_report=counter_report_type,
             start_date="2018-01-01",
             end_date="2018-12-31",
-            data_file=ContentFile('{}', name=f"something.tsv"),
+            data_file=ContentFile('{}', name="something.tsv"),
             credentials_version_hash=creds.compute_version_hash(),
-            download_success=download_success,
-            is_processed=is_processed,
-            contains_data=contains_data,
-            import_crashed=import_crashed,
+            status=status,
         )
 
-        with pytest.raises(ValueError):
-            import_one_sushi_attempt(fetch_attempt)
+        if passed:
+            check_importable_attempt(fetch_attempt)
+        else:
+            with pytest.raises(ValueError):
+                check_importable_attempt(fetch_attempt)
 
     def test_counter5_tr_warning(self, organizations, counter_report_type_named, platforms):
         cr_type = counter_report_type_named('TR', version=5)
@@ -180,7 +168,7 @@ class TestAttemptImport:
         with (Path(__file__).parent / "data/counter5/5_TR_with_warning.json").open() as f:
 
             data_file = ContentFile(f.read())
-            data_file.name = f"something.json"
+            data_file.name = "something.json"
 
         fetch_attempt = SushiFetchAttempt.objects.create(
             credentials=creds,
@@ -189,18 +177,12 @@ class TestAttemptImport:
             end_date="2018-11-30",
             data_file=data_file,
             credentials_version_hash=creds.compute_version_hash(),
-            download_success=True,
-            is_processed=False,
-            import_crashed=False,
-            contains_data=True,
+            status=AttemptStatus.IMPORTING,
         )
 
         import_one_sushi_attempt(fetch_attempt)
 
-        assert fetch_attempt.contains_data is True
-        assert fetch_attempt.import_crashed is False
-        assert fetch_attempt.import_batch is not None
-        assert fetch_attempt.processing_success is True
+        assert fetch_attempt.status == AttemptStatus.SUCCESS
         assert fetch_attempt.import_batch.accesslog_set.count() == 12
         assert (
             fetch_attempt.log

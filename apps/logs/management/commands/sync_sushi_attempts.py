@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from django.models.transaction import atomic
 
 from logs.logic.attempt_import import import_one_sushi_attempt
-from sushi.models import SushiFetchAttempt
+from sushi.models import SushiFetchAttempt, AttemptStatus
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
     @atomic
     def handle(self, *args, **options):
         queryset = SushiFetchAttempt.objects.select_for_update(skip_locked=True).filter(
-            is_processed=False, download_success=True, contains_data=True
+            status=AttemptStatus.IMPORTING,
         )
         if options['report_type']:
             queryset = queryset.filter(counter_report__code=options['report_type'])

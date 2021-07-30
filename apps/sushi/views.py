@@ -25,10 +25,13 @@ from core.permissions import (
 )
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id
+from scheduler.models import FetchIntention
+from scheduler.serializers import MonthOverviewSerializer
 from .models import (
     SushiCredentials,
     CounterReportType,
     SushiFetchAttempt,
+    AttemptStatus,
     CounterReportsToCredentials,
 )
 from .serializers import (
@@ -211,10 +214,10 @@ class SushiCredentialsViewSet(ModelViewSet):
             while start <= end:
                 if start.year in result:
                     before = result[start.year][f"{start.month:02d}"][report_type]["status"]
-                    if status in ['FAILURE', 'BROKEN'] and before in ["untried"]:
+                    if status in AttemptStatus.errors() and before in ["untried"]:
                         # untried => failed
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "failed"
-                    elif status == "PARTIAL_DATA" and before in [
+                    elif attempt.partial_data and before in [
                         "untried",
                         "failed",
                         "success",
@@ -224,10 +227,14 @@ class SushiCredentialsViewSet(ModelViewSet):
                         result[start.year][f"{start.month:02d}"][report_type][
                             "status"
                         ] = "partial_data"
-                    elif status in ['NO_DATA'] and before in ["untried", "failed", "partial_data"]:
+                    elif status == AttemptStatus.NO_DATA and before in [
+                        "untried",
+                        "failed",
+                        "partial_data",
+                    ]:
                         # failed, untried, partial_data => no_data
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "no_data"
-                    elif status == 'SUCCESS' and before in [
+                    elif status == AttemptStatus.SUCCESS and before in [
                         "untried",
                         "failed",
                         "no_data",
@@ -281,19 +288,18 @@ class SushiCredentialsViewSet(ModelViewSet):
             {'credentials__enabled': True} if 'disabled' not in request.query_params else {}
         )
         query = (
-            SushiFetchAttempt.objects.filter(
+            FetchIntention.objects.filter(
                 start_date__lte=start,
                 end_date__gte=end,
                 credentials_id__in=credentials,
-                in_progress=False,
                 counter_report=F('credentials__counter_reports'),
                 **enabled_attr,
             )
-            .order_by("credentials_id", "counter_report_id", "-timestamp")
+            .order_by("credentials_id", "counter_report_id", "-attempt__timestamp")
             .distinct("credentials_id", "counter_report_id")
-            .select_related('credentials', 'counter_report')
+            .select_related('credentials', 'counter_report', 'attempt')
         )
-        records = SushiFetchAttemptSimpleSerializer(query, many=True).data
+        records = MonthOverviewSerializer(query, many=True).data
         return Response(records)
 
 

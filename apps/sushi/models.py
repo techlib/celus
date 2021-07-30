@@ -17,6 +17,7 @@ from django.db import models
 from django.db.models import F, Exists, OuterRef
 from django.db.transaction import atomic
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from pycounter.exceptions import SushiException
 from rest_framework.exceptions import PermissionDenied
 
@@ -368,7 +369,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
         else:
             attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
-        attempt_params['in_progress'] = False
         # add version info to the attempt
         attempt_params['credentials_version_hash'] = self.version_hash
         # now store it - into an existing object or a new one
@@ -391,15 +391,12 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     def _fetch_report_v4(
         self, client: Sushi4Client, counter_report, start_date, end_date, file_data: IO[bytes]
     ) -> dict:
-        contains_data = False
-        download_success = False
-        processing_success = False
-        is_processed = False
+
+        status = AttemptStatus.INITIAL
         partial_data = False
         when_processed = None
         log = ''
         error_code = ''
-        queued = False
         params = self.extra_params or {}
         params['sushi_dump'] = True
         filename = 'foo.tsv'  # we just need the extension
@@ -414,10 +411,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             errors = client.extract_errors_from_data(file_data)
             if errors:
                 error_code = errors[0].code
-                queued = False
-                download_success = False
-                processing_success = False
-                is_processed = True
                 when_processed = now()
 
                 # Check whether it contains partial data
@@ -431,17 +424,20 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 ):
                     partial_data = True
 
+            status = AttemptStatus.DOWNLOAD_FAILED
             log = '\n'.join(error.full_log for error in errors)
             filename = 'foo.xml'  # we just need the extension
         except Exception as e:
+            status = AttemptStatus.PARSING_FAILED
             logger.error("Error: %s", e)
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             filename = 'foo.xml'  # we just need the extension
         else:
-            contains_data = True
-            download_success = True
-            processing_success = True
+            if len(report.pubs) > 0:
+                status = AttemptStatus.IMPORTING
+            else:
+                status = AttemptStatus.NO_DATA
 
         if report:
             # Write tsv report
@@ -452,22 +448,16 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             data_file = File(file_data)
 
         data_file.name = filename
-        when_queued = now() if queued else None
 
         return dict(
+            status=status,
             credentials=self,
             counter_report=counter_report,
             start_date=start_date,
             end_date=end_date,
-            download_success=download_success,
-            processing_success=processing_success,
             data_file=data_file,
             log=log,
             error_code=error_code,
-            contains_data=contains_data,
-            queued=queued,
-            when_queued=when_queued,
-            is_processed=is_processed,
             when_processed=when_processed,
             partial_data=partial_data,
         )
@@ -475,14 +465,10 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     def _fetch_report_v5(
         self, client: Sushi5Client, counter_report, start_date, end_date, file_data: IO[bytes]
     ) -> dict:
-        contains_data = False
-        download_success = False
-        processing_success = False
-        is_processed = False
+        status = AttemptStatus.INITIAL
         when_processed = None
         partial_data = False
         filename = 'foo.json'
-        queued = False
         error_code = ''
         # we want extra split data from the report
         # params must be a copy, otherwise we will pollute EXTRA_PARAMS
@@ -499,18 +485,18 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             logger.warning('Connection error: %s', e)
             error_code = 'connection'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            status = AttemptStatus.DOWNLOAD_FAILED
         except SushiExceptionNigiri as e:
             logger.warning('Error: %s', e)
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            status = AttemptStatus.PARSING_FAILED
         except Exception as e:
             logger.error('Error: %s', e)
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            status = AttemptStatus.PARSING_FAILED
         else:
-            download_success = len(report.errors) == 0
-            contains_data = report.record_found
-
             # Check for partial data
             partial_data = any(
                 str(w.code)
@@ -534,41 +520,30 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
                 if isinstance(error_obj, TransportError):
                     # transport error means something bad and no valid json in response
-                    queued = False
-                    processing_success = False
-                    download_success = False
+                    status = AttemptStatus.DOWNLOAD_FAILED
                     error_code = 'non-sushi'
                 else:
                     error_code = error_obj.code if hasattr(error_obj, 'code') else ''
-
-                    queued = False
-                    processing_success = False
-                    is_processed = True
+                    status = AttemptStatus.DOWNLOAD_FAILED
                     when_processed = now()
             else:
-                processing_success = True
-                queued = report.queued
+                status = AttemptStatus.IMPORTING if report.record_found else AttemptStatus.NO_DATA
                 log = ''
 
         # now create the attempt instance
         file_data.seek(0)  # make sure that file is rewind to the start
         django_file = File(file_data)
         django_file.name = filename
-        when_queued = now() if queued else None
+
         return dict(
             credentials=self,
             counter_report=counter_report,
             start_date=start_date,
             end_date=end_date,
-            download_success=download_success,
+            status=status,
             data_file=django_file,
-            queued=queued,
             log=log,
             error_code=error_code,
-            contains_data=contains_data,
-            processing_success=processing_success,
-            when_queued=when_queued,
-            is_processed=is_processed,
             when_processed=when_processed,
             http_status_code=http_status_code,
             partial_data=partial_data,
@@ -601,22 +576,80 @@ class SushiFetchAttemptQuerySet(models.QuerySet):
     def current(self):
         return self.filter(credentials_version_hash=F('credentials__version_hash'))
 
-    def successful(self, success_measure='is_processed'):
-        assert success_measure in (
-            'is_processed',
-            'download_success',
-            'processing_success',
-            'contains_data',
-        )
-        return self.filter(**{success_measure: True})
+    def successful(self):
+        return self.filter(status__in=AttemptStatus.successes())
 
-    def current_or_successful(self, success_measure='is_processed'):
-        return self.current() | self.successful(success_measure=success_measure)
+    def current_or_successful(self):
+        return self.current() | self.successful()
+
+
+class AttemptStatus(models.TextChoices):
+    # -> DOWNLOADING, CANCELED
+    INITIAL = 'initial', _("Initial")
+    # -> PARSING_FAILED, DOWNLOAD_FAILED, CREDENTIALS_BROKEN, NO_DATA, CANCELED, IMPORTING
+    DOWNLOADING = 'downloading', _("Downloading")
+    # -> SUCCESS, IMPORT_FAILED, CANCELED, NO_DATA
+    IMPORTING = 'importing', _("Importing")
+
+    # Terminators
+    # -> IMPORTING
+    SUCCESS = 'success', _("Success")
+    # -> IMPORTING
+    UNPROCESSED = 'unprocessed', _("Unprocessed")
+    # -> IMPORTING
+    NO_DATA = 'no_data', _("No data")
+    # -> IMPORTING
+    IMPORT_FAILED = 'import_failed', _("Import failed")
+    PARSING_FAILED = 'parsing_failed', _("Parsing failed")
+    DOWNLOAD_FAILED = 'download_failed', _("Download failed")
+    CREDENTIALS_BROKEN = 'credentails_broken', _("Broken credentials")
+    CANCELED = 'canceled', _("Canceled")
+
+    @classmethod
+    def terminated(cls):
+        return {
+            cls.SUCCESS,
+            cls.UNPROCESSED,
+            cls.NO_DATA,
+            cls.IMPORT_FAILED,
+            cls.PARSING_FAILED,
+            cls.DOWNLOAD_FAILED,
+            cls.CREDENTIALS_BROKEN,
+        }
+
+    @classmethod
+    def running(cls):
+        return {e for e in cls} - cls.terminated()
+
+    @classmethod
+    def errors(cls):
+        return {
+            cls.IMPORT_FAILED,
+            cls.PARSING_FAILED,
+            cls.DOWNLOAD_FAILED,
+            cls.CREDENTIALS_BROKEN,
+        }
+
+    @classmethod
+    def warnings(cls):
+        return {cls.NO_DATA, cls.CANCELED}
+
+    @classmethod
+    def successes(cls):
+        return {cls.SUCCESS}
+
+    @classmethod
+    def unprocessable(cls):
+        return {cls.SUCCESS, cls.NO_DATA, cls.IMPORT_FAILED}
 
 
 class SushiFetchAttempt(models.Model):
 
     objects = SushiFetchAttemptQuerySet.as_manager()
+
+    status = models.CharField(
+        max_length=20, choices=AttemptStatus.choices, default=AttemptStatus.INITIAL
+    )
 
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
@@ -624,29 +657,6 @@ class SushiFetchAttempt(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    in_progress = models.BooleanField(
-        default=False, help_text='True if the data is still downloading'
-    )
-    download_success = models.BooleanField(
-        default=False, help_text="True if there was no error downloading data"
-    )
-    processing_success = models.BooleanField(
-        default=False,
-        help_text="True if there was no error extracting " "data from the downloaded material",
-    )
-    contains_data = models.BooleanField(
-        default=False, help_text='Does the report actually contain data for ' 'import'
-    )
-    import_crashed = models.BooleanField(
-        default=False,
-        help_text='Set to true if there was an error during '
-        'data import. Details in log and '
-        'processing_info',
-    )
-    queued = models.BooleanField(
-        default=False,
-        help_text='Was the attempt queued by the provider and should be ' 'refetched?',
-    )
     when_queued = models.DateTimeField(null=True, blank=True)
     queue_id = models.IntegerField(
         null=True, blank=True, help_text='Identifier for attempt queue',
@@ -663,7 +673,6 @@ class SushiFetchAttempt(models.Model):
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
     http_status_code = models.PositiveSmallIntegerField(null=True)
-    is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
     partial_data = models.BooleanField(default=False, help_text='Data may not be complete')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
@@ -689,37 +698,16 @@ class SushiFetchAttempt(models.Model):
 
     @property
     def can_import_data(self):
-        return (
-            not self.is_processed
-            and self.download_success
-            and self.contains_data
-            and not self.import_crashed
-        )
-
-    @property
-    def status(self):
-        status = 'SUCCESS'
-        if not self.download_success:
-            status = 'FAILURE'
-        elif not self.processing_success:
-            status = 'BROKEN'
-        elif not self.contains_data:
-            status = 'NO_DATA'
-        elif self.partial_data:
-            status = 'PARTIAL_DATA'
-        if self.queued:
-            status = 'QUEUED'
-        return status
+        return self.status in [AttemptStatus.IMPORTING]
 
     def mark_processed(self):
-        if not self.is_processed:
-            self.is_processed = True
+        if self.status in AttemptStatus.terminated() and not self.when_processed:
             self.when_processed = now()
             self.save()
 
     @property
     def ok(self):
-        return self.download_success and self.processing_success
+        return self.status not in AttemptStatus.errors()
 
     def file_is_json(self) -> Optional[bool]:
         """
@@ -755,25 +743,27 @@ class SushiFetchAttempt(models.Model):
         if self.log:
             self.log += '\n'
         self.log += str(exception)
-        self.import_crashed = True
+        self.status = AttemptStatus.IMPORT_FAILED
         self.processing_info['import_crash_traceback'] = traceback.format_exc()
         self.save()
 
     @atomic
-    def unprocess(self) -> dict:
+    def unprocess(self) -> Optional[dict]:
         """
         Changes the sushi attempt to undo changes of it being processed. This includes:
         * deleting any data related to the import_batch
         * deleting the import_batch itself
-        * changing is_processed to False
         * and mark attempt as if it didn't crashed
         """
+        if self.status not in AttemptStatus.unprocessable():
+            return None
+
         stats = {}
+
         if self.import_batch:
             stats = self.import_batch.delete()  # deletes the access logs as well
             self.import_batch = None
-        self.is_processed = False
-        self.import_crashed = False
+        self.status = AttemptStatus.UNPROCESSED
         self.log = ''
         if 'import_crash_traceback' in self.processing_info:
             del self.processing_info['import_crash_traceback']
@@ -786,7 +776,7 @@ class SushiFetchAttempt(models.Model):
             # credentials changed -> result of this fetch attempt is irrelevant
             return
 
-        if self.status in ('BROKEN', 'FAILURE'):
+        if self.status == AttemptStatus.CREDENTIALS_BROKEN:
             self.update_broken_credentials()
             self.update_broken_report_type()
 
@@ -794,7 +784,7 @@ class SushiFetchAttempt(models.Model):
         for attempt in SushiFetchAttempt.objects.filter(
             credentials=self.credentials, credentials_version_hash=self.credentials_version_hash,
         ).filter(when_processed__gte=now() - timedelta(days=days)):
-            if attempt.status in ('NO_DATA', 'SUCCESS'):
+            if attempt.status in (AttemptStatus.NO_DATA, AttemptStatus.SUCCESS):
                 return True
 
         return False

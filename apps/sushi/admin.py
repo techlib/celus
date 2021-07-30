@@ -87,8 +87,8 @@ class CounterReportTypeAdmin(admin.ModelAdmin):
 def reimport(modeladmin, request, queryset):
     count = 0
     for attempt in queryset.select_for_update(skip_locked=True, of=('self',)):
-        reprocess_attempt(attempt)
-        count += 1
+        if reprocess_attempt(attempt) is not None:
+            count += 1
     messages.info(request, f'{count} attempts reimported')
 
 
@@ -173,24 +173,14 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         'timestamp',
         'start_date',
         'end_date',
-        'queued',
-        'download_success',
-        'processing_success',
-        'contains_data',
-        'import_crashed',
-        'is_processed',
+        'status',
         'error_code',
         'has_import_batch',
     ]
     list_filter = [
         HistoryMode,
-        'download_success',
-        'processing_success',
-        'is_processed',
-        'queued',
-        'import_crashed',
+        'status',
         'error_code',
-        'contains_data',
         HasImportBatch,
         'counter_report',
         'credentials__organization',
@@ -198,11 +188,11 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
     ]
     readonly_fields = [
         'credentials',
+        'status',
         'counter_report',
         'timestamp',
         'start_date',
         'end_date',
-        'download_success',
         'data_file',
         'import_batch',
         'queue_previous',

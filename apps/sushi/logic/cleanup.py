@@ -8,7 +8,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Max
 
-from sushi.models import SushiFetchAttempt
+from sushi.models import SushiFetchAttempt, AttemptStatus
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def cleanup_fetch_attempts_with_no_data(
     """
     fltr = {
         "import_batch__isnull": True,
-        "contains_data": False,
+        "status__in": list(AttemptStatus.errors()) + [AttemptStatus.NO_DATA],
         "timestamp__lt": timezone.now() - age,
     }
 

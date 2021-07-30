@@ -20,7 +20,7 @@ from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
 )
-from sushi.models import SushiFetchAttempt
+from sushi.models import SushiFetchAttempt, AttemptStatus
 
 
 logger = logging.getLogger(__file__)
@@ -46,7 +46,7 @@ def import_new_sushi_attempts_task():
     try:
         # select_for_update locks fetch attempts
         attempts = SushiFetchAttempt.objects.select_for_update(nowait=True).filter(
-            is_processed=False, download_success=True, contains_data=True, import_crashed=False
+            status=AttemptStatus.IMPORTING,
         )
         count = attempts.count()
         logger.info('Found %d unprocessed successful download attempts matching criteria', count)

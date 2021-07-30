@@ -15,8 +15,6 @@
 import VePie from "v-charts/lib/pie";
 import axios from "axios";
 import {
-  attemptState,
-  ATTEMPT_QUEUED,
   ATTEMPT_SUCCESS,
   ATTEMPT_ERROR,
   ATTEMPT_NOT_MADE,
@@ -25,6 +23,9 @@ import {
   BROKEN_REPORT,
   BROKEN_CREDENTIALS,
 } from "@/libs/attempt-state";
+
+import { intentionState, INTENTION_QUEUED } from "@/libs/intention-state";
+
 import LoaderWidget from "@/components/util/LoaderWidget";
 import { mapActions } from "vuex";
 
@@ -58,7 +59,7 @@ export default {
       height: "370px",
       states: [
         ATTEMPT_NOT_MADE,
-        ATTEMPT_QUEUED,
+        INTENTION_QUEUED,
         ATTEMPT_SUCCESS,
         ATTEMPT_EMPTY_DATA,
         ATTEMPT_UNKNOWN,
@@ -68,7 +69,7 @@ export default {
       ],
       statusToColor: {},
     };
-    data.statusToColor[this.$t(`sushi.state.${ATTEMPT_QUEUED}`)] = "#9e9e9e";
+    data.statusToColor[this.$t(`sushi.state.${INTENTION_QUEUED}`)] = "#9e9e9e";
     data.statusToColor[this.$t(`sushi.state.${ATTEMPT_SUCCESS}`)] = "#7dc17f";
     data.statusToColor[this.$t(`sushi.state.${ATTEMPT_ERROR}`)] = "#e58383";
     data.statusToColor[this.$t(`sushi.state.${ATTEMPT_NOT_MADE}`)] = "#e8e8e8";
@@ -164,7 +165,7 @@ export default {
       try {
         let response = await axios.get(this.statsUrl);
         this.rawData = response.data;
-        this.rawData.forEach((item) => (item.state = attemptState(item)));
+        this.rawData.forEach((item) => (item.state = intentionState(item)));
         if (this.sushiCredentialsList) {
           this.prepareData();
         }

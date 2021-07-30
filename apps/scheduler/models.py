@@ -26,6 +26,7 @@ from sushi.models import (
     CounterReportType,
     SushiCredentials,
     SushiFetchAttempt,
+    AttemptStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -322,9 +323,7 @@ class FetchIntentionQuerySet(models.QuerySet):
                 filter=models.Q(when_processed__isnull=True) & models.Q(duplicate_of__isnull=True)
                 | (
                     # contains data which were not imported yet
-                    models.Q(attempt__import_batch__isnull=True)
-                    & models.Q(attempt__contains_data=True)
-                    & models.Q(attempt__import_crashed=False)
+                    models.Q(attempt__status=AttemptStatus.IMPORTING)
                 ),
             ),
             0,

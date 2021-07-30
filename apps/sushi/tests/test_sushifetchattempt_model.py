@@ -8,6 +8,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 from sushi.models import (
     SushiFetchAttempt,
+    AttemptStatus,
     CounterReportsToCredentials,
     BrokenCredentialsMixin as BC,
 )
@@ -90,9 +91,9 @@ class TestSushiFetchAttemptModelManager:
         """
         Test that custom manager methods are also available on querysets for SushiFetchAttempts
         """
-        SushiFetchAttempt.objects.filter(download_success=True).current()
-        SushiFetchAttempt.objects.filter(download_success=True).current_or_successful()
-        SushiFetchAttempt.objects.filter(download_success=True).last_queued()
+        SushiFetchAttempt.objects.filter(status=AttemptStatus.SUCCESS).current()
+        SushiFetchAttempt.objects.filter(status=AttemptStatus.SUCCESS).current_or_successful()
+        SushiFetchAttempt.objects.filter(status=AttemptStatus.SUCCESS).last_queued()
 
     def test_last_queued(self, credentials, counter_report_types):
         fa1 = SushiFetchAttempt.objects.create(
@@ -181,9 +182,7 @@ class TestSushiFetchAttemptModel:
                 credentials=credentials["standalone_tr"],
                 end_date="2020-01-31",
                 when_processed=now,
-                download_success=False,
-                processing_success=False,
-                queued=False,
+                status=AttemptStatus.DOWNLOAD_FAILED,
                 counter_report=counter_report_types["tr"],
             )
             assert attempt.any_success_lately() is False
@@ -193,9 +192,7 @@ class TestSushiFetchAttemptModel:
                 credentials=credentials["standalone_tr"],
                 end_date="2020-01-31",
                 when_processed=now - timedelta(days=5),
-                download_success=False,
-                processing_success=False,
-                queued=False,
+                status=AttemptStatus.DOWNLOAD_FAILED,
                 counter_report=counter_report_types["tr"],
             )
             assert attempt.any_success_lately() is False
@@ -205,9 +202,7 @@ class TestSushiFetchAttemptModel:
                 credentials=credentials["standalone_tr"],
                 end_date="2020-01-31",
                 when_processed=now - timedelta(days=16),
-                download_success=False,
-                processing_success=False,
-                queued=False,
+                status=AttemptStatus.SUCCESS,
                 counter_report=counter_report_types["tr"],
             )
             assert attempt.any_success_lately() is False
@@ -217,9 +212,7 @@ class TestSushiFetchAttemptModel:
                 credentials=credentials["standalone_tr"],
                 end_date="2020-01-31",
                 when_processed=now - timedelta(days=15),
-                download_success=True,
-                processing_success=True,
-                queued=False,
+                status=AttemptStatus.SUCCESS,
                 counter_report=counter_report_types["tr"],
             )
             assert attempt.any_success_lately() is True
@@ -277,9 +270,7 @@ class TestSushiFetchAttemptModel:
             credentials=credentials["standalone_tr"],
             end_date="2020-01-31",
             when_processed=timezone.now() - timedelta(days=1),
-            download_success=True,
-            processing_success=True,
-            queued=False,
+            status=AttemptStatus.SUCCESS,
             counter_report=counter_report_types["jr1"],
         )
 
@@ -288,48 +279,21 @@ class TestSushiFetchAttemptModel:
                 credentials=creds,
                 end_date="2020-01-31",
                 when_processed=timezone.now() - timedelta(days=1),
-                download_success=True,
-                processing_success=True,
-                queued=False,
+                status=AttemptStatus.SUCCESS,
                 counter_report=counter_report_types["br1"],
                 http_status_code=200,
             )
 
         if status == 'SUCCESS':
-            kwargs = {
-                "download_success": True,
-                "processing_success": True,
-                "contains_data": True,
-                "queued": False,
-            }
+            status = AttemptStatus.SUCCESS
         elif status == 'NO_DATA':
-            kwargs = {
-                "download_success": True,
-                "processing_success": True,
-                "contains_data": False,
-                "queued": False,
-            }
+            status = AttemptStatus.NO_DATA
         elif status == 'QUEUED':
-            kwargs = {
-                "download_success": True,
-                "processing_success": True,
-                "contains_data": False,
-                "queued": True,
-            }
+            status = AttemptStatus.DOWNLOADING
         elif status == 'BROKEN':
-            kwargs = {
-                "download_success": True,
-                "processing_success": False,
-                "contains_data": False,
-                "queued": False,
-            }
+            status = AttemptStatus.CREDENTIALS_BROKEN
         elif status == 'FAILURE':
-            kwargs = {
-                "download_success": False,
-                "processing_success": False,
-                "contains_data": False,
-                "queued": False,
-            }
+            status = AttemptStatus.DOWNLOAD_FAILED
         else:
             raise NotImplementedError()
 
@@ -341,7 +305,9 @@ class TestSushiFetchAttemptModel:
             counter_report=counter_report_types["br1"],
             error_code=sushi_status.value,
             http_status_code=http_status,
-            **kwargs,
+            status=AttemptStatus.CREDENTIALS_BROKEN
+            if broken_credentials or broken_cr2c
+            else AttemptStatus.SUCCESS,
         )
         attempt.update_broken()
         creds.refresh_from_db()
@@ -359,7 +325,7 @@ class TestSushiFetchAttemptModel:
             counter_report=counter_report_types["br1"],
             error_code=sushi_status.value,
             http_status_code=http_status,
-            **kwargs,
+            status=status,
         )
         second_attempt.update_broken()
         creds.refresh_from_db()

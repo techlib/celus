@@ -3,7 +3,8 @@ from rest_framework.fields import DateField, DateTimeField
 
 from organizations.serializers import OrganizationSerializer, OrganizationShortSerializer
 from publications.serializers import PlatformSerializer, SimplePlatformSerializer
-from sushi.serializers import SushiFetchAttemptFlatSerializer
+from sushi.serializers import SushiFetchAttemptFlatSerializer, SushiFetchAttemptSimpleSerializer
+from sushi.models import SushiFetchAttempt
 
 from .models import Automatic, FetchIntention, Harvest
 
@@ -168,3 +169,34 @@ class CreateHarvestSerializer(serializers.ModelSerializer):
         if len(items) == 0:
             raise serializers.ValidationError("At least one intention has to be used")
         return items
+
+
+class MonthOverviewSerializer(serializers.ModelSerializer):
+    attempt = SushiFetchAttemptSimpleSerializer()
+    counter_version = serializers.IntegerField(
+        read_only=True, source='counter_report.counter_version'
+    )
+    data_file = serializers.CharField(read_only=True, source='attempt.data_file')
+    error_code = serializers.CharField(read_only=True, source='attempt.error_code')
+    import_batch = serializers.PrimaryKeyRelatedField(read_only=True, source='attempt.import_batch')
+    status = serializers.CharField(read_only=True, source='attempt.status')
+    when_processed = DateTimeField(read_only=True, source='attempt.when_processed')
+    when_downloaded = DateTimeField(read_only=True, source='when_processed')
+
+    class Meta:
+        model = FetchIntention
+        fields = (
+            'attempt',
+            'counter_report_id',
+            'counter_version',
+            'credentials_id',
+            'data_file',
+            'start_date',
+            'end_date',
+            'error_code',
+            'import_batch',
+            'pk',
+            'when_processed',
+            'when_downloaded',
+            'status',
+        )

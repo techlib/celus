@@ -18,6 +18,7 @@ from django.utils import timezone
 
 from organizations.models import Organization
 from scheduler.models import FetchIntention
+from sushi.models import SushiFetchAttempt, AttemptStatus
 from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
 from ..entities.fetchattempts import FetchAttemptFactory
@@ -350,9 +351,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                     end_date="2020-01-31",
                     credentials=credentials["standalone_tr"],
                     counter_report=counter_report_types["tr"],
-                    download_success=False,
-                    processing_success=False,
-                    contains_data=False,
+                    status=AttemptStatus.DOWNLOAD_FAILED,
                 ),
             ),
             FetchIntentionFactory.build(
@@ -370,9 +369,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                     end_date="2020-01-31",
                     credentials=credentials["standalone_br1_jr1"],
                     counter_report=counter_report_types["jr1"],
-                    download_success=True,
-                    processing_success=False,
-                    contains_data=False,
+                    status=AttemptStatus.IMPORT_FAILED,
                 ),
                 start_date="2020-01-01",
                 end_date="2020-01-31",
@@ -433,9 +430,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                     end_date="2020-01-31",
                     credentials=credentials["standalone_br1_jr1"],
                     counter_report=counter_report_types["br1"],
-                    download_success=True,
-                    processing_success=True,
-                    contains_data=False,
+                    status=AttemptStatus.NO_DATA,
                 ),
                 queue_id=6,
             ),
@@ -460,9 +455,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                     end_date="2020-01-31",
                     credentials=credentials["branch_pr"],
                     counter_report=counter_report_types["pr"],
-                    download_success=True,
-                    processing_success=True,
-                    contains_data=True,
+                    status=AttemptStatus.SUCCESS,
                     import_batch=import_batches["pr"],
                 ),
                 queue_id=8,

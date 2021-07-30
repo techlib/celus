@@ -61,11 +61,7 @@ cs:
 <script>
 import {
   attemptState,
-  ATTEMPT_QUEUED,
-  ATTEMPT_SUCCESS,
-  ATTEMPT_ERROR,
   ATTEMPT_NOT_MADE,
-  ATTEMPT_EMPTY_DATA,
   attemptStateToIcon,
 } from "@/libs/attempt-state";
 import { isoDateTimeFormat } from "@/libs/dates";

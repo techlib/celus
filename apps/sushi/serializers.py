@@ -171,29 +171,22 @@ class SushiFetchAttemptSerializer(ModelSerializer):
     class Meta:
         model = SushiFetchAttempt
         fields = (
-            'contains_data',
             'counter_report',
             'counter_report_verbose',
             'credentials',
             'data_file',
-            'download_success',
             'end_date',
             'error_code',
             'import_batch',
-            'import_crashed',
-            'in_progress',
-            'is_processed',
             'log',
             'organization',
             'pk',
             'platform',
-            'processing_success',
-            'queued',
             'start_date',
             'timestamp',
             'when_processed',
-            'when_queued',
             'partial_data',
+            'status',
         )
 
 
@@ -204,25 +197,18 @@ class SushiFetchAttemptSimpleSerializer(ModelSerializer):
     class Meta:
         model = SushiFetchAttempt
         fields = (
-            'contains_data',
             'counter_report_id',
             'counter_version',
             'credentials_id',
             'data_file',
-            'download_success',
             'end_date',
             'error_code',
             'import_batch',
-            'import_crashed',
-            'in_progress',
-            'is_processed',
             'pk',
-            'processing_success',
-            'queued',
             'start_date',
             'timestamp',
             'when_processed',
-            'when_queued',
+            'status',
         )
 
 
@@ -230,26 +216,19 @@ class SushiFetchAttemptFlatSerializer(ModelSerializer):
     class Meta:
         model = SushiFetchAttempt
         fields = (
-            'contains_data',
             'counter_report',
             'credentials',
             'data_file',
-            'download_success',
             'end_date',
             'error_code',
             'import_batch',
-            'import_crashed',
-            'in_progress',
-            'is_processed',
             'log',
             'pk',
-            'processing_success',
-            'queued',
             'start_date',
             'timestamp',
             'when_processed',
-            'when_queued',
             'partial_data',
+            'status',
         )
 
 

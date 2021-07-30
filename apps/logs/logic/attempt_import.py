@@ -10,7 +10,7 @@ from logs.models import OrganizationPlatform, ImportBatch
 from nigiri.client import Sushi5Client, SushiException, SushiError
 from nigiri.counter5 import CounterError, Counter5ReportBase, TransportError
 from nigiri.counter4 import Counter4ReportBase
-from sushi.models import SushiFetchAttempt
+from sushi.models import SushiFetchAttempt, AttemptStatus
 
 
 logger = logging.getLogger(__name__)
@@ -26,17 +26,27 @@ def validate_data_v4(report: Counter4ReportBase):
 
 
 def check_importable_attempt(attempt: SushiFetchAttempt):
-    if attempt.is_processed:
+
+    if attempt.status == AttemptStatus.SUCCESS:
         raise ValueError(f'Data already imported (attempt={attempt.pk})')
 
-    if not attempt.download_success:
+    elif attempt.status in [
+        AttemptStatus.DOWNLOAD_FAILED,
+        AttemptStatus.CREDENTIALS_BROKEN,
+    ]:
         raise ValueError(f'Trying to import data when download failed (attempt={attempt.pk})')
 
-    if not attempt.contains_data:
+    elif attempt.status == AttemptStatus.NO_DATA:
         raise ValueError(f'Attempt contains no data (attempt={attempt.pk})')
 
-    if attempt.import_crashed:
+    if attempt.status == AttemptStatus.IMPORT_FAILED:
         raise ValueError(f'Import of data already crashed (attempt={attempt.pk})')
+
+    if attempt.status not in [
+        AttemptStatus.IMPORTING,
+        AttemptStatus.UNPROCESSED,
+    ]:
+        raise ValueError(f'Could not import data (attempt={attempt.pk})')
 
 
 @atomic
@@ -67,11 +77,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         # if we find validation error on data revalidation, we switch the report success attr
         logger.error('Validation error: %s', e)
         logger.info('Marking the attempt as unsuccessful')
-        attempt.download_success = True
-        attempt.processing_success = True
-        attempt.is_processed = True
-        attempt.import_crashed = True
-        attempt.contains_data = False
+        attempt.status = AttemptStatus.IMPORT_FAILED
         if isinstance(e.text, SushiError):
             attempt.log = str(e.text)
             attempt.error_code = e.text.code
@@ -97,18 +103,10 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.log = '; '.join(str(e) for e in reader.errors)
         logger.warning('Found errors: %s', attempt.log)
         if isinstance(error, TransportError):
-            attempt.download_success = False
-            attempt.contains_data = False
-            attempt.queued = False
-            attempt.processing_success = False
+            attempt.status = AttemptStatus.DOWNLOAD_FAILED
         else:
             attempt.error_code = error.code
-            attempt.download_success = True
-            attempt.contains_data = False
-            attempt.queued = False  # queued logic was moved to scheduler
-            attempt.processing_success = (
-                False  # consider that processing has failed when an error occurs
-            )
+            attempt.status = AttemptStatus.DOWNLOAD_FAILED
         attempt.save()
     # now read the data and import it
     elif reader.record_found:
@@ -125,7 +123,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             import_batch,
         )
         attempt.import_batch = import_batch
-        attempt.processing_success = True
+        attempt.status = AttemptStatus.SUCCESS
         if counter_version == 5 and (reader.errors or reader.warnings):
             attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
             attempt.error_code = reader.warnings[0].code
@@ -137,14 +135,15 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
         else:
             attempt.log = 'No data found during import'
-        attempt.contains_data = False
+        attempt.status = AttemptStatus.NO_DATA
         attempt.save()
         logger.warning('No records found!')
     attempt.mark_processed()
 
 
-def reprocess_attempt(attempt: SushiFetchAttempt) -> SushiFetchAttempt:
-    attempt.unprocess()
+def reprocess_attempt(attempt: SushiFetchAttempt) -> typing.Optional[SushiFetchAttempt]:
+    if not attempt.unprocess():
+        return None
     try:
         import_one_sushi_attempt(attempt)
     except Exception as e:

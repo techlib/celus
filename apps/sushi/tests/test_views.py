@@ -13,12 +13,14 @@ from organizations.tests.conftest import identity_by_user_type  # noqa
 from sushi.models import (
     SushiCredentials,
     SushiFetchAttempt,
+    AttemptStatus,
     BrokenCredentialsMixin as BS,
     CounterReportsToCredentials,
 )
 
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.scheduler import FetchIntentionFactory
 from test_fixtures.scenarios.basic import (  # noqa
     basic1,
     clients,
@@ -226,19 +228,33 @@ class TestSushiCredentialsViewSet:
         )
         new_rt1 = counter_report_type_named('new1')
         credentials.counter_reports.add(new_rt1)
-        FetchAttemptFactory(
+        FetchIntentionFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
-            credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
+            attempt=FetchAttemptFactory(
+                credentials=credentials,
+                start_date='2020-01-01',
+                end_date='2020-01-31',
+                credentials_version_hash=credentials.version_hash,
+                counter_report=new_rt1,
+                status=AttemptStatus.SUCCESS,
+            ),
         )
-        attempt2 = FetchAttemptFactory(
+        intention2 = FetchIntentionFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
-            credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
+            attempt=FetchAttemptFactory(
+                credentials=credentials,
+                start_date='2020-01-01',
+                end_date='2020-01-31',
+                credentials_version_hash=credentials.version_hash,
+                counter_report=new_rt1,
+                status=AttemptStatus.SUCCESS,
+            ),
         )
         url = reverse('sushi-credentials-month-overview')
         resp = clients["master"].get(url, {'month': '2020-01'})
@@ -248,7 +264,7 @@ class TestSushiCredentialsViewSet:
         rec = data[0]
         assert rec['credentials_id'] == credentials.pk
         assert rec['counter_report_id'] == new_rt1.pk
-        assert rec['pk'] == attempt2.pk, 'the second (newer) attempt should be reported'
+        assert rec['pk'] == intention2.pk, 'the second (newer) attempt should be reported'
         # now disable the credentials and observe the result
         credentials.enabled = False
         credentials.save()
@@ -274,19 +290,33 @@ class TestSushiCredentialsViewSet:
         )
         new_rt1 = counter_report_type_named('new1')
         credentials.counter_reports.add(new_rt1)
-        attempt1 = FetchAttemptFactory(
+        intention1 = FetchIntentionFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-03-31',
-            credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
+            attempt=FetchAttemptFactory(
+                credentials=credentials,
+                start_date='2020-01-01',
+                end_date='2020-03-31',
+                credentials_version_hash=credentials.version_hash,
+                counter_report=new_rt1,
+                status=AttemptStatus.SUCCESS,
+            ),
         )
-        attempt2 = FetchAttemptFactory(
+        intention2 = FetchIntentionFactory(
             credentials=credentials,
             start_date='2020-01-01',
             end_date='2020-01-31',
-            credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
+            attempt=FetchAttemptFactory(
+                credentials=credentials,
+                start_date='2020-01-01',
+                end_date='2020-01-31',
+                credentials_version_hash=credentials.version_hash,
+                counter_report=new_rt1,
+                status=AttemptStatus.SUCCESS,
+            ),
         )
         url = reverse('sushi-credentials-month-overview')
         # 2020-01 - there are two attempts for this month
@@ -295,14 +325,14 @@ class TestSushiCredentialsViewSet:
         data = resp.json()
         assert len(data) == 1, 'there should be one record for this period'
         rec = data[0]
-        assert rec['pk'] == attempt2.pk, 'the second (newer) attempt should be reported'
+        assert rec['pk'] == intention2.pk, 'the second (newer) attempt should be reported'
         # 2020-02 - there is one attempt for this month
         resp = clients["master"].get(url, {'month': '2020-02'})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, 'there should be one record for this period'
         rec = data[0]
-        assert rec['pk'] == attempt1.pk, 'the attempt spanning to this month should be reported'
+        assert rec['pk'] == intention1.pk, 'the attempt spanning to this month should be reported'
         # 2020-03 - there is one attempt for this month
         resp = clients["master"].get(url, {'month': '2020-03'})
         assert resp.status_code == 200
@@ -446,6 +476,7 @@ class TestSushiCredentialsViewSet:
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
             start_date=date(2020, 1, 1),
+            status=AttemptStatus.CREDENTIALS_BROKEN,
         )
         credentials["standalone_tr"].set_broken(attempt_tr, BS.BROKEN_HTTP)
 
@@ -454,6 +485,7 @@ class TestSushiCredentialsViewSet:
             credentials=credentials["standalone_br1_jr1"],
             counter_report=counter_report_types["jr1"],
             start_date=date(2020, 1, 1),
+            status=AttemptStatus.CREDENTIALS_BROKEN,
         )
         cr2c_br1 = CounterReportsToCredentials.objects.get(
             credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"

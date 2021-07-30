@@ -114,6 +114,8 @@ export {
   annotateIntention,
   intentionState,
   intentionStateToIcon,
+  INTENTION_QUEUED,
+  INTENTION_CANCELED,
   INTENTION_RUNNING,
   INTENTION_DELETED,
   INTENTION_BROKEN,

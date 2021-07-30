@@ -36,9 +36,12 @@ from scheduler.models import (
     RunResponse,
     Scheduler,
 )
-from scheduler import signals
-from sushi.models import SushiCredentials, CounterReportsToCredentials
-from nigiri.error_codes import ErrorCode
+from sushi.models import (
+    SushiCredentials,
+    SushiFetchAttempt,
+    CounterReportsToCredentials,
+    AttemptStatus,
+)
 
 
 current_tz = timezone.get_current_timezone()
@@ -140,10 +143,7 @@ class TestFetchIntention:
                 counter_report=counter_report,
                 start_date=start_date,
                 end_date=end_date,
-                contains_data=True,
-                is_processed=False,
-                download_success=True,
-                import_crashed=False,
+                status=AttemptStatus.IMPORTING,
             )
 
         monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
