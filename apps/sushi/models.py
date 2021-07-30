@@ -21,7 +21,7 @@ from pycounter.exceptions import SushiException
 from rest_framework.exceptions import PermissionDenied
 
 from core.logic.dates import month_end, parse_date
-from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, User
+from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, CreatedUpdatedMixin, User
 from core.task_support import cache_based_lock
 from logs.models import AccessLog, ImportBatch
 from nigiri.client import (
@@ -85,15 +85,6 @@ COUNTER_REPORTS = (
     ('DR', 5, False, Counter5TableReport, False),
     ('IR', 5, False, Counter5TableReport, False),
 )
-
-
-class CreatedUpdatedMixin(models.Model):
-    created = models.DateTimeField(default=now)
-    last_updated = models.DateTimeField(auto_now=True)
-    last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-
-    class Meta:
-        abstract = True
 
 
 class BrokenCredentialsMixin(models.Model):

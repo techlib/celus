@@ -6,7 +6,7 @@ from enum import Enum, auto
 
 from celery import states
 from core.logic.dates import month_end, month_start
-from core.models import User
+from core.models import User, CreatedUpdatedMixin
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import DatabaseError, models, transaction
@@ -24,7 +24,6 @@ from publications.models import Platform
 from sushi.models import (
     CounterReportsToCredentials,
     CounterReportType,
-    CreatedUpdatedMixin,
     SushiCredentials,
     SushiFetchAttempt,
 )

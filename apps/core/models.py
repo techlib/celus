@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+from django.utils.timezone import now
 from django.apps import apps
 
 from core.logic.url import extract_organization_id_from_request_query
@@ -278,3 +279,12 @@ class Identity(models.Model):
 
     def __str__(self):
         return self.identity
+
+
+class CreatedUpdatedMixin(models.Model):
+    created = models.DateTimeField(default=now)
+    last_updated = models.DateTimeField(auto_now=True)
+    last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        abstract = True
