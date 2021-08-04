@@ -1,3 +1,5 @@
+import typing
+
 from enum import Enum
 
 
@@ -29,3 +31,61 @@ class ErrorCode(Enum):
             return self.value == o
         else:
             return super().__eq__(o)
+
+
+def error_code_to_severity(error_code: typing.Union[None, int, str]) -> str:
+    if error_code is None:
+        return "Error"
+    try:
+        error_code = int(error_code)
+    except ValueError:
+        return "Error"
+
+    if error_code == 0:
+        return "Info"
+    elif 1 < error_code < 999:
+        return "Warning"
+    elif error_code == ErrorCode.SERVICE_NOT_AVAILABLE.value:
+        return "Error"  # Fatal
+    elif error_code == ErrorCode.SERVICE_BUSY.value:
+        return "Error"  # Fatal
+    elif error_code == ErrorCode.PREPARING_DATA.value:
+        return "Warning"
+    elif error_code == ErrorCode.TOO_MANY_REQUESTS.value:
+        return "Error"  # Fatal
+    elif error_code == ErrorCode.INSUFFICIENT_DATA.value:
+        return "Error"  # Fatal
+    elif error_code == ErrorCode.NOT_AUTHORIZED.value:
+        return "Error"
+    elif error_code == ErrorCode.NOT_AUTHORIZED_INSTITUTION.value:
+        return "Error"
+    elif error_code == ErrorCode.INVALID_API_KEY.value:
+        return "Error"
+    elif error_code == ErrorCode.REPORT_NOT_SUPPORTED.value:
+        return "Error"
+    elif error_code == ErrorCode.REPORT_VERSION_NOT_SUPPORTED.value:
+        return "Error"
+    elif error_code == ErrorCode.INVALID_DATE_ARGS.value:
+        return "Error"
+    elif error_code == ErrorCode.NO_DATA_FOR_DATE_ARGS.value:
+        return "Error"
+    elif error_code == ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value:
+        return "Error"  # or Warning
+    elif error_code == ErrorCode.NO_LONGER_AVAILABLE.value:
+        return "Warning"
+    elif error_code == ErrorCode.PARTIAL_DATA_RETURNED.value:
+        return "Warning"
+    elif error_code == ErrorCode.PARAMETER_NOT_RECOGNIZED.value:
+        return "Warning"
+    elif error_code == ErrorCode.INVALID_REPORT_FILTER.value:
+        return "Error"  # or Warning
+    elif error_code == ErrorCode.INCONGRUOUS_REPORT_FILTER.value:
+        return "Error"  # or Warning
+    elif error_code == ErrorCode.MISSING_REPORT_FILTER.value:
+        return "Error"  # or Warning
+    elif error_code == ErrorCode.MISSING_REPORT_ATTRIBUTE.value:
+        return "Error"  # or Warning
+    elif error_code == ErrorCode.RETURN_DATA_LIMIT_REACHED.value:
+        return "Warning"
+    else:
+        return "Error"

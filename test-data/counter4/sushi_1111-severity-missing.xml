@@ -1,0 +1,29 @@
+<soapenv:Envelope xmlns:xsi="http://www.w3.org/1999/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/1999/XMLSchema">
+	<soapenv:Body soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+		<ReportResponse xmlns="http://www.niso.org/schemas/sushi/counter" xmlns:s="http://www.niso.org/schemas/sushi" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="fff_stats" xsi:schemaLocation="http://www.niso.org/schemas/sushi/counter http://www.niso.org/schemas/sushi/counter_sushi4_0.xsd" Created="2020-08-13T21:13:04">
+			<s:Requestor>
+				<s:ID>fffffffff</s:ID>
+				<s:Name/>
+				<s:Email/>
+			</s:Requestor>
+			<s:CustomerReference>
+				<s:ID>loc=ffffffff_ffff</s:ID>
+				<s:Name/>
+			</s:CustomerReference>
+			<s:ReportDefinition Name="BR2" Release="4">
+				<s:Filters>
+					<s:UsageDateRange>
+						<s:Begin>2020-07-01</s:Begin>
+						<s:End>2020-07-31</s:End>
+					</s:UsageDateRange>
+				</s:Filters>
+			</s:ReportDefinition>
+			<Report xmlns="http://www.niso.org/schemas/sushi/counter">
+				<Exception xmlns="http://www.niso.org/schemas/sushi" Created="2020-08-13T21:13:04">
+					<Number>1111</Number>
+					<Message>Authentication Failed. Invalid userId/password</Message>
+				</Exception>
+			</Report>
+		</ReportResponse>
+	</soapenv:Body>
+</soapenv:Envelope>

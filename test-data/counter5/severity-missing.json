@@ -1,0 +1,43 @@
+{
+  "Report_Header": {
+    "Created": "2021-05-14T00:00:00Z",
+    "Created_By": "Provider",
+    "Customer_ID": "XXX",
+    "Report_ID": "DR",
+    "Release": "5",
+    "Report_Name": "Database Master Report",
+    "Institution_Name": "My university",
+    "Institution_ID": [
+      {
+        "Type": "Proprietary",
+        "Value": "Provider:1258"
+      }
+    ],
+    "Report_Filters": [
+      {
+        "Name": "Begin_Date",
+        "Value": "2021-01-01"
+      },
+      {
+        "Name": "End_Date",
+        "Value": "2021-01-31"
+      }
+    ],
+    "Report_Attributes": [
+      {
+        "Name": "Attributes_To_Show",
+        "Value": "Access_Method|Data_Type"
+      }
+    ],
+    "Exceptions": [
+      {
+        "Code": 3010,
+        "Message": "Report Version Not Supported: Report not implemented",
+        "Help_URL": "",
+        "Data": "DR"
+      }
+    ]
+  },
+  "Report_Items": null
+}
+

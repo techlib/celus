@@ -22,7 +22,7 @@ from .counter5 import (
     CounterError,
     Counter5IRM1Report,
 )
-from .error_codes import ErrorCode
+from .error_codes import error_code_to_severity
 from .exceptions import SushiException
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 class SushiError:
     def __init__(self, code='', text='', full_log='', raw_data=None, severity=None, data=None):
         self.code = code
-        self.severity = severity
+        self.severity = severity if isinstance(severity, str) else error_code_to_severity(code)
         self.text = text
         self.full_log = full_log
         self.data = data
@@ -342,8 +342,8 @@ class Sushi5Client(SushiClientBase):
 
     @classmethod
     def _format_error(cls, exc: dict):
-        severity = next(recursive_finder(exc, ["Severity"]), "Unknown")
         code = next(recursive_finder(exc, ["Code"]), None)
+        severity = next(recursive_finder(exc, ["Severity"]), error_code_to_severity(code))
         text = next(recursive_finder(exc, ["Message"]), "")
         data = next(recursive_finder(exc, ["Data"]), "")
 
@@ -449,7 +449,9 @@ class Sushi4Client(SushiClientBase):
                     continue
                 code = next(recursive_finder(exception, ["Number"]), "")
                 message = next(recursive_finder(exception, ["Message"]), "")
-                severity = next(recursive_finder(exception, ["Severity"]), "Unknown")
+                severity = next(
+                    recursive_finder(exception, ["Severity"]), error_code_to_severity(code)
+                )
 
                 full_log = f'{severity}: #{code}; {message}'
                 errors.append(

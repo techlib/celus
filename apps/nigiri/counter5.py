@@ -9,7 +9,7 @@ from copy import copy
 import ijson.backends.python as ijson  # TODO yalj2 backend can be faster...
 
 from core.logic.dates import parse_counter_month
-from .error_codes import ErrorCode
+from .error_codes import ErrorCode, error_code_to_severity
 from .exceptions import SushiException
 
 
@@ -56,7 +56,7 @@ class CounterRecord:
 class CounterError:
     def __init__(self, code=None, severity=None, message=None, data=None):
         self.code = code
-        self.severity = severity
+        self.severity = severity if isinstance(severity, str) else error_code_to_severity(code)
         self.message = message
         self.data = data
 
@@ -71,6 +71,10 @@ class CounterError:
 
     @classmethod
     def from_sushi_dict(cls, rec):
+        severity = rec.get('Severity')
+        severity = (
+            severity if isinstance(severity, str) else error_code_to_severity(rec.get('Code'))
+        )
         return cls(
             code=rec.get('Code'),
             severity=rec.get('Severity'),

@@ -7,21 +7,21 @@ from nigiri.client import Sushi4Client
 
 class TestErrors:
     @pytest.mark.parametrize(
-        "filename,code",
+        "filename,code,severity",
         (
-            ("4_BR2_invalid_location1.xml", 1110),
-            ("4_BR2_not_supported1.xml", 3000),
-            ("4_BR2_service_not_available1.xml", 1000),
-            ("4_BR2_unauthorized1.xml", 2000),
-            ("4_BR2_unauthorized2.xml", 2010),
-            ("4_PR1_invalid_requestor.xml", 2000),
-            ("sushi_1111.xml", 1111),
-            ("sushi_3030.xml", 3030),
+            ("4_BR2_invalid_location1.xml", 1110, "Error"),
+            ("4_BR2_not_supported1.xml", 3000, "Error"),
+            ("4_BR2_service_not_available1.xml", 1000, "Fatal"),
+            ("4_BR2_unauthorized1.xml", 2000, "Error"),
+            ("4_BR2_unauthorized2.xml", 2010, "Error"),
+            ("4_PR1_invalid_requestor.xml", 2000, "Error"),
+            ("sushi_1111.xml", 1111, "Error"),
+            ("sushi_1111-severity-number.xml", 1111, "4"),  # xml doesn't have number type
+            ("sushi_1111-severity-missing.xml", 1111, "Error"),
+            ("sushi_3030.xml", 3030, "Error"),
         ),
     )
-    def test_error_extraction(
-        self, filename, code,
-    ):
+    def test_error_extraction(self, filename, code, severity):
 
         client = Sushi4Client("https://example.com/", "user")
 
@@ -30,3 +30,4 @@ class TestErrors:
             assert len(errors) == 1
             error = errors[0]
             assert int(error.code) == code
+            assert error.severity == severity

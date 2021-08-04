@@ -169,6 +169,37 @@ class TestCounter5Reading:
         error = reader.errors[0]
         assert str(error.code) == '2090'
 
+    def test_severity_as_number(self):
+        """
+        Severity of error is a number
+        """
+        reader = Counter5TRReport()
+        records = [
+            e
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/severity-number.json'
+            )
+        ]
+        assert len(records) == 0
+        assert len(reader.errors) == 1
+        error = reader.errors[0]
+        assert str(error.code) == '3010'
+        assert str(error.severity.lower()) == 'error'
+
+    def test_severity_is_missing(self):
+        reader = Counter5TRReport()
+        records = [
+            e
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/severity-missing.json'
+            )
+        ]
+        assert len(records) == 0
+        assert len(reader.errors) == 1
+        error = reader.errors[0]
+        assert str(error.code) == '3010'
+        assert str(error.severity.lower()) == 'error'
+
 
 @pytest.mark.django_db
 class TestCounter5TableReports:
