@@ -47,6 +47,6 @@ class Command(BaseCommand):
             count, details = model.objects.all().delete()
             self.update_stats(stats, details)
             self.stderr.write(self.style.WARNING(f'Deleted: {count} objects; stats: {stats}'))
+        self.stderr.write(self.style.WARNING(f'Stats: {stats}'))
         if not options['doit']:
-            self.stderr.write(self.style.WARNING(f'Stats: {stats}'))
             raise ValueError('preventing db commit, use --do-it to really do it ;)')
