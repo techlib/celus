@@ -277,7 +277,7 @@ CELERY_TASK_ROUTES = {
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
     'core.tasks.test': {'queue': 'normal'},
-    'update_report_approx_record_count_task': {'queue': 'interest'},
+    'logs.tasks.update_report_approx_record_count_task': {'queue': 'interest'},
     'logs.tasks.export_raw_data_task': {'queue': 'export'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
 }
@@ -312,7 +312,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=50, hour=23),  # every day at 23:50
     },
     'update_report_approx_record_count_task': {
-        'task': 'update_report_approx_record_count_task',
+        'task': 'logs.tasks.update_report_approx_record_count_task',
         'schedule': crontab(hour=1, minute=13),  # every day at 1:13
     },
 }
