@@ -171,6 +171,18 @@ class TestPlatformAPI:
                 )
             ) == {'TR', 'DR', 'JR1', 'BR2', 'DB1'}, "Interest report types created check"
 
+        resp = clients[client].post(
+            reverse('platform-list', args=[organizations[organization].pk],),
+            {
+                'ext_id': 122,  # ext_id may not be present and will be overriden to None
+                'short_name': 'platform',
+                'name': "long_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+            },
+        )
+        assert resp.status_code in [400, 403], "Already created"
+
     def test_create_platform_for_organization_with_no_data_source(
         self, basic1, clients, organizations, client, settings
     ):
@@ -191,6 +203,17 @@ class TestPlatformAPI:
         organizations["master"].refresh_from_db()
         assert organizations["master"].source.organization == organizations["master"]
         assert organizations["master"].source.type == DataSource.TYPE_ORGANIZATION
+
+        resp = clients["su"].post(
+            reverse('platform-list', args=[organizations["master"].pk],),
+            {
+                'short_name': 'platform',
+                'name': "long_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+            },
+        )
+        assert resp.status_code == 400, "Already created"
 
     def test_create_platform_when_disabled(
         self, basic1, clients, organizations, client, settings,

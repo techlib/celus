@@ -21,7 +21,7 @@ from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
-from core.models import DataSource
+from core.models import DataSource, DATA_SOURCE_TYPE_API, DATA_SOURCE_TYPE_KNOWLEDGEBASE
 from core.pagination import SmartPageNumberPagination
 from core.permissions import (
     SuperuserOrAdminPermission,
@@ -164,6 +164,14 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
             organization.save()
         else:
             source = organization.source
+
+        serializer.is_valid()  # -> sets validated_data
+        if Platform.objects.filter(
+            Q(ext_id__isnull=True)
+            & Q(short_name=serializer.validated_data["short_name"])
+            & (Q(source__isnull=True) | Q(source=source))
+        ).exists():
+            raise ValidationError({"short_name": "Already exists"}, code="unique")
 
         platform = serializer.save(ext_id=None, source=source)
         platform.create_default_interests()
