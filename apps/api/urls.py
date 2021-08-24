@@ -12,7 +12,8 @@ from . import views
 logger = logging.getLogger(__name__)
 
 urlpatterns = [
-    path('rest-auth/', include('rest_auth.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),  # contains link to reset password
+    path('rest-auth/', include('dj_rest_auth.urls')),
     path('', include('logs.urls')),
     path('', include('organizations.urls')),
     path('', include('publications.urls')),
@@ -27,7 +28,7 @@ urlpatterns = [
 ]
 
 if settings.ALLOW_USER_REGISTRATION:
-    urlpatterns.append(path('rest-auth/registration/', include('rest_auth.registration.urls')))
+    urlpatterns.append(path('rest-auth/registration/', include('dj_rest_auth.registration.urls')))
 
 
 if settings.DEBUG:

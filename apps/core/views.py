@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import translation
-from rest_auth.views import PasswordResetConfirmView
+from dj_rest_auth.views import PasswordResetConfirmView
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
