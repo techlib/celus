@@ -18,6 +18,7 @@ class TestManualUploadForCounterData:
             ('counter4/counter4_br2.tsv', 4, 'BR2'),
             ('counter5/counter5_table_dr.csv', 5, 'DR'),
             ('counter5/counter5_table_dr.tsv', 5, 'DR'),
+            ('counter5/counter5_table_pr.csv', 5, 'PR'),
             ('counter5/counter5_tr_test1.json', 5, 'TR'),
         ),
     )

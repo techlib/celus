@@ -371,10 +371,10 @@ class Counter5TableReport:
         header = {}
         reader = csv.reader(infile, dialect=dialect)
         for header_line in reader:
-            if not header_line[0].strip():
+            if not header_line or not header_line[0].strip():
                 # we break on empty line - it means end of header and start of data
                 break
-            header[header_line[0].strip()] = header_line[1].strip()
+            header[header_line[0].strip()] = header_line[1].strip() if len(header_line) > 1 else ''
         report_type = header.get('Report_ID')
         if not report_type or report_type not in self.report_type_to_dimensions:
             raise ValueError(f'Unsupported report type: {report_type}')
