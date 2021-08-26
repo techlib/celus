@@ -2,6 +2,7 @@ from django.contrib import admin
 from modeltranslation.admin import TranslationAdmin
 
 from . import models
+from sushi.admin import HasImportBatch
 
 
 @admin.register(models.OrganizationPlatform)
@@ -154,3 +155,23 @@ class ReportMaterializationSpecAdmin(admin.ModelAdmin):
 class FlexibleReportAdmin(admin.ModelAdmin):
 
     list_display = ['name', 'access_level', 'owner', 'owner_organization']
+
+
+@admin.register(models.ManualDataUpload)
+class ManualDataUploadAdmin(admin.ModelAdmin):
+
+    list_filter = ['report_type', 'organization', 'platform', HasImportBatch]
+    list_display = ['created', 'report_type', 'platform', 'organization', 'user', 'is_processed']
+    list_select_related = ['report_type', 'organization', 'platform']
+    readonly_fields = [
+        'data_file',
+        'created',
+        'import_batch',
+    ]
+    search_fields = [
+        'organization__name',
+        'platform__name',
+        'pk',
+        'user__username',
+        'user__email',
+    ]
