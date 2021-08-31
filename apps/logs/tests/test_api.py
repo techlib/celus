@@ -55,19 +55,15 @@ class TestChartDataAPI:
         )
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            # the following is necessary so that it does not hang in Gitlab
-            resp = authenticated_client.get(
-                reverse('chart_data_raw', args=(report_type.pk,)),
-                {
-                    'organization': organization.pk,
-                    'metric': metric.pk,
-                    'platform': platform.pk,
-                    'prim_dim': 'date',
-                },
-            )
-            # make sure recache is not used here
-            renewal_task.apply_async.assert_not_called()
+        resp = authenticated_client.get(
+            reverse('chart_data_raw', args=(report_type.pk,)),
+            {
+                'organization': organization.pk,
+                'metric': metric.pk,
+                'platform': platform.pk,
+                'prim_dim': 'date',
+            },
+        )
         assert resp.status_code == 200
         assert 'data' in resp.json()
 
@@ -87,7 +83,6 @@ class TestChartDataAPI:
         )
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
-        # the following is necessary so that it does not hang in Gitlab
         resp = authenticated_client.get(
             reverse('chart_data_raw', args=(report_type.pk,)),
             {

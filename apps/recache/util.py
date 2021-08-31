@@ -1,12 +1,13 @@
 import logging
 from datetime import timedelta
+from time import monotonic
 
 import django
 from django.db import IntegrityError
 from django.db.transaction import atomic
 
-from .models import DEFAULT_TIMEOUT, DEFAULT_LIFETIME, CachedQuery
-from .tasks import renew_cached_query_task, find_and_renew_first_due_cached_query_task
+from .models import DEFAULT_TIMEOUT, DEFAULT_LIFETIME, CachedQuery, EMPTY_RESULT_DURATION_THRESHOLD
+from .tasks import find_and_renew_first_due_cached_query_task
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,13 @@ def recache_queryset(
         cq.renew()
         return cq.get_cached_queryset()
     except CachedQuery.DoesNotExist:
-        logger.debug('Creating new cache and scheduling its update')
+        start = monotonic()
+        result_count = len(queryset)  # evaluate the queryset to get the duration
+        duration = monotonic() - start
+        if result_count == 0 and duration < EMPTY_RESULT_DURATION_THRESHOLD:
+            logger.debug('Not caching empty result for a fast (%.2f s) query', duration)
+            return queryset
+        logger.debug('Creating new cache')
         safe_create_cached_query(queryset, timeout, lifetime, origin)
         return queryset
 

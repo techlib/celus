@@ -32,15 +32,12 @@ class TestRecacheQueryset:
         """
         UserFactory.create_batch(1)
         # prepare the cache
-        with patch('recache.util.renew_cached_query_task'):
-            recache_queryset(User.objects.all())
+        recache_queryset(User.objects.all())
         assert User.objects.count() == 1
         UserFactory.create_batch(2)  # create more users
         assert User.objects.count() == 3
         assert CachedQuery.objects.count() == 1
-        with patch('recache.util.renew_cached_query_task') as renewal_task:
-            qs = recache_queryset(User.objects.all())
-            renewal_task.apply_async.assert_not_called()
+        qs = recache_queryset(User.objects.all())
         assert CachedQuery.objects.count() == 1, 'still only one cache object'
         assert qs.count() == 1, 'should keep the old count'
         assert User.objects.count() == 3
@@ -53,8 +50,7 @@ class TestRecacheQueryset:
         """
         UserFactory.create_batch(1)
         # prepare the cache
-        with patch('recache.util.renew_cached_query_task'):
-            recache_queryset(User.objects.all())
+        recache_queryset(User.objects.all())
         assert User.objects.count() == 1
         UserFactory.create_batch(2)  # create more users
         assert User.objects.count() == 3
@@ -63,9 +59,7 @@ class TestRecacheQueryset:
         cq = CachedQuery.objects.get()
         cq.last_updated -= 1.5 * cq.timeout
         cq.save()
-        with patch('recache.util.find_and_renew_first_due_cached_query_task') as renewal_task:
-            qs = recache_queryset(User.objects.all())
-            renewal_task.apply_async.assert_called()
+        qs = recache_queryset(User.objects.all())
         assert CachedQuery.objects.count() == 1, 'still only one cache object'
         assert qs.count() == 1, 'should keep the old count'
         assert User.objects.count() == 3
@@ -114,3 +108,13 @@ class TestRecacheQueryset:
         assert CachedQuery.objects.count() == 2, 'new cache object is created'
         assert qs.count() == 3, 'should have the new count'
         assert User.objects.count() == 3
+
+    def test_recache_queryset_empty(self):
+        """
+        Tests that uncached queryset will not create a cached query if the results is empty
+        and the query is too fast
+        """
+        assert User.objects.count() == 0
+        assert CachedQuery.objects.count() == 0
+        recache_queryset(User.objects.all())
+        assert CachedQuery.objects.count() == 0
