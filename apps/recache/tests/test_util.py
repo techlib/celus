@@ -59,7 +59,9 @@ class TestRecacheQueryset:
         cq = CachedQuery.objects.get()
         cq.last_updated -= 1.5 * cq.timeout
         cq.save()
-        qs = recache_queryset(User.objects.all())
+        with patch('recache.util.find_and_renew_first_due_cached_query_task') as renewal_task:
+            qs = recache_queryset(User.objects.all())
+            renewal_task.apply_async.assert_called()
         assert CachedQuery.objects.count() == 1, 'still only one cache object'
         assert qs.count() == 1, 'should keep the old count'
         assert User.objects.count() == 3
