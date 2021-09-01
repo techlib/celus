@@ -15,7 +15,6 @@ from django.utils.timezone import now
 
 BLAKE_HASH_SIZE = 16
 DEFAULT_TIMEOUT = timedelta(seconds=60 * 60)  # 1 hour
-DEFAULT_TIMEOUT_EMPTY = timedelta(seconds=60)  # 1 minute
 # queries with empty results which take less than EMPTY_RESULT_DURATION_THRESHOLD seconds
 # won't be cached
 EMPTY_RESULT_DURATION_THRESHOLD = 0.4
