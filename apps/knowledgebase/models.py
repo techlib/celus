@@ -7,20 +7,100 @@ import typing
 
 from collections import Counter
 from enum import Enum, auto
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
+from django.core.validators import MinLengthValidator
 from django.db import models, transaction
 from django.utils import timezone
 
 from core.models import DataSource
-from logs.models import ReportType
-from publications.models import Platform, PlatformInterestReport
+from publications.models import Platform
 
 
 logger = logging.getLogger(__name__)
 
 
-class ImportAttempt(models.Model):
+class AuthTokenMixin:
+    @property
+    def request_headers_extra(self) -> dict:
+        return {}
+
+    @property
+    def request_headers(self) -> dict:
+        res = {
+            'Authorization': f'Token {self.source.token}',
+            'Content-Type': 'application/json',
+        }
+        res.update(self.request_headers_extra)
+        return res
+
+
+class RouterSyncAttempt(AuthTokenMixin, models.Model):
+    class Target(models.TextChoices):
+        ABSENT = "A", "absent"
+        PRESENT = "P", "present"
+
+    source = models.ForeignKey(DataSource, on_delete=models.CASCADE)
+    prefix = models.CharField(max_length=8, validators=[MinLengthValidator(8)],)
+    target = models.CharField(max_length=1, choices=Target.choices, default=Target.PRESENT)
+    retries = models.PositiveIntegerField(default=0)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    done = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True, null=True)
+
+    @property
+    def url(self):
+        return urljoin(self.source.url, f"/router/api-key-prefix/{self.prefix}/")
+
+    def trigger(self) -> bool:
+        # Deleting prefix should not be performed before Insert
+        #
+        # So if there is a Target.PRESENT attempt which is not
+        # not propagaged yet, don't perform Target.ABSENT
+        if self.target == self.Target.ABSENT:
+            if RouterSyncAttempt.objects.filter(
+                prefix=self.prefix, target=self.Target.PRESENT, done__isnull=True
+            ).exists():
+                return False
+
+        res = False
+        try:
+            self.last_error = None
+            if self.target == self.Target.PRESENT:
+                resp = requests.put(self.url, headers=self.request_headers)
+                resp.raise_for_status()
+            elif self.target == self.Target.ABSENT:
+                resp = requests.delete(self.url, headers=self.request_headers)
+                if resp.status_code != 404:  # already deleted
+                    resp.raise_for_status()
+
+            self.done = timezone.now()
+            res = True
+        except Exception as e:
+            logger.warning("An error occured: %s", e)
+            logger.debug(traceback.format_exc())
+
+            self.last_error = str(e)
+            self.retries = models.F('retries') + 1
+        finally:
+            self.save()
+
+        return res
+
+    @staticmethod
+    def propagate_prefix(prefix: str, target: 'RouterSyncAttempt.Target'):
+        with transaction.atomic():
+            for source in DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE):
+                RouterSyncAttempt.objects.get_or_create(prefix=prefix, target=target, source=source)
+
+    def plan(self):
+        from .tasks import sync_route
+
+        sync_route.delay(self.pk)
+
+
+class ImportAttempt(AuthTokenMixin, models.Model):
     class State(Enum):
         QUEUE = auto()
         DOWNLOADING = auto()
@@ -92,21 +172,7 @@ class ImportAttempt(models.Model):
     def save(self, *args, **kwargs):
         self.kind = self.required_kind
         self.url = urljoin(self.source.url, ImportAttempt.URL_MAP[self.kind])
-
         return super().save(*args, **kwargs)
-
-    @property
-    def request_headers_extra(self) -> dict:
-        return {}
-
-    @property
-    def request_headers(self) -> dict:
-        res = {
-            'Authorization': f'Token {self.source.token}',
-            'Content-Type': 'application/json',
-        }
-        res.update(self.request_headers_extra)
-        return res
 
     def perform(self, merge=MergeStrategy.NONE):
         """ Downloads data from knowledgebase and imports it
@@ -150,7 +216,7 @@ class ImportAttempt(models.Model):
 
         except Exception as e:
             logger.warning("An error occured: %s", e)
-            logger.debug(traceback.print_exc())
+            logger.debug(traceback.format_exc())
 
             self.error = str(e)
 

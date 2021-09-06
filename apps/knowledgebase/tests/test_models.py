@@ -8,13 +8,14 @@ from django.utils.timezone import now
 from django.conf import settings
 
 from core.models import DataSource
-from knowledgebase.models import PlatformImportAttempt
+from knowledgebase.models import PlatformImportAttempt, RouterSyncAttempt
 from logs.models import ReportType
 from publications.models import Platform
 
 from test_fixtures.scenarios.basic import data_sources, organizations, report_types
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.data_souces import DataSourceFactory
+from test_fixtures.entities.api import OrganizationAPIKeyFactory
 
 
 INPUT_DATA = [
@@ -401,3 +402,66 @@ class TestPlatformImportAttempt:
             assert attempt2.end_timestamp is not None
             assert attempt2.data_hash == attempt1.data_hash
             assert not attempt2.error
+
+
+@pytest.mark.django_db
+class TestRouterSyncAttempt:
+    def test_present_absent(self, organizations):
+        ds1 = DataSourceFactory(
+            short_name='first-data-source',
+            type=DataSource.TYPE_KNOWLEDGEBASE,
+            url='https://first.data.source',
+            token="1" * 64,
+        )
+        ds2 = DataSourceFactory(
+            short_name='second-data-source',
+            type=DataSource.TYPE_KNOWLEDGEBASE,
+            url='https://second.data.source',
+            token="2" * 64,
+        )
+        # Create two tokens
+        OrganizationAPIKeyFactory(organization=organizations["master"])
+        token = OrganizationAPIKeyFactory(organization=organizations["branch"])
+
+        assert (
+            RouterSyncAttempt.objects.filter(
+                target=RouterSyncAttempt.Target.PRESENT, done__isnull=True
+            ).count()
+            == 4
+        ), "Creation of two tokens should create attempts as well"
+        assert (
+            RouterSyncAttempt.objects.filter(
+                target=RouterSyncAttempt.Target.ABSENT, done__isnull=True
+            ).count()
+            == 0
+        ), "Nothing deleted"
+
+        token.delete()
+
+        assert (
+            RouterSyncAttempt.objects.filter(
+                target=RouterSyncAttempt.Target.PRESENT, done__isnull=True
+            ).count()
+            == 4
+        ), "PRESENT attempts remain the same"
+        assert (
+            RouterSyncAttempt.objects.filter(
+                target=RouterSyncAttempt.Target.ABSENT, done__isnull=True
+            ).count()
+            == 2
+        ), "Deletion of a token should add ABSENT attempt"
+
+    def test_propagete_prefix(self, organizations):
+        ds1 = DataSourceFactory(
+            short_name='first-data-source',
+            type=DataSource.TYPE_KNOWLEDGEBASE,
+            url='https://first.data.source',
+            token="1" * 64,
+        )
+        ds2 = DataSourceFactory(
+            short_name='second-data-source',
+            type=DataSource.TYPE_KNOWLEDGEBASE,
+            url='https://second.data.source',
+            token="2" * 64,
+        )
+        pass

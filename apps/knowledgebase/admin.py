@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import path
 
-from .models import PlatformImportAttempt
+from .models import RouterSyncAttempt, PlatformImportAttempt
 from core.models import DataSource
 
 
@@ -85,3 +85,35 @@ class PlatformImportAttemptAdmin(admin.ModelAdmin):
 
     def same(self, obj: PlatformImportAttempt):
         return (obj.stats and obj.stats.get("same", "0")) or ""
+
+
+@admin.register(RouterSyncAttempt)
+class RouterSyncAttemptAdmin(admin.ModelAdmin):
+    list_display = (
+        'prefix',
+        'source',
+        'target',
+        'created',
+        'updated',
+        'done',
+        'retries',
+    )
+    readonly_fields = (
+        'prefix',
+        'source',
+        'target',
+        'created',
+        'updated',
+        'done',
+        'retries',
+        'last_error',
+    )
+    list_filter = ('source',)
+    actions = ('trigger',)
+
+    def trigger(self, request, queryset):
+        for attempt in queryset:
+            if not attempt.done:
+                attempt.plan()
+
+    trigger.short_description = 'Trigger sync in background'

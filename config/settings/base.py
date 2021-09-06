@@ -282,6 +282,8 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.update_report_approx_record_count_task': {'queue': 'interest'},
     'logs.tasks.export_raw_data_task': {'queue': 'export'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
+    'knowledgebase.tasks.sync_routes': {'queue': 'normal'},
+    'knowledgebase.tasks.sync_route': {'queue': 'normal'},
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -316,6 +318,10 @@ CELERY_BEAT_SCHEDULE = {
     'update_report_approx_record_count_task': {
         'task': 'logs.tasks.update_report_approx_record_count_task',
         'schedule': crontab(hour=1, minute=13),  # every day at 1:13
+    },
+    'knowledgebase_sync_routes': {
+        'task': 'knowledgebase.tasks.sync_routes',
+        'schedule': schedule(run_every=timedelta(minutes=5)),
     },
 }
 
