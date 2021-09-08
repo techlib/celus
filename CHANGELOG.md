@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [3.2.0]
+
+### Added
+
+#### Frontend
+
+* all COUNTER reports are offered for manual upload - regardless if they define interest or not
+
+#### Backend
+
+* it is now possible to export SUSHI credentials from the Django admin
+* API key based authentication for specific API endpoints was implemented
+* API endpoint for access to "raw" data for individual reports was added with API key access
+
+### Changes
+
+#### Backend
+
+* speed up loading of list of manual uploads by identifying import batches with their IDs only
+* the API and related code for SUSHI harvesting was cleaned up by removing unused/obsolete code
+* internal working of fetch attempt state was changed from several booleans into a progression of
+  specific states
+* replace django-rest-auth with dj-reset-auth
+* manual data upload model was added into Django admin
+* do not cache queries with empty result - removes delay between first data is harvested and
+  displayed for new users
+* list of platforms for an organization was made accessible using API key authentication
+* deployment of requirements using requirements files for pip was dropped in favor of poetry
+
+
+### Fixed
+
+#### Frontend
+
+* the registration link did not properly work on first load
+
+#### Backend
+
+* the celery task for updating approximate number of records for a report type was not correctly
+  scheduled
+* do not respond by server error when user creates a platform with `short_name` that is already used
+* parsing of exceptions from COUNTER 5 table format was made more robust
+* code to derive SUSHI exception severity from a response was made more robust
+
+
 ## [3.1.1]
 
 
