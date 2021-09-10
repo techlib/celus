@@ -12,11 +12,6 @@ repos:
 
   - repo: local
     hooks:
-      - id: dependencies
-        name: Check whether requirements/*.txt are up-to-date
-        entry: make update_requirements
-        language: system
-        files: poetry.lock
       - id: black
         name: Black formatter
         entry: poetry run black --check

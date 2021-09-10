@@ -41,10 +41,11 @@ RUN \
 	locale-gen
 
 # install dependencies
-COPY requirements/ requirements/
+# install poetry
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 RUN \
-	pip install -r requirements/docker.txt \
-	pip install python-prctl
+	poetry install
+	pip install python-prctl uvicorn==0.11.3
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.docker
 

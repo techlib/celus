@@ -25,9 +25,28 @@
     - restart celery
     - restart celerybeat
 
-- name: install project python dependencies into virtualenv
-  pip: requirements=/opt/{{ project_name }}/requirements/{{ settings_version }}.txt virtualenv=/opt/virtualenvs/{{ project_name }} chdir=/opt/{{ project_name }} virtualenv_python=python3 extra_args=-U
-  tags: git_update
+- name: check that poetry command exists
+  stat: path=/root/.poetry/bin/poetry
+  register: _poetry_executable
+
+- name: download the poetry installer
+  get_url:
+    url: https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
+    dest: /tmp/get-poetry.py
+  when: _poetry_executable.stat.exists == false
+
+- name: run the poetry installer
+  command: /usr/bin/python3 /tmp/get-poetry.py -y
+  when: _poetry_executable.stat.exists == false
+
+- name: install project python dependencies using poetry
+  environment:
+    VIRTUAL_ENV: /opt/virtualenvs/{{ project_name }}
+  command: /root/.poetry/bin/poetry install
+  args:
+    chdir: /opt/{{ project_name }}
+  tags:
+    - git_update
 
 # postgres
 - name: prepare PostgreSQL database
