@@ -17,13 +17,13 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.6.8"
 
-celery = "~5.0.2"
+celery = "~5.1.2"
 dateparser = "~0.7.4"
 tzlocal = "<3.0"  # dateparser does not limit version of tzlocal, but does not work with >=3.0
 Django = "~3.1.3"
 django-allauth = "~0.41.0"
 django-anymail = "~7.1.0"
-django-celery-results = "~2.0.0"
+django-celery-results = "~2.2.0"
 django-cachalot = "~2.3.5"
 django-error-report = "~0.2.0"
 django-modeltranslation = "~0.15.0"
