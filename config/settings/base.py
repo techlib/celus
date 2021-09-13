@@ -147,6 +147,7 @@ DATABASES = {
         'ATOMIC_REQUESTS': True,
     }
 }
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
 # Password validation
