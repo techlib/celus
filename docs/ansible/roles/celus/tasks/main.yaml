@@ -39,6 +39,13 @@
   command: /usr/bin/python3 /tmp/get-poetry.py -y
   when: _poetry_executable.stat.exists == false
 
+- name: install specific poetry version
+  command: /root/.poetry/bin/poetry self update 1.1.8
+  environment:
+    VIRTUAL_ENV: /opt/virtualenvs/{{ project_name }}
+  tags:
+    - git_update
+
 - name: install project python dependencies using poetry
   environment:
     VIRTUAL_ENV: /opt/virtualenvs/{{ project_name }}
