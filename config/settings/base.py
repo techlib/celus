@@ -269,6 +269,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 }
 
 # default route in Celery is called 'celery'
+CELERY_TASK_DEFAULT_QUEUE = 'celery'  # just making the default explicit
 # in production, we remap this queue to the name 'normal', but here it should either be omitted
 # or explicitly set to 'celery'
 CELERY_TASK_ROUTES = {
