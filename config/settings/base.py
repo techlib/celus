@@ -268,6 +268,9 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     'queue_order_strategy': 'priority',
 }
 
+# default route in Celery is called 'celery'
+# in production, we remap this queue to the name 'normal', but here it should either be omitted
+# or explicitly set to 'celery'
 CELERY_TASK_ROUTES = {
     'logs.tasks.sync_interest_task': {'queue': 'interest'},
     'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
@@ -278,12 +281,12 @@ CELERY_TASK_ROUTES = {
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
-    'core.tasks.test': {'queue': 'normal'},
+    'core.tasks.test': {'queue': 'celery'},
     'logs.tasks.update_report_approx_record_count_task': {'queue': 'interest'},
     'logs.tasks.export_raw_data_task': {'queue': 'export'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
-    'knowledgebase.tasks.sync_routes': {'queue': 'normal'},
-    'knowledgebase.tasks.sync_route': {'queue': 'normal'},
+    'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_route': {'queue': 'celery'},
 }
 
 CELERY_BEAT_SCHEDULE = {
