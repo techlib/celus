@@ -135,7 +135,7 @@ cs:
         <v-row>
           <v-col>
             <v-data-table
-              :items="sushiCredentialsWithAttempts"
+              :items="sushiCredentialsWithIntentions"
               :headers="headers"
               :search="search"
               :items-per-page.sync="itemsPerPage"
@@ -225,11 +225,8 @@ import addDays from "date-fns/addDays";
 import addMonths from "date-fns/addMonths";
 import { parseDateTime, ymDateFormat } from "@/libs/dates";
 import SushiAttemptStateIcon from "@/components/sushi/SushiAttemptStateIcon";
-import {
-  attemptState,
-  ATTEMPT_SUCCESS,
-  ATTEMPT_NOT_MADE,
-} from "@/libs/attempt-state";
+import { intentionState } from "@/libs/intention-state";
+import { ATTEMPT_SUCCESS, ATTEMPT_NOT_MADE } from "@/libs/attempt-state";
 import IconButton from "@/components/sushi/IconButton";
 
 export default {
@@ -252,8 +249,8 @@ export default {
   data() {
     return {
       sushiCredentialsList: [],
-      attemptData: [],
-      attemptMap: new Map(),
+      intentionsData: [],
+      intentionsMap: new Map(),
       reportTypes: [],
       search: "",
       itemsPerPage: 25,
@@ -262,7 +259,7 @@ export default {
       orderBy: ["platform.name", "organization.name"],
       loadingReportTypes: false,
       loadingCredentials: false,
-      loadingAttempts: false,
+      loadingIntentions: false,
       selectedMonth:
         this.$route.query.month ||
         ymDateFormat(addDays(startOfMonth(new Date()), -15)),
@@ -322,7 +319,7 @@ export default {
     credentialsUrl() {
       return `/api/sushi-credentials/?organization=${this.organizationId}`;
     },
-    attemptsUrl() {
+    intentionsUrl() {
       if (!this.selectedMonth) {
         return null;
       }
@@ -334,7 +331,7 @@ export default {
     },
     usedReportTypes() {
       let usedRTIds = new Set();
-      for (let cred of this.sushiCredentialsWithAttempts) {
+      for (let cred of this.sushiCredentialsWithIntentions) {
         for (let rt of cred.counter_reports_long) {
           usedRTIds.add(rt.id);
         }
@@ -356,23 +353,23 @@ export default {
         ...[...usedPlatforms].sort((a, b) => a.name.localeCompare(b.name)),
       ];
     },
-    activeAttempts() {
-      let attempts = [];
-      for (let cred of this.sushiCredentialsWithAttemptsAfterFilter) {
+    activeIntentions() {
+      let intentions = [];
+      for (let cred of this.sushiCredentialsWithIntentionsAfterFilter) {
         for (let rt of cred.counter_reports_long) {
           if (cred.hasOwnProperty(rt.code)) {
-            attempts.push(cred[rt.code]);
+            intentions.push(cred[rt.code]);
           }
         }
       }
-      return attempts;
+      return intentions;
     },
-    allSushiCredentialsWithAttempts() {
+    allSushiCredentialsWithIntentions() {
       return this.sushiCredentialsList.map((item) => {
         for (let reportType of item.counter_reports_long) {
           let key = `${item.pk}-${reportType.id}`;
-          if (this.attemptMap.has(key)) {
-            item[reportType.code] = this.attemptMap.get(key);
+          if (this.intentionsMap.has(key)) {
+            item[reportType.code] = this.intentionsMap.get(key);
           } else {
             item[reportType.code] = { untried: true, state: ATTEMPT_NOT_MADE };
           }
@@ -380,8 +377,8 @@ export default {
         return item;
       });
     },
-    sushiCredentialsWithAttemptsAfterFilter() {
-      let list = this.allSushiCredentialsWithAttempts
+    sushiCredentialsWithIntentionsAfterFilter() {
+      let list = this.allSushiCredentialsWithIntentions
         .filter((item) => this.showInactive || item.enabled)
         .filter(
           (item) =>
@@ -403,8 +400,8 @@ export default {
       }
       return list;
     },
-    sushiCredentialsWithAttempts() {
-      let list = this.sushiCredentialsWithAttemptsAfterFilter;
+    sushiCredentialsWithIntentions() {
+      let list = this.sushiCredentialsWithIntentionsAfterFilter;
       if (this.stateFilter) {
         list = list.filter(
           (item) =>
@@ -417,7 +414,7 @@ export default {
     },
     stateStats() {
       let stats = new Map();
-      for (let state of this.activeAttempts.map((attempt) => attempt.state)) {
+      for (let state of this.activeIntentions.map((intention) => intention.state)) {
         if (stats.has(state)) {
           stats.set(state, stats.get(state) + 1);
         } else {
@@ -442,7 +439,7 @@ export default {
     },
     loading() {
       return (
-        this.loadingAttempts ||
+        this.loadingIntentions ||
         this.loadingReportTypes ||
         this.loadingCredentials
       );
@@ -467,31 +464,33 @@ export default {
         this.loadingCredentials = false;
       }
     },
-    async loadAttempts() {
-      if (!this.attemptsUrl) {
+    async loadIntentions() {
+      if (!this.intentionsUrl) {
         return;
       }
-      this.loadingAttempts = true;
+      this.loadingIntentions = true;
       try {
-        let response = await axios.get(this.attemptsUrl);
-        this.attemptData = response.data;
-        // create a map to easily find the attempt data
-        let attemptMap = new Map();
-        this.attemptData.forEach((item) => (item.state = attemptState(item)));
-        this.attemptData.forEach((item) =>
-          attemptMap.set(
+        let response = await axios.get(this.intentionsUrl);
+        this.intentionsData = response.data;
+        // create a map to easily find the intention data
+        let intentionsMap = new Map();
+        this.intentionsData.forEach(
+          (item) => (item.state = intentionState(item))
+        );
+        this.intentionsData.forEach((item) =>
+          intentionsMap.set(
             `${item.credentials_id}-${item.counter_report_id}`,
             item
           )
         );
-        this.attemptMap = attemptMap;
+        this.intentionsMap = intentionsMap;
       } catch (error) {
         this.showSnackbar({
-          content: "Error loading attempts: " + error,
+          content: "Error loading intentions: " + error,
           color: "error",
         });
       } finally {
-        this.loadingAttempts = false;
+        this.loadingIntentions = false;
       }
     },
     async loadReportTypes() {
@@ -519,9 +518,9 @@ export default {
       return value <= now;
     },
     slotName: (rt) => "item." + rt.code,
-    showAttempt(attempt) {
-      this.selectedAttempt = attempt;
-      this.showDetailsDialog = true;
+    showAttempt(intention) {
+      this.selectedAttempt = intention.attempt;
+      this.showDetailsDialog = !!this.selectedAttempt;
     },
     shiftMonth(months) {
       let date = parseDateTime(this.selectedMonth);
@@ -530,12 +529,12 @@ export default {
         this.selectedMonth = shifted;
       }
     },
-    hasBrokenReport(attempt) {
-      if (!attempt) {
+    hasBrokenReport(intention) {
+      if (!intention) {
         return false;
       }
       return this.brokenReports.has(
-        `${attempt.credentials_id}-${attempt.counter_report_id}`
+        `${intention.credentials_id}-${intention.counter_report_id}`
       );
     },
     switchStateFilter(state) {
@@ -558,11 +557,11 @@ export default {
     dataUrl() {
       this.loadSushiCredentialsList();
     },
-    async attemptsUrl() {
-      await this.loadAttempts();
+    async intentionsUrl() {
+      await this.loadIntentions();
       // check that the filter is still valid in the new context
       // if not - disable it to prevent showing empty data
-      if (this.sushiCredentialsWithAttempts.length === 0 && this.stateFilter) {
+      if (this.sushiCredentialsWithIntentions.length === 0 && this.stateFilter) {
         this.stateFilter = null;
       }
     },
@@ -574,7 +573,7 @@ export default {
   mounted() {
     this.loadReportTypes();
     this.loadSushiCredentialsList();
-    this.loadAttempts();
+    this.loadIntentions();
   },
 };
 </script>
