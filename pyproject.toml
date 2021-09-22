@@ -35,6 +35,7 @@ djangorestframework = "~3.11.0"
 drf-nested-routers = "~0.91.0"
 lz4 = "~3.0.2"
 pycounter = {git = "https://github.com/beda42/pycounter.git", branch = "fa5d03ac29da0efd5a57db54eb1b6be9a094e102"}
+openpyxl = "~3.0.7, !=3.0.8"  # openpyxl 3.0.8 was removed after release :/ grrrr, so we need to prevent it
 python-magic = "~0.4.15"
 pytz = "*"
 psutil = "~5.7.0"
