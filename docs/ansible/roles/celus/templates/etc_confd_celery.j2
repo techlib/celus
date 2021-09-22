@@ -13,7 +13,7 @@ CELERY_APP="{{ settings_dir }}"
 CELERYD_MULTI="multi"
 
 # Extra command-line arguments to the worker
-CELERYD_OPTS="--time-limit:interest=14400 --time-limit:sushi=14400 --time-limit:import=14400 --time-limit:normal=300 --concurrency:interest=1 --concurrency:import=1 --concurrency:sushi=2 --concurrency:normal=3 -Ofair:normal -Q:normal celery -Q:interest interest -Q:sushi sushi -Q:import import"
+CELERYD_OPTS="--time-limit:interest=14400 --time-limit:sushi=14400 --time-limit:import=14400 --time-limit:normal=300 --time-limit:export=3600 --concurrency:interest=1 --concurrency:import=1 --concurrency:sushi=2 --concurrency:normal=3 --concurrency:export=5 -Ofair:normal -Q:normal celery -Q:interest interest -Q:sushi sushi -Q:import import -Q:export export"
 
 
 CELERYD_LOG_LEVEL=debug
