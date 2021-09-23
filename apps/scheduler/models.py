@@ -318,7 +318,7 @@ class FetchIntentionQuerySet(models.QuerySet):
     def unprocessed_count_query(cls):
         return Coalesce(
             models.Count(
-                'queue_id',
+                'pk',
                 distinct=True,
                 filter=models.Q(when_processed__isnull=True) & models.Q(duplicate_of__isnull=True)
                 | (
@@ -669,14 +669,16 @@ class HarvestQuerySet(models.QuerySet):
 
     def annotate_stats(self):
         return self.annotate(
-            planned=Coalesce(
-                models.Subquery(
-                    FetchIntention.objects.filter(harvest=models.OuterRef('pk'))
-                    .values('harvest')
-                    .annotate(count=FetchIntentionQuerySet.unprocessed_count_query())
-                    .values('count')
+            planned=models.Count(
+                'intentions__pk',
+                distinct=True,
+                filter=(
+                    (
+                        models.Q(intentions__when_processed__isnull=True)
+                        & models.Q(intentions__duplicate_of__isnull=True)
+                    )
+                    | models.Q(intentions__attempt__status=AttemptStatus.IMPORTING)
                 ),
-                0,
             ),
             total=models.Count('intentions__queue_id', distinct=True),
             finished=F('total') - F('planned'),
