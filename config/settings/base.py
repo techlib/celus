@@ -294,38 +294,47 @@ CELERY_BEAT_SCHEDULE = {
     'smart_interest_sync_task': {
         'task': 'logs.tasks.smart_interest_sync_task',
         'schedule': schedule(run_every=timedelta(minutes=10)),
+        'options': {'expires': 10 * 60},
     },
     'sync_materialized_reports_task': {
         'task': 'logs.tasks.sync_materialized_reports_task',
         'schedule': schedule(run_every=timedelta(minutes=7)),
+        'options': {'expires': 7 * 60},
     },
     'import_new_sushi_attempts_task': {
         'task': 'logs.tasks.import_new_sushi_attempts_task',
         'schedule': schedule(run_every=timedelta(minutes=5)),
+        'options': {'expires': 5 * 60},
     },
     'remove_old_cached_queries_task': {
         'task': 'recache.tasks.remove_old_cached_queries_task',
         'schedule': crontab(minute=17, hour=2),  # every day at 2:17
+        'options': {'expires': 24 * 60 * 60},
     },
     'find_and_renew_first_due_cached_query_task': {
         'task': 'recache.tasks.find_and_renew_first_due_cached_query_task',
         'schedule': schedule(run_every=timedelta(minutes=29)),
+        'options': {'expires': 29 * 60},
     },
     'scheduler_plan_fetching': {
         'task': 'scheduler.tasks.plan_schedulers_triggering',
         'schedule': schedule(run_every=timedelta(minutes=1)),
+        'options': {'expires': 60},
     },
     'scheduler_update_automatic_harvesting': {
         'task': 'scheduler.tasks.update_automatic_harvesting',
         'schedule': crontab(minute=50, hour=23),  # every day at 23:50
+        'options': {'expires': 24 * 60 * 60},
     },
     'update_report_approx_record_count_task': {
         'task': 'logs.tasks.update_report_approx_record_count_task',
         'schedule': crontab(hour=1, minute=13),  # every day at 1:13
+        'options': {'expires': 24 * 60 * 60},
     },
     'knowledgebase_sync_routes': {
         'task': 'knowledgebase.tasks.sync_routes',
         'schedule': schedule(run_every=timedelta(minutes=5)),
+        'options': {'expires': 5 * 60},
     },
 }
 
@@ -333,14 +342,17 @@ ERMS_CELERY_SCHEDULE = {
     'erms_sync_platforms_task': {
         'task': 'publications.tasks.erms_sync_platforms_task',
         'schedule': schedule(run_every=timedelta(minutes=30)),
+        'options': {'expires': 30 * 60},
     },
     'erms_sync_organizations_task': {
         'task': 'organizations.tasks.erms_sync_organizations_task',
         'schedule': schedule(run_every=timedelta(days=1)),
+        'options': {'expires': 24 * 60 * 60},
     },
     'erms_sync_users_and_identities_task': {
         'task': 'core.tasks.erms_sync_users_and_identities_task',
         'schedule': schedule(run_every=timedelta(minutes=30)),
+        'options': {'expires': 30 * 60},
     },
 }
 

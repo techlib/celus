@@ -53,7 +53,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     'find_and_renew_first_due_cached_query_task': {
         'task': 'recache.tasks.find_and_renew_first_due_cached_query_task',
-        'schedule': schedule(run_every=timedelta(minutes=3)),
+        'schedule': schedule(run_every=timedelta(seconds=10)),
+        'options': {'expires': 4},
     },
 }
 
