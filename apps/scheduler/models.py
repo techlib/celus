@@ -287,7 +287,10 @@ class FetchIntentionQuerySet(models.QuerySet):
     def schedulers_to_trigger(self) -> typing.List[Scheduler]:
         res: typing.Set[Scheduler] = set()
         for fi in self.filter(
-            not_before__lt=timezone.now(), scheduler__isnull=True, duplicate_of__isnull=True
+            not_before__lt=timezone.now(),
+            scheduler__isnull=True,
+            duplicate_of__isnull=True,
+            when_processed__isnull=True,
         ):
             (scheduler, _) = Scheduler.objects.get_or_create(url=fi.credentials.url)
             if (
