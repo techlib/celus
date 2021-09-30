@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.3]
+
+### Fixed
+
+#### Backend
+
+* invitation links were fixed after switch to dj-rest-auth broke their functionality
+* fix scheduling of FetchIntentions added by migration for older FetchAttempts - fixes overload
+  of celery by endless stream of tasks without effect
+
+### Changes
+
+#### Backend
+
+* expiration was added to all celery tasks planned by celerybeat to avoid accumulation of tasks in
+  queue if celery does not handle them quickly enough
+* harvest API endpoint was optimized for speed
+
+
+
 ## [3.2.2]
 
 ### Fixed
