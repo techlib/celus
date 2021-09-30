@@ -1,8 +1,13 @@
-from django.contrib.auth.forms import PasswordResetForm
-from django.urls import resolve
-from allauth.account.adapter import DefaultAccountAdapter
-from allauth.utils import build_absolute_uri
 from urllib.parse import urlparse
+
+from allauth.account.adapter import DefaultAccountAdapter
+from allauth.account.forms import default_token_generator
+from allauth.account.utils import user_pk_to_url_str as uid_encoder
+from allauth.utils import build_absolute_uri
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import EmailMultiAlternatives
+from django.template import loader
+from django.urls import resolve
 
 
 class CelusAccountAdapter(DefaultAccountAdapter):
@@ -11,14 +16,27 @@ class CelusAccountAdapter(DefaultAccountAdapter):
         return build_absolute_uri(request, url)
 
     def send_invitation_email(self, request, user):
-        form = PasswordResetForm(data={"email": user.email})
-        form.is_valid()  # don't care about retval this should be always valid...
-        form.save(
-            subject_template_name='registration/invitation_subject.txt',
-            email_template_name='registration/invitation_email.html',
-            request=request,
-            extra_email_context={'user': user},  # overrides user in the template
-        )
+        # In this code, we use the token generator and uid encoder from allauth because we
+        # are using dj-rest-auth to later process the token and uid and it expects it to be in
+        # allauth format when allauth is in INSTALLED_APPS.
+        current_site = get_current_site(request)
+        site_name = current_site.name
+        domain = current_site.domain
+        context = {
+            'email': user.email,
+            'domain': domain,
+            'site_name': site_name,
+            'uid': uid_encoder(user),
+            'user': user,
+            'token': default_token_generator.make_token(user),
+            'protocol': request.scheme,
+        }
+        subject = loader.render_to_string('registration/invitation_subject.txt', context)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+        body = loader.render_to_string('registration/invitation_email.html', context)
+        email_message = EmailMultiAlternatives(subject, body, to=[user.email])
+        email_message.send()
 
     def send_mail(self, template_prefix, email, context):
         # override reset password template
@@ -26,9 +44,11 @@ class CelusAccountAdapter(DefaultAccountAdapter):
             # get user_id and token from url
             orig_url = urlparse(context["password_reset_url"])
             kwargs = resolve(orig_url.path).kwargs
+            uid = kwargs.get('uidb64')
+            token = kwargs.get('token')
             context[
                 "reset_url"
-            ] = f"{orig_url.scheme}://{orig_url.netloc}/reset-password/?uid={kwargs.get('uidb64')}&token={kwargs.get('token')}"
+            ] = f"{orig_url.scheme}://{orig_url.netloc}/reset-password/?uid={uid}&token={token}"
             context["site_name"] = orig_url.netloc
 
             msg = self.render_mail("registration/password_reset", email, context)

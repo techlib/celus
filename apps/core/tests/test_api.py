@@ -6,6 +6,7 @@ import pytest
 from datetime import datetime
 
 from allauth.account.models import EmailAddress, EmailConfirmation
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.urls import reverse
 from django.utils import timezone
 
@@ -342,7 +343,37 @@ class TestInvitationAndPasswordResetAPI:
             '/api/user/password-reset',
             {'uid': uid, 'token': token, 'new_password1': new_pwd, 'new_password2': new_pwd},
         )
-        print(resp.content)
+        assert resp.status_code == 200
+        assert len(mailoutbox) == 1, 'no new email after password reset'
+        user.refresh_from_db()
+        assert user.password != old_pwd
+        # one more thing - check that the user email is thus verified
+        assert user.email_verified
+
+    def test_invitation_workflow_works(self, admin_client, client, mailoutbox):
+        """
+        Test that password can be changed using the link sent when inviting users
+        """
+        user = User.objects.create(username='foo', email='foo@bar.baz')
+        # invitation is sent using an admin action
+        resp = admin_client.post(
+            reverse('admin:core_user_changelist'),
+            {'action': 'send_invitation_emails', ACTION_CHECKBOX_NAME: [user.pk]},
+        )
+        assert resp.status_code == 302
+        assert len(mailoutbox) == 1
+        # extract uid and token to use for the endpoint
+        # - the link itself points to frontend so it is not directly usable
+        uid = re.search(r'\?uid=(\w+)&', mailoutbox[0].body).group(1)
+        token = re.search(r'&token=([\w-]+)', mailoutbox[0].body).group(1)
+        assert uid and token, 'both uid and token must be present in the email body'
+        # now try resetting the password
+        old_pwd = user.password
+        new_pwd = '4aKVkhMfVP'
+        resp = client.post(
+            '/api/user/password-reset',
+            {'uid': uid, 'token': token, 'new_password1': new_pwd, 'new_password2': new_pwd},
+        )
         assert resp.status_code == 200
         assert len(mailoutbox) == 1, 'no new email after password reset'
         user.refresh_from_db()
