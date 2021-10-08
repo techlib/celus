@@ -5,7 +5,7 @@ project_git_path_base: https://github.com/techlib/
 
 # default version tag to check when getting project data from git
 # it defines both the version of the source code in GIT and which compiled static files to get
-project_branch: v1.0.36
+project_branch: v1.0.39
 
 # default settings version to use
 settings_version: production
