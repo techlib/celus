@@ -9,6 +9,7 @@ from .credentials import CredentialsFactory
 from .counter_report_types import CounterReportTypeFactory
 from .organizations import OrganizationFactory
 from .users import UserFactory
+from .fetchattempts import FetchAttemptFactory
 
 
 class HarvestFactory(factory.DjangoModelFactory):
@@ -24,6 +25,8 @@ class HarvestFactory(factory.DjangoModelFactory):
 
         if extracted:
             for intention in extracted:
+                if intention.attempt:
+                    intention.attempt.save()
                 intention.harvest = self
                 intention.save()
 
@@ -37,6 +40,13 @@ class SchedulerFactory(factory.DjangoModelFactory):
 
 class FetchIntentionFactory(factory.DjangoModelFactory):
     harvest = factory.SubFactory(HarvestFactory)
+    attempt = factory.SubFactory(
+        FetchAttemptFactory,
+        counter_report=factory.SelfAttribute('..counter_report'),
+        credentials=factory.SelfAttribute('..credentials'),
+        start_date=factory.SelfAttribute('..start_date'),
+        end_date=factory.SelfAttribute('..end_date'),
+    )
     not_before = timezone.now()
     credentials = factory.SubFactory(CredentialsFactory)
     counter_report = factory.SubFactory(CounterReportTypeFactory)

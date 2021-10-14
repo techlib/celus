@@ -153,9 +153,9 @@ export default new Router({
       component: () => import("../pages/ManualUploadListPage.vue"),
     },
     {
-      path: "/admin/sushi-fetch-attempts/",
-      name: "sushi-fetch-attempts",
-      component: () => import("../pages/SushiFetchAttemptsPage.vue"),
+      path: "/admin/harvests/",
+      name: "harvests",
+      component: () => import("../pages/HarvestsPage.vue"),
     },
     {
       path: "/admin/maintenance/",

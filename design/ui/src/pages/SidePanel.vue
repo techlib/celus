@@ -206,7 +206,7 @@ export default {
                 {
                   title: this.$t("pages.sushi_fetch_attempts"),
                   icon: "fa-retweet",
-                  linkTo: "sushi-fetch-attempts",
+                  linkTo: "harvests",
                   show: this.showAdminStuff,
                 },
               ],

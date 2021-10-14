@@ -57,7 +57,7 @@ import { mapGetters, mapState } from "vuex";
 import HarvestsTable from "@/components/HarvestsTable";
 
 export default {
-  name: "SushiFetchAttemptsPage",
+  name: "HarvestsPage",
   components: {
     HarvestsTable,
   },

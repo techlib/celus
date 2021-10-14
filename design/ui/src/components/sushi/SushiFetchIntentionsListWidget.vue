@@ -369,11 +369,11 @@ export default {
       return [
         {
           text: this.$t("labels.platform"),
-          value: "platform_name",
+          value: "platform.name",
         },
         {
           text: this.$t("organization"),
-          value: "organization_name",
+          value: "organization.name",
         },
         {
           text: this.$t("labels.report_type"),

@@ -448,6 +448,7 @@ class TestFetchIntention:
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["jr1"],
             harvest=hr,
+            attempt=None,
         )
         fi1.save()
         assert fi1.queue_id == fi1.pk
@@ -457,6 +458,7 @@ class TestFetchIntention:
             queue_id=fi1.queue_id,
             counter_report=counter_report_types["jr1"],
             harvest=hr,
+            attempt=None,
         )
         fi2.save()
         assert fi2.queue_id == fi1.pk
@@ -757,6 +759,7 @@ class TestHarvest:
             when_processed=timezone.now(),
             harvest=harvest1,
             duplicate_of=None,
+            attempt=None,
         )
 
         FetchIntentionFactory(
@@ -767,6 +770,7 @@ class TestHarvest:
             when_processed=timezone.now(),
             harvest=harvest2,
             duplicate_of=None,
+            attempt=None,
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
@@ -777,6 +781,7 @@ class TestHarvest:
             harvest=harvest2,
             duplicate_of=None,
             queue_id=1,
+            attempt=None,
         )
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
@@ -799,6 +804,7 @@ class TestHarvest:
             when_processed=None,
             harvest=harvest2,
             duplicate_of=None,
+            attempt=None,
         )
 
         original_fi = FetchIntentionFactory(
@@ -821,6 +827,7 @@ class TestHarvest:
             when_processed=None,
             harvest=harvest4,
             duplicate_of=original_fi,
+            attempt=None,
         )
 
         assert harvest1.stats() == {"finished": 1, "planned": 1, "total": 2, "attempt_count": 1}

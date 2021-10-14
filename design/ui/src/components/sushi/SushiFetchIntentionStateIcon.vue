@@ -14,7 +14,7 @@ cs:
 </i18n>
 
 <template>
-  <span v-if="attemptState">
+  <span v-if="intentionState">
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <span v-on="on">
@@ -31,7 +31,7 @@ cs:
 
       <div>
         <div class="explanation">
-          {{ $t(`sushi.state_desc.${attemptState}`) }}
+          {{ $t(`sushi.state_desc.${intentionState}`) }}
         </div>
         <div v-if="brokenReport">
           {{ $t("sushi.state_desc.broken_report") }}
@@ -39,18 +39,22 @@ cs:
         <div v-if="brokenCredentials">
           {{ $t("sushi.state_desc.broken") }}
         </div>
-        <div v-if="attempt && attemptState !== stateUntried">
+        <div
+          v-if="
+            intention && intention.attempt && intentionState !== stateUntried
+          "
+        >
           <h4 v-text="$t('details')" class="mt-3"></h4>
           <ul>
-            <li>
+            <li v-if="intention.attempt">
               <strong>{{
                 latest ? $t("field_timestamp_latest") : $t("field_timestamp")
               }}</strong
-              >: {{ formatDateTime(attempt.timestamp) }}
+              >: {{ formatDateTime(intention.attempt.timestamp) }}
             </li>
-            <li v-if="attempt.error_code">
+            <li v-if="intention.attempt.error_code">
               <strong>{{ $t("field_error_code") }}</strong
-              >: {{ attempt.error_code }}
+              >: {{ intention.attempt.error_code }}
             </li>
           </ul>
         </div>
@@ -60,18 +64,18 @@ cs:
 </template>
 <script>
 import {
-  attemptState,
-  ATTEMPT_NOT_MADE,
-  attemptStateToIcon,
-} from "@/libs/attempt-state";
+  intentionState,
+  INTENTION_WAITING,
+  intentionStateToIcon,
+} from "@/libs/intention-state";
 import { isoDateTimeFormat } from "@/libs/dates";
 
 export default {
-  name: "SushiAttemptStateIcon",
+  name: "SushiFetchIntentionStateIcon",
 
   props: {
-    attempt: { required: false },
-    // when set to true, this attempt is last of several and the wording should reflect it
+    intention: { required: false },
+    // when set to true, this intention is last of several and the wording should reflect it
     latest: { default: false, type: Boolean },
     forceState: { required: false, default: null, type: String },
     brokenReport: { default: false, type: Boolean },
@@ -80,23 +84,23 @@ export default {
 
   data() {
     return {
-      stateUntried: ATTEMPT_NOT_MADE,
+      stateUntried: INTENTION_WAITING,
     };
   },
 
   computed: {
-    attemptState() {
+    intentionState() {
       if (this.forceState) {
         return this.forceState;
-      } else if (this.attempt) {
-        return this.attempt.state
-          ? this.attempt.state
-          : attemptState(this.attempt);
+      } else if (this.intention) {
+        return this.intention.state
+          ? this.intention.state
+          : intentionState(this.intention);
       }
       return null;
     },
     icon() {
-      return attemptStateToIcon(this.attemptState);
+      return intentionStateToIcon(this.intentionState);
     },
   },
 

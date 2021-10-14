@@ -4,6 +4,7 @@ import pytest
 import json
 
 from django.urls import reverse
+from django.utils import timezone
 
 from scheduler import tasks
 from scheduler.models import Automatic, FetchIntention
@@ -25,6 +26,8 @@ from test_fixtures.scenarios.basic import (
     schedulers,
 )
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.entities.scheduler import FetchIntentionFactory
 
 
 @pytest.mark.django_db
@@ -482,7 +485,7 @@ class TestHarvestAPI:
 
 
 @pytest.mark.django_db()
-class TestFetchIntentionAPI:
+class TestHarvestFetchIntentionAPI:
     def test_list(self, basic1, clients, harvests):
 
         url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
@@ -667,3 +670,150 @@ class TestFetchIntentionAPI:
             assert intention.canceled is True
         else:
             assert intention.canceled is False
+
+
+@pytest.mark.django_db()
+class TestFetchIntentionAPI:
+    def test_list(
+        self,
+        basic1,
+        clients,
+        organizations,
+        platforms,
+        counter_report_types,
+        harvests,
+        credentials,
+    ):
+        """
+        Check whether fetch attempts are properly listed
+        """
+        url = reverse('sushi-fetch-attempt-list',)
+        resp = clients["master"].get(reverse('intention-list'),)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 4
+
+    @pytest.mark.parametrize(
+        ['user', 'status_code'],
+        [
+            ['unauthenticated', 401],
+            ['invalid', 401],
+            ['user1', 200],
+            ['user2', 404],
+            ['admin1', 200],
+            ['admin2', 404],
+            ['master', 200],
+            ['su', 200],
+        ],
+    )
+    def test_detail(
+        self,
+        basic1,
+        clients,
+        organizations,
+        platforms,
+        counter_report_types,
+        harvests,
+        credentials,
+        user,
+        status_code,
+    ):
+        """
+        Check whether displaying detail about fetch attempts works properly
+        """
+        intention = harvests["user1"].intentions.get(queue_id=8)
+        url = reverse('intention-detail', args=(intention.pk,))
+        resp = clients[user].get(url)
+        assert resp.status_code == status_code
+
+    @pytest.mark.parametrize(['attempt_count'], [(1,), (2,), (10,)])
+    def test_list(self, admin_client, attempt_count):
+        cr = CredentialsFactory()
+        FetchAttemptFactory.create_batch(attempt_count, credentials=cr)
+        FetchIntentionFactory.create_batch(attempt_count, credentials=cr, attempt__credentials=cr)
+        resp = admin_client.get(reverse('intention-list'))
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == attempt_count
+
+    def test_list_filtering(self, admin_client):
+        cr = CredentialsFactory()
+        cr2 = CredentialsFactory()
+        assert cr.platform_id != cr2.platform_id
+        FetchIntentionFactory.create_batch(3, credentials=cr, attempt__credentials=cr)
+        FetchIntentionFactory.create_batch(
+            30,
+            credentials=cr2,
+            attempt__credentials=cr2,
+            queue_id=99,
+            when_processed=timezone.now(),
+        )
+        # try without filter
+        resp = admin_client.get(reverse('intention-list'))
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 4
+        # try with filter for platform
+        resp = admin_client.get(reverse('intention-list'), {'platform': cr.platform_id})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 3
+
+    @pytest.mark.parametrize(
+        ['order_by'], (('start_date',), ('end_date',), ('timestamp',), ('error_code',))
+    )
+    @pytest.mark.parametrize(['desc'], ((True,), (False,), (None,)))
+    def test_list_sorting(self, admin_client, order_by, desc):
+        cr = CredentialsFactory()
+        FetchIntentionFactory.create_batch(30, credentials=cr, attempt__credentials=cr)
+        params = {'order_by': order_by}
+        if desc is not None:
+            params['desc'] = 'true' if desc else 'false'
+        resp = admin_client.get(reverse('intention-list'), params)
+        assert resp.status_code == 200
+        records = resp.json()['results']
+        assert len(records) == 30
+        if order_by in ["timestamp", "error_code"]:
+            values = [x['attempt'][order_by] for x in records]
+        else:
+            values = [x[order_by] for x in records]
+        assert values == list(sorted(values, reverse=bool(desc)))
+
+    @pytest.mark.parametrize(
+        ['order_by', 'path'],
+        (
+            ('counter_report__code', ['counter_report_verbose', 'code']),
+            ('credentials__platform__short_name', ['platform', 'short_name']),
+            ('credentials__organization__short_name', ['organization', 'short_name']),
+        ),
+    )
+    @pytest.mark.parametrize(['desc'], ((True,), (False,), (None,)))
+    def test_list_sorting_nested_values(self, admin_client, order_by, path, desc):
+        cr = CredentialsFactory()
+        FetchIntentionFactory.create_batch(30, credentials=cr, attempt__credentials=cr)
+        params = {'order_by': order_by}
+        if desc is not None:
+            params['desc'] = 'true' if desc else 'false'
+        resp = admin_client.get(reverse('intention-list'), params)
+        assert resp.status_code == 200
+        records = resp.json()['results']
+        assert len(records) == 30
+        for part in path:
+            records = [x[part] for x in records]
+        assert records == list(sorted(records, reverse=bool(desc)))
+
+    @pytest.mark.parametrize(['page_size'], ((5,), (10,), (25,)))
+    def test_list_page_size(self, admin_client, page_size):
+        cr = CredentialsFactory()
+        FetchIntentionFactory.create_batch(30, credentials=cr, attempt__credentials=cr)
+        resp = admin_client.get(reverse('intention-list'), {'page_size': page_size})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == page_size
+
+    def test_list_attempts_only(self, admin_client):
+        cr = CredentialsFactory()
+        FetchIntentionFactory.create_batch(23, credentials=cr, attempt__credentials=cr)
+        FetchIntentionFactory.create_batch(19, credentials=cr, attempt=None)
+        resp = admin_client.get(reverse('intention-list'), {'attempt': '1'})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 23
+        resp = admin_client.get(reverse('intention-list'), {'attempt': '0'})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 19

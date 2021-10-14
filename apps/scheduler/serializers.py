@@ -3,7 +3,11 @@ from rest_framework.fields import DateField, DateTimeField
 
 from organizations.serializers import OrganizationSerializer, OrganizationShortSerializer
 from publications.serializers import PlatformSerializer, SimplePlatformSerializer
-from sushi.serializers import SushiFetchAttemptFlatSerializer, SushiFetchAttemptSimpleSerializer
+from sushi.serializers import (
+    CounterReportTypeSerializer,
+    SushiFetchAttemptFlatSerializer,
+    SushiFetchAttemptSimpleSerializer,
+)
 from sushi.models import SushiFetchAttempt
 
 from .models import Automatic, FetchIntention, Harvest
@@ -55,6 +59,9 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
     fetching_data = serializers.BooleanField()
     duplicate_of = DuplicateFetchIntentionSerializer(required=False)
     previous_intention = DuplicateFetchIntentionSerializer(required=False)
+    counter_report_verbose = CounterReportTypeSerializer(read_only=True, source='counter_report')
+    platform = SimplePlatformSerializer(read_only=True, source='credentials.platform')
+    organization = OrganizationSerializer(read_only=True, source='credentials.organization')
 
     class Meta:
         model = FetchIntention
@@ -64,8 +71,9 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
             'broken_credentials',
             'credentials',
             'counter_report',
-            'platform_name',
-            'organization_name',
+            'counter_report_verbose',
+            'platform',
+            'organization',
             'counter_report_code',
             'fetching_data',
             'attempt',

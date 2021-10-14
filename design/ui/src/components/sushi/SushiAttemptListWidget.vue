@@ -27,7 +27,7 @@ cs:
     <v-card-title>{{ $t("sushi_fetch_attempts") }}</v-card-title>
     <v-card-text class="pb-0">
       <v-container fluid>
-        <v-row v-if="!attemptId">
+        <v-row v-if="!intentionId">
           <v-col cols="12" md="6">
             <SushiCredentialsOverviewHeaderWidget
               :organization="organization"
@@ -58,32 +58,38 @@ cs:
         <v-row>
           <v-col>
             <v-data-table
-              :items="filteredAttempts"
+              :items="filteredIntentions"
               :headers="headers"
               show-expand
               :expanded.sync="expandedRows"
-              item-key="timestamp"
+              item-key="pk"
               :sort-by.sync="orderBy"
               :sort-desc.sync="orderDesc"
               :items-per-page.sync="pageSize"
               :loading="loading"
               :footer-props="{ itemsPerPageOptions: [5, 10, 25] }"
-              :server-items-length="attemptCount"
+              :server-items-length="intentionCount"
               :page.sync="page"
             >
               <template #item.status="{ item }">
-                <SushiAttemptStateIcon :attempt="item" />
+                <SushiFetchIntentionStateIcon :intention="item" />
               </template>
               <template #item.timestamp="{ item }">
-                <span v-html="formatDateTime(item.timestamp)"></span>
+                <span
+                  v-html="
+                    item.attempt && formatDateTime(item.attempt.timestamp)
+                  "
+                ></span>
               </template>
               <template #expanded-item="{ item, headers }">
                 <th colspan="2">Log</th>
                 <td :colspan="headers.length - 3" class="pre">
-                  {{ item.log }}
+                  {{ item.attempt.log }}
                 </td>
-                <td v-if="item.data_file">
-                  <a :href="item.data_file" target="_blank">Data file</a>
+                <td v-if="item.attempt && item.attempt.data_file">
+                  <a :href="item.attempt.data_file" target="_blank">
+                    Data file
+                  </a>
                 </td>
               </template>
               <template #item.data-table-expand="{ isExpanded, expand }">
@@ -92,14 +98,17 @@ cs:
                 }}</v-icon>
               </template>
               <template #item.actions="{ item }">
-                <v-tooltip bottom v-if="item.import_batch">
+                <v-tooltip
+                  bottom
+                  v-if="item.attempt && item.attempt.import_batch"
+                >
                   <template v-slot:activator="{ on }">
                     <v-btn
                       text
                       small
                       color="secondary"
                       @click.stop="
-                        selectedBatch = item.import_batch;
+                        selectedBatch = item.attempt.import_batch;
                         dialogType = 'data';
                         showBatchDialog = true;
                       "
@@ -110,14 +119,17 @@ cs:
                   </template>
                   <span>{{ $t("show_raw_data") }}</span>
                 </v-tooltip>
-                <v-tooltip bottom v-if="item.import_batch">
+                <v-tooltip
+                  bottom
+                  v-if="item.attempt && item.attempt.import_batch"
+                >
                   <template v-slot:activator="{ on }">
                     <v-btn
                       text
                       small
                       color="secondary"
                       @click.stop="
-                        selectedBatch = item.import_batch;
+                        selectedBatch = item.attempt.import_batch;
                         dialogType = 'chart';
                         showBatchDialog = true;
                       "
@@ -169,19 +181,17 @@ import { mapActions } from "vuex";
 import axios from "axios";
 import AccessLogList from "../AccessLogList";
 import ImportBatchChart from "../ImportBatchChart";
-import CheckMark from "@/components/util/CheckMark";
 import FetchAttemptModeFilter from "./FetchAttemptModeFilter";
-import SushiAttemptStateIcon from "@/components/sushi/SushiAttemptStateIcon";
+import SushiFetchIntentionStateIcon from "@/components/sushi/SushiFetchIntentionStateIcon";
 import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 
 export default {
   name: "SushiAttemptListWidget",
   components: {
-    SushiAttemptStateIcon,
+    SushiFetchIntentionStateIcon,
     AccessLogList,
     ImportBatchChart,
-    CheckMark,
     FetchAttemptModeFilter,
     SushiCredentialsOverviewHeaderWidget,
   },
@@ -192,13 +202,13 @@ export default {
     fromDate: { required: false },
     month: { required: false },
     counterVersion: { required: false },
-    attemptId: { required: false },
+    intentionId: { required: false },
   },
   data() {
     return {
-      attempts: [],
+      intentions: [],
       expandedRows: [],
-      attemptCount: 0,
+      intentionCount: 0,
       showSuccess: true,
       showFailure: true,
       orderBy: ["timestamp"],
@@ -219,13 +229,13 @@ export default {
   },
   computed: {
     listUrl() {
-      if (this.attemptId) {
-        return `/api/sushi-fetch-attempt/${this.attemptId}`;
+      if (this.intentionId) {
+        return `/api/scheduler/intention/${this.intentionId}`;
       }
       if (!(this.organization || this.platform || this.report)) {
         return "";
       }
-      let base = `/api/sushi-fetch-attempt/?format=json&mode=${this.historyMode}`;
+      let base = `/api/scheduler/intention/?format=json&attempt=1&mode=${this.historyMode}`;
       if (this.organization) {
         base += `&organization=${this.organization.pk}`;
       }
@@ -301,8 +311,8 @@ export default {
 
       return ret;
     },
-    filteredAttempts() {
-      let out = this.attempts;
+    filteredIntentions() {
+      let out = this.intentions;
       if (!this.showSuccess) {
         out = out.filter((item) => !item.processing_success);
       }
@@ -316,22 +326,22 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
-    async loadAttempts() {
+    async loadIntentions() {
       if (!this.listUrl) {
         return;
       }
       this.loading = true;
       try {
         let response = await axios.get(this.listUrl);
-        if (this.attemptId) {
-          this.attempts = [response.data];
-          this.attemptCount = 1;
+        if (this.intentionId) {
+          this.intentions = [response.data];
+          this.intentionCount = 1;
         } else {
-          this.attempts = response.data.results;
-          this.attemptCount = response.data.count;
+          this.intentions = response.data.results;
+          this.intentionCount = response.data.count;
         }
       } catch (error) {
-        this.attempts = [];
+        this.intentions = [];
         this.showSnackbar({
           content: "Error fetching SUSHI attempt data: " + error,
           color: "error",
@@ -344,17 +354,17 @@ export default {
       return isoDateTimeFormatSpans(value);
     },
     cleanup() {
-      this.attempts = [];
+      this.intentions = [];
     },
   },
 
   watch: {
     listUrl() {
-      this.loadAttempts();
+      this.loadIntentions();
     },
   },
   mounted() {
-    this.loadAttempts();
+    this.loadIntentions();
   },
 };
 </script>

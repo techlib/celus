@@ -163,16 +163,10 @@ class SushiCredentialsDataSerializer(Serializer):
 
 
 class SushiFetchAttemptSerializer(ModelSerializer):
-
-    counter_report_verbose = CounterReportTypeSerializer(read_only=True, source='counter_report')
-    organization = OrganizationSerializer(read_only=True, source='credentials.organization')
-    platform = SimplePlatformSerializer(read_only=True, source='credentials.platform')
-
     class Meta:
         model = SushiFetchAttempt
         fields = (
             'counter_report',
-            'counter_report_verbose',
             'credentials',
             'data_file',
             'end_date',

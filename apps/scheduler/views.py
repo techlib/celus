@@ -7,7 +7,7 @@ from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet, ModelViewSet
 
 from core.logic.dates import parse_month
 from core.models import REL_ORG_USER
@@ -15,6 +15,7 @@ from core.permissions import SuperuserOrAdminPermission
 from logs.views import StandardResultsSetPagination
 from sushi.models import CounterReportsToCredentials
 
+from . import filters
 from .models import Automatic, FetchIntention, Harvest
 from .tasks import trigger_scheduler
 from .serializers import (
@@ -257,12 +258,28 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
         return Response(status=status.HTTP_200_OK)
 
 
-class IntentionViewSet(ReadOnlyModelViewSet):
+class IntentionViewSet(ModelViewSet):
 
     serializer_class = FetchIntentionSerializer
+    http_method_names = ['get', 'options', 'head']
+    filter_backends = [
+        filters.OrganizationFilter,
+        filters.PlatformFilter,
+        filters.ReportFilter,
+        filters.DateFromFilter,
+        filters.MonthFilter,
+        filters.CounterVersionFilter,
+        filters.ModeFilter,
+        filters.OrderingFilter,
+        filters.AttemptFilter,
+    ]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        org_perm_args = [
-            Q(credentials__organization__in=self.request.user.accessible_organizations())
-        ]
-        return FetchIntention.objects.filter(*org_perm_args)
+        return (
+            FetchIntention.objects.all()
+            .latest_intentions()
+            .select_related(
+                'attempt', 'counter_report', 'credentials__organization', 'credentials__platform',
+            )
+        )

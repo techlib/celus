@@ -119,7 +119,7 @@ cs:
                     stateFilter !== null && stateFilter !== state ? 'alpha' : ''
                   "
                 >
-                  <SushiAttemptStateIcon :force-state="state" />
+                  <SushiFetchIntentionStateIcon :force-state="state" />
                   {{ count }}
                 </span>
               </span>
@@ -154,7 +154,7 @@ cs:
                   @click="
                     (item[rt.code] &&
                       item[rt.code].pk &&
-                      showAttempt(item[rt.code])) ||
+                      showIntention(item[rt.code])) ||
                       null
                   "
                   :class="{
@@ -165,8 +165,8 @@ cs:
                       stateFilter !== item[rt.code].state,
                   }"
                 >
-                  <SushiAttemptStateIcon
-                    :attempt="item[rt.code]"
+                  <SushiFetchIntentionStateIcon
+                    :intention="item[rt.code]"
                     latest
                     :broken-report="hasBrokenReport(item[rt.code])"
                     :broken-credentials="!!item.broken"
@@ -205,8 +205,8 @@ cs:
 
     <v-dialog v-model="showDetailsDialog">
       <SushiAttemptListWidget
-        v-if="selectedAttempt"
-        :attempt-id="selectedAttempt.pk"
+        v-if="selectedIntention"
+        :intention-id="selectedIntention.pk"
         @close="closeDetailsDialog"
         ref="attemptListWidget"
       >
@@ -224,7 +224,7 @@ import startOfMonth from "date-fns/startOfMonth";
 import addDays from "date-fns/addDays";
 import addMonths from "date-fns/addMonths";
 import { parseDateTime, ymDateFormat } from "@/libs/dates";
-import SushiAttemptStateIcon from "@/components/sushi/SushiAttemptStateIcon";
+import SushiFetchIntentionStateIcon from "@/components/sushi/SushiFetchIntentionStateIcon";
 import { intentionState } from "@/libs/intention-state";
 import { ATTEMPT_SUCCESS, ATTEMPT_NOT_MADE } from "@/libs/attempt-state";
 import IconButton from "@/components/sushi/IconButton";
@@ -232,7 +232,7 @@ import IconButton from "@/components/sushi/IconButton";
 export default {
   name: "SushiCredentialsMonthOverviewWidget",
 
-  components: { IconButton, SushiAttemptStateIcon, SushiAttemptListWidget },
+  components: { IconButton, SushiFetchIntentionStateIcon, SushiAttemptListWidget },
 
   props: {
     dialogMaxWidth: {
@@ -254,7 +254,7 @@ export default {
       reportTypes: [],
       search: "",
       itemsPerPage: 25,
-      selectedAttempt: null,
+      selectedIntention: null,
       showDetailsDialog: false,
       orderBy: ["platform.name", "organization.name"],
       loadingReportTypes: false,
@@ -510,7 +510,7 @@ export default {
     closeDetailsDialog() {
       this.selectedCredentials = null;
       this.$refs["attemptListWidget"].cleanup();
-      this.selectedAttempt = null;
+      this.selectedIntention = null;
       this.showDetailsDialog = false;
     },
     allowedMonths(value) {
@@ -518,9 +518,9 @@ export default {
       return value <= now;
     },
     slotName: (rt) => "item." + rt.code,
-    showAttempt(intention) {
-      this.selectedAttempt = intention.attempt;
-      this.showDetailsDialog = !!this.selectedAttempt;
+    showIntention(intention) {
+      this.selectedIntention = intention;
+      this.showDetailsDialog = !!this.selectedIntention;
     },
     shiftMonth(months) {
       let date = parseDateTime(this.selectedMonth);
