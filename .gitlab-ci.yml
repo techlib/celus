@@ -13,4 +13,5 @@ include:
   - local: /.gitlab/pre-commit.yml
   - local: /.gitlab/build-vue.yml
   - local: /.gitlab/run-tests.yml
+  - local: /.gitlab/test-js.yml
   - local: /.gitlab/sentry.yml

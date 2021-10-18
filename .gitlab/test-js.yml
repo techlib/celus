@@ -1,0 +1,10 @@
+tests:test_js:
+  stage: tests
+  needs: []
+  image: node:12.18
+  script:
+    - cd design/ui
+    - yarn install
+    - yarn test
+  tags:
+    - bdd
