@@ -1,13 +1,15 @@
 // basic imports
 import Vue from "vue";
 import Vuetify from "vuetify";
-import { mount, createLocalVue } from "@vue/test-utils";
+import VueI18n from "vue-i18n";
+import { createLocalVue, mount } from "@vue/test-utils";
 
 // stuff to check
 import CheckMark from "@/components/util/CheckMark";
 
 // basic setup
 Vue.use(Vuetify);
+Vue.use(VueI18n);
 const localVue = createLocalVue();
 
 describe("CheckMark", () => {
@@ -26,7 +28,8 @@ describe("CheckMark", () => {
         value: false,
       },
     });
-    expect(wrapper.html()).toContain("error");
+    expect(wrapper.html()).toContain("fa-square");
+    expect(wrapper.html()).not.toContain("fa-check-square");
   }),
     test("check success color", () => {
       const wrapper = mount(CheckMark, {
@@ -36,8 +39,7 @@ describe("CheckMark", () => {
           value: true,
         },
       });
-      //wrapper.setProps({value: true})
-      expect(wrapper.html()).toContain("success");
-      expect(wrapper.html()).not.toContain("error");
+      expect(wrapper.html()).toContain("fa-check-square");
+      expect(wrapper.html()).not.toContain("fa-square");
     });
 });
