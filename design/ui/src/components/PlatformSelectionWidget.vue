@@ -25,9 +25,13 @@ cs:
           <v-tooltip bottom max-width="600px" v-if="badge(item)">
             <template #activator="{ on }">
               <span>{{ item.name }}</span>
-              <v-badge inline :content="$t(badge(item).content)" :color="badge(item).color">
+              <v-badge
+                inline
+                :content="$t(badge(item).content)"
+                :color="badge(item).color"
+              >
                 <template v-slot:badge>
-                <span v-on="on">{{ $t(badge(item).content) }}</span>
+                  <span v-on="on">{{ $t(badge(item).content) }}</span>
                 </template>
               </v-badge>
             </template>
@@ -95,6 +99,10 @@ export default {
           `/api/organization/${this.selectedOrganizationId}/all-platform/`
         );
         this.platforms = response.data;
+        // make sure platform name is not blank - use short_name if needed
+        this.platforms.forEach((item) => {
+          if (!item.name) item.name = item.short_name;
+        });
       } catch (error) {
         this.showSnackbar({ content: "Error loading platform list: " + error });
       } finally {
@@ -103,7 +111,7 @@ export default {
     },
     badge(item) {
       return badge(item);
-    }
+    },
   },
   mounted() {
     this.loadPlatforms();

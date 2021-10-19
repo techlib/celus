@@ -232,7 +232,11 @@ import IconButton from "@/components/sushi/IconButton";
 export default {
   name: "SushiCredentialsMonthOverviewWidget",
 
-  components: { IconButton, SushiFetchIntentionStateIcon, SushiAttemptListWidget },
+  components: {
+    IconButton,
+    SushiFetchIntentionStateIcon,
+    SushiAttemptListWidget,
+  },
 
   props: {
     dialogMaxWidth: {
@@ -414,7 +418,9 @@ export default {
     },
     stateStats() {
       let stats = new Map();
-      for (let state of this.activeIntentions.map((intention) => intention.state)) {
+      for (let state of this.activeIntentions.map(
+        (intention) => intention.state
+      )) {
         if (stats.has(state)) {
           stats.set(state, stats.get(state) + 1);
         } else {
@@ -455,6 +461,11 @@ export default {
       try {
         let response = await axios.get(this.credentialsUrl);
         this.sushiCredentialsList = response.data;
+        // make sure platform name is not blank - use short_name if needed
+        this.sushiCredentialsList.forEach((item) => {
+          if (!item.platform.name)
+            item.platform.name = item.platform.short_name;
+        });
       } catch (error) {
         this.showSnackbar({
           content: "Error loading credentials list: " + error,
@@ -561,7 +572,10 @@ export default {
       await this.loadIntentions();
       // check that the filter is still valid in the new context
       // if not - disable it to prevent showing empty data
-      if (this.sushiCredentialsWithIntentions.length === 0 && this.stateFilter) {
+      if (
+        this.sushiCredentialsWithIntentions.length === 0 &&
+        this.stateFilter
+      ) {
         this.stateFilter = null;
       }
     },

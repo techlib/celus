@@ -60,13 +60,13 @@ cs:
           sort-by="name"
           :loading="loading"
         >
-          <template v-slot:item.name="props">
+          <template v-slot:item.name="{ item }">
             <router-link
               :to="{
                 name: 'platform-detail',
-                params: { platformId: props.item.pk },
+                params: { platformId: item.pk },
               }"
-              >{{ props.item.name }}
+              >{{ item.name || item.short_name }}
             </router-link>
           </template>
           <template v-slot:item.title_count="{ item }">
@@ -167,7 +167,7 @@ import PlatformEditDialog from "@/components/PlatformEditDialog";
 export default {
   name: "PlatformList",
   components: {
-      PlatformEditDialog,
+    PlatformEditDialog,
   },
   props: {
     dialogMaxWidth: {

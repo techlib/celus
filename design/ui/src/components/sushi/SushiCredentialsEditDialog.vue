@@ -140,7 +140,7 @@ cs:
             <v-col cols="12" :md="4">
               <v-text-field
                 v-if="credentials || fixedPlatform"
-                :value="activePlatform.name"
+                :value="activePlatformName"
                 :label="$t('platform')"
                 disabled
               >
@@ -665,6 +665,9 @@ export default {
         default:
           return "";
       }
+    },
+    activePlatformName() {
+      return this.activePlatform.name || this.activePlatform.short_name;
     },
   },
 

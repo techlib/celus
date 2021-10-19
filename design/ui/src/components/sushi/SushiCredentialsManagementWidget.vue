@@ -514,6 +514,10 @@ export default {
         // we need to make sure a broken item is not checked
         this.checkedRows = this.checkedRows.filter((row) => row.pk !== item.pk);
       }
+      if (!item.platform.name) {
+        // use platform short_name instead of name if name is empty
+        item.platform.name = item.platform.short_name;
+      }
     },
     async toggleLock(credentials) {
       let newLockLevel = 400;
