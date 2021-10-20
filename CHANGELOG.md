@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.4]
+
+### Fixed
+
+#### Frontend
+
+* test for `/report/` as part of SUSHI URL was fixed to prevent false positives like
+  `https::/report.foo.bar/`
+* platform `short_name` is used if `name` is blank to prevent showing platforms with blank name
+* tooltip for icons in SUSHI status was fixed
+
+### Changes
+
+#### Backend
+
+* the API to get status of "fetch attempts" was removed in favor of "fetch intentions" (is related
+  to the above fix of tooltips)
+* server log messages about user identity were changed from `error` to `debug` importance
+
+
 ## [3.2.3]
 
 ### Fixed
