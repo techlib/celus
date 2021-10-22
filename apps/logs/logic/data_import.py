@@ -97,8 +97,8 @@ class TitleManager:
                 self.stats['existing'] += 1
             return title_pk
         title, created = Title.objects.get_or_create(
+            defaults={"pub_type": record.pub_type},
             name=record.name,
-            pub_type=record.pub_type,
             isbn=record.isbn,
             issn=record.issn,
             eissn=record.eissn,
