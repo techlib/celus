@@ -817,3 +817,15 @@ class TestFetchIntentionAPI:
         resp = admin_client.get(reverse('intention-list'), {'attempt': '0'})
         assert resp.status_code == 200
         assert len(resp.json()['results']) == 19
+
+    def test_list_filter_by_credentials(self, admin_client):
+        cr1 = CredentialsFactory()
+        cr2 = CredentialsFactory()
+        FetchIntentionFactory.create_batch(29, credentials=cr1)
+        FetchIntentionFactory.create_batch(31, credentials=cr2)
+        resp = admin_client.get(reverse('intention-list'), {'credentials': cr1.pk})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 29
+        resp = admin_client.get(reverse('intention-list'), {'credentials': cr2.pk})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 31

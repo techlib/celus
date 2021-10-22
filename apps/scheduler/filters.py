@@ -98,3 +98,11 @@ class OrderingFilter(filters.BaseFilterBackend):
             prefix = '-' if desc == 'true' else ''
             queryset = queryset.order_by(prefix + order_by)
         return queryset
+
+
+class CredentialsFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        credentials = request.query_params.get("credentials", "")
+        if credentials:
+            queryset = queryset.filter(credentials_id=credentials)
+        return queryset

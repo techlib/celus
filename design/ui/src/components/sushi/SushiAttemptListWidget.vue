@@ -196,6 +196,7 @@ export default {
     SushiCredentialsOverviewHeaderWidget,
   },
   props: {
+    credentials: { required: false },
     organization: { required: false },
     platform: { required: false },
     report: { required: false },
@@ -232,10 +233,15 @@ export default {
       if (this.intentionId) {
         return `/api/scheduler/intention/${this.intentionId}`;
       }
-      if (!(this.organization || this.platform || this.report)) {
+      if (
+        !(this.organization || this.platform || this.report || this.credentials)
+      ) {
         return "";
       }
       let base = `/api/scheduler/intention/?format=json&attempt=1&mode=${this.historyMode}`;
+      if (this.credentials) {
+        base += `&credentials=${this.credentials.pk}`;
+      }
       if (this.organization) {
         base += `&organization=${this.organization.pk}`;
       }

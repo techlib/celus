@@ -272,6 +272,7 @@ class IntentionViewSet(ModelViewSet):
         filters.ModeFilter,
         filters.OrderingFilter,
         filters.AttemptFilter,
+        filters.CredentialsFilter,
     ]
     pagination_class = StandardResultsSetPagination
 

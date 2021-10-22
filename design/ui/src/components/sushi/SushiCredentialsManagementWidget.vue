@@ -243,9 +243,7 @@ cs:
     <v-dialog v-model="showDetailsDialog">
       <SushiAttemptListWidget
         v-if="selectedCredentials"
-        :organization="selectedCredentials.organization"
-        :platform="selectedCredentials.platform"
-        :counter-version="selectedCredentials.counter_version"
+        :credentials="selectedCredentials"
         @close="closeDetailsDialog"
       >
       </SushiAttemptListWidget>
