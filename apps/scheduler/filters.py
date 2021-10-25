@@ -2,7 +2,7 @@ import dateparser
 from distutils.util import strtobool
 
 from django.shortcuts import get_object_or_404
-from django.db.models import F
+from django.db.models import F, Q
 from rest_framework import filters
 
 from sushi.models import AttemptStatus
@@ -67,8 +67,8 @@ class ModeFilter(filters.BaseFilterBackend):
         mode = request.query_params.get('mode', "")
         if mode == 'success_and_current':
             queryset = queryset.filter(
-                attempt__credentials_version_hash=F('credentials__version_hash'),
-                attempt__status__in=AttemptStatus.successes(),
+                Q(attempt__credentials_version_hash=F('credentials__version_hash'))
+                | Q(attempt__status__in=AttemptStatus.successes())
             )
         elif mode == 'current':
             queryset = queryset.filter(

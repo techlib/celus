@@ -47,9 +47,7 @@ class HarvestViewSet(
                 Prefetch('automatic', queryset=Automatic.objects.select_related('organization')),
                 Prefetch(
                     'intentions',
-                    queryset=FetchIntention.objects.latest_intentions(
-                        within_harvest=True
-                    ).annotate_credentials_state(),
+                    queryset=FetchIntention.objects.latest_intentions().annotate_credentials_state(),
                     to_attr='prefetched_latest_intentions',
                 ),
                 Prefetch(
@@ -277,16 +275,13 @@ class IntentionViewSet(ModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
+        return FetchIntention.objects.all().select_related(
+            'attempt', 'counter_report', 'credentials__organization', 'credentials__platform',
+        )
+
+    def filter_queryset(self, *args, **kwargs):
         if 'pk' in self.kwargs:
             # when a specific object was requested, do not filter for latest intentions to avoid
             # 404 for existing but not last intentions
-            return FetchIntention.objects.all().select_related(
-                'attempt', 'counter_report', 'credentials__organization', 'credentials__platform',
-            )
-        return (
-            FetchIntention.objects.all()
-            .latest_intentions()
-            .select_related(
-                'attempt', 'counter_report', 'credentials__organization', 'credentials__platform',
-            )
-        )
+            return super().filter_queryset(*args, **kwargs)
+        return super().filter_queryset(*args, **kwargs).latest_intentions()

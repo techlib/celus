@@ -10,7 +10,7 @@ from core.models import User, CreatedUpdatedMixin
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import DatabaseError, models, transaction
-from django.db.models import F, IntegerField, Max, Q
+from django.db.models import F, Max, Q
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -302,20 +302,14 @@ class FetchIntentionQuerySet(models.QuerySet):
 
         return list(res)
 
-    def latest_intentions(self, within_harvest=False) -> models.QuerySet:
+    def latest_intentions(self) -> models.QuerySet:
         """ Only latest intentions, retried intentions are skipped """
 
-        extra_filters = {"harvest": models.OuterRef('harvest')} if within_harvest else {}
-
-        return self.annotate(
-            max_pk=models.Subquery(
-                self.filter(queue_id=models.OuterRef('queue_id'), **extra_filters)
-                .values('queue_id')
-                .annotate(max_pk=models.Max('pk'))
-                .values("max_pk")[:1],
-                output_field=IntegerField(),
-            )
-        ).filter(pk=models.F('max_pk'))
+        return self.filter(
+            pk__in=self.values("queue_id")
+            .annotate(max_pk=models.Max('pk'))
+            .values_list('max_pk', flat=True)
+        )
 
     @classmethod
     def unprocessed_count_query(cls):
@@ -808,7 +802,7 @@ class Harvest(CreatedUpdatedMixin):
             return self.prefetched_latest_intentions
 
         return (
-            self.intentions.latest_intentions(within_harvest=True)
+            self.intentions.latest_intentions()
             .annotate_credentials_state()
             .select_related(
                 'attempt',
