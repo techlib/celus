@@ -154,11 +154,15 @@ cs:
                   @click="
                     (item[rt.code] &&
                       item[rt.code].pk &&
+                      item[rt.code].attempt &&
                       showIntention(item[rt.code])) ||
                       null
                   "
                   :class="{
-                    clickable: item[rt.code] && item[rt.code].pk,
+                    clickable:
+                      item[rt.code] &&
+                      item[rt.code].pk &&
+                      item[rt.code].attempt,
                     alpha:
                       stateFilter &&
                       item[rt.code] &&

@@ -277,6 +277,12 @@ class IntentionViewSet(ModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
+        if 'pk' in self.kwargs:
+            # when a specific object was requested, do not filter for latest intentions to avoid
+            # 404 for existing but not last intentions
+            return FetchIntention.objects.all().select_related(
+                'attempt', 'counter_report', 'credentials__organization', 'credentials__platform',
+            )
         return (
             FetchIntention.objects.all()
             .latest_intentions()

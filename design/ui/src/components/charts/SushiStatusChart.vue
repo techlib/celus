@@ -24,7 +24,11 @@ import {
   BROKEN_CREDENTIALS,
 } from "@/libs/attempt-state";
 
-import { intentionState, INTENTION_QUEUED } from "@/libs/intention-state";
+import {
+  intentionState,
+  INTENTION_QUEUED,
+  INTENTION_WAITING,
+} from "@/libs/intention-state";
 
 import LoaderWidget from "@/components/util/LoaderWidget";
 import { mapActions } from "vuex";
@@ -60,6 +64,7 @@ export default {
       states: [
         ATTEMPT_NOT_MADE,
         INTENTION_QUEUED,
+        INTENTION_WAITING,
         ATTEMPT_SUCCESS,
         ATTEMPT_EMPTY_DATA,
         ATTEMPT_UNKNOWN,
@@ -70,6 +75,7 @@ export default {
       statusToColor: {},
     };
     data.statusToColor[this.$t(`sushi.state.${INTENTION_QUEUED}`)] = "#9e9e9e";
+    data.statusToColor[this.$t(`sushi.state.${INTENTION_WAITING}`)] = "#cacaca";
     data.statusToColor[this.$t(`sushi.state.${ATTEMPT_SUCCESS}`)] = "#7dc17f";
     data.statusToColor[this.$t(`sushi.state.${ATTEMPT_ERROR}`)] = "#e58383";
     data.statusToColor[this.$t(`sushi.state.${ATTEMPT_NOT_MADE}`)] = "#e8e8e8";
