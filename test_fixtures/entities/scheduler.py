@@ -4,7 +4,7 @@ import factory
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 
-from scheduler.models import Automatic, FetchIntention, Harvest, Scheduler
+from scheduler.models import Automatic, FetchIntention, FetchIntentionQueue, Harvest, Scheduler
 from .credentials import CredentialsFactory
 from .counter_report_types import CounterReportTypeFactory
 from .organizations import OrganizationFactory
@@ -29,6 +29,10 @@ class HarvestFactory(factory.DjangoModelFactory):
                     intention.attempt.save()
                 intention.harvest = self
                 intention.save()
+                if not intention.queue:
+                    intention.queue = FetchIntentionQueueFactory(
+                        id=intention.pk, start=intention, end=intention
+                    )
 
 
 class SchedulerFactory(factory.DjangoModelFactory):
@@ -36,6 +40,12 @@ class SchedulerFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = Scheduler
+
+
+class FetchIntentionQueueFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = FetchIntentionQueue
+        django_get_or_create = ('id',)
 
 
 class FetchIntentionFactory(factory.DjangoModelFactory):
@@ -54,6 +64,20 @@ class FetchIntentionFactory(factory.DjangoModelFactory):
     end_date = factory.LazyAttribute(
         lambda x: x.start_date + relativedelta(months=1) - relativedelta(days=1)
     )
+
+    @factory.post_generation
+    def queue(obj, create, extracted, **kwargs):
+        if extracted:
+            obj.queue = extracted
+        if obj.pk and not obj.queue:
+            if create:
+                obj.queue = FetchIntentionQueueFactory(id=obj.pk, start=obj, end=obj)
+            else:
+                obj.queue = FetchIntentionQueueFactory.build(id=obj.pk, start=obj, end=obj)
+
+        if obj.queue and obj.pk:
+            obj.queue.end = obj
+            obj.queue.save()
 
     class Meta:
         model = FetchIntention

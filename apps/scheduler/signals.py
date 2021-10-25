@@ -5,7 +5,8 @@ from django.dispatch import receiver
 
 from core.logic.dates import month_end, this_month
 from sushi.models import SushiCredentials, CounterReportsToCredentials
-from .models import Automatic, FetchIntention
+
+from .models import Automatic, FetchIntention, FetchIntentionQueue
 
 
 def _update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
@@ -88,7 +89,7 @@ def update_intentions_from_cr2c_post_delete(sender, instance, using, **kwargs):
 
 
 @receiver(post_save, sender=FetchIntention)
-def fill_in_queue_id(sender, instance, created, raw, using, update_fields, **kwargs):
-    if not instance.queue_id:
-        FetchIntention.objects.filter(pk=instance.pk).update(queue_id=instance.pk)
-        instance.queue_id = instance.pk
+def fill_in_queue(sender, instance, created, raw, using, update_fields, **kwargs):
+    if not instance.queue:
+        queue = FetchIntentionQueue.objects.create(id=instance.pk, start=instance, end=instance)
+        FetchIntention.objects.filter(pk=instance.pk).update(queue=queue)

@@ -305,11 +305,7 @@ class FetchIntentionQuerySet(models.QuerySet):
     def latest_intentions(self) -> models.QuerySet:
         """ Only latest intentions, retried intentions are skipped """
 
-        return self.filter(
-            pk__in=self.values("queue_id")
-            .annotate(max_pk=models.Max('pk'))
-            .values_list('max_pk', flat=True)
-        )
+        return self.filter(pk=F('queue__end__pk'))
 
     @classmethod
     def unprocessed_count_query(cls):
@@ -357,7 +353,13 @@ class FetchIntention(models.Model):
     harvest = models.ForeignKey(
         'scheduler.Harvest', on_delete=models.CASCADE, related_name="intentions"
     )
-    queue_id = models.IntegerField(null=True, blank=True, help_text='Identifier of retry queue',)
+    queue = models.ForeignKey(
+        'scheduler.FetchIntentionQueue',
+        null=True,
+        blank=True,
+        help_text='Identifier of retry queue',
+        on_delete=models.CASCADE,
+    )
 
     # Retry counters
     data_not_ready_retry = models.SmallIntegerField(default=0)
@@ -533,24 +535,30 @@ class FetchIntention(models.Model):
             kwargs['service_not_available_retry'] = self.service_not_available_retry + 1
 
         with transaction.atomic():
-            if not self.queue_id:
-                self.queue_id = self.pk
+            if not self.queue:
+                self.queue = FetchIntentionQueue.objects.create(id=self.pk, start=self, end=self)
                 self.save()
                 self.attempt.queue_id = self.queue_id
                 self.attempt.save()
 
-        return FetchIntention.objects.create(
-            not_before=not_before,
-            priority=self.priority,
-            credentials=self.credentials,
-            counter_report=self.counter_report,
-            start_date=self.start_date,
-            end_date=self.end_date,
-            harvest=self.harvest,
-            queue_id=self.queue_id,
-            previous_intention=self,
-            **kwargs,
-        )
+            fi = FetchIntention.objects.create(
+                not_before=not_before,
+                priority=self.priority,
+                credentials=self.credentials,
+                counter_report=self.counter_report,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                harvest=self.harvest,
+                queue=self.queue,
+                previous_intention=self,
+                **kwargs,
+            )
+
+            # set last in queue
+            fi.queue.end = fi
+            fi.queue.save()
+
+        return fi
 
     def handle_service_not_available(self):
         next_time, max_reached = FetchIntention.next_exponential(
@@ -683,6 +691,16 @@ class HarvestQuerySet(models.QuerySet):
         )
 
 
+class FetchIntentionQueue(models.Model):
+    id = models.IntegerField(primary_key=True)
+    start = models.ForeignKey(
+        FetchIntention, on_delete=models.SET_NULL, related_name='qstart', null=True
+    )
+    end = models.ForeignKey(
+        FetchIntention, on_delete=models.SET_NULL, related_name='qend', null=True
+    )
+
+
 class Harvest(CreatedUpdatedMixin):
 
     objects = HarvestQuerySet.as_manager()
@@ -778,8 +796,15 @@ class Harvest(CreatedUpdatedMixin):
 
         FetchIntention.objects.bulk_create(intentions)
         # There is no signal if bulk_create is used
-        # We need to set a proper queue_id here
-        harvest.intentions.all().update(queue_id=models.F('pk'))
+        # We need to set a proper queue here
+        for fi in harvest.intentions.all():
+            fi.queue, created = FetchIntentionQueue.objects.get_or_create(
+                id=fi.pk, defaults={"start": fi, "end": fi}
+            )
+            if not created:
+                fi.queue.end = fi
+                fi.queue.save()
+            fi.save()
 
         if priority >= FetchIntention.PRIORITY_NOW:
             from .tasks import trigger_scheduler

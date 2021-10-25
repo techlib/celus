@@ -132,7 +132,7 @@ class PlatformReportView(APIView):
             if not fetch_attempts:
                 return self._get_response({'status': 'Data not yet harvested'})
             last: SushiFetchAttempt = fetch_attempts[0]
-            if last.queue_id:
+            if last.fetchintention != last.fetchintention.queue.end:  # not last in queue
                 return self._get_response({'status': 'Harvesting ongoing'})
             if last.error_code == '3030':
                 return self._get_response(

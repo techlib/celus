@@ -399,13 +399,13 @@ class TestFetchIntention:
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_cancel(self, harvests):
-        processed = harvests["anonymous"].intentions.filter(queue_id=1).order_by('pk').last()
+        processed = harvests["anonymous"].intentions.order_by('pk')[0]
         assert processed.is_processed
         assert processed.cancel() is False
         assert processed.canceled is False
         assert processed.is_processed
 
-        unprocessed = harvests["anonymous"].intentions.filter(queue_id=3).order_by('pk').last()
+        unprocessed = harvests["anonymous"].intentions.latest_intentions()[2]
         assert not unprocessed.is_processed
         assert unprocessed.cancel() is True
         assert unprocessed.canceled is True
@@ -439,7 +439,7 @@ class TestFetchIntention:
 
         assert intention1.fetching_data is False
 
-    def test_queue_id(self, credentials, counter_report_types):
+    def test_queue(self, credentials, counter_report_types):
         sch = SchedulerFactory()
         hr = HarvestFactory()
         fi1 = FetchIntentionFactory.build(
@@ -451,17 +451,19 @@ class TestFetchIntention:
             attempt=None,
         )
         fi1.save()
-        assert fi1.queue_id == fi1.pk
+        fi1.refresh_from_db()
+        assert fi1.queue.id == fi1.pk
         fi2 = FetchIntentionFactory.build(
             scheduler=sch,
             credentials=credentials["standalone_tr"],
-            queue_id=fi1.queue_id,
+            queue=fi1.queue,
             counter_report=counter_report_types["jr1"],
             harvest=hr,
             attempt=None,
         )
         fi2.save()
-        assert fi2.queue_id == fi1.pk
+        fi2.refresh_from_db()
+        assert fi2.queue.id == fi1.pk
 
 
 @pytest.mark.django_db
@@ -772,7 +774,7 @@ class TestHarvest:
             duplicate_of=None,
             attempt=None,
         )
-        FetchIntentionFactory(
+        last = FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
             counter_report=counter_report_types["jr1"],
             start_date="2020-01-01",
@@ -780,9 +782,9 @@ class TestHarvest:
             when_processed=None,
             harvest=harvest2,
             duplicate_of=None,
-            queue_id=1,
             attempt=None,
         )
+        queue = last.queue
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
             counter_report=counter_report_types["jr1"],
@@ -791,7 +793,7 @@ class TestHarvest:
             when_processed=timezone.now(),
             harvest=harvest2,
             duplicate_of=None,
-            queue_id=1,
+            queue=queue,
             attempt=FetchAttemptFactory(
                 counter_report=counter_report_types["tr"], credentials=credentials["standalone_tr"]
             ),

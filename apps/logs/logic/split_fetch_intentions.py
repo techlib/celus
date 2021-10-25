@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.db.models import F, Max
 
 from core.logic.dates import month_start, month_end
+from scheduler.models import FetchIntentionQueue
 
 
 def split_fetch_intentions(accesslog_model, fetchintention_model):
@@ -50,6 +51,12 @@ def split_fetch_intentions(accesslog_model, fetchintention_model):
             else:
                 max_queue_id += 1
                 fi.queue_id = max_queue_id
+                try:
+                    FetchIntentionQueue.objects.create(id=max_queue_id)
+                except Exception:
+                    # this code may appear in a migration where FetchIntentionQueue
+                    # table is not created yet
+                    pass
                 queue_id_remap[queue_key] = fi.queue_id
             # similar check for previous intention
             if orig_previous_intention_id:

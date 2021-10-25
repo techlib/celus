@@ -577,6 +577,8 @@ class TestHarvestFetchIntentionAPI:
         intention.data_not_ready_retry = 1
         intention.attempt = None
         intention.save()
+        intention.queue.end = intention
+        intention.queue.save()
 
         # try to get old and new intentions via get
         resp = clients['master'].get(
@@ -667,9 +669,9 @@ class TestHarvestFetchIntentionAPI:
     )
     def test_cancel(self, basic1, harvests, clients, user, cancelable, status):
         if cancelable:
-            intention = harvests["user1"].intentions.filter(queue_id=9).latest_intentions().last()
+            intention = harvests["user1"].intentions.latest_intentions().order_by('pk')[1]
         else:
-            intention = harvests["user1"].intentions.filter(queue_id=8).latest_intentions().last()
+            intention = harvests["user1"].intentions.latest_intentions().order_by('pk')[0]
 
         url = reverse('harvest-intention-cancel', args=(intention.harvest.pk, intention.pk),)
 
@@ -732,7 +734,7 @@ class TestFetchIntentionAPI:
         """
         Check whether displaying detail about fetch attempts works properly
         """
-        intention = harvests["user1"].intentions.get(queue_id=8)
+        intention = harvests["user1"].intentions.latest_intentions().order_by('pk')[0]
         url = reverse('intention-detail', args=(intention.pk,))
         resp = clients[user].get(url)
         assert resp.status_code == status_code
@@ -751,11 +753,15 @@ class TestFetchIntentionAPI:
         cr2 = CredentialsFactory()
         assert cr.platform_id != cr2.platform_id
         FetchIntentionFactory.create_batch(3, credentials=cr, attempt__credentials=cr)
+        fi = FetchIntentionFactory(
+            credentials=cr2, attempt__credentials=cr2, when_processed=timezone.now(),
+        )
+        fi.refresh_from_db()
         FetchIntentionFactory.create_batch(
-            30,
+            29,
             credentials=cr2,
             attempt__credentials=cr2,
-            queue_id=99,
+            queue=fi.queue,
             when_processed=timezone.now(),
         )
         # try without filter

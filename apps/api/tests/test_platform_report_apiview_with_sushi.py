@@ -5,10 +5,13 @@ fixtures which clash with those for other tests of this view.
 
 import pytest
 from django.urls import reverse
+from django.utils.timezone import now
 
 from api.models import OrganizationAPIKey
-from sushi.models import CounterReportsToCredentials, SushiFetchAttempt, AttemptStatus
+from sushi.models import CounterReportsToCredentials
 from sushi.tests.conftest import counter_report_type, credentials, platforms, organizations  # noqa
+
+from test_fixtures.entities.scheduler import FetchIntentionFactory
 
 
 @pytest.mark.django_db
@@ -110,12 +113,20 @@ class TestPlatformReportApiView:
             organization=credentials.organization, name='test'
         )
         credentials.counter_reports.add(counter_report_type)
-        SushiFetchAttempt.objects.create(
+        fi = FetchIntentionFactory(
             credentials=credentials,
             counter_report=counter_report_type,
-            queue_id=1,
             start_date='2020-01-01',
             end_date='2020-01-31',
+            when_processed=now(),
+        )
+        FetchIntentionFactory(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            queue=fi.queue,
+            attempt=None,
         )
         resp = client.get(
             reverse(
@@ -145,12 +156,12 @@ class TestPlatformReportApiView:
             organization=credentials.organization, name='test'
         )
         credentials.counter_reports.add(counter_report_type)
-        SushiFetchAttempt.objects.create(
+        FetchIntentionFactory(
             credentials=credentials,
             counter_report=counter_report_type,
             start_date='2020-01-01',
             end_date='2020-01-31',
-            error_code='3030',
+            attempt__error_code='3030',
         )
         resp = client.get(
             reverse(
@@ -181,7 +192,7 @@ class TestPlatformReportApiView:
             organization=credentials.organization, name='test'
         )
         credentials.counter_reports.add(counter_report_type)
-        SushiFetchAttempt.objects.create(
+        FetchIntentionFactory(
             credentials=credentials,
             counter_report=counter_report_type,
             start_date='2020-01-01',

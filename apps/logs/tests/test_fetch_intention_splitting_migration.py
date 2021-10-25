@@ -4,6 +4,8 @@ from django.db.models import Count, Sum, F
 
 from logs.logic.split_fetch_intentions import split_fetch_intentions
 
+from test_fixtures.entities.scheduler import FetchIntentionQueueFactory
+
 
 @pytest.mark.django_db
 class TestFetchIntentionSplittingMigration:
@@ -237,6 +239,7 @@ class TestFetchIntentionSplittingMigration:
             counter_report=counter_rt,
             credentials=credentials,
         )
+        queue = FetchIntentionQueueFactory(id=1)
         fi1 = FetchIntention.objects.create(
             start_date=fa1.start_date,
             end_date=fa1.end_date,
@@ -244,7 +247,7 @@ class TestFetchIntentionSplittingMigration:
             credentials=fa1.credentials,
             harvest=h1,
             when_processed='2021-01-01',
-            queue_id=1,
+            queue=queue,
         )
         fi1_2 = FetchIntention.objects.create(
             attempt=fa1,
@@ -253,7 +256,7 @@ class TestFetchIntentionSplittingMigration:
             counter_report=fa1.counter_report,
             credentials=fa1.credentials,
             harvest=h1,
-            queue_id=1,
+            queue=queue,
             previous_intention=fi1,
         )
         fa3 = SushiFetchAttempt.objects.create(
