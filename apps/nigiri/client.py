@@ -6,8 +6,10 @@ import typing
 import urllib
 from datetime import timedelta
 from io import StringIO, BytesIO
+from urllib.parse import urlparse
 
 import requests
+from decouple import config, Csv
 from pycounter import sushi
 from pycounter import report
 from requests import Response
@@ -163,6 +165,31 @@ class Sushi5Client(SushiClientBase):
                 'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0'
             }
         )
+        proxy = self._get_proxy(url)
+        if proxy:
+            logger.debug('Using proxy %s for server %s', proxy['proxy'], url)
+            proxy_rec = 'http://{username}:{password}@{proxy}:{port}/'.format(**proxy)
+            self.session.proxies.update({'http': proxy_rec, 'https': proxy_rec})
+
+    def _get_proxy(self, url):
+        parsed = urlparse(url)
+        proxy_settings = config(
+            'SUSHI_PROXIES', cast=Csv(cast=Csv(post_process=tuple), delimiter=';'), default=''
+        )
+        for rec in proxy_settings:
+            if len(rec) != 5:
+                logger.warning('Incorrect proxy definition: [%s]', rec)
+                continue
+            if not rec[2].isdigit():
+                logger.warning('Incorrect proxy port: [%s]', rec[2])
+                continue
+            if rec[0] == parsed.netloc:
+                return {
+                    'proxy': rec[1],
+                    'port': int(rec[2]),
+                    'username': rec[3],
+                    'password': rec[4],
+                }
 
     @classmethod
     def _encode_date(cls, value) -> str:
