@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [3.2.5]
+
+### Fixed
+
+#### Frontend
+
+* different method of filtering fetch-intentions for particular credentials was introduced.
+  It fixes cases where more than one set of credentials was used for the same organization and
+  platform which resulted in records being mixed together
+* a regression in dashboard SUSHI chart was fixed to include waiting harvests (broken in 3.2.4)
+
+#### Backend
+
+* a regression was fixed in API providing fetch-intention data - it had a slow response and data
+  were incomplete (broken in 3.2.4)
+
+### Added
+
+#### Backend
+
+* support for using HTTP proxy for SUSHI requests was added to nigiri for C5
+
+
 ## [3.2.4]
 
 ### Fixed
