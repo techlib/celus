@@ -3,6 +3,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
 from django.db.models.functions import Coalesce
+from hcube.api.models.aggregation import Count as CubeCount
 from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, PermissionDenied
@@ -12,22 +13,18 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
-from rest_framework_api_key.permissions import HasAPIKey
 
 from api.auth import extract_org_from_request_api_key
-from api.models import OrganizationAPIKey
 from api.permissions import HasOrganizationAPIKey
 from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
-from core.models import DataSource, DATA_SOURCE_TYPE_API, DATA_SOURCE_TYPE_KNOWLEDGEBASE
+from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
-from core.permissions import (
-    SuperuserOrAdminPermission,
-    ViewPlatformPermission,
-)
+from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
+from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, DimensionText
 from logs.serializers import ReportTypeExtendedSerializer
@@ -105,7 +102,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
 
     @action(detail=True, url_path='knowledgebase')
     def knowledgebase(self, request, pk, organization_pk):
-        """ Get knowledgebase information about the platform """
+        """Get knowledgebase information about the platform"""
         organization = self._organization_pk_to_obj(organization_pk)
         platform = get_object_or_404(
             request.user.accessible_platforms(organization=organization), pk=pk
@@ -213,14 +210,34 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 
     @action(methods=['GET'], url_path='title-count', url_name='title-count', detail=False)
     def title_count(self, request, organization_pk):
-        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+
         date_filter_params = date_filter_from_params(request.GET)
-        qs = (
-            PlatformTitle.objects.filter(**org_filter, **date_filter_params)
-            .values('platform')
-            .annotate(title_count=Count('title', distinct=True))
-        )
-        return Response(qs)
+        if request.USE_CLICKHOUSE:
+            from logs.cubes import AccessLogCube, ch_backend
+
+            org_filter = organization_filter_from_org_id(
+                organization_pk, request.user, clickhouse=True
+            )
+            query = (
+                AccessLogCube.query()
+                .filter(**org_filter, **date_filter_params)
+                .group_by('platform_id')
+                .order_by('platform_id')
+                .filter(target_id__not_in=[0])
+                .aggregate(title_count=CubeCount(distinct='target_id'))
+            )
+            return Response(
+                {'platform': rec.platform_id, 'title_count': rec.title_count}
+                for rec in ch_backend.get_records(query, auto_use_materialized_views=True)
+            )
+        else:
+            org_filter = organization_filter_from_org_id(organization_pk, request.user)
+            qs = (
+                PlatformTitle.objects.filter(**org_filter, **date_filter_params)
+                .values('platform')
+                .annotate(title_count=Count('title', distinct=True))
+            )
+            return Response(qs)
 
     @action(methods=['GET'], url_path='title-count', url_name='title-count', detail=True)
     def title_count_detail(self, request, organization_pk, pk):
@@ -657,31 +674,28 @@ class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
             self.kwargs.get('organization_pk'), self.request.user
         )
         extra_filters = self._extra_filters(org_filter)
-        access_log_filter = Q(**org_filter, **extra_filters)
-        distinct_rts = (
-            AccessLog.objects.filter(access_log_filter).values('report_type_id').distinct()
-        )
+        if self.request.USE_CLICKHOUSE:
+            org_filter = organization_filter_from_org_id(
+                self.kwargs.get('organization_pk'), self.request.user, clickhouse=True
+            )
+            extra_filters = {k + "_id": v.pk for k, v in extra_filters.items()}
+            distinct_rts = (
+                rec.report_type_id
+                for rec in ch_backend.get_records(
+                    AccessLogCube.query()
+                    .filter(**org_filter, **extra_filters)
+                    .group_by('report_type_id')
+                )
+            )
+        else:
+            access_log_filter = Q(**org_filter, **extra_filters)
+            distinct_rts = (
+                AccessLog.objects.filter(access_log_filter).values('report_type_id').distinct()
+            )
         report_types = ReportDataView.objects.filter(base_report_type_id__in=distinct_rts).order_by(
             'position'
         )
-        # the following is a alternative approach which uses Exists subquery
-        # it might be faster in some cases but seems to be somewhat slower in others
-        # access_log_query = AccessLog.objects.\
-        #     filter(access_log_filter,
-        #            report_type_id=OuterRef('base_report_type_id')).values('pk')
-        # report_types = ReportDataView.objects.annotate(has_al=Exists(access_log_query)).\
-        #     filter(has_al=True)
-        if self.more_precise_results:
-            return report_types
-            # the following is commented out as it is not clear if it is still required
-            # after a change in the query that gets the report_types
-            # report_types_clean = []
-            # for rt in report_types:
-            #     if rt.logdata_qs().filter(**org_filter, **extra_filters).exists():
-            #         report_types_clean.append(rt)
-            # return report_types_clean
-        else:
-            return report_types
+        return report_types
 
 
 class TitleReportDataViewViewSet(BaseReportDataViewViewSet):
@@ -762,12 +776,9 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
         interest_type_dim = interest_rt.dimensions_sorted[0]
         interest_type_name = self.request.query_params.get('order_by', 'full_text')
 
-        filters = {}
         # -- title filters --
         # publication type filter
         pub_type_arg = self.request.query_params.get('pub_type')
-        if pub_type_arg:
-            filters['pub_type'] = pub_type_arg
 
         # -- accesslog filters --
         # filtering only interest related accesslogs
@@ -775,32 +786,67 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
             interest_type_id = interest_type_dim.dimensiontext_set.get(text=interest_type_name).pk
         except DimensionText.DoesNotExist:
             raise BadRequestException(detail=f'Interest type "{interest_type_name}" does not exist')
-        filters['accesslog__report_type_id'] = interest_rt.pk
-        filters['accesslog__dim1'] = interest_type_id
-        # organization filter
-        org_filter = organization_filter_from_org_id(
-            self.kwargs.get('organization_pk'), self.request.user
-        )
-        if org_filter:
-            filters['accesslog__organization_id'] = org_filter.get('organization__pk')
         # date filter
-        date_filter = extend_query_filter(date_filter_from_params(self.request.GET), 'accesslog__')
+        date_filter = date_filter_from_params(self.request.GET)
 
-        interest_annot_params = {interest_type_name: Coalesce(Sum('accesslog__value'), 0)}
+        if self.request.USE_CLICKHOUSE and not pub_type_arg:
+            from logs.cubes import AccessLogCube, ch_backend
+            from hcube.api.models.aggregation import Sum as HSum
 
-        records = (
-            Title.objects.all()
-            .filter(**date_filter, **filters)
-            .annotate(**interest_annot_params)
-            .order_by(f'-{interest_type_name}')
-        )[:10]
-        # we recache the final queryset so that the results are automatically re-evaluated in the
-        # background when needed
-        records = recache_queryset(records, origin=f'top-10-titles-{interest_type_name}')
+            org_filter = organization_filter_from_org_id(
+                self.kwargs.get('organization_pk'), self.request.user, clickhouse=True
+            )
+            query = (
+                AccessLogCube.query()
+                .filter(report_type_id=interest_rt.pk, dim1=interest_type_id, target_id__not_in=[0])
+                .group_by('target_id')
+                .aggregate(**{interest_type_name: HSum('value')})
+                .order_by(f"-{interest_type_name}")
+            )
+            if org_filter:
+                query.filter(**org_filter)
+            if date_filter:
+                query.filter(**date_filter)
+            if pub_type_arg:
+                raise ValueError('pub_type filter not supported in CH yet')
+            ch_result = list(ch_backend.get_records(query[:10]))
+            title_pks = [rec.target_id for rec in ch_result]
+            pk_to_title = {title.pk: title for title in Title.objects.filter(pk__in=title_pks)}
+            out = []
+            for rec in ch_result[:10]:
+                title = pk_to_title[rec.target_id]
+                title.interests = {interest_type_name: getattr(rec, interest_type_name)}
+                out.append(title)
+            return out
+        else:
+            filters = {}
+            org_filter = organization_filter_from_org_id(
+                self.kwargs.get('organization_pk'), self.request.user
+            )
+            interest_annot_params = {interest_type_name: Coalesce(Sum('accesslog__value'), 0)}
+            filters['accesslog__report_type_id'] = interest_rt.pk
+            filters['accesslog__dim1'] = interest_type_id
+            if org_filter:
+                filters['accesslog__organization_id'] = org_filter.get('organization__pk')
+            if pub_type_arg:
+                if self.request.USE_CLICKHOUSE:
+                    print('`pub_type` filter not supported in ClickHouse yet.')
+                filters['pub_type'] = pub_type_arg
+            # date filter
+            date_filter = extend_query_filter(date_filter, 'accesslog__')
 
-        for record in records:
-            record.interests = {interest_type_name: getattr(record, interest_type_name)}
-        return records
+            records = (
+                Title.objects.all()
+                .filter(**date_filter, **filters)
+                .annotate(**interest_annot_params)
+                .order_by(f'-{interest_type_name}')
+            )[:10]
+            # we recache the final queryset so that the results are automatically re-evaluated in
+            # the background when needed
+            records = recache_queryset(records, origin=f'top-10-titles-{interest_type_name}')
+            for record in records:
+                record.interests = {interest_type_name: getattr(record, interest_type_name)}
+            return records
 
 
 class InterestByPlatformMixin:
@@ -873,4 +919,4 @@ class StartERMSSyncPlatformsTask(APIView):
 
     def post(self, request):
         task = erms_sync_platforms_task.delay()
-        return Response({'id': task.id,})
+        return Response({'id': task.id})

@@ -23,11 +23,11 @@ from publications.models import Platform
 from sushi.models import AttemptStatus, CounterReportsToCredentials
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
+from test_fixtures.entities.logs import ManualDataUploadFullFactory
 
 from ..logic.data_import import import_counter_records
 from organizations.tests.conftest import organizations, identity_by_user_type  # noqa
-from core.tests.conftest import (
+from core.tests.conftest import (  # noqa - fixtures
     valid_identity,
     authenticated_client,
     authentication_headers,
@@ -456,7 +456,7 @@ class TestManualDataUpload:
 
     def test_manual_upload_data_disabled(self, master_client, settings):
         settings.ALLOW_MANUAL_UPLOAD = False
-        response = master_client.get(reverse('manual-data-upload-list'),)
+        response = master_client.get(reverse('manual-data-upload-list'))
         assert response.status_code == 403
 
 
@@ -562,7 +562,7 @@ class TestRawDataExport:
         ],
     )
     def test_raw_export_start_organization_access(
-        self, user_type, can_access, identity_by_user_type, client, authentication_headers,
+        self, user_type, can_access, identity_by_user_type, client, authentication_headers
     ):
         identity, org = identity_by_user_type(user_type)
         url = reverse('raw_data_export')
@@ -592,7 +592,7 @@ class TestRawDataExport:
         ],
     )
     def test_raw_export_start_no_organization_access(
-        self, user_type, can_access, identity_by_user_type, client, authentication_headers,
+        self, user_type, can_access, identity_by_user_type, client, authentication_headers
     ):
         identity, org = identity_by_user_type(user_type)
         url = reverse('raw_data_export')
@@ -888,7 +888,7 @@ class TestFlexibleReportAPI:
 
         # org1
         resp = client.patch(
-            url, {'owner_organization': org1.pk, 'owner': None}, content_type='application/json',
+            url, {'owner_organization': org1.pk, 'owner': None}, content_type='application/json'
         )
         assert resp.status_code == self.access_to_code(can_org1)
         if can_org1:
@@ -897,7 +897,7 @@ class TestFlexibleReportAPI:
 
         # org2
         resp = client.patch(
-            url, {'owner_organization': org2.pk, 'owner': None}, content_type='application/json',
+            url, {'owner_organization': org2.pk, 'owner': None}, content_type='application/json'
         )
         assert resp.status_code == self.access_to_code(can_org2)
         if can_org2:
@@ -1018,11 +1018,7 @@ def dimension_texts():
     dt1 = DimensionText.objects.create(text='test1', dimension=dim1)
     dt2 = DimensionText.objects.create(text='test2', dimension=dim1)
     dt3 = DimensionText.objects.create(text='test3', dimension=dim2)
-    return {
-        dt1.text: dt1,
-        dt2.text: dt2,
-        dt3.text: dt3,
-    }
+    return {dt1.text: dt1, dt2.text: dt2, dt3.text: dt3}
 
 
 @pytest.mark.django_db

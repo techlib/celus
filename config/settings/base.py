@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 import sys
+import warnings
 
 from datetime import timedelta
 from django.core.exceptions import ImproperlyConfigured
@@ -92,6 +93,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'core.middleware.EDUIdHeaderMiddleware',
     'core.middleware.CelusVersionHeaderMiddleware',
+    'core.middleware.ClickhouseIntegrationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -99,9 +101,7 @@ MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-]
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 
 ALLOW_EMAIL_LOGIN = config('ALLOW_EMAIL_LOGIN', cast=bool, default=True)
 if ALLOW_EMAIL_LOGIN:
@@ -125,9 +125,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            ],
+            ]
         },
-    },
+    }
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
@@ -154,10 +154,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # Custom user model
@@ -174,10 +174,7 @@ USE_L10N = True
 USE_TZ = True
 
 gettext = lambda s: s
-AVAILABLE_LANGUAGES = (
-    ('en', gettext('English')),
-    ('cs', gettext('Czech')),
-)
+AVAILABLE_LANGUAGES = (('en', gettext('English')), ('cs', gettext('Czech')))
 MODELTRANSLATION_LANGUAGES = [code for code, lang in AVAILABLE_LANGUAGES]
 used_languages = config('USED_LANGUAGES', default='en', cast=Csv())
 LANGUAGES = [lang for lang in AVAILABLE_LANGUAGES if lang[0] in used_languages]
@@ -207,7 +204,7 @@ REST_FRAMEWORK = {
         'rest_pandas.renderers.PandasCSVRenderer',
         'rest_pandas.renderers.PandasExcelRenderer',
     ),
-    'DEFAULT_AUTHENTICATION_CLASSES': ['core.authentication.SessionAuthentication401',]
+    'DEFAULT_AUTHENTICATION_CLASSES': ['core.authentication.SessionAuthentication401']
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
 }
@@ -264,9 +261,7 @@ CELERY_TIMEZONE = TIME_ZONE
 #   9 is the "lowest" priority - gets processed last
 # - default priority is 0 (or 1 or 2 - these end up in the same list)
 
-CELERY_BROKER_TRANSPORT_OPTIONS = {
-    'queue_order_strategy': 'priority',
-}
+CELERY_BROKER_TRANSPORT_OPTIONS = {'queue_order_strategy': 'priority'}
 
 # default route in Celery is called 'celery'
 CELERY_TASK_DEFAULT_QUEUE = 'celery'  # just making the default explicit
@@ -288,6 +283,7 @@ CELERY_TASK_ROUTES = {
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
     'knowledgebase.tasks.sync_route': {'queue': 'celery'},
+    'logs.tasks.process_outstanding_import_batch_sync_logs_task': {'queue': 'celery'},
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -336,6 +332,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': schedule(run_every=timedelta(minutes=5)),
         'options': {'expires': 5 * 60},
     },
+    'process_outstanding_import_batch_sync_logs_task': {
+        'task': 'logs.tasks.process_outstanding_import_batch_sync_logs_task',
+        'schedule': schedule(run_every=timedelta(minutes=7)),
+        'options': {'expires': 7 * 60},
+    },
 }
 
 ERMS_CELERY_SCHEDULE = {
@@ -371,21 +372,21 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler',},
+        'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler'},
         'errorlog': {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': BASE_DIR / 'error.log',
         },
-        'mail_admins': {'level': 'ERROR', 'class': 'django.utils.log.AdminEmailHandler',},
+        'mail_admins': {'level': 'ERROR', 'class': 'django.utils.log.AdminEmailHandler'},
     },
     'loggers': {
-        'django.db': {'level': 'INFO',},
-        'pycounter': {'level': 'INFO',},
-        'requests': {'level': 'INFO',},
-        'django': {'level': 'ERROR', 'handlers': ['errorlog', 'mail_admins'], 'propagate': True,},
-        'logs.logic.materialized_interest': {'level': 'INFO',},
+        'django.db': {'level': 'INFO'},
+        'pycounter': {'level': 'INFO'},
+        'requests': {'level': 'INFO'},
+        'django': {'level': 'ERROR', 'handlers': ['errorlog', 'mail_admins'], 'propagate': True},
+        'logs.logic.materialized_interest': {'level': 'INFO'},
     },
-    'root': {'level': 'DEBUG', 'handlers': ['console'],},
+    'root': {'level': 'DEBUG', 'handlers': ['console']},
 }
 
 # hopefully temporary hacks
@@ -496,3 +497,23 @@ if SENTRY_URL:
     )
     # ignore pycounter errors
     ignore_logger("pycounter.sushi")
+
+# Clickhouse integration
+# should data be synced to clickhouse on write?
+CLICKHOUSE_SYNC_ACTIVE = config('CLICKHOUSE_SYNC_ACTIVE', cast=bool, default=False)
+# should data from clickhouse be used when answering queries?
+CLICKHOUSE_QUERY_ACTIVE = config('CLICKHOUSE_QUERY_ACTIVE', cast=bool, default=False)
+if CLICKHOUSE_QUERY_ACTIVE and not CLICKHOUSE_SYNC_ACTIVE:
+    warnings.warn(
+        'Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is likely an '
+        'error as the data will not be up to date in queries.'
+    )
+CLICKHOUSE_DB_NAME = config('CLICKHOUSE_DB_NAME', default='celus')
+CLICKHOUSE_DB_PASSWORD = config('CLICKHOUSE_DB_PASSWORD', default='')
+CLICKHOUSE_DB_HOST = config('CLICKHOUSE_DB_HOST', default='localhost')
+
+print(
+    f'Clickhouse db: {CLICKHOUSE_DB_NAME}; sync: {CLICKHOUSE_SYNC_ACTIVE}; '
+    f'query: {CLICKHOUSE_QUERY_ACTIVE}',
+    file=sys.stderr,
+)

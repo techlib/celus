@@ -11,13 +11,14 @@ from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
-from django.db.models import Index, UniqueConstraint, Q
+from django.db.models import Index, UniqueConstraint, Q, QuerySet
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 
-from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource
-from nigiri.counter5 import CounterRecord, Counter5TableReport
+from core.exceptions import ModelUsageError
+from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource, CreatedUpdatedMixin
+from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Platform, Title
 
@@ -280,10 +281,7 @@ class Dimension(models.Model):
     TYPE_INT = 1
     TYPE_TEXT = 2
 
-    DIMENSION_TYPE_CHOICES = (
-        (TYPE_INT, 'integer'),
-        (TYPE_TEXT, 'text'),
-    )
+    DIMENSION_TYPE_CHOICES = ((TYPE_INT, 'integer'), (TYPE_TEXT, 'text'))
 
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
@@ -340,6 +338,7 @@ class ImportBatch(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
     created = models.DateTimeField(default=now)
+    last_updated = models.DateTimeField(auto_now=True)
     system_created = models.BooleanField(default=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
@@ -356,7 +355,10 @@ class ImportBatch(models.Model):
     materialization_data = models.JSONField(
         default=dict,
         blank=True,
-        help_text='Internal information about materialized report ' 'data in this batch',
+        help_text='Internal information about materialized report data in this batch',
+    )
+    last_clickhoused = models.DateTimeField(
+        null=True, help_text='When was the import batch last synced with clickhouse'
     )
 
     class Meta:
@@ -370,6 +372,16 @@ class ImportBatch(models.Model):
     @cached_property
     def accesslog_count(self):
         return self.accesslog_set.count()
+
+
+class AccessLogQuerySet(QuerySet):
+    def delete(self, i_know_what_i_am_doing=False):
+        if not i_know_what_i_am_doing:
+            raise ModelUsageError(
+                'Deleting individual AccessLogs is not permitted - they may only be deleted in '
+                'cascade from ImportBatch.'
+            )
+        super().delete()
 
 
 class AccessLog(models.Model):
@@ -406,6 +418,14 @@ class AccessLog(models.Model):
             BrinIndex(fields=('organization',)),
             BrinIndex(fields=('date',)),
             Index(fields=('report_type', 'organization')),  # these occur often, so we optimize
+        )
+
+    objects = AccessLogQuerySet.as_manager()
+
+    def delete(self, using=None, keep_parents=False):
+        raise ModelUsageError(
+            'Deleting individual AccessLogs is not permitted - they may only be deleted in cascade '
+            'from ImportBatch.'
         )
 
 
@@ -719,3 +739,25 @@ class FlexibleReport(models.Model):
         for rt_filter in rt_filters:
             rts += list(ReportType.objects.filter(short_name__in=rt_filter['values']))
         return rts
+
+
+class ImportBatchSyncLog(CreatedUpdatedMixin, models.Model):
+    """
+    Used to register adding, change or removal of an import batch. It serves as a 'journal'
+    for synchronization with Clickhouse, so that we can really make sure the data are in sync.
+    """
+
+    STATE_NO_CHANGE = 0
+    STATE_SYNC = 1
+    STATE_DELETE = 2
+    STATE_SYNC_INTEREST = 3
+    STATE_CHOICES = (
+        (STATE_NO_CHANGE, 'No change'),
+        (STATE_SYNC, 'Sync'),
+        (STATE_DELETE, 'Delete'),
+        (STATE_SYNC_INTEREST, 'Sync interest'),
+    )
+
+    # Because we need to refer to deleted import batches, we do not use a foreign key here
+    import_batch_id = models.PositiveBigIntegerField(primary_key=True)
+    state = models.PositiveSmallIntegerField(choices=STATE_CHOICES, default=STATE_NO_CHANGE)

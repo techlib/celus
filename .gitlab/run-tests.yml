@@ -12,10 +12,18 @@ tests:run_tests:
     POSTGRES_PASSWORD: celus
     POSTGRES_HOST: postgres
     REDIS_URL: "redis://redis:6379/1"
+    DEBIAN_FRONTEND: noninteractive
   before_script:
+    - apt-get update -qy
+    - apt-get install -y gnupg
+    - apt-key adv --keyserver keyserver.ubuntu.com --recv E0C56BD4
+    - echo "deb http://repo.yandex.ru/clickhouse/deb/stable/ main/" > /etc/apt/sources.list.d/clickhouse.list
+    - apt-get update -qy
+    - apt-get install -y curl clickhouse-server
+    - service clickhouse-server start
     - poetry install
   script:
-    - cp .env.example .env
+    - cat .env.example | sed "s/\(CLICKHOUSE_.*_ACTIVE\)=.*$/\\1=True/g" > .env
     - poetry run pytest -v -n 2 --create-db --junitxml=report.xml --cov=activity --cov=annotations --cov=api --cov=charts --cov=core --cov=cost --cov=erms --cov=logs --cov=nigiri --cov=organizations --cov=publications --cov=sushi --cov=recache --cov=knowledgebase --cov-report=xml --cov-report=term apps/
   artifacts:
     reports:

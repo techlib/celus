@@ -145,7 +145,7 @@ class TestPlatformAPI:
 
         # su client
         resp = clients[client].post(
-            reverse('platform-list', args=[organizations[organization].pk],),
+            reverse('platform-list', args=[organizations[organization].pk]),
             {
                 'ext_id': 122,  # ext_id may not be present and will be overriden to None
                 'short_name': 'platform',
@@ -170,7 +170,7 @@ class TestPlatformAPI:
             ) == {'TR', 'DR', 'JR1', 'BR2', 'DB1'}, "Interest report types created check"
 
         resp = clients[client].post(
-            reverse('platform-list', args=[organizations[organization].pk],),
+            reverse('platform-list', args=[organizations[organization].pk]),
             {
                 'ext_id': 122,  # ext_id may not be present and will be overriden to None
                 'short_name': 'platform',
@@ -188,7 +188,7 @@ class TestPlatformAPI:
         assert organizations["master"].source is None
 
         resp = clients["su"].post(
-            reverse('platform-list', args=[organizations["master"].pk],),
+            reverse('platform-list', args=[organizations["master"].pk]),
             {
                 'short_name': 'platform',
                 'name': "long_platform",
@@ -203,7 +203,7 @@ class TestPlatformAPI:
         assert organizations["master"].source.type == DataSource.TYPE_ORGANIZATION
 
         resp = clients["su"].post(
-            reverse('platform-list', args=[organizations["master"].pk],),
+            reverse('platform-list', args=[organizations["master"].pk]),
             {
                 'short_name': 'platform',
                 'name': "long_platform",
@@ -213,13 +213,11 @@ class TestPlatformAPI:
         )
         assert resp.status_code == 400, "Already created"
 
-    def test_create_platform_when_disabled(
-        self, basic1, clients, organizations, client, settings,
-    ):
+    def test_create_platform_when_disabled(self, basic1, clients, organizations, client, settings):
         settings.ALLOW_USER_CREATED_PLATFORMS = False
 
         resp = clients["su"].post(
-            reverse('platform-list', args=[organizations["standalone"].pk],),
+            reverse('platform-list', args=[organizations["standalone"].pk]),
             {
                 'short_name': 'platform',
                 'name': "long_platform",
@@ -229,10 +227,8 @@ class TestPlatformAPI:
         )
         assert resp.status_code == 403
 
-    def test_list_platforms_for_all_organization(
-        self, basic1, clients, organizations, client,
-    ):
-        resp = clients["master"].get(reverse('platform-list', args=[-1],))
+    def test_list_platforms_for_all_organization(self, basic1, clients, organizations, client):
+        resp = clients["master"].get(reverse('platform-list', args=[-1]))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 7
@@ -245,7 +241,7 @@ class TestPlatformAPI:
         assert mapped["shared"]["source"] is None
         assert mapped["standalone"]["source"]["organization"]["name"] == "standalone"
 
-        resp = clients["master"].get(reverse('platform-list', args=[-1],) + "?used_only")
+        resp = clients["master"].get(reverse('platform-list', args=[-1]) + "?used_only")
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 3
@@ -282,7 +278,7 @@ class TestPlatformAPI:
         settings.ALLOW_USER_CREATED_PLATFORMS = True
         resp = clients[client].patch(
             reverse(
-                'platform-detail', args=[organizations[organization].pk, platforms[platform].pk],
+                'platform-detail', args=[organizations[organization].pk, platforms[platform].pk]
             ),
             {
                 'ext_id': 122,  # ext_id may not be present and will be overriden to None
@@ -305,7 +301,7 @@ class TestPlatformAPI:
         self, basic1, clients, organizations, client, platforms
     ):
         resp = clients["su"].patch(
-            reverse('platform-detail', args=[organizations["master"].pk, platforms["master"].pk],),
+            reverse('platform-detail', args=[organizations["master"].pk, platforms["master"].pk]),
             {
                 'short_name': 'platform',
                 'name': "long_platform",
@@ -322,8 +318,7 @@ class TestPlatformAPI:
 
         resp = clients["su"].patch(
             reverse(
-                'platform-detail',
-                args=[organizations["standalone"].pk, platforms["standalone"].pk],
+                'platform-detail', args=[organizations["standalone"].pk, platforms["standalone"].pk]
             ),
             {
                 'short_name': 'platform',
@@ -629,7 +624,7 @@ class TestPlatformTitleAPI:
         assert platform.short_name in data[0]['interests']
 
     def test_authorized_user_accessible_platforms_interest_by_platform_more_platforms(
-        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
     ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         organization = accesslogs_with_interest['organization']
@@ -652,7 +647,7 @@ class TestPlatformTitleAPI:
         assert platform2.short_name in data[0]['interests']
 
     def test_organization_platforms_overlap(
-        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
     ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         organization = accesslogs_with_interest['organization']
@@ -683,7 +678,7 @@ class TestPlatformTitleAPI:
         assert check_rec['overlap'] == 1
 
     def test_organization_platforms_overlap_with_date_filter(
-        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
     ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         organization = accesslogs_with_interest['organization']
@@ -696,13 +691,13 @@ class TestPlatformTitleAPI:
         )
         # first with start_date allowing all records in
         resp = authenticated_client.get(
-            reverse('organization-platform-overlap', args=[organization.pk]), {'start': '2019-01'},
+            reverse('organization-platform-overlap', args=[organization.pk]), {'start': '2019-01'}
         )
         assert resp.status_code == 200
         assert len(resp.json()) == 4
         # then with start_date which removes the overlapping records
         resp = authenticated_client.get(
-            reverse('organization-platform-overlap', args=[organization.pk]), {'start': '2019-03'},
+            reverse('organization-platform-overlap', args=[organization.pk]), {'start': '2019-03'}
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -712,7 +707,7 @@ class TestPlatformTitleAPI:
         ), '1 self-overlap'
 
     def test_organization_all_platform_overlap(
-        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
     ):
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         organization = accesslogs_with_interest['organization']
@@ -739,7 +734,7 @@ class TestPlatformTitleAPI:
                 assert rec['total_interest'] == 0, 'no interest on platform 2'
 
     def test_organization_all_platform_overlap_2(
-        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms,
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
     ):
         """
         Create two identical sets of access logs but for different platforms and see what the overlap would be
@@ -800,7 +795,7 @@ class TestPlatformTitleAPI:
             assert rec['total_interest'] == 7
 
     def test_organization_all_platform_overlap_all_orgs(
-        self, master_client, accesslogs_with_interest, platforms,
+        self, master_client, accesslogs_with_interest, platforms
     ):
         organization = accesslogs_with_interest['organization']
         platform = accesslogs_with_interest['platform']
@@ -865,6 +860,9 @@ class TestPlatformTitleAPI:
         data = resp.json()
         assert len(data) == 0
 
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.django_db(transaction=True)
     def test_platform_title_count(self, master_client, accesslogs_with_interest):
         """
         Test the 'title-count' custom action of platform viewset
@@ -1006,8 +1004,7 @@ class TestAllPlatformsAPI:
         # no credentials
         resp = clients["admin1"].get(
             reverse(
-                "all-platforms-knowledgebase",
-                args=[organizations["root"].pk, platforms["root"].pk],
+                "all-platforms-knowledgebase", args=[organizations["root"].pk, platforms["root"].pk]
             )
         )
         assert resp.status_code == 200
@@ -1134,7 +1131,7 @@ class TestGlobalPlatformsAPI:
             ["user1", (200,), {"brain", "master", "empty", "branch", "shared"}],
             ["user2", (200,), {"brain", "master", "empty", "standalone", "shared"}],
         ],
-        ids=["unauthenticated", "master", "admin1", "admin2", "user1", "user2",],
+        ids=["unauthenticated", "master", "admin1", "admin2", "user1", "user2"],
     )
     def test_all_platform_list(self, client, status, available, clients, platforms, organizations):
 
@@ -1178,7 +1175,7 @@ class TestGlobalPlatformsAPI:
             ["user1", {"brain", "master", "empty", "branch", "shared"}],
             ["user2", {"brain", "master", "empty", "standalone", "shared"}],
         ],
-        ids=["unauthenticated", "mastery", "admin1", "admin2", "user1", "user2",],
+        ids=["unauthenticated", "mastery", "admin1", "admin2", "user1", "user2"],
     )
     def test_all_platform_detail(self, client, available, clients, platforms, organizations):
         for platform in platforms.values():
@@ -1257,7 +1254,9 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
     }
 
 
-@pytest.mark.django_db
+@pytest.mark.clickhouse
+@pytest.mark.usefixtures('clickhouse_on_off')
+@pytest.mark.django_db(transaction=True)
 class TestTopTitleInterestViewSet:
     def test_all_organizations(self, accesslogs_with_interest, master_client):
         titles = accesslogs_with_interest['titles']
@@ -1278,7 +1277,7 @@ class TestTopTitleInterestViewSet:
         organization = accesslogs_with_interest['organization']
         titles = accesslogs_with_interest['titles']
         resp = master_client.get(
-            reverse('top-title-interest-list', args=[organization.pk]), {'order_by': 'interest1'},
+            reverse('top-title-interest-list', args=[organization.pk]), {'order_by': 'interest1'}
         )
         assert resp.status_code == 200
         data = resp.json()

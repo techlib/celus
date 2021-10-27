@@ -62,10 +62,28 @@ class CelusVersionHeaderMiddleware:
             and request.headers.get('CELUS-VERSION') != settings.CELUS_VERSION
         ):
             response = JsonResponse(
-                {'error': 'celus versions mismatched'}, status=status.HTTP_409_CONFLICT,
+                {'error': 'celus versions mismatched'}, status=status.HTTP_409_CONFLICT
             )
         else:
             response = self.get_response(request)
 
         response['CELUS-VERSION'] = settings.CELUS_VERSION
+        return response
+
+
+class ClickhouseIntegrationMiddleware:
+    """
+    Adds `USE_CLICKHOUSE` attr to request based on global settings and per-request headers.
+
+    Useful for testing, debugging etc.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        request.USE_CLICKHOUSE = (
+            settings.CLICKHOUSE_QUERY_ACTIVE and 'DISABLE-CLICKHOUSE' not in request.headers
+        )
+        response = self.get_response(request)
         return response

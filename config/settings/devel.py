@@ -53,12 +53,15 @@ CELERY_BEAT_SCHEDULE = {
     },
     'find_and_renew_first_due_cached_query_task': {
         'task': 'recache.tasks.find_and_renew_first_due_cached_query_task',
-        'schedule': schedule(run_every=timedelta(seconds=10)),
+        'schedule': schedule(run_every=timedelta(seconds=300)),
         'options': {'expires': 4},
+    },
+    'process_outstanding_import_batch_sync_logs_task': {
+        'task': 'logs.tasks.process_outstanding_import_batch_sync_logs_task',
+        'schedule': schedule(run_every=timedelta(minutes=7)),
+        'options': {'expires': 7 * 60},
     },
 }
 
 
-QUERYCOUNT = {
-    'DISPLAY_DUPLICATES': 5,
-}
+QUERYCOUNT = {'DISPLAY_DUPLICATES': 5}

@@ -6,8 +6,9 @@ from collections import Counter
 from time import time
 from typing import List, Dict, Iterable, Set
 
+from django.conf import settings
 from django.db.models import Sum, Count, Max, F, Q, OuterRef, Subquery, Exists, Min
-from django.db.transaction import atomic
+from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 
 from core.task_support import cache_based_lock
@@ -18,6 +19,7 @@ from logs.models import (
     ImportBatch,
     Metric,
     ReportInterestMetric,
+    ImportBatchSyncLog,
 )
 from publications.models import Platform
 
@@ -75,7 +77,7 @@ def sync_interest_for_import_batch(import_batch: ImportBatch, interest_rt: Repor
             for log_dict in really_new
         )
     if to_delete_pks:
-        AccessLog.objects.filter(pk__in=to_delete_pks).delete()
+        AccessLog.objects.filter(pk__in=to_delete_pks).delete(i_know_what_i_am_doing=True)
     # update the import batch
     import_batch.interest_timestamp = now()
     import_batch.save()
@@ -83,6 +85,11 @@ def sync_interest_for_import_batch(import_batch: ImportBatch, interest_rt: Repor
     stats['existing'] = same
     stats['removed'] = len(to_delete_pks)
     logger.debug('Import took: %.2f s; Stats: %s', time() - start, stats)
+    # sync with clickhouse
+    if settings.CLICKHOUSE_SYNC_ACTIVE and (really_new or to_delete_pks):
+        from .clickhouse import sync_import_batch_interest_with_clickhouse
+
+        on_commit(lambda: sync_import_batch_interest_with_clickhouse(import_batch))
     return stats
 
 

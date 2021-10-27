@@ -1,15 +1,21 @@
 """
 Celery tasks reside here
 """
-import celery
 import logging
+from collections import Counter
+from datetime import timedelta
 
+import celery
 from django.db import DatabaseError
 from django.db.transaction import atomic
+from django.utils.timezone import now
 
+from core.context_managers import needs_clickhouse_sync
 from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
+from core.tasks import async_mail_admins
 from logs.logic.attempt_import import import_one_sushi_attempt, check_importable_attempt
+from logs.logic.clickhouse import process_one_import_batch_sync_log
 from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import (
     sync_interest_by_import_batches,
@@ -20,8 +26,8 @@ from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
 )
+from logs.models import ImportBatchSyncLog
 from sushi.models import SushiFetchAttempt, AttemptStatus
-
 
 logger = logging.getLogger(__file__)
 
@@ -46,7 +52,7 @@ def import_new_sushi_attempts_task():
     try:
         # select_for_update locks fetch attempts
         attempts = SushiFetchAttempt.objects.select_for_update(nowait=True).filter(
-            status=AttemptStatus.IMPORTING,
+            status=AttemptStatus.IMPORTING
         )
         count = attempts.count()
         logger.info('Found %d unprocessed successful download attempts matching criteria', count)
@@ -153,3 +159,34 @@ def update_report_approx_record_count_task():
     """
     with cache_based_lock('update_report_approx_record_count_task', blocking_timeout=10):
         update_report_approx_record_count()
+
+
+@celery.shared_task
+@email_if_fails
+@needs_clickhouse_sync
+@atomic
+def process_outstanding_import_batch_sync_logs_task(age_threshold: int = 600):
+    qs = (
+        ImportBatchSyncLog.objects.exclude(state=ImportBatchSyncLog.STATE_NO_CHANGE)
+        .filter(created__lt=now() - timedelta(seconds=age_threshold))
+        .order_by('created')
+        .select_for_update(skip_locked=True)
+    )
+    count = qs.count()
+    if count:
+        stats = Counter()
+        for sync_log in qs:
+            stats[sync_log.get_state_display()] += 1
+        async_mail_admins.delay(
+            "Unsynced import batches found",
+            f"We found **{count}** import batches that were not immediatelly synced with "
+            f"Clickhouse and remained unsynced. Their state is as follows: \n\n{stats}",
+        )
+    for sync_log in qs:
+        process_one_import_batch_sync_log_task.delay(sync_log.pk)
+
+
+@celery.shared_task
+@email_if_fails
+def process_one_import_batch_sync_log_task(import_batch_id):
+    process_one_import_batch_sync_log(import_batch_id)

@@ -5,7 +5,26 @@ build-backend = "poetry.masonry.api"
 [tool.black]
 line-length = 100
 skip-string-normalization = true
-target-version = ["py36"]
+target-version = ["py38"]
+# old versions of black used to put a comma at the end of
+#
+# fn(
+#     arg1, arg2,
+# )
+#
+# and new versions interpret this as a "magic comma" and use it to split it to one item per line
+# (https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#the-magic-trailing-comma):
+#
+# fn(
+#     arg1,
+#     arg2,
+# )
+#
+# which we do not like. So we preserve the old behavior with the following
+#
+# We could also keep the new magic comma behavior, but do one-off reformatting using the following
+# setting just to remove the magic commas in the first place
+skip-magic-trailing-comma = true
 
 [tool.poetry]
 name = "celus"
@@ -15,7 +34,7 @@ authors = ["Beda Kosata <beda@bigdigdata.com>", "Stepan Henek <stepan@bigdigdata
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.6.8"
+python = "^3.8.10"
 
 celery = "~5.1.2"
 dateparser = "~0.7.4"
@@ -39,7 +58,7 @@ openpyxl = "~3.0.7, !=3.0.8"  # openpyxl 3.0.8 was removed after release :/ grrr
 python-magic = "~0.4.15"
 pytz = "*"
 psutil = "~5.7.0"
-psycopg2-binary = "~2.8.5"
+psycopg2-binary = "~2.9.1"
 redis = "~3.5.0"
 rest-pandas = "~1.1.0"
 requests = "^2.23.0"
@@ -56,6 +75,7 @@ pytest-xdist = "^2.2.1"
 django-test-migrations = "^1.1.0"
 django-import-export = "^2.5.0"
 djangorestframework-api-key = "^2.0.0"
+hcube = "0.1.4"
 
 
 

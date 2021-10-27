@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from charts.models import ReportDataView, ChartDefinition, ReportViewToChartType
 from core.tests.conftest import master_client, master_identity, authenticated_client, valid_identity
+from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import import_counter_records
 from logs.models import OrganizationPlatform, AccessLog, Metric, ImportBatch
 from logs.tests.conftest import report_type_nd, counter_records_0d
@@ -127,6 +128,9 @@ class TestReportViewAPI:
         data = resp.json()
         assert [rec['position'] for rec in data] == [1, 2, 3]
 
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.django_db(transaction=True)
     def test_api_list_for_platform_ordering(
         self, report_type_nd, master_client, platform, organizations
     ):
@@ -141,6 +145,9 @@ class TestReportViewAPI:
         organization = organizations[0]
         OrganizationPlatform.objects.create(organization=organization, platform=platform)
         # we need to add accesslog in order to connect platform and report-type
+        ib = ImportBatch.objects.create(
+            report_type=rt, organization=organization, platform=platform
+        )
         AccessLog.objects.create(
             report_type=rt,
             organization=organization,
@@ -148,10 +155,11 @@ class TestReportViewAPI:
             value=1,
             date='2020-01-01',
             metric=Metric.objects.create(short_name='metric'),
-            import_batch=ImportBatch.objects.create(
-                report_type=rt, organization=organization, platform=platform,
-            ),
+            import_batch=ib,
         )
+        # sync with clickhouse as we have circumvented the normal creation of accesslogs
+        sync_import_batch_with_clickhouse(ib)
+
         resp = master_client.get(
             reverse(
                 'platform-report-data-views-list',
@@ -162,6 +170,9 @@ class TestReportViewAPI:
         data = resp.json()
         assert [rec['position'] for rec in data] == [1, 2, 3]
 
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.django_db(transaction=True)
     def test_api_list_for_platform_and_title_ordering(
         self, report_type_nd, master_client, platform, organizations
     ):
@@ -177,6 +188,9 @@ class TestReportViewAPI:
         OrganizationPlatform.objects.create(organization=organization, platform=platform)
         title = Title.objects.create(name='Journal of Foo Bar')
         # we need to add accesslog in order to connect platform and report-type
+        ib = ImportBatch.objects.create(
+            report_type=rt, organization=organization, platform=platform
+        )
         AccessLog.objects.create(
             report_type=rt,
             organization=organization,
@@ -185,10 +199,10 @@ class TestReportViewAPI:
             value=1,
             date='2020-01-01',
             metric=Metric.objects.create(short_name='metric'),
-            import_batch=ImportBatch.objects.create(
-                report_type=rt, organization=organization, platform=platform,
-            ),
+            import_batch=ib,
         )
+        # sync with clickhouse as we have circumvented the normal creation of accesslogs
+        sync_import_batch_with_clickhouse(ib)
         resp = master_client.get(
             reverse(
                 'platform-title-report-data-views-list',

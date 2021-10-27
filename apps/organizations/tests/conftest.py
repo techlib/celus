@@ -9,7 +9,7 @@ from test_fixtures.entities.organizations import OrganizationFactory
 
 @pytest.fixture()
 def organizations():
-    parent1 = Organization.objects.create(
+    parent1, _ = Organization.objects.get_or_create(
         ext_id=1,
         parent=None,
         internal_id='AAA',
@@ -18,7 +18,7 @@ def organizations():
         name_en='AAA',
         short_name='AA',
     )
-    parent2 = Organization.objects.create(
+    parent2, _ = Organization.objects.get_or_create(
         ext_id=2,
         parent=None,
         internal_id='BBB',
@@ -27,7 +27,7 @@ def organizations():
         name_en='BBB',
         short_name='BB',
     )
-    child1 = Organization.objects.create(
+    child1, _ = Organization.objects.get_or_create(
         ext_id=3,
         parent=parent1,
         internal_id='AAA1',

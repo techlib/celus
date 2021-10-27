@@ -5,9 +5,12 @@ from collections import Counter, namedtuple
 from datetime import date
 from typing import Optional, Tuple, Set
 
+from django.conf import settings
+from django.db.transaction import atomic, on_commit
+
 from core.logic.debug import log_memory
 from logs.logic.validation import clean_and_validate_issn, ValidationError, normalize_isbn
-from logs.models import ImportBatch
+from logs.models import ImportBatch, ImportBatchSyncLog
 from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Title, Platform, PlatformTitle
@@ -168,6 +171,7 @@ class TitleManager:
         ).update(pub_type=Title.PUB_TYPE_JOURNAL)
 
 
+@atomic
 def import_counter_records(
     report_type: ReportType,
     organization: Organization,
@@ -183,16 +187,27 @@ def import_counter_records(
         buff.append(record)
         if len(buff) >= COUNTER_RECORD_BUFFER_SIZE:
             _import_counter_records(
-                report_type, organization, platform, buff, import_batch, stats, tm,
+                report_type, organization, platform, buff, import_batch, stats, tm
             )
             buff = []
             gc.collect()
 
     # flush the rest of the buffer
     if buff:
-        _import_counter_records(
-            report_type, organization, platform, buff, import_batch, stats, tm,
-        )
+        _import_counter_records(report_type, organization, platform, buff, import_batch, stats, tm)
+    # save the import batch to update the `last_updated` timestamp which we then use when doing
+    # sync with clickhouse.
+    import_batch.save()
+    if settings.CLICKHOUSE_SYNC_ACTIVE:
+        from .clickhouse import sync_import_batch_with_clickhouse
+
+        def sync_with_clickhouse():
+            # note: sync_import_batch_with_clickhouse is atomic
+            logger.debug(
+                'Synced %d records into ClickHouse', sync_import_batch_with_clickhouse(import_batch)
+            )
+
+        on_commit(sync_with_clickhouse)
 
     return stats
 

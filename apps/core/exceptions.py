@@ -10,3 +10,9 @@ class BadRequestException(APIException):
     status_code = 400
     default_code = 'bad request'
     default_detail = 'Incorrect input data for the request'
+
+
+class ModelUsageError(Exception):
+    """
+    Used when a model is used in a way that is not allowed or supported.
+    """

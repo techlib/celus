@@ -368,7 +368,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         # down - instead we add a report_type filter later to allow the query to skip some
         # partitions
         for cred in credentials:
-            filters.append(Q(organization_id=cred.organization_id, platform_id=cred.platform_id,))
+            filters.append(Q(organization_id=cred.organization_id, platform_id=cred.platform_id))
         if not filters:
             raise BadRequest(
                 "The 'credentials' param must resolve to at least one set of SUSHI credentials."
@@ -631,10 +631,7 @@ class FlexibleReportViewSet(ModelViewSet):
             return Response(
                 {'error': 'Missing "config" parameter for the report'}, status=HTTP_400_BAD_REQUEST
             )
-        data = {
-            **self._get_basic_data(request),
-            'report_config': config,
-        }
+        data = {**self._get_basic_data(request), 'report_config': config}
         self._check_write_permissions(request, data['owner'], data['owner_organization'])
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

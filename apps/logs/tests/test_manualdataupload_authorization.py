@@ -39,7 +39,7 @@ def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organ
     def do_it(org):
         rt = report_type_nd(0)
         mdu_rel_admin = ManualDataUpload.objects.create(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN,
+            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN
         )
         mdu_unrel_admin = ManualDataUpload.objects.create(
             organization=organizations[1],
@@ -48,10 +48,10 @@ def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organ
             owner_level=UL_ORG_ADMIN,
         )
         mdu_master = ManualDataUpload.objects.create(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_CONS_STAFF,
+            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_CONS_STAFF
         )
         mdu_super = ManualDataUpload.objects.create(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_CONS_ADMIN,
+            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_CONS_ADMIN
         )
         return MDUSet(
             rel_admin=mdu_rel_admin, unrel_admin=mdu_unrel_admin, master=mdu_master, super=mdu_super
@@ -141,7 +141,7 @@ class TestAuthorization:
         identity, org = identity_by_user_type(user_type)
         rt = report_type_nd(0)
         mdu_rel = ManualDataUpload.objects.create(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN,
+            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN
         )
         mdu_unrel = ManualDataUpload.objects.create(
             organization=organizations[1],
@@ -270,7 +270,7 @@ class TestAuthorization:
         identity, org = identity_by_user_type(user_type)
         rt = report_type_nd(0)
         mdu = ManualDataUpload.objects.create(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN,
+            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN
         )
         for i, (can, org_obj) in enumerate(
             ((can_set_rel_org, org), (can_set_unrel_org, organizations[1]))

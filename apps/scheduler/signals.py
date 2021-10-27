@@ -1,17 +1,10 @@
-import datetime
-
-from dateutil.relativedelta import relativedelta
-
 from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.utils import timezone
 
-
-from core.logic.dates import month_start, month_end, this_month
+from core.logic.dates import month_end, this_month
 from sushi.models import SushiCredentials, CounterReportsToCredentials
-
 from .models import Automatic, FetchIntention
 
 

@@ -46,7 +46,7 @@ class TestPlatformTitleCleanup:
         assert AccessLog.objects.count() == 3
         assert PlatformTitle.objects.count() == 3
         # remove accesslogs
-        AccessLog.objects.filter(date='2020-01-01').delete()
+        AccessLog.objects.filter(date='2020-01-01').delete(i_know_what_i_am_doing=True)
         assert AccessLog.objects.count() == 1
         assert PlatformTitle.objects.count() == 3, 'the platform-title links are all still there'
         clean_obsolete_platform_title_links()

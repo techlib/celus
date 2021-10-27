@@ -3,7 +3,7 @@ from django.http import Http404
 from core.models import User
 
 
-def organization_filter_from_org_id(org_id, user: User, prefix='') -> dict:
+def organization_filter_from_org_id(org_id, user: User, prefix='', clickhouse=False) -> dict:
     """
     Returns a filter parameters in form of a dictionary based on the org_id and the user
     If the org_id is -1 and the user has the proper role, all organizations should be allowed
@@ -26,6 +26,9 @@ def organization_filter_from_org_id(org_id, user: User, prefix='') -> dict:
             or user.is_from_master_organization
             or user.accessible_organizations().filter(pk=org_id).exists()
         ):
+            if clickhouse:
+                return {f'{prefix}organization_id': org_id}
+            # for django, we cannot use `organization_id` as it would not work for m2m links
             return {f'{prefix}organization__pk': org_id}
         raise Http404()
 

@@ -79,9 +79,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
-            {'pk': 'org1', 'pl1': 519318, 'pl2': 717606, 'pl3': 915894,},
-            {'pk': 'org2', 'pl1': 1114182, 'pl2': 1312470, 'pl3': 1510758,},
-            {'pk': 'org3', 'pl1': 1709046, 'pl2': 1907334, 'pl3': 2105622,},
+            {'pk': 'org1', 'pl1': 519318, 'pl2': 717606, 'pl3': 915894},
+            {'pk': 'org2', 'pl1': 1114182, 'pl2': 1312470, 'pl3': 1510758},
+            {'pk': 'org3', 'pl1': 1709046, 'pl2': 1907334, 'pl3': 2105622},
         ]
 
     def test_org_sum_by_platform_filter_metric(self, flexible_slicer_test_data):
@@ -99,9 +99,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
-            {'pk': 'org1', 'pl1': 151074, 'pl2': 217170, 'pl3': 283266,},
-            {'pk': 'org2', 'pl1': 349362, 'pl2': 415458, 'pl3': 481554,},
-            {'pk': 'org3', 'pl1': 547650, 'pl2': 613746, 'pl3': 679842,},
+            {'pk': 'org1', 'pl1': 151074, 'pl2': 217170, 'pl3': 283266},
+            {'pk': 'org2', 'pl1': 349362, 'pl2': 415458, 'pl3': 481554},
+            {'pk': 'org3', 'pl1': 547650, 'pl2': 613746, 'pl3': 679842},
         ]
 
     def test_org_sum_by_platform_filter_platform(self, flexible_slicer_test_data):
@@ -118,9 +118,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
-            {'pk': 'org1', 'pl2': 717606, 'pl3': 915894,},
-            {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758,},
-            {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622,},
+            {'pk': 'org1', 'pl2': 717606, 'pl3': 915894},
+            {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758},
+            {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
         ]
 
     def test_org_sum_by_platform_filter_platform_metric(self, flexible_slicer_test_data):
@@ -139,9 +139,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
-            {'pk': 'org1', 'pl2': 500436, 'pl3': 632628,},
-            {'pk': 'org2', 'pl2': 897012, 'pl3': 1029204,},
-            {'pk': 'org3', 'pl2': 1293588, 'pl3': 1425780,},
+            {'pk': 'org1', 'pl2': 500436, 'pl3': 632628},
+            {'pk': 'org2', 'pl2': 897012, 'pl3': 1029204},
+            {'pk': 'org3', 'pl2': 1293588, 'pl3': 1425780},
         ]
 
     def test_org_sum_by_platform_filter_organization(self, flexible_slicer_test_data):
@@ -162,8 +162,8 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
-            {'pk': 'org2', 'pl1': 1114182, 'pl2': 1312470, 'pl3': 1510758,},
-            {'pk': 'org3', 'pl1': 1709046, 'pl2': 1907334, 'pl3': 2105622,},
+            {'pk': 'org2', 'pl1': 1114182, 'pl2': 1312470, 'pl3': 1510758},
+            {'pk': 'org3', 'pl1': 1709046, 'pl2': 1907334, 'pl3': 2105622},
         ]
 
     def test_org_sum_by_platform_filter_platform_organization(self, flexible_slicer_test_data):
@@ -187,8 +187,8 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
-            {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758,},
-            {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622,},
+            {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758},
+            {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
         ]
 
     def test_org_sum_by_platform_metric_filter_platform_metric(self, flexible_slicer_test_data):
@@ -204,7 +204,7 @@ class TestFlexibleDataSlicerComputations:
             ForeignKeyDimensionFilter('platform', [pl.pk for pl in platforms]), add_group=True
         )
         slicer.add_filter(
-            ForeignKeyDimensionFilter('metric', [met.pk for met in metrics]), add_group=True,
+            ForeignKeyDimensionFilter('metric', [met.pk for met in metrics]), add_group=True
         )
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
@@ -402,8 +402,10 @@ class TestFlexibleDataSlicerOther:
         assert (
             organization_data['count'] == Organization.objects.count()
         ), 'the data is complete so all organizations should be present'
-        # let's delete all records related to one organization and the filtered organizations
-        AccessLog.objects.filter(metric__in=metrics, organization=organization).delete()
+        # let's delete all records related to one organization and the filtered metrics
+        AccessLog.objects.filter(metric__in=metrics, organization=organization).delete(
+            i_know_what_i_am_doing=True
+        )
         organization_data = slicer.get_possible_dimension_values('organization')
         assert (
             organization_data['count'] == Organization.objects.count() - 1

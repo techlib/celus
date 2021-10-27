@@ -101,7 +101,11 @@ def create_materialized_accesslogs_for_importbatches(
     """
     assert rt.materialization_spec, 'This code works only for materialized report types'
     # remove existing materialized stuff from the ImportBatches
-    AccessLog.objects.filter(report_type=rt, import_batch__in=ibs).delete()
+    # as we do not sync materialized report data to clickhouse, the code here does not
+    # change anything from the clickhouse point of view
+    AccessLog.objects.filter(report_type=rt, import_batch__in=ibs).delete(
+        i_know_what_i_am_doing=True
+    )
     # construct query
     keep, _remove = rt.materialization_spec.split_attributes(add_id_postfix=True)
     query = (
@@ -164,8 +168,10 @@ def remove_materialized_accesslogs(progress_callback: Callable[[int], None] = No
     :return:
     """
     rt_keys = set()
+    # materialized reports are not synced with clickhouse, so the following delete has no
+    # influence on clickhouse sync
     for rt in ReportType.objects.filter(materialization_spec__isnull=False):
-        rt.accesslog_set.all().delete()
+        rt.accesslog_set.all().delete(i_know_what_i_am_doing=True)
         rt_keys.add(rt.pk)
     # we iterate stupidly over all import batches, but that's life for you - I did not find
     # a way to batch update json field, so I at least go over each import batch only once for
