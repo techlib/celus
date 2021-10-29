@@ -408,25 +408,33 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             )
         except SushiException as e:
             logger.warning("pycounter Error: %s", e)
-            errors = client.extract_errors_from_data(file_data)
-            if errors:
-                error_code = errors[0].code
-                when_processed = now()
+            try:
+                errors = client.extract_errors_from_data(file_data)
+                if errors:
+                    error_code = int(errors[0].code)
+                    when_processed = now()
 
-                # Check whether it contains partial data
-                if any(
-                    str(e.code)
-                    in (
-                        str(ErrorCode.PARTIAL_DATA_RETURNED.value),
-                        str(ErrorCode.NO_LONGER_AVAILABLE.value),
-                    )
-                    for e in errors
-                ):
-                    partial_data = True
+                    # Check whether it contains partial data
+                    if any(
+                        str(e.code)
+                        in (
+                            str(ErrorCode.PARTIAL_DATA_RETURNED.value),
+                            str(ErrorCode.NO_LONGER_AVAILABLE.value),
+                        )
+                        for e in errors
+                    ):
+                        partial_data = True
 
-            status = AttemptStatus.DOWNLOAD_FAILED
-            log = '\n'.join(error.full_log for error in errors)
-            filename = 'foo.xml'  # we just need the extension
+                status = AttemptStatus.DOWNLOAD_FAILED
+                log = '\n'.join(error.full_log for error in errors)
+                filename = 'foo.xml'  # we just need the extension
+            except Exception as e:
+                status = AttemptStatus.PARSING_FAILED
+                logger.error("Incorrect sushi format: %s", e)
+                error_code = 'wrong-sushi'
+                log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+                filename = 'foo.xml'  # we just need the extension
+
         except Exception as e:
             status = AttemptStatus.PARSING_FAILED
             logger.error("Error: %s", e)

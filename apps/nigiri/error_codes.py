@@ -38,7 +38,7 @@ def error_code_to_severity(error_code: typing.Union[None, int, str]) -> str:
         return "Error"
     try:
         error_code = int(error_code)
-    except ValueError:
+    except (ValueError, TypeError):
         return "Error"
 
     if error_code == 0:

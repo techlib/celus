@@ -92,6 +92,22 @@ class TestSushiFetching:
             assert m.called
             assert attempt.status == AttemptStatus.DOWNLOAD_FAILED
 
+    def test_c4_wrong_namespaces(self, counter_report_types, organizations, platforms):
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
+        )
+        credentials.counter_reports.add(counter_report_types["db1"])
+        with requests_mock.Mocker() as m, freeze_time("2021-01-01"):
+            with open(
+                Path(__file__).parent / 'data/counter4/sushi_exception-with-extra-attrs.xml'
+            ) as datafile:
+                m.post(re.compile(f'^{credentials.url}.*'), text=datafile.read())
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                counter_report_types["db1"], start_date='2020-01-01', end_date='2020-01-31'
+            )
+            assert m.called
+            assert attempt.status == AttemptStatus.DOWNLOAD_FAILED
+
     @pytest.mark.parametrize('time', ('2017-04-01', '2017-02-15'))
     def test_c5_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(

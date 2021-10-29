@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope" xmlns:sc="http://www.niso.org/schemas/sushi/counter" xmlns:sus="http://www.niso.org/schemas/sushi" xmlns:sql="http://apache.org/cocoon/SQL/2.0" xmlns="http://www.niso.org/schemas/counter">
+	<soap:Body>
+		<sc:ReportResponse rootNode="$myRootName" Created="2020-01-01T00:00:00+00:00" ID="eeeeeeee-186c-43fb-8932-014ca1693092">
+			<sus:Exception Created="2021-01-01T00:00:00Z">
+				<sus:Number xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:coun="http://www.niso.org/schemas/sushi/counter">3000</sus:Number>
+				<sus:Severity xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:coun="http://www.niso.org/schemas/sushi/counter">Error</sus:Severity>
+				<sus:Message xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:coun="http://www.niso.org/schemas/sushi/counter">Requested report Name is not supported</sus:Message>
+			</sus:Exception>
+			<sushi:Requestor xmlns:sushi="http://www.niso.org/schemas/sushi" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:coun="http://www.niso.org/schemas/sushi/counter" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sushicounter="http://www.niso.org/schemas/sushi/counter" xmlns:counter="http://www.niso.org/schemas/counter">
+				<sushi:ID>eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee</sushi:ID>
+				<sushi:Name/>
+				<sushi:Email/>
+			</sushi:Requestor>
+			<sushi:CustomerReference xmlns:sushi="http://www.niso.org/schemas/sushi" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:coun="http://www.niso.org/schemas/sushi/counter" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sushicounter="http://www.niso.org/schemas/sushi/counter" xmlns:counter="http://www.niso.org/schemas/counter">
+				<sushi:ID>111118</sushi:ID>
+				<sushi:Name/>
+			</sushi:CustomerReference>
+			<sushi:ReportDefinition xmlns:sushi="http://www.niso.org/schemas/sushi" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:coun="http://www.niso.org/schemas/sushi/counter" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sushicounter="http://www.niso.org/schemas/sushi/counter" xmlns:counter="http://www.niso.org/schemas/counter" Name="DB1" Release="4">
+				<sushi:Filters>
+					<sushi:UsageDateRange>
+						<sushi:Begin>2020-01-01</sushi:Begin>
+						<sushi:End>2020-01-31</sushi:End>
+					</sushi:UsageDateRange>
+				</sushi:Filters>
+			</sushi:ReportDefinition>
+			<sc:Report xsi:nil="true"/>
+		</sc:ReportResponse>
+	</soap:Body>
+</soap:Envelope>

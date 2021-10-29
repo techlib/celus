@@ -475,10 +475,13 @@ class Sushi4Client(SushiClientBase):
                     # skip non-object exceptions
                     continue
                 code = next(recursive_finder(exception, ["Number"]), "")
+                code = code.get("#text", "") if isinstance(code, dict) else code
                 message = next(recursive_finder(exception, ["Message"]), "")
+                message = message.get("#text", "") if isinstance(message, dict) else message
                 severity = next(
                     recursive_finder(exception, ["Severity"]), error_code_to_severity(code)
                 )
+                severity = severity.get("#text", "") if isinstance(severity, dict) else severity
 
                 full_log = f'{severity}: #{code}; {message}'
                 errors.append(
