@@ -186,17 +186,6 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         'credentials__organization',
         'credentials__platform',
     ]
-    readonly_fields = [
-        'credentials',
-        'status',
-        'counter_report',
-        'timestamp',
-        'start_date',
-        'end_date',
-        'data_file',
-        'import_batch',
-        'queue_previous',
-    ]
     search_fields = [
         'credentials__organization__name',
         'credentials__platform__name',
@@ -231,6 +220,15 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         return obj.import_batch is not None
 
     has_import_batch.boolean = True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(models.CounterReportsToCredentials)

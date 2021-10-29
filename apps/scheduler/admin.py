@@ -57,6 +57,7 @@ class HarvestAdmin(admin.ModelAdmin):
         'last_updated_by__email',
         'automatic__organization__name',
     )
+    readonly_fields = ('created',)
 
     list_display = (
         'pk',
@@ -101,6 +102,15 @@ class HarvestAdmin(admin.ModelAdmin):
             return ""
 
     automatic_organization.short_description = "Organization"
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(models.Scheduler)
@@ -201,5 +211,13 @@ class FetchIntentionAdmin(admin.ModelAdmin):
 
     harvest_link.short_description = "Harvest"
     harvest_link.admin_order_field = 'harvest'
-
     harvest_link.allow_tags = True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
