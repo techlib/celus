@@ -5,12 +5,6 @@ en:
   total_interest: Total interest
   number_of_days: Number of days with data
   interest_per_day: Average daily interest
-  title_interest_histogram: Interest histogram
-  log: Logarithmic scale
-  title_count: Resource count
-  histogram_tooltip:
-    SUSHI data very seldom contains data about titles for which there was no
-    access recorded, so titles with zero count are likely heavily underrepresented.
   sushi_status: SUSHI automated harvesting status
   sushi_status_info: Result of download for each automatically harvested report.
   details_here: Details here
@@ -21,12 +15,6 @@ cs:
   total_interest: Celkový zájem
   number_of_days: Počet dní s daty
   interest_per_day: Průměrný denní zájem
-  title_interest_histogram: Histogram zájmu
-  log: Logaritmická škála
-  title_count: Počet zdrojů
-  histogram_tooltip:
-    SUSHI data zřídka obsahují informace o titulech, pro které nebyl zaznamenán
-    žádný zájem. Z toho důvodu je počet titulů s nulovým zájmem pravděpodobně silně podhodnocen.
   sushi_status: Stav automatického stahování SUSHI
   sushi_status_info: Souhrn výsledku stahování pro všechny automaticky sklízené reporty.
   details_here: Podrobnosti zde
@@ -198,8 +186,6 @@ export default {
     return {
       interestReportType: null,
       totalInterestData: null,
-      histogramData: null,
-      histogramLogScale: false,
       sushiMonths: [lastMonth, monthBeforeLast],
       sushiMonth: lastMonth,
     };
@@ -241,24 +227,6 @@ export default {
       }
       return null;
     },
-    histogramDataUrl() {
-      if (this.organizationId) {
-        return `/api/organization/${this.organizationId}/title-interest-histogram/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
-      }
-      return null;
-    },
-    histogramChartData() {
-      if (this.histogramData) {
-        return {
-          columns: ["name", "count"],
-          rows: this.histogramData,
-        };
-      }
-      return null;
-    },
-    histogramChartXAxisData() {
-      return [...new Set(this.histogramData.map((item) => item.name))];
-    },
   },
 
   methods: {
@@ -287,20 +255,6 @@ export default {
       }
     },
 
-    async fetchHistogramData() {
-      if (this.histogramDataUrl) {
-        try {
-          const response = await axios.get(this.histogramDataUrl);
-          this.histogramData = response.data;
-        } catch (error) {
-          this.showSnackbar({
-            content: "Error loading histogram data: " + error,
-            color: "error",
-          });
-        }
-      }
-    },
-
     pubTypesForInterestGroup(igShortName) {
       if (igShortName.indexOf("full_text") > -1) {
         let all = { text: "pub_type.all", value: "", icon: "fa-expand" };
@@ -321,17 +275,12 @@ export default {
     this.loadSushiCredentialsCount();
     this.fetchReportTypes();
     this.fetchTotalInterest();
-    this.fetchHistogramData();
   },
 
   watch: {
     totalInterestDataUrl() {
       this.totalInterestData = null;
       this.fetchTotalInterest();
-    },
-    histogramDataUrl() {
-      this.histogramData = null;
-      this.fetchHistogramData();
     },
   },
 };
