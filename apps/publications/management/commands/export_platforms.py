@@ -31,7 +31,7 @@ class Command(BaseCommand):
         platforms = Platform.objects.all().values("pk", "name", "short_name", "provider", "url",)
 
         converted_credentials = []
-        for creds in SushiCredentials.objects.working():
+        for creds in SushiCredentials.objects.working().not_fake():
             new_credentials = {
                 "pk": creds.pk,
                 "platform_id": creds.platform_id,

@@ -320,3 +320,11 @@ class TestCredentialsQuerySet:
         )
 
         assert SushiCredentials.objects.all().working().count() == 1
+
+    def test_not_fake(self, report_types, counter_report_types, settings):
+        settings.FAKE_SUSHI_URLS = ['https://fake.it', 'https://skip.it']
+        c1 = CredentialsFactory(url="https://real.sushi/")
+        CredentialsFactory(url="https://skip.it")
+        CredentialsFactory(url="https://fake.it/something")
+        c2 = CredentialsFactory(url="http://fake.it")
+        assert set(SushiCredentials.objects.all().not_fake()) == {c1, c2}

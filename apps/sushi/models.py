@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import traceback
+from functools import reduce
 from copy import deepcopy
 from datetime import timedelta, datetime, date
 from hashlib import blake2b
@@ -168,6 +169,14 @@ class SushiCredentialsQuerySet(models.QuerySet):
                 )
             )
         ).filter(has_access_log=True)
+
+    def not_fake(self):
+        """ List credentials which are not from fake URLs """
+        # Constructs condition - Q() | Q(url__icontains=url1) | Q(url__icontains=url2) ...
+        cond = reduce(
+            lambda x, y: x | models.Q(url__icontains=y), settings.FAKE_SUSHI_URLS, models.Q()
+        )
+        return self.exclude(cond)
 
 
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):

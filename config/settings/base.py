@@ -445,6 +445,10 @@ ALLOW_USER_REGISTRATION = config('ALLOW_USER_REGISTRATION', cast=bool, default=F
 # Allow user to create platforms
 ALLOW_USER_CREATED_PLATFORMS = config('ALLOW_USER_CREATED_PLATFORMS', cast=bool, default=False)
 
+
+# Credentials which should be skipped during celery import
+FAKE_SUSHI_URLS = ['https://demo.celus.net/']
+
 # social authentication providers
 SOCIAL_ACCOUNTS_SUPPORTED = config('SOCIAL_ACCOUNTS_SUPPORTED', cast=Csv(), default='')
 SITE_ID = config('SITE_ID', cast=int, default=1)
