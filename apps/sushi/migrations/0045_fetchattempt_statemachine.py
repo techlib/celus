@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 def bools_to_state(apps, schema_editor):
     SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
-    for attempt in SushiFetchAttempt.objects.all():
+    for attempt in SushiFetchAttempt.objects.all().iterator():
         if attempt.import_crashed:
             attempt.status = "import_failed"
         elif attempt.in_progress:

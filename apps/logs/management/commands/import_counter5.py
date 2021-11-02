@@ -23,7 +23,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'organization',
-            help='The ID or name of organization for which this data was ' 'downloaded',
+            help='The ID or name of organization for which this data was downloaded',
         )
         parser.add_argument('platform', help='Short name of platform for which data was downloaded')
         parser.add_argument('report_type', help='Report type of the submitted data')
