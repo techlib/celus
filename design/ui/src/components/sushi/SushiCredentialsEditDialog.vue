@@ -101,6 +101,8 @@ cs:
                     :label="$t('title_label')"
                     v-on="on"
                     :rules="[ruleNoConflictingCredentials]"
+                    dense
+                    height="2.75rem"
                   >
                     <template v-slot:append v-if="titleHint">
                       <v-tooltip bottom v-if="titleHint">
@@ -123,6 +125,8 @@ cs:
                 :value="organization.name"
                 :label="$t('organization')"
                 disabled
+                dense
+                height="2.75rem"
               >
               </v-text-field>
               <v-select
@@ -134,6 +138,8 @@ cs:
                 return-object
                 :disabled="organizationSelected"
                 :rules="[ruleRequired]"
+                dense
+                height="2.75rem"
               >
               </v-select>
             </v-col>
@@ -143,6 +149,8 @@ cs:
                 :value="activePlatformName"
                 :label="$t('platform')"
                 disabled
+                dense
+                height="2.75rem"
               >
               </v-text-field>
               <v-autocomplete
@@ -154,6 +162,8 @@ cs:
                 return-object
                 :loading="loadingPlatforms"
                 :rules="[ruleRequired]"
+                dense
+                height="2.75rem"
               >
                 <template v-slot:prepend-item>
                   <AddPlatformButton
