@@ -6,7 +6,7 @@ from . import views
 router = DefaultRouter()
 router.register(r'report-type', views.ReportTypeViewSet, basename='report-type')
 router.register(r'metric', views.MetricViewSet)
-router.register(r'import-batch', views.ImportBatchViewSet)
+router.register(r'import-batch', views.ImportBatchViewSet, basename='import-batch')
 router.register(r'manual-data-upload', views.ManualDataUploadViewSet, basename='manual-data-upload')
 router.register(r'interest-groups', views.InterestGroupViewSet)
 router.register(r'dimension-text', views.DimensionTextViewSet, basename='dimension-text')

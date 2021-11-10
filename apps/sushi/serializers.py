@@ -58,10 +58,11 @@ class CounterReportsToCredentialsSerializer(ModelSerializer):
     code = ReadOnlyField(source='counter_report.code')
     name = ReadOnlyField(source='counter_report.name')
     counter_version = ReadOnlyField(source='counter_report.counter_version')
+    report_type = ReadOnlyField(source='counter_report.report_type_id')
 
     class Meta:
         model = CounterReportsToCredentials
-        fields = ('id', 'code', 'name', 'counter_version', 'broken')
+        fields = ('id', 'code', 'name', 'counter_version', 'report_type', 'broken')
 
 
 class SushiCredentialsSerializer(ModelSerializer):
@@ -69,7 +70,7 @@ class SushiCredentialsSerializer(ModelSerializer):
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
     counter_reports = PrimaryKeyRelatedField(
-        queryset=CounterReportType.objects.all(), many=True, read_only=False, write_only=True,
+        queryset=CounterReportType.objects.all(), many=True, read_only=False, write_only=True
     )
 
     counter_reports_long = CounterReportsToCredentialsSerializer(

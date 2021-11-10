@@ -2,8 +2,7 @@ from django.db.models import Sum
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
-from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField, DictField, BooleanField, ListField
+from rest_framework.fields import CharField, BooleanField, ListField
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
@@ -11,20 +10,15 @@ from rest_framework.views import APIView
 from api.auth import extract_org_from_request_api_key
 from api.permissions import HasOrganizationAPIKey
 from core.logic.dates import parse_month
+from core.validators import month_validator
 from logs.logic.queries import find_best_materialized_view
 from logs.models import AccessLog, ReportType, DimensionText
 from publications.models import Title
-from sushi.models import SushiCredentials, SushiFetchAttempt, CounterReportsToCredentials
+from sushi.models import SushiCredentials, SushiFetchAttempt
 
 
 class RedocView(TemplateView):
     template_name = "api/redoc.html"
-
-
-def month_validator(text: str):
-    value = parse_month(text)
-    if value is None:
-        raise ValidationError(f'{text} is not a valid input for month value (YYYY-MM)')
 
 
 class PlatformReportView(APIView):

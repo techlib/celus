@@ -1,52 +1,39 @@
 <i18n lang="yaml" src="../../locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  select_dates_text: Select date range for manual SUSHI harvesting.
-  select_dates_text_test:
-    "Select the month for SUSHI credentials test. <br /><strong>Note</strong>: we use one month for testing to make it as fast as possible.
+  select_dates_text: "Select date range to harvest:"
+  select_dates_text_test: "Select the month for SUSHI credentials test:"
+  select_dates_text_test_note:
+    "<strong>Note</strong>: we use one month for testing to make it as fast as possible.
     If you want to download data for a longer period, use the 'Harvest selected' button on the SUSHI management page."
-  credentials_count: Number of credentials to harvest
-  credentials_count_test: Number of credentials to test
-  report_count: Number of reports to harvest
-  report_count_test: Number of reports to test
-  broken_report_count: Number of broken reports (not harvested)
-  broken_reports_tooltip:
-    These reports have been marked as broken by Celus and will not be harvested. Switch them off
-    by editing corresponding credentials.
   there_were_errors: " | It was not possible to start harvesting due to the following error: | It was not possible to start harvesting due to the following errors:"
   check_credentials: Please check selection of credentials after closing this dialog. Broken credentials will be automatically unselected.
   test_date: Month to test on
-  months_to_cover: Months to cover
-  fetch_attempt_count: Number of individual downloads
+  start_harvesting: "Nothing to harvest | Start {count} download | Start {count} downloads"
+  nothing_to_harvest: Nothing to harvest
 
 cs:
-  select_dates_text: Vyberte rozsah měsíců pro manuální stahování SUSHI.
-  select_dates_text_test: "Vyberte měsíc pro otestování přihlašovacích údajů.
-    <br /><strong>Poznámka</strong>: pro co nejrychlejší otestování stahujeme data pouze za jeden měsíc. Pokud chcete
+  select_dates_text: "Vyberte rozsah měsíců pro stažení:"
+  select_dates_text_test: "Vyberte měsíc pro otestování přihlašovacích údajů:"
+  select_dates_text_test_note:
+    "<strong>Poznámka</strong>: pro co nejrychlejší otestování stahujeme data pouze za jeden měsíc. Pokud chcete
     stáhnout data za delší období, použijte tlačítko 'Stáhni označené' na stránce správy SUSHI."
-  credentials_count: Počet přihlašovacích údajů ke stažení
-  credentials_count_test: Počet přihlašovacích údajů k otestování
-  report_count: Počet reportů ke stažení
-  report_count_text: Počet reportů k otestování
-  broken_report_count: Počet nefunkčních reportů (nebudou stahovány)
-  broken_reports_tooltip:
-    Celus tyto reporty označil za nefunkční a nebudou staženy. Vypněte je editací
-    příslušných přihlašovacích údajů.
   there_were_errors: "Nebylo možné zahájit harvesting kvůli následující chybě: | Nebylo možné zahájit harvesting kvůli následujícím chybám: | Nebylo možné zahájit harvesting kvůli následujícím chybám:"
   check_credentials: Po uzavření dialogu zkontrolujte prosím výběr přihlašovacích údajů. Označení nefunkčních bude automaticky zrušeno.
-  months_to_cover: Stahované měsíce
-  fetch_attempt_count: Počet jednotlivých stahování
+  test_date: Testovaný měsíc
+  start_harvesting: "Začít {count} stahování | Začít {count} stahování | Začít {count} stahování"
+  nothing_to_harvest: Není co stahovat
 </i18n>
 
 <template>
   <v-container fluid class="pb-0">
-    <v-row v-if="!started">
+    <v-row v-if="!started" class="align-center">
       <v-col
         v-html="test ? $t('select_dates_text_test') : $t('select_dates_text')"
+        cols="12"
+        md="auto"
       ></v-col>
-    </v-row>
-    <v-row align="center" v-if="!started">
-      <v-col cols="6" md="4">
+      <v-col cols="auto">
         <v-menu
           v-model="startDateMenu"
           :close-on-content-click="false"
@@ -74,7 +61,7 @@ cs:
           ></v-date-picker>
         </v-menu>
       </v-col>
-      <v-col cols="6" md="4" v-if="!test">
+      <v-col cols="auto" v-if="!test">
         <v-menu
           v-model="endDateMenu"
           :close-on-content-click="false"
@@ -102,58 +89,39 @@ cs:
           ></v-date-picker>
         </v-menu>
       </v-col>
-      <v-col cols="6" md="4" lg="3">
+      <v-col cols="auto">
         <v-btn
           @click="createIntentions()"
           v-text="
-            test ? $t('actions.start_test') : $t('actions.start_harvesting')
+            slotsFree === 0
+              ? $t('nothing_to_harvest')
+              : test
+              ? $t('actions.start_test')
+              : $tc('start_harvesting', slotsFree)
           "
           color="primary"
           class=""
           width="100%"
-          :disabled="!totalReportCount"
+          :disabled="!totalReportCount || !slotsReady || slotsFree === 0"
         ></v-btn>
+      </v-col>
+    </v-row>
+    <v-row v-if="test">
+      <v-col>
+        <div v-html="$t('select_dates_text_test_note')"></div>
       </v-col>
     </v-row>
 
     <v-row v-if="!started">
       <v-col>
-        <div>
-          <strong
-            v-text="
-              test ? $t('credentials_count_test') : $t('credentials_count')
-            "
-          ></strong
-          >: {{ credentials.length }}
-        </div>
-        <div>
-          <strong>{{ $t("report_count") }}</strong
-          >:
-          <span :class="totalReportCount == 0 ? 'error--text' : ''">{{
-            totalReportCount
-          }}</span>
-        </div>
-        <div v-if="brokenReportCount">
-          <strong>{{ $t("broken_report_count") }}</strong
-          >: {{ brokenReportCount }}
-          <v-tooltip v-if="brokenReportCount" bottom max-width="400">
-            <template #activator="{ on }">
-              <v-icon v-on="on" color="warning" small>fa-info-circle</v-icon>
-            </template>
-            {{ $t("broken_reports_tooltip") }}
-          </v-tooltip>
-        </div>
-        <div>
-          <strong>{{ $t("months_to_cover") }}</strong
-          >:
-          {{ monthsToCoverCount }}
-        </div>
-        <div>
-          <strong>{{ $t("fetch_attempt_count") }}</strong
-          >: {{ totalAttemptCount }}
-          <span class="ml-3"
-            >({{ totalReportCount }} &times; {{ monthsToCoverCount }})</span
-          >
+        <div v-if="startDate && endDate">
+          <SushiHarvestedSlotsWidget
+            :credentials="credentials"
+            :start-date="startDate"
+            :end-date="test ? startDate : endDate"
+            ref="slotWidget"
+            :ready.sync="slotsReady"
+          />
         </div>
       </v-col>
     </v-row>
@@ -197,15 +165,15 @@ import {
   ymDateParse,
 } from "@/libs/dates";
 import addMonths from "date-fns/addMonths";
-import HarvestsTable from "@/components/HarvestsTable";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
+import SushiHarvestedSlotsWidget from "@/components/sushi/SushiHarvestedSlotsWidget";
 
 export default {
   name: "SushiCredentialsTestWidget",
 
   components: {
+    SushiHarvestedSlotsWidget,
     SushiFetchIntentionsListWidget,
-    HarvestsTable,
   },
 
   props: {
@@ -226,6 +194,7 @@ export default {
       startDateMenu: null,
       endDateMenu: null,
       error: null,
+      slotsReady: false,
     };
   },
 
@@ -281,6 +250,12 @@ export default {
     totalAttemptCount() {
       return this.totalReportCount * this.monthsToCoverCount;
     },
+    slotsFree() {
+      if (this.slotsReady && this.$refs.slotWidget) {
+        return this.$refs.slotWidget.slotsFree;
+      }
+      return 0;
+    },
   },
 
   methods: {
@@ -290,17 +265,16 @@ export default {
     async createIntentions() {
       let intentions = [];
 
-      for (let cred of this.credentials) {
-        for (let rt of cred.counter_reports_long) {
-          if (!rt.broken) {
-            for (let month of this.monthsToCover) {
-              intentions.push({
-                start_date: monthFirstDay(month),
-                end_date: monthLastDay(month),
-                credentials: cred.pk,
-                counter_report: rt.id,
-              });
-            }
+      for (let rec of this.$refs.slotWidget.tableData) {
+        for (let [month, source] of Object.entries(rec.months)) {
+          if (source === "") {
+            let monthDate = ymDateParse(month);
+            intentions.push({
+              start_date: monthFirstDay(monthDate),
+              end_date: monthLastDay(monthDate),
+              credentials: rec.cred.pk,
+              counter_report: rec.rt.id,
+            });
           }
         }
       }

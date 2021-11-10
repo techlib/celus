@@ -10,6 +10,7 @@ fake = Faker()
 class OrganizationFactory(factory.DjangoModelFactory):
     class Meta:
         model = Organization
+        django_get_or_create = ('name',)
 
     ext_id = factory.Sequence(lambda n: n)
     ico = factory.Sequence(lambda n: n)

@@ -1,14 +1,12 @@
 from collections import namedtuple
 from io import StringIO
 
-import pytest
 from django.urls import reverse
 
-from annotations.models import Annotation
-from core.tests.conftest import *
 from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF
+from core.tests.conftest import *  # noqa  - test fixtures
 from logs.models import ManualDataUpload
-from organizations.tests.conftest import *
+from organizations.tests.conftest import *  # noqa  - test fixtures
 from publications.tests.conftest import *
 
 

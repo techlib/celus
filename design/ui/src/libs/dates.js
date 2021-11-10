@@ -3,6 +3,7 @@ import getYear from "date-fns/getYear";
 import getMonth from "date-fns/getMonth";
 import parseISO from "date-fns/parseISO";
 import isValid from "date-fns/isValid";
+import addMonths from "date-fns/addMonths";
 
 function isoDateFormat(date) {
   return format(date, "yyyy-MM-dd");
@@ -63,6 +64,17 @@ function isoDateTimeFormatSpans(date) {
   )}</span> <span class="time">${format(date, "HH:mm:ss")}</span>`;
 }
 
+function monthsBetween(start, end) {
+  let startMonth = ymDateParse(start);
+  const endMonth = ymDateParse(end);
+  let months = [startMonth];
+  while (startMonth < endMonth) {
+    startMonth = addMonths(startMonth, 1);
+    months.push(startMonth);
+  }
+  return months;
+}
+
 export {
   isoDateFormat,
   monthFirstDay,
@@ -74,4 +86,5 @@ export {
   parseDateTime,
   isoDateTimeFormat,
   isoDateTimeFormatSpans,
+  monthsBetween,
 };

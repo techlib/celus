@@ -1,8 +1,10 @@
 import traceback
+from functools import reduce
 from pprint import pprint
 from time import monotonic
 
 from django.core.cache import cache
+from django.core.exceptions import BadRequest
 from django.core.mail import mail_admins
 from django.db.models import Count, Q, Exists, OuterRef
 from django.http import JsonResponse
@@ -11,17 +13,19 @@ from django.views import View
 from pandas import DataFrame
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.fields import CharField
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_200_OK
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_pandas import PandasView
 
 from core.filters import PkMultiValueFilterBackend
-from core.logic.dates import date_filter_from_params
+from core.logic.dates import date_filter_from_params, parse_month
 from core.models import DataSource, REL_ORG_ADMIN
 from core.permissions import (
     OrganizationRequiredInDataForNonSuperusers,
@@ -33,6 +37,7 @@ from core.permissions import (
     ManualDataUploadEnabledPermission,
 )
 from core.prometheus import report_access_time_summary, report_access_total_counter
+from core.validators import month_validator, pk_list_validator
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
 from logs.logic.queries import (
@@ -66,6 +71,7 @@ from logs.serializers import (
     FlexibleReportSerializer,
 )
 from organizations.logic.queries import organization_filter_from_org_id
+from sushi.models import SushiCredentials, SushiFetchAttempt, AttemptStatus
 from .tasks import export_raw_data_task
 
 
@@ -291,6 +297,100 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             # for one result, we can use the verbose serializer
             return ImportBatchVerboseSerializer
         return super().get_serializer_class()
+
+    class DataPresenceParamSerializer(Serializer):
+
+        start_date = CharField(validators=[month_validator], required=True)
+        end_date = CharField(validators=[month_validator], required=True)
+        credentials = CharField(validators=[pk_list_validator], required=True)
+
+    @action(detail=False, methods=['get'], url_name='data-presence', url_path='data-presence')
+    def data_presence(self, request):
+        """
+        Return a list of combinations of report_type, platform, organization and month for which
+        there are some data.
+
+        If requires a filter composed of `start_date`, `end_date` and `credentials` which is a
+        comma separated list of credentials primary keys.
+
+        The result is a list of dicts with `report_type_id`, `platform_id`, `organization_id`,
+        `date` and `source`. `source` is either `sushi` for data comming from SUSHI or `manual`
+        for manually uploaded data.
+
+        Please note that the resulting list may contain data which do not belong to any of the
+        credentials provided in `credentials` filter. This is because manually uploaded data
+        do not have a direct link to credentials and it would be too costly to remove this extra
+        data.
+        """
+        # Note:
+        #
+        # This endpoint uses fetch attempt data for sushi data and access logs for manually
+        # uploaded data. We could simplify it by:
+        #  * splitting data from manually uploaded data into one-month import batches
+        #  * adding date to import batches
+        #  * creating empty import batches for 3030 when we decide there is no reason to retry
+        #
+        # After these changes, we could simply query import batches to get the data for this view.
+        param_serializer = self.DataPresenceParamSerializer(data=request.GET)
+        param_serializer.is_valid(raise_exception=True)
+        params = param_serializer.validated_data
+
+        # prepare data from SUSHI - we use fetch attempts for that
+        credentials_ids = [int(cid) for cid in params['credentials'].split(',')]
+        credentials = SushiCredentials.objects.filter(
+            pk__in=credentials_ids, organization__in=request.user.accessible_organizations()
+        )
+        qs = SushiFetchAttempt.objects.filter(
+            start_date__gte=parse_month(params['start_date']),
+            start_date__lte=parse_month(params['end_date']),
+            credentials__in=credentials,
+            status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
+        ).select_related('credentials', 'counter_report')
+        records = {
+            tuple(rec): 'sushi'
+            for rec in qs.values_list(
+                'counter_report__report_type_id',
+                'credentials__platform_id',
+                'credentials__organization_id',
+                'start_date',
+            ).distinct()
+        }
+
+        # now manually uploaded data - we need to go by AccessLog, there is no other place with
+        # date info
+        qs = AccessLog.objects.filter(
+            import_batch__manualdataupload__isnull=False,
+            date__gte=parse_month(params['start_date']),
+            date__lte=parse_month(params['end_date']),
+        )
+        filters = []
+        # we do not add report type filter to each Q below because it seems to slow the query
+        # down - instead we add a report_type filter later to allow the query to skip some
+        # partitions
+        for cred in credentials:
+            filters.append(Q(organization_id=cred.organization_id, platform_id=cred.platform_id,))
+        if not filters:
+            raise BadRequest(
+                "The 'credentials' param must resolve to at least one set of SUSHI credentials."
+            )
+        rts = ReportType.objects.filter(
+            counterreporttype__counterreportstocredentials__credentials__in=credentials
+        )
+        qs = qs.filter(reduce(lambda x, y: x | y, filters, Q())).filter(report_type_id__in=rts)
+        qs = qs.values_list('report_type_id', 'platform_id', 'organization_id', 'date').distinct()
+        for rec in qs:
+            records[tuple(rec)] = 'manual'
+
+        return Response(
+            {
+                'report_type_id': rt,
+                'platform_id': plat,
+                'organization_id': org,
+                'date': date,
+                'source': source,
+            }
+            for (rt, plat, org, date), source in records.items()
+        )
 
 
 class ManualDataUploadViewSet(ModelViewSet):
