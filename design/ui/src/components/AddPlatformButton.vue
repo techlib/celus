@@ -10,7 +10,13 @@ cs:
   <span>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
-        <v-btn @click="showDialog = true" v-on="on" :text="text" :small="small">
+        <v-btn
+          @click="showDialog = true"
+          v-on="on"
+          :text="text"
+          :small="small"
+          :color="color"
+        >
           <slot>
             <v-icon small class="mr-2">fas fa-plus</v-icon>
             {{ $t("add") }}
@@ -20,12 +26,12 @@ cs:
       {{ $t("add") }}
     </v-tooltip>
     <v-dialog v-model="showDialog" :max-width="dialogMaxWidth">
-       <PlatformEditDialog
-          v-if="showDialog"
-          @close="cancelEdit()"
-          @saved="platformSaved"
-          key="add"
-       />
+      <PlatformEditDialog
+        v-if="showDialog"
+        @close="cancelEdit()"
+        @saved="platformSaved"
+        key="add"
+      />
     </v-dialog>
   </span>
 </template>
@@ -39,6 +45,7 @@ export default {
     dialogMaxWidth: { type: String, default: "1240px" },
     text: { type: Boolean, default: false },
     small: { type: Boolean, default: false },
+    color: { type: String, default: "" },
   },
   data() {
     return {

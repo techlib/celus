@@ -140,6 +140,7 @@ cs:
                 :rules="[ruleRequired]"
                 dense
                 height="2.75rem"
+                :menu-props="{ maxHeight: 480 }"
               >
               </v-select>
             </v-col>
@@ -164,6 +165,7 @@ cs:
                 :rules="[ruleRequired]"
                 dense
                 height="2.75rem"
+                :menu-props="{ maxHeight: 480 }"
               >
                 <template v-slot:prepend-item>
                   <AddPlatformButton
@@ -173,12 +175,15 @@ cs:
                     "
                     @update-platforms="preselectCreatedPlatform"
                     :text="true"
+                    small
+                    color="success"
+                    class="pl-1"
                   />
                 </template>
                 <template v-slot:item="{ item }">
                   <v-tooltip bottom max-width="600px" v-if="badge(item)">
                     <template #activator="{ on }">
-                      <span>{{ item.name }}</span>
+                      <span class="v-list-item__title">{{ item.name }}</span>
                       <v-badge
                         inline
                         :content="$t(badge(item).content)"
@@ -191,7 +196,7 @@ cs:
                     </template>
                     <span>{{ $t(badge(item).tooltip) }}</span>
                   </v-tooltip>
-                  <span v-else>
+                  <span v-else class="v-list-item__title">
                     {{ item.name }}
                   </span>
                 </template>
@@ -758,6 +763,7 @@ export default {
         try {
           let result = await axios.get("/api/organization/");
           this.organizations = result.data;
+          this.organizations.sort((a, b) => a.name.localeCompare(b.name));
           this.organization = this.organizations[0];
         } catch (error) {
           this.showSnackbar({
