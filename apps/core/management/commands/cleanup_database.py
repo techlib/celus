@@ -9,6 +9,7 @@ from annotations.models import Annotation
 from export.models import FlexibleDataExport
 from logs.models import ImportBatch
 from organizations.models import Organization
+from publications.models import Title
 from recache.models import CachedQuery
 from scheduler.models import Harvest, Scheduler
 
@@ -42,6 +43,7 @@ class Command(BaseCommand):
             CachedQuery,
             Harvest,
             Scheduler,
+            Title,
         ):
             self.stderr.write(self.style.WARNING(f'Deleting {model.__name__}'))
             count, details = model.objects.all().delete()
