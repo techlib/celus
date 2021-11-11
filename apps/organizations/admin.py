@@ -19,6 +19,7 @@ class OrganizationAdmin(MPTTModelAdmin, TranslationAdmin):
 class UserOrganizationAdmin(admin.ModelAdmin):
 
     list_display = ['user', 'organization', 'is_admin', 'source']
+    autocomplete_fields = ['user', 'organization']
     list_filter = ['source']
     list_select_related = ['source', 'organization', 'user']
     search_fields = ['user__username', 'user__email']
