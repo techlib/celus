@@ -3,7 +3,7 @@ from rest_framework import filters
 
 class PkMultiValueFilterBackend(filters.BaseFilterBackend):
     """
-    Filter that only allows users to see their own objects.
+    Filter that allows selection by a list of primary keys
     """
 
     filter_field = 'pk'

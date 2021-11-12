@@ -12,13 +12,19 @@ en:
   planned: It is already planned to be harvested
   broken: Broken report type
   selected_count: Number of records to harvest
-  select_help: You can select records in the table
+  selected_count_delete: Number of records to delete
+  select_help: You can select unsuccessful records in the table
+  select_help_delete: You can select records to delete in the table
   harvest_button: Harvest
+  delete_button: Delete
   data_harvest: Harvesting credentials
   snack_bar:
     credentials_broken: Entire credentials are broken - can't select item for harvesting.
     report_type_broken: Broken report type - can't select item for harvesting.
-
+  delete_mode: Delete mode
+  really_delete: " | Really delete all data for {count} record? This action cannot be reverted without re-harvesting the data. | Really delete all data for {count} records? This action cannot be reverted without re-harvesting the data."
+  delete_mode_info: activate to delete existing data
+  delete_in_progress: Delete in progress, please wait...
 
 cs:
   title: Yearly overview
@@ -30,14 +36,12 @@ cs:
   planned: Stahování bylo naplánováno
   broken: Rozbitý report
   selected_count: Počet záznamů ke stáhnutí
-  select_help: Můžete vybrat záznamy z tabulky
+  select_help: Můžete vybrat neúspěšné záznamy z tabulky
   harvest_button: Stáhnout
   data_harvest: Stahuji data k přístupovým udajům
   snack_bar:
     credentials_broken: Přístupové údaje jsou rozbité - položku nelze přidat ke stahování.
     report_type_broken: Rozbitý report - položku nelze přidat ke stahování.
-
-
 </i18n>
 
 <template>
@@ -46,13 +50,24 @@ cs:
     <v-card-text class="pb-0">
       <v-container fluid class="pt-0 pb-0">
         <v-row>
-          <v-col cols="12" md="6">
+          <v-col>
             <SushiCredentialsOverviewHeaderWidget
               v-if="credentials"
               :credentials-name="credentialsName"
               :organization="credentials.organization"
               :platform="credentials.platform"
               :counter-version="credentials.counter_version"
+            />
+          </v-col>
+          <v-col cols="auto" class="align-self-start text-right">
+            <v-switch
+              :label="$t('delete_mode')"
+              v-model="deleteMode"
+              color="error"
+              dense
+              :hint="$t('delete_mode_info')"
+              persistent-hint
+              :disabled="deleteInProgress"
             />
           </v-col>
         </v-row>
@@ -89,54 +104,78 @@ cs:
                       />
                     </v-chip>
                   </td>
-                  <td v-for="month in months" class="pa-0">
+                  <td v-for="month in months" class="pa-0" :key="month">
                     <v-tooltip bottom>
                       <template v-slot:activator="{ on, attrs }">
-                        <div v-bind="attrs" v-on="on">
+                        <div v-bind="attrs" v-on="on" class="text-center">
                           <v-btn-toggle
-                            :multiple="true"
-                            v-model="buttonsSelected[row.item.year + '-' + month]"
-                            @change="filterBroken(buttonsSelected, credentials, reportTypes)"
+                            v-if="dataReady(row.item, month)"
+                            multiple
+                            v-model="
+                              buttonsSelected[row.item.year + '-' + month]
+                            "
+                            @change="
+                              filterBroken(
+                                buttonsSelected,
+                                credentials,
+                                reportTypes
+                              )
+                            "
                             dense
                             class="pa-0 d-block"
                           >
                             <v-btn
                               :value="row.item.report_type.id"
-                              :key="`${ row.item.year }-${ month }-${ row.item.report_type.code }`"
-                              :disabled="!dataReady(row.item, month)"
+                              :key="`${row.item.year}-${month}-${row.item.report_type.code}`"
                               :color="buttonColor(row.item[month])"
                             >
                               <v-icon
                                 small
-                                :color="statusIcon(row.item[month].status).color"
-                              >{{ statusIcon(row.item[month].status).icon }}</v-icon>
+                                :color="
+                                  statusIcon(row.item[month].status).color
+                                "
+                                >{{
+                                  statusIcon(row.item[month].status).icon
+                                }}</v-icon
+                              >
                               <span :class="textClases(row.item[month])"></span>
                             </v-btn>
                           </v-btn-toggle>
+                          <span v-else class="text-center d-inline-block">
+                            <v-icon
+                              small
+                              :color="statusIcon(row.item[month].status).color"
+                              >{{
+                                statusIcon(row.item[month].status).icon
+                              }}</v-icon
+                            >
+                          </span>
                         </div>
                       </template>
-                      <span
-                        v-if="row.item[month].status == 'no_data'"
-                      >{{ $t("status.no_data") }}</span>
-                      <span
-                        v-else-if="row.item[month].status == 'success'"
-                      >{{ $t("status.success") }}</span>
-                      <span
-                        v-else-if="row.item[month].status == 'failed'"
-                      >{{ $t("status.failed") }}</span>
-                      <span
-                        v-else-if="row.item[month].status == 'untried'"
-                      >{{ $t("status.untried") }}</span>
+                      <span v-if="row.item[month].status === 'no_data'">{{
+                        $t("status.no_data")
+                      }}</span>
+                      <span v-else-if="row.item[month].status === 'success'">{{
+                        $t("status.success")
+                      }}</span>
+                      <span v-else-if="row.item[month].status === 'failed'">{{
+                        $t("status.failed")
+                      }}</span>
+                      <span v-else-if="row.item[month].status === 'untried'">{{
+                        $t("status.untried")
+                      }}</span>
                       <span
                         v-else-if="row.item[month].status == 'partial_data'"
-                      >{{ $t("sushi.state_desc.partial_data") }}</span>
-                      <span v-if="row.item[month].broken"><br />
-                        <v-icon
-                          small
-                          color="error"
-                        >fa fa-exclamation</v-icon>
-                      {{ $t("broken") }}</span>
-                      <span v-if="row.item[month].planned"><br />{{ $t("planned") }}</span>
+                        >{{ $t("sushi.state_desc.partial_data") }}</span
+                      >
+                      <span v-if="row.item[month].broken"
+                        ><br />
+                        <v-icon small color="error">fa fa-exclamation</v-icon>
+                        {{ $t("broken") }}</span
+                      >
+                      <span v-if="row.item[month].planned"
+                        ><br />{{ $t("planned") }}</span
+                      >
                     </v-tooltip>
                   </td>
                 </tr>
@@ -189,26 +228,62 @@ cs:
         </v-row>
         <v-row>
           <v-col>
-            <span class="font-weight-black">{{ $t("selected_count") }}:</span> <span>{{ selectedItems.length }}</span>
-            <span v-if="selectedItems.length == 0" class="font-italic"> ({{ $t("select_help") }})</span>
+            <span class="font-weight-black pr-2"
+              >{{
+                deleteMode ? $t("selected_count_delete") : $t("selected_count")
+              }}:</span
+            >
+            <span>{{ selectedItems.length }}</span>
+            <span v-if="selectedItems.length == 0" class="font-italic">
+              ({{
+                deleteMode ? $t("select_help_delete") : $t("select_help")
+              }})</span
+            >
           </v-col>
         </v-row>
       </v-container>
     </v-card-text>
     <v-card-actions>
-      <v-container fluid >
+      <v-container fluid>
         <v-row no-gutters>
           <v-col cols="auto">
-      <v-btn
-        @click="triggerHarvest"
-        :disabled="selectedItems.length == 0"
-        color="primary"
-      >{{ $t("harvest_button") }}</v-btn>
+            <v-btn
+              v-if="deleteMode"
+              color="error"
+              :disabled="selectedItems.length == 0 || deleteInProgress"
+              @click="deleteSelected"
+            >
+              <v-progress-circular
+                small
+                indeterminate
+                v-if="deleteInProgress"
+                color="error"
+                class="mr-2"
+              />
+              <v-icon v-else small class="pr-2">fa fa-trash</v-icon>
+              {{ $t("delete_button") }}
+            </v-btn>
+            <v-btn
+              v-else
+              @click="triggerHarvest"
+              :disabled="selectedItems.length == 0 || deleteInProgress"
+              color="primary"
+            >
+              <v-icon small class="pr-2">fa fa-download</v-icon>
+              {{ $t("harvest_button") }}
+            </v-btn>
+          </v-col>
+          <v-col v-if="deleteInProgress" class="align-self-center">
+            <div class="pl-4 warning--text">
+              {{ $t("delete_in_progress") }}
+            </div>
           </v-col>
         </v-row>
       </v-container>
       <v-spacer></v-spacer>
-      <v-btn @click="closeDialog()" class="mb-3 mr-4" :right="true">{{ $t("close") }}</v-btn>
+      <v-btn @click="closeDialog()" class="mr-4" :right="true">{{
+        $t("close")
+      }}</v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -220,13 +295,7 @@ import { ymFirstDay, ymLastDay } from "@/libs/dates";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
-import {
-  dataStateToIcon,
-  DATA_UNTRIED,
-  DATA_FAILED,
-  DATA_NO_DATA,
-  DATA_SUCCESS,
-} from "@/libs/data-state";
+import { dataStateToIcon } from "@/libs/data-state";
 
 export default {
   name: "SushiCredentialsDataDialog",
@@ -237,8 +306,8 @@ export default {
   },
   props: {
     credentials: {
-       required: true,
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -246,16 +315,22 @@ export default {
       fetchedData: [],
       loadingDownloads: false,
       tableOptions: {
-        sortBy: ['year'],
+        sortBy: ["year"],
         sortDesc: [true],
       },
       currentHarvest: null,
       showHarvestDialog: false,
+      deleteMode: true,
+      deleteInProgress: false,
     };
   },
   computed: {
     itemsPerPageOptions() {
-      return [this.reportTypes.length, this.reportTypes.length * 2, this.reportTypes.length * 3]
+      return [
+        this.reportTypes.length,
+        this.reportTypes.length * 2,
+        this.reportTypes.length * 3,
+      ];
     },
     itemsPerPage() {
       return this.reportTypes.length;
@@ -289,11 +364,13 @@ export default {
           };
           for (const month of this.months) {
             for (const row of year_data[month]) {
-              if (row.counter_report.code ==  report_type.code) {
+              if (row.counter_report.code == report_type.code) {
                 record[month] = {
                   status: row.status,
                   planned: row.planned,
-                  broken: row.broken || !!(this.credentials && this.credentials.broken),
+                  broken:
+                    row.broken ||
+                    !!(this.credentials && this.credentials.broken),
                 };
               }
             }
@@ -311,7 +388,7 @@ export default {
             broken: rt.broken,
             code: rt.counter_report.code,
             id: rt.counter_report.id,
-            name: rt.counter_report.name
+            name: rt.counter_report.name,
           });
         }
       }
@@ -321,7 +398,7 @@ export default {
       let result = [];
       for (const a in this.buttonsSelected) {
         for (const rt of this.buttonsSelected[a]) {
-          let yearMonth = `${a.slice(0,4)}-${a.slice(5, 7)}`;
+          let yearMonth = `${a.slice(0, 4)}-${a.slice(5, 7)}`;
           result.push({
             start_date: ymFirstDay(yearMonth),
             end_date: ymLastDay(yearMonth),
@@ -335,27 +412,38 @@ export default {
     headers() {
       let res = [
         { text: this.$t("year"), value: "year", class: "wrap" },
-        { text: this.$t("labels.report_type"), value: "counter_report", class: "wrap", align: "center" },
+        {
+          text: this.$t("labels.report_type"),
+          value: "counter_report",
+          class: "wrap",
+          align: "center",
+        },
       ];
-      for (let i = 1;  i <= 12; i++) {
+      for (let i = 1; i <= 12; i++) {
         let padded = `${i}`.padStart(2, "0");
         let shortMonthName = new Date(2020, i - 1, 1).toLocaleString(
-          this.$i18n.locale, {month: "short"}
+          this.$i18n.locale,
+          { month: "short" }
         );
-        res.push({ text: shortMonthName, value: `${padded}`, sortable: false, align: "center", width: 50});
+        res.push({
+          text: shortMonthName,
+          value: `${padded}`,
+          sortable: false,
+          align: "center",
+          width: 50,
+        });
       }
       return res;
     },
     totalCount() {
       return this.processedData.length;
-    }
+    },
   },
 
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
-    slotName: (rt) => "item." + rt,
     async loadCredentialsData() {
       if (this.credentialsDataUrl) {
         this.platforms = [];
@@ -366,7 +454,8 @@ export default {
         } catch (error) {
           this.showSnackbar({
             content:
-              `Error fetching Download data for credentials: ${this.credentials.pk}: ` + error,
+              `Error fetching Download data for credentials: ${this.credentials.pk}: ` +
+              error,
           });
         } finally {
           this.loadingDownloads = false;
@@ -392,27 +481,38 @@ export default {
 
       // reload current data
       this.buttonsSelected = {};
-      this.loadCredentialsData();
+      await this.loadCredentialsData();
 
       this.showHarvestDialog = true;
     },
-    dataReady: (item, month) => {
+    isStatusSelectable(status) {
+      if (this.deleteMode || (status !== "no_data" && status !== "success"))
+        return true;
+      return false;
+    },
+    dataReady(item, month) {
       let year = parseInt(item.year);
       let month_int = parseInt(month);
+      if (!this.isStatusSelectable(item[month].status))
+        // do not allow re-harvesting of successful downloads
+        return false;
       let current = new Date();
       let current_year = current.getFullYear();
       let current_month = current.getMonth() + 1;
-      return (year < current_year || (year == current_year && month_int < current_month)) ? true : false;
+      return year < current_year ||
+        (year == current_year && month_int < current_month)
+        ? true
+        : false;
     },
     buttonColor: (report) => {
       if (report.planned) {
-        return 'primary lighten-5';
+        return "primary lighten-5";
       }
-      return '';
+      return "";
     },
     textClases: (report) => {
       if (report.planned) {
-        return ['font-weight-black', 'primary--text'];
+        return ["font-weight-black", "primary--text"];
       }
       return [];
     },
@@ -424,11 +524,13 @@ export default {
       // remove broken credentials
       if (credentials.broken != null) {
         this.showSnackbar({
-          content: this.$t('snack_bar.credentials_broken'),
+          content: this.$t("snack_bar.credentials_broken"),
           color: "error",
         });
         // unselect all
-        Object.keys(selected).forEach((key) => { selected[key] = []; });
+        Object.keys(selected).forEach((key) => {
+          selected[key] = [];
+        });
         return;
       }
 
@@ -437,15 +539,64 @@ export default {
       let broken_report_type = false;
       Object.keys(selected).forEach((key) => {
         let orig_len = selected[key].length;
-        selected[key] = selected[key].filter((rt_id) => !brokenIds.includes(rt_id))
-        broken_report_type = broken_report_type || (orig_len != selected[key].length);
+        selected[key] = selected[key].filter(
+          (rt_id) => !brokenIds.includes(rt_id)
+        );
+        broken_report_type =
+          broken_report_type || orig_len != selected[key].length;
       });
       if (broken_report_type) {
         this.showSnackbar({
-          content: this.$t('snack_bar.report_type_broken'),
+          content: this.$t("snack_bar.report_type_broken"),
           color: "error",
         });
       }
+    },
+    async deleteSelected() {
+      const res = await this.$confirm(
+        this.$tc("really_delete", this.selectedItems.length),
+        {
+          title: this.$t("confirm_delete"),
+          buttonTrueText: this.$t("delete"),
+          buttonFalseText: this.$t("cancel"),
+        }
+      );
+      if (res) {
+        this.deleteInProgress = true;
+        try {
+          await axios.post(
+            "/api/scheduler/fetch-intention-delete/",
+            this.selectedItems
+          );
+          await this.loadCredentialsData();
+          this.validateSelection();
+        } catch (error) {
+          this.showSnackbar({
+            content: "Error deleting data: " + error,
+            color: "error",
+          });
+        } finally {
+          this.deleteInProgress = false;
+        }
+      }
+    },
+    validateSelection() {
+      // goes over selected buttons and only keeps the ones compatible with
+      // the current mode
+      let newSelection = {};
+      for (let [yearMonth, trs] of Object.entries(this.buttonsSelected)) {
+        let year = parseInt(yearMonth.substring(0, 4));
+        let month = yearMonth.substring(5, 7);
+        let yearRec = this.fetchedData.find((item) => item.year === year);
+        let monthRec = yearRec[month];
+        for (let trId of trs) {
+          let match = monthRec.find((item) => item.counter_report.id === trId);
+          if (this.isStatusSelectable(match.status)) {
+            newSelection[yearMonth] = trs;
+          }
+        }
+      }
+      this.buttonsSelected = newSelection;
     },
   },
 
@@ -463,14 +614,18 @@ export default {
         this.loadCredentialsData();
       }
     },
+    deleteMode() {
+      this.validateSelection();
+      //this.buttonsSelected = {};
+    },
   },
 };
 </script>
 
 <style scoped lang="scss">
-  tbody {
-     tr:hover {
-        background-color: transparent !important;
-     }
+tbody {
+  tr:hover {
+    background-color: transparent !important;
   }
+}
 </style>

@@ -1,19 +1,34 @@
+from collections import Counter
+
+from django.core.exceptions import BadRequest
 from django.db.models import Count, Exists, F, Max, Min, Prefetch, Q
 from django.db.models.functions import Coalesce
+from django.db.transaction import atomic
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.fields import DateField
+from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
+from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet, ModelViewSet
 
-from core.logic.dates import parse_month
-from core.models import REL_ORG_USER
+from core.logic.dates import parse_month, month_end
+from core.models import REL_ORG_USER, REL_ORG_ADMIN
 from core.permissions import SuperuserOrAdminPermission
+from logs.models import ImportBatch
 from logs.views import StandardResultsSetPagination
-from sushi.models import CounterReportsToCredentials
+from sushi.models import (
+    CounterReportsToCredentials,
+    SushiFetchAttempt,
+    SushiCredentials,
+    CounterReportType,
+)
 
 from . import filters
 from .models import Automatic, FetchIntention, Harvest
@@ -285,3 +300,42 @@ class IntentionViewSet(ModelViewSet):
             # 404 for existing but not last intentions
             return super().filter_queryset(*args, **kwargs)
         return super().filter_queryset(*args, **kwargs).latest_intentions()
+
+
+class IntentionDeleteView(APIView):
+    class DeleteIntentionSerializer(Serializer):
+        credentials = PrimaryKeyRelatedField(many=False, queryset=SushiCredentials.objects.all())
+        start_date = DateField()
+        counter_report = PrimaryKeyRelatedField(
+            many=False, queryset=CounterReportType.objects.all()
+        )
+
+    @atomic
+    def post(self, request):
+        stats = Counter()
+        serializer = self.DeleteIntentionSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        for item in serializer.validated_data:
+            credentials = item['credentials']
+            start_date = item['start_date']
+            counter_report = item['counter_report']
+            if not request.user.has_organization_admin_permission(credentials.organization_id):
+                raise PermissionDenied(
+                    f'User not allowed to manage data for organization: '
+                    f'{credentials.organization_id}'
+                )
+            to_delete = FetchIntention.objects.filter(
+                credentials=credentials,
+                start_date=start_date,
+                end_date=month_end(start_date),
+                counter_report=counter_report,
+            )
+            stats.update(
+                ImportBatch.objects.filter(
+                    sushifetchattempt__fetchintention__in=to_delete
+                ).delete()[1]
+            )
+            stats.update(SushiFetchAttempt.objects.filter(fetchintention__in=to_delete).delete()[1])
+            stats.update(to_delete.delete()[1])
+
+        return Response(stats)
