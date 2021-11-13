@@ -20,6 +20,7 @@ en:
   import: Import
   thats_all: That is all. The data were imported.
   return_to_platform: Go to platform page
+  upload_more_files: Upload more files
   following_error_found: The following error was found when checking the imported data
   back_to_start: Back to data upload
   no_report_types: There are not reports defined for this platform - contact administrators to add some
@@ -43,6 +44,7 @@ cs:
   import: Importovat
   thats_all: To je vše. Data byla úspěšně importována.
   return_to_platform: Přejít na stránku platformy
+  upload_more_files: Nahrát další data
   following_error_found: Při kontrole dat byla nalezena následující chyba
   back_to_start: Zpět na nahrání dat
   no_report_types: Pro tuto platformu nejsou definovány žádné reporty - kontaktujte administrátory pro jejich přidání
@@ -208,9 +210,10 @@ cs:
                 <AccessLogList :import-batch="importBatch.pk" />
               </v-tab-item>
             </v-tabs-items>
-            <v-container>
+            <v-container fluid>
               <v-row>
-                <v-col cols="auto">
+                <v-col cols="auto" class="align-self-center">
+                  <v-icon color="success" small>fa fa-check-circle</v-icon>
                   {{ $t("thats_all") }}
                 </v-col>
                 <v-spacer></v-spacer>
@@ -224,6 +227,13 @@ cs:
                   >
                     {{ $t("return_to_platform") }}
                   </v-btn>
+                </v-col>
+                <v-col cols="auto">
+                  <v-btn
+                    @click="backToStart()"
+                    v-text="$t('upload_more_files')"
+                    color="primary"
+                  ></v-btn>
                 </v-col>
               </v-row>
             </v-container>
