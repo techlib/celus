@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 from django.urls import reverse
 
@@ -16,9 +14,9 @@ from logs.models import (
     ReportInterestMetric,
     ReportType,
 )
-from logs.tests.conftest import report_type_nd
+from logs.tests.conftest import report_type_nd  # noqa - fixture
 from organizations.models import UserOrganization
-from core.tests.conftest import (
+from core.tests.conftest import (  # noqa - fixtures
     valid_identity,
     authenticated_client,
     authentication_headers,
@@ -28,8 +26,7 @@ from core.tests.conftest import (
 )
 from publications.models import PlatformInterestReport, Platform, PlatformTitle
 from sushi.models import SushiCredentials, CounterReportType
-from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.scenarios.basic import *
+from test_fixtures.scenarios.basic import *  # noqa - fixtures
 
 
 @pytest.mark.django_db
