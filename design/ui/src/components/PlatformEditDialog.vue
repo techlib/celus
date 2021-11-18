@@ -225,6 +225,9 @@ export default {
     platformsBaseUrl() {
       return `/api/organization/${this.selectedOrganization.pk}/platform/`;
     },
+    platformsAllUrl() {
+      return `/api/organization/${this.selectedOrganization.pk}/all-platform/`;
+    },
     similarPlatforms() {
       const SIMILAR_CONST = 0.5;
       // search by short name
@@ -294,10 +297,10 @@ export default {
       }
     },
     async loadPlatforms() {
-      if (this.platformsBaseUrl) {
+      if (this.platformsAllUrl) {
         this.platforms = [];
         try {
-          let result = await axios.get(this.platformsBaseUrl);
+          let result = await axios.get(this.platformsAllUrl);
           this.platforms = result.data;
         } catch (error) {
             this.showSnackbar({ content: "Error loading platforms: " + error });
