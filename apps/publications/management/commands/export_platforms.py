@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.models import OuterRef, Exists
 
+from core.models import DATA_SOURCE_TYPE_ORGANIZATION
 from logs.models import AccessLog
 from publications.models import Platform
 from sushi.models import SushiCredentials
@@ -22,16 +23,25 @@ class Command(BaseCommand):
         parser.add_argument(
             '--output', '-o', dest='output', required=True, type=lambda x: pathlib.Path(x).open("w")
         )
+        parser.add_argument(
+            '--all',
+            dest='all',
+            action='store_true',
+            help="Export all platforms - including those which were made by users",
+        )
 
     def handle(self, *args, **options):
 
         # try to get site domain
         domain_name = Site.objects.get(pk=settings.SITE_ID).domain
 
-        platforms = Platform.objects.all().values("pk", "name", "short_name", "provider", "url",)
+        all_platforms = options.get("all", False)
+        platform_exclude = {} if all_platforms else {"source__type": DATA_SOURCE_TYPE_ORGANIZATION}
+
+        platforms = Platform.objects.exclude(**platform_exclude)
 
         converted_credentials = []
-        for creds in SushiCredentials.objects.working().not_fake():
+        for creds in SushiCredentials.objects.working().filter(platform__in=platforms).not_fake():
             new_credentials = {
                 "pk": creds.pk,
                 "platform_id": creds.platform_id,
@@ -56,7 +66,7 @@ class Command(BaseCommand):
 
         result = {
             "origin": domain_name,
-            "platforms": list(platforms),
+            "platforms": list(platforms.values("pk", "name", "short_name", "provider", "url",)),
             "credentials": converted_credentials,
         }
 
