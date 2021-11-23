@@ -6,6 +6,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [4.0.0]
+
+### Added
+
+#### Frontend
+
+* when harvesting data using SUSHI, overview of existing data is shown and months with existing
+  data are automatically skipped
+* it is now possible to delete SUSHI data from the "Overview" dialog in SUSHI management
+* months with already planned harvesting are marked with a badge in the "Overview" dialog
+* rows with zero usage are removed from advanced reporting output by default, it is possible to
+  configure reports to add them.
+* upload of another file is offered in the last step of manual upload
+
+#### Backend
+
+* support for synchronization of log data into Clickhouse was added
+* management command was added to remove titles without any associated usage data
+* management command was added to remove orphaned files from sushi harvesting
+
+### Changes
+
+#### Frontend
+
+* menu sections for reporting and overlap analysis were renamed based on user feedback
+* selection of organization and platforms when adding new SUSHI credentials was optimized for space
+* downloads resulting in SUSHI exception 3030 (no usage) are now shown with the "empty data" icon
+  rather than the "error" icon
+* javascript libraries were updated
+
+#### Backend
+
+* older data harvested using SUSHI for a period longer than one month were split to individual
+  months for easier management (deleting and re-harvesting)
+* python libraries were updated
+
+### Fixed
+
+#### Frontend
+
+* when adding new platform, warning of potential clash with existing platforms now works correctly
+* remove background request for unused chart data on the dashboard page
+* manual upload of data is no longer permitted if all organizations are selected
+
+#### Backend
+
+* rare database constraint error when creating new title records during data import was fixed
+* properly handle exceptions coming from the pycounter library when importing C4 data
+* check for correct site.domain configuration were added when sending user invitations
+* disabling of cachalot in test settings was fixed
+
+
 ## [3.2.5]
 
 ### Fixed
