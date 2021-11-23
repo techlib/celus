@@ -8,6 +8,7 @@ en:
     org: Organization
     sys: Consortium
   run_report_tt: Show report output in table
+  cancel_report_tt: Cancel report creation
   export_tt: Export report into CSV
   view_report_tt: View report definition details
   edit_report_tt: Edit report definition
@@ -41,7 +42,8 @@ cs:
     org: Organizace
     sys: Konzorcium
   run_report_tt: Zobrazit výstup v tabulce
-  export_tt: Exportovat data to CSV
+  cancel_report_tt: Zrušit tvorbu reportu
+  export_tt: Exportovat data do CSV
   view_report_tt: Zobrazení detailu definice reportu
   edit_report_tt: Úprava definice reportu
   copy_report_tt: Vytvoří kopii existujícího reportu

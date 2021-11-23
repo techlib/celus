@@ -4,6 +4,7 @@
 <i18n lang="yaml">
 en:
   run_report: Run report
+  cancel_report: Cancel report
   run_export: Export
   not_empty: This field cannot be empty
   column_order_tt: This number shows the position which this dimension will occupy in the column header. It is based on the order in which the checkboxes are checked.
@@ -17,6 +18,7 @@ en:
 
 cs:
   run_report: Spustit report
+  cancel_report: Zrušit report
   run_export: Exportovat
   not_empty: Toto pole nesmí být prázdné
   detail: Detail
@@ -297,13 +299,14 @@ cs:
         </v-row>
 
         <v-row>
-          <v-col cols="auto">
+          <v-col v-show="!reportRunning" cols="auto">
             <v-tooltip bottom>
               <template #activator="{ on }">
                 <v-btn
                   @click="runReport"
-                  :disabled="!(formValid && hasGroupBy)"
+                  :disabled="!(formValid && hasGroupBy) || reportRunning"
                   v-on="on"
+                  min-width="12rem"
                 >
                   <v-icon small color="green lighten-2" class="mr-1"
                     >fa fa-play
@@ -312,6 +315,24 @@ cs:
                 </v-btn>
               </template>
               {{ $t("run_report_tt") }}
+            </v-tooltip>
+          </v-col>
+          <v-col v-show="reportRunning" cols="auto">
+            <v-tooltip bottom>
+              <template #activator="{ on }">
+                <v-btn
+                  @click="cancelReport"
+                  :disabled="!(hasGroupBy && reportRunning)"
+                  v-on="on"
+                  min-width="12rem"
+                >
+                  <v-icon small color="red lighten-2" class="mr-1"
+                    >fa-stop
+                  </v-icon>
+                  {{ $t("cancel_report") }}
+                </v-btn>
+              </template>
+              {{ $t("cancel_report_tt") }}
             </v-tooltip>
           </v-col>
           <v-col cols="auto">
@@ -382,7 +403,7 @@ cs:
 
     <v-row>
       <v-col>
-        <FlexiTableOutput ref="outputTable" :show-zero-rows="showZeroRows" />
+        <FlexiTableOutput v-show="displayReport" ref="outputTable" :show-zero-rows="showZeroRows" />
       </v-col>
     </v-row>
   </v-container>
@@ -456,6 +477,7 @@ export default {
       accessLevelParams: {},
       wantsSave: !!this.reportId || "wantsSave" in this.$route.query,
       showZeroRows: false,
+      reportRunning: false,
     };
   },
 
@@ -611,7 +633,13 @@ export default {
     ruleNotEmpty(value) {
       return value.length > 0 || this.$t("not_empty");
     },
+    cancelReport() {
+      this.displayReport = false;
+      this.$refs.outputTable.cancelReport();
+    },
     async runReport() {
+      this.displayReport = true;
+      this.reportRunning = true;
       // used when the whole report changes. We need to reset the sorting because the old
       // might no longer be relevant
       // we want to prevent double loading of data if the change to sortBy changes URL params and
@@ -621,6 +649,7 @@ export default {
         await this.updateReport();
       } finally {
         this.ignoreUrlFilteringParams = false;
+        this.reportRunning = false;
       }
     },
     async updateReport() {

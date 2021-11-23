@@ -88,6 +88,7 @@ export default {
       },
       errorCode: null,
       errorDetails: null,
+      cancelTokenSource: null,
     };
   },
 
@@ -173,8 +174,12 @@ export default {
       }
       await this.fetchData();
     },
+    cancelReport() {
+      this.cancelTokenSource.cancel("request canceled by user");
+    },
     async fetchData() {
       this.dataLoading = true;
+      this.cancelTokenSource = axios.CancelToken.source();
       let params = {
         ...this.report.urlParams(),
         page_size: this.options.itemsPerPage,
@@ -182,13 +187,18 @@ export default {
         ...this.orderByParam,
       };
       try {
-        let resp = await axios.get(this.dataUrl, {
+        let resp = await axios({
+          method: "GET",
+          url: this.dataUrl,
           params: params,
+          cancelToken: this.cancelTokenSource.token,
         });
         this.data = resp.data.results;
         this.totalRowCount = resp.data.count;
       } catch (error) {
-        if (
+        if (axios.isCancel(error)) {
+          console.debug("Request cancelled by customer");
+        } else if (
           error.response.data &&
           error.response.data.error &&
           error.response.data.error.code
@@ -204,6 +214,7 @@ export default {
         return;
       } finally {
         this.dataLoading = false;
+        this.cancelTokenSource = null;
       }
       await this.updateTranslators();
       this.recomputeData();
