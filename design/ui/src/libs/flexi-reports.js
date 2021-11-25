@@ -98,6 +98,7 @@ class FlexiReport {
     this.name = "";
     this.owner = null;
     this.ownerOrganization = null;
+    this.includeZeroRows = false;
   }
 
   get accessLevel() {
@@ -168,6 +169,8 @@ class FlexiReport {
     this.groupBy = config.group_by.map((item) => this.resolveDim(item));
     // order by
     this.orderBy = config.order_by;
+    // extra params
+    this.includeZeroRows = config.zero_rows ?? false;
   }
 
   async resolveReportType(id, allReportTypes = null) {
@@ -211,6 +214,7 @@ class FlexiReport {
       filters: btoa(JSON.stringify(filters)),
       groups: btoa(JSON.stringify(this.groupBy.map((item) => item.ref))),
       order_by: this.orderBy.join(";"),
+      zero_rows: this.includeZeroRows,
     };
   }
 

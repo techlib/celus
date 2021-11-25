@@ -617,6 +617,7 @@ class FlexibleDataSlicer:
         self.order_by = []
         self._annotations = []
         self.organization_filter = None
+        self.include_all_zero_rows = False
 
     def config(self):
         return {
@@ -624,6 +625,7 @@ class FlexibleDataSlicer:
             "filters": [fltr.config() for fltr in self.dimension_filters],
             "group_by": self.group_by,
             "order_by": self.order_by,
+            "zero_rows": self.include_all_zero_rows,
         }
 
     @property
@@ -736,6 +738,9 @@ class FlexibleDataSlicer:
                 'E103',
                 details={'dimension': self.primary_dimension},
             )
+        if not self.include_all_zero_rows:
+            # total is added in _prepare_annotations and is a sum of all the value columns
+            qs = qs.filter(_total__gt=0)
         return qs
 
     def _primary_dimension_filter(self) -> dict:
@@ -750,7 +755,10 @@ class FlexibleDataSlicer:
     ) -> dict:
         gb_query = self.get_possible_groups_queryset()
         if not gb_query:
-            return {'total': Coalesce(Sum(f'{accesslog_prefix}value'), 0)}
+            return {
+                'total': Coalesce(Sum(f'{accesslog_prefix}value'), 0),
+                '_total': Coalesce(Sum(f'{accesslog_prefix}value'), 0),
+            }
         if gb_query.count() > max_number:
             raise SlicerConfigError(
                 f'There are too many ({gb_query.count()}) possible groups, please refine '
@@ -766,6 +774,7 @@ class FlexibleDataSlicer:
             key = self._group_dict_to_group_key(group)
             filters = {f'{accesslog_prefix}{dim}': group[dim] for dim in self.group_by}
             annotations[key] = Coalesce(Sum(f'{accesslog_prefix}value', filter=Q(**filters)), 0)
+            annotations['_total'] = Coalesce(Sum(f'{accesslog_prefix}value'), 0)
         self._annotations = annotations
         return annotations
 
@@ -1017,6 +1026,9 @@ class FlexibleDataSlicer:
             if desc in (True, 'true', '1'):
                 order_by = '-' + order_by
             slicer.order_by = [order_by]
+        # extra stuff
+        # the zero_rows value should be recoded to python bool, but we want to make sure
+        slicer.include_all_zero_rows = params.get('zero_rows', '') in (True, 'true', '1', 1)
         return slicer
 
     @classmethod
@@ -1042,12 +1054,14 @@ class FlexibleDataSlicer:
         slicer.group_by = params.get('group_by', [])
         # ordering
         slicer.order_by = params.get('order_by', [])
+        # extra stuff
+        slicer.include_all_zero_rows = params.get('zero_rows', False)
         return slicer
 
 
 class FlexibleDataExporter:
 
-    object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn'],}}
+    object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
 
     def __init__(self, slicer: FlexibleDataSlicer, column_parts_separator: str = ' / '):
         self.slicer = slicer

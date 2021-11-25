@@ -17,11 +17,11 @@ en:
     analytics: Analytics
     overlap_analysis_titles: Titles on multiple platforms
     overlap_analysis_platforms: Platform overlap
-    flexitable: Advanced reporting
+    flexitable: Reporting and exports
     sushi: SUSHI
     configuration: Configuration
     data_management: Data management
-    subscriptions: Subscriptions
+    subscriptions: Overlap analysis
     exports: Exports
     ad_hoc_report: Ad hoc report
     flexi_reports: Reports
@@ -123,6 +123,7 @@ en:
     report_output: Report output
     status: Status
     credentials: Credentials
+    settings: Settings
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -180,11 +181,11 @@ cs:
     analytics: Analytické nástroje
     overlap_analysis_titles: Tituly na více platformách
     overlap_analysis_platforms: Překryv platforem
-    flexitable: Pokročilý reporting
+    flexitable: Reporting a exporty
     sushi: SUSHI
     configuration: Konfigurace
     data_management: Správa dat
-    subscriptions: Předplatné
+    subscriptions: Analýza překryvů
     exports: Exporty
     ad_hoc_report: Ad hoc report
     flexi_reports: Reporty
@@ -286,6 +287,7 @@ cs:
     report_output: Výstup reportu
     status: Stav
     credentials: Přihlašovací údaje
+    settings: Nastavení
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

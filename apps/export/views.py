@@ -23,8 +23,6 @@ class FlexibleDataExportViewSet(ModelViewSet):
             slicer = FlexibleDataSlicer.create_from_params(request.data)
         except SlicerConfigError as e:
             return Response({'error': str(e)}, status=HTTP_400_BAD_REQUEST)
-        print(slicer.filters)
-        pprint(slicer.config())
         export = FlexibleDataExport.create_from_slicer(slicer, request.user)
         process_flexible_export_task.apply_async(args=(export.pk,), countdown=2)
         serializer = self.get_serializer(export)

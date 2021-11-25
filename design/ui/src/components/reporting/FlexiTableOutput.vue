@@ -66,6 +66,7 @@ export default {
 
   props: {
     readonly: { default: false, type: Boolean },
+    showZeroRows: { default: false, type: Boolean },
   },
 
   data() {

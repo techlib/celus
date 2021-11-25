@@ -13,7 +13,7 @@ from logs.logic.queries import (
 )
 from logs.models import Metric, DimensionText, AccessLog, Dimension
 from organizations.models import Organization
-from publications.models import Platform
+from publications.models import Platform, Title
 
 
 def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list) -> dict:
@@ -513,6 +513,20 @@ class TestFlexibleDataSlicerOther:
         data = list(slicer.get_data())
         new_slicer = FlexibleDataSlicer.create_from_config(slicer.config())
         assert data == list(new_slicer.get_data())
+
+    @pytest.mark.parametrize(['show_zero', 'row_count'], [(True, 4), (False, 3)])
+    def test_include_zero_usage(self, flexible_slicer_test_data, show_zero, row_count):
+        """
+        Test that slicer correctly reacts to `include_all_zero_rows`
+        :return:
+        """
+        Title.objects.create(name='Zero usage')  # add one unused title
+        assert Title.objects.count() == 4
+        slicer = FlexibleDataSlicer(primary_dimension='target')
+        slicer.add_group_by('metric')
+        slicer.include_all_zero_rows = show_zero
+        data = list(slicer.get_data())
+        assert len(data) == row_count
 
 
 @pytest.mark.django_db

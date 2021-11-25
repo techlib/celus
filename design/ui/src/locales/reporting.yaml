@@ -22,6 +22,9 @@ en:
   new_title: New title
   add_report: Add report
   error_details: Error details
+  show_zero_rows: Include rows with zero usage
+  show_zero_rows_no: Only rows with non-zero usage
+  show_zero_rows_yes: Includes rows with zero usage
   export_status:
     not_started: Not started
     in_progress: In progress
@@ -52,6 +55,9 @@ cs:
   new_title: Nový název
   add_report: Přidat report
   error_details: Detaily chyby
+  show_zero_rows: Zahrnout i řádky s nulovým využitím
+  show_zero_rows_no: Jen řádky s nenulovým využitím
+  show_zero_rows_yes: Zahrnuje řádky s nulovým využitím
   export_status:
     not_started: Nespuštěno
     in_progress: Probíhá export

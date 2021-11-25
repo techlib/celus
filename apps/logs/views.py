@@ -3,6 +3,7 @@ from functools import reduce
 from pprint import pprint
 from time import monotonic
 
+from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import BadRequest
 from django.core.mail import mail_admins
@@ -181,7 +182,6 @@ class RawDataExportView(PandasView):
 
     def get_queryset(self):
         query_params = self.extract_query_filter_params(self.request)
-        print('Count:', AccessLog.objects.filter(**query_params).count())
         data = AccessLog.objects.filter(**query_params).select_related(*self.implicit_dims)[
             : self.export_size_limit
         ]
@@ -535,9 +535,8 @@ class FlexibleSlicerView(APIView):
         try:
             slicer = FlexibleDataSlicer.create_from_params(request.query_params)
             slicer.add_extra_organization_filter(request.user.accessible_organizations())
-            print(slicer.filters)
-            pprint(slicer.config())
-            print("LANG", request.user.language)
+            if settings.DEBUG:
+                pprint(slicer.config())
             data = slicer.get_data(lang=request.user.language)
         except SlicerConfigError as e:
             return Response(
@@ -560,7 +559,8 @@ class FlexibleSlicerPossibleValuesView(APIView):
         try:
             slicer = FlexibleDataSlicer.create_from_params(request.query_params)
             slicer.add_extra_organization_filter(request.user.accessible_organizations())
-            pprint(slicer.config())
+            if settings.DEBUG:
+                pprint(slicer.config())
             q = request.query_params.get('q')
             pks = None
             pks_value = request.query_params.get('pks')

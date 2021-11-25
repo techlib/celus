@@ -147,22 +147,6 @@ export default {
           title: this.$i18n.t("pages.analytics"),
           items: [
             {
-              title: this.$t("pages.subscriptions"),
-              icon: "fa fa-layer-group",
-              items: [
-                {
-                  title: this.$i18n.t("pages.overlap_analysis_titles"),
-                  icon: "fa fa-layer-group",
-                  linkTo: "overlap-analysis",
-                },
-                {
-                  title: this.$i18n.t("pages.overlap_analysis_platforms"),
-                  icon: "fa fa-th",
-                  linkTo: "platform-overlap-analysis",
-                },
-              ],
-            },
-            {
               title: this.$i18n.t("pages.flexitable"),
               icon: "fa fa-border-all",
               items: [
@@ -177,6 +161,22 @@ export default {
                 {
                   title: this.$t("pages.exports"),
                   linkTo: "exports",
+                },
+              ],
+            },
+            {
+              title: this.$t("pages.subscriptions"),
+              icon: "fa fa-layer-group",
+              items: [
+                {
+                  title: this.$i18n.t("pages.overlap_analysis_titles"),
+                  icon: "fa fa-layer-group",
+                  linkTo: "overlap-analysis",
+                },
+                {
+                  title: this.$i18n.t("pages.overlap_analysis_platforms"),
+                  icon: "fa fa-th",
+                  linkTo: "platform-overlap-analysis",
                 },
               ],
             },

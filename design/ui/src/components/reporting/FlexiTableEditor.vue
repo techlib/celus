@@ -14,6 +14,7 @@ en:
   report_title: Report title
   please_fill_in_title: Please fill in report title and access level and hit 'Save changes' again.
   select_at_least_one_column_dim: At least one column dimension must be selected.
+
 cs:
   run_report: Spustit report
   run_export: Exportovat
@@ -353,6 +354,14 @@ cs:
               >{{ $t("select_at_least_one_column_dim") }}</v-alert
             >
           </v-col>
+          <v-col cols="auto">
+            <v-switch
+              :label="$t('show_zero_rows')"
+              v-model="showZeroRows"
+              class="mt-0"
+            />
+          </v-col>
+          <v-spacer></v-spacer>
           <v-col cols="auto" v-if="!readOnly">
             <v-btn
               @click="saveReport"
@@ -373,7 +382,7 @@ cs:
 
     <v-row>
       <v-col>
-        <FlexiTableOutput ref="outputTable" />
+        <FlexiTableOutput ref="outputTable" :show-zero-rows="showZeroRows" />
       </v-col>
     </v-row>
   </v-container>
@@ -446,6 +455,7 @@ export default {
       edit: !this.reportId || "edit" in this.$route.query,
       accessLevelParams: {},
       wantsSave: !!this.reportId || "wantsSave" in this.$route.query,
+      showZeroRows: false,
     };
   },
 
@@ -517,6 +527,7 @@ export default {
         primary_dimension: this.row,
         filters: btoa(JSON.stringify(this.appliedFilters)),
         groups: btoa(JSON.stringify(this.appliedGroups)),
+        zero_rows: this.showZeroRows,
       };
     },
     selectorBaseUrl() {
@@ -574,6 +585,7 @@ export default {
       let access = this.accessLevelParams;
       rt.owner = access.owner;
       rt.ownerOrganization = access.owner_organization;
+      rt.includeZeroRows = this.showZeroRows;
       return rt;
     },
     canEdit() {
@@ -760,6 +772,7 @@ export default {
       if (config.order_by) {
         this.orderBy = config.order_by;
       }
+      this.showZeroRows = config.zero_rows ?? false;
       this.reportName = settings.name;
       this.reportPk = settings.pk;
       this.owner = settings.owner;

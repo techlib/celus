@@ -80,7 +80,7 @@ class FlexibleDataExport(ExportBase):
 
     @classmethod
     def create_from_slicer(cls, slicer: FlexibleDataSlicer, user):
-        this = FlexibleDataExport(owner=user, export_params=slicer.config(),)
+        this = FlexibleDataExport(owner=user, export_params=slicer.config())
         this.save()
         return this
 

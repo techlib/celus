@@ -158,6 +158,16 @@
                     }}
                   </td>
                 </tr>
+                <tr>
+                  <th>{{ $t("labels.settings") }}:</th>
+                  <td>
+                    {{
+                      item.includeZeroRows
+                        ? $t("show_zero_rows_yes")
+                        : $t("show_zero_rows_no")
+                    }}
+                  </td>
+                </tr>
               </table>
             </td>
             <td>
