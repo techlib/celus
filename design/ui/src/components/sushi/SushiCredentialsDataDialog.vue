@@ -10,6 +10,7 @@ en:
     untried: Hasn't been performed yet
     success: Successfully downloaded
   planned: It is already planned to be harvested
+  planned_retry: A re-harvest is already planned to make sure there was really no usage
   broken: Broken report type
   selected_count: Number of records to harvest
   selected_count_delete: Number of records to delete
@@ -34,6 +35,7 @@ cs:
     untried: Stahování zatím neproběhlo
     success: Úspěšně staženo
   planned: Stahování bylo naplánováno
+  planned_retry: Je naplánováno stahování, aby se ověřilo, že opravdu nejsou data
   broken: Rozbitý report
   selected_count: Počet záznamů ke stáhnutí
   select_help: Můžete vybrat neúspěšné záznamy z tabulky
@@ -173,9 +175,16 @@ cs:
                         <v-icon small color="error">fa fa-exclamation</v-icon>
                         {{ $t("broken") }}</span
                       >
-                      <span v-if="row.item[month].planned"
-                        ><br />{{ $t("planned") }}</span
-                      >
+                      <span
+                        v-if="
+                          row.item[month].planned &&
+                          row.item[month].status === 'no_data'
+                        "
+                        ><br />{{ $t("planned_retry") }}
+                      </span>
+                      <span v-else-if="row.item[month].planned">
+                        <br />{{ $t("planned") }}
+                      </span>
                     </v-tooltip>
                   </td>
                 </tr>
@@ -320,7 +329,7 @@ export default {
       },
       currentHarvest: null,
       showHarvestDialog: false,
-      deleteMode: true,
+      deleteMode: false,
       deleteInProgress: false,
     };
   },

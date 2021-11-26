@@ -11,7 +11,7 @@ function dataStateToIcon(state) {
     case DATA_FAILED:
       return { color: "error", icon: "fas fa-exclamation-circle" };
     case DATA_NO_DATA:
-      return { color: "warning", icon: "far fa-question-circle" };
+      return { color: "success", icon: "far fa-circle" };
     case DATA_SUCCESS:
       return { color: "success", icon: "far fa-check-circle" };
     case DATA_PARTIAL_DATA:

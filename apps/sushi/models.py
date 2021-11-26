@@ -434,7 +434,20 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                     ):
                         partial_data = True
 
-                status = AttemptStatus.DOWNLOAD_FAILED
+                # Mark that status is no data when there is no data error
+                # Otherwise mark as failed download
+                if any(
+                    str(e.code)
+                    in (
+                        str(ErrorCode.NO_DATA_FOR_DATE_ARGS.value),
+                        str(ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value),
+                    )
+                    for e in errors
+                ):
+                    status = AttemptStatus.NO_DATA
+                else:
+                    status = AttemptStatus.DOWNLOAD_FAILED
+
                 log = '\n'.join(error.full_log for error in errors)
                 filename = 'foo.xml'  # we just need the extension
             except Exception as e:
@@ -541,7 +554,17 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                     error_code = 'non-sushi'
                 else:
                     error_code = error_obj.code if hasattr(error_obj, 'code') else ''
-                    status = AttemptStatus.DOWNLOAD_FAILED
+
+                    # Mark that status is no data when there is no data error
+                    # Otherwise mark as failed download
+                    if str(error_code) in (
+                        str(ErrorCode.NO_DATA_FOR_DATE_ARGS.value),
+                        str(ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value),
+                    ):
+                        status = AttemptStatus.NO_DATA
+                    else:
+                        status = AttemptStatus.DOWNLOAD_FAILED
+
                     when_processed = now()
             else:
                 status = AttemptStatus.IMPORTING if report.record_found else AttemptStatus.NO_DATA

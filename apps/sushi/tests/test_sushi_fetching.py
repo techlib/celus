@@ -38,8 +38,8 @@ class TestSushiFetching:
             ),
             (
                 '5_TR_ProQuestEbookCentral_exception.json',
-                AttemptStatus.DOWNLOAD_FAILED,
-                AttemptStatus.DOWNLOAD_FAILED,
+                AttemptStatus.NO_DATA,
+                AttemptStatus.NO_DATA,
                 'Error #3030: No Usage Available for Requested Dates.',
             ),
             (
@@ -90,7 +90,7 @@ class TestSushiFetching:
                 counter_report_types["db1"], start_date='2020-05-01', end_date='2020-05-31'
             )
             assert m.called
-            assert attempt.status == AttemptStatus.DOWNLOAD_FAILED
+            assert attempt.status == AttemptStatus.NO_DATA
 
     def test_c4_wrong_namespaces(self, counter_report_types, organizations, platforms):
         credentials = CredentialsFactory(
@@ -123,7 +123,7 @@ class TestSushiFetching:
                 counter_report_types["pr"], start_date='2017-01-01', end_date='2017-01-31'
             )
             assert m.called
-            assert attempt.status == AttemptStatus.DOWNLOAD_FAILED
+            assert attempt.status == AttemptStatus.NO_DATA
 
     @pytest.mark.parametrize(
         ('path', 'http_status', 'error_code', 'status'),
