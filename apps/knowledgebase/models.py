@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 
 from django.core.validators import MinLengthValidator
 from django.db import models, transaction
+from django.db.transaction import on_commit
 from django.utils import timezone
 
 from core.models import DataSource
@@ -27,10 +28,7 @@ class AuthTokenMixin:
 
     @property
     def request_headers(self) -> dict:
-        res = {
-            'Authorization': f'Token {self.source.token}',
-            'Content-Type': 'application/json',
-        }
+        res = {'Authorization': f'Token {self.source.token}', 'Content-Type': 'application/json'}
         res.update(self.request_headers_extra)
         return res
 
@@ -41,7 +39,7 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
         PRESENT = "P", "present"
 
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE)
-    prefix = models.CharField(max_length=8, validators=[MinLengthValidator(8)],)
+    prefix = models.CharField(max_length=8, validators=[MinLengthValidator(8)])
     target = models.CharField(max_length=1, choices=Target.choices, default=Target.PRESENT)
     retries = models.PositiveIntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
@@ -92,7 +90,10 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
     def propagate_prefix(prefix: str, target: 'RouterSyncAttempt.Target'):
         with transaction.atomic():
             for source in DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE):
-                RouterSyncAttempt.objects.get_or_create(prefix=prefix, target=target, source=source)
+                sync_attempt, _ = RouterSyncAttempt.objects.get_or_create(
+                    prefix=prefix, target=target, source=source
+                )
+                on_commit(lambda: sync_attempt.plan())
 
     def plan(self):
         from .tasks import sync_route
@@ -116,11 +117,9 @@ class ImportAttempt(AuthTokenMixin, models.Model):
 
     KIND_PLATFORM = 'platform'
 
-    KINDS = ((KIND_PLATFORM, 'Platform',),)
+    KINDS = ((KIND_PLATFORM, 'Platform'),)
 
-    URL_MAP = {
-        KIND_PLATFORM: '/knowledgebase/platforms/',
-    }
+    URL_MAP = {KIND_PLATFORM: '/knowledgebase/platforms/'}
 
     url = models.URLField()
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE)
@@ -157,7 +156,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
 
     @property
     def failed(self) -> bool:
-        """ attempt failed """
+        """attempt failed"""
         return self.status == ImportAttempt.State.FAILED
 
     @property
@@ -166,7 +165,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
 
     @property
     def running(self):
-        """ running or to be run """
+        """running or to be run"""
         return not self.failed and not self.success
 
     def save(self, *args, **kwargs):
@@ -175,7 +174,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
         return super().save(*args, **kwargs)
 
     def perform(self, merge=MergeStrategy.NONE):
-        """ Downloads data from knowledgebase and imports it
+        """Downloads data from knowledgebase and imports it
 
         :param merge: Try to merge with existing platforms without a source (should be used rarely)
         """
@@ -254,7 +253,7 @@ class PlatformImportAttempt(ImportAttempt):
             if merge == ImportAttempt.MergeStrategy.NONE:
                 # Only new or existing with the same soure
                 platform, created = Platform.objects.get_or_create(
-                    defaults=updatable, ext_id=record["pk"], source=self.source,
+                    defaults=updatable, ext_id=record["pk"], source=self.source
                 )
             elif merge in [
                 ImportAttempt.MergeStrategy.EMPTY_SOURCE,
@@ -263,7 +262,7 @@ class PlatformImportAttempt(ImportAttempt):
                 try:
                     # Try to get existing record (non-knowledgebase) record
                     query_args = models.Q(short_name=record["short_name"]) & ~models.Q(
-                        source__type=DataSource.TYPE_KNOWLEDGEBASE,
+                        source__type=DataSource.TYPE_KNOWLEDGEBASE
                     )
                     if merge == ImportAttempt.MergeStrategy.EMPTY_SOURCE:
                         query_args = query_args & models.Q(source__isnull=True)
@@ -277,7 +276,7 @@ class PlatformImportAttempt(ImportAttempt):
 
                 except Platform.DoesNotExist:
                     platform, created = Platform.objects.get_or_create(
-                        defaults=updatable, ext_id=record["pk"], source=self.source,
+                        defaults=updatable, ext_id=record["pk"], source=self.source
                     )
                 except Platform.MultipleObjectsReturned:
                     # if multiple objects are returned we are not sure which one to merge
