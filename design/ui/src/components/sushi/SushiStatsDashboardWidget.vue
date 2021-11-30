@@ -127,8 +127,8 @@ cs:
 </template>
 
 <script>
-import { mapActions, mapState } from "vuex";
-import axios from "axios";
+import { mapState } from "vuex";
+import http from "@/libs/http";
 
 export default {
   name: "SushiStatsDashboardWidget",
@@ -140,15 +140,7 @@ export default {
   },
 
   computed: {
-    ...mapState({
-      selectedOrganizationId: "selectedOrganizationId",
-    }),
-    sushiCredentialsUrl() {
-      if (this.selectedOrganizationId) {
-        return `/api/sushi-credentials/?organization=${this.selectedOrganizationId}`;
-      }
-      return null;
-    },
+    ...mapState(["selectedOrganizationId"]),
     credentialsCount() {
       return this.sushiCredentials.length;
     },
@@ -213,22 +205,17 @@ export default {
   },
 
   methods: {
-    ...mapActions({
-      showSnackbar: "showSnackbar",
-    }),
     async fetchSushiCredentials() {
-      if (this.sushiCredentialsUrl) {
-        this.sushiCredentials = [];
-        try {
-          let result = await axios.get(this.sushiCredentialsUrl);
-          this.sushiCredentials = result.data;
-        } catch (error) {
-          this.showSnackbar({
-            content: "Could not load SUSHI credentials: " + error,
-            color: "error",
-          });
-        }
-      }
+      if (!this.selectedOrganizationId) return;
+
+      this.sushiCredentials = [];
+      const request = {
+        url: "/api/sushi-credentials/",
+        params: { organization: this.selectedOrganizationId },
+        label: "SUSHI credentials",
+      };
+      const { response } = await http(request);
+      this.sushiCredentials = response ? response.data : [];
     },
   },
 
@@ -237,9 +224,7 @@ export default {
   },
 
   watch: {
-    sushiCredentialsUrl() {
-      this.fetchSushiCredentials();
-    },
+    selectedOrganizationId: "fetchSushiCredentials",
   },
 };
 </script>

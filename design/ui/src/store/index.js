@@ -266,6 +266,12 @@ export default new Vuex.Store({
     hideSnackbar(context) {
       context.commit("setSnackbarShow", { show: false });
     },
+    showError({ dispatch }, { label, error}) {
+      dispatch("showSnackbar", {
+        content: `Error loading ${label ? label : "data"}: ${error}`,
+        color: "error",
+      });
+    },
     selectOrganization(context, { id }) {
       context.commit("setSelectedOrganizationId", { id });
     },

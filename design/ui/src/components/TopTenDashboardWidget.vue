@@ -31,7 +31,8 @@ cs:
       $t("titles_with_most_interest")
     }}</v-card-subtitle>
     <v-card-text>
-      <v-progress-linear v-if="titles && loading" indeterminate />
+      <LargeSpinner v-if="loading" />
+      <v-progress-linear v-else-if="!titles" indeterminate />
       <v-simple-table v-if="titles && titles.length" class="dashboard" dense>
         <tbody>
           <tr v-for="title in titles" :key="title.pk">
@@ -58,24 +59,23 @@ cs:
         </div>
         {{ $t("no_matching_titles") }}
       </div>
-      <LargeSpinner v-else />
     </v-card-text>
   </v-card>
 </template>
+
 <script>
 import LargeSpinner from "@/components/util/LargeSpinner";
-import { formatInteger } from "@/libs/numbers";
-import axios from "axios";
-import { mapActions } from "vuex";
 import ShortenText from "@/components/ShortenText";
+import { formatInteger } from "@/libs/numbers";
+import http from "@/libs/http";
 
 export default {
   name: "TopTenDashboardWidget",
   components: { ShortenText, LargeSpinner },
   props: {
-    urlBase: { required: true, type: String },
+    requestBase: { required: true, type: Object },
+    interestGroup: { required: true, type: Object },
     pubTypes: { default: () => [] },
-    interestGroup: null,
   },
 
   data() {
@@ -87,48 +87,37 @@ export default {
   },
 
   computed: {
-    url() {
-      if (this.urlBase && this.interestGroup) {
-        let url = this.urlBase + `&order_by=${this.interestGroup.short_name}`;
-        if (this.selectedPubType) {
-          url += `&pub_type=${this.selectedPubType}`;
-        }
-        return url;
+    request() {
+      let { url, params } = { ...this.requestBase };
+      params = { ...params, order_by: this.interestGroup.short_name };
+      if (this.selectedPubType) {
+        params = { ...params, pub_type: this.selectedPubType };
       }
-      return null;
+      return { url, params };
     },
   },
 
   methods: {
-    ...mapActions({
-      showSnackbar: "showSnackbar",
-    }),
     formatInteger,
     async fetchTitleInterest() {
+      this.titles = null;
+      if (!this.requestBase || !this.interestGroup) return;
+
+      const label = this.interestGroup.name;
+      const group = this.interestGroup.short_name;
+
       this.loading = true;
-      //this.titles = null
-      if (this.url) {
-        try {
-          let response = await axios.get(this.url);
-          this.titles = response.data.filter(
-            (item) => item.interests[this.interestGroup.short_name] > 0
-          );
-        } catch (error) {
-          this.showSnackbar({
-            content: "Error loading interesting titles: " + error,
-            color: "error",
-          });
-        } finally {
-          this.loading = false;
-        }
-      }
+      const { response } = await http({ label, ...this.request });
+      this.loading = false;
+
+      this.titles = response
+        ? response.data.filter((item) => item.interests[group] > 0)
+        : [];
     },
   },
 
   watch: {
-    url() {
-      this.fetchTitleInterest();
-    },
+    request: "fetchTitleInterest",
   },
 
   mounted() {

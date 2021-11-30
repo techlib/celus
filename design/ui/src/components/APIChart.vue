@@ -131,8 +131,7 @@
         :mark-line="markLine"
         :xAxis="xAxis"
         :legend="{
-          icon:
-            'path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z',
+          icon: 'path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z',
           itemWidth: 16,
           itemGap: 16,
           itemHeight: 16,
@@ -160,10 +159,10 @@ import _dataZoom from "echarts/lib/component/dataZoom";
 // noinspection ES6UnusedImports
 import _toolBox from "echarts/lib/component/toolbox";
 // other imports
-import axios from "axios";
 import { mapActions, mapGetters, mapState } from "vuex";
 import "echarts/lib/component/markLine";
 import LoaderWidget from "@/components/util/LoaderWidget";
+import http from "@/libs/http";
 import { pivot } from "@/libs/pivot";
 import ChartDataTable from "./ChartDataTable";
 import { padIntegerWithZeros } from "@/libs/numbers";
@@ -515,8 +514,7 @@ export default {
           myExportData: {
             show: true,
             title: this.$t("chart.toolbox.export_csv"),
-            icon:
-              "path://m 434.57178,114.29929 -83.882,-83.882005 c -9.00169,-9.001761 -21.21063,-14.058933 -33.941,-14.059 H 48.630782 c -26.51,0 -47.9999996,21.49 -47.9999996,48 V 416.35829 c 0,26.51 21.4899996,48 47.9999996,48 H 400.63078 c 26.51,0 48,-21.49 48,-48 v -268.118 c -7e-5,-12.73037 -5.05724,-24.93931 -14.059,-33.941 z m -161.941,-49.941005 v 80.000005 h -128 V 64.358285 Z m -48,152.000005 c -48.523,0 -88,39.477 -88,88 0,48.523 39.477,88 88,88 48.523,0 88,-39.477 88,-88 0,-48.523 -39.477,-88 -88,-88 z",
+            icon: "path://m 434.57178,114.29929 -83.882,-83.882005 c -9.00169,-9.001761 -21.21063,-14.058933 -33.941,-14.059 H 48.630782 c -26.51,0 -47.9999996,21.49 -47.9999996,48 V 416.35829 c 0,26.51 21.4899996,48 47.9999996,48 H 400.63078 c 26.51,0 48,-21.49 48,-48 v -268.118 c -7e-5,-12.73037 -5.05724,-24.93931 -14.059,-33.941 z m -161.941,-49.941005 v 80.000005 h -128 V 64.358285 Z m -48,152.000005 c -48.523,0 -88,39.477 -88,88 0,48.523 39.477,88 88,88 48.523,0 88,-39.477 88,-88 0,-48.523 -39.477,-88 -88,-88 z",
             onclick: (function (that) {
               return function () {
                 window.open(that.dataURL + "&format=csv");
@@ -692,46 +690,28 @@ export default {
       this.crunchingData = false;
     },
     async loadData() {
-      this.loading = true;
+      if (!this.dataURL) return;
+
       this.dataRaw = [];
       this.tooMuchData = false;
       this.error = null;
-      if (this.dataURL) {
-        try {
-          let response = await axios.get(this.dataURL);
-          if (response.data.too_much_data) {
-            this.tooMuchData = true;
-            return;
-          }
-          this.loading = false;
-          this.crunchingData = true;
-          this.rawDataLength = response.data.data.length;
-          this.rawData = response.data.data;
-          this.reportedMetrics = response.data.reported_metrics;
-          // we use timeout to give the interface time to redraw
-          setTimeout(async () => await this.ingestData(response.data.data), 10);
-        } catch (error) {
-          if (
-            error.response.status === 400 &&
-            error.response.data &&
-            error.response.data.error
-          ) {
-            // we have some useful error to report rather than a generic one
-            this.error = error.response.data.error;
-            this.showSnackbar({
-              content: "Error fetching data: " + error.response.data.error,
-              color: "error",
-            });
-          } else {
-            this.showSnackbar({
-              content: "Error fetching data: " + error,
-              color: "error",
-            });
-          }
-        } finally {
-          this.loading = false;
-        }
+
+      this.loading = true;
+      const { response, error } = await http({ url: this.dataURL });
+      this.loading = false;
+      this.error = error;
+
+      if (!response) return;
+      if (response.data.too_much_data) {
+        this.tooMuchData = true;
+        return;
       }
+      this.crunchingData = true;
+      this.rawDataLength = response.data.data.length;
+      this.rawData = response.data.data;
+      this.reportedMetrics = response.data.reported_metrics;
+      // we use timeout to give the interface time to redraw
+      setTimeout(async () => await this.ingestData(response.data.data), 10);
     },
     pivot() {
       return pivot(

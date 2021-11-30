@@ -39,7 +39,7 @@ cs:
           v-else
           :data="chartData"
           :settings="chartSettings"
-          :height="heightString"
+          :height="`${height}px`"
           :xAxis="xAxis"
         >
         </ve-heatmap>
@@ -50,12 +50,13 @@ cs:
 
 <script>
 import VeHeatmap from "v-charts/lib/heatmap.common";
-import { mapActions, mapGetters } from "vuex";
-import axios from "axios";
+import { mapActions, mapGetters, mapState } from "vuex";
 import LoaderWidget from "@/components/util/LoaderWidget";
+import http from "@/libs/http";
 
 export default {
   name: "OrganizationPlatformInterestHeatmap",
+
   components: {
     LoaderWidget,
     VeHeatmap,
@@ -66,7 +67,6 @@ export default {
       loading: false,
       primaryDim: "platform",
       secondaryDim: "organization",
-      reportTypeId: null,
       height: 200,
     };
   },
@@ -75,15 +75,25 @@ export default {
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
     }),
-    dataURL() {
-      if (this.reportTypeId) {
-        return `/api/chart-data-raw/${this.reportTypeId}/?prim_dim=${this.primaryDim}&sec_dim=${this.secondaryDim}&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
-      }
-      return null;
+    ...mapState(["interestReportType"]),
+    request() {
+      return this.reportTypeId
+        ? {
+            url: `/api/chart-data-raw/${this.reportTypeId}/`,
+            params: {
+              end: this.dateRangeEnd,
+              start: this.dateRangeStart,
+              prim_dim: this.primaryDim,
+              sec_dim: this.secondaryDim,
+            },
+          }
+        : null;
+    },
+    reportTypeId() {
+      return this.interestReportType ? this.interestReportType.pk : null;
     },
     columns() {
-      if (this.loading) return [];
-      return [this.primaryDim, this.secondaryDim, "count"];
+      return this.loading ? [] : [this.primaryDim, this.secondaryDim, "count"];
     },
     chartData() {
       return {
@@ -132,44 +142,27 @@ export default {
     maxHeight() {
       return this.autoHeight * 1.25;
     },
-    heightString() {
-      return this.height.toString() + "px";
-    },
   },
   methods: {
-    ...mapActions({
-      showSnackbar: "showSnackbar",
-      fetchInterestReportType: "fetchInterestReportType",
-    }),
+    ...mapActions("interest", ["fetchInterestReportType"]),
     async fetchData() {
-      if (this.dataURL) {
-        this.loading = true;
-        try {
-          const response = await axios.get(this.dataURL);
-          this.dataRaw = response.data.data;
-          this.height = this.autoHeight;
-        } catch (error) {
-          this.showSnackbar({
-            content: "Error loading data: " + error,
-            color: "error",
-          });
-        } finally {
-          this.loading = false;
-        }
+      if (!this.request) return;
+
+      this.loading = true;
+      const { response } = await http(this.request);
+      this.loading = false;
+
+      if (response) {
+        this.dataRaw = response.data.data;
+        this.height = this.autoHeight;
       }
-    },
-    async fetchReportTypes() {
-      const interestReportType = await this.fetchInterestReportType();
-      if (interestReportType) this.reportTypeId = interestReportType.pk;
     },
   },
   mounted() {
-    this.fetchReportTypes();
+    this.fetchInterestReportType();
   },
   watch: {
-    dataURL() {
-      this.fetchData();
-    },
+    request: "fetchData",
   },
 };
 </script>

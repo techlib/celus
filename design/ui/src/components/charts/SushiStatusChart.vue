@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="@/locales/sushi.yaml" />
+<i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 
 <template>
   <LoaderWidget v-if="loading" icon-name="fa-cog" height="370px" />
@@ -13,7 +13,6 @@
 
 <script>
 import VePie from "v-charts/lib/pie";
-import axios from "axios";
 import {
   ATTEMPT_SUCCESS,
   ATTEMPT_ERROR,
@@ -29,9 +28,9 @@ import {
   INTENTION_QUEUED,
   INTENTION_WAITING,
 } from "@/libs/intention-state";
+import http from "@/libs/http";
 
 import LoaderWidget from "@/components/util/LoaderWidget";
-import { mapActions } from "vuex";
 
 export default {
   name: "SushiStatusChart",
@@ -89,15 +88,14 @@ export default {
   },
 
   computed: {
-    credentialsUrl() {
-      return `/api/sushi-credentials/?organization=${this.organizationId}`;
-    },
-    statsUrl() {
-      let url = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.month}`;
-      if (this.showInactive) {
-        url += "&disabled=true";
-      }
-      return url;
+    statsParams() {
+      if (!this.organizationId || !this.month) return null;
+
+      return {
+        organization: this.organizationId,
+        month: this.month,
+        ...(this.showInactive && { disabled: true }),
+      };
     },
     rows() {
       return this.states.map((state) => {
@@ -143,45 +141,35 @@ export default {
   },
 
   methods: {
-    ...mapActions({
-      showSnackbar: "showSnackbar",
-    }),
     async loadSushiCredentialsList() {
       this.loading = true;
-      try {
-        let response = await axios.get(this.credentialsUrl);
-        this.sushiCredentialsList = response.data;
-        if (this.rawData) {
-          this.prepareData();
-        }
-      } catch (error) {
-        this.showSnackbar({
-          content: "Error loading credentials list: " + error,
-          color: "error",
-        });
-      } finally {
-        this.loading = false;
+      const { response } = await http({
+        url: "/api/sushi-credentials/",
+        params: { organization: this.organizationId },
+        label: "credentials list",
+      });
+      this.loading = false;
+
+      this.sushiCredentialsList = response ? response.data : [];
+      if (this.rawData) {
+        this.prepareData();
       }
     },
     async fetchData() {
-      if (!this.statsUrl) {
-        return;
-      }
+      if (!this.statsParams) return;
+
       this.loading = true;
-      try {
-        let response = await axios.get(this.statsUrl);
-        this.rawData = response.data;
-        this.rawData.forEach((item) => (item.state = intentionState(item)));
-        if (this.sushiCredentialsList) {
-          this.prepareData();
-        }
-      } catch (error) {
-        this.showSnackbar({
-          content: "Error loading stats: " + error,
-          color: "error",
-        });
-      } finally {
-        this.loading = false;
+      const { response } = await http({
+        url: "/api/sushi-credentials/month-overview/",
+        params: this.statsParams,
+        label: "stats",
+      });
+      this.loading = false;
+
+      this.rawData = response ? response.data : [];
+      this.rawData.forEach((item) => (item.state = intentionState(item)));
+      if (this.sushiCredentialsList) {
+        this.prepareData();
       }
     },
     prepareData() {
@@ -213,7 +201,7 @@ export default {
   },
 
   watch: {
-    statsUrl() {
+    statsParams() {
       this.loadSushiCredentialsList();
       this.fetchData();
     },

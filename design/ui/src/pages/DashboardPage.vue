@@ -140,7 +140,7 @@ cs:
       >
         <v-lazy min-height="320" transition="fade-transition">
           <TopTenDashboardWidget
-            :url-base="titleInterestBaseUrl"
+            :request-base="titleInterestTopRequest"
             :interest-group="interestGroup"
             :pub-types="pubTypesForInterestGroup(interestGroup.short_name)"
           >
@@ -154,7 +154,6 @@ cs:
 <script>
 import APIChart from "@/components/APIChart";
 import { mapActions, mapGetters, mapState } from "vuex";
-import axios from "axios";
 import LargeSpinner from "@/components/util/LargeSpinner";
 import { formatInteger, smartFormatFloat } from "@/libs/numbers";
 import { pubTypes } from "@/libs/pub-types";
@@ -184,8 +183,6 @@ export default {
       addDays(startOfMonth(new Date()), -45)
     );
     return {
-      interestReportType: null,
-      totalInterestData: null,
       sushiMonths: [lastMonth, monthBeforeLast],
       sushiMonth: lastMonth,
     };
@@ -195,6 +192,8 @@ export default {
     ...mapState({
       organizationId: "selectedOrganizationId",
       interestGroups: (state) => state.interest.interestGroups,
+      interestReportType: (state) => state.interest.interestReportType,
+      totalInterestData: (state) => state.interest.totalInterestData,
     }),
     ...mapGetters({
       dateRangeStart: "dateRangeStartText",
@@ -215,45 +214,33 @@ export default {
       }
       return igs;
     },
-    titleInterestBaseUrl() {
-      if (this.organizationId) {
-        return `/api/organization/${this.organizationId}/top-title-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&page_size=10&desc=true&page=1&simple`;
-      }
-      return null;
+    titleInterestTopRequest() {
+      return this.organizationId
+        ? {
+            url: `/api/organization/${this.organizationId}/top-title-interest/`,
+            params: { start: this.dateRangeStart, end: this.dateRangeEnd },
+          }
+        : null;
     },
-    totalInterestDataUrl() {
-      if (this.organizationId) {
-        return `/api/organization/${this.organizationId}/interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
-      }
-      return null;
+    totalInterestRequest() {
+      return this.organizationId
+        ? {
+            url: `/api/organization/${this.organizationId}/interest/`,
+            params: { start: this.dateRangeStart, end: this.dateRangeEnd },
+          }
+        : null;
     },
   },
 
   methods: {
-    ...mapActions({
-      fetchInterestReportType: "fetchInterestReportType",
-      showSnackbar: "showSnackbar",
-      loadSushiCredentialsCount: "loadSushiCredentialsCount",
-    }),
+    ...mapActions([
+      "fetchInterestGroups",
+      "fetchInterestReportType",
+      "fetchTotalInterest",
+      "loadSushiCredentialsCount",
+    ]),
     formatInteger,
     smartFormatFloat,
-    async fetchReportTypes() {
-      this.interestReportType = await this.fetchInterestReportType();
-    },
-
-    async fetchTotalInterest() {
-      if (this.totalInterestDataUrl) {
-        try {
-          const response = await axios.get(this.totalInterestDataUrl);
-          this.totalInterestData = response.data;
-        } catch (error) {
-          this.showSnackbar({
-            content: "Error loading total interest data: " + error,
-            color: "error",
-          });
-        }
-      }
-    },
 
     pubTypesForInterestGroup(igShortName) {
       if (igShortName.indexOf("full_text") > -1) {
@@ -273,15 +260,13 @@ export default {
 
   mounted() {
     this.loadSushiCredentialsCount();
-    this.fetchReportTypes();
-    this.fetchTotalInterest();
+    this.fetchInterestReportType();
+    this.fetchTotalInterest(this.totalInterestRequest);
+    this.fetchInterestGroups();
   },
 
   watch: {
-    totalInterestDataUrl() {
-      this.totalInterestData = null;
-      this.fetchTotalInterest();
-    },
+    totalInterestRequest: "fetchTotalInterest",
   },
 };
 </script>
