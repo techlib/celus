@@ -85,7 +85,7 @@ axios.interceptors.request.use(async (config) => {
 });
 
 /**
- * Wrapper for Axios with error handling.
+ * Wrapper for Axios with cancellation per component.
  * @param {string} url - (axios) URL
  * @param {Object} [params] - (axios) GET query parameters
  * @param {string} [method] - (axios) HTTP method "get" by default

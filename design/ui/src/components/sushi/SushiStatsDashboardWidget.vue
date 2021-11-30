@@ -128,10 +128,12 @@ cs:
 
 <script>
 import { mapState } from "vuex";
-import http from "@/libs/http";
+import cancellation from "@/mixins/cancellation";
 
 export default {
   name: "SushiStatsDashboardWidget",
+
+  mixins: [cancellation],
 
   data() {
     return {
@@ -214,7 +216,7 @@ export default {
         params: { organization: this.selectedOrganizationId },
         label: "SUSHI credentials",
       };
-      const { response } = await http(request);
+      const { response } = await this.http(request);
       this.sushiCredentials = response ? response.data : [];
     },
   },

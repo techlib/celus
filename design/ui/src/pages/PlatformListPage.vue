@@ -106,9 +106,13 @@ import PlatformInterestChart from "@/components/PlatformInterestChart";
 import PlatformCostList from "@/components/PlatformCostList";
 import PlatformList from "@/components/PlatformList";
 import ManualUploadButton from "@/components/ManualUploadButton";
+import cancellation from "@/mixins/cancellation";
 
 export default {
   name: "PlatformListPage",
+
+  mixins: [cancellation],
+
   components: {
     PlatformList,
     PlatformCostList,

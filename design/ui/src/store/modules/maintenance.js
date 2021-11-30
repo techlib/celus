@@ -49,10 +49,11 @@ export default {
       });
       return response.data;
     },
-    async loadSushiCredentialsCount({ commit }) {
+    async loadSushiCredentialsCount({ commit }, component) {
       const { response } = await http({
         url: "/api/sushi-credentials/count/",
-        label: "sushi credentials count"
+        label: "sushi credentials count",
+        component
       });
       if (!response) return;
       commit("setSushiCredentialsCount", response.data);

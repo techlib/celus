@@ -52,10 +52,12 @@ cs:
 import VeHeatmap from "v-charts/lib/heatmap.common";
 import { mapActions, mapGetters, mapState } from "vuex";
 import LoaderWidget from "@/components/util/LoaderWidget";
-import http from "@/libs/http";
+import cancellation from "@/mixins/cancellation";
 
 export default {
   name: "OrganizationPlatformInterestHeatmap",
+
+  mixins: [cancellation],
 
   components: {
     LoaderWidget,
@@ -149,7 +151,7 @@ export default {
       if (!this.request) return;
 
       this.loading = true;
-      const { response } = await http(this.request);
+      const { response } = await this.http(this.request);
       this.loading = false;
 
       if (response) {
@@ -159,7 +161,7 @@ export default {
     },
   },
   mounted() {
-    this.fetchInterestReportType();
+    this.fetchInterestReportType(this._cid);
   },
   watch: {
     request: "fetchData",

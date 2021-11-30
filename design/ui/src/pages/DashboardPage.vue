@@ -164,9 +164,12 @@ import startOfMonth from "date-fns/startOfMonth";
 import addDays from "date-fns/addDays";
 import { ymDateFormat } from "@/libs/dates";
 import SushiStatsDashboardWidget from "@/components/sushi/SushiStatsDashboardWidget";
+import cancellation from "@/mixins/cancellation";
 
 export default {
   name: "DashboardPage",
+
+  mixins: [cancellation],
 
   components: {
     SushiStatsDashboardWidget,
@@ -227,6 +230,7 @@ export default {
         ? {
             url: `/api/organization/${this.organizationId}/interest/`,
             params: { start: this.dateRangeStart, end: this.dateRangeEnd },
+            component: this._cid,
           }
         : null;
     },
@@ -259,10 +263,10 @@ export default {
   },
 
   mounted() {
-    this.loadSushiCredentialsCount();
-    this.fetchInterestReportType();
+    this.loadSushiCredentialsCount(this._cid);
+    this.fetchInterestReportType(this._cid);
+    this.fetchInterestGroups(this._cid);
     this.fetchTotalInterest(this.totalInterestRequest);
-    this.fetchInterestGroups();
   },
 
   watch: {

@@ -162,8 +162,8 @@ import _toolBox from "echarts/lib/component/toolbox";
 import { mapActions, mapGetters, mapState } from "vuex";
 import "echarts/lib/component/markLine";
 import LoaderWidget from "@/components/util/LoaderWidget";
-import http from "@/libs/http";
 import { pivot } from "@/libs/pivot";
+import cancellation from "@/mixins/cancellation";
 import ChartDataTable from "./ChartDataTable";
 import { padIntegerWithZeros } from "@/libs/numbers";
 
@@ -171,6 +171,7 @@ const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export default {
   name: "APIChart",
+  mixins: [cancellation],
   components: { ChartDataTable, VeHistogram, VeBar, VeLine, LoaderWidget },
   props: {
     type: {
@@ -697,7 +698,7 @@ export default {
       this.error = null;
 
       this.loading = true;
-      const { response, error } = await http({ url: this.dataURL });
+      const { response, error } = await this.http({ url: this.dataURL });
       this.loading = false;
       this.error = error;
 

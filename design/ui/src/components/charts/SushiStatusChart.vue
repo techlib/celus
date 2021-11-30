@@ -28,13 +28,14 @@ import {
   INTENTION_QUEUED,
   INTENTION_WAITING,
 } from "@/libs/intention-state";
-import http from "@/libs/http";
+import cancellation from "@/mixins/cancellation";
 
 import LoaderWidget from "@/components/util/LoaderWidget";
 
 export default {
   name: "SushiStatusChart",
 
+  mixins: [cancellation],
   components: {
     VePie,
     LoaderWidget,
@@ -143,7 +144,7 @@ export default {
   methods: {
     async loadSushiCredentialsList() {
       this.loading = true;
-      const { response } = await http({
+      const { response } = await this.http({
         url: "/api/sushi-credentials/",
         params: { organization: this.organizationId },
         label: "credentials list",
@@ -159,7 +160,7 @@ export default {
       if (!this.statsParams) return;
 
       this.loading = true;
-      const { response } = await http({
+      const { response } = await this.http({
         url: "/api/sushi-credentials/month-overview/",
         params: this.statsParams,
         label: "stats",

@@ -10,6 +10,7 @@ import { ymDateFormat, parseDateTime } from "@/libs/dates";
 import { format as formatNumber } from "mathjs/lib/function/string/format";
 import VuexPersistence from "vuex-persist";
 import { sortOrganizations } from "@/libs/organizations";
+import cancellation from "./modules/cancellation";
 import interest from "./modules/interest";
 import maintenance from "./modules/maintenance";
 import tour from "./modules/tour";
@@ -46,11 +47,12 @@ const vuexLocal = new VuexPersistence({
 });
 
 export default new Vuex.Store({
-  plugins: [vuexLocal.plugin],
+  plugins: [ vuexLocal.plugin ],
   modules: {
+    cancellation,
     interest,
-    maintenance,
     login,
+    maintenance,
     siteConfig,
     tour,
   },
@@ -174,7 +176,7 @@ export default new Vuex.Store({
     },
     allowUserCreatePlatforms(state) {
       if ("ALLOW_USER_CREATED_PLATFORMS" in state.basicInfo) {
-          return state.basicInfo["ALLOW_USER_CREATED_PLATFORMS"];
+        return state.basicInfo["ALLOW_USER_CREATED_PLATFORMS"];
       }
     },
     consortialInstall(state) {
@@ -230,7 +232,7 @@ export default new Vuex.Store({
       if ("LANGUAGES" in state.basicInfo) {
         return state.basicInfo["LANGUAGES"].map((item) => item[0]);
       }
-      return ["en"];
+      return [ "en" ];
     },
     celusVersion() {
       return process.env.VUE_APP_VERSION;

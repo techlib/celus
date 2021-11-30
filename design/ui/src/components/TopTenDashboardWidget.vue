@@ -67,10 +67,11 @@ cs:
 import LargeSpinner from "@/components/util/LargeSpinner";
 import ShortenText from "@/components/ShortenText";
 import { formatInteger } from "@/libs/numbers";
-import http from "@/libs/http";
+import cancellation from "@/mixins/cancellation";
 
 export default {
   name: "TopTenDashboardWidget",
+  mixins: [cancellation],
   components: { ShortenText, LargeSpinner },
   props: {
     requestBase: { required: true, type: Object },
@@ -88,28 +89,31 @@ export default {
 
   computed: {
     request() {
-      let { url, params } = { ...this.requestBase };
-      params = { ...params, order_by: this.interestGroup.short_name };
-      if (this.selectedPubType) {
-        params = { ...params, pub_type: this.selectedPubType };
-      }
+      let { url, params } = this.requestBase;
+      params = {
+        ...params,
+        order_by: this.interestGroup.short_name,
+        ...(this.selectedPubType && { pub_type: this.selectedPubType }),
+      };
       return { url, params };
     },
   },
 
   methods: {
     formatInteger,
+
     async fetchTitleInterest() {
       this.titles = null;
       if (!this.requestBase || !this.interestGroup) return;
 
-      const label = this.interestGroup.name;
-      const group = this.interestGroup.short_name;
-
       this.loading = true;
-      const { response } = await http({ label, ...this.request });
+      const { response } = await this.http({
+        ...this.request,
+        label: this.interestGroup.name,
+      });
       this.loading = false;
 
+      const group = this.interestGroup.short_name;
       this.titles = response
         ? response.data.filter((item) => item.interests[group] > 0)
         : [];
@@ -117,7 +121,7 @@ export default {
   },
 
   watch: {
-    request: "fetchTitleInterest",
+    selectedPubType: "fetchTitleInterest",
   },
 
   mounted() {

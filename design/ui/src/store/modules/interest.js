@@ -18,10 +18,11 @@ export default {
   },
 
   actions: {
-    async fetchInterestGroups({ commit }) {
-      const { response } = await http({
+    async fetchInterestGroups({ commit }, component) {
+      let {response} = await http({
         url: "/api/interest-groups/",
-        label: "interest groups"
+        label: "interest groups",
+        component,
       });
       if (!response) return;
       commit("setInterestGroups", {
@@ -37,10 +38,11 @@ export default {
       commit("setSelectedGroups", { groups: groups });
     },
 
-    async fetchInterestReportType({ commit }) {
+    async fetchInterestReportType({ commit }, component) {
       const { response } = await http({
         url: "/api/report-type/",
-        label: "interest report type"
+        label: "interest report type",
+        component,
       });
       if (response === null) return;
 
