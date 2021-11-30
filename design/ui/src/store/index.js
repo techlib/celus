@@ -253,7 +253,7 @@ export default new Vuex.Store({
     afterAuthentication({ dispatch, state, getters }) {
       dispatch("loadOrganizations");
       dispatch("changeDateRangeObject", state.dateRangeIndex);
-      dispatch("fetchInterestGroups");
+      dispatch("interest/fetchInterestGroups");
       dispatch("loadSushiCredentialsCount");
       if (getters.showManagementStuff) {
         dispatch("fetchNoInterestPlatforms");

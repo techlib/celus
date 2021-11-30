@@ -187,8 +187,10 @@ export default {
   computed: {
     ...mapGetters({
       formatNumber: "formatNumber",
-      activeInterestGroups: "selectedGroupObjects",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
+    }),
+    ...mapGetters("interest", {
+      activeInterestGroups: "selectedGroupObjects",
     }),
     headers() {
       let base = [

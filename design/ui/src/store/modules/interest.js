@@ -1,6 +1,8 @@
 import http from "@/libs/http";
 
 export default {
+  namespaced: true,
+
   state: {
     interestGroups: [],
     selectedGroups: [],

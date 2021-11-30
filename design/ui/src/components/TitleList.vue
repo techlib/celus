@@ -171,7 +171,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters({
+    ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
     }),
     searchDebounced: {

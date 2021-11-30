@@ -189,12 +189,12 @@ export default {
   },
 
   computed: {
-    ...mapState({
-      organizationId: "selectedOrganizationId",
-      interestGroups: (state) => state.interest.interestGroups,
-      interestReportType: (state) => state.interest.interestReportType,
-      totalInterestData: (state) => state.interest.totalInterestData,
-    }),
+    ...mapState({ organizationId: "selectedOrganizationId" }),
+    ...mapState("interest", [
+      "interestGroups",
+      "interestReportType",
+      "totalInterestData",
+    ]),
     ...mapGetters({
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
@@ -233,11 +233,11 @@ export default {
   },
 
   methods: {
-    ...mapActions([
+    ...mapActions(["loadSushiCredentialsCount"]),
+    ...mapActions("interest", [
       "fetchInterestGroups",
       "fetchInterestReportType",
       "fetchTotalInterest",
-      "loadSushiCredentialsCount",
     ]),
     formatInteger,
     smartFormatFloat,

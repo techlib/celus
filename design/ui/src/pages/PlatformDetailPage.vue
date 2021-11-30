@@ -244,8 +244,10 @@ export default {
       dateRangeEnd: "dateRangeEndText",
       showAdminStuff: "showAdminStuff",
       organizationSelected: "organizationSelected",
-      activeInterestGroups: "selectedGroupObjects",
       allowManualDataUpload: "allowManualDataUpload",
+    }),
+    ...mapGetters("interest", {
+      activeInterestGroups: "selectedGroupObjects",
     }),
     ...mapState({
       selectedOrganizationId: "selectedOrganizationId",

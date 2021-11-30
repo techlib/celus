@@ -139,9 +139,11 @@ export default {
       dateRangeEnd: "dateRangeEndText",
       showAdminStuff: "showAdminStuff",
       organizationSelected: "organizationSelected",
-      activeInterestGroups: "selectedGroupObjects",
       allowManualDataUpload: "allowManualDataUpload",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
+    }),
+    ...mapGetters("interest", {
+      activeInterestGroups: "selectedGroupObjects",
     }),
     platformsURL() {
       return `/api/organization/${this.selectedOrganizationId}/platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&used_only`;

@@ -240,11 +240,13 @@ export default {
     }),
     ...mapGetters({
       formatNumber: "formatNumber",
-      activeInterestGroups: "selectedGroupObjects",
       showAdminStuff: "showAdminStuff",
       organizationSelected: "organizationSelected",
       selectedOrganization: "selectedOrganization",
       currency: "referenceCurrency",
+    }),
+    ...mapGetters("interest", {
+      activeInterestGroups: "selectedGroupObjects",
     }),
     headers() {
       let base = [

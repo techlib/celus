@@ -75,7 +75,7 @@ export default {
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
     }),
-    ...mapState(["interestReportType"]),
+    ...mapState("interest", ["interestReportType"]),
     request() {
       return this.reportTypeId
         ? {
