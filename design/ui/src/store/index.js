@@ -15,15 +15,11 @@ import maintenance from "./modules/maintenance";
 import tour from "./modules/tour";
 import login from "./modules/login";
 import siteConfig from "./modules/site-config";
-import { ConcurrencyManager } from "axios-concurrency";
 import isEqual from "lodash/isEqual";
 import sleep from "@/libs/sleep";
 import { cs } from "date-fns/locale";
 
 Vue.use(Vuex);
-
-const MAX_CONCURRENT_REQUESTS_DEFAULT = 2;
-let concurrencyManager = null;
 
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
@@ -249,81 +245,7 @@ export default new Vuex.Store({
   },
 
   actions: {
-    async start({ dispatch, getters, state }) {
-      axios.defaults.xsrfCookieName = "csrftoken";
-      axios.defaults.xsrfHeaderName = "X-CSRFToken";
-      axios.interceptors.request.use(
-        function (config) {
-          config.headers["celus-version"] = getters.celusVersion;
-          return config;
-        },
-        function (error) {
-          return Promise.reject(error);
-        }
-      );
-      axios.interceptors.response.use(
-        function (response) {
-          // Clear the version diaolog when no error is returned
-          dispatch("setNewCelusVersion", { new_version: null });
-          // Do something with response data
-          return response;
-        },
-        function (error) {
-          // Do something with response error
-          if (axios.isCancel(error)) {
-            // we ignore this
-          } else if (
-            error.response &&
-            (error.response.status === 401 || error.response.status === 403)
-          ) {
-            // if there is 401 error, try to (re)authenticate
-            dispatch("setShowLoginDialog", { show: true });
-          } else if (typeof error.response && error.response.status === 409) {
-            // Display new celus version dialog
-            dispatch("setNewCelusVersion", { new_version: error.response.headers["celus-version"] });
-          } else if (typeof error.response === "undefined") {
-            // we are getting redirected to the EduID login page, but 302 is transparent for us
-            // (the browser handles it on its own) and the error we get does not have any response
-            // because it is caused by CORS violation when we try to get the eduid login page
-            dispatch("setShowLoginDialog", { show: true });
-          }
-          return Promise.reject(error);
-        }
-      );
-
-      // install concurrency manager
-      let max_concurrent_requests = parseInt(
-        localStorage.getItem("max_concurrent_requests")
-      );
-      if (!max_concurrent_requests) {
-        max_concurrent_requests = MAX_CONCURRENT_REQUESTS_DEFAULT;
-      }
-      console.log("max_concurrent_requests", max_concurrent_requests);
-      concurrencyManager = ConcurrencyManager(axios, max_concurrent_requests);
-
-      axios.interceptors.request.use(async (config) => {
-        // only let requests marked as privileged unless state.letAxiosThrough is true
-        // this helps to let requests wait until all the required setup is done (user is logged
-        // in, some basic data is loaded, etc.)
-        if (getters.letAxiosThrough || config.privileged) {
-          return config;
-        }
-        const watcher = new Promise((resolve) => {
-          console.log(`delaying request for ${config.url}`);
-          this.watch(
-            (state, getters) => getters.letAxiosThrough,
-            (newVal) => {
-              if (newVal) resolve();
-            }
-          );
-        });
-        try {
-          await watcher;
-          return config;
-        } catch (e) {
-          console.error("error waiting for permission to use axios", e);
-        }
-      });
+    async start({ getters, dispatch }) {
       await dispatch("loadBasicInfo"); // load basic info - this can be done without logging in
       await dispatch("loadSiteConfig"); // site config - name, images, etc.
       await dispatch("loadUserData"); // we need user data first
