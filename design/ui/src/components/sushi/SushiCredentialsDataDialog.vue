@@ -5,7 +5,7 @@
 en:
   title: Yearly overview
   status:
-    no_data: Downloaded, but no data present
+    no_data: Downloaded, empty data
     failed: An error occured
     untried: Hasn't been performed yet
     success: Successfully downloaded
@@ -30,12 +30,12 @@ en:
 cs:
   title: Yearly overview
   status:
-    no_data: Staženo, ale data nenalezena
+    no_data: Staženo, prázdná data
     failed: Objevila se chyba
     untried: Stahování zatím neproběhlo
     success: Úspěšně staženo
   planned: Stahování bylo naplánováno
-  planned_retry: Je naplánováno stahování, aby se ověřilo, že opravdu nejsou data
+  planned_retry: Je naplánováno další stahování, abychom potvrdili neexistenci dat
   broken: Rozbitý report
   selected_count: Počet záznamů ke stáhnutí
   select_help: Můžete vybrat neúspěšné záznamy z tabulky
@@ -131,26 +131,17 @@ cs:
                               :key="`${row.item.year}-${month}-${row.item.report_type.code}`"
                               :color="buttonColor(row.item[month])"
                             >
-                              <v-icon
-                                small
-                                :color="
-                                  statusIcon(row.item[month].status).color
-                                "
-                                >{{
-                                  statusIcon(row.item[month].status).icon
-                                }}</v-icon
-                              >
-                              <span :class="textClases(row.item[month])"></span>
+                              <SushiMonthStatusIcon
+                                :planned="row.item[month].planned"
+                                :status="row.item[month].status"
+                              />
                             </v-btn>
                           </v-btn-toggle>
                           <span v-else class="text-center d-inline-block">
-                            <v-icon
-                              small
-                              :color="statusIcon(row.item[month].status).color"
-                              >{{
-                                statusIcon(row.item[month].status).icon
-                              }}</v-icon
-                            >
+                            <SushiMonthStatusIcon
+                              :planned="row.item[month].planned"
+                              :status="row.item[month].status"
+                            />
                           </span>
                         </div>
                       </template>
@@ -304,11 +295,12 @@ import { ymFirstDay, ymLastDay } from "@/libs/dates";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
-import { dataStateToIcon } from "@/libs/data-state";
+import SushiMonthStatusIcon from "@/components/sushi/SushiMonthStatusIcon";
 
 export default {
   name: "SushiCredentialsDataDialog",
   components: {
+    SushiMonthStatusIcon,
     SushiFetchIntentionsListWidget,
     SushiCredentialsOverviewHeaderWidget,
     SushiReportIndicator,
@@ -518,16 +510,6 @@ export default {
         return "primary lighten-5";
       }
       return "";
-    },
-    textClases: (report) => {
-      if (report.planned) {
-        return ["font-weight-black", "primary--text"];
-      }
-      return [];
-    },
-    statusIcon: (state) => {
-      let res = dataStateToIcon(state);
-      return res;
     },
     filterBroken(selected, credentials, reportTypes) {
       // remove broken credentials
