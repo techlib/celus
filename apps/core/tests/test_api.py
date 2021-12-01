@@ -7,6 +7,7 @@ from datetime import datetime
 
 from allauth.account.models import EmailAddress, EmailConfirmation
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.utils import timezone
 
@@ -350,10 +351,11 @@ class TestInvitationAndPasswordResetAPI:
         # one more thing - check that the user email is thus verified
         assert user.email_verified
 
-    def test_invitation_workflow_works(self, admin_client, client, mailoutbox):
+    def test_invitation_workflow_works(self, admin_client, client, mailoutbox, settings, site):
         """
         Test that password can be changed using the link sent when inviting users
         """
+        settings.ALLOWED_HOSTS = ['testserver', site.domain]
         user = User.objects.create(username='foo', email='foo@bar.baz')
         # invitation is sent using an admin action
         resp = admin_client.post(
@@ -380,6 +382,37 @@ class TestInvitationAndPasswordResetAPI:
         assert user.password != old_pwd
         # one more thing - check that the user email is thus verified
         assert user.email_verified
+
+    @pytest.mark.parametrize(
+        ['site_domain', 'allowed_hosts', 'ok'],
+        [
+            ('foo.celus.net', ['foo.celus.net'], True),
+            ('bar.celus.net', ['foo.celus.net'], False),
+            ('foo.celus.net', ['*'], False),
+            ('*', ['foo.celus.net'], False),
+            ('*.celus.net', ['foo.celus.net'], False),
+        ],
+    )
+    def test_invitation_sending_checks(
+        self, admin_client, admin_user, settings, mailoutbox, site_domain, allowed_hosts, ok, site
+    ):
+        """
+        Test that the code for preventing sending invitations with incorrect domain name works
+        """
+        # prepare the site
+        site.domain = site_domain
+        site.save()
+        # and settings
+        settings.ALLOWED_HOSTS = ['testserver', *allowed_hosts]
+        resp = admin_client.post(
+            reverse('admin:core_user_changelist'),
+            {'action': 'send_invitation_emails', ACTION_CHECKBOX_NAME: [admin_user.pk]},
+        )
+        assert resp.status_code == 302
+        if ok:
+            assert len(mailoutbox) == 1, 'invitation was sent'
+        else:
+            assert len(mailoutbox) == 0, 'invitation was not sent'
 
 
 @pytest.mark.django_db

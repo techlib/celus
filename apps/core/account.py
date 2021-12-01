@@ -1,9 +1,11 @@
+import re
 from urllib.parse import urlparse
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.forms import default_token_generator
 from allauth.account.utils import user_pk_to_url_str as uid_encoder
 from allauth.utils import build_absolute_uri
+from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
@@ -22,6 +24,15 @@ class CelusAccountAdapter(DefaultAccountAdapter):
         current_site = get_current_site(request)
         site_name = current_site.name
         domain = current_site.domain
+        # rudimentary checks that the domain is properly set - nothing fancy, we just need
+        # to catch wildcards and strange names
+        if '.' not in domain or '*' in domain:
+            raise ValueError(f'Invalid site.domain: {domain}')
+        elif domain not in settings.ALLOWED_HOSTS:
+            raise ValueError(
+                f'site.domain ({domain}) is not present in ALLOWED_HOSTS, probably a '
+                'misconfiguration'
+            )
         context = {
             'email': user.email,
             'domain': domain,

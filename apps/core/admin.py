@@ -24,7 +24,11 @@ class MyUserAdmin(UserAdmin):
         adapter = get_adapter()
         sent_messages = 0
         for user in queryset.all():
-            adapter.send_invitation_email(request, user)
+            try:
+                adapter.send_invitation_email(request, user)
+            except ValueError as exc:
+                messages.add_message(request, messages.ERROR, f'Error sending invitations: {exc}')
+                return
             sent_messages += 1
         messages.add_message(request, messages.SUCCESS, f'Sent {sent_messages} invitation(s)')
 
