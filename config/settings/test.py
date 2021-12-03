@@ -1,7 +1,10 @@
 import os
 
+# we need to disable cachalot through environment because this changes caused by this setting
+# are applied in config.settings.base and it does not help overriding them later on
+os.environ['DISABLE_CACHALOT'] = 'true'
+
 from .base import *  # noqa
-from .base import CACHES, DATABASES
 
 LIVE_ERMS_AUTHENTICATION = False
 
@@ -14,5 +17,3 @@ CACHES["default"]["LOCATION"] = os.environ.get("REDIS_URL", "redis://127.0.0.1:6
 
 ALLOW_USER_CREATED_PLATFORMS = True
 ALLOW_USER_REGISTRATION = True
-
-DISABLE_CACHALOT = True
