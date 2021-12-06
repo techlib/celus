@@ -38,6 +38,7 @@ python = "^3.8.10"
 
 celery = "~5.1.2"
 dateparser = "~0.7.4"
+diskcache = "5.3"
 tzlocal = "<3.0"  # dateparser does not limit version of tzlocal, but does not work with >=3.0
 Django = "~3.2.7"
 django-allauth = "~0.41.0"
