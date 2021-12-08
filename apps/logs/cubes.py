@@ -10,9 +10,12 @@ from logs.logic.materialized_interest import interest_report_type
 from logs.models import AccessLog, ImportBatch
 
 ch_backend = ClickhouseCubeBackend(
-    database=settings.CLICKHOUSE_DB_NAME,
-    password=settings.CLICKHOUSE_DB_PASSWORD,
-    host=settings.CLICKHOUSE_DB_HOST,
+    database=settings.CLICKHOUSE_DB,
+    user=settings.CLICKHOUSE_USER,
+    password=settings.CLICKHOUSE_PASSWORD,
+    host=settings.CLICKHOUSE_HOST,
+    port=settings.CLICKHOUSE_PORT,
+    secure=settings.CLICKHOUSE_SECURE,
 )
 
 

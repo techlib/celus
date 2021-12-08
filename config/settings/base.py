@@ -508,12 +508,15 @@ if CLICKHOUSE_QUERY_ACTIVE and not CLICKHOUSE_SYNC_ACTIVE:
         'Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is likely an '
         'error as the data will not be up to date in queries.'
     )
-CLICKHOUSE_DB_NAME = config('CLICKHOUSE_DB_NAME', default='celus')
-CLICKHOUSE_DB_PASSWORD = config('CLICKHOUSE_DB_PASSWORD', default='')
-CLICKHOUSE_DB_HOST = config('CLICKHOUSE_DB_HOST', default='localhost')
+CLICKHOUSE_DB = config('CLICKHOUSE_DB', default='celus')
+CLICKHOUSE_USER = config('CLICKHOUSE_USER', default='celus')
+CLICKHOUSE_PASSWORD = config('CLICKHOUSE_PASSWORD', default='celus')
+CLICKHOUSE_HOST = config('CLICKHOUSE_HOST', default='localhost')
+CLICKHOUSE_PORT = config('CLICKHOUSE_PORT', default=9000, cast=int)
+CLICKHOUSE_SECURE = config('CLICKHOUSE_SECURE', default=False, cast=bool)
 
 print(
-    f'Clickhouse db: {CLICKHOUSE_DB_NAME}; sync: {CLICKHOUSE_SYNC_ACTIVE}; '
+    f'Clickhouse db: {CLICKHOUSE_DB}; sync: {CLICKHOUSE_SYNC_ACTIVE}; '
     f'query: {CLICKHOUSE_QUERY_ACTIVE}',
     file=sys.stderr,
 )
