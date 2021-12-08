@@ -1,5 +1,13 @@
 <i18n lang="yaml">
 en:
+  add_credentials: Add credentials
+  continue: Continue
+cs:
+  add_credentials: Přidat pověření
+  continue: Dále
+</i18n>
+<i18n lang="yaml">
+en:
   step1: Hello
   step1_text:
     Hello, it looks like you are new to Celus and there are no data in your account.
@@ -50,7 +58,6 @@ en:
     OK, you should now know everything that is needed to get you started. Click the
     button below and add your first SUSHI credentials. Good luck ;)
 </i18n>
-
 <template>
   <v-stepper v-model="step" non-linear>
     <v-stepper-header>
@@ -179,7 +186,7 @@ en:
 
         <p class="text-center pt-5">
           <v-btn @click="showCredentialsDialog = true" color="primary">{{
-            $t("Add credentials")
+            $t("add_credentials")
           }}</v-btn>
         </p>
       </v-stepper-content>
