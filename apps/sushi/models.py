@@ -2,11 +2,10 @@ import json
 import logging
 import os
 import traceback
-from functools import reduce
 from copy import deepcopy
-from datetime import timedelta, datetime, date
+from datetime import timedelta, date
+from functools import reduce
 from hashlib import blake2b
-from itertools import takewhile
 from tempfile import TemporaryFile
 from typing import Optional, Dict, Iterable, IO, Union
 
@@ -22,7 +21,7 @@ from django.utils.translation import gettext_lazy as _
 from pycounter.exceptions import SushiException
 from rest_framework.exceptions import PermissionDenied
 
-from core.logic.dates import month_end, parse_date
+from core.logic.dates import parse_date
 from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, CreatedUpdatedMixin, User
 from core.task_support import cache_based_lock
 from logs.models import AccessLog, ImportBatch
@@ -31,6 +30,7 @@ from nigiri.client import (
     Sushi4Client,
     SushiException as SushiExceptionNigiri,
     SushiClientBase,
+    SushiError,
 )
 from nigiri.counter4 import (
     Counter4JR1Report,
@@ -420,37 +420,58 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             try:
                 errors = client.extract_errors_from_data(file_data)
                 if errors:
-                    error_code = int(errors[0].code)
+                    error_code = errors[0].code
                     when_processed = now()
+                    if error_code == 'non-sushi':
+                        # this is an exception in pycounter itself, not an exception extracted
+                        # from SUSHI response
+                        # lets add the exception to the errors as it cannot be collected by
+                        # `client.extract_errors_from_data`
+                        status = AttemptStatus.PARSING_FAILED
+                        errors.insert(
+                            0,
+                            SushiError(
+                                code='non-sushi',
+                                text=str(e),
+                                full_log=str(e),
+                                severity='Exception',
+                            ),
+                        )
+                    else:
+                        error_code = int(error_code)
+                        # Check whether it contains partial data
+                        if any(
+                            str(e.code)
+                            in (
+                                str(ErrorCode.PARTIAL_DATA_RETURNED.value),
+                                str(ErrorCode.NO_LONGER_AVAILABLE.value),
+                            )
+                            for e in errors
+                        ):
+                            partial_data = True
 
-                    # Check whether it contains partial data
+                if status == AttemptStatus.INITIAL:
+                    # the status has not been set yet
+                    # Mark that status is no data when there is no data error
+                    # Otherwise mark as failed download
                     if any(
                         str(e.code)
                         in (
-                            str(ErrorCode.PARTIAL_DATA_RETURNED.value),
-                            str(ErrorCode.NO_LONGER_AVAILABLE.value),
+                            str(ErrorCode.NO_DATA_FOR_DATE_ARGS.value),
+                            str(ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value),
                         )
                         for e in errors
                     ):
-                        partial_data = True
-
-                # Mark that status is no data when there is no data error
-                # Otherwise mark as failed download
-                if any(
-                    str(e.code)
-                    in (
-                        str(ErrorCode.NO_DATA_FOR_DATE_ARGS.value),
-                        str(ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value),
-                    )
-                    for e in errors
-                ):
-                    status = AttemptStatus.NO_DATA
-                else:
-                    status = AttemptStatus.DOWNLOAD_FAILED
+                        status = AttemptStatus.NO_DATA
+                    else:
+                        status = AttemptStatus.DOWNLOAD_FAILED
 
                 log = '\n'.join(error.full_log for error in errors)
                 filename = 'foo.xml'  # we just need the extension
             except Exception as e:
+                # if this happens, it means we were not able to handle the data correctly
+                # and something failed in our own code - we want a traceback and error report
+                # in the logger
                 status = AttemptStatus.PARSING_FAILED
                 logger.error("Incorrect sushi format: %s", e)
                 error_code = 'wrong-sushi'
@@ -680,7 +701,7 @@ class AttemptStatus(models.TextChoices):
 
     @classmethod
     def unprocessable(cls):
-        return {cls.SUCCESS, cls.NO_DATA, cls.IMPORT_FAILED}
+        return {cls.SUCCESS, cls.NO_DATA, cls.IMPORT_FAILED, cls.PARSING_FAILED, cls.UNPROCESSED}
 
 
 class SushiFetchAttempt(models.Model):

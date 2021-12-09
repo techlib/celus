@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+        <ReportResponse ID="32167" xmlns="http://www.niso.org/schemas/sushi/counter"
+                        xsi:schemaLocation="http://www.niso.org http://www.niso.org/schemas/sushi/counter_sushi3_0.xsd"
+                        xmlns:s="http://www.niso.org/schemas/sushi"
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        Created="2021-12-08T07:31:25Z">
+            <s:Requestor>
+                <s:ID>xxxxxxxxxx</s:ID>
+                <s:Name/>
+                <s:Email/>
+            </s:Requestor>
+            <s:CustomerReference>
+                <s:ID>xxxxxx</s:ID>
+                <s:Name/>
+            </s:CustomerReference>
+            <s:ReportDefinition Name="JR1" Release="4">
+                <s:Filters>
+                    <s:UsageDateRange>
+                        <s:Begin>2021-10-01</s:Begin>
+                        <s:End>2021-10-31</s:End>
+                    </s:UsageDateRange>
+                </s:Filters>
+            </s:ReportDefinition>
+            <!-- here should be a <Reports> opening tag, but unfotunatelly we have seen it missing -->
+            <Report ID="JR1:4" Version="4" Name="JR1" xmlns="http://www.niso.org/schemas/counter">
+                <Vendor>
+                    <ID/>
+                    <Contact>
+                        <Contact>Digital Library</Contact>
+                        <E-mail>orders@begellhouse.com</E-mail>
+                    </Contact>
+                    <WebSiteUrl>dl.begellhouse.com</WebSiteUrl>
+                </Vendor>
+                <Customer>
+                    <Name>xxxxxxx</Name>
+                    <ID>aaaaaa</ID>
+                    <ReportItems>
+                        <ItemIdentifier>
+                            <Type>Print_ISSN</Type>
+                            <Value>1044-5110</Value>
+                        </ItemIdentifier>
+                        <ItemIdentifier>
+                            <Type>Online_ISSN</Type>
+                            <Value>1936-2684</Value>
+                        </ItemIdentifier>
+                        <ItemPlatform>DL</ItemPlatform>
+                        <ItemPublisher>Begell House</ItemPublisher>
+                        <ItemName>Atomization and Sprays</ItemName>
+                        <ItemDataType>Journal</ItemDataType>
+                        <ItemPerformance>
+                            <Period>
+                                <Begin>2021-10-01</Begin>
+                                <End>2021-10-31</End>
+                            </Period>
+                            <Category>Requests</Category>
+                            <Instance>
+                                <MetricType>ft_total</MetricType>
+                                <Count>0</Count>
+                            </Instance>
+                        </ItemPerformance>
+                    </ReportItems>
+                </Customer>
+            </Report>
+        </ReportResponse>
+    </soap:Body>
+</soap:Envelope>

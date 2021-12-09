@@ -142,7 +142,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
 
 
 def reprocess_attempt(attempt: SushiFetchAttempt) -> typing.Optional[SushiFetchAttempt]:
-    if not attempt.unprocess():
+    if attempt.unprocess() is None:  # note: empty dict is valid output of `unprocess`
         return None
     try:
         import_one_sushi_attempt(attempt)
