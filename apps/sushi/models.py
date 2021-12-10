@@ -421,7 +421,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 errors = client.extract_errors_from_data(file_data)
                 if errors:
                     error_code = errors[0].code
-                    when_processed = now()
                     if error_code == 'non-sushi':
                         # this is an exception in pycounter itself, not an exception extracted
                         # from SUSHI response
@@ -489,6 +488,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 status = AttemptStatus.IMPORTING
             else:
                 status = AttemptStatus.NO_DATA
+        finally:
+            when_processed = now()
 
         if report:
             # Write tsv report
