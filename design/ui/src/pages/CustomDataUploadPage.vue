@@ -24,6 +24,7 @@ en:
   following_error_found: The following error was found when checking the imported data
   back_to_start: Back to data upload
   no_report_types: There are not reports defined for this platform - contact administrators to add some
+  please_select_organization: It is necessary to select an organization before uploading data.
 
 cs:
   data_file: Datový soubor k nahrání
@@ -48,6 +49,7 @@ cs:
   following_error_found: Při kontrole dat byla nalezena následující chyba
   back_to_start: Zpět na nahrání dat
   no_report_types: Pro tuto platformu nejsou definovány žádné reporty - kontaktujte administrátory pro jejich přidání
+  please_select_organization: Pro nahrání dat je potřeba nejprve vybrat organizaci.
 </i18n>
 
 <template>
@@ -148,9 +150,19 @@ cs:
             </v-row>
             <v-row>
               <v-col>
-                <v-btn @click="postData" :disabled="!valid">{{
-                  $t("upload")
-                }}</v-btn>
+                <v-btn
+                  @click="postData"
+                  :disabled="!valid || !$store.getters.organizationSelected"
+                  class="mb-4 mr-4"
+                  >{{ $t("upload") }}</v-btn
+                >
+                <v-alert
+                  type="warning"
+                  class="d-inline-block"
+                  v-if="!$store.getters.organizationSelected"
+                >
+                  {{ $t("please_select_organization") }}
+                </v-alert>
               </v-col>
             </v-row>
           </v-container>
