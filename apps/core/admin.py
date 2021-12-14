@@ -9,7 +9,16 @@ from .models import User, Identity, DataSource
 @admin.register(User)
 class MyUserAdmin(UserAdmin):
 
-    list_display = UserAdmin.list_display + ('language', 'source', 'last_login')
+    list_display = (
+        'username',
+        'email',
+        'first_name',
+        'last_name',
+        'last_login',
+        'is_active',
+        'is_staff',
+        'source',
+    )
 
     custom_fields = ('ext_id', 'source', 'language', 'extra_data')
 
