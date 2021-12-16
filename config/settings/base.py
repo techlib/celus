@@ -494,6 +494,7 @@ if SENTRY_URL:
         send_default_pii=True,
         environment=SENTRY_ENVIRONMENT,
         release=f"celus-{SENTRY_RELEASE}" if SENTRY_RELEASE else None,
+        traces_sample_rate=config('SENTRY_TRACE_SAMPLE_RATE', cast=float, default=1.0),
     )
     # ignore pycounter errors
     ignore_logger("pycounter.sushi")
