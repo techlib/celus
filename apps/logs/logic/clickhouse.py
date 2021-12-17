@@ -33,11 +33,12 @@ def sync_import_batch_with_clickhouse(import_batch: ImportBatch, batch_size=10_0
                 ch_backend, import_batch, batch_size=batch_size
             )
         except Exception as exc:
+            e = exc
             sync_log.state = ImportBatchSyncLog.STATE_SYNC
             sync_log.save()
 
             def error():
-                raise exc
+                raise e
 
             on_commit(error)
         else:
@@ -76,11 +77,12 @@ def sync_import_batch_interest_with_clickhouse(import_batch: ImportBatch, batch_
                 ch_backend, import_batch, batch_size=batch_size
             )
         except Exception as exc:
+            e = exc
             sync_log.state = ImportBatchSyncLog.STATE_SYNC_INTEREST
             sync_log.save()
 
             def error():
-                raise exc
+                raise e
 
             on_commit(error)
         else:
@@ -150,11 +152,12 @@ def delete_import_batch_from_clickhouse(import_batch_id: int):
     try:
         AccessLogCube.delete_import_batch(ch_backend, import_batch_id)
     except Exception as exc:
+        e = exc
         sync_log.state = ImportBatchSyncLog.STATE_DELETE
         sync_log.save()
 
         def error():
-            raise exc
+            raise e
 
         on_commit(error)
     else:

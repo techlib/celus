@@ -1,6 +1,8 @@
 import factory
 import faker
+from django.conf import settings
 
+from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import ImportBatch, Metric, AccessLog, ManualDataUpload
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
@@ -52,6 +54,8 @@ class ImportBatchFullFactory(factory.DjangoModelFactory):
         als1 = [AccessLog(value=fake.random_int(), metric=m1, **attrs) for _i in range(10)]
         als2 = [AccessLog(value=fake.random_int(), metric=m2, **attrs) for _i in range(10)]
         AccessLog.objects.bulk_create(als1 + als2)
+        if settings.CLICKHOUSE_SYNC_ACTIVE:
+            sync_import_batch_with_clickhouse(obj)
 
 
 class ManualDataUploadFullFactory(factory.DjangoModelFactory):

@@ -9,6 +9,7 @@ from logs.cubes import ch_backend, AccessLogCube
 from logs.logic.clickhouse import (
     sync_accesslogs_with_clickhouse_superfast,
     process_one_import_batch_sync_log,
+    sync_import_batch_with_clickhouse,
 )
 from logs.logic.data_import import import_counter_records, _import_counter_records, TitleManager
 from logs.logic.materialized_interest import sync_interest_by_import_batches, smart_interest_sync
@@ -330,3 +331,13 @@ class TestClickhouseSync:
             ).sum
             == 2 * old_sum_cube
         ), 'the interest with the new metric should be doubled'
+
+    def test_sync_import_batch_with_clickhouse_with_exception(
+        self, counter_records, organizations, report_type_nd
+    ):
+        platform, report_type, ib = self._prepare_counter_records(
+            counter_records, organizations, report_type_nd
+        )
+        with pytest.raises(TypeError):
+            # value error about string not being comparable to int should be raised
+            sync_import_batch_with_clickhouse(ib, batch_size='aaaa')

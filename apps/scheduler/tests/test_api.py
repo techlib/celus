@@ -4,9 +4,12 @@ from itertools import product
 import pytest
 import json
 
+from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
+from hcube.api.models.aggregation import Sum as HSum
 
+from logs.cubes import ch_backend, AccessLogCube
 from logs.models import ImportBatch, AccessLog
 from organizations.models import UserOrganization
 from scheduler import tasks
@@ -839,8 +842,10 @@ class TestFetchIntentionAPI:
         assert len(resp.json()['results']) == 31
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 class TestIntentionDeleteView:
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures('clickhouse_on_off')
     @pytest.mark.parametrize(
         ['user', 'status_code'],
         [
@@ -854,9 +859,8 @@ class TestIntentionDeleteView:
             ['su', 200],
         ],
     )
-    def test_intention_delete_view(self, basic1, clients, user, status_code):
+    def test_intention_delete_view(self, basic1, clients, user, status_code, settings):
         # the basic1 fixture is necessary for the master user to really be master
-        # TODO: test with clickhouse
         cr1 = CredentialsFactory()
         cr2 = CredentialsFactory()
         fi1 = FetchIntentionFactory.create(credentials=cr1, start_date=date(2021, 1, 1))
@@ -874,6 +878,17 @@ class TestIntentionDeleteView:
         assert FetchIntention.objects.count() == 2
         assert SushiFetchAttempt.objects.count() == 2
         assert ImportBatch.objects.count() == 1
+        # check that clickhouse integration works as expected
+        if settings.CLICKHOUSE_SYNC_ACTIVE:
+            assert (
+                ch_backend.get_one_record(
+                    AccessLogCube.query()
+                    .filter(import_batch_id=ib1.pk)
+                    .aggregate(sum=HSum('value'))
+                ).sum
+                == AccessLog.objects.aggregate(sum=Sum('value'))['sum']
+            )
+
         resp = clients[user].post(
             reverse('fetch-intention-delete'),
             json.dumps(
@@ -900,8 +915,26 @@ class TestIntentionDeleteView:
                 'sushi.SushiFetchAttempt': 1,
                 'scheduler.FetchIntention': 1,
             }, 'delete counts should match expectations'
+            if settings.CLICKHOUSE_SYNC_ACTIVE:
+                assert (
+                    ch_backend.get_one_record(
+                        AccessLogCube.query()
+                        .filter(import_batch_id=ib1.pk)
+                        .aggregate(sum=HSum('value'))
+                    ).sum
+                    == 0
+                )
         else:
             assert FetchIntention.objects.count() == 2, 'the number of intentions is the same'
             assert SushiFetchAttempt.objects.count() == 2, 'number of attempts remains the same'
             assert ImportBatch.objects.count() == 1, 'no change in number of import batches'
             assert AccessLog.objects.count() == 20, 'no change in number of access logs'
+            if settings.CLICKHOUSE_SYNC_ACTIVE:
+                assert (
+                    ch_backend.get_one_record(
+                        AccessLogCube.query()
+                        .filter(import_batch_id=ib1.pk)
+                        .aggregate(HSum('value'))
+                    ).sum
+                    == AccessLog.objects.aggregate(sum=Sum('value'))['sum']
+                )

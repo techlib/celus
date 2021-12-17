@@ -27,6 +27,8 @@ def clickhouse_connection(request, settings):
 
             if strtobool(os.environ.get("CLICKHOUSE_PURGE_TEST_DB", "False")):
                 client.execute(f"DROP DATABASE IF EXISTS {database}")
+                # update the backend to know that all tables were removed
+                ch_backend._table_exists = {}
             elif (
                 len(
                     client.execute(
