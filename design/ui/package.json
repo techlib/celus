@@ -14,7 +14,7 @@
     "@sentry/integrations": "^5.29.2",
     "@vue/cli-shared-utils": "^4.5.10",
     "axios": "^0.24.0",
-    "axios-concurrency": "git+https://github.com/beda42/axios-concurrency.git#980e93ebb3eb0b67197be399549afdc5a458dbbf",
+    "axios-concurrency": "git+https://github.com/beda42/axios-concurrency.git#9a1076a9fed241292551912b28d69839af189511",
     "color": "^3.1.3",
     "core-js": "^3.8.2",
     "crossfilter": "^1.3.12",
