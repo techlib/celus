@@ -24,9 +24,7 @@ en:
   step3_text_2: |
     <em>Note</em>: Please note that in some cases providers limit the access to
     their SUSHI servers to specific IP addresses. If you find that you are not able to
-    download data even though your credentials are OK, it might be necessary to register
-    the IP addresses of Celus.one with your provider. These are:
-    <ul><li>142.93.169.41</li><li>2a03:b0c0:3:e0::465:c001 (for IPv6)</li></ul>
+    download data even though your credentials are OK, it might be necessary to register the IP addresses of Celus harvesters with your provider. These are:
   step4: Test your credentials
   step4_text:
     After you put your credentials into Celus, we strongly advise to test them
@@ -79,8 +77,7 @@ cs:
     <em>Pozn.</em>: Berte prosím v potaz, že někteří poskytovatelé povolují přístup
     na svoje SUSHI servery pouze z určitých IP adres. Pokud tedy zjistíte, že
     nemůžete stahovat data i přesto, že vaše přístupové údaje jsou v pořádku,
-    tak může být potřeba zaregistrovat IP adresy Celus.one u vašeho poskytovatele.
-    Jsou to: <ul><li>142.93.169.41</li>2a03:b0c0:3:e0::465:c001 (pro IPv6)<li></li></ul>
+    tak může být potřeba zaregistrovat IP adresy Celus harvestrů u vašeho poskytovatele. Jsou to:
   step4: Testování vašich přístupových údajů
   step4_text:
     Po zadání vašich přístupových údajů do Celusu Vám doporučujeme je hned otestovat.
@@ -189,6 +186,12 @@ cs:
       <v-stepper-content :step="3">
         <p v-html="$t('step3_text')"></p>
         <p v-html="$t('step3_text_2')"></p>
+        <ul v-for="IPv4Address in this.harvesterIPv4Addresses" :key="IPv4Address">
+          <li>{{IPv4Address}} (IPv4)</li>
+        </ul>
+        <ul v-for="IPv6Address in this.harvesterIPv6Addresses" :key="IPv6Address">
+          <li>{{IPv6Address}} (IPv6)</li>
+        </ul>
         <p class="text-right">
           <v-btn @click="step++">{{ $t("continue") }}</v-btn>
         </p>
@@ -245,7 +248,7 @@ cs:
 
 <script>
 import SushiCredentialsEditDialog from "../sushi/SushiCredentialsEditDialog";
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 export default {
   name: "FirstSushiHelpWidget",
   components: { SushiCredentialsEditDialog },
@@ -254,6 +257,13 @@ export default {
       step: 1,
       showCredentialsDialog: false,
     };
+  },
+
+  computed: {
+    ...mapGetters({
+      harvesterIPv4Addresses: "harvesterIPv4Addresses",
+      harvesterIPv6Addresses: "harvesterIPv6Addresses",
+    }),
   },
 
   methods: {

@@ -197,6 +197,12 @@ export default new Vuex.Store({
       }
       return "wsEc67YNV2sq/";
     },
+    harvesterIPv4Addresses(state) {
+      return state.basicInfo.HARVESTER_IPV4_ADDRESSES || [];
+    },
+    harvesterIPv6Addresses(state) {
+      return state.basicInfo.HARVESTER_IPV6_ADDRESSES || [];
+    },
     letAxiosThrough(state, getters) {
       /*
         when true, all requests by axios will be put through,

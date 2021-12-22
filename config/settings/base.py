@@ -454,6 +454,12 @@ FAKE_SUSHI_URLS = ['https://demo.celus.net/']
 SOCIAL_ACCOUNTS_SUPPORTED = config('SOCIAL_ACCOUNTS_SUPPORTED', cast=Csv(), default='')
 SITE_ID = config('SITE_ID', cast=int, default=1)
 
+# Celus servers from which the data will be harvested.
+# These IPs are displayed in frontend so that customer knows,
+# which addresses to register with his provider
+HARVESTER_IPV4_ADDRESSES = config('HARVESTER_IPV4_ADDRESSES', cast=Csv(), default='')
+HARVESTER_IPV6_ADDRESSES = config('HARVESTER_IPV6_ADDRESSES', cast=Csv(), default='')
+
 # Email
 ADMINS = config('ADMINS', cast=Csv(cast=Csv(post_process=tuple), delimiter=';'), default='')
 EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[Stats] ')
@@ -474,6 +480,8 @@ EXPORTED_SETTINGS = [
     'ALLOW_EDUID_LOGIN',
     'USES_ERMS',
     'LANGUAGES',
+    'HARVESTER_IPV4_ADDRESSES',
+    'HARVESTER_IPV6_ADDRESSES',
 ]
 
 # Enables Automatic harvesting
