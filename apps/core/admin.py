@@ -1,5 +1,6 @@
 from allauth.account.adapter import get_adapter
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 
@@ -28,6 +29,13 @@ class MyUserAdmin(UserAdmin):
     list_filter = ('source',) + UserAdmin.list_filter
 
     actions = ['send_invitation_emails']
+
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        res = super().formfield_for_choice_field(db_field, request, **kwargs)
+        if db_field.name == "language":
+            # Limit language choice according to current settings
+            res.choices = [e for e in res.choices if e in settings.LANGUAGES]
+        return res
 
     def send_invitation_emails(self, request, queryset):
         adapter = get_adapter()
