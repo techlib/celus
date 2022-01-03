@@ -318,9 +318,10 @@ class PlatformInterestViewSet(ViewSet):
                 m['short_name']: m['name']
                 for m in InterestGroup.objects.all().values('short_name', 'name')
             }
-            data['platform'] = [platform_names[pk] for pk in data['platform']]
-            data.set_index('platform', drop=True, inplace=True)
-            data.rename(columns=metric_names, inplace=True)
+            if 'platform' in data:
+                data['platform'] = [platform_names[pk] for pk in data['platform']]
+                data.set_index('platform', drop=True, inplace=True)
+                data.rename(columns=metric_names, inplace=True)
             return Response(
                 data,
                 headers={'Content-Disposition': f'attachment; filename="export.{data_format}"'},

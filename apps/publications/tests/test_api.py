@@ -469,7 +469,6 @@ class TestPlatformTitleAPI:
             reverse('platform-title-list', args=[organization.pk, platform.pk])
         )
         assert resp.status_code == 200
-        print(resp.json())
         assert len(resp.json()) == 1
         assert resp.json()[0]['isbn'] == titles[0].isbn
         assert resp.json()[0]['name'] == titles[0].name
@@ -887,6 +886,33 @@ class TestPlatformTitleAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert data['title_count'] == 2
+
+
+@pytest.mark.django_db
+class TestPlatformInterestAPI:
+    @pytest.mark.parametrize(
+        "fmt", (None, "csv", "xlsx"),
+    )
+    def test_platfrom_interest_list_empty(self, master_client, interest_rt, organizations, fmt):
+        url = reverse('platform-interest-list', args=(organizations["standalone"].pk,))
+        if fmt:
+            url += f"?format={fmt}"
+        resp = master_client.get(url)
+        assert resp.status_code == 200
+        if fmt is None:
+            assert resp.json() == []
+
+    @pytest.mark.parametrize(
+        "fmt", (None, "csv", "xlsx"),
+    )
+    def test_platfrom_interest_list_all_org_empty(self, master_client, interest_rt, fmt):
+        url = reverse('platform-interest-list', args=(-1,))
+        if fmt:
+            url += f"?format={fmt}"
+        resp = master_client.get(url)
+        assert resp.status_code == 200
+        if fmt is None:
+            assert resp.json() == []
 
 
 @pytest.mark.django_db
