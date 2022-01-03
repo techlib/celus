@@ -92,16 +92,25 @@ axios.interceptors.request.use(async (config) => {
  * @param {string} [label] - Description of resource in case of error
  * @param {boolean} [raise] - Throw the exception
  * @param {string} [component] - A unique component identifier for cancellation
+ * @param {string} [group] - Mutually exclusive group of requests
  * @returns {Object} - { response, error }
  */
 const http = async (args) => {
-  const { label, raise, component, ...config } = args;
+  const { label, raise, component, group, ...config } = args;
 
-  if (component) {
+  if (!config["signal"] && component) {
+    let grp = group || "";
+
     // Don’t try to make new requests after cancellation
     if (store.state.cancellation.ongoing[component]) return null;
 
-    config["signal"] = store.state.cancellation.signal[component];
+    if (grp && store.state.cancellation.controllers[component][grp]) {
+      // aborting in the same group
+      await store.state.cancellation.controllers[component][grp].abort();
+    }
+    store.dispatch("cancellation/set", { component, group: grp });
+    config["signal"] =
+      store.state.cancellation.controllers[component][grp].signal;
   }
 
   try {

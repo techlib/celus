@@ -3,24 +3,19 @@ export default {
   namespaced: true,
 
   state: {
-    controller: {}, // Function controller.abort() to be called on cancellation
-    signal: {}, // Passed during the request to communicate with Axios
+    controllers: {}, // Function controllers[..].abort() to be called on cancellation
     ongoing: {}, // Prevents creation of new requests after cancellation
   },
 
   actions: {
     setup({ commit }, component) {
-      const controller = new AbortController();
-      commit("setController", { controller, component });
-      commit("setSignal", { signal: controller.signal, component });
+      commit("initControllers", { component });
       commit("setOngoing", { value: false, component });
     },
     cancel({ state, commit, dispatch }, component) {
       commit("setOngoing", { value: true, component });
-      const controller = state.controller[component];
-      if (controller) {
-        controller.abort();
-      }
+      const controllers = state.controllers[component];
+      Object.values(controllers).forEach((controller) => controller.abort());
       // Clean up after some time
       setTimeout(() => dispatch("cleanup", component), 4000);
     },
@@ -28,14 +23,17 @@ export default {
       commit("setOngoing", { component, value: false });
       commit("deleteComponent", component);
     },
+    set({ commit }, { component, group }) {
+      commit("setController", { component, group });
+    },
   },
 
   mutations: {
-    setController(state, { controller, component }) {
-      state.controller[component] = controller;
+    initControllers(state, { component }) {
+      state.controllers[component] = {};
     },
-    setSignal(state, { signal, component }) {
-      state.signal[component] = signal;
+    setController(state, { component, group }) {
+      state.controllers[component][group] = new AbortController();
     },
     setOngoing(state, { value, component }) {
       state.ongoing[component] = value;
@@ -44,8 +42,7 @@ export default {
       state.current = component;
     },
     deleteComponent(state, component) {
-      delete state.controller[component];
-      delete state.signal[component];
+      delete state.controllers[component];
       delete state.ongoing[component];
     },
   },

@@ -231,10 +231,13 @@ import { parseDateTime, ymDateFormat } from "@/libs/dates";
 import SushiFetchIntentionStateIcon from "@/components/sushi/SushiFetchIntentionStateIcon";
 import { intentionState } from "@/libs/intention-state";
 import { ATTEMPT_SUCCESS, ATTEMPT_NOT_MADE } from "@/libs/attempt-state";
+import cancellation from "@/mixins/cancellation";
 import IconButton from "@/components/sushi/IconButton";
 
 export default {
   name: "SushiCredentialsMonthOverviewWidget",
+
+  mixins: [cancellation],
 
   components: {
     IconButton,
@@ -480,33 +483,29 @@ export default {
       }
     },
     async loadIntentions() {
-      if (!this.intentionsUrl) {
-        return;
-      }
+      if (!this.intentionsUrl) return;
+
       this.loadingIntentions = true;
-      try {
-        let response = await axios.get(this.intentionsUrl);
-        this.intentionsData = response.data;
-        // create a map to easily find the intention data
-        let intentionsMap = new Map();
-        this.intentionsData.forEach(
-          (item) => (item.state = intentionState(item))
-        );
-        this.intentionsData.forEach((item) =>
-          intentionsMap.set(
-            `${item.credentials_id}-${item.counter_report_id}`,
-            item
-          )
-        );
-        this.intentionsMap = intentionsMap;
-      } catch (error) {
-        this.showSnackbar({
-          content: "Error loading intentions: " + error,
-          color: "error",
-        });
-      } finally {
-        this.loadingIntentions = false;
-      }
+      const { response } = await this.http({
+        url: this.intentionsUrl,
+        group: "month-overview-intention-list",
+      });
+      this.loadingIntentions = false;
+
+      if (!response) return;
+      this.intentionsData = response.data;
+      // create a map to easily find the intention data
+      let intentionsMap = new Map();
+      this.intentionsData.forEach(
+        (item) => (item.state = intentionState(item))
+      );
+      this.intentionsData.forEach((item) =>
+        intentionsMap.set(
+          `${item.credentials_id}-${item.counter_report_id}`,
+          item
+        )
+      );
+      this.intentionsMap = intentionsMap;
     },
     async loadReportTypes() {
       this.loadingReportTypes = true;
