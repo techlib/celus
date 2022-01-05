@@ -5,7 +5,7 @@
     <template v-slot:activator="{ on }">
       <span v-on="on">
         <span>{{ report.code }}</span>
-        <span v-if="showName && report.name" class="font-weight-light"
+        <span v-if="showName && report.name" class="font-weight-light me-2"
           >: {{ report.name }}</span
         >
         <v-icon v-if="isBroken" x-small color="error" class="pl-1"
@@ -13,6 +13,9 @@
         >
         <v-icon v-else-if="inKnowledgebase" x-small color="success" class="pl-1"
           >fa-user-check</v-icon
+        >
+        <v-icon v-if="inRegistry" small color="counterRegistry" class="pl-1"
+          >fa-registered</v-icon
         >
       </span>
     </template>
@@ -26,6 +29,12 @@
       <div v-if="isBroken">
         <v-icon small color="error">fa-exclamation-triangle</v-icon>
         {{ $t("sushi.broken_report_type_desc") }}
+      </div>
+      <div v-if="inRegistry">
+        <v-icon small v-if="inRegistry" color="counterRegistry"
+          >fa-registered</v-icon
+        >
+        {{ $t("sushi.registry_report_type_desc") }}
       </div>
     </span>
   </v-tooltip>
@@ -51,6 +60,12 @@ export default {
       required: false,
       default: null,
     },
+    registryFn: {
+      // function to call with report instance to find out whether
+      // the report type is in the COUNTER registry
+      required: false,
+      default: null,
+    },
     showName: {
       default: false,
       type: Boolean,
@@ -72,6 +87,13 @@ export default {
         return false;
       } else {
         return this.knowledgebaseFn(this.report);
+      }
+    },
+    inRegistry() {
+      if (!this.registryFn) {
+        return false;
+      } else {
+        return this.registryFn(this.report);
       }
     },
   },

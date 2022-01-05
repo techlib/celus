@@ -271,6 +271,7 @@ en:
     bug_fix_tt: This releases contains bug fixes
     new_feature_tt: This release contains new features
     update_tt: This release contains updates of existing features
+  registry_info: COUNTER registry info
 
 cs:
   pages:
@@ -545,3 +546,4 @@ cs:
     bug_fix_tt: Toto vydaní obsahuje opravy chyb
     new_feature_tt: Toto vydaní obsahuje nové funkce
     update_tt: Toto vydaní obsahuje aktualizace existujících funkcí
+  registry_info: Informace z COUNTER registru

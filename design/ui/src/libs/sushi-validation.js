@@ -5,7 +5,6 @@ function testSushiUrlReport(url) {
   try {
     let parsed = new URL(url);
     if (parsed) {
-      console.debug(url, parsed.pathname);
       return !reportRegexp.test(parsed.pathname);
     }
     return true;

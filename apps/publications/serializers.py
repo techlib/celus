@@ -15,7 +15,7 @@ from .models import Platform, Title
 class SimplePlatformSerializer(ModelSerializer):
     class Meta:
         model = Platform
-        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url')
+        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url', 'counter_registry_id')
 
 
 class DataSourceSerializer(ModelSerializer):
@@ -41,6 +41,7 @@ class PlatformSerializer(ModelSerializer):
             'url',
             'knowledgebase',
             'source',
+            'counter_registry_id',
         )
 
 
@@ -62,6 +63,7 @@ class DetailedPlatformSerializer(ModelSerializer):
             'title_count',
             'interests',
             'has_data',
+            'counter_registry_id',
         )
 
 

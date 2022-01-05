@@ -10,7 +10,9 @@ axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
 axios.interceptors.request.use(
   function (config) {
-    config.headers["celus-version"] = store.getters.celusVersion;
+    if (!config.url.includes("projectcounter.org")) {
+      config.headers["celus-version"] = store.getters.celusVersion;
+    }
     return config;
   },
   function (error) {

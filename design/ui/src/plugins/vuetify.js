@@ -14,6 +14,7 @@ export default new Vuetify({
         primary: colors.teal.lighten2,
         secondary: colors.grey,
         accent: colors.orange.lighten2,
+        counterRegistry: "#107da6",
       },
     },
   },

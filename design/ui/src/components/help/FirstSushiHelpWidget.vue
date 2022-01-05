@@ -149,17 +149,19 @@ cs:
       <v-stepper-content :step="3">
         <p v-html="$t('step3_text')"></p>
         <p v-html="$t('step3_text_2')"></p>
-        <ul
-          v-for="IPv4Address in this.harvesterIPv4Addresses"
-          :key="IPv4Address"
-        >
-          <li>{{ IPv4Address }} (IPv4)</li>
-        </ul>
-        <ul
-          v-for="IPv6Address in this.harvesterIPv6Addresses"
-          :key="IPv6Address"
-        >
-          <li>{{ IPv6Address }} (IPv6)</li>
+        <ul>
+          <li
+            v-for="IPv4Address in this.harvesterIPv4Addresses"
+            :key="IPv4Address"
+          >
+            {{ IPv4Address }} (IPv4)
+          </li>
+          <li
+            v-for="IPv6Address in this.harvesterIPv6Addresses"
+            :key="IPv6Address"
+          >
+            {{ IPv6Address }} (IPv6)
+          </li>
         </ul>
         <p class="text-right">
           <v-btn @click="step++">{{ $t("continue") }}</v-btn>

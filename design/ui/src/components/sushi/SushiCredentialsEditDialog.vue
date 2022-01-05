@@ -41,7 +41,11 @@ en:
   unverified_details: There are no successful harvests using the current version of these credentials.
   unverified_note: Please verify the credentials by performing a harvest. Note that the credentials won't be used for automatic harvesting unless a successful harvest is performed.
   plan_harvest: Plan harvest
-
+  requestor_id_not_required: Requestor ID is not required for this platform
+  see_registry_hint: The Registry icon contains tooltip about this field from the COUNTER registry
+  ip_authorization_required: According to the COUNTER registry, this platform requires IP authorization. In case you have problems with harvesting, please contact the platform provider with a request to add the following to the list of authorized IPs
+  registry_platform_required: According to the COUNTER registry, this platform requires this attribute to be set
+  registry_link: Link to the COUNTER registry record for the selected platform
 cs:
   add_custom_param: Přidat vlastní parametr
   add_custom_param_tooltip: Použijte toto tlačítko pro data, pro která nenajdete odpovídající políčko jinde.
@@ -63,7 +67,7 @@ cs:
   title_in_conflict_hint: Je vyžadován unikátní název
   extra_attributes: Extra atributy - vyplňte pouze pokud to poskytovatel vyžaduje
   extra_attributes_tooltip: Tato sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
-  platform_filter_tooltip: Toto pole je používáno jen některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi obsahují filtr "platform", můžete jej vyplnit zde.
+  platform_filter_tooltip: Toto pole je používáno jen některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi, obsahují filtr "platform", můžete jej vyplnit zde.
   really_delete: Chcete opravdu smazat tyto přihlašovací údaje? (Stažená data budou zachována)
   broken: Tyto přihlašovací údaje byly označené jako nefunkční. Stahování bude vypnuto dokud nebudou údaje upraveny.
   broken_unbreak_manually:
@@ -82,6 +86,11 @@ cs:
   unverified_details: Současná verze těcho přihlašovacích údajů zatím nebyla úspěšně použita pro stažení dat.
   unverified_note: Ověřte prosím platnost přihlašovacích údajů stažením dat. Upozorňujeme, že dokud nebdou přihlašovací údaje ověřeny, nebude u nich probíhat automatické stahování dat.
   plan_harvest: Naplánovat stahování
+  requestor_id_not_required: Requestor ID není pro tuto platformu vyžadováno
+  see_registry_hint: Ikona registru obsahuje nápovědu pro toto pole z COUNTER registru
+  ip_authorization_required: Podle informací z COUNTER registru je pro tuto platformu vyžadována autorizace IP adresy. Pokud narazíte na problémy se sklízením dat, kontaktujte prosím poskytovatele a požádejte o povolení přístupu z následujících adres
+  registry_platform_required: Podle informací z COUNTER registru je tato hodnota vyžadována
+  registry_link: Odkaz do COUNTER registru pro vybranou platformu
 </i18n>
 
 <template>
@@ -169,63 +178,81 @@ cs:
               </v-select>
             </v-col>
             <v-col cols="12" :md="4">
-              <v-text-field
-                v-if="credentials || fixedPlatform"
-                :value="activePlatformName"
-                :label="$t('platform')"
-                disabled
-                dense
-                height="2.75rem"
-              >
-              </v-text-field>
-              <v-autocomplete
-                v-else
-                v-model="platform"
-                :items="allowedPlatforms"
-                item-text="name"
-                item-value="pk"
-                :label="$t('platform')"
-                return-object
-                :loading="loadingPlatforms"
-                :rules="[ruleRequired]"
-                dense
-                height="2.75rem"
-                :menu-props="{ maxHeight: 480 }"
-              >
-                <template v-slot:prepend-item>
-                  <AddPlatformButton
-                    v-if="
-                      allowUserCreatePlatforms &&
-                      (!credentials || !credentials.pk)
-                    "
-                    @update-platforms="preselectCreatedPlatform"
-                    :text="true"
-                    small
-                    color="success"
-                    class="pl-1"
-                  />
-                </template>
-                <template v-slot:item="{ item }">
-                  <v-tooltip bottom max-width="600px" v-if="badge(item)">
-                    <template #activator="{ on }">
-                      <span class="v-list-item__title">{{ item.name }}</span>
-                      <v-badge
-                        inline
-                        :content="$t(badge(item).content)"
-                        :color="badge(item).color"
+              <span class="d-flex">
+                <v-text-field
+                  v-if="credentials || fixedPlatform"
+                  :value="activePlatformName"
+                  :label="$t('platform')"
+                  disabled
+                  dense
+                  height="2.75rem"
+                >
+                </v-text-field>
+                <v-autocomplete
+                  v-else
+                  v-model="platform"
+                  :items="allowedPlatforms"
+                  item-text="name"
+                  item-value="pk"
+                  :label="$t('platform')"
+                  return-object
+                  :loading="loadingPlatforms"
+                  :rules="[ruleRequired]"
+                  dense
+                  height="2.75rem"
+                  :menu-props="{ maxHeight: 480 }"
+                >
+                  <template v-slot:prepend-item>
+                    <AddPlatformButton
+                      v-if="
+                        allowUserCreatePlatforms &&
+                        (!credentials || !credentials.pk)
+                      "
+                      @update-platforms="preselectCreatedPlatform"
+                      :text="true"
+                      small
+                      color="success"
+                      class="pl-1"
+                    />
+                  </template>
+                  <template v-slot:item="{ item }">
+                    <v-tooltip bottom max-width="600px" v-if="badge(item)">
+                      <template #activator="{ on }">
+                        <span class="v-list-item__title">{{ item.name }}</span>
+                        <v-badge
+                          inline
+                          :content="$t(badge(item).content)"
+                          :color="badge(item).color"
+                        >
+                          <template v-slot:badge>
+                            <span v-on="on">{{ $t(badge(item).content) }}</span>
+                          </template>
+                        </v-badge>
+                      </template>
+                      <span>{{ $t(badge(item).tooltip) }}</span>
+                    </v-tooltip>
+                    <span v-else class="v-list-item__title">
+                      {{ item.name }}
+                    </span>
+                  </template>
+                </v-autocomplete>
+                <v-tooltip bottom v-if="platformRegistryLink">
+                  <template #activator="{ on }">
+                    <span v-on="on" class="align-self-end mb-3 ms-1">
+                      <a
+                        target="_blank"
+                        :href="`https://registry.projectcounter.org/platform/${activePlatform.counter_registry_id}/`"
+                        style="line-height: 2rem"
                       >
-                        <template v-slot:badge>
-                          <span v-on="on">{{ $t(badge(item).content) }}</span>
-                        </template>
-                      </v-badge>
-                    </template>
-                    <span>{{ $t(badge(item).tooltip) }}</span>
-                  </v-tooltip>
-                  <span v-else class="v-list-item__title">
-                    {{ item.name }}
-                  </span>
-                </template>
-              </v-autocomplete>
+                        <v-icon small color="counterRegistry"
+                          >fa-external-link-alt
+                        </v-icon>
+                      </a>
+                    </span>
+                  </template>
+                  <span>{{ $t("registry_link") }}</span>
+                </v-tooltip>
+              </span>
             </v-col>
           </v-row>
 
@@ -235,7 +262,12 @@ cs:
                 v-model="requestorId"
                 :label="$t('labels.requestor_id')"
                 :disabled="!activePlatform"
+                persistent-hint
+                :hint="requestorIdInfo ? $t('see_registry_hint') : ''"
               >
+                <template #append v-if="requestorIdInfo">
+                  <RegistryIcon :text="requestorIdInfo" />
+                </template>
               </v-text-field>
             </v-col>
             <v-col cols="12" :sm="counterVersion === 5 ? 4 : 6">
@@ -244,7 +276,12 @@ cs:
                 :label="$t('labels.customer_id')"
                 :rules="[ruleRequired]"
                 :disabled="!activePlatform"
+                persistent-hint
+                :hint="customerIdInfo ? $t('see_registry_hint') : ''"
               >
+                <template #append v-if="customerIdInfo">
+                  <RegistryIcon :text="customerIdInfo" />
+                </template>
               </v-text-field>
             </v-col>
 
@@ -254,7 +291,12 @@ cs:
                 :label="$t('labels.api_key')"
                 :disabled="!activePlatform"
                 :rules="[ruleAPIkey]"
+                persistent-hint
+                :hint="apiKeyInfo ? $t('see_registry_hint') : ''"
               >
+                <template #append>
+                  <RegistryIcon v-if="apiKeyInfo" :text="apiKeyInfo" />
+                </template>
               </v-text-field>
             </v-col>
           </v-row>
@@ -285,6 +327,7 @@ cs:
                 :error-messages="errors.url"
                 :disabled="!activePlatform"
                 @change="urlManuallyEdited = true"
+                ref="urlField"
               >
               </v-text-field>
             </v-col>
@@ -308,6 +351,7 @@ cs:
                       :report="item"
                       :broken-fn="isBroken"
                       :knowledgebase-fn="inKnowledgebase"
+                      :registry-fn="inRegistry"
                       show-name
                     />
                   </v-list-item-content>
@@ -324,6 +368,7 @@ cs:
                       :report="item"
                       :broken-fn="isBroken"
                       :knowledgebase-fn="inKnowledgebase"
+                      :registry-fn="inRegistry"
                     />
                   </v-chip>
                 </template>
@@ -345,24 +390,51 @@ cs:
               </v-tooltip>
               <v-container fluid class="pa-0 pl-md-8">
                 <v-row v-if="counterVersion === 5">
-                  <v-col md="5" class="py-0">
+                  <v-col md="5" class="pt-0">
                     <v-text-field
                       v-model="platformFilter"
                       :label="$t('labels.platform_filter')"
                       :disabled="!activePlatform"
                       :rules="[rulePlatform]"
+                      persistent-hint
+                      class="mb-3 pb-3"
+                      :hint="
+                        platformAttrRequired
+                          ? $t('registry_platform_required')
+                          : ''
+                      "
                     >
                       <template v-slot:append>
-                        <v-tooltip right>
+                        <v-tooltip right max-width="400px">
                           <template #activator="{ on }">
-                            <v-icon v-on="on" small color="secondary"
-                              >fa-info-circle</v-icon
+                            <v-icon
+                              v-on="on"
+                              small
+                              :color="
+                                platformAttrRequired
+                                  ? 'counterRegistry'
+                                  : 'secondary'
+                              "
+                              >{{
+                                platformAttrRequired
+                                  ? "fa-registered"
+                                  : "fa-info-circle"
+                              }}</v-icon
                             >
                           </template>
-                          <div
-                            v-html="$t('platform_filter_tooltip')"
-                            style="max-width: 400px"
-                          ></div>
+                          <div>
+                            <div v-if="platformAttrRequired" class="bold">
+                              {{ $t("registry_info") }}
+                            </div>
+                            <div
+                              v-html="
+                                platformAttrRequired
+                                  ? platformAttrInfo ||
+                                    $t('registry_platform_required')
+                                  : $t('platform_filter_tooltip')
+                              "
+                            ></div>
+                          </div>
                         </v-tooltip>
                       </template>
                     </v-text-field>
@@ -443,6 +515,28 @@ cs:
                   </v-row>
                 </div>
               </v-container>
+            </v-col>
+          </v-row>
+          <v-row v-if="ipAuthorizationRequired">
+            <v-col cols="12" class="py-0">
+              <v-alert type="warning" outlined>
+                {{ $t("ip_authorization_required") }}
+
+                <ul class="mt-2">
+                  <li
+                    v-for="IPv4Address in this.harvesterIPv4Addresses"
+                    :key="IPv4Address"
+                  >
+                    {{ IPv4Address }} (IPv4)
+                  </li>
+                  <li
+                    v-for="IPv6Address in this.harvesterIPv6Addresses"
+                    :key="IPv6Address"
+                  >
+                    {{ IPv6Address }} (IPv6)
+                  </li>
+                </ul>
+              </v-alert>
             </v-col>
           </v-row>
           <v-row>
@@ -569,10 +663,12 @@ import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import validate from "validate.js";
 import { testSushiUrlReport } from "@/libs/sushi-validation";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
+import RegistryIcon from "@/components/sushi/RegistryIcon";
 
 export default {
   name: "SushiCredentialsEditDialog",
   components: {
+    RegistryIcon,
     HarvestSelectedWidget,
     SushiReportIndicator,
     AddPlatformButton,
@@ -638,6 +734,8 @@ export default {
       userIsManager: "showManagementStuff",
       consortialInstall: "consortialInstall",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
+      harvesterIPv4Addresses: "harvesterIPv4Addresses",
+      harvesterIPv6Addresses: "harvesterIPv6Addresses",
     }),
     credentials() {
       if (this.credentialsObject) {
@@ -655,6 +753,12 @@ export default {
         return this.fixedPlatform;
       }
       return this.platform;
+    },
+    activePlatformId() {
+      if (this.activePlatform) {
+        return this.activePlatform.pk;
+      }
+      return null;
     },
     apiData() {
       let extraParams = {};
@@ -834,6 +938,43 @@ export default {
     },
     activePlatformName() {
       return this.activePlatform.name || this.activePlatform.short_name;
+    },
+    platformRegistryLink() {
+      if (this.activePlatform && this.activePlatform.counter_registry_id) {
+        return `https://registry.projectcounter.org/api/v1/platform/${this.activePlatform.counter_registry_id}/`;
+      }
+    },
+    registrySushiService() {
+      if (this.activePlatform && this.activePlatform.registry_data) {
+        return this.activePlatform.registry_data.sushi_services.find(
+          (service) => service.counter_release == this.counterVersion
+        );
+      }
+      return null;
+    },
+    requestorIdInfo() {
+      if (!this.requestorIdRequired) {
+        return this.$t("requestor_id_not_required");
+      }
+      return this.registrySushiService?.requestor_id_info ?? "";
+    },
+    requestorIdRequired() {
+      return this.registrySushiService?.requestor_id_required ?? true;
+    },
+    customerIdInfo() {
+      return this.registrySushiService?.customer_id_info ?? "";
+    },
+    apiKeyInfo() {
+      return this.registrySushiService?.api_key_info ?? "";
+    },
+    ipAuthorizationRequired() {
+      return this.registrySushiService?.ip_address_authorization ?? false;
+    },
+    platformAttrRequired() {
+      return this.registrySushiService?.platform_attr_required ?? false;
+    },
+    platformAttrInfo() {
+      return this.registrySushiService?.platform_specific_info ?? "";
     },
   },
 
@@ -1023,7 +1164,7 @@ export default {
       this.errors = errors;
     },
     async saveAndClose() {
-      this.$refs.form.validate();
+      await this.$refs.form.validate();
       if (this.isValid) {
         let data = await this.saveData();
         if (data) {
@@ -1078,6 +1219,17 @@ export default {
     },
     inKnowledgebase(report) {
       return this.knowledgebaseReportTypes.includes(report.code);
+    },
+    inRegistry(report) {
+      const reports = this.activePlatform?.registry_data?.reports;
+      if (reports) {
+        return !!reports.find(
+          (item) =>
+            item.counter_release == this.counterVersion &&
+            item.report_id == report.code
+        );
+      }
+      return false;
     },
     guessUrl() {
       if (!this.url) {
@@ -1197,6 +1349,22 @@ export default {
         });
       }
     },
+    async loadRegistryData() {
+      if (this.platformRegistryLink) {
+        try {
+          const platformId = this.activePlatform.counter_registry_id;
+          let resp = await axios.get(this.platformRegistryLink);
+          if (resp.data.id === platformId) {
+            // check that the ID did not change during the request
+            this.$set(this.activePlatform, "registry_data", resp.data);
+          }
+        } catch (error) {
+          this.showSnackbar({
+            content: "Could not load data from the COUNTER registry",
+          });
+        }
+      }
+    },
   },
 
   async mounted() {
@@ -1221,10 +1389,14 @@ export default {
         this.loadUseCases();
       }
     },
-    activePlatform() {
-      if (!this.credentials) {
-        this.guessUrl();
-      }
+    activePlatformId: {
+      immediate: true,
+      handler() {
+        if (!this.credentials) {
+          this.guessUrl();
+        }
+        this.loadRegistryData();
+      },
     },
     counterVersion() {
       let currentReportTypes = this.allReportTypes
@@ -1238,6 +1410,9 @@ export default {
       }
     },
     url() {
+      this.$nextTick(() => {
+        this.$refs.urlField.validate();
+      });
       delete this.errors.url;
     },
     async showTestDialog(value) {

@@ -43,7 +43,8 @@ en:
       during harvesting of data which indicate credentials are correct, but report is not supported.
       Automatic harvesting is disabled for such reports.
     knowledgebase_report_type_desc:
-      It is verified that this report type is supported for this platform.
+      This report was successfully harvested by other users for this platform.
+    registry_report_type_desc: According to the COUNTER registry, this report is supported by the selected platform.
 
 cs:
   sushi:
@@ -91,3 +92,4 @@ cs:
       Automatické stahování je pro tyto reporty vypnuté.
     knowledgebase_report_type_desc:
       Je ověřeno, že tento report je podporován na této platformě.
+    registry_report_type_desc: Podle COUNTER registru je tento report podporován pro vybranou platformu.
