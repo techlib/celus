@@ -430,10 +430,12 @@ class ManualDataUploadViewSet(ModelViewSet):
         try:
             stats = custom_import_preflight_check(mdu)
             return Response(stats)
+        except UnicodeDecodeError as e:
+            return Response({'error': str(e), 'kind': 'unicode-decode'}, status=400)
         except Exception as e:
             body = f'URL: {request.path}\n\nException: {e}\n\nTraceback: {traceback.format_exc()}'
             mail_admins('MDU preflight check error', body)
-            return Response({'error': str(e)}, status=400)
+            return Response({'error': str(e), 'kind': 'general'}, status=400)
 
     @action(methods=['POST'], detail=True, url_path='process')
     def process(self, request, pk):

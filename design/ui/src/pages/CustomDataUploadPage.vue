@@ -25,6 +25,7 @@ en:
   back_to_start: Back to data upload
   no_report_types: There are not reports defined for this platform - contact administrators to add some
   please_select_organization: It is necessary to select an organization before uploading data.
+  requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
 
 cs:
   data_file: Datový soubor k nahrání
@@ -50,6 +51,7 @@ cs:
   back_to_start: Zpět na nahrání dat
   no_report_types: Pro tuto platformu nejsou definovány žádné reporty - kontaktujte administrátory pro jejich přidání
   please_select_organization: Pro nahrání dat je potřeba nejprve vybrat organizaci.
+  requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
 </i18n>
 
 <template>
@@ -183,7 +185,12 @@ cs:
             />
             <v-alert v-else-if="preflightError" type="error">
               <strong v-text="$t('following_error_found')"></strong>:
-              <span v-text="preflightError"></span>
+              <span
+                v-if="(preflightError.kind = 'unicode-decode')"
+                v-text="$t('requires_utf8')"
+              >
+              </span>
+              <span v-else v-text="preflightError.error"></span>
             </v-alert>
             <LargeSpinner v-else />
           </v-card-text>
@@ -455,7 +462,7 @@ export default {
             error.response.status === 400 &&
             "error" in error.response.data
           ) {
-            this.preflightError = error.response.data.error;
+            this.preflightError = error.response.data;
           } else {
             this.showSnackbar({
               content: "Error loading preflight data: " + error,
