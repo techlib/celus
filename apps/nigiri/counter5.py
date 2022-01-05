@@ -363,8 +363,8 @@ class Counter5TableReport:
                 yield rec
 
     def _fd_to_records(self, infile) -> typing.Generator[CounterRecord, None, None]:
-        # guess TSV or CSV
-        dialect = csv.Sniffer().sniff(infile.read(1024))
+        # guess TSV or CSV and other csv stuff (e.g. how strings are escaped)
+        dialect = csv.Sniffer().sniff(infile.read(10 * 1024 * 1024))  # first 10MB
         infile.seek(0)
 
         # read the header
