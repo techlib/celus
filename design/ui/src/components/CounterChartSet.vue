@@ -74,6 +74,7 @@ cs:
           :order-by="this.selectedChartType.ordering"
           :ignore-date-range="!!importBatchId"
           :show-mark-line="showMarkLine"
+          ref="chart"
         >
         </APIChart>
         <v-alert
@@ -231,6 +232,11 @@ export default {
         } finally {
           this.loading = false;
         }
+      }
+    },
+    reloadChartData() {
+      if (this.$refs.chart) {
+        this.$refs.chart.loadData();
       }
     },
   },

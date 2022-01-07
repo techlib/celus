@@ -167,6 +167,7 @@ cs:
               :title-id="null"
               :report-views-url="reportViewsUrl"
               scope="platform"
+              ref="chartSet"
             >
             </CounterChartSet>
           </section>
@@ -369,6 +370,11 @@ export default {
     },
     platformTitleCountUrl() {
       this.loadPlatformTitleCount();
+    },
+    activeTab() {
+      if (this.activeTab === "chart" && this.$refs.chartSet) {
+        this.$refs.chartSet.reloadChartData();
+      }
     },
   },
 };
