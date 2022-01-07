@@ -17,14 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * it is now possible to delete SUSHI data from the "Overview" dialog in SUSHI management
 * months with already planned harvesting are marked with a badge in the "Overview" dialog
 * rows with zero usage are removed from advanced reporting output by default, it is possible to
-  configure reports to add them.
+  configure reports to add them
 * upload of another file is offered in the last step of manual upload
+* outstanding HTTP requests to the backend are cancelled when user switches pages, thus improving
+  frontend responsiveness (especially when quickly leaving dashboard page after initial load)
 
 #### Backend
 
 * support for synchronization of log data into Clickhouse was added
 * management command was added to remove titles without any associated usage data
 * management command was added to remove orphaned files from sushi harvesting
+* management command was added for comparing the main database content with Clickhouse
 
 ### Changes
 
@@ -34,12 +37,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * selection of organization and platforms when adding new SUSHI credentials was optimized for space
 * downloads resulting in SUSHI exception 3030 (no usage) are now shown with the "empty data" icon
   rather than the "error" icon
+* when switching between tabs on the platform detail page, the chart data get automatically
+  reloaded to make sure they are up to date
+* more informative error messages are shown when incorrect encoding it used for manually uploaded
+  CSV files
 * javascript libraries were updated
 
 #### Backend
 
 * older data harvested using SUSHI for a period longer than one month were split to individual
   months for easier management (deleting and re-harvesting)
+* CSV "sniffing" size was increased to improve accuracy of format dialect detection
 * python libraries were updated
 
 ### Fixed
@@ -56,6 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * properly handle exceptions coming from the pycounter library when importing C4 data
 * check for correct site.domain configuration were added when sending user invitations
 * disabling of cachalot in test settings was fixed
+* ensure than only enabled languages are available for user selection in Django admin
+* export of empty data no longer crashes with "KeyError"
 
 
 ## [3.2.5]
