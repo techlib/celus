@@ -44,6 +44,10 @@ def sync_import_batch_with_clickhouse(import_batch: ImportBatch, batch_size=10_0
         else:
             sync_log.state = ImportBatchSyncLog.STATE_NO_CHANGE
             sync_log.save()
+            # the following way of updating the date does not trigger update of last_updated
+            # which is important because otherwise it would be always later than `last_clickhoused`
+            # which would interfere with the way we find out-of-sync import batches
+            ImportBatch.objects.filter(pk=import_batch.pk).update(last_clickhoused=now())
         return out
     elif sync_log.state == ImportBatchSyncLog.STATE_DELETE:
         # the import batch was already deleted, so we cannot do anything and just leave it

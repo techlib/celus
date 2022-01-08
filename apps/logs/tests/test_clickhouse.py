@@ -125,6 +125,9 @@ class TestClickhouseSync:
         assert len(ch_recs) == 6
         assert ImportBatchSyncLog.objects.count() == 1, 'the import batch is still there'
         assert ImportBatchSyncLog.objects.get().state == ImportBatchSyncLog.STATE_NO_CHANGE
+        ib = ImportBatch.objects.get()
+        assert ib.last_clickhoused is not None
+        assert ib.last_clickhoused > ib.last_updated
 
     def test_general_accesslog_sync(self, counter_records, organizations, report_type_nd):
         self._prepare_counter_records(counter_records, organizations, report_type_nd, lowlevel=True)
