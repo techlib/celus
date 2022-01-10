@@ -186,7 +186,7 @@ cs:
             <v-alert v-else-if="preflightError" type="error">
               <strong v-text="$t('following_error_found')"></strong>:
               <span
-                v-if="(preflightError.kind = 'unicode-decode')"
+                v-if="preflightError.kind == 'unicode-decode'"
                 v-text="$t('requires_utf8')"
               >
               </span>
