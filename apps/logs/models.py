@@ -519,6 +519,14 @@ class ManualDataUpload(models.Model):
     def __str__(self):
         return f'{self.user.username if self.user else ""}: {self.report_type}, {self.platform}'
 
+    def mail_report_format(self, request):
+        return f"""\
+        User: {self.user.username} ( {self.user.email} )
+        Organization: {self.organization}
+        Platform: {self.platform}
+        ReportType: {self.report_type}
+        File: {request.build_absolute_uri(self.data_file.url)}"""
+
     def delete(self, using=None, keep_parents=False):
         if self.import_batch:
             self.import_batch.delete()

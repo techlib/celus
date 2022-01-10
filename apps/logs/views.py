@@ -433,7 +433,15 @@ class ManualDataUploadViewSet(ModelViewSet):
         except UnicodeDecodeError as e:
             return Response({'error': str(e), 'kind': 'unicode-decode'}, status=400)
         except Exception as e:
-            body = f'URL: {request.path}\n\nException: {e}\n\nTraceback: {traceback.format_exc()}'
+            body = f"""\
+{mdu.mail_report_format(request)}
+
+URL: {request.path}
+
+Exception: {e}
+
+Traceback: {traceback.format_exc()}
+"""
             mail_admins('MDU preflight check error', body)
             return Response({'error': str(e), 'kind': 'general'}, status=400)
 
