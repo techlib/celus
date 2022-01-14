@@ -50,7 +50,7 @@ export default {
     },
   },
   methods: {
-    ...mapActions({
+    ...mapActions("interest", {
       changeSelectedGroups: "changeSelectedGroups",
     }),
   },
