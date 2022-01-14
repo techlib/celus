@@ -30,7 +30,7 @@ from sushi.models import (
     CounterReportType,
 )
 
-from . import filters
+from .filters import intentions as intentions_filters, harvests as harvests_filters
 from .models import Automatic, FetchIntention, Harvest
 from .tasks import trigger_scheduler
 from .serializers import (
@@ -46,6 +46,15 @@ class HarvestViewSet(
 ):
 
     pagination_class = StandardResultsSetPagination
+
+    filter_backends = [
+        harvests_filters.FinishedFilter,
+        harvests_filters.BrokenFilter,
+        harvests_filters.PlatformsFilter,
+        harvests_filters.AutomaticFilter,
+        harvests_filters.MonthFilter,
+        harvests_filters.OrderingFilter,
+    ]
 
     def get_queryset(self):
         if SuperuserOrAdminPermission().has_permission(self.request, self):
@@ -107,29 +116,6 @@ class HarvestViewSet(
                 ),
             )
         )
-
-        finished = self.request.query_params.get('finished', None)
-        if finished == "1":
-            qs = qs.filter(planned=0)
-        elif finished == "0":
-            qs = qs.filter(planned__gt=0)
-
-        broken = self.request.query_params.get('broken', None)
-        if broken == "1":
-            qs = qs.filter(broken__gt=0)
-        elif broken == "0":
-            qs = qs.filter(broken=0)
-
-        automatic = self.request.query_params.get('automatic', None)
-        if automatic == "1":
-            qs = qs.filter(automatic__isnull=False)
-        elif automatic == "0":
-            qs = qs.filter(automatic__isnull=True)
-
-        month = self.request.query_params.get('month', None)
-        if month:
-            parsed_month = parse_month(month)
-            qs = qs.filter(start_date__lte=parsed_month, end_date__gte=parsed_month)
 
         order_by = self.request.query_params.get('order_by', 'pk')
         order_desc = "desc" if self.request.query_params.get('desc', 'false') == 'true' else "asc"
@@ -276,16 +262,16 @@ class IntentionViewSet(ModelViewSet):
     serializer_class = FetchIntentionSerializer
     http_method_names = ['get', 'options', 'head']
     filter_backends = [
-        filters.OrganizationFilter,
-        filters.PlatformFilter,
-        filters.ReportFilter,
-        filters.DateFromFilter,
-        filters.MonthFilter,
-        filters.CounterVersionFilter,
-        filters.ModeFilter,
-        filters.OrderingFilter,
-        filters.AttemptFilter,
-        filters.CredentialsFilter,
+        intentions_filters.OrganizationFilter,
+        intentions_filters.PlatformFilter,
+        intentions_filters.ReportFilter,
+        intentions_filters.DateFromFilter,
+        intentions_filters.MonthFilter,
+        intentions_filters.CounterVersionFilter,
+        intentions_filters.ModeFilter,
+        intentions_filters.OrderingFilter,
+        intentions_filters.AttemptFilter,
+        intentions_filters.CredentialsFilter,
     ]
     pagination_class = StandardResultsSetPagination
 

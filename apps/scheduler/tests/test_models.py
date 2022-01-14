@@ -787,7 +787,9 @@ class TestHarvest:
             harvest=harvest1,
             duplicate_of=None,
             attempt=FetchAttemptFactory(
-                counter_report=counter_report_types["tr"], credentials=credentials["standalone_tr"]
+                counter_report=counter_report_types["tr"],
+                credentials=credentials["standalone_tr"],
+                status='importing',
             ),
         )
         FetchIntentionFactory(
@@ -832,7 +834,9 @@ class TestHarvest:
             duplicate_of=None,
             queue=queue,
             attempt=FetchAttemptFactory(
-                counter_report=counter_report_types["tr"], credentials=credentials["standalone_tr"]
+                counter_report=counter_report_types["tr"],
+                credentials=credentials["standalone_tr"],
+                status='success',
             ),
         )
         FetchIntentionFactory(
@@ -855,10 +859,10 @@ class TestHarvest:
             harvest=harvest3,
             duplicate_of=None,
             attempt=FetchAttemptFactory(
-                counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"]
+                counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"],
             ),
         )
-        FetchIntentionFactory(
+        working_intention = FetchIntentionFactory(
             credentials=credentials["branch_pr"],
             counter_report=counter_report_types["pr"],
             start_date="2020-01-01",
@@ -868,12 +872,43 @@ class TestHarvest:
             duplicate_of=original_fi,
             attempt=None,
         )
+        SchedulerFactory(current_intention=working_intention)
 
-        assert harvest1.stats() == {"finished": 1, "planned": 1, "total": 2, "attempt_count": 1}
-        assert harvest2.stats() == {"finished": 1, "planned": 2, "total": 3, "attempt_count": 1}
-        assert harvest3.stats() == {"finished": 1, "planned": 0, "total": 1, "attempt_count": 1}
-        assert harvest4.stats() == {"finished": 1, "planned": 0, "total": 1, "attempt_count": 0}
-        assert harvest5.stats() == {"finished": 0, "planned": 0, "total": 0, "attempt_count": 0}
+        assert harvest1.stats() == {
+            "finished": 1,
+            "planned": 1,
+            "total": 2,
+            "attempt_count": 1,
+            "working": 1,
+        }
+        assert harvest2.stats() == {
+            "finished": 1,
+            "planned": 2,
+            "total": 3,
+            "attempt_count": 1,
+            "working": 0,
+        }
+        assert harvest3.stats() == {
+            "finished": 1,
+            "planned": 0,
+            "total": 1,
+            "attempt_count": 1,
+            "working": 0,
+        }
+        assert harvest4.stats() == {
+            "finished": 1,
+            "planned": 0,
+            "total": 1,
+            "attempt_count": 0,
+            "working": 1,
+        }
+        assert harvest5.stats() == {
+            "finished": 0,
+            "planned": 0,
+            "total": 0,
+            "attempt_count": 0,
+            "working": 0,
+        }
 
         assert list(
             Harvest.objects.annotate_stats().order_by('pk').values_list('pk', 'planned', 'total')

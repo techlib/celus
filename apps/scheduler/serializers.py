@@ -17,9 +17,14 @@ class StatsSerializer(serializers.Serializer):
     total = serializers.IntegerField()
     planned = serializers.IntegerField()
     attempt_count = serializers.IntegerField()
+    working = serializers.IntegerField()
 
     def to_representation(self, instance):
-        return {k: v for k, v in instance.items() if k in ("planned", "total", "attempt_count",)}
+        return {
+            k: v
+            for k, v in instance.items()
+            if k in ("planned", "total", "attempt_count", "working")
+        }
 
 
 class CreateFetchIntentionSerializer(serializers.ModelSerializer):

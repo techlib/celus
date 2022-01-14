@@ -52,10 +52,10 @@ class TestHarvestAPI:
         assert data[0]["pk"] < data[1]["pk"] < data[2]["pk"], "default sort by pk asc"
 
         # stats
-        assert data[0]["stats"] == {"total": 3, "planned": 2, "attempt_count": 2}
-        assert data[1]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
-        assert data[2]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
-        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0}
+        assert data[0]["stats"] == {"total": 3, "planned": 2, "attempt_count": 2, "working": 0}
+        assert data[1]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
+        assert data[2]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
+        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
 
         # start and end dates
         assert data[0]["start_date"] == "2020-01-01"
@@ -104,15 +104,20 @@ class TestHarvestAPI:
 
         url = reverse('harvest-list')
         # test finished filter
-        resp = clients["master"].get(url + "?finished=1", {})
+        resp = clients["master"].get(url + "?finished=yes", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
         assert len(data1) == 1
 
-        resp = clients["master"].get(url + "?finished=0", {})
+        resp = clients["master"].get(url + "?finished=no", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
         assert len(data2) == 3
+
+        resp = clients["master"].get(url + "?finished=working", {})
+        assert resp.status_code == 200
+        data3 = resp.json()["results"]
+        assert len(data3) == 0
 
         assert data1[0]["pk"] != data2[0]["pk"]
         assert data1[0]["pk"] != data2[1]["pk"]
@@ -171,33 +176,46 @@ class TestHarvestAPI:
         data2 = resp.json()["results"]
         assert len(data2) == 1
 
+    def test_list_filter_platforms(self, basic1, clients, harvests, platforms):
+        url = reverse('harvest-list')
+        resp = clients["master"].get(url + f"?platforms={platforms['branch'].pk}", {})
+        assert resp.status_code == 200
+        data1 = resp.json()["results"]
+        assert len(data1) == 2
+
+        url += f"?platforms={platforms['branch'].pk},{platforms['standalone'].pk}"
+        resp = clients["master"].get(url, {},)
+        assert resp.status_code == 200
+        data2 = resp.json()["results"]
+        assert len(data2) == 4
+
     def test_get(self, basic1, clients, harvests):
         url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["stats"] == {"total": 3, "planned": 2, "attempt_count": 2}
+        assert data["stats"] == {"total": 3, "planned": 2, "attempt_count": 2, "working": 0}
         assert len(data["intentions"]) == 3
 
         url = reverse('harvest-detail', args=(harvests["user1"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
+        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
         assert len(data["intentions"]) == 2
 
         url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 0}
+        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
         assert len(data["intentions"]) == 2
 
         url = reverse('harvest-detail', args=(harvests["user2"].pk,))
         resp = clients["master"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
+        assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
         assert len(data["intentions"]) == 2
 
     @pytest.mark.django_db(transaction=True)
@@ -240,7 +258,7 @@ class TestHarvestAPI:
 
         assert resp.status_code == 201
         data = resp.json()
-        assert data["stats"] == {"total": 2, "planned": 2, "attempt_count": 0}
+        assert data["stats"] == {"total": 2, "planned": 2, "attempt_count": 0, "working": 0}
         assert len(data["intentions"]) == 2
         assert data["last_updated_by"] == users["master"].pk
         assert stored_intentions_count + 2 == FetchIntention.objects.count()

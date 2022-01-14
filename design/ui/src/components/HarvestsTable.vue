@@ -20,8 +20,9 @@ en:
     finished:
       title: Finished
       ready: Yes
-      working: No
+      unfinished: No
       all: All
+      working: Working
     manual:
       title: Manually created
       all: All
@@ -32,6 +33,7 @@ en:
       all: All
       no: No
       yes: Yes
+    platforms: Platforms
     month: Harvested month
 
 cs:
@@ -54,8 +56,9 @@ cs:
     finished:
       title: Dokončeno
       ready: Ano
-      working: Ne
+      unfinished: Ne
       all: Všechno
+      working: Zpracovává se
     manual:
       title: Manuálně vytvořeno
       all: Všechno
@@ -66,6 +69,7 @@ cs:
       all: Všechno
       no: Ne
       yes: Ano
+    platforms: Platformy
     month: Stahovaný měsíc
 </i18n>
 
@@ -99,6 +103,22 @@ cs:
           :label="$t('filter.month')"
         ></MonthEntry>
       </v-col>
+      <v-col cols="auto">
+        <v-autocomplete
+          :items="platformList"
+          v-model="filterPlatforms"
+          :label="$t('filter.platforms')"
+          :loading="loadingPlatforms"
+          return-object
+          multiple
+          deletable-chips
+          chips
+          small-chips
+          :item-text="(item) => item.short_name || item.name"
+          item-value="pk"
+          height="2.0rem"
+        ></v-autocomplete>
+      </v-col>
     </v-row>
     <v-row>
       <v-col>
@@ -111,6 +131,12 @@ cs:
           :options.sync="tableOptions"
           :server-items-length="totalCount"
         >
+          <template v-slot:footer.prepend>
+            <v-btn x-small plain elevation="2" @click="fetchHarvestsData()">
+              <v-icon x-small class="pr-2">fas fa-sync-alt</v-icon>
+              {{ $t("actions.refresh") }}
+            </v-btn>
+          </template>
           <template v-slot:item.pk="{ item }">
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
@@ -171,6 +197,10 @@ cs:
             <span v-if="item.finished || !item.lastAttempt">-</span>
             <span v-else v-html="formatDateTime(item.lastAttempt)"></span>
           </template>
+          <template #item.finishedRatio="{ item }">
+            <v-icon x-small v-if="item.working">fa fa-cog fa-spin</v-icon>
+            {{ item.finishedRatio }}
+          </template>
         </v-data-table>
 
         <v-dialog
@@ -215,14 +245,12 @@ cs:
 import cancellation from "@/mixins/cancellation";
 import { mapActions, mapGetters } from "vuex";
 import {
-  isoDateTimeFormat,
   isoDateTimeFormatSpans,
   parseDateTime,
   ymDateFormat,
 } from "@/libs/dates";
 import CheckMark from "@/components/util/CheckMark";
 import MonthEntry from "@/components/util/MonthEntry";
-import formatRelative from "date-fns/formatRelative";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 
 export default {
@@ -236,32 +264,29 @@ export default {
   },
 
   props: {
-    retryInterval: { default: 1000, type: Number },
     showOrganization: { default: false, type: Boolean },
-    showPlatform: { default: false, type: Boolean },
-    refreshInterval: { default: 10000, type: Number },
   },
 
   data() {
     return {
       harvestsData: [], // raw request data
       tableData: [], // processed data
+      platformList: [],
       showHarvestDialog: false,
       currentHarvest: null,
       orderBy: ["harvest.pk"],
       loading: false,
+      loadingPlatforms: false,
       filterFinished: "",
       filterManual: "",
       filterMonth: "",
       filterBroken: "",
-      now: new Date(),
+      filterPlatforms: [],
       totalCount: 0,
       tableOptions: {
         sortBy: ["pk"],
         sortDesc: [true],
       },
-      lastFetchedTime: null,
-      lastFetchTimer: null,
     };
   },
 
@@ -273,11 +298,19 @@ export default {
       let filterFinished = "";
       switch (this.filterFinished) {
         case "working":
-          filterFinished = "&finished=0";
+          filterFinished = "&finished=working";
+          break;
+        case "unfinished":
+          filterFinished = "&finished=no";
           break;
         case "ready":
-          filterFinished = "&finished=1";
+          filterFinished = "&finished=yes";
           break;
+      }
+      let filterPlatforms = "";
+      if (this.filterPlatforms.length > 0) {
+        let pks = this.filterPlatforms.map((platform) => platform.pk).join(",");
+        filterPlatforms = `&platforms=${pks}`;
       }
       let filterManual = "";
       switch (this.filterManual) {
@@ -320,7 +353,7 @@ export default {
           sortBy = "start_date";
           break;
       }
-      return `/api/scheduler/harvest/?page=${this.tableOptions.page}&page_size=${this.tableOptions.itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}${filterFinished}${filterManual}${filterMonth}${filterBroken}`;
+      return `/api/scheduler/harvest/?page=${this.tableOptions.page}&page_size=${this.tableOptions.itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}${filterFinished}${filterManual}${filterMonth}${filterBroken}${filterPlatforms}`;
     },
     headers() {
       const headersHead = [
@@ -389,6 +422,10 @@ export default {
           text: this.$t("filter.finished.ready"),
         },
         {
+          value: "unfinished",
+          text: this.$t("filter.finished.unfinished"),
+        },
+        {
           value: "working",
           text: this.$t("filter.finished.working"),
         },
@@ -438,12 +475,15 @@ export default {
         url: this.harvestsUrl,
         group: "harvest-list",
       });
-      this.loading = false;
       if (!result.error) {
         this.totalCount = result.response.data.count;
         this.harvestsData = result.response.data.results;
         this.dataToTable(result.response.data.results);
-        this.lastFetchedTime = new Date();
+      }
+      if (result.error !== "canceled") {
+        // if the request was cancelled, it means another request was made
+        // so we do not want to swich loading off
+        this.loading = false;
       }
     },
     async selectHarvest(id) {
@@ -475,6 +515,7 @@ export default {
           lastAttempt: parseDateTime(rec.last_attempt_date),
           start_date: rec.start_date,
           end_date: rec.end_date,
+          working: rec.stats.working > 0,
         });
       }
       this.tableData = res;
@@ -482,48 +523,38 @@ export default {
     formatDateTime(value) {
       return isoDateTimeFormatSpans(value);
     },
-    formatDateTimePlain(value) {
-      if (value) {
-        return isoDateTimeFormat(value);
-      }
-      return this.$t("tooltip.date_not_set");
-    },
-    formatDateTimeRelative(value) {
-      if (value) {
-        return formatRelative(value, this.now, this.dateFnOptions);
-      }
-      return "-";
-    },
     formatYM(value) {
       if (value) {
         return ymDateFormat(parseDateTime(value));
       }
       return "-";
     },
-  },
-
-  created() {
-    this.now = new Date();
+    async fetchPlatforms() {
+      this.platformList = [];
+      this.loadingPlatforms = true;
+      let result = await this.http({
+        url: "/api/organization/-1/all-platform/",
+      });
+      this.loadingPlatforms = false;
+      if (!result.error) {
+        this.platformList = result.response.data;
+        this.platformList.sort((a, b) => {
+          let atext = a.short_name || a.name;
+          let btext = b.short_name || b.short_name;
+          return atext.localeCompare(btext);
+        });
+      }
+    },
   },
 
   mounted() {
     this.fetchHarvestsData();
-    setInterval(() => {
-      this.now = new Date();
-    }, 10000); // we do not need it that often
+    this.fetchPlatforms();
   },
 
   watch: {
     harvestsUrl() {
       this.fetchHarvestsData();
-    },
-    lastFetchedTime() {
-      if (this.lastFetchTimer) {
-        clearTimeout(this.lastFetchTimer);
-      }
-      this.lastFetchTimer = setTimeout(() => {
-        this.fetchHarvestsData();
-      }, this.refreshInterval);
     },
     showHarvestDialog() {
       if (!this.showHarvestDialog) {

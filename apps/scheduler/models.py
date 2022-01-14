@@ -275,7 +275,7 @@ class FetchIntentionQuerySet(models.QuerySet):
         )
 
     def aggregate_stats(self) -> typing.Dict[str, int]:
-        attrs = ("planned", "total", "attempt_count", "finished")
+        attrs = ("planned", "total", "attempt_count", "finished", "working")
         if all(hasattr(self, name) for name in attrs):
             return {name: getattr(self, name) for name in attrs}
 
@@ -283,6 +283,14 @@ class FetchIntentionQuerySet(models.QuerySet):
             total=Coalesce(models.Count('queue_id', distinct=True), 0),
             planned=self.unprocessed_count_query(),
             attempt_count=Coalesce(models.Count('attempt__pk'), 0),
+            working=models.Count(
+                'pk',
+                distinct=True,
+                filter=(
+                    models.Q(current_scheduler__isnull=False)
+                    | models.Q(attempt__status=AttemptStatus.IMPORTING)
+                ),
+            ),
         )
         res['finished'] = res['total'] - res['planned']
 
@@ -716,6 +724,14 @@ class HarvestQuerySet(models.QuerySet):
                     | models.Q(intentions__attempt__status=AttemptStatus.IMPORTING)
                 ),
             ),
+            working=models.Count(
+                'intentions__pk',
+                distinct=True,
+                filter=(
+                    models.Q(intentions__current_scheduler__isnull=False)
+                    | models.Q(intentions__attempt__status=AttemptStatus.IMPORTING)
+                ),
+            ),
             total=models.Count('intentions__queue_id', distinct=True),
             finished=F('total') - F('planned'),
             attempt_count=Coalesce(models.Count('intentions__attempt__pk', distinct=True), 0),
@@ -735,7 +751,7 @@ class FetchIntentionQueue(models.Model):
 class Harvest(CreatedUpdatedMixin):
 
     objects = HarvestQuerySet.as_manager()
-    stats_attrs = ("planned", "total", "attempt_count", "finished")
+    stats_attrs = ("planned", "total", "attempt_count", "finished", "working")
 
     def __str__(self):
         return f'Harvest #{self.pk}'
