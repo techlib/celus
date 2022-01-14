@@ -257,7 +257,7 @@ cs:
       <v-card>
         <v-card-title>{{ $t("test_dialog") }}</v-card-title>
         <v-card-text class="pb-0">
-          <SushiCredentialsTestWidget
+          <HarvestSelectedWidget
             v-if="showTestDialog"
             :credentials="checkedCredentials"
             ref="testWidget"
@@ -265,7 +265,7 @@ cs:
             :show-platform="true"
             :show-organization="true"
           >
-          </SushiCredentialsTestWidget>
+          </HarvestSelectedWidget>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -296,16 +296,16 @@ import debounce from "lodash/debounce";
 import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
 import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import CheckMark from "@/components/util/CheckMark";
-import SushiCredentialsTestWidget from "@/components/sushi/SushiCredentialsTestWidget";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
+import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 
 export default {
   name: "SushiCredentialsManagementWidget",
 
   components: {
+    HarvestSelectedWidget,
     SushiReportIndicator,
-    SushiCredentialsTestWidget,
     SushiCredentialsEditDialog,
     SushiAttemptListWidget,
     SushiCredentialsDataDialog,
@@ -486,6 +486,13 @@ export default {
         if (this.sushiCredentialsList[i].pk === credentials.pk) {
           this.$set(this.sushiCredentialsList, i, credentials);
           found = true;
+          break;
+        }
+      }
+      // checkedRows contains a copy of the credentials, so we need to update it as well
+      for (let i = 0; i < this.checkedRows.length; i++) {
+        if (this.checkedRows[i].pk === credentials.pk) {
+          this.$set(this.checkedRows, i, credentials);
           break;
         }
       }

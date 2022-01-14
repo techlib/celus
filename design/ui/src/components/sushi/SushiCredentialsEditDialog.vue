@@ -467,13 +467,13 @@ cs:
         <v-card>
           <v-card-title>{{ $t("test_dialog") }}</v-card-title>
           <v-card-text>
-            <SushiCredentialsTestWidget
+            <HarvestSelectedWidget
               v-if="showTestDialog"
               :credentials="[credentials]"
               ref="testWidget"
               test
             >
-            </SushiCredentialsTestWidget>
+            </HarvestSelectedWidget>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -491,17 +491,18 @@ cs:
 import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
 import { badge } from "@/libs/sources.js";
-import SushiCredentialsTestWidget from "./SushiCredentialsTestWidget";
 import AddPlatformButton from "@/components/AddPlatformButton";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import validate from "validate.js";
 import { testSushiUrlReport } from "@/libs/sushi-validation";
+import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 
 export default {
   name: "SushiCredentialsEditDialog",
   components: {
+    HarvestSelectedWidget,
     SushiReportIndicator,
-    SushiCredentialsTestWidget,
+    HarvestSelectedWidget,
     AddPlatformButton,
   },
   props: {

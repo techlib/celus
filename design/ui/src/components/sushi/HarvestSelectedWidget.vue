@@ -169,7 +169,7 @@ import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntenti
 import SushiHarvestedSlotsWidget from "@/components/sushi/SushiHarvestedSlotsWidget";
 
 export default {
-  name: "SushiCredentialsTestWidget",
+  name: "HarvestSelectedWidget",
 
   components: {
     SushiHarvestedSlotsWidget,
