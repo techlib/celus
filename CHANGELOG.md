@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [4.0.1]
+
+### Added
+
+#### Frontend
+
+* IP addresses of Celus harvesters are no longer hardcoded in the code, but rather configured in
+Django settings.
+
+#### Backend
+
+* a slower but more memory efficient method of synchronization between Django database and
+Clickhouse was added
+* more information (username, etc.) was added to the error message sent to admins when an error
+occurs during manual data upload
+
+### Fixed
+
+#### Frontend
+
+* activation and deactivation of shown interest types on platform page was fixed (regression
+introduced in 4.0.0)
+* active reports are properly synchronized when credentials are edited after being selected for
+harvesting
+* fixed - manual upload of incorrect data always ended up displaying message about UTF-8 encoding
+(regression introduced in 4.0.0)
+
+
 ## [4.0.0]
 
 ### Added
