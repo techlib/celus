@@ -95,6 +95,11 @@ export default new Router({
         import("../pages/OrganizationPlatformInterestOverviewPage.vue"),
     },
     {
+      path: "/annotations/",
+      name: "annotations",
+      component: () => import("../pages/AnnotationListPage.vue"),
+    },
+    {
       path: "/analytics/overlap",
       name: "overlap-analysis",
       component: () => import("../pages/OverlapAnalysisPage.vue"),

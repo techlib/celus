@@ -140,6 +140,11 @@ export default {
               linkTo: "heatmap",
               show: this.consortialInstall,
             },
+            {
+              title: this.$i18n.t("labels.annotations"),
+              icon: "fas fa-pen-fancy",
+              linkTo: "annotations",
+            },
           ],
           show: true,
         },

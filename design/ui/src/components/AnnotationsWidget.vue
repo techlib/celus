@@ -145,7 +145,7 @@ export default {
       organizationSelected: "organizationSelected",
     }),
     annotationsUrl() {
-      let url = `/api/annotations/?start_date=${this.dateRangeStart}&end_date=${this.dateRangeEnd}`;
+      let url = `/api/annotations/?start_date=${this.dateRangeStart}&end_date=${this.dateRangeEnd}&no_page=1`;
       if (this.organizationSelected) {
         url += `&organization=${this.selectedOrganizationId}`;
       }

@@ -134,11 +134,11 @@ cs:
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="6" v-if="showCs">
           <v-text-field
             v-model="subjectCs"
-            :label="$t('labels.subject') + ' (' + $t('in_czech') + ') *'"
-            :rules="[required]"
+            :label="$t('labels.subject') + `${inCs} *`"
+            :rules="showCs ? [required] : []"
             maxlength="200"
             counter
           >
@@ -147,7 +147,7 @@ cs:
         <v-col cols="12" md="6">
           <v-text-field
             v-model="subjectEn"
-            :label="$t('labels.subject') + ' (' + $t('in_english') + ') *'"
+            :label="$t('labels.subject') + `${inEn} *`"
             :rules="[required]"
             maxlength="200"
             counter
@@ -156,10 +156,10 @@ cs:
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="6" v-if="showCs">
           <v-textarea
             v-model="shortMessageCs"
-            :label="$t('labels.short_message') + ' (' + $t('in_czech') + ')'"
+            :label="$t('labels.short_message') + inCs"
             rows="2"
             outlined
             auto-grow
@@ -169,7 +169,7 @@ cs:
         <v-col cols="12" md="6">
           <v-textarea
             v-model="shortMessageEn"
-            :label="$t('labels.short_message') + ' (' + $t('in_english') + ')'"
+            :label="$t('labels.short_message') + inEn"
             rows="2"
             outlined
             auto-grow
@@ -178,20 +178,20 @@ cs:
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="6" v-if="showCs">
           <v-textarea
             v-model="messageCs"
-            :label="$t('labels.message') + ' (' + $t('in_czech') + ')'"
+            :label="$t('labels.message') + inCs"
             rows="4"
             outlined
             auto-grow
           >
           </v-textarea>
         </v-col>
-        <v-col cols="12" md="6">
+        <v-col cols="12" :md="showCs ? 6 : null">
           <v-textarea
             v-model="messageEn"
-            :label="$t('labels.message') + ' (' + $t('in_english') + ')'"
+            :label="$t('labels.message') + inEn"
             rows="4"
             outlined
             auto-grow
@@ -204,7 +204,7 @@ cs:
         <v-col cols="auto">
           <v-btn @click="$emit('cancel')" v-text="$t('cancel')"></v-btn>
         </v-col>
-        <v-col cols="auto" v-if="annotationId">
+        <v-col cols="auto" v-if="showDeleteButton && annotationId">
           <v-btn @click="deleteAnnotation()" color="error">
             <v-icon small class="mr-2">fa-trash</v-icon>
             {{ $t("delete") }}
@@ -231,6 +231,7 @@ export default {
     platform: { required: false, type: Object },
     annotation: { required: false, type: Object },
     fixPlatform: { type: Boolean, default: false },
+    showDeleteButton: { type: Boolean, default: true },
   },
   data() {
     return {
@@ -261,6 +262,7 @@ export default {
       organizationSelected: "organizationSelected",
       selectedOrganization: "selectedOrganization",
       organizations: "organizationItems",
+      languages: "activeLanguageCodes",
     }),
     importanceLevels() {
       return [
@@ -299,9 +301,8 @@ export default {
       return data;
     },
     valid() {
-      if (!this.subjectCs || !this.subjectEn) {
-        return false;
-      }
+      if (!this.subjectEn) return false;
+      if (this.showCs && !this.subjectCs) return false;
       return true;
     },
     availablePlatformsUrl() {
@@ -316,6 +317,15 @@ export default {
       );
       result.unshift({ name: this.$t("all"), pk: null, extra: true });
       return result;
+    },
+    showCs() {
+      return this.languages.includes("cs");
+    },
+    inEn() {
+      return this.showCs ? ` ( ${this.$t("in_english")} )` : "";
+    },
+    inCs() {
+      return this.showCs ? ` ( ${this.$t("in_czech")} )` : "";
     },
   },
 
@@ -436,6 +446,8 @@ export default {
     },
     clean() {
       this.annotationId = null;
+      this.organizationId = null;
+      this.platformId = null;
       this.startDate = null;
       this.endDate = null;
       this.subjectCs = "";

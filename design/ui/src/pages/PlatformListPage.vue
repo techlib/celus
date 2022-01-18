@@ -159,7 +159,7 @@ export default {
       return `/api/organization/${this.selectedOrganizationId}/platform/title-count/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
     },
     annotationsUrl() {
-      let url = `/api/annotations/?start_date=${this.dateRangeStart}&end_date=${this.dateRangeEnd}`;
+      let url = `/api/annotations/?start_date=${this.dateRangeStart}&end_date=${this.dateRangeEnd}&no_page=1`;
       if (this.organizationSelected) {
         url += `&organization=${this.selectedOrganizationId}`;
       }

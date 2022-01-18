@@ -89,6 +89,7 @@ __all__ = [
     'master_identity',
     'authentication_headers',
     'authentication_headers',
+    'authenticated_client',
     'unauthenticated_client',
     'valid_identity',
     'invalid_identity',

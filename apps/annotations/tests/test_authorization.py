@@ -1,10 +1,10 @@
 import pytest
-from django.urls import reverse
-
-from annotations.models import Annotation
+from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN
 from core.tests.conftest import *
-from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF
+from django.urls import reverse
 from organizations.tests.conftest import organizations
+
+from test_fixtures.entities.annotations import AnnotationFactory
 
 
 @pytest.mark.django_db
@@ -48,13 +48,13 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # now create two annotations - one related to org and one unrelated
-        annot1 = Annotation.objects.create(subject='prase', organization=org)
-        annot2 = Annotation.objects.create(subject='hroch', organization=organizations[1])
+        annot1 = AnnotationFactory(subject='prase', organization=org)
+        annot2 = AnnotationFactory(subject='hroch', organization=organizations[1])
         url = reverse('annotations-list')
         resp = client.get(url, **authentication_headers(identity))
         if has_access:
             assert resp.status_code == 200
-            assert len(resp.json()) == annot_count
+            assert len(resp.json()["results"]) == annot_count
         else:
             assert resp.status_code in (403, 401)  # depends on auth backend
 
@@ -141,15 +141,11 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
-        annot_rel = Annotation.objects.create(
-            subject='foo2', organization=org, owner_level=UL_ORG_ADMIN
-        )
-        annot_unrel = Annotation.objects.create(
+        annot_rel = AnnotationFactory(subject='foo2', organization=org, owner_level=UL_ORG_ADMIN)
+        annot_unrel = AnnotationFactory(
             subject='foo', organization=organizations[1], owner_level=UL_ORG_ADMIN
         )
-        annot_noorg = Annotation.objects.create(
-            subject='bar', organization=None, owner_level=UL_CONS_ADMIN
-        )
+        annot_noorg = AnnotationFactory(subject='bar', organization=None, owner_level=UL_CONS_ADMIN)
         for i, (annot, can) in enumerate(
             (
                 (annot_unrel, can_access_unrel),
@@ -194,18 +190,14 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
-        annot_rel_admin = Annotation.objects.create(
+        annot_rel_admin = AnnotationFactory(
             subject='foo2', organization=org, owner_level=UL_ORG_ADMIN
         )
-        annot_unrel_admin = Annotation.objects.create(
+        annot_unrel_admin = AnnotationFactory(
             subject='foo', organization=organizations[1], owner_level=UL_ORG_ADMIN
         )
-        annot_master = Annotation.objects.create(
-            subject='bar', organization=org, owner_level=UL_CONS_STAFF
-        )
-        annot_super = Annotation.objects.create(
-            subject='baz', organization=org, owner_level=UL_CONS_ADMIN
-        )
+        annot_master = AnnotationFactory(subject='bar', organization=org, owner_level=UL_CONS_STAFF)
+        annot_super = AnnotationFactory(subject='baz', organization=org, owner_level=UL_CONS_ADMIN)
         for i, (annot, can) in enumerate(
             (
                 (annot_rel_admin, can_delete_rel_org_admin),
@@ -251,18 +243,14 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
-        annot_rel_admin = Annotation.objects.create(
+        annot_rel_admin = AnnotationFactory(
             subject='foo2', organization=org, owner_level=UL_ORG_ADMIN
         )
-        annot_unrel_admin = Annotation.objects.create(
+        annot_unrel_admin = AnnotationFactory(
             subject='foo', organization=organizations[1], owner_level=UL_ORG_ADMIN
         )
-        annot_master = Annotation.objects.create(
-            subject='bar', organization=org, owner_level=UL_CONS_STAFF
-        )
-        annot_super = Annotation.objects.create(
-            subject='baz', organization=org, owner_level=UL_CONS_ADMIN
-        )
+        annot_master = AnnotationFactory(subject='bar', organization=org, owner_level=UL_CONS_STAFF)
+        annot_super = AnnotationFactory(subject='baz', organization=org, owner_level=UL_CONS_ADMIN)
         for i, (annot, can) in enumerate(
             (
                 (annot_rel_admin, can_modify_rel_org_admin),
@@ -302,7 +290,7 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
-        annot = Annotation.objects.create(subject='foo', organization=org, owner_level=UL_ORG_ADMIN)
+        annot = AnnotationFactory(subject='foo', organization=org, owner_level=UL_ORG_ADMIN)
         for i, (can, org_obj) in enumerate(
             ((can_set_rel_org, org), (can_set_unrel_org, organizations[1]), (can_set_noorg, None))
         ):

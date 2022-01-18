@@ -2,7 +2,7 @@ from django.utils.log import RequireDebugFalse
 from kombu.asynchronous.http.curl import DEFAULT_USER_AGENT
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import ReadOnlyField, BooleanField, HiddenField, CurrentUserDefault
-from rest_framework.relations import PrimaryKeyRelatedField
+from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 from rest_framework.serializers import ModelSerializer
 
 from core.models import UL_CONS_STAFF, User
@@ -26,6 +26,7 @@ class AnnotationSerializer(ModelSerializer):
     )
     can_edit = BooleanField(read_only=True)
     submitter = HiddenField(default=CurrentUserDefault())
+    author = StringRelatedField()
 
     class Meta:
         model = Annotation
@@ -49,10 +50,10 @@ class AnnotationSerializer(ModelSerializer):
             'level',
             'can_edit',
             'submitter',
+            'author',
         )
         extra_kwargs = {
             'subject_en': {'allow_blank': False},
-            'subject_cs': {'allow_blank': False},
         }
 
     def update(self, instance: Annotation, validated_data):

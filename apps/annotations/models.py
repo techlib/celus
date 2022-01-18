@@ -1,7 +1,28 @@
+from enum import Enum
+
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
+from django.utils.timezone import now
 
-from core.models import USER_LEVEL_CHOICES, UL_ORG_ADMIN, User, UL_CONS_STAFF
+from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, USER_LEVEL_CHOICES, User
+
+
+class Validity(Enum):
+    VALID = "valid"
+    FUTURE = "future"
+    OUTDATED = "outdated"
+
+    def as_query(self):
+        today = now().date()
+        return {
+            self.VALID: (Q(start_date__lte=today) | Q(start_date__isnull=True))
+            & (Q(end_date__gte=today) | Q(end_date__isnull=True)),
+            self.FUTURE: Q(start_date__gte=today)
+            & (Q(end_date__gte=today) | Q(end_date__isnull=True)),
+            self.OUTDATED: (Q(start_date__lte=today) | Q(start_date__isnull=True))
+            & Q(end_date__lte=today),
+        }[self]
 
 
 class Annotation(models.Model):
