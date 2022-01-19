@@ -212,7 +212,7 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
+import cancellation from "@/mixins/cancellation";
 import { mapActions, mapGetters } from "vuex";
 import {
   isoDateTimeFormat,
@@ -227,6 +227,7 @@ import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntenti
 
 export default {
   name: "HarvestsTable",
+  mixins: [cancellation],
 
   components: {
     SushiFetchIntentionsListWidget,
@@ -261,7 +262,6 @@ export default {
       },
       lastFetchedTime: null,
       lastFetchTimer: null,
-      cancelTokenSource: null,
     };
   },
 
@@ -433,33 +433,17 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     async fetchHarvestsData() {
-      // Cancel previous request to load the new request data
-      if (this.cancelTokenSource) {
-        this.cancelTokenSource.cancel("new data requested");
-        this.cancelTokenSource = null;
-      }
-
       this.loading = true;
-      this.cancelTokenSource = axios.CancelToken.source();
-      try {
-        let result = await axios.get(this.harvestsUrl, {
-          cancelToken: this.cancelTokenSource.token,
-        });
-        this.totalCount = result.data.count;
-        this.harvestsData = result.data.results;
-        this.dataToTable(result.data.results);
+      let result = await this.http({
+        url: this.harvestsUrl,
+        group: "harvest-list",
+      });
+      this.loading = false;
+      if (!result.error) {
+        this.totalCount = result.response.data.count;
+        this.harvestsData = result.response.data.results;
+        this.dataToTable(result.response.data.results);
         this.lastFetchedTime = new Date();
-        this.loading = false;
-      } catch (error) {
-        if (axios.isCancel(error)) {
-          console.debug("Request cancelled");
-        } else {
-          this.showSnackbar({
-            content: "Error loading harvest list: " + error,
-            color: "error",
-          });
-          this.loading = false;
-        }
       }
     },
     async selectHarvest(id) {
