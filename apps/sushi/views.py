@@ -158,9 +158,9 @@ class SushiCredentialsViewSet(ModelViewSet):
 
         current_time = timezone.now()
         start_year = (
-            credentials.sushifetchattempt_set.aggregate(min_start=Min('start_date'))["min_start"]
+            credentials.fetchintention_set.aggregate(min_start=Min('start_date'))["min_start"]
             or current_time
-        ).year
+        ).year - 1
         end_year = current_time.year
 
         report_types_and_broken = [

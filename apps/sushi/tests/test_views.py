@@ -469,7 +469,7 @@ class TestSushiCredentialsViewSet:
         assert resp.json() == {'count': 3, 'broken': 1, 'broken_reports': 1}
 
     @freeze_time("2020-06-01")
-    def test_downloads(self, basic1, credentials, clients, harvests, counter_report_types):
+    def test_data(self, basic1, credentials, clients, harvests, counter_report_types):
 
         # mark credentials
         attempt_tr = FetchAttemptFactory(
@@ -499,40 +499,50 @@ class TestSushiCredentialsViewSet:
         assert resp.status_code == 200
         data = resp.json()
 
-        assert len(data) == 1
-        assert data[0]["year"] == timezone.now().year
+        assert len(data) == 2
+        assert data[0]["year"] == timezone.now().year - 1
         for i in range(1, 13):
             month = f"{i:02d}"
-            assert len(data[0][month]) == 1
-            assert data[0][month][0]["planned"] is False
-            assert data[0][month][0]["broken"] is False, "mapping not broken, but creds are"
+            assert data[0][month][0]["status"] == "untried"
+
+        assert data[1]["year"] == timezone.now().year
+        for i in range(1, 13):
+            month = f"{i:02d}"
+            assert len(data[1][month]) == 1
+            assert data[1][month][0]["planned"] is False
+            assert data[1][month][0]["broken"] is False, "mapping not broken, but creds are"
             if month in ["01"]:
-                assert data[0][month][0]["status"] == "failed"
+                assert data[1][month][0]["status"] == "failed"
             else:
-                assert data[0][month][0]["status"] == "untried"
+                assert data[1][month][0]["status"] == "untried"
 
         resp = clients["master"].get(
             reverse('sushi-credentials-data', args=(credentials["standalone_br1_jr1"].pk,))
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data[0]["year"] == timezone.now().year
-        assert len(data) == 1
+        assert len(data) == 2
+        assert data[0]["year"] == timezone.now().year - 1
         for i in range(1, 13):
             month = f"{i:02d}"
-            assert len(data[0][month]) == 2
-            assert data[0][month][0]["broken"] is True, "mapping broken"
-            assert data[0][month][1]["broken"] is False
+            data[0][month][0]["status"] == "untried"
+
+        assert data[1]["year"] == timezone.now().year
+        for i in range(1, 13):
+            month = f"{i:02d}"
+            assert len(data[1][month]) == 2
+            assert data[1][month][0]["broken"] is True, "mapping broken"
+            assert data[1][month][1]["broken"] is False
             if month in ["01"]:
-                assert data[0][month][1]["status"] == "failed"
-                assert data[0][month][0]["status"] == "no_data"
-                assert data[0][month][1]["planned"] is True
-                assert data[0][month][0]["planned"] is True
+                assert data[1][month][1]["status"] == "failed"
+                assert data[1][month][0]["status"] == "no_data"
+                assert data[1][month][1]["planned"] is True
+                assert data[1][month][0]["planned"] is True
             else:
-                assert data[0][month][1]["status"] == "untried"
-                assert data[0][month][0]["status"] == "untried"
-                assert data[0][month][1]["planned"] is False
-                assert data[0][month][0]["planned"] is False
+                assert data[1][month][1]["status"] == "untried"
+                assert data[1][month][0]["status"] == "untried"
+                assert data[1][month][1]["planned"] is False
+                assert data[1][month][0]["planned"] is False
 
         resp = clients["master"].get(
             reverse('sushi-credentials-data', args=(credentials["branch_pr"].pk,))
@@ -540,18 +550,23 @@ class TestSushiCredentialsViewSet:
         assert resp.status_code == 200
         data = resp.json()
 
-        assert len(data) == 1
-        assert data[0]["year"] == timezone.now().year
+        assert len(data) == 2
+        assert data[0]["year"] == timezone.now().year - 1
         for i in range(1, 13):
             month = f"{i:02d}"
-            assert len(data[0][month]) == 1
-            assert data[0][month][0]["broken"] is False
+            data[0][month][0]["status"] == "untried"
+
+        assert data[1]["year"] == timezone.now().year
+        for i in range(1, 13):
+            month = f"{i:02d}"
+            assert len(data[1][month]) == 1
+            assert data[1][month][0]["broken"] is False
             if month in ["01"]:
-                assert data[0][month][0]["status"] == "success"
-                assert data[0][month][0]["planned"] is False
+                assert data[1][month][0]["status"] == "success"
+                assert data[1][month][0]["planned"] is False
             elif month in ["03"]:
-                assert data[0][month][0]["status"] == "untried"
-                assert data[0][month][0]["planned"] is True
+                assert data[1][month][0]["status"] == "untried"
+                assert data[1][month][0]["planned"] is True
             else:
-                assert data[0][month][0]["status"] == "untried"
-                assert data[0][month][0]["planned"] is False
+                assert data[1][month][0]["status"] == "untried"
+                assert data[1][month][0]["planned"] is False
