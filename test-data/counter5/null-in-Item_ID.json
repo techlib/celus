@@ -1,0 +1,104 @@
+{
+  "Report_Header": {
+    "Created": "2020-01-01T00:00:00Z",
+    "Created_By": "Some Entity",
+    "Customer_ID": "1111",
+    "Report_ID": "TR",
+    "Release": "5",
+    "Report_Name": "Title Master Report",
+    "Institution_Name": "My organization",
+    "Institution_ID": [
+      {
+        "Type": "Proprietary",
+        "Value": "my:1111"
+      }
+    ],
+    "Report_Filters": [
+      {
+        "Name": "Begin_Date",
+        "Value": "2019-11-01"
+      },
+      {
+        "Name": "End_Date",
+        "Value": "2019-11-30"
+      }
+    ],
+    "Report_Attributes": [
+      {
+        "Name": "Attributes_To_Show",
+        "Value": "Access_Method|Access_Type|Data_Type|Section_Type|YOP"
+      }
+    ]
+  },
+  "Report_Items": [
+    {
+      "Title": "Nullable item",
+      "Item_ID": null,
+      "Platform": "Platform1",
+      "Publisher": "Publisher1",
+      "Publisher_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "pub1"
+        }
+      ],
+      "Data_Type": "Book",
+      "YOP": "0001",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2019-11-01",
+            "End_Date": "2019-11-30"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "No_License",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "Title",
+      "Item_ID": [
+        {
+          "Type": "DOI",
+          "Value": "11.1111/1111111111111"
+        },
+        {
+          "Type": "ISBN",
+          "Value": "111-1-11-111111-1"
+        }
+      ],
+      "Platform": "Platform1",
+      "Publisher": "Publisher1",
+      "Publisher_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "pub1"
+        }
+      ],
+      "Data_Type": "Book",
+      "YOP": "2017",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2019-11-01",
+            "End_Date": "2019-11-30"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Unique_Title_Investigations",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

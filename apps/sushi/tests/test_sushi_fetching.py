@@ -4,16 +4,15 @@ from pathlib import Path
 import pytest
 import requests_mock
 from freezegun import freeze_time
-
 from logs.logic.attempt_import import import_one_sushi_attempt
-from sushi.models import SushiFetchAttempt, AttemptStatus
+from sushi.models import AttemptStatus, SushiFetchAttempt
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     data_sources,
-    report_types,
     organizations,
     platforms,
+    report_types,
 )
 
 
@@ -198,3 +197,49 @@ class TestSushiFetching:
             assert m.called
             assert attempt.error_code == error_code
             assert attempt.partial_data == partial
+
+    @pytest.mark.parametrize(
+        ('path', 'import_passes'),
+        (
+            ('5_DR_ProQuestEbookCentral_exception.json', False,),
+            ('5_TR_ProQuestEbookCentral.json', True,),
+            ('5_TR_ProQuestEbookCentral_exception.json', False,),
+            ('5_TR_with_warning.json', True,),
+            ('C5_PR_test.json', True,),
+            ('counter5_tr_test1.json', True,),
+            ('data_incorrect.json', False,),
+            ('data_simple.json', True,),
+            ('error-in-root.json', False,),
+            ('naked_error.json', False,),
+            ('naked_error_3000.json', False,),
+            ('naked_error_lowercase.json', False,),
+            ('naked_errors.json', False,),
+            ('no_data.json', False,),
+            ('partial_data1.json', False,),
+            ('partial_data2.json', False,),
+            ('severity-missing.json', False,),
+            ('severity-number.json', False,),
+            ('stringified_error.json', False,),
+            ('null-in-Item_ID.json', True,),
+        ),
+    )
+    def test_c5_all_cases(
+        self, path, import_passes, counter_report_types, organizations, platforms,
+    ):
+        """ Just test that processing of test data works as excpected """
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+        )
+        with requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
+                m.get(
+                    re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200,
+                )
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+            )
+            if import_passes:
+                import_one_sushi_attempt(attempt)
+            else:
+                with pytest.raises(ValueError):
+                    import_one_sushi_attempt(attempt)
