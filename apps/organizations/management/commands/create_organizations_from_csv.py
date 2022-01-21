@@ -32,9 +32,9 @@ class Command(BaseCommand):
                 org_params = {'short_name': short_name}
                 if 'name_cs' in row:
                     org_params['name_cs'] = row['name_cs']
-                user, created = Organization.objects.update_or_create(
-                    name=name, defaults=org_params,
-                )
+                if ext_id := row.get('ext_id', None):
+                    org_params['ext_id'] = ext_id
+                _, created = Organization.objects.update_or_create(defaults=org_params, name=name)
                 if created:
                     stats['organization_created'] += 1
                     logger.debug('created organization %s: %s', name, org_params)

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
 
-    help = 'Create/sync organizations with CSV file'
+    help = 'Create/sync platforms with CSV file'
 
     def add_arguments(self, parser):
         parser.add_argument('csv_file')
@@ -29,14 +29,14 @@ class Command(BaseCommand):
                     raise ValueError('Row "name" is required')
                 name = name.strip()
                 short_name = row.get('short_name', name)
-                org_params = {'short_name': short_name}
-                user, created = Platform.objects.update_or_create(name=name, defaults=org_params,)
+                platform_params = {'short_name': short_name}
+                _, created = Platform.objects.update_or_create(name=name, defaults=platform_params)
                 if created:
                     stats['platform_created'] += 1
-                    logger.debug('created platform %s: %s', name, org_params)
+                    logger.debug('created platform %s: %s', name, platform_params)
                 else:
                     stats['platform_existed'] += 1
-                    logger.debug('updating platform %s: %s', name, org_params)
+                    logger.debug('updating platform %s: %s', name, platform_params)
 
         self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
         if not options['doit']:

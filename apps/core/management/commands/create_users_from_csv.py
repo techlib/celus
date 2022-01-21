@@ -4,6 +4,7 @@ from collections import Counter
 from distutils.util import strtobool
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.db.transaction import atomic
 
 from core.models import User
@@ -33,12 +34,12 @@ class Command(BaseCommand):
                 if not email:
                     raise ValueError('Row "email" is required')
                 email = email.strip()
-                username = row.get('username', email.split('@')[0])
+                username = row.get('username', email)
                 superuser = bool(strtobool(row.get('superuser', 'False')))
                 staff = strtobool(row.get('staff', 'False'))
                 name = row.get('name', '')
-                first_name = name.split()[0] if name else ''
-                last_name = name.split()[-1] if name else ''
+                first_name = row.get('first_name') or (name.split()[0] if name else '')
+                last_name = row.get('last_name') or (name.split()[-1] if name else '')
                 user_params = {
                     'username': username,
                     'is_superuser': superuser,
@@ -46,16 +47,18 @@ class Command(BaseCommand):
                     'first_name': first_name,
                     'last_name': last_name,
                 }
-                user, created = User.objects.update_or_create(email=email, defaults=user_params,)
+                user, created = User.objects.update_or_create(email=email, defaults=user_params)
                 if created:
                     stats['user_created'] += 1
                     logger.debug('created user %s: %s', email, user_params)
                 else:
                     stats['user_existed'] += 1
                     logger.debug('updating user %s: %s', email, user_params)
-                org_name = row.get('organization')
+                org_name = row.get('org_id') or row.get('organization')
                 if org_name:
-                    organization = Organization.objects.get(internal_id=org_name.strip())
+                    organization = Organization.objects.get(
+                        Q(internal_id=org_name.strip()) | Q(ext_id=org_name.strip())
+                    )
                     is_admin = strtobool(row.get('org_admin', 'False'))
                     uo, created = UserOrganization.objects.update_or_create(
                         user=user, organization=organization, defaults={'is_admin': is_admin}

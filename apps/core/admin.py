@@ -2,9 +2,16 @@ from allauth.account.adapter import get_adapter
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.admin import TabularInline
 from django.contrib.auth.admin import UserAdmin
 
+from organizations.models import UserOrganization
 from .models import User, Identity, DataSource
+
+
+class UserOrganizationInline(TabularInline):
+    model = UserOrganization
+    fields = ['organization', 'is_admin']
 
 
 @admin.register(User)
@@ -23,12 +30,15 @@ class MyUserAdmin(UserAdmin):
 
     custom_fields = ('ext_id', 'source', 'language', 'extra_data')
 
-    fieldsets = UserAdmin.fieldsets + ((None, {'fields': custom_fields}),)
-    add_fieldsets = UserAdmin.add_fieldsets + ((None, {'fields': custom_fields}),)
+    fieldsets = (
+        UserAdmin.fieldsets[:2] + (("Celus", {'fields': custom_fields}),) + UserAdmin.fieldsets[2:]
+    )
+    add_fieldsets = UserAdmin.add_fieldsets + (("Celus", {'fields': custom_fields}),)
 
     list_filter = ('source',) + UserAdmin.list_filter
 
     actions = ['send_invitation_emails']
+    inlines = [UserOrganizationInline]
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
         res = super().formfield_for_choice_field(db_field, request, **kwargs)
