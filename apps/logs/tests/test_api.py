@@ -54,12 +54,7 @@ class TestChartDataAPI:
         )
         organization = organizations[0]
         report_type = report_type_nd(0)  # type: ReportType
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(
-            report_type, organization, platform, counter_records_0d, import_batch
-        )
+        import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
         resp = authenticated_client.get(
@@ -82,12 +77,7 @@ class TestChartDataAPI:
         )
         organization = organizations[0]
         report_type = report_type_nd(0)  # type: ReportType
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(
-            report_type, organization, platform, counter_records_0d, import_batch
-        )
+        import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
         resp = authenticated_client.get(
@@ -138,10 +128,7 @@ class TestChartDataAPI:
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
         organization = organizations[0]
         report_type = report_type_nd(3)
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs, import_batch)
+        import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 6
         metric = Metric.objects.get(short_name='Hits')
         if type(primary_dim) is int:
@@ -201,10 +188,7 @@ class TestChartDataAPI:
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
         organization = organizations[0]
         report_type = report_type_nd(3)
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs, import_batch)
+        import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 2
         metric = Metric.objects.get(short_name='Hits')
         params = {
@@ -246,42 +230,10 @@ class TestChartDataAPI:
         crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
         crs2 = list(counter_records(data2, metric='Big Hits', platform='Platform2'))
         report_type = report_type_nd(3)
-        import_counter_records(
-            report_type,
-            organizations[0],
-            platform1,
-            crs1,
-            ImportBatch.objects.create(
-                organization=organizations[0], platform=platform1, report_type=report_type
-            ),
-        )
-        import_counter_records(
-            report_type,
-            organizations[0],
-            platform2,
-            crs1,
-            ImportBatch.objects.create(
-                organization=organizations[0], platform=platform2, report_type=report_type
-            ),
-        )
-        import_counter_records(
-            report_type,
-            organizations[1],
-            platform1,
-            crs1,
-            ImportBatch.objects.create(
-                organization=organizations[1], platform=platform1, report_type=report_type
-            ),
-        )
-        import_counter_records(
-            report_type,
-            organizations[1],
-            platform2,
-            crs2,
-            ImportBatch.objects.create(
-                organization=organizations[1], platform=platform2, report_type=report_type
-            ),
-        )
+        import_counter_records(report_type, organizations[0], platform1, crs1)
+        import_counter_records(report_type, organizations[0], platform2, crs1)
+        import_counter_records(report_type, organizations[1], platform1, crs1)
+        import_counter_records(report_type, organizations[1], platform2, crs2)
         assert AccessLog.objects.count() == 12
         metric1 = Metric.objects.get(short_name='Hits')
         metric2 = Metric.objects.get(short_name='Big Hits')
@@ -369,10 +321,7 @@ class TestChartDataAPI:
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
         organization = organizations[0]
         report_type = report_type_nd(3)
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs, import_batch)
+        import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 6
         metric = Metric.objects.get(short_name='Hits')
         if type(primary_dim) is int:
@@ -406,10 +355,7 @@ class TestChartDataAPI:
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
         organization = organizations[0]
         report_type = report_type_nd(1)
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs, import_batch)
+        import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 4
         metric = Metric.objects.get(short_name='Hits')
         # check it without year first

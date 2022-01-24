@@ -1,4 +1,4 @@
-from collections import Counter
+from typing import Union
 from unittest.mock import patch
 
 import pytest
@@ -11,7 +11,7 @@ from logs.logic.clickhouse import (
     process_one_import_batch_sync_log,
     sync_import_batch_with_clickhouse,
 )
-from logs.logic.data_import import import_counter_records, _import_counter_records, TitleManager
+from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_by_import_batches, smart_interest_sync
 from logs.models import (
     ImportBatch,
@@ -81,11 +81,10 @@ class TestClickhouseSync:
         counter_records,
         organizations,
         report_type_nd,
-        metric='Hits',
-        multiplier=1,
+        metric: Union[dict, str] = 'Hits',
         lowlevel=False,
         report_type=None,
-    ):
+    ) -> [ImportBatch]:
         """
         if `lowlevel` is given, it uses and internal function for the creation of counter records
         which does not force clickhouse sync on its own.
@@ -93,41 +92,41 @@ class TestClickhouseSync:
         platform, _created = Platform.objects.get_or_create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
-        data = [
-            ['Title1', '2018-01-01', '1v1', '2v1', '3v1', multiplier * 1],
-            ['Title1', '2018-01-01', '1v2', '2v1', '3v1', multiplier * 2],
-            ['Title2', '2018-01-01', '1v2', '2v2', '3v1', multiplier * 4],
-            ['Title1', '2018-02-01', '1v1', '2v1', '3v1', multiplier * 8],
-            ['Title2', '2018-02-01', '1v1', '2v2', '3v2', multiplier * 16],
-            ['Title1', '2018-03-01', '1v1', '2v3', '3v2', multiplier * 32],
-        ]
-        crs = list(counter_records(data, metric=metric, platform='Platform1'))
+        # metric may be a dict of name->multiplier or string
+        metric_to_multi = metric if type(metric) is dict else {metric: 1}
+        crs = []
+        for m_name, multi in metric_to_multi.items():
+            data = [
+                ['Title1', '2018-01-01', '1v1', '2v1', '3v1', multi * 1],
+                ['Title1', '2018-01-01', '1v2', '2v1', '3v1', multi * 2],
+                ['Title2', '2018-01-01', '1v2', '2v2', '3v1', multi * 4],
+                ['Title1', '2018-02-01', '1v1', '2v1', '3v1', multi * 8],
+                ['Title2', '2018-02-01', '1v1', '2v2', '3v2', multi * 16],
+                ['Title1', '2018-03-01', '1v1', '2v3', '3v2', multi * 32],
+            ]
+            crs += list(counter_records(data, metric=m_name, platform='Platform1'))
         organization = organizations[0]
         if not report_type:
             report_type = report_type_nd(3)
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
+        import_batches, _stats = import_counter_records(
+            report_type, organization, platform, crs, skip_clickhouse_sync=lowlevel
         )
-        if lowlevel:
-            stats = Counter()
-            tm = TitleManager()
-            _import_counter_records(
-                report_type, organization, platform, crs, import_batch, stats, tm
-            )
-        else:
-            import_counter_records(report_type, organization, platform, crs, import_batch)
-        return platform, report_type, import_batch
+        return platform, report_type, import_batches
 
     def test_one_import_batch_sync(self, counter_records, organizations, report_type_nd):
-        self._prepare_counter_records(counter_records, organizations, report_type_nd)
+        *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
         assert AccessLog.objects.count() == 6
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 6
-        assert ImportBatchSyncLog.objects.count() == 1, 'the import batch is still there'
-        assert ImportBatchSyncLog.objects.get().state == ImportBatchSyncLog.STATE_NO_CHANGE
-        ib = ImportBatch.objects.get()
-        assert ib.last_clickhoused is not None
-        assert ib.last_clickhoused > ib.last_updated
+        assert ImportBatchSyncLog.objects.count() == len(ibs)
+        for ib in ibs:
+            assert (
+                ImportBatchSyncLog.objects.get(import_batch_id=ib.pk).state
+                == ImportBatchSyncLog.STATE_NO_CHANGE
+            )
+            ib.refresh_from_db()
+            assert ib.last_clickhoused is not None
+            assert ib.last_clickhoused > ib.last_updated
 
     def test_general_accesslog_sync(self, counter_records, organizations, report_type_nd):
         self._prepare_counter_records(counter_records, organizations, report_type_nd, lowlevel=True)
@@ -142,7 +141,7 @@ class TestClickhouseSync:
     def test_one_import_batch_sync_interest_calculation(
         self, counter_records, organizations, report_type_nd
     ):
-        platform, report_type, ib = self._prepare_counter_records(
+        platform, report_type, _ibs = self._prepare_counter_records(
             counter_records, organizations, report_type_nd
         )
         assert AccessLog.objects.count() == 6
@@ -168,15 +167,14 @@ class TestClickhouseSync:
     def test_import_batch_delete_from_model_instance(
         self, counter_records, organizations, report_type_nd
     ):
-        platform, report_type, ib = self._prepare_counter_records(
-            counter_records, organizations, report_type_nd
-        )
+        *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
         assert AccessLog.objects.count() == 6
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 6
-        assert ImportBatchSyncLog.objects.count() == 1
+        assert ImportBatchSyncLog.objects.count() == len(ibs)
         # delete the import batch
-        ib.delete()
+        for ib in ibs:
+            ib.delete()
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 0, 'all records should be deleted from clickhouse'
         assert ImportBatchSyncLog.objects.count() == 0, 'sync log was removed as well'
@@ -184,14 +182,13 @@ class TestClickhouseSync:
     def test_import_batch_delete_from_queryset_method(
         self, counter_records, organizations, report_type_nd
     ):
-        platform, report_type, ib = self._prepare_counter_records(
-            counter_records, organizations, report_type_nd
-        )
+        *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
         assert AccessLog.objects.count() == 6
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 6
-        assert ImportBatchSyncLog.objects.count() == 1
-        ImportBatch.objects.filter(pk=ib.pk).delete()
+        assert ImportBatchSyncLog.objects.count() == len(ibs)
+        for ib in ibs:
+            ImportBatch.objects.filter(pk=ib.pk).delete()
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 0, 'all records should be deleted from clickhouse'
         assert ImportBatchSyncLog.objects.count() == 0, 'sync log was removed as well'
@@ -201,12 +198,13 @@ class TestClickhouseSync:
         We simulate a situation where an import batch was created but not synced with clickhouse
         for some reason.
         """
-        platform, report_type, ib = self._prepare_counter_records(
+        *_, ibs = self._prepare_counter_records(
             counter_records, organizations, report_type_nd, lowlevel=True
         )
         assert AccessLog.objects.count() == 6
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 0
-        assert ImportBatchSyncLog.objects.count() == 1
+        assert ImportBatchSyncLog.objects.count() == len(ibs)
+        ib = ibs[0]
         sync_log = ImportBatchSyncLog.objects.get(import_batch_id=ib.pk)
         sync_log.state = ImportBatchSyncLog.STATE_SYNC
         sync_log.save()
@@ -225,17 +223,19 @@ class TestClickhouseSync:
         Tests the code that is run from `process_outstanding_import_batch_sync_logs_task` because
         it is hard to test otherwise
         """
-        platform, report_type, ib = self._prepare_counter_records(
+        *_, ibs = self._prepare_counter_records(
             counter_records, organizations, report_type_nd, lowlevel=True
         )
         assert AccessLog.objects.count() == 6
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 0
-        assert ImportBatchSyncLog.objects.count() == 1
-        sync_log = ImportBatchSyncLog.objects.get(import_batch_id=ib.pk)
-        sync_log.state = ImportBatchSyncLog.STATE_SYNC
-        sync_log.save()
-        process_one_import_batch_sync_log(sync_log.pk)
-        assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 6, 'accesslogs synced'
+        assert ImportBatchSyncLog.objects.count() == len(ibs)
+        ibs.sort(key=lambda obj: obj.date)
+        for ib, al_count in zip(ibs, [3, 5, 6]):
+            sync_log = ImportBatchSyncLog.objects.get(import_batch_id=ib.pk)
+            sync_log.state = ImportBatchSyncLog.STATE_SYNC
+            sync_log.save()
+            process_one_import_batch_sync_log(sync_log.pk)
+            assert len(list(ch_backend.get_records(AccessLogCube.query()))) == al_count
 
     def test_import_batch_sync_after_interest_recalculation_with_delete(
         self, counter_records, organizations, report_type_nd
@@ -244,7 +244,7 @@ class TestClickhouseSync:
         Test that when we update interest definition and recalculate interest that clickhouse
         will be synced correctly.
         """
-        platform, report_type, ib = self._prepare_counter_records(
+        platform, report_type, _ibs = self._prepare_counter_records(
             counter_records, organizations, report_type_nd
         )
         assert AccessLog.objects.count() == 6
@@ -275,16 +275,8 @@ class TestClickhouseSync:
         Test that when we update interest definition and recalculate interest that clickhouse
         will be synced correctly.
         """
-        platform, report_type, ib = self._prepare_counter_records(
-            counter_records, organizations, report_type_nd
-        )
-        platform, report_type, ib = self._prepare_counter_records(
-            counter_records,
-            organizations,
-            report_type_nd,
-            multiplier=2,
-            metric='Visits',
-            report_type=report_type,
+        platform, report_type, _ibs = self._prepare_counter_records(
+            counter_records, organizations, report_type_nd, metric={'Hits': 1, 'Visits': 2}
         )
         assert AccessLog.objects.count() == 12
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 12
@@ -338,9 +330,7 @@ class TestClickhouseSync:
     def test_sync_import_batch_with_clickhouse_with_exception(
         self, counter_records, organizations, report_type_nd
     ):
-        platform, report_type, ib = self._prepare_counter_records(
-            counter_records, organizations, report_type_nd
-        )
+        *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
         with pytest.raises(TypeError):
             # value error about string not being comparable to int should be raised
-            sync_import_batch_with_clickhouse(ib, batch_size='aaaa')
+            sync_import_batch_with_clickhouse(ibs[0], batch_size='aaaa')

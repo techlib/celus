@@ -9,11 +9,13 @@ from django.conf import settings
 from django.db.transaction import atomic, on_commit
 
 from core.logic.debug import log_memory
-from logs.logic.validation import clean_and_validate_issn, ValidationError, normalize_isbn
-from logs.models import ImportBatch, ImportBatchSyncLog
+from core.task_support import cache_based_lock
+from logs.logic.validation import clean_and_validate_issn, normalize_isbn
+from logs.models import ImportBatch
 from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Title, Platform, PlatformTitle
+from ..exceptions import DataStructureError
 from ..models import ReportType, Metric, DimensionText, AccessLog
 
 logger = logging.getLogger(__name__)
@@ -177,39 +179,115 @@ def import_counter_records(
     organization: Organization,
     platform: Platform,
     records: typing.Generator[CounterRecord, None, None],
-    import_batch: ImportBatch,
-) -> Counter:
+    months: typing.Optional[typing.Iterable[str]] = None,
+    import_batch_kwargs: Optional[dict] = None,
+    skip_clickhouse_sync: bool = False,
+    buffer_size: int = COUNTER_RECORD_BUFFER_SIZE,
+) -> ([ImportBatch], Counter):
+    """
+    If `months` are given, then only import data for the months listed in there, skip others.
+    Months are given as strings in ISO format.
+    """
     stats = Counter()
     tm = TitleManager()
+    # mapping of months to import batches - has to be shared between calls to
+    # _import_counter_record so that the same import batches are used for all data
+    month_to_ib = {}
+
+    def process_buffer(record_batch: typing.Iterable[CounterRecord]):
+        """
+        Internal function not to repeat the same code twice.
+        Please note that we do not create all the import batches upfront because we do not want
+        to evaluate the whole `records` generator as it may be quite large. This is why we do all
+        by chunks/buffer
+        """
+        # check and prepare import batches
+        months_in_data = {
+            rec.start.isoformat() if isinstance(rec.start, date) else rec.start
+            for rec in record_batch
+        }
+        if months:
+            months_in_data = {month for month in months_in_data if month in months}
+            # filter records down to only those that are present in `months` - we do it early
+            # to save as much work as possible
+            record_batch = [rec for rec in record_batch if rec.start in months_in_data]
+
+        # the following would crash if we tried to create an import batch for month that already
+        # has an import batch
+        for month in months_in_data:
+            if month not in month_to_ib:
+                month_to_ib[month] = create_import_batch_or_crash(
+                    report_type, organization, platform, month, ib_kwargs=import_batch_kwargs
+                )
+        return _import_counter_records(
+            report_type, organization, platform, record_batch, stats, tm, month_to_ib
+        )
 
     buff: typing.List[CounterRecord] = []
     for record in records:
         buff.append(record)
-        if len(buff) >= COUNTER_RECORD_BUFFER_SIZE:
-            _import_counter_records(
-                report_type, organization, platform, buff, import_batch, stats, tm
-            )
+        if len(buff) >= buffer_size:
+            process_buffer(buff)
             buff = []
             gc.collect()
 
     # flush the rest of the buffer
     if buff:
-        _import_counter_records(report_type, organization, platform, buff, import_batch, stats, tm)
-    # save the import batch to update the `last_updated` timestamp which we then use when doing
-    # sync with clickhouse.
-    import_batch.save()
-    if settings.CLICKHOUSE_SYNC_ACTIVE:
+        process_buffer(buff)
+    import_batches = list(month_to_ib.values())
+
+    if not skip_clickhouse_sync and settings.CLICKHOUSE_SYNC_ACTIVE:
         from .clickhouse import sync_import_batch_with_clickhouse
 
         def sync_with_clickhouse():
             # note: sync_import_batch_with_clickhouse is atomic
-            logger.debug(
-                'Synced %d records into ClickHouse', sync_import_batch_with_clickhouse(import_batch)
-            )
+            for import_batch in import_batches:
+                logger.debug(
+                    'Synced %d records into ClickHouse',
+                    sync_import_batch_with_clickhouse(import_batch),
+                )
 
         on_commit(sync_with_clickhouse)
 
-    return stats
+    return import_batches, stats
+
+
+def create_import_batch_or_crash(
+    report_type: ReportType,
+    organization: Organization,
+    platform: Platform,
+    month: typing.Union[str, date],
+    ib_kwargs: Optional[dict] = None,
+) -> ImportBatch:
+    """
+    Creates an import batch if a matching one does not exist yet. Raises an error otherwise.
+    Note: In the future, we will have db constraints preventing clashing import batches from
+          appearing, but we need to do a cleanup before that, so we cannot add them right now.
+    """
+    # we need the lock to prevent race conditions in creating the import batch
+    with cache_based_lock(
+        f'create_import_batch_{report_type.pk}_{organization.pk}_{platform.pk}_{month}',
+        blocking_timeout=10,
+    ):
+        if ImportBatch.objects.filter(
+            report_type=report_type, platform=platform, organization=organization, date=month
+        ):
+            raise DataStructureError(
+                'Clashing import batch exists for report type "%s", platform "%s", '
+                'organization "%s" and date "%s"',
+                report_type,
+                platform,
+                organization,
+                month,
+            )
+        kwargs = ib_kwargs or {}
+        return ImportBatch.objects.create(
+            report_type=report_type,
+            platform=platform,
+            organization=organization,
+            date=month,
+            **kwargs,
+        )
 
 
 def _import_counter_records(
@@ -217,9 +295,9 @@ def _import_counter_records(
     organization: Organization,
     platform: Platform,
     records: typing.List[CounterRecord],
-    import_batch: ImportBatch,
     stats: Counter,
     tm: TitleManager,
+    month_to_import_batch: typing.Dict[str, ImportBatch],
 ):
     # prepare all remaps
     metrics = {
@@ -320,16 +398,13 @@ def _import_counter_records(
     for key, value in to_insert.items():
         db_pk, db_value = to_compare.get(key, (None, None))
         if db_pk:
-            if value != db_value:
-                logger.warning(f'Clashing values between import and db: {db_value} x {value}')
-                stats['updated logs'] += 1
-            else:
-                logger.info('Record already present with the same value from other import')
-                stats['skipped logs'] += 1
+            raise DataStructureError(
+                f'Clashing accesslog even though import batch level checks passed: %s', key
+            )
         else:
             rec = dict(key)
             rec['value'] = value
-            als_to_insert.append(AccessLog(import_batch=import_batch, **rec))
+            als_to_insert.append(AccessLog(import_batch=month_to_import_batch[rec['date']], **rec))
             if rec['target_id'] is not None:
                 target_date_tuples.add((rec['target_id'], rec['date']))
         if len(als_to_insert) >= max_batch_size:

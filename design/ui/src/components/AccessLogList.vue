@@ -17,10 +17,11 @@ import { mapActions } from "vuex";
 export default {
   name: "AccessLogList",
   props: {
-    importBatch: { required: false },
+    importBatch: { required: false, type: Number },
     organization: { required: false },
     platform: { required: false },
     title: { required: false },
+    mduId: { required: false, type: Number },
   },
   data() {
     return {
@@ -82,6 +83,9 @@ export default {
       if (this.importBatch) {
         params["import_batch"] = this.importBatch;
       }
+      if (this.mduId) {
+        params["mdu"] = this.mduId;
+      }
       if (this.organization) {
         params["organization"] = this.organization;
       }
@@ -103,6 +107,10 @@ export default {
   },
   watch: {
     importBatch() {
+      this.accessLogs = [];
+      this.loadLogs();
+    },
+    mduId() {
       this.accessLogs = [];
       this.loadLogs();
     },

@@ -1,19 +1,16 @@
-from unittest.mock import patch
-
 import pytest
 from django.urls import reverse
 
 from core.models import Identity, User
-from logs.models import AccessLog, Metric, ImportBatch
-from organizations.models import UserOrganization, Organization
-from core.tests.conftest import (
+from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,
     authentication_headers,
     invalid_identity,
     valid_identity,
 )
-from organizations.views import OrganizationViewSet
-from publications.tests.conftest import interest_rt
+from logs.models import AccessLog, Metric, ImportBatch
+from organizations.models import UserOrganization, Organization
+from publications.tests.conftest import interest_rt  # noqa - fixture
 
 
 @pytest.mark.django_db

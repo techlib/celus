@@ -35,10 +35,7 @@ class TestMaterializedReport:
         crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ib = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        import_counter_records(report_type, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
         # now define materialized report
         spec = ReportMaterializationSpec.objects.create(
@@ -61,10 +58,7 @@ class TestMaterializedReport:
         crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ib = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        import_counter_records(report_type, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
         # now define materialized report
         spec = ReportMaterializationSpec.objects.create(
@@ -87,10 +81,7 @@ class TestMaterializedReport:
         crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ib = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        import_counter_records(report_type, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
         # now define materialized report
         spec = ReportMaterializationSpec.objects.create(
@@ -151,10 +142,7 @@ class TestMaterializedReport:
         ]
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ib = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
 
         # now define the interest
@@ -166,7 +154,8 @@ class TestMaterializedReport:
             metric=Metric.objects.get(short_name='m1'),
             interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
         )
-        sync_interest_for_import_batch(ib, interest_rt)
+        for ib in ibs:
+            sync_interest_for_import_batch(ib, interest_rt)
         assert interest_rt.accesslog_set.count() == 1, '1 record for metric m1'
 
         # now define materialized report for interest
@@ -181,13 +170,13 @@ class TestMaterializedReport:
         # now recompute the interest with the right metric
         rim.metric = Metric.objects.get(short_name='m2')
         rim.save()
-        ib.refresh_from_db()  # this is needed because materialization_data was added to the ib
-        sync_interest_for_import_batch(ib, interest_rt)
+        for ib in ibs:
+            ib.refresh_from_db()  # this is needed because materialization_data was added to the ib
+            sync_interest_for_import_batch(ib, interest_rt)
         assert interest_rt.accesslog_set.count() == 2, '2 interest records for metric m2'
 
         # and check that the materialization is up to date as well
         sync_materialized_reports()
-        ib.refresh_from_db()
         assert old_mat_pks != {al.pk for al in mat_report.accesslog_set.all()}
         assert mat_report.accesslog_set.count() == 2, '2 access logs without title for metric m2'
 
@@ -205,10 +194,7 @@ class TestMaterializedReport:
         crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ib = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        import_counter_records(report_type, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
         # now define materialized report
         spec = ReportMaterializationSpec.objects.create(
@@ -240,10 +226,7 @@ class TestMaterializedReportManagementCommands:
         crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ib = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        import_counter_records(report_type, organization, platform, crs1)
         # now define materialized report
         spec = ReportMaterializationSpec.objects.create(
             base_report_type=report_type, keep_target=False

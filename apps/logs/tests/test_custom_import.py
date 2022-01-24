@@ -13,6 +13,7 @@ from publications.tests.conftest import platforms  # noqa
 from logs.logic.custom_import import custom_data_to_records, import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload
 from publications.models import Platform
+from test_fixtures.entities.logs import ManualDataUploadFullFactory
 
 
 @pytest.mark.django_db
@@ -113,6 +114,7 @@ class TestCustomImport:
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
         assert mdu.organization == organization
+        assert mdu.import_batches.count() == 0, 'no import batches yet'
 
         # do the preflight check
         response = master_client.get(reverse('manual-data-upload-preflight-check', args=(mdu.pk,)))
@@ -128,6 +130,7 @@ class TestCustomImport:
         assert mdu.is_processed
         assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
         assert AccessLog.objects.count() == 6
+        assert mdu.import_batches.count() == 3, '3 months of data'
 
         # reprocess
         response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
@@ -151,9 +154,13 @@ class TestCustomImport:
         assert response.status_code == 200
         data = response.json()
         assert data['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
+        assert len(data['clashing_months']) == 3, 'all 3 months are already there'
+        assert data['can_import'] is False, 'preflight signals that import is not possible'
         response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
-        assert response.status_code == 200
+        assert response.status_code == 400
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
+        mdu.refresh_from_db()
+        assert not mdu.is_processed, 'crash - should not mark mdu as processed'
 
     def test_manual_data_upload_api_delete(
         self, organizations, report_type_nd, tmp_path, settings, master_client, master_identity
@@ -180,7 +187,7 @@ class TestCustomImport:
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
-        assert mdu.import_batch is None
+        assert mdu.import_batches.count() == 0
         # let's process the mdu
         assert AccessLog.objects.count() == 0
         response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
@@ -189,9 +196,9 @@ class TestCustomImport:
         assert mdu.is_processed
         assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
         assert AccessLog.objects.count() == 6
-        assert mdu.import_batch is not None
-        assert mdu.import_batch.accesslog_count == 6
-        assert ImportBatch.objects.count() == 1
+        assert mdu.import_batches.count() == 3, '3 months of data = 3 import batches'
+        assert mdu.accesslogs.count() == 6
+        assert ImportBatch.objects.count() == 3
         # let's delete the object
         response = master_client.delete(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 204
@@ -286,12 +293,13 @@ class TestCustomImport:
             organization=org, platform=platforms[0], report_type=rt, owner_level=owner_level,
         )
         mdu.data_file.save('xxx', file)
-        assert mdu.import_batch is None
+        assert mdu.import_batches.count() == 0
         user = Identity.objects.get(identity=identity).user
         import_custom_data(mdu, user)
         mdu.refresh_from_db()
-        assert mdu.import_batch is not None
-        assert mdu.import_batch.owner_level == mdu.owner_level
+        assert mdu.import_batches.count() > 0
+        for ib in mdu.import_batches.all():
+            assert ib.owner_level == mdu.owner_level
 
     @pytest.mark.parametrize(['content_prefix'], [[''], ['\ufeff']])
     def test_mdu_data_to_records(
@@ -330,7 +338,7 @@ class TestCustomImport:
     )
     def test_mdu_json(self, organizations, report_type_nd, tmp_path, settings, content, is_json):
         """
-        Check that CSV data are correctly ingested - regardless of BOM presence
+        Check that JSON data are properly recognized during import
         """
         report_type = report_type_nd(0)
         organization = organizations[0]
@@ -345,3 +353,23 @@ class TestCustomImport:
             report_type=report_type, organization=organization, platform=platform, data_file=file,
         )
         assert mdu.file_is_json() == is_json
+
+    def test_mdu_list_view(self, admin_client):
+        """
+        Test the manual data upload global api endpoint
+        """
+        mdus = ManualDataUploadFullFactory.create_batch(5, is_processed=False)
+        mdus += ManualDataUploadFullFactory.create_batch(5, is_processed=True)
+        resp = admin_client.get(reverse('manual-data-upload-list'))
+        assert resp.status_code == 200
+        assert len(resp.json()) == 10
+
+    def test_organization_mdu_list_view(self, admin_client):
+        """
+        Test the manual data upload api endpoint for an organization
+        """
+        mdus = ManualDataUploadFullFactory.create_batch(5, is_processed=False)
+        mdus += ManualDataUploadFullFactory.create_batch(5, is_processed=True)
+        resp = admin_client.get(reverse('organization-manual-data-upload-list', args=(-1,)))
+        assert resp.status_code == 200
+        assert len(resp.json()) == 10

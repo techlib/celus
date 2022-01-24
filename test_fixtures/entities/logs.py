@@ -37,6 +37,7 @@ class ImportBatchFullFactory(factory.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
     report_type = factory.SubFactory(ReportTypeFactory)
+    date = factory.Faker('date_this_century')
 
     @factory.post_generation
     def create_accesslogs(obj, create, extracted, **kwargs):  # noqa - obj name is ok here
@@ -49,7 +50,7 @@ class ImportBatchFullFactory(factory.DjangoModelFactory):
             'organization': obj.organization,
             'platform': obj.platform,
             'report_type': obj.report_type,
-            'date': '2020-01-01',
+            'date': obj.date,
         }
         als1 = [AccessLog(value=fake.random_int(), metric=m1, **attrs) for _i in range(10)]
         als2 = [AccessLog(value=fake.random_int(), metric=m2, **attrs) for _i in range(10)]
@@ -66,13 +67,18 @@ class ManualDataUploadFullFactory(factory.DjangoModelFactory):
     platform = factory.SubFactory(PlatformFactory)
     report_type = factory.SubFactory(ReportTypeFactory)
 
-    import_batch = factory.SubFactory(
-        ImportBatchFullFactory,
-        organization=factory.SelfAttribute('..organization'),
-        platform=factory.SelfAttribute('..platform'),
-        report_type=factory.SelfAttribute('..report_type'),
-    )
     is_processed = True
     when_processed = factory.LazyAttribute(
         lambda o: fake.date_time_this_year() if o.is_processed else None
     )
+
+    @factory.post_generation
+    def create_import_batches(obj, create, extracted, **kwargs):  # noqa - obj name is ok here
+        if not create:
+            return
+
+        if obj.is_processed:
+            ib = ImportBatchFullFactory.create(
+                organization=obj.organization, platform=obj.platform, report_type=obj.report_type
+            )
+            obj.import_batches.set([ib])

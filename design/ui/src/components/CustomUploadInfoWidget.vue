@@ -7,7 +7,7 @@ en:
     <strong>right format</strong>. For platforms that support <strong>COUNTER</strong>, you
     can use COUNTER data saved in <strong>CSV</strong> file. For platforms that do not use
     COUNTER, you need to <strong>prepare data according to the rules below</strong>.
-    Files in the Microsoft <strong>Excell format are not supported</strong>.
+    Files in the Microsoft <strong>Excel format are not supported</strong>.
   non_counter_data_h: non-COUNTER data
   non_counter_data:
     Because of the large variability in formats that providers use to deliver non-COUNTER

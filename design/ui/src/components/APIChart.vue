@@ -33,8 +33,24 @@
     id="loading"
   >
     <div>
-      <i class="far fa-frown"></i>
+      <i
+        class="far fa-frown"
+        :style="{ marginTop: reportedMetrics.length ? '36px' : null }"
+      ></i>
       <div class="infotext">{{ $t("chart.no_data") }}</div>
+      <v-alert
+        v-if="reportedMetrics.length"
+        type="info"
+        class="mt-8 d-inline-block text-left"
+        outlined
+        max-width="960px"
+      >
+        <div>{{ $t("reported_metrics_empty_data_intro") }}</div>
+        <div class="my-3 font-weight-bold">
+          {{ $t("reported_metrics_empty_data_info") }}
+        </div>
+        <div v-html="reportedMetricsText"></div>
+      </v-alert>
     </div>
   </div>
   <div v-else>
@@ -131,8 +147,7 @@
         :mark-line="markLine"
         :xAxis="xAxis"
         :legend="{
-          icon:
-            'path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z',
+          icon: 'path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z',
           itemWidth: 16,
           itemGap: 16,
           itemHeight: 16,
@@ -204,6 +219,11 @@ export default {
     },
     importBatch: {
       // id of the Batch
+      required: false,
+      type: Number,
+    },
+    mduId: {
+      // id of the manual data upload
       required: false,
       type: Number,
     },
@@ -305,6 +325,7 @@ export default {
       if (this.organization) url += `&organization=${this.organization}`;
       if (this.title) url += `&target=${this.title}`;
       if (this.importBatch) url += `&import_batch=${this.importBatch}`;
+      if (this.mduId) url += `&mdu=${this.mduId}`;
       if (this.dashboardChart) {
         url += "&dashboard=true";
       }
@@ -516,8 +537,7 @@ export default {
           myExportData: {
             show: true,
             title: this.$t("chart.toolbox.export_csv"),
-            icon:
-              "path://m 434.57178,114.29929 -83.882,-83.882005 c -9.00169,-9.001761 -21.21063,-14.058933 -33.941,-14.059 H 48.630782 c -26.51,0 -47.9999996,21.49 -47.9999996,48 V 416.35829 c 0,26.51 21.4899996,48 47.9999996,48 H 400.63078 c 26.51,0 48,-21.49 48,-48 v -268.118 c -7e-5,-12.73037 -5.05724,-24.93931 -14.059,-33.941 z m -161.941,-49.941005 v 80.000005 h -128 V 64.358285 Z m -48,152.000005 c -48.523,0 -88,39.477 -88,88 0,48.523 39.477,88 88,88 48.523,0 88,-39.477 88,-88 0,-48.523 -39.477,-88 -88,-88 z",
+            icon: "path://m 434.57178,114.29929 -83.882,-83.882005 c -9.00169,-9.001761 -21.21063,-14.058933 -33.941,-14.059 H 48.630782 c -26.51,0 -47.9999996,21.49 -47.9999996,48 V 416.35829 c 0,26.51 21.4899996,48 47.9999996,48 H 400.63078 c 26.51,0 48,-21.49 48,-48 v -268.118 c -7e-5,-12.73037 -5.05724,-24.93931 -14.059,-33.941 z m -161.941,-49.941005 v 80.000005 h -128 V 64.358285 Z m -48,152.000005 c -48.523,0 -88,39.477 -88,88 0,48.523 39.477,88 88,88 48.523,0 88,-39.477 88,-88 0,-48.523 -39.477,-88 -88,-88 z",
             onclick: (function (that) {
               return function () {
                 window.open(that.dataURL + "&format=csv");
@@ -766,8 +786,9 @@ export default {
   color: #1db79a88;
   text-align: center;
 
-  i {
-    margin-top: 160px;
+  i.fa,
+  i.far {
+    margin-top: 100px;
   }
 
   div.infotext {

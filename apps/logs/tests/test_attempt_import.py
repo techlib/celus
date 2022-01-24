@@ -28,7 +28,7 @@ class TestAttemptImport:
             url="http://a.b.c/",
         )
 
-        with (Path(__file__).parent / "data/counter4/counter4_br2.tsv").open() as f:
+        with (Path(__file__).parent / "data/counter4/counter4_br2_one_month.tsv").open() as f:
 
             data_file = ContentFile(f.read())
             data_file.name = f"something.tsv"
@@ -36,8 +36,8 @@ class TestAttemptImport:
         fetch_attempt = SushiFetchAttempt.objects.create(
             credentials=creds,
             counter_report=cr_type,
-            start_date="2018-01-01",
-            end_date="2018-12-31",
+            start_date="2018-02-01",
+            end_date="2018-02-28",
             data_file=data_file,
             credentials_version_hash=creds.compute_version_hash(),
             status=AttemptStatus.IMPORTING,
@@ -46,7 +46,7 @@ class TestAttemptImport:
         import_one_sushi_attempt(fetch_attempt)
 
         assert fetch_attempt.status == AttemptStatus.SUCCESS
-        assert fetch_attempt.import_batch.accesslog_set.count() == 60
+        assert fetch_attempt.import_batch.accesslog_set.count() == 5
 
     def test_counter4_jr2_import(self, organizations, counter_report_type_named, platforms):
         cr_type = counter_report_type_named('JR2', version=4)
@@ -183,7 +183,7 @@ class TestAttemptImport:
         import_one_sushi_attempt(fetch_attempt)
 
         assert fetch_attempt.status == AttemptStatus.SUCCESS
-        assert fetch_attempt.import_batch.accesslog_set.count() == 12
+        assert fetch_attempt.import_batch.accesslog_set.count() == 8
         assert (
             fetch_attempt.log
             == "Warnings: Warning #3032: Usage No Longer Available for Requested Dates"

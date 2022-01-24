@@ -871,7 +871,7 @@ class TestIntentionDeleteView:
         cr2 = CredentialsFactory()
         fi1 = FetchIntentionFactory.create(credentials=cr1, start_date=date(2021, 1, 1))
         fi2 = FetchIntentionFactory.create(credentials=cr2, start_date=date(2021, 5, 1))
-        ib1 = ImportBatchFullFactory.create()
+        ib1 = ImportBatchFullFactory.create(date=date(2021, 1, 1))
         fi1.attempt.import_batch = ib1
         fi1.attempt.save()
 

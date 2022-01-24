@@ -66,13 +66,14 @@ cs:
           :platform="platformForChart"
           :title="titleId"
           :import-batch="importBatchId"
+          :mdu-id="mduId"
           :stack="
             this.selectedChartType.stack === undefined
               ? this.selectedChartType.chart_type === 'h-bar'
               : this.selectedChartType.stack
           "
           :order-by="this.selectedChartType.ordering"
-          :ignore-date-range="!!importBatchId"
+          :ignore-date-range="!!(importBatchId || mduId)"
           :show-mark-line="showMarkLine"
           ref="chart"
         >
@@ -109,14 +110,17 @@ export default {
   name: "CounterChartSet",
   components: { APIChart, ChartTypeSelector },
   props: {
-    platformId: {},
-    titleId: {},
+    platformId: { required: false, type: Number },
+    titleId: { required: false, type: Number },
     reportViewsUrl: {},
-    importBatchId: {},
+    importBatchId: { required: false, type: Number },
+    mduId: { required: false, type: Number },
     ignoreOrganization: { type: Boolean, default: false },
     scope: { default: "", required: false },
     fixedReportView: { required: false, default: null },
     fixedChart: { required: false, default: null },
+    // if `preferFullReport` is true then the full/master report will be selected by default
+    preferFullReport: { default: false, type: Boolean },
   },
   data() {
     return {
@@ -223,8 +227,17 @@ export default {
           const response = await axios.get(url);
           this.reportViews = response.data;
           if (this.reportViewsForSelect.length > 1) {
-            // if there is something, [0] is header, [1] is actuall reportView
-            this.selectedReportView = this.reportViewsForSelect[1];
+            let toSelect = null;
+            if (this.preferFullReport) {
+              // we need strict comparison to false because `is_standard_view` may be missing
+              toSelect = this.reportViewsForSelect.find(
+                (item) => item.is_standard_view === false
+              );
+            }
+            // if there is something, [0] is header, [1] is actual reportView
+            this.selectedReportView = toSelect
+              ? toSelect
+              : this.reportViewsForSelect[1];
           }
         } catch (error) {
           console.log("ERROR: ", error);

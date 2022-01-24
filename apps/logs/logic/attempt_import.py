@@ -5,6 +5,7 @@ import typing
 from django.conf import settings
 from django.db.transaction import atomic
 
+from logs.exceptions import DataStructureError
 from logs.logic.data_import import import_counter_records
 from logs.models import OrganizationPlatform, ImportBatch
 from nigiri.client import Sushi5Client, SushiException, SushiError
@@ -110,19 +111,15 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.save()
     # now read the data and import it
     elif reader.record_found:
-        import_batch = ImportBatch.objects.create(
-            platform=attempt.credentials.platform,
-            organization=attempt.credentials.organization,
-            report_type=attempt.counter_report.report_type,
-        )
-        stats = import_counter_records(
+        import_batches, stats = import_counter_records(
             attempt.counter_report.report_type,
             attempt.credentials.organization,
             attempt.credentials.platform,
             records,
-            import_batch,
         )
-        attempt.import_batch = import_batch
+        if len(import_batches) > 1:
+            raise DataStructureError('Cannot import data for more than one month from SUSHI')
+        attempt.import_batch = import_batches[0]
         attempt.status = AttemptStatus.SUCCESS
         if counter_version == 5 and (reader.errors or reader.warnings):
             attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))

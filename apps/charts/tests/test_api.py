@@ -268,12 +268,7 @@ class TestChartDataAPIView:
         """
         organization = organizations[0]
         report_type = report_type_nd(0)  # type: ReportType
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(
-            report_type, organization, platform, counter_records_0d, import_batch
-        )
+        import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
         report_view = ReportDataView.objects.create(base_report_type=report_type)
@@ -297,12 +292,7 @@ class TestChartDataAPIView:
         """
         organization = organizations[0]
         report_type = report_type_nd(0)  # type: ReportType
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(
-            report_type, organization, platform, counter_records_0d, import_batch
-        )
+        import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
         report_view = ReportDataView.objects.create(base_report_type=report_type)

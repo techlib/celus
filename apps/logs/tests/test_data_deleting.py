@@ -9,7 +9,7 @@ from publications.models import Platform
 
 @pytest.mark.django_db
 class TestDataDeleting:
-    def _prepare_accesslogs(self, counter_records, organizations, report_type_nd):
+    def _prepare_accesslogs(self, counter_records, organizations, report_type_nd) -> [ImportBatch]:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
@@ -24,11 +24,8 @@ class TestDataDeleting:
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
         organization = organizations[0]
         report_type = report_type_nd(3)
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs, import_batch)
-        return import_batch
+        import_batches, stats = import_counter_records(report_type, organization, platform, crs)
+        return import_batches
 
     def test_accesslog_cannot_be_deleted_from_instance(
         self, counter_records, organizations, report_type_nd
@@ -54,17 +51,18 @@ class TestDataDeleting:
     def test_accesslog_cannot_be_deleted_from_related_query_set(
         self, counter_records, organizations, report_type_nd
     ):
-        ib = self._prepare_accesslogs(counter_records, organizations, report_type_nd)
+        ibs = self._prepare_accesslogs(counter_records, organizations, report_type_nd)
         assert AccessLog.objects.count() > 0
         orig_count = AccessLog.objects.count()
         with pytest.raises(ModelUsageError):
-            ib.accesslog_set.delete()
+            ibs[0].accesslog_set.delete()
         assert AccessLog.objects.count() == orig_count, 'still the same number of accesslogs'
 
     def test_accesslog_can_be_deleted_in_cascade_from_import_batch(
         self, counter_records, organizations, report_type_nd
     ):
-        ib = self._prepare_accesslogs(counter_records, organizations, report_type_nd)
+        ibs = self._prepare_accesslogs(counter_records, organizations, report_type_nd)
         assert AccessLog.objects.count() > 0
-        ib.delete()
+        for ib in ibs:
+            ib.delete()
         assert AccessLog.objects.count() == 0, 'all accesslogs are deleted'

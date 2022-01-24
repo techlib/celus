@@ -138,12 +138,22 @@ def histogram_with_count(iterable) -> Counter:
 
 def custom_import_preflight_check(mdu: ManualDataUpload):
     records = list(mdu.data_to_records())  # type: [CounterRecord]
+    month_to_count = histogram_with_count([(str(record.start), record.value) for record in records])
+    clashing_months = ImportBatch.objects.filter(
+        report_type=mdu.report_type,
+        platform=mdu.platform,
+        organization=mdu.organization,
+        date__in=month_to_count.keys(),
+    ).values_list('date', flat=True)
+    can_import = not clashing_months
     return {
         'log_count': len(records),
         'hits_total': sum((record.value for record in records), 0),
-        'months': histogram_with_count([(str(record.start), record.value) for record in records]),
+        'months': month_to_count,
+        'clashing_months': clashing_months,
         'metrics': histogram_with_count([(record.metric, record.value) for record in records]),
         'titles': histogram_with_count([(record.title, record.value) for record in records]),
+        'can_import': can_import,
     }
 
 
@@ -151,22 +161,19 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
 def import_custom_data(mdu: ManualDataUpload, user) -> dict:
     records = mdu.data_to_records()
     # TODO: the owner level should be derived from the user and the organization at hand
-    import_batch = ImportBatch.objects.create(
-        platform=mdu.platform,
-        organization=mdu.organization,
-        report_type=mdu.report_type,
-        user=user,
-        system_created=False,
-        owner_level=mdu.owner_level,
-    )
-    stats = import_counter_records(
-        mdu.report_type, mdu.organization, mdu.platform, records, import_batch=import_batch
+    import_batches, stats = import_counter_records(
+        mdu.report_type,
+        mdu.organization,
+        mdu.platform,
+        records,
+        import_batch_kwargs=dict(user=user, system_created=False, owner_level=mdu.owner_level),
     )
     # explicitly connect the organization and the platform
     OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=mdu.organization)
-    mdu.import_batch = import_batch
+    mdu.import_batches.set(import_batches)
     mdu.mark_processed()
-    sync_materialized_reports_for_import_batch(import_batch)
+    for import_batch in import_batches:
+        sync_materialized_reports_for_import_batch(import_batch)
     # the following could be used to debug the speed of this code chunk
     # qs = connection.queries
     # qs.sort(key=lambda x: -float(x['time']))

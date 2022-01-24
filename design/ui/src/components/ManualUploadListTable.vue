@@ -62,14 +62,14 @@ cs:
           </template>
           <span>{{ $t("actions.delete") }}</span>
         </v-tooltip>
-        <v-tooltip bottom v-if="item.import_batch">
+        <v-tooltip bottom v-if="item.is_processed">
           <template v-slot:activator="{ on }">
             <v-btn
               icon
               small
               color="secondary"
               @click.stop="
-                selectedBatch = item.import_batch;
+                selectedMDU = item;
                 dialogType = 'data';
                 showBatchDialog = true;
               "
@@ -80,14 +80,14 @@ cs:
           </template>
           <span>{{ $t("actions.show_raw_data") }}</span>
         </v-tooltip>
-        <v-tooltip bottom v-if="item.import_batch">
+        <v-tooltip bottom v-if="item.is_processed">
           <template v-slot:activator="{ on }">
             <v-btn
               icon
               small
               color="secondary"
               @click.stop="
-                selectedBatch = item.import_batch;
+                selectedMDU = item;
                 dialogType = 'chart';
                 showBatchDialog = true;
               "
@@ -131,13 +131,13 @@ cs:
           <v-container v-if="dialogType === 'data'" fluid class="pb-0">
             <v-row class="pb-0">
               <v-col cols="12" class="pb-0">
-                <AccessLogList :import-batch="selectedBatch" />
+                <AccessLogList :mdu-id="selectedMDU.pk" />
               </v-col>
             </v-row>
           </v-container>
-          <ImportBatchChart
-            v-else-if="dialogType === 'chart'"
-            :import-batch-id="selectedBatch"
+          <MDUChart
+            v-else-if="dialogType === 'chart' && selectedMDU"
+            :mdu-id="selectedMDU.pk"
           />
         </v-card-text>
         <v-card-actions>
@@ -213,18 +213,18 @@ cs:
 import { mapActions, mapGetters, mapState } from "vuex";
 import axios from "axios";
 import AccessLogList from "./AccessLogList";
-import ImportBatchChart from "./ImportBatchChart";
 import { isoDateTimeFormat, isoDateTimeFormatSpans } from "../libs/dates";
 import CheckMark from "@/components/util/CheckMark";
 import { userToString } from "../libs/user";
+import MDUChart from "@/components/MDUChart";
 
 export default {
   name: "ManualUploadListTable",
 
   components: {
+    MDUChart,
     CheckMark,
     AccessLogList,
-    ImportBatchChart,
   },
 
   data() {
@@ -233,7 +233,6 @@ export default {
       loading: false,
       showBatchDialog: false,
       showDeleteDialog: false,
-      selectedBatch: null,
       selectedMDU: null,
       dialogType: "chart",
     };

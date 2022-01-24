@@ -337,6 +337,7 @@ class ImportBatch(models.Model):
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
+    date = models.DateField(null=True)
     created = models.DateTimeField(default=now)
     last_updated = models.DateTimeField(auto_now=True)
     system_created = models.BooleanField(default=True)
@@ -511,7 +512,9 @@ class ManualDataUpload(models.Model):
     log = models.TextField(blank=True)
     is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
-    import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
+    import_batches = models.ManyToManyField(
+        ImportBatch, through='ManualDataUploadImportBatch', related_name='mdu'
+    )
     extra = models.JSONField(
         default=dict, blank=True, help_text='Internal data related to processing of the upload'
     )
@@ -528,9 +531,13 @@ class ManualDataUpload(models.Model):
         File: {request.build_absolute_uri(self.data_file.url)}"""
 
     def delete(self, using=None, keep_parents=False):
-        if self.import_batch:
-            self.import_batch.delete()
+        for import_batch in self.import_batches.all():
+            import_batch.delete()
         super().delete(using=using, keep_parents=keep_parents)
+
+    @property
+    def accesslogs(self):
+        return AccessLog.objects.filter(import_batch__in=self.import_batches.all())
 
     def mark_processed(self):
         if not self.is_processed:
@@ -580,6 +587,17 @@ class ManualDataUpload(models.Model):
         if char in b'[{':
             return True
         return False
+
+
+class ManualDataUploadImportBatch(models.Model):
+
+    import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE, related_name='mdu_link')
+    mdu = models.ForeignKey(
+        ManualDataUpload, on_delete=models.CASCADE, related_name='import_batch_link'
+    )
+
+    class Meta:
+        constraints = [UniqueConstraint(fields=('import_batch',), name='one_import_batch_per_mdu')]
 
 
 class FlexibleReport(models.Model):

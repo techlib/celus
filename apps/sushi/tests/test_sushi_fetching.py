@@ -8,7 +8,7 @@ from freezegun import freeze_time
 from logs.logic.attempt_import import import_one_sushi_attempt
 from sushi.models import SushiFetchAttempt, AttemptStatus
 from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     data_sources,
     report_types,

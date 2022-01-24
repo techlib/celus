@@ -103,12 +103,17 @@ def extract_interests_from_objects(interest_rt: ReportType, objects: Iterable):
 
 
 def extract_accesslog_attr_query_params(
-    params, dimensions=('date', 'platform', 'metric', 'organization', 'target'), use_ids=False
+    params,
+    dimensions=('date', 'platform', 'metric', 'organization', 'target'),
+    mdu_filter: bool = False,
+    use_ids=False,
 ):
     """
     :param params: dict with the params
     :param dimensions:
     :param use_ids: when True, fk_id=Number will be used instead of fk=Instance
+    :param mdu_filter: if True, a filter `mdu` will be extracted from the params - it is queried
+                       differently than other dimensions, which is why it is treated separately
     :return:
     """
     query_params = {}
@@ -127,6 +132,9 @@ def extract_accesslog_attr_query_params(
                     pass
             else:
                 query_params[dim_name] = value
+    # MDUs are connected through import batches m2m, so we need to handle them differently
+    if mdu_filter and (mdu_id := params.get('mdu')):
+        query_params['import_batch__mdu__pk'] = mdu_id
     return query_params
 
 
@@ -303,7 +311,9 @@ class StatsComputer:
             secondary_dim
         )
 
-    def get_data(self, report_type: ReportType, params: dict, user, recache=False):
+    def get_data(
+        self, report_type: Union[ReportType, ReportDataView], params: dict, user, recache=False
+    ):
         """
         This method encapsulates most of the stuff that is done by this view.
         Based on report_type_id and the request object, it loads, post-processes, etc. the data
@@ -386,7 +396,9 @@ class StatsComputer:
             query_params = {'metric__active': True}
         # go over implicit dimensions and add them to the query if GET params are given for this
         query_params.update(
-            extract_accesslog_attr_query_params(params, dimensions=self.implicit_dims)
+            extract_accesslog_attr_query_params(
+                params, dimensions=self.implicit_dims, mdu_filter=True
+            )
         )
         # now go over the extra dimensions and add them to filter if requested
         dim_raw_name_to_name = {}

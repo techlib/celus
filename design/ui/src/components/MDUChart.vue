@@ -3,9 +3,9 @@
     <v-row class="pb-0">
       <v-col class="pb-0">
         <CounterChartSet
-          v-if="importBatch"
-          :platform-id="importBatch.platform.pk"
-          :import-batch-id="importBatchId"
+          v-if="mdu"
+          :platform-id="mdu.platform.pk"
+          :mdu-id="mduId"
           :report-views-url="reportViewsUrl"
           prefer-full-report
           ignore-organization
@@ -20,21 +20,21 @@ import CounterChartSet from "./CounterChartSet";
 import axios from "axios";
 import { mapActions } from "vuex";
 export default {
-  name: "ImportBatchChart",
+  name: "MDUChart",
   components: { CounterChartSet },
   props: {
-    importBatchId: { required: true },
+    mduId: { required: true },
   },
   data() {
     return {
       selectedChartType: null,
-      importBatch: null,
+      mdu: null,
     };
   },
   computed: {
     reportViewsUrl() {
-      if (this.importBatch) {
-        return `/api/report-type/${this.importBatch.report_type.pk}/report-views/`;
+      if (this.mdu) {
+        return `/api/report-type/${this.mdu.report_type}/report-views/`;
       }
       return null;
     },
@@ -43,24 +43,26 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
-    async loadImportBatch() {
+    async loadDetails() {
       try {
         let response = await axios.get(
-          `/api/import-batch/${this.importBatchId}/`
+          `/api/manual-data-upload/${this.mduId}/`
         );
-        this.importBatch = response.data;
+        this.mdu = response.data;
       } catch (error) {
-        this.showSnackbar({ content: "Error loading batch details: " + error });
+        this.showSnackbar({
+          content: "Error loading manual data upload details: " + error,
+        });
       }
     },
   },
   watch: {
-    importBatchId() {
-      this.loadImportBatch();
+    mduId() {
+      this.loadDetails();
     },
   },
   mounted() {
-    this.loadImportBatch();
+    this.loadDetails();
   },
 };
 </script>

@@ -46,14 +46,12 @@ class TestInterestCalculation:
         crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ib = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
+        assert len(ibs) == 1, 'only one import batch created'
         # now define the interest
         interest_rt = report_type_nd(1, short_name='interest')
-        sync_interest_for_import_batch(ib, interest_rt)
+        sync_interest_for_import_batch(ibs[0], interest_rt)
         assert interest_rt.accesslog_set.count() == 0, 'no interest platform and metric yet'
         # now improve it and retry
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
@@ -62,7 +60,7 @@ class TestInterestCalculation:
             metric=Metric.objects.get(short_name='Hits'),
             interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
         )
-        sync_interest_for_import_batch(ib, interest_rt)
+        sync_interest_for_import_batch(ibs[0], interest_rt)
         assert interest_rt.accesslog_set.count() == 3, 'now it should work'
         assert interest_rt.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
 
@@ -92,18 +90,8 @@ class TestInterestCalculation:
         report_type_new = report_type_nd(1, short_name='new')
         report_type_old.superseeded_by = report_type_new
         report_type_old.save()
-        ib_old = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type_old
-        )
-        ib_new = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type_new
-        )
-        import_counter_records(
-            report_type_old, organization, platform, crs_old, import_batch=ib_old
-        )
-        import_counter_records(
-            report_type_new, organization, platform, crs_new, import_batch=ib_new
-        )
+        ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
+        ibs_new, _stats = import_counter_records(report_type_new, organization, platform, crs_new)
         assert AccessLog.objects.count() == 6
         # now define the interest
         interest_rt = report_type_nd(1, short_name='interest')
@@ -118,9 +106,11 @@ class TestInterestCalculation:
             report_type=report_type_new, metric=hit_metric, interest_group=ig
         )
         # sync and count
-        sync_interest_for_import_batch(ib_old, interest_rt)
+        for ib_old in ibs_old:
+            sync_interest_for_import_batch(ib_old, interest_rt)
         assert interest_rt.accesslog_set.count() == 1, '1 of 3 should make it to interest'
-        sync_interest_for_import_batch(ib_new, interest_rt)
+        for ib_new in ibs_new:
+            sync_interest_for_import_batch(ib_new, interest_rt)
         assert interest_rt.accesslog_set.count() == 4, '3 of 3 should make it to interest'
 
     def test_superseeded_report_types_with_different_titles(
@@ -152,18 +142,8 @@ class TestInterestCalculation:
         report_type_new = report_type_nd(1, short_name='new')
         report_type_old.superseeded_by = report_type_new
         report_type_old.save()
-        ib_old = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type_old
-        )
-        ib_new = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type_new
-        )
-        import_counter_records(
-            report_type_old, organization, platform, crs_old, import_batch=ib_old
-        )
-        import_counter_records(
-            report_type_new, organization, platform, crs_new, import_batch=ib_new
-        )
+        ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
+        ibs_new, _stats = import_counter_records(report_type_new, organization, platform, crs_new)
         assert AccessLog.objects.count() == 6
         # now define the interest
         interest_rt = report_type_nd(1, short_name='interest')
@@ -178,9 +158,11 @@ class TestInterestCalculation:
             report_type=report_type_new, metric=hit_metric, interest_group=ig
         )
         # sync and count
-        sync_interest_for_import_batch(ib_old, interest_rt)
+        for ib_old in ibs_old:
+            sync_interest_for_import_batch(ib_old, interest_rt)
         assert interest_rt.accesslog_set.count() == 0, '0 of 3 should make it to interest'
-        sync_interest_for_import_batch(ib_new, interest_rt)
+        for ib_new in ibs_new:
+            sync_interest_for_import_batch(ib_new, interest_rt)
         assert interest_rt.accesslog_set.count() == 3, '3 of 3 should make it to interest'
 
     def test_with_materialized_reports(self, counter_records, organizations, report_type_nd):
@@ -199,11 +181,9 @@ class TestInterestCalculation:
         crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ib = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        import_counter_records(report_type, organization, platform, crs1, import_batch=ib)
+        ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
+        assert len(ibs) == 1, 'only one import batch'
         # create materialized report
         mat_def = ReportMaterializationSpec.objects.create(
             base_report_type=report_type, keep_dim1=False
@@ -211,6 +191,7 @@ class TestInterestCalculation:
         mat_rt = ReportType.objects.create(short_name='materialized', materialization_spec=mat_def)
         mat_rec_count = create_materialized_accesslogs(mat_rt)
         assert mat_rec_count == 3
+        ib = ibs[0]
         assert ib.accesslog_set.count() == 6
         # now define the interest
         interest_rt = report_type_nd(1, short_name='interest')
@@ -540,16 +521,10 @@ class TestInterestRecomputationDetection:
         report_type_new = report_type_nd(1, short_name='new')
         report_type_old.superseeded_by = report_type_new
         report_type_old.save()
-        ib_old = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type_old
-        )
-        ib_new = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type_new
-        )
-        import_counter_records(
-            report_type_old, organization, platform, crs_old, import_batch=ib_old
-        )
+        ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
         assert AccessLog.objects.count() == 3
+        assert len(ibs_old) == 1
+        ib_old = ibs_old[0]
         # now define the interest
         interest_rt = report_type_nd(1, short_name='interest')
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
@@ -568,9 +543,9 @@ class TestInterestRecomputationDetection:
         assert (
             ib_old.accesslog_set.filter(report_type=interest_rt).count() == 3
         ), '3 new interest records'
-        import_counter_records(
-            report_type_new, organization, platform, crs_new, import_batch=ib_new
-        )
+        ibs_new, _stats = import_counter_records(report_type_new, organization, platform, crs_new)
+        assert len(ibs_new) == 1
+        ib_new = ibs_new[0]
         sync_interest_for_import_batch(ib_new, interest_rt)
         assert interest_rt.accesslog_set.count() == 6, '3 of 3 should make it to interest'
         # let's run the detection code and see if it removes the old stuff

@@ -34,6 +34,11 @@ en:
   interest_metrics_only: This view uses interest-defining metrics only.
   reported_metrics_tooltip: "Only the following metrics were used to compute the displayed values:"
   reported_metrics_tooltip_many: The resulting value is a sum of the individual displayed metrics.
+  reported_metrics_empty_data_intro: |
+     Please note that because this view does not define a specific metric to show, only metrics
+     used for interest definition are taken into account for this chart.
+     This avoids summing up incompatible metrics.
+  reported_metrics_empty_data_info: "The following metrics were tried, but no data were found:"
   available_charts: Choose a chart
 cs:
   chart:
@@ -71,4 +76,8 @@ cs:
   interest_metrics_only: Tento pohled využívá pouze metriky, které definují zájem.
   reported_metrics_tooltip: "Při výpočtu dat pro tento graf byly použity pouze tyto metriky:"
   reported_metrics_tooltip_many: Výsledná hodnota je součtem jednotlivých uvedených metrik.
+  reported_metrics_empty_data_intro: |
+     Vzhledem k tomu, že tento pohled nedefinuje, jaká metrika se má použít, jsou použity pouze
+     metriky, které definují zájem. To zabraňuje sčítání nekompatibilních hodnot.
+  reported_metrics_empty_data_info: "Následující metriky byly brány v potaz, ale nebyla nalezena žádná data:"
   available_charts: Vyberte graf

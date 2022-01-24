@@ -216,17 +216,17 @@ cs:
       </v-stepper-step>
       <v-stepper-content step="3">
         <v-card>
-          <v-card-text v-if="importBatch">
+          <v-card-text v-if="uploadObject && uploadObject.is_processed">
             <v-tabs v-model="tab" dark background-color="primary" fixed-tabs>
               <v-tab href="#chart">{{ $t("tab_chart") }}</v-tab>
               <v-tab href="#data">{{ $t("tab_data") }}</v-tab>
             </v-tabs>
             <v-tabs-items v-model="tab">
               <v-tab-item value="chart">
-                <ImportBatchChart :import-batch-id="importBatch.pk" />
+                <MDUChart :mdu-id="uploadObject.pk" />
               </v-tab-item>
               <v-tab-item value="data">
-                <AccessLogList :import-batch="importBatch.pk" />
+                <AccessLogList :mdu-id="uploadObject.pk" />
               </v-tab-item>
             </v-tabs-items>
             <v-container fluid>
@@ -302,7 +302,6 @@ cs:
 <script>
 import axios from "axios";
 import { mapActions, mapState } from "vuex";
-import ImportBatchChart from "@/components/ImportBatchChart";
 import AccessLogList from "@/components/AccessLogList";
 import ReportTypeCreateWidget from "@/components/ReportTypeCreateWidget";
 import LargeSpinner from "@/components/util/LargeSpinner";
@@ -310,14 +309,15 @@ import CustomUploadInfoWidget from "@/components/CustomUploadInfoWidget";
 import ReportTypeInfoWidget from "@/components/ReportTypeInfoWidget";
 import ImportPreflightDataWidget from "./ImportPreflightDataWidget";
 import { badge } from "@/libs/sources.js";
+import MDUChart from "@/components/MDUChart";
 
 export default {
   name: "CustomDataUploadPage",
   components: {
+    MDUChart,
     ImportPreflightDataWidget,
     LargeSpinner,
     ReportTypeCreateWidget,
-    ImportBatchChart,
     AccessLogList,
     CustomUploadInfoWidget,
     ReportTypeInfoWidget,
@@ -340,7 +340,6 @@ export default {
       preflightData: null,
       preflightError: null,
       importStats: null,
-      importBatch: null,
       showAddReportTypeDialog: false,
       tab: "chart",
       uploadObjectProcessing: false,
@@ -478,7 +477,7 @@ export default {
         try {
           const response = await axios.post(url, {});
           this.importStats = response.data.stats;
-          this.importBatch = response.data.import_batch;
+          this.uploadObject.is_processed = response.data.is_processed;
           this.step = 3;
         } catch (error) {
           this.showSnackbar({ content: "Error processing data: " + error });
@@ -494,8 +493,7 @@ export default {
             `/api/manual-data-upload/${this.uploadObjectId}/`
           );
           this.uploadObject = response.data;
-          if (this.uploadObject.import_batch) {
-            this.importBatch = this.uploadObject.import_batch;
+          if (this.uploadObject.is_processed) {
             this.step = 3;
           } else {
             this.step = 2;

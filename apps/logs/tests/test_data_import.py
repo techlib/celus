@@ -1,16 +1,15 @@
-import pytest
-
 from pathlib import Path
 
-from django.db.models import Count
+import pytest
+from django.db.models import Count, Sum
 
 from logs.logic.data_import import TitleManager, TitleRec
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 from nigiri.counter4 import Counter4BR2Report
-from publications.models import Platform, Title, PlatformTitle
-
+from organizations.tests.conftest import organizations  # noqa - fixture
+from publications.models import Title, PlatformTitle
+from ..exceptions import DataStructureError
 from ..logic.data_import import import_counter_records
-from organizations.tests.conftest import organizations
 
 
 @pytest.mark.django_db
@@ -20,25 +19,34 @@ class TestDataImport:
     Tests functionality of the logic.data_import module
     """
 
-    def test_api_simple_data_0d(self, counter_records_0d, organizations, report_type_nd, platform):
+    def test_import_counter_records_simple_data_0d(
+        self, counter_records_0d, organizations, report_type_nd, platform
+    ):
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
         report_type = report_type_nd(0)
-        import_counter_records(
-            report_type,
-            organizations[0],
-            platform,
-            counter_records_0d,
-            ImportBatch.objects.create(
-                organization=organizations[0], platform=platform, report_type=report_type
-            ),
-        )
+        import_counter_records(report_type, organizations[0], platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
+        assert ImportBatch.objects.count() == 1
         assert Title.objects.count() == 1
         al = AccessLog.objects.get()
         assert al.value == 50
         assert al.dim1 is None
         assert PlatformTitle.objects.count() == 1
+
+    def test_import_counter_records_simple_data_0d_more_passes(
+        self, counter_records_nd, organizations, report_type_nd, platform
+    ):
+        """
+        Tests that when the import has to go over the imported data in several passes
+        (batches, not import batches), it still functions properly
+        """
+        assert AccessLog.objects.count() == 0
+        record_number = 10
+        crs = list(counter_records_nd(1, record_number=record_number))
+        report_type = report_type_nd(1)
+        import_counter_records(report_type, organizations[0], platform, crs, buffer_size=1)
+        assert AccessLog.objects.count() == record_number
 
     def test_simple_data_import_1d(
         self, counter_records_nd, organizations, report_type_nd, platform
@@ -47,15 +55,7 @@ class TestDataImport:
         assert Title.objects.count() == 0
         crs = list(counter_records_nd(1))
         report_type = report_type_nd(1)
-        import_counter_records(
-            report_type,
-            organizations[0],
-            platform,
-            crs,
-            ImportBatch.objects.create(
-                organization=organizations[0], platform=platform, report_type=report_type
-            ),
-        )
+        import_counter_records(report_type, organizations[0], platform, crs)
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
         al = AccessLog.objects.get()
@@ -71,15 +71,7 @@ class TestDataImport:
         assert Title.objects.count() == 0
         crs = list(counter_records_nd(3, record_number=10))
         report_type = report_type_nd(3)
-        stats = import_counter_records(
-            report_type,
-            organizations[0],
-            platform,
-            crs,
-            ImportBatch.objects.create(
-                organization=organizations[0], platform=platform, report_type=report_type
-            ),
-        )
+        _ibs, stats = import_counter_records(report_type, organizations[0], platform, crs)
         assert stats['skipped logs'] == 0
         assert stats['new logs'] == 10
         assert AccessLog.objects.count() == 10
@@ -92,24 +84,52 @@ class TestDataImport:
         assert DimensionText.objects.get(pk=al.dim3).text == crs[0].dimension_data['dim2']
         assert al.dim4 is None
 
+    @pytest.mark.parametrize(
+        ['months', 'log_count', 'log_sum'],
+        [
+            (None, 6, 63),
+            (['2018-01-01'], 3, 7),
+            (['2018-01-01', '2018-03-01'], 4, 39),
+            (['2018-01-01', '2018-02-01'], 5, 31),
+            (['2018-01-01', '2018-02-01', '2018-03-01'], 6, 63),
+            (['2018-02-01', '2018-03-01'], 3, 56),
+            (['2018-02-01'], 2, 24),
+        ],
+    )
+    def test_data_import_month_skipping(
+        self, counter_records, organizations, report_type_nd, platform, months, log_count, log_sum
+    ):
+        assert AccessLog.objects.count() == 0
+        assert Title.objects.count() == 0
+        data = [
+            [None, '2018-01-01', '1v1', '2v1', '3v1', 1],
+            [None, '2018-01-01', '1v2', '2v1', '3v1', 2],
+            [None, '2018-01-01', '1v2', '2v2', '3v1', 4],
+            [None, '2018-02-01', '1v1', '2v1', '3v1', 8],
+            [None, '2018-02-01', '1v1', '2v2', '3v2', 16],
+            [None, '2018-03-01', '1v1', '2v3', '3v2', 32],
+        ]
+        crs = list(counter_records(data, metric='Hits', platform=platform.name))
+        organization = organizations[0]
+        report_type = report_type_nd(3)
+        import_counter_records(report_type, organization, platform, crs, months=months)
+        assert AccessLog.objects.count() == log_count
+        assert AccessLog.objects.aggregate(sum=Sum('value'))['sum'] == log_sum
+
     def test_data_import_mutli_3d_repeating_data(
         self, counter_records_nd, organizations, report_type_nd, platform
     ):
+        """
+        Tests that when the same values occur in the import data, they are remapped correctly to
+        the save database value.
+        """
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
         crs = list(
             counter_records_nd(3, record_number=10, title='Title ABC', dim_value='one value')
         )
         rt = report_type_nd(3)  # type: ReportType
-        import_counter_records(
-            rt,
-            organizations[0],
-            platform,
-            crs,
-            ImportBatch.objects.create(
-                organization=organizations[0], platform=platform, report_type=rt
-            ),
-        )
+        import_counter_records(rt, organizations[0], platform, crs)
         assert AccessLog.objects.count() == 10
         assert Title.objects.count() > 0
         al1, al2 = AccessLog.objects.order_by('pk')[:2]
@@ -127,33 +147,18 @@ class TestDataImport:
         assert al1.dim4 is None
 
     def test_reimport(self, counter_records_nd, organizations, report_type_nd, platform):
+        """
+        Test that reimporting the same data will lead to an exception
+        """
         crs = list(counter_records_nd(3, record_number=1, title='Title ABC', dim_value='one value'))
         rt = report_type_nd(3)  # type: ReportType
-        stats = import_counter_records(
-            rt,
-            organizations[0],
-            platform,
-            crs,
-            ImportBatch.objects.create(
-                organization=organizations[0], platform=platform, report_type=rt
-            ),
-        )
+        _ibs, stats = import_counter_records(rt, organizations[0], platform, crs)
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
         assert stats['new logs'] == 1
         assert stats['new platformtitles'] == 1
-        stats = import_counter_records(
-            rt,
-            organizations[0],
-            platform,
-            crs,
-            ImportBatch.objects.create(
-                organization=organizations[0], platform=platform, report_type=rt
-            ),
-        )
-        assert stats['new logs'] == 0
-        assert stats['skipped logs'] == 1
-        assert stats['new platformtitles'] == 0
+        with pytest.raises(DataStructureError):
+            import_counter_records(rt, organizations[0], platform, crs)
 
 
 @pytest.mark.django_db
@@ -167,13 +172,8 @@ class TestCounter4Import:
         records = [e for e in reader.read_report(data)]
         assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
-        import_batch = ImportBatch.objects.create(
-            platform=platform, organization=organization, report_type=rt
-        )
         assert AccessLog.objects.count() == 0
-        stats = import_counter_records(
-            rt, organization, platform, (e for e in records), import_batch
-        )
+        _ibs, stats = import_counter_records(rt, organization, platform, (e for e in records))
         assert AccessLog.objects.count() == 60
         assert stats['new logs'] == 60
         values = [
@@ -196,11 +196,8 @@ class TestCounter4Import:
         records = [e for e in reader.read_report(data)]
         assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
-        import_batch = ImportBatch.objects.create(
-            platform=platform, organization=organization, report_type=rt
-        )
         assert Title.objects.count() == 0
-        import_counter_records(rt, organization, platform, (e for e in records), import_batch)
+        import_counter_records(rt, organization, platform, (e for e in records))
         assert Title.objects.count() == 5
         assert list(
             Title.objects.order_by('pub_type').values('pub_type').annotate(count=Count('id'))

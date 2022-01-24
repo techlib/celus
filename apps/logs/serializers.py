@@ -1,7 +1,6 @@
 from django.utils.translation import gettext as _
-
-from rest_framework.exceptions import NotAuthenticated, ValidationError, PermissionDenied
-from rest_framework.fields import CharField, IntegerField, DateField, BooleanField
+from rest_framework.exceptions import ValidationError
+from rest_framework.fields import IntegerField, DateField, BooleanField
 from rest_framework.relations import StringRelatedField, PrimaryKeyRelatedField
 from rest_framework.serializers import (
     ModelSerializer,
@@ -14,7 +13,11 @@ from core.models import DataSource, UL_CONS_STAFF
 from core.serializers import UserSerializer, UserSimpleSerializer
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
-from publications.serializers import PlatformSerializer, DataSourceSerializer
+from publications.serializers import (
+    PlatformSerializer,
+    DataSourceSerializer,
+    SimplePlatformSerializer,
+)
 from .models import (
     Metric,
     Dimension,
@@ -295,7 +298,7 @@ class ImportBatchVerboseSerializer(ModelSerializer):
 class ManualDataUploadSerializer(ModelSerializer):
 
     user = HiddenField(default=CurrentUserDefault())
-    import_batch = ImportBatchSerializer(read_only=True)
+    import_batches = ImportBatchSerializer(read_only=True, many=True)
     can_edit = BooleanField(read_only=True)
 
     class Meta:
@@ -310,7 +313,7 @@ class ManualDataUploadSerializer(ModelSerializer):
             'created',
             'is_processed',
             'log',
-            'import_batch',
+            'import_batches',
             'extra',
             'can_edit',
             'owner_level',
@@ -342,7 +345,7 @@ class ManualDataUploadSerializer(ModelSerializer):
 class ManualDataUploadVerboseSerializer(ModelSerializer):
 
     user = UserSimpleSerializer(read_only=True)
-    platform = PlatformSerializer(read_only=True)
+    platform = SimplePlatformSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
     report_type = ReportTypeSimpleSerializer(read_only=True)
     can_edit = BooleanField(read_only=True)
@@ -359,7 +362,7 @@ class ManualDataUploadVerboseSerializer(ModelSerializer):
             'created',
             'is_processed',
             'log',
-            'import_batch',
+            'import_batches',
             'extra',
             'can_edit',
             'owner_level',

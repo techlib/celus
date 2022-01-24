@@ -73,6 +73,7 @@ from logs.serializers import (
 )
 from organizations.logic.queries import organization_filter_from_org_id
 from sushi.models import SushiCredentials, SushiFetchAttempt, AttemptStatus
+from .exceptions import DataStructureError
 from .tasks import export_raw_data_task
 
 
@@ -207,7 +208,9 @@ class RawDataExportView(PandasView):
     def extract_query_filter_params(cls, request) -> dict:
         query_params = date_filter_from_params(request.GET)
         query_params.update(
-            extract_accesslog_attr_query_params(request.GET, dimensions=cls.implicit_dims)
+            extract_accesslog_attr_query_params(
+                request.GET, dimensions=cls.implicit_dims, mdu_filter=True
+            )
         )
         return query_params
 
@@ -310,7 +313,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         Return a list of combinations of report_type, platform, organization and month for which
         there are some data.
 
-        If requires a filter composed of `start_date`, `end_date` and `credentials` which is a
+        It requires a filter composed of `start_date`, `end_date` and `credentials` which is a
         comma separated list of credentials primary keys.
 
         The result is a list of dicts with `report_type_id`, `platform_id`, `organization_id`,
@@ -331,6 +334,8 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         #  * creating empty import batches for 3030 when we decide there is no reason to retry
         #
         # After these changes, we could simply query import batches to get the data for this view.
+        # TODO: FIX THIS FOR IMPORT BATCHES -
+        #       we need to create empty import batches for 3030 for that
         param_serializer = self.DataPresenceParamSerializer(data=request.GET)
         param_serializer.is_valid(raise_exception=True)
         params = param_serializer.validated_data
@@ -359,7 +364,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         # now manually uploaded data - we need to go by AccessLog, there is no other place with
         # date info
         qs = AccessLog.objects.filter(
-            import_batch__manualdataupload__isnull=False,
+            import_batch__mdu_link__isnull=False,
             date__gte=parse_month(params['start_date']),
             date__lte=parse_month(params['end_date']),
         )
@@ -448,12 +453,22 @@ Traceback: {traceback.format_exc()}
     @action(methods=['POST'], detail=True, url_path='process')
     def process(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)  # type: ManualDataUpload
-        if mdu.is_processed or mdu.import_batch:
-            stats = {'existing logs': mdu.import_batch.accesslog_count}
+        if mdu.is_processed or mdu.import_batches.exists():
+            stats = {
+                'existing logs': AccessLog.objects.filter(
+                    import_batch_id__in=mdu.import_batches.all()
+                ).count()
+            }
         else:
-            stats = import_custom_data(mdu, request.user)
+            try:
+                stats = import_custom_data(mdu, request.user)
+            except DataStructureError as exc:
+                raise BadRequest(f'Cannot import data: {exc}')
         return Response(
-            {'stats': stats, 'import_batch': ImportBatchSerializer(mdu.import_batch).data}
+            {
+                'stats': stats,
+                'import_batches': ImportBatchSerializer(mdu.import_batches.all(), many=True).data,
+            }
         )
 
     def get_permissions(self):
@@ -485,8 +500,10 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
         org_filter = organization_filter_from_org_id(
             self.kwargs.get('organization_pk'), self.request.user
         )
-        qs = ManualDataUpload.objects.filter(**org_filter).select_related(
-            'import_batch', 'import_batch__user', 'organization', 'platform', 'report_type', 'user'
+        qs = (
+            ManualDataUpload.objects.filter(**org_filter)
+            .select_related('organization', 'platform', 'report_type', 'user')
+            .prefetch_related('import_batches', 'import_batches__user')
         )
         # add access level stuff
         org_to_level = {}  # this is used to cache user access level for the same organization
