@@ -241,6 +241,8 @@ class PlatformImportAttempt(ImportAttempt):
 
         UPDATABLE_FIELDS = ('short_name', 'name', 'provider', 'url', 'knowledgebase')
 
+        updated_platforms_ids = []
+
         for record in data:
             updatable = dict(
                 short_name=record["short_name"],
@@ -291,7 +293,9 @@ class PlatformImportAttempt(ImportAttempt):
             else:
                 raise ValueError(f'Unsupported value for "merge": {merge}')
 
+            updated_platforms_ids.append(platform.pk)
             needs_update = any(updatable[e] != getattr(platform, e) for e in UPDATABLE_FIELDS)
+
             if created:
                 logger.info("Platform '%s' created", record["short_name"])
                 platform.create_default_interests()
@@ -307,6 +311,15 @@ class PlatformImportAttempt(ImportAttempt):
             else:
                 logger.info("Platform '%s' remained the same", record["short_name"])
                 counter["same"] += 1
+
+        # Wipe knowledgebase data which were removed from knowledgebase
+        for platform in Platform.objects.filter(
+            source=self.source, knowledgebase__isnull=False
+        ).exclude(pk__in=updated_platforms_ids):
+            logger.info("Knowledgebase data from platform '%s' wiped", platform.short_name)
+            platform.knowledgebase = None
+            platform.save()
+            counter["wiped"] += 1
 
         self.stats = dict(counter)
 

@@ -302,9 +302,9 @@ class TestPlatformImportAttempt:
     @pytest.mark.parametrize(
         "strategy,count,no_source,erms",
         (
-            (PlatformImportAttempt.MergeStrategy.NONE, 7, False, False),
-            (PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE, 6, True, False),
-            (PlatformImportAttempt.MergeStrategy.ALL, 5, True, True),
+            (PlatformImportAttempt.MergeStrategy.NONE, 8, False, False),
+            (PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE, 7, True, False),
+            (PlatformImportAttempt.MergeStrategy.ALL, 6, True, True),
         ),
     )
     def test_process_merge_strategies(
@@ -316,7 +316,14 @@ class TestPlatformImportAttempt:
             url="https://other.example.com",
             token="f" * 64,
         )
-        PlatformFactory(short_name="new")
+        platform_wiped = PlatformFactory(
+            short_name="wiped_knowledgebase",
+            knowledgebase={"some": "data1"},
+            source=data_sources["brain"],
+        )
+        platform_no_wiped = PlatformFactory(
+            short_name="no_wiped_knowledgebase", knowledgebase={"some": "data2"}, source=None,
+        )
         platform_no_source = PlatformFactory(source=None, short_name="AAP")
         platform_erms = PlatformFactory(source=data_sources["api"], short_name="AACR")
         platform_other_knowledgebase = PlatformFactory(source=other_data_source, short_name="APS")
@@ -342,6 +349,12 @@ class TestPlatformImportAttempt:
         platform_other_knowledgebase.refresh_from_db()
         assert platform_other_knowledgebase.ext_id == other_ext_id
         assert platform_other_knowledgebase.source == other_source
+
+        platform_wiped.refresh_from_db()
+        assert platform_wiped.knowledgebase is None, "KB from same source is wiped"
+
+        platform_no_wiped.refresh_from_db()
+        assert platform_no_wiped.knowledgebase == {"some": "data2"}, "KB from other source remain"
 
     def test_process_merge_strategies_more_that_one_record(self, data_sources, report_types):
 

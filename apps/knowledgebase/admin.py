@@ -16,6 +16,7 @@ class PlatformImportAttemptAdmin(admin.ModelAdmin):
         'get_status',
         'created',
         'updated',
+        'wiped',
         'same',
         'total',
     )
@@ -85,6 +86,9 @@ class PlatformImportAttemptAdmin(admin.ModelAdmin):
 
     def same(self, obj: PlatformImportAttempt):
         return (obj.stats and obj.stats.get("same", "0")) or ""
+
+    def wiped(self, obj: PlatformImportAttempt):
+        return (obj.stats and obj.stats.get("wiped", "0")) or ""
 
 
 @admin.register(RouterSyncAttempt)
