@@ -476,7 +476,7 @@ class TestSushiCredentialsViewSet:
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
             start_date=date(2020, 1, 1),
-            status=AttemptStatus.CREDENTIALS_BROKEN,
+            status=AttemptStatus.DOWNLOAD_FAILED,
         )
         credentials["standalone_tr"].set_broken(attempt_tr, BS.BROKEN_HTTP)
 
@@ -485,7 +485,7 @@ class TestSushiCredentialsViewSet:
             credentials=credentials["standalone_br1_jr1"],
             counter_report=counter_report_types["jr1"],
             start_date=date(2020, 1, 1),
-            status=AttemptStatus.CREDENTIALS_BROKEN,
+            status=AttemptStatus.DOWNLOAD_FAILED,
         )
         cr2c_br1 = CounterReportsToCredentials.objects.get(
             credentials=credentials["standalone_br1_jr1"], counter_report__code="BR1"

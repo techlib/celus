@@ -648,7 +648,7 @@ class SushiFetchAttemptQuerySet(models.QuerySet):
 class AttemptStatus(models.TextChoices):
     # -> DOWNLOADING, CANCELED
     INITIAL = 'initial', _("Initial")
-    # -> PARSING_FAILED, DOWNLOAD_FAILED, CREDENTIALS_BROKEN, NO_DATA, CANCELED, IMPORTING
+    # -> PARSING_FAILED, DOWNLOAD_FAILED, NO_DATA, CANCELED, IMPORTING
     DOWNLOADING = 'downloading', _("Downloading")
     # -> SUCCESS, IMPORT_FAILED, CANCELED, NO_DATA
     IMPORTING = 'importing', _("Importing")
@@ -664,7 +664,6 @@ class AttemptStatus(models.TextChoices):
     IMPORT_FAILED = 'import_failed', _("Import failed")
     PARSING_FAILED = 'parsing_failed', _("Parsing failed")
     DOWNLOAD_FAILED = 'download_failed', _("Download failed")
-    CREDENTIALS_BROKEN = 'credentails_broken', _("Broken credentials")
     CANCELED = 'canceled', _("Canceled")
 
     @classmethod
@@ -676,7 +675,6 @@ class AttemptStatus(models.TextChoices):
             cls.IMPORT_FAILED,
             cls.PARSING_FAILED,
             cls.DOWNLOAD_FAILED,
-            cls.CREDENTIALS_BROKEN,
         }
 
     @classmethod
@@ -689,7 +687,6 @@ class AttemptStatus(models.TextChoices):
             cls.IMPORT_FAILED,
             cls.PARSING_FAILED,
             cls.DOWNLOAD_FAILED,
-            cls.CREDENTIALS_BROKEN,
         }
 
     @classmethod
@@ -838,7 +835,7 @@ class SushiFetchAttempt(models.Model):
             # credentials changed -> result of this fetch attempt is irrelevant
             return
 
-        if self.status == AttemptStatus.CREDENTIALS_BROKEN:
+        if self.status == AttemptStatus.DOWNLOAD_FAILED:
             self.update_broken_credentials()
             self.update_broken_report_type()
 

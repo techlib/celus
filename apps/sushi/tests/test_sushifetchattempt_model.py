@@ -228,18 +228,18 @@ class TestSushiFetchAttemptModel:
             ("NO_DATA", 400, ErrorCode.INSUFFICIENT_DATA, False, None, None),
             # cred broken testing
             ("FAILURE", 401, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
-            ("BROKEN", 403, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
+            ("FAILURE", 403, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
             ("FAILURE", 500, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
-            ("BROKEN", 400, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
+            ("FAILURE", 400, ErrorCode.TOO_MANY_REQUESTS, False, BC.BROKEN_HTTP, None),
             ("FAILURE", 500, ErrorCode.TOO_MANY_REQUESTS, True, None, None),
-            ("BROKEN", 400, ErrorCode.TOO_MANY_REQUESTS, True, None, None),
+            ("FAILURE", 400, ErrorCode.TOO_MANY_REQUESTS, True, None, None),
             ("FAILURE", 200, ErrorCode.NOT_AUTHORIZED, False, BC.BROKEN_SUSHI, None),
-            ("BROKEN", 200, ErrorCode.INVALID_API_KEY, False, BC.BROKEN_SUSHI, None),
+            ("FAILURE", 200, ErrorCode.INVALID_API_KEY, False, BC.BROKEN_SUSHI, None),
             ("FAILURE", 200, ErrorCode.NOT_AUTHORIZED_INSTITUTION, False, BC.BROKEN_SUSHI, None,),
-            ("BROKEN", 200, ErrorCode.INSUFFICIENT_DATA, False, BC.BROKEN_SUSHI, None,),
+            ("FAILURE", 200, ErrorCode.INSUFFICIENT_DATA, False, BC.BROKEN_SUSHI, None,),
             # cred to report type testing
             ("FAILURE", 404, ErrorCode.TOO_MANY_REQUESTS, False, None, BC.BROKEN_HTTP),
-            ("BROKEN", 200, ErrorCode.REPORT_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
+            ("FAILURE", 200, ErrorCode.REPORT_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
             ("FAILURE", 200, ErrorCode.REPORT_VERSION_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
             ("FAILURE", 400, ErrorCode.INVALID_REPORT_FILTER, False, None, BC.BROKEN_SUSHI),
         ),
@@ -290,8 +290,6 @@ class TestSushiFetchAttemptModel:
             status = AttemptStatus.NO_DATA
         elif status == 'QUEUED':
             status = AttemptStatus.DOWNLOADING
-        elif status == 'BROKEN':
-            status = AttemptStatus.CREDENTIALS_BROKEN
         elif status == 'FAILURE':
             status = AttemptStatus.DOWNLOAD_FAILED
         else:
@@ -305,7 +303,7 @@ class TestSushiFetchAttemptModel:
             counter_report=counter_report_types["br1"],
             error_code=sushi_status.value,
             http_status_code=http_status,
-            status=AttemptStatus.CREDENTIALS_BROKEN
+            status=AttemptStatus.DOWNLOAD_FAILED
             if broken_credentials or broken_cr2c
             else AttemptStatus.SUCCESS,
         )

@@ -122,7 +122,6 @@ class TestAttemptImport:
             (AttemptStatus.IMPORT_FAILED, False),
             (AttemptStatus.PARSING_FAILED, False),
             (AttemptStatus.DOWNLOAD_FAILED, False),
-            (AttemptStatus.CREDENTIALS_BROKEN, False),
             (AttemptStatus.CANCELED, False),
         ),
     )

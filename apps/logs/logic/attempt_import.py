@@ -31,10 +31,7 @@ def check_importable_attempt(attempt: SushiFetchAttempt):
     if attempt.status == AttemptStatus.SUCCESS:
         raise ValueError(f'Data already imported (attempt={attempt.pk})')
 
-    elif attempt.status in [
-        AttemptStatus.DOWNLOAD_FAILED,
-        AttemptStatus.CREDENTIALS_BROKEN,
-    ]:
+    elif attempt.status == AttemptStatus.DOWNLOAD_FAILED:
         raise ValueError(f'Trying to import data when download failed (attempt={attempt.pk})')
 
     elif attempt.status == AttemptStatus.NO_DATA:

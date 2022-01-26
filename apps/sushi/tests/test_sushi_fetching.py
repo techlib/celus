@@ -19,44 +19,56 @@ from test_fixtures.scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestSushiFetching:
     @pytest.mark.parametrize(
-        ('path', 'status1', 'status2', 'log'),
+        ('path', 'status1', 'status2', 'log', 'breaks'),
         (
-            ('C5_PR_test.json', AttemptStatus.IMPORTING, AttemptStatus.SUCCESS, '',),
+            ('C5_PR_test.json', AttemptStatus.IMPORTING, AttemptStatus.SUCCESS, '', False,),
             (
                 'naked_errors.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
                 'Warnings: Warning #1011: Report Queued for Processing; '
                 'Warning #3060: Invalid Report Filter Value',
+                False,
             ),
             (
                 'naked_error.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
                 'Warnings: Warning #1011: Report Queued for Processing',
+                False,
             ),
             (
                 '5_TR_ProQuestEbookCentral_exception.json',
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
                 'Error #3030: No Usage Available for Requested Dates.',
+                False,
             ),
             (
                 'error-in-root.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
                 'Error #2090: Got response code: 404 for request: https://example.com/path/path',
+                False,
             ),
-            ('no_data.json', AttemptStatus.NO_DATA, AttemptStatus.NO_DATA, '',),
+            ('no_data.json', AttemptStatus.NO_DATA, AttemptStatus.NO_DATA, '', False,),
+            (
+                'invalid-customer.json',
+                AttemptStatus.DOWNLOAD_FAILED,
+                AttemptStatus.DOWNLOAD_FAILED,
+                'Fatal #1030: Invalid Customer Id',
+                True,
+            ),
         ),
         ids=lambda x: "" if isinstance(x, str) and not x.endswith('.json') else x,
     )
     def test_c5_pr(
-        self, path, status1, status2, log, counter_report_types, organizations, platforms,
+        self, path, status1, status2, log, breaks, counter_report_types, organizations, platforms,
     ):
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
         )
+        assert credentials.is_broken() is False
         with requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
                 m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read())
@@ -75,6 +87,8 @@ class TestSushiFetching:
             else:
                 with pytest.raises(ValueError):
                     import_one_sushi_attempt(attempt)
+
+        assert credentials.is_broken() == breaks
 
     @pytest.mark.parametrize('time', ('2020-08-01', '2020-06-15'))
     def test_c4_3030(self, counter_report_types, organizations, platforms, time):
