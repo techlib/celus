@@ -373,36 +373,6 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
         bulk=False,
     )
 
-    automatic = HarvestFactory(
-        last_updated_by=None,
-        intentions=(
-            FetchIntentionFactory.build(
-                credentials=credentials["standalone_br1_jr1"],
-                counter_report=counter_report_types["br1"],
-                start_date="2020-01-01",
-                end_date="2020-01-31",
-                when_processed=None,
-                attempt=None,
-            ),
-            FetchIntentionFactory.build(
-                credentials=credentials["standalone_br1_jr1"],
-                counter_report=counter_report_types["jr1"],
-                start_date="2020-01-01",
-                end_date="2020-01-31",
-                when_processed=None,
-                duplicate_of=anonymous.intentions.get(
-                    credentials=credentials["standalone_br1_jr1"],
-                    counter_report=counter_report_types["jr1"],
-                    attempt__isnull=False,
-                ),
-                attempt=None,
-            ),  # dulicate
-        ),
-    )
-    AutomaticFactory(
-        harvest=automatic, month="2020-01-01", organization=organizations["standalone"],
-    )
-
     user2 = HarvestFactory(
         last_updated_by=users["user2"],
         intentions=(
@@ -444,6 +414,36 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 attempt=None,
             ),
         ),
+    )
+
+    automatic = HarvestFactory(
+        last_updated_by=None,
+        intentions=(
+            FetchIntentionFactory.build(
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["br1"],
+                start_date="2020-01-01",
+                end_date="2020-01-31",
+                when_processed=None,
+                attempt=None,
+            ),
+            FetchIntentionFactory.build(
+                credentials=credentials["branch_pr"],
+                counter_report=counter_report_types["pr"],
+                start_date="2020-01-01",
+                end_date="2020-01-31",
+                when_processed=None,
+                duplicate_of=user1.intentions.get(
+                    credentials=credentials["branch_pr"],
+                    counter_report=counter_report_types["pr"],
+                    attempt__isnull=False,
+                ),
+                attempt=None,
+            ),  # dulicate of successfull
+        ),
+    )
+    AutomaticFactory(
+        harvest=automatic, month="2020-01-01", organization=organizations["standalone"],
     )
 
     return locals()

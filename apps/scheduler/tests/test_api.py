@@ -53,9 +53,9 @@ class TestHarvestAPI:
 
         # stats
         assert data[0]["stats"] == {"total": 3, "planned": 2, "attempt_count": 2}
-        assert data[1]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0}
+        assert data[1]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
         assert data[2]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
-        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1}
+        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0}
 
         # start and end dates
         assert data[0]["start_date"] == "2020-01-01"
@@ -63,15 +63,15 @@ class TestHarvestAPI:
         assert data[1]["start_date"] == "2020-01-01"
         assert data[1]["end_date"] == "2020-01-31"
         assert data[2]["start_date"] == "2020-01-01"
-        assert data[2]["end_date"] == "2020-01-31"
+        assert data[2]["end_date"] == "2020-03-31"
         assert data[3]["start_date"] == "2020-01-01"
-        assert data[3]["end_date"] == "2020-03-31"
+        assert data[3]["end_date"] == "2020-01-31"
 
         # last processed fetch intention
         assert data[0]["last_processed"] is not None
-        assert data[1]["last_processed"] is None
+        assert data[1]["last_processed"] is not None
         assert data[2]["last_processed"] is not None
-        assert data[3]["last_processed"] is not None
+        assert data[3]["last_processed"] is None
 
         # test broken
         assert data[0]["broken"] == 0

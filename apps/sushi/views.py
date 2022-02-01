@@ -189,7 +189,7 @@ class SushiCredentialsViewSet(ModelViewSet):
 
         # update planned
         for intention in credentials.fetchintention_set.filter(
-            counter_report__in=report_types, when_processed__isnull=True,
+            counter_report__in=report_types, when_processed__isnull=True, duplicate_of=None,
         ).select_related('counter_report'):
             start = intention.start_date
             end = intention.end_date
