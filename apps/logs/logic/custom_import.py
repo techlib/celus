@@ -166,7 +166,7 @@ def import_custom_data(mdu: ManualDataUpload, user) -> dict:
         mdu.organization,
         mdu.platform,
         records,
-        import_batch_kwargs=dict(user=user, system_created=False, owner_level=mdu.owner_level),
+        import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
     )
     # explicitly connect the organization and the platform
     OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=mdu.organization)

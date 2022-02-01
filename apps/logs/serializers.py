@@ -267,7 +267,6 @@ class ImportBatchSerializer(ModelSerializer):
             'organization',
             'platform',
             'report_type',
-            'system_created',
             'user',
             'owner_level',
         )
@@ -288,7 +287,6 @@ class ImportBatchVerboseSerializer(ModelSerializer):
             'organization',
             'platform',
             'report_type',
-            'system_created',
             'user',
             'owner_level',
             'accesslog_count',

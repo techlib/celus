@@ -340,7 +340,6 @@ class ImportBatch(models.Model):
     date = models.DateField(null=True)
     created = models.DateTimeField(default=now)
     last_updated = models.DateTimeField(auto_now=True)
-    system_created = models.BooleanField(default=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
     )
@@ -364,11 +363,6 @@ class ImportBatch(models.Model):
 
     class Meta:
         verbose_name_plural = "Import batches"
-
-    def clean(self):
-        super().clean()
-        if not self.system_created and not self.user:
-            raise ValidationError('When system_created is False, user must be filled in')
 
     @cached_property
     def accesslog_count(self):
