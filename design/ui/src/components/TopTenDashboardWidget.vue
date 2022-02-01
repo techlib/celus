@@ -121,7 +121,7 @@ export default {
   },
 
   watch: {
-    selectedPubType: "fetchTitleInterest",
+    request: "fetchTitleInterest",
   },
 
   mounted() {
