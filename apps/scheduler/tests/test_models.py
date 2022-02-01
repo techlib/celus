@@ -362,6 +362,15 @@ class TestFetchIntention:
             with freeze_time(fi.not_before):
                 fi.scheduler = scheduler
                 assert fi.process() == ProcessResponse.SUCCESS
+                if not expected and error_code == ErrorCode.NO_DATA_FOR_DATE_ARGS.value:
+                    assert (
+                        fi.attempt.import_batch is not None
+                    ), "there should be import batch in no_data chain"
+                    assert (
+                        fi.attempt.import_batch.accesslog_set.count() == 0
+                    ), "import batch should be empty"
+                else:
+                    assert fi.attempt.import_batch is None
             new_fi = FetchIntention.objects.order_by('pk').last()
             assert new_fi is not None
 

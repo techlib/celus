@@ -18,6 +18,7 @@ from django.utils.functional import cached_property
 from django_celery_results.models import TaskResult
 from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
+from logs.logic.data_import import create_import_batch_or_crash
 from nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
@@ -623,7 +624,15 @@ class FetchIntention(models.Model):
             - datetime.combine(self.end_date, datetime.min.time(), tzinfo=next_time.tzinfo)
             > NO_DATA_RETRY_PERIOD
         ):
-            # giving up last retry will be we showing empty data
+            # giving up - last retry will be we showing empty data
+            # represented by empty import batch
+            self.attempt.import_batch = create_import_batch_or_crash(
+                report_type=self.counter_report.report_type,
+                organization=self.credentials.organization,
+                platform=self.credentials.platform,
+                month=self.start_date,
+            )
+            self.attempt.save()
             return
 
         # prepare retry
