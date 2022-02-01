@@ -35,7 +35,7 @@ cs:
 </i18n>
 
 <template>
-  <v-container>
+  <v-container fluid>
     <v-card>
       <v-card-title>
         <v-container fluid>
