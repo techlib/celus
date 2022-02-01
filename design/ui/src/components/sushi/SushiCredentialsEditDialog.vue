@@ -447,6 +447,8 @@ cs:
                     @click="saveAndTest()"
                     class="mr-2"
                     v-on="on"
+                    :disabled="saving"
+                    :loading="saving"
                   >
                     <v-icon small class="mr-1">fa fa-play</v-icon>
                     {{ $t("save_and_test") }}
@@ -454,7 +456,13 @@ cs:
                 </template>
                 <span v-html="$t('save_and_test_tooltip')"></span>
               </v-tooltip>
-              <v-btn color="primary" @click="saveAndClose()" class="mr-2">
+              <v-btn
+                color="primary"
+                @click="saveAndClose()"
+                class="mr-2"
+                :disabled="saving"
+                :loading="saving"
+              >
                 <v-icon small class="mr-1">fa fa-save</v-icon>
                 {{ $t("save") }}
               </v-btn>
@@ -502,7 +510,6 @@ export default {
   components: {
     HarvestSelectedWidget,
     SushiReportIndicator,
-    HarvestSelectedWidget,
     AddPlatformButton,
   },
   props: {
@@ -538,6 +545,7 @@ export default {
       loadingPlatforms: false,
       loadingReportTypes: false,
       valid: false,
+      saving: false,
     };
   },
   computed: {
@@ -823,6 +831,7 @@ export default {
     },
     async saveData() {
       this.errors = {};
+      this.saving = true;
       try {
         let response = null;
         if (this.credentials) {
@@ -851,6 +860,8 @@ export default {
           this.processErrors(error.response.data);
         }
         return false;
+      } finally {
+        this.saving = false;
       }
     },
     async deleteObject() {
