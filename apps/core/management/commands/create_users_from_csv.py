@@ -41,11 +41,11 @@ class Command(BaseCommand):
                 first_name = row.get('first_name') or (name.split()[0] if name else '')
                 last_name = row.get('last_name') or (name.split()[-1] if name else '')
                 user_params = {
-                    'username': username,
+                    'username': username.strip(),
                     'is_superuser': superuser,
                     'is_staff': staff,
-                    'first_name': first_name,
-                    'last_name': last_name,
+                    'first_name': first_name.strip(),
+                    'last_name': last_name.strip(),
                 }
                 user, created = User.objects.update_or_create(email=email, defaults=user_params)
                 if created:
