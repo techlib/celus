@@ -66,6 +66,12 @@ def import_new_sushi_attempts_task():
                 logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
                 attempt.mark_crashed(e)
 
+            finally:
+                # Close the file (celery might keep the file opened)
+                # Note that data_file should not be None otherwise FetchAttempt
+                # wouldn't be in IMPORTING state
+                attempt.data_file.close()
+
     except DatabaseError:
         logger.warning("Sushi import attempts are currently being processed.")
 
@@ -98,6 +104,8 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
         check_importable_attempt(attempt)
     except ValueError as e:
         logger.warning("Sushi attempt '%d' can't be imported: %s", attempt_id, str(e))
+        if attempt.data_file:
+            attempt.data_file.close()
         return
     try:
         import_one_sushi_attempt(attempt)
@@ -105,6 +113,8 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
         # we catch any kind of error to make sure that there is no crash
         logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
         attempt.mark_crashed(e)
+    finally:
+        attempt.data_file.close()
 
 
 @celery.shared_task
