@@ -18,6 +18,7 @@ from publications.serializers import (
     DataSourceSerializer,
     SimplePlatformSerializer,
 )
+from sushi.serializers import SushiFetchAttemptFlatSerializer
 from .models import (
     Metric,
     Dimension,
@@ -272,12 +273,24 @@ class ImportBatchSerializer(ModelSerializer):
         )
 
 
+class ManualDataUploadSimpleSerializer(ModelSerializer):
+    class Meta:
+        model = ManualDataUpload
+        fields = (
+            'pk',
+            'data_file',
+            'owner_level',
+        )
+
+
 class ImportBatchVerboseSerializer(ModelSerializer):
 
     user = UserSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
     report_type = ReportTypeSerializer(read_only=True)
+    sushifetchattempt = SushiFetchAttemptFlatSerializer(read_only=True)
+    mdu = ManualDataUploadSimpleSerializer(read_only=True, many=True)
 
     class Meta:
         model = ImportBatch
@@ -290,6 +303,9 @@ class ImportBatchVerboseSerializer(ModelSerializer):
             'user',
             'owner_level',
             'accesslog_count',
+            'mdu',
+            'date',
+            'sushifetchattempt',
         )
 
 

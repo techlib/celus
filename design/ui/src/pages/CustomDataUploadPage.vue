@@ -26,6 +26,9 @@ en:
   no_report_types: There are not reports defined for this platform - contact administrators to add some
   please_select_organization: It is necessary to select an organization before uploading data.
   requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
+  clashing_import_batches_title: Can't import data
+  clashing_import_batches_text: Data are clashing with existing data
+  delete_existing: Delete existing
 
 cs:
   data_file: Datový soubor k nahrání
@@ -52,6 +55,9 @@ cs:
   no_report_types: Pro tuto platformu nejsou definovány žádné reporty - kontaktujte administrátory pro jejich přidání
   please_select_organization: Pro nahrání dat je potřeba nejprve vybrat organizaci.
   requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
+  clashing_import_batches_title: Není možné naimportovat data
+  clashing_import_batches_text: Data jsou v konfliktu s již existujícími daty
+  delete_existing: Smazat existující
 </i18n>
 
 <template>
@@ -193,13 +199,42 @@ cs:
               <span v-else v-text="preflightError.error"></span>
             </v-alert>
             <LargeSpinner v-else />
+            <v-alert
+              v-if="
+                preflightData && preflightData.clashing_import_batches.length
+              "
+              type="warning"
+            >
+              <strong v-text="$t('clashing_import_batches_title')"></strong>:
+              <span v-text="$t('clashing_import_batches_text')"></span>
+            </v-alert>
+            <ClashingImportBatchesWidget
+              :import-batches="preflightData.clashing_import_batches"
+              v-if="
+                preflightData && preflightData.clashing_import_batches.length
+              "
+            />
           </v-card-text>
           <v-card-actions>
+            <v-btn
+              v-if="
+                preflightData && preflightData.clashing_import_batches.length
+              "
+              color="warning"
+              :loading="deleting"
+              @click="deleteConflictingData()"
+            >
+              <v-icon small class="pr-2">fa fa-trash-alt</v-icon>
+              {{ $t("delete_existing") }}
+            </v-btn>
             <v-btn
               v-if="preflightData && !preflightError"
               @click="processUploadObject()"
               color="primary"
               :loading="uploadObjectProcessing"
+              :disabled="
+                preflightData && !!preflightData.clashing_import_batches.length
+              "
               >{{ $t("import") }}</v-btn
             >
             <v-btn
@@ -303,17 +338,20 @@ cs:
 import axios from "axios";
 import { mapActions, mapState } from "vuex";
 import AccessLogList from "@/components/AccessLogList";
+import ClashingImportBatchesWidget from "@/components/ClashingImportBatchesWidget";
 import ReportTypeCreateWidget from "@/components/ReportTypeCreateWidget";
 import LargeSpinner from "@/components/util/LargeSpinner";
 import CustomUploadInfoWidget from "@/components/CustomUploadInfoWidget";
 import ReportTypeInfoWidget from "@/components/ReportTypeInfoWidget";
 import ImportPreflightDataWidget from "./ImportPreflightDataWidget";
+import { monthLastDay, parseDateTime, isoDateFormat} from "@/libs/dates.js";
 import { badge } from "@/libs/sources.js";
 import MDUChart from "@/components/MDUChart";
 
 export default {
   name: "CustomDataUploadPage",
   components: {
+    ClashingImportBatchesWidget,
     MDUChart,
     ImportPreflightDataWidget,
     LargeSpinner,
@@ -344,6 +382,7 @@ export default {
       tab: "chart",
       uploadObjectProcessing: false,
       reportTypesFetched: false,
+      deleting: false,
     };
   },
   computed: {
@@ -477,13 +516,14 @@ export default {
         try {
           const response = await axios.post(url, {});
           this.importStats = response.data.stats;
-          this.uploadObject.is_processed = response.data.is_processed;
           this.step = 3;
         } catch (error) {
           this.showSnackbar({ content: "Error processing data: " + error });
         } finally {
           this.uploadObjectProcessing = false;
         }
+        // plan reloading of the object
+        this.loadUploadObject();
       }
     },
     async loadUploadObject() {
@@ -502,6 +542,54 @@ export default {
         } catch (error) {
           this.showSnackbar({ content: "Error loading upload data: " + error });
         }
+      }
+    },
+    async deleteConflictingData() {
+      if (this.preflightData && this.preflightData.clashing_import_batches) {
+        // delete mdus
+        let to_delete_mdu = this.preflightData.clashing_import_batches
+          .filter((e) => e.mdu.length > 0)
+          .map((e) => e.mdu[0].pk);
+        this.deleting = true;
+        for (const mdu of to_delete_mdu) {
+          let url = `/api/manual-data-upload/${mdu}/`;
+          try {
+            await axios.delete(url, {});
+          } catch (error) {
+            this.showSnackbar({ content: "Error deleting upload: " + error });
+            this.deleting = false; // abort on a single error
+
+            // update preflight data on the page
+            await this.loadPreflightData();
+            return;
+          }
+        }
+
+        // delete attempts
+        let to_delete_fa = this.preflightData.clashing_import_batches
+          .filter((e) => !!e.sushifetchattempt)
+          .map((e) => ({
+            counter_report: e.sushifetchattempt.counter_report,
+            credentials: e.sushifetchattempt.credentials,
+            start_date: e.date,
+            end_date: monthLastDay(parseDateTime(e.date)),
+          }));
+
+        console.log(to_delete_fa);
+
+        let url = "/api/scheduler/fetch-intention-delete/";
+        if (to_delete_fa.length > 0) {
+          try {
+            await axios.post(url, to_delete_fa);
+          } catch (error) {
+            this.showSnackbar({ content: "Error deleting attempts: " + error });
+          } finally {
+            this.deleting = false;
+          }
+        }
+
+        // update preflight data on the page
+        await this.loadPreflightData();
       }
     },
     filledIn(v) {

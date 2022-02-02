@@ -465,12 +465,18 @@ def validate_mime_type(fileobj):
     # other possibilities that could be detected - for example the text/x-Algol68 seems
     # to be returned for some CSV files with some version of libmagic
     # (the library magic uses internally)
-    if detected_type not in ('text/csv', 'text/plain', 'application/csv', 'text/x-Algol68'):
+    if detected_type not in (
+        'text/csv',
+        'text/plain',
+        'application/csv',
+        'text/x-Algol68',
+        'application/json',
+    ):
         raise ValidationError(
             _(
-                "The uploaded file is not a CSV file or is corrupted. "
+                "The uploaded file is not a CSV/JSON file or is corrupted. "
                 "The file type seems to be '{detected_type}'. "
-                "Please upload a CSV file."
+                "Please upload a CSV or JSON file."
             ).format(detected_type=detected_type)
         )
 
@@ -550,7 +556,7 @@ class ManualDataUpload(models.Model):
         data = list(reader)
         return data
 
-    def data_to_records(self) -> typing.Generator[typing.List[CounterRecord], None, None]:
+    def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
         try:
             crt = self.report_type.counterreporttype
         except ObjectDoesNotExist:
@@ -587,6 +593,19 @@ class ManualDataUpload(models.Model):
         if char in b'[{':
             return True
         return False
+
+    def clashing_batches(self) -> typing.Iterable[ImportBatch]:
+        """ Get list of all conflicting batches """
+        months = set()
+        for record in self.data_to_records():
+            months.add(record.start)
+
+        return ImportBatch.objects.filter(
+            date__in=months,
+            report_type=self.report_type,
+            organization=self.organization,
+            platform=self.platform,
+        )
 
 
 class ManualDataUploadImportBatch(models.Model):

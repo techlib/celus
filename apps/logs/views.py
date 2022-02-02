@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
 from pandas import DataFrame
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import CharField
@@ -462,8 +463,14 @@ Traceback: {traceback.format_exc()}
         else:
             try:
                 stats = import_custom_data(mdu, request.user)
-            except DataStructureError as exc:
-                raise BadRequest(f'Cannot import data: {exc}')
+            except DataStructureError:
+
+                clashing_ibs = mdu.clashing_batches()
+                clashing = ImportBatchVerboseSerializer(clashing_ibs, many=True).data
+                return Response(
+                    {"error": "data-conflict", "clashing_import_batches": clashing},
+                    status=status.HTTP_409_CONFLICT,
+                )
         return Response(
             {
                 'stats': stats,

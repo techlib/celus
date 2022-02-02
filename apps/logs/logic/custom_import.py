@@ -11,8 +11,9 @@ from django.utils.translation import gettext as _
 from core.models import UL_ORG_ADMIN
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
-from nigiri.counter5 import CounterRecord
 from logs.models import ImportBatch, ManualDataUpload, Metric, OrganizationPlatform
+from logs.serializers import ImportBatchVerboseSerializer
+from nigiri.counter5 import CounterRecord
 
 
 # en_month_matcher = re.compile(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})')
@@ -139,18 +140,13 @@ def histogram_with_count(iterable) -> Counter:
 def custom_import_preflight_check(mdu: ManualDataUpload):
     records = list(mdu.data_to_records())  # type: [CounterRecord]
     month_to_count = histogram_with_count([(str(record.start), record.value) for record in records])
-    clashing_months = ImportBatch.objects.filter(
-        report_type=mdu.report_type,
-        platform=mdu.platform,
-        organization=mdu.organization,
-        date__in=month_to_count.keys(),
-    ).values_list('date', flat=True)
-    can_import = not clashing_months
+    clashing_batches = ImportBatchVerboseSerializer(mdu.clashing_batches(), many=True).data
+    can_import = not clashing_batches
     return {
         'log_count': len(records),
         'hits_total': sum((record.value for record in records), 0),
         'months': month_to_count,
-        'clashing_months': clashing_months,
+        'clashing_import_batches': clashing_batches,
         'metrics': histogram_with_count([(record.metric, record.value) for record in records]),
         'titles': histogram_with_count([(record.title, record.value) for record in records]),
         'can_import': can_import,

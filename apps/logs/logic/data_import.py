@@ -273,12 +273,8 @@ def create_import_batch_or_crash(
             report_type=report_type, platform=platform, organization=organization, date=month
         ):
             raise DataStructureError(
-                'Clashing import batch exists for report type "%s", platform "%s", '
-                'organization "%s" and date "%s"',
-                report_type,
-                platform,
-                organization,
-                month,
+                f'Clashing import batch exists for report type "{report_type}"'
+                f', platform "{platform}", organization "{organization}" and date "{month}"',
             )
         kwargs = ib_kwargs or {}
         return ImportBatch.objects.create(
