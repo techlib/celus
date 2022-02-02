@@ -1,3 +1,6 @@
+import csv
+from io import StringIO
+
 from api.models import OrganizationAPIKey
 from django.core.management.base import BaseCommand, CommandError
 from django.db.transaction import atomic
@@ -24,9 +27,20 @@ class Command(BaseCommand):
     @atomic
     def handle(self, *args, **options):
         api_keys = self.create_keys(org_ids=options["org_ids"])
+        out = StringIO()
+        writer = csv.writer(out)
+        writer.writerow(['organization id', 'organization ext_id', 'organization name', 'api_key'])
         for api_key, key_value in api_keys:
-            print(f"{key_value} {api_key.organization.pk:4d}: {api_key.name}")
+            writer.writerow(
+                [
+                    api_key.organization.pk,
+                    api_key.organization.ext_id,
+                    api_key.organization.name,
+                    key_value,
+                ]
+            )
 
+        print(out.getvalue())
         if not options["doit"]:
             raise CommandError("Preventing DB commit, use --do-it to really do it ;)")
 
