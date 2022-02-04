@@ -478,6 +478,7 @@ export default {
       wantsSave: !!this.reportId || "wantsSave" in this.$route.query,
       showZeroRows: false,
       reportRunning: false,
+      displayReport: false,
     };
   },
 
