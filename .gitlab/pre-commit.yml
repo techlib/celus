@@ -2,8 +2,17 @@ lints:pre_commit:
   stage: lints
   needs: []
   image: registry.gitlab.com/big-dig-data/celus/celus-test:latest
+  services:
+    - postgres
+  variables:
+    DJANGO_SETTINGS_MODULE: config.settings.test
+    POSTGRES_DB: celus
+    POSTGRES_USER: celus
+    POSTGRES_PASSWORD: celus
+    POSTGRES_HOST: postgres
   before_script:
     - poetry install
+    - cp .env.example .env
   script:
     - poetry run pre-commit run --hook-stage push --all-files
   tags:

@@ -22,7 +22,12 @@ repos:
         entry: "@pytest.mark.now"
         language: pygrep
         types: [python]
-
+      - id: django-migrations
+        name: Check django migrations
+        entry: python manage.py makemigrations --check --no-input
+        language: system
+        types: [python]
+        pass_filenames: false
 
 #  - repo: https://github.com/prettier/prettier
 #    rev: "2.1.2" # Use the sha or tag you want to point at
