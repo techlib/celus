@@ -7,7 +7,7 @@ from organizations.models import Organization
 fake = Faker()
 
 
-class OrganizationFactory(factory.DjangoModelFactory):
+class OrganizationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Organization
         django_get_or_create = ('name',)

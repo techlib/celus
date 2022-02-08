@@ -10,7 +10,7 @@ from .credentials import CredentialsFactory
 from .counter_report_types import CounterReportTypeFactory
 
 
-class FetchAttemptFactory(factory.DjangoModelFactory):
+class FetchAttemptFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SushiFetchAttempt
 

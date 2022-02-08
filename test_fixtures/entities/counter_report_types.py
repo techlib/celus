@@ -5,7 +5,7 @@ from sushi.models import CounterReportType
 from .report_types import ReportTypeFactory
 
 
-class CounterReportTypeFactory(factory.DjangoModelFactory):
+class CounterReportTypeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CounterReportType
         django_get_or_create = ('code',)

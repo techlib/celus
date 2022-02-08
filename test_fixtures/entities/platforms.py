@@ -7,7 +7,7 @@ from publications.models import Platform
 fake = Faker()
 
 
-class PlatformFactory(factory.DjangoModelFactory):
+class PlatformFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Platform
         django_get_or_create = ('name',)

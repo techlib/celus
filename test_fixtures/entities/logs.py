@@ -12,7 +12,7 @@ from test_fixtures.entities.report_types import ReportTypeFactory
 fake = faker.Faker()
 
 
-class MetricFactory(factory.DjangoModelFactory):
+class MetricFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Metric
 
@@ -20,12 +20,12 @@ class MetricFactory(factory.DjangoModelFactory):
     name = factory.Faker('name')
 
 
-class ImportBatchFactory(factory.DjangoModelFactory):
+class ImportBatchFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ImportBatch
 
 
-class ImportBatchFullFactory(factory.DjangoModelFactory):
+class ImportBatchFullFactory(factory.django.DjangoModelFactory):
     """
     Factory to create import batch with the report type, organization, platform, metrics and
     data.
@@ -59,7 +59,7 @@ class ImportBatchFullFactory(factory.DjangoModelFactory):
             sync_import_batch_with_clickhouse(obj)
 
 
-class ManualDataUploadFullFactory(factory.DjangoModelFactory):
+class ManualDataUploadFullFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ManualDataUpload
 

@@ -9,7 +9,7 @@ from .users import UserFactory
 fake = Faker()
 
 
-class IdentityFactory(factory.DjangoModelFactory):
+class IdentityFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Identity
         django_get_or_create = ('user',)

@@ -7,7 +7,7 @@ from core.models import DataSource
 fake = Faker()
 
 
-class DataSourceFactory(factory.DjangoModelFactory):
+class DataSourceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = DataSource
 

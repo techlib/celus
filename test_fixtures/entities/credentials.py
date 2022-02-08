@@ -11,7 +11,7 @@ from .platforms import PlatformFactory
 fake = Faker()
 
 
-class CredentialsFactory(factory.DjangoModelFactory):
+class CredentialsFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SushiCredentials
 

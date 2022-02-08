@@ -3,7 +3,7 @@ import factory
 from logs.models import ReportType
 
 
-class ReportTypeFactory(factory.DjangoModelFactory):
+class ReportTypeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ReportType
         django_get_or_create = ('short_name',)

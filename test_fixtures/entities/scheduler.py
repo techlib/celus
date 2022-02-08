@@ -12,7 +12,7 @@ from .users import UserFactory
 from .fetchattempts import FetchAttemptFactory
 
 
-class HarvestFactory(factory.DjangoModelFactory):
+class HarvestFactory(factory.django.DjangoModelFactory):
     last_updated_by = factory.SubFactory(UserFactory)
 
     class Meta:
@@ -35,20 +35,20 @@ class HarvestFactory(factory.DjangoModelFactory):
                     )
 
 
-class SchedulerFactory(factory.DjangoModelFactory):
+class SchedulerFactory(factory.django.DjangoModelFactory):
     url = factory.Faker('url')
 
     class Meta:
         model = Scheduler
 
 
-class FetchIntentionQueueFactory(factory.DjangoModelFactory):
+class FetchIntentionQueueFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = FetchIntentionQueue
         django_get_or_create = ('id',)
 
 
-class FetchIntentionFactory(factory.DjangoModelFactory):
+class FetchIntentionFactory(factory.django.DjangoModelFactory):
     harvest = factory.SubFactory(HarvestFactory)
     attempt = factory.SubFactory(
         FetchAttemptFactory,
@@ -83,7 +83,7 @@ class FetchIntentionFactory(factory.DjangoModelFactory):
         model = FetchIntention
 
 
-class AutomaticFactory(factory.DjangoModelFactory):
+class AutomaticFactory(factory.django.DjangoModelFactory):
     month = date(2020, 1, 1)
     organization = factory.SubFactory(OrganizationFactory)
     harvest = factory.SubFactory(HarvestFactory)

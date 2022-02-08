@@ -11,7 +11,7 @@ from .users import UserFactory
 fake = Faker()
 
 
-class AnnotationFactory(factory.DjangoModelFactory):
+class AnnotationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Annotation
 
