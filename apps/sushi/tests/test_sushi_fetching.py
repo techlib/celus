@@ -27,28 +27,28 @@ class TestSushiFetching:
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
                 'Warnings: Warning #1011: Report Queued for Processing; '
-                'Warning #3060: Invalid Report Filter Value',
+                'Warning #3060: Invalid Report Filter Value\n\n',
                 False,
             ),
             (
                 'naked_error.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Warnings: Warning #1011: Report Queued for Processing',
+                'Warnings: Warning #1011: Report Queued for Processing\n\n',
                 False,
             ),
             (
                 '5_TR_ProQuestEbookCentral_exception.json',
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                'Error #3030: No Usage Available for Requested Dates.',
+                'Errors: Error #3030: No Usage Available for Requested Dates.\n\n',
                 False,
             ),
             (
                 'error-in-root.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Error #2090: Got response code: 404 for request: https://example.com/path/path',
+                'Errors: Error #2090: Got response code: 404 for request: https://example.com/path/path\n\n',
                 False,
             ),
             ('no_data.json', AttemptStatus.NO_DATA, AttemptStatus.NO_DATA, '', False,),
@@ -56,8 +56,15 @@ class TestSushiFetching:
                 'invalid-customer.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Fatal #1030: Invalid Customer Id',
+                'Errors: Fatal #1030: Invalid Customer Id\n\n',
                 True,
+            ),
+            (
+                'code-zero.json',
+                AttemptStatus.NO_DATA,
+                AttemptStatus.NO_DATA,
+                'Infos: Info #0: Some description\n\n',
+                False,
             ),
         ),
         ids=lambda x: "" if isinstance(x, str) and not x.endswith('.json') else x,
@@ -159,8 +166,8 @@ class TestSushiFetching:
     @pytest.mark.parametrize(
         ('path', 'http_status', 'error_code', 'status'),
         (
-            ('naked_error_3000.json', 400, 3000, AttemptStatus.DOWNLOAD_FAILED,),
-            ('naked_error_3000.json', 200, 3000, AttemptStatus.DOWNLOAD_FAILED,),
+            ('naked_error_3000.json', 400, '3000', AttemptStatus.DOWNLOAD_FAILED,),
+            ('naked_error_3000.json', 200, '3000', AttemptStatus.DOWNLOAD_FAILED,),
             ('no_json.txt', 400, 'non-sushi', AttemptStatus.DOWNLOAD_FAILED),
         ),
     )
@@ -188,9 +195,9 @@ class TestSushiFetching:
     @pytest.mark.parametrize(
         ('path', 'error_code', 'partial'),
         (
-            ('partial_data1.json', 3210, True,),
-            ('partial_data2.json', 3210, True,),
-            ('5_TR_with_warning.json', '', True,),
+            ('partial_data1.json', '3210', True,),
+            ('partial_data2.json', '3210', True,),
+            ('5_TR_with_warning.json', '3032', True,),
             ('data_simple.json', '', False,),
         ),
     )
@@ -218,7 +225,7 @@ class TestSushiFetching:
             ('5_DR_ProQuestEbookCentral_exception.json', False,),
             ('5_TR_ProQuestEbookCentral.json', True,),
             ('5_TR_ProQuestEbookCentral_exception.json', False,),
-            ('5_TR_with_warning.json', True,),
+            ('5_TR_with_warning.json', False,),
             ('C5_PR_test.json', True,),
             ('counter5_tr_test1.json', True,),
             ('data_incorrect.json', False,),

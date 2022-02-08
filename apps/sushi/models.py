@@ -558,16 +558,40 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 )
                 for w in report.warnings
             )
+            # override default status
+            error_code = ''
+            error_code = (
+                str(ErrorCode.NO_LONGER_AVAILABLE.value)
+                if any(
+                    str(w.code) == str(ErrorCode.NO_LONGER_AVAILABLE.value) for w in report.warnings
+                )
+                else error_code
+            )
+            error_code = (
+                str(ErrorCode.PARTIAL_DATA_RETURNED.value)
+                if any(
+                    str(w.code) == str(ErrorCode.PARTIAL_DATA_RETURNED.value)
+                    for w in report.warnings
+                )
+                else error_code
+            )
 
+            # append to log
+            log = ''
+            if report.errors:
+                log += 'Errors: ' + '; '.join(str(e) for e in report.errors) + '\n' * 2
+            if report.infos:
+                log = 'Infos: ' + '; '.join(str(e) for e in report.infos) + '\n' * 2
+            if report.warnings:
+                log += 'Warnings: ' + '; '.join(str(e) for e in report.warnings) + "\n" * 2
+
+            # This indicates fatal error
             error = report.errors or (report.warnings and not report.record_found)
-            # check for errors
             if error:
                 if report.errors:
                     logger.warning('Found errors: %s', report.errors)
-                    log = '; '.join(str(e) for e in report.errors)
                     error_obj = report.errors[0]
-                else:
-                    log = 'Warnings: ' + '; '.join(str(e) for e in report.warnings)
+                elif report.warnings:
                     error_obj = report.warnings[0]
 
                 if isinstance(error_obj, TransportError):
@@ -575,7 +599,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                     status = AttemptStatus.DOWNLOAD_FAILED
                     error_code = 'non-sushi'
                 else:
-                    error_code = error_obj.code if hasattr(error_obj, 'code') else ''
+                    error_code = str(error_obj.code) if hasattr(error_obj, 'code') else ''
 
                     # Mark that status is no data when there is no data error
                     # Otherwise mark as failed download
@@ -589,8 +613,15 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
                     when_processed = now()
             else:
-                status = AttemptStatus.IMPORTING if report.record_found else AttemptStatus.NO_DATA
-                log = ''
+                if partial_data:
+                    # Treat partial data as if download failed
+                    # we want to proceed only with complete data
+                    status = AttemptStatus.DOWNLOAD_FAILED
+                else:
+                    if report.record_found:
+                        status = AttemptStatus.IMPORTING
+                    else:
+                        status = AttemptStatus.NO_DATA
 
         # now create the attempt instance
         file_data.seek(0)  # make sure that file is rewind to the start

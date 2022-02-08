@@ -113,10 +113,11 @@ class Counter5ReportBase:
         self.record_found: bool = False  # is populated once `fd_to_dicts` is called
         self.header = {}
         self.errors: typing.List[typing.Union[CounterError, TransportError]] = []
-        self.warnings: typing.List[typing.Union[CounterError, TransportError]] = []
+        self.warnings: typing.List[CounterError] = []
+        self.infos: typing.List[CounterError] = []
         self.http_status_code = http_status_code
 
-        # Parse it for the first time to extract errors and warnings
+        # Parse it for the first time to extract errors, warnings and infos
         if report:
             self.fd_to_dicts(report)
 
@@ -157,8 +158,10 @@ class Counter5ReportBase:
 
         for sushi_error in sushi_errors:
             counter_error = CounterError.from_sushi_error(sushi_error)
-            if sushi_error.is_info or sushi_error.is_warning:
+            if sushi_error.is_warning:
                 self.warnings.append(counter_error)
+            elif sushi_error.is_info:
+                self.infos.append(counter_error)
             else:
                 self.errors.append(counter_error)
 
@@ -211,7 +214,7 @@ class Counter5ReportBase:
             self.extract_errors(header)
 
         # Errors still not extracted
-        if not self.errors and not self.warnings:
+        if not self.errors and not self.warnings and not self.infos:
             # Extract exceptions from root
             self.extract_errors(list(ijson.items(fd, "Exceptions.items")))  # In <root>
             fd.seek(0)

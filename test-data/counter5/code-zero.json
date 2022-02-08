@@ -1,0 +1,43 @@
+{
+  "Report_Header": {
+    "Created": "2020-01-01T00:00:00Z",
+    "Created_By": "Publisher",
+    "Customer_ID": "0000000000",
+    "Report_ID": "TR",
+    "Release": "5",
+    "Report_Name": "Title Master Report",
+    "Institution_Name": "Celus College",
+    "Institution_ID": [
+      {
+        "Type": "Proprietary",
+        "Value": "SN:8888888888"
+      }
+    ],
+    "Report_Filters": [
+      {
+        "Name": "Begin_Date",
+        "Value": "2020-01-01"
+      },
+      {
+        "Name": "End_Date",
+        "Value": "2020-01-31"
+      }
+    ],
+    "Report_Attributes": [
+      {
+        "Name": "Attributes_To_Show",
+        "Value": "YOP|Access_Method|Access_Type|Data_Type|Section_Type"
+      }
+    ],
+    "Exceptions": [
+      {
+        "Code": 0,
+        "Severity": "Info",
+        "Message": "Some description",
+        "Help_URL": "example.com",
+        "Data": ""
+      }
+    ]
+  },
+  "Report_Items": []
+}
