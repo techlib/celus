@@ -26,6 +26,7 @@ from core.tests.conftest import (  # noqa - fixtures
 )
 from publications.models import PlatformInterestReport, Platform, PlatformTitle
 from sushi.models import SushiCredentials, CounterReportType
+from test_fixtures.entities.logs import MetricFactory
 from test_fixtures.scenarios.basic import *  # noqa - fixtures
 
 
@@ -890,9 +891,7 @@ class TestPlatformTitleAPI:
 
 @pytest.mark.django_db
 class TestPlatformInterestAPI:
-    @pytest.mark.parametrize(
-        "fmt", (None, "csv", "xlsx"),
-    )
+    @pytest.mark.parametrize("fmt", (None, "csv", "xlsx"))
     def test_platfrom_interest_list_empty(self, master_client, interest_rt, organizations, fmt):
         url = reverse('platform-interest-list', args=(organizations["standalone"].pk,))
         if fmt:
@@ -902,9 +901,7 @@ class TestPlatformInterestAPI:
         if fmt is None:
             assert resp.json() == []
 
-    @pytest.mark.parametrize(
-        "fmt", (None, "csv", "xlsx"),
-    )
+    @pytest.mark.parametrize("fmt", (None, "csv", "xlsx"))
     def test_platfrom_interest_list_all_org_empty(self, master_client, interest_rt, fmt):
         url = reverse('platform-interest-list', args=(-1,))
         if fmt:
@@ -1386,3 +1383,22 @@ class TestTitleInterestBrief:
         assert type(data) is dict
         assert len(data) == 1, 'just "interest" key'
         assert data['interest'] == 3  # 1 + 2
+
+
+@pytest.mark.django_db
+class TestPlatformInterestReport:
+    def test_get_platform_interest_report(
+        self, authenticated_client, platforms, report_types, metrics, interests,
+    ):
+        url = reverse("platform-interest-report-list")
+        resp = authenticated_client.get(url)
+        assert resp.status_code == 200
+        data = {e["short_name"]: e for e in resp.json()}
+        assert len(data["branch"]["interest_reports"]) == 1
+        assert len(data["branch"]["interest_reports"][0]['interest_metric_set']) == 2
+        assert len(data["standalone"]["interest_reports"]) == 2
+        assert (
+            len(data["standalone"]["interest_reports"][0]['interest_metric_set'])
+            + len(data["standalone"]["interest_reports"][0]['interest_metric_set'])
+            == 4
+        )

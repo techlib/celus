@@ -6,7 +6,7 @@ from time import monotonic
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import BadRequest
-from django.db.models import Count, Q, Exists, OuterRef
+from django.db.models import Count, Q, Exists, OuterRef, Prefetch
 from django.db.transaction import atomic
 from django.http import JsonResponse
 from django.urls import reverse
@@ -58,10 +58,12 @@ from logs.models import (
     MduState,
     InterestGroup,
     FlexibleReport,
+    ReportInterestMetric,
 )
 from logs.serializers import (
     DimensionSerializer,
     ReportTypeSerializer,
+    ReportTypeInterestSerializer,
     MetricSerializer,
     AccessLogSerializer,
     ImportBatchSerializer,
@@ -150,6 +152,20 @@ class MetricViewSet(ReadOnlyModelViewSet):
     serializer_class = MetricSerializer
     queryset = Metric.objects.all()
     filter_backends = [PkMultiValueFilterBackend]
+
+
+class ReportInterestMetricViewSet(ReadOnlyModelViewSet):
+    serializer_class = ReportTypeInterestSerializer
+    queryset = ReportType.objects.prefetch_related(
+        "interest_metrics",
+        Prefetch(
+            "reportinterestmetric_set",
+            queryset=ReportInterestMetric.objects.select_related(
+                "metric", "target_metric", "interest_group"
+            ),
+        ),
+        "controlled_metrics",
+    )
 
 
 class DimensionTextViewSet(ReadOnlyModelViewSet):

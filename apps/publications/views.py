@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
-from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation
+from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation, Prefetch
 from django.db.models.functions import Coalesce
 from hcube.api.models.aggregation import Count as CubeCount
 from pandas import DataFrame
@@ -26,8 +26,15 @@ from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import ReportType, AccessLog, InterestGroup, ImportBatch, DimensionText
-from logs.serializers import ReportTypeExtendedSerializer
+from logs.models import (
+    ReportType,
+    AccessLog,
+    InterestGroup,
+    ImportBatch,
+    DimensionText,
+    ReportInterestMetric,
+)
+from logs.serializers import ReportTypeExtendedSerializer, PlatformInterestReportSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
 from organizations.models import Organization
@@ -360,6 +367,19 @@ class PlatformInterestViewSet(ViewSet):
             .annotate(**interest_annot_params)
         )
         return Response(result)
+
+
+class PlatformInterestReportViewSet(ReadOnlyModelViewSet):
+    serializer_class = PlatformInterestReportSerializer
+    queryset = Platform.objects.prefetch_related(
+        "interest_reports",
+        Prefetch(
+            "interest_reports__reportinterestmetric_set",
+            queryset=ReportInterestMetric.objects.select_related(
+                "metric", "target_metric", "interest_group"
+            ),
+        ),
+    )
 
 
 class GlobalPlatformsViewSet(ReadOnlyModelViewSet):

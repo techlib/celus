@@ -248,6 +248,10 @@ export default {
                   linkTo: "maintenance",
                   show: this.showManagementStuff,
                 },
+                {
+                  title: this.$i18n.t("pages.interest_overview"),
+                  linkTo: "interest-overview",
+                },
               ],
             },
           ],

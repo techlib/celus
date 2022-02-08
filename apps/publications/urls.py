@@ -67,6 +67,12 @@ platform_title_sub_router.register(
 root_router.register(r'platform', views.GlobalPlatformsViewSet, basename='global-platforms')
 root_router.register(r'title', views.GlobalTitleViewSet, basename='global-titles')
 
+root_router.register(
+    'platform-interest-report',
+    views.PlatformInterestReportViewSet,
+    basename='platform-interest-report',
+)
+
 urlpatterns = [path('run-task/erms-sync-platforms', views.StartERMSSyncPlatformsTask.as_view())]
 
 urlpatterns += root_router.urls

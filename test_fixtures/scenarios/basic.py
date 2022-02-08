@@ -22,7 +22,7 @@ from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
 from ..entities.data_souces import DataSourceFactory, DataSource
 from ..entities.identities import IdentityFactory, Identity
-from ..entities.logs import ImportBatchFactory
+from ..entities.logs import ImportBatchFactory, MetricFactory
 from ..entities.organizations import OrganizationFactory
 from ..entities.platforms import PlatformFactory
 from ..entities.report_types import ReportTypeFactory
@@ -449,6 +449,53 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
     return locals()
 
 
+@pytest.fixture
+def metrics(report_types, platforms):
+    metric1 = MetricFactory(name="metric1")
+    metric2 = MetricFactory(name="metric2")
+    metric3 = MetricFactory(name="metric3")
+    metric4 = MetricFactory(name="metric4")
+
+    return locals()
+
+
+@pytest.fixture
+def interests(report_types, platforms, metrics):
+
+    report_types["jr1"].interest_metrics.set([metrics["metric1"], metrics["metric3"]])
+    report_types["tr"].interest_metrics.set([metrics["metric2"], metrics["metric1"]])
+    report_types["br2"].interest_metrics.set([metrics["metric3"]])
+
+    platforms["standalone"].interest_reports.set([report_types["tr"], report_types["dr"]])
+    platforms["branch"].interest_reports.set([report_types["jr1"]])
+
+
+@pytest.fixture
+def client_by_user_type(
+    clients, organizations, basic1,
+):
+    def fn(user_type):
+        if user_type == 'no_user':
+            return clients["unauthenticated"], organizations["branch"]
+        elif user_type == 'invalid':
+            return clients["invalid"], organizations["branch"]
+        elif user_type == 'unrelated':
+            return clients["user2"], organizations["branch"]
+        elif user_type == 'related_user':
+            return clients["user1"], organizations["branch"]
+        elif user_type == 'related_admin':
+            return clients["admin2"], organizations["standalone"]
+        elif user_type == 'master_user':
+            return clients["master"], organizations["branch"]
+        elif user_type == 'superuser':
+            return clients["su"], organizations["branch"]
+        else:
+            raise ValueError(f'Unsupported user_type: {user_type}')
+        return identity, org
+
+    return fn
+
+
 __all__ = [
     'platforms',
     'report_types',
@@ -457,8 +504,10 @@ __all__ = [
     'schedulers',
     'credentials',
     'import_batches',
+    'interests',
     'basic1',
     'clients',
+    'metrics',
     'make_client',
     'identities',
     'data_sources',

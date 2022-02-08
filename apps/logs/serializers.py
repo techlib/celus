@@ -15,6 +15,7 @@ from core.models import DataSource, UL_CONS_STAFF
 from core.serializers import UserSerializer, UserSimpleSerializer
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
+from publications.models import Platform
 from publications.serializers import (
     PlatformSerializer,
     DataSourceSerializer,
@@ -232,6 +233,25 @@ class ReportTypeExtendedSerializer(ModelSerializer):
         )
 
 
+class ReportTypeInterestSerializer(ModelSerializer):
+
+    interest_metric_set = ReportInterestMetricSerializer(
+        many=True, read_only=True, source='reportinterestmetric_set'
+    )
+
+    class Meta:
+        model = ReportType
+        fields = (
+            'pk',
+            'short_name',
+            'name',
+            'name_cs',
+            'name_en',
+            'desc',
+            'interest_metric_set',
+        )
+
+
 class AccessLogSerializer(BaseSerializer):
 
     report_type = StringRelatedField()
@@ -422,3 +442,11 @@ class FlexibleReportSerializer(ModelSerializer):
             'report_config',
             'config',
         )
+
+
+class PlatformInterestReportSerializer(ModelSerializer):
+    interest_reports = ReportTypeInterestSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Platform
+        fields = ('interest_reports', 'pk', 'ext_id', 'short_name', 'name', 'provider', 'url')

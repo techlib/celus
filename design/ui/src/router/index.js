@@ -89,6 +89,11 @@ export default new Router({
       }),
     },
     {
+      path: "/interests",
+      name: "interest-overview",
+      component: () => import("../pages/InterestOverviewPage.vue"),
+    },
+    {
       path: "/heatmap",
       name: "heatmap",
       component: () =>

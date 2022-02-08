@@ -10,6 +10,7 @@ en:
     import_batches: Import batches
     management: Management
     maintenance: Maintenance
+    interest_overview: Interests
     heatmap: Interest heatmap
     manual_data_uploads: Manual data uploads
     dashboard: Dashboard
@@ -177,6 +178,7 @@ cs:
     import_batches: Importované dávky
     management: Management
     maintenance: Údržba
+    interest_overview: Zájmy
     heatmap: Heatmapa zájmu
     manual_data_uploads: Ručně nahraná data
     dashboard: Přehled

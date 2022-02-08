@@ -23,7 +23,6 @@ from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ManualDataUploadFullFactory
 
 from ..logic.data_import import import_counter_records
-from organizations.tests.conftest import organizations, identity_by_user_type  # noqa
 from core.tests.conftest import (  # noqa - fixtures
     valid_identity,
     authenticated_client,
@@ -33,7 +32,21 @@ from core.tests.conftest import (  # noqa - fixtures
     master_client,
     admin_identity,
 )
-from test_fixtures.scenarios.basic import users  # noqa
+from test_fixtures.scenarios.basic import (
+    users,
+    report_types,
+    data_sources,
+    platforms,
+    metrics,
+    organizations,
+    data_sources,
+    metrics,
+    identities,
+    interests,
+    client_by_user_type,
+    clients,
+    basic1,
+)  # noqa
 
 
 @pytest.mark.django_db
@@ -49,7 +62,7 @@ class TestChartDataAPI:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
-        organization = organizations[0]
+        organization = organizations["branch"]
         report_type = report_type_nd(0)  # type: ReportType
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
@@ -72,7 +85,7 @@ class TestChartDataAPI:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
-        organization = organizations[0]
+        organization = organizations["branch"]
         report_type = report_type_nd(0)  # type: ReportType
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
@@ -123,7 +136,7 @@ class TestChartDataAPI:
             ['Title1', '2018-03-01', '1v1', '2v3', '3v2', 32],
         ]
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
-        organization = organizations[0]
+        organization = organizations["branch"]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 6
@@ -160,9 +173,9 @@ class TestChartDataAPI:
             ['platform', None, [{'platform': 'Platform1', 'count': 3}]],
             ['platform', 'metric', [{'platform': 'Platform1', 'metric': 'Hits', 'count': 3}]],
             ['metric', 'platform', [{'platform': 'Platform1', 'metric': 'Hits', 'count': 3}]],
-            ['organization', None, [{'organization': 'AAA', 'count': 3}]],
-            ['organization', 'metric', [{'organization': 'AAA', 'metric': 'Hits', 'count': 3}]],
-            ['metric', 'organization', [{'organization': 'AAA', 'metric': 'Hits', 'count': 3}]],
+            ['organization', None, [{'organization': 'branch', 'count': 3}]],
+            ['organization', 'metric', [{'organization': 'branch', 'metric': 'Hits', 'count': 3}]],
+            ['metric', 'organization', [{'organization': 'branch', 'metric': 'Hits', 'count': 3}]],
         ],
     )
     def test_api_values(
@@ -183,7 +196,7 @@ class TestChartDataAPI:
             ['Title1', '2018-01-01', '1v2', '2v1', '3v1', 2],
         ]
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
-        organization = organizations[0]
+        organization = organizations["branch"]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 2
@@ -227,10 +240,10 @@ class TestChartDataAPI:
         crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
         crs2 = list(counter_records(data2, metric='Big Hits', platform='Platform2'))
         report_type = report_type_nd(3)
-        import_counter_records(report_type, organizations[0], platform1, crs1)
-        import_counter_records(report_type, organizations[0], platform2, crs1)
-        import_counter_records(report_type, organizations[1], platform1, crs1)
-        import_counter_records(report_type, organizations[1], platform2, crs2)
+        import_counter_records(report_type, organizations["branch"], platform1, crs1)
+        import_counter_records(report_type, organizations["branch"], platform2, crs1)
+        import_counter_records(report_type, organizations["standalone"], platform1, crs1)
+        import_counter_records(report_type, organizations["standalone"], platform2, crs2)
         assert AccessLog.objects.count() == 12
         metric1 = Metric.objects.get(short_name='Hits')
         metric2 = Metric.objects.get(short_name='Big Hits')
@@ -250,7 +263,7 @@ class TestChartDataAPI:
         assert recs[0]['count'] == 3 * (1 + 2 + 4) + 8
         assert recs[1]['count'] == 16 + 32
         # organization filter
-        recs = get_data({'organization': organizations[0].pk, 'prim_dim': 'date'})
+        recs = get_data({'organization': organizations["branch"].pk, 'prim_dim': 'date'})
         assert len(recs) == 1
         assert recs[0]['count'] == 2 * (1 + 2 + 4)
         # organization dim, platform filter
@@ -316,7 +329,7 @@ class TestChartDataAPI:
             [None, '2018-03-01', '1v1', '2v3', '3v2', 32],
         ]
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
-        organization = organizations[0]
+        organization = organizations["branch"]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 6
@@ -350,7 +363,7 @@ class TestChartDataAPI:
             ['Title1', '2019-01-01', '1v1', 8],
         ]
         crs = list(counter_records(data, metric='Hits', platform='Platform1'))
-        organization = organizations[0]
+        organization = organizations["branch"]
         report_type = report_type_nd(1)
         import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 4
@@ -390,7 +403,7 @@ class TestManualDataUpload:
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
-                'organization': organizations[0].pk,
+                'organization': organizations["branch"].pk,
                 'report_type': report_type.pk,
                 'data_file': file,
             },
@@ -406,7 +419,7 @@ class TestManualDataUpload:
 @pytest.mark.django_db
 class TestReportTypeAPI:
     def test_create_report_type_400(self, organizations, authenticated_client):
-        organization = organizations[0]
+        organization = organizations["branch"]
         assert ReportType.objects.count() == 0
         response = authenticated_client.post(
             reverse('organization-report-types-list', kwargs={'organization_pk': organization.pk}),
@@ -424,7 +437,7 @@ class TestReportTypeAPI:
         assert ReportType.objects.count() == 0, 'no new ReportType was created'
 
     def test_create_report_type(self, organizations, authenticated_client):
-        organization = organizations[0]
+        organization = organizations["branch"]
         # bind the user to the organization
         UserOrganization.objects.create(user=authenticated_client.user, organization=organization)
         assert ReportType.objects.count() == 0
@@ -445,7 +458,7 @@ class TestReportTypeAPI:
         assert len(rt.dimensions_sorted) == 0, 'no extra dimensions for ReportType'
 
     def test_create_report_type_with_dimension(self, organizations, authenticated_client):
-        organization = organizations[0]
+        organization = organizations["branch"]
         # bind the user to the organization
         UserOrganization.objects.create(user=authenticated_client.user, organization=organization)
         assert ReportType.objects.count() == 0
@@ -469,7 +482,7 @@ class TestReportTypeAPI:
         assert len(rt.dimensions_sorted) == 2
 
     def test_create_report_type_with_invalid_dimension(self, organizations, authenticated_client):
-        organization = organizations[0]
+        organization = organizations["branch"]
         # bind the user to the organization
         UserOrganization.objects.create(user=authenticated_client.user, organization=organization)
         assert ReportType.objects.count() == 0
@@ -505,16 +518,12 @@ class TestRawDataExport:
         ],
     )
     def test_raw_export_start_organization_access(
-        self, user_type, can_access, identity_by_user_type, client, authentication_headers
+        self, user_type, can_access, client_by_user_type,
     ):
-        identity, org = identity_by_user_type(user_type)
+        client, org = client_by_user_type(user_type)
         url = reverse('raw_data_export')
         with patch('logs.views.export_raw_data_task') as export_task:
-            resp = client.post(
-                url + f'?organization={org.pk}',
-                content_type='application/json',
-                **authentication_headers(identity),
-            )
+            resp = client.post(url + f'?organization={org.pk}', content_type='application/json',)
             expected_status_code = (200,) if can_access else (401, 403)
             assert resp.status_code in expected_status_code
             if can_access:
@@ -535,14 +544,12 @@ class TestRawDataExport:
         ],
     )
     def test_raw_export_start_no_organization_access(
-        self, user_type, can_access, identity_by_user_type, client, authentication_headers
+        self, user_type, can_access, client_by_user_type,
     ):
-        identity, org = identity_by_user_type(user_type)
+        client, org = client_by_user_type(user_type)
         url = reverse('raw_data_export')
         with patch('logs.views.export_raw_data_task') as export_task:
-            resp = client.post(
-                url, content_type='application/json', **authentication_headers(identity)
-            )
+            resp = client.post(url, content_type='application/json',)
             expected_status_code = (200,) if can_access else (401, 403)
             assert resp.status_code in expected_status_code
             if can_access:
@@ -653,3 +660,18 @@ class TestImportBatchViewSet:
             assert len(data) == 1
         else:
             assert len(data) == 0, 'status should not be counted in data presence'
+
+
+@pytest.mark.django_db
+class TestReportInterestMetricAPI:
+    def test_get_report_interest_metric(
+        self, authenticated_client, platforms, report_types, metrics, interests,
+    ):
+        url = reverse("reporttype-list")
+        resp = authenticated_client.get(url)
+        assert resp.status_code == 200
+        data = {e["short_name"]: e for e in resp.json()}
+        assert len(data["TR"]["interest_metric_set"]) == 2
+        assert len(data["DR"]["interest_metric_set"]) == 0
+        assert len(data["JR1"]["interest_metric_set"]) == 2
+        assert len(data["BR2"]["interest_metric_set"]) == 1
