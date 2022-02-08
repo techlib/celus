@@ -3,6 +3,8 @@
 from django.db import migrations
 from datetime import date
 
+from core.logic.dates import month_start, month_end
+
 
 def add_fetch_intention(apps, schema_editor):
     SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
@@ -27,6 +29,12 @@ def add_fetch_intention(apps, schema_editor):
             organization_id = attempt.credentials.organization_id
             datestamp = this_date
 
+        # if the start and end date of the attempt are the same, fix the attempt
+        # (this could occur in some very old version of Celus from 2019)
+        if attempt.start_date == attempt.end_date:
+            attempt.start_date = month_start(attempt.start_date)
+            attempt.end_date = month_end(attempt.end_date)
+            attempt.save()
         FetchIntention.objects.create(
             harvest=harvest,
             not_before=attempt.timestamp,
