@@ -1,3 +1,4 @@
+from chardet.universaldetector import UniversalDetector
 import codecs
 import csv
 import os
@@ -507,9 +508,9 @@ def validate_mime_type(fileobj):
     ):
         raise ValidationError(
             _(
-                "The uploaded file is not a CSV/JSON file or is corrupted. "
-                "The file type seems to be '{detected_type}'. "
-                "Please upload a CSV or JSON file."
+                "The uploaded file is not in required file type or is corrupted."
+                "The file type seems to be '{detected_type}'."
+                "Please upload your file in required file type."
             ).format(detected_type=detected_type)
         )
 
@@ -584,8 +585,24 @@ class ManualDataUpload(models.Model):
             self.when_processed = now()
             self.save()
 
+    def detect_file_encoding(self) -> str:
+        """
+            returns encoding of the file uploaded
+            """
+        with open(self.data_file.path, "rb") as file:
+            detector = UniversalDetector()
+            for line in file.readlines():
+                detector.feed(line)
+                if detector.done:
+                    break
+            detector.close()
+            if detector.result['confidence'] < 0.8:
+                return 'utf-8-sig'
+            else:
+                return detector.result['encoding']
+
     def to_record_dicts(self) -> [dict]:
-        reader = csv.DictReader(codecs.iterdecode(self.data_file.file, 'utf-8-sig'))
+        reader = csv.DictReader(codecs.iterdecode(self.data_file.file, self.detect_file_encoding()))
         data = list(reader)
         return data
 

@@ -77,6 +77,7 @@ django-test-migrations = "^1.1.0"
 django-import-export = "^2.5.0"
 djangorestframework-api-key = "^2.0.0"
 hcube = "0.3.0"
+chardet = "^4.0.0"
 
 
 
