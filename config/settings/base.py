@@ -465,6 +465,7 @@ ADMINS = config('ADMINS', cast=Csv(cast=Csv(post_process=tuple), delimiter=';'),
 EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[Stats] ')
 SERVER_EMAIL = config('SERVER_EMAIL', default='root@localhost')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='root@localhost')
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
 
 CELUS_ADMIN_SITE_PATH = config('CELUS_ADMIN_SITE_PATH', default='wsEc67YNV2sq/')
 
