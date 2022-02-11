@@ -4,6 +4,7 @@ import os
 import re
 import typing
 from copy import deepcopy
+from datetime import date
 from enum import Enum
 
 import magic
@@ -11,7 +12,7 @@ from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
-from django.db.models import Index, UniqueConstraint, Q, QuerySet
+from django.db.models import Index, UniqueConstraint, Q, QuerySet, OuterRef, Exists, Max
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
@@ -327,12 +328,44 @@ class ReportTypeToDimension(models.Model):
         return '{}-{} #{}'.format(self.report_type, self.dimension, self.position)
 
 
+class ImportBatchQuerySet(models.QuerySet):
+    def data_matrix(
+        self,
+        organizations: typing.Optional[typing.Iterable[Organization]] = None,
+        platforms: typing.Optional[typing.Iterable[Platform]] = None,
+        report_types: typing.Optional[typing.Iterable[ReportType]] = None,
+        start_date: typing.Optional[date] = None,
+        end_date: typing.Optional[date] = None,
+    ):
+        filter = {}
+        if organizations:
+            filter["organization__in"] = organizations
+        if platforms:
+            filter["platform__in"] = platforms
+        if report_types:
+            filter["report_type__in"] = report_types
+
+        return (
+            self.filter(**filter)
+            .order_by("date")
+            .annotate(
+                has_logs=Exists(AccessLog.objects.filter(import_batch=OuterRef('pk'))),
+                mdu_id=Max('mdu'),  # max is fine here, there can be only one mdu
+                attempt_id=Max('sushifetchattempt__pk'),
+            )
+            .select_related('sushifetchattempt')
+            .prefetch_related('mdu')
+        )
+
+
 class ImportBatch(models.Model):
 
     """
     Represents one batch of imported data. Such data share common source, such as a file
     and the user who created them.
     """
+
+    objects = ImportBatchQuerySet.as_manager()
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)

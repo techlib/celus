@@ -82,3 +82,25 @@ class ManualDataUploadFullFactory(factory.django.DjangoModelFactory):
                 organization=obj.organization, platform=obj.platform, report_type=obj.report_type
             )
             obj.import_batches.set([ib])
+
+
+class ManualDataUploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ManualDataUpload
+
+    organization = factory.SubFactory(OrganizationFactory)
+    platform = factory.SubFactory(PlatformFactory)
+    report_type = factory.SubFactory(ReportTypeFactory)
+
+    is_processed = True
+    when_processed = factory.LazyAttribute(
+        lambda o: fake.date_time_this_year() if o.is_processed else None
+    )
+
+    @factory.post_generation
+    def import_batches(self, create, extracted, **kwargs):  # noqa - obj name is ok here
+        if not create:
+            return
+        if extracted:
+            for batch in extracted:
+                self.import_batches.add(batch)

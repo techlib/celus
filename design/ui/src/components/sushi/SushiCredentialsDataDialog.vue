@@ -23,9 +23,8 @@ en:
     credentials_broken: Entire credentials are broken - can't select item for harvesting.
     report_type_broken: Broken report type - can't select item for harvesting.
   delete_mode: Delete mode
-  really_delete: " | Really delete all data for {count} record? This action cannot be reverted without re-harvesting the data. | Really delete all data for {count} records? This action cannot be reverted without re-harvesting the data."
   delete_mode_info: activate to delete existing data
-  delete_in_progress: Delete in progress, please wait...
+  delete_ok: Selected data were deleted.
 
 cs:
   title: Yearly overview
@@ -38,12 +37,17 @@ cs:
   planned_retry: Je naplánováno další stahování, abychom potvrdili neexistenci dat
   broken: Rozbitý report
   selected_count: Počet záznamů ke stáhnutí
+  selected_count_delete: Počet záznamů ke smazání
   select_help: Můžete vybrat neúspěšné záznamy z tabulky
   harvest_button: Stáhnout
+  delete_button: Smazat
   data_harvest: Stahuji data k přístupovým udajům
   snack_bar:
     credentials_broken: Přístupové údaje jsou rozbité - položku nelze přidat ke stahování.
     report_type_broken: Rozbitý report - položku nelze přidat ke stahování.
+  delete_mode: Mazací mód
+  delete_mode_info: aktivujte pro mazání data
+  delete_ok: Vybraná data byla smazána.
 </i18n>
 
 <template>
@@ -69,7 +73,6 @@ cs:
               dense
               :hint="$t('delete_mode_info')"
               persistent-hint
-              :disabled="deleteInProgress"
             />
           </v-col>
         </v-row>
@@ -88,8 +91,8 @@ cs:
               <template v-slot:item="row">
                 <tr>
                   <td
-                    v-if="row.index % reportTypes.length === 0"
-                    :rowspan="reportTypes.length"
+                    v-if="row.index % counterReports.length === 0"
+                    :rowspan="counterReports.length"
                   >
                     {{ row.item.year }}
                   </td>
@@ -101,7 +104,7 @@ cs:
                       label
                     >
                       <SushiReportIndicator
-                        :report="row.item.report_type"
+                        :report="row.item.counterReport"
                         :broken-fn="() => row.item['01'].broken"
                       />
                     </v-chip>
@@ -120,15 +123,15 @@ cs:
                               filterBroken(
                                 buttonsSelected,
                                 credentials,
-                                reportTypes
+                                counterReports
                               )
                             "
                             dense
                             class="pa-0 d-block"
                           >
                             <v-btn
-                              :value="row.item.report_type.id"
-                              :key="`${row.item.year}-${month}-${row.item.report_type.code}`"
+                              :value="row.item.counterReport.id"
+                              :key="`${row.item.year}-${month}-${row.item.counterReport.code}`"
                               :color="buttonColor(row.item[month])"
                             >
                               <SushiMonthStatusIcon
@@ -181,6 +184,15 @@ cs:
                 </tr>
               </template>
             </v-data-table>
+            <v-dialog max-width="1100px" v-model="showConfirmDeleteDialog">
+              <ImportBatchesDeleteConfirm
+                v-model="showConfirmDeleteDialog"
+                v-if="showConfirmDeleteDialog"
+                :slices="slicesToDelete"
+                @cancel="showConfirmDeleteDialog = false"
+                @deleted="deletePerformed()"
+              />
+            </v-dialog>
             <v-dialog
               v-model="showHarvestDialog"
               v-if="currentHarvest"
@@ -250,33 +262,21 @@ cs:
             <v-btn
               v-if="deleteMode"
               color="error"
-              :disabled="selectedItems.length == 0 || deleteInProgress"
-              @click="deleteSelected"
+              :disabled="selectedItems.length == 0"
+              @click="showConfirmDeleteDialog = true"
             >
-              <v-progress-circular
-                small
-                indeterminate
-                v-if="deleteInProgress"
-                color="error"
-                class="mr-2"
-              />
-              <v-icon v-else small class="pr-2">fa fa-trash</v-icon>
+              <v-icon small class="pr-2">fas fa-trash</v-icon>
               {{ $t("delete_button") }}
             </v-btn>
             <v-btn
               v-else
               @click="triggerHarvest"
-              :disabled="selectedItems.length == 0 || deleteInProgress"
+              :disabled="selectedItems.length == 0"
               color="primary"
             >
               <v-icon small class="pr-2">fa fa-download</v-icon>
               {{ $t("harvest_button") }}
             </v-btn>
-          </v-col>
-          <v-col v-if="deleteInProgress" class="align-self-center">
-            <div class="pl-4 warning--text">
-              {{ $t("delete_in_progress") }}
-            </div>
           </v-col>
         </v-row>
       </v-container>
@@ -292,6 +292,7 @@ cs:
 import axios from "axios";
 import { mapActions } from "vuex";
 import { ymFirstDay, ymLastDay } from "@/libs/dates";
+import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
@@ -304,6 +305,7 @@ export default {
     SushiFetchIntentionsListWidget,
     SushiCredentialsOverviewHeaderWidget,
     SushiReportIndicator,
+    ImportBatchesDeleteConfirm,
   },
   props: {
     credentials: {
@@ -321,20 +323,20 @@ export default {
       },
       currentHarvest: null,
       showHarvestDialog: false,
+      showConfirmDeleteDialog: false,
       deleteMode: false,
-      deleteInProgress: false,
     };
   },
   computed: {
     itemsPerPageOptions() {
       return [
-        this.reportTypes.length,
-        this.reportTypes.length * 2,
-        this.reportTypes.length * 3,
+        this.counterReports.length,
+        this.counterReports.length * 2,
+        this.counterReports.length * 3,
       ];
     },
     itemsPerPage() {
-      return this.reportTypes.length;
+      return this.counterReports.length;
     },
     credentialsDataUrl() {
       if (this.credentials && this.credentials.pk) {
@@ -358,14 +360,14 @@ export default {
     processedData() {
       let result = [];
       for (const year_data of this.fetchedData) {
-        for (const report_type of this.reportTypes) {
+        for (const counterReport of this.counterReports) {
           let record = {
             year: year_data.year,
-            report_type: report_type,
+            counterReport: counterReport,
           };
           for (const month of this.months) {
             for (const row of year_data[month]) {
-              if (row.counter_report.code == report_type.code) {
+              if (row.counter_report.code == counterReport.code) {
                 record[month] = {
                   status: row.status,
                   planned: row.planned,
@@ -381,19 +383,26 @@ export default {
       }
       return result;
     },
-    reportTypes() {
+    counterReports() {
       let result = [];
       if (this.fetchedData.length > 0) {
-        for (const rt of this.fetchedData[0]["01"]) {
+        for (const crt of this.fetchedData[0]["01"]) {
           result.push({
-            broken: rt.broken,
-            code: rt.counter_report.code,
-            id: rt.counter_report.id,
-            name: rt.counter_report.name,
+            broken: crt.broken,
+            code: crt.counter_report.code,
+            id: crt.counter_report.id,
+            name: crt.counter_report.name,
+            report_type: crt.counter_report.report_type,
           });
         }
       }
       return result;
+    },
+    counterReportsToReportType() {
+      return this.counterReports.reduce(
+        (obj, cur) => ({ ...obj, [cur.id]: cur.report_type }),
+        {}
+      );
     },
     selectedItems() {
       let result = [];
@@ -404,11 +413,22 @@ export default {
             start_date: ymFirstDay(yearMonth),
             end_date: ymLastDay(yearMonth),
             credentials: this.credentials.pk,
+            platform: this.credentials.platform.pk,
+            organization: this.credentials.organization.pk,
             counter_report: rt,
+            report_type: this.counterReportsToReportType[rt],
           });
         }
       }
       return result;
+    },
+    slicesToDelete() {
+      return this.selectedItems.map((e) => ({
+        platform: e.platform,
+        organization: e.organization,
+        report_type: e.report_type,
+        months: [e.start_date],
+      }));
     },
     headers() {
       let res = [
@@ -511,7 +531,7 @@ export default {
       }
       return "";
     },
-    filterBroken(selected, credentials, reportTypes) {
+    filterBroken(selected, credentials, counterReports) {
       // remove broken credentials
       if (credentials.broken != null) {
         this.showSnackbar({
@@ -526,49 +546,21 @@ export default {
       }
 
       // remove broken report types
-      let brokenIds = reportTypes.filter((rt) => rt.broken).map((e) => e.id);
-      let broken_report_type = false;
+      let brokenIds = counterReports.filter((rt) => rt.broken).map((e) => e.id);
+      let broken_counter_report = false;
       Object.keys(selected).forEach((key) => {
         let orig_len = selected[key].length;
         selected[key] = selected[key].filter(
           (rt_id) => !brokenIds.includes(rt_id)
         );
-        broken_report_type =
-          broken_report_type || orig_len != selected[key].length;
+        broken_counter_report =
+          broken_counter_report || orig_len != selected[key].length;
       });
-      if (broken_report_type) {
+      if (broken_counter_report) {
         this.showSnackbar({
           content: this.$t("snack_bar.report_type_broken"),
           color: "error",
         });
-      }
-    },
-    async deleteSelected() {
-      const res = await this.$confirm(
-        this.$tc("really_delete", this.selectedItems.length),
-        {
-          title: this.$t("confirm_delete"),
-          buttonTrueText: this.$t("delete"),
-          buttonFalseText: this.$t("cancel"),
-        }
-      );
-      if (res) {
-        this.deleteInProgress = true;
-        try {
-          await axios.post(
-            "/api/scheduler/fetch-intention-delete/",
-            this.selectedItems
-          );
-          await this.loadCredentialsData();
-          this.validateSelection();
-        } catch (error) {
-          this.showSnackbar({
-            content: "Error deleting data: " + error,
-            color: "error",
-          });
-        } finally {
-          this.deleteInProgress = false;
-        }
       }
     },
     validateSelection() {
@@ -588,6 +580,10 @@ export default {
         }
       }
       this.buttonsSelected = newSelection;
+    },
+    deletePerformed() {
+      this.showConfirmDeleteDialog = false;
+      this.loadCredentialsData();
     },
   },
 

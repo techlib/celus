@@ -118,6 +118,7 @@ class TestManualUploadConflicts:
         response = clients["master"].post(reverse('manual-data-upload-process', args=(mdu.pk,)))
         assert response.status_code == 200
         batches = sorted(e['pk'] for e in response.data["import_batches"])
+        batches_months = sorted(e['date'] for e in response.data["import_batches"])
 
         # Upload the same data
         data_file.seek(0)
@@ -140,7 +141,9 @@ class TestManualUploadConflicts:
         )
         assert response.status_code == 200
         assert response.data["can_import"] is False
-        assert batches == sorted(e["pk"] for e in response.data["clashing_import_batches"])
+        assert batches_months == sorted(
+            e.strftime("%Y-%m-%d") for e in response.data["clashing_months"]
+        )
 
         # fail processing
         response = clients["master"].post(reverse('manual-data-upload-process', args=(mdu.pk,)))

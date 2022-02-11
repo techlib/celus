@@ -269,6 +269,7 @@ class ImportBatchSerializer(ModelSerializer):
             'platform',
             'report_type',
             'user',
+            'date',
             'owner_level',
         )
 

@@ -154,7 +154,7 @@ class TestCustomImport:
         assert response.status_code == 200
         data = response.json()
         assert data['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
-        assert len(data['clashing_import_batches']) == 3, 'all 3 months are already there'
+        assert len(data['clashing_months']) == 3, 'all 3 months are already there'
         assert data['can_import'] is False, 'preflight signals that import is not possible'
         response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
         assert response.status_code == 409

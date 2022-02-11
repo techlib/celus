@@ -23,6 +23,7 @@ from core.permissions import (
     SuperuserOrAdminPermission,
     OrganizationRelatedPermissionMixin,
 )
+from logs.models import ImportBatch
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id
 from scheduler.models import FetchIntention
@@ -166,25 +167,45 @@ class SushiCredentialsViewSet(ModelViewSet):
         report_types_and_broken = [
             (e.counter_report, e.is_broken())
             for e in credentials.counterreportstocredentials_set.all().select_related(
-                'counter_report'
+                'counter_report', 'counter_report__report_type'
             )
         ]
         report_types = [e[0] for e in report_types_and_broken]
+
+        data_matrix = ImportBatch.objects.data_matrix(
+            organizations=[credentials.organization],
+            platforms=[credentials.platform],
+            report_types=[e.report_type for e in report_types],
+            start_date=f"{start_year}-01-01",
+            end_date=f"{end_year}-12-31",
+        )
+        data_matrix_map = {
+            (e.report_type_id, e.date.year, e.date.month): e for e in data_matrix if e.date
+        }
 
         result = {}
         # initialize matrix with empty values
         for year in range(start_year, end_year + 1):
             year_result = {"year": year}
             for i in range(1, 13):
-                year_result[f"{i:02d}"] = {
-                    rt.code: {
-                        "status": "untried",
+                year_result[f"{i:02d}"] = {}
+                for (crt, broken) in report_types_and_broken:
+                    if entry := data_matrix_map.get((crt.report_type.pk, year, i)):
+                        status = "success" if entry.has_logs else "no_data"
+                    else:
+                        status = "untried"
+
+                    year_result[f"{i:02d}"][crt.code] = {
+                        "status": status,
                         "planned": False,
                         "broken": broken,
-                        "counter_report": {"id": rt.pk, "name": rt.name, "code": rt.code,},
+                        "counter_report": {
+                            "id": crt.pk,
+                            "name": crt.name,
+                            "code": crt.code,
+                            "report_type": crt.report_type_id,
+                        },
                     }
-                    for (rt, broken) in report_types_and_broken
-                }
             result[year] = year_result
 
         # update planned

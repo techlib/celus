@@ -2,12 +2,14 @@ import traceback
 from functools import reduce
 from pprint import pprint
 from time import monotonic
+from collections import Counter
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import BadRequest
 from django.core.mail import mail_admins
 from django.db.models import Count, Q, Exists, OuterRef
+from django.db.transaction import atomic
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
@@ -15,12 +17,12 @@ from pandas import DataFrame
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, ListField
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.serializers import Serializer
+from rest_framework.serializers import DateField, IntegerField, Serializer
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_200_OK
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
@@ -73,7 +75,9 @@ from logs.serializers import (
     FlexibleReportSerializer,
 )
 from organizations.logic.queries import organization_filter_from_org_id
+from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt, AttemptStatus
+from . import filters
 from .exceptions import DataStructureError
 from .tasks import export_raw_data_task
 
@@ -268,39 +272,107 @@ class RawDataDelayedExportProgressView(View):
 class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ImportBatchSerializer
-    queryset = ImportBatch.objects.none()
+    queryset = ImportBatch.objects.all()
     # pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.AccessibleFilter, filters.UserFilter, filters.OrderByFilter]
 
     def get_queryset(self):
-        if self.request.user.is_from_master_organization:
-            qs = ImportBatch.objects.all()
-        else:
-            qs = ImportBatch.objects.filter(
-                organization__in=self.request.user.accessible_organizations()
-            )
-        # make it possible to limit result to only specific user
-        if 'user' in self.request.GET:
-            qs = qs.filter(user_id=self.request.GET['user'])
+        qs = self.queryset
         if 'pk' in self.kwargs:
             # we only add accesslog_count if only one object was requested
             qs = qs.annotate(accesslog_count=Count('accesslog'))
         qs = qs.select_related('organization', 'platform', 'report_type')
-        order_by = self.request.GET.get('order_by', 'created')
-        if self.request.GET.get('desc') in ('true', 1):
-            order_by = '-' + order_by
-        # ensure that .created is always part of ordering because it is the only value we can
-        # be reasonably sure is different between instances
-        if order_by != 'created':
-            order_by = [order_by, 'created']
-        else:
-            order_by = [order_by]
-        return qs.order_by(*order_by)
+        return qs
 
     def get_serializer_class(self):
         if 'pk' in self.kwargs:
             # for one result, we can use the verbose serializer
             return ImportBatchVerboseSerializer
         return super().get_serializer_class()
+
+    class LookupSerializer(Serializer):
+        organization = IntegerField(required=True)
+        platform = IntegerField(required=True)
+        report_type = IntegerField(required=True)
+        months = ListField(child=DateField(), allow_empty=False)
+
+    @action(detail=False, methods=['post'])
+    def lookup(self, request):
+        """ Based on provided list of records
+            [("organization", "platform", "report_type", "months")]
+            return corresponding import batches
+        """
+        serializer = self.LookupSerializer(many=True, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        fltr = Q(pk=None)  # always empty
+        for record in serializer.data:
+            fltr |= (
+                Q(organization_id=record["organization"])
+                & Q(platform_id=record["platform"])
+                & Q(report_type=record["report_type"])
+                & Q(date__in=record["months"])
+            )
+
+        qs = ImportBatch.objects.filter(fltr)
+        # Only available organizations of the user
+        qs = filters.AccessibleFilter().filter_queryset(request, qs, self)
+        # Apply ordering
+        qs = filters.OrderByFilter().filter_queryset(request, qs, self)
+        # Optimizations
+        qs = (
+            qs.select_related(
+                'user', 'platform', 'organization', 'report_type', 'sushifetchattempt'
+            )
+            .prefetch_related('mdu')
+            .annotate(accesslog_count=Count('accesslog'))
+        )
+        return Response(ImportBatchVerboseSerializer(qs, many=True).data)
+
+    class PurgeSerializer(Serializer):
+        batches = ListField(child=IntegerField(), allow_empty=False)
+
+    @atomic
+    @action(detail=False, methods=['post'], serializer_class=PurgeSerializer)
+    def purge(self, request):
+        """ Remove all data and related structures of given list of import batches
+
+            Note that if id of given ib doesn't exists it is not treated as an error
+            It might have been already deleted
+        """
+        counter = Counter()
+        serializer = self.PurgeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # only accesible batches
+        batches = filters.AccessibleFilter().filter_queryset(
+            request, ImportBatch.objects.filter(pk__in=serializer.data["batches"]), self
+        )
+
+        # note that we don't use queryset's delete() because it doesn't trigger signals
+
+        # remove fetch intentions and fetch attempts
+        for fi in FetchIntention.objects.filter(attempt__import_batch__in=batches):
+            counter["sushi"] += 1
+            fi.attempt.delete()
+            fi.delete()
+
+        mdus = list(
+            ManualDataUpload.objects.filter(import_batches__in=batches).values_list('pk', flat=True)
+        )
+
+        # remove import batches
+        for ib in batches:
+            counter["batches"] += 1
+            ib.delete()
+
+        # remove empty manual data uploads
+        for mdu in ManualDataUpload.objects.filter(pk__in=mdus):
+            if not mdu.import_batches.exists():
+                counter["manual"] += 1
+                mdu.delete()
+
+        return Response(counter)
 
     class DataPresenceParamSerializer(Serializer):
 

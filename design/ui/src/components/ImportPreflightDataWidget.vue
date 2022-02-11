@@ -9,6 +9,7 @@ en:
   title_count: Title count
   hits: hits
   is_interest_metric: This metric defines interest for this report type
+  data_exists: Data for this month already exists.
 
 cs:
   output_logs: Vygenerované záznamy
@@ -20,6 +21,7 @@ cs:
   title_count: Počet titulů
   hits: zásahů
   is_interest_metric: Tato metrika definuje zájem pro tento typ reportu
+  data_exists: Data za tento měsíc již existují.
 </i18n>
 
 <template>
@@ -59,7 +61,21 @@ cs:
             <div class="text-right">
               <table style="width: 100%">
                 <tr v-for="rec in monthsSorted" :key="rec.name">
-                  <td class="text-left pr-4">{{ rec.name.substring(0, 7) }}</td>
+                  <td class="text-left pr-4">
+                    {{ rec.name.substring(0, 7) }}
+
+                    <v-tooltip
+                      bottom
+                      v-if="preflightData.clashing_months.includes(rec.name)"
+                    >
+                      <template v-slot:activator="{ on }">
+                        <v-icon class="ml-1" x-small color="warning" v-on="on">
+                          fa fa-exclamation-triangle
+                        </v-icon>
+                      </template>
+                      <span>{{ $t("data_exists") }}</span>
+                    </v-tooltip>
+                  </td>
                   <td>{{ rec.value }}</td>
                 </tr>
               </table>
@@ -87,7 +103,6 @@ cs:
                     </v-tooltip>
                     <span v-else v-text="rec.name"></span>
                   </td>
-
                   <td>{{ rec.value }}</td>
                 </tr>
               </table>

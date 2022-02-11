@@ -146,6 +146,7 @@ class SushiCredentialsDataCounterReportSerializer(Serializer):
     id = IntegerField(required=True)
     code = ChoiceField(choices=[e[0] for e in COUNTER_REPORTS], required=True)
     name = CharField(allow_blank=True)
+    report_type = IntegerField(required=True)
 
 
 class SushiCredentialsDataReportSerializer(Serializer):

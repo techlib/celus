@@ -1,34 +1,34 @@
 <i18n lang="yaml">
 en:
-  clashing_import_batches:
-    title: Clashing Imports
+  import_batches_list:
     header:
       record_count: Records
       created: Created
       month: Month
       user: User
-      sushi: Sushi
+      source: Source
+      report_type: Report type
     tooltip:
       manual: Manually uploaded
-      sushi: Harvested using sushi
+      sushi: Harvested using SUSHI
 
 cs:
-  clashing_import_batches:
-    title: Konfliktní importy
+  import_batches_list:
     header:
       record_count: Záznamů
       created: Vytvořeno
       month: Měsíc
       user: Uživatel
-      sushi: Sushi
+      source: Zdroj
+      report_type: Typ reportu
     tooltip:
       manual: Ručně nahráno
-      sushi: Staženo přes sushi
+      sushi: Staženo přes SUSHI
 </i18n>
 
 <template>
   <v-container>
-    <h3>{{ $t("clashing_import_batches.title") }}</h3>
+    <h3 v-if="titleText">{{ titleText || $t("import_batches_list.title") }}</h3>
     <v-data-table
       :headers="headers"
       :items="importBatches"
@@ -37,6 +37,7 @@ cs:
       }"
       dense
       hide-default-footer
+      :loading="loading"
     >
       <template #item.created="{ item }">
         <span v-html="isoDateTimeFormatSpans(item.created)"></span>
@@ -47,8 +48,12 @@ cs:
       <template #item.sushifetchattempt="{ item }">
         <CheckMark
           :value="!!item.sushifetchattempt"
-          :true-tooltip="$t('clashing_import_batches.tooltip.sushi')"
-          :false-tooltip="$t('clashing_import_batches.tooltip.manual')"
+          true-icon="fas fa-cloud-download-alt"
+          false-icon="fas fa-upload"
+          true-color="primary"
+          false-color="primary"
+          :true-tooltip="$t('import_batches_list.tooltip.sushi')"
+          :false-tooltip="$t('import_batches_list.tooltip.manual')"
         />
       </template>
     </v-data-table>
@@ -64,7 +69,7 @@ import {
 import CheckMark from "@/components/util/CheckMark";
 
 export default {
-  name: "ClashingImportBatchesWidget",
+  name: "ImportBatchesList",
 
   components: {
     CheckMark,
@@ -74,32 +79,44 @@ export default {
     importBatches: {
       required: true,
     },
+    titleText: {
+      required: false,
+      type: String,
+    },
+    loading: {
+      required: false,
+      type: Boolean,
+      default: false,
+    },
   },
 
   computed: {
     headers() {
       return [
         {
-          text: this.$i18n.t("clashing_import_batches.header.created"),
+          text: this.$i18n.t("import_batches_list.header.created"),
           value: "created",
         },
         {
-          text: this.$i18n.t("clashing_import_batches.header.month"),
+          text: this.$i18n.t("import_batches_list.header.month"),
           value: "date",
         },
         {
-          text: this.$i18n.t("clashing_import_batches.header.user"),
+          text: this.$i18n.t("import_batches_list.header.report_type"),
+          value: "report_type.short_name",
+        },
+        {
+          text: this.$i18n.t("import_batches_list.header.user"),
           value: "user.email",
         },
         {
-          text: this.$i18n.t("clashing_import_batches.header.sushi"),
+          text: this.$i18n.t("import_batches_list.header.source"),
           value: "sushifetchattempt",
         },
         {
-          text: this.$i18n.t("clashing_import_batches.header.record_count"),
+          text: this.$i18n.t("import_batches_list.header.record_count"),
           value: "accesslog_count",
         },
-        // TODO sushi indicator
       ];
     },
   },
