@@ -47,6 +47,7 @@ tests:load_initial_data:
     POSTGRES_PASSWORD: celus_loaddata
     POSTGRES_HOST: postgres
     REDIS_URL: "redis://redis:6379/1"
+    CLICKHOUSE_SYNC_ACTIVE: "false"
   before_script:
     - poetry install
   script:

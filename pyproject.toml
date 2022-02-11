@@ -76,7 +76,7 @@ pytest-xdist = "^2.2.1"
 django-test-migrations = "^1.1.0"
 django-import-export = "^2.5.0"
 djangorestframework-api-key = "^2.0.0"
-hcube = "0.1.5"
+hcube = "0.3.0"
 
 
 

@@ -4,7 +4,7 @@ from hcube.api.models.cube import Cube
 from hcube.api.models.dimensions import IntDimension, DateDimension
 from hcube.api.models.materialized_views import AggregatingMaterializedView
 from hcube.api.models.metrics import IntMetric
-from hcube.backends.clickhouse import ClickhouseCubeBackend
+from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
 
 from logs.logic.materialized_interest import interest_report_type
 from logs.models import AccessLog, ImportBatch
@@ -60,6 +60,16 @@ class AccessLogCube(Cube):
             'dim7',
             'import_batch_id',
             'id',
+        ]
+        indexes = [
+            # skipping index to make finding data by import batch faster
+            # reduces time to delete import batch data by several factors of magnitude for big dbs
+            IndexDefinition(
+                name='idx_import_batch_id',
+                expression='import_batch_id',
+                type='set(0)',
+                granularity=1,
+            )
         ]
 
     @classmethod
