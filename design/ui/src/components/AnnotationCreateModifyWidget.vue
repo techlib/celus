@@ -3,7 +3,7 @@
 <i18n lang="yaml">
 en:
   labels:
-    short_message: Annotation preamble
+    short_message: Short description
     message: Annotation text
     subject: Title
   level: Importance
@@ -15,7 +15,7 @@ en:
   all: All
 cs:
   labels:
-    short_message: Krátký úvod zprávy
+    short_message: Krátký popisek
     message: Text zprávy
     subject: Titulek
   level: Důležitost
