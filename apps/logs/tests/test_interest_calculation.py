@@ -273,6 +273,10 @@ class TestInterestRecomputationDetection:
         assert {obj.pk for obj in qs} == {ib1.pk}
 
     def test_find_platform_interest_changes2(self, organizations, report_type_nd):
+        """
+        Test that when changing report type of PlatformInterestReport, import batches for that
+        platform are recomputed.
+        """
         organization = organizations[0]
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
@@ -307,6 +311,34 @@ class TestInterestRecomputationDetection:
         # let's test the function
         qs = _find_platform_interest_changes()
         assert {obj.pk for obj in qs} == {ib1.pk}
+
+    def test_find_platform_interest_changes3(self, organizations, report_type_nd):
+        """
+        Test that when changing platform of PlatformInterestReport, import batches for that
+        report type do not change - it would be pointless as only data for ib.platform can
+        influence the ib interest.
+        """
+        organization = organizations[0]
+        platform = Platform.objects.create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
+        report_type = report_type_nd(1, short_name='rt1')  # type: ReportType
+        # now define the interest
+        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        ib1 = ImportBatch.objects.create(
+            organization=organization,
+            platform=platform,
+            report_type=report_type,
+            interest_timestamp=now(),
+        )
+        # update pir - it should invalidate ib1
+        pir.platform = Platform.objects.create(
+            ext_id=1235, short_name='P2', name='P2', provider='P2'
+        )
+        pir.save()
+        assert pir.last_modified > ib1.interest_timestamp
+        qs = _find_platform_interest_changes()
+        assert qs.count() == 0, 'nothing to recompute'
 
     def test_find_metric_interest_changes(self, organizations, report_type_nd):
         organization = organizations[0]

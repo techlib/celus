@@ -321,18 +321,12 @@ def _find_platform_interest_changes():
     """
     batches where interest definition changed after interest_timestamp - platforminterest change
     """
-    # we must take into account both the PlatformInterestReport object that is connected through
-    # platform and the one that is connected through report_type
+    # we only care about changes related to the import_batch.platform, those related to
+    # report_type are not relevant as they would not touch the relevant batches
     return (
         ImportBatch.objects.all()
-        .annotate(
-            last_interest_change1=Max('platform__platforminterestreport__last_modified'),
-            last_interest_change2=Max('report_type__platforminterestreport__last_modified'),
-        )
-        .filter(
-            Q(last_interest_change1__gte=F('interest_timestamp'))
-            | Q(last_interest_change2__gte=F('interest_timestamp'))
-        )
+        .annotate(last_interest_change=Max('platform__platforminterestreport__last_modified'))
+        .filter(Q(last_interest_change__gte=F('interest_timestamp')))
     )
 
 
