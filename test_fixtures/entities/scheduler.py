@@ -49,6 +49,9 @@ class FetchIntentionQueueFactory(factory.django.DjangoModelFactory):
 
 
 class FetchIntentionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = FetchIntention
+
     harvest = factory.SubFactory(HarvestFactory)
     attempt = factory.SubFactory(
         FetchAttemptFactory,
@@ -78,9 +81,6 @@ class FetchIntentionFactory(factory.django.DjangoModelFactory):
         if obj.queue and obj.pk:
             obj.queue.end = obj
             obj.queue.save()
-
-    class Meta:
-        model = FetchIntention
 
 
 class AutomaticFactory(factory.django.DjangoModelFactory):

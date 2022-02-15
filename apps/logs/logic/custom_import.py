@@ -1,17 +1,14 @@
 import typing
-
 from collections import Counter
 from datetime import date, datetime
-import dateparser
-from django.db import connection
-from django.db.transaction import atomic
 
+import dateparser
+from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
-from core.models import UL_ORG_ADMIN
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
-from logs.models import ImportBatch, ManualDataUpload, Metric, OrganizationPlatform
+from logs.models import ImportBatch, ManualDataUpload, OrganizationPlatform
 from nigiri.counter5 import CounterRecord
 
 
@@ -162,7 +159,16 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
 
 
 @atomic
-def import_custom_data(mdu: ManualDataUpload, user) -> dict:
+def import_custom_data(
+    mdu: ManualDataUpload, user, months: typing.Optional[typing.Iterable[str]] = None
+) -> dict:
+    """
+    :param mdu:
+    :param user:
+    :param months: Can be used to limit which months of data will be loaded from the file -
+                   see `import_counter_records` for more details how this works
+    :return: import statistics
+    """
     records = mdu.data_to_records()
     # TODO: the owner level should be derived from the user and the organization at hand
     import_batches, stats = import_counter_records(
@@ -170,6 +176,7 @@ def import_custom_data(mdu: ManualDataUpload, user) -> dict:
         mdu.organization,
         mdu.platform,
         records,
+        months=months,
         import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
     )
     # explicitly connect the organization and the platform

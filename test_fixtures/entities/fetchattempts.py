@@ -4,7 +4,7 @@ from random import randint
 import factory
 from dateutil.relativedelta import relativedelta
 
-from sushi.models import SushiFetchAttempt
+from sushi.models import SushiFetchAttempt, AttemptStatus
 
 from .credentials import CredentialsFactory
 from .counter_report_types import CounterReportTypeFactory
@@ -22,5 +22,6 @@ class FetchAttemptFactory(factory.django.DjangoModelFactory):
     end_date = factory.LazyAttribute(
         lambda x: x.start_date + relativedelta(months=1) - relativedelta(days=1)
     )
-
+    import_batch = None
+    status = AttemptStatus.SUCCESS
     data_file = factory.django.FileField()

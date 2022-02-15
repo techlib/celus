@@ -4,4 +4,8 @@ class DataStructureError(ValueError):
     - might be missing data, conflict with existing data, etc.
     """
 
-    ...
+
+class SourceFileMissingError(Exception):
+    """
+    Used in re-importing code if is finds that the file to read is not there
+    """

@@ -6,6 +6,7 @@ from datetime import date
 from typing import Optional, Tuple, Set
 
 from django.conf import settings
+from django.db.models import F
 from django.db.transaction import atomic, on_commit
 
 from core.logic.debug import log_memory
@@ -210,7 +211,12 @@ def import_counter_records(
             months_in_data = {month for month in months_in_data if month in months}
             # filter records down to only those that are present in `months` - we do it early
             # to save as much work as possible
-            record_batch = [rec for rec in record_batch if rec.start in months_in_data]
+            record_batch = [
+                rec
+                for rec in record_batch
+                if (rec.start.isoformat() if isinstance(rec.start, date) else rec.start)
+                in months_in_data
+            ]
 
         # the following would crash if we tried to create an import batch for month that already
         # has an import batch
@@ -352,6 +358,7 @@ def _import_counter_records(
             else:
                 dim_value = int(dim_value) if dim_value is not None else None
             id_attrs[f'dim{i+1}'] = dim_value
+        # here we detect possible duplicated keys and merge matching records
         key = tuple(sorted(id_attrs.items()))
         if key in to_insert:
             to_insert[key] += record.value
@@ -362,30 +369,31 @@ def _import_counter_records(
     # compare the prepared data with current database content
     # get the candidates
     log_memory('XX')
-    to_check = AccessLog.objects.filter(
-        organization=organization,
-        platform=platform,
-        report_type=report_type,
-        date__lte=max(seen_dates),
-        date__gte=min(seen_dates),
-    )
     to_compare = {}
-    for al_rec in to_check.values(
-        'pk',
-        'organization_id',
-        'platform_id',
-        'report_type_id',
-        'date',
-        'value',
-        'target_id',
-        'metric_id',
-        *[f'dim{i+1}' for i, d in enumerate(dimensions)],
-    ):
-        pk = al_rec.pop('pk')
-        value = al_rec.pop('value')
-        al_rec['date'] = al_rec['date'].isoformat()
-        key = tuple(sorted(al_rec.items()))
-        to_compare[key] = (pk, value)
+    if to_insert:
+        to_check = AccessLog.objects.filter(
+            organization=organization,
+            platform=platform,
+            report_type=report_type,
+            date__lte=max(seen_dates),
+            date__gte=min(seen_dates),
+        )
+        for al_rec in to_check.values(
+            'pk',
+            'organization_id',
+            'platform_id',
+            'report_type_id',
+            'date',
+            'value',
+            'target_id',
+            'metric_id',
+            *[f'dim{i+1}' for i, d in enumerate(dimensions)],
+        ):
+            pk = al_rec.pop('pk')
+            value = al_rec.pop('value')
+            al_rec['date'] = al_rec['date'].isoformat()
+            key = tuple(sorted(al_rec.items()))
+            to_compare[key] = (pk, value)
     # make the comparison
     log_memory('XX2')
     als_to_insert = []
@@ -393,14 +401,31 @@ def _import_counter_records(
     max_batch_size = 100_000
     for key, value in to_insert.items():
         db_pk, db_value = to_compare.get(key, (None, None))
+        rec = dict(key)
+        import_batch = month_to_import_batch[rec['date']]
         if db_pk:
-            raise DataStructureError(
-                f'Clashing accesslog even though import batch level checks passed: %s', key
-            )
+            # There is an accesslog with the same dimensions.
+            # It could belong to the same import batch, which means we got it from the same file
+            # but in different batches determined by `buffer_size` in `import_counter_records`.
+            # In such case, we need to merge it with the existing record,
+            # but if it comes from a different IB, we need to raise an error
+            # BTW, this operation is relatively expensive, but it should happen only very seldom,
+            # so we do not care that much
+            clash = AccessLog.objects.get(pk=db_pk)
+            if import_batch.pk == clash.import_batch_id:
+                # we have an AL from the same batch, just update
+                clash.value = F('value') + value
+                clash.save()
+                logger.warning(f'Merging duplicated values in import batch #{import_batch.pk}')
+            else:
+                raise DataStructureError(
+                    f'Clashing accesslog even though import batch level checks passed: {rec}; '
+                    f'Clashing AL is from IB #{clash.import_batch_id} from '
+                    f'{clash.import_batch.created}'
+                )
         else:
-            rec = dict(key)
             rec['value'] = value
-            als_to_insert.append(AccessLog(import_batch=month_to_import_batch[rec['date']], **rec))
+            als_to_insert.append(AccessLog(import_batch=import_batch, **rec))
             if rec['target_id'] is not None:
                 target_date_tuples.add((rec['target_id'], rec['date']))
         if len(als_to_insert) >= max_batch_size:

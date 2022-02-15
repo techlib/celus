@@ -160,6 +160,28 @@ class TestDataImport:
         with pytest.raises(DataStructureError):
             import_counter_records(rt, organizations[0], platform, crs)
 
+    @pytest.mark.parametrize(['buffer_size'], [(10,), (3,), (2,), (1,)])
+    def test_duplicated_data_in_one_import(
+        self, counter_records_nd, organizations, report_type_nd, platform, buffer_size
+    ):
+        """
+        Test that when there are several records with the same dimensions in the records,
+        they are properly merged together.
+        It should work regardless of buffer_size - which means even if the clashing records
+        are in different batches
+        """
+        cr = list(counter_records_nd(3, record_number=1, title='Title ABC', dim_value='one'))[0]
+        crs = [cr, cr, cr]
+        rt = report_type_nd(3)  # type: ReportType
+        _ibs, stats = import_counter_records(
+            rt, organizations[0], platform, crs, buffer_size=buffer_size
+        )
+        assert AccessLog.objects.count() == 1
+        assert AccessLog.objects.get().value == 3 * cr.value
+        assert Title.objects.count() == 1
+        assert stats['new logs'] == 1
+        assert stats['new platformtitles'] == 1
+
 
 @pytest.mark.django_db
 class TestCounter4Import:

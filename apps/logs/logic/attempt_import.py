@@ -1,6 +1,7 @@
 import logging
 import os
 import typing
+from datetime import date
 
 from django.conf import settings
 from django.db.transaction import atomic
@@ -113,11 +114,23 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.credentials.organization,
             attempt.credentials.platform,
             records,
+            months=[
+                attempt.start_date.isoformat()
+                if isinstance(attempt.start_date, date)
+                else attempt.start_date
+            ],
         )
         if len(import_batches) > 1:
             raise DataStructureError('Cannot import data for more than one month from SUSHI')
-        attempt.import_batch = import_batches[0]
-        attempt.status = AttemptStatus.SUCCESS
+        # it is possible that because of month filter there will be no data imported anyway
+        # here we handle such situation
+        if import_batches:
+            attempt.import_batch = import_batches[0]
+            attempt.status = AttemptStatus.SUCCESS
+        else:
+            attempt.status = AttemptStatus.NO_DATA
+            # it may be overwritten bellow with sushi warnings, but that's not a problem
+            attempt.log = 'No data found during import'
         if counter_version == 5 and (reader.errors or reader.warnings):
             attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
             attempt.error_code = reader.warnings[0].code
