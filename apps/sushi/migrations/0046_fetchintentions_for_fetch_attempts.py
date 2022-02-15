@@ -52,6 +52,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('sushi', '0045_fetchattempt_statemachine'),
+        ('scheduler', '0011_fetchintention_previous'),
     ]
 
     operations = [
