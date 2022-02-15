@@ -21,6 +21,7 @@ def add_empty_import_batch_to_last_3030_attempt(apps, schema_editor):
             organization=fi.credentials.organization,
             date=fi.start_date,
         )
+        fi.attempt.save()
         counter["finalized_count"] += 1
 
     print()
