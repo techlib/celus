@@ -9,12 +9,14 @@ def add_empty_import_batch_to_last_3030_attempt(apps, schema_editor):
     ImportBatch = apps.get_model('logs', 'ImportBatch')
     FetchIntention = apps.get_model('scheduler', 'FetchIntention')
     counter = Counter()
-    for fi in FetchIntention.objects.filter(
+    qs = FetchIntention.objects.filter(
         duplicate_of__isnull=True,
         pk=F('queue__end__pk'),  # last in queue
         attempt__error_code="3030",
         attempt__import_batch__isnull=True,
-    ):
+    )
+    print(f'\nGoing to create {qs.count()} import batches')
+    for fi in qs.iterator():
         fi.attempt.import_batch = ImportBatch.objects.create(
             report_type=fi.counter_report.report_type,
             platform=fi.credentials.platform,
@@ -23,8 +25,8 @@ def add_empty_import_batch_to_last_3030_attempt(apps, schema_editor):
         )
         fi.attempt.save()
         counter["finalized_count"] += 1
-
-    print()
+        if counter['finalized_count'] % 1000 == 0:
+            print(counter['finalized_count'])
     print(counter)
 
 

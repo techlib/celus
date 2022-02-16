@@ -361,6 +361,9 @@ class FetchIntention(models.Model):
         help_text='Identifier of retry queue',
         on_delete=models.CASCADE,
     )
+    # bookkeeping
+    timestamp = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
 
     # Retry counters
     data_not_ready_retry = models.SmallIntegerField(default=0)
