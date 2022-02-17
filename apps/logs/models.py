@@ -413,6 +413,12 @@ class AccessLog(models.Model):
             BrinIndex(fields=('organization',)),
             BrinIndex(fields=('date',)),
             Index(fields=('report_type', 'organization')),  # these occur often, so we optimize
+            # the following index makes it possible to answer queries about unique report_type
+            # for a platform (and potentially organization) using IndexScan only
+            # this speeds up the /api/organization/X/platform/Y/report-views/ endpoint by
+            # a factor of 10 when organization is given and factor of 2 for all organizations
+            # it takes about 5 % of the table size
+            Index(fields=('platform', 'organization', 'report_type')),
         )
 
     objects = AccessLogQuerySet.as_manager()
