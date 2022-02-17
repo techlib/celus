@@ -22,3 +22,5 @@ class FetchAttemptFactory(factory.django.DjangoModelFactory):
     end_date = factory.LazyAttribute(
         lambda x: x.start_date + relativedelta(months=1) - relativedelta(days=1)
     )
+
+    data_file = factory.django.FileField()

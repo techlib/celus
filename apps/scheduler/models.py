@@ -37,6 +37,7 @@ NO_DATA_RETRY_PERIOD = timedelta(days=45)  # cca month and half
 SERVICE_NOT_AVAILABLE_MAX_RETRY_TIME = timedelta(days=1)
 SERVICE_BUSY_MAX_RETRY_TIME = timedelta(days=1)
 DATA_NOT_READY_RETRY_PERIOD = timedelta(days=1)
+PARTIAL_DATA_RETRY_PERIOD = timedelta(days=1)
 
 
 class RunResponse(Enum):
@@ -434,6 +435,8 @@ class FetchIntention(models.Model):
             return cls.handle_no_data
         elif error_code == ErrorCode.TOO_MANY_REQUESTS:
             return cls.handle_too_many_requests
+        elif error_code == ErrorCode.PARTIAL_DATA_RETURNED:
+            return cls.handle_partial_data
 
         return None
 
@@ -604,16 +607,23 @@ class FetchIntention(models.Model):
 
     def handle_data_not_ready(self):
         next_time, _ = FetchIntention.next_exponential(
-            self.data_not_ready_retry, DATA_NOT_READY_RETRY_PERIOD.total_seconds(),
+            self.data_not_ready_retry, PARTIAL_DATA_RETRY_PERIOD.total_seconds(),
         )
+
+        if self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
+            # giving up - last retry will be we showing empty data
+            # represented by empty import batch
+            self.attempt.import_batch = create_import_batch_or_crash(
+                report_type=self.counter_report.report_type,
+                organization=self.credentials.organization,
+                platform=self.credentials.platform,
+                month=self.start_date,
+            )
+            self.attempt.save()
+            return
 
         # prepare retry
         retry = self._create_retry(next_time, inc_data_not_ready_retry=True)
-
-        if self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
-            # giving up
-            retry.cancel()
-            return
 
     def handle_no_data(self):
         """ Some vendors use no_data status as data_not_ready status """
@@ -627,6 +637,7 @@ class FetchIntention(models.Model):
             - datetime.combine(self.end_date, datetime.min.time(), tzinfo=next_time.tzinfo)
             > NO_DATA_RETRY_PERIOD
         ):
+
             # giving up - last retry will be we showing empty data
             # represented by empty import batch
             self.attempt.import_batch = create_import_batch_or_crash(
@@ -650,6 +661,23 @@ class FetchIntention(models.Model):
 
         # prepare retry
         self._create_retry(self.scheduler.when_ready)
+
+    def handle_partial_data(self):
+        next_time, _ = FetchIntention.next_exponential(
+            self.data_not_ready_retry, DATA_NOT_READY_RETRY_PERIOD.total_seconds(),
+        )
+
+        if self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
+            # giving up
+            # consider last partial data as final and let data to be imported
+            # Note that if attempt doesn't contain any data it is marked as
+            # NO_DATA when the data are imported
+            self.attempt.status = AttemptStatus.IMPORTING
+            self.attempt.save()
+            return
+
+        # prepare retry
+        self._create_retry(next_time, inc_data_not_ready_retry=True)
 
     @property
     def platform_name(self):

@@ -614,9 +614,14 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                     when_processed = now()
             else:
                 if partial_data:
-                    # Treat partial data as if download failed
+                    # Treat partial data as if there were no data
                     # we want to proceed only with complete data
-                    status = AttemptStatus.DOWNLOAD_FAILED
+                    log = (
+                        "Partial data returned:\n"
+                        "Celus did not import the partial data from this harvest "
+                        "and will retry downloading the data later"
+                    )
+                    status = AttemptStatus.NO_DATA
                 else:
                     if report.record_found:
                         status = AttemptStatus.IMPORTING

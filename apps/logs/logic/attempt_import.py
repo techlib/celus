@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db.transaction import atomic
 
 from logs.exceptions import DataStructureError
-from logs.logic.data_import import import_counter_records
+from logs.logic.data_import import import_counter_records, create_import_batch_or_crash
 from logs.models import OrganizationPlatform, ImportBatch
 from nigiri.client import Sushi5Client, SushiException, SushiError
 from nigiri.counter5 import CounterError, Counter5ReportBase, TransportError
@@ -130,6 +130,13 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         else:
             attempt.log = 'No data found during import'
         attempt.status = AttemptStatus.NO_DATA
+        # create empty import batch each time empty data are imported
+        attempt.import_batch = create_import_batch_or_crash(
+            report_type=attempt.counter_report.report_type,
+            organization=attempt.credentials.organization,
+            platform=attempt.credentials.platform,
+            month=attempt.start_date,
+        )
         attempt.save()
         logger.warning('No records found!')
     attempt.mark_processed()

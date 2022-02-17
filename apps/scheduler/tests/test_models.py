@@ -1,3 +1,4 @@
+import io
 import typing
 import uuid
 
@@ -25,6 +26,7 @@ from test_fixtures.scenarios.basic import (
     schedulers,
 )
 
+from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
 from scheduler import tasks
@@ -315,7 +317,7 @@ class TestFetchIntention:
                     timedelta(days=64),
                     None,
                 ],
-                True,
+                False,
             ),
             (
                 ErrorCode.NO_DATA_FOR_DATE_ARGS.value,
@@ -330,8 +332,22 @@ class TestFetchIntention:
                 ],
                 False,
             ),
+            (
+                ErrorCode.PARTIAL_DATA_RETURNED.value,
+                [
+                    timedelta(days=1),
+                    timedelta(days=2),
+                    timedelta(days=4),
+                    timedelta(days=8),
+                    timedelta(days=16),
+                    timedelta(days=32),
+                    timedelta(days=64),
+                    None,
+                ],
+                False,
+            ),
         ),
-        ids=("not_ready", "no_data",),
+        ids=("not_ready", "no_data", "partial_data"),
     )
     def test_process_retry_chain(
         self,
@@ -349,11 +365,11 @@ class TestFetchIntention:
         def mocked_fetch_report(
             self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True,
         ):
-
             return FetchAttemptFactory(
                 error_code=error_code,
                 credentials=credentials["standalone_tr"],
                 counter_report=counter_report_types["tr"],
+                data_file__data=b'{"Report_Items": []}',
             )
 
         monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
@@ -362,13 +378,24 @@ class TestFetchIntention:
             with freeze_time(fi.not_before):
                 fi.scheduler = scheduler
                 assert fi.process() == ProcessResponse.SUCCESS
-                if not expected and error_code == ErrorCode.NO_DATA_FOR_DATE_ARGS.value:
-                    assert (
-                        fi.attempt.import_batch is not None
-                    ), "there should be import batch in no_data chain"
-                    assert (
-                        fi.attempt.import_batch.accesslog_set.count() == 0
-                    ), "import batch should be empty"
+                if not expected:
+                    if error_code == ErrorCode.PARTIAL_DATA_RETURNED.value:
+                        assert (
+                            fi.attempt.import_batch is None
+                        ), "last partial data should not contain ib"
+                        assert fi.attempt.can_import_data, "last partial data should be importable"
+                        import_one_sushi_attempt(fi.attempt)
+                        assert (
+                            fi.attempt.import_batch is not None
+                        ), "last partial data should contain ib after import"
+
+                    else:
+                        assert (
+                            fi.attempt.import_batch is not None
+                        ), "there should be import batch at the end of a chain"
+                        assert (
+                            fi.attempt.import_batch.accesslog_set.count() == 0
+                        ), "import batch should be empty if partial_data is not returned"
                 else:
                     assert fi.attempt.import_batch is None
             new_fi = FetchIntention.objects.order_by('pk').last()
