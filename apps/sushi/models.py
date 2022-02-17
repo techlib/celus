@@ -538,52 +538,36 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             error_code = 'connection'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             status = AttemptStatus.DOWNLOAD_FAILED
-        except SushiExceptionNigiri as e:
-            logger.warning('Error: %s', e)
-            error_code = 'non-sushi'
-            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
-            status = AttemptStatus.PARSING_FAILED
-        except Exception as e:
-            logger.error('Error: %s', e)
+        except (SushiExceptionNigiri, Exception) as e:
+            logger.log(
+                logging.WARNING if isinstance(e, SushiExceptionNigiri) else logging.ERROR,
+                'Error: %s',
+                e,
+            )
             error_code = 'non-sushi'
             log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
             status = AttemptStatus.PARSING_FAILED
         else:
-            # Check for partial data
-            partial_data = any(
-                str(w.code)
-                in (
-                    str(ErrorCode.PARTIAL_DATA_RETURNED.value),
-                    str(ErrorCode.NO_LONGER_AVAILABLE.value),
-                )
-                for w in report.warnings
-            )
-            # override default status
-            error_code = ''
-            error_code = (
-                str(ErrorCode.NO_LONGER_AVAILABLE.value)
-                if any(
-                    str(w.code) == str(ErrorCode.NO_LONGER_AVAILABLE.value) for w in report.warnings
-                )
-                else error_code
-            )
-            error_code = (
-                str(ErrorCode.PARTIAL_DATA_RETURNED.value)
-                if any(
-                    str(w.code) == str(ErrorCode.PARTIAL_DATA_RETURNED.value)
-                    for w in report.warnings
-                )
-                else error_code
-            )
+            warning_codes = [str(w.code) for w in report.warnings]
+            # override error and check for partial data
+            if str(ErrorCode.PARTIAL_DATA_RETURNED.value) in warning_codes:
+                error_code = str(ErrorCode.PARTIAL_DATA_RETURNED.value)
+                partial_data = True
+            elif str(ErrorCode.NO_LONGER_AVAILABLE.value) in warning_codes:
+                error_code = str(ErrorCode.NO_LONGER_AVAILABLE.value)
+                partial_data = True
+            else:
+                error_code = ''
+                partial_data = False
 
             # append to log
             log = ''
             if report.errors:
                 log += 'Errors: ' + '; '.join(str(e) for e in report.errors) + '\n' * 2
-            if report.infos:
-                log = 'Infos: ' + '; '.join(str(e) for e in report.infos) + '\n' * 2
             if report.warnings:
                 log += 'Warnings: ' + '; '.join(str(e) for e in report.warnings) + "\n" * 2
+            if report.infos:
+                log += 'Infos: ' + '; '.join(str(e) for e in report.infos) + '\n' * 2
 
             # This indicates fatal error
             error = report.errors or (report.warnings and not report.record_found)
