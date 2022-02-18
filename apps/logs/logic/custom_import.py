@@ -139,12 +139,16 @@ def histogram_with_count(iterable) -> Counter:
 def custom_import_preflight_check(mdu: ManualDataUpload):
     records = list(mdu.data_to_records())  # type: [CounterRecord]
     month_to_count = histogram_with_count([(str(record.start), record.value) for record in records])
-    clashing_months = ImportBatch.objects.filter(
-        report_type=mdu.report_type,
-        platform=mdu.platform,
-        organization=mdu.organization,
-        date__in=month_to_count.keys(),
-    ).values_list('date', flat=True)
+    clashing_months = (
+        ImportBatch.objects.filter(
+            report_type=mdu.report_type,
+            platform=mdu.platform,
+            organization=mdu.organization,
+            date__in=month_to_count.keys(),
+        )
+        .values_list('date', flat=True)
+        .distinct()
+    )
     can_import = not clashing_months
     return {
         'log_count': len(records),
