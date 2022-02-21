@@ -2,7 +2,7 @@
 
 <template>
   <!-- groups -->
-  <v-list-group v-if="item.items">
+  <v-list-group v-if="item.items" v-model="expanded" eager>
     <template v-slot:activator>
       <v-list-item-icon>
         <v-icon class="fa-fw">{{ item.icon }}</v-icon>
@@ -20,6 +20,7 @@
       :item="subitem"
       :notifications="notifications"
       :level="level + 1"
+      @expand="expand()"
     />
   </v-list-group>
 
@@ -28,6 +29,8 @@
     v-else
     :to="{ name: item.linkTo }"
     :class="`pl-${4 + 8 * level}`"
+    @change="change()"
+    ref="item"
   >
     <v-list-item-icon v-if="level === 0">
       <v-icon class="fa-fw">{{ item.icon }}</v-icon>
@@ -71,9 +74,26 @@ export default {
     level: { default: 0, type: Number },
   },
 
+  data() {
+    return {
+      expanded: null,
+    };
+  },
+
   computed: {
     visibleSubItems() {
       return this.item.items.filter((item) => item.show ?? true);
+    },
+  },
+
+  methods: {
+    change() {
+      if (this.$refs.item.isActive) {
+        this.$emit("expand");
+      }
+    },
+    expand() {
+      this.expanded = true;
     },
   },
 };
