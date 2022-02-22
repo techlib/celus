@@ -20,9 +20,6 @@ export default {
     // Component ID, to avoid using private attribute this._uid
     // Eg.: DashboardPage-n4hl2wq7
     this._cid = `${this.$options.name}-${randomString(8)}`;
-  },
-
-  beforeMount() {
     this.$store.dispatch("cancellation/setup", this._cid);
   },
 

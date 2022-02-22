@@ -103,12 +103,13 @@ cs:
 </template>
 
 <script>
+import cancellation from "@/mixins/cancellation";
 import { mapActions } from "vuex";
-import axios from "axios";
 import { monthsBetween, parseDateTime, ymDateFormat } from "@/libs/dates";
 
 export default {
   name: "SushiHarvestedSlotsWidget",
+  mixins: [cancellation],
 
   props: {
     credentials: { type: Array, required: true },
@@ -199,9 +200,13 @@ export default {
       if (!this.presenceDataUrl) return;
       this.loading = true;
       this.dataReady = false;
-      try {
-        let resp = await axios.get(this.presenceDataUrl);
-        this.presenceData = resp.data;
+      let result = await this.http({
+        url: this.presenceDataUrl,
+        group: "data-presence",
+      });
+      this.loading = false;
+      if (!result.error) {
+        this.presenceData = result.response.data;
         let map = new Map();
         this.presenceData.forEach((rec) =>
           map.set(
@@ -213,13 +218,6 @@ export default {
         );
         this.presenceMap = map;
         this.dataReady = true;
-      } catch (error) {
-        this.showSnackbar({
-          content: "Could not fetch into about existing data: " + error,
-          color: "error",
-        });
-      } finally {
-        this.loading = false;
       }
     },
   },
