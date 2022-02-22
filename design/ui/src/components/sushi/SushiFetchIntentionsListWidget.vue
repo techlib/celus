@@ -72,15 +72,17 @@ cs:
           :loading="loading"
           dense
         >
-
-          <template v-for="h in headers" v-slot:[`header.${h.value}`]="{ header }">
+          <template
+            v-for="h in headers"
+            v-slot:[`header.${h.value}`]="{ header }"
+          >
             <v-tooltip bottom v-if="header.tooltip">
               <template v-slot:activator="{ on }">
-                <span v-on="on">{{h.text}}</span>
+                <span v-on="on">{{ h.text }}</span>
               </template>
-                <span>{{h.tooltip}}</span>
+              <span>{{ h.tooltip }}</span>
             </v-tooltip>
-            <span v-else>{{h.text}}</span>
+            <span v-else>{{ h.text }}</span>
           </template>
 
           <template #top>
@@ -158,7 +160,10 @@ cs:
           </template>
 
           <template v-slot:item.notBefore="{ item }">
-            <span v-html="formatDateTime(item.notBefore)" v-if="!item.isFinished"></span>
+            <span
+              v-html="formatDateTime(item.notBefore)"
+              v-if="!item.isFinished"
+            ></span>
           </template>
 
           <template #item.status="{ item }">
@@ -170,9 +175,8 @@ cs:
           </template>
 
           <template #expanded-item="{ headers, item }">
-            <td>
-            </td>
-            <td :colspan="headers.length -1" class="py-2">
+            <td></td>
+            <td :colspan="headers.length - 1" class="py-2">
               <span
                 v-if="item.fetchingData"
                 v-text="$t('currently_downloading')"
@@ -186,6 +190,7 @@ cs:
                 v-text="$t('attempt_deleted')"
               ></span>
               <div v-else-if="item.attempt">
+                <AttemptExtractedData :attempt="item.attempt" />
                 <div v-if="item.attempt && item.attempt.data_file">
                   <strong>{{ $t("title_fields.data_file") }}</strong
                   >:
@@ -245,10 +250,10 @@ cs:
                   </ul>
                 </div>
               </span>
-              <div v-if="item.isForceRunPossible || item.isCancelPossible"><br /></div>
-              <v-tooltip
-                bottom
-              >
+              <div v-if="item.isForceRunPossible || item.isCancelPossible">
+                <br />
+              </div>
+              <v-tooltip bottom>
                 <template #activator="{ on }">
                   <v-btn
                     v-if="item.isForceRunPossible"
@@ -260,14 +265,12 @@ cs:
                     color="primary"
                   >
                     <v-icon class="fas fa-play-circle" x-small left></v-icon>
-                    {{ $t('actions_force_run_title') }}
+                    {{ $t("actions_force_run_title") }}
                   </v-btn>
                 </template>
-                <span>{{ $t('actions_force_run')}}</span>
+                <span>{{ $t("actions_force_run") }}</span>
               </v-tooltip>
-              <v-tooltip
-                bottom
-              >
+              <v-tooltip bottom>
                 <template #activator="{ on }">
                   <v-btn
                     v-if="item.isCancelPossible"
@@ -279,10 +282,10 @@ cs:
                     color="error"
                   >
                     <v-icon class="fas fa-ban" x-small left></v-icon>
-                    {{ $t('actions_cancel_title') }}
+                    {{ $t("actions_cancel_title") }}
                   </v-btn>
                 </template>
-                <span>{{ $t('actions_cancel')}}</span>
+                <span>{{ $t("actions_cancel") }}</span>
               </v-tooltip>
             </td>
           </template>
@@ -306,10 +309,11 @@ import { annotateIntention } from "@/libs/intention-state";
 import CheckMark from "@/components/util/CheckMark";
 import { intentionStateToIcon } from "@/libs/intention-state";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
+import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 
 export default {
   name: "SushiFetchIntentionsListWidget",
-  components: { CheckMark, FetchIntentionStatusIcon },
+  components: { AttemptExtractedData, CheckMark, FetchIntentionStatusIcon },
   props: {
     harvestId: {
       required: false,
@@ -442,7 +446,10 @@ export default {
             case "never":
               return item.isFinished || item.brokenCredentials;
             case "now":
-              return !(item.isFinished || item.brokenCredentials) && item.notBefore < now;
+              return (
+                !(item.isFinished || item.brokenCredentials) &&
+                item.notBefore < now
+              );
             case "future":
               return !(item.isFinished || item.brokenCredentials) >= now;
             default:
@@ -487,15 +494,15 @@ export default {
     }),
 
     triggerUrl(pk) {
-      return `${this.intentionsUrl}/${pk}/trigger/`
+      return `${this.intentionsUrl}/${pk}/trigger/`;
     },
 
     cancelUrl(pk) {
-      return `${this.intentionsUrl}/${pk}/cancel/`
+      return `${this.intentionsUrl}/${pk}/cancel/`;
     },
 
     async forceRun(intention) {
-      this.loadingActions.trigger.push(intention.pk)
+      this.loadingActions.trigger.push(intention.pk);
       try {
         await axios.post(this.triggerUrl(intention.pk));
       } catch (error) {
@@ -504,7 +511,9 @@ export default {
           color: "error",
         });
       } finally {
-        this.loadingActions.trigger = this.loadingActions.trigger.filter((x) => x !== intention.pk);
+        this.loadingActions.trigger = this.loadingActions.trigger.filter(
+          (x) => x !== intention.pk
+        );
       }
       this.fetchIntentions(false);
     },
@@ -514,7 +523,7 @@ export default {
     },
 
     async cancel(intention) {
-      this.loadingActions.cancel.push(intention.pk)
+      this.loadingActions.cancel.push(intention.pk);
       try {
         await axios.post(this.cancelUrl(intention.pk));
       } catch (error) {
@@ -523,7 +532,9 @@ export default {
           color: "error",
         });
       } finally {
-        this.loadingActions.cancel = this.loadingActions.cancel.filter((x) => x !== intention.pk);
+        this.loadingActions.cancel = this.loadingActions.cancel.filter(
+          (x) => x !== intention.pk
+        );
       }
       this.fetchIntentions(false);
     },
@@ -580,7 +591,10 @@ export default {
 
       if (!this.inactive && this.retryTimeout) {
         // setTimeout delay (ms) can't be greater than 32bit integer
-        setTimeout(() => this.scheduleRecheck(false), Math.min(1000 * 60 * 60, this.retryTimeout));
+        setTimeout(
+          () => this.scheduleRecheck(false),
+          Math.min(1000 * 60 * 60, this.retryTimeout)
+        );
       }
     },
     switchStateFilter(state) {

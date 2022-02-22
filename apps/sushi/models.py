@@ -766,6 +766,11 @@ class SushiFetchAttempt(models.Model):
         on_delete=models.SET_NULL,
         help_text="User who triggered the attempt or null if attempt was triggered by e.g. cron",
     )
+    extracted_data = models.JSONField(
+        default=dict, help_text='Information extracted from the SUSHI data header'
+    )
+
+    EXTRACTED_DATA_KEYS = ('Created_By', 'Institution_Name', 'Institution_ID')
 
     def __str__(self):
         return f'{self.status}: {self.credentials}, {self.counter_report}'
@@ -844,6 +849,7 @@ class SushiFetchAttempt(models.Model):
             self.import_batch = None
         self.status = AttemptStatus.UNPROCESSED
         self.log = ''
+        self.extracted_data = {}
         if 'import_crash_traceback' in self.processing_info:
             del self.processing_info['import_crash_traceback']
         self.save()
@@ -914,6 +920,18 @@ class SushiFetchAttempt(models.Model):
         ):
             mark_broken(SushiCredentials.BROKEN_SUSHI)
             return
+
+    def extract_header_data(self, header: dict) -> bool:
+        """
+        Takes supported header data from `header` and loads them into `extracted_data`.
+        Does not save the instance!
+        Returns true if something was extracted, false otherwise
+        """
+        ext_data = {key: header.get(key) for key in self.EXTRACTED_DATA_KEYS if key in header}
+        if ext_data:
+            self.extracted_data = ext_data
+            return True
+        return False
 
 
 class CounterReportsToCredentials(BrokenCredentialsMixin):

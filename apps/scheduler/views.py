@@ -290,8 +290,16 @@ class IntentionViewSet(ModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        return FetchIntention.objects.all().select_related(
-            'attempt', 'counter_report', 'credentials__organization', 'credentials__platform',
+        return (
+            FetchIntention.objects.all()
+            .select_related(
+                'attempt',
+                'counter_report',
+                'credentials__organization',
+                'credentials__platform',
+                'current_scheduler',
+            )
+            .annotate_credentials_state()
         )
 
     def filter_queryset(self, *args, **kwargs):

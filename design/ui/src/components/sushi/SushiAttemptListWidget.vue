@@ -10,6 +10,7 @@ en:
   show_chart: Show charts
   not_older_than: Not older than
   counter_version: Counter version
+  data_file: Data file
 
 cs:
   sushi_fetch_attempts: Pokusy o stažení Sushi
@@ -20,6 +21,7 @@ cs:
   show_chart: Zobrazit grafy
   not_older_than: Ne starší než
   counter_version: Verze Counter
+  data_file: Datový soubor
 </i18n>
 
 <template>
@@ -82,14 +84,30 @@ cs:
                 ></span>
               </template>
               <template #expanded-item="{ item, headers }">
-                <th colspan="2">Log</th>
-                <td :colspan="headers.length - 3" class="pre">
-                  {{ item.attempt.log }}
-                </td>
-                <td v-if="item.attempt && item.attempt.data_file">
-                  <a :href="item.attempt.data_file" target="_blank">
-                    Data file
-                  </a>
+                <td :colspan="headers.length">
+                  <div class="d-flex justify-space-between">
+                    <div>
+                      <div class="d-flex" v-if="item.attempt.log">
+                        <div class="font-weight-bold">
+                          {{ $t("log") }}
+                        </div>
+                        <div class="pre">
+                          {{ item.attempt.log }}
+                        </div>
+                      </div>
+                      <!-- extracted data -->
+                      <AttemptExtractedData :attempt="item.attempt" />
+                    </div>
+                    <div class="ml-auto">
+                      <a
+                        v-if="item.attempt && item.attempt.data_file"
+                        :href="item.attempt.data_file"
+                        target="_blank"
+                      >
+                        {{ $t("data_file") }}
+                      </a>
+                    </div>
+                  </div>
                 </td>
               </template>
               <template #item.data-table-expand="{ isExpanded, expand }">
@@ -185,10 +203,12 @@ import FetchAttemptModeFilter from "./FetchAttemptModeFilter";
 import SushiFetchIntentionStateIcon from "@/components/sushi/SushiFetchIntentionStateIcon";
 import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
+import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 
 export default {
   name: "SushiAttemptListWidget",
   components: {
+    AttemptExtractedData,
     SushiFetchIntentionStateIcon,
     AccessLogList,
     ImportBatchChart,

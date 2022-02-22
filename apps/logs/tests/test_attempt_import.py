@@ -187,3 +187,38 @@ class TestAttemptImport:
             fetch_attempt.log
             == "Warnings: Warning #3032: Usage No Longer Available for Requested Dates"
         )
+
+    def test_counter5_extracted_data(self, organizations, counter_report_type_named, platforms):
+        cr_type = counter_report_type_named('TR', version=5)
+
+        creds = SushiCredentials.objects.create(
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url="http://a.b.c/",
+        )
+
+        with (Path(__file__).parent / "data/counter5/5_TR_ProQuestEbookCentral.json").open() as f:
+
+            data_file = ContentFile(f.read())
+            data_file.name = "something.json"
+
+        fetch_attempt = SushiFetchAttempt.objects.create(
+            credentials=creds,
+            counter_report=cr_type,
+            start_date="2019-11-01",
+            end_date="2019-11-30",
+            data_file=data_file,
+            credentials_version_hash=creds.compute_version_hash(),
+            status=AttemptStatus.IMPORTING,
+        )
+
+        import_one_sushi_attempt(fetch_attempt)
+
+        assert fetch_attempt.status == AttemptStatus.SUCCESS
+        assert fetch_attempt.extracted_data['Institution_Name'] == 'Hidden'
+        assert fetch_attempt.extracted_data['Institution_ID'] == [
+            {"Type": "Proprietary", "Value": "EBC:hidden"}
+        ]
+        assert fetch_attempt.extracted_data['Created_By'] == 'ProQuest Ebook Central'

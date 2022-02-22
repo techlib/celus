@@ -687,25 +687,6 @@ class TestHarvestFetchIntentionAPI:
 
 @pytest.mark.django_db()
 class TestFetchIntentionAPI:
-    def test_list(
-        self,
-        basic1,
-        clients,
-        organizations,
-        platforms,
-        counter_report_types,
-        harvests,
-        credentials,
-    ):
-        """
-        Check whether fetch attempts are properly listed
-        """
-        url = reverse('sushi-fetch-attempt-list',)
-        resp = clients["master"].get(reverse('intention-list'),)
-        assert resp.status_code == 200
-        data = resp.json()
-        assert len(data) == 4
-
     @pytest.mark.parametrize(
         ['user', 'status_code'],
         [
@@ -740,11 +721,12 @@ class TestFetchIntentionAPI:
         assert resp.status_code == status_code
 
     @pytest.mark.parametrize(['attempt_count'], [(1,), (2,), (10,)])
-    def test_list(self, admin_client, attempt_count):
+    def test_list(self, admin_client, attempt_count, django_assert_max_num_queries):
         cr = CredentialsFactory()
         FetchAttemptFactory.create_batch(attempt_count, credentials=cr)
         FetchIntentionFactory.create_batch(attempt_count, credentials=cr, attempt__credentials=cr)
-        resp = admin_client.get(reverse('intention-list'))
+        with django_assert_max_num_queries(9):  # even 10 attempts should be under 10 requests
+            resp = admin_client.get(reverse('intention-list'))
         assert resp.status_code == 200
         assert len(resp.json()['results']) == attempt_count
 

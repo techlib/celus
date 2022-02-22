@@ -152,6 +152,10 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         )
         attempt.save()
         logger.warning('No records found!')
+    # fill in extracted_data
+    if hasattr(reader, 'header') and type(reader.header) is dict:
+        if attempt.extract_header_data(reader.header):
+            attempt.save()
     attempt.mark_processed()
 
 

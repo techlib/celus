@@ -226,6 +226,7 @@ class SushiFetchAttemptFlatSerializer(ModelSerializer):
             'when_processed',
             'partial_data',
             'status',
+            'extracted_data',
         )
 
 
