@@ -18,6 +18,7 @@ class Counter4ReportBase:
     dimension_to_attr = {
         'Publisher': 'publisher',
         'Content Provider': 'content_provider',
+        'Platform': 'platform',
     }
     title_id_to_attr = {
         'Print_ISSN': 'issn',
@@ -44,7 +45,6 @@ class Counter4ReportBase:
         for journal in report:  # type: CounterEresource
             for start, metric, value in journal:
                 record = CounterRecord()
-                record.platform_name = journal.platform
                 record.title = self._extract_title(journal)
                 record.title_ids = self._extract_title_ids(journal)
                 record.dimension_data = self._extract_dimension_data(self.dimensions, journal)
@@ -85,44 +85,44 @@ class Counter4ReportBase:
 
 class Counter4JR1Report(Counter4ReportBase):
 
-    dimensions = ['Publisher']
+    dimensions = ['Publisher', 'Platform']
 
 
 class Counter4JR2Report(Counter4ReportBase):
 
-    dimensions = ['Publisher', 'Access Denied Category']
+    dimensions = ['Publisher', 'Access Denied Category', 'Platform']
 
 
 class Counter4BR1Report(Counter4ReportBase):
 
-    dimensions = ['Publisher']
+    dimensions = ['Publisher', 'Platform']
 
 
 class Counter4BR2Report(Counter4ReportBase):
 
-    dimensions = ['Publisher']
+    dimensions = ['Publisher', 'Platform']
 
 
 class Counter4BR3Report(Counter4ReportBase):
 
-    dimensions = ['Publisher']
+    dimensions = ['Publisher', 'Platform']
 
 
 class Counter4DB1Report(Counter4ReportBase):
 
-    dimensions = ['Publisher']
+    dimensions = ['Publisher', 'Platform']
 
 
 class Counter4DB2Report(Counter4ReportBase):
 
-    dimensions = ['Publisher', 'Access Denied Category']
+    dimensions = ['Publisher', 'Access Denied Category', 'Platform']
 
 
 class Counter4PR1Report(Counter4ReportBase):
 
-    dimensions = ['Publisher']
+    dimensions = ['Publisher', 'Platform']
 
 
 class Counter4MR1Report(Counter4ReportBase):
 
-    dimensions = ['Content Provider']
+    dimensions = ['Content Provider', 'Platform']

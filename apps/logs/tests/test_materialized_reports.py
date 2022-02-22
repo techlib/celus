@@ -134,7 +134,7 @@ class TestMaterializedReport:
         When interest definition changes and interest is thus recomputed after materialization
         occurs, we need to recompute materialized reports as well.
         """
-        cr = lambda **kw: CounterRecord(platform_name=platform.name, **kw)
+        cr = CounterRecord
         crs1 = [
             cr(start='2018-01-01', end='2018-01-31', metric='m1', value=1, title='Title1',),
             cr(start='2018-01-01', end='2018-01-31', metric='m2', value=2, title='Title2',),

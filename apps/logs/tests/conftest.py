@@ -24,7 +24,6 @@ from publications.models import Platform, Title
 @pytest.fixture
 def counter_records_0d():
     rec1 = CounterRecord(
-        platform_name='Platform1',
         start='2019-01-01',
         end='2019-01-31',
         metric='Metric 1',
@@ -56,7 +55,6 @@ def counter_records_nd():
             if title is None:
                 title = f'title {fake.pyint()}'
             rec = CounterRecord(
-                platform_name=f'Platform{fake.pyint()}',
                 start='2019-01-01',
                 end='2019-01-31',
                 metric=metric if metric else f'Metric {fake.pyint()}',
@@ -93,7 +91,6 @@ def counter_records():
             dim_data = {f'dim{i}': value for i, value in enumerate(row[2:-1])}
             value = row[-1]
             rec = CounterRecord(
-                platform_name=platform if platform else f'Platform{fake.pyint()}',
                 start=start,
                 end=end.isoformat(),
                 metric=metric if metric else f'Metric {fake.pyint()}',

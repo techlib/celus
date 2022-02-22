@@ -17,7 +17,6 @@ from .exceptions import SushiException
 # but newer version o python >= 3.7 is required here
 class CounterRecord:
     __slots__ = (
-        "platform_name",
         "start",
         "end",
         "title",
@@ -29,7 +28,6 @@ class CounterRecord:
 
     def __init__(
         self,
-        platform_name=None,
         start=None,
         end=None,
         title=None,
@@ -38,7 +36,6 @@ class CounterRecord:
         value=None,
         dimension_data=None,
     ):
-        self.platform_name = platform_name
         self.start = start
         self.end = end
         self.title = title
@@ -132,7 +129,6 @@ class Counter5ReportBase:
 
         for item in items:
             record = CounterRecord()
-            record.platform_name = item.get('Platform')
             record.title = self._item_get_title(item)
             record.title_ids = self._extract_title_ids(item.get('Item_ID', []) or [])
             record.dimension_data = self._extract_dimension_data(self.dimensions, item)
@@ -290,7 +286,7 @@ class Counter5ReportBase:
 
 class Counter5DRReport(Counter5ReportBase):
 
-    dimensions = ['Access_Method', 'Data_Type', 'Publisher']
+    dimensions = ['Access_Method', 'Data_Type', 'Publisher', 'Platform']
 
     @classmethod
     def _item_get_title(cls, item):
@@ -299,12 +295,20 @@ class Counter5DRReport(Counter5ReportBase):
 
 class Counter5TRReport(Counter5ReportBase):
 
-    dimensions = ['Access_Type', 'Access_Method', 'Data_Type', 'Section_Type', 'YOP', 'Publisher']
+    dimensions = [
+        'Access_Type',
+        'Access_Method',
+        'Data_Type',
+        'Section_Type',
+        'YOP',
+        'Publisher',
+        'Platform',
+    ]
 
 
 class Counter5PRReport(Counter5ReportBase):
 
-    dimensions = ['Access_Method', 'Data_Type']
+    dimensions = ['Access_Method', 'Data_Type', 'Platform']
 
     @classmethod
     def _item_get_title(cls, item):
@@ -314,7 +318,7 @@ class Counter5PRReport(Counter5ReportBase):
 
 class Counter5IRReport(Counter5ReportBase):
 
-    dimensions = ['Access_Type', 'Access_Method', 'Data_Type', 'YOP', 'Publisher']
+    dimensions = ['Access_Type', 'Access_Method', 'Data_Type', 'YOP', 'Publisher', 'Platform']
 
     @classmethod
     def _item_get_title(cls, item):
@@ -323,7 +327,7 @@ class Counter5IRReport(Counter5ReportBase):
 
 class Counter5IRM1Report(Counter5IRReport):
 
-    dimensions = ['Publisher']
+    dimensions = ['Publisher', 'Platform']
 
 
 class Counter5TableReport:
@@ -337,17 +341,24 @@ class Counter5TableReport:
         'Metric_Type': 'metric',
         'Organization': 'organization',
         'Database': 'title',
-        'Platform': 'platform_name',
         'Title': 'title',
         'Item': 'title',
     }
 
     report_type_to_dimensions = {
-        'DR': ['Access_Method', 'Data_Type', 'Publisher'],
-        'TR': ['Access_Type', 'Access_Method', 'Data_Type', 'Section_Type', 'YOP', 'Publisher'],
-        'PR': ['Access_Method', 'Data_Type'],
-        'IR': ['Access_Type', 'Access_Method', 'Data_Type', 'YOP', 'Publisher'],
-        'IR_M1': ['Publisher'],
+        'DR': ['Access_Method', 'Data_Type', 'Publisher', 'Platform'],
+        'TR': [
+            'Access_Type',
+            'Access_Method',
+            'Data_Type',
+            'Section_Type',
+            'YOP',
+            'Publisher',
+            'Platform',
+        ],
+        'PR': ['Access_Method', 'Data_Type', 'Platform'],
+        'IR': ['Access_Type', 'Access_Method', 'Data_Type', 'YOP', 'Publisher', 'Platform'],
+        'IR_M1': ['Publisher', 'Platform'],
     }
 
     title_id_columns = ['DOI', 'ISBN', 'Print_ISSN', 'Online_ISSN']

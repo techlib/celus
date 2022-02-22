@@ -626,7 +626,7 @@ class ManualDataUpload(models.Model):
             records = custom_data_to_records(
                 data,
                 extra_dims=self.report_type.dimension_short_names,
-                initial_data={'platform_name': self.platform.name, 'metric': default_metric.pk},
+                initial_data={'metric': default_metric.pk},
             )
         else:
             reader = crt.get_reader_class(json_format=self.file_is_json())()
