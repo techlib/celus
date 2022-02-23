@@ -91,7 +91,7 @@ class ReportType(models.Model):
     def dimensions_sorted(self):
         if self.materialization_spec:
             return self.materialization_spec.base_report_type.dimensions_sorted
-        return list(self.dimensions.all())
+        return list(self.dimensions.all().order_by('reporttypetodimension__position'))
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
