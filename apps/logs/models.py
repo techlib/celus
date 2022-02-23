@@ -397,6 +397,7 @@ class ImportBatch(models.Model):
 
     class Meta:
         verbose_name_plural = "Import batches"
+        indexes = (BrinIndex(fields=('date',)),)
 
     @cached_property
     def accesslog_count(self):
