@@ -90,7 +90,7 @@ class ReportType(models.Model):
         return self.short_name
 
     @cached_property
-    def dimension_short_names(self):
+    def dimension_short_names(self) -> typing.List[str]:
         return [dim.short_name for dim in self.dimensions.all()]
 
     @cached_property
@@ -98,7 +98,7 @@ class ReportType(models.Model):
         return self.controlled_metrics.count() > 0
 
     @cached_property
-    def dimensions_sorted(self):
+    def dimensions_sorted(self) -> typing.List['Dimension']:
         if self.materialization_spec:
             return self.materialization_spec.base_report_type.dimensions_sorted
         return list(self.dimensions.all().order_by('reporttypetodimension__position'))
@@ -121,10 +121,10 @@ class ReportType(models.Model):
             raise ValidationError("Attribute 'short_name' should be unique for each data source")
 
     @property
-    def public(self):
+    def public(self) -> bool:
         return self.source is None
 
-    def dimension_by_attr_name(self, attr_name: str) -> 'Dimension':
+    def dimension_by_attr_name(self, attr_name: str) -> typing.Optional['Dimension']:
         """
         Given an attribute name like `dim1` return the appropriate dimension instance
         """
@@ -132,6 +132,16 @@ class ReportType(models.Model):
         if m:
             idx = int(m.group(1)) - 1
             return self.dimensions_sorted[idx] if idx < len(self.dimensions_sorted) else None
+        return None
+
+    def dim_name_to_dim_attr(self, dim_short_name: str) -> typing.Optional[str]:
+        """
+        Given a short_name of a dimension like 'Data_Type' returns the attribute name for that
+        dimension like 'dim2'. If dimension is not present, returns None
+        """
+        for i, dim in enumerate(self.dimensions_sorted):
+            if dim.short_name == dim_short_name:
+                return f'dim{i+1}'
         return None
 
     @classmethod

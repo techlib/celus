@@ -3,10 +3,10 @@ from pathlib import Path
 import pytest
 from django.db.models import Count, Sum
 
-from logs.logic.data_import import TitleManager, TitleRec
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 from nigiri.counter4 import Counter4BR2Report
-from organizations.tests.conftest import organizations  # noqa - fixture
+from nigiri.counter5 import Counter5TableReport, Counter5TRReport
+from organizations.tests.conftest import organizations, organization_random  # noqa - fixture
 from publications.models import Title, PlatformTitle
 from ..exceptions import DataStructureError
 from ..logic.data_import import import_counter_records
@@ -209,61 +209,98 @@ class TestCounter4Import:
         assert len(values) == 12
         assert values == [1, 10, 2, 3, 5, 0, 0, 0, 0, 0, 0, 0]
 
-    def test_c4_import_title_types(self, organizations, report_type_nd, platform):
-        rt = report_type_nd(1, dimension_names=['Publisher'])
+    def test_c4_import_title_types_ids_and_platform(self, organizations, report_type_nd, platform):
+        expected = [
+            (
+                "Auditing Your Human Resources Department: A Step-by-Step Guide to Assessing the "
+                "Key Areas of Your Program",
+                ['453619'],
+                '9780814416617',
+            ),
+            ("Columbia Electronic Encyclopedia, 6th Edition", ['576175'], '9780787650155'),
+            ("International Business Times", [], ''),
+            ("World Congress on Engineering 2007 (Volume 1)", ['422959'], '9789889867157'),
+            ("World Congress on Engineering 2009 (Volume 1)", ['657512'], '9789881701251'),
+        ]
+
+        reader = Counter4BR2Report()
+        rt = report_type_nd(len(reader.dimensions), dimension_names=reader.dimensions)
+
         from pycounter import report
 
         data = report.parse(str(Path(__file__).parent / 'data/counter4/counter4_br2.tsv'))
-        reader = Counter4BR2Report()
+
         records = [e for e in reader.read_report(data)]
         assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
         assert Title.objects.count() == 0
         import_counter_records(rt, organization, platform, (e for e in records))
         assert Title.objects.count() == 5
+        # test title publication type
         assert list(
             Title.objects.order_by('pub_type').values('pub_type').annotate(count=Count('id'))
         ) == [
             {'pub_type': Title.PUB_TYPE_BOOK, 'count': 4},
             {'pub_type': Title.PUB_TYPE_UNKNOWN, 'count': 1},
         ]
+        # test other title properties
+        for title in Title.objects.all():
+            for exp_title, exp_ids, exp_isbn in expected:
+                if exp_title == title.name:
+                    assert title.proprietary_ids == exp_ids
+                    assert title.isbn == exp_isbn
+                    break
+            else:
+                assert False, 'expected title was not found'
+        # test that the Platform dimension was properly handled
+        pl_attr = rt.dim_name_to_dim_attr('Platform')
+        pl_dim = rt.dimension_by_attr_name(pl_attr)
+        ebsco_text = DimensionText.objects.filter(dimension=pl_dim, text='EBSCOhost')
+        assert ebsco_text.exists(), 'corresponding DimensionText should have been created'
+        ebsco_text = ebsco_text.get()
+        for al in AccessLog.objects.all():
+            assert getattr(al, pl_attr) == ebsco_text.pk
 
 
 @pytest.mark.django_db
-class TestTitleManager:
-    def test_get_or_create(self):
-        """
-        Creating same title
-        """
-        tm = TitleManager()
-        record = TitleRec("TITLE", Title.PUB_TYPE_BOOK, "", "", "977-481-83-13d6-2", "")
+class TestCounter5Import:
+    @pytest.mark.parametrize(
+        ['filename', 'expected'],
+        [
+            ('counter5_table_dr.csv', [("ARTICLES", ['Test123'], []), ("BOOKS", ['Test456'], [])]),
+            (
+                'COUNTER_R5_Report_Examples_TR.csv',
+                [("Journal Six", ['xyz123'], ['https://foo.bar.baz/'])],
+            ),
+        ],
+    )
+    def test_c5_import_title_types_and_ids(
+        self, organization_random, report_type_nd, platform, filename, expected
+    ):
+        # we do not care much about the dimensions - just about titles
+        rt = report_type_nd(0)
 
-        # creating same title
-        pk1 = tm.get_or_create(record)
-        assert tm.stats['created'] == 1
-        assert tm.stats['existing'] == 0
-        pk2 = tm.get_or_create(record)
-        assert tm.stats['created'] == 1
-        assert tm.stats['existing'] == 1
-        assert pk1 is not None
-        assert pk2 is not None
-        assert pk1 == pk2
+        reader = Counter5TableReport()
+        records = reader.file_to_records(str(Path(__file__).parent / 'data/counter5' / filename))
+        assert Title.objects.count() == 0
+        import_counter_records(rt, organization_random, platform, records)
+        assert Title.objects.count() == len(expected)
+        for title in Title.objects.all():
+            for exp_title, exp_ids, exp_uris in expected:
+                if exp_title == title.name:
+                    assert title.proprietary_ids == exp_ids
+                    assert title.uris == exp_uris
+                    break
+            else:
+                assert False, 'expected title was not found'
 
-    def test_get_or_create_no_cache(self):
-        """
-        Creating same title with cache flushed -
-        this may occur when there are two same imports running in parallel.
-        """
-        tm = TitleManager()
-        record = TitleRec("TITLE", Title.PUB_TYPE_BOOK, "", "", "977-481-83-13d6-2", "")
+    def test_c5_tr_nature_merging(self, organization_random, report_type_nd, platform):
+        # we do not care much about the dimensions - just about titles
+        rt = report_type_nd(0)
 
-        pk1 = tm.get_or_create(record)
-        assert tm.stats['created'] == 1
-        assert tm.stats['existing'] == 0
-        tm.key_to_title_id_and_pub_type.clear()
-        pk2 = tm.get_or_create(record)
-        assert tm.stats['created'] == 1
-        assert tm.stats['existing'] == 1
-        assert pk1 is not None
-        assert pk2 is not None
-        assert pk1 == pk2
+        reader = Counter5TRReport()
+        records = reader.file_to_records(
+            str(Path(__file__).parent / 'data/counter5/counter5_tr_nature.json')
+        )
+        import_counter_records(rt, organization_random, platform, records)
+        assert Title.objects.filter(name='Nature').count() == 1, 'only one Nature'

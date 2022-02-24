@@ -39,6 +39,9 @@ class CounterRecord:
         self.start = start
         self.end = end
         self.title = title
+        # by using a dict below, we do not allow more than one proprietary ID
+        # this should be OK, but in most of the code below, we allow more than one prop. ID
+        # In case we wanted to actually support it, we would need to change this code
         self.title_ids = title_ids if title_ids else {}
         self.dimension_data = dimension_data if dimension_data is not None else {}
         self.metric = metric
@@ -102,7 +105,7 @@ class TransportError:
 class Counter5ReportBase:
 
     dimensions = []  # this should be redefined in subclasses
-    allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']
+    allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN', 'Proprietary', 'URI']
 
     def __init__(self, report: typing.Optional[typing.IO[bytes]] = None, http_status_code=None):
         self.records = []
@@ -361,14 +364,19 @@ class Counter5TableReport:
         'IR_M1': ['Publisher', 'Platform'],
     }
 
-    title_id_columns = ['DOI', 'ISBN', 'Print_ISSN', 'Online_ISSN']
+    title_id_columns = {
+        'DOI': 'DOI',
+        'ISBN': 'ISBN',
+        'Print_ISSN': 'Print_ISSN',
+        'Online_ISSN': 'Online_ISSN',
+        'Proprietary_ID': 'Proprietary',
+        'URI': 'URI',
+    }
 
     ignored_columns = [
         'Reporting_Period_Total',
         'Publisher_ID',
-        'Proprietary_ID',
         'Linking_ISSN',
-        'URI',
     ]
 
     def file_to_records(self, filename: str) -> typing.Generator[CounterRecord, None, None]:
@@ -420,7 +428,7 @@ class Counter5TableReport:
                     elif key in extra_dims:
                         explicit_dimensions[key] = value
                     elif key in self.title_id_columns:
-                        title_ids[key] = value
+                        title_ids[self.title_id_columns[key]] = value
                     else:
                         raise KeyError(f'We don\'t know how to interpret the column "{key}"')
             # we put initial data into the data we read - these are usually dimensions that are fixed

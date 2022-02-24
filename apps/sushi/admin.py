@@ -113,13 +113,13 @@ reimport_delayed.short_description = 'Plan Reimport data - same as Reimport, but
 
 @atomic
 def delete_with_data(modeladmin, request, queryset):
-    batches_deleted = ImportBatch.objects.filter(
+    del_stats = ImportBatch.objects.filter(
         pk__in=queryset.filter(import_batch__isnull=False).values('import_batch_id')
     ).delete()
     attempts_deleted = queryset.delete()
+    batches_deleted = del_stats[1].get('logs.ImportBatch', 0)
     messages.info(
-        request,
-        f'{attempts_deleted[0]} attempts deleted with ' f'{batches_deleted[0]} data batches',
+        request, f'{attempts_deleted[0]} attempts deleted with ' f'{batches_deleted} data batches',
     )
 
 

@@ -124,7 +124,10 @@ class Title(models.Model):
 
     name = models.TextField()
     pub_type = models.CharField(
-        max_length=1, choices=PUB_TYPE_CHOICES, verbose_name='Publication type'
+        max_length=1,
+        choices=PUB_TYPE_CHOICES,
+        default=PUB_TYPE_UNKNOWN,
+        verbose_name='Publication type',
     )
     isbn = models.CharField(max_length=20, blank=True, default='')
     issn = models.CharField(max_length=9, blank=True, default='')
@@ -132,6 +135,8 @@ class Title(models.Model):
         max_length=9, blank=True, default='', help_text="ISSN of electronic version"
     )
     doi = models.CharField(max_length=250, blank=True, default='')
+    proprietary_ids = models.JSONField(default=list)
+    uris = models.JSONField(default=list)
 
     class Meta:
         ordering = ('name', 'pub_type')

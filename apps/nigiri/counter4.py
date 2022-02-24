@@ -13,7 +13,13 @@ from .counter5 import CounterRecord
 class Counter4ReportBase:
 
     dimensions = []  # this should be redefined in subclasses
-    allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN']
+    allowed_item_ids = [
+        'DOI',
+        'Online_ISSN',
+        'Print_ISSN',
+        'ISBN',
+        'Proprietary',
+    ]
 
     dimension_to_attr = {
         'Publisher': 'publisher',
@@ -25,6 +31,7 @@ class Counter4ReportBase:
         'Online_ISSN': 'eissn',
         'ISBN': 'isbn',
         'DOI': 'doi',
+        'Proprietary': 'proprietary_id',
     }
 
     def __init__(self):

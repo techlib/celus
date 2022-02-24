@@ -1,4 +1,3 @@
-import json
 import logging
 from time import time
 
@@ -6,12 +5,11 @@ from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 
 from core.logic.debug import log_memory
-from logs.models import ImportBatch
+from nigiri.counter5 import Counter5TRReport
+from organizations.models import Organization
 from publications.models import Platform
 from ...logic.data_import import import_counter_records
 from ...models import ReportType, OrganizationPlatform
-from organizations.models import Organization
-from nigiri.counter5 import Counter5TRReport
 
 logger = logging.getLogger(__name__)
 
@@ -53,11 +51,9 @@ class Command(BaseCommand):
         self.stderr.write(f'Time #2: {time() - t2}\n')
         log_memory('B')
         t3 = time()
-        import_batch = ImportBatch.objects.create(
-            organization=organization, platform=platform, report_type=report_type
-        )
-        stats = import_counter_records(report_type, organization, platform, records, import_batch)
+        ibs, stats = import_counter_records(report_type, organization, platform, records)
         self.stderr.write(f'Time #3: {time() - t3}\n')
         log_memory('C')
         self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
-        self.stderr.write(self.style.WARNING(f'Import batch ID: #{import_batch.pk}'))
+        for import_batch in ibs:
+            self.stderr.write(self.style.WARNING(f'Import batch ID: #{import_batch.pk}'))

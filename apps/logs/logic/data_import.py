@@ -1,17 +1,18 @@
 import gc
 import logging
-import typing
-from collections import Counter, namedtuple
+from collections import Counter
+from dataclasses import dataclass, field
 from datetime import date
-from typing import Optional, Tuple, Set
+from typing import Optional, Tuple, Set, Iterable, Dict, Generator, List, Union
 
 from django.conf import settings
 from django.db.models import F
+from django.db.models.functions import Lower
 from django.db.transaction import atomic, on_commit
 
 from core.logic.debug import log_memory
 from core.task_support import cache_based_lock
-from logs.logic.validation import clean_and_validate_issn, normalize_isbn
+from logs.logic.validation import normalize_issn, normalize_isbn, normalize_title
 from logs.models import ImportBatch
 from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
@@ -37,7 +38,65 @@ def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=No
         return mapping[attr_value]["pk"]
 
 
-def get_or_create_metric(mapping, value, controlled_metrics: typing.List[str] = None) -> int:
+@dataclass
+class TitleRec:
+    name: str = ''
+    pub_type: str = Title.PUB_TYPE_UNKNOWN
+    issn: str = ''
+    eissn: str = ''
+    isbn: str = ''
+    doi: str = ''
+    # according to the CoP, there must be max one proprietary ID per title,
+    # but I do not believe it 100%, so I prepared this model for the possibility
+    # of more than one value
+    proprietary_ids: Set[str] = field(default_factory=set)
+    uri: str = ''
+
+    def __post_init__(self):
+        # ensure proprietary_ids is a set
+        self.proprietary_ids = set(self.proprietary_ids)
+
+    def ids_to_set(self):
+        return {
+            (attr, getattr(self, attr)) for attr in TitleManager.id_attrs if getattr(self, attr)
+        }
+
+
+@dataclass
+class TitleCompareRec:
+    """
+    Such a record is created from the database record and is optimized for further comparing
+    with incoming title records
+    """
+
+    pk: int
+    pub_type: str
+    uris: Set[str] = field(default_factory=set)
+    id_set: Set[str] = field(default_factory=set)
+    proprietary_ids: Set[str] = field(default_factory=set)
+
+    def __post_init__(self):
+        # ensure all sets are sets
+        self.proprietary_ids = set(self.proprietary_ids)
+        self.uris = set(self.uris)
+        self.id_set = set(self.id_set)
+
+
+class Cache(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._hits = 0
+        self._misses = 0
+
+    def __contains__(self, item):
+        if result := super().__contains__(item):
+            self._hits += 1
+        else:
+            self._misses += 1
+        return result
+
+
+def get_or_create_metric(mapping, value, controlled_metrics: List[str] = None) -> int:
     # already in mapping
     if record := mapping.get(value):
         return record["pk"]
@@ -64,26 +123,45 @@ def get_or_create_metric(mapping, value, controlled_metrics: typing.List[str] = 
         return metric.pk
 
 
-TitleRec = namedtuple('TitleRec', ('name', 'pub_type', 'issn', 'eissn', 'isbn', 'doi'))
-
-
 class TitleManager:
+    id_attrs = ('isbn', 'issn', 'eissn', 'doi')
+
     def __init__(self):
-        self.key_to_title_id_and_pub_type = {}
+        self.name_to_records: Dict[str, List[TitleCompareRec]] = {}
         self.stats = Counter()
+        # below we cache the incoming name and ids and map them to the TitleRecord to speed up
+        # processing. We similarly cache the TitleRecord -> Title conversion
+        #
+        # The basic idea of the caching is that many rows come from the same JSON record
+        # and thus have a copy of the same title information. Thus it does not make sense
+        # to resolve the title each time if we have already done it for the previous record
+        # This type of caching is especially effective when there are many records created for
+        # one title, such as when a TR report with YOP and other dimensions is imported
+        self._counter_rec_to_title_rec_cache = Cache()
+        self._title_rec_to_title_cache = Cache()
 
     def prefetch_titles(self, records: [TitleRec]):
         title_qs = Title.objects.all()
-        for attr_name in ('issn', 'eissn', 'isbn', 'doi', 'name'):
-            attr_values = {getattr(rec, attr_name) for rec in records}
-            title_qs = title_qs.filter(**{attr_name + '__in': attr_values})
-        self.key_to_title_id_and_pub_type = {
-            tuple(t[:5]): tuple(t[5:])
-            for t in title_qs.order_by().values_list(
-                'name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type'
+        names = [rec.name.lower() if rec.name else rec.name for rec in records]
+        title_qs = title_qs.annotate(lname=Lower('name')).filter(lname__in=names)
+        self.name_to_records = {}
+        for row in title_qs.order_by('name').values(
+            'name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type', 'proprietary_ids', 'uris'
+        ):
+            name = row.pop('name').lower()
+            if name not in self.name_to_records:
+                self.name_to_records[name] = []
+            id_set = {(attr, row[attr]) for attr in self.id_attrs if row[attr]}
+            self.name_to_records[name].append(
+                TitleCompareRec(
+                    pk=row['pk'],
+                    pub_type=row['pub_type'],
+                    id_set=id_set,
+                    uris=row['uris'],
+                    proprietary_ids=row['proprietary_ids'],
+                )
             )
-        }
-        logger.debug('Prefetched %d records', len(self.key_to_title_id_and_pub_type))
+        logger.debug('Prefetched %d records', len(self.name_to_records))
 
     @classmethod
     def normalize_title_rec(cls, record: TitleRec) -> TitleRec:
@@ -94,18 +172,20 @@ class TitleManager:
         # normalize issn, eissn and isbn - they are sometimes malformed by whitespace in the data
         issn = record.issn
         if issn:
-            issn = clean_and_validate_issn(issn, raise_error=False)
+            issn = normalize_issn(issn, raise_error=False)
         eissn = record.eissn
         if eissn:
-            eissn = clean_and_validate_issn(eissn, raise_error=False)
+            eissn = normalize_issn(eissn, raise_error=False)
         isbn = normalize_isbn(record.isbn) if record.isbn else record.isbn
         return TitleRec(
-            name=record.name,
+            name=normalize_title(record.name) if record.name else record.name,
             isbn=isbn,
             issn=issn,
             eissn=eissn,
             doi=record.doi,
             pub_type=record.pub_type,
+            proprietary_ids=record.proprietary_ids,
+            uri=record.uri,
         )
 
     def get_or_create(self, record: TitleRec) -> Optional[int]:
@@ -118,54 +198,173 @@ class TitleManager:
                 record.doi,
             )
             return None
-        key = (record.name, record.isbn, record.issn, record.eissn, record.doi)
-        if key in self.key_to_title_id_and_pub_type:
-            title_pk, db_pub_type = self.key_to_title_id_and_pub_type[key]
-            # check if we need to improve the pub_type from UNKNOWN to something better
-            if db_pub_type == Title.PUB_TYPE_UNKNOWN and record.pub_type != Title.PUB_TYPE_UNKNOWN:
-                logger.info('Upgrading publication type from unknown to "%s"', record.pub_type)
-                Title.objects.filter(pk=title_pk).update(pub_type=record.pub_type)
-                self.stats['update'] += 1
+
+        cache_key = id(record)
+        if cache_key in self._title_rec_to_title_cache:
+            self.stats['existing'] += 1
+            return self._title_rec_to_title_cache[cache_key]
+
+        # make sure that `prefetch_titles` was called at least for this record
+        if not self.name_to_records:
+            self.prefetch_titles([record])
+
+        winner = self._find_matching_title(record)
+
+        if not winner:
+            # let's create the title
+            title: Title
+            title, created = Title.objects.get_or_create(
+                defaults={"pub_type": record.pub_type},
+                name=record.name,
+                isbn=record.isbn,
+                issn=record.issn,
+                eissn=record.eissn,
+                doi=record.doi,
+                uris=[record.uri] if record.uri else [],
+                proprietary_ids=list(record.proprietary_ids),
+            )
+            # we use normalized name in the `name_to_records` cache
+            name = title.name.lower() if title.name else title.name
+            if name not in self.name_to_records:
+                self.name_to_records[name] = []
+            self.name_to_records[name].append(
+                TitleCompareRec(
+                    pk=title.pk,
+                    pub_type=title.pub_type,
+                    uris=title.uris,
+                    proprietary_ids=title.proprietary_ids,
+                    id_set=record.ids_to_set(),
+                )
+            )
+            if created:
+                self.stats['created'] += 1
             else:
                 self.stats['existing'] += 1
-            return title_pk
-        title, created = Title.objects.get_or_create(
-            defaults={"pub_type": record.pub_type},
-            name=record.name,
-            isbn=record.isbn,
-            issn=record.issn,
-            eissn=record.eissn,
-            doi=record.doi,
-        )
-        self.key_to_title_id_and_pub_type[key] = (title.pk, record.pub_type)
-        if created:
-            self.stats['created'] += 1
+            self._title_rec_to_title_cache[cache_key] = title.pk
+            return title.pk
+
+        # we have a winner - we must merge record with the winner
+        rec_id_set = record.ids_to_set()
+        extra_ids = rec_id_set - winner.id_set
+        extra_prop_ids = record.proprietary_ids - winner.proprietary_ids
+        if (
+            extra_ids
+            or extra_prop_ids
+            or (
+                winner.pub_type == Title.PUB_TYPE_UNKNOWN
+                and record.pub_type != Title.PUB_TYPE_UNKNOWN
+            )
+            or (record.uri and record.uri not in winner.uris)
+        ):
+            title = Title.objects.get(pk=winner.pk)
+            title.proprietary_ids = title.proprietary_ids + list(extra_prop_ids)
+            winner.proprietary_ids |= extra_prop_ids
+            if extra_ids:
+                for id_name, id_value in extra_ids:
+                    setattr(title, id_name, id_value)
+                winner.id_set |= extra_ids
+            if record.uri and record.uri not in winner.uris:
+                title.uris = title.uris + [record.uri]
+                winner.uris.add(record.uri)
+            if title.pub_type == title.PUB_TYPE_UNKNOWN:
+                title.pub_type = record.pub_type
+                winner.pub_type = record.pub_type
+            title.save()
+            self.stats['update'] += 1
         else:
             self.stats['existing'] += 1
-        return title.pk
+        self._title_rec_to_title_cache[cache_key] = winner.pk
+        return winner.pk
+
+    def _find_matching_title(self, record: TitleRec) -> TitleCompareRec:
+        # try to select amongst Titles with the name
+        rec_id_set = record.ids_to_set()
+        winner = None
+        winner_miss_score = (1000, 0)
+        candidates = self.name_to_records.get(record.name.lower(), [])
+        # first go over all the candidates and try to find one with the least difference with
+        # our record - this should make it more probable to find a match that will not need
+        # an upgrade later. It also protects against clashes created by upgrading a worse
+        # candidate to the same state as a better one
+        for candidate in candidates:
+            if rec_id_set and candidate.id_set:
+                # we need at least one value in both id_sets to be able to meaningfully match them
+                rec_extra = rec_id_set - candidate.id_set
+                cand_extra = candidate.id_set - rec_id_set
+                clashing_id_names = {x for x, y in rec_extra if y} & {x for x, y in cand_extra if y}
+                # the first part of score is the number of new values - the lower, the better
+                # because we do not want to update the candidate if possible
+                # the second part of the score is the total number of set IDs in the candidate
+                # here the higher, the better as we want to merge with the most populated title
+                miss_score = (len(rec_extra), -len(cand_extra))
+                if not clashing_id_names and miss_score < winner_miss_score:
+                    # we have a match - if the records do not match, it is on the same fields
+                    winner = candidate
+                    winner_miss_score = miss_score
+        if not winner:
+            # could not find winner using ids
+            if record.proprietary_ids:
+                # let 's try proprietary ids
+                # we only allow this if either the in-memory or in-db record does not have any other
+                # ids - if they had, we would have matched it above, if we did not, they must clash
+                for candidate in candidates:
+                    if record.proprietary_ids.issubset(record.proprietary_ids) and (
+                        not rec_id_set or not candidate.id_set
+                    ):
+                        return candidate
+            elif not rec_id_set:
+                # record has no proprietary ids and other ids failed above
+                # here we try the last resort and match together records with only name and nothing
+                # else
+                for candidate in candidates:
+                    if not candidate.proprietary_ids and not candidate.id_set:
+                        return candidate
+        return winner
 
     def counter_record_to_title_rec(self, record: CounterRecord) -> TitleRec:
-        title = record.title
+        cache_key = (record.title, frozenset(record.title_ids.items()))
+        if cache_key in self._counter_rec_to_title_rec_cache:
+            return self._counter_rec_to_title_rec_cache[cache_key]
+        title = normalize_title(record.title) if record.title else record.title
         isbn = None
         issn = None
         eissn = None
         doi = None
+        uri = None
+        proprietary_ids = set()
         for key, value in record.title_ids.items():
+            value = value.strip() if value else value
             if key == 'DOI':
                 doi = value
             elif key == 'Online_ISSN':
-                eissn = clean_and_validate_issn(value, raise_error=False) if value else value
+                eissn = normalize_issn(value, raise_error=False) if value else value
             elif key == 'Print_ISSN':
-                issn = clean_and_validate_issn(value, raise_error=False) if value else value
+                issn = normalize_issn(value, raise_error=False) if value else value
             elif key == 'ISBN':
                 isbn = normalize_isbn(value) if value else value
+            elif key == 'Proprietary' and value:
+                proprietary_ids.add(value)
+            elif key == 'URI':
+                uri = value
         pub_type = self.deduce_pub_type(eissn, isbn, issn, record)
         # convert None values for the following attrs to empty strings
         isbn = '' if isbn is None else isbn
         issn = '' if issn is None else issn
         eissn = '' if eissn is None else eissn
         doi = '' if doi is None else doi
-        return TitleRec(name=title, pub_type=pub_type, isbn=isbn, issn=issn, eissn=eissn, doi=doi)
+        uri = '' if uri is None else uri
+        ret = TitleRec(
+            name=title,
+            pub_type=pub_type,
+            isbn=isbn,
+            issn=issn,
+            eissn=eissn,
+            doi=doi,
+            proprietary_ids=proprietary_ids,
+            uri=uri,
+        )
+        self._counter_rec_to_title_rec_cache[cache_key] = ret
+        return ret
 
     def deduce_pub_type(self, eissn, isbn, issn, record):
         pub_type = Title.PUB_TYPE_UNKNOWN
@@ -206,8 +405,8 @@ def import_counter_records(
     report_type: ReportType,
     organization: Organization,
     platform: Platform,
-    records: typing.Generator[CounterRecord, None, None],
-    months: typing.Optional[typing.Iterable[str]] = None,
+    records: Generator[CounterRecord, None, None],
+    months: Optional[Iterable[str]] = None,
     import_batch_kwargs: Optional[dict] = None,
     skip_clickhouse_sync: bool = False,
     buffer_size: int = COUNTER_RECORD_BUFFER_SIZE,
@@ -222,7 +421,7 @@ def import_counter_records(
     # _import_counter_record so that the same import batches are used for all data
     month_to_ib = {}
 
-    def process_buffer(record_batch: typing.Iterable[CounterRecord]):
+    def process_buffer(record_batch: Iterable[CounterRecord]):
         """
         Internal function not to repeat the same code twice.
         Please note that we do not create all the import batches upfront because we do not want
@@ -256,7 +455,7 @@ def import_counter_records(
             report_type, organization, platform, record_batch, stats, tm, month_to_ib
         )
 
-    buff: typing.List[CounterRecord] = []
+    buff: List[CounterRecord] = []
     for record in records:
         buff.append(record)
         if len(buff) >= buffer_size:
@@ -281,6 +480,11 @@ def import_counter_records(
                 )
 
         on_commit(sync_with_clickhouse)
+    for i, cache in enumerate([tm._counter_rec_to_title_rec_cache, tm._title_rec_to_title_cache]):
+        logger.info(
+            f'Title manager: step #{i+1} cache hits: {cache._hits}, misses: {cache._misses}, '
+            f'size: {len(cache)}'
+        )
 
     return import_batches, stats
 
@@ -289,7 +493,7 @@ def create_import_batch_or_crash(
     report_type: ReportType,
     organization: Organization,
     platform: Platform,
-    month: typing.Union[str, date],
+    month: Union[str, date],
     ib_kwargs: Optional[dict] = None,
 ) -> ImportBatch:
     """
@@ -323,10 +527,10 @@ def _import_counter_records(
     report_type: ReportType,
     organization: Organization,
     platform: Platform,
-    records: typing.List[CounterRecord],
+    records: List[CounterRecord],
     stats: Counter,
     tm: TitleManager,
-    month_to_import_batch: typing.Dict[str, ImportBatch],
+    month_to_import_batch: Dict[str, ImportBatch],
 ):
     # prepare controlled metrics filtering
     controlled_metrics = list(report_type.controlled_metrics.values_list('short_name', flat=True))

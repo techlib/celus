@@ -1,0 +1,1486 @@
+{
+   "Report_Header" : {
+      "Created" : "2022-01-28T10:10:46Z",
+      "Created_By" : "SpringerNature",
+      "Customer_ID" : "XXXXX",
+      "Exceptions" : [],
+      "Institution_ID" : [
+         {
+            "Type" : "Proprietary",
+            "Value" : "SN:XXXXXX"
+         }
+      ],
+      "Institution_Name" : "PRIVATE",
+      "Release" : "5",
+      "Report_Attributes" : [
+         {
+            "Name" : "Attributes_To_Show",
+            "Value" : "YOP|Access_Method|Access_Type|Data_Type|Section_Type"
+         }
+      ],
+      "Report_Filters" : [
+         {
+            "Name" : "Begin_Date",
+            "Value" : "2021-12-01"
+         },
+         {
+            "Name" : "End_Date",
+            "Value" : "2021-12-31"
+         }
+      ],
+      "Report_ID" : "TR",
+      "Report_Name" : "Title Master Report"
+   },
+   "Report_Items" : [
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0950-9232"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1476-5594"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41388"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Oncogene",
+         "YOP" : "2015"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41392.2059-3635"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2059-3635"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41392"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Signal Transduction and Targeted Therapy",
+         "YOP" : "2020"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0032-3896"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1349-0540"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41428"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Polymer Journal",
+         "YOP" : "2006"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0969-7128"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1476-5462"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41434"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Gene Therapy",
+         "YOP" : "2012"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2041-1723"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41467"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Communications",
+         "YOP" : "2017"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2041-1723"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41467"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Communications",
+         "YOP" : "2018"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41467.2041-1723"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2041-1723"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41467"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Communications",
+         "YOP" : "2019"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41467.2041-1723"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2041-1723"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41467"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 7,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 6,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 7,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 6,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Communications",
+         "YOP" : "2021"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41467.2041-1723"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2041-1723"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41467"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Communications",
+         "YOP" : "2020"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41522.2055-5008"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2055-5008"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41522"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "npj Biofilms and Microbiomes",
+         "YOP" : "2021"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41524.2057-3960"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2057-3960"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41524"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "npj Computational Materials",
+         "YOP" : "2019"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41524.2057-3960"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2057-3960"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41524"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "npj Computational Materials",
+         "YOP" : "2020"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "1755-4330"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1755-4349"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41557"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "No_License"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Chemistry",
+         "YOP" : "2018"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41562.2397-3374"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "2397-3374"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41562"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Human Behaviour",
+         "YOP" : "2021"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41565.1748-3395"
+            },
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "1748-3387"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1748-3395"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41565"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Nanotechnology",
+         "YOP" : "2019"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41566.1749-4893"
+            },
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "1749-4885"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1749-4893"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41566"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Photonics",
+         "YOP" : "2021"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "OA_Gold",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41566.1749-4893"
+            },
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "1749-4885"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1749-4893"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41566"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Photonics",
+         "YOP" : "2021"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41566.1749-4893"
+            },
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "1749-4885"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1749-4893"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41566"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Photonics",
+         "YOP" : "2022"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41567.1745-2481"
+            },
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "1745-2473"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1745-2481"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41567"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Physics",
+         "YOP" : "2021"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "1759-5002"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1759-5010"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41569"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Reviews Cardiology",
+         "YOP" : "2010"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41576.1471-0064"
+            },
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "1471-0056"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1471-0064"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41576"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature Reviews Genetics",
+         "YOP" : "2022"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0028-0836"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1476-4687"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41586"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature",
+         "YOP" : "2011"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41586"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 4,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature",
+         "YOP" : "2020"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0028-0836"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1476-4687"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41586"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature",
+         "YOP" : "1933"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0028-0836"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1476-4687"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41586"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature",
+         "YOP" : "1922"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0028-0836"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1476-4687"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41586"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature",
+         "YOP" : "1903"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "DOI",
+               "Value" : "10.1038/41586.1476-4687"
+            },
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0028-0836"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1476-4687"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41586"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 3,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature",
+         "YOP" : "2018"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Print_ISSN",
+               "Value" : "0028-0836"
+            },
+            {
+               "Type" : "Online_ISSN",
+               "Value" : "1476-4687"
+            },
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41586"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 1,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature",
+         "YOP" : "2017"
+      },
+      {
+         "Access_Method" : "Regular",
+         "Access_Type" : "Controlled",
+         "Data_Type" : "Journal",
+         "Item_ID" : [
+            {
+               "Type" : "Proprietary",
+               "Value" : "SN:41586"
+            }
+         ],
+         "Performance" : [
+            {
+               "Instance" : [
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Requests"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Total_Item_Investigations"
+                  },
+                  {
+                     "Count" : 2,
+                     "Metric_Type" : "Unique_Item_Investigations"
+                  }
+               ],
+               "Period" : {
+                  "Begin_Date" : "2021-12-01",
+                  "End_Date" : "2021-12-31"
+               }
+            }
+         ],
+         "Platform" : "nature.com",
+         "Publisher" : "Nature Publishing Group UK",
+         "Section_Type" : "Article",
+         "Title" : "Nature",
+         "YOP" : "2019"
+      }
+   ]
+}
