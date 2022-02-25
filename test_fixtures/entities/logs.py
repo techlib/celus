@@ -11,6 +11,15 @@ from test_fixtures.entities.report_types import ReportTypeFactory
 
 fake = faker.Faker()
 
+DATA_FILE = b"""\
+Title,Metric,Publisher,Success,Jan 2020, Feb 2020, Mar 2020
+A,views,Pub1,Success,0,1,2
+A,views,Pub1,Denied,1,0,0
+B,views,Pub1,Success,0,0,0
+B,views,Pub1,Denied,1,1,1
+C,views,Pub2,Success,3,3,3
+C,views,Pub2,Denied,4,4,4"""
+
 
 class MetricFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -71,6 +80,7 @@ class ManualDataUploadFullFactory(factory.django.DjangoModelFactory):
     when_processed = factory.LazyAttribute(
         lambda o: fake.date_time_this_year() if o.is_processed else None
     )
+    data_file = factory.django.FileField(data=DATA_FILE)
 
     @factory.post_generation
     def create_import_batches(obj, create, extracted, **kwargs):  # noqa - obj name is ok here

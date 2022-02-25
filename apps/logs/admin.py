@@ -1,4 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.utils.translation import ngettext
+
 from modeltranslation.admin import TranslationAdmin
 
 from . import models
@@ -177,8 +179,8 @@ class HasImportBatch(admin.SimpleListFilter):
 @admin.register(models.ManualDataUpload)
 class ManualDataUploadAdmin(admin.ModelAdmin):
 
-    list_filter = ['report_type', 'organization', 'platform', HasImportBatch]
-    list_display = ['created', 'report_type', 'platform', 'organization', 'user', 'is_processed']
+    list_filter = ['state', 'report_type', 'organization', 'platform', HasImportBatch]
+    list_display = ['created', 'report_type', 'platform', 'organization', 'user', 'state']
     list_select_related = ['report_type', 'organization', 'platform', 'user']
     readonly_fields = [
         'data_file',
@@ -191,3 +193,20 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
         'user__username',
         'user__email',
     ]
+    actions = ['regenerate_preflight']
+
+    @admin.action(description="Regenerate preflight data")
+    def regenerate_preflight(self, request, queryset):
+        count = 0
+        for mdu in queryset:
+            if mdu.regenerate_preflight():
+                count += 1
+
+        self.message_user(
+            request,
+            ngettext(
+                "%d preflight started to regenerate", "%d preflights started to regenerate", count
+            )
+            % count,
+            messages.SUCCESS,
+        )

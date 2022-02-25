@@ -29,6 +29,7 @@ en:
   clashing_import_batches_title: Can't import data
   clashing_import_batches_text: Imported file contains data for dates for which there already are existing records in the database. To import this file you need to delete the existing data first.
   delete_existing: Delete existing
+  regenerate_preflight: Regenerate overview
 
 cs:
   data_file: Datový soubor k nahrání
@@ -58,6 +59,7 @@ cs:
   clashing_import_batches_title: Není možné naimportovat data
   clashing_import_batches_text: Nahrávaný soubor obsahuje data za období, pro které jsou již v databázi uložena data. Pro nahrání souboru je třeba nejprve existující data smazat.
   delete_existing: Smazat existující
+  regenerate_preflight: Přegenerovat přehled
 </i18n>
 
 <template>
@@ -184,23 +186,23 @@ cs:
         <v-card>
           <v-card-title>{{ $t("overview") }}</v-card-title>
           <v-card-text>
+            <LargeSpinner v-if="state == 'initial' || spinnerOn" />
             <ImportPreflightDataWidget
-              v-if="preflightData"
+              v-else-if="state == 'preflight'"
               :preflight-data="preflightData"
               :interest-metrics="selectedInterestMetrics"
             />
-            <v-alert v-else-if="preflightError" type="error">
+            <v-alert v-else-if="state == 'prefailed'" type="error">
               <strong v-text="$t('following_error_found')"></strong>:
               <span
-                v-if="preflightError.kind == 'unicode-decode'"
+                v-if="error == 'unicode-decode'"
                 v-text="$t('requires_utf8')"
               >
               </span>
-              <span v-else v-text="preflightError.error"></span>
+              <span v-else v-text="log"></span>
             </v-alert>
-            <LargeSpinner v-else />
             <v-alert
-              v-if="preflightData && preflightData.clashing_months.length"
+              v-else-if="preflightData && preflightData.clashing_months.length"
               type="warning"
               class="mt-2 mb-1"
             >
@@ -208,7 +210,7 @@ cs:
               <span v-text="$t('clashing_import_batches_text')"></span>
             </v-alert>
           </v-card-text>
-          <v-card-actions>
+          <v-card-actions v-if="state == 'preflight'">
             <v-btn
               v-if="preflightData && preflightData.clashing_months.length"
               color="warning"
@@ -218,20 +220,32 @@ cs:
               {{ $t("delete_existing") }}
             </v-btn>
             <v-btn
-              v-if="preflightData && !preflightError"
-              @click="processUploadObject()"
-              color="primary"
-              :loading="uploadObjectProcessing"
+              v-if="canImport"
+              @click="triggerImportData()"
+              color="success"
+              :loading="state == 'importing'"
               :disabled="
                 preflightData && !!preflightData.clashing_months.length
               "
-              >{{ $t("import") }}</v-btn
             >
+              <v-icon small class="pr-2">fas fa-cogs</v-icon>
+              {{ $t("import") }}
+            </v-btn>
+            <v-btn color="primary" @click="regeneratePreflight">
+              <v-icon small class="pr-2">fas fa-redo</v-icon>
+              {{ $t("regenerate_preflight") }}
+            </v-btn>
             <v-btn
               @click="backToStart()"
               v-text="$t('back_to_start')"
               color="secondary"
             ></v-btn>
+          </v-card-actions>
+          <v-card-actions v-else-if="state == 'prefailed'">
+            <v-btn color="primary" @click="regeneratePreflight">
+              <v-icon small class="pr-2">fas fa-redo</v-icon>
+              {{ $t("regenerate_preflight") }}
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -241,7 +255,7 @@ cs:
       </v-stepper-step>
       <v-stepper-content step="3">
         <v-card>
-          <v-card-text v-if="uploadObject && uploadObject.is_processed">
+          <v-card-text v-if="state == 'imported'">
             <v-tabs v-model="tab" dark background-color="primary" fixed-tabs>
               <v-tab href="#chart">{{ $t("tab_chart") }}</v-tab>
               <v-tab href="#data">{{ $t("tab_data") }}</v-tab>
@@ -374,14 +388,13 @@ export default {
       errors: [],
       step: 1,
       uploadObject: null,
-      preflightData: null,
-      preflightError: null,
-      importStats: null,
       showAddReportTypeDialog: false,
       tab: "chart",
       uploadObjectProcessing: false,
       reportTypesFetched: false,
       deleting: false,
+      refreshTimeout: null,
+      spinnerOn: false,
     };
   },
   computed: {
@@ -431,6 +444,44 @@ export default {
         ];
       }
       return [];
+    },
+    log() {
+      if (this.uploadObject) {
+        return this.uploadObject.log;
+      } else {
+        return null;
+      }
+    },
+    canImport() {
+      if (this.uploadObject) {
+        return this.uploadObject.can_import;
+      } else {
+        return false; // not uploaded yet
+      }
+    },
+    error() {
+      if (this.uploadObject) {
+        return this.uploadObject.error;
+      } else {
+        return null;
+      }
+    },
+    state() {
+      if (this.uploadObject) {
+        return this.uploadObject.state;
+      } else {
+        return null;
+      }
+    },
+    preflightData() {
+      if (this.uploadObject) {
+        let result = JSON.parse(JSON.stringify(this.uploadObject.preflight));
+        result.clashing_months = this.uploadObject.clashing_months || [];
+        result.can_import = this.uploadObject.can_import || false;
+        return result;
+      } else {
+        return null;
+      }
     },
   },
   methods: {
@@ -504,61 +555,78 @@ export default {
         }
       }
     },
-    async loadPreflightData() {
-      if (this.uploadObject) {
-        let url = `/api/manual-data-upload/${this.uploadObject.pk}/preflight/`;
+    async triggerImportData() {
+      if (this.uploadObject && !this.uploadObjectProcessing && this.canImport) {
+        this.uploadObjectProcessing = true;
+        let url = `/api/manual-data-upload/${this.uploadObject.pk}/import-data/`;
         try {
-          const response = await axios.get(url);
-          this.preflightData = response.data;
-          this.preflightError = null;
-        } catch (error) {
-          if (
-            error.response &&
-            error.response.status === 400 &&
-            "error" in error.response.data
-          ) {
-            this.preflightError = error.response.data;
-          } else {
-            this.showSnackbar({
-              content: "Error loading preflight data: " + error,
-            });
-          }
-        }
-      }
-    },
-    async processUploadObject() {
-      this.uploadObjectProcessing = true;
-      if (this.uploadObject) {
-        let url = `/api/manual-data-upload/${this.uploadObject.pk}/process/`;
-        try {
-          const response = await axios.post(url, {});
-          this.importStats = response.data.stats;
-          this.step = 3;
+          await axios.post(url, {});
         } catch (error) {
           this.showSnackbar({ content: "Error processing data: " + error });
         } finally {
           this.uploadObjectProcessing = false;
         }
-        // plan reloading of the object
-        this.loadUploadObject();
+        // reload object
+        await this.loadMdu();
       }
     },
-    async loadUploadObject() {
+    async regeneratePreflight() {
+      if (
+        this.uploadObject &&
+        !this.uploadObjectProcessing &&
+        ["preflight", "prefailed"].includes(this.uploadObject.state)
+      ) {
+        this.uploadObjectProcessing = true;
+        let url = `/api/manual-data-upload/${this.uploadObject.pk}/preflight/`;
+        try {
+          await axios.post(url, {});
+        } catch (error) {
+          this.showSnackbar({
+            content: "Error triggering preflight generation: " + error,
+          });
+        } finally {
+          this.uploadObjectProcessing = false;
+        }
+        // reload object
+        this.spinnerOn = true;
+        this.loadMdu();
+      }
+    },
+    async loadMdu() {
+      this.cancelRefreshTimeout();
       if (this.uploadObjectId) {
         try {
           let response = await axios.get(
             `/api/manual-data-upload/${this.uploadObjectId}/`
           );
           this.uploadObject = response.data;
-          if (this.uploadObject.is_processed) {
-            this.step = 3;
-          } else {
-            this.step = 2;
-            this.loadPreflightData();
+          switch (this.uploadObject.state) {
+            case "initial":
+            case "preflight":
+            case "prefailed":
+              this.step = 2;
+              break;
+            case "importing":
+            case "imported":
+            case "failed":
+              this.step = 3;
+              break;
+          }
+          if (["initial", "importing"].includes(this.uploadObject.state)) {
+            this.cancelRefreshTimeout();
+            this.refreshTimeout = setTimeout(() => this.loadMdu(), 5000); // every 5 seconds
           }
         } catch (error) {
           this.showSnackbar({ content: "Error loading upload data: " + error });
+        } finally {
+          this.spinnerOn = false;
         }
+      }
+    },
+    cancelRefreshTimeout() {
+      if (this.refreshTimeout) {
+        clearTimeout(this.refreshTimeout);
+        this.refreshTimeout = null;
       }
     },
     filledIn(v) {
@@ -577,15 +645,18 @@ export default {
     deletePerformed() {
       this.showConfirmDeleteDialog = false;
       // update preflight data on the page
-      this.loadPreflightData();
+      this.loadMdu();
     },
   },
   mounted() {
     this.loadReportTypes();
     this.loadPlatform();
     if (this.uploadObjectId) {
-      this.loadUploadObject();
+      this.loadMdu();
     }
+  },
+  beforeDestroy() {
+    this.cancelRefreshTimeout();
   },
   watch: {
     showAddReportTypeDialog() {

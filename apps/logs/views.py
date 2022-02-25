@@ -1,4 +1,3 @@
-import traceback
 from functools import reduce
 from pprint import pprint
 from time import monotonic
@@ -8,7 +7,6 @@ from functools import reduce
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import BadRequest
-from django.core.mail import mail_admins
 from django.db.models import Count, Q, Exists, OuterRef
 from django.db.transaction import atomic
 from django.http import JsonResponse
@@ -43,7 +41,6 @@ from core.permissions import (
 )
 from core.prometheus import report_access_time_summary, report_access_total_counter
 from core.validators import month_validator, pk_list_validator
-from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
 from logs.logic.queries import (
     extract_accesslog_attr_query_params,
@@ -59,6 +56,7 @@ from logs.models import (
     Metric,
     ImportBatch,
     ManualDataUpload,
+    MduState,
     InterestGroup,
     FlexibleReport,
 )
@@ -508,53 +506,62 @@ class ManualDataUploadViewSet(ModelViewSet):
         )
     ]
 
-    @action(methods=['GET'], detail=True, url_path='preflight')
-    def preflight_check(self, request, pk):
+    @action(methods=['POST'], detail=True, url_path='preflight')
+    def preflight(self, request, pk):
+        """ triggers preflight computation """
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
-        try:
-            stats = custom_import_preflight_check(mdu)
-            return Response(stats)
-        except UnicodeDecodeError as e:
-            return Response({'error': str(e), 'kind': 'unicode-decode'}, status=400)
-        except Exception as e:
-            body = f"""\
-{mdu.mail_report_format(request)}
 
-URL: {request.path}
+        if mdu.state == MduState.INITIAL:
+            # already should be already planned
+            # just start it in celery right now
+            self.plan_preflight()
+            return Response({"msg": "generating preflight"})
 
-Exception: {e}
+        elif mdu.state in (MduState.PREFLIGHT, MduState.PREFAILED):
+            # regenerate preflight
+            if mdu.regenerate_preflight():
+                return Response({"msg": "regenerating preflight"})
+            else:
+                return Response(
+                    {"error": "preflight-trigger-failed"}, status=status.HTTP_400_BAD_REQUEST
+                )
 
-Traceback: {traceback.format_exc()}
-"""
-            mail_admins('MDU preflight check error', body)
-            return Response({'error': str(e), 'kind': 'general'}, status=400)
+        return Response(
+            {"error": "can-generate-preflight", "state": mdu.state},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
-    @action(methods=['POST'], detail=True, url_path='process')
-    def process(self, request, pk):
+    @action(methods=['POST'], detail=True, url_path='import-data')
+    def import_data(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)  # type: ManualDataUpload
-        if mdu.is_processed or mdu.import_batches.exists():
+        if mdu.state == MduState.IMPORTED:
             stats = {
                 'existing logs': AccessLog.objects.filter(
                     import_batch_id__in=mdu.import_batches.all()
                 ).count()
             }
-        else:
-            try:
-                stats = import_custom_data(mdu, request.user)
-            except DataStructureError:
-
-                clashing_ibs = mdu.clashing_batches()
+            return Response(
+                {
+                    'stats': stats,
+                    'import_batches': ImportBatchSerializer(
+                        mdu.import_batches.all(), many=True
+                    ).data,
+                }
+            )
+        elif mdu.clashing_months:
+            if clashing_ibs := mdu.clashing_batches():
                 clashing = ImportBatchVerboseSerializer(clashing_ibs, many=True).data
                 return Response(
                     {"error": "data-conflict", "clashing_import_batches": clashing},
                     status=status.HTTP_409_CONFLICT,
                 )
-        return Response(
-            {
-                'stats': stats,
-                'import_batches': ImportBatchSerializer(mdu.import_batches.all(), many=True).data,
-            }
-        )
+        elif mdu.state == MduState.IMPORTING:
+            return Response({"msg": "already importing"})
+        elif mdu.can_import:
+            mdu.plan_import(request.user)
+            return Response({"msg": "import started"})
+
+        return Response({"error": "can-not-import"}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_permissions(self):
         if self.action in {_action.__name__ for _action in self.get_extra_actions()}:

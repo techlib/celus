@@ -268,22 +268,24 @@ CELERY_TASK_DEFAULT_QUEUE = 'celery'  # just making the default explicit
 # in production, we remap this queue to the name 'normal', but here it should either be omitted
 # or explicitly set to 'celery'
 CELERY_TASK_ROUTES = {
+    'core.tasks.test': {'queue': 'celery'},
+    'export.tasks.process_flexible_export_task': {'queue': 'export'},
+    'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_route': {'queue': 'celery'},
     'logs.tasks.sync_interest_task': {'queue': 'interest'},
     'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
     'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
     'logs.tasks.import_one_sushi_attempt_task': {'queue': 'import'},
     'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
     'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
+    'logs.tasks.process_outstanding_import_batch_sync_logs_task': {'queue': 'celery'},
+    'logs.tasks.update_report_approx_record_count_task': {'queue': 'interest'},
+    'logs.tasks.export_raw_data_task': {'queue': 'export'},
+    'logs.tasks.prepare_preflight': {'queue': 'preflight'},
+    'logs.tasks.import_manual_upload_data': {'queue': 'import'},
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
-    'core.tasks.test': {'queue': 'celery'},
-    'logs.tasks.update_report_approx_record_count_task': {'queue': 'interest'},
-    'logs.tasks.export_raw_data_task': {'queue': 'export'},
-    'export.tasks.process_flexible_export_task': {'queue': 'export'},
-    'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
-    'knowledgebase.tasks.sync_route': {'queue': 'celery'},
-    'logs.tasks.process_outstanding_import_batch_sync_logs_task': {'queue': 'celery'},
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -336,6 +338,16 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'logs.tasks.process_outstanding_import_batch_sync_logs_task',
         'schedule': schedule(run_every=timedelta(minutes=7)),
         'options': {'expires': 7 * 60},
+    },
+    'mdu_prepare_preflights': {
+        'task': 'logs.tasks.prepare_preflights',
+        'schedule': schedule(run_every=timedelta(minutes=5)),
+        'options': {'expires': 5 * 60},
+    },
+    'mdu_unstuck_manual_imports': {
+        'task': 'logs.tasks.unstuck_import_manual_upload_data',
+        'schedule': schedule(run_every=timedelta(minutes=5)),
+        'options': {'expires': 5 * 60},
     },
 }
 

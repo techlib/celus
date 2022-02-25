@@ -4,16 +4,22 @@ Celery tasks reside here
 import logging
 from collections import Counter
 from datetime import timedelta
+import traceback
 
 import celery
 from django.db import DatabaseError
+from django.db.models import Q
 from django.db.transaction import atomic
+from django.core.mail import mail_admins
 from django.utils.timezone import now
 
+from core.models import User
 from core.context_managers import needs_clickhouse_sync
 from core.logic.error_reporting import email_if_fails
 from core.task_support import cache_based_lock
 from core.tasks import async_mail_admins
+from logs.exceptions import DataStructureError
+from logs.logic.custom_import import import_custom_data
 from logs.logic.attempt_import import import_one_sushi_attempt, check_importable_attempt
 from logs.logic.clickhouse import process_one_import_batch_sync_log
 from logs.logic.export import CSVExport
@@ -22,11 +28,12 @@ from logs.logic.materialized_interest import (
     recompute_interest_by_batch,
     smart_interest_sync,
 )
+from logs.logic.custom_import import custom_import_preflight_check
 from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
 )
-from logs.models import ImportBatchSyncLog
+from logs.models import ImportBatchSyncLog, ManualDataUpload, MduState
 from sushi.models import SushiFetchAttempt, AttemptStatus
 
 logger = logging.getLogger(__file__)
@@ -200,3 +207,118 @@ def process_outstanding_import_batch_sync_logs_task(age_threshold: int = 600):
 @email_if_fails
 def process_one_import_batch_sync_log_task(import_batch_id):
     process_one_import_batch_sync_log(import_batch_id)
+
+
+@celery.shared_task
+@email_if_fails
+@atomic
+def prepare_preflight(mdu_id: int):
+    try:
+        # select_for_update lock only a single fetch attempts
+        mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(pk=mdu_id)
+        if mdu.state == MduState.PREFLIGHT:
+            # preflight data already generated => skipping
+            logger.warning(
+                f"Preflight data (for mdu={mdu.pk}) are already generated: {mdu.preflight}"
+            )
+        elif mdu.state == MduState.INITIAL:
+            mdu.preflight = custom_import_preflight_check(mdu)
+            mdu.state = MduState.PREFLIGHT
+            mdu.save()
+        else:
+            logger.error(f"Can't generate preflight data for mdu={mdu.pk} (state={mdu.state})")
+
+    except ManualDataUpload.DoesNotExist:
+        # mdu was deleted in the meantime
+        logger.warning("mdu '%s' was not found.", mdu_id)
+
+    except DatabaseError as e:
+        logger.warning("mdu '%s' is alreading being processed. (%s)", mdu_id, e)
+    except UnicodeDecodeError as e:
+        mdu.log = str(e)
+        mdu.error = "unicode-decode"
+        mdu.is_processed = True
+        mdu.when_processed = now()
+        mdu.state = MduState.PREFAILED
+        mdu.save()
+
+    except Exception as e:
+        body = f"""\
+{mdu.mail_report_format()}
+
+
+Exception: {e}
+
+Traceback: {traceback.format_exc()}
+"""
+        mdu.log = body
+        mdu.error = "general"
+        mdu.is_processed = True
+        mdu.when_processed = now()
+        mdu.state = MduState.PREFAILED
+        mdu.save()
+        mail_admins('MDU preflight check error', body)
+
+
+@celery.shared_task
+@email_if_fails
+@atomic
+def prepare_preflights():
+    """ This should unstuck MDUs without preflight """
+    for mdu in ManualDataUpload.objects.select_for_update(skip_locked=True).filter(
+        Q(state=MduState.INITIAL)
+        & Q(created__lt=now() - timedelta(minutes=5))  # don't start right away
+    ):
+        mdu.plan_preflight()
+
+
+@celery.shared_task
+@email_if_fails
+@atomic
+def import_manual_upload_data(mdu_id: int, user_id: int):
+    try:
+        mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(pk=mdu_id)
+        user = User.objects.get(pk=user_id)
+        res = import_custom_data(mdu, user)
+        logger.info("Manual upload processed: %s", res)
+
+    except ManualDataUpload.DoesNotExist:
+        # probably mdu was deleted in the meantime
+        logger.warning("mdu '%s' was not found.", mdu_id)
+
+    except User.DoesNotExist:
+        # user was deleted in the meantime
+        # this should almost never happen
+        logger.warning("user '%s' was not found.", user_id)
+
+    except DatabaseError as e:
+        logger.warning("mdu '%s' is alreading being processed. (%s)", mdu_id, e)
+
+    except (Exception, DataStructureError) as e:
+        # generic import error handling
+
+        mdu.log = f"""\
+{mdu.mail_report_format()}
+
+
+Exception: {e}
+
+Traceback: {traceback.format_exc()}
+"""
+
+        mdu.error = "clashing-data" if isinstance(e, DatabaseError) else "import-error"
+        mdu.is_processed = True
+        mdu.when_processed = now()
+        mdu.state = MduState.FAILED
+        mdu.save()
+
+
+@celery.shared_task
+@email_if_fails
+@atomic
+def unstuck_import_manual_upload_data():
+    """ This should unstuck unprocessed MDUs """
+    for mdu in ManualDataUpload.objects.select_for_update(skip_locked=True).filter(
+        Q(state=MduState.IMPORTING)
+    ):
+        import_manual_upload_data.delay(mdu.pk, mdu.user.pk)

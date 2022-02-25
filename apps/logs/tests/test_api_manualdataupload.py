@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from django.urls import reverse
 
 from core.tests.conftest import *  # noqa
+from logs.tasks import prepare_preflight, import_manual_upload_data
 from logs.models import ManualDataUpload
 from test_fixtures.scenarios.basic import (
     data_sources,
@@ -65,14 +66,15 @@ class TestManualUploadForCounterData:
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
-        # do the preflight check
-        response = clients["master"].get(
-            reverse('manual-data-upload-preflight-check', args=(mdu.pk,))
-        )
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
-        assert 'hits_total' in data
-        assert data['log_count'] > 0
+        assert 'preflight' in data
+        assert 'hits_total' in data['preflight']
+        assert data['preflight']['log_count'] > 0
 
 
 @pytest.mark.django_db
@@ -108,14 +110,17 @@ class TestManualUploadConflicts:
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
-        # preflight
-        response = clients["master"].get(
-            reverse('manual-data-upload-preflight-check', args=(mdu.pk,))
-        )
-        assert response.status_code == 200
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
 
         # process data
-        response = clients["master"].post(reverse('manual-data-upload-process', args=(mdu.pk,)))
+        response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        assert response.status_code == 200
+
+        # import data (this should be handled via celery)
+        import_manual_upload_data(mdu.pk, mdu.user.pk)
+
+        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         batches = sorted(e['pk'] for e in response.data["import_batches"])
         batches_months = sorted(e['date'] for e in response.data["import_batches"])
@@ -135,10 +140,11 @@ class TestManualUploadConflicts:
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
         # fail preflight
-        response = clients["master"].get(
-            reverse('manual-data-upload-preflight-check', args=(mdu.pk,))
-        )
+        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         assert response.data["can_import"] is False
         assert batches_months == sorted(
@@ -146,7 +152,7 @@ class TestManualUploadConflicts:
         )
 
         # fail processing
-        response = clients["master"].post(reverse('manual-data-upload-process', args=(mdu.pk,)))
+        response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
         assert response.status_code == 409
         assert batches == sorted(
             e["pk"] for e in response.data["clashing_import_batches"]

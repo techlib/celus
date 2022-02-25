@@ -9,6 +9,8 @@ from logs.models import ManualDataUpload
 from organizations.tests.conftest import *  # noqa  - test fixtures
 from publications.tests.conftest import *
 
+from test_fixtures.entities.logs import ManualDataUploadFullFactory
+
 
 @pytest.fixture()
 def mdu_api_post(platforms, report_type_nd, tmp_path, settings, client, authentication_headers):
@@ -38,19 +40,19 @@ MDUSet = namedtuple('MDUSet', ['rel_admin', 'unrel_admin', 'master', 'super'])
 def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organizations):
     def do_it(org):
         rt = report_type_nd(0)
-        mdu_rel_admin = ManualDataUpload.objects.create(
+        mdu_rel_admin = ManualDataUploadFullFactory(
             organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN
         )
-        mdu_unrel_admin = ManualDataUpload.objects.create(
+        mdu_unrel_admin = ManualDataUploadFullFactory(
             organization=organizations[1],
             platform=platforms[0],
             report_type=rt,
             owner_level=UL_ORG_ADMIN,
         )
-        mdu_master = ManualDataUpload.objects.create(
+        mdu_master = ManualDataUploadFullFactory(
             organization=org, platform=platforms[0], report_type=rt, owner_level=UL_CONS_STAFF
         )
-        mdu_super = ManualDataUpload.objects.create(
+        mdu_super = ManualDataUploadFullFactory(
             organization=org, platform=platforms[0], report_type=rt, owner_level=UL_CONS_ADMIN
         )
         return MDUSet(
@@ -140,10 +142,10 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         rt = report_type_nd(0)
-        mdu_rel = ManualDataUpload.objects.create(
+        mdu_rel = ManualDataUploadFullFactory(
             organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN
         )
-        mdu_unrel = ManualDataUpload.objects.create(
+        mdu_unrel = ManualDataUploadFullFactory(
             organization=organizations[1],
             platform=platforms[0],
             report_type=rt,
@@ -269,7 +271,7 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         rt = report_type_nd(0)
-        mdu = ManualDataUpload.objects.create(
+        mdu = ManualDataUploadFullFactory(
             organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN
         )
         for i, (can, org_obj) in enumerate(

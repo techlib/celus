@@ -4,7 +4,7 @@ from django.db.transaction import on_commit, atomic
 from django.dispatch import receiver
 
 from logs.logic.clickhouse import delete_import_batch_from_clickhouse
-from logs.models import ImportBatch, ImportBatchSyncLog
+from logs.models import ImportBatch, ImportBatchSyncLog, ManualDataUpload
 
 
 @receiver(post_delete, sender=ImportBatch)
@@ -25,3 +25,9 @@ def import_batch_create_sync_log(sender, instance: ImportBatch, using, **kwargs)
     ImportBatchSyncLog.objects.get_or_create(
         import_batch_id=instance.pk, defaults={'state': ImportBatchSyncLog.STATE_NO_CHANGE}
     )
+
+
+@receiver(post_save, sender=ManualDataUpload)
+def mdu_prepare_preflight(sender, instance: ManualDataUpload, using, created, **kwargs):
+    if created:
+        on_commit(instance.plan_preflight)

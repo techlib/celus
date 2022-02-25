@@ -327,11 +327,15 @@ class ManualDataUploadSerializer(ModelSerializer):
             'user',
             'created',
             'is_processed',
+            'error',
             'log',
             'import_batches',
-            'extra',
+            'preflight',
             'can_edit',
             'owner_level',
+            'can_import',
+            'state',
+            'clashing_months',
         )
 
     def validate(self, attrs):
@@ -378,9 +382,10 @@ class ManualDataUploadVerboseSerializer(ModelSerializer):
             'is_processed',
             'log',
             'import_batches',
-            'extra',
+            'preflight',
             'can_edit',
             'owner_level',
+            'state',
         )
 
 

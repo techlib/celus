@@ -13,16 +13,19 @@ from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
+from django.db import transaction
 from django.db.models import Index, UniqueConstraint, Q, QuerySet, OuterRef, Exists, Max
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 
 from core.exceptions import ModelUsageError
-from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource, CreatedUpdatedMixin
+from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource, CreatedUpdatedMixin, User
 from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Platform, Title
+
+from .exceptions import WrongState
 
 
 class OrganizationPlatform(models.Model):
@@ -535,6 +538,15 @@ def check_can_parse(fileobj):
         )
 
 
+class MduState(models.TextChoices):
+    INITIAL = 'initial', _("Initial")
+    PREFLIGHT = 'preflight', _("Preflight")
+    IMPORTING = 'importing', _("Importing")
+    IMPORTED = 'imported', _("Imported")
+    PREFAILED = 'prefailed', _("Preflight failed")
+    FAILED = 'failed', _("Import failed")
+
+
 class ManualDataUpload(models.Model):
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
@@ -551,25 +563,32 @@ class ManualDataUpload(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     data_file = models.FileField(upload_to=where_to_store, validators=[validate_mime_type])
     log = models.TextField(blank=True)
+    error = models.CharField(max_length=50, null=True, blank=True)
     is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batches = models.ManyToManyField(
         ImportBatch, through='ManualDataUploadImportBatch', related_name='mdu'
     )
-    extra = models.JSONField(
-        default=dict, blank=True, help_text='Internal data related to processing of the upload'
+    preflight = models.JSONField(
+        default=dict, blank=True, help_text='Data derived during pre-flight check'
     )
+    state = models.CharField(max_length=20, choices=MduState.choices, default=MduState.INITIAL)
 
     def __str__(self):
         return f'{self.user.username if self.user else ""}: {self.report_type}, {self.platform}'
 
-    def mail_report_format(self, request):
+    def mail_report_format(self):
+        try:
+            report_type = self.report_type
+        except ReportType.DoesNotExist:
+            report_type = ""
+
         return f"""\
         User: {self.user.username} ( {self.user.email} )
         Organization: {self.organization}
         Platform: {self.platform}
-        ReportType: {self.report_type}
-        File: {request.build_absolute_uri(self.data_file.url)}"""
+        ReportType: {report_type}
+        File: {self.data_file.url}"""
 
     def delete(self, using=None, keep_parents=False):
         for import_batch in self.import_batches.all():
@@ -645,7 +664,7 @@ class ManualDataUpload(models.Model):
             return True
         return False
 
-    def clashing_batches(self) -> typing.Iterable[ImportBatch]:
+    def clashing_batches(self) -> models.QuerySet:
         """ Get list of all conflicting batches """
         months = set()
         for record in self.data_to_records():
@@ -657,6 +676,61 @@ class ManualDataUpload(models.Model):
             organization=self.organization,
             platform=self.platform,
         )
+
+    @cached_property
+    def clashing_months(self) -> typing.List[date]:
+        """ Display which months are in conflict with data to be imported
+
+        return: list of months or None if preflight check hasn't been performed yet
+        """
+        if not self.preflight or "months" not in self.preflight:
+            return sorted({e for e in self.clashing_batches().values_list("date", flat=True)})
+        # preflight was performed
+        return sorted(
+            {
+                e.date
+                for e in ImportBatch.objects.filter(
+                    report_type=self.report_type,
+                    platform=self.platform,
+                    organization=self.organization,
+                    date__in=self.preflight["months"],
+                )
+            }
+        )
+
+    @property
+    def can_import(self):
+        return bool(self.state == MduState.PREFLIGHT and not self.clashing_months)
+
+    def plan_preflight(self):
+        if self.pk and self.state == MduState.INITIAL:
+            from .tasks import prepare_preflight
+
+            prepare_preflight.delay(self.pk)
+
+    def regenerate_preflight(self) -> bool:
+        if self.state in (MduState.PREFLIGHT, MduState.PREFAILED):
+            self.state = MduState.INITIAL
+            self.save()
+            transaction.on_commit(self.plan_preflight)
+            return True
+        else:
+            return False
+
+    def plan_import(self, user: User):
+        if self.can_import:
+            self.state = MduState.IMPORTING
+            self.save()
+
+            from .tasks import import_manual_upload_data
+
+            import_manual_upload_data.delay(self.pk, user.pk)
+
+        elif self.state == MduState.IMPORTING:
+            # skip when already importing data
+            pass
+        else:
+            raise WrongState("MDU can't be imported in current state")
 
 
 class ManualDataUploadImportBatch(models.Model):

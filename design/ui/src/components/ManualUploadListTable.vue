@@ -2,7 +2,7 @@
 <i18n lang="yaml">
 en:
   really_delete: Really delete?
-  is_processed: Imported
+  state: State
   delete_warning:
     You are about to delete this manually uploaded data from the database.
     Please confirm this action.
@@ -12,7 +12,7 @@ en:
 
 cs:
   really_delete: Opravdu smazat?
-  is_processed: Importováno
+  state: Stav
   delete_warning: Prosím potvrďte, že chcete smazat z databáze tato ručně nahraná data.
   delete_success: Vybraná ručně nahraná data byla úspěšně smazána
   mdu_page: Na stránku zpracování
@@ -122,8 +122,8 @@ cs:
         </v-tooltip>
       </template>
 
-      <template #item.is_processed="{ item }">
-        <CheckMark :value="item.is_processed" true-color="success" />
+      <template #item.state="{ item }">
+        <ManualUploadState :state="item.state" />
       </template>
     </v-data-table>
 
@@ -216,7 +216,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import axios from "axios";
 import AccessLogList from "./AccessLogList";
 import { isoDateTimeFormat, isoDateTimeFormatSpans } from "../libs/dates";
-import CheckMark from "@/components/util/CheckMark";
+import ManualUploadState from "@/components/ManualUploadState";
 import { userToString } from "../libs/user";
 import MDUChart from "@/components/MDUChart";
 
@@ -225,7 +225,7 @@ export default {
 
   components: {
     MDUChart,
-    CheckMark,
+    ManualUploadState,
     AccessLogList,
   },
 
@@ -266,8 +266,8 @@ export default {
           value: "user.last_name",
         },
         {
-          text: this.$t("is_processed"),
-          value: "is_processed",
+          text: this.$t("state"),
+          value: "state",
         },
         {
           text: this.$t("title_fields.actions"),

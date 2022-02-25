@@ -10,6 +10,7 @@ from core.models import Identity, UL_ORG_ADMIN, UL_CONS_STAFF
 from core.tests.conftest import *  # noqa
 from organizations.tests.conftest import identity_by_user_type, organizations  # noqa
 from publications.tests.conftest import platforms  # noqa
+from logs.tasks import prepare_preflight, import_manual_upload_data
 from logs.logic.custom_import import custom_data_to_records, import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload
 from publications.models import Platform
@@ -80,7 +81,7 @@ class TestCustomImport:
         """
         Complex test
           - upload data to create ManualDataUpload object using the API
-          - do the preflight check
+          - calculate preflight via celery
           - process the ManualDataUpload and check the resulting data
           - check that next process does not create new AccessLogs
           - reimport the same data
@@ -110,16 +111,21 @@ class TestCustomImport:
         assert mdu.organization == organization
         assert mdu.import_batches.count() == 0, 'no import batches yet'
 
-        # do the preflight check
-        response = master_client.get(reverse('manual-data-upload-preflight-check', args=(mdu.pk,)))
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        response = master_client.get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
-        assert data['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
+        assert data['preflight']['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
 
         # let's process the mdu
         assert AccessLog.objects.count() == 0
-        response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
+        response = master_client.post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
         assert response.status_code == 200
+        # import data (this should be handled via celery)
+        import_manual_upload_data(mdu.pk, mdu.user.pk)
+
         mdu.refresh_from_db()
         assert mdu.is_processed
         assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
@@ -127,8 +133,8 @@ class TestCustomImport:
         assert mdu.import_batches.count() == 3, '3 months of data'
 
         # reprocess
-        response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
-        assert response.status_code == 200
+        response = master_client.post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        assert response.status_code == 200, "already imported, nothing needs to be done"
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
 
         # the whole thing once again
@@ -143,14 +149,19 @@ class TestCustomImport:
             },
         )
         assert response.status_code == 201
+
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
-        response = master_client.get(reverse('manual-data-upload-preflight-check', args=(mdu.pk,)))
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        response = master_client.get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
-        assert data['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
+        assert data['preflight']['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
         assert len(data['clashing_months']) == 3, 'all 3 months are already there'
         assert data['can_import'] is False, 'preflight signals that import is not possible'
-        response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
+        response = master_client.post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
         assert response.status_code == 409
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
         mdu.refresh_from_db()
@@ -184,8 +195,15 @@ class TestCustomImport:
         assert mdu.import_batches.count() == 0
         # let's process the mdu
         assert AccessLog.objects.count() == 0
-        response = master_client.post(reverse('manual-data-upload-process', args=(mdu.pk,)))
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        response = master_client.post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
         assert response.status_code == 200
+
+        import_manual_upload_data(mdu.pk, mdu.user.pk)
+
         mdu.refresh_from_db()
         assert mdu.is_processed
         assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
@@ -247,19 +265,23 @@ class TestCustomImport:
         assert response.status_code == 201 if allowed else 403
         if allowed:
             mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
-            # do the preflight check
+
+            # calculate preflight in celery
+            prepare_preflight(mdu.pk)
+
             response = client.get(
-                reverse('manual-data-upload-preflight-check', args=(mdu.pk,)),
+                reverse('manual-data-upload-detail', args=(mdu.pk,)),
                 **authentication_headers(identity),
             )
-            assert response.status_code == (200 if allowed else 403)
+            assert response.status_code == 200
 
             # let's process the mdu
             response = client.post(
-                reverse('manual-data-upload-process', args=(mdu.pk,)),
+                reverse('manual-data-upload-import-data', args=(mdu.pk,)),
                 **authentication_headers(identity),
             )
-            assert response.status_code == (200 if allowed else 403)
+
+            assert response.status_code == 200
 
     @pytest.mark.parametrize(
         ['user_type', 'owner_level'],
