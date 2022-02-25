@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0]
+
+### Added
+
+#### Frontend
+
+* a new page for management of annotations was added
+* it is now possible to delete manually uploaded data from the "SUSHI overview" view
+* deleting of data was improved to show more details about deleted data
+* when manually uploading data, conflicting existing data are detected and presented to the user
+  with the option of deleting them
+
+#### Backend
+
+* encoding of manually uploaded files is automatically detected
+* new model `FetchIntentionQueue` was introduced to bind together follow-up `FetchIntentions`
+  created after SUSHI error 3031 or 3030
+
+
+### Changes
+
+#### Frontend
+
+* the SUSHI management page now uses the whole page even on large screens
+* the "Save" button in SUSHI editing dialog is disabled when save is in progress to prevent
+  double-clicking related issues
+* the SUSHI overview dialog always shows one more year than there are existing data for
+
+#### Backend
+
+* intervals of re-checking not-yet-available recent data by SUSHI (exception 3031) were changed
+  from 1,2,4,8,16,32 days to 1,2,4,8,8,8,8 days (for 3030 the intervals remain at 1,2,4,8,16,32 days)
+* automatic harvesting ending in SUSHI error 3040 (partial data) newly leads to retries similar to
+  3031
+* several required Python packages were updated - most notably Celery
+* feature: added brin index to ImportBatch.date
+* performance of the API endpoint for retrieving report-views was improved
+* a `timestamp` field was added to the FetchIntention model
+* a `date` field was added to the ImportBatch model
+* unused `system_created` field from ImportBatch was removed
+* detection of "broken credentials" was extended to cover more SUSHI statuses
+* the `create_organization_api_keys` CLI management command was improved
+* an empty ImportBatch object is now created after the last attempt in a queue of attempts with
+  the 3030 or 3040 SUSHI errors
+* manual uploads model was modify to use several ImportBatches - one for each month of data
+* when the connected knowledgebase source no longer exports a platform, its knowledgebase related
+  data are cleared up
+* SUSHI exceptions of type `Info` are now correctly processed and stored
+
+
+### Fixed
+
+#### Frontend
+
+* no longer relevant ongoing requests to the backend are cancelled on the Harvest and SUSHI
+  overview pages
+* duplicated FetchIntentions are now properly handled on the SUSHI overview page (no more cases
+  where successful attempts are also marked as scheduled for future harvesting)
+* the "Top 10" widgets on the dashboard now properly react to change of the displayed time range
+* menu is automatically expanded when the user navigates to a child page without using the menu
+ (for example to the SUSHI management page from the dashboard widget)
+* Overlap of text and widget in the test harvesting dialog was fixed
+
+#### Backend
+
+* data migration fixing several problematic ImportBatch states was added
+* code to determine when interest should be recalculated when interest definition changes was
+  optimized
+* skip index for `import_batch_id` was added to Clickhouse to improve deletion speed
+* fix cases where celery did not properly close open sushi-attempt related files
+* gracefully handle situations when `Item_ID` is null in SUSHI C5 reports
+
 
 ## [4.0.1]
 
