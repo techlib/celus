@@ -146,7 +146,7 @@ cs:
       </v-col>
     </v-row>
 
-    <v-row v-else no-gutters>
+    <v-row v-else>
       <SushiFetchIntentionsListWidget
         :harvest-id="harvestId"
         ref="intentionsList"
