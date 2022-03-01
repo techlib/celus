@@ -1,39 +1,16 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/annotations.yaml"></i18n>
 <i18n lang="yaml">
 en:
   columns:
-    subject: Title
-    short_message: Message
-    start_date: "@:title_fields.start_date"
-    end_date: "@:title_fields.end_date"
-    organization: "@:organization"
-    platform: "@:platform"
-    level: Level
     created: Created
-    author: Author
-    actions: Actions
-  dates: Dates
   are_you_sure: "Are you sure to delete {0}?"
-  info: Info
-  important: Important
 
 cs:
   columns:
-    subject: Titulek
-    short_message: Zpráva
-    start_date: "@:title_fields.start_date"
-    end_date: "@:title_fields.end_date"
-    organization: "@:organization"
-    platform: Platforma
-    level: Typ
     created: Vytvořeno
-    author: Autor
-    actions: Akce
-  dates: Data
   are_you_sure: "Určitě chcete smazat {0}?"
-  info: Info
-  important: Důležité
 </i18n>
 
 <template>
@@ -43,12 +20,15 @@ cs:
         :items="annotations"
         :headers="headers"
         sort-by="pk"
+        item-key="pk"
         :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
         :options.sync="options"
         :loading="loading"
         :page="page"
         :items-per-page="10"
         :server-items-length="serverItemsLength"
+        show-expand
+        :expanded.sync="expandedRows"
       >
         <template v-slot:top>
           <v-dialog
@@ -98,7 +78,7 @@ cs:
                 fas fa-info-circle
               </v-icon>
             </template>
-            <i18n path="info" />
+            <span v-text="$t('annotations.labels.level_info')"></span>
           </v-tooltip>
           <v-tooltip bottom v-if="item.level == 'important'">
             <template v-slot:activator="{ on }">
@@ -106,7 +86,7 @@ cs:
                 fas fa-exclamation-triangle
               </v-icon>
             </template>
-            <i18n path="important" />
+            <span v-text="$t('annotations.labels.level_important')"></span>
           </v-tooltip>
         </template>
 
@@ -127,6 +107,33 @@ cs:
           >
             fas fa-trash-alt
           </v-icon>
+        </template>
+
+        <template #expanded-item="{ item, headers }">
+          <td :colspan="headers.length" class="py-3">
+            <div class="caption">
+              {{ $t("annotations.labels.date_range") }}
+            </div>
+            <div class="pb-2">
+              {{ item.start_date }}&ndash;{{ item.end_date }}
+            </div>
+            <div class="caption">
+              {{ $t("annotations.labels.short_message") }}
+            </div>
+            <div class="pb-2">
+              {{ item.short_message || $t("annotations.messages.empty") }}
+            </div>
+            <div class="caption">
+              {{ $t("annotations.labels.message") }}
+            </div>
+            <div>
+              {{
+                item.message.length
+                  ? item.message
+                  : $t("annotations.messages.empty")
+              }}
+            </div>
+          </td>
         </template>
       </v-data-table>
     </v-col>
@@ -171,6 +178,7 @@ export default {
       showEditDialog: false,
       showDeleteDialog: false,
       options: {},
+      expandedRows: [],
     };
   },
 
@@ -184,27 +192,27 @@ export default {
     headers() {
       return [
         {
-          text: this.$i18n.t("columns.subject"),
+          text: this.$i18n.t("annotations.labels.subject"),
           value: `subject_${this.lang}`,
         },
         {
-          text: this.$i18n.t("columns.organization"),
+          text: this.$i18n.t("organization"),
           value: `organization.name_${this.lang}`,
         },
         {
-          text: this.$i18n.t("columns.platform"),
+          text: this.$i18n.t("platform"),
           value: "platform.name",
         },
         {
-          text: this.$i18n.t("columns.level"),
+          text: this.$i18n.t("annotations.labels.level"),
           value: "level",
         },
         {
-          text: this.$i18n.t("columns.author"),
+          text: this.$i18n.t("annotations.labels.author"),
           value: "author",
         },
         {
-          text: this.$i18n.t("columns.actions"),
+          text: this.$i18n.t("title_fields.actions"),
           value: "actions",
         },
       ];
