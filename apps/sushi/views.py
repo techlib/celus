@@ -184,7 +184,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         }
 
         result = {}
-        # initialize matrix with empty values
+        # initialize output matrix
         for year in range(start_year, end_year + 1):
             year_result = {"year": year}
             for i in range(1, 13):
@@ -192,13 +192,16 @@ class SushiCredentialsViewSet(ModelViewSet):
                 for (crt, broken) in report_types_and_broken:
                     if entry := data_matrix_map.get((crt.report_type.pk, year, i)):
                         status = "success" if entry.has_logs else "no_data"
+                        can_harvest = False
                     else:
                         status = "untried"
+                        can_harvest = True
 
                     year_result[f"{i:02d}"][crt.code] = {
                         "status": status,
                         "planned": False,
                         "broken": broken,
+                        "can_harvest": can_harvest and not broken,
                         "counter_report": {
                             "id": crt.pk,
                             "name": crt.name,
