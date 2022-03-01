@@ -1,0 +1,32 @@
+en:
+  annotations:
+    labels:
+      short_message: Short description
+      message: Annotation text
+      subject: Title
+      level: Importance
+      level_info: Info
+      level_important: Important
+      date_range: Date range
+      author: Author
+    messages:
+      annotation_created: Annotation was successfully created
+      annotation_updated: Annotation was successfully updated
+      annotation_deleted: Annotation was successfully deleted
+      empty: -- empty --
+cs:
+  annotations:
+    labels:
+      short_message: Krátký popisek
+      message: Text zprávy
+      subject: Titulek
+      level: Důležitost
+      level_info: Informační
+      level_important: Důležité
+      date_range: Platnost od-do
+      author: Autor
+    messages:
+      annotation_created: Poznámka byla úspěšně vytvořena
+      annotation_updated: Poznámka byla úspěšně upravena
+      annotation_deleted: Poznámka byla úspěšně smazána
+      empty: -- prázdný --

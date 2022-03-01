@@ -1,29 +1,10 @@
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
 <i18n lang="yaml" src="../locales/dialog.yaml"></i18n>
+<i18n lang="yaml" src="../locales/annotations.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  labels:
-    short_message: Short description
-    message: Annotation text
-    subject: Title
-  level: Importance
-  level_info: Info
-  level_important: Important
-  annotation_created: Annotation was successfully created
-  annotation_updated: Annotation was successfully updated
-  annotation_deleted: Annotation was successfully deleted
   all: All
 cs:
-  labels:
-    short_message: Krátký popisek
-    message: Text zprávy
-    subject: Titulek
-  level: Důležitost
-  level_info: Informační
-  level_important: Důležité
-  annotation_created: Poznámka byla úspěšně vytvořena
-  annotation_updated: Poznámka byla úspěšně upravena
-  annotation_deleted: Poznámka byla úspěšně smazána
   all: Všechny
 </i18n>
 
@@ -115,7 +96,7 @@ cs:
         <v-col cols="auto">
           <v-select
             :items="importanceLevels"
-            :label="$t('level')"
+            :label="$t('annotations.labels.level')"
             v-model="level"
           >
             <template v-slot:item="{ item }">
@@ -137,7 +118,7 @@ cs:
         <v-col cols="12" md="6" v-if="showCs">
           <v-text-field
             v-model="subjectCs"
-            :label="$t('labels.subject') + `${inCs} *`"
+            :label="$t('annotations.labels.subject') + `${inCs} *`"
             :rules="showCs ? [required] : []"
             maxlength="200"
             counter
@@ -147,7 +128,7 @@ cs:
         <v-col cols="12" md="6">
           <v-text-field
             v-model="subjectEn"
-            :label="$t('labels.subject') + `${inEn} *`"
+            :label="$t('annotations.labels.subject') + `${inEn} *`"
             :rules="[required]"
             maxlength="200"
             counter
@@ -159,7 +140,7 @@ cs:
         <v-col cols="12" md="6" v-if="showCs">
           <v-textarea
             v-model="shortMessageCs"
-            :label="$t('labels.short_message') + inCs"
+            :label="$t('annotations.labels.short_message') + inCs"
             rows="2"
             outlined
             auto-grow
@@ -169,7 +150,7 @@ cs:
         <v-col cols="12" md="6">
           <v-textarea
             v-model="shortMessageEn"
-            :label="$t('labels.short_message') + inEn"
+            :label="$t('annotations.labels.short_message') + inEn"
             rows="2"
             outlined
             auto-grow
@@ -181,7 +162,7 @@ cs:
         <v-col cols="12" md="6" v-if="showCs">
           <v-textarea
             v-model="messageCs"
-            :label="$t('labels.message') + inCs"
+            :label="$t('annotations.labels.message') + inCs"
             rows="4"
             outlined
             auto-grow
@@ -191,7 +172,7 @@ cs:
         <v-col cols="12" :md="showCs ? 6 : null">
           <v-textarea
             v-model="messageEn"
-            :label="$t('labels.message') + inEn"
+            :label="$t('annotations.labels.message') + inEn"
             rows="4"
             outlined
             auto-grow
@@ -268,13 +249,13 @@ export default {
       return [
         {
           value: "info",
-          text: this.$t("level_info"),
+          text: this.$t("annotations.labels.level_info"),
           icon: "fa-info-circle",
           color: "info",
         },
         {
           value: "important",
-          text: this.$t("level_important"),
+          text: this.$t("annotations.labels.level_important"),
           icon: "fa-exclamation-triangle",
           color: "warning",
         },
@@ -322,10 +303,10 @@ export default {
       return this.languages.includes("cs");
     },
     inEn() {
-      return this.showCs ? ` ( ${this.$t("in_english")} )` : "";
+      return this.showCs ? ` (${this.$t("in_english")})` : "";
     },
     inCs() {
-      return this.showCs ? ` ( ${this.$t("in_czech")} )` : "";
+      return this.showCs ? ` (${this.$t("in_czech")})` : "";
     },
   },
 
@@ -350,7 +331,7 @@ export default {
         this.annotationId = response.data.pk;
         this.$emit("saved", { annotation: response.data });
         this.showSnackbar({
-          content: this.$t("annotation_created"),
+          content: this.$t("annotations.messages.annotation_created"),
           color: "success",
         });
       } catch (error) {
@@ -372,7 +353,7 @@ export default {
         this.annotationId = response.data.pk;
         this.$emit("saved", { annotation: response.data });
         this.showSnackbar({
-          content: this.$t("annotation_updated"),
+          content: this.$t("annotations.messages.annotation_updated"),
           color: "success",
         });
       } catch (error) {
@@ -429,7 +410,7 @@ export default {
             `/api/annotations/${this.annotationId}/`
           );
           this.showSnackbar({
-            content: this.$t("annotation_deleted"),
+            content: this.$t("annotations.messages.annotation_deleted"),
             color: "success",
           });
           this.$emit("deleted");
