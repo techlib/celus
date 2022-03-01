@@ -155,6 +155,7 @@ class SushiCredentialsDataReportSerializer(Serializer):
     )
     planned = BooleanField(required=True)
     broken = BooleanField()
+    can_harvest = BooleanField()
     counter_report = SushiCredentialsDataCounterReportSerializer()
 
 

@@ -371,6 +371,7 @@ export default {
                 record[month] = {
                   status: row.status,
                   planned: row.planned,
+                  can_harvest: row.can_harvest,
                   broken:
                     row.broken ||
                     !!(this.credentials && this.credentials.broken),
@@ -506,15 +507,13 @@ export default {
 
       this.showHarvestDialog = true;
     },
-    isStatusSelectable(status) {
-      if (this.deleteMode || (status !== "no_data" && status !== "success"))
-        return true;
-      return false;
+    isSelectable(record) {
+      return this.deleteMode || record.can_harvest;
     },
     dataReady(item, month) {
       let year = parseInt(item.year);
       let month_int = parseInt(month);
-      if (!this.isStatusSelectable(item[month].status))
+      if (!this.isSelectable(item[month]))
         // do not allow re-harvesting of successful downloads
         return false;
       let current = new Date();
@@ -574,7 +573,7 @@ export default {
         let monthRec = yearRec[month];
         for (let trId of trs) {
           let match = monthRec.find((item) => item.counter_report.id === trId);
-          if (this.isStatusSelectable(match.status)) {
+          if (this.isSelectable(match)) {
             newSelection[yearMonth] = trs;
           }
         }
