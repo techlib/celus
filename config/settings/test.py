@@ -1,4 +1,5 @@
 import os
+from decouple import config, Csv
 
 # we need to disable cachalot through environment because this changes caused by this setting
 # are applied in config.settings.base and it does not help overriding them later on
@@ -8,12 +9,13 @@ from .base import *  # noqa
 
 LIVE_ERMS_AUTHENTICATION = False
 
-DATABASES["default"]["NAME"] = os.environ.get("POSTGRES_DB", "celus")
-DATABASES["default"]["USER"] = os.environ.get("POSTGRES_USER", "celus")
-DATABASES["default"]["PASSWORD"] = os.environ.get("POSTGRES_PASSWORD", "celus")
-DATABASES["default"]["HOST"] = os.environ.get("POSTGRES_HOST", "127.0.0.1")
+DATABASES["default"]["NAME"] = config("POSTGRES_DB", "celus")
+DATABASES["default"]["USER"] = config("POSTGRES_USER", "celus")
+DATABASES["default"]["PASSWORD"] = config("POSTGRES_PASSWORD", "celus")
+DATABASES["default"]["HOST"] = config("POSTGRES_HOST", "127.0.0.1")
 
-CACHES["default"]["LOCATION"] = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1")
+CACHES["default"]["LOCATION"] = config("REDIS_URL", "redis://127.0.0.1:6379/1")
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost')
 
 ALLOW_USER_CREATED_PLATFORMS = True
 ALLOW_USER_REGISTRATION = True
