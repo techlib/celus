@@ -1,2 +1,2 @@
 #!/bin/sh
-celery -A config beat -l DEBUG
+watchmedo auto-restart -d apps/ -d config/  -p '*.py' -R -- celery -A config beat -l DEBUG
