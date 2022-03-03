@@ -1,25 +1,20 @@
 import typing
-
 from collections import Counter
-from datetime import date, datetime
-import dateparser
-from django.db import connection
-from django.db.transaction import atomic
+from datetime import date
+from functools import lru_cache
 
+from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
-from core.models import UL_ORG_ADMIN
+from core.logic.dates import parse_date_fuzzy
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
-from logs.models import ImportBatch, ManualDataUpload, Metric, OrganizationPlatform
+from logs.models import ImportBatch, ManualDataUpload, OrganizationPlatform
 from nigiri.counter5 import CounterRecord
 
 
-# en_month_matcher = re.compile(r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})')
-# iso_month_matcher = re.compile(r'(\d{4})-(\d{1,2})')
-
-
-def col_name_to_month(row_name: str) -> date:
+@lru_cache
+def col_name_to_month(row_name: str) -> typing.Optional[date]:
     """
     >>> col_name_to_month('Jan 2019')
     datetime.date(2019, 1, 1)
@@ -28,10 +23,10 @@ def col_name_to_month(row_name: str) -> date:
     >>> col_name_to_month('prase') is None
     True
     """
-    dt = dateparser.parse(row_name)  # type: datetime
-    if not dt:
-        return dt
-    return dt.date().replace(day=1)
+    _date = parse_date_fuzzy(row_name)
+    if _date:
+        return _date.replace(day=1)
+    return None
 
 
 def custom_data_import_precheck(
@@ -44,7 +39,7 @@ def custom_data_import_precheck(
         if col_name in expected_dimensions:
             pass
         else:
-            month = col_name_to_month(col_name)
+            month = parse_date_fuzzy(col_name)
             if month is None:
                 problems.append(_('Column name not understood: "{}"').format(col_name))
             else:

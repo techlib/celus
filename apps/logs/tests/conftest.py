@@ -1,12 +1,10 @@
 import calendar
-from datetime import date
 from itertools import product
 
-import dateparser
 import faker
 import pytest
-from django.db.transaction import atomic
 
+from core.logic.dates import parse_date_fuzzy
 from logs.models import (
     ReportType,
     Dimension,
@@ -88,7 +86,7 @@ def counter_records():
             assert len(row) >= 3
             title = row[0] if row[0] else fake.sentence()
             start = row[1]
-            end = dateparser.parse(start)  # type: date
+            end = parse_date_fuzzy(start)
             end = end.replace(day=calendar.monthrange(end.year, end.month)[1])  # last day of month
             dim_data = {f'dim{i}': value for i, value in enumerate(row[2:-1])}
             value = row[-1]
