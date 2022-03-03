@@ -1,10 +1,10 @@
-import dateparser
 from distutils.util import strtobool
 
-from django.shortcuts import get_object_or_404
 from django.db.models import F, Q
+from django.shortcuts import get_object_or_404
 from rest_framework import filters
 
+from core.logic.dates import parse_date_fuzzy
 from sushi.models import AttemptStatus
 
 
@@ -39,7 +39,7 @@ class ReportFilter(filters.BaseFilterBackend):
 
 class DateFromFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        date_from = dateparser.parse(request.query_params.get("date_from", ""))
+        date_from = parse_date_fuzzy(request.query_params.get("date_from", ""))
         if date_from:
             queryset = queryset.filter(attempt__timestamp__date__gte=date_from)
         return queryset
@@ -47,7 +47,7 @@ class DateFromFilter(filters.BaseFilterBackend):
 
 class MonthFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        month = dateparser.parse(request.query_params.get("month", ""))
+        month = parse_date_fuzzy(request.query_params.get("month", ""))
         if month:
             queryset = queryset.filter(start_date__gte=month)
             queryset = queryset.filter(end_date__lte=month)

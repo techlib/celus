@@ -1,37 +1,26 @@
-import json
-from time import sleep
-
-import dateparser
 import reversion
 from dateutil.relativedelta import relativedelta
 from django.db.models import Min, F
-from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from reversion.views import create_revision
 
-from core.logic.dates import month_start, month_end
-from core.models import UL_CONS_STAFF, REL_ORG_ADMIN
-from core.permissions import (
-    SuperuserOrAdminPermission,
-    OrganizationRelatedPermissionMixin,
-)
+from core.logic.dates import month_start, month_end, parse_date_fuzzy
+from core.models import UL_CONS_STAFF
+from core.permissions import SuperuserOrAdminPermission
 from logs.models import ImportBatch
-from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id
 from scheduler.models import FetchIntention
 from scheduler.serializers import MonthOverviewSerializer
 from .models import (
     SushiCredentials,
     CounterReportType,
-    SushiFetchAttempt,
     AttemptStatus,
     CounterReportsToCredentials,
 )
@@ -39,8 +28,6 @@ from .serializers import (
     CounterReportTypeSerializer,
     SushiCredentialsSerializer,
     SushiCredentialsDataSerializer,
-    SushiFetchAttemptSerializer,
-    SushiFetchAttemptSimpleSerializer,
     UnsetBrokenSerializer,
 )
 
@@ -304,7 +291,7 @@ class SushiCredentialsViewSet(ModelViewSet):
                 {'error': 'Missing "month" URL param'}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        month_date = dateparser.parse(month)
+        month_date = parse_date_fuzzy(month)
         start = month_start(month_date)
         end = month_end(month_date)
         credentials = self.get_queryset()
