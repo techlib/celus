@@ -26,6 +26,8 @@ cs:
       :headers="headers"
       :no-data-text="$t('no_data')"
       :loading="loading"
+      sort-by="created"
+      sort-desc
     >
       <template #item.user.last_name="{ item }">
         {{ userToString(item.user) }}
