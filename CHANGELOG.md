@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [4.1.1]
+
+### Added
+
+#### Frontend
+
+* The annotations list table now shows the dates and text of the annotations in an expansion panel
+
+### Changes
+
+#### Frontend
+
+* Manual data uploads are sorted by the upload date by default (not randomly ordered)
+
+### Fixed
+
+#### Frontend
+
+* It is now possible to reharvest data for months where the data was empty
+* Very slow parsing of some manual data uploads caused by slow date parser was fixed
+
+
 ## [4.1.0]
 
 ### Added
