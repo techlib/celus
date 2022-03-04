@@ -16,7 +16,7 @@ from logs.models import ImportBatch
 from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Title, Platform, PlatformTitle
-from ..exceptions import DataStructureError
+from ..exceptions import DataStructureError, UnknownMetric
 from ..models import ReportType, Metric, DimensionText, AccessLog
 
 logger = logging.getLogger(__name__)
@@ -35,6 +35,21 @@ def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=No
         return obj.pk
     else:
         return mapping[attr_value]["pk"]
+
+
+def get_or_create_metric(mapping, value) -> int:
+    if settings.AUTOMATICALLY_CREATE_METRICS:
+        return get_or_create_with_map(Metric, mapping, 'short_name', value)
+    else:
+        if pk := mapping.get(value):
+            return pk
+        else:
+            try:
+                metric = Metric.objects.get(short_name=value)
+                mapping[value] = metric.pk
+                return metric.pk
+            except Metric.DoesNotExist:
+                raise UnknownMetric(value)
 
 
 TitleRec = namedtuple('TitleRec', ('name', 'pub_type', 'issn', 'eissn', 'isbn', 'doi'))
@@ -330,7 +345,7 @@ def _import_counter_records(
             # we can pass a specific metric by numeric ID
             metric_id = record.metric
         else:
-            metric_id = get_or_create_with_map(Metric, metrics, 'short_name', record.metric)
+            metric_id = get_or_create_metric(metrics, record.metric)
         start = record.start if not isinstance(record.start, date) else record.start.isoformat()
         id_attrs = {
             'report_type_id': report_type.pk,

@@ -458,9 +458,13 @@ ALLOW_USER_REGISTRATION = config('ALLOW_USER_REGISTRATION', cast=bool, default=F
 # Allow user to create platforms
 ALLOW_USER_CREATED_PLATFORMS = config('ALLOW_USER_CREATED_PLATFORMS', cast=bool, default=False)
 
+# Allows to create new metrics during data import
+# When False, user has to create metrics via admin,
+# which will cause that import fails
+AUTOMATICALLY_CREATE_METRICS = config('AUTOMATICALLY_CREATE_METRICS', cast=bool, default=True)
 
 # Credentials which should be skipped during celery import
-FAKE_SUSHI_URLS = ['https://demo.celus.net/']
+FAKE_SUSHI_URLS = ['https://sashimi.celus.net/']
 
 # social authentication providers
 SOCIAL_ACCOUNTS_SUPPORTED = config('SOCIAL_ACCOUNTS_SUPPORTED', cast=Csv(), default='')
