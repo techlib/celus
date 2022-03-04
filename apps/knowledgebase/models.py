@@ -173,7 +173,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
         self.url = urljoin(self.source.url, ImportAttempt.URL_MAP[self.kind])
         return super().save(*args, **kwargs)
 
-    def perform(self, merge=MergeStrategy.NONE):
+    def perform(self, merge=MergeStrategy.EMPTY_SOURCE):
         """Downloads data from knowledgebase and imports it
 
         :param merge: Try to merge with existing platforms without a source (should be used rarely)
@@ -234,7 +234,7 @@ class PlatformImportAttempt(ImportAttempt):
         update_platforms.delay(self.pk)
 
     @transaction.atomic
-    def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.NONE):
+    def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.EMPTY_SOURCE):
         counter: typing.Counter[str] = Counter()
 
         counter["total"] = len(data)
