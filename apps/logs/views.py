@@ -142,7 +142,7 @@ class ReportTypeViewSet(ReadOnlyModelViewSet):
             return self.queryset.filter(
                 Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk'))))
                 | Q(short_name='interest')
-            )
+            ).prefetch_related('controlled_metrics')
         return self.queryset
 
 
@@ -514,7 +514,7 @@ class ManualDataUploadViewSet(ModelViewSet):
         if mdu.state == MduState.INITIAL:
             # already should be already planned
             # just start it in celery right now
-            self.plan_preflight()
+            mdu.plan_preflight()
             return Response({"msg": "generating preflight"})
 
         elif mdu.state in (MduState.PREFLIGHT, MduState.PREFAILED):

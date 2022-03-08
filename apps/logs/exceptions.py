@@ -23,3 +23,9 @@ class UnknownMetric(Exception):
     Raised during import when unexisting metric is found.
     used only when AUTOMATICALLY_CREATE_METRICS=False
     """
+
+
+class UnsupportedMetric(Exception):
+    """
+    Raised when unsupported metric for report type is found during import.
+    """

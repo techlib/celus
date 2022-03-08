@@ -1,4 +1,6 @@
+from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin import widgets
 from django.utils.translation import ngettext
 
 from modeltranslation.admin import TranslationAdmin
@@ -30,8 +32,21 @@ class IsMaterialized(admin.SimpleListFilter):
         return queryset
 
 
+class ReportTypeForm(forms.ModelForm):
+    controlled_metrics = forms.ModelMultipleChoiceField(
+        queryset=models.Metric.objects.all(),
+        widget=widgets.FilteredSelectMultiple("Controlled metrics", is_stacked=False),
+        required=False,
+    )
+
+    class Meta:
+        model = models.ReportType
+        fields = '__all__'
+
+
 @admin.register(models.ReportType)
 class ReportTypeAdmin(TranslationAdmin):
+    form = ReportTypeForm
 
     list_display = [
         'short_name',
@@ -45,6 +60,7 @@ class ReportTypeAdmin(TranslationAdmin):
     ]
     ordering = ['short_name']
     list_filter = ['source', IsMaterialized, 'default_platform_interest']
+    readonly_fields = ['approx_record_count']
 
     class Media:
         css = {'all': ['css/report_type.css']}
@@ -66,9 +82,17 @@ class ReportTypeAdmin(TranslationAdmin):
 @admin.register(models.Metric)
 class MetricAdmin(TranslationAdmin):
 
-    list_display = ['short_name', 'active', 'name']
+    list_display = ['short_name', 'active', 'name', 'controlled_report_types']
     list_editable = ['active']
     list_filter = ['active']
+
+    @classmethod
+    def controlled_report_types(cls, obj: models.Metric):
+        return ', '.join(str(e) for e in obj.controlled.all())
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related('controlled')
 
 
 @admin.register(models.ReportInterestMetric)

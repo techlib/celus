@@ -16,7 +16,7 @@ from logs.models import ImportBatch
 from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Title, Platform, PlatformTitle
-from ..exceptions import DataStructureError, UnknownMetric
+from ..exceptions import DataStructureError, UnknownMetric, UnsupportedMetric
 from ..models import ReportType, Metric, DimensionText, AccessLog
 
 logger = logging.getLogger(__name__)
@@ -37,19 +37,31 @@ def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=No
         return mapping[attr_value]["pk"]
 
 
-def get_or_create_metric(mapping, value) -> int:
-    if settings.AUTOMATICALLY_CREATE_METRICS:
+def get_or_create_metric(mapping, value, controlled_metrics: typing.List[str] = None) -> int:
+    # already in mapping
+    if record := mapping.get(value):
+        return record["pk"]
+
+    if settings.AUTOMATICALLY_CREATE_METRICS and not controlled_metrics:
+        # When metric auto create of metrics is allowed and metrics doesn't
+        # need to be check just create it without further checking
         return get_or_create_with_map(Metric, mapping, 'short_name', value)
     else:
-        if pk := mapping.get(value):
-            return pk
-        else:
-            try:
-                metric = Metric.objects.get(short_name=value)
-                mapping[value] = metric.pk
-                return metric.pk
-            except Metric.DoesNotExist:
-                raise UnknownMetric(value)
+        try:
+            # Metric is supposed to exist
+            metric = Metric.objects.get(short_name=value)
+        except Metric.DoesNotExist:
+            raise UnknownMetric(value)
+
+        if controlled_metrics:
+            # check for controlled metrics
+            if value not in controlled_metrics:
+                raise UnsupportedMetric(value)
+
+        # update mapping
+        mapping[value] = {"short_name": metric.short_name, "pk": metric.pk}
+
+        return metric.pk
 
 
 TitleRec = namedtuple('TitleRec', ('name', 'pub_type', 'issn', 'eissn', 'isbn', 'doi'))
@@ -316,11 +328,16 @@ def _import_counter_records(
     tm: TitleManager,
     month_to_import_batch: typing.Dict[str, ImportBatch],
 ):
+    # prepare controlled metrics filtering
+    controlled_metrics = list(report_type.controlled_metrics.values_list('short_name', flat=True))
+
     # prepare all remaps
     metrics = {
         metric["short_name"]: {"pk": metric["pk"], "short_name": metric["short_name"]}
         for metric in Metric.objects.values("pk", "short_name")
+        if not controlled_metrics or metric["short_name"] in controlled_metrics
     }
+
     text_to_int_remaps = {}
     log_memory('X-2')
     for dim_text in DimensionText.objects.values("dimension_id", "text", "pk"):
@@ -345,7 +362,7 @@ def _import_counter_records(
             # we can pass a specific metric by numeric ID
             metric_id = record.metric
         else:
-            metric_id = get_or_create_metric(metrics, record.metric)
+            metric_id = get_or_create_metric(metrics, record.metric, controlled_metrics)
         start = record.start if not isinstance(record.start, date) else record.start.isoformat()
         id_attrs = {
             'report_type_id': report_type.pk,

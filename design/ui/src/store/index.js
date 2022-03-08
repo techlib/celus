@@ -191,6 +191,12 @@ export default new Vuex.Store({
       }
       return true;
     },
+    automaticallyCreateMetrics(state) {
+      if ("AUTOMATICALLY_CREATE_METRICS" in state.basicInfo) {
+        return state.basicInfo["AUTOMATICALLY_CREATE_METRICS"];
+      }
+      return true;
+    },
     celusAdminSitePath(state) {
       if ("CELUS_ADMIN_SITE_PATH" in state.basicInfo) {
         return state.basicInfo.CELUS_ADMIN_SITE_PATH;

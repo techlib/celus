@@ -5,11 +5,11 @@ from datetime import date
 from functools import lru_cache
 
 from django.db.transaction import atomic
+from django.conf import settings
 from django.utils.translation import gettext as _
 from django.utils.timezone import now
 
 from core.logic.dates import parse_date_fuzzy
-from core.logic.version import celus_version
 from core.models import User
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
@@ -137,8 +137,10 @@ def histograms_with_count(
 def custom_import_preflight_check(mdu: ManualDataUpload):
     histograms, counts = histograms_with_count(['start', 'metric', 'title'], mdu.data_to_records())
     return {
+        'format_version': '1',
+        'celus_version': settings.CELUS_VERSION,
+        'git_hash': settings.SENTRY_RELEASE,
         'generated': now().isoformat(),
-        'celus_version': celus_version(),
         'log_count': counts["count"],
         'hits_total': counts["sum"],
         'months': histograms["start"],

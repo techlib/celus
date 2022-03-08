@@ -191,6 +191,10 @@ cs:
               v-else-if="state == 'preflight'"
               :preflight-data="preflightData"
               :interest-metrics="selectedInterestMetrics"
+              :usable-metrics="usableMetrics"
+              :check-metrics="checkMetrics"
+              :auto-create-metrics="automaticallyCreateMetrics"
+              :metrics="metrics"
             />
             <v-alert v-else-if="state == 'prefailed'" type="error">
               <strong v-text="$t('following_error_found')"></strong>:
@@ -349,7 +353,7 @@ cs:
 
 <script>
 import axios from "axios";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import AccessLogList from "@/components/AccessLogList";
 import ReportTypeCreateWidget from "@/components/ReportTypeCreateWidget";
 import LargeSpinner from "@/components/util/LargeSpinner";
@@ -382,6 +386,9 @@ export default {
       valid: false,
       platform: null,
       reportTypes: [],
+      reportTypesFetched: false,
+      metrics: [],
+      metricsFetched: false,
       selectedReportType: null,
       showErrorDialog: false,
       showConfirmDeleteDialog: false,
@@ -391,7 +398,6 @@ export default {
       showAddReportTypeDialog: false,
       tab: "chart",
       uploadObjectProcessing: false,
-      reportTypesFetched: false,
       deleting: false,
       refreshTimeout: null,
       spinnerOn: false,
@@ -400,6 +406,9 @@ export default {
   computed: {
     ...mapState({
       organizationId: "selectedOrganizationId",
+    }),
+    ...mapGetters({
+      automaticallyCreateMetrics: "automaticallyCreateMetrics",
     }),
     breadcrumbs() {
       return [
@@ -420,10 +429,16 @@ export default {
       ];
     },
     selectedInterestMetrics() {
-      if (this.selectedReportType) {
-        return this.selectedReportType.interest_metric_set.map(
+      if (this.uploadObject && this.uploadObject.report_type_obj) {
+        return this.uploadObject.report_type_obj.interest_metric_set.map(
           (item) => item.metric.short_name
         );
+      }
+      return [];
+    },
+    usableMetrics() {
+      if (this.uploadObject && this.uploadObject.report_type_obj) {
+        return this.uploadObject.report_type_obj.usable_metrics_names;
       }
       return [];
     },
@@ -438,7 +453,7 @@ export default {
           {
             platform: this.platformId,
             organization: this.organizationId,
-            report_type: this.uploadObject.report_type,
+            report_type: this.uploadObject.report_type_obj.pk,
             months: this.preflightData.clashing_months,
           },
         ];
@@ -471,6 +486,13 @@ export default {
         return this.uploadObject.state;
       } else {
         return null;
+      }
+    },
+    checkMetrics() {
+      if (this.uploadObject) {
+        return this.uploadObject.report_type_obj.check_controlled_metrics;
+      } else {
+        return false;
       }
     },
     preflightData() {
@@ -551,8 +573,18 @@ export default {
           }
           this.reportTypesFetched = true;
         } catch (error) {
-          this.showSnackbar({ content: "Error loading title: " + error });
+          this.showSnackbar({ content: "Error loading report types: " + error });
         }
+      }
+    },
+    async loadMetrics() {
+      let url = `/api/metric/`;
+      try {
+        const response = await axios.get(url);
+        this.metrics = response.data;
+        this.metricsFetched = true;
+      } catch (error) {
+        this.showSnackbar({ content: "Error loading metrics: " + error });
       }
     },
     async triggerImportData() {
@@ -594,6 +626,12 @@ export default {
     },
     async loadMdu() {
       this.cancelRefreshTimeout();
+
+      // Try to fetch metrics first
+      if (!this.metricsFetched) {
+        await this.loadMetrics();
+      }
+
       if (this.uploadObjectId) {
         try {
           let response = await axios.get(
@@ -650,6 +688,7 @@ export default {
   },
   mounted() {
     this.loadReportTypes();
+    this.loadMetrics();
     this.loadPlatform();
     if (this.uploadObjectId) {
       this.loadMdu();

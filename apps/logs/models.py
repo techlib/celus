@@ -70,6 +70,9 @@ class ReportType(models.Model):
         default=0,
         help_text='Automatically filled in by periodic check to have some fast measure of the record count',
     )
+    controlled_metrics = models.ManyToManyField(
+        'Metric', through='ControlledMetric', related_name='controlled'
+    )
 
     class Meta:
         constraints = [
@@ -91,10 +94,22 @@ class ReportType(models.Model):
         return [dim.short_name for dim in self.dimensions.all()]
 
     @cached_property
+    def check_controlled_metrics(self):
+        return self.controlled_metrics.count() > 0
+
+    @cached_property
     def dimensions_sorted(self):
         if self.materialization_spec:
             return self.materialization_spec.base_report_type.dimensions_sorted
         return list(self.dimensions.all().order_by('reporttypetodimension__position'))
+
+    @cached_property
+    def usable_metrics_names(self):
+        return list(
+            (
+                self.controlled_metrics if self.check_controlled_metrics else Metric.objects.all()
+            ).values_list('short_name', flat=True)
+        )
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -251,6 +266,22 @@ class Metric(models.Model):
         if self.name and self.name != self.short_name:
             return f'{self.short_name} => {self.name}'
         return self.short_name
+
+
+class ControlledMetric(models.Model):
+    created = models.DateTimeField(default=now)
+    updated = models.DateTimeField(auto_now=True)
+
+    metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
+    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=['metric_id', 'report_type_id'],
+                name='controlled_report_type_and_metric_unique',
+            ),
+        ]
 
 
 class ReportInterestMetric(models.Model):
@@ -664,7 +695,7 @@ class ManualDataUpload(models.Model):
             return True
         return False
 
-    def clashing_batches(self) -> models.QuerySet:
+    def clashing_batches(self) -> models.QuerySet[ImportBatch]:
         """ Get list of all conflicting batches """
         months = set()
         for record in self.data_to_records():
@@ -700,7 +731,31 @@ class ManualDataUpload(models.Model):
 
     @property
     def can_import(self):
-        return bool(self.state == MduState.PREFLIGHT and not self.clashing_months)
+        # check state
+        if self.state != MduState.PREFLIGHT:
+            return False
+
+        # check clashing
+        if self.clashing_months:
+            return False
+
+        # check metrics
+        if self.report_type.check_controlled_metrics:
+            if "metrics" not in self.preflight:
+                # metrics should be contained in preflight
+                return False
+            if not set(self.preflight["metrics"]).issubset(self.report_type.usable_metrics_names):
+                # Extra metrics occured
+                return False
+
+        else:
+            if not settings.AUTOMATICALLY_CREATE_METRICS:
+                all_metrics = Metric.objects.all().values_list("short_name", flat=True)
+                # Check whether all metrics exist
+                if not set(self.preflight["metrics"]).issubset(all_metrics):
+                    return False
+
+        return True
 
     def plan_preflight(self):
         if self.pk and self.state == MduState.INITIAL:

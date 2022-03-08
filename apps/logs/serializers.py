@@ -3,7 +3,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import IntegerField, DateField, BooleanField
 from rest_framework.relations import StringRelatedField, PrimaryKeyRelatedField
 from rest_framework.serializers import (
+    CharField,
     ModelSerializer,
+    ListField,
     BaseSerializer,
     HiddenField,
     CurrentUserDefault,
@@ -110,6 +112,7 @@ class ReportTypeSimpleSerializer(ModelSerializer):
 
 class ReportTypeSerializer(ModelSerializer):
 
+    usable_metrics_names = ListField(child=CharField(), read_only=True)
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
     log_count = IntegerField(read_only=True)
     newest_log = DateField(read_only=True)
@@ -134,6 +137,8 @@ class ReportTypeSerializer(ModelSerializer):
             'oldest_log',
             'public',
             'dimensions',
+            'check_controlled_metrics',
+            'usable_metrics_names',
         )
 
     def create(self, validated_data):
@@ -201,6 +206,7 @@ class ReportInterestMetricSerializer(ModelSerializer):
 
 class ReportTypeExtendedSerializer(ModelSerializer):
 
+    usable_metrics_names = ListField(child=CharField(), read_only=True)
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
     used_metrics = MetricSerializer(many=True, read_only=True)
     interest_metric_set = ReportInterestMetricSerializer(
@@ -221,6 +227,8 @@ class ReportTypeExtendedSerializer(ModelSerializer):
             'dimensions_sorted',
             'used_metrics',
             'interest_metric_set',
+            'check_controlled_metrics',
+            'usable_metrics_names',
         )
 
 
@@ -315,12 +323,14 @@ class ManualDataUploadSerializer(ModelSerializer):
     user = HiddenField(default=CurrentUserDefault())
     import_batches = ImportBatchSerializer(read_only=True, many=True)
     can_edit = BooleanField(read_only=True)
+    report_type_obj = ReportTypeExtendedSerializer(source='report_type', read_only=True)
 
     class Meta:
         model = ManualDataUpload
         fields = (
             'pk',
             'report_type',
+            'report_type_obj',
             'organization',
             'platform',
             'data_file',
