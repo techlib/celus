@@ -66,7 +66,7 @@
                   :href="platformInterestURL + '&format=csv'"
                   color="secondary"
                 >
-                  <v-icon left small>fa-download</v-icon>
+                  <v-icon left small>fas fa-file-export</v-icon>
                   Export
                 </v-btn>
               </PlatformInterestChart>

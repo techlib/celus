@@ -358,7 +358,7 @@ cs:
               <template v-slot:activator="{ on }">
                 <v-btn v-on="on" :disabled="!(formValid && hasGroupBy)">
                   <v-icon small color="blue lighten-2" class="mr-1"
-                    >fa fa-download
+                    >fas fa-file-export
                   </v-icon>
                   {{ $t("run_export") }}
                 </v-btn>

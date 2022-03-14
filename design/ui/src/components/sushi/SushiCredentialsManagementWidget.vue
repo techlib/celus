@@ -4,12 +4,16 @@
 <i18n lang="yaml">
 en:
   add_new: Add new SUSHI
+  export: Export
+  export_selected: Selected
+  export_all: All
+  export_tooltip: Export credentials into CSV
   is_locked: These credentials are locked.
   is_unlocked: These credentials are not locked, you may edit them.
   cannot_edit: You cannot edit them.
   can_edit: Because of your priviledges, you can still edit them.
   can_lock: You may lock/unlock these credentials - click to do so.
-  test_checked: Harvest selected
+  test_checked: Harvest
   test_checked_tooltip: Opens a dialog for one-off harvesting of data for all selected SUSHI credentials.
   test_dialog: Manual SUSHI harvesting
   is_broken:
@@ -19,12 +23,16 @@ en:
   select_at_least_one_credentials: Please select at least one set of SUSHI credentials using the checkboxes in the credentials list.
 cs:
   add_new: Přidat nové SUSHI
+  export: Exportuj
+  export_selected: Vybrané
+  export_all: Všechny
+  export_tooltip: Exportovat přístupové údaje do CSV
   is_locked: Tyto přístupové údaje jsou uzamčené.
   is_unlocked: Tyto přístupové údaje nejsou uzamčené, můžete je editovat
   cannot_edit: Nemůžete je editovat.
   can_edit: Vaše oprávnění Vám umožňují je přesto editovat.
   can_lock: Kliknutím můžete tyto údaje uzamknout/odemknout.
-  test_checked: Stáhni označené
+  test_checked: Stáhni
   test_checked_tooltip: Otevře dialog pro jednorázové stažení dat pro všechny vybrané přístupové údaje SUSHI.
   test_dialog: Manuální stahování SUSHI
   is_broken:
@@ -52,10 +60,99 @@ cs:
                   <v-btn @click="testChecked()" color="success" v-on="on">
                     <v-icon small class="mr-2">fa fa-download</v-icon>
                     {{ $t("test_checked") }}
-                    ({{ checkedCredentials.length }})
+                    <v-badge color="white" inline>
+                      <template #badge>
+                        <span class="success--text">{{
+                          checkedCredentials.length
+                        }}</span>
+                      </template>
+                    </v-badge>
                   </v-btn>
                 </template>
                 {{ $t("test_checked_tooltip") }}
+              </v-tooltip>
+            </v-col>
+            <v-col cols="auto" align-self="center">
+              <v-tooltip right>
+                <template #activator="tooltip">
+                  <v-menu offset-y>
+                    <template #activator="menu">
+                      <v-btn
+                        v-on="{ ...menu.on, ...tooltip.on }"
+                        color="primary"
+                      >
+                        <v-icon small class="mr-2">fas fa-file-export</v-icon>
+                        {{ $t("export") }}
+                      </v-btn>
+                    </template>
+                    <v-list>
+                      <form
+                        action="/api/sushi-credentials/export-credentials/"
+                        method="post"
+                      >
+                        <input type="hidden name="csrfmiddlewaretoken"
+                        :value="getCSRFToken" style="display: none" />
+                        <div
+                          v-for="checkedCredential in checkedCredentials"
+                          :key="checkedCredential.pk"
+                          style="display: none"
+                        >
+                          <input
+                            type="hidden"
+                            :id="checkedCredential.pk"
+                            name="pk"
+                            :value="checkedCredential.pk"
+                          />
+                        </div>
+                        <input
+                          :type="
+                            checkedCredentials.length > 0 ? 'submit' : undefined
+                          "
+                          id="submitform"
+                          style="display: none"
+                        />
+                        <label for="submitform">
+                          <v-list-item @click="showSelectCredentials">
+                            <v-list-item-title>
+                              {{ $t("export_selected") }}
+                              <v-badge inline color="secondary" class="mt-0">
+                                <template #badge>
+                                  <span class="white--text">{{
+                                    checkedCredentials.length
+                                  }}</span>
+                                </template>
+                              </v-badge>
+                            </v-list-item-title>
+                          </v-list-item>
+                        </label>
+                      </form>
+                      <form
+                        action="/api/sushi-credentials/export-credentials/"
+                        method="post"
+                      >
+                        <input
+                          type="hidden"
+                          name="csrfmiddlewaretoken"
+                          :value="getCSRFToken"
+                          style="display: none"
+                        />
+                        <input
+                          type="submit"
+                          id="exportAll"
+                          style="display: none"
+                        />
+                        <label for="exportAll">
+                          <v-list-item @click="downloadAll">
+                            <v-list-item-title>
+                              {{ $t("export_all") }}
+                            </v-list-item-title>
+                          </v-list-item>
+                        </label>
+                      </form>
+                    </v-list>
+                  </v-menu>
+                </template>
+                {{ $t("export_tooltip") }}
               </v-tooltip>
             </v-col>
             <v-spacer></v-spacer>
@@ -291,6 +388,7 @@ cs:
 
 <script>
 import axios from "axios";
+import Cookies from "js-cookie";
 import { mapActions, mapGetters } from "vuex";
 import debounce from "lodash/debounce";
 import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
@@ -349,12 +447,18 @@ export default {
       checkedRows: [],
       showTestDialog: false,
       brokenOnly: this.showBrokenOnly,
+      exportAllCredentialsUrl:
+        "/api/sushi-credentials/export-all-credentials/?export_all=true",
     };
   },
   computed: {
     ...mapGetters({
       consortialInstall: "consortialInstall",
     }),
+    getCSRFToken() {
+      let csrftoken = Cookies.get("csrftoken");
+      return csrftoken;
+    },
     headers() {
       const large = this.$vuetify.breakpoint.lgAndUp;
       let allHeaders = [
@@ -446,6 +550,18 @@ export default {
       showSnackbar: "showSnackbar",
       loadSushiCredentialsCount: "loadSushiCredentialsCount",
     }),
+    showSelectCredentials() {
+      if (this.checkedCredentials.length === 0) {
+        this.$confirm(this.$t("select_at_least_one_credentials"), {
+          title: this.$t("no_credentials_selected"),
+          buttonTrueText: this.$t("close"),
+          buttonFalseText: null,
+        });
+      }
+    },
+    downloadAll() {
+      return true;
+    },
     async loadSushiCredentialsList() {
       this.loading = true;
       try {

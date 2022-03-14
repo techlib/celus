@@ -1,6 +1,9 @@
+import datetime
+
 import reversion
 from dateutil.relativedelta import relativedelta
 from django.db.models import Min, F
+from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -18,6 +21,7 @@ from logs.models import ImportBatch
 from organizations.logic.queries import organization_filter_from_org_id
 from scheduler.models import FetchIntention
 from scheduler.serializers import MonthOverviewSerializer
+from .admin import SushiCredentialsResource
 from .models import (
     SushiCredentials,
     CounterReportType,
@@ -131,6 +135,23 @@ class SushiCredentialsViewSet(ModelViewSet):
                 cr2c.unset_broken()
         credentials.refresh_from_db()
         return Response(SushiCredentialsSerializer(credentials).data)
+
+    @action(detail=False, methods=['post'], url_path="export-credentials")
+    def export_credentials(self, request):
+        pks = request.data.getlist('pk')
+        queryset = self.get_queryset()
+        if pks:
+            queryset = queryset.filter(pk__in=pks)
+        queryset = queryset.prefetch_related('counter_reports')
+
+        data = SushiCredentialsResource().export(queryset)
+        data_in_csv = data.csv
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+        return StreamingHttpResponse(
+            data_in_csv,
+            content_type='text/csv',
+            headers={'Content-Disposition': f'attachment; filename="SushiCredentials-{today}.csv"'},
+        )
 
     @action(
         detail=True,

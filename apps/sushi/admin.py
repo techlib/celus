@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin, messages
 from django.db.transaction import atomic
 from import_export.admin import ExportActionMixin
@@ -36,6 +37,7 @@ class SushiCredentialsResource(ModelResource):
             'extra_params',
             'counter_reports',
         )
+        fields += ('outside_consortium', 'lock_level') if settings.CONSORTIAL_INSTALLATION else ()
         export_order = fields
 
     def dehydrate_counter_reports(self, credentials: models.SushiCredentials):

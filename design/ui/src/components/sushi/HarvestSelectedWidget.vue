@@ -5,7 +5,7 @@ en:
   select_dates_text_test: "Select the month for SUSHI credentials test:"
   select_dates_text_test_note:
     "<strong>Note</strong>: we use one month for testing to make it as fast as possible.
-    If you want to download data for a longer period, use the 'Harvest selected' button on the SUSHI management page."
+    If you want to download data for a longer period, use the 'Harvest' button on the SUSHI management page."
   there_were_errors: " | It was not possible to start harvesting due to the following error: | It was not possible to start harvesting due to the following errors:"
   check_credentials: Please check selection of credentials after closing this dialog. Broken credentials will be automatically unselected.
   test_date: Month to test on
@@ -17,7 +17,7 @@ cs:
   select_dates_text_test: "Vyberte měsíc pro otestování přihlašovacích údajů:"
   select_dates_text_test_note:
     "<strong>Poznámka</strong>: pro co nejrychlejší otestování stahujeme data pouze za jeden měsíc. Pokud chcete
-    stáhnout data za delší období, použijte tlačítko 'Stáhni označené' na stránce správy SUSHI."
+    stáhnout data za delší období, použijte tlačítko 'Stáhni' na stránce správy SUSHI."
   there_were_errors: "Nebylo možné zahájit harvesting kvůli následující chybě: | Nebylo možné zahájit harvesting kvůli následujícím chybám: | Nebylo možné zahájit harvesting kvůli následujícím chybám:"
   check_credentials: Po uzavření dialogu zkontrolujte prosím výběr přihlašovacích údajů. Označení nefunkčních bude automaticky zrušeno.
   test_date: Testovaný měsíc
