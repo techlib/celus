@@ -3,6 +3,7 @@ from functools import reduce
 from pprint import pprint
 from time import monotonic
 from collections import Counter
+from functools import reduce
 
 from django.conf import settings
 from django.core.cache import cache
@@ -349,28 +350,33 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             request, ImportBatch.objects.filter(pk__in=serializer.data["batches"]), self
         )
 
-        # note that we don't use queryset's delete() because it doesn't trigger signals
-
-        # remove fetch intentions and fetch attempts
-        for fi in FetchIntention.objects.filter(attempt__import_batch__in=batches):
-            counter["sushi"] += 1
-            fi.attempt.delete()
-            fi.delete()
-
         mdus = list(
             ManualDataUpload.objects.filter(import_batches__in=batches).values_list('pk', flat=True)
         )
 
+        # remove fetch intentions and fetch attempts
+        to_delete = (
+            FetchIntention.objects.filter(attempt__import_batch__in=batches)
+            .values('credentials__pk', 'counter_report__pk', 'start_date')
+            .distinct()
+        )
+        to_delete = [Q(**e) for e in to_delete]
+        to_delete = reduce(lambda x, y: x | y, to_delete, Q())
+        if to_delete:
+            fis_to_delete = FetchIntention.objects.filter(to_delete)
+            counter.update(
+                SushiFetchAttempt.objects.filter(fetchintention__in=fis_to_delete).delete()[1]
+            )
+
+            counter.update(fis_to_delete.delete()[1])
+
         # remove import batches
-        for ib in batches:
-            counter["batches"] += 1
-            ib.delete()
+        counter.update(batches.delete()[1])
 
         # remove empty manual data uploads
-        for mdu in ManualDataUpload.objects.filter(pk__in=mdus):
-            if not mdu.import_batches.exists():
-                counter["manual"] += 1
-                mdu.delete()
+        counter.update(
+            ManualDataUpload.objects.filter(pk__in=mdus, import_batches__isnull=True).delete()[1]
+        )
 
         return Response(counter)
 

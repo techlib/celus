@@ -846,3 +846,101 @@ class TestFetchIntentionAPI:
         resp = admin_client.get(reverse('intention-list'), {'credentials': cr2.pk})
         assert resp.status_code == 200
         assert len(resp.json()['results']) == 31
+
+
+@pytest.mark.django_db(transaction=True)
+class TestIntentionDeleteView:
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.parametrize(
+        ['user', 'status_code'],
+        [
+            ['unauthenticated', 401],
+            ['invalid', 401],
+            ['user1', 403],
+            ['user2', 403],
+            ['admin1', 200],
+            ['admin2', 403],
+            ['master', 200],
+            ['su', 200],
+        ],
+    )
+    def test_intention_delete_view(self, basic1, clients, user, status_code, settings):
+        # the basic1 fixture is necessary for the master user to really be master
+        cr1 = CredentialsFactory()
+        cr2 = CredentialsFactory()
+        fi1 = FetchIntentionFactory.create(credentials=cr1, start_date=date(2021, 1, 1))
+        fi2 = FetchIntentionFactory.create(credentials=cr2, start_date=date(2021, 5, 1))
+        ib1 = ImportBatchFullFactory.create(date=date(2021, 1, 1))
+        fi1.attempt.import_batch = ib1
+        fi1.attempt.save()
+
+        if user == 'admin1':
+            # admin1 is not admin of cr1.organization by default, so we make him
+            UserOrganization.objects.get_or_create(
+                user=basic1['users']['admin1'], organization=cr1.organization, is_admin=True
+            )
+
+        assert FetchIntention.objects.count() == 2
+        assert SushiFetchAttempt.objects.count() == 2
+        assert ImportBatch.objects.count() == 1
+        # check that clickhouse integration works as expected
+        if settings.CLICKHOUSE_SYNC_ACTIVE:
+            assert (
+                ch_backend.get_one_record(
+                    AccessLogCube.query()
+                    .filter(import_batch_id=ib1.pk)
+                    .aggregate(sum=HSum('value'))
+                ).sum
+                == AccessLog.objects.aggregate(sum=Sum('value'))['sum']
+            )
+
+        resp = clients[user].post(
+            reverse('intention-purge'),
+            json.dumps(
+                [
+                    {
+                        'credentials': cr1.pk,
+                        'start_date': '2021-01-01',
+                        'counter_report': fi1.counter_report_id,
+                    }
+                ]
+            ),
+            content_type='application/json',
+        )
+        assert resp.status_code == status_code
+        if status_code == 200:
+            assert FetchIntention.objects.count() == 1
+            assert FetchIntention.objects.get().pk == fi2.pk, 'intention fi2 should remain'
+            assert SushiFetchAttempt.objects.count() == 1, 'only one attempt should remain'
+            assert ImportBatch.objects.count() == 0, 'import batch is deleted'
+            assert AccessLog.objects.count() == 0, 'no access logs remain'
+            assert resp.json() == {
+                'logs.AccessLog': 20,
+                'logs.ImportBatch': 1,
+                'sushi.SushiFetchAttempt': 1,
+                'scheduler.FetchIntention': 1,
+            }, 'delete counts should match expectations'
+            if settings.CLICKHOUSE_SYNC_ACTIVE:
+                assert (
+                    ch_backend.get_one_record(
+                        AccessLogCube.query()
+                        .filter(import_batch_id=ib1.pk)
+                        .aggregate(sum=HSum('value'))
+                    ).sum
+                    == 0
+                )
+        else:
+            assert FetchIntention.objects.count() == 2, 'the number of intentions is the same'
+            assert SushiFetchAttempt.objects.count() == 2, 'number of attempts remains the same'
+            assert ImportBatch.objects.count() == 1, 'no change in number of import batches'
+            assert AccessLog.objects.count() == 20, 'no change in number of access logs'
+            if settings.CLICKHOUSE_SYNC_ACTIVE:
+                assert (
+                    ch_backend.get_one_record(
+                        AccessLogCube.query()
+                        .filter(import_batch_id=ib1.pk)
+                        .aggregate(HSum('value'))
+                    ).sum
+                    == AccessLog.objects.aggregate(sum=Sum('value'))['sum']
+                )

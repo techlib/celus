@@ -34,7 +34,7 @@ cs:
         color="error"
         class="ma-3"
         :loading="deleting"
-        @click="deleteImportBatches()"
+        @click="deleteAll()"
         :disabled="!canDelete"
       >
         <v-progress-circular
@@ -67,7 +67,17 @@ export default {
     ImportBatchesList,
   },
   props: {
-    slices: { required: true, type: Array },
+    // These are the slices which are used to query import batches
+    // to be deleted - will be displayed in UI and user has to
+    // confirm the deletion
+    importBatchSlices: { required: true, type: Array },
+
+    // These slices are used to delete information regarding sushi downloads
+    // (can be empty - in this case no downloads are deleted)
+    //
+    // Note that these records are deleted based on time / organization / platform
+    // and not based on existing data and no confirmation is displayed here.
+    intentionSlices: { required: false, type: Array, default: () => [] },
   },
   data() {
     return {
@@ -78,8 +88,11 @@ export default {
   },
 
   computed: {
-    deleteUrl() {
+    deleteImportBatchesUrl() {
       return "/api/import-batch/purge/";
+    },
+    deleteIntentionsUrl() {
+      return "/api/scheduler/intention/purge/";
     },
     lookupUrl() {
       return "/api/import-batch/lookup/?order_by=pk";
@@ -99,7 +112,7 @@ export default {
     async loadImportBatches() {
       this.loading = true;
       try {
-        let response = await axios.post(this.lookupUrl, this.slices);
+        let response = await axios.post(this.lookupUrl, this.importBatchSlices);
         this.importBatches = response.data;
       } catch (error) {
         this.showSnackbar({
@@ -109,23 +122,38 @@ export default {
         this.loading = false;
       }
     },
-    async deleteImportBatches() {
+    async deleteAll() {
       this.deleting = true;
+      await this.deleteImportBatches();
+      await this.deleteIntentions();
+      this.$emit("deleted");
+      this.deleting = false;
+    },
+    async deleteImportBatches() {
       try {
-        let response = await axios.post(this.deleteUrl, {
+        await axios.post(this.deleteImportBatchesUrl, {
           batches: this.importBatchesKeys,
         });
         this.showSnackbar({
           content: this.$t("confirm_delete.delete_ok"),
           color: "success",
         });
-        this.$emit("deleted");
       } catch (error) {
         this.showSnackbar({
           content: "Error deleting import batches: " + error,
         });
-      } finally {
-        this.deleting = false;
+      }
+    },
+    async deleteIntentions() {
+      if (this.intentionSlices.length == 0) {
+        return;
+      }
+      try {
+        await axios.post(this.deleteIntentionsUrl, this.intentionSlices);
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error deleting intentions: " + error,
+        });
       }
     },
     cancelDialog() {

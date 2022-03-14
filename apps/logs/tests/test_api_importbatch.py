@@ -38,6 +38,21 @@ class TestImportBatchesAPI:
             attempt=FetchAttemptFactory(
                 start_date="2020-01-01",
                 end_date="2020-01-31",
+                error_code="3031",
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                import_batch=None,
+            ),
+        )
+
+        FetchIntentionFactory(
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            attempt=FetchAttemptFactory(
+                start_date="2020-01-01",
+                end_date="2020-01-31",
                 credentials=credentials["standalone_tr"],
                 counter_report=counter_report_types["tr"],
                 import_batch=ImportBatchFullFactory(
@@ -219,7 +234,12 @@ class TestImportBatchesAPI:
         resp = clients["su"].post(self.purge_url, {"batches": [batches[0]]}, format="json")
 
         assert resp.status_code == 200
-        assert resp.data == {"batches": 1, "sushi": 1}, "remove ib with fetch attempt"
+        assert resp.data == {
+            'logs.AccessLog': 20,
+            'sushi.SushiFetchAttempt': 2,
+            'scheduler.FetchIntention': 2,
+            'logs.ImportBatch': 1,
+        }, "remove ib with fetch attempt (second is 3031)"
         assert ImportBatch.objects.count() == len(batches) - 1
 
         resp = clients["su"].post(self.purge_url, {"batches": [batches[0]]}, format="json")
@@ -228,17 +248,33 @@ class TestImportBatchesAPI:
 
         resp = clients["su"].post(self.purge_url, {"batches": [batches[-1]]}, format="json")
         assert resp.status_code == 200
-        assert resp.data == {"batches": 1}, "remove ib from mdu"
+        assert resp.data == {
+            'logs.AccessLog': 20,
+            'logs.ImportBatch': 1,
+            'logs.ManualDataUploadImportBatch': 1,
+        }, "remove ib from mdu"
         assert ImportBatch.objects.count() == len(batches) - 2
 
         resp = clients["su"].post(self.purge_url, {"batches": batches[-3:]}, format="json")
         assert resp.status_code == 200
-        assert resp.data == {"manual": 1, "batches": 2}, "remove last ibs from mdu"
+        assert resp.data == {
+            'logs.AccessLog': 40,
+            'logs.ImportBatch': 2,
+            'logs.ManualDataUpload': 1,
+            'logs.ManualDataUploadImportBatch': 2,
+        }, "remove last ibs from mdu"
         assert ImportBatch.objects.count() == len(batches) - 4
 
         resp = clients["su"].post(self.purge_url, {"batches": batches}, format="json")
         assert resp.status_code == 200
-        assert resp.data == {"manual": 1, "batches": 5, "sushi": 3}, "remove rest"
+        assert resp.data == {
+            'logs.AccessLog': 100,
+            'logs.ImportBatch': 5,
+            'logs.ManualDataUpload': 1,
+            'logs.ManualDataUploadImportBatch': 2,
+            'scheduler.FetchIntention': 3,
+            'sushi.SushiFetchAttempt': 3,
+        }, "remove rest"
         assert ImportBatch.objects.count() == 0
 
     def test_lookup_and_purge(self, data, clients, organizations, platforms, report_types):
@@ -269,5 +305,5 @@ class TestImportBatchesAPI:
             self.purge_url, {"batches": [e["pk"] for e in data]}, format="json"
         )
         assert resp.status_code == 200
-        assert resp.data["batches"] == len(data), "number of deleted ibs"
+        assert resp.data['logs.ImportBatch'] == len(data), "number of deleted ibs"
         assert ImportBatch.objects.count() == count - len(data), "all ibs were deleted"

@@ -292,7 +292,7 @@ cs:
       <ImportBatchesDeleteConfirm
         v-model="showConfirmDeleteDialog"
         v-if="showConfirmDeleteDialog"
-        :slices="slicesToDelete"
+        :import-batch-slices="slicesToDelete"
         @cancel="showConfirmDeleteDialog = false"
         @deleted="deletePerformed()"
       />

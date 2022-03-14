@@ -260,7 +260,7 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 class IntentionViewSet(ModelViewSet):
 
     serializer_class = FetchIntentionSerializer
-    http_method_names = ['get', 'options', 'head']
+    http_method_names = ['get', 'options', 'head', 'post']
     filter_backends = [
         intentions_filters.OrganizationFilter,
         intentions_filters.PlatformFilter,
@@ -294,3 +294,42 @@ class IntentionViewSet(ModelViewSet):
             # 404 for existing but not last intentions
             return super().filter_queryset(*args, **kwargs)
         return super().filter_queryset(*args, **kwargs).latest_intentions()
+
+    class PurgeSerializer(Serializer):
+        credentials = PrimaryKeyRelatedField(many=False, queryset=SushiCredentials.objects.all())
+        start_date = DateField()
+        counter_report = PrimaryKeyRelatedField(
+            many=False, queryset=CounterReportType.objects.all()
+        )
+
+    @atomic
+    @action(detail=False, methods=['post'], serializer_class=PurgeSerializer)
+    def purge(self, request):
+        """ Removes all intentions and related data """
+        stats = Counter()
+        serializer = self.PurgeSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        for item in serializer.validated_data:
+            credentials = item['credentials']
+            start_date = item['start_date']
+            counter_report = item['counter_report']
+            if not request.user.has_organization_admin_permission(credentials.organization_id):
+                raise PermissionDenied(
+                    f'User not allowed to manage data for organization: '
+                    f'{credentials.organization_id}'
+                )
+            to_delete = FetchIntention.objects.filter(
+                credentials=credentials,
+                start_date=start_date,
+                end_date=month_end(start_date),
+                counter_report=counter_report,
+            )
+            stats.update(
+                ImportBatch.objects.filter(
+                    sushifetchattempt__fetchintention__in=to_delete
+                ).delete()[1]
+            )
+            stats.update(SushiFetchAttempt.objects.filter(fetchintention__in=to_delete).delete()[1])
+            stats.update(to_delete.delete()[1])
+
+        return Response(stats)

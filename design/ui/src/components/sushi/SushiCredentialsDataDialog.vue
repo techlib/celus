@@ -188,7 +188,8 @@ cs:
               <ImportBatchesDeleteConfirm
                 v-model="showConfirmDeleteDialog"
                 v-if="showConfirmDeleteDialog"
-                :slices="slicesToDelete"
+                :import-batch-slices="importBatchSlicesToDelete"
+                :intention-slices="intentionSlicesToDelete"
                 @cancel="showConfirmDeleteDialog = false"
                 @deleted="deletePerformed()"
               />
@@ -423,12 +424,19 @@ export default {
       }
       return result;
     },
-    slicesToDelete() {
+    importBatchSlicesToDelete() {
       return this.selectedItems.map((e) => ({
         platform: e.platform,
         organization: e.organization,
         report_type: e.report_type,
         months: [e.start_date],
+      }));
+    },
+    intentionSlicesToDelete() {
+      return this.selectedItems.map((e) => ({
+        credentials: this.credentials.pk,
+        counter_report: e.counter_report,
+        start_date: e.start_date,
       }));
     },
     headers() {
