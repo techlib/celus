@@ -121,32 +121,29 @@ def custom_data_to_records(
     return (e for e in result)  # TODO convert this into a propper generator
 
 
-def histogram(iterable) -> Counter:
-    out = Counter()
+def histograms_with_count(
+    attrs: typing.List[str], iterable
+) -> typing.Tuple[typing.Dict[str, Counter], Counter]:
+    his = {e: Counter() for e in attrs}
+    cnt = Counter()
     for x in iterable:
-        out[x] += 1
-    return out
-
-
-def histogram_with_count(iterable) -> Counter:
-    out = Counter()
-    for x, count in iterable:
-        out[x] += count
-    return out
+        for attr in attrs:
+            his[attr][str(getattr(x, attr))] += x.value
+        cnt["count"] += 1
+        cnt["sum"] += x.value
+    return his, cnt
 
 
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    # TODO make more memory efficient
-    records = list(mdu.data_to_records())  # type: [CounterRecord]
-    month_to_count = histogram_with_count([(str(record.start), record.value) for record in records])
+    histograms, counts = histograms_with_count(['start', 'metric', 'title'], mdu.data_to_records())
     return {
         'generated': now().isoformat(),
         'celus_version': celus_version(),
-        'log_count': len(records),
-        'hits_total': sum((record.value for record in records), 0),
-        'months': month_to_count,
-        'metrics': histogram_with_count([(record.metric, record.value) for record in records]),
-        'titles': histogram_with_count([(record.title, record.value) for record in records]),
+        'log_count': counts["count"],
+        'hits_total': counts["sum"],
+        'months': histograms["start"],
+        'metrics': histograms["metric"],
+        'title_count': len(histograms["title"]),
     }
 
 

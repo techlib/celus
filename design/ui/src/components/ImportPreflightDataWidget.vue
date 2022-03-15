@@ -142,7 +142,7 @@ export default {
     },
 
     titleCount() {
-      return Object.keys(this.preflightData.titles).length;
+      return this.preflightData.title_count;
     },
   },
 
