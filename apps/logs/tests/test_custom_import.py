@@ -12,7 +12,7 @@ from organizations.tests.conftest import identity_by_user_type, organizations  #
 from publications.tests.conftest import platforms  # noqa
 from logs.tasks import prepare_preflight, import_manual_upload_data
 from logs.logic.custom_import import custom_data_to_records, import_custom_data
-from logs.models import AccessLog, ImportBatch, ManualDataUpload
+from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduState
 from publications.models import Platform
 from test_fixtures.entities.logs import ManualDataUploadFullFactory
 
@@ -374,8 +374,8 @@ class TestCustomImport:
         """
         Test the manual data upload global api endpoint
         """
-        mdus = ManualDataUploadFullFactory.create_batch(5, is_processed=False)
-        mdus += ManualDataUploadFullFactory.create_batch(5, is_processed=True)
+        mdus = ManualDataUploadFullFactory.create_batch(5, state=MduState.INITIAL)
+        mdus += ManualDataUploadFullFactory.create_batch(5, state=MduState.IMPORTED)
         resp = admin_client.get(reverse('manual-data-upload-list'))
         assert resp.status_code == 200
         assert len(resp.json()) == 10
@@ -384,8 +384,8 @@ class TestCustomImport:
         """
         Test the manual data upload api endpoint for an organization
         """
-        mdus = ManualDataUploadFullFactory.create_batch(5, is_processed=False)
-        mdus += ManualDataUploadFullFactory.create_batch(5, is_processed=True)
+        mdus = ManualDataUploadFullFactory.create_batch(5, state=MduState.INITIAL)
+        mdus += ManualDataUploadFullFactory.create_batch(5, state=MduState.IMPORTED)
         resp = admin_client.get(reverse('organization-manual-data-upload-list', args=(-1,)))
         assert resp.status_code == 200
         assert len(resp.json()) == 10

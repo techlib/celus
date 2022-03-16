@@ -173,7 +173,6 @@ def import_custom_data(
     # explicitly connect the organization and the platform
     OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=mdu.organization)
     mdu.import_batches.set(import_batches)
-    mdu.state = MduState.IMPORTED
     mdu.mark_processed()  # this also saves the model
 
     for import_batch in import_batches:

@@ -3,7 +3,7 @@ import faker
 from django.conf import settings
 
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
-from logs.models import ImportBatch, Metric, AccessLog, ManualDataUpload
+from logs.models import ImportBatch, Metric, AccessLog, ManualDataUpload, MduState
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.report_types import ReportTypeFactory
@@ -76,9 +76,9 @@ class ManualDataUploadFullFactory(factory.django.DjangoModelFactory):
     platform = factory.SubFactory(PlatformFactory)
     report_type = factory.SubFactory(ReportTypeFactory)
 
-    is_processed = True
+    state = MduState.IMPORTED
     when_processed = factory.LazyAttribute(
-        lambda o: fake.date_time_this_year() if o.is_processed else None
+        lambda o: fake.date_time_this_year() if o.state == MduState.IMPORTED else None
     )
     data_file = factory.django.FileField(data=DATA_FILE)
 
@@ -102,9 +102,9 @@ class ManualDataUploadFactory(factory.django.DjangoModelFactory):
     platform = factory.SubFactory(PlatformFactory)
     report_type = factory.SubFactory(ReportTypeFactory)
 
-    is_processed = True
+    state = MduState.IMPORTED
     when_processed = factory.LazyAttribute(
-        lambda o: fake.date_time_this_year() if o.is_processed else None
+        lambda o: fake.date_time_this_year() if o.state == MduState.IMPORTED else None
     )
 
     @factory.post_generation

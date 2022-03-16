@@ -11,7 +11,7 @@ from logs.logic.reimport import (
     reimport_import_batch_with_fa,
     reimport_mdu_batch,
 )
-from logs.models import ImportBatch, ManualDataUpload
+from logs.models import ImportBatch, ManualDataUpload, MduState
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from scheduler.models import FetchIntention
 from sushi.models import SushiFetchAttempt, AttemptStatus
@@ -70,10 +70,10 @@ def clashing_mdu(clashing_fis):
         organization=ib2.organization,
         platform=ib2.platform,
         report_type=ib2.report_type,
-        is_processed=False,
+        state=MduState.INITIAL,
     )
     mdu.import_batches.set([ib2])
-    mdu.is_processed = True
+    mdu.state = MduState.IMPORTED
     mdu.save()
     return {**clashing_fis, **locals()}
 
@@ -301,10 +301,10 @@ class TestReimport:
             organization=ib1.organization,
             platform=ib1.platform,
             report_type=ib1.report_type,
-            is_processed=False,
+            state=MduState.INITIAL,
         )
         mdu.import_batches.set([ib1, ib2, ib3])
-        mdu.is_processed = True
+        mdu.state = MduState.IMPORTED
         mdu.save()
 
         reimport = find_import_batches_to_reimport(ImportBatch.objects.all())
@@ -355,10 +355,10 @@ class TestReimport:
             organization=ib1.organization,
             platform=ib1.platform,
             report_type=ib1.report_type,
-            is_processed=False,
+            state=MduState.INITIAL,
         )
         mdu.import_batches.set([ib1, ib2, ib3])
-        mdu.is_processed = True
+        mdu.state = MduState.IMPORTED
         mdu.save()
 
         reimport = find_import_batches_to_reimport(ImportBatch.objects.all())

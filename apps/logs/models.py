@@ -595,7 +595,6 @@ class ManualDataUpload(models.Model):
     data_file = models.FileField(upload_to=where_to_store, validators=[validate_mime_type])
     log = models.TextField(blank=True)
     error = models.CharField(max_length=50, null=True, blank=True)
-    is_processed = models.BooleanField(default=False, help_text='Was the data converted into logs?')
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batches = models.ManyToManyField(
         ImportBatch, through='ManualDataUploadImportBatch', related_name='mdu'
@@ -632,9 +631,13 @@ class ManualDataUpload(models.Model):
 
     def mark_processed(self):
         if not self.is_processed:
-            self.is_processed = True
+            self.state = MduState.IMPORTED
             self.when_processed = now()
             self.save()
+
+    @property
+    def is_processed(self):
+        return self.state == MduState.IMPORTED
 
     def detect_file_encoding(self) -> str:
         """
