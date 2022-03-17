@@ -21,7 +21,6 @@ from django.urls import path, include
 urlpatterns = [
     path('api/', include('api.urls')),
     path(settings.CELUS_ADMIN_SITE_PATH, admin.site.urls),
-    path('error/', include('error_report.urls')),
     path('', include('django_prometheus.urls')),
 ]
 

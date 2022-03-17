@@ -1,5 +1,6 @@
 import { implicitDimensions } from "@/mixins/dimensions";
 import axios from "axios";
+import { toBase64JSON } from "@/libs/serialization";
 
 class Dimension {
   /*
@@ -95,6 +96,7 @@ class FlexiReport {
     this.filters = [];
     this.groupBy = [];
     this.orderBy = [];
+    this.splitBy = null;
     this.name = "";
     this.owner = null;
     this.ownerOrganization = null;
@@ -117,10 +119,8 @@ class FlexiReport {
     if (user.is_superuser || user.is_from_master_organization) {
       return true;
     }
-    console.log("org", this.ownerOrganization);
     if (this.ownerOrganization) {
       let org = organizationMap[this.ownerOrganization];
-      console.log("org2", org, org.is_admin);
       if (org && org.is_admin) {
         return true;
       }
@@ -169,6 +169,14 @@ class FlexiReport {
     this.groupBy = config.group_by.map((item) => this.resolveDim(item));
     // order by
     this.orderBy = config.order_by;
+    // split by
+    // in this case the backend supports split_by as a list (for splitting by
+    // more than one dimension), but we do not use it in the UI and just use
+    // single dimension - here we convert between the list and a single value
+    this.splitBy =
+      config.split_by && config.split_by.length
+        ? this.resolveDim(config.split_by[0])
+        : null;
     // extra params
     this.includeZeroRows = config.zero_rows ?? false;
   }
@@ -211,8 +219,9 @@ class FlexiReport {
     filters["report_type"] = this.reportTypes.map((item) => item.pk);
     return {
       primary_dimension: this.primaryDimension.ref,
-      filters: btoa(JSON.stringify(filters)),
-      groups: btoa(JSON.stringify(this.groupBy.map((item) => item.ref))),
+      filters: toBase64JSON(filters),
+      groups: toBase64JSON(this.groupBy.map((item) => item.ref)),
+      split_by: this.splitBy ? toBase64JSON([this.splitBy.ref]) : null,
       order_by: this.orderBy.join(";"),
       zero_rows: this.includeZeroRows,
     };
@@ -240,11 +249,12 @@ class FlexiReport {
     }
   }
 
-  async startExport() {
-    let resp = await axios.post(
-      "/api/export/flexible-export/",
-      this.urlParams()
-    );
+  async startExport(format) {
+    let resp = await axios.post("/api/export/flexible-export/", {
+      ...this.urlParams(),
+      format: format,
+      name: this.name,
+    });
     return resp.data;
   }
 }
@@ -262,14 +272,22 @@ class FlexiExport {
     3: "error",
   };
 
+  static formatToText = {
+    XLSX: "Excel",
+    ZIP_CSV: "CSV",
+  };
+
   constructor() {
     this.pk = null;
+    this.name = "";
     this.primaryDimension = null;
     this.reportTypes = []; // these are filters as well, but we treat is differently
     this.filters = [];
     this.groupBy = [];
     this.orderBy = [];
     this.outputFile = null;
+    this.fileFormat = null;
+    this.fileSize = 0;
     this.status = 0;
     this.errorInfo = {};
   }
@@ -280,8 +298,10 @@ class FlexiExport {
     flexiExport.outputFile = data.output_file;
     flexiExport.created = data.created;
     flexiExport.fileSize = data.file_size;
+    flexiExport.fileFormat = this.formatToText[data.file_format];
     flexiExport.status = data.status;
     flexiExport.errorInfo = data.error_info;
+    flexiExport.name = data.name;
     await flexiExport.readConfig(data.export_params, allReportTypes);
     return flexiExport;
   }

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import UniqueConstraint, Q
+from django.utils.translation import ugettext as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
@@ -49,6 +50,7 @@ class Organization(MPTTModel):
     class Meta:
         ordering = ('name',)
         unique_together = (('ico', 'level'),)  # duplicated ico can only be between parent and child
+        verbose_name = _('Organization')
         constraints = (
             models.UniqueConstraint(
                 fields=('short_name',),

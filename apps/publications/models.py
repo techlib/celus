@@ -32,6 +32,7 @@ class Platform(models.Model):
 
     class Meta:
         ordering = ('short_name',)
+        verbose_name = _('Platform')
         constraints = [
             UniqueConstraint(fields=['ext_id', 'source'], name='ext_id_source_not_null'),
             UniqueConstraint(
@@ -140,6 +141,7 @@ class Title(models.Model):
 
     class Meta:
         ordering = ('name', 'pub_type')
+        verbose_name = _('Title/Database')
         unique_together = (('name', 'isbn', 'issn', 'eissn', 'doi'),)
 
     def __str__(self):

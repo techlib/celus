@@ -8,6 +8,7 @@ class FlexibleDataExportSerializer(ModelSerializer):
         model = FlexibleDataExport
         fields = (
             'pk',
+            'name',
             'created',
             'last_updated',
             'status',
@@ -15,5 +16,6 @@ class FlexibleDataExportSerializer(ModelSerializer):
             'export_params',
             'progress',
             'file_size',
+            'file_format',
             'error_info',
         )

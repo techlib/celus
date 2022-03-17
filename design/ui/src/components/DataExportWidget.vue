@@ -1,17 +1,29 @@
+<i18n lang="yaml">
+en:
+  export: Export
+  raw_to_excel: Raw data Excel
+  raw_to_csv: Raw data CSV
+
+cs:
+  export: Export
+  raw_to_excel: Podkladová data - Excel
+  raw_to_csv: Podkladová data - CSV
+</i18n>
+
 <template>
   <v-menu offset-y class="mb-3">
     <template v-slot:activator="{ on }">
       <v-btn color="primary" dark v-on="on" class="elevation-2">
         <v-icon left>fa-download</v-icon>
-        Export
+        {{ $t("export") }}
       </v-btn>
     </template>
     <v-list>
       <v-list-item :href="url + '&format=xlsx'">
-        <v-list-item-title>Raw data Excel</v-list-item-title>
+        <v-list-item-title>{{ $t("raw_to_excel") }}</v-list-item-title>
       </v-list-item>
       <v-list-item :href="url + '&format=csv'">
-        <v-list-item-title>Raw data CSV</v-list-item-title>
+        <v-list-item-title>{{ $t("raw_to_csv") }}</v-list-item-title>
       </v-list-item>
     </v-list>
   </v-menu>

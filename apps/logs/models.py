@@ -11,10 +11,10 @@ from enum import Enum
 import magic
 from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, FieldDoesNotExist
 from django.db import models
 from django.db import transaction
-from django.db.models import Index, UniqueConstraint, Q, QuerySet, OuterRef, Exists, Max
+from django.db.models import Index, UniqueConstraint, Q, QuerySet, OuterRef, Exists, Max, Field
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
@@ -75,6 +75,7 @@ class ReportType(models.Model):
     )
 
     class Meta:
+        verbose_name = _('Report type')
         constraints = [
             UniqueConstraint(
                 fields=['short_name', 'source'], name='report_type_short_name_source_not_null'
@@ -261,6 +262,7 @@ class Metric(models.Model):
 
     class Meta:
         ordering = ('short_name', 'name')
+        verbose_name = _('Metric')
         constraints = [
             UniqueConstraint(
                 fields=['short_name', 'source'], name='metric_short_name_source_not_null'
@@ -465,7 +467,10 @@ class AccessLog(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
     target = models.ForeignKey(
-        Title, on_delete=models.CASCADE, null=True, help_text='Title for which this log was created'
+        Title,
+        on_delete=models.CASCADE,
+        null=True,
+        help_text='Title for which this log was created',
     )
     dim1 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #1')
     dim2 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #2')
@@ -475,7 +480,7 @@ class AccessLog(models.Model):
     dim6 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #6')
     dim7 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #7')
     value = models.PositiveIntegerField(help_text='The value representing number of accesses')
-    date = models.DateField()
+    date = models.DateField(verbose_name=_('Date'))
     # internal fields
     created = models.DateTimeField(default=now)
     owner_level = models.PositiveSmallIntegerField(
@@ -507,6 +512,23 @@ class AccessLog(models.Model):
             'Deleting individual AccessLogs is not permitted - they may only be deleted in cascade '
             'from ImportBatch.'
         )
+
+    @classmethod
+    def get_dimension_field(
+        cls, dimension: str
+    ) -> typing.Tuple[typing.Optional[Field], typing.Optional[str]]:
+        """
+        This is used in reporting to get a field matching a string description of the field
+        :param dimension:
+        :return:
+        """
+        modifier = ''
+        if '__' in dimension:
+            dimension, modifier = dimension.split('__', 1)
+        try:
+            return cls._meta.get_field(dimension), modifier
+        except FieldDoesNotExist:
+            return None, None
 
 
 class DimensionText(models.Model):

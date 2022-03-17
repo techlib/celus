@@ -78,6 +78,7 @@ django-import-export = "^2.5.0"
 djangorestframework-api-key = "^2.0.0"
 hcube = "0.3.0"
 chardet = "^4.0.0"
+XlsxWriter = "^3.0.3"
 toml = "^0.10.2"
 
 

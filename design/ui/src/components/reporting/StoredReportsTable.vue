@@ -30,17 +30,26 @@
               {{ $t("run_report_tt") }}
             </v-tooltip>
 
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-btn
-                  icon
-                  color="blue lighten-2"
-                  @click="runExport(item)"
-                  v-on="on"
-                >
+            <v-menu offset-y class="mb-3">
+              <template v-slot:activator="{ on }">
+                <v-btn icon color="blue lighten-2" v-on="on">
                   <v-icon small>fa fa-download</v-icon>
                 </v-btn>
               </template>
+              <v-list>
+                <v-list-item @click="runExport(item, 'xlsx')">
+                  <v-list-item-title>{{
+                    $t("format.excel")
+                  }}</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="runExport(item, 'csv')">
+                  <v-list-item-title>{{ $t("format.csv") }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+
+            <v-tooltip bottom>
+              <template #activator="{ on }"> </template>
               {{ $t("export_tt") }}
             </v-tooltip>
 
@@ -130,6 +139,10 @@
             {{ item.primaryDimension.getName($i18n) }}
           </template>
 
+          <template #item.splitBy.name="{ item }">
+            {{ item.splitBy ? item.splitBy.getName($i18n) : "" }}
+          </template>
+
           <template #expanded-item="{ item, headers }">
             <th></th>
             <td :colspan="headers.length - 2" class="py-3">
@@ -190,10 +203,10 @@
             </v-btn>
           </template>
 
-          <template #body.append>
+          <template #body.append="{ headers }">
             <tr>
               <td colspan="1"></td>
-              <td>
+              <td :colspan="headers.length - 1">
                 <v-btn
                   color="primary"
                   :to="{ name: 'flexitable', query: { wantsSave: true } }"
@@ -276,6 +289,10 @@ export default {
           value: "primaryDimension.name",
         },
         {
+          text: this.$t("title_fields.split_by"),
+          value: "splitBy.name",
+        },
+        {
           text: this.$t("title_fields.actions"),
           value: "actions",
           sortable: false,
@@ -327,8 +344,12 @@ export default {
       this.activeReport = report;
       await this.$refs.outputTable.updateOutput(report);
     },
-    async runExport(report) {
-      let urlParams = report.urlParams();
+    async runExport(report, format) {
+      let urlParams = {
+        ...report.urlParams(),
+        format: format,
+        name: report.name,
+      };
       try {
         let resp = await axios.post("/api/export/flexible-export/", urlParams);
         this.exportHandle = resp.data;

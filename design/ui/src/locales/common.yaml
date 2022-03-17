@@ -66,8 +66,9 @@ en:
     ratios: Ratio
     organizations: Organizations
     primary_dimension: Rows
-    access_level: Access level
+    access_level: Visibility
     not_before: Cannot start until
+    split_by: Split by
   titles: Titles
   overview: Overview
   chart:
@@ -119,11 +120,13 @@ en:
     rows: Rows
     columns: Columns
     file_size: File size
+    file_format: File format
     exported_data: Exported data
     report_output: Report output
     status: Status
     credentials: Credentials
     settings: Settings
+    report_name: Report name
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -230,8 +233,9 @@ cs:
     ratios: Rozložení
     organizations: Organizace
     primary_dimension: Řádky
-    access_level: Úroveň přístupu
+    access_level: Viditelnost
     not_before: Stažení nejdříve
+    split_by: Rozdělit podle
   titles: Tituly
   overview: Přehled
   chart:
@@ -283,11 +287,13 @@ cs:
     rows: Řádky
     columns: Sloupce
     file_size: Velikost souboru
+    file_format: Formát souboru
     exported_data: Exportovaná data
     report_output: Výstup reportu
     status: Stav
     credentials: Přihlašovací údaje
     settings: Nastavení
+    report_name: Jméno reportu
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

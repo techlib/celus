@@ -1,11 +1,17 @@
-from typing import Tuple
+from typing import Tuple, Optional, Union
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 from django.utils.timezone import now
 
-from logs.logic.queries import FlexibleDataSlicer, FlexibleDataExporter, SlicerConfigError
+from export.enums import FileFormat
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
+from logs.logic.reporting.export import (
+    FlexibleDataExporter,
+    FlexibleDataExcelExporter,
+    FlexibleDataZipCSVExporter,
+)
 
 
 class ExportBase(models.Model):
@@ -71,39 +77,74 @@ class ExportBase(models.Model):
 
 class FlexibleDataExport(ExportBase):
 
+    format_to_exporter = {
+        FileFormat.XLSX: FlexibleDataExcelExporter,
+        FileFormat.ZIP_CSV: FlexibleDataZipCSVExporter,
+    }
+
     export_params = models.JSONField(
         default=dict, help_text='Serialized parameters of the export', blank=True
     )
+    file_format = models.CharField(
+        max_length=10, choices=FileFormat.choices, default=FileFormat.XLSX
+    )
+    name = models.CharField(max_length=120, default='', blank=True)
 
     def __str__(self):
         return f'Export: {self.created}'
 
     @classmethod
-    def create_from_slicer(cls, slicer: FlexibleDataSlicer, user):
-        this = FlexibleDataExport(owner=user, export_params=slicer.config())
+    def create_from_slicer(
+        cls,
+        slicer: FlexibleDataSlicer,
+        user,
+        name: str = '',
+        fmt: Optional[Union[str, FileFormat]] = None,
+    ):
+        this = FlexibleDataExport(
+            owner=user,
+            export_params=slicer.config(),
+            file_format=cls.cleanup_format(fmt),
+            name=name,
+        )
         this.save()
         return this
+
+    @classmethod
+    def cleanup_format(cls, fmt: Optional[Union[str, FileFormat]]) -> FileFormat:
+        if fmt in FileFormat.values:
+            return FileFormat[fmt]
+        if not fmt:
+            return cls._meta.get_field('file_format').default
+        if fmt.lstrip('.').lower() in ('zip', 'csv'):
+            return FileFormat.ZIP_CSV
+        return FileFormat.XLSX
 
     def write_data(self, stream, progress_monitor=None) -> int:
         slicer = FlexibleDataSlicer.create_from_config(self.export_params)
         slicer.add_extra_organization_filter(self.owner.accessible_organizations())
-        exporter = FlexibleDataExporter(slicer)
+        export_cls = self.format_to_exporter[self.file_format]
+        exporter = export_cls(slicer, report_name=self.name, report_owner=self.owner)
         return exporter.stream_data_to_sink(stream, progress_monitor=progress_monitor)
 
-    def create_output_file(self, progress_monitor=None):
+    def create_output_file(self, progress_monitor=None, raise_exception=False):
         self.status = self.IN_PROGRESS
         self.save()
         self.output_file.name = self.generate_filename()
         try:
-            with self.output_file.open('w') as outfile:
+            with self.output_file.open('wb') as outfile:
                 rec_count = self.write_data(outfile, progress_monitor=progress_monitor)
         except SlicerConfigError as e:
             self.extra_info['error_detail'] = e.message
             self.extra_info['error_code'] = e.code
             self.status = self.ERROR
+            if raise_exception:
+                raise e
         except Exception as e:
             self.extra_info['error_detail'] = str(e)
             self.status = self.ERROR
+            if raise_exception:
+                raise e
         else:
             self.extra_info['record_count'] = rec_count
             self.extra_info['file_size'] = self.output_file.size
@@ -112,4 +153,5 @@ class FlexibleDataExport(ExportBase):
 
     def generate_filename(self):
         ts = now().strftime('%Y%m%d-%H%M%S')
-        return f'export-{self.pk}-{ts}.csv'
+        ext = FileFormat.file_extension(self.file_format)
+        return f'export-{self.pk}-{ts}.{ext}'

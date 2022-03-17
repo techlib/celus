@@ -15,6 +15,8 @@ en:
   report_title: Report title
   please_fill_in_title: Please fill in report title and access level and hit 'Save changes' again.
   select_at_least_one_column_dim: At least one column dimension must be selected.
+  split_to_parts: Split report to parts by selected attribute
+  dont_split: "-- no splitting --"
 
 cs:
   run_report: Spustit report
@@ -30,6 +32,8 @@ cs:
   report_title: Název reportu
   please_fill_in_title: Vyplňte prosím název reportu a úroveň přístupu výše a pak stiskněte tlačítko 'Uložit změny' znovu.
   select_at_least_one_column_dim: Musí být vybrán alespoň jeden rozměr, který definuje sloupce.
+  split_to_parts: Rozdělit report na části podle vybraného atributu
+  dont_split: "-- nedělit --"
 </i18n>
 
 <template>
@@ -79,13 +83,26 @@ cs:
               :disabled="readOnly"
             />
           </v-col>
-          <v-col class="align-self-center">
-            <span v-if="selectedReportTypes.length === 0">
+          <v-col
+            class="align-self-center"
+            v-if="selectedReportTypes.length === 0"
+          >
+            <span>
               <v-icon class="pr-2" color="orange"
                 >fa fa-angle-double-left</v-icon
               >
               {{ $t("select_report_type") }}
             </span>
+          </v-col>
+          <v-col class="align-self-end">
+            <v-select
+              v-model="splitBy"
+              :label="$t('split_to_parts')"
+              :items="[{ id: null, name: $t('dont_split') }, ...possibleRows]"
+              item-text="name"
+              item-value="id"
+              :disabled="readOnly"
+            ></v-select>
           </v-col>
           <v-col
             v-if="readOnly && canEdit"
@@ -126,6 +143,7 @@ cs:
                     :label="row.name"
                     :value="row.id"
                     :key="row.id"
+                    :disabled="row.id === splitBy"
                   ></v-radio>
                 </v-radio-group>
               </v-card-text>
@@ -148,6 +166,7 @@ cs:
                   class="mt-1"
                   :disabled="
                     item.id === row ||
+                    item.id === splitBy ||
                     !reportTypeSelected ||
                     readOnly ||
                     (item.id === 'date' && columns.includes('date__year')) ||
@@ -336,21 +355,26 @@ cs:
             </v-tooltip>
           </v-col>
           <v-col cols="auto">
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-btn
-                  @click="runExport"
-                  :disabled="!(formValid && hasGroupBy)"
-                  v-on="on"
-                >
+            <v-menu offset-y class="mb-3">
+              <template v-slot:activator="{ on }">
+                <v-btn v-on="on" :disabled="!(formValid && hasGroupBy)">
                   <v-icon small color="blue lighten-2" class="mr-1"
                     >fa fa-download
                   </v-icon>
                   {{ $t("run_export") }}
                 </v-btn>
               </template>
-              {{ $t("export_tt") }}
-            </v-tooltip>
+              <v-list>
+                <v-list-item @click="runExport('xlsx')">
+                  <v-list-item-title>{{
+                    $t("format.excel")
+                  }}</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="runExport('csv')">
+                  <v-list-item-title>{{ $t("format.csv") }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
           </v-col>
           <v-col cols="auto">
             <ExportMonitorWidget
@@ -403,7 +427,11 @@ cs:
 
     <v-row>
       <v-col>
-        <FlexiTableOutput v-show="displayReport" ref="outputTable" :show-zero-rows="showZeroRows" />
+        <FlexiTableOutput
+          v-show="displayReport"
+          ref="outputTable"
+          :show-zero-rows="showZeroRows"
+        />
       </v-col>
     </v-row>
   </v-container>
@@ -412,7 +440,6 @@ cs:
 <script>
 import axios from "axios";
 import { mapActions, mapGetters, mapState } from "vuex";
-import { itemToString } from "@/libs/db-object-localization";
 import FromToMonthEntry from "@/components/util/FromToMonthEntry";
 import DimensionKeySelector from "@/components/DimensionKeySelector";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
@@ -427,11 +454,19 @@ import { dataTableToDjangoOrderBy } from "@/libs/sorting";
 import AccessLevelSelector from "@/components/reporting/AccessLevelSelector";
 import formRulesMixin from "@/mixins/formRulesMixin";
 import { parseDateTime, ymDateFormat } from "@/libs/dates";
+import cancellation from "@/mixins/cancellation";
+import { toBase64JSON } from "@/libs/serialization";
 
 export default {
   name: "FlexiTableEditor",
 
-  mixins: [translators, dimensionMixin, reportTypes, formRulesMixin],
+  mixins: [
+    translators,
+    dimensionMixin,
+    reportTypes,
+    formRulesMixin,
+    cancellation,
+  ],
 
   components: {
     AccessLevelSelector,
@@ -452,6 +487,7 @@ export default {
       row: "organization",
       columns: [],
       filters: [],
+      splitBy: null,
       tableDimension: null,
       selectedMetrics: [],
       selectedPlatforms: [],
@@ -548,16 +584,15 @@ export default {
     dataUrlParams() {
       return {
         primary_dimension: this.row,
-        filters: btoa(JSON.stringify(this.appliedFilters)),
-        groups: btoa(JSON.stringify(this.appliedGroups)),
+        filters: toBase64JSON(this.appliedFilters),
+        groups: toBase64JSON(this.appliedGroups),
         zero_rows: this.showZeroRows,
       };
     },
     selectorBaseUrl() {
       if (this.row) {
         let base = `/api/flexible-slicer/possible-values/?primary_dimension=${this.row}`;
-        let filters = JSON.stringify(this.appliedFilters);
-        base += `&filters=${btoa(filters)}`;
+        base += `&filters=${toBase64JSON(this.appliedFilters)}`;
         return base;
       }
       return null;
@@ -605,6 +640,7 @@ export default {
         });
       rt.groupBy = this.appliedGroups.map((item) => rt.resolveDim(item));
       rt.orderBy = this.orderBy;
+      rt.splitBy = this.splitBy ? rt.resolveDim(this.splitBy) : this.splitBy;
       let access = this.accessLevelParams;
       rt.owner = access.owner;
       rt.ownerOrganization = access.owner_organization;
@@ -625,9 +661,6 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
-    itemToString(item) {
-      return itemToString(item, this.$i18n.locale);
-    },
     ruleRequired(value) {
       return !!value || this.$t("required");
     },
@@ -657,14 +690,14 @@ export default {
       // used when only sorting is changed, nothing else
       await this.$refs.outputTable.updateOutput(this.reportObject);
     },
-    async runExport() {
+    async runExport(format) {
       if (!this.formValid) {
         console.debug("form is not valid");
         return;
       }
       if (this.canGetData) {
         try {
-          this.exportHandle = await this.reportObject.startExport();
+          this.exportHandle = await this.reportObject.startExport(format);
         } catch (error) {
           this.showSnackbar({
             content: "Could not start export: " + error,
@@ -702,7 +735,7 @@ export default {
           }
           await this.reportObject.save();
           this.reportPk = this.reportObject.pk;
-          // rewrite window history to that we return to this page rather than an empty one
+          // rewrite window history so that we return to this page rather than an empty one
           let location = this.$router.resolve({
             name: "flexireport",
             params: {
@@ -802,6 +835,11 @@ export default {
       if (config.order_by) {
         this.orderBy = config.order_by;
       }
+      if (config.split_by && config.split_by.length) {
+        this.splitBy = config.split_by[0];
+      } else {
+        this.splitBy = null;
+      }
       this.showZeroRows = config.zero_rows ?? false;
       this.reportName = settings.name;
       this.reportPk = settings.pk;
@@ -830,6 +868,14 @@ export default {
   watch: {
     row() {
       this.columns = this.columns.filter((dim) => dim !== this.row);
+    },
+    splitBy() {
+      this.columns = this.columns.filter((dim) => dim !== this.splitBy);
+      if (this.row === this.splitBy) {
+        this.row = this.possibleRows.find(
+          (item) => item.id !== this.splitBy
+        ).id;
+      }
     },
     selectedReportTypes(newValue, oldValue) {
       if (this.reportTypeSetOnLoad) {
@@ -888,9 +934,6 @@ export default {
           }
         }
       },
-    },
-    selectorBaseUrl() {
-      console.debug("filters", this.appliedFilters);
     },
     dataUrlParams: {
       deep: true,

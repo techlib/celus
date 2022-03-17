@@ -31,6 +31,9 @@ en:
     in_progress: In progress
     finished: Finished
     error: Error
+  format:
+    excel: Excel
+    csv: CSV
 
 cs:
   access_level_tt:
@@ -65,3 +68,6 @@ cs:
     in_progress: Probíhá export
     finished: Dokončeno
     error: Chyba
+  format:
+    excel: Excel
+    csv: CSV

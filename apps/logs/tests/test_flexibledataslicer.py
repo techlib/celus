@@ -1,15 +1,22 @@
-from io import StringIO
+import codecs
+import csv
+from io import StringIO, BytesIO
 from unittest.mock import MagicMock
+from zipfile import ZipFile
 
 import pytest
 
-from logs.logic.queries import (
-    FlexibleDataSlicer,
-    SlicerConfigError,
+from export.enums import FileFormat
+from logs.logic.reporting.filters import (
+    DateDimensionFilter,
     ForeignKeyDimensionFilter,
     ExplicitDimensionFilter,
-    FlexibleDataExporter,
-    DateDimensionFilter,
+)
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
+from logs.logic.reporting.export import (
+    FlexibleDataSimpleCSVExporter,
+    FlexibleDataZipCSVExporter,
+    FlexibleDataExcelExporter,
 )
 from logs.models import Metric, DimensionText, AccessLog, Dimension
 from organizations.models import Organization
@@ -530,7 +537,7 @@ class TestFlexibleDataSlicerOther:
 
 
 @pytest.mark.django_db
-class TestFlexibleDataExporter:
+class TestFlexibleDataSimpleCSVExporter:
     def test_org_sum_by_platform(self, flexible_slicer_test_data):
         """
         Primary dimension: organization
@@ -539,13 +546,13 @@ class TestFlexibleDataExporter:
         """
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
         assert len(output.splitlines()) == Organization.objects.count() + 1
         assert output.splitlines() == [
-            'organization,Platform 1,Platform 2,Platform 3',
+            'Organization,Platform 1,Platform 2,Platform 3',
             'Organization 1,519318,717606,915894',
             'Organization 2,1114182,1312470,1510758',
             'Organization 3,1709046,1907334,2105622',
@@ -564,12 +571,12 @@ class TestFlexibleDataExporter:
         slicer.add_filter(ExplicitDimensionFilter('dim1', dim1_ids), add_group=True)
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
         assert output.splitlines() == [
-            'platform,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,B / Metric 2,B / Metric 3',
+            'Platform,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,B / Metric 2,B / Metric 3',
             'Platform 1,12294,13590,14886,12330,13626,14922',
             'Platform 2,16182,17478,18774,16218,17514,18810',
             'Platform 3,20070,21366,22662,20106,21402,22698',
@@ -585,12 +592,12 @@ class TestFlexibleDataExporter:
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('date')
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
         assert output.splitlines() == [
-            'platform,2019-12-01,2020-01-01,2020-02-01,2020-03-01',
+            'Platform,2019-12-01,2020-01-01,2020-02-01,2020-03-01',
             'Platform 1,30294,30537,30780,31023',
             'Platform 2,39042,39285,39528,39771',
             'Platform 3,47790,48033,48276,48519',
@@ -606,12 +613,12 @@ class TestFlexibleDataExporter:
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('date__year')
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
         assert output.splitlines() == [
-            'platform,2019,2020',
+            'Platform,2019,2020',
             'Platform 1,30294,92340',
             'Platform 2,39042,118584',
             'Platform 3,47790,144828',
@@ -629,7 +636,7 @@ class TestFlexibleDataExporter:
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('date__year')
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         monitor = MagicMock()
         exporter.stream_data_to_sink(out, progress_monitor=monitor)
@@ -647,7 +654,7 @@ class TestFlexibleDataExporter:
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_filter(DateDimensionFilter('date', '2020-01-01', '2020-03-31'))
         slicer.add_group_by('date__year')
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
@@ -666,7 +673,7 @@ class TestFlexibleDataExporter:
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
         slicer.order_by = ['date__year']
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
@@ -685,7 +692,7 @@ class TestFlexibleDataExporter:
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
         slicer.order_by = ['dim1']
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
@@ -710,7 +717,7 @@ class TestFlexibleDataExporter:
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
         slicer.order_by = ['dim1']
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
@@ -736,7 +743,7 @@ class TestFlexibleDataExporter:
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('dim1')
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
@@ -746,7 +753,7 @@ class TestFlexibleDataExporter:
         text_pks = map(
             str, DimensionText.objects.filter(dimension=dim1).values_list('pk', flat=True)
         )
-        assert row_names == {'platform', *text_pks}
+        assert row_names == {'Platform', *text_pks}
 
     def test_org_sum_by_platform_with_org_extra_filter(self, flexible_slicer_test_data):
         """
@@ -758,12 +765,210 @@ class TestFlexibleDataExporter:
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
         slicer.add_extra_organization_filter([flexible_slicer_test_data['organizations'][1].pk])
-        exporter = FlexibleDataExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
         assert len(output.splitlines()) == 2
         assert output.splitlines() == [
-            'organization,Platform 1,Platform 2,Platform 3',
+            'Organization,Platform 1,Platform 2,Platform 3',
             'Organization 2,1114182,1312470,1510758',
         ]
+
+    def test_split_by_org_get_parts(self, flexible_slicer_test_data):
+        """
+        Split dimension: organization
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_split_by('organization')
+        slicer.add_group_by('metric')
+        parts = slicer.get_parts_queryset()
+        assert {p['organization'] for p in parts} == {
+            org.pk for org in flexible_slicer_test_data['organizations']
+        }
+
+    def test_split_by_org_get_parts_with_split_filter(self, flexible_slicer_test_data):
+        """
+        Split dimension: organization
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter: organization (thus limiting the number of parts after split)
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_split_by('organization')
+        slicer.add_group_by('metric')
+        organizations = flexible_slicer_test_data['organizations'][:2]
+        slicer.add_filter(ForeignKeyDimensionFilter('organization', organizations))
+        parts = slicer.get_parts_queryset()
+        assert {p['organization'] for p in parts} == {org.pk for org in organizations}
+
+    def test_split_by_org_get_data_missing_part_arg(self, flexible_slicer_test_data):
+        """
+        Split dimension: organization
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_split_by('organization')
+        slicer.add_group_by('metric')
+        with pytest.raises(SlicerConfigError):
+            slicer.get_data()
+
+    def test_split_by_org_get_data(self, flexible_slicer_test_data):
+        """
+        Split dimension: organization
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_split_by('organization')
+        slicer.add_group_by('metric')
+        org = flexible_slicer_test_data['organizations'][0]
+        data = slicer.get_data(part=[org.pk])
+        expected = {'Platform 1': 519318, 'Platform 2': 717606, 'Platform 3': 915894}
+        found = {Platform.objects.get(pk=rec['pk']).name: rec['_total'] for rec in data}
+        assert found == expected
+
+    def test_split_by_date_get_data(self, flexible_slicer_test_data):
+        """
+        Split dimension: date
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_split_by('date')
+        slicer.add_group_by('metric')
+        data = slicer.get_data(part=['2020-01'])
+        expected = {'Platform 1': 833571, 'Platform 2': 982287, 'Platform 3': 1131003}
+        found = {Platform.objects.get(pk=rec['pk']).name: rec['_total'] for rec in data}
+        assert found == expected
+
+    def test_streaming_of_multipart_data(self, flexible_slicer_test_data):
+        """
+        Split dimension: organization
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_split_by('organization')
+        slicer.add_group_by('metric')
+        exporter = FlexibleDataZipCSVExporter(slicer)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        with ZipFile(out, 'r') as zipfile:
+            assert len(zipfile.namelist()) == len(flexible_slicer_test_data['organizations']) + 1
+            assert set(zipfile.namelist()) == {
+                '_metadata.csv',
+                'organization-1.csv',
+                'organization-2.csv',
+                'organization-3.csv',
+            }
+
+    def test_metadata_multipart(self, flexible_slicer_test_data):
+        """
+        Split dimension: organization
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        report_type = flexible_slicer_test_data['report_types'][0]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        slicer.add_split_by('organization')
+        slicer.add_group_by('metric')
+
+        exporter = FlexibleDataZipCSVExporter(slicer)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        with ZipFile(out, 'r') as zipfile:
+            with zipfile.open('_metadata.csv', 'r') as metafile:
+                decoder = codecs.getreader('utf-8')(metafile)
+                reader = csv.reader(decoder)
+                data = list(reader)
+                assert data[5] == ['Split by', 'Organization']
+                assert data[6] == ['Rows', 'Platform']
+                assert data[7] == ['Columns', 'Metric']
+                assert data[8] == ['Applied filters', f'Report type: {report_type.name}']
+
+    @pytest.mark.parametrize(
+        ['name_in', 'name_out'],
+        [
+            ('Sheet', 'Sheet'),
+            (
+                'Very long name of the sheet that does not fit into 32',
+                'Very long name of the sheet th…',
+            ),
+            ('Forbidden & ?: characters \\/ etc.', 'Forbidden & characters etc.'),
+            ("More forbidden'", 'More forbidden'),
+            ("History", 'History_'),
+            ("history'", 'history_'),
+            ("'", 'Sheet'),
+            ('Long that fits after []??? removal', 'Long that fits after removal',),
+            ('Long that does not fit after []??? removal', 'Long that does not fit after r…',),
+        ],
+    )
+    def test_xslx_cleanup_sheetname(self, name_in, name_out):
+        assert FlexibleDataExcelExporter.cleanup_sheetname(name_in) == name_out
+
+
+@pytest.mark.django_db
+class TestFilters:
+    def test_foreign_key_filter(self, flexible_slicer_test_data):
+        report_type = flexible_slicer_test_data['report_types'][0]
+        fltr = ForeignKeyDimensionFilter('report_type', report_type)
+        assert str(fltr) == f'report_type: {report_type.name}'
+
+    def test_date_filter(self):
+        fltr = DateDimensionFilter('date', '2020-10-01', '2021-03')
+        assert str(fltr) == f'date: 2020-10-01 - 2021-03'
+
+    def test_explicit_dim_filter(self, flexible_slicer_test_data):
+        texts = flexible_slicer_test_data['dimension_values'][0][1:]
+        dim1_ids = DimensionText.objects.filter(text__in=texts).values_list('pk', flat=True)
+        fltr = ExplicitDimensionFilter('dim1', dim1_ids)
+        value = '; '.join(texts)
+        assert str(fltr) == f'dim1: {value}'
+
+
+@pytest.mark.django_db
+class TestFiltersInSlicerContext:
+    """
+    Explicit dim filter can be properly resolved only in the context of a slicer, so we add the
+    same tests as in `TestFilters` here with a slicer at hand.
+
+    Slicer also decodes the name of the dimension to `verbose_name`
+    """
+
+    def _slicer_filter_to_str(self, fltr) -> str:
+        slicer = FlexibleDataSlicer(primary_dimension='metric')
+        slicer.add_filter(fltr)
+        return slicer.filter_to_str(fltr)
+
+    def test_foreign_key_filter(self, flexible_slicer_test_data):
+        report_type = flexible_slicer_test_data['report_types'][0]
+        fltr = ForeignKeyDimensionFilter('report_type', report_type)
+        assert self._slicer_filter_to_str(fltr) == f'Report type: {report_type.name}'
+
+    def test_date_filter(self):
+        fltr = DateDimensionFilter('date', '2020-10-01', '2021-03')
+        assert self._slicer_filter_to_str(fltr) == f'Date: 2020-10-01 - 2021-03'
+
+    def test_explicit_dim_filter(self, flexible_slicer_test_data):
+        texts = flexible_slicer_test_data['dimension_values'][0][1:]
+        dim1_ids = DimensionText.objects.filter(text__in=texts).values_list('pk', flat=True)
+        # for explicit dimension resolution, we need to have a report type specified
+        report_type = flexible_slicer_test_data['report_types'][0]
+        slicer = FlexibleDataSlicer(primary_dimension='metric')
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        fltr = ExplicitDimensionFilter('dim1', dim1_ids)
+        value = '; '.join(texts)
+        assert slicer.filter_to_str(fltr) == f'dim1name: {value}'

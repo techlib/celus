@@ -1,8 +1,7 @@
+from collections import Counter
 from functools import reduce
 from pprint import pprint
 from time import monotonic
-from collections import Counter
-from functools import reduce
 
 from django.conf import settings
 from django.core.cache import cache
@@ -27,8 +26,10 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_pandas import PandasView
 
+from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params, parse_month
+from core.logic.serialization import parse_b64json
 from core.models import DataSource, REL_ORG_ADMIN
 from core.permissions import (
     OrganizationRequiredInDataForNonSuperusers,
@@ -45,9 +46,8 @@ from logs.logic.export import CSVExport
 from logs.logic.queries import (
     extract_accesslog_attr_query_params,
     StatsComputer,
-    FlexibleDataSlicer,
-    SlicerConfigError,
 )
+from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from logs.models import (
     AccessLog,
     ReportType,
@@ -77,7 +77,6 @@ from organizations.logic.queries import organization_filter_from_org_id
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt, AttemptStatus
 from . import filters
-from .exceptions import DataStructureError
 from .tasks import export_raw_data_task
 
 
@@ -649,14 +648,30 @@ class InterestGroupViewSet(ReadOnlyModelViewSet):
     serializer_class = InterestGroupSerializer
 
 
-class FlexibleSlicerView(APIView):
-    def get(self, request):
+class FlexibleSlicerBaseView(APIView):
+    def create_slicer(self, request):
         try:
             slicer = FlexibleDataSlicer.create_from_params(request.query_params)
             slicer.add_extra_organization_filter(request.user.accessible_organizations())
             if settings.DEBUG:
                 pprint(slicer.config())
-            data = slicer.get_data(lang=request.user.language)
+            slicer.check_params()
+            return slicer
+        except SlicerConfigError as e:
+            raise BadRequestException(
+                {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
+            )
+
+
+class FlexibleSlicerView(FlexibleSlicerBaseView):
+    def get(self, request):
+        slicer = self.create_slicer(request)
+        try:
+            part = request.query_params.get('part') if slicer.split_by else None
+            if part:
+                part = parse_b64json(part)
+            print(part)
+            data = slicer.get_data(part=part, lang=request.user.language)
         except SlicerConfigError as e:
             return Response(
                 {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
@@ -667,37 +682,50 @@ class FlexibleSlicerView(APIView):
         return pagination.get_paginated_response(page)
 
 
-class FlexibleSlicerPossibleValuesView(APIView):
+class FlexibleSlicerPossibleValuesView(FlexibleSlicerBaseView):
     def get(self, request):
         dimension = request.query_params.get('dimension')
         if not dimension:
             return Response(
-                {'error': {'message': 'the "dimension" param is required', 'code': 'E105'}},
+                {
+                    'error': {
+                        'message': 'the "dimension" param is required',
+                        'code': SlicerConfigErrorCode.E105,
+                    }
+                },
                 status=HTTP_400_BAD_REQUEST,
             )
-        try:
-            slicer = FlexibleDataSlicer.create_from_params(request.query_params)
-            slicer.add_extra_organization_filter(request.user.accessible_organizations())
-            if settings.DEBUG:
-                pprint(slicer.config())
-            q = request.query_params.get('q')
-            pks = None
-            pks_value = request.query_params.get('pks')
-            if pks_value:
-                try:
-                    pks = list(map(int, pks_value.split(',')))
-                except ValueError as e:
-                    return Response({'error': {'message': str(e)}})
-            return Response(
-                slicer.get_possible_dimension_values(
-                    dimension, ignore_self=True, text_filter=q, pks=pks
-                )
+        slicer = self.create_slicer(request)
+        q = request.query_params.get('q')
+        pks = None
+        pks_value = request.query_params.get('pks')
+        if pks_value:
+            try:
+                pks = list(map(int, pks_value.split(',')))
+            except ValueError as e:
+                return Response({'error': {'message': str(e)}})
+        return Response(
+            slicer.get_possible_dimension_values(
+                dimension, ignore_self=True, text_filter=q, pks=pks
             )
-        except SlicerConfigError as e:
-            return Response(
-                {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
-                status=HTTP_400_BAD_REQUEST,
-            )
+        )
+
+
+class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
+
+    MAX_COUNT = 1000
+
+    def get(self, request):
+        slicer = self.create_slicer(request)
+        qs = slicer.get_parts_queryset()
+        cropped = False
+        count = 0
+        if qs:
+            count = qs.count()
+            if count > self.MAX_COUNT:
+                qs = qs[: self.MAX_COUNT]
+                cropped = True
+        return Response({'count': count, "values": qs or [], "cropped": cropped})
 
 
 class FlexibleReportViewSet(ModelViewSet):

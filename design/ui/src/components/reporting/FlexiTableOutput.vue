@@ -6,17 +6,23 @@ en:
   error: Error
   error_code: Error code
   error_intro: The following error was reported during the preparation of the report.
+  available_parts: Select part - {count} available | Select part - {count} available | Select part - {count} available
 
 cs:
   detail: Detail
   error: Chyba
   error_code: Kód chyby
   error_intro: Následující chyba byla nahlášena při přípravě požadovaného reportu.
+  available_parts: Vyberte část - {count} možnost | Vyberte část - {count} možnosti | Vyberte část - {count} možností
 </i18n>
 
 <template>
   <v-data-table
-    v-if="cleanData.length || (loading && !errorCode)"
+    v-if="
+      cleanData.length ||
+      (loading && !errorCode) ||
+      (report && report.splitBy && splitParts.length && currentPart)
+    "
     :items="cleanData"
     :headers="tableHeaders"
     item-key="pk"
@@ -28,6 +34,36 @@ cs:
   >
     <template #loading>
       <v-skeleton-loader type="paragraph@10" loading class="py-10 px-5" />
+    </template>
+
+    <template #top v-if="report.splitBy && splitParts.length">
+      <v-slide-group
+        v-if="splitParts.length < 16"
+        v-model="currentPart"
+        class="py-4"
+      >
+        <v-slide-item
+          v-for="item in splitParts"
+          :key="item.id"
+          v-slot="{ active, toggle }"
+          :value="item.id"
+        >
+          <v-btn @click="toggle" :input-value="active" text outlined tile>{{
+            item.text
+          }}</v-btn>
+        </v-slide-item>
+      </v-slide-group>
+      <!-- if there are too many parts, use a select -->
+      <v-autocomplete
+        v-else
+        :items="splitParts"
+        v-model="currentPart"
+        :label="$tc('available_parts', splitParts.length)"
+        item-value="id"
+        class="py-4 ps-4"
+        outlined
+        dense
+      />
     </template>
   </v-data-table>
   <div v-else-if="errorCode">
@@ -58,11 +94,13 @@ import { mapActions } from "vuex";
 import translators from "@/mixins/translators";
 import { djangoToDataTableOrderBy } from "@/libs/sorting";
 import { isEqual } from "lodash";
+import { toBase64JSON } from "@/libs/serialization";
+import cancellation from "@/mixins/cancellation";
 
 export default {
   name: "FlexiTableOutput",
 
-  mixins: [translators],
+  mixins: [translators, cancellation],
 
   props: {
     readonly: { default: false, type: Boolean },
@@ -72,6 +110,7 @@ export default {
   data() {
     return {
       report: null,
+      part: null,
       data: [],
       cleanData: [],
       totalRowCount: null,
@@ -89,6 +128,8 @@ export default {
       errorCode: null,
       errorDetails: null,
       cancelTokenSource: null,
+      splitParts: [],
+      currentPart: null,
     };
   },
 
@@ -153,6 +194,15 @@ export default {
     ...mapActions(["showSnackbar"]),
     async updateOutput(report, clean = true) {
       this.report = report;
+
+      // if we are in the split mode, we need to check the possible splits first
+      this.splitParts = [];
+      if (this.report.splitBy) {
+        await this.getSplitParts();
+      } else {
+        this.currentPart = null;
+      }
+
       // update translators
       this.report.groupBy
         .filter((item) => item.isExplicit)
@@ -167,12 +217,52 @@ export default {
       if (primDim.isExplicit && primDim.isMapped) {
         this.translators[primDim.ref] = this.translators.explicitDimension;
       }
+      this.errorCode = null;
+      this.errorDetails = null;
       if (clean) {
         this.data = [];
         this.cleanData = [];
         this.setOrdering(report);
       }
       await this.fetchData();
+    },
+    async getSplitParts() {
+      let resp = await this.http({
+        url: "/api/flexible-slicer/parts/",
+        params: this.report.urlParams(),
+      });
+      let splitParts = resp.response.data.values.map(
+        (item) => item[this.report.splitBy.ref]
+      );
+      // explicit dimensions do not have a translator defined by default,
+      // so we need to define it if we are splitting by explicit mapped dimension
+      if (this.report.splitBy.isExplicit && this.report.splitBy.isMapped) {
+        this.translators[this.report.splitBy.ref] =
+          this.translators.explicitDimension;
+      }
+      let translator = this.translators[this.report.splitBy.ref];
+      if (translator) {
+        await translator.prepareTranslation(splitParts);
+        this.splitParts = splitParts
+          .map((item) => {
+            return {
+              id: item,
+              text: translator.translateKeyToString(item, this.$i18n.locale),
+            };
+          })
+          .sort((a, b) => a.text.localeCompare(b.text));
+      } else {
+        this.splitParts = splitParts.map((item) => {
+          return { id: item, text: item.toString() };
+        });
+      }
+      this.splitParts.sort((a, b) => a.text.localeCompare(b.text));
+      if (
+        this.splitParts &&
+        (!this.currentPart ||
+          !this.splitParts.find((item) => item.id === this.currentPart))
+      )
+        this.currentPart = this.splitParts[0].id;
     },
     cancelReport() {
       this.cancelTokenSource.cancel("request canceled by user");
@@ -186,6 +276,9 @@ export default {
         page: this.options.page,
         ...this.orderByParam,
       };
+      if (this.report.splitBy && this.currentPart) {
+        params["part"] = toBase64JSON([this.currentPart]);
+      }
       try {
         let resp = await axios({
           method: "GET",
@@ -322,6 +415,9 @@ export default {
           this.fetchData();
         }
       },
+    },
+    currentPart() {
+      this.fetchData();
     },
   },
 };

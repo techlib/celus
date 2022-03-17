@@ -121,6 +121,7 @@ export default {
     headers() {
       return [
         { text: this.$t("labels.date"), value: "created" },
+        { text: this.$t("labels.report_name"), value: "name" },
         {
           text: this.$t("labels.rows"),
           value: "primaryDimension",
@@ -133,6 +134,10 @@ export default {
           text: this.$t("labels.file_size"),
           value: "fileSize",
           align: "right",
+        },
+        {
+          text: this.$t("labels.file_format"),
+          value: "fileFormat",
         },
         { text: this.$t("labels.exported_data"), value: "outputFile" },
       ];

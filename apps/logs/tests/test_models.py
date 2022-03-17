@@ -2,11 +2,8 @@ import pytest
 from django.db import DatabaseError
 
 from core.models import User
-from logs.logic.queries import (
-    FlexibleDataSlicer,
-    ForeignKeyDimensionFilter,
-    ExplicitDimensionFilter,
-)
+from logs.logic.reporting.filters import ForeignKeyDimensionFilter, ExplicitDimensionFilter
+from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import ReportType, Dimension, ReportTypeToDimension, FlexibleReport, DimensionText
 from organizations.tests.conftest import organizations  # noqa
 

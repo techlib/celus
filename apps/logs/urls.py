@@ -29,6 +29,11 @@ urlpatterns = [
         views.FlexibleSlicerPossibleValuesView.as_view(),
         name='flexible-slicer-possible-values',
     ),
+    path(
+        'flexible-slicer/parts/',
+        views.FlexibleSlicerSplitParts.as_view(),
+        name='flexible-slicer-split-parts',
+    ),
 ]
 
 urlpatterns += router.urls

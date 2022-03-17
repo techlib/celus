@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     'knowledgebase.apps.KnowledgebaseConfig',
     'export.apps.ExportConfig',
     'rest_pandas',
-    'error_report',
+    # 'error_report',
     'django_prometheus',
     'import_export',
     'rest_framework_api_key',
@@ -97,7 +97,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-    'error_report.middleware.ExceptionProcessor',
+    # 'error_report.middleware.ExceptionProcessor',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
