@@ -101,6 +101,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
                 'reportinterestmetric_set__interest_group',
                 'source',
                 'source__organization',
+                'controlled_metrics',
             )
         )
         if not settings.ALLOW_NONCOUNTER_DATA:

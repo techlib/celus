@@ -1,24 +1,23 @@
 from pathlib import Path
 
 import pytest
+from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
-
-from core.tests.conftest import *  # noqa
-from logs.tasks import prepare_preflight, import_manual_upload_data
 from logs.models import ManualDataUpload
+from logs.tasks import import_manual_upload_data, prepare_preflight
 from test_fixtures.entities.logs import MetricFactory
+from test_fixtures.scenarios.basic import clients  # noqa
 from test_fixtures.scenarios.basic import (
+    basic1,
+    counter_report_types,
     data_sources,
+    identities,
     organizations,
     platforms,
-    counter_report_types,
     report_types,
-    clients,
-    identities,
     users,
-    basic1,
-)  # noqa
+)
 
 
 @pytest.mark.django_db
@@ -60,7 +59,7 @@ class TestManualUploadForCounterData:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type': cr_type.report_type_id,
+                'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
             },
         )
@@ -76,6 +75,13 @@ class TestManualUploadForCounterData:
         assert 'preflight' in data
         assert 'hits_total' in data['preflight']
         assert data['preflight']['log_count'] > 0
+        for month_data in data['preflight']['months'].values():
+            assert set(month_data.keys()) == {
+                'new',
+                'this_month',
+                'prev_year_avg',
+                'prev_year_month',
+            }
 
 
 @pytest.mark.django_db
@@ -108,7 +114,7 @@ class TestManualUploadControlledMetrics:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type': cr_type.report_type_id,
+                'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
             },
         )
@@ -123,7 +129,7 @@ class TestManualUploadControlledMetrics:
         assert response.status_code == 200
         # Should be able to import
         assert response.data["can_import"] is True
-        assert response.data["report_type_obj"]["check_controlled_metrics"] is False
+        assert len(response.data["report_type"]["controlled_metrics"]) == 0
         assert set(response.data["preflight"]["metrics"].keys()) == set(metrics)
 
         # mark report type as controlled
@@ -138,7 +144,7 @@ class TestManualUploadControlledMetrics:
         assert response.status_code == 200
         # Should be able to import
         assert response.data["can_import"] is False
-        assert response.data["report_type_obj"]["check_controlled_metrics"] is True
+        assert len(response.data["report_type"]["controlled_metrics"]) > 0
         assert set(response.data["preflight"]["metrics"].keys()) == set(metrics)
 
         # Should fail to import data
@@ -153,7 +159,7 @@ class TestManualUploadControlledMetrics:
         response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         assert response.data["can_import"] is True
-        assert response.data["report_type_obj"]["check_controlled_metrics"] is True
+        assert len(response.data["report_type"]["controlled_metrics"]) > 0
         assert set(response.data["preflight"]["metrics"].keys()) == set(metrics)
 
         # Import should pass
@@ -187,7 +193,7 @@ class TestManualUploadConflicts:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type': report_types['br2'].pk,
+                'report_type_id': report_types['br2'].pk,
                 'data_file': data_file,
             },
         )
@@ -217,7 +223,7 @@ class TestManualUploadConflicts:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type': report_types['br2'].pk,
+                'report_type_id': report_types['br2'].pk,
                 'data_file': data_file,
             },
         )

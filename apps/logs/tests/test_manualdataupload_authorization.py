@@ -23,7 +23,7 @@ def mdu_api_post(platforms, report_type_nd, tmp_path, settings, client, authenti
             data={
                 'platform': platforms[0].id,
                 'organization': organization.pk,
-                'report_type': report_type.pk,
+                'report_type_id': report_type.pk,
                 'data_file': file,
             },
             **authentication_headers(identity),

@@ -1,13 +1,16 @@
+from datetime import date
+from random import randint
+
 import factory
 import faker
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
-
-from logs.logic.clickhouse import sync_import_batch_with_clickhouse
-from logs.models import ImportBatch, Metric, AccessLog, ManualDataUpload, MduState
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.report_types import ReportTypeFactory
 
+from logs.logic.clickhouse import sync_import_batch_with_clickhouse
+from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduState, Metric
 
 fake = faker.Faker()
 
@@ -32,6 +35,19 @@ class MetricFactory(factory.django.DjangoModelFactory):
 class ImportBatchFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ImportBatch
+
+
+class AccessLogFactory(factory.django.DjangoModelFactory):
+    import_batch = factory.SubFactory(ImportBatchFactory)
+    value = factory.LazyFunction(lambda: randint(1, 5000))
+
+    date = factory.SelfAttribute('import_batch.date')
+    organization = factory.SelfAttribute('import_batch.organization')
+    report_type = factory.SelfAttribute('import_batch.report_type')
+    platform = factory.SelfAttribute('import_batch.platform')
+
+    class Meta:
+        model = AccessLog
 
 
 class ImportBatchFullFactory(factory.django.DjangoModelFactory):
@@ -106,6 +122,7 @@ class ManualDataUploadFactory(factory.django.DjangoModelFactory):
     when_processed = factory.LazyAttribute(
         lambda o: fake.date_time_this_year() if o.state == MduState.IMPORTED else None
     )
+    data_file = factory.django.FileField(data=DATA_FILE)
 
     @factory.post_generation
     def import_batches(self, create, extracted, **kwargs):  # noqa - obj name is ok here

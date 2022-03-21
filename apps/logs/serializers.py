@@ -9,6 +9,7 @@ from rest_framework.serializers import (
     BaseSerializer,
     HiddenField,
     CurrentUserDefault,
+    PrimaryKeyRelatedField,
 )
 
 from core.models import DataSource, UL_CONS_STAFF
@@ -113,7 +114,7 @@ class ReportTypeSimpleSerializer(ModelSerializer):
 
 class ReportTypeSerializer(ModelSerializer):
 
-    usable_metrics_names = ListField(child=CharField(), read_only=True)
+    controlled_metrics = PrimaryKeyRelatedField(many=True, read_only=True)
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
     log_count = IntegerField(read_only=True)
     newest_log = DateField(read_only=True)
@@ -138,8 +139,7 @@ class ReportTypeSerializer(ModelSerializer):
             'oldest_log',
             'public',
             'dimensions',
-            'check_controlled_metrics',
-            'usable_metrics_names',
+            'controlled_metrics',
         )
 
     def create(self, validated_data):
@@ -207,9 +207,8 @@ class ReportInterestMetricSerializer(ModelSerializer):
 
 class ReportTypeExtendedSerializer(ModelSerializer):
 
-    usable_metrics_names = ListField(child=CharField(), read_only=True)
+    controlled_metrics = PrimaryKeyRelatedField(many=True, read_only=True)
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
-    used_metrics = MetricSerializer(many=True, read_only=True)
     interest_metric_set = ReportInterestMetricSerializer(
         many=True, read_only=True, source='reportinterestmetric_set'
     )
@@ -226,10 +225,8 @@ class ReportTypeExtendedSerializer(ModelSerializer):
             'name_en',
             'desc',
             'dimensions_sorted',
-            'used_metrics',
             'interest_metric_set',
-            'check_controlled_metrics',
-            'usable_metrics_names',
+            'controlled_metrics',
         )
 
 
@@ -347,15 +344,17 @@ class ManualDataUploadSerializer(ModelSerializer):
 
     user = HiddenField(default=CurrentUserDefault())
     import_batches = ImportBatchSerializer(read_only=True, many=True)
+    report_type = ReportTypeExtendedSerializer(read_only=True)
+    report_type_id = IntegerField(write_only=True)
     can_edit = BooleanField(read_only=True)
-    report_type_obj = ReportTypeExtendedSerializer(source='report_type', read_only=True)
+    can_import = BooleanField(read_only=True)
 
     class Meta:
         model = ManualDataUpload
         fields = (
             'pk',
             'report_type',
-            'report_type_obj',
+            'report_type_id',
             'organization',
             'platform',
             'data_file',
@@ -368,8 +367,8 @@ class ManualDataUploadSerializer(ModelSerializer):
             'import_batches',
             'preflight',
             'can_edit',
-            'owner_level',
             'can_import',
+            'owner_level',
             'state',
             'clashing_months',
         )

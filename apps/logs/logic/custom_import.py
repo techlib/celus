@@ -1,16 +1,16 @@
 import typing
+import statistics
 
 from collections import Counter
 from datetime import date
 from functools import lru_cache
 
-from django.db.transaction import atomic
-from django.conf import settings
-from django.utils.translation import gettext as _
-from django.utils.timezone import now
-
 from core.logic.dates import parse_date_fuzzy
 from core.models import User
+from django.conf import settings
+from django.db.transaction import atomic
+from django.utils.timezone import now
+from django.utils.translation import gettext as _
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import ImportBatch, ManualDataUpload, MduState, OrganizationPlatform
@@ -121,30 +121,61 @@ def custom_data_to_records(
     return (e for e in result)  # TODO convert this into a propper generator
 
 
-def histograms_with_count(
+def histograms_with_stats(
     attrs: typing.List[str], iterable
 ) -> typing.Tuple[typing.Dict[str, Counter], Counter]:
-    his = {e: Counter() for e in attrs}
+    histograms = {e: {} for e in attrs}
     cnt = Counter()
     for x in iterable:
         for attr in attrs:
-            his[attr][str(getattr(x, attr))] += x.value
-        cnt["count"] += 1
+            value = str(getattr(x, attr))
+            rec = histograms[attr].get(value, {"sum": 0, "count": 0})
+            rec["sum"] += x.value
+            rec["count"] += 1
+            histograms[attr][value] = rec
         cnt["sum"] += x.value
-    return his, cnt
+        cnt["count"] += 1
+    return histograms, cnt
 
 
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    histograms, counts = histograms_with_count(['start', 'metric', 'title'], mdu.data_to_records())
+    histograms, counts = histograms_with_stats(['start', 'metric', 'title'], mdu.data_to_records())
+    months = {
+        k: {"new": v, "this_month": None, "prev_year_avg": None, "prev_year_month": 0}
+        for k, v in histograms["start"].items()
+    }
+
+    # prepare month statistics
+    related_months, used_metrics = mdu.related_months_data()
+
+    for year_month, data in months.items():
+        year, month, *_ = [int(e) for e in year_month.split('-')]
+        last_year_month = f"{year - 1}-{month:02d}-01"
+        last_year_months = {f"{year - 1}-{i:02d}-01" for i in range(1, 13)}
+        data['this_month'] = related_months.get(year_month)
+
+        # Display last year average only when all months contain data
+        if last_year_months.issubset(related_months.keys()):
+            data['prev_year_avg'] = {"sum": 0, "count": 0}
+            for ymonth in last_year_months:
+                data['prev_year_avg']['sum'] += related_months[ymonth]['sum']
+                data['prev_year_avg']['count'] += related_months[ymonth]['count']
+            data['prev_year_avg']['sum'] = round(data['prev_year_avg']['sum'] / 12)
+            data['prev_year_avg']['count'] = round(data['prev_year_avg']['count'] / 12)
+        else:
+            data['prev_year_avg'] = None
+        data['prev_year_month'] = related_months.get(last_year_month)
+
     return {
-        'format_version': '1',
+        'format_version': mdu.PREFLIGHT_FORMAT_VERSION,
         'celus_version': settings.CELUS_VERSION,
         'git_hash': settings.SENTRY_RELEASE,
         'generated': now().isoformat(),
         'log_count': counts["count"],
         'hits_total': counts["sum"],
-        'months': histograms["start"],
+        'months': months,
         'metrics': histograms["metric"],
+        'used_metrics': used_metrics,
         'title_count': len(histograms["title"]),
     }
 

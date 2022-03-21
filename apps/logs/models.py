@@ -1,4 +1,3 @@
-from chardet.universaldetector import UniversalDetector
 import codecs
 import csv
 import os
@@ -9,18 +8,29 @@ from datetime import date
 from enum import Enum
 
 import magic
+from chardet.universaldetector import UniversalDetector
+from core.exceptions import ModelUsageError
+from core.models import UL_ROBOT, USER_LEVEL_CHOICES, CreatedUpdatedMixin, DataSource, User
 from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
-from django.core.exceptions import ValidationError, ObjectDoesNotExist, FieldDoesNotExist
-from django.db import models
-from django.db import transaction
-from django.db.models import Index, UniqueConstraint, Q, QuerySet, OuterRef, Exists, Max, Field
+from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist, ValidationError
+from django.db import models, transaction
+from django.db.models import (
+    Count,
+    Exists,
+    Field,
+    Index,
+    Max,
+    OuterRef,
+    Q,
+    QuerySet,
+    Sum,
+    UniqueConstraint,
+)
+from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
-
-from core.exceptions import ModelUsageError
-from core.models import USER_LEVEL_CHOICES, UL_ROBOT, DataSource, CreatedUpdatedMixin, User
 from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Platform, Title
@@ -95,22 +105,10 @@ class ReportType(models.Model):
         return [dim.short_name for dim in self.dimensions.all()]
 
     @cached_property
-    def check_controlled_metrics(self):
-        return self.controlled_metrics.count() > 0
-
-    @cached_property
     def dimensions_sorted(self) -> typing.List['Dimension']:
         if self.materialization_spec:
             return self.materialization_spec.base_report_type.dimensions_sorted
         return list(self.dimensions.all().order_by('reporttypetodimension__position'))
-
-    @cached_property
-    def usable_metrics_names(self):
-        return list(
-            (
-                self.controlled_metrics if self.check_controlled_metrics else Metric.objects.all()
-            ).values_list('short_name', flat=True)
-        )
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -609,6 +607,7 @@ class MduState(models.TextChoices):
 
 
 class ManualDataUpload(models.Model):
+    PREFLIGHT_FORMAT_VERSION = '2'
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -746,9 +745,14 @@ class ManualDataUpload(models.Model):
     def clashing_months(self) -> typing.List[date]:
         """ Display which months are in conflict with data to be imported
 
-        return: list of months or None if preflight check hasn't been performed yet
+        return: list of months
         """
-        if not self.preflight or "months" not in self.preflight:
+        if (
+            not self.preflight
+            or "months" not in self.preflight
+            or "format_version" not in self.preflight
+            or self.preflight["format_version"] != self.PREFLIGHT_FORMAT_VERSION
+        ):
             return sorted({e for e in self.clashing_batches().values_list("date", flat=True)})
         # preflight was performed
         return sorted(
@@ -758,7 +762,7 @@ class ManualDataUpload(models.Model):
                     report_type=self.report_type,
                     platform=self.platform,
                     organization=self.organization,
-                    date__in=self.preflight["months"],
+                    date__in=[e for e in self.preflight["months"]],
                 )
             }
         )
@@ -774,11 +778,15 @@ class ManualDataUpload(models.Model):
             return False
 
         # check metrics
-        if self.report_type.check_controlled_metrics:
-            if "metrics" not in self.preflight:
-                # metrics should be contained in preflight
-                return False
-            if not set(self.preflight["metrics"]).issubset(self.report_type.usable_metrics_names):
+        if "metrics" not in self.preflight:
+            # metrics should be contained in preflight
+            return False
+
+        controlled_metrics = list(
+            self.report_type.controlled_metrics.values_list('short_name', flat=True)
+        )
+        if controlled_metrics:
+            if not set(self.preflight["metrics"]).issubset(controlled_metrics):
                 # Extra metrics occured
                 return False
 
@@ -820,6 +828,55 @@ class ManualDataUpload(models.Model):
             pass
         else:
             raise WrongState("MDU can't be imported in current state")
+
+    def related_months_data(self) -> typing.Tuple[typing.Dict[str, int], typing.List[str]]:
+        """ Returns the number of access logs per month of all existing data which matches this MDU
+            and a list of all metrics
+        """
+
+        # Get all counts for same (org, platform, report_type)
+        ibs = ImportBatch.objects.filter(
+            platform_id=self.platform_id,
+            organization_id=self.organization_id,
+            report_type_id=self.report_type_id,
+        )
+
+        counts = (
+            ibs.values('date')
+            .annotate(
+                # if no access logs are present it means the ib is empty
+                count=Coalesce(
+                    Count('accesslog__pk', filter=Q(accesslog__report_type_id=self.report_type_id)),
+                    0,
+                ),
+                sum=Coalesce(
+                    Sum(
+                        'accesslog__value', filter=Q(accesslog__report_type_id=self.report_type_id)
+                    ),
+                    0,
+                ),
+            )
+            .values('date', 'count', 'sum')
+        )
+
+        counts = {
+            e['date'].strftime("%Y-%m-%d"): {'count': e['count'], 'sum': e['sum']} for e in counts
+        }
+
+        # Get metrics
+        metric_ids = (
+            AccessLog.objects.filter(
+                platform_id=self.platform_id,
+                organization_id=self.organization_id,
+                report_type_id=self.report_type_id,
+            )
+            .values_list('metric_id')
+            .distinct()
+        )
+
+        metrics = [e.short_name for e in Metric.objects.filter(pk__in=metric_ids).order_by('pk')]
+
+        return counts, metrics
 
 
 class ManualDataUploadImportBatch(models.Model):

@@ -34,7 +34,7 @@ export default {
   computed: {
     reportViewsUrl() {
       if (this.mdu) {
-        return `/api/report-type/${this.mdu.report_type}/report-views/`;
+        return `/api/report-type/${this.mdu.report_type.pk}/report-views/`;
       }
       return null;
     },

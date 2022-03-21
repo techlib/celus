@@ -10,8 +10,6 @@ en:
   step2: Check before data import
   step3: Imported data view
   input_rows: Read input data rows
-  output_logs: Generated logs
-  imported_months: Data found for months
   overview: Overview
   upload: Upload
   add_report_type: Add new report type
@@ -30,6 +28,7 @@ en:
   clashing_import_batches_text: Imported file contains data for dates for which there already are existing records in the database. To import this file you need to delete the existing data first.
   delete_existing: Delete existing
   regenerate_preflight: Regenerate overview
+  preflight_data_outdated: Preflight data are outdated, please regenerate preflight.
   errors:
     requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
     unknown_preflight_error: An unknown error has occured during data check.
@@ -44,8 +43,6 @@ cs:
   step2: Kontrola před importem
   step3: Zobrazení importovaných dat
   input_rows: Načtené datové řádky
-  output_logs: Vygenerované záznamy
-  imported_months: Data nalezena pro měsíce
   overview: Přehled
   upload: Nahrát
   add_report_type: Vytvořit nový typ reportu
@@ -64,6 +61,7 @@ cs:
   clashing_import_batches_text: Nahrávaný soubor obsahuje data za období, pro které jsou již v databázi uložena data. Pro nahrání souboru je třeba nejprve existující data smazat.
   delete_existing: Smazat existující
   regenerate_preflight: Přegenerovat přehled
+  preflight_data_outdated: Data přehledu již nejsou platná. Prosím přegenerujte přehled.
   errors:
     requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
     unknown_preflight_error: Během kontroly dat se vyskytla neznámá chyba.
@@ -206,6 +204,12 @@ cs:
           <v-card-title>{{ $t("overview") }}</v-card-title>
           <v-card-text>
             <LargeSpinner v-if="state == 'initial' || spinnerOn || !state" />
+            <v-alert
+              v-else-if="state == 'preflight' && !preflightDataFormatValid"
+              type="warning"
+            >
+              <span v-text="$t('preflight_data_outdated')"></span>
+            </v-alert>
             <ImportPreflightDataWidget
               v-else-if="state == 'preflight'"
               :preflight-data="preflightData"
@@ -240,7 +244,11 @@ cs:
           </v-card-text>
           <v-card-actions v-if="state == 'preflight'">
             <v-btn
-              v-if="preflightData && preflightData.clashing_months.length"
+              v-if="
+                preflightData &&
+                preflightDataFormatValid &&
+                preflightData.clashing_months.length
+              "
               color="warning"
               @click="showConfirmDeleteDialog = true"
             >
@@ -258,10 +266,6 @@ cs:
             >
               <v-icon small class="pr-2">fas fa-cogs</v-icon>
               {{ $t("import") }}
-            </v-btn>
-            <v-btn color="primary" @click="regeneratePreflight">
-              <v-icon small class="pr-2">fas fa-redo</v-icon>
-              {{ $t("regenerate_preflight") }}
             </v-btn>
             <v-btn
               @click="backToStart()"
@@ -485,16 +489,26 @@ export default {
       ];
     },
     selectedInterestMetrics() {
-      if (this.uploadObject && this.uploadObject.report_type_obj) {
-        return this.uploadObject.report_type_obj.interest_metric_set.map(
+      if (this.uploadObject && this.uploadObject.report_type) {
+        return this.uploadObject.report_type.interest_metric_set.map(
           (item) => item.metric.short_name
         );
       }
       return [];
     },
     usableMetrics() {
-      if (this.uploadObject && this.uploadObject.report_type_obj) {
-        return this.uploadObject.report_type_obj.usable_metrics_names;
+      if (this.uploadObject && this.uploadObject.report_type) {
+        if (this.uploadObject.report_type.controlled_metrics) {
+          return this.metrics
+            .filter((metric) =>
+              this.uploadObject.report_type.controlled_metrics.includes(
+                metric.pk
+              )
+            )
+            .map((item) => item.short_name);
+        } else {
+          return this.metrics.map((metric) => metric.short_name);
+        }
       }
       return [];
     },
@@ -509,7 +523,7 @@ export default {
           {
             platform: this.platformId,
             organization: this.organizationId,
-            report_type: this.uploadObject.report_type_obj.pk,
+            report_type: this.uploadObject.report_type.pk,
             months: this.preflightData.clashing_months,
           },
         ];
@@ -544,9 +558,16 @@ export default {
         return null;
       }
     },
+    preflightDataFormatValid() {
+      if (this.uploadObject) {
+        return this.uploadObject.preflight.format_version === "2";
+      } else {
+        return false;
+      }
+    },
     checkMetrics() {
       if (this.uploadObject) {
-        return this.uploadObject.report_type_obj.check_controlled_metrics;
+        return this.uploadObject.report_type.controlled_metrics.length > 0;
       } else {
         return false;
       }
@@ -574,7 +595,7 @@ export default {
       formData.append("data_file", this.dataFile);
       formData.append("organization", this.organizationId);
       formData.append("platform", this.platformId);
-      formData.append("report_type", this.selectedReportType.pk);
+      formData.append("report_type_id", this.selectedReportType.pk);
       try {
         let response = await axios.post("/api/manual-data-upload/", formData, {
           headers: { "Content-Type": "multipart/form-data" },
@@ -707,8 +728,14 @@ export default {
           this.uploadObject = response.data;
           switch (this.uploadObject.state) {
             case "initial":
-            case "preflight":
             case "prefailed":
+              this.step = 2;
+              break;
+            case "preflight":
+              // Auto regenarete outdated preflights
+              if (!this.preflightDataFormatValid) {
+                this.regeneratePreflight();
+              }
               this.step = 2;
               break;
             case "importing":
@@ -753,8 +780,8 @@ export default {
     },
     deletePerformed() {
       this.showConfirmDeleteDialog = false;
-      // update preflight data on the page
-      this.loadMdu();
+      // regenerate preflight
+      this.regeneratePreflight();
     },
     async loadRequiredData() {
       // report type API call is quite time consuming

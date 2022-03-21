@@ -404,7 +404,7 @@ class TestManualDataUpload:
             data={
                 'platform': platform.id,
                 'organization': organizations["branch"].pk,
-                'report_type': report_type.pk,
+                'report_type_id': report_type.pk,
                 'data_file': file,
             },
         )

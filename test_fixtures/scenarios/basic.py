@@ -452,10 +452,10 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
 
 @pytest.fixture
 def metrics(report_types, platforms):
-    metric1 = MetricFactory(name="metric1")
-    metric2 = MetricFactory(name="metric2")
-    metric3 = MetricFactory(name="metric3")
-    metric4 = MetricFactory(name="metric4")
+    metric1 = MetricFactory(short_name="metric1", name="Metric1")
+    metric2 = MetricFactory(short_name="metric2", name="Metric2")
+    metric3 = MetricFactory(short_name="metric3", name="Metric3")
+    metric4 = MetricFactory(short_name="metric4", name="Metric4")
 
     return locals()
 

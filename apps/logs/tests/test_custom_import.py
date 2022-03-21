@@ -102,7 +102,7 @@ class TestCustomImport:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type': report_type.pk,
+                'report_type_id': report_type.pk,
                 'data_file': file,
             },
         )
@@ -144,7 +144,7 @@ class TestCustomImport:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type': report_type.pk,
+                'report_type_id': report_type.pk,
                 'data_file': file,
             },
         )
@@ -186,7 +186,7 @@ class TestCustomImport:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type': report_type.pk,
+                'report_type_id': report_type.pk,
                 'data_file': file,
             },
         )
@@ -257,7 +257,7 @@ class TestCustomImport:
             data={
                 'platform': platform.id,
                 'organization': org.pk,
-                'report_type': report_type.pk,
+                'report_type_id': report_type.pk,
                 'data_file': file,
             },
             **authentication_headers(identity),

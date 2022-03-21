@@ -11,12 +11,26 @@ en:
   is_interest_metric: This metric defines interest for this report type
   data_exists: Data for this month already exists.
   metric_create: Metric will be created.
-  metric_ready: Metric is valid.
+  metric_ready: Metric is valid and is used.
   metric_unknown: Metric was not found.
   metric_check_failed: Invalid metric for report type.
+  metric_not_used_yet: |
+    Metric hasn't been used for this combination of organization,
+    platform and report type.
   import_not_allowed: Data import is not possible
   data_exists_for_months: Data are already present for following months
+  delete_existing_data_first: If you want to proceed you need to delete existing data first.
   cant_use_metrics: Following metrics can't be used
+  month_table:
+    hits_sum: Sum of hits
+    prev_year_average: Previous year average
+    prev_year_month: Same month previous year
+    sum_count_tooltip: Sum of hits which are present in uploaded data per month
+    last_year_average_tooltip: Average sum of hits for previous year
+    last_year_month_tooltip: Sum of hits for the same month last year
+  comparison_with_existing_sum: Comparison with the sum of hits with existing data
+  comparison_with_last_year_average_sum: Comparison with the average sum of hits from previous year
+  comparison_with_last_year_month_sum: Comparison with sum of hits from the same month previous year
 
 cs:
   output_logs: Vygenerované záznamy
@@ -30,12 +44,26 @@ cs:
   is_interest_metric: Tato metrika definuje zájem pro tento typ reportu
   data_exists: Data za tento měsíc již existují.
   metric_create: Metrika bude vytvořena.
-  metric_ready: Metrika je platná.
+  metric_ready: Metrika je platná a používaná.
   metric_unknown: Metrika nebyla nalezena.
   metric_check_failed: Metrika není pro daný report povolená.
+  metric_not_used_yet: |
+    Tato metrika zatím nebyla použita pro danu kombinaci
+    organizace platformy a typu reportu.
   import_not_allowed: Import dat není možný
   data_exists_for_months: Data za následující měsíce již existují
+  delete_existing_data_first: Pokud chcete pokračovat je nutné nejprve smazat existující data.
   cant_use_metrics: Následující metriky nemohou být použity
+  month_table:
+    hits_sum: Součet zásahů
+    prev_year_average: Průměr za předchozí rok
+    prev_year_month: Stejný měsíc předchozí rok
+    sum_count_tooltip: Součet zásahů, které jsou přítomné v nahrávaných datech po měsících
+    last_year_average_tooltip: Průměrný součet zásahů za předchozí rok
+    last_year_month_tooltip: Součet zásahů za stejný měsíc předchozího roku
+  comparison_with_existing_sum: Porovnání součtu zásahů s již existujícími daty
+  comparison_with_last_year_average_sum: Porovnání součtu zásahů s průměrem součtu zásahů za minulý rok
+  comparison_with_last_year_month_sum: Porovnání součtu zásahů se stejným měsícem v minulém roce
 </i18n>
 
 <template>
@@ -45,7 +73,9 @@ cs:
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("output_logs") }}</h4>
-            <div class="text-right">{{ preflightData.log_count }}</div>
+            <div class="text-right">
+              {{ formatInteger(preflightData.log_count) }}
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -53,7 +83,9 @@ cs:
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("total_hits") }}</h4>
-            <div class="text-right">{{ preflightData.hits_total }}</div>
+            <div class="text-right">
+              {{ formatInteger(preflightData.hits_total) }}
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -62,7 +94,7 @@ cs:
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("title_count") }}</h4>
-            <div class="text-right">{{ titleCount }}</div>
+            <div class="text-right">{{ formatInteger(titleCount) }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -72,8 +104,44 @@ cs:
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("imported_months") }}</h4>
+            <br />
             <div class="text-right">
               <table style="width: 100%">
+                <tr class="text-center">
+                  <th class="pl-1 pr-1"></th>
+                  <th class="pl-1 pr-1">
+                    <v-tooltip bottom>
+                      <template v-slot:activator="{ on }">
+                        <span v-on="on">{{ $t("month_table.hits_sum") }}</span>
+                      </template>
+                      <span>{{ $t("month_table.sum_count_tooltip") }}</span>
+                    </v-tooltip>
+                  </th>
+                  <th class="pl-1 pr-1" v-if="clashingMonths.length == 0">
+                    <v-tooltip bottom>
+                      <template v-slot:activator="{ on }">
+                        <span v-on="on">
+                          {{ $t("month_table.prev_year_average") }}
+                        </span>
+                      </template>
+                      <span>
+                        {{ $t("month_table.last_year_average_tooltip") }}
+                      </span>
+                    </v-tooltip>
+                  </th>
+                  <th class="pl-1 pr-1" v-if="clashingMonths.length == 0">
+                    <v-tooltip bottom>
+                      <template v-slot:activator="{ on }">
+                        <span v-on="on">
+                          {{ $t("month_table.prev_year_month") }}
+                        </span>
+                      </template>
+                      <span>
+                        {{ $t("month_table.last_year_month_tooltip") }}
+                      </span>
+                    </v-tooltip>
+                  </th>
+                </tr>
                 <tr v-for="rec in monthsSorted" :key="rec.name">
                   <td class="text-left pr-4">
                     {{ rec.name.substring(0, 7) }}
@@ -83,14 +151,48 @@ cs:
                       v-if="preflightData.clashing_months.includes(rec.name)"
                     >
                       <template v-slot:activator="{ on }">
-                        <v-icon class="ml-1" x-small color="warning" v-on="on">
+                        <v-icon class="ml-1" x-small color="error" v-on="on">
                           fa fa-exclamation-triangle
                         </v-icon>
                       </template>
                       <span>{{ $t("data_exists") }}</span>
                     </v-tooltip>
                   </td>
-                  <td>{{ rec.value }}</td>
+                  <td class="text-center">
+                    <SimpleCompare
+                      :value="rec.value.new && rec.value.new.sum"
+                      :other-value="
+                        rec.value.this_month && rec.value.this_month.sum
+                      "
+                      :other-value-tooltip="$t('comparison_with_existing_sum')"
+                      :negate="false"
+                    />
+                  </td>
+                  <td v-if="clashingMonths.length == 0" class="text-center">
+                    <SimpleCompare
+                      :value="
+                        rec.value.prev_year_avg && rec.value.prev_year_avg.sum
+                      "
+                      :other-value="rec.value.new && rec.value.new.sum"
+                      :other-value-tooltip="
+                        $t('comparison_with_last_year_average_sum')
+                      "
+                      :negate="true"
+                    />
+                  </td>
+                  <td v-if="clashingMonths.length == 0" class="text-center">
+                    <SimpleCompare
+                      :value="
+                        rec.value.prev_year_month &&
+                        rec.value.prev_year_month.sum
+                      "
+                      :other-value="rec.value.new && rec.value.new.sum"
+                      :other-value-tooltip="
+                        $t('comparison_with_last_year_month_sum')
+                      "
+                      :negate="true"
+                    />
+                  </td>
                 </tr>
               </table>
             </div>
@@ -110,7 +212,6 @@ cs:
                       <td class="text-left">
                         <v-icon
                           v-on="on"
-                          class="ml-2"
                           small
                           left
                           :color="metricState(rec.name).color"
@@ -133,7 +234,7 @@ cs:
                     </v-tooltip>
                     <span v-else v-text="rec.name"></span>
                   </td>
-                  <td>{{ rec.value }}</td>
+                  <td>{{ formatInteger(rec.value.sum) }}</td>
                 </tr>
               </table>
             </div>
@@ -143,7 +244,7 @@ cs:
     </v-row>
     <v-row v-if="clashingMonths.length > 0 || failedMetrics.length > 0">
       <v-col>
-        <v-alert type="warning" outlined>
+        <v-alert type="error" outlined>
           <h4 class="mb-2 text-h6">{{ $t("import_not_allowed") }}</h4>
           <div v-if="clashingMonths.length > 0" class="mb-2">
             {{ $t("data_exists_for_months") }}:
@@ -152,6 +253,9 @@ cs:
                 {{ month.substring(0, 7) }}
               </li>
             </ul>
+            <p v-if="failedMetrics.length === 0" class="mt-2">
+              <strong>{{ $t("delete_existing_data_first") }}</strong>
+            </p>
           </div>
           <div v-if="failedMetrics.length > 0" class="mb-2">
             {{ $t("cant_use_metrics") }}:
@@ -171,10 +275,15 @@ cs:
   </v-container>
 </template>
 <script>
+import SimpleCompare from "@/components/util/SimpleCompare";
+import { formatInteger } from "@/libs/numbers";
+
 export default {
   name: "ImportPreflightDataWidget",
 
-  components: {},
+  components: {
+    SimpleCompare,
+  },
 
   props: {
     preflightData: { required: true, type: Object },
@@ -223,9 +332,13 @@ export default {
     clashingMonths() {
       return this.preflightData.clashing_months;
     },
+    usedMetrics() {
+      return this.preflightData.used_metrics;
+    },
   },
 
   methods: {
+    formatInteger,
     isInterestMetric(metricName) {
       if (this.interestMetrics.indexOf(metricName) > -1) {
         return true;
@@ -259,6 +372,15 @@ export default {
             tooltip: "metric_unknown",
           };
         }
+      }
+      if (!this.usedMetrics.includes(metricName)) {
+        // Metric exists and is valid, but it hasn't been used
+        // for this combination of (org, platform, report type)
+        return {
+          icon: "fas fa-question-circle",
+          color: "warning",
+          tooltip: "metric_not_used_yet",
+        };
       }
       return {
         icon: "fas fa-check-circle",

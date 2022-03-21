@@ -36,20 +36,6 @@ class TestReportType:
             )
         assert report2.dimension_short_names == ['dim3x', 'dim2x', 'dim1x']
 
-    def test_usable_metrics_names(self, report_types):
-        m1 = MetricFactory(short_name="m1")
-        m2 = MetricFactory(short_name="m2")
-        m3 = MetricFactory(short_name="m3")
-
-        report_types["tr"].controlled_metrics.set([m1, m3])
-        report_types["jr2"].controlled_metrics.set([m2])
-        report_types["dr"].controlled_metrics.set([])
-
-        assert sorted(report_types["tr"].usable_metrics_names) == ["m1", "m3"]
-        assert sorted(report_types["jr2"].usable_metrics_names) == ["m2"]
-        assert sorted(report_types["dr"].usable_metrics_names) == ["m1", "m2", "m3"]
-        assert sorted(report_types["br1"].usable_metrics_names) == ["m1", "m2", "m3"]
-
 
 @pytest.mark.django_db
 class TestFlexibleReport:
