@@ -237,7 +237,6 @@ def prepare_preflight(mdu_id: int):
     except UnicodeDecodeError as e:
         mdu.log = str(e)
         mdu.error = "unicode-decode"
-        mdu.is_processed = True
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
@@ -253,7 +252,6 @@ Traceback: {traceback.format_exc()}
 """
         mdu.log = body
         mdu.error = "general"
-        mdu.is_processed = True
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
@@ -307,7 +305,6 @@ Traceback: {traceback.format_exc()}
 """
 
         mdu.error = "clashing-data" if isinstance(e, DatabaseError) else "import-error"
-        mdu.is_processed = True
         mdu.when_processed = now()
         mdu.state = MduState.FAILED
         mdu.save()
