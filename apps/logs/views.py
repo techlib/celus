@@ -156,15 +156,20 @@ class MetricViewSet(ReadOnlyModelViewSet):
 
 class ReportInterestMetricViewSet(ReadOnlyModelViewSet):
     serializer_class = ReportTypeInterestSerializer
-    queryset = ReportType.objects.prefetch_related(
-        "interest_metrics",
-        Prefetch(
-            "reportinterestmetric_set",
-            queryset=ReportInterestMetric.objects.select_related(
-                "metric", "target_metric", "interest_group"
+    queryset = (
+        ReportType.objects.filter(materialization_spec__isnull=True)
+        .exclude(short_name='interest')
+        .annotate(used_by_platforms=Count('platforminterestreport__platform', distinct=True))
+        .prefetch_related(
+            "interest_metrics",
+            Prefetch(
+                "reportinterestmetric_set",
+                queryset=ReportInterestMetric.objects.select_related(
+                    "metric", "target_metric", "interest_group"
+                ),
             ),
-        ),
-        "controlled_metrics",
+            "controlled_metrics",
+        )
     )
 
 

@@ -143,6 +143,7 @@ cs:
 <script>
 import AnnotationCreateModifyWidget from "./AnnotationCreateModifyWidget.vue";
 import cancellation from "@/mixins/cancellation";
+import { mapState } from "vuex";
 
 export default {
   name: "AnnotationList",
@@ -183,12 +184,10 @@ export default {
   },
 
   computed: {
-    organization() {
-      return this.$store.state.selectedOrganizationId;
-    },
-    lang() {
-      return this.$store.state.appLanguage || "en";
-    },
+    ...mapState({
+      lang: "appLanguage",
+      organization: "selectedOrganizationId",
+    }),
     headers() {
       return [
         {

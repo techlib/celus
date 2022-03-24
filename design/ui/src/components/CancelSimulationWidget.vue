@@ -132,7 +132,6 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import axios from "axios";
 import { formatInteger } from "@/libs/numbers";
 import VeGauge from "v-charts/lib/gauge.common";
-import SmallLoader from "@/components/util/SmallLoader";
 import { pubTypes } from "@/libs/pub-types";
 import TitleTypeFilterWidget from "@/components/TitleTypeFilterWidget";
 import LoaderWidget from "@/components/util/LoaderWidget";
@@ -143,7 +142,6 @@ export default {
   components: {
     LoaderWidget,
     TitleTypeFilterWidget,
-    SmallLoader,
     VeGauge,
   },
 
@@ -483,12 +481,10 @@ export default {
          */
         for (let platform of this.platformsList) {
           let uniqueTitles = this.platformUniqueTitles(platform, false);
-          platform["distinctTitleCount"] = this.uniqueTitlesToCount(
-            uniqueTitles
-          );
-          platform["distinctTitleInterest"] = this.uniqueTitlesToInterest(
-            uniqueTitles
-          );
+          platform["distinctTitleCount"] =
+            this.uniqueTitlesToCount(uniqueTitles);
+          platform["distinctTitleInterest"] =
+            this.uniqueTitlesToInterest(uniqueTitles);
           let uniqueTitleSet = new Set(uniqueTitles);
           let allTitles = this.platformTitles.get(platform.pk);
           if (allTitles) {
