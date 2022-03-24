@@ -223,6 +223,8 @@ def prepare_preflight(mdu_id: int):
             )
         elif mdu.state == MduState.INITIAL:
             mdu.preflight = custom_import_preflight_check(mdu)
+            mdu.error = None
+            mdu.error_details = None
             mdu.state = MduState.PREFLIGHT
             mdu.save()
         else:
@@ -233,10 +235,14 @@ def prepare_preflight(mdu_id: int):
         logger.warning("mdu '%s' was not found.", mdu_id)
 
     except DatabaseError as e:
-        logger.warning("mdu '%s' is alreading being processed. (%s)", mdu_id, e)
+        logger.warning("mdu '%s' is already being processed. (%s)", mdu_id, e)
     except UnicodeDecodeError as e:
         mdu.log = str(e)
         mdu.error = "unicode-decode"
+        mdu.error_details = {
+            "exception": str(e),
+            "traceback": traceback.format_exc(),
+        }
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
@@ -252,6 +258,10 @@ Traceback: {traceback.format_exc()}
 """
         mdu.log = body
         mdu.error = "general"
+        mdu.error_details = {
+            "exception": str(e),
+            "traceback": traceback.format_exc(),
+        }
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
@@ -275,7 +285,7 @@ def prepare_preflights():
 @atomic
 def import_manual_upload_data(mdu_id: int, user_id: int):
     try:
-        mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(pk=mdu_id)
+        mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(pk=mdu_id, state=MduState.IMPORTING)
         user = User.objects.get(pk=user_id)
         res = import_custom_data(mdu, user)
         logger.info("Manual upload processed: %s", res)
@@ -290,7 +300,7 @@ def import_manual_upload_data(mdu_id: int, user_id: int):
         logger.warning("user '%s' was not found.", user_id)
 
     except DatabaseError as e:
-        logger.warning("mdu '%s' is alreading being processed. (%s)", mdu_id, e)
+        logger.warning("mdu '%s' is already being processed. (%s)", mdu_id, e)
 
     except (Exception, DataStructureError) as e:
         # generic import error handling
@@ -305,6 +315,10 @@ Traceback: {traceback.format_exc()}
 """
 
         mdu.error = "clashing-data" if isinstance(e, DatabaseError) else "import-error"
+        mdu.error_details = {
+            "exception": str(e),
+            "traceback": traceback.format_exc(),
+        }
         mdu.when_processed = now()
         mdu.state = MduState.FAILED
         mdu.save()
@@ -317,5 +331,6 @@ def unstuck_import_manual_upload_data():
     """ This should unstuck unprocessed MDUs """
     for mdu in ManualDataUpload.objects.select_for_update(skip_locked=True).filter(
         Q(state=MduState.IMPORTING)
+        & Q(created__lt=now() - timedelta(minutes=5))  # don't start right away
     ):
         import_manual_upload_data.delay(mdu.pk, mdu.user.pk)

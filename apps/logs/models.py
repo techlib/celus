@@ -625,6 +625,7 @@ class ManualDataUpload(models.Model):
     data_file = models.FileField(upload_to=where_to_store, validators=[validate_mime_type])
     log = models.TextField(blank=True)
     error = models.CharField(max_length=50, null=True, blank=True)
+    error_details = models.JSONField(blank=True, null=True)
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batches = models.ManyToManyField(
         ImportBatch, through='ManualDataUploadImportBatch', related_name='mdu'

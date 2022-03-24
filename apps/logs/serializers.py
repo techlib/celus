@@ -363,6 +363,7 @@ class ManualDataUploadSerializer(ModelSerializer):
             'created',
             'is_processed',
             'error',
+            'error_details',
             'log',
             'import_batches',
             'preflight',

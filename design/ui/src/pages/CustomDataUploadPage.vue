@@ -21,15 +21,19 @@ en:
   thats_all: That is all. The data were imported.
   return_to_platform: Go to platform page
   upload_more_files: Upload more files
-  following_error_found: The following error was found when checking the imported data
+  preflight_error_found: Error occured during data check
+  import_error_found: The following error was found when data were imported
   back_to_start: Back to data upload
   no_report_types: There are not reports defined for this platform - contact administrators to add some
   please_select_organization: It is necessary to select an organization before uploading data.
-  requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
   clashing_import_batches_title: Can't import data
   clashing_import_batches_text: Imported file contains data for dates for which there already are existing records in the database. To import this file you need to delete the existing data first.
   delete_existing: Delete existing
   regenerate_preflight: Regenerate overview
+  errors:
+    requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
+    unknown_preflight_error: An unknown error has occured during data check.
+    unknown_import_error: An unknown error has occured during data import.
 
 cs:
   data_file: Datový soubor k nahrání
@@ -51,15 +55,19 @@ cs:
   thats_all: To je vše. Data byla úspěšně importována.
   return_to_platform: Přejít na stránku platformy
   upload_more_files: Nahrát další data
-  following_error_found: Při kontrole dat byla nalezena následující chyba
+  preflight_error_found: Chyba při kontrole dat
+  import_error_found: Při nahrávání dat byla nalezena následující chyba
   back_to_start: Zpět na nahrání dat
   no_report_types: Pro tuto platformu nejsou definovány žádné reporty - kontaktujte administrátory pro jejich přidání
   please_select_organization: Pro nahrání dat je potřeba nejprve vybrat organizaci.
-  requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
   clashing_import_batches_title: Není možné naimportovat data
   clashing_import_batches_text: Nahrávaný soubor obsahuje data za období, pro které jsou již v databázi uložena data. Pro nahrání souboru je třeba nejprve existující data smazat.
   delete_existing: Smazat existující
   regenerate_preflight: Přegenerovat přehled
+  errors:
+    requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
+    unknown_preflight_error: Během kontroly dat se vyskytla neznámá chyba.
+    unknown_import_error: Během importu dat se vyskytla neznámá chyba.
 </i18n>
 
 <template>
@@ -91,8 +99,18 @@ cs:
         </v-col>
       </v-row>
     </v-container>
-    <v-stepper v-model="step" vertical>
-      <v-stepper-step step="1" :complete="step > 1">
+    <v-sheet
+      v-if="globalSpinnerOn"
+      class="justify-center"
+      elevation="1"
+      width="100%"
+    >
+      <v-skeleton-loader
+        type="list-item-avatar-three-line, list-item-avatar-three-line, list-item-avatar-three-line"
+      />
+    </v-sheet>
+    <v-stepper v-model="step" v-else vertical>
+      <v-stepper-step step="1" :complete="!!uploadObjectId || step > 1">
         {{ $t("step1") }}
       </v-stepper-step>
       <v-stepper-content step="1">
@@ -121,6 +139,7 @@ cs:
                   :label="$t('labels.report_type')"
                   :no-data-text="$t('no_report_types')"
                   :rules="[filledIn]"
+                  :loading="!reportTypesFetched"
                 >
                   <template v-slot:item="{ item }">
                     <v-tooltip bottom max-width="600px" v-if="badge(item)">
@@ -186,7 +205,7 @@ cs:
         <v-card>
           <v-card-title>{{ $t("overview") }}</v-card-title>
           <v-card-text>
-            <LargeSpinner v-if="state == 'initial' || spinnerOn" />
+            <LargeSpinner v-if="state == 'initial' || spinnerOn || !state" />
             <ImportPreflightDataWidget
               v-else-if="state == 'preflight'"
               :preflight-data="preflightData"
@@ -197,13 +216,18 @@ cs:
               :metrics="metrics"
             />
             <v-alert v-else-if="state == 'prefailed'" type="error">
-              <strong v-text="$t('following_error_found')"></strong>:
-              <span
-                v-if="error == 'unicode-decode'"
-                v-text="$t('requires_utf8')"
-              >
-              </span>
-              <span v-else v-text="log"></span>
+              <h3 v-text="$t('preflight_error_found')" class="pb-2"></h3>
+              <strong v-if="errro == 'unicode-decode'">
+                {{ $t("errors.requires_utf8") }}
+              </strong>
+              <strong v-else>
+                {{ $t("errors.unknown_preflight_error") }}
+              </strong>
+              <pre
+                v-text="errorDetails.exception"
+                v-if="errorDetails && errorDetails.exception"
+                class="pt-2"
+              ></pre>
             </v-alert>
             <v-alert
               v-else-if="preflightData && preflightData.clashing_months.length"
@@ -250,6 +274,11 @@ cs:
               <v-icon small class="pr-2">fas fa-redo</v-icon>
               {{ $t("regenerate_preflight") }}
             </v-btn>
+            <v-btn
+              @click="backToStart()"
+              v-text="$t('back_to_start')"
+              color="secondary"
+            ></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -290,6 +319,32 @@ cs:
                     {{ $t("return_to_platform") }}
                   </v-btn>
                 </v-col>
+                <v-col cols="auto">
+                  <v-btn
+                    @click="backToStart()"
+                    v-text="$t('upload_more_files')"
+                    color="primary"
+                  ></v-btn>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-card-text>
+          <v-card-text v-else-if="state == 'failed'">
+            <v-container>
+              <v-row>
+                <v-col cols="auto">
+                  <v-alert type="error">
+                    <h3 v-text="$t('import_error_found')" class="pb-2"></h3>
+                    <strong>{{ $t("unknown_import_error") }}</strong>
+                    <pre
+                      v-text="errorDetails.exception"
+                      v-if="errorDetails && errorDetails.exception"
+                      class="pt-2"
+                    ></pre>
+                  </v-alert>
+                </v-col>
+              </v-row>
+              <v-row>
                 <v-col cols="auto">
                   <v-btn
                     @click="backToStart()"
@@ -401,6 +456,7 @@ export default {
       deleting: false,
       refreshTimeout: null,
       spinnerOn: false,
+      globalSpinnerOn: true,
     };
   },
   computed: {
@@ -460,9 +516,9 @@ export default {
       }
       return [];
     },
-    log() {
+    errorDetails() {
       if (this.uploadObject) {
-        return this.uploadObject.log;
+        return this.uploadObject.error_details;
       } else {
         return null;
       }
@@ -569,11 +625,22 @@ export default {
             a.name.localeCompare(b.name)
           );
           if (this.reportTypes.length > 0) {
-            this.selectedReportType = this.reportTypes[0];
+            this.selectedReportType = this.reportTypes[0]; // default
+            if (this.$router.currentRoute.query?.report_type_id) {
+              let rt_id = parseInt(
+                this.$router.currentRoute.query.report_type_id
+              );
+              this.selectedReportType = this.reportTypes.find(
+                (rt) => rt.pk === rt_id
+              );
+              this.selectedReportType ??= this.reportTypes[0];
+            }
           }
           this.reportTypesFetched = true;
         } catch (error) {
-          this.showSnackbar({ content: "Error loading report types: " + error });
+          this.showSnackbar({
+            content: "Error loading report types: " + error,
+          });
         }
       }
     },
@@ -672,11 +739,15 @@ export default {
       return true;
     },
     async backToStart() {
+      let reportTypeId = this.uploadObject.report_type;
       this.uploadObject = null;
       await this.$router.replace({
         name: "platform-upload-data",
         params: {
           platformId: this.platformId,
+        },
+        query: {
+          report_type_id: reportTypeId,
         },
       });
     },
@@ -685,11 +756,21 @@ export default {
       // update preflight data on the page
       this.loadMdu();
     },
+    async loadRequiredData() {
+      // report type API call is quite time consuming
+      // so waiting for it to finish would be inconvenient
+      // loading attribte is v-select use used instead
+      this.loadReportTypes();
+      await Promise.all([this.loadMetrics(), this.loadPlatform()]);
+      this.globalSpinnerOn = false;
+    },
   },
   mounted() {
-    this.loadReportTypes();
-    this.loadMetrics();
-    this.loadPlatform();
+    if (this.uploadObjectId && this.step == 1) {
+      // If object is present move to step2
+      this.step = 2;
+    }
+    this.loadRequiredData();
     if (this.uploadObjectId) {
       this.loadMdu();
     }
