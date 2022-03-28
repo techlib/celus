@@ -28,7 +28,7 @@ skip-magic-trailing-comma = true
 
 [tool.poetry]
 name = "celus"
-version = "4.1.1"
+version = "4.2.0"
 description = "web application for harvesting and visualization of usage data of electronic information sources"
 authors = ["Beda Kosata <beda@bigdigdata.com>", "Stepan Henek <stepan@bigdigdata.com>"]
 license = "MIT"

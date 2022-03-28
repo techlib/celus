@@ -6,6 +6,66 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [4.2.0]
+
+### Added
+
+#### Frontend
+
+* reporting was extended to include
+  * splitting reports by a specified attribute into several files/sheets
+  * export to Excel format
+  * metadata about the export in a separate file/sheet
+  * export now has name taken from the report which created it
+* show data extracted from SUSHI header (organization name and 'Created-By') together with each download
+* harvest list UI was improved with a platform filter, info about currently processed downloads, etc.
+* when uploading data manually more heuristics about used metrics are presented
+* processing of manually uploaded files was optimized for speed
+
+
+#### Backend
+
+* titles newly store proprietary IDs and URIs extracted from COUNTER data
+* the Platform dimension is newly extracted from COUNTER reports and stored in the database
+* extract data from SUSHI header and store them with harvested data  (data reimport is required to
+  fully take advantage)
+* Celus version was added to the prometheus exporter
+* cli script was to check if report type dimensions match reader classes
+
+### Changes
+
+#### Frontend
+
+* manual uploads are by default sorted by date
+
+#### Backend
+
+* processing of manually uploaded data was moved to the backend process. This fixes timeout issues
+  when processing large files
+* it is now possible to disable automatic creation of metrics on a per-installation basis
+* it is now possible to limit the set of metrics allowed for a report
+* the way how incoming titles are compared with the database has been changed to merge titles which
+  only differ in some identifiers being empty (data reimport is required to fully take advantage)
+* normalization is newly applied to ISBNs
+* normalization and cleanup was added for ISSNs and ISBNs which ensures length restrictions
+* the django-error-report module was removed
+
+### Fixed
+
+#### Frontend
+
+* deleting of data for one month for specific credentials deletes all related downloads - not only
+  the last successful one.
+
+#### Backend
+
+* synchronization with knowledgebase was fixed to prevent creation of duplicated records
+* flush file to disk after it was downloaded - may fix situation when a large file is downloaded
+  by the sushi celery worker and it appears as incomplete in the import worker
+
+
+
+
 ## [4.1.1]
 
 ### Added
