@@ -14,6 +14,10 @@ class Command(BaseCommand):
 
     help = 'Checks that dimensions assigned to report types match what the readers have defined'
 
+    dim_name_remap = {
+        'Platform': {'en': 'Platform in COUNTER data', 'cs': 'Platforma v COUNTER datech'}
+    }
+
     def add_arguments(self, parser):
         parser.add_argument('--fix-it', dest='fix_it', action='store_true')
 
@@ -44,10 +48,20 @@ class Command(BaseCommand):
                     if fixable and fix_it:
                         pos = len(rt.dimension_short_names)
                         for i, dim_name in enumerate(reader_dims - rt_dims):
+                            def_names = {}
+                            if dim_name in self.dim_name_remap:
+                                def_names = {
+                                    f'name_{lang}': value
+                                    for lang, value in self.dim_name_remap[dim_name].items()
+                                }
                             dim, _ = Dimension.objects.get_or_create(
                                 short_name=dim_name,
                                 source=None,
-                                defaults={'name': dim_name, 'type': 2},
+                                defaults={
+                                    'name': self.dim_name_remap.get(dim_name, dim_name),
+                                    'type': 2,
+                                    **def_names,
+                                },
                             )
                             ReportTypeToDimension.objects.create(
                                 report_type=rt, dimension=dim, position=pos + i
