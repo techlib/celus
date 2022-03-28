@@ -48,20 +48,14 @@ class Command(BaseCommand):
                     if fixable and fix_it:
                         pos = len(rt.dimension_short_names)
                         for i, dim_name in enumerate(reader_dims - rt_dims):
-                            def_names = {}
-                            if dim_name in self.dim_name_remap:
+                            if remap_data := self.dim_name_remap.get(dim_name):
                                 def_names = {
-                                    f'name_{lang}': value
-                                    for lang, value in self.dim_name_remap[dim_name].items()
+                                    f'name_{lang}': value for lang, value in remap_data.items()
                                 }
+                            else:
+                                def_names = {'name': dim_name}
                             dim, _ = Dimension.objects.get_or_create(
-                                short_name=dim_name,
-                                source=None,
-                                defaults={
-                                    'name': self.dim_name_remap.get(dim_name, dim_name),
-                                    'type': 2,
-                                    **def_names,
-                                },
+                                short_name=dim_name, source=None, defaults={'type': 2, **def_names},
                             )
                             ReportTypeToDimension.objects.create(
                                 report_type=rt, dimension=dim, position=pos + i
