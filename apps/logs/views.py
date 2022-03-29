@@ -47,7 +47,6 @@ from logs.logic.queries import (
     extract_accesslog_attr_query_params,
     StatsComputer,
 )
-from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from logs.models import (
     AccessLog,
     ReportType,
@@ -77,6 +76,7 @@ from organizations.logic.queries import organization_filter_from_org_id
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt, AttemptStatus
 from . import filters
+from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from .tasks import export_raw_data_task
 
 

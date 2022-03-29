@@ -1,6 +1,6 @@
 function localizedNamer(locale) {
   function namer(obj) {
-    return obj[`name_${locale}`] ?? obj.short_name;
+    return obj[`name_${locale}`] || obj.short_name;
   }
   return namer;
 }

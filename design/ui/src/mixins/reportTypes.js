@@ -1,4 +1,4 @@
-import { getNamedObjectSorter } from "@/libs/sorting";
+import { getNamedObjectSorter, localizedNamer } from "@/libs/sorting";
 import axios from "axios";
 import { Dimension } from "@/libs/flexi-reports";
 
@@ -20,8 +20,11 @@ export default {
     async fetchReportTypes() {
       try {
         let resp = await axios.get(this.reportTypesUrl);
-        this.allReportTypes = resp.data.sort(
-          getNamedObjectSorter(this.$i18n.locale)
+        this.allReportTypes = resp.data;
+        const namer = localizedNamer(this.$i18n.locale);
+        this.allReportTypes.forEach((rt) => (rt.name = namer(rt)));
+        this.allReportTypes = resp.data.sort((a, b) =>
+          a.name.localeCompare(b.name)
         );
         this.allReportTypes.forEach((rt) => {
           rt.dimensions_sorted.forEach((dim, idx) => {

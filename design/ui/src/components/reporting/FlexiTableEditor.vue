@@ -70,7 +70,7 @@ cs:
       <v-form v-model="formValid">
         <v-row>
           <v-col class="d-flex">
-            <v-select
+            <v-autocomplete
               v-model="selectedReportTypes"
               :items="allReportTypes"
               :rules="[ruleNotEmpty]"
@@ -523,6 +523,7 @@ export default {
       selectedOrganizationId: "selectedOrganizationId",
       organizations: "organizations",
       user: "user",
+      lang: "appLanguage",
     }),
     ...mapGetters({
       organizationSelected: "organizationSelected",

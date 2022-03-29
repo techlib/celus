@@ -7,6 +7,7 @@ en:
   error_code: Error code
   error_intro: The following error was reported during the preparation of the report.
   available_parts: Select part - {count} available | Select part - {count} available | Select part - {count} available
+  loading_parts: Loading list of parts
 
 cs:
   detail: Detail
@@ -14,76 +15,84 @@ cs:
   error_code: Kód chyby
   error_intro: Následující chyba byla nahlášena při přípravě požadovaného reportu.
   available_parts: Vyberte část - {count} možnost | Vyberte část - {count} možnosti | Vyberte část - {count} možností
+  loading_parts: Nahrávám seznam částí
 </i18n>
 
 <template>
-  <v-data-table
-    v-if="
-      cleanData.length ||
-      (loading && !errorCode) ||
-      (report && report.splitBy && splitParts.length && currentPart)
-    "
-    :items="cleanData"
-    :headers="tableHeaders"
-    item-key="pk"
-    :loading="loading"
-    dense
-    :footer-props="{ itemsPerPageOptions: [20, 50, 100] }"
-    :options.sync="options"
-    :server-items-length="totalRowCount"
-  >
-    <template #loading>
-      <v-skeleton-loader type="paragraph@10" loading class="py-10 px-5" />
-    </template>
+  <div>
+    <div v-if="loadingParts">
+      <v-progress-linear indeterminate :height="24" class="mb-4">
+        <span class="text-caption" v-text="$t('loading_parts')"></span>
+      </v-progress-linear>
+    </div>
+    <v-data-table
+      v-else-if="
+        cleanData.length ||
+        (loading && !errorCode) ||
+        (report && report.splitBy && splitParts.length && currentPart)
+      "
+      :items="cleanData"
+      :headers="tableHeaders"
+      item-key="pk"
+      :loading="loading"
+      dense
+      :footer-props="{ itemsPerPageOptions: [20, 50, 100] }"
+      :options.sync="options"
+      :server-items-length="totalRowCount"
+    >
+      <template #loading>
+        <v-skeleton-loader type="paragraph@10" loading class="py-10 px-5" />
+      </template>
 
-    <template #top v-if="report.splitBy && splitParts.length">
-      <v-slide-group
-        v-if="splitParts.length < 16"
-        v-model="currentPart"
-        class="py-4"
-      >
-        <v-slide-item
-          v-for="item in splitParts"
-          :key="item.id"
-          v-slot="{ active, toggle }"
-          :value="item.id"
+      <template #top v-if="report.splitBy && splitParts.length">
+        <v-slide-group
+          v-if="splitParts.length < 16"
+          v-model="currentPart"
+          class="py-4"
         >
-          <v-btn @click="toggle" :input-value="active" text outlined tile>{{
-            item.text
-          }}</v-btn>
-        </v-slide-item>
-      </v-slide-group>
-      <!-- if there are too many parts, use a select -->
-      <v-autocomplete
-        v-else
-        :items="splitParts"
-        v-model="currentPart"
-        :label="$tc('available_parts', splitParts.length)"
-        item-value="id"
-        class="py-4 ps-4"
-        outlined
-        dense
-      />
-    </template>
-  </v-data-table>
-  <div v-else-if="errorCode">
-    <v-card>
-      <v-card-title>
-        <v-icon color="error" class="mr-2">fa fa-exclamation-triangle</v-icon>
-        {{ $t("error") }}
-      </v-card-title>
-      <v-card-text>
-        <p>{{ $t("error_intro") }}</p>
-        <p>
-          <strong>{{ $t("error_code") }}</strong
-          >: {{ errorCode }}
-        </p>
-        <p>
-          <strong>{{ $t("detail") }}</strong
-          >: {{ errorText }}
-        </p>
-      </v-card-text>
-    </v-card>
+          <v-slide-item
+            v-for="item in splitParts"
+            :key="item.id"
+            v-slot="{ active, toggle }"
+            :value="item.id"
+          >
+            <v-btn @click="toggle" :input-value="active" text outlined tile>{{
+              item.text
+            }}</v-btn>
+          </v-slide-item>
+        </v-slide-group>
+        <!-- if there are too many parts, use a select -->
+        <v-autocomplete
+          v-else
+          :items="splitParts"
+          v-model="currentPart"
+          :label="$tc('available_parts', splitParts.length)"
+          item-value="id"
+          class="py-4 ps-4"
+          outlined
+          dense
+        />
+      </template>
+    </v-data-table>
+    <div v-else-if="errorCode">
+      <v-card>
+        <v-card-title>
+          <v-icon color="error" class="mr-2">fa fa-exclamation-triangle</v-icon>
+          {{ $t("error") }}
+        </v-card-title>
+        <v-card-text>
+          <p>{{ $t("error_intro") }}</p>
+          <p>
+            <strong>{{ $t("error_code") }}</strong
+            >: {{ errorCode }}
+          </p>
+          <p>
+            <strong>{{ $t("detail") }}</strong
+            >: {{ errorText }}
+          </p>
+        </v-card-text>
+      </v-card>
+    </div>
   </div>
 </template>
 <script>
@@ -114,7 +123,7 @@ export default {
       data: [],
       cleanData: [],
       totalRowCount: null,
-      dataLoading: false,
+      loadingData: false,
       dataComputing: false,
       translatorsUpdating: false,
       headersFromData: [],
@@ -130,12 +139,13 @@ export default {
       cancelTokenSource: null,
       splitParts: [],
       currentPart: null,
+      loadingParts: false,
     };
   },
 
   computed: {
     loading() {
-      return this.dataLoading || this.dataComputing || this.translatorsUpdating;
+      return this.loadingData || this.dataComputing || this.translatorsUpdating;
     },
     activeTitleColumns() {
       let titleHeaders = [];
@@ -227,48 +237,52 @@ export default {
       await this.fetchData();
     },
     async getSplitParts() {
+      this.loadingParts = true;
       let resp = await this.http({
         url: "/api/flexible-slicer/parts/",
         params: this.report.urlParams(),
       });
-      let splitParts = resp.response.data.values.map(
-        (item) => item[this.report.splitBy.ref]
-      );
-      // explicit dimensions do not have a translator defined by default,
-      // so we need to define it if we are splitting by explicit mapped dimension
-      if (this.report.splitBy.isExplicit && this.report.splitBy.isMapped) {
-        this.translators[this.report.splitBy.ref] =
-          this.translators.explicitDimension;
+      if (resp.response) {
+        let splitParts = resp.response.data.values.map(
+          (item) => item[this.report.splitBy.ref]
+        );
+        // explicit dimensions do not have a translator defined by default,
+        // so we need to define it if we are splitting by explicit mapped dimension
+        if (this.report.splitBy.isExplicit && this.report.splitBy.isMapped) {
+          this.translators[this.report.splitBy.ref] =
+            this.translators.explicitDimension;
+        }
+        let translator = this.translators[this.report.splitBy.ref];
+        if (translator) {
+          await translator.prepareTranslation(splitParts);
+          this.splitParts = splitParts
+            .map((item) => {
+              return {
+                id: item,
+                text: translator.translateKeyToString(item, this.$i18n.locale),
+              };
+            })
+            .sort((a, b) => a.text.localeCompare(b.text));
+        } else {
+          this.splitParts = splitParts.map((item) => {
+            return { id: item, text: item.toString() };
+          });
+        }
+        this.splitParts.sort((a, b) => a.text.localeCompare(b.text));
+        if (
+          this.splitParts &&
+          (!this.currentPart ||
+            !this.splitParts.find((item) => item.id === this.currentPart))
+        )
+          this.currentPart = this.splitParts[0].id;
       }
-      let translator = this.translators[this.report.splitBy.ref];
-      if (translator) {
-        await translator.prepareTranslation(splitParts);
-        this.splitParts = splitParts
-          .map((item) => {
-            return {
-              id: item,
-              text: translator.translateKeyToString(item, this.$i18n.locale),
-            };
-          })
-          .sort((a, b) => a.text.localeCompare(b.text));
-      } else {
-        this.splitParts = splitParts.map((item) => {
-          return { id: item, text: item.toString() };
-        });
-      }
-      this.splitParts.sort((a, b) => a.text.localeCompare(b.text));
-      if (
-        this.splitParts &&
-        (!this.currentPart ||
-          !this.splitParts.find((item) => item.id === this.currentPart))
-      )
-        this.currentPart = this.splitParts[0].id;
+      this.loadingParts = false;
     },
     cancelReport() {
       this.cancelTokenSource.cancel("request canceled by user");
     },
     async fetchData() {
-      this.dataLoading = true;
+      this.loadingData = true;
       this.cancelTokenSource = axios.CancelToken.source();
       let params = {
         ...this.report.urlParams(),
@@ -306,7 +320,7 @@ export default {
         }
         return;
       } finally {
-        this.dataLoading = false;
+        this.loadingData = false;
         this.cancelTokenSource = null;
       }
       await this.updateTranslators();
