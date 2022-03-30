@@ -33,44 +33,54 @@ cs:
           </v-text-field>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col>
-          <v-data-table
-            :items="items"
-            :headers="headers"
-            :loading="loading"
-            :search="search"
-            :expanded.sync="expanded"
-            show-expand
-            item-key="pk"
-            expand-icon="fa fa-caret-down"
-            :items-per-page="50"
-            :footer-props="{ itemsPerPageOptions: [50, 100, -1] }"
-            :custom-filter="searchFilter"
-          >
-            <template #expanded-item="{ headers, item }">
-              <td
-                :colspan="headers.length"
-                v-if="item.interest_metric_set.length > 0"
+    </template>
+
+    <template #expanded-item="{ headers, item }">
+      <td
+        :colspan="headers.length"
+        v-if="item.interest_metric_set.length > 0"
+        class="pa-2"
+      >
+        <v-sheet class="pl-8">
+          <v-simple-table class="ml-8 font-weight-light" dense>
+            <thead>
+              <tr>
+                <th v-text="$t('labels.interest_type')"></th>
+                <th v-text="$t('labels.source_metric')"></th>
+                <th>
+                  {{ $t("labels.interest_metric") }}
+                  <v-tooltip bottom>
+                    <template #activator="{ on }">
+                      <v-icon color="info" small v-on="on"
+                        >fa fa-info-circle</v-icon
+                      >
+                    </template>
+                    {{ $t("tt.interest_metric") }}
+                  </v-tooltip>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(metric, index) in item.interest_metric_set"
+                :key="index"
               >
-                <v-list-item
-                  v-for="(metric, index) in item.interest_metric_set"
-                  :key="index"
-                >
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      {{ metric.metric.short_name }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle v-if="metric.interest_group">
-                      {{ metric.interest_group.name }}
-                    </v-list-item-subtitle>
-                    <v-list-item-subtitle v-if="metric.target_metric">
-                      {{ metric.target_metric[`name_$(lang)`] }}
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-              </td>
-            </template>
+                <td>
+                  {{ metric.interest_group.name }}
+                </td>
+                <td>{{ metric.metric.short_name }}</td>
+                <td v-if="metric.target_metric" class="font-italic">
+                  {{ metric.target_metric.name }}
+                </td>
+                <td v-else>
+                  {{ metric.metric.short_name }}
+                </td>
+              </tr>
+            </tbody>
+          </v-simple-table>
+        </v-sheet>
+      </td>
+    </template>
 
             <template v-slot:[`item.short_name`]="{ item }">
               <ReportChip :report="item"></ReportChip>

@@ -313,9 +313,7 @@ class ReportInterestMetric(models.Model):
         blank=True,
         related_name='source_report_interest_metrics',
     )
-    interest_group = models.ForeignKey(
-        InterestGroup, null=True, blank=True, on_delete=models.SET_NULL
-    )
+    interest_group = models.ForeignKey(InterestGroup, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 

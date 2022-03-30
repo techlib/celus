@@ -16,6 +16,7 @@ from rest_framework.test import APIClient
 from django.conf import settings
 from django.utils import timezone
 
+from logs.models import ReportInterestMetric, InterestGroup
 from organizations.models import Organization
 from sushi.models import AttemptStatus
 from ..entities.counter_report_types import CounterReportTypeFactory
@@ -461,10 +462,16 @@ def metrics(report_types, platforms):
 
 @pytest.fixture
 def interests(report_types, platforms, metrics):
-
-    report_types["jr1"].interest_metrics.set([metrics["metric1"], metrics["metric3"]])
-    report_types["tr"].interest_metrics.set([metrics["metric2"], metrics["metric1"]])
-    report_types["br2"].interest_metrics.set([metrics["metric3"]])
+    ig = InterestGroup.objects.create(short_name='foo', name='bar', position=1)
+    for rt_name, metric_names in {
+        "jr1": ["metric1", "metric3"],
+        "tr": ["metric2", "metric1"],
+        "br2": ["metric3"],
+    }.items():
+        for metric_name in metric_names:
+            ReportInterestMetric.objects.create(
+                report_type=report_types[rt_name], metric=metrics[metric_name], interest_group=ig
+            )
 
     platforms["standalone"].interest_reports.set([report_types["tr"], report_types["dr"]])
     platforms["branch"].interest_reports.set([report_types["jr1"]])
