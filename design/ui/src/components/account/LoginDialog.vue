@@ -79,216 +79,230 @@ cs:
     :max-width="usesPasswordLogin ? 480 : 290"
   >
     <!-- login-->
-    <v-card v-if="usesPasswordLogin && currentTab == 'login'">
-      <v-card-title class="headline">{{ $t("not_logged_in") }}</v-card-title>
-      <v-card-text>
-        <div>{{ $t("not_logged_in_internal_text") }}</div>
+    <v-form
+      v-if="usesPasswordLogin && currentTab == 'login'"
+      v-model="valid"
+      @submit.prevent="doLogin">
+      <v-card>
+        <v-card-title class="headline">{{ $t("not_logged_in") }}</v-card-title>
+        <v-card-text>
+          <div>{{ $t("not_logged_in_internal_text") }}</div>
 
-        <v-alert v-if="allowSignUp" color="primary" outlined class="mt-3">
-          <v-icon class="pr-3">far fa-hand-point-right</v-icon>
-          <i18n path="signup" tag="span" class="text--secondary">
-            <template #register_here>
-              <a @click="currentTab = 'register'" v-text="$t('register')"></a>
-            </template>
-          </i18n>
-        </v-alert>
+          <v-alert v-if="allowSignUp" color="primary" outlined class="mt-3">
+            <v-icon class="pr-3">far fa-hand-point-right</v-icon>
+            <i18n path="signup" tag="span" class="text--secondary">
+              <template #register_here>
+                <a @click="currentTab = 'register'" v-text="$t('register')"></a>
+              </template>
+            </i18n>
+          </v-alert>
 
-        <v-divider class="my-3"></v-divider>
-        <v-text-field
-          v-model="email"
-          :label="$t('email')"
-          :rules="[emailError, rules.required, rules.email]"
-        ></v-text-field>
-        <v-text-field
-          v-on:keyup.enter="triggerLoginOnEnter"
-          v-model="password"
-          :label="$t('password')"
-          :rules="[passwordError, rules.required, rules.min]"
-          :type="showPassword ? 'text' : 'password'"
-          :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
-          @click:append="showPassword = !showPassword"
-        ></v-text-field>
+          <v-divider class="my-3"></v-divider>
+          <v-text-field
+            v-model="email"
+            :label="$t('email')"
+            :rules="[emailError, rules.required, rules.email]"
+          ></v-text-field>
+          <v-text-field
+            v-model="password"
+            :label="$t('password')"
+            :rules="[passwordError, rules.required, rules.min]"
+            :type="showPassword ? 'text' : 'password'"
+            :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
+            @click:append="showPassword = !showPassword"
+          ></v-text-field>
 
-        <v-alert
-          v-if="loginError"
-          type="error"
-          outlined
-          icon="fas fa-exclamation-circle"
-        >
-          {{ $t("login_error") }}: "<em>{{ loginErrorText }}</em
-          >"
-          <!--
-                       we need to find a better way how to decide if we want to display the following;
-                       until then, I am disabling it.
-                    -->
-          <!-- p v-if="!allowSignUp" class="mt-4" v-html="$t('how_to_gain_access')"></p-->
-        </v-alert>
-      </v-card-text>
-      <v-card-actions>
-        <div class="ml-4" :class="{ small: !loginError }">
-          <v-icon color="warning" class="mr-2" v-if="loginError">
-            fa fa-caret-right
-          </v-icon>
-
-          <i18n
-            path="password_reset.switch"
-            tag="span"
-            :class="loginError ? 'warning--text' : 'secondary--text'"
+          <v-alert
+            v-if="loginError"
+            type="error"
+            outlined
+            icon="fas fa-exclamation-circle"
           >
-            <template #reset_here>
-              <a
-                @click="currentTab = 'reset-password'"
-                v-text="$t('password_reset.link')"
-              ></a>
-            </template>
-          </i18n>
+            {{ $t("login_error") }}: "<em>{{ loginErrorText }}</em
+            >"
+            <!--
+                        we need to find a better way how to decide if we want to display the following;
+                        until then, I am disabling it.
+                      -->
+            <!-- p v-if="!allowSignUp" class="mt-4" v-html="$t('how_to_gain_access')"></p-->
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <div class="ml-4" :class="{ small: !loginError }">
+            <v-icon color="warning" class="mr-2" v-if="loginError">
+              fa fa-caret-right
+            </v-icon>
 
-          <v-icon color="warning" class="ml-2" v-if="loginError">
-            fa fa-caret-left
-          </v-icon>
-        </div>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="primary"
-          class="ma-3"
-          @click="doLogin"
-          :disabled="!loginValid || requestInProgress"
-          v-text="$t('login')"
-        ></v-btn>
-      </v-card-actions>
-    </v-card>
+            <i18n
+              path="password_reset.switch"
+              tag="span"
+              :class="loginError ? 'warning--text' : 'secondary--text'"
+            >
+              <template #reset_here>
+                <a
+                  @click="currentTab = 'reset-password'"
+                  v-text="$t('password_reset.link')"
+                ></a>
+              </template>
+            </i18n>
+
+            <v-icon color="warning" class="ml-2" v-if="loginError">
+              fa fa-caret-left
+            </v-icon>
+          </div>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            class="ma-3"
+            :disabled="!valid || requestInProgress"
+            v-text="$t('login')"
+            type="submit"
+          ></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-form>
     <!-- registration -->
-    <v-card v-else-if="usesPasswordLogin && currentTab == 'register'">
-      <v-card-title class="headline">{{ $t("just_registering") }}</v-card-title>
-      <v-card-text>
-        <div v-text="$t('just_registering_text')"></div>
+    <v-form
+      v-else-if="usesPasswordLogin && currentTab == 'register'"
+      v-model="valid"
+      @submit.prevent="doSignUp">
+      <v-card >
+        <v-card-title class="headline">{{ $t("just_registering") }}</v-card-title>
+        <v-card-text>
+          <div v-text="$t('just_registering_text')"></div>
 
-        <v-alert v-if="allowSignUp" color="primary" outlined class="mt-3">
-          <v-icon class="pr-3">far fa-hand-point-right</v-icon>
-          <i18n path="login_from_register" tag="span" class="text--secondary">
-            <template #login_here>
-              <a @click="currentTab = 'login'" v-text="$t('login_link')"></a>
-            </template>
-          </i18n>
-        </v-alert>
+          <v-alert v-if="allowSignUp" color="primary" outlined class="mt-3">
+            <v-icon class="pr-3">far fa-hand-point-right</v-icon>
+            <i18n path="login_from_register" tag="span" class="text--secondary">
+              <template #login_here>
+                <a @click="currentTab = 'login'" v-text="$t('login_link')"></a>
+              </template>
+            </i18n>
+          </v-alert>
 
-        <v-divider class="my-3"></v-divider>
-        <v-text-field
-          v-model="email"
-          :label="$t('email')"
-          :rules="[emailError, rules.required, rules.email]"
-        ></v-text-field>
-        <v-text-field
-          v-model="password"
-          :label="$t('new_password')"
-          :rules="[passwordError, rules.required, rules.min]"
-          :type="showPassword ? 'text' : 'password'"
-          :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
-          @click:append="showPassword = !showPassword"
-          counter
-        ></v-text-field>
-        <!--v-text-field v-model="password2" type="password" :label="$t('password2')"></v-text-field-->
+          <v-divider class="my-3"></v-divider>
+          <v-text-field
+            v-model="email"
+            :label="$t('email')"
+            :rules="[emailError, rules.required, rules.email]"
+          ></v-text-field>
+          <v-text-field
+            v-model="password"
+            :label="$t('new_password')"
+            :rules="[passwordError, rules.required, rules.min]"
+            :type="showPassword ? 'text' : 'password'"
+            :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
+            @click:append="showPassword = !showPassword"
+            counter
+          ></v-text-field>
+          <!--v-text-field v-model="password2" type="password" :label="$t('password2')"></v-text-field-->
 
-        <v-alert
-          v-if="
-            signupError &&
-            !emailError &&
-            !passwordError &&
-            !emailEdited &&
-            !passwordEdited
-          "
-          type="error"
-          outlined
-          icon="fas fa-exclamation-circle"
-        >
-          {{ $t("signup_error") }}: "<em>{{ signupError }}</em
-          >"
-        </v-alert>
-      </v-card-text>
-      <v-card-actions class="pa-6">
-        <v-spacer></v-spacer>
-        <v-btn
-          color="primary"
-          @click="doSignUp"
-          :disabled="!signupValid || requestInProgress"
-          v-text="$t('create_account')"
-        ></v-btn>
-      </v-card-actions>
-    </v-card>
+          <v-alert
+            v-if="
+              signupError &&
+              !emailError &&
+              !passwordError &&
+              !emailEdited &&
+              !passwordEdited
+            "
+            type="error"
+            outlined
+            icon="fas fa-exclamation-circle"
+          >
+            {{ $t("signup_error") }}: "<em>{{ signupError }}</em
+            >"
+          </v-alert>
+        </v-card-text>
+        <v-card-actions class="pa-6">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            :disabled="!valid || requestInProgress"
+            v-text="$t('create_account')"
+            type="submit"
+          ></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-form>
     <!-- reset password -->
-    <v-card v-else-if="usesPasswordLogin && currentTab == 'reset-password'">
-      <v-card-title class="headline">{{
-        $t("password_reset.title")
-      }}</v-card-title>
-      <v-card-text>
-        <div>{{ $t("password_reset.text") }}</div>
+    <v-form
+      v-else-if="usesPasswordLogin && currentTab == 'reset-password'"
+      v-model="valid"
+      @submit.prevent="doReset">
+      <v-card >
+        <v-card-title class="headline">{{
+          $t("password_reset.title")
+        }}</v-card-title>
+        <v-card-text>
+          <div>{{ $t("password_reset.text") }}</div>
 
-        <v-text-field
-          v-model="email"
-          :label="$t('email')"
-          :rules="[emailError, rules.required, rules.email]"
-          class="mt-6"
-        ></v-text-field>
-        <v-alert
-          v-if="resetError"
-          type="error"
-          outlined
-          icon="fas fa-exclamation-circle"
-        >
-          {{ $t("password_reset.error") }}: "<em>{{ resetError }}</em
-          >"
-        </v-alert>
-        <v-alert v-if="resetSuccess" type="success" outlined>
-          <i18n
-            path="password_reset.success"
-            tag="span"
-            class="text--secondary"
+          <v-text-field
+            v-model="email"
+            :label="$t('email')"
+            :rules="[emailError, rules.required, rules.email]"
+            class="mt-6"
+          ></v-text-field>
+          <v-alert
+            v-if="resetError"
+            type="error"
+            outlined
+            icon="fas fa-exclamation-circle"
           >
-            <template #reset_email>
-              <a :href="'mailto:' + email" v-text="email"></a>
-            </template>
-          </i18n>
-        </v-alert>
-      </v-card-text>
-      <v-card-actions>
-        <div class="ml-4 small">
-          <i18n
-            path="password_reset.back_to_login"
-            tag="span"
-            class="text--secondary"
-          >
-            <template #login>
-              <a
-                @click="
-                  currentTab = 'login';
-                  resetForm();
-                "
-                v-text="$t('login')"
-              ></a>
-            </template>
-          </i18n>
-        </div>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="primary"
-          class="ma-3"
-          @click="doReset()"
-          :disabled="!resetValid || requestInProgress"
-          v-if="!resetSuccess"
-          v-text="$t('password_reset.button')"
-        ></v-btn>
-        <v-btn
-          v-else
-          @click="
-            currentTab = 'login';
-            resetForm();
-          "
-          v-text="$t('password_reset.back_to_login_full')"
-          class="mr-4 mb-3"
-          color="primary"
-        ></v-btn>
-      </v-card-actions>
-    </v-card>
+            {{ $t("password_reset.error") }}: "<em>{{ resetError }}</em
+            >"
+          </v-alert>
+          <v-alert v-if="resetSuccess" type="success" outlined>
+            <i18n
+              path="password_reset.success"
+              tag="span"
+              class="text--secondary"
+            >
+              <template #reset_email>
+                <a :href="'mailto:' + email" v-text="email"></a>
+              </template>
+            </i18n>
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <div class="ml-4 small">
+            <i18n
+              path="password_reset.back_to_login"
+              tag="span"
+              class="text--secondary"
+            >
+              <template #login>
+                <a
+                  @click="
+                    currentTab = 'login';
+                    resetForm();
+                  "
+                  v-text="$t('login')"
+                ></a>
+              </template>
+            </i18n>
+          </div>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            class="ma-3"
+            :disabled="!valid || requestInProgress"
+            v-if="!resetSuccess"
+            v-text="$t('password_reset.button')"
+            type="submit"
+          ></v-btn>
+          <v-btn
+            v-else
+            @click="
+              currentTab = 'login';
+              resetForm();
+            "
+            v-text="$t('password_reset.back_to_login_full')"
+            class="mr-4 mb-3"
+            color="primary"
+          ></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-form>
     <!-- SSO -->
     <v-card v-else>
       <v-card-title class="headline">{{ $t("not_logged_in") }}</v-card-title>
@@ -336,6 +350,7 @@ export default {
       passwordEdited: false,
       requestInProgress: false, // if a request was just sent to the backend and is processed
       resetSuccess: false, // reset email was sent
+      valid: false,
     };
   },
 
@@ -360,23 +375,6 @@ export default {
       // we add the current timestamp param to the URL in order to unsure the
       // page will not be fetched from cache by the browser
       return new Date().getTime();
-    },
-    signupValid() {
-      return (
-        this.email !== "" &&
-        this.rules.email(this.email) === true &&
-        this.password.length >= 8
-      );
-    },
-    loginValid() {
-      return (
-        this.email !== "" &&
-        this.rules.email(this.email) === true &&
-        this.password.length >= 8
-      );
-    },
-    resetValid() {
-      return this.email !== "" && this.rules.email(this.email) === true;
     },
     emailError() {
       if (this.signupError && !this.emailEdited) {
@@ -418,11 +416,6 @@ export default {
       this.passwordEdited = false;
       this.requestInProgress = false;
       this.$store.state.login.loginError = null;
-    },
-    async triggerLoginOnEnter() {
-      if (this.loginValid) {
-        await this.doLogin();
-      }
     },
     async doLogin() {
       this.requestInProgress = true;

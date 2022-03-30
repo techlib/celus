@@ -11,9 +11,11 @@ cs:
 
 <template>
   <v-card>
+    <!-- Submit on enter can't be used here because it is not compatible with v-autocomplete. -->
     <v-card-title>{{ $t("select_platform") }}</v-card-title>
     <v-card-text>
       <v-autocomplete
+        autofocus
         :items="availablePlatforms"
         item-value="pk"
         item-text="name"

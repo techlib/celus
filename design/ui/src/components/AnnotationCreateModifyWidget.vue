@@ -9,7 +9,9 @@ cs:
 </i18n>
 
 <template>
-  <v-form ref="form">
+  <v-form ref="form"
+    v-model="valid"
+    @submit.prevent="save">
     <v-container fluid>
       <v-row>
         <v-col>
@@ -192,7 +194,7 @@ cs:
           </v-btn>
         </v-col>
         <v-col cols="auto">
-          <v-btn :disabled="saving || !valid" @click="save()" color="primary">
+          <v-btn :disabled="saving || !valid" color="primary" type="submit">
             <v-icon small class="mr-2">fa-save</v-icon>
             {{ $t("save") }}
           </v-btn>
@@ -233,6 +235,7 @@ export default {
       organizationId: null,
       platforms: [],
       loadingPlatforms: false,
+      valid: false,
     };
   },
   computed: {
@@ -280,11 +283,6 @@ export default {
         data["pk"] = this.annotationId;
       }
       return data;
-    },
-    valid() {
-      if (!this.subjectEn) return false;
-      if (this.showCs && !this.subjectCs) return false;
-      return true;
     },
     availablePlatformsUrl() {
       if (this.organizationId !== null) {
