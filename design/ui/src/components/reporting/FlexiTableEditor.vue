@@ -318,7 +318,7 @@ cs:
         </v-row>
 
         <v-row>
-          <v-col v-show="!reportRunning" cols="auto">
+          <v-col v-if="!reportRunning" cols="auto">
             <v-tooltip bottom>
               <template #activator="{ on }">
                 <v-btn
@@ -336,7 +336,7 @@ cs:
               {{ $t("run_report_tt") }}
             </v-tooltip>
           </v-col>
-          <v-col v-show="reportRunning" cols="auto">
+          <v-col v-if="reportRunning" cols="auto">
             <v-tooltip bottom>
               <template #activator="{ on }">
                 <v-btn
