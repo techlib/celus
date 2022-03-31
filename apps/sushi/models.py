@@ -500,7 +500,10 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             data_file = File(file_data)
 
         data_file.name = filename
-        data_file.flush()  # flush internal buffer to disk
+
+        # Make sure that file is written to disk
+        data_file.flush()
+        os.fsync(data_file.fileno())
 
         return dict(
             status=status,
@@ -617,7 +620,10 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         file_data.seek(0)  # make sure that file is rewind to the start
         django_file = File(file_data)
         django_file.name = filename
-        django_file.flush()  # flush internal buffer to disk
+
+        # Make sure that file is written to disk
+        django_file.flush()
+        os.fsync(django_file.fileno())
 
         return dict(
             credentials=self,
