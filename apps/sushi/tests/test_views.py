@@ -242,6 +242,14 @@ class TestSushiCredentialsViewSet:
                 status=AttemptStatus.SUCCESS,
             ),
         )
+        # intention without attempt
+        FetchIntentionFactory(
+            credentials=credentials,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            counter_report=new_rt1,
+            attempt=None,
+        )
         intention2 = FetchIntentionFactory(
             credentials=credentials,
             start_date='2020-01-01',

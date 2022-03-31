@@ -302,11 +302,16 @@ class SushiCredentialsViewSet(ModelViewSet):
             FetchIntention.objects.filter(
                 start_date__lte=start,
                 end_date__gte=end,
-                credentials_id__in=credentials,
+                credentials__in=credentials,
                 counter_report=F('credentials__counter_reports'),
+                duplicate_of__isnull=True,  # ignore duplicates
                 **enabled_attr,
             )
-            .order_by("credentials_id", "counter_report_id", "-attempt__timestamp")
+            .order_by(
+                "credentials_id",
+                "counter_report_id",
+                F("attempt__timestamp").desc(nulls_last=True),  # no attempt => last
+            )
             .distinct("credentials_id", "counter_report_id")
             .select_related('credentials', 'counter_report', 'attempt')
         )
