@@ -795,7 +795,7 @@ class ManualDataUpload(models.Model):
         if self.pk and self.state == MduState.INITIAL:
             from .tasks import prepare_preflight
 
-            prepare_preflight.delay(self.pk)
+            transaction.on_commit(lambda: prepare_preflight.delay(self.pk))
 
     def regenerate_preflight(self) -> bool:
         if self.state in (MduState.PREFLIGHT, MduState.PREFAILED):
@@ -813,7 +813,7 @@ class ManualDataUpload(models.Model):
 
             from .tasks import import_manual_upload_data
 
-            import_manual_upload_data.delay(self.pk, user.pk)
+            transaction.on_commit(lambda: import_manual_upload_data.delay(self.pk, user.pk))
 
         elif self.state == MduState.IMPORTING:
             # skip when already importing data

@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logs', '0061_remove_manualdataupload_is_processed'),
+        ('logs', '0063_alter_reportinterestmetric_interest_group'),
     ]
 
     operations = [

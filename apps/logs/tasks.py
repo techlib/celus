@@ -285,7 +285,9 @@ def prepare_preflights():
 @atomic
 def import_manual_upload_data(mdu_id: int, user_id: int):
     try:
-        mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(pk=mdu_id, state=MduState.IMPORTING)
+        mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(
+            pk=mdu_id, state=MduState.IMPORTING
+        )
         user = User.objects.get(pk=user_id)
         res = import_custom_data(mdu, user)
         logger.info("Manual upload processed: %s", res)
