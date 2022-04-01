@@ -14,7 +14,7 @@ report_access_time_summary = Summary(
 )
 
 celus_version_num = Gauge(
-    'celus_version_num', 'CELUS version converted to int. For example 4.1.2 => 412', []
+    'celus_version_num', 'CELUS version converted to int. For example 4.1.2 => 40102', []
 )
 
 celus_sentry_release = Gauge(
