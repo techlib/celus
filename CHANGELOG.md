@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0]
+
+### Added
+
+#### Frontend
+
+* new view of Interest definition was added (available under Administration/Interests)
+* progress bar was added to reporting when list of individual parts is loaded
+* manual data uploading was improved
+  * it is now possible to return to data upload from the 'preflight' step
+  * error reporting was improved to handle some specific cases better
+  * progress indicator was improved
+
+### Changes
+
+#### Frontend
+
+* report types are now alphabetically sorted in reporting and use the autocomplete widget
+
+### Fixed
+
+#### Frontend
+
+* *SUSHI harvesting dashboard widget* and *SUSHI status page* were fixed not to include incorrect
+  `Waiting` entries for reports successfully harvested
+
+#### Backend
+
+* when downloading large files, make sure they are really flushed to the disk before trying to parse
+  them
+* race condition in locking of manual uploads was fixed - fixes manual data sometimes not being
+  imported and getting stuck as `importing`.
+
 
 ## [4.2.0]
 
