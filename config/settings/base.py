@@ -176,6 +176,7 @@ AVAILABLE_LANGUAGES = (('en', gettext('English')), ('cs', gettext('Czech')))
 MODELTRANSLATION_LANGUAGES = [code for code, lang in AVAILABLE_LANGUAGES]
 used_languages = config('USED_LANGUAGES', default='en', cast=Csv())
 LANGUAGES = [lang for lang in AVAILABLE_LANGUAGES if lang[0] in used_languages]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/

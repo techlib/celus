@@ -12,14 +12,20 @@
       v-if="!disabled"
     >
       <template #item="{ item }">
-        <v-icon color="#999999" class="mr-1 fa-fw" small
-          >fa {{ item.icon }}
-        </v-icon>
-        {{ item.text }}
-        <v-spacer v-if="!short"></v-spacer>
-        <span class="subdued text-caption" v-if="!short">{{
-          $t("access_level_tt." + item.value)
-        }}</span>
+        <v-list-item-icon>
+          <v-icon color="#999999" class="mr-1 fa-fw" small
+            >fa {{ item.icon }}
+          </v-icon>
+        </v-list-item-icon>
+
+        <v-list-item-content>
+          <v-list-item-title>
+            {{ item.text }}
+          </v-list-item-title>
+          <v-list-item-subtitle v-if="!short">
+            {{ $t("access_level_tt." + item.value) }}
+          </v-list-item-subtitle>
+        </v-list-item-content>
       </template>
       <template #selection="{ item }">
         <v-icon color="#999999" class="mr-1 fa-fw" small

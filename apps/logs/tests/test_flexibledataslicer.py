@@ -919,6 +919,42 @@ class TestFlexibleDataSimpleCSVExporter:
     def test_xslx_cleanup_sheetname(self, name_in, name_out):
         assert FlexibleDataExcelExporter.cleanup_sheetname(name_in) == name_out
 
+    def test_metadata_unfiltered_orgs(self, flexible_slicer_test_data):
+        """
+        Test that when organization is not part of split_by, group_by or a filter, that a list
+        of organizations will be added to the metadata to make it obvious to the user what
+        he got.
+        Split dimension: organization
+        Primary dimension: platform
+        Group by: metric
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        report_type = flexible_slicer_test_data['report_types'][0]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        slicer.add_group_by('metric')
+
+        exporter = FlexibleDataZipCSVExporter(slicer)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        with ZipFile(out, 'r') as zipfile:
+            with zipfile.open('_metadata.csv', 'r') as metafile:
+                decoder = codecs.getreader('utf-8')(metafile)
+                reader = csv.reader(decoder)
+                data = list(reader)
+                assert data[5] == ['Split by', '-']
+                assert data[6] == ['Rows', 'Platform']
+                assert data[7] == ['Columns', 'Metric']
+                assert data[8] == ['Applied filters', f'Report type: {report_type.name}']
+                assert data[10] == [
+                    'Included organizations',
+                    '(No organization filter was applied, the data represent the following '
+                    'organizations)',
+                ]
+                org_names = {row[1] for row in data[11 : len(data)]}
+                assert org_names == {org.name for org in Organization.objects.all()}
+
 
 @pytest.mark.django_db
 class TestFilters:

@@ -1,0 +1,366 @@
+# Celus
+# Copyright (C) 2019-2022
+# This file is distributed under the same license as the PACKAGE package.
+# Beda Kosata <beda@ecomole.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 4.2.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-04-01 14:25+0200\n"
+"PO-Revision-Date: 2022-04-01 14:29+0200\n"
+"Last-Translator: Beda Kosata <beda@ecomole.com>\n"
+"Language-Team: Czech <beda@ecomole.com>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2\n"
+"X-Generator: Gtranslator 3.36.0\n"
+
+#: apps/charts/models.py:90
+msgid "date"
+msgstr ""
+
+#: apps/charts/models.py:91
+msgid "platform"
+msgstr ""
+
+#: apps/charts/models.py:92
+msgid "metric"
+msgstr ""
+
+#: apps/charts/models.py:93
+msgid "organization"
+msgstr ""
+
+#: apps/charts/models.py:94
+msgid "target"
+msgstr ""
+
+#: apps/charts/models.py:100
+msgid "horizontal bar"
+msgstr ""
+
+#: apps/charts/models.py:101
+msgid "vertical bar"
+msgstr ""
+
+#: apps/charts/models.py:102
+msgid "line"
+msgstr ""
+
+#: apps/core/models.py:23
+msgid "Normal user"
+msgstr ""
+
+#: apps/core/models.py:24
+msgid "Robot"
+msgstr ""
+
+#: apps/core/models.py:25
+msgid "Organization admin"
+msgstr ""
+
+#: apps/core/models.py:26
+msgid "Consortium staff"
+msgstr ""
+
+#: apps/core/models.py:27
+msgid "Consortium admin"
+msgstr ""
+
+#: apps/core/templates/account/email/email_confirmation_message.txt:1
+#, python-format
+msgid ""
+"Hello,\n"
+"\n"
+"you are receiving this email in order to verify your email address for use "
+"with Celus.one.\n"
+"\n"
+"To confirm your email, please go to %(activate_url)s\n"
+"\n"
+"If you did not register your email with us, you can safely ignore this email "
+"or reply to it to let us know about the situation.\n"
+"\n"
+"Have a great day\n"
+"\n"
+"The Celus.one team\n"
+msgstr ""
+
+#: apps/core/templates/account/email/email_confirmation_subject.txt:2
+msgid ""
+"\n"
+"Please verify your email address for use with Celus.one\n"
+msgstr ""
+
+#: apps/core/templates/registration/invitation_email.html:2
+#, python-format
+msgid ""
+"You're invited to register into the usage statistics application Celus at "
+"%(site_name)s."
+msgstr ""
+
+#: apps/core/templates/registration/invitation_email.html:4
+msgid ""
+"To accept the invitation, please go to the following page and choose your "
+"password:"
+msgstr ""
+
+#: apps/core/templates/registration/invitation_email.html:9
+msgid "Looking forward to meeting you in Celus!"
+msgstr ""
+
+#: apps/core/templates/registration/invitation_email.html:11
+#: apps/core/templates/registration/password_reset_message.html:12
+msgid "The Celus team"
+msgstr ""
+
+#: apps/core/templates/registration/password_reset_message.html:2
+#, python-format
+msgid ""
+"You're receiving this email because you requested a password reset for your "
+"Celus user account at %(site_name)s."
+msgstr ""
+
+#: apps/core/templates/registration/password_reset_message.html:4
+msgid "Please go to the following page and choose a new password:"
+msgstr ""
+
+#: apps/core/templates/registration/password_reset_message.html:8
+msgid "Your username, in case you've forgotten:"
+msgstr ""
+
+#: apps/core/templates/registration/password_reset_message.html:10
+msgid "Looking forward to seeing you in Celus again!"
+msgstr ""
+
+#: apps/core/validators.py:14
+#, python-format
+msgid "%(value)s is not in range for valid year (%(minv)d-%(maxv)d)"
+msgstr ""
+
+#: apps/logs/admin.py:232
+#, python-format
+msgid "%d preflight started to regenerate"
+msgid_plural "%d preflights started to regenerate"
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/logs/logic/custom_import.py:48 custom_import.py:48
+msgid "Column name not understood: \"{}\""
+msgstr ""
+
+#: apps/logs/logic/custom_import.py:60 custom_import.py:60
+#, python-brace-format
+msgid ""
+"Value cannot be converted into integer, row {row}, column \"{column}\", "
+"value: \"{value}\""
+msgstr ""
+
+#: apps/logs/logic/custom_import.py:103 custom_import.py:103
+#, python-brace-format
+msgid "We don't know how to interpret the column \"{column}\""
+msgstr ""
+
+#: apps/logs/logic/reporting/export.py:214
+msgid "Report name"
+msgstr "Název reportu"
+
+#: apps/logs/logic/reporting/export.py:215
+msgid "Created"
+msgstr "Vytvořeno"
+
+#: apps/logs/logic/reporting/export.py:216
+msgid "Created for"
+msgstr "Vytvořeno pro"
+
+#: apps/logs/logic/reporting/export.py:217
+msgid "Celus version"
+msgstr "Verze Celus"
+
+#: apps/logs/logic/reporting/export.py:221
+msgid "Split by"
+msgstr "Rozdělit podle"
+
+#: apps/logs/logic/reporting/export.py:227
+msgid "Rows"
+msgstr "Řádky"
+
+#: apps/logs/logic/reporting/export.py:230
+msgid "Columns"
+msgstr "Soupce"
+
+#: apps/logs/logic/reporting/export.py:236
+msgid "Applied filters"
+msgstr "Aplikované filtry"
+
+#: apps/logs/models.py:78
+msgid "Report type"
+msgstr "Typ reportu"
+
+#: apps/logs/models.py:265
+msgid "Metric"
+msgstr "Metrika"
+
+#: apps/logs/models.py:481
+msgid "Date"
+msgstr "Datum"
+
+#: apps/logs/models.py:576
+#, python-brace-format
+msgid ""
+"The uploaded file is not in required file type or is corrupted.The file type "
+"seems to be '{detected_type}'.Please upload your file in required file type."
+msgstr ""
+
+#: apps/logs/models.py:592
+msgid "Only one row in the uploaded file, there is not data to import"
+msgstr ""
+
+#: apps/logs/models.py:598
+msgid "Errors understanding uploaded data: {}"
+msgstr ""
+
+#: apps/logs/models.py:603 apps/sushi/models.py:672
+msgid "Initial"
+msgstr ""
+
+#: apps/logs/models.py:604
+msgid "Preflight"
+msgstr ""
+
+#: apps/logs/models.py:605 apps/sushi/models.py:676
+msgid "Importing"
+msgstr ""
+
+#: apps/logs/models.py:606
+msgid "Imported"
+msgstr ""
+
+#: apps/logs/models.py:607
+msgid "Preflight failed"
+msgstr ""
+
+#: apps/logs/models.py:608 apps/sushi/models.py:686
+msgid "Import failed"
+msgstr ""
+
+#: apps/logs/serializers.py:89
+msgid "Public dimension with this code name already exists"
+msgstr ""
+
+#: apps/logs/serializers.py:97
+msgid "Dimension with this code name already exists"
+msgstr ""
+
+#: apps/logs/serializers.py:181
+msgid "Public report type with this code name already exists"
+msgstr ""
+
+#: apps/logs/serializers.py:190
+#, python-brace-format
+msgid ""
+"Report type with this code name already exists for organization "
+"\"{organization}\""
+msgstr ""
+
+#: apps/organizations/models.py:53
+msgid "Organization"
+msgstr ""
+
+#: apps/publications/models.py:35 apps/publications/models.py:104
+msgid "Platform"
+msgstr ""
+
+#: apps/publications/models.py:93
+msgid "Book"
+msgstr ""
+
+#: apps/publications/models.py:94
+msgid "Journal"
+msgstr ""
+
+#: apps/publications/models.py:95
+msgid "Unknown"
+msgstr ""
+
+#: apps/publications/models.py:96
+msgid "Database"
+msgstr ""
+
+#: apps/publications/models.py:97
+msgid "Other"
+msgstr ""
+
+#: apps/publications/models.py:98
+msgid "Report"
+msgstr ""
+
+#: apps/publications/models.py:99
+msgid "Newspaper"
+msgstr ""
+
+#: apps/publications/models.py:100
+msgid "Multimedia"
+msgstr ""
+
+#: apps/publications/models.py:101
+msgid "Article"
+msgstr ""
+
+#: apps/publications/models.py:102
+msgid "Book segment"
+msgstr ""
+
+#: apps/publications/models.py:103
+msgid "Dataset"
+msgstr ""
+
+#: apps/publications/models.py:105
+msgid "Repository item"
+msgstr ""
+
+#: apps/publications/models.py:106
+msgid "Thesis or dissertation"
+msgstr ""
+
+#: apps/publications/models.py:144
+msgid "Title/Database"
+msgstr ""
+
+#: apps/sushi/models.py:674
+msgid "Downloading"
+msgstr ""
+
+#: apps/sushi/models.py:680
+msgid "Success"
+msgstr ""
+
+#: apps/sushi/models.py:682
+msgid "Unprocessed"
+msgstr ""
+
+#: apps/sushi/models.py:684
+msgid "No data"
+msgstr ""
+
+#: apps/sushi/models.py:687
+msgid "Parsing failed"
+msgstr ""
+
+#: apps/sushi/models.py:688
+msgid "Download failed"
+msgstr ""
+
+#: apps/sushi/models.py:689
+msgid "Canceled"
+msgstr ""
+
+#: config/settings/base.py:175
+msgid "English"
+msgstr ""
+
+#: config/settings/base.py:175
+msgid "Czech"
+msgstr ""

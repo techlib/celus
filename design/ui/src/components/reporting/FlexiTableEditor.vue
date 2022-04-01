@@ -59,7 +59,6 @@ cs:
             <AccessLevelSelector
               :value="accessLevel"
               ref="accessLevel"
-              short
               :owner-organization="ownerOrganization"
               :disabled="readOnly"
               @change="updateAccessLevel"
@@ -860,6 +859,27 @@ export default {
     this.loading = true;
     try {
       await this.fetchReportTypes();
+      // we want to select something so that the user immediately has a report
+      // he can run and see how it works. Here we select something the users
+      // already know from the platforms page:
+      //   * reportType = interest (most usefull, shows that interest is a separate report)
+      //   * rows = platform
+      //   * columns = interest type
+      if (this.selectedReportTypes.length === 0) {
+        const interest = this.allReportTypes.find(
+          (rt) => rt.short_name === "interest"
+        );
+        if (interest) {
+          this.selectedReportTypes.push(interest.pk);
+          this.row = "platform";
+          const interestType = interest.dimensionObjs.find(
+            (dim) => dim.shortName === "Interest_Type"
+          );
+          if (interestType)
+            // this change has to be done after all watchers, etc. have run
+            this.$nextTick(() => (this.columns = [interestType.ref]));
+        }
+      }
       await this.fetchSettings();
     } finally {
       this.loading = false;

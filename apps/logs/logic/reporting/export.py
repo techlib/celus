@@ -1,5 +1,4 @@
 import codecs
-import os
 import tempfile
 from abc import ABC, abstractmethod
 from typing import Optional, Callable, Type, Tuple, Any, Union
@@ -11,6 +10,7 @@ from django.db.models import Model, ForeignKey, Field
 from django.db.models.base import ModelBase
 from django.utils.text import slugify
 from django.utils.timezone import now
+from django.utils.translation import gettext as _
 from mptt.models import MPTTModelBase
 
 from logs.logic.export_utils import (
@@ -23,6 +23,7 @@ from logs.logic.export_utils import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import DimensionText, ReportType, AccessLog
+from organizations.models import Organization
 
 
 class FlexibleDataExporter(ABC):
@@ -211,28 +212,67 @@ class FlexibleDataExporter(ABC):
             return False, False, field
 
     def create_report_metadata(self, writer: ListWriter):
-        writer.writerow(['Report name', self.report_name])
-        writer.writerow(['Created', str(now())])
-        writer.writerow(['Created for', str(self.report_owner)])
-        writer.writerow(['Celus version', str(settings.CELUS_VERSION)])
+        writer.writerow([_('Report name'), self.report_name])
+        writer.writerow([_('Created'), str(now())])
+        writer.writerow([_('Created for'), str(self.report_owner)])
+        writer.writerow([_('Celus version'), str(settings.CELUS_VERSION)])
         writer.writerow(['', ''])
         writer.writerow(
             [
-                'Split by',
+                _('Split by'),
                 ', '.join(self.dimension_output_name(dim) for dim in self.slicer.split_by)
                 if self.slicer.split_by
                 else '-',
             ]
         )
-        writer.writerow(['Rows', self.primary_column_name()])
+        writer.writerow([_('Rows'), self.primary_column_name()])
         writer.writerow(
             [
-                'Columns',
+                _('Columns'),
                 str('; '.join(self.dimension_output_name(dim) for dim in self.slicer.group_by)),
             ]
         )
         for i, fltr in enumerate(self.slicer.dimension_filters):
-            writer.writerow(['Applied filters' if i == 0 else '', self.slicer.filter_to_str(fltr)])
+            writer.writerow(
+                [_('Applied filters') if i == 0 else '', self.slicer.filter_to_str(fltr)]
+            )
+        # print out organizations for which the report was created in case they would be "hidden"
+        # (not present in rows, cols, split_by or filter)
+        dim = 'organization'
+        if (
+            self.slicer.primary_dimension != dim
+            and dim not in self.slicer.split_by
+            and dim not in self.slicer.group_by
+            and not any(f.dimension == dim for f in self.slicer.dimension_filters)
+        ):
+            writer.writerow([])
+            writer.writerow(
+                [
+                    _('Included organizations'),
+                    _(
+                        '(No organization filter was applied, the data represent the following '
+                        'organizations)'
+                    ),
+                ],
+            )
+            if self.slicer.organization_filter:
+                # if an explicit filter was applied, use it
+                orgs = self.slicer.organization_filter
+            elif self.report_owner:
+                # otherwise, use what user has access to
+                orgs = self.report_owner.accessible_organizations
+            else:
+                # if nothing is available, ask the slicer itself
+                orgs = Organization.objects.filter(
+                    pk__in=[
+                        rec['organization']
+                        for rec in self.slicer.get_possible_dimension_values_queryset(
+                            'organization'
+                        )
+                    ]
+                )
+            for org in orgs.order_by('name'):
+                writer.writerow(['', org.name])
 
 
 class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
