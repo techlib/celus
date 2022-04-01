@@ -176,21 +176,29 @@ cs:
               </v-col>
             </v-row>
             <v-row>
-              <v-col>
+              <v-col class="d-flex align-center">
                 <v-btn
                   @click="postData"
                   :disabled="!valid || !$store.getters.organizationSelected"
-                  class="mb-4 mr-4"
+                  :loading="uploading"
                   >{{ $t("upload") }}</v-btn
                 >
-                <v-alert
-                  type="warning"
-                  class="d-inline-block"
-                  v-if="!$store.getters.organizationSelected"
-                >
-                  {{ $t("please_select_organization") }}
-                </v-alert>
+                <v-progress-linear
+                  class="ma-3"
+                  v-model="uploadProgress"
+                  round
+                  v-if="uploading"
+                />
               </v-col>
+            </v-row>
+            <v-row>
+              <v-alert
+                type="warning"
+                class="d-inline-block"
+                v-if="!$store.getters.organizationSelected"
+              >
+                {{ $t("please_select_organization") }}
+              </v-alert>
             </v-row>
           </v-container>
         </v-form>
@@ -461,6 +469,8 @@ export default {
       refreshTimeout: null,
       spinnerOn: false,
       globalSpinnerOn: true,
+      uploading: false,
+      uploadProgress: 0,
     };
   },
   computed: {
@@ -590,15 +600,24 @@ export default {
     badge(item) {
       return badge(item);
     },
+    setProgress(total, current) {
+      if (total) {
+        this.uploadProgress = 100 * current / total;
+      }
+    },
     async postData() {
       let formData = new FormData();
       formData.append("data_file", this.dataFile);
       formData.append("organization", this.organizationId);
       formData.append("platform", this.platformId);
       formData.append("report_type_id", this.selectedReportType.pk);
+
+      this.uploading = true;
+      this.uploadProgress = 0;
       try {
         let response = await axios.post("/api/manual-data-upload/", formData, {
           headers: { "Content-Type": "multipart/form-data" },
+          onUploadProgress: (e) => this.setProgress(e.total, e.loaded),
         });
         // this.showSnackbar({content: 'Data successfully sent', color: 'success'})
         this.uploadObject = response.data;
@@ -621,6 +640,9 @@ export default {
         } else {
           this.showSnackbar({ content: "Error sending data: " + error });
         }
+      } finally {
+        this.uploading = false;
+        this.uploadProgress = 0;
       }
     },
     async loadPlatform() {
