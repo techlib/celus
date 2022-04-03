@@ -58,7 +58,8 @@ export default {
       showInactive: false,
       rawData: null,
       statusCounter: new Map(),
-      loading: false,
+      loadingCredentials: false,
+      loadingStats: false,
       sushiCredentialsList: [],
       height: "370px",
       states: [
@@ -89,6 +90,9 @@ export default {
   },
 
   computed: {
+    loading() {
+      return this.loadingCredentials || this.loadingStats;
+    },
     statsParams() {
       if (!this.organizationId || !this.month) return null;
 
@@ -143,34 +147,38 @@ export default {
 
   methods: {
     async loadSushiCredentialsList() {
-      this.loading = true;
-      const { response } = await this.http({
-        url: "/api/sushi-credentials/",
-        params: { organization: this.organizationId },
-        label: "credentials list",
-      });
-      this.loading = false;
-
-      this.sushiCredentialsList = response ? response.data : [];
-      if (this.rawData) {
-        this.prepareData();
+      this.loadingCredentials = true;
+      try {
+        const { response } = await this.http({
+          url: "/api/sushi-credentials/",
+          params: { organization: this.organizationId },
+          label: "credentials list",
+        });
+        this.sushiCredentialsList = response ? response.data : [];
+        if (this.rawData) {
+          this.prepareData();
+        }
+      } finally {
+        this.loadingCredentials = false;
       }
     },
     async fetchData() {
       if (!this.statsParams) return;
 
-      this.loading = true;
-      const { response } = await this.http({
-        url: "/api/sushi-credentials/month-overview/",
-        params: this.statsParams,
-        label: "stats",
-      });
-      this.loading = false;
-
-      this.rawData = response ? response.data : [];
-      this.rawData.forEach((item) => (item.state = intentionState(item)));
-      if (this.sushiCredentialsList) {
-        this.prepareData();
+      this.loadingStats = true;
+      try {
+        const { response } = await this.http({
+          url: "/api/sushi-credentials/month-overview/",
+          params: this.statsParams,
+          label: "stats",
+        });
+        this.rawData = response ? response.data : [];
+        this.rawData.forEach((item) => (item.state = intentionState(item)));
+        if (this.sushiCredentialsList) {
+          this.prepareData();
+        }
+      } finally {
+        this.loadingStats = false;
       }
     },
     prepareData() {
@@ -203,8 +211,10 @@ export default {
 
   watch: {
     statsParams() {
-      this.loadSushiCredentialsList();
       this.fetchData();
+    },
+    organizationId() {
+      this.loadSushiCredentialsList();
     },
   },
 

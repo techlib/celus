@@ -1,6 +1,8 @@
 import { parseDateTime } from "@/libs/dates";
 import {
   ATTEMPT_AWAITING_IMPORT,
+  ATTEMPT_EMPTY_DATA,
+  ATTEMPT_ERROR,
   attemptState,
   attemptStateToIcon,
 } from "@/libs/attempt-state";
@@ -42,22 +44,18 @@ function annotateIntention(intention) {
   }
 
   if (!intention.hasAttempt) {
-    intention.previousAttempt = intention.previous_intention && intention.previous_intention.attempt;
+    intention.previousAttempt =
+      intention.previous_intention && intention.previous_intention.attempt;
   }
   intention.state = intentionState(intention);
 
-  intention.isForceRunPossible = (
-    (intention.notBefore > new Date()) && // skip already planned
-    (intention.endDate < new Date()) && // skip for future data
-    (
-        intention.state == INTENTION_WAITING ||
-        intention.state == INTENTION_QUEUED
-    )
-  );
-  intention.isCancelPossible = (
-      intention.state == INTENTION_WAITING ||
-      intention.state == INTENTION_QUEUED
-  );
+  intention.isForceRunPossible =
+    intention.notBefore > new Date() && // skip already planned
+    intention.endDate < new Date() && // skip for future data
+    (intention.state == INTENTION_WAITING ||
+      intention.state == INTENTION_QUEUED);
+  intention.isCancelPossible =
+    intention.state == INTENTION_WAITING || intention.state == INTENTION_QUEUED;
   intention.isCanceled = intention.state == INTENTION_CANCELED;
   intention.loading = false;
 }
@@ -77,7 +75,10 @@ function intentionState(intention) {
     return INTENTION_BROKEN;
   }
   if (intention.attempt) {
-    return attemptState(intention.attempt);
+    const as = attemptState(intention.attempt);
+    if (as === ATTEMPT_ERROR && intention.attempt.error_code === "3031")
+      return INTENTION_WAITING;
+    else return as;
   }
   if (intention.canceled) {
     return INTENTION_CANCELED;

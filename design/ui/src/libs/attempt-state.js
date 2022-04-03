@@ -11,7 +11,8 @@ const BROKEN_CREDENTIALS = "broken";
 const BROKEN_REPORT = "broken_report";
 
 function attemptState(attempt) {
-  if (attempt.status == "untried") {  // untried is status only for monthly overview
+  if (attempt.status == "untried") {
+    // untried is status only for monthly overview
     return ATTEMPT_NOT_MADE;
   } else if (attempt.status == "import_failed") {
     return ATTEMPT_IMPORT_FAILED;
