@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import os
@@ -503,7 +504,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
         # Make sure that file is written to disk
         data_file.flush()
-        os.fsync(data_file.fileno())
+        try:
+            os.fsync(data_file.fileno())
+        except io.UnsupportedOperation:
+            # we don't care if it fails here
+            pass
 
         return dict(
             status=status,
@@ -623,7 +628,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
         # Make sure that file is written to disk
         django_file.flush()
-        os.fsync(django_file.fileno())
+        try:
+            os.fsync(django_file.fileno())
+        except io.UnsupportedOperation:
+            # we don't care if it fails here
+            pass
 
         return dict(
             credentials=self,
