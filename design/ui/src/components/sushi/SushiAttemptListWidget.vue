@@ -88,8 +88,8 @@ cs:
                   <div class="d-flex justify-space-between">
                     <div>
                       <div class="d-flex" v-if="item.attempt.log">
-                        <div class="font-weight-bold">
-                          {{ $t("log") }}
+                        <div class="font-weight-bold pr-2">
+                          {{ $t("title_fields.log") }}
                         </div>
                         <div class="pre">
                           {{ item.attempt.log }}
@@ -402,7 +402,7 @@ table.overview {
   }
 }
 
-td.pre {
+.pre {
   font-family: Courier, monospace;
   color: #666666;
   white-space: pre-wrap;
