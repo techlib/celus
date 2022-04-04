@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.1]
+
+### Added
+
+#### Frontend
+
+* preflight data were extended to include:
+  * information if a metric was previously used for the selected report type
+  * comparison of imported data with average of previous year and the same month in previous year
+
+#### Backend
+
+* Django admin for Report Types was extended to include the list of interest defining metrics as an
+  inline
+
+### Changes
+
+#### Frontend
+
+* reporting improvements:
+  * make visibility level tooltip part of the selector
+  * when starting new report, select something by default to make it 'runnable' immediately
+  * add list of organizations to metadata if organization is not in rows, columns, split_by or
+    filtered
+
+#### Backend
+
+* Celus ignores the `Severity` attribute in C5 SUSHI (marked as obsolete in CoP 5.0.2)
+
+
+### Fixed
+
+#### Frontend
+
+* SUSHI status dashboard and monthly overview were fixed to correctly display waiting harvests
+  (COUNTER exception 3031)
+* regression in formatting of log data in expander of list of attempts was fixed
+
+#### Backend
+
+* error in harvesting when dealing with in-memory files was fixed
+* ignoring `Severity` (see above) fixes errors when importing data with exception 1011 which had
+  incorrect severity
+
+
 ## [4.3.0]
 
 ### Added
