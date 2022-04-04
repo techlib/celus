@@ -1,11 +1,12 @@
 from django import forms
 from django.contrib import admin, messages
-from django.contrib.admin import widgets
+from django.contrib.admin import widgets, TabularInline
+from django.db.models import Count
 from django.utils.translation import ngettext
-
 from modeltranslation.admin import TranslationAdmin
 
 from . import models
+from .models import ReportInterestMetric
 
 
 @admin.register(models.OrganizationPlatform)
@@ -32,6 +33,11 @@ class IsMaterialized(admin.SimpleListFilter):
         return queryset
 
 
+class ReportInterestMetricInline(TabularInline):
+    model = ReportInterestMetric
+    fields = ['metric', 'interest_group', 'target_metric']
+
+
 class ReportTypeForm(forms.ModelForm):
     controlled_metrics = forms.ModelMultipleChoiceField(
         queryset=models.Metric.objects.all(),
@@ -51,19 +57,48 @@ class ReportTypeAdmin(TranslationAdmin):
     list_display = [
         'short_name',
         'name',
-        'desc',
         'dimension_list',
         'source',
         'superseeded_by',
         'materialized',
+        'rim_count',
+        'cm_count',
         'record_count',
     ]
     ordering = ['short_name']
     list_filter = ['source', IsMaterialized, 'default_platform_interest']
     readonly_fields = ['approx_record_count']
+    inlines = [ReportInterestMetricInline]
+    list_select_related = ['source__organization']
 
     class Media:
         css = {'all': ['css/report_type.css']}
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(
+                rim_count=Count('reportinterestmetric__metric', distinct=True),
+                cm_count=Count('controlled_metrics', distinct=True),
+            )
+        )
+
+    def rim_count(self, obj: models.ReportType):
+        return obj.rim_count
+
+    rim_count.short_description = 'interest metrics'
+
+    def cm_count(self, obj: models.ReportType):
+        return obj.cm_count
+
+    cm_count.short_description = 'controlled metrics'
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'source':
+            field.queryset = field.queryset.select_related('organization')
+        return field
 
     @classmethod
     def dimension_list(cls, obj: models.ReportType):

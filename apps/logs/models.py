@@ -315,6 +315,9 @@ class ReportInterestMetric(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f'{self.report_type} - {self.metric} ({self.interest_group})'
+
 
 class Dimension(models.Model):
 
