@@ -1,0 +1,33 @@
+{
+  "Created": "2022-03-02T23:41:51Z",
+  "Created_By": "My provider",
+  "Customer_ID": "C111111111",
+  "Report_ID": "PR",
+  "Release": "5",
+  "Report_Name": "Platform Master Report",
+  "Institution_Name": "My university",
+  "Report_Filters": [
+    {
+      "Name": "Begin_Date",
+      "Value": "2022-02-01"
+    },
+    {
+      "Name": "End_Date",
+      "Value": "2022-02-28"
+    }
+  ],
+  "Report_Attributes": [
+    {
+      "Name": "Attributes_To_Show",
+      "Value": "access_method|data_type"
+    }
+  ],
+  "Exceptions": [
+    {
+      "Code": 1011,
+      "Severity": "Info",
+      "Message": "Your request has been submitted. Please try after some time to retrieve the report",
+      "Data": "9da418c0f3006729e741c8cf4dceee9f"
+    }
+  ]
+}

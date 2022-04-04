@@ -370,7 +370,7 @@ class Sushi5Client(SushiClientBase):
     @classmethod
     def _format_error(cls, exc: dict):
         code = next(recursive_finder(exc, ["Code"]), None)
-        severity = next(recursive_finder(exc, ["Severity"]), error_code_to_severity(code))
+        severity = error_code_to_severity(code)
         text = next(recursive_finder(exc, ["Message"]), "")
         data = next(recursive_finder(exc, ["Data"]), "")
 
@@ -478,10 +478,7 @@ class Sushi4Client(SushiClientBase):
                 code = code.get("#text", "") if isinstance(code, dict) else code
                 message = next(recursive_finder(exception, ["Message"]), "")
                 message = message.get("#text", "") if isinstance(message, dict) else message
-                severity = next(
-                    recursive_finder(exception, ["Severity"]), error_code_to_severity(code)
-                )
-                severity = severity.get("#text", "") if isinstance(severity, dict) else severity
+                severity = error_code_to_severity(code)
 
                 full_log = f'{severity}: #{code}; {message}'
                 errors.append(

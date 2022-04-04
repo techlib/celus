@@ -26,8 +26,8 @@ class TestSushiFetching:
                 'naked_errors.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Warnings: Warning #1011: Report Queued for Processing; '
-                'Warning #3060: Invalid Report Filter Value\n\n',
+                'Errors: Error #3060: Invalid Report Filter Value\n\n'
+                'Warnings: Warning #1011: Report Queued for Processing\n\n',
                 False,
             ),
             (
@@ -56,7 +56,7 @@ class TestSushiFetching:
                 'invalid-customer.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Errors: Fatal #1030: Invalid Customer Id\n\n',
+                'Errors: Error #1030: Invalid Customer Id\n\n',
                 True,
             ),
             (
@@ -168,6 +168,7 @@ class TestSushiFetching:
         (
             ('naked_error_3000.json', 400, '3000', AttemptStatus.DOWNLOAD_FAILED,),
             ('naked_error_3000.json', 200, '3000', AttemptStatus.DOWNLOAD_FAILED,),
+            ('severity-wrong.json', 200, '1011', AttemptStatus.DOWNLOAD_FAILED,),
             ('no_json.txt', 400, 'non-sushi', AttemptStatus.DOWNLOAD_FAILED),
         ),
     )

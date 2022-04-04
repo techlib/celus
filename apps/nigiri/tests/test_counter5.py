@@ -1,8 +1,8 @@
-import pytest
-
 from pathlib import Path
 
-from ..counter5 import Counter5ReportBase, Counter5TRReport, Counter5TableReport
+import pytest
+
+from ..counter5 import Counter5ReportBase, Counter5TableReport, Counter5TRReport
 from ..exceptions import SushiException
 
 
@@ -150,7 +150,8 @@ class TestCounter5Reading:
             )
         ]
         assert len(records) == 0
-        assert len(reader.warnings) == 2
+        assert len(reader.warnings) == 1
+        assert len(reader.errors) == 1
         assert reader.queued
 
     def test_reading_strigified_exception(self):

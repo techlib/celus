@@ -1,31 +1,11 @@
 import io
 import typing
 import uuid
-
-from datetime import datetime, timedelta, date
-
-from django.utils import timezone
+from datetime import date, datetime, timedelta
 
 import pytest
-
+from django.utils import timezone
 from freezegun import freeze_time
-
-from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory, HarvestFactory, SchedulerFactory
-from test_fixtures.scenarios.basic import (
-    counter_report_types,
-    report_types,
-    credentials,
-    platforms,
-    import_batches,
-    organizations,
-    data_sources,
-    users,
-    harvests,
-    schedulers,
-)
-
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.tasks import import_one_sushi_attempt_task
 from nigiri.error_codes import ErrorCode
@@ -39,12 +19,26 @@ from scheduler.models import (
     Scheduler,
 )
 from sushi.models import (
+    AttemptStatus,
+    CounterReportsToCredentials,
     SushiCredentials,
     SushiFetchAttempt,
-    CounterReportsToCredentials,
-    AttemptStatus,
 )
-
+from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.scheduler import FetchIntentionFactory, HarvestFactory, SchedulerFactory
+from test_fixtures.scenarios.basic import (
+    counter_report_types,
+    credentials,
+    data_sources,
+    harvests,
+    import_batches,
+    organizations,
+    platforms,
+    report_types,
+    schedulers,
+    users,
+)
 
 current_tz = timezone.get_current_timezone()
 
@@ -347,8 +341,63 @@ class TestFetchIntention:
                 ],
                 False,
             ),
+            (
+                ErrorCode.PREPARING_DATA.value,
+                [
+                    timedelta(minutes=1),
+                    timedelta(minutes=2),
+                    timedelta(minutes=4),
+                    timedelta(minutes=8),
+                    timedelta(minutes=16),
+                    timedelta(minutes=32),
+                    timedelta(minutes=64),
+                    timedelta(minutes=128),
+                    timedelta(minutes=256),
+                    timedelta(minutes=512),
+                    timedelta(minutes=1024),
+                    None,
+                ],
+                True,
+            ),
+            (
+                ErrorCode.SERVICE_BUSY.value,
+                [
+                    timedelta(minutes=1),
+                    timedelta(minutes=2),
+                    timedelta(minutes=4),
+                    timedelta(minutes=8),
+                    timedelta(minutes=16),
+                    timedelta(minutes=32),
+                    timedelta(minutes=64),
+                    timedelta(minutes=128),
+                    timedelta(minutes=256),
+                    timedelta(minutes=512),
+                    timedelta(minutes=1024),
+                    None,
+                ],
+                True,
+            ),
+            (
+                ErrorCode.SERVICE_NOT_AVAILABLE.value,
+                [
+                    timedelta(minutes=60),
+                    timedelta(minutes=120),
+                    timedelta(minutes=240),
+                    timedelta(minutes=480),
+                    timedelta(minutes=960),
+                    None,
+                ],
+                True,
+            ),
         ),
-        ids=("not_ready", "no_data", "partial_data"),
+        ids=(
+            "not_ready",
+            "no_data",
+            "partial_data",
+            "preparing_data",
+            "service_busy",
+            "service_not_available",
+        ),
     )
     def test_process_retry_chain(
         self,
@@ -389,6 +438,15 @@ class TestFetchIntention:
                         assert (
                             fi.attempt.import_batch is not None
                         ), "last partial data should contain ib after import"
+
+                    if error_code in [
+                        ErrorCode.SERVICE_NOT_AVAILABLE.value,
+                        ErrorCode.SERVICE_BUSY,
+                        ErrorCode.PREPARING_DATA,
+                    ]:
+                        assert (
+                            fi.attempt.import_batch is None
+                        ), "no ib should be present so it can be retried later"
 
                     else:
                         assert (

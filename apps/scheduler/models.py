@@ -6,7 +6,7 @@ from enum import Enum, auto
 
 from celery import states
 from core.logic.dates import month_end, month_start
-from core.models import User, CreatedUpdatedMixin
+from core.models import CreatedUpdatedMixin, User
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import DatabaseError, models, transaction
@@ -17,18 +17,18 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_celery_results.models import TaskResult
 from logs.exceptions import DataStructureError
+from logs.logic.data_import import create_import_batch_or_crash
 from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
-from logs.logic.data_import import create_import_batch_or_crash
 from nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
 from sushi.models import (
+    AttemptStatus,
     CounterReportsToCredentials,
     CounterReportType,
     SushiCredentials,
     SushiFetchAttempt,
-    AttemptStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -642,7 +642,7 @@ class FetchIntention(models.Model):
             return
 
         # prepare retry
-        retry = self._create_retry(next_time, inc_data_not_ready_retry=True)
+        self._create_retry(next_time, inc_data_not_ready_retry=True)
 
     def handle_no_data(self):
         """ Some vendors use no_data status as data_not_ready status """
