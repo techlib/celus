@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.2]
+
+### Fixed
+
+#### Backend
+
+* merging of titles between incoming data and database was fixed for cases where
+  only name and proprietary IDs are available. Lowercasing of İ was tweaked.
+
+
 ## [4.3.1]
 
 ### Added
