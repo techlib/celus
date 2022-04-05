@@ -213,6 +213,30 @@ class TestTitleManager:
                 False,
                 id="title only based match - prop id mismatch",
             ),
+            # title + proprietary IDs with different order
+            pytest.param(
+                {'name': 'Nature', 'proprietary_ids': ['bar', 'foo']},
+                {'name': 'Nature', 'proprietary_ids': ['foo', 'bar']},
+                True,
+                id="title only based match - proprietary ids different order",
+            ),
+            # strange thing seen in production
+            pytest.param(
+                {
+                    'name': 'Sakarya Üniversitesi İlahiyat Fakültesi Dergisi (SAUIFD)',
+                    'issn': '2146-9806',
+                    'eissn': '1304-6535',
+                    'proprietary_ids': [],
+                },
+                {
+                    'name': 'Sakarya Üniversitesi İlahiyat Fakültesi Dergisi (SAUIFD)',
+                    'issn': '2146-9806',
+                    'eissn': '1304-6535',
+                    'proprietary_ids': ['EBSCOhost:KBID:898430'],
+                },
+                True,
+                id="turkish I problem",
+            ),
         ],
     )
     def test_get_or_create_merging_strategy(

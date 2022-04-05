@@ -140,9 +140,24 @@ class TitleManager:
         self._counter_rec_to_title_rec_cache = Cache()
         self._title_rec_to_title_cache = Cache()
 
+    @classmethod
+    def normalize_title(cls, name: str) -> str:
+        """
+        Normalize title for comparison with the database.
+        Does some strange things to Turkish I to make it compatible with Postgres lower
+        """
+        if not name:
+            return name
+        ret = name.lower()
+        # get around a strange unicode case where the turkish İ forms two chars
+        if 'İ' in name and len('İ'.lower()) == 2:
+            remove = 'İ'.lower()[1]
+            return ret.replace(remove, '')
+        return ret
+
     def prefetch_titles(self, records: [TitleRec]):
         title_qs = Title.objects.all()
-        names = [rec.name.lower() if rec.name else rec.name for rec in records]
+        names = [self.normalize_title(rec.name) if rec.name else rec.name for rec in records]
         title_qs = title_qs.annotate(lname=Lower('name')).filter(lname__in=names)
         self.name_to_records = {}
         for row in title_qs.order_by('name').values(
