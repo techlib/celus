@@ -142,7 +142,7 @@ class Title(models.Model):
     class Meta:
         ordering = ('name', 'pub_type')
         verbose_name = _('Title/Database')
-        unique_together = (('name', 'isbn', 'issn', 'eissn', 'doi'),)
+        unique_together = (('name', 'isbn', 'issn', 'eissn', 'doi', 'proprietary_ids'),)
 
     def __str__(self):
         return self.name

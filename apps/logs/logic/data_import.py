@@ -308,16 +308,20 @@ class TitleManager:
                 # we only allow this if either the in-memory or in-db record does not have any other
                 # ids - if they had, we would have matched it above, if we did not, they must clash
                 for candidate in candidates:
-                    if record.proprietary_ids.issubset(record.proprietary_ids) and (
+                    if record.proprietary_ids.issubset(candidate.proprietary_ids) and (
                         not rec_id_set or not candidate.id_set
                     ):
                         return candidate
-            elif not rec_id_set:
-                # record has no proprietary ids and other ids failed above
+                # another step - if the other candidate
+            if not rec_id_set:
+                # no match using proprietary ids and other ids failed above
                 # here we try the last resort and match together records with only name and nothing
-                # else
+                # else - if proprietary ids on one side are empty, we match it, if they are
+                # disjunct, we do not match
                 for candidate in candidates:
-                    if not candidate.proprietary_ids and not candidate.id_set:
+                    if not candidate.id_set and (
+                        not candidate.proprietary_ids or not record.proprietary_ids
+                    ):
                         return candidate
         return winner
 

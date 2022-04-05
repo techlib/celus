@@ -195,6 +195,24 @@ class TestTitleManager:
                 True,
                 id="case insensitive title",
             ),
+            # title only based match with one proprietary ID
+            pytest.param(
+                {'name': 'Nature', 'proprietary_ids': []},
+                {'name': 'Nature', 'proprietary_ids': ['foo']},
+                True,
+                id="title only based match with one empty prop id",
+            ),
+            # title only based match with no proprietary ID
+            pytest.param(
+                {'name': 'Nature'}, {'name': 'Nature'}, True, id="title only based match",
+            ),
+            # title + proprietary ID
+            pytest.param(
+                {'name': 'Nature', 'proprietary_ids': ['bar']},
+                {'name': 'Nature', 'proprietary_ids': ['foo']},
+                False,
+                id="title only based match - prop id mismatch",
+            ),
         ],
     )
     def test_get_or_create_merging_strategy(
