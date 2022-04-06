@@ -90,8 +90,12 @@ cs:
                         action="/api/sushi-credentials/export-credentials/"
                         method="post"
                       >
-                        <input type="hidden name="csrfmiddlewaretoken"
-                        :value="getCSRFToken" style="display: none" />
+                        <input
+                          type="hidden"
+                          name="csrfmiddlewaretoken"
+                          :value="getCSRFToken"
+                          style="display: none"
+                        />
                         <div
                           v-for="checkedCredential in checkedCredentials"
                           :key="checkedCredential.pk"
