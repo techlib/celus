@@ -256,8 +256,8 @@ class TestAccountCreationAPI:
         assert resp.status_code == 201
         assert len(mailoutbox) == 1
         mail = mailoutbox[0]
-        assert 'Celus.one' in mail.subject, "Celus.one must be mentioned in the email body"
-        assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
+        assert 'Celus' in mail.subject, "Celus must be mentioned in the email body"
+        assert 'Celus' in mail.body, "Celus must be mentioned in the email body"
         assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
 
     def test_create_account_email_customization_resend(
@@ -276,8 +276,8 @@ class TestAccountCreationAPI:
         assert resp.status_code == 200
         assert len(mailoutbox) == 1
         mail = mailoutbox[0]
-        assert 'Celus.one' in mail.subject, "Celus.one must be mentioned in the email body"
-        assert 'Celus.one' in mail.body, "Celus.one must be mentioned in the email body"
+        assert 'Celus' in mail.subject, "Celus must be mentioned in the email body"
+        assert 'Celus' in mail.body, "Celus must be mentioned in the email body"
         assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
 
     def test_email_admins_about_create_account(self, mailoutbox, client, site):

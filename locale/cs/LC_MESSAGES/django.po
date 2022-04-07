@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 4.2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-01 14:25+0200\n"
+"POT-Creation-Date: 2022-04-07 16:49+0200\n"
 "PO-Revision-Date: 2022-04-01 14:29+0200\n"
 "Last-Translator: Beda Kosata <beda@ecomole.com>\n"
 "Language-Team: Czech <beda@ecomole.com>\n"
@@ -76,7 +76,7 @@ msgid ""
 "Hello,\n"
 "\n"
 "you are receiving this email in order to verify your email address for use "
-"with Celus.one.\n"
+"with Celus.\n"
 "\n"
 "To confirm your email, please go to %(activate_url)s\n"
 "\n"
@@ -85,13 +85,13 @@ msgid ""
 "\n"
 "Have a great day\n"
 "\n"
-"The Celus.one team\n"
+"The Celus team\n"
 msgstr ""
 
 #: apps/core/templates/account/email/email_confirmation_subject.txt:2
 msgid ""
 "\n"
-"Please verify your email address for use with Celus.one\n"
+"Please verify your email address for use with Celus\n"
 msgstr ""
 
 #: apps/core/templates/registration/invitation_email.html:2
@@ -140,117 +140,127 @@ msgstr ""
 msgid "%(value)s is not in range for valid year (%(minv)d-%(maxv)d)"
 msgstr ""
 
-#: apps/logs/admin.py:232
+#: apps/logs/admin.py:267
 #, python-format
 msgid "%d preflight started to regenerate"
 msgid_plural "%d preflights started to regenerate"
 msgstr[0] ""
 msgstr[1] ""
 
-#: apps/logs/logic/custom_import.py:48 custom_import.py:48
+#: apps/logs/logic/custom_import.py:48
 msgid "Column name not understood: \"{}\""
 msgstr ""
 
-#: apps/logs/logic/custom_import.py:60 custom_import.py:60
+#: apps/logs/logic/custom_import.py:60
 #, python-brace-format
 msgid ""
 "Value cannot be converted into integer, row {row}, column \"{column}\", "
 "value: \"{value}\""
 msgstr ""
 
-#: apps/logs/logic/custom_import.py:103 custom_import.py:103
+#: apps/logs/logic/custom_import.py:103
 #, python-brace-format
 msgid "We don't know how to interpret the column \"{column}\""
 msgstr ""
 
-#: apps/logs/logic/reporting/export.py:214
+#: apps/logs/logic/reporting/export.py:215
 msgid "Report name"
 msgstr "Název reportu"
 
-#: apps/logs/logic/reporting/export.py:215
+#: apps/logs/logic/reporting/export.py:216
 msgid "Created"
 msgstr "Vytvořeno"
 
-#: apps/logs/logic/reporting/export.py:216
+#: apps/logs/logic/reporting/export.py:217
 msgid "Created for"
 msgstr "Vytvořeno pro"
 
-#: apps/logs/logic/reporting/export.py:217
+#: apps/logs/logic/reporting/export.py:218
 msgid "Celus version"
 msgstr "Verze Celus"
 
-#: apps/logs/logic/reporting/export.py:221
+#: apps/logs/logic/reporting/export.py:222
 msgid "Split by"
 msgstr "Rozdělit podle"
 
-#: apps/logs/logic/reporting/export.py:227
+#: apps/logs/logic/reporting/export.py:228
 msgid "Rows"
 msgstr "Řádky"
 
-#: apps/logs/logic/reporting/export.py:230
+#: apps/logs/logic/reporting/export.py:231
 msgid "Columns"
 msgstr "Soupce"
 
-#: apps/logs/logic/reporting/export.py:236
+#: apps/logs/logic/reporting/export.py:237
 msgid "Applied filters"
 msgstr "Aplikované filtry"
 
-#: apps/logs/models.py:78
+#: apps/logs/logic/reporting/export.py:251
+msgid "Included organizations"
+msgstr ""
+
+#: apps/logs/logic/reporting/export.py:253
+msgid ""
+"(No organization filter was applied, the data represent the following "
+"organizations)"
+msgstr ""
+
+#: apps/logs/models.py:88
 msgid "Report type"
 msgstr "Typ reportu"
 
-#: apps/logs/models.py:265
+#: apps/logs/models.py:263
 msgid "Metric"
 msgstr "Metrika"
 
-#: apps/logs/models.py:481
+#: apps/logs/models.py:482
 msgid "Date"
 msgstr "Datum"
 
-#: apps/logs/models.py:576
+#: apps/logs/models.py:577
 #, python-brace-format
 msgid ""
 "The uploaded file is not in required file type or is corrupted.The file type "
 "seems to be '{detected_type}'.Please upload your file in required file type."
 msgstr ""
 
-#: apps/logs/models.py:592
+#: apps/logs/models.py:593
 msgid "Only one row in the uploaded file, there is not data to import"
 msgstr ""
 
-#: apps/logs/models.py:598
+#: apps/logs/models.py:599
 msgid "Errors understanding uploaded data: {}"
 msgstr ""
 
-#: apps/logs/models.py:603 apps/sushi/models.py:672
+#: apps/logs/models.py:604 apps/sushi/models.py:687
 msgid "Initial"
 msgstr ""
 
-#: apps/logs/models.py:604
+#: apps/logs/models.py:605
 msgid "Preflight"
 msgstr ""
 
-#: apps/logs/models.py:605 apps/sushi/models.py:676
+#: apps/logs/models.py:606 apps/sushi/models.py:691
 msgid "Importing"
 msgstr ""
 
-#: apps/logs/models.py:606
+#: apps/logs/models.py:607
 msgid "Imported"
 msgstr ""
 
-#: apps/logs/models.py:607
+#: apps/logs/models.py:608
 msgid "Preflight failed"
 msgstr ""
 
-#: apps/logs/models.py:608 apps/sushi/models.py:686
+#: apps/logs/models.py:609 apps/sushi/models.py:701
 msgid "Import failed"
 msgstr ""
 
-#: apps/logs/serializers.py:89
+#: apps/logs/serializers.py:90
 msgid "Public dimension with this code name already exists"
 msgstr ""
 
-#: apps/logs/serializers.py:97
+#: apps/logs/serializers.py:98
 msgid "Dimension with this code name already exists"
 msgstr ""
 
@@ -329,31 +339,31 @@ msgstr ""
 msgid "Title/Database"
 msgstr ""
 
-#: apps/sushi/models.py:674
+#: apps/sushi/models.py:689
 msgid "Downloading"
 msgstr ""
 
-#: apps/sushi/models.py:680
+#: apps/sushi/models.py:695
 msgid "Success"
 msgstr ""
 
-#: apps/sushi/models.py:682
+#: apps/sushi/models.py:697
 msgid "Unprocessed"
 msgstr ""
 
-#: apps/sushi/models.py:684
+#: apps/sushi/models.py:699
 msgid "No data"
 msgstr ""
 
-#: apps/sushi/models.py:687
+#: apps/sushi/models.py:702
 msgid "Parsing failed"
 msgstr ""
 
-#: apps/sushi/models.py:688
+#: apps/sushi/models.py:703
 msgid "Download failed"
 msgstr ""
 
-#: apps/sushi/models.py:689
+#: apps/sushi/models.py:704
 msgid "Canceled"
 msgstr ""
 

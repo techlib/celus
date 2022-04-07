@@ -1,6 +1,6 @@
 {% load account %}{% user_display user as user_display %}{% load i18n %}{% autoescape off %}{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Hello,
 
-you are receiving this email in order to verify your email address for use with Celus.one.
+you are receiving this email in order to verify your email address for use with Celus.
 
 To confirm your email, please go to {{ activate_url }}
 
@@ -8,6 +8,6 @@ If you did not register your email with us, you can safely ignore this email or 
 
 Have a great day
 
-The Celus.one team
+The Celus team
 {% endblocktrans %}
 {% endautoescape %}
