@@ -203,7 +203,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     customer_id = models.CharField(max_length=128)
     http_username = models.CharField(max_length=128, blank=True)
     http_password = models.CharField(max_length=128, blank=True)
-    api_key = models.CharField(max_length=128, blank=True)
+    api_key = models.CharField(max_length=400, blank=True)
     extra_params = models.JSONField(default=dict, blank=True)
     enabled = models.BooleanField(default=True)
     counter_reports = models.ManyToManyField(

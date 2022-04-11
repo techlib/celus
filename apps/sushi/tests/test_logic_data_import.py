@@ -26,7 +26,7 @@ class TestLogicDataImport:
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
                 'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+                'extra_attrs': f'auth=un,pass;api_key={"key" * 100};foo=bar',
             },
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
@@ -45,7 +45,7 @@ class TestLogicDataImport:
         assert cr2.organization == organizations[1]
         assert cr2.http_username == 'un'
         assert cr2.http_password == 'pass'
-        assert cr2.api_key == 'kekekeyyy'
+        assert cr2.api_key == 'key' * 100
         assert cr2.extra_params == {'foo': 'bar'}
         # retry
         stats = import_sushi_credentials(data)
