@@ -1,40 +1,40 @@
-from django.utils.translation import gettext as _
-from rest_framework.exceptions import ValidationError
-from rest_framework.fields import IntegerField, DateField, BooleanField
-from rest_framework.relations import StringRelatedField, PrimaryKeyRelatedField
-from rest_framework.serializers import (
-    CharField,
-    ModelSerializer,
-    ListField,
-    BaseSerializer,
-    HiddenField,
-    CurrentUserDefault,
-    PrimaryKeyRelatedField,
-)
-
-from core.models import DataSource, UL_CONS_STAFF
+from core.models import UL_CONS_STAFF, DataSource
 from core.serializers import UserSerializer, UserSimpleSerializer
+from django.utils.translation import gettext as _
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
 from publications.serializers import (
-    PlatformSerializer,
     DataSourceSerializer,
+    PlatformSerializer,
     SimplePlatformSerializer,
 )
+from rest_framework.exceptions import ValidationError
+from rest_framework.fields import BooleanField, DateField, IntegerField
+from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
+from rest_framework.serializers import (
+    BaseSerializer,
+    CharField,
+    CurrentUserDefault,
+    HiddenField,
+    ListField,
+    ModelSerializer,
+    PrimaryKeyRelatedField,
+)
 from sushi.serializers import SushiFetchAttemptFlatSerializer
+
 from .models import (
-    Metric,
-    Dimension,
-    ReportType,
-    ManualDataUpload,
-    InterestGroup,
     AccessLog,
-    ImportBatch,
-    ReportTypeToDimension,
-    ReportInterestMetric,
+    Dimension,
     DimensionText,
     FlexibleReport,
+    ImportBatch,
+    InterestGroup,
+    ManualDataUpload,
+    Metric,
+    ReportInterestMetric,
+    ReportType,
+    ReportTypeToDimension,
 )
 
 
@@ -348,6 +348,7 @@ class ManualDataUploadSerializer(ModelSerializer):
     report_type_id = IntegerField(write_only=True)
     can_edit = BooleanField(read_only=True)
     can_import = BooleanField(read_only=True)
+    clashing_months = ListField(child=DateField(), read_only=True)
 
     class Meta:
         model = ManualDataUpload

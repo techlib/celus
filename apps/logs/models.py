@@ -733,9 +733,13 @@ class ManualDataUpload(models.Model):
 
     def clashing_batches(self) -> models.QuerySet[ImportBatch]:
         """ Get list of all conflicting batches """
-        months = set()
-        for record in self.data_to_records():
-            months.add(record.start)
+
+        if self.preflight and 'months' in self.preflight:
+            # Months can be present in preflight
+            months = self.preflight['months'].keys()
+        else:
+            # Otherwise try to parse data file
+            months = {record.start for record in self.data_to_records()}
 
         return ImportBatch.objects.filter(
             date__in=months,
@@ -745,7 +749,7 @@ class ManualDataUpload(models.Model):
         )
 
     @cached_property
-    def clashing_months(self) -> typing.List[date]:
+    def clashing_months(self) -> typing.Optional[typing.List[date]]:
         """ Display which months are in conflict with data to be imported
 
         return: list of months
@@ -756,7 +760,8 @@ class ManualDataUpload(models.Model):
             or "format_version" not in self.preflight
             or self.preflight["format_version"] != self.PREFLIGHT_FORMAT_VERSION
         ):
-            return sorted({e for e in self.clashing_batches().values_list("date", flat=True)})
+            return None
+
         # preflight was performed
         return sorted(
             {
@@ -777,7 +782,7 @@ class ManualDataUpload(models.Model):
             return False
 
         # check clashing
-        if self.clashing_months:
+        if self.clashing_months or self.clashing_months is None:
             return False
 
         # check metrics

@@ -237,9 +237,7 @@ class TestManualUploadConflicts:
         response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         assert response.data["can_import"] is False
-        assert batches_months == sorted(
-            e.strftime("%Y-%m-%d") for e in response.data["clashing_months"]
-        )
+        assert batches_months == sorted(e for e in response.data["clashing_months"])
 
         # fail processing
         response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))

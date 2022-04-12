@@ -267,9 +267,10 @@ cs:
               v-if="canImport"
               @click="triggerImportData()"
               color="success"
-              :loading="state == 'importing'"
+              :loading="state == 'importing' || importing"
               :disabled="
-                preflightData && !!preflightData.clashing_months.length
+                (preflightData && !!preflightData.clashing_months.length) ||
+                preflighting
               "
             >
               <v-icon small class="pr-2">fas fa-cogs</v-icon>
@@ -282,7 +283,11 @@ cs:
             ></v-btn>
           </v-card-actions>
           <v-card-actions v-else-if="state == 'prefailed'">
-            <v-btn color="primary" @click="regeneratePreflight">
+            <v-btn
+              color="primary"
+              @click="regeneratePreflight"
+              :disabled="importing"
+            >
               <v-icon small class="pr-2">fas fa-redo</v-icon>
               {{ $t("regenerate_preflight") }}
             </v-btn>
@@ -464,12 +469,13 @@ export default {
       uploadObject: null,
       showAddReportTypeDialog: false,
       tab: "chart",
-      uploadObjectProcessing: false,
       deleting: false,
       refreshTimeout: null,
       spinnerOn: false,
       globalSpinnerOn: true,
       uploading: false,
+      importing: false,
+      preflighting: false,
       uploadProgress: 0,
     };
   },
@@ -602,7 +608,7 @@ export default {
     },
     setProgress(total, current) {
       if (total) {
-        this.uploadProgress = 100 * current / total;
+        this.uploadProgress = (100 * current) / total;
       }
     },
     async postData() {
@@ -698,15 +704,15 @@ export default {
       }
     },
     async triggerImportData() {
-      if (this.uploadObject && !this.uploadObjectProcessing && this.canImport) {
-        this.uploadObjectProcessing = true;
+      if (this.uploadObject && !this.importing && this.canImport) {
+        this.importing = true;
         let url = `/api/manual-data-upload/${this.uploadObject.pk}/import-data/`;
         try {
           await axios.post(url, {});
         } catch (error) {
           this.showSnackbar({ content: "Error processing data: " + error });
         } finally {
-          this.uploadObjectProcessing = false;
+          this.importing = false;
         }
         // reload object
         await this.loadMdu();
@@ -715,10 +721,10 @@ export default {
     async regeneratePreflight() {
       if (
         this.uploadObject &&
-        !this.uploadObjectProcessing &&
+        !this.preflighting &&
         ["preflight", "prefailed"].includes(this.uploadObject.state)
       ) {
-        this.uploadObjectProcessing = true;
+        this.preflighting = true;
         let url = `/api/manual-data-upload/${this.uploadObject.pk}/preflight/`;
         try {
           await axios.post(url, {});
@@ -727,7 +733,7 @@ export default {
             content: "Error triggering preflight generation: " + error,
           });
         } finally {
-          this.uploadObjectProcessing = false;
+          this.preflighting = false;
         }
         // reload object
         this.spinnerOn = true;
