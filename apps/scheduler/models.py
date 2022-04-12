@@ -747,6 +747,9 @@ class FetchIntentionQueue(models.Model):
         FetchIntention, on_delete=models.SET_NULL, related_name='qend', null=True
     )
 
+    def __str__(self):
+        return f'Queue #{self.pk}'
+
 
 class Harvest(CreatedUpdatedMixin):
 

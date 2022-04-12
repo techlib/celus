@@ -15,7 +15,7 @@ class FetchIntentionInline(admin.TabularInline):
     )
     fields = (
         "intention_link",
-        "queue_id",
+        "queue",
         "url",
         "when_processed",
         "start_date",
@@ -23,7 +23,7 @@ class FetchIntentionInline(admin.TabularInline):
     )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request).select_related('queue')
         return qs.prefetch_related('credentials')
 
     def intention_link(self, obj: models.FetchIntention):
@@ -116,6 +116,7 @@ class HarvestAdmin(admin.ModelAdmin):
 @admin.register(models.Scheduler)
 class SchedulerAdmin(admin.ModelAdmin):
     search_fields = ('url',)
+    readonly_fields = ('current_intention',)
 
     list_display = (
         'url',
