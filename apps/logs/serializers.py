@@ -285,7 +285,7 @@ class AccessLogSerializer(BaseSerializer):
 
 class ImportBatchSerializer(ModelSerializer):
 
-    user = UserSerializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
     report_type = StringRelatedField()
     organization = StringRelatedField()
     platform = StringRelatedField()
@@ -316,10 +316,10 @@ class ManualDataUploadSimpleSerializer(ModelSerializer):
 
 class ImportBatchVerboseSerializer(ModelSerializer):
 
-    user = UserSerializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
-    report_type = ReportTypeSerializer(read_only=True)
+    report_type = ReportTypeSimpleSerializer(read_only=True)
     sushifetchattempt = SushiFetchAttemptFlatSerializer(read_only=True)
     mdu = ManualDataUploadSimpleSerializer(read_only=True, many=True)
 

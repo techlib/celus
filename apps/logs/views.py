@@ -3,14 +3,31 @@ from functools import reduce
 from pprint import pprint
 from time import monotonic
 
+from core.exceptions import BadRequestException
+from core.filters import PkMultiValueFilterBackend
+from core.logic.dates import date_filter_from_params, parse_month
+from core.logic.serialization import parse_b64json
+from core.models import REL_ORG_ADMIN, DataSource
+from core.permissions import (
+    CanAccessOrganizationFromGETAttrs,
+    CanAccessOrganizationRelatedObjectPermission,
+    CanPostOrganizationDataPermission,
+    ManualDataUploadEnabledPermission,
+    OrganizationRequiredInDataForNonSuperusers,
+    OwnerLevelBasedPermissions,
+    SuperuserOrAdminPermission,
+)
+from core.prometheus import report_access_time_summary, report_access_total_counter
+from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import BadRequest
-from django.db.models import Count, Q, Exists, OuterRef, Prefetch
+from django.db.models import Count, Exists, OuterRef, Prefetch, Q
 from django.db.transaction import atomic
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
+from organizations.logic.queries import organization_filter_from_org_id
 from pandas import DataFrame
 from rest_framework import status
 from rest_framework.decorators import action
@@ -21,62 +38,43 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import DateField, IntegerField, Serializer
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_pandas import PandasView
+from scheduler.models import FetchIntention
+from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
-from core.exceptions import BadRequestException
-from core.filters import PkMultiValueFilterBackend
-from core.logic.dates import date_filter_from_params, parse_month
-from core.logic.serialization import parse_b64json
-from core.models import DataSource, REL_ORG_ADMIN
-from core.permissions import (
-    OrganizationRequiredInDataForNonSuperusers,
-    SuperuserOrAdminPermission,
-    OwnerLevelBasedPermissions,
-    CanPostOrganizationDataPermission,
-    CanAccessOrganizationRelatedObjectPermission,
-    CanAccessOrganizationFromGETAttrs,
-    ManualDataUploadEnabledPermission,
-)
-from core.prometheus import report_access_time_summary, report_access_total_counter
-from core.validators import month_validator, pk_list_validator
 from logs.logic.export import CSVExport
-from logs.logic.queries import (
-    extract_accesslog_attr_query_params,
-    StatsComputer,
-)
+from logs.logic.queries import StatsComputer, extract_accesslog_attr_query_params
 from logs.models import (
     AccessLog,
-    ReportType,
     Dimension,
     DimensionText,
-    Metric,
+    FlexibleReport,
     ImportBatch,
+    InterestGroup,
     ManualDataUpload,
     MduState,
-    InterestGroup,
-    FlexibleReport,
+    Metric,
     ReportInterestMetric,
+    ReportType,
 )
 from logs.serializers import (
-    DimensionSerializer,
-    ReportTypeSerializer,
-    ReportTypeInterestSerializer,
-    MetricSerializer,
     AccessLogSerializer,
-    ImportBatchSerializer,
-    ImportBatchVerboseSerializer,
-    ManualDataUploadSerializer,
-    InterestGroupSerializer,
-    ManualDataUploadVerboseSerializer,
+    DimensionSerializer,
     DimensionTextSerializer,
     FlexibleReportSerializer,
+    ImportBatchSerializer,
+    ImportBatchVerboseSerializer,
+    InterestGroupSerializer,
+    ManualDataUploadSerializer,
+    ManualDataUploadVerboseSerializer,
+    MetricSerializer,
+    ReportTypeInterestSerializer,
+    ReportTypeSerializer,
 )
-from organizations.logic.queries import organization_filter_from_org_id
-from scheduler.models import FetchIntention
-from sushi.models import SushiCredentials, SushiFetchAttempt, AttemptStatus
+
 from . import filters
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from .tasks import export_raw_data_task
@@ -341,7 +339,12 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         # Optimizations
         qs = (
             qs.select_related(
-                'user', 'platform', 'organization', 'report_type', 'sushifetchattempt'
+                'user',
+                'platform',
+                'platform__source',
+                'organization',
+                'report_type',
+                'sushifetchattempt',
             )
             .prefetch_related('mdu')
             .annotate(accesslog_count=Count('accesslog'))
