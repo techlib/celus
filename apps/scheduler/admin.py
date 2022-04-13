@@ -24,7 +24,9 @@ class FetchIntentionInline(admin.TabularInline):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).select_related('queue')
-        return qs.prefetch_related('credentials')
+        return qs.prefetch_related(
+            'credentials', 'credentials__organization', 'credentials__platform'
+        )
 
     def intention_link(self, obj: models.FetchIntention):
         url = reverse('admin:scheduler_fetchintention_change', args=[obj.pk])
@@ -70,7 +72,7 @@ class HarvestAdmin(admin.ModelAdmin):
         'attempts',
     )
 
-    list_select_related = ['last_updated_by', 'automatic']
+    list_select_related = ['last_updated_by', 'automatic', 'automatic__organization']
     actions = [wipe_harvest]
 
     def get_queryset(self, request):
