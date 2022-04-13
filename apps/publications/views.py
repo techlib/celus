@@ -1,19 +1,3 @@
-from django.conf import settings
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db import transaction
-from django.db.models import Count, Sum, Q, OuterRef, Exists, FilteredRelation, Prefetch
-from django.db.models.functions import Coalesce
-from hcube.api.models.aggregation import Count as CubeCount
-from pandas import DataFrame
-from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError, PermissionDenied
-from rest_framework.generics import get_object_or_404
-from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
-
 from api.auth import extract_org_from_request_api_key
 from api.permissions import HasOrganizationAPIKey
 from charts.models import ReportDataView
@@ -24,29 +8,46 @@ from core.logic.dates import date_filter_from_params
 from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
+from django.conf import settings
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db import transaction
+from django.db.models import Count, Exists, FilteredRelation, OuterRef, Prefetch, Q, Sum
+from django.db.models.functions import Coalesce
+from hcube.api.models.aggregation import Count as CubeCount
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import (
-    ReportType,
     AccessLog,
-    InterestGroup,
-    ImportBatch,
     DimensionText,
+    ImportBatch,
+    InterestGroup,
     ReportInterestMetric,
+    ReportType,
 )
-from logs.serializers import ReportTypeExtendedSerializer, PlatformInterestReportSerializer
+from logs.serializers import PlatformInterestReportSerializer, ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
-from organizations.logic.queries import organization_filter_from_org_id, extend_query_filter
+from organizations.logic.queries import extend_query_filter, organization_filter_from_org_id
 from organizations.models import Organization
-from publications.models import Platform, Title, PlatformTitle
-from publications.serializers import TitleCountSerializer, SimplePlatformSerializer
+from pandas import DataFrame
 from recache.util import recache_queryset
-from .serializers import (
-    PlatformSerializer,
-    DetailedPlatformSerializer,
-    TitleSerializer,
-    PlatformKnowledgebaseSerializer,
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.generics import get_object_or_404
+from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
+
+from publications.models import Platform, PlatformTitle, Title
+from publications.serializers import (
+    SimplePlatformSerializer,
+    TitleCountSerializer,
+    UseCaseSerializer,
 )
+
+from .logic.use_cases import get_use_cases
+from .serializers import DetailedPlatformSerializer, PlatformSerializer, TitleSerializer
 from .tasks import erms_sync_platforms_task
 
 
@@ -80,6 +81,15 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
             .order_by('name')
         )
 
+    @action(detail=False, url_path='use-cases', serializer_class=UseCaseSerializer)
+    def use_cases(self, request, organization_pk):
+        """ Returns data how are the platforms successfully used """
+        platforms = self.get_queryset()
+        use_cases = get_use_cases(platforms)
+        serializer = UseCaseSerializer(data=list(use_cases), many=True)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
+
     @action(detail=True, url_path='report-types')
     def get_report_types(self, request, pk, organization_pk):
         """
@@ -107,15 +117,6 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         if not settings.ALLOW_NONCOUNTER_DATA:
             report_types = report_types.filter(counterreporttype__isnull=False)
         return Response(ReportTypeExtendedSerializer(report_types, many=True).data)
-
-    @action(detail=True, url_path='knowledgebase')
-    def knowledgebase(self, request, pk, organization_pk):
-        """Get knowledgebase information about the platform"""
-        organization = self._organization_pk_to_obj(organization_pk)
-        platform = get_object_or_404(
-            request.user.accessible_platforms(organization=organization), pk=pk
-        )
-        return Response(PlatformKnowledgebaseSerializer(platform).data)
 
 
 class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
@@ -816,8 +817,8 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
         date_filter = date_filter_from_params(self.request.GET)
 
         if self.request.USE_CLICKHOUSE and not pub_type_arg:
-            from logs.cubes import AccessLogCube, ch_backend
             from hcube.api.models.aggregation import Sum as HSum
+            from logs.cubes import AccessLogCube, ch_backend
 
             org_filter = organization_filter_from_org_id(
                 self.kwargs.get('organization_pk'), self.request.user, clickhouse=True

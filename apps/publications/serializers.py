@@ -1,14 +1,15 @@
-from rest_framework.fields import (
-    CharField,
-    ListField,
-    JSONField,
-    SerializerMethodField,
-    BooleanField,
-)
-from rest_framework.serializers import ModelSerializer, IntegerField
-
 from core.models import DataSource
 from organizations.serializers import OrganizationSerializer
+from rest_framework.fields import (
+    BooleanField,
+    CharField,
+    DateTimeField,
+    JSONField,
+    ListField,
+    SerializerMethodField,
+    URLField,
+)
+from rest_framework.serializers import IntegerField, ModelSerializer, Serializer
 
 from .models import Platform, Title
 
@@ -118,9 +119,12 @@ class TitleCountSerializer(ModelSerializer):
         return obj.get_pub_type_display()
 
 
-class PlatformKnowledgebaseSerializer(ModelSerializer):
-    knowledgebase = JSONField(read_only=True)
+class UseCaseSerializer(Serializer):
 
-    class Meta:
-        model = Platform
-        fields = ("knowledgebase",)
+    url = URLField(required=True)
+    organization = IntegerField(required=True)
+    platform = IntegerField(required=True)
+    counter_version = IntegerField(required=True)
+    counter_report = IntegerField(required=True)
+    latest = DateTimeField(required=True)
+    count = IntegerField(required=True)

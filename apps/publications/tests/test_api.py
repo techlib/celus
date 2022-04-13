@@ -1,32 +1,27 @@
 import pytest
-from django.urls import reverse
-
 from api.models import OrganizationAPIKey
 from core.models import DataSource, Identity
+from core.tests.conftest import authenticated_client  # noqa - fixtures
+from core.tests.conftest import authentication_headers  # noqa - fixtures
+from core.tests.conftest import invalid_identity, master_client, master_identity, valid_identity
+from django.urls import reverse
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import (
-    OrganizationPlatform,
     AccessLog,
-    Metric,
     ImportBatch,
     InterestGroup,
+    Metric,
+    OrganizationPlatform,
     ReportInterestMetric,
     ReportType,
 )
 from logs.tests.conftest import report_type_nd  # noqa - fixture
 from organizations.models import UserOrganization
-from core.tests.conftest import (  # noqa - fixtures
-    valid_identity,
-    authenticated_client,
-    authentication_headers,
-    invalid_identity,
-    master_client,
-    master_identity,
-)
-from publications.models import PlatformInterestReport, Platform, PlatformTitle, Title
-from sushi.models import SushiCredentials, CounterReportType
-from test_fixtures.entities.logs import MetricFactory
+from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
+from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.logs import ImportBatchFactory, ImportBatchFullFactory, MetricFactory
 from test_fixtures.scenarios.basic import *  # noqa - fixtures
 
 
@@ -1070,89 +1065,6 @@ class TestAllPlatformsAPI:
         if available is not None:
             assert [e["pk"] for e in resp.json()] == [platforms[e].pk for e in sorted(available)]
 
-    def test_all_platfrom_knowledgebase(self, platforms, clients, organizations):
-
-        # any organiztion
-        resp = clients["user2"].get(
-            reverse("all-platforms-knowledgebase", args=[-1, platforms["standalone"].pk])
-        )
-        assert resp.status_code == 200
-        assert {"knowledgebase": None} == resp.json()
-
-        # no credentials
-        resp = clients["admin1"].get(
-            reverse(
-                "all-platforms-knowledgebase", args=[organizations["root"].pk, platforms["root"].pk]
-            )
-        )
-        assert resp.status_code == 200
-        assert {"knowledgebase": None} == resp.json()
-
-        # unaccessible organization
-        resp = clients["user2"].get(
-            reverse(
-                "all-platforms-knowledgebase",
-                args=[organizations["branch"].pk, platforms["branch"].pk],
-            )
-        )
-        assert resp.status_code == 404
-
-        # same organization
-        resp = clients["user1"].get(
-            reverse(
-                "all-platforms-knowledgebase",
-                args=[organizations["branch"].pk, platforms["brain"].pk],
-            )
-        )
-        assert resp.status_code == 200
-        assert resp.json() == {
-            'knowledgebase': {
-                'providers': [
-                    {
-                        'assigned_report_types': [
-                            {
-                                'not_valid_after': None,
-                                'not_valid_before': None,
-                                'report_type': 'JR1',
-                            }
-                        ],
-                        'counter_version': 4,
-                        'provider': {
-                            'extra': {},
-                            'monthly': None,
-                            'name': 'c4.brain.celus.net',
-                            'pk': 10,
-                            'url': 'http://c4.brain.celus.net',
-                            'yearly': None,
-                        },
-                    },
-                    {
-                        'assigned_report_types': [
-                            {
-                                'not_valid_after': None,
-                                'not_valid_before': None,
-                                'report_type': 'TR',
-                            },
-                            {
-                                'not_valid_after': None,
-                                'not_valid_before': None,
-                                'report_type': 'DR',
-                            },
-                        ],
-                        'counter_version': 5,
-                        'provider': {
-                            'extra': {},
-                            'monthly': None,
-                            'name': 'c5.brain.celus.net',
-                            'pk': 11,
-                            'url': 'https://c5.brain.celus.net/sushi',
-                            'yearly': None,
-                        },
-                    },
-                ]
-            }
-        }
-
     @pytest.mark.parametrize(['allow_noncounter'], ((True,), (False,)))
     def test_all_platforms_detail_report_types(
         self, basic1, report_type_nd, settings, allow_noncounter
@@ -1190,6 +1102,49 @@ class TestAllPlatformsAPI:
             }
         else:
             assert {rec['pk'] for rec in data} == {rt_counter.pk, rt_counter_no_interest.pk}
+
+    @pytest.mark.parametrize(
+        ["organization", "record_count"], [("branch", 1), ("standalone", 1), (None, 2),],
+    )
+    def test_use_cases(
+        self,
+        basic1,
+        harvests,
+        clients,
+        platforms,
+        organizations,
+        credentials,
+        counter_report_types,
+        organization,
+        record_count,
+    ):
+
+        # Some success comes from harvests fixture (pr)
+        # and the second is created here (br1)
+        FetchAttemptFactory(
+            credentials=credentials["standalone_br1_jr1"],
+            counter_report=counter_report_types["br1"],
+            status=AttemptStatus.SUCCESS,
+        )
+
+        resp = clients["su"].get(
+            reverse(
+                "all-platforms-use-cases",
+                args=[organizations[organization].pk if organization else -1],
+            )
+        )
+        assert resp.status_code == 200
+        assert len(resp.data) == record_count
+        for record in resp.data:
+            assert record.keys() == {
+                'url',
+                'organization',
+                'platform',
+                'counter_version',
+                'counter_report',
+                'latest',
+                'count',
+            }
 
 
 @pytest.mark.django_db

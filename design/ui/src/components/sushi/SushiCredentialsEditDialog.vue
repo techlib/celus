@@ -249,6 +249,7 @@ cs:
                 validate-on-blur
                 :error-messages="errors.url"
                 :disabled="!activePlatform"
+                @change="urlManuallyEdited = true"
               >
               </v-text-field>
             </v-col>
@@ -540,6 +541,7 @@ export default {
       customerId: "",
       counterVersion: 5,
       url: "",
+      urlManuallyEdited: false,
       httpUsername: "",
       httpPassword: "",
       apiKey: "",
@@ -557,6 +559,7 @@ export default {
       loadingReportTypes: false,
       valid: false,
       saving: false,
+      useCasesData: [],
     };
   },
   computed: {
@@ -623,6 +626,57 @@ export default {
         return null;
       }
     },
+    currentUseCases() {
+      if (this.activePlatform) {
+        return this.useCasesData.filter(
+          (e) =>
+            e.platform === this.activePlatform.pk &&
+            e.counter_version === this.counterVersion
+        );
+      } else {
+        return [];
+      }
+    },
+    pickedUseCases() {
+      // Use usecases from selected organization
+      // or use all if no such usecases exists
+      if (this.organization?.pk) {
+        let res = this.currentUseCases.filter(
+          (e) => e.organization === this.organization.pk
+        );
+        if (res.length > 0) {
+          return res;
+        }
+      }
+      return this.currentUseCases;
+    },
+    useCaseReportTypes() {
+      let report_type_ids = [
+        ...new Set(this.pickedUseCases.map((e) => e.counter_report)),
+      ];
+
+      // Convert id to code
+      return report_type_ids.flatMap((e) => {
+        for (const crt of this.allReportTypes) {
+          if (crt.id === e) {
+            return [crt.code];
+          } else {
+            return [];
+          }
+        }
+      });
+    },
+    pickedCaseUrl() {
+      // pick latest record
+      if (this.pickedUseCases.length > 0) {
+        let records = [...this.pickedUseCases];
+        records.sort((a, b) =>
+          a.latest < b.latest ? 1 : a.latest > b.latest ? -1 : 0
+        );
+        return records[0].url;
+      }
+      return null;
+    },
     knowledgebaseReportTypes() {
       if (this.currentKnowledgebase) {
         let providers = this.activePlatform.knowledgebase.providers.filter(
@@ -632,7 +686,8 @@ export default {
           return providers[0].assigned_report_types.map((e) => e.report_type);
         }
       }
-      return [];
+      // Fallback to useCases when there is no knowledgebase
+      return this.useCaseReportTypes;
     },
     isValid() {
       return this.valid;
@@ -680,6 +735,12 @@ export default {
     platformsBaseUrl() {
       if (this.organization && this.organization.pk) {
         return `/api/organization/${this.organization.pk}/all-platform/`;
+      }
+      return null;
+    },
+    useCasesUrl() {
+      if (this.platformsBaseUrl) {
+        return `${this.platformsBaseUrl}use-cases/`;
       }
       return null;
     },
@@ -833,6 +894,17 @@ export default {
         }
       }
     },
+    async loadUseCases() {
+      if (this.useCasesUrl) {
+        this.useCasesData = [];
+        try {
+          let result = await axios.get(this.useCasesUrl);
+          this.useCasesData = result.data;
+        } catch (error) {
+          this.showSnackbar({ content: "Error loading use cases: " + error });
+        }
+      }
+    },
     async preselectCreatedPlatform(platform) {
       await this.loadPlatforms();
       this.platform = platform;
@@ -971,12 +1043,24 @@ export default {
       if (!this.credentials) {
         await this.loadOrganizations();
         await this.loadPlatforms();
+        await this.loadUseCases();
       }
       if (this.$refs.form) {
         this.$refs.form.resetValidation();
       }
     },
-    guessUrlFromKnowledgebase() {
+    guessUrl() {
+      if (!this.url) {
+        // reset edited state for empty urls
+        this.urlManuallyEdited = false;
+      }
+
+      if (this.urlManuallyEdited) {
+        // don't guess URL for manually edited values
+        return;
+      }
+
+      this.url = "";
       if (this.currentKnowledgebase) {
         let providers = this.currentKnowledgebase.providers.filter(
           (provider) => provider.counter_version == this.counterVersion
@@ -986,7 +1070,8 @@ export default {
           this.url = providers[0].provider.url;
           return;
         }
-        this.url = "";
+      } else if (this.pickedCaseUrl) {
+        this.url = this.pickedCaseUrl;
       }
     },
     addExtraParam() {
@@ -1063,7 +1148,7 @@ export default {
     },
     activePlatform() {
       if (!this.credentials) {
-        this.guessUrlFromKnowledgebase();
+        this.guessUrl();
       }
     },
     counterVersion() {
@@ -1074,7 +1159,7 @@ export default {
         currentReportTypes.includes(item)
       );
       if (!this.credentials) {
-        this.guessUrlFromKnowledgebase();
+        this.guessUrl();
       }
     },
     url() {
