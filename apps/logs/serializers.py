@@ -116,9 +116,6 @@ class ReportTypeSerializer(ModelSerializer):
 
     controlled_metrics = PrimaryKeyRelatedField(many=True, read_only=True)
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
-    log_count = IntegerField(read_only=True)
-    newest_log = DateField(read_only=True)
-    oldest_log = DateField(read_only=True)
     public = BooleanField(default=False)
     dimensions = PrimaryKeyRelatedField(
         read_only=False, queryset=Dimension.objects.all(), many=True, write_only=True
@@ -134,9 +131,6 @@ class ReportTypeSerializer(ModelSerializer):
             'name_en',
             'desc',
             'dimensions_sorted',
-            'log_count',
-            'newest_log',
-            'oldest_log',
             'public',
             'dimensions',
             'controlled_metrics',
