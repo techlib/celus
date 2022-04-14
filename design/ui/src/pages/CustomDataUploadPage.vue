@@ -229,7 +229,7 @@ cs:
             />
             <v-alert v-else-if="state == 'prefailed'" type="error">
               <h3 v-text="$t('preflight_error_found')" class="pb-2"></h3>
-              <strong v-if="errro == 'unicode-decode'">
+              <strong v-if="error == 'unicode-decode'">
                 {{ $t("errors.requires_utf8") }}
               </strong>
               <strong v-else>
