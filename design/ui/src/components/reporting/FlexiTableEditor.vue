@@ -206,8 +206,7 @@ cs:
                     (row.id === 'date' && filters.includes('date__year')) ||
                     (row.id === 'date__year' && filters.includes('date')) ||
                     !reportTypeSelected ||
-                    readOnly ||
-                    row.type === 1
+                    readOnly
                   "
                   :key="row.id"
                 ></v-checkbox>
@@ -289,9 +288,7 @@ cs:
                         v-model="selectedDimValues[index]"
                         :dimension="`dim${index + 1}`"
                         :name="ed.name"
-                        :translator="
-                          ed.type === 1 ? null : translators.explicitDimension
-                        "
+                        :translator="translators.explicitDimension"
                         :disabled="disableDimValuesSelectors"
                         :read-only="readOnly"
                       />
@@ -910,11 +907,7 @@ export default {
           // disable translation for dimensions that are of type integer
           this.explicitDims.forEach((dim, index) => {
             let dimName = `dim${index + 1}`;
-            if (dim.type === 1) {
-              this.translators[dimName] = null;
-            } else {
-              this.translators[dimName] = this.translators.explicitDimension;
-            }
+            this.translators[dimName] = this.translators.explicitDimension;
           });
         }
         // remove groups that are for explicit dimensions

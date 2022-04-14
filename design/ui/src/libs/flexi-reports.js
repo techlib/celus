@@ -21,7 +21,6 @@ class Dimension {
     this.ref = ref;
     this.shortName = "";
     this.name = "";
-    this.type = null;
     this.pk = null;
     this.names = {};
   }
@@ -29,7 +28,6 @@ class Dimension {
   static fromObject(ref, data) {
     let dim = new Dimension(ref);
     dim.shortName = data.short_name;
-    dim.type = data.type;
     dim.pk = data.pk;
     dim.names = {};
     Object.entries(data)
@@ -65,10 +63,7 @@ class Dimension {
 
   get isMapped() {
     // are the values mapped through a pk->value translator?
-    return (
-      (this.isExplicit && this.type === 2) ||
-      (!this.isExplicit && !this.ref.startsWith("date"))
-    );
+    return this.isExplicit || !this.ref.startsWith("date");
   }
 
   getName(i18n) {
