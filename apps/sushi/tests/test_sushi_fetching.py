@@ -66,6 +66,20 @@ class TestSushiFetching:
                 'Infos: Info #0: Some description\n\n',
                 False,
             ),
+            (
+                'no_data_3062.json',
+                AttemptStatus.NO_DATA,
+                AttemptStatus.NO_DATA,
+                'Infos: Info #3062: Invalid ReportAttribute Value\n\n',
+                False,
+            ),
+            (
+                'some_data_3062.json',
+                AttemptStatus.IMPORTING,
+                AttemptStatus.SUCCESS,
+                'Infos: Info #3062: Invalid ReportAttribute Value\n\n',
+                False,
+            ),
         ),
         ids=lambda x: "" if isinstance(x, str) and not x.endswith('.json') else x,
     )

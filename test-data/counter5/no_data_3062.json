@@ -1,0 +1,53 @@
+{
+  "Report_Header": {
+    "Created": "2021-01-01T00:00:00Z",
+    "Created_By": "Provider",
+    "Customer_ID": "11111",
+    "Report_ID": "TR",
+    "Release": "5",
+    "Report_Name": "Title Master Report",
+    "Institution_Name": "My LIbrary",
+    "Report_Filters": [
+      {
+        "Name": "Begin_Date",
+        "Value": "2020-03-01"
+      },
+      {
+        "Name": "End_Date",
+        "Value": "2020-03-31"
+      },
+      {
+        "Name": "Data_Type",
+        "Value": "Newspaper_or_Newsletter"
+      },
+      {
+        "Name": "Access_Method",
+        "Value": "Regular"
+      },
+      {
+        "Name": "Access_Type",
+        "Value": "Controlled"
+      },
+      {
+        "Name": "Metric_Type",
+        "Value": "Total_Item_Requests|Unique_Item_Requests|Total_Item_Investigations|Unique_Item_Investigations"
+      }
+    ],
+    "Report_Attributes": [
+      {
+        "Name": "Attributes_To_Show",
+        "Value": "YOP|Data_Type|Section_Type|Access_Type|Access_Method"
+      }
+    ],
+    "Exceptions": [
+      {
+        "Code": "3062",
+        "Severity": "Warning",
+        "Message": "Invalid ReportAttribute Value",
+        "Help_URL": "",
+        "Data": "Access_Method is not a recognized attribute for this report"
+      }
+    ]
+  },
+  "Report_Items": []
+}

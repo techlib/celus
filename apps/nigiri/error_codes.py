@@ -22,6 +22,7 @@ class ErrorCode(Enum):
     PARAMETER_NOT_RECOGNIZED = 3050
     INVALID_REPORT_FILTER = 3060
     INCONGRUOUS_REPORT_FILTER = 3061
+    INVALID_REPORT_ATTRIBUTE = 3062
     MISSING_REPORT_FILTER = 3070
     MISSING_REPORT_ATTRIBUTE = 3071
     RETURN_DATA_LIMIT_REACHED = 3080
@@ -81,6 +82,11 @@ def error_code_to_severity(error_code: typing.Union[None, int, str]) -> str:
         return "Error"  # or Warning
     elif error_code == ErrorCode.INCONGRUOUS_REPORT_FILTER.value:
         return "Error"  # or Warning
+    elif error_code == ErrorCode.INVALID_REPORT_ATTRIBUTE.value:
+        # According to standard this is supposed to be Warning or Error
+        # But some vendors are using this error code with valid output
+        # So it is converted to Info
+        return "Info"
     elif error_code == ErrorCode.MISSING_REPORT_FILTER.value:
         return "Error"  # or Warning
     elif error_code == ErrorCode.MISSING_REPORT_ATTRIBUTE.value:
