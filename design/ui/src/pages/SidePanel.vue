@@ -222,7 +222,6 @@ export default {
               linkTo: "manual-data-upload-list",
               show: this.showAdminStuff && this.allowManualDataUpload,
             },
-            //{ title: this.$t('pages.import_batches'), icon: 'fa-file-import', linkTo: 'import-batch-list', show: this.showAdminStuff },
           ],
           show: this.showAdminStuff,
         },
