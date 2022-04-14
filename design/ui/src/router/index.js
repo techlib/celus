@@ -50,12 +50,15 @@ export default new Router({
       path: "/user/",
       name: "user-page",
       component: () => import("../pages/UserPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/platforms/",
       name: "platform-list",
       component: () => import("../pages/PlatformListPage.vue"),
-      // meta: {title: 'pages.platforms'}
     },
     {
       path: "/titles/",
@@ -92,6 +95,10 @@ export default new Router({
       path: "/interests",
       name: "interest-overview",
       component: () => import("../pages/InterestOverviewPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/heatmap",
@@ -118,6 +125,10 @@ export default new Router({
       path: "/analytics/flexitable",
       name: "flexitable",
       component: () => import("../pages/FlexiTablePage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/analytics/flexible-reports/:reportId",
@@ -126,51 +137,78 @@ export default new Router({
       props: (route) => ({
         reportId: Number.parseInt(route.params.reportId, 10),
       }),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/analytics/flexible-reports",
       name: "flexireports",
       component: () => import("../pages/FlexibleReportsPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/analytics/exports",
       name: "exports",
       component: () => import("../pages/ExportOverviewPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/admin/management/",
       name: "management",
       component: () => import("../pages/ManagementPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/admin/sushi-credentials/",
       name: "sushi-credentials-list",
       component: () => import("../pages/SushiCredentialsManagementPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/admin/sushi-by-month/",
       name: "sushi-monthly-overview",
       component: () => import("../pages/SushiCredentialsMonthOverviewPage.vue"),
-    },
-    {
-      path: "/admin/import-batches/",
-      name: "import-batch-list",
-      component: () => import("../pages/ImportBatchesPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/admin/mdu/",
       name: "manual-data-upload-list",
       component: () => import("../pages/ManualUploadListPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/admin/harvests/",
       name: "harvests",
       component: () => import("../pages/HarvestsPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/admin/maintenance/",
       name: "maintenance",
       component: () => import("../pages/MaintenancePage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/platforms/:platformId/upload-data/",
@@ -179,6 +217,9 @@ export default new Router({
       props: (route) => ({
         platformId: Number.parseInt(route.params.platformId, 10),
       }),
+      meta: {
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/platforms/:platformId/upload-data/:uploadObjectId",
@@ -188,6 +229,9 @@ export default new Router({
         platformId: Number.parseInt(route.params.platformId, 10),
         uploadObjectId: Number.parseInt(route.params.uploadObjectId, 10),
       }),
+      meta: {
+        hideDateRangeSelector: true,
+      },
     },
     {
       path: "/secure",

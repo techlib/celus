@@ -32,13 +32,15 @@ cs:
       <OrganizationSelector
         internal-label
         :lang="appLanguage"
-        v-if="$vuetify.breakpoint.mdAndUp"
+        v-if="
+          $vuetify.breakpoint.mdAndUp && !$route.meta.hideOrganizationSelector
+        "
         class="d-flex"
       />
       <SelectedDateRangeWidget
         input-like-label
         class="d-flex"
-        v-if="$vuetify.breakpoint.smAndUp"
+        v-if="$vuetify.breakpoint.smAndUp && !$route.meta.hideDateRangeSelector"
       />
 
       <v-spacer></v-spacer>
@@ -103,10 +105,6 @@ cs:
     <v-main>
       <v-container fluid pa-0 pa-sm-2>
         <router-view :key="$route.fullPath" v-if="loggedIn" />
-
-        <!--keep-alive max="5">
-                    <router-view :key="$route.fullPath"/>
-                </keep-alive-->
 
         <v-snackbar v-model="snackbarShow" :color="snackbarColor">
           {{ snackbarText }}
