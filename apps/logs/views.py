@@ -216,10 +216,7 @@ class RawDataExportView(PandasView):
             al.mapped_dim_values_ = {}
             for i, dim in enumerate(tr_to_dimensions[al.report_type_id]):
                 value = getattr(al, f'dim{i+1}')
-                if dim.type == dim.TYPE_TEXT:
-                    al.mapped_dim_values_[dim.short_name] = text_id_to_text.get(value, value)
-                else:
-                    al.mapped_dim_values_[dim.short_name] = value
+                al.mapped_dim_values_[dim.short_name] = text_id_to_text.get(value, value)
             if al.target:
                 al.mapped_dim_values_['isbn'] = al.target.isbn
                 al.mapped_dim_values_['issn'] = al.target.issn

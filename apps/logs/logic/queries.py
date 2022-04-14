@@ -342,14 +342,14 @@ class StatsComputer:
         self.clean_organization_names(user, data)
         # remap the values if text dimensions are involved
         # primary dimension
-        if self.prim_dim_obj and self.prim_dim_obj.type == Dimension.TYPE_TEXT:
+        if self.prim_dim_obj:
             remap_dicts(self.prim_dim_obj, data, self.prim_dim_name)
         elif self.prim_dim_name in self.implicit_dims:
             # we remap the implicit dims if they are foreign key based
             to_text_fn = self.implicit_dim_to_text_fn.get(self.io_prim_dim_name, str)
             self.remap_implicit_dim(data, self.prim_dim_name, to_text_fn=to_text_fn)
         # secondary dimension
-        if self.sec_dim_obj and self.sec_dim_obj.type == Dimension.TYPE_TEXT:
+        if self.sec_dim_obj:
             remap_dicts(self.sec_dim_obj, data, self.sec_dim_name)
         elif self.sec_dim_name in self.implicit_dims:
             # we remap the implicit dims if they are foreign key based
@@ -387,12 +387,11 @@ class StatsComputer:
                 dim_raw_name_to_name[dim_raw_name] = dim_name
                 value = params.get(dim_name)
                 if value:
-                    if dim.type == dim.TYPE_TEXT:
-                        try:
-                            value = DimensionText.objects.get(dimension=dim, text=value).pk
-                        except DimensionText.DoesNotExist:
-                            # we leave the value as it is - it will probably lead to empty result
-                            pass
+                    try:
+                        value = DimensionText.objects.get(dimension=dim, text=value).pk
+                    except DimensionText.DoesNotExist:
+                        # we leave the value as it is - it will probably lead to empty result
+                        pass
                     query_params[dim_raw_name] = value
         # remap dimension names if the query dim name is different from the i/o one
         if self.prim_dim_name != self.io_prim_dim_name:

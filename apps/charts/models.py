@@ -49,15 +49,10 @@ class ReportDataView(models.Model):
         for i, dim in enumerate(self.base_report_type.dimensions_sorted):
             if dim.pk in dim_filters:
                 allowed_values = dim_filters[dim.pk]
-                if dim.type == dim.TYPE_TEXT:
-                    values = [
-                        dt.pk
-                        for dt in DimensionText.objects.filter(
-                            dimension=dim, text__in=allowed_values
-                        )
-                    ]
-                else:
-                    values = allowed_values
+                values = [
+                    dt.pk
+                    for dt in DimensionText.objects.filter(dimension=dim, text__in=allowed_values)
+                ]
                 filters[f'dim{i+1}__in'] = values
         return filters
 

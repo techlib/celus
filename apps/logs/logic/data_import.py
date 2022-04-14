@@ -597,21 +597,14 @@ def _import_counter_records(
         }
         for i, dim in enumerate(dimensions):
             dim_value = record.dimension_data.get(dim.short_name)
-            if dim.type != dim.TYPE_INT:
-                if dim_value is not None:
-                    remap = text_to_int_remaps.get(dim.pk)
-                    if not remap:
-                        remap = {}
-                        text_to_int_remaps[dim.pk] = remap
-                    dim_value = get_or_create_with_map(
-                        DimensionText,
-                        remap,
-                        'text',
-                        dim_value,
-                        other_attrs={'dimension_id': dim.pk},
-                    )
-            else:
-                dim_value = int(dim_value) if dim_value is not None else None
+            if dim_value is not None:
+                remap = text_to_int_remaps.get(dim.pk)
+                if not remap:
+                    remap = {}
+                    text_to_int_remaps[dim.pk] = remap
+                dim_value = get_or_create_with_map(
+                    DimensionText, remap, 'text', dim_value, other_attrs={'dimension_id': dim.pk},
+                )
             id_attrs[f'dim{i+1}'] = dim_value
         # here we detect possible duplicated keys and merge matching records
         key = tuple(sorted(id_attrs.items()))

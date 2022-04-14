@@ -73,7 +73,7 @@ class DimensionSerializer(OrganizationSourceExtractingMixin, ModelSerializer):
 
     class Meta:
         model = Dimension
-        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'type', 'source', 'public')
+        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'source', 'public')
         validators = []  # this removes the implicit required validation on source
 
     def validate(self, attrs):

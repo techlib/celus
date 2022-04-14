@@ -207,7 +207,7 @@ class FlexibleDataExporter(ABC):
                 )
             rt: ReportType = self.involved_report_types[0]
             dim = rt.dimension_by_attr_name(ref)
-            return True, dim.type == dim.TYPE_TEXT, dim
+            return True, True, dim
         else:
             return False, False, field
 

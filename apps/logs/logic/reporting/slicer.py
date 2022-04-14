@@ -260,15 +260,10 @@ class FlexibleDataSlicer:
             subfilter = primary_cls.objects.filter(self._text_to_filter(text_filter)).values('id')
             extra_filter = {f'{dimension}_id__in': subfilter}
         elif field and dimension.startswith('dim'):
-            dim = self.resolve_explicit_dimension(dimension)
-            if dim.type == Dimension.TYPE_TEXT:
-                subfilter = DimensionText.objects.filter(
-                    self._text_to_filter(text_filter, text_fields=('text', 'text_local'))
-                ).values('id')
-                extra_filter = {f'{dimension}__in': subfilter}
-            else:
-                extra_annot = {f'{dimension}_str': Cast(dimension, CharField())}
-                extra_filter = {f'{dimension}_str__contains': text_filter}
+            subfilter = DimensionText.objects.filter(
+                self._text_to_filter(text_filter, text_fields=('text', 'text_local'))
+            ).values('id')
+            extra_filter = {f'{dimension}__in': subfilter}
         else:
             raise SlicerConfigError(
                 'The requested dimension is not supported', SlicerConfigErrorCode.E107
@@ -361,14 +356,10 @@ class FlexibleDataSlicer:
             if ob.startswith('dim'):
                 # when sorting by dimX we need to map the IDs to the corresponding texts
                 # because the mapping does not use a Foreign key relationship, we use a subquery
-                # but the dimension might be of type 'integer' and in such case we do not want to
-                # remap anything...
-                dim = self.resolve_explicit_dimension(ob)
-                if dim.type == Dimension.TYPE_TEXT:
-                    dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values('text')[:1]
-                    qs = qs.annotate(**{ob + 'sort': Subquery(dt_query)})
-                    obs.append(prefix + ob + 'sort')
-                    dealt_with = True
+                dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values('text')[:1]
+                qs = qs.annotate(**{ob + 'sort': Subquery(dt_query)})
+                obs.append(prefix + ob + 'sort')
+                dealt_with = True
             elif ob.startswith('grp-'):
                 if ob not in self._annotations:
                     # we ignore sort groups that are not in the data

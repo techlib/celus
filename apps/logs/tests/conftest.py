@@ -115,7 +115,7 @@ def report_type_nd():
             else:
                 dim_short_name = f'dim{i}'
             dim, _ = Dimension.objects.get_or_create(
-                short_name=dim_short_name, name=f'dimension-{i}', type=Dimension.TYPE_TEXT
+                short_name=dim_short_name, name=f'dimension-{i}'
             )
             ReportTypeToDimension.objects.create(report_type=rt, dimension=dim, position=i)
         return rt
@@ -289,9 +289,6 @@ def flexible_slicer_test_data2(report_type_nd):
         report_type_nd(1, ['dim1name'], short_name='rt1', name='Report type 1'),
         report_type_nd(2, ['dim1name', 'dim2name'], short_name='rt2', name='Report type 2'),
     ]
-    # change the second dimension to type INT
-    report_types[1].dimensions_sorted[1].type = Dimension.TYPE_INT
-    report_types[1].dimensions_sorted[1].save()
 
     dates = ['2019-12-01', '2020-01-01', '2020-02-01']
     dimension_values = [
@@ -307,10 +304,9 @@ def flexible_slicer_test_data2(report_type_nd):
         dim_options = dimension_values[:dim_count]
         for i, dim in enumerate(rt.dimensions_sorted):
             for value in dimension_values[i]:
-                if dim.type == Dimension.TYPE_TEXT:
-                    dimension_texts[(dim.pk, value)], _ = DimensionText.objects.get_or_create(
-                        dimension=dim, text=value
-                    )
+                dimension_texts[(dim.pk, value)], _ = DimensionText.objects.get_or_create(
+                    dimension=dim, text=value
+                )
         for rec in product(organizations, platforms, metrics, targets, dates, *dim_options):
             organization, platform, metric, target, date = rec[:5]
             dim_data = {}

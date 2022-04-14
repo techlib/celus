@@ -700,61 +700,6 @@ class TestFlexibleDataSimpleCSVExporter:
         assert len(output.splitlines()[0].split(',')) == 4, 'three metrics and primary dim'
         assert output.splitlines()[1].split(',')[0] == "A", 'first row starts with "A"'
 
-    def test_explicit_dim_without_remap_by_metric(self, flexible_slicer_test_data):
-        """
-        Primary dimension: dim1 without remap
-        Group by: metric
-        DimensionFilter: report_type
-        """
-        # the simplest way how to make a dimension not-remapping is to change its definition
-        # and treat the references that are in accesslogs as actual values
-        dim1 = Dimension.objects.get(short_name='dim1name')
-        dim1.type = Dimension.TYPE_INT
-        dim1.save()
-        # let's continue
-        slicer = FlexibleDataSlicer(primary_dimension='dim1')
-        report_type = flexible_slicer_test_data['report_types'][0]
-        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
-        slicer.add_group_by('metric')
-        slicer.order_by = ['dim1']
-        exporter = FlexibleDataSimpleCSVExporter(slicer)
-        out = StringIO()
-        exporter.stream_data_to_sink(out)
-        output = out.getvalue()
-        assert len(output.splitlines()) == 4, "3 dim values + header"
-        assert len(output.splitlines()[0].split(',')) == 4, 'three metrics and primary dim'
-        assert output.splitlines()[1].split(',')[0] == str(
-            DimensionText.objects.get(text='A', dimension=dim1).pk
-        ), 'first row starts with the primary key of "A"'
-
-    def test_platform_by_explicit_dim_without_remap(self, flexible_slicer_test_data):
-        """
-        Primary dimension: platform
-        Group by: dim1 without remap
-        DimensionFilter: report_type
-        """
-        # the simplest way how to make a dimension not-remapping is to change its definition
-        # and treat the references that are in accesslogs as actual values
-        dim1 = Dimension.objects.get(short_name='dim1name')
-        dim1.type = Dimension.TYPE_INT
-        dim1.save()
-        # let's continue
-        slicer = FlexibleDataSlicer(primary_dimension='platform')
-        report_type = flexible_slicer_test_data['report_types'][0]
-        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
-        slicer.add_group_by('dim1')
-        exporter = FlexibleDataSimpleCSVExporter(slicer)
-        out = StringIO()
-        exporter.stream_data_to_sink(out)
-        output = out.getvalue()
-        assert len(output.splitlines()) == 4, "3 dim values + header"
-        assert len(output.splitlines()[0].split(',')) == 4, 'three platforms and primary dim'
-        row_names = set(output.splitlines()[0].split(','))
-        text_pks = map(
-            str, DimensionText.objects.filter(dimension=dim1).values_list('pk', flat=True)
-        )
-        assert row_names == {'Platform', *text_pks}
-
     def test_org_sum_by_platform_with_org_extra_filter(self, flexible_slicer_test_data):
         """
         Primary dimension: organization

@@ -136,10 +136,7 @@ class CSVExport:
                 record['date'] = log['date']
                 for i, dim in enumerate(rt_to_dimensions[log['report_type_id']]):
                     value = log.get(f'dim{i+1}')
-                    if dim.type == dim.TYPE_TEXT:
-                        record[dim.short_name] = text_id_to_text.get(value, value)
-                    else:
-                        record[dim.short_name] = value
+                    record[dim.short_name] = text_id_to_text.get(value, value)
                 writer.writerow(record)
                 if rec_num % 999 == 0:
                     self.store_progress(rec_num + 1)

@@ -325,14 +325,8 @@ class Dimension(models.Model):
     Represents a specific dimension of multidimensional data
     """
 
-    TYPE_INT = 1
-    TYPE_TEXT = 2
-
-    DIMENSION_TYPE_CHOICES = ((TYPE_INT, 'integer'), (TYPE_TEXT, 'text'))
-
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
-    type = models.PositiveSmallIntegerField(choices=DIMENSION_TYPE_CHOICES, default=TYPE_TEXT)
     desc = models.TextField(blank=True)
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -348,7 +342,7 @@ class Dimension(models.Model):
         ]
 
     def __str__(self):
-        return '{} ({})'.format(self.short_name, self.get_type_display())
+        return self.short_name
 
     @property
     def public(self):
