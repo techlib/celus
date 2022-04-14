@@ -751,6 +751,10 @@ PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', cast=int, default=8640
 
 CELUS_ADMIN_SITE_PATH = config('CELUS_ADMIN_SITE_PATH', default='wsEc67YNV2sq/')
 
+# contacts with customers
+CONTACT_EMAIL = 'ask@celus.net'
+SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL = 'Credentials - COUNTER 5 import'
+
 EXPORTED_SETTINGS = [
     'ALLOW_EDUID_LOGIN',
     'ALLOW_EMAIL_LOGIN',
@@ -770,6 +774,8 @@ EXPORTED_SETTINGS = [
     'USES_ERMS',
     'EXPORT_DELETING_PERIOD',
     'ENABLE_RAW_DATA_IMPORT',
+    'CONTACT_EMAIL',
+    'SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL',
 ]
 
 # Enables Automatic harvesting
@@ -820,4 +826,14 @@ ENABLE_NIBBLER_FOR_CELUS_FORMAT = config(
 )
 ENABLE_NIBBLER_FOR_COUNTER_FORMAT = config(
     'ENABLE_NIBBLER_FOR_COUNTER_FORMAT', cast=bool, default=False
+)
+
+# export sushi credentials
+TEMPLATE_FOR_SUSHI_CRED_IMPORT_CONSORTIUM = (
+    Path(__file__).parent.parent.parent
+    / 'apps/sushi/templates/Template_for_SushiCredentials_import_consortium.xlsx'
+)
+TEMPLATE_FOR_SUSHI_CRED_IMPORT_SINGLE_ORG = (
+    Path(__file__).parent.parent.parent
+    / 'apps/sushi/templates/Template_for_SushiCredentials_import_singleorg.xlsx'
 )

@@ -1,5 +1,3 @@
-import datetime
-
 import reversion
 from celus_nigiri.utils import parse_date_fuzzy
 from core.logic.dates import month_end, month_start
@@ -8,12 +6,14 @@ from core.permissions import SuperuserOrAdminPermission
 from dateutil.relativedelta import relativedelta
 from django.db.models import BooleanField, F, Min
 from django.db.models.functions import Cast
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.timezone import now
 from logs.models import ImportBatch
 from organizations.logic.queries import organization_filter_from_org_id
+from organizations.models import Organization
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -25,7 +25,7 @@ from scheduler.serializers import MonthOverviewSerializer
 from sushi.models import SushiFetchAttempt
 from sushi.tasks import delete_fetchattempts_and_related_importbatches_task
 
-from .admin import SushiCredentialsResource
+from .logic.export import CredentialsDataFrame, OrganizationsDataFrame, Sheet, XlsxFile
 from .models import AttemptStatus, CounterReportsToCredentials, CounterReportType, SushiCredentials
 from .serializers import (
     CounterReportTypeSerializer,
@@ -171,22 +171,74 @@ class SushiCredentialsViewSet(ModelViewSet):
         self._post_process_queryset([credentials])
         return Response(SushiCredentialsSerializer(credentials).data)
 
-    @action(detail=False, methods=['post'], url_path="export-credentials")
+    @action(detail=False, methods=['post', 'get'], url_path="export-credentials")
     def export_credentials(self, request):
         pks = request.data.getlist('pk')
+        selected_organization_id = request.GET.get('organization', '-1')
         qs = self.get_queryset()
         if pks:
             qs = qs.filter(pk__in=pks)
         qs = qs.prefetch_related('counter_reports')
-
-        data = SushiCredentialsResource().export(qs)
-        data_in_csv = data.csv
-        today = datetime.datetime.now().strftime("%Y-%m-%d")
-        return StreamingHttpResponse(
-            data_in_csv,
-            content_type='text/csv',
-            headers={'Content-Disposition': f'attachment; filename="SushiCredentials-{today}.csv"'},
+        sheets = [
+            Sheet(
+                CredentialsDataFrame.export(counter_version=4).create(qs), 'Credentials-COUNTER4'
+            ),
+            Sheet(
+                CredentialsDataFrame.export(counter_version=5).create(qs), 'Credentials-COUNTER5'
+            ),
+        ]
+        excel_file = XlsxFile.new(sheets).create()
+        response = HttpResponse(
+            excel_file.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
+        today = now().strftime("%Y-%m-%d")
+        org_suffix = (
+            "consortium"
+            if selected_organization_id == '-1'
+            else Organization.objects.get(id=selected_organization_id).short_name
+        )
+        org_suffix = org_suffix.replace('/', '_')
+        response[
+            'Content-Disposition'
+        ] = f'attachment; filename="SushiCredentials-{today}_{org_suffix}.xlsx"'
+        return response
+
+    @action(detail=False, methods=['get'], url_name='import-template', url_path="import-template")
+    def get_template_for_import(self, request):
+        selected_organization_id = request.GET.get('organization', '-1')
+        accessible_organizations = request.user.accessible_organizations()
+        admin_organizations = request.user.admin_organizations()
+        qs = self.get_queryset()
+        qs = qs.prefetch_related('counter_reports')
+        sheets = [
+            Sheet(
+                CredentialsDataFrame.template_for_import(selected_organization_id).create(
+                    qs, accessible_organizations
+                ),
+                'Credentials-COUNTER5',
+            )
+        ]
+        if selected_organization_id == '-1':
+            sheets.append(
+                Sheet(OrganizationsDataFrame(admin_organizations).create(), 'Organizations')
+            )
+        excel_file = XlsxFile.use_template(sheets, selected_organization_id).create(
+            mode='a', if_sheet_exists="overlay"
+        )
+        response = HttpResponse(
+            excel_file.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        org_suffix = (
+            "consortium"
+            if selected_organization_id == '-1'
+            else Organization.objects.get(id=selected_organization_id).short_name
+        )
+        response[
+            'Content-Disposition'
+        ] = f'attachment; filename="Template_for_import_SushiCredentials_{org_suffix}.xlsx"'
+        return response
 
     @action(
         detail=True,

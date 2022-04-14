@@ -228,6 +228,18 @@ export default new Vuex.Store({
       }
       return true;
     },
+    contactEmail(state) {
+      if ("CONTACT_EMAIL" in state.basicInfo) {
+        return state.basicInfo["CONTACT_EMAIL"];
+      }
+      return null;
+    },
+    subjectForImportCredEmail(state) {
+      if ("SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL" in state.basicInfo) {
+        return state.basicInfo["SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL"];
+      }
+      return "COUNTER credentials import";
+    },
     allowManualDataUpload(state) {
       if ("ALLOW_MANUAL_UPLOAD" in state.basicInfo) {
         return state.basicInfo["ALLOW_MANUAL_UPLOAD"];

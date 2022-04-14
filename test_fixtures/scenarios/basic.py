@@ -308,19 +308,13 @@ def import_batches(report_types):
 
 @pytest.fixture
 def credentials(counter_report_types, organizations, platforms):
-    standalone_tr = CredentialsFactory(
-        organization=organizations["standalone"],
-        platform=platforms["standalone"],
-        url="https://c5.standalone.example.com/",
-        counter_version=5,
-    )
-    standalone_tr.counter_reports.add(counter_report_types["tr"])
 
     standalone_br1_jr1 = CredentialsFactory(
         organization=organizations["standalone"],
         platform=platforms["standalone"],
         url="https://c4.standalone.example.com/",
         counter_version=4,
+        extra_params={"jlkj": "oencel", "uunni": "idsnclk", "uybkk": 66},
     )
     standalone_br1_jr1.counter_reports.add(counter_report_types["br1"])
     standalone_br1_jr1.counter_reports.add(counter_report_types["jr1"])
@@ -330,9 +324,20 @@ def credentials(counter_report_types, organizations, platforms):
         platform=platforms["branch"],
         url="https://c5.branch.example.com/",
         counter_version=5,
+        extra_params={"kibi": "oncrun", "btvtc": "ivnejen", "ygvex": 34},
     )
     branch_pr.counter_reports.add(counter_report_types["pr"])
 
+    standalone_tr = CredentialsFactory(
+        organization=organizations["standalone"],
+        platform=platforms["standalone"],
+        url="https://c5.standalone.example.com/",
+        counter_version=5,
+        extra_params={"duiefn": "5ce54", "acuv": 4354, "ncjd": "as.§da"},
+    )
+    standalone_tr.counter_reports.add(counter_report_types["tr"])
+
+    del counter_report_types, organizations, platforms
     return locals()
 
 
