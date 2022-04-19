@@ -374,8 +374,6 @@ class ImportBatchQuerySet(models.QuerySet):
         organizations: typing.Optional[typing.Iterable[Organization]] = None,
         platforms: typing.Optional[typing.Iterable[Platform]] = None,
         report_types: typing.Optional[typing.Iterable[ReportType]] = None,
-        start_date: typing.Optional[date] = None,
-        end_date: typing.Optional[date] = None,
     ):
         filter = {}
         if organizations:

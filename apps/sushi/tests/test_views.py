@@ -21,6 +21,7 @@ from sushi.models import (
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory
+from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.scenarios.basic import (  # noqa
     basic1,
     clients,
@@ -500,6 +501,32 @@ class TestSushiCredentialsViewSet:
         )
         cr2c_br1.set_broken(attempt_br1, BS.BROKEN_SUSHI)
 
+        # partial download in a queue
+        intention_pr = FetchIntentionFactory(
+            credentials=credentials["branch_pr"],
+            counter_report=counter_report_types["pr"],
+            start_date=date(2020, 6, 1),
+            attempt__status=AttemptStatus.SUCCESS,
+            attempt__partial_data=True,
+            attempt__import_batch=None,
+            when_processed=timezone.now(),
+        )
+        FetchIntentionFactory(
+            credentials=credentials["branch_pr"],
+            counter_report=counter_report_types["pr"],
+            start_date=date(2020, 6, 1),
+            attempt__status=AttemptStatus.SUCCESS,
+            attempt__partial_data=False,
+            when_processed=timezone.now(),
+            queue=intention_pr.queue,
+            attempt__import_batch=ImportBatchFullFactory(
+                organization=credentials["branch_pr"].organization,
+                platform=credentials["branch_pr"].platform,
+                report_type=counter_report_types["pr"].report_type,
+                date=date(2020, 6, 1),
+            ),
+        )
+
         # Just test premade scenarios
         resp = clients["master"].get(
             reverse('sushi-credentials-data', args=(credentials["standalone_tr"].pk,))
@@ -580,7 +607,6 @@ class TestSushiCredentialsViewSet:
             month = f"{i:02d}"
             assert len(data[1][month]) == 1
             assert data[1][month][0]["broken"] is False
-            assert data[1][month][0]["can_harvest"] is True
             if month in ["01"]:
                 assert data[1][month][0]["status"] == "success"
                 assert data[1][month][0]["planned"] is False
@@ -589,6 +615,10 @@ class TestSushiCredentialsViewSet:
                 assert data[1][month][0]["status"] == "untried"
                 assert data[1][month][0]["planned"] is True
                 assert data[1][month][0]["can_harvest"] is True
+            elif month in ["06"]:
+                assert data[1][month][0]["status"] == "success"
+                assert data[1][month][0]["planned"] is False
+                assert data[1][month][0]["can_harvest"] is False
             else:
                 assert data[1][month][0]["status"] == "untried"
                 assert data[1][month][0]["planned"] is False

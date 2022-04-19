@@ -163,8 +163,6 @@ class SushiCredentialsViewSet(ModelViewSet):
         """ Display data for given set of credentials """
         credentials = get_object_or_404(SushiCredentials, pk=pk)
 
-        # TODO perhaps we might add some year filter here
-
         current_time = timezone.now()
         start_year = (
             credentials.fetchintention_set.aggregate(min_start=Min('start_date'))["min_start"]
@@ -184,8 +182,6 @@ class SushiCredentialsViewSet(ModelViewSet):
             organizations=[credentials.organization],
             platforms=[credentials.platform],
             report_types=[e.report_type for e in report_types],
-            start_date=f"{start_year}-01-01",
-            end_date=f"{end_year}-12-31",
         )
         data_matrix_map = {
             (e.report_type_id, e.date.year, e.date.month): e for e in data_matrix if e.date
@@ -252,19 +248,17 @@ class SushiCredentialsViewSet(ModelViewSet):
                     elif attempt.partial_data and before in [
                         "untried",
                         "failed",
-                        "success",
                         "no_data",
                     ]:
-                        # success. failed, success, no_data => partial_data
+                        # untried, failed, no_data => partial_data
                         result[start.year][f"{start.month:02d}"][report_type][
                             "status"
                         ] = "partial_data"
                     elif status == AttemptStatus.NO_DATA and before in [
                         "untried",
                         "failed",
-                        "partial_data",
                     ]:
-                        # failed, untried, partial_data => no_data
+                        # failed, untried => no_data
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "no_data"
                     elif status == AttemptStatus.SUCCESS and before in [
                         "untried",
