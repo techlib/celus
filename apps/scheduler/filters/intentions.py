@@ -64,17 +64,22 @@ class CounterVersionFilter(filters.BaseFilterBackend):
 
 class ModeFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        mode = request.query_params.get('mode', "")
+        # Use all mode in detail as default otherwise current mode will be used
+        mode = request.query_params.get('mode', "all" if view.detail else "")
+
         if mode == 'success_and_current':
-            queryset = queryset.filter(
+            return queryset.filter(
                 Q(attempt__credentials_version_hash=F('credentials__version_hash'))
                 | Q(attempt__status__in=AttemptStatus.successes())
-            )
-        elif mode == 'current':
-            queryset = queryset.filter(
+            ).latest_intentions()
+        elif mode == 'all':
+            # No filtering in all mode
+            return queryset
+        else:
+            # a.k.a default 'current' mode
+            return queryset.filter(
                 attempt__credentials_version_hash=F('credentials__version_hash'),
-            )
-        return queryset
+            ).latest_intentions()
 
 
 class AttemptFilter(filters.BaseFilterBackend):

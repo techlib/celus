@@ -1,44 +1,38 @@
+import json
 from datetime import date
 from itertools import product
 
 import pytest
-import json
-
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
 from hcube.api.models.aggregation import Sum as HSum
-
-from logs.cubes import ch_backend, AccessLogCube
-from logs.models import ImportBatch, AccessLog
+from logs.cubes import AccessLogCube, ch_backend
+from logs.models import AccessLog, ImportBatch
 from organizations.models import UserOrganization
 from scheduler import tasks
 from scheduler.models import Automatic, FetchIntention
-from sushi.models import (
-    BrokenCredentialsMixin as BS,
-    CounterReportsToCredentials,
-    SushiFetchAttempt,
-)
+from sushi.models import BrokenCredentialsMixin as BS
+from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
+from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
-
+from test_fixtures.entities.scheduler import FetchIntentionFactory
 from test_fixtures.scenarios.basic import (
     basic1,
     clients,
+    counter_report_types,
+    credentials,
     data_sources,
     harvests,
     identities,
     import_batches,
     organizations,
     platforms,
-    users,
-    counter_report_types,
     report_types,
-    credentials,
     schedulers,
+    users,
 )
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory
 
 
 @pytest.mark.django_db
@@ -764,14 +758,45 @@ class TestFetchIntentionAPI:
             queue=fi.queue,
             when_processed=timezone.now(),
         )
-        # try without filter
+
+        # no mode set (should be the same as all mode
         resp = admin_client.get(reverse('intention-list'))
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 4
-        # try with filter for platform
+        assert len(resp.json()['results']) == 4, "no mode no platform filter"
         resp = admin_client.get(reverse('intention-list'), {'platform': cr.platform_id})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 3
+        assert len(resp.json()['results']) == 3, "no mode with platform filter"
+
+        # mode all
+        resp = admin_client.get(reverse('intention-list'), {'mode': 'all'})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 33, "mode all no platform filter"
+        resp = admin_client.get(
+            reverse('intention-list'), {'platform': cr.platform_id, 'mode': 'all'}
+        )
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 3, "mode all with platform filter"
+
+        # mode current
+        resp = admin_client.get(reverse('intention-list'), {"mode": "current"})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 4, "no platform filter"
+        resp = admin_client.get(
+            reverse('intention-list'), {'platform': cr.platform_id, "mode": "current"}
+        )
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 3, "with platform filter"
+
+        # mode success_and_current
+
+        resp = admin_client.get(reverse('intention-list'), {"mode": "success_and_current"})
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 4, "no platform filter"
+        resp = admin_client.get(
+            reverse('intention-list'), {'platform': cr.platform_id, "mode": "success_and_current"}
+        )
+        assert resp.status_code == 200
+        assert len(resp.json()['results']) == 3, "with platform filter"
 
     @pytest.mark.parametrize(
         ['order_by'], (('start_date',), ('end_date',), ('timestamp',), ('error_code',))
@@ -828,10 +853,10 @@ class TestFetchIntentionAPI:
         cr = CredentialsFactory()
         FetchIntentionFactory.create_batch(23, credentials=cr, attempt__credentials=cr)
         FetchIntentionFactory.create_batch(19, credentials=cr, attempt=None)
-        resp = admin_client.get(reverse('intention-list'), {'attempt': '1'})
+        resp = admin_client.get(reverse('intention-list'), {'attempt': '1', 'mode': 'all'})
         assert resp.status_code == 200
         assert len(resp.json()['results']) == 23
-        resp = admin_client.get(reverse('intention-list'), {'attempt': '0'})
+        resp = admin_client.get(reverse('intention-list'), {'attempt': '0', 'mode': 'all'})
         assert resp.status_code == 200
         assert len(resp.json()['results']) == 19
 

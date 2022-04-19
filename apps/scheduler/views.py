@@ -288,13 +288,6 @@ class IntentionViewSet(ModelViewSet):
             .annotate_credentials_state()
         )
 
-    def filter_queryset(self, *args, **kwargs):
-        if 'pk' in self.kwargs:
-            # when a specific object was requested, do not filter for latest intentions to avoid
-            # 404 for existing but not last intentions
-            return super().filter_queryset(*args, **kwargs)
-        return super().filter_queryset(*args, **kwargs).latest_intentions()
-
     class PurgeSerializer(Serializer):
         credentials = PrimaryKeyRelatedField(many=False, queryset=SushiCredentials.objects.all())
         start_date = DateField()
