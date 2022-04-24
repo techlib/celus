@@ -1,6 +1,7 @@
+import csv
 import logging
 from collections import Counter
-from time import time
+from time import monotonic
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Min
@@ -24,6 +25,11 @@ class Command(BaseCommand):
         'Goes over all import batches, removes the old data and reimports the data from source '
         'files.'
     )
+
+    def __init__(self, stdout=None, stderr=None, no_color=False, force_color=False):
+        super().__init__(stdout, stderr, no_color, force_color)
+        self.trace_file = None
+        self.trace_writer = None
 
     def add_arguments(self, parser):
         parser.add_argument('--do-it', dest='do_it', action='store_true')
@@ -52,6 +58,12 @@ class Command(BaseCommand):
             dest='no_mdu',
             action='store_true',
             help='Do not process import batches with MDU',
+        )
+        parser.add_argument(
+            '--trace-file',
+            dest='trace_file',
+            default=None,
+            help='File into which to write duration information for each import batch',
         )
 
     def handle(self, *args, **options):
@@ -123,8 +135,16 @@ class Command(BaseCommand):
                 )
             logger.warning('Use --do-it to really do it.')
             return
+        trace_writer = None
+        if trace_file := options.get('trace_file'):
+            self.trace_file = open(trace_file, 'w')
+            self.trace_writer = csv.DictWriter(
+                self.trace_file,
+                ['ib', 'platform', 'organization', 'report_type', 'date', 'duration'],
+            )
+            self.trace_writer.writeheader()
         stats = Counter()
-        start = time()
+        start = monotonic()
         # `no_mdu` and `no_fa` are not applied to the queryset but rather applied on a case by case
         # basis during processing
         # the reason is that we need all the relevant import batches in the queryset to properly
@@ -135,7 +155,8 @@ class Command(BaseCommand):
                 # honor the 'older_than' filter even if it does not play very well with the filter
                 # because many IBs may be in an MDU and all have to be processed at once
                 if (
-                    mdu_batch.mdu.import_batches.aggregate(oldest=Min('last_updated'))[
+                    options['older_than']
+                    and mdu_batch.mdu.import_batches.aggregate(oldest=Min('last_updated'))[
                         'oldest'
                     ].isoformat()
                     > options['older_than']
@@ -153,16 +174,25 @@ class Command(BaseCommand):
                 else:
                     stats['mdu reimport'] += 1
                 if i and i % 10 == 0:
-                    logger.info('Duration: %s, Stats: %s', time() - start, stats)
-            logger.info('Finished processing MDUs. Duration: %s, Stats: %s', time() - start, stats)
+                    logger.info('Duration: %s, Stats: %s', monotonic() - start, stats)
+            logger.info(
+                'Finished processing MDUs. Duration: %s, Stats: %s', monotonic() - start, stats
+            )
         else:
             logger.info('Skipping MDU processing')
         # then FA's
         if not options['no_fa']:
+            stats['fa_total'] = to_do.count()
             for i, ib in enumerate(to_do):
                 try:
-                    logger.info(f'Reimport IB #{ib.pk}')
+                    logger.info(
+                        f'Reimport IB #{ib.pk}, RT: {ib.report_type}, org: {ib.organization}, '
+                        f'platform: {ib.platform}, date: {ib.date}'
+                    )
+                    t = monotonic()
+                    ib_id = ib.pk  # pk will be emptied on delete, so we need to preserve it here
                     reimport_import_batch_with_fa(ib)
+                    self.write_trace(ib_id, ib, monotonic() - t)
                 except SourceFileMissingError:
                     stats['fa missing file'] += 1
                 except Exception as exc:
@@ -171,7 +201,26 @@ class Command(BaseCommand):
                 else:
                     stats['fa reimport'] += 1
                 if i and i % 10 == 0:
-                    logger.info('Duration: %s, Stats: %s', time() - start, stats)
-            logger.info('Finished processing FA. Duration: %s, Stats: %s', time() - start, stats)
+                    logger.info('===== Duration: %s, Stats: %s =====', monotonic() - start, stats)
+            logger.info(
+                'Finished processing FA. Duration: %s, Stats: %s', monotonic() - start, stats
+            )
         else:
             logger.info('Skipping FA processing')
+
+        if self.trace_file:
+            self.trace_file.close()
+
+    def write_trace(self, ib_id: int, ib: ImportBatch, duration: float):
+        if self.trace_writer:
+            self.trace_writer.writerow(
+                {
+                    'ib': ib_id,
+                    'report_type': ib.report_type.short_name,
+                    'organization': str(ib.organization),
+                    'platform': str(ib.platform),
+                    'date': str(ib.date),
+                    'duration': duration,
+                }
+            )
+            self.trace_file.flush()

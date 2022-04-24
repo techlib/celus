@@ -11,7 +11,7 @@ from django.db.transaction import atomic
 from logs.exceptions import DataStructureError, SourceFileMissingError
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.logic.custom_import import import_custom_data
-from logs.models import ImportBatch, ManualDataUploadImportBatch, ManualDataUpload
+from logs.models import ImportBatch, ManualDataUploadImportBatch, ManualDataUpload, AccessLog
 from scheduler.models import FetchIntention
 from sushi.models import SushiFetchAttempt, AttemptStatus
 
@@ -56,7 +56,7 @@ class ImportBatchReimport:
             )
 
 
-def find_import_batches_to_reimport(queryset: QuerySet[ImportBatch],) -> ImportBatchReimport:
+def find_import_batches_to_reimport(queryset: QuerySet[ImportBatch]) -> ImportBatchReimport:
     """
     Returns a queryset with import batches to re-import and import batches to delete.
     The ones to delete are those that are clashing with the reimported ones and are older.
@@ -71,11 +71,18 @@ def find_import_batches_to_reimport(queryset: QuerySet[ImportBatch],) -> ImportB
             has_mdu=Exists(
                 ManualDataUploadImportBatch.objects.filter(import_batch_id=OuterRef('id'))
             ),
+            has_als=Exists(AccessLog.objects.filter(import_batch_id=OuterRef('id'))),
         )
         # combine has_fa and has_mdu into one field so that both have the same value when sorting
         .annotate(has_source=CombinedExpression(lhs=F('has_fa'), rhs=F('has_mdu'), connector="OR"))
         .order_by(
-            'organization_id', 'platform_id', 'report_type_id', 'date', '-has_source', '-created',
+            'organization_id',
+            'platform_id',
+            'report_type_id',
+            'date',
+            '-has_als',
+            '-has_source',
+            '-created',
         )
         .distinct('organization_id', 'platform_id', 'report_type_id', 'date')
     )
@@ -115,9 +122,15 @@ def has_source_data_file(ib: ImportBatch) -> bool:
         except ObjectDoesNotExist:
             return False
         else:
-            return os.path.isfile(source_mdu.data_file.path)
+            try:
+                return os.path.isfile(source_mdu.data_file.path)
+            except ValueError:
+                return False
     else:
-        return os.path.isfile(source_fa.data_file.path)
+        try:
+            return os.path.isfile(source_fa.data_file.path)
+        except ValueError:
+            return False
 
 
 def find_and_delete_clashing_data(ib: ImportBatch):
@@ -150,6 +163,20 @@ def reimport_import_batch_with_fa(ib: ImportBatch) -> ImportBatch:
     # check that we have the raw data before we delete anything
     if source_fa and not os.path.isfile(source_fa.data_file.path):
         raise SourceFileMissingError()
+
+    if source_fa.status == AttemptStatus.NO_DATA:
+        if (
+            ImportBatch.objects.filter(
+                organization_id=ib.organization_id,
+                platform_id=ib.platform_id,
+                report_type_id=ib.report_type_id,
+                date=ib.date,
+            )
+            .annotate(has_als=Exists(AccessLog.objects.filter(import_batch_id=OuterRef('id'))))
+            .filter(has_als=True)
+            .exists()
+        ):
+            raise ValueError('Cannot use NO_DATA IB if there is one with data')
 
     find_and_delete_clashing_data(ib)
     # reimport the data if source is fa

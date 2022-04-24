@@ -452,16 +452,6 @@ def import_counter_records(
             rec.start.isoformat() if isinstance(rec.start, date) else rec.start
             for rec in record_batch
         }
-        if months:
-            months_in_data = {month for month in months_in_data if month in months}
-            # filter records down to only those that are present in `months` - we do it early
-            # to save as much work as possible
-            record_batch = [
-                rec
-                for rec in record_batch
-                if (rec.start.isoformat() if isinstance(rec.start, date) else rec.start)
-                in months_in_data
-            ]
 
         # the following would crash if we tried to create an import batch for month that already
         # has an import batch
@@ -476,6 +466,14 @@ def import_counter_records(
 
     buff: List[CounterRecord] = []
     for record in records:
+        # check months and skip early to avoid extra work on multi-month files
+        if (
+            months
+            and (record.start.isoformat() if isinstance(record.start, date) else record.start)
+            not in months
+        ):
+            continue
+
         buff.append(record)
         if len(buff) >= buffer_size:
             process_buffer(buff)
@@ -546,7 +544,7 @@ def _import_counter_records(
     report_type: ReportType,
     organization: Organization,
     platform: Platform,
-    records: List[CounterRecord],
+    records: Iterable[CounterRecord],
     stats: Counter,
     tm: TitleManager,
     month_to_import_batch: Dict[str, ImportBatch],
