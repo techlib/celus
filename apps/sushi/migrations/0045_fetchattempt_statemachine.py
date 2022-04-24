@@ -19,7 +19,13 @@ def bools_to_state(apps, schema_editor):
         elif attempt.is_processed:
             attempt.status = "no_data"
         else:
-            attempt.status = "importing"
+            # the error_code and import_batch are the only things we can use
+            if attempt.error_code in ('3030', '3031'):
+                attempt.status = "no_data"
+            elif attempt.import_batch:
+                attempt.status = "success"
+            else:
+                attempt.status = "download_failed"
 
         attempt.save()
 
