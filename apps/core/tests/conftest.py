@@ -29,7 +29,7 @@ def master_identity():
         Organization.objects.get_or_create(
             internal_id=settings.MASTER_ORGANIZATIONS[0],
             defaults=dict(
-                ext_id=100,
+                ext_id=1235711,
                 parent=None,
                 ico='12345',
                 name_cs='šéf',

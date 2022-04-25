@@ -890,29 +890,58 @@ class TestPlatformTitleAPI:
 
     @pytest.mark.parametrize(['has_issn'], [(True,), (False,)])
     @pytest.mark.parametrize(['has_isbn'], [(True,), (False,)])
-    @pytest.mark.parametrize(['has_query'], [(True,), (False,)])
+    @pytest.mark.parametrize(['has_eissn'], [(True,), (False,)])
+    @pytest.mark.parametrize(['has_doi'], [(True,), (False,)])
+    @pytest.mark.parametrize(
+        ['matched_field'], [('name',), ('isbn',), ('issn',), ('eissn',), ('doi',), (None,)]
+    )
     def test_platform_title_list_filtering_with_eissn(
-        self, master_client, platform, organizations, has_issn, has_isbn, has_query
+        self,
+        master_client,
+        platform,
+        organizations,
+        has_issn,
+        has_isbn,
+        has_eissn,
+        has_doi,
+        matched_field,
     ):
+        """
+        Tests that looking for a title using different attributes works as expected.
+        """
+        base_attrs = {
+            'name': 'Foo Bar',
+            'issn': '1234-4567',
+            'eissn': '2345-6789',
+            'isbn': '0801643317',
+            'doi': '10.1007/9876.5432',
+        }
         t = Title.objects.create(
-            name='Foo Bar',
-            issn='1234-4567' if has_issn else '',
-            eissn='2345-6789',
-            isbn='0801643317' if has_isbn else '',
+            name=base_attrs['name'],
+            issn=base_attrs['issn'] if has_issn else '',
+            eissn=base_attrs['eissn'] if has_eissn else '',
+            isbn=base_attrs['isbn'] if has_isbn else '',
+            doi=base_attrs['doi'] if has_doi else '',
         )
         org = organizations['master']
+        # connect organization to platform - otherwise the user would get 404
         OrganizationPlatform.objects.create(organization=org, platform=platform)
+        # and platform to title, otherwise the title will be missing from the results
         PlatformTitle.objects.create(
             platform=platform, title=t, organization=org, date='2020-01-01'
         )
+        q = base_attrs[matched_field][-4:] if matched_field else ''  # end of matched string
         resp = master_client.get(
-            reverse('platform-title-list', args=[org.pk, platform.pk]),
-            {'q': '2345' if has_query else ''},
+            reverse('platform-title-list', args=[org.pk, platform.pk]), {'q': q},
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 1
-        assert data[0]['pk'] == t.pk
+        if matched_field is None or matched_field == 'name' or locals()['has_' + matched_field]:
+            # the matched field is actually filled in, so it should match
+            assert len(data) == 1, f'the title should match "{q}"'
+            assert data[0]['pk'] == t.pk
+        else:
+            assert len(data) == 0, f'nothing should match "{q}"'
 
 
 @pytest.mark.django_db
