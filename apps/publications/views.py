@@ -483,7 +483,11 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         q = self.request.query_params.get('q')
         if q:
             search_filters = [
-                Q(name__ilike=p) | Q(isbn__ilike=p) | Q(issn__ilike=p) | Q(doi__ilike=p)
+                Q(name__ilike=p)
+                | Q(isbn__ilike=p)
+                | Q(eissn__ilike=p)
+                | Q(issn__ilike=p)
+                | Q(doi__ilike=p)
                 for p in q.split()
             ]
         pub_type_arg = self.request.query_params.get('pub_type')

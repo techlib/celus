@@ -24,7 +24,7 @@ from core.tests.conftest import (  # noqa - fixtures
     master_client,
     master_identity,
 )
-from publications.models import PlatformInterestReport, Platform, PlatformTitle
+from publications.models import PlatformInterestReport, Platform, PlatformTitle, Title
 from sushi.models import SushiCredentials, CounterReportType
 from test_fixtures.entities.logs import MetricFactory
 from test_fixtures.scenarios.basic import *  # noqa - fixtures
@@ -887,6 +887,32 @@ class TestPlatformTitleAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert data['title_count'] == 2
+
+    @pytest.mark.parametrize(['has_issn'], [(True,), (False,)])
+    @pytest.mark.parametrize(['has_isbn'], [(True,), (False,)])
+    @pytest.mark.parametrize(['has_query'], [(True,), (False,)])
+    def test_platform_title_list_filtering_with_eissn(
+        self, master_client, platform, organizations, has_issn, has_isbn, has_query
+    ):
+        t = Title.objects.create(
+            name='Foo Bar',
+            issn='1234-4567' if has_issn else '',
+            eissn='2345-6789',
+            isbn='0801643317' if has_isbn else '',
+        )
+        org = organizations['master']
+        OrganizationPlatform.objects.create(organization=org, platform=platform)
+        PlatformTitle.objects.create(
+            platform=platform, title=t, organization=org, date='2020-01-01'
+        )
+        resp = master_client.get(
+            reverse('platform-title-list', args=[org.pk, platform.pk]),
+            {'q': '2345' if has_query else ''},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['pk'] == t.pk
 
 
 @pytest.mark.django_db
