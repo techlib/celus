@@ -7,8 +7,8 @@ import typing
 from copy import copy
 
 import ijson.backends.python as ijson  # TODO yalj2 backend can be faster...
-
 from core.logic.dates import parse_counter_month
+
 from .error_codes import ErrorCode, error_code_to_severity
 from .exceptions import SushiException
 
@@ -146,6 +146,12 @@ class Counter5ReportBase:
                     this_rec.value = int(metric.get('Count'))
                     yield this_rec
 
+    def check_header(self, header, fd):
+        lower_keys = [e.lower() for e in header]
+        for field in ['report_id', 'customer_id']:  # mandatory header fields
+            if field not in lower_keys:
+                raise SushiException('Incorrect format', content=fd.read())
+
     def extract_errors(self, data):
         from .client import Sushi5Client
 
@@ -182,7 +188,7 @@ class Counter5ReportBase:
         fd.seek(0)
 
         if first_character == b'[':
-            # error report handling
+            # entire json can be a list of errors
             self.extract_errors(json.load(fd))
             return {}, empty_generator()
 
@@ -199,61 +205,59 @@ class Counter5ReportBase:
             )
             return {}, empty_generator()
 
+        # Try to read the data
+        self.record_found = bool(next(ijson.items(fd, "Report_Items.item"), None))
+        fd.seek(0)
+        if self.record_found:
+            items = ijson.items(fd, "Report_Items.item")
+        else:
+            self.record_found = bool(next(ijson.items(fd, "body.Report_Items.item"), None))
+            if self.record_found:
+                items = ijson.items(fd, "body.Report_Items.item")
+            else:
+                items = empty_generator()
+        fd.seek(0)
+
         # try to read the header
         header = dict(ijson.kvitems(fd, "Report_Header"))
         fd.seek(0)
-
         # check whether the header is not located in 'body' element
         if not header:
             header = dict(ijson.kvitems(fd, "body.Report_Header"))
             fd.seek(0)
 
+        if not self.record_found and not header:
+            # not data and header not found entire json could be a header
+            header = json.load(fd)
+        fd.seek(0)
+
+        # Extract errors
         if header:
             # Try to extract exceptions from header
             self.extract_errors(header)
+            if not any((self.errors, self.warnings, self.infos)):
+                # no  error/warning/info = > file has to contain a valid header
+                self.check_header(header, fd)
+                fd.seek(0)
+        elif not self.record_found:
+            # Header is missing and no data
+            raise SushiException('Incorrect format', content=fd.read())
+        else:
+            # Header is empty, but data are present
+            pass
 
-        # Errors still not extracted
+        # error can be placed outside of header
         if not self.errors and not self.warnings and not self.infos:
             # Extract exceptions from root
-            self.extract_errors(list(ijson.items(fd, "Exceptions.items")))  # In <root>
+            self.extract_errors(list(ijson.items(fd, "Exceptions.item")))  # In <root>
             fd.seek(0)
             self.extract_errors(dict(ijson.kvitems(fd, "Exception")))  # Single exception in <root>
             fd.seek(0)
             # Extract exception(s) from body
-            self.extract_errors(list(ijson.items(fd, "body.Exceptions.items")))
+            self.extract_errors(list(ijson.items(fd, "body.Exceptions.item")))
             fd.seek(0)
             self.extract_errors(dict(ijson.kvitems(fd, "body.Exception")))
             fd.seek(0)
-
-        # try to read the first item
-        self.record_found = bool(next(ijson.items(fd, "Report_Items.item"), None))
-        fd.seek(0)
-        if self.record_found:
-            # Items found
-            items = ijson.items(fd, "Report_Items.item")
-        else:
-            # Try to seek in body element
-            self.record_found = bool(next(ijson.items(fd, "body.Report_Items.item"), None))
-            fd.seek(0)  # rewind back
-            items = ijson.items(fd, "body.Report_Items.item")
-
-        if not header and not self.record_found:
-            # No data and no header -> try to extract an exception
-            self.extract_errors(json.load(fd))
-            items = empty_generator()
-
-        if not self.record_found:
-            # we have no data
-            if not self.errors and not self.warnings:
-                # check whether Report_Items or body.Report_Items are present
-                # if they are present, but empty consider this as a valid input
-                fd.seek(0)
-                for prefix, e_type, _ in ijson.parse(fd):
-                    if e_type == "start_array" and prefix in ("Report_Items", "body.Report_Items"):
-                        return header, empty_generator()
-
-                # We didn't find an exception nor data field => json is not correct
-                raise SushiException('Incorrect format', content=fd.read())
 
         return header, items
 

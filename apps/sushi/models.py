@@ -868,9 +868,7 @@ class SushiFetchAttempt(models.Model):
 
         if self.http_status_code in (500, 400):
             if not self.any_success_lately():
-                # Don't break entire credentials for specific error codes
-                if str(self.error_code) not in (str(ErrorCode.INVALID_REPORT_FILTER.value),):
-                    self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
+                self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
                 return
 
         # Check for sushi error
@@ -902,7 +900,6 @@ class SushiFetchAttempt(models.Model):
         if str(self.error_code) in (
             str(ErrorCode.REPORT_NOT_SUPPORTED.value),
             str(ErrorCode.REPORT_VERSION_NOT_SUPPORTED.value),
-            str(ErrorCode.INVALID_REPORT_FILTER.value),
         ):
             mark_broken(SushiCredentials.BROKEN_SUSHI)
             return

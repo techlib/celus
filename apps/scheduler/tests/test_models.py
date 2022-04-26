@@ -419,7 +419,7 @@ class TestFetchIntention:
                 error_code=error_code,
                 credentials=credentials["standalone_tr"],
                 counter_report=counter_report_types["tr"],
-                data_file__data=b'{"Report_Items": []}',
+                data_file__data=b'{"Report_Items": [],"Report_Header": {"Report_ID": "TR", "Customer_ID":"C1"}}',
             )
 
         monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)

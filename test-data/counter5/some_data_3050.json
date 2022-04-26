@@ -1,0 +1,104 @@
+{
+  "Report_Header": {
+    "Created": "2022-04-01T00:00:00Z",
+    "Created_By": "My provider",
+    "Customer_ID": "111111",
+    "Report_ID": "PR",
+    "Release": "5",
+    "Report_Name": "Platform Master Report",
+    "Institution_Name": "My Library",
+    "Report_Filters": [
+      {
+        "Name": "Begin_Date",
+        "Value": "2019-04-01"
+      },
+      {
+        "Name": "End_Date",
+        "Value": "2019-04-30"
+      }
+    ],
+    "Report_Attributes": [
+      {
+        "Name": "Attributes_To_Show",
+        "Value": "Access_Method|Data_Type"
+      }
+    ],
+    "Exceptions": [
+      {
+        "Code": 3050,
+        "Severity": "Warning",
+        "Message": "Parameter Not Recognized in this Context",
+        "Data": "[requestor_id]"
+      },
+      {
+        "Code": 0,
+        "Severity": "Info",
+        "Message": "In order to be consistent with chapter-only COUNTER metrics available for other publishers, the non-standard tandfeBooks:Total_Chapter_Requests metric has been included"
+      }
+    ]
+  },
+  "Report_Items": [
+    {
+      "Platform": "My provider",
+      "Data_Type": "Platform",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2019-04-01",
+            "End_Date": "2019-04-30"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Searches_Platform",
+              "Count": 188
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Platform": "My provider",
+      "Data_Type": "Book",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2019-04-01",
+            "End_Date": "2019-04-30"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 360
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 47
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 246
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 44
+            },
+            {
+              "Metric_Type": "Unique_Title_Investigations",
+              "Count": 183
+            },
+            {
+              "Metric_Type": "Unique_Title_Requests",
+              "Count": 25
+            },
+            {
+              "Metric_Type": "tandfeBooks:Total_Chapter_Requests",
+              "Count": 329
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

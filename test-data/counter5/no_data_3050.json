@@ -1,0 +1,33 @@
+{
+  "Created": "2020-01-01T00:00:00Z",
+  "Created_By": "My provider",
+  "Customer_ID": "CCCCCCCCCC",
+  "Report_ID": "TR",
+  "Release": "5",
+  "Report_Name": "Title Master Report",
+  "Institution_Name": "My Library",
+  "Report_Filters": [
+    {
+      "Name": "Begin_Date",
+      "Value": "2019-04-01"
+    },
+    {
+      "Name": "End_Date",
+      "Value": "2019-04-30"
+    }
+  ],
+  "Report_Attributes": [
+    {
+      "Name": "Attributes_To_Show",
+      "Value": "yop|access_method|access_type|data_type|section_type"
+    }
+  ],
+  "Exceptions": [
+    {
+      "Code": 3050,
+      "Severity": "Warning",
+      "Message": "Parameter Not Recognized in this Context",
+      "Data": "Parameter email is not recognized"
+    }
+  ]
+}

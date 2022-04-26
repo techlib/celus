@@ -1,5 +1,4 @@
 import typing
-
 from enum import Enum
 
 
@@ -12,6 +11,7 @@ class ErrorCode(Enum):
     NOT_AUTHORIZED = 2000
     NOT_AUTHORIZED_INSTITUTION = 2010
     INVALID_API_KEY = 2020
+    NOT_AUTHORIZED_IP_ADDRESS = 2030
     REPORT_NOT_SUPPORTED = 3000
     REPORT_VERSION_NOT_SUPPORTED = 3010
     INVALID_DATE_ARGS = 3020
@@ -62,6 +62,8 @@ def error_code_to_severity(error_code: typing.Union[None, int, str]) -> str:
         return "Error"
     elif error_code == ErrorCode.INVALID_API_KEY.value:
         return "Error"
+    elif error_code == ErrorCode.NOT_AUTHORIZED_IP_ADDRESS.value:
+        return "Error"
     elif error_code == ErrorCode.REPORT_NOT_SUPPORTED.value:
         return "Error"
     elif error_code == ErrorCode.REPORT_VERSION_NOT_SUPPORTED.value:
@@ -77,15 +79,21 @@ def error_code_to_severity(error_code: typing.Union[None, int, str]) -> str:
     elif error_code == ErrorCode.PARTIAL_DATA_RETURNED.value:
         return "Warning"
     elif error_code == ErrorCode.PARAMETER_NOT_RECOGNIZED.value:
-        return "Warning"
+        # According to standard this is supposed to be Warning
+        # But full data are supposed to be returned once this status
+        # occurs. So it is conveted to info.
+        return "Info"
     elif error_code == ErrorCode.INVALID_REPORT_FILTER.value:
-        return "Error"  # or Warning
+        return "Warning"  # or Error
     elif error_code == ErrorCode.INCONGRUOUS_REPORT_FILTER.value:
-        return "Error"  # or Warning
+        # According to standard this is supposed to be Warning or Error
+        # But full data are supposed to be returned once this status
+        # occurs. So it is conveted to info.
+        return "Info"
     elif error_code == ErrorCode.INVALID_REPORT_ATTRIBUTE.value:
         # According to standard this is supposed to be Warning or Error
-        # But some vendors are using this error code with valid output
-        # So it is converted to Info
+        # But full data are supposed to be returned once this status
+        # occurs. So it is conveted to info.
         return "Info"
     elif error_code == ErrorCode.MISSING_REPORT_FILTER.value:
         return "Error"  # or Warning

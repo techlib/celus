@@ -26,8 +26,8 @@ class TestSushiFetching:
                 'naked_errors.json',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Errors: Error #3060: Invalid Report Filter Value\n\n'
-                'Warnings: Warning #1011: Report Queued for Processing\n\n',
+                'Warnings: Warning #1011: Report Queued for Processing; '
+                'Warning #3060: Invalid Report Filter Value\n\n',
                 False,
             ),
             (
@@ -78,6 +78,23 @@ class TestSushiFetching:
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
                 'Infos: Info #3062: Invalid ReportAttribute Value\n\n',
+                False,
+            ),
+            (
+                'no_data_3050.json',
+                AttemptStatus.NO_DATA,
+                AttemptStatus.NO_DATA,
+                'Infos: Info #3050: Parameter Not Recognized in this Context\n\n',
+                False,
+            ),
+            (
+                'some_data_3050.json',
+                AttemptStatus.IMPORTING,
+                AttemptStatus.SUCCESS,
+                'Infos: Info #3050: Parameter Not Recognized in this Context; '
+                'Info #0: In order to be consistent with chapter-only COUNTER '
+                'metrics available for other publishers, the non-standard '
+                'tandfeBooks:Total_Chapter_Requests metric has been included\n\n',
                 False,
             ),
         ),

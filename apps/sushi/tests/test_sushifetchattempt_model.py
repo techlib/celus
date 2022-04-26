@@ -2,31 +2,26 @@ from datetime import timedelta
 
 import pytest
 from core.models import UL_ORG_ADMIN
-from django.core.files.base import ContentFile
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.utils import timezone
 from freezegun import freeze_time
-from sushi.models import (
-    SushiFetchAttempt,
-    AttemptStatus,
-    CounterReportsToCredentials,
-    BrokenCredentialsMixin as BC,
-)
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.organizations import OrganizationFactory
+from nigiri.error_codes import ErrorCode
+from sushi.models import AttemptStatus
+from sushi.models import BrokenCredentialsMixin as BC
+from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 from test_fixtures.entities.credentials import CredentialsFactory
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.organizations import OrganizationFactory
+from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.scenarios.basic import (
-    credentials,
     counter_report_types,
+    credentials,
     data_sources,
     organizations,
-    report_types,
     platforms,
-    counter_report_types,
+    report_types,
 )
-
-from nigiri.error_codes import ErrorCode
 
 
 @pytest.mark.django_db
@@ -185,7 +180,7 @@ class TestSushiFetchAttemptModel:
             ("FAILURE", 404, ErrorCode.TOO_MANY_REQUESTS, False, None, BC.BROKEN_HTTP),
             ("FAILURE", 200, ErrorCode.REPORT_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
             ("FAILURE", 200, ErrorCode.REPORT_VERSION_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),
-            ("FAILURE", 400, ErrorCode.INVALID_REPORT_FILTER, False, None, BC.BROKEN_SUSHI),
+            ("FAILURE", 400, ErrorCode.INVALID_REPORT_FILTER, False, BC.BROKEN_HTTP, None),
         ),
     )
     def test_update_broken(
