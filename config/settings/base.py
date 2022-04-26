@@ -66,11 +66,15 @@ INSTALLED_APPS = [
     'recache.apps.RecacheConfig',
     'knowledgebase.apps.KnowledgebaseConfig',
     'export.apps.ExportConfig',
+    'tags.apps.TagsConfig',
     'rest_pandas',
     'django_prometheus',
     'import_export',
     'rest_framework_api_key',
+    'django.contrib.postgres',
+    'psqlextra',
     'impersonate',
+    'colorfield',
     # allauth is at the end so that we can easily override its templates
     'allauth',
     'allauth.socialaccount',
@@ -136,9 +140,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+POSTGRES_EXTRA_DB_BACKEND_BASE = 'django_prometheus.db.backends.postgresql'
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django_prometheus.db.backends.postgresql',
+        'ENGINE': 'psqlextra.backend',
         'NAME': config('DB_NAME', default='celus'),
         'USER': config('DB_USER', default='celus'),
         'PASSWORD': config('DB_PASSWORD'),
@@ -523,6 +529,9 @@ AUTOMATICALLY_CREATE_METRICS = config('AUTOMATICALLY_CREATE_METRICS', cast=bool,
 # Credentials which should be skipped during celery import
 FAKE_SUSHI_URLS = ['https://sashimi.celus.net/']
 
+# Should tags be visible in the UI - the following is passed to the frontend and used there
+ENABLE_TAGS = config('ENABLE_TAGS', cast=bool, default=False)
+
 # social authentication providers
 SOCIAL_ACCOUNTS_SUPPORTED = config('SOCIAL_ACCOUNTS_SUPPORTED', cast=Csv(), default='')
 SITE_ID = config('SITE_ID', cast=int, default=1)
@@ -562,20 +571,21 @@ PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', cast=int, default=8640
 CELUS_ADMIN_SITE_PATH = config('CELUS_ADMIN_SITE_PATH', default='wsEc67YNV2sq/')
 
 EXPORTED_SETTINGS = [
-    'REFERENCE_CURRENCY',
-    'ALLOW_USER_REGISTRATION',
-    'ALLOW_USER_CREATED_PLATFORMS',
-    'SOCIAL_ACCOUNTS_SUPPORTED',
-    'CONSORTIAL_INSTALLATION',
-    'ALLOW_MANUAL_UPLOAD',
-    'CELUS_ADMIN_SITE_PATH',
-    'ALLOW_EMAIL_LOGIN',
     'ALLOW_EDUID_LOGIN',
-    'USES_ERMS',
-    'LANGUAGES',
+    'ALLOW_EMAIL_LOGIN',
+    'ALLOW_MANUAL_UPLOAD',
+    'ALLOW_USER_CREATED_PLATFORMS',
+    'ALLOW_USER_REGISTRATION',
+    'AUTOMATICALLY_CREATE_METRICS',
+    'CELUS_ADMIN_SITE_PATH',
+    'CONSORTIAL_INSTALLATION',
+    'ENABLE_TAGS',
     'HARVESTER_IPV4_ADDRESSES',
     'HARVESTER_IPV6_ADDRESSES',
-    'AUTOMATICALLY_CREATE_METRICS',
+    'LANGUAGES',
+    'REFERENCE_CURRENCY',
+    'SOCIAL_ACCOUNTS_SUPPORTED',
+    'USES_ERMS',
 ]
 
 # Enables Automatic harvesting

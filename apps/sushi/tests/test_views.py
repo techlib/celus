@@ -1,22 +1,25 @@
 from datetime import date
-from unittest.mock import patch
 
 import pytest
-from core.models import UL_CONS_STAFF, UL_ORG_ADMIN
 from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
+
+from core.models import UL_CONS_STAFF, UL_ORG_ADMIN
 from organizations.tests.conftest import identity_by_user_type  # noqa
-from sushi.models import AttemptStatus
-from sushi.models import BrokenCredentialsMixin as BS
-from sushi.models import CounterReportsToCredentials, SushiCredentials, SushiFetchAttempt
+from sushi.models import (
+    AttemptStatus,
+    BrokenCredentialsMixin as BS,
+    CounterReportsToCredentials,
+    SushiCredentials,
+)
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory
-from test_fixtures.scenarios.basic import clients  # noqa
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
+    clients,
     counter_report_types,
     credentials,
     data_sources,

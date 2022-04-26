@@ -17,6 +17,10 @@ en:
   select_at_least_one_column_dim: At least one column dimension must be selected.
   split_to_parts: Split report to parts by selected attribute
   dont_split: "-- no splitting --"
+  title_tags: Tags for title filtering
+  title_tags_tt: |
+    Tags are used to simplify filtering of titles. You can add tags to individual titles on their corresponding pages
+    or in one batch by uploading a title list.
 
 cs:
   run_report: Spustit report
@@ -34,6 +38,10 @@ cs:
   select_at_least_one_column_dim: Musí být vybrán alespoň jeden rozměr, který definuje sloupce.
   split_to_parts: Rozdělit report na části podle vybraného atributu
   dont_split: "-- nedělit --"
+  title_tags: Štítky pro filtrování titulů
+  title_tags_tt: |
+    Pro zjednodušení filtrování titulů jsou použity štítky. Můžete je k titulům přidávat na stránce daného titulu nebo
+    nahrát celý titulový seznam ze souboru.
 </i18n>
 
 <template>
@@ -262,6 +270,21 @@ cs:
                       md="6"
                       xl="4"
                       class="d-flex"
+                      v-if="filters.includes('target') && enableTags"
+                    >
+                      <TagSelector
+                        v-model="selectedTitleTags"
+                        :label="$t('title_tags')"
+                        :tooltip="$t('title_tags_tt')"
+                        scope="title"
+                      />
+                    </v-col>
+
+                    <v-col
+                      cols="12"
+                      md="6"
+                      xl="4"
+                      class="d-flex"
                       v-if="filters.includes('metric')"
                     >
                       <DimensionKeySelector
@@ -456,6 +479,7 @@ import formRulesMixin from "@/mixins/formRulesMixin";
 import { parseDateTime, ymDateFormat } from "@/libs/dates";
 import cancellation from "@/mixins/cancellation";
 import { toBase64JSON } from "@/libs/serialization";
+import TagSelector from "@/components/tags/TagSelector";
 
 export default {
   name: "FlexiTableEditor",
@@ -469,6 +493,7 @@ export default {
   ],
 
   components: {
+    TagSelector,
     AccessLevelSelector,
     ReportLoadingWidget,
     FlexiTableOutput,
@@ -496,6 +521,7 @@ export default {
       selectedOrganizations: [],
       selectedDateRange: { start: null, end: null },
       selectedDimValues: [],
+      selectedTitleTags: [],
       formValid: false,
       headerFormValid: false,
       dateModifier: "__year",
@@ -530,6 +556,7 @@ export default {
       organizationSelected: "organizationSelected",
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
+      enableTags: "enableTags",
     }),
     readOnly() {
       return !this.edit || !this.canEdit;
@@ -567,6 +594,14 @@ export default {
       ) {
         ret["organization"] = this.selectedOrganizations;
       }
+      // title tags
+      if (
+        this.filters.includes("target") &&
+        this.selectedTitleTags.length > 0
+      ) {
+        ret["tag__target"] = this.selectedTitleTags;
+      }
+      // explicit dims
       this.explicitDims.forEach((dim, index) => {
         if (this.filters.includes(dim.id)) {
           let vals = this.selectedDimValues[index];

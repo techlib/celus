@@ -5,7 +5,6 @@ from enum import Enum
 from functools import reduce
 from typing import List, Iterable, Optional, Type
 
-from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
     ForeignKey,
     FilteredRelation,
@@ -27,6 +26,7 @@ from logs.logic.reporting.filters import (
     DateDimensionFilter,
     ForeignKeyDimensionFilter,
     ExplicitDimensionFilter,
+    TagDimensionFilter,
 )
 from logs.models import AccessLog, DimensionText, ReportType
 from organizations.logic.queries import extend_query_filter
@@ -445,6 +445,8 @@ class FlexibleDataSlicer:
         """
         Finds the right Filter class for the dimension at hand
         """
+        if dimension.startswith('tag__'):
+            return TagDimensionFilter
         field, _modifier = AccessLog.get_dimension_field(dimension)
         if isinstance(field, ForeignKey):
             return ForeignKeyDimensionFilter
@@ -456,7 +458,7 @@ class FlexibleDataSlicer:
             raise ValueError(f'not supported yet ({dimension}, {field}, {_modifier})')
 
     @classmethod
-    def filter_instance(cls, dimension, value):
+    def filter_instance(cls, dimension: str, value):
         """
         Uses `filter_class` to get the correct filter class for dimension and then creates
         an instance of the filter for `value`.
@@ -475,11 +477,18 @@ class FlexibleDataSlicer:
                 end = month_end(start)
                 value = {'start': start, 'end': end}
             return filter_class(field.name, *date_range_from_params(value))
+        elif filter_class is TagDimensionFilter:
+            dimension = dimension[len('tag__') :]
+            return filter_class(dimension, value)
         else:
             return filter_class(dimension, value)
 
     @classmethod
     def create_from_params(cls, params: dict) -> 'FlexibleDataSlicer':
+        """
+        Takes the parameters as they would be obtained from the API and creates a new slicer
+        instance based on those.
+        """
         primary_dimension = params.get('primary_dimension')
         if not primary_dimension:
             raise SlicerConfigError(

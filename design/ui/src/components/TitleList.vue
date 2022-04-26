@@ -35,6 +35,13 @@ cs:
             </template>
           </v-select>
         </v-col>
+        <v-col cols="auto" v-if="enableTags">
+          <TagSelector
+            v-model="selectedTags"
+            scope="title"
+            dont-check-exclusive
+          />
+        </v-col>
         <v-col cols="auto">
           <v-switch v-model="showDOI" :label="$t('show_doi')"></v-switch>
         </v-col>
@@ -47,6 +54,8 @@ cs:
             :label="$t('labels.search')"
             single-line
             hide-details
+            clearable
+            clear-icon="fa-times"
           ></v-text-field>
         </v-col>
       </v-row>
@@ -128,6 +137,16 @@ cs:
           <span class="interest ml-1">{{ interest }}</span>
         </span>
       </template>
+
+      <template #item.tags="{ item }">
+        <TagChip
+          v-for="tag in objIdToTags.get(item.pk)"
+          :key="tag.pk"
+          :tag="tag"
+          small
+          show-class
+        />
+      </template>
     </v-data-table>
   </v-card>
 </template>
@@ -141,10 +160,18 @@ import { iconForPubType, pubTypes, titleForPubType } from "../libs/pub-types";
 import ShortenText from "./ShortenText";
 import SimplePie from "@/components/util/SimplePie";
 import { echartPalette } from "@/libs/palettes";
+import TagSelector from "@/components/tags/TagSelector";
+import cancellation from "@/mixins/cancellation";
+import tags from "@/mixins/tags";
+import TagChip from "@/components/tags/TagChip";
 
 export default {
   name: "TitleList",
-  components: { ShortenText, SimplePie },
+
+  mixins: [cancellation, tags],
+
+  components: { TagChip, TagSelector, ShortenText, SimplePie },
+
   props: {
     url: { required: true },
     platformId: { required: false },
@@ -167,10 +194,14 @@ export default {
         sortBy: [this.orderInterest ? this.orderInterest : "name"],
       },
       cancelTokenSource: null,
+      selectedTags: [],
     };
   },
 
   computed: {
+    ...mapGetters({
+      enableTags: "enableTags",
+    }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
     }),
@@ -243,6 +274,9 @@ export default {
             align: "right",
           });
         }
+        if (this.enableTags) {
+          base.push({ text: this.$t("labels.tags"), value: "tags" });
+        }
       }
       return base;
     },
@@ -265,17 +299,18 @@ export default {
         if (Array.isArray(sortDesc)) {
           sortDesc = sortDesc[0];
         }
+        let tags = "";
+        if (this.selectedTags.length) {
+          tags = "&tags=" + this.selectedTags.join(",");
+        }
         return (
           this.url +
           `&page_size=${itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}&page=${page}&q=${
-            this.search
-          }&pub_type=${this.selectedPubType || ""}`
+            this.search ?? ""
+          }&pub_type=${this.selectedPubType || ""}${tags}`
         );
       }
       return this.url;
-    },
-    palette() {
-      return echartPalette;
     },
   },
 
@@ -326,6 +361,12 @@ export default {
         if (!this.selectedPubType) {
           // if we do not filter by pubType, we extract the available pub types here
           this.pubTypes = this.extractPubTypes(i18n);
+        }
+        if (this.titles.length) {
+          await this.getTagsForObjectsById(
+            "title",
+            this.titles.map((item) => item.pk)
+          );
         }
       }
     },

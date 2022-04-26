@@ -1,26 +1,28 @@
 import codecs
 import csv
-from io import StringIO, BytesIO
+from io import BytesIO, StringIO
 from unittest.mock import MagicMock
 from zipfile import ZipFile
 
 import pytest
 
-from export.enums import FileFormat
-from logs.logic.reporting.filters import (
-    DateDimensionFilter,
-    ForeignKeyDimensionFilter,
-    ExplicitDimensionFilter,
-)
-from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 from logs.logic.reporting.export import (
+    FlexibleDataExcelExporter,
     FlexibleDataSimpleCSVExporter,
     FlexibleDataZipCSVExporter,
-    FlexibleDataExcelExporter,
 )
-from logs.models import Metric, DimensionText, AccessLog, Dimension
+from logs.logic.reporting.filters import (
+    DateDimensionFilter,
+    ExplicitDimensionFilter,
+    ForeignKeyDimensionFilter,
+    TagDimensionFilter,
+)
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
+from logs.models import AccessLog, DimensionText, Metric
 from organizations.models import Organization
 from publications.models import Platform, Title
+from tags.logic.fake_data import TagFactory, TagForTitleFactory
+from tags.models import TagScope
 
 
 def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list) -> dict:
@@ -38,8 +40,8 @@ def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list
             new_key = '-'.join(new_key_parts)
             result[new_key] = value
         elif key == 'pk':
-            new_value = primary_dimension.objects.get(pk=value).short_name
-            result[key] = new_value
+            obj = primary_dimension.objects.get(pk=value)
+            result[key] = getattr(obj, 'short_name', str(obj))
     return result
 
 
@@ -404,6 +406,92 @@ class TestFlexibleDataSlicerComputations:
                 'B-m2': 21402,
                 'B-m3': 22698,
             },
+        ]
+
+    def test_org_sum_by_platform_filter_platform_by_tag(
+        self, flexible_slicer_test_data, show_zero, admin_user
+    ):
+        """
+        Primary dimension: organization
+        Group by: platform
+        DimensionFilter: tag on platform
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        platforms = flexible_slicer_test_data['platforms'][1:]
+        tag = TagFactory.create(name='my_platforms', tag_class__scope=TagScope.PLATFORM)
+        for platform in platforms:
+            tag.tag(platform, admin_user)
+        slicer.add_filter(TagDimensionFilter('platform', tag), add_group=True)
+        slicer.include_all_zero_rows = show_zero
+        data = list(slicer.get_data())
+        assert len(data) == Organization.objects.count()
+        data.sort(key=lambda rec: rec['pk'])
+        # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
+        assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
+            {'pk': 'org1', 'pl2': 717606, 'pl3': 915894},
+            {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758},
+            {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
+        ]
+
+    def test_title_sum_by_platform_filter_metric_platform_title_by_tag(
+        self, flexible_slicer_test_data, show_zero, admin_user
+    ):
+        """
+        Primary dimension: title/target
+        Group by: platform
+        DimensionFilter: tag on title, platform, metric
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='target')
+        platforms = flexible_slicer_test_data['platforms'][:2]
+        metric = flexible_slicer_test_data['metrics'][0]
+        titles = [flexible_slicer_test_data['targets'][0], flexible_slicer_test_data['targets'][2]]
+        tag = TagForTitleFactory.create(name='my_titles')
+        for title in titles:
+            tag.tag(title, admin_user)
+
+        slicer.add_filter(ForeignKeyDimensionFilter('platform', platforms), add_group=True)
+        slicer.add_filter(TagDimensionFilter('target', tag), add_group=False)
+        slicer.add_filter(ForeignKeyDimensionFilter('metric', metric), add_group=False)
+        slicer.include_all_zero_rows = show_zero
+        data = list(slicer.get_data())
+        assert len(data) == len(titles)
+        data.sort(key=lambda rec: rec['pk'])
+        # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
+        assert [remap_row_keys_to_short_names(row, Title, [Platform]) for row in data] == [
+            {'pk': 'Title 1', 'pl1': 342018, 'pl2': 408114},
+            {'pk': 'Title 3', 'pl1': 356706, 'pl2': 422802},
+        ]
+
+    def test_title_sum_by_platform_filter_metric_platform_by_tag_title_by_tag(
+        self, flexible_slicer_test_data, show_zero, admin_user
+    ):
+        """
+        Primary dimension: title/target
+        Group by: platform
+        DimensionFilter: tag on title, tag on platform, metric
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='target')
+        metric = flexible_slicer_test_data['metrics'][0]
+        platforms = flexible_slicer_test_data['platforms'][:2]
+        pl_tag = TagFactory.create(name='my_platforms', tag_class__scope=TagScope.PLATFORM)
+        for platform in platforms:
+            pl_tag.tag(platform, admin_user)
+        titles = [flexible_slicer_test_data['targets'][0], flexible_slicer_test_data['targets'][2]]
+        title_tag = TagForTitleFactory.create(name='my_titles')
+        for title in titles:
+            title_tag.tag(title, admin_user)
+
+        slicer.add_filter(TagDimensionFilter('platform', pl_tag), add_group=True)
+        slicer.add_filter(TagDimensionFilter('target', title_tag), add_group=False)
+        slicer.add_filter(ForeignKeyDimensionFilter('metric', metric), add_group=False)
+        slicer.include_all_zero_rows = show_zero
+        data = list(slicer.get_data())
+        assert len(data) == len(titles)
+        data.sort(key=lambda rec: rec['pk'])
+        # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
+        assert [remap_row_keys_to_short_names(row, Title, [Platform]) for row in data] == [
+            {'pk': 'Title 1', 'pl1': 342018, 'pl2': 408114},
+            {'pk': 'Title 3', 'pl1': 356706, 'pl2': 422802},
         ]
 
 

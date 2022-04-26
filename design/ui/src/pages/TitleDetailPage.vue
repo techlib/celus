@@ -17,7 +17,7 @@ cs:
 </i18n>
 
 <template>
-  <v-container class="ml-0 px-2 px-sm-2">
+  <v-container fluid class="ml-0 px-2 px-sm-2">
     <v-row no-gutters>
       <v-col>
         <v-breadcrumbs :items="breadcrumbs" class="pl-0">
@@ -171,6 +171,15 @@ cs:
           </tr>
         </table>
       </v-col>
+      <v-spacer></v-spacer>
+      <v-col cols="auto" v-if="enableTags">
+        <TagCard
+          v-if="titleId"
+          item-type="title"
+          :item-id="titleId"
+          show-class
+        />
+      </v-col>
     </v-row>
 
     <section class="my-4" id="annotations">
@@ -205,20 +214,23 @@ cs:
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import axios from "axios";
 import CounterChartSet from "@/components/CounterChartSet";
 import DataExportWidget from "@/components/DataExportWidget";
 import AnnotationsWidget from "@/components/AnnotationsWidget";
 import goTo from "vuetify/es5/services/goto";
 import { formatInteger } from "@/libs/numbers";
+import cancellation from "@/mixins/cancellation";
+import TagCard from "@/components/tags/TagCard";
 
 export default {
   name: "TitleDetailPage",
   components: {
+    TagCard,
     DataExportWidget,
     CounterChartSet,
     AnnotationsWidget,
   },
+  mixins: [cancellation],
   props: {
     platformId: { required: false, type: Number },
     titleId: { required: true, type: Number },
@@ -239,6 +251,7 @@ export default {
       selectedOrganization: "selectedOrganization",
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
+      enableTags: "enableTags",
     }),
     isReady() {
       return this.selectedOrganization && this.titleId;
@@ -319,42 +332,29 @@ export default {
     async loadTitle() {
       let url = this.titleUrl;
       if (url) {
-        try {
-          const response = await axios.get(url);
-          this.title = response.data;
-        } catch (error) {
-          this.showSnackbar({ content: "Error loading title: " + error });
+        const result = await this.http({ url: url });
+        if (!result.error) {
+          this.title = result.response.data;
         }
       }
     },
-    loadPlatform() {
+    async loadPlatform() {
       if (this.selectedOrganization && this.platformId) {
-        axios
-          .get(
-            `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/`
-          )
-          .then((response) => {
-            this.platformData = response.data;
-          })
-          .catch((error) => {
-            this.showSnackbar({
-              content: "Error loading platform details: " + error,
-            });
-          });
+        const result = await this.http({
+          url: `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/`,
+        });
+        if (!result.error) {
+          this.platformData = result.response.data;
+        }
       }
     },
     async loadAllPlatforms() {
       if (this.selectedOrganization) {
-        try {
-          const response = await axios.get(
-            `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/platforms/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`
-          );
-          this.availableFromPlatforms = response.data;
-        } catch (error) {
-          this.showSnackbar({
-            content: "Error loading platform details: " + error,
-            color: "error",
-          });
+        const result = await this.http({
+          url: `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/platforms/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`,
+        });
+        if (!result.error) {
+          this.availableFromPlatforms = result.response.data;
         }
       }
     },

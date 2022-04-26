@@ -50,6 +50,7 @@ from publications.serializers import (
     TitleCountSerializer,
     UseCaseSerializer,
 )
+from tags.models import Tag
 
 from .logic.cleanup import delete_platform_data
 from .logic.use_cases import get_use_cases
@@ -509,6 +510,18 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         pub_type_arg = self.request.query_params.get('pub_type')
         if pub_type_arg:
             search_filters.append(Q(pub_type=pub_type_arg))
+        # tags
+
+        # tags
+        if tag_arg := self.request.query_params.get('tags'):
+            tag_ids = map(int, tag_arg.split(","))
+            search_filters.append(
+                Q(
+                    tags__in=Tag.objects.user_accessible_tags(self.request.user).filter(
+                        pk__in=tag_ids
+                    )
+                )
+            )
         # we evaluate this here as it might be important for the _extra_accesslog_filters method
         extra_filters = self._extra_filters()
         # put together filters for accesslogs

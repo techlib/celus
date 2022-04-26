@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from datetime import datetime, date
+from datetime import date, datetime
 
 from django.db import models
 
 from core.logic.type_conversion import to_list
-from logs.models import DimensionText, AccessLog
+from logs.models import AccessLog, DimensionText
+from tags.models import Tag
 
 
 class DimensionFilter(ABC):
@@ -111,4 +112,33 @@ class ExplicitDimensionFilter(DimensionFilter):
         return {
             'dimension': self.dimension,
             'values': self.values,
+        }
+
+
+class TagDimensionFilter(DimensionFilter):
+    def __init__(self, dimension, tag_ids):
+        super().__init__(dimension)
+        if dimension not in ['target', 'platform', 'organization']:
+            raise ValueError(f'Unsupported dimension for tagging: {dimension}')
+        self.tag_ids = [tag.pk if isinstance(tag, Tag) else tag for tag in to_list(tag_ids)]
+
+    @property
+    def value_str(self):
+        return '; '.join(val.name for val in Tag.objects.filter(pk__in=self.tag_ids))
+
+    def query_params(self, primary_filter=False) -> dict:
+        if primary_filter:
+            return {'tags__in': self.tag_ids}
+        # here we translate the tag ids to related object ids and use it for query,
+        # querying tags directly in the query (like `platform__tags__in`) hits a nesting limit
+        # inside Django
+        field, _modifier = AccessLog.get_dimension_field(self.dimension)
+        rel_model = field.remote_field.model
+        obj_qs = rel_model.objects.filter(tags__in=self.tag_ids)
+        return {f'{self.dimension}__in': obj_qs}
+
+    def config(self):
+        return {
+            'dimension': self.dimension,
+            'tag_ids': self.tag_ids,
         }

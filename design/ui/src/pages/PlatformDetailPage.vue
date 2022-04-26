@@ -134,6 +134,9 @@ cs:
           </table>
         </v-col>
         <v-spacer></v-spacer>
+        <v-col cols="auto" v-if="enableTags">
+          <TagCard item-type="platform" :item-id="platformId" />
+        </v-col>
         <v-col cols="auto" v-if="showAdminStuff">
           <v-card>
             <v-card-text>
@@ -325,10 +328,12 @@ import SushiCredentialsManagementWidget from "@/components/sushi/SushiCredential
 import DeletePlatformDataWidget from "@/components/admin/DeletePlatformDataWidget";
 import ErrorPlaceholder from "@/components/util/ErrorPlaceholder";
 import LoaderWidget from "@/components/util/LoaderWidget";
+import TagCard from "@/components/tags/TagCard";
 
 export default {
   name: "PlatformDetailPage",
   components: {
+    TagCard,
     LoaderWidget,
     ErrorPlaceholder,
     DeletePlatformDataWidget,
@@ -361,6 +366,7 @@ export default {
       showAdminStuff: "showAdminStuff",
       organizationSelected: "organizationSelected",
       allowManualDataUpload: "allowManualDataUpload",
+      enableTags: "enableTags",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",

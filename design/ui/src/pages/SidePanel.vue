@@ -110,6 +110,7 @@ export default {
       consortialInstall: "consortialInstall",
       tourByName: "tourByName",
       celusVersion: "celusVersion",
+      enableTags: "enableTags",
     }),
     tourToShow() {
       return this.tourByName(this.tourName);
@@ -133,6 +134,12 @@ export default {
               title: this.$i18n.t("pages.all_titles"),
               icon: "far fa-copy",
               linkTo: "title-list",
+            },
+            {
+              title: this.$i18n.t("pages.tags"),
+              icon: "fa fa-tags",
+              linkTo: "tags",
+              show: this.enableTags,
             },
             {
               title: this.$i18n.t("pages.interest_overview"),

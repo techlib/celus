@@ -38,6 +38,13 @@ cs:
 <template>
   <v-container fluid class="pt-0 px-0 px-sm-2">
     <v-row>
+      <v-col class="pt-0">
+        <TagSelector
+          v-model="selectedTags"
+          scope="platform"
+          dont-check-exclusive
+        />
+      </v-col>
       <v-spacer></v-spacer>
       <v-col class="pt-0">
         <v-text-field
@@ -52,7 +59,7 @@ cs:
     <v-row>
       <v-col class="px-0 px-sm-2">
         <v-data-table
-          :items="platforms"
+          :items="visiblePlatforms"
           :headers="headers"
           :items-per-page="-1"
           :search="search"
@@ -143,6 +150,16 @@ cs:
               </template>
             </v-tooltip>
           </template>
+
+          <template #item.tags="{ item }">
+            <TagChip
+              v-for="tag in objIdToTags.get(item.pk)"
+              :key="tag.pk"
+              :tag="tag"
+              small
+              show-class
+            />
+          </template>
         </v-data-table>
       </v-col>
     </v-row>
@@ -162,12 +179,23 @@ cs:
 import { mapGetters } from "vuex";
 import { formatInteger } from "../libs/numbers";
 import PlatformEditDialog from "@/components/PlatformEditDialog";
+import cancellation from "@/mixins/cancellation";
+import tags from "@/mixins/tags";
+import TagChip from "@/components/tags/TagChip";
+import TagSelector from "@/components/tags/TagSelector";
+import { intersection } from "lodash";
 
 export default {
   name: "PlatformList",
+
   components: {
+    TagSelector,
+    TagChip,
     PlatformEditDialog,
   },
+
+  mixins: [cancellation, tags],
+
   props: {
     dialogMaxWidth: {
       required: false,
@@ -176,17 +204,21 @@ export default {
     loading: {},
     platforms: {},
   },
+
   data() {
     return {
       search: "",
       showEditDialog: false,
       selectedPlatform: null,
+      selectedTags: [],
     };
   },
+
   computed: {
     ...mapGetters({
       formatNumber: "formatNumber",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
+      enableTags: "enableTags",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
@@ -233,16 +265,29 @@ export default {
           sortable: false,
         });
       }
+      if (this.enableTags) {
+        base.splice(3, 0, {
+          text: this.$i18n.t("labels.tags"),
+          value: "tags",
+        });
+      }
       return base;
     },
-  },
-  watch: {
-    showEditDialog(value) {
-      if (!value) {
-        this.selectedPlatform = null;
+    visiblePlatforms() {
+      // filter platforms by tag
+      if (this.selectedTags.length > 0) {
+        return this.platforms.filter((pl) => {
+          const tags = this.objIdToTags.get(pl.pk).map((tag) => tag.pk);
+          if (intersection(tags, this.selectedTags).length) {
+            return true;
+          }
+          return false;
+        });
       }
+      return this.platforms;
     },
   },
+
   methods: {
     editDialogSaved(platform) {
       console.log(platform);
@@ -255,6 +300,22 @@ export default {
     formatInteger: formatInteger,
     slotName(ig) {
       return "item.interests." + ig.short_name;
+    },
+  },
+
+  watch: {
+    showEditDialog(value) {
+      if (!value) {
+        this.selectedPlatform = null;
+      }
+    },
+    platforms() {
+      if (this.platforms.length) {
+        this.getTagsForObjectsById(
+          "platform",
+          this.platforms.map((item) => item.pk)
+        );
+      }
     },
   },
 };

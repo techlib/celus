@@ -112,6 +112,7 @@ export default new Vuex.Store({
     basicInfo: {},
     backendReady: false,
     bootUpMessage: "loading_basic_data",
+    et: false,
   },
 
   getters: {
@@ -226,6 +227,9 @@ export default new Vuex.Store({
         return state.basicInfo["AUTOMATICALLY_CREATE_METRICS"];
       }
       return true;
+    },
+    enableTags(state) {
+      return state.basicInfo.ENABLE_TAGS ?? false;
     },
     celusAdminSitePath(state) {
       if ("CELUS_ADMIN_SITE_PATH" in state.basicInfo) {

@@ -77,7 +77,9 @@ hcube = "0.3.1"
 chardet = "^4.0.0"
 XlsxWriter = "^3.0.3"
 toml = "^0.10.2"
+django-postgres-extra = "^2.0.5"
 django-postgres-copy = "^2.7.0"
+django-colorfield = "^0.7.2"
 
 
 [tool.poetry.dev-dependencies]

@@ -26,6 +26,7 @@ en:
     exports: Exports
     ad_hoc_report: Ad hoc report
     flexi_reports: Reports
+    tags: Tags
   menu: Menu
   organization: Organization
   platform: Platform
@@ -138,6 +139,30 @@ en:
     delete_data: Delete data
     delete_all_platform_data: Delete all platform data
     today: today
+    group_by_class: Group by class
+    tag_name: Tag name
+    tag_class: Tag class
+    new_tag: Create new tag
+    tags: Tags
+    text_color: Text color
+    bg_color: Background color
+    tag_color: Tag color
+    preview: Preview
+    no_tags: Click edit to add a tag.
+    description: Description
+    tag_scope: Tag scope
+    tag_scope_hint: What type of object can this tag be assigned to
+    all_tags: All
+    new_tag_class: Create new tag class
+    tag_class_name: Tag class name
+    tag_can_see: Who can see tag
+    tag_can_assign: Who can assign tag
+    tag_is_exclusive: Exclusive
+    tag_is_exclusive_tt: Only one tag from an exclusive tag class may be assigned to an object
+    tag_exclusive_already_present: Target already has a tag from the same exclusive class
+    tag_class_can_modify: Who can modify this tag class
+    tag_class_can_create_tags: Who can add new tags of this class
+    custom: Custom
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -166,6 +191,8 @@ en:
     save_report: Save report
     refresh: Refresh
     download: Download
+    add_tag: Add tag
+    create: Create
   in_czech: Czech
   in_english: English
   cover_image: Cover image
@@ -175,6 +202,13 @@ en:
   warnings:
     select_one_title_type: Select at least one publication type
   blank_value: -- blank --
+  tag_access_level:
+    everybody: Everybody
+    org_users: Organization users
+    org_admins: Organizations admins
+    cons_admins: Consortium admins
+    owner: Owner
+    system: System
 
 cs:
   pages:
@@ -204,6 +238,7 @@ cs:
     exports: Exporty
     ad_hoc_report: Ad hoc report
     flexi_reports: Reporty
+    tags: Štítky
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -316,6 +351,30 @@ cs:
     delete_data: Mazání dat
     delete_all_platform_data: Smazat všechna data pro platformu
     today: dnes
+    group_by_class: Seskupit podle typu
+    tag_name: Název štítku
+    tag_class: Typ štítku
+    new_tag: Přidat nový štítek
+    tags: Štítky
+    text_color: Barva textu
+    bg_color: Barva pozadí
+    tag_color: Barva štítku
+    preview: Náhled
+    no_tags: Klikněte na editaci k přidání štítku.
+    description: Popis
+    tag_scope: Cíl štítku
+    tag_scope_hint: K jakému typu objektu může být štítek připojen
+    all_tags: Všechny
+    new_tag_class: Přidat nový druh štítku
+    tag_class_name: Název typu štítku
+    tag_can_see: Kdo štítek uvidí
+    tag_can_assign: Kdo může štítek přiřazovat
+    tag_is_exclusive: Exklusivní
+    tag_is_exclusive_tt: Objektu může být přiřazený jenom jeden štítek ze skupiny, pokud je typ označný jako exklusivní
+    tag_exclusive_already_present: Štítek stejného exklusivního typu je již přítomen
+    tag_class_can_modify: Kdo může upravovat typ štítku
+    tag_class_can_create_tags: Kdo může vytvářet štítky v této skupině
+    custom: Vlastní
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu
@@ -344,6 +403,8 @@ cs:
     save_report: Uložit report
     refresh: Aktualizovat
     download: Stáhnout
+    add_tag: Přidat štítek
+    create: Vytvořit
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky
@@ -353,3 +414,10 @@ cs:
   warnings:
     select_one_title_type: Vyberte alespoň jeden typ publikace
   blank_value: -- prázdná hodnota --
+  tag_access_level:
+    everybody: Kdokoli
+    org_users: Členové organizace
+    org_admins: Administrátoři organizace
+    cons_admins: Administrátoři konzorcia
+    owner: Vlastník
+    system: Systém

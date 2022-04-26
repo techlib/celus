@@ -101,6 +101,14 @@ export default new Router({
       },
     },
     {
+      path: "/tags",
+      name: "tags",
+      component: () => import("../pages/TagListPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+      },
+    },
+    {
       path: "/heatmap",
       name: "heatmap",
       component: () =>

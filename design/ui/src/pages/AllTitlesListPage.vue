@@ -4,7 +4,7 @@
 <template>
   <div>
     <section v-if="selectedOrganizationId">
-      <h3 class="pt-3">{{ $t("titles") }}</h3>
+      <h2 class="pt-3 pl-3">{{ $t("titles") }}</h2>
 
       <InterestGroupSelector />
 

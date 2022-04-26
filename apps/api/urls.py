@@ -34,6 +34,7 @@ urlpatterns = [
     path('export/', include('export.urls')),
     path('scheduler/', include('scheduler.urls')),
     path('deployment/', include('deployment.urls')),
+    path('tags/', include('tags.urls')),
 ]
 
 if settings.ALLOW_USER_REGISTRATION:

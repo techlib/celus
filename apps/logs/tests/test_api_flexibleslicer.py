@@ -3,6 +3,8 @@ from django.urls import reverse
 
 from core.logic.serialization import b64json
 from organizations.models import UserOrganization
+from tags.logic.fake_data import TagFactory
+from tags.models import TagScope
 
 from test_fixtures.scenarios.basic import users  # noqa
 
@@ -130,3 +132,25 @@ class TestSlicerAPI:
             },
         )
         assert resp.status_code == 200
+
+    # tags
+    def test_parts_api_with_tags(self, flexible_slicer_test_data, admin_client, admin_user):
+        """
+        Tests that the /parts/ endpoint for getting possible parts works properly with tag filter
+        """
+        tag = TagFactory.create(name='my_platforms', tag_class__scope=TagScope.PLATFORM)
+        for platform in flexible_slicer_test_data['platforms'][1:]:
+            tag.tag(platform, admin_user)
+        resp = admin_client.get(
+            reverse('flexible-slicer-split-parts'),
+            {
+                'primary_dimension': 'organization',
+                'groups': b64json(['metric']),
+                'split_by': b64json(['platform']),
+                'filters': b64json({'tag__platform': tag.pk}),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == 2
+        assert len(data['values']) == 2
