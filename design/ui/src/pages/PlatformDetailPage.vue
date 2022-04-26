@@ -135,7 +135,7 @@ cs:
         </v-col>
         <v-spacer></v-spacer>
         <v-col cols="auto" v-if="enableTags">
-          <TagCard item-type="platform" :item-id="platformId" />
+          <TagCard scope="platform" :item-id="platformId" />
         </v-col>
         <v-col cols="auto" v-if="showAdminStuff">
           <v-card>

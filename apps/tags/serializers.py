@@ -2,10 +2,15 @@ from functools import cached_property
 
 from django.core.exceptions import BadRequest
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import HiddenField, CurrentUserDefault, SerializerMethodField
+from rest_framework.fields import (
+    HiddenField,
+    CurrentUserDefault,
+    SerializerMethodField,
+    ReadOnlyField,
+)
 from rest_framework.serializers import ModelSerializer
 
-from tags.models import Tag, TagClass
+from tags.models import Tag, TagClass, TaggingBatch
 
 
 class TagClassSerializer(ModelSerializer):
@@ -169,3 +174,35 @@ class TagCreateSerializer(ModelSerializer):
             raise PermissionDenied(f'User cannot add tags to class "{tc}"')
         tag = super().create(validated_data)
         return tag
+
+
+class _TaggingBatchBaseSerializer(ModelSerializer):
+
+    preflight = ReadOnlyField()
+
+    class Meta:
+        model = TaggingBatch
+        fields = (
+            'pk',
+            'source_file',
+            'annotated_file',
+            'preflight',
+            'postflight',
+            'tag',
+            'tag_class',
+            'state',
+            'last_updated_by',
+            'created',
+            'last_updated',
+        )
+
+
+class TaggingBatchSerializer(_TaggingBatchBaseSerializer):
+
+    tag = TagSerializer(read_only=True)
+    tag_class = TagClassSerializer(read_only=True)
+
+
+class TaggingBatchCreateSerializer(_TaggingBatchBaseSerializer):
+
+    last_updated_by = HiddenField(default=CurrentUserDefault())

@@ -210,7 +210,6 @@ export default {
       search: "",
       showEditDialog: false,
       selectedPlatform: null,
-      selectedTags: [],
     };
   },
 
@@ -277,9 +276,11 @@ export default {
       // filter platforms by tag
       if (this.selectedTags.length > 0) {
         return this.platforms.filter((pl) => {
-          const tags = this.objIdToTags.get(pl.pk).map((tag) => tag.pk);
-          if (intersection(tags, this.selectedTags).length) {
-            return true;
+          if (this.objIdToTags.has(pl.pk)) {
+            const tags = this.objIdToTags.get(pl.pk).map((tag) => tag.pk);
+            if (intersection(tags, this.selectedTags).length) {
+              return true;
+            }
           }
           return false;
         });
@@ -316,6 +317,17 @@ export default {
           this.platforms.map((item) => item.pk)
         );
       }
+    },
+    selectedTags: {
+      deep: true,
+      handler() {
+        const tags = this.selectedTags.join(",");
+        if (tags !== "") {
+          history.pushState({}, null, this.$route.path + `?tags=${tags}`);
+        } else {
+          history.pushState({}, null, this.$route.path);
+        }
+      },
     },
   },
 };

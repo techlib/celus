@@ -55,7 +55,7 @@ en:
       </template>
 
       <template #item.name="{ item }">
-        <TagChip :tag="item" :show-class="showClass" />
+        <TagChip :tag="item" :show-class="showClass" link />
       </template>
 
       <template #item._group_sorter="{ item }">

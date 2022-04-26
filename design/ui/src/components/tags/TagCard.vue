@@ -36,7 +36,7 @@
           :hidden-tags="usedTagIds"
           :used-exclusive-classes="usedExclusiveClasses"
           assignable-only
-          :scope="itemType"
+          :scope="scope"
         />
       </div>
     </v-card-text>
@@ -53,7 +53,7 @@ export default {
   mixins: [cancellation],
 
   props: {
-    itemType: {
+    scope: {
       required: true,
       type: String,
       validator(value) {
@@ -85,8 +85,8 @@ export default {
 
   computed: {
     tagsUrl() {
-      if (this.itemType && this.itemId)
-        return `/api/tags/tag/?item_type=${this.itemType}&item_id=${this.itemId}`;
+      if (this.scope && this.itemId)
+        return `/api/tags/tag/?item_type=${this.scope}&item_id=${this.itemId}`;
       return null;
     },
     usedTagIds() {
@@ -113,7 +113,7 @@ export default {
     },
     async removeTag(tagId) {
       await this.http({
-        url: `/api/tags/tag/${tagId}/${this.itemType}/remove/`,
+        url: `/api/tags/tag/${tagId}/${this.scope}/remove/`,
         method: "delete",
         data: { item_id: this.itemId },
       });
@@ -133,9 +133,9 @@ export default {
           for (const tag of this.tagsToAdd) {
             promises.push(
               this.http({
-                url: `/api/tags/tag/${tag}/${this.itemType}/add/`,
+                url: `/api/tags/tag/${tag}/${this.scope}/add/`,
                 method: "post",
-                data: { item_id: this.itemId, scope: this.itemType },
+                data: { item_id: this.itemId, scope: this.scope },
               })
             );
           }

@@ -1,15 +1,8 @@
-from datetime import date
 from random import randint
 
 import factory
 import faker
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
-
-from publications.models import PlatformTitle
-from test_fixtures.entities.organizations import OrganizationFactory
-from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.report_types import ReportTypeFactory
 
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import (
@@ -20,6 +13,10 @@ from logs.models import (
     Metric,
     OrganizationPlatform,
 )
+from publications.models import PlatformTitle
+from test_fixtures.entities.organizations import OrganizationFactory
+from test_fixtures.entities.platforms import PlatformFactory
+from test_fixtures.entities.report_types import ReportTypeFactory
 from test_fixtures.entities.titles import TitleFactory
 
 fake = faker.Faker()

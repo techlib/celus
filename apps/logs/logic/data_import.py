@@ -234,13 +234,6 @@ class TitleManager:
 
     def get_or_create(self, record: TitleRec) -> Optional[int]:
         if not record.name:
-            logger.warning(
-                'Record is missing or has empty title: ' 'ISBN: %s, ISSN: %s, eISSN: %s, DOI: %s',
-                record.isbn,
-                record.issn,
-                record.eissn,
-                record.doi,
-            )
             return None
 
         cache_key = id(record)

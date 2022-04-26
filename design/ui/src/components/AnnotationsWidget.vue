@@ -198,11 +198,3 @@ export default {
   },
 };
 </script>
-
-<style scoped lang="scss">
-table.overview {
-  th {
-    text-align: left;
-  }
-}
-</style>

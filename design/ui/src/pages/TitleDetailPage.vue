@@ -173,12 +173,7 @@ cs:
       </v-col>
       <v-spacer></v-spacer>
       <v-col cols="auto" v-if="enableTags">
-        <TagCard
-          v-if="titleId"
-          item-type="title"
-          :item-id="titleId"
-          show-class
-        />
+        <TagCard v-if="titleId" scope="title" :item-id="titleId" show-class />
       </v-col>
     </v-row>
 

@@ -6,7 +6,7 @@
     :items="visibleTags"
     item-text="name"
     item-value="pk"
-    multiple
+    :multiple="!singleTag"
     :label="labelToShow"
     clearable
     clear-icon="fa-times"
@@ -26,7 +26,9 @@
     </template>
 
     <template #selection="{ item }">
-      <TagChip :tag="item" small hide-icon />
+      <!-- tooltips on tags work strange in autocomplete and the whole tag
+      sometimes disappears, so we disable the tooltip here -->
+      <TagChip :tag="item" small hide-icon hide-tooltip />
     </template>
 
     <template #prepend v-if="tooltip">
@@ -49,7 +51,7 @@ export default {
   mixins: [cancellation],
 
   props: {
-    value: { type: Array },
+    value: {},
     hiddenTags: { type: Array, default: () => [] },
     usedExclusiveClasses: { type: Array, default: () => [] },
     label: { type: String, default: "" },
@@ -63,7 +65,9 @@ export default {
       validator(value) {
         return ["title", "platform", "organization"].includes(value);
       },
+      required: true,
     },
+    singleTag: { type: Boolean, default: false },
   },
 
   data() {
@@ -82,9 +86,10 @@ export default {
       },
     },
     selectedExclusiveClasses() {
+      let value = Array.isArray(this.value) ? this.value : [this.value];
       return this.tags
         .filter((tag) => tag.tag_class.exclusive)
-        .filter((tag) => this.value.includes(tag.pk))
+        .filter((tag) => value.includes(tag.pk))
         .map((tag) => tag.tag_class.pk);
     },
     visibleTags() {
@@ -101,6 +106,9 @@ export default {
     labelToShow() {
       if (this.label) {
         return this.label;
+      }
+      if (this.singleTag) {
+        return this.$t("labels.tag");
       }
       return this.$t("labels.tags");
     },

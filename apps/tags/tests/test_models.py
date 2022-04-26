@@ -1,8 +1,8 @@
 import pytest
-from django.db import DatabaseError
+from django.db import DatabaseError, IntegrityError
 
 from tags.logic.fake_data import TagClassFactory, TagFactory
-from tags.models import AccessibleBy, Tag, TagClass, TagScope
+from tags.models import AccessibleBy, Tag, TagClass, TagScope, TaggingBatch, TaggingBatchState
 from test_fixtures.entities.titles import TitleFactory
 from test_fixtures.entities.users import UserFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
@@ -444,3 +444,31 @@ class TestItemTagConstraints:
         else:
             with pytest.raises(DatabaseError):
                 tag2.tag(title, admin_user)
+
+
+@pytest.mark.django_db
+class TestTaggingBatchConstraints:
+    @pytest.mark.parametrize(
+        ['state', 'has_tag', 'has_tag_class', 'ok'],
+        [
+            (TaggingBatchState.INITIAL, True, True, True),
+            (TaggingBatchState.INITIAL, True, False, True),
+            (TaggingBatchState.INITIAL, False, True, True),
+            (TaggingBatchState.INITIAL, False, False, True),
+            (TaggingBatchState.IMPORTED, True, True, False),
+            (TaggingBatchState.IMPORTED, True, False, True),
+            (TaggingBatchState.IMPORTED, False, True, True),
+            (TaggingBatchState.IMPORTED, False, False, False),
+        ],
+    )
+    def test_tag_or_tag_class_is_set(self, state, has_tag, has_tag_class, ok):
+        data = {'state': state}
+        if has_tag:
+            data['tag'] = TagFactory.create()
+        if has_tag_class:
+            data['tag_class'] = TagClassFactory.create()
+        if ok:
+            TaggingBatch.objects.create(**data)
+        else:
+            with pytest.raises(IntegrityError):
+                TaggingBatch.objects.create(**data)

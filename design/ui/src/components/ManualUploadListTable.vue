@@ -1,7 +1,7 @@
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="../locales/dialog.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  really_delete: Really delete?
   state: State
   delete_warning:
     You are about to delete this manually uploaded data from the database.
@@ -11,7 +11,6 @@ en:
   no_data: There are no manually uploaded data yet
 
 cs:
-  really_delete: Opravdu smazat?
   state: Stav
   delete_warning: Prosím potvrďte, že chcete smazat z databáze tato ručně nahraná data.
   delete_success: Vybraná ručně nahraná data byla úspěšně smazána
@@ -153,7 +152,7 @@ cs:
 
     <v-dialog v-model="showDeleteDialog" max-width="720px">
       <v-card>
-        <v-card-title v-text="$t('really_delete')"></v-card-title>
+        <v-card-title v-text="$t('confirm_delete')"></v-card-title>
         <v-card-text>
           <v-container fluid class="pb-0">
             <v-row>
@@ -343,17 +342,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-span.time {
-  font-weight: 300;
-  font-size: 87.5%;
-}
-
-table.overview {
-  th {
-    text-align: left;
-    padding-right: 1.5rem;
-  }
-}
-</style>

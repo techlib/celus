@@ -1,18 +1,26 @@
+import codecs
 import operator
+import os
+import tempfile
+from collections import Counter
 from functools import reduce
-from typing import Optional, Tuple, Type, Union
+from typing import BinaryIO, Callable, Optional, Tuple, Type, Union
 
 from colorfield.fields import ColorField
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.files.base import File
 from django.db import models
 from django.db.models import Q, QuerySet
+from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from rest_framework.exceptions import PermissionDenied
 
 from core.models import CreatedUpdatedMixin, REL_ORG_ADMIN, User
+from logs.logic.data_import import TitleManager
 from organizations.models import Organization
 from publications.models import Platform, Title
+from tags.logic.titles_lists import CsvTitleListReader
 
 
 class AccessibleBy(models.IntegerChoices):
@@ -361,6 +369,13 @@ class ItemTag(CreatedUpdatedMixin, models.Model):
 
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     target = models.ForeignKey(Title, on_delete=models.CASCADE)  # just to have something here
+    tagging_batch = models.ForeignKey(
+        'TaggingBatch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text='If the tagging was done in a batch, this is the batch',
+    )
     # the following is redundant, but we need it for a constraint
     _tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE)
     _exclusive = models.BooleanField()
@@ -405,3 +420,210 @@ class PlatformTag(ItemTag):
 class OrganizationTag(ItemTag):
 
     target = models.ForeignKey(Organization, on_delete=models.CASCADE)
+
+
+def where_to_store(instance: 'TaggingBatch', filename):
+    root, ext = os.path.splitext(filename)
+    ts = now().strftime('%Y%m%d-%H%M%S.%f')
+    return f'tagging_batch/{root}-{ts}{ext}'
+
+
+class TaggingBatchState(models.TextChoices):
+    """
+    I originally used `MduState` for this, but needed the `UNDOING` state for the unassigning
+    process. Because inheritance is not possible, I had to recreate the whole thing, but kept the
+    original names so that I do not have to change the frontend code.
+    """
+
+    INITIAL = 'initial', _("Initial")
+    PREFLIGHT = 'preflight', _("Preflight")
+    IMPORTING = 'importing', _("Importing")
+    IMPORTED = 'imported', _("Imported")
+    PREFAILED = 'prefailed', _("Preflight failed")
+    FAILED = 'failed', _("Import failed")
+    UNDOING = 'undoing', _('Undoing')
+
+
+class TaggingBatch(CreatedUpdatedMixin, models.Model):
+
+    source_file = models.FileField(upload_to=where_to_store, blank=True, null=True, max_length=256)
+    annotated_file = models.FileField(
+        upload_to='tagging_batch/',
+        blank=True,
+        null=True,
+        max_length=256,
+        help_text='File with additional data added during pre-flight or import',
+    )
+    preflight = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Information gathered during the preflight check of the source',
+    )
+    postflight = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Information gathered during the actual processing of the source and '
+        'application of tags',
+    )
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, blank=True, null=True)
+    tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE, blank=True, null=True)
+    state = models.CharField(
+        max_length=20, choices=TaggingBatchState.choices, default=TaggingBatchState.INITIAL
+    )
+
+    class Meta:
+        verbose_name_plural = 'Tagging batches'
+        constraints = [
+            models.CheckConstraint(
+                # either tag or tag_class must be set, but not both, if the state is
+                # imported, importing or failed
+                # in other cases, we do not care about tag or tag_class
+                name='one_of_tag_and_tag_class_not_null',
+                check=(
+                    ~Q(
+                        state__in=[
+                            TaggingBatchState.IMPORTED,
+                            TaggingBatchState.IMPORTING,
+                            TaggingBatchState.FAILED,
+                        ]
+                    )
+                    | (
+                        (Q(tag__isnull=True) & Q(tag_class__isnull=False))
+                        | (Q(tag__isnull=False) & Q(tag_class__isnull=True))
+                    )
+                ),
+            )
+        ]
+
+    def compute_preflight(
+        self, dump_file: Optional[BinaryIO] = None, title_id_formatter: Callable[[int], str] = str
+    ) -> dict:
+        """
+        :param dump_file: opened file where a copy of input will be written with extra data from
+                          the processing
+        :param title_id_formatter: converter of title id into string
+        :return:
+        """
+        reader = CsvTitleListReader()
+        stats = Counter()
+        unique_title_ids = set()
+        for rec in reader.process_source(
+            codecs.iterdecode(self.source_file, 'utf-8'),
+            dump_file=dump_file,
+            dump_id_formatter=title_id_formatter,
+        ):
+            stats['row_count'] += 1
+            unique_title_ids |= rec.title_ids
+            if not rec.title_ids:
+                stats['no_match'] += 1
+        stats['unique_matched_titles'] = len(unique_title_ids)
+        return {
+            'stats': stats,
+            'explicit_tags': reader.has_explicit_tags,
+            'recognized_columns': list(
+                sorted(reader.column_names.values(), key=lambda x: x.lower())
+            ),
+        }
+
+    def do_preflight(self, title_id_formatter: Callable[[int], str] = str):
+        """
+        :param title_id_formatter: converts title ids to string in the annotated file
+        :return:
+        """
+        try:
+            with tempfile.NamedTemporaryFile('r+b') as dump_file:
+                self.preflight = self.compute_preflight(
+                    dump_file=dump_file, title_id_formatter=title_id_formatter
+                )
+                self.state = TaggingBatchState.PREFLIGHT
+                dump_file.seek(0)
+                self.annotated_file = File(dump_file, name=self.create_annotated_file_name())
+                self.save()
+        except Exception as e:
+            self.preflight['error'] = str(e)
+            self.state = TaggingBatchState.PREFAILED
+            self.save()
+
+    def assign_tag(
+        self, create_missing_titles=False, title_id_formatter: Callable[[int], str] = str
+    ) -> None:
+        """
+        :param create_missing_titles: if True, titles which are not found in the database will
+                                      be created
+        :param title_id_formatter: converts title ids to string in the annotated file
+        """
+        if self.state != TaggingBatchState.IMPORTING:
+            raise ValueError(f'Cannot assign tag for batch in state "{self.state}"')
+        if not self.tag.can_user_assign(self.last_updated_by):
+            raise PermissionDenied(f'User cannot assing tag #{self.tag_id}')
+        reader = CsvTitleListReader()
+        stats = Counter()
+        unique_title_ids = set()
+        unmatched_title_recs = []
+        with tempfile.NamedTemporaryFile('wb') as dump_file:
+            for rec in reader.process_source(
+                codecs.iterdecode(self.source_file, 'utf-8'),
+                dump_file=dump_file,
+                dump_id_formatter=title_id_formatter,
+            ):
+                stats['row_count'] += 1
+                unique_title_ids |= rec.title_ids
+                if not rec.title_ids:
+                    stats['no_match'] += 1
+                    if create_missing_titles:
+                        unmatched_title_recs.append(rec.title_rec)
+            dump_file.seek(0)
+            with open(dump_file.name, 'rb') as infile:
+                if self.annotated_file:
+                    # we delete the original annotated_file in order to preserve the original name
+                    # and not allow Django to replace it with one with extra junk in the filename
+                    self.annotated_file.delete(save=False)
+                self.annotated_file = File(infile, name=self.create_annotated_file_name())
+                self.save()
+        stats['unique_matched_titles'] = len(unique_title_ids)
+        if unmatched_title_recs:
+            tm = TitleManager()
+            tm.prefetch_titles(unmatched_title_recs)
+            stats['created_titles'] = -len(unique_title_ids)  # we need the difference after-before
+            for title_rec in unmatched_title_recs:
+                if title_id := tm.get_or_create(title_rec):
+                    unique_title_ids.add(title_id)
+            stats['created_titles'] += len(unique_title_ids)
+
+        # do the actual tagging
+        to_insert = [
+            TitleTag(
+                tag_id=self.tag_id,
+                target_id=title_id,
+                tagging_batch=self,
+                _tag_class=self.tag.tag_class,
+                _exclusive=self.tag.tag_class.exclusive,
+                last_updated_by=self.last_updated_by,
+            )
+            for title_id in unique_title_ids
+        ]
+        # because of ignore_conflicts all object from `to_insert` will be returned, even if they
+        # were not inserted because of a conflict. This is why we use the actual count of
+        # titletags as count of tagged titles
+        TitleTag.objects.bulk_create(to_insert, ignore_conflicts=True)
+        stats['tagged_titles'] = self.titletag_set.count()
+        self.postflight = {'stats': stats}
+        self.state = TaggingBatchState.IMPORTED
+        self.save()
+
+    def unassign_tag(self) -> None:
+        """
+        Remove all the TitleTags created by this batch
+        """
+        if self.state != TaggingBatchState.UNDOING:
+            raise ValueError(f'Cannot un-assign tag for batch in state "{self.state}"')
+        if not self.tag.can_user_assign(self.last_updated_by):
+            raise PermissionDenied(f'User cannot un-assing tag #{self.tag_id}')
+        self.titletag_set.all().delete()
+
+    def create_annotated_file_name(self) -> str:
+        if not self.source_file:
+            raise ValueError('source_file must be filled in')
+        _folder, fname = os.path.split(self.source_file.name)
+        base, ext = os.path.splitext(fname)
+        return base + '-annotated' + ext

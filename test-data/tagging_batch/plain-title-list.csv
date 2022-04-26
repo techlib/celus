@@ -1,0 +1,7 @@
+Name,ISBN,issn,eISSN,note
+Foo,9780787960186,,,isbn13
+Bar,,1234-5678,,issn
+Baz,,9874-6314,2546-5794,both issn and eissn
+Moo,1614294410,,,isnb10
+Mar,,,1234-5678,eissn matching previously seen issn
+Maz,9781614295365,2345-6789,,isbn13 + issn

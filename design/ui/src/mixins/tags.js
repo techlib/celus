@@ -2,7 +2,19 @@ import qs from "qs";
 
 export default {
   data() {
+    let tags = [];
+    if (this.$route.query.tags) {
+      if (typeof this.$route.query.tags === "number") {
+        tags = [this.$route.query.tags];
+      } else {
+        tags = this.$route.query.tags
+          .split(",")
+          .map((x) => Number.parseInt(x, 10))
+          .filter((x) => !!x);
+      }
+    }
     return {
+      selectedTags: tags,
       objIdToTags: new Map(),
     };
   },

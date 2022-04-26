@@ -17,6 +17,8 @@ tagged_titles_router.register(
     r'organization', views.TaggedOrganizationsViewSet, basename='tagged-organizations'
 )
 
+router.register(r'tagging-batch', views.TaggingBatchViewSet, basename='tagging-batch')
+
 urlpatterns = [
     *router.urls,
     *tagged_titles_router.urls,

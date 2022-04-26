@@ -126,10 +126,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-span.time {
-  font-weight: 300;
-  font-size: 87.5%;
-}
-</style>

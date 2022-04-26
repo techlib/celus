@@ -396,20 +396,9 @@ export default {
 </script>
 
 <style lang="scss">
-table.overview {
-  th {
-    padding-right: 1rem;
-  }
-}
-
 .pre {
   font-family: Courier, monospace;
   color: #666666;
   white-space: pre-wrap;
-}
-
-span.time {
-  font-weight: 300;
-  font-size: 87.5%;
 }
 </style>

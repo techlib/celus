@@ -1,13 +1,10 @@
 import re
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
-
-from datetime import datetime
-
 from allauth.account.models import EmailAddress, EmailConfirmation
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.utils import timezone
 

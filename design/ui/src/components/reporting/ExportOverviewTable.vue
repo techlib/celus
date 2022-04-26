@@ -51,7 +51,7 @@
     <template #expanded-item="{ item, headers }">
       <th></th>
       <td :colspan="headers.length - 1" class="py-3">
-        <table class="overview">
+        <table class="overview text--secondary">
           <tr>
             <th>{{ $t("labels.report_type") }}:</th>
             <td>
@@ -181,23 +181,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-span.time {
-  font-weight: 300;
-  font-size: 87.5%;
-}
-
-table.overview {
-  color: #666666;
-
-  tr {
-    margin: 0.75rem 0;
-
-    th {
-      text-align: left;
-      padding-right: 1rem;
-    }
-  }
-}
-</style>

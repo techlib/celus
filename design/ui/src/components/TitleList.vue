@@ -179,6 +179,7 @@ export default {
     interestByPlatform: { default: false, type: Boolean },
     noDataText: { default: null, type: String },
   },
+
   data() {
     return {
       titles: [],
@@ -194,7 +195,6 @@ export default {
         sortBy: [this.orderInterest ? this.orderInterest : "name"],
       },
       cancelTokenSource: null,
-      selectedTags: [],
     };
   },
 
@@ -394,6 +394,17 @@ export default {
   watch: {
     fullUrl() {
       this.loadData();
+    },
+    selectedTags: {
+      deep: true,
+      handler() {
+        const tags = this.selectedTags.join(",");
+        if (tags !== "") {
+          history.pushState({}, null, this.$route.path + `?tags=${tags}`);
+        } else {
+          history.pushState({}, null, this.$route.path);
+        }
+      },
     },
   },
   mounted() {

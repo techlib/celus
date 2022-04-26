@@ -144,8 +144,17 @@ export default {
             {
               title: this.$i18n.t("pages.tags"),
               icon: "fa fa-tags",
-              linkTo: "tags",
               show: this.enableTags,
+              items: [
+                {
+                  title: this.$i18n.t("pages.tag_management"),
+                  linkTo: "tags",
+                },
+                {
+                  title: this.$i18n.t("pages.title_lists"),
+                  linkTo: "tagging-batches",
+                },
+              ],
             },
             {
               title: this.$i18n.t("pages.interest_overview"),

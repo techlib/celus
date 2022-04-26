@@ -147,4 +147,21 @@ table.overview-card {
     }
   }
 }
+
+table.overview {
+  th {
+    text-align: left;
+    padding-right: 1.5rem;
+  }
+
+  &.full-width {
+    width: 100%;
+  }
+}
+
+/* data and time formatting */
+span.time {
+  font-weight: 300;
+  font-size: 87.5%;
+}
 </style>

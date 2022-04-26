@@ -35,7 +35,10 @@ axios.interceptors.response.use(
     ) {
       // if there is 401 error, try to (re)authenticate
       store.dispatch("setShowLoginDialog", { show: true });
-    } else if (error.response?.status === 409) {
+    } else if (
+      error.response?.status === 409 &&
+      error.response.headers["celus-version"] !== store.getters.celusVersion
+    ) {
       // Display new celus version dialog
       store.dispatch("setNewCelusVersion", {
         new_version: error.response.headers["celus-version"],

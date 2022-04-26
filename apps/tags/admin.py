@@ -46,3 +46,10 @@ class TagClassAdmin(TagPreviewMixin, admin.ModelAdmin):
     ]
     readonly_fields = ['last_updated_by']
     search_fields = ['name', 'text_color', 'bg_color']
+
+
+@admin.register(models.TaggingBatch)
+class TaggingBatchAdmin(admin.ModelAdmin):
+
+    list_display = ['pk', 'state', 'created', 'last_updated_by', 'tag', 'tag_class']
+    list_filter = ['state', 'last_updated_by', 'tag', 'tag_class']

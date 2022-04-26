@@ -27,6 +27,8 @@ en:
     ad_hoc_report: Ad hoc report
     flexi_reports: Reports
     tags: Tags
+    tag_management: Tag management
+    title_lists: Title lists
     organizations: Organizations
   menu: Menu
   organization: Organization
@@ -146,6 +148,7 @@ en:
     tag_class: Tag class
     new_tag: Create new tag
     tags: Tags
+    tag: Tag
     text_color: Text color
     bg_color: Background color
     tag_color: Tag color
@@ -165,6 +168,10 @@ en:
     tag_class_can_modify: Who can modify this tag class
     tag_class_can_create_tags: Who can add new tags of this class
     custom: Custom
+    created: Created
+    state: State
+    source_file: Source file
+    error: Error
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -195,6 +202,7 @@ en:
     download: Download
     add_tag: Add tag
     create: Create
+    assign_tag: Assign tag
   in_czech: Czech
   in_english: English
   cover_image: Cover image
@@ -211,6 +219,35 @@ en:
     cons_admins: Consortium admins
     owner: Owner
     system: System
+  tagging:
+    data_rows: Data rows
+    data_rows_tt: Total number of rows found in the source file
+    matched_titles: Matched titles
+    matched_titles_tt: Total number of unique matched titles
+    title_number_note: One row may match more than one title, so this number may be higher than the number of matched rows
+    tagged_titles: Tagged titles
+    tagged_titles_tt: Total number of unique tagged titles
+    no_match_rows: Rows without match
+    no_match_rows_tt: The number of rows which did not match any title
+    recognized_columns: Recognized columns
+    recognized_columns_tt: Names of columns from the uploaded sheet which were recognized as containing title identifiers
+    create_new_title_list: Upload a new list
+    title_list: Title list
+    preprocessing_data: Preprocessing
+    annotated_source_file: Annotated source file
+    annotated_source_file_tt: Copy of the source file annotated with information about identified titles. Use it to review what exactly was matched.
+    delete_batch_text: Do you really want to delete the title list? All assigned tags will be preserved, just the list itself will be deleted.
+    batch_delete_success: Title list was successfully deleted
+    unassign_tag: Unassign tag
+    unassign_tag_tt: Unassign tag from all titles in the list
+  tag_state:
+    initial: Just uploaded
+    preflight: Ready for tagging
+    prefailed: Preprocessing failed
+    failed: Processing failed
+    importing: Tagging in progress
+    imported: Tag assigned
+    undoing: Unassigning tags
 
 cs:
   pages:
@@ -241,6 +278,8 @@ cs:
     ad_hoc_report: Ad hoc report
     flexi_reports: Reporty
     tags: Štítky
+    tag_management: Správa štítků
+    title_lists: Titulové seznamy
     organizations: Organizace
   menu: Menu
   organization: Organizace
@@ -360,6 +399,7 @@ cs:
     tag_class: Typ štítku
     new_tag: Přidat nový štítek
     tags: Štítky
+    tag: Štítek
     text_color: Barva textu
     bg_color: Barva pozadí
     tag_color: Barva štítku
@@ -379,6 +419,10 @@ cs:
     tag_class_can_modify: Kdo může upravovat typ štítku
     tag_class_can_create_tags: Kdo může vytvářet štítky v této skupině
     custom: Vlastní
+    created: Datum vytvoření
+    state: Stav
+    source_file: Zdrojový soubor
+    error: Chyba
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu
@@ -409,6 +453,7 @@ cs:
     download: Stáhnout
     add_tag: Přidat štítek
     create: Vytvořit
+    assign_tag: Oštítkovat
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky
@@ -425,3 +470,32 @@ cs:
     cons_admins: Administrátoři konzorcia
     owner: Vlastník
     system: Systém
+  tagging:
+    data_rows: Datové řádky
+    data_rows_tt: Celkový počet řádků nalezených ve zdrojovém souboru
+    matched_titles: Nalezené tituly
+    matched_titles_tt: Počet unikátních identifikovaných titulů
+    title_number_note: Jeden řádek může odpovídat více titulům. Je tedy možné, že toto číslo bude větší než počet identifikovaných řádků.
+    tagged_titles: Oštítkované tituly
+    tagged_titles_tt: Celkový počet unikátních oštítkovaných titulů
+    no_match_rows: Řádky bez odpovídajícího titulu
+    no_match_rows_tt: Počet řádků, které neodpovídají žádnému titulu v databázi
+    recognized_columns: Rozeznané sloupce
+    recognized_columns_tt: Názvy sloupců z nahrané tabulky, které byly rozeznány jako použitelné pro identifikaci titulů
+    create_new_title_list: Nahrát nový seznam
+    title_list: Seznam titulů
+    preprocessing_data: Probíhá předzpracování
+    annotated_source_file: Anotovaný zdrojový soubor
+    annotated_source_file_tt: Kopie zdrojového souboru doplněná o informace o identifikovaných titulech.
+    delete_batch_text: Opravdu si přejete smazat tento seznam titulů? Všechny přiřazené štítky budou zachovány, smazán bude jen samotný seznam.
+    batch_delete_success: Seznam titulů byl úspěšně smazán
+    unassign_tag: Odstranit štítky
+    unassign_tag_tt: Odstraní odpovídající štítky z nalezených titulů
+  tag_state:
+    initial: Právě nahráno
+    preflight: Připraveno k šťítkování
+    prefailed: Předzpracování selhalo
+    failed: Zpracování selhalo
+    importing: Probíhá štítkování
+    imported: Štítkování dokončeno
+    undoing: Odstraňování štítků

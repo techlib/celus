@@ -1,26 +1,43 @@
 from typing import Optional
 
-from django.db import IntegrityError, connection
+from allauth.utils import build_absolute_uri
+from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
+from django.http import Http404
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import ChoiceField, IntegerField, BooleanField, ListField
+from rest_framework.fields import BooleanField, ChoiceField, IntegerField, ListField
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
-from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
+from rest_framework.status import (
+    HTTP_201_CREATED,
+    HTTP_202_ACCEPTED,
+    HTTP_204_NO_CONTENT,
+    HTTP_409_CONFLICT,
+)
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from core.exceptions import BadRequestException
 from logs.views import StandardResultsSetPagination
-from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer, TitleSerializer
-from tags.models import ItemTag, Tag, TagClass, TagScope
+from tags.models import ItemTag, Tag, TagClass, TagScope, TaggingBatch, TaggingBatchState
 from tags.permissions import TagClassPermissions, TagPermissions
-from tags.serializers import TagSerializer, TagClassSerializer, TagCreateSerializer
+from tags.serializers import (
+    TagClassSerializer,
+    TagCreateSerializer,
+    TagSerializer,
+    TaggingBatchCreateSerializer,
+    TaggingBatchSerializer,
+)
+from tags.tasks import (
+    tagging_batch_assign_tag_task,
+    tagging_batch_preflight_task,
+    tagging_batch_unassign_task,
+)
 
 
 class TagClassViewSet(ModelViewSet):
@@ -178,3 +195,84 @@ class TagItemLinksView(APIView):
         elif item_type == TagScope.PLATFORM:
             data = data.filter(target_id__in=request.user.accessible_platforms())
         return Response(data)
+
+
+class TaggingBatchViewSet(ModelViewSet):
+
+    queryset = TaggingBatch.objects.none()
+
+    def get_serializer_class(self):
+        if self.action in ("create", "update", "partial_update"):
+            return TaggingBatchCreateSerializer
+        return TaggingBatchSerializer
+
+    def get_queryset(self):
+        return TaggingBatch.objects.filter(last_updated_by=self.request.user).select_related(
+            'tag', 'tag__tag_class', 'tag_class'
+        )
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        url_base = build_absolute_uri(self.request, '/')
+        tagging_batch_preflight_task.delay(serializer.data['pk'], url_base)
+
+    @action(methods=['post'], detail=True, url_name='assign-tags', url_path='assign-tags')
+    def assign_tags(self, request, pk):
+        try:
+            tb = self.get_queryset().select_related().select_for_update(nowait=True).get(pk=pk)
+            if tb.state != TaggingBatchState.PREFLIGHT:
+                raise BadRequestException(
+                    {'error': f'Cannot use batch with state "{tb.state}" to assign tags'}
+                )
+        except DatabaseError as exc:
+            return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
+        except TaggingBatch.DoesNotExist:
+            raise Http404({'error': 'Tagging batch not found'})
+
+        # we need to resolve the IDs before submitting them to the task so that we
+        # resolve user access and existence of the tags
+        if tag_ids_str := request.data.get('tag', ''):
+            try:
+                tag = Tag.objects.user_assignable_tags(request.user).get(pk=tag_ids_str)
+            except Tag.DoesNotExist:
+                raise BadRequestException({'error': 'No matching tags to apply were found'})
+            tb.state = TaggingBatchState.IMPORTING
+            tb.tag = tag
+            tb.last_updated_by = request.user
+            tb.save()
+            url_base = build_absolute_uri(self.request, '/')
+            task = tagging_batch_assign_tag_task.apply_async(args=(tb.pk, url_base), countdown=2)
+            return Response(
+                {
+                    'task_id': task.id,
+                    'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
+                },
+                status=HTTP_202_ACCEPTED,
+            )
+        raise BadRequestException(
+            {'error': 'Parameter `tags` with comma separated list of tag IDs is required'}
+        )
+
+    @action(methods=['post'], detail=True, url_name='unassign', url_path='unassign')
+    def unassign(self, request, pk):
+        try:
+            tb = self.get_queryset().select_related().select_for_update(nowait=True).get(pk=pk)
+            if tb.state != TaggingBatchState.IMPORTED:
+                raise BadRequestException(
+                    {'error': f'Cannot use batch with state "{tb.state}" to unassign tags'}
+                )
+        except DatabaseError as exc:
+            return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
+        except TaggingBatch.DoesNotExist:
+            raise Http404({'error': 'Tagging batch not found'})
+
+        tb.state = TaggingBatchState.UNDOING
+        tb.save()
+        task = tagging_batch_unassign_task.apply_async(args=(tb.pk,), countdown=2)
+        return Response(
+            {
+                'task_id': task.id,
+                'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
+            },
+            status=HTTP_202_ACCEPTED,
+        )

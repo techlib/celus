@@ -118,6 +118,14 @@ export default new Router({
       },
     },
     {
+      path: "/tagging-batches",
+      name: "tagging-batches",
+      component: () => import("../pages/TaggingBatchesPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+      },
+    },
+    {
       path: "/heatmap",
       name: "heatmap",
       component: () =>

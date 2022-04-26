@@ -59,3 +59,8 @@ clickhouse_on_off = pytest.fixture(params=['clickhouse_on', 'clickhouse_off'])(
 )
 
 clickhouse_db = pytest.fixture(params=['clickhouse_on'])(clickhouse_connection)
+
+
+@pytest.fixture()
+def inmemory_media(settings):
+    settings.DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
