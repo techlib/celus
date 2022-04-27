@@ -665,23 +665,6 @@ def where_to_store(instance: 'SushiFetchAttempt', filename):
     )
 
 
-class SushiFetchAttemptQuerySet(models.QuerySet):
-    def last_queued(self):
-        res = self.annotate(
-            is_previous=Exists(SushiFetchAttempt.objects.filter(queue_previous=OuterRef('pk')))
-        ).filter(is_previous=False)
-        return res
-
-    def current(self):
-        return self.filter(credentials_version_hash=F('credentials__version_hash'))
-
-    def successful(self):
-        return self.filter(status__in=AttemptStatus.successes())
-
-    def current_or_successful(self):
-        return self.current() | self.successful()
-
-
 class AttemptStatus(models.TextChoices):
     # -> DOWNLOADING, CANCELED
     INITIAL = 'initial', _("Initial")
@@ -741,8 +724,6 @@ class AttemptStatus(models.TextChoices):
 
 class SushiFetchAttempt(models.Model):
 
-    objects = SushiFetchAttemptQuerySet.as_manager()
-
     status = models.CharField(
         max_length=20, choices=AttemptStatus.choices, default=AttemptStatus.INITIAL
     )
@@ -753,18 +734,6 @@ class SushiFetchAttempt(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    when_queued = models.DateTimeField(null=True, blank=True)
-    queue_id = models.IntegerField(
-        null=True, blank=True, help_text='Identifier for attempt queue',
-    )  # None if attempt is not queued
-    queue_previous = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_query_name='queue_following',
-        related_name='queue_following',
-    )
     data_file = models.FileField(upload_to=where_to_store, blank=True, null=True, max_length=256)
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)

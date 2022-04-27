@@ -77,62 +77,6 @@ class TestFileName:
 
 
 @pytest.mark.django_db
-class TestSushiFetchAttemptModelManager:
-    def test_custom_manager_methods_exist(self):
-        """
-        Test that custom manager methods exist at all
-        """
-        SushiFetchAttempt.objects.all()
-        SushiFetchAttempt.objects.current()
-        SushiFetchAttempt.objects.current_or_successful()
-        SushiFetchAttempt.objects.last_queued()
-
-    def test_custom_manager_methods_exist_on_queryset(self):
-        """
-        Test that custom manager methods are also available on querysets for SushiFetchAttempts
-        """
-        SushiFetchAttempt.objects.filter(status=AttemptStatus.SUCCESS).current()
-        SushiFetchAttempt.objects.filter(status=AttemptStatus.SUCCESS).current_or_successful()
-        SushiFetchAttempt.objects.filter(status=AttemptStatus.SUCCESS).last_queued()
-
-    def test_last_queued(self, credentials, counter_report_types):
-        fa1 = SushiFetchAttempt.objects.create(
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            start_date='2020-01-01',
-            end_date='2020-01-31',
-        )
-
-        fa2 = SushiFetchAttempt.objects.create(
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            start_date='2020-01-01',
-            end_date='2020-01-31',
-            queue_previous=fa1,
-        )
-
-        fa3 = SushiFetchAttempt.objects.create(
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            start_date='2020-01-01',
-            end_date='2020-01-31',
-            queue_previous=fa2,
-        )
-
-        fa4 = SushiFetchAttempt.objects.create(
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            start_date='2020-01-01',
-            end_date='2020-01-31',
-        )
-
-        assert SushiFetchAttempt.objects.last_queued().count() == 2
-        assert {fa4.pk, fa3.pk} == set(
-            SushiFetchAttempt.objects.last_queued().values_list('pk', flat=True)
-        )
-
-
-@pytest.mark.django_db
 class TestSushiFetchAttemptModel:
     def test_conflicting_fully_enclosing(self, credentials, counter_report_types):
         fa = SushiFetchAttempt.objects.create(

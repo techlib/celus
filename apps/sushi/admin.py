@@ -146,24 +146,6 @@ class HasImportBatch(admin.SimpleListFilter):
         return queryset
 
 
-class HistoryMode(admin.SimpleListFilter):
-    title = 'history mode'
-    parameter_name = 'hm'
-
-    def lookups(self, request, model_admin):
-        return (
-            ('current', 'Current only'),
-            ('current_and_success', 'Current and sucessful'),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == 'current':
-            return queryset.current()
-        if self.value() == 'current_and_success':
-            return queryset.current_or_successful()
-        return queryset
-
-
 @admin.register(models.SushiFetchAttempt)
 class SushiFetchAttemptAdmin(admin.ModelAdmin):
 
@@ -180,7 +162,6 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         'has_import_batch',
     ]
     list_filter = [
-        HistoryMode,
         'status',
         'error_code',
         HasImportBatch,
