@@ -135,7 +135,6 @@ class Command(BaseCommand):
                 )
             logger.warning('Use --do-it to really do it.')
             return
-        trace_writer = None
         if trace_file := options.get('trace_file'):
             self.trace_file = open(trace_file, 'w')
             self.trace_writer = csv.DictWriter(
@@ -181,6 +180,9 @@ class Command(BaseCommand):
         else:
             logger.info('Skipping MDU processing')
         # then FA's
+        # exclude import batches processed as part of MDU - otherwise the newly created IBs
+        # would be counted into `to_do` and tried to reimport
+        to_do = to_do.exclude(mdu__isnull=False)
         if not options['no_fa']:
             stats['fa_total'] = to_do.count()
             for i, ib in enumerate(to_do):

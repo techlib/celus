@@ -4,7 +4,7 @@ from typing import Generator, Tuple, List
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import QuerySet, Exists, OuterRef, Q, F
+from django.db.models import QuerySet, Exists, OuterRef, Q, F, Case, When
 from django.db.models.expressions import CombinedExpression
 from django.db.transaction import atomic
 
@@ -161,7 +161,7 @@ def reimport_import_batch_with_fa(ib: ImportBatch) -> ImportBatch:
     except ObjectDoesNotExist:
         raise DataStructureError('Import batch without FA')
     # check that we have the raw data before we delete anything
-    if source_fa and not os.path.isfile(source_fa.data_file.path):
+    if source_fa and (source_fa.data_file == '' or not os.path.isfile(source_fa.data_file.path)):
         raise SourceFileMissingError()
 
     if source_fa.status == AttemptStatus.NO_DATA:
@@ -172,6 +172,7 @@ def reimport_import_batch_with_fa(ib: ImportBatch) -> ImportBatch:
                 report_type_id=ib.report_type_id,
                 date=ib.date,
             )
+            .exclude(id=ib.pk)
             .annotate(has_als=Exists(AccessLog.objects.filter(import_batch_id=OuterRef('id'))))
             .filter(has_als=True)
             .exists()
