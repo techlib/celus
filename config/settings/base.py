@@ -285,6 +285,8 @@ CELERY_TASK_ROUTES = {
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
+    'logs.tasks.prepare_preflights': {'queue': 'preflight'},
+    'core.tasks.empty_task_export': {'queue': 'export'},
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -347,6 +349,11 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'logs.tasks.unstuck_import_manual_upload_data',
         'schedule': schedule(run_every=timedelta(minutes=5)),
         'options': {'expires': 5 * 60},
+    },
+    'empty_task_export': {
+        'task': 'core.tasks.empty_task_export',
+        'schedule': schedule(run_every=timedelta(minutes=8)),
+        'options': {'expires': 8 * 60},
     },
 }
 

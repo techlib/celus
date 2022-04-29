@@ -2,6 +2,7 @@ import logging
 
 import celery
 from django.core.mail import mail_admins
+from django.utils.timezone import now
 
 from core.logic.error_reporting import email_if_fails
 from .models import DataSource
@@ -33,3 +34,12 @@ def async_mail_admins(subject, body):
 @email_if_fails
 def fail_intentionally_task():
     raise Exception('test error')
+
+
+@celery.shared_task
+def empty_task_export():
+    """
+    Empty task to be used in the export queue to make sure that Celerus has something
+    to detect stuck Celery workers by
+    """
+    logger.info(f"Still alive at {now()}")
