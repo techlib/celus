@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [4.4.0]
+
+### Added
+
+#### Frontend
+
+* progressbar was added to the manual data upload page
+
+### Changes
+
+#### Frontend
+
+* top menubar now hides organization and date range selectors on pages where it is not used
+
+#### Backend
+
+* SUSHI exceptions 3050, 3060, 3061 and 3062 do not cause import error if data is also present in the response
+* import of multi-month files was sped up considerably
+* reimport script was improved with more verbose output and other changes
+* obsolete code related to `Dimension.type` was removed
+* several unused fields were removed from `ReportTypeSerializer`
+* API for manual data uploads was optimized for speed and data size
+* API for finding existing data for new harvests was sped up
+* SUSHI APIKey maximum size was increased to 400 to support some strange platforms
+
+### Fixed
+
+#### Frontend
+
+* filtering of titles by eISSN was fixed
+
+#### Backend
+
+* several small fixes and optimizations in Django admin
+* pycounter was updated to fix error in date handling in specific situations
+  (when the date range in header differs from the actual data)
+
+
+
 ## [4.3.3]
 
 ### Added
