@@ -4,7 +4,7 @@ import re
 from isbnlib import is_isbn13, is_isbn10, to_isbn13, canonical
 
 logger = logging.getLogger(__name__)
-issn_matcher = re.compile(r'\d{4}-\d{3}[\dX]')
+issn_matcher = re.compile(r'(\d{4})-?(\d{3}[\dX])')
 
 
 class ValidationError(Exception):
@@ -19,7 +19,7 @@ def normalize_issn(text: str, raise_error=True) -> str:
     """
     clean = ''.join(text.split())  # remove all whitespace
     if m := issn_matcher.search(clean):
-        return m.group(0)
+        return m.group(1) + '-' + m.group(2)
     if raise_error:
         raise ValidationError(f'Invalid ISSN: "{text}"')
     logger.warning('Invalid ISSN: "%s"', text)
