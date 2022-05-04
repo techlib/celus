@@ -593,7 +593,7 @@ tests = ["coverage"]
 
 [[package]]
 name = "django-modeltranslation"
-version = "0.17.6"
+version = "0.17.7"
 description = "Translates Django models using a registration approach."
 category = "main"
 optional = false
@@ -2814,7 +2814,7 @@ django-js-asset = [
     {file = "django_js_asset-2.0.0.tar.gz", hash = "sha256:adc1ee1efa853fad42054b540c02205344bb406c9bddf87c9e5377a41b7db90f"},
 ]
 django-modeltranslation = [
-    {file = "django-modeltranslation-0.17.6.tar.gz", hash = "sha256:7d6a76b2f4fe982d2a64ffb867ba77f3ef6e188dee262db61f5a59538c0549c3"},
+    {file = "django-modeltranslation-0.17.7.tar.gz", hash = "sha256:e247840b9038b7e7b2dc6f1b4868dfe88737540883eaed3d4b4775e5bd89c7fd"},
 ]
 django-mptt = [
     {file = "django-mptt-0.11.0.tar.gz", hash = "sha256:dfdb3af75ad27cdd4458b0544ec8574174f2b90f99bc2cafab6a15b4bc1895a8"},
