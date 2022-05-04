@@ -54,7 +54,6 @@ cs:
         <v-data-table
           :items="platforms"
           :headers="headers"
-          :hide-default-footer="true"
           :items-per-page="-1"
           :search="search"
           sort-by="name"
