@@ -54,7 +54,7 @@ django-reversion = "~3.0.7"
 djangorestframework = "~3.11.0"
 drf-nested-routers = "~0.91.0"
 lz4 = "~3.0.2"
-pycounter = {git = "https://github.com/beda42/pycounter.git", rev = "523a5b27c04501bdf335edf45f57d4f5db8e790f"}
+pycounter = {git = "https://github.com/beda42/pycounter.git", rev = "860ee5e3472c1fcd5428d4a4d63f5d05b06c5397"}
 openpyxl = "~3.0.7, !=3.0.8"  # openpyxl 3.0.8 was removed after release :/ grrrr, so we need to prevent it
 python-magic = "~0.4.15"
 pytz = "*"
