@@ -335,3 +335,15 @@ def unstuck_import_manual_upload_data():
         & Q(created__lt=now() - timedelta(minutes=5))  # don't start right away
     ):
         import_manual_upload_data.delay(mdu.pk, mdu.user.pk)
+
+
+@celery.shared_task
+@email_if_fails
+def reprocess_mdu_task(mdu_id):
+    try:
+        mdu = ManualDataUpload.objects.get(pk=mdu_id)
+    except ManualDataUpload.DoesNotExist:
+        logger.error(f'MDU #{mdu_id} for reprocessing does not exist')
+    else:
+        mdu.unprocess()
+        import_manual_upload_data.delay(mdu.pk, mdu.user.pk)

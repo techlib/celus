@@ -1,5 +1,3 @@
-import json
-from base64 import b64encode
 from unittest.mock import patch
 
 import pytest

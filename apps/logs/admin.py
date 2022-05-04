@@ -6,7 +6,8 @@ from django.utils.translation import ngettext
 from modeltranslation.admin import TranslationAdmin
 
 from . import models
-from .models import ReportInterestMetric
+from .models import ReportInterestMetric, MduState
+from .tasks import reprocess_mdu_task, import_manual_upload_data
 
 
 @admin.register(models.OrganizationPlatform)
@@ -252,7 +253,7 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
         'user__username',
         'user__email',
     ]
-    actions = ['regenerate_preflight']
+    actions = ['regenerate_preflight', 'reimport']
 
     @admin.action(description="Regenerate preflight data")
     def regenerate_preflight(self, request, queryset):
@@ -267,5 +268,29 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
                 "%d preflight started to regenerate", "%d preflights started to regenerate", count
             )
             % count,
+            messages.SUCCESS,
+        )
+
+    @admin.action(
+        description="Reimport data - deletes old and re-imports the file again. "
+        "Runs in the background"
+    )
+    def reimport(self, request, queryset):
+        count = 0
+        total_count = queryset.count()
+        for mdu in queryset.select_for_update(skip_locked=True, of=('self',)):
+            mdu.unprocess()
+            # import_manual_upload_data does not work without the state being `IMPORTING`
+            mdu.state = MduState.IMPORTING
+            mdu.save()
+            import_manual_upload_data.apply_async(args=(mdu.pk, mdu.user_id), countdown=2)
+            count += 1
+
+        already_running_text = (
+            f" ({total_count - count} imports already running.)" if total_count != count else ""
+        )
+        messages.info(
+            request,
+            f'{count} uploads planned to be reimported.{already_running_text}',
             messages.SUCCESS,
         )

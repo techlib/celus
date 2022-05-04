@@ -1,20 +1,23 @@
+import logging
 import typing
-import statistics
-
 from collections import Counter
 from datetime import date
 from functools import lru_cache
 
-from core.logic.dates import parse_date_fuzzy
-from core.models import User
 from django.conf import settings
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
+
+from core.logic.dates import parse_date_fuzzy
+from core.models import User
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
-from logs.models import ImportBatch, ManualDataUpload, MduState, OrganizationPlatform
+from logs.models import ManualDataUpload, OrganizationPlatform, MduState
 from nigiri.counter5 import CounterRecord
+
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache

@@ -1,13 +1,17 @@
+from collections import Counter
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from django.db.models import Count, Sum
+from django.urls import reverse
 
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 from nigiri.counter4 import Counter4BR2Report
 from nigiri.counter5 import Counter5TableReport, Counter5TRReport
 from organizations.tests.conftest import organizations, organization_random  # noqa - fixture
 from publications.models import Title, PlatformTitle
+from test_fixtures.entities.logs import ManualDataUploadFullFactory, ImportBatchFullFactory
 from ..exceptions import DataStructureError
 from ..logic.data_import import import_counter_records
 
@@ -304,3 +308,16 @@ class TestCounter5Import:
         )
         import_counter_records(rt, organization_random, platform, records)
         assert Title.objects.filter(name='Nature').count() == 1, 'only one Nature'
+
+
+@pytest.mark.django_db
+class TestReprocessMDU:
+    def test_reimport_admin_action(self, admin_client):
+        mdu = ManualDataUploadFullFactory.create()
+        # reprocess and check
+        with patch('logs.admin.import_manual_upload_data') as task_patch:
+            admin_client.post(
+                reverse('admin:logs_manualdataupload_changelist'),
+                {'action': 'reimport', '_selected_action': [str(mdu.pk)]},
+            )
+            task_patch.apply_async.assert_called_once()

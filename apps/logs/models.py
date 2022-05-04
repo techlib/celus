@@ -650,6 +650,13 @@ class ManualDataUpload(models.Model):
             import_batch.delete()
         super().delete(using=using, keep_parents=keep_parents)
 
+    def unprocess(self):
+        self.import_batches.all().delete()
+        self.state = MduState.INITIAL
+        self.error_details = None
+        self.error = None
+        self.save()
+
     @property
     def accesslogs(self):
         return AccessLog.objects.filter(import_batch__in=self.import_batches.all())

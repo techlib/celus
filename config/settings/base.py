@@ -280,6 +280,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'celery'  # just making the default explicit
 # in production, we remap this queue to the name 'normal', but here it should either be omitted
 # or explicitly set to 'celery'
 CELERY_TASK_ROUTES = {
+    'core.tasks.empty_task_export': {'queue': 'export'},
     'core.tasks.test': {'queue': 'celery'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
@@ -295,11 +296,11 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.export_raw_data_task': {'queue': 'export'},
     'logs.tasks.prepare_preflight': {'queue': 'preflight'},
     'logs.tasks.import_manual_upload_data': {'queue': 'import'},
+    'logs.tasks.prepare_preflights': {'queue': 'preflight'},
+    'logs.tasks.reprocess_mdu_task': {'queue': 'import'},
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
-    'logs.tasks.prepare_preflights': {'queue': 'preflight'},
-    'core.tasks.empty_task_export': {'queue': 'export'},
 }
 
 CELERY_BEAT_SCHEDULE = {
