@@ -1,4 +1,4 @@
-const reportRegexp = new RegExp("/report($|\\W)");
+const reportRegexp = new RegExp("/reports($|\\W)");
 
 function testSushiUrlReport(url) {
   // returns true if the url is ok, false otherwise

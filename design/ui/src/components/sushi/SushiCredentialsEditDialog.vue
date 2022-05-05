@@ -30,7 +30,7 @@ en:
   mark_fixed: Mark fixed
   mark_fixed_success: Credentials were marked as fixed
   broken_reports_warning: Some active reports have been marked as broken by Celus - they are probably not supported by this platform. Fix it by deactivating them.
-  url_hint_no_report: "URL should not contain the '/report/' part and anything beyond this. For example 'https://x.y.z/sushi5/report/tr?customer_id=1' should be cropped to 'https://x.y.z/sushi5/'"
+  url_hint_no_report: "URL should not contain the '/reports/' part and anything beyond this. For example 'https://example.com/sushi5/reports/tr?customer_id=1' should be cropped to 'https://example.com/sushi5/'"
   url_hint_no_query: "URL should not contain any query parameters, i. e. there should be no '{search}' part"
   invalid_url: Please enter a valid URL
   duplicate: Name must be unique
@@ -66,7 +66,7 @@ cs:
   mark_fixed: Označit jako opravené
   mark_fixed_success: Přihlašovací údaje byly označeny jako opravené
   broken_reports_warning: Některé aktivní reporty Celus označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací.
-  url_hint_no_report: "URL by neměla obsahovat část s '/report/' a cokoliv po ní. Např. 'https://x.y.z/sushi5/report/tr?customer_id=1' by mělo být zkráceno na 'https://x.y.z/sushi5/'"
+  url_hint_no_report: "URL by neměla obsahovat část s '/reports/' a cokoliv po ní. Např. 'https://example.com/sushi5/reports/tr?customer_id=1' by mělo být zkráceno na 'https://example.com/sushi5/'"
   url_hint_no_query: "URL nesmí obsahovat query parametry, tedy část '{search}'"
   invalid_url: Prosím zadejte platné URL
   duplicate: Název musí být unikátní
