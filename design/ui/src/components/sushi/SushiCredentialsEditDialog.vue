@@ -209,6 +209,7 @@ cs:
               <v-text-field
                 v-model="requestorId"
                 :label="$t('labels.requestor_id')"
+                :disabled="!activePlatform"
               >
               </v-text-field>
             </v-col>
@@ -217,6 +218,7 @@ cs:
                 v-model="customerId"
                 :label="$t('labels.customer_id')"
                 :rules="[ruleRequired]"
+                :disabled="!activePlatform"
               >
               </v-text-field>
             </v-col>
@@ -228,7 +230,7 @@ cs:
                 v-model="counterVersion"
                 :label="$t('labels.counter_version')"
                 :items="allowedCounterVersions"
-                :disabled="!!credentials"
+                :disabled="!!credentials || !activePlatform"
                 :no-data-text="$t('all_versions_used')"
               >
               </v-select>
@@ -246,6 +248,7 @@ cs:
                 ]"
                 validate-on-blur
                 :error-messages="errors.url"
+                :disabled="!activePlatform"
               >
               </v-text-field>
             </v-col>
@@ -261,6 +264,7 @@ cs:
                 item-value="id"
                 :rules="[ruleAtLeastOne]"
                 :loading="loadingReportTypes"
+                :disabled="!activePlatform"
               >
                 <template #item="{ item }">
                   <v-list-item-content>
@@ -315,6 +319,7 @@ cs:
                     <v-text-field
                       v-model="httpUsername"
                       :label="$t('labels.http_username')"
+                      :disabled="!activePlatform"
                     >
                     </v-text-field>
                   </v-col>
@@ -322,6 +327,7 @@ cs:
                     <v-text-field
                       v-model="httpPassword"
                       :label="$t('labels.http_password')"
+                      :disabled="!activePlatform"
                     >
                     </v-text-field>
                   </v-col>
@@ -331,6 +337,7 @@ cs:
                     <v-text-field
                       v-model="apiKey"
                       :label="$t('labels.api_key')"
+                      :disabled="!activePlatform"
                     >
                     </v-text-field>
                   </v-col>
@@ -341,6 +348,7 @@ cs:
                       v-model="param.key"
                       :label="$t('labels.variable')"
                       :rules="[ruleRequired, ruleExtraNoDuplicateKey]"
+                      :disabled="!activePlatform"
                     >
                     </v-text-field>
                   </v-col>
@@ -349,6 +357,7 @@ cs:
                       v-model="param.value"
                       :label="$t('labels.variable_value')"
                       :rules="[ruleRequired]"
+                      :disabled="!activePlatform"
                     >
                     </v-text-field>
                   </v-col>
@@ -368,6 +377,7 @@ cs:
                           outlined
                           text
                           color="secondary"
+                          :disabled="!activePlatform"
                         >
                           <v-icon left x-small>fa-plus</v-icon>
                           {{ $t("add_custom_param") }}
@@ -401,6 +411,7 @@ cs:
                       v-model="enabled"
                       :label="$t('sushi.enabled')"
                       class="pl-2 my-0"
+                      :disabled="!activePlatform"
                     ></v-switch>
                   </span>
                 </template>
@@ -415,7 +426,7 @@ cs:
                       v-model="outsideConsortium"
                       :label="$t('outside')"
                       class="pl-2 my-0"
-                      :disabled="!userIsManager"
+                      :disabled="!userIsManager || !activePlatform"
                     ></v-switch>
                   </span>
                 </template>
