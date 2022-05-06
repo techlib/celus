@@ -10,7 +10,6 @@ import celery
 from django.db import DatabaseError
 from django.db.models import Q
 from django.db.transaction import atomic
-from django.core.mail import mail_admins
 from django.utils.timezone import now
 
 from core.models import User
@@ -265,7 +264,7 @@ Traceback: {traceback.format_exc()}
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
-        mail_admins('MDU preflight check error', body)
+        async_mail_admins.delay('MDU preflight check error', body)
 
 
 @celery.shared_task
