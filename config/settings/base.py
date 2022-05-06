@@ -143,8 +143,21 @@ DATABASES = {
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', cast=int, default=5432),
         'ATOMIC_REQUESTS': True,
-    }
+    },
 }
+
+DB_NAME_OLD = config('DB_NAME_OLD', default='')
+if DB_NAME_OLD:
+    DATABASES['old'] = {
+        'ENGINE': 'django_prometheus.db.backends.postgresql',
+        'NAME': DB_NAME_OLD,
+        'USER': config('DB_USER', default='celus'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', cast=int, default=5432),
+        'ATOMIC_REQUESTS': True,
+    }
+
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
