@@ -4,7 +4,7 @@ from collections import Counter
 from time import monotonic
 
 from django.core.management.base import BaseCommand
-from django.db.models import Count, Min
+from django.db.models import Count, Min, Q
 
 from logs.logic.reimport import (
     find_import_batches_to_reimport,
@@ -67,16 +67,22 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        filters = {}
-        if options['platform']:
-            filters['platform__short_name'] = options['platform']
-        if options['report_type']:
-            filters['report_type__short_name'] = options['report_type']
-        if options['organization']:
-            filters['organization__short_name'] = options['organization']
+        filters = Q()
+        for opt in ('platform', 'report_type', 'organization'):
+            one_fltr = Q()
+            if options[opt]:
+                for val in options[opt].split(','):
+                    val = val.strip()
+                    if val.isdigit():
+                        one_fltr |= Q(**{f'{opt}_id': int(val)})
+                    else:
+                        one_fltr |= Q(**{f'{opt}__short_name': val})
+            filters &= one_fltr
+
         if options['ib_id']:
-            filters['pk'] = options['ib_id']
-        qs = ImportBatch.objects.filter(**filters)
+            filters &= Q(id=options['ib_id'])
+        qs = ImportBatch.objects.filter(filters)
+
         reimport = find_import_batches_to_reimport(qs)
         logger.info(
             f'Reimport candidates: {reimport.reimportable.count()}\n'
