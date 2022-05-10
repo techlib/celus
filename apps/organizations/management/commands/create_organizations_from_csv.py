@@ -30,10 +30,9 @@ class Command(BaseCommand):
                 name = name.strip()
                 short_name = row.get('short_name', name)
                 org_params = {'short_name': short_name}
-                if 'name_cs' in row:
-                    org_params['name_cs'] = row['name_cs']
-                if ext_id := row.get('ext_id', None):
-                    org_params['ext_id'] = ext_id
+                for extra_attr in ['name_cs', 'ext_id', 'internal_id']:
+                    if ext_value := row.get(extra_attr):
+                        org_params[extra_attr] = ext_value
                 _, created = Organization.objects.update_or_create(defaults=org_params, name=name)
                 if created:
                     stats['organization_created'] += 1

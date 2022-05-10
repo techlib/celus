@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
 from modeltranslation.admin import TranslationAdmin
@@ -27,7 +28,9 @@ class PlatformAdmin(TranslationAdmin):
     list_select_related = ['source']
     list_filter = [('knowledgebase', admin.EmptyFieldListFilter), 'source']
     ordering = ['short_name']
-    search_fields = ['short_name', 'name', 'provider']
+    search_fields = ['short_name', 'provider'] + [
+        f'name_{code}' for code, name in settings.LANGUAGES
+    ]
     readonly_fields = ['pretty_knowledgebase']
     exclude = ['knowledgebase']
     actions = (create_default_interests, flush_knowledgebase)

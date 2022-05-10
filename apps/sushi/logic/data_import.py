@@ -58,7 +58,7 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
         key = (organization.pk, platform.pk, version)
         extra_attrs = record.get('extra_attrs', {})
         if extra_attrs:
-            extra_attrs = parse_params(extra_attrs)
+            extra_attrs = parse_params(extra_attrs, version=version)
         optional = {}
         if 'auth' in extra_attrs:
             optional['http_username'], optional['http_password'] = extra_attrs['auth']
@@ -118,8 +118,9 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
     return stats
 
 
-def parse_params(text) -> dict:
+def parse_params(text, version: Optional[int] = None) -> dict:
     out = {}
+    text = text.strip()
     for part in text.split(';'):
         if '=' in part:
             name, value = part.split('=')
@@ -128,4 +129,8 @@ def parse_params(text) -> dict:
             if name == 'auth':
                 value = tuple(value.split(','))
             out[name] = value
+    if text and not out and version == 5:
+        # there is some text, but we could not extract anything from it
+        # if this is C5, we assume the value is the API key
+        out['api_key'] = text
     return out
