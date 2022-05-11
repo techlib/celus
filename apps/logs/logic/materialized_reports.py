@@ -45,14 +45,14 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None) -> int:
     assert rt.materialization_spec, 'This code works only for materialized report types'
     if batch_size is None:
         batch_size = guess_batch_size_for_materialization(rt)
-        logger.debug('Guessing batch_size for "%s": %d', rt, batch_size)
+        logger.info('Guessing batch_size for "%s": %d', rt, batch_size)
     # construct query
     to_process = materialized_import_batch_queryset(rt)[:batch_size]
     total = 0
     while to_process:
         start = monotonic()
         size = create_materialized_accesslogs_for_importbatches(rt, to_process)
-        logger.debug(
+        logger.info(
             'Batch materialization took %.1f s; records created: %d', monotonic() - start, size
         )
         total += size

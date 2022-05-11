@@ -12,6 +12,7 @@ from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 
 from core.task_support import cache_based_lock
+from logs.constants import ACTION_INTEREST_SMART_SYNC, ACTION_INTEREST_CHANGE
 from logs.models import (
     ReportType,
     AccessLog,
@@ -20,6 +21,7 @@ from logs.models import (
     Metric,
     ReportInterestMetric,
     ImportBatchSyncLog,
+    LastAction,
 )
 from publications.models import Platform
 
@@ -250,10 +252,13 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
         #          lead to memory exhaustion - I leave it here as a memento against future attempts
         # queryset = queryset.select_related('report_type__superseeded_by', 'platform').\
         #     annotate(min_date=Min('accesslog__date'), max_date=Max('accesslog__date'))
-        interest_rt = interest_report_type()
+        stats = Counter()
         total_count = queryset.count()
         logger.info('Going to recompute interest for %d batches', total_count)
-        stats = Counter()
+        if total_count == 0:
+            # short-circuit to save query for interest report type
+            return stats
+        interest_rt = interest_report_type()
         for i, import_batch in enumerate(queryset.iterator()):
             old_sum = (
                 import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
@@ -300,16 +305,21 @@ def find_batches_that_need_interest_sync():
     Generator that returns querysets for different cases where ImportBatches may be out of
     sync with their interest data
     """
-    for fn in (
-        _find_unprocessed_batches,
-        _find_platform_interest_changes,
-        _find_metric_interest_changes,
-        _find_platform_report_type_disconnect,
-        _find_potentially_superseded_import_batches,
+    interest_changed = LastAction.should_run(ACTION_INTEREST_SMART_SYNC, ACTION_INTEREST_CHANGE)
+    for fn, only_if_interest_changed in (
+        (_find_unprocessed_batches, False),
+        (_find_platform_interest_changes, True),
+        (_find_metric_interest_changes, True),
+        (_find_platform_report_type_disconnect, True),
+        (_find_potentially_superseded_import_batches, False),
     ):
-        yield fn()
-    for qs in _find_report_type_metric_disconnect():  # this is a generator itself
-        yield qs
+        if not only_if_interest_changed or interest_changed:
+            yield fn()
+    if interest_changed:
+        for qs in _find_report_type_metric_disconnect():  # this is a generator itself
+            yield qs
+    # store the date of last interest sync to possibly skip it in the future
+    LastAction.update_action(ACTION_INTEREST_SMART_SYNC)
 
 
 def _find_unprocessed_batches():

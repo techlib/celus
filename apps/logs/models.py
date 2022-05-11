@@ -1084,3 +1084,59 @@ class ImportBatchSyncLog(CreatedUpdatedMixin, models.Model):
     # Because we need to refer to deleted import batches, we do not use a foreign key here
     import_batch_id = models.PositiveBigIntegerField(primary_key=True)
     state = models.PositiveSmallIntegerField(choices=STATE_CHOICES, default=STATE_NO_CHANGE)
+
+
+class LastAction(CreatedUpdatedMixin, models.Model):
+    """
+    Stores information about when an action was last made, so that it can be used in caching
+    and other similar functions
+    """
+
+    action = models.CharField(max_length=64, unique=True, db_index=True)
+    # `last_updated` is part of the CreatedUpdatedMixin
+
+    def is_newer(self, ref_action: str) -> bool:
+        """
+        Return True if `self` is newer than `ref_action` or `ref_action` does not exist,
+        False otherwise.
+        """
+        return not LastAction.objects.filter(
+            action=ref_action, last_updated__gte=self.last_updated
+        ).exists()
+
+    @classmethod
+    def should_run(cls, action: str, trigger_action: str) -> bool:
+        """
+        If `trigger_action` is newer than `action`, then `action` should run, otherwise it shouldn't.
+        If `trigger_action` does not exist, then `action` should only run if it does not exist,
+        otherwise it should not run.
+
+        The use-case is like this:
+
+        should_run('update_interest', 'interest_definition_has_changed')
+
+        if 'update_interest' is older than 'interest_definition_has_changed', it should run
+        if it is newer, it should not run
+        if 'interest_definition_has_changed' does not exist, then 'update_interest' is always newer
+          and should run, but only if it does exist at all - if 'update_interest' does not exist,
+          then it should run.
+        """
+        try:
+            trigger = LastAction.objects.get(action=trigger_action)
+        except LastAction.DoesNotExist:
+            return not LastAction.objects.filter(action=action).exists()
+        return trigger.is_newer(action)
+
+    @classmethod
+    def update_action(cls, action: str):
+        """
+        Convenience method to update an action by name
+        :param action:
+        :return:
+        """
+        action, created = LastAction.objects.get_or_create(action=action)
+        if not created:
+            action.update()
+
+    def update(self):
+        self.save()

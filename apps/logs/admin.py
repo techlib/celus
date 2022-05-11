@@ -294,3 +294,9 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
             f'{count} uploads planned to be reimported.{already_running_text}',
             messages.SUCCESS,
         )
+
+
+@admin.register(models.LastAction)
+class LastActionAdmin(admin.ModelAdmin):
+
+    list_display = ['action', 'last_updated']

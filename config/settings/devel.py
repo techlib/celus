@@ -47,9 +47,10 @@ INTERNAL_IPS = ['127.0.0.1']
 
 # disable most periodic celery tasks
 CELERY_BEAT_SCHEDULE = {
-    'sync_interest_task': {
-        'task': 'logs.tasks.sync_interest_task',
-        'schedule': schedule(run_every=timedelta(days=1)),
+    'smart_interest_sync_task': {
+        'task': 'logs.tasks.smart_interest_sync_task',
+        'schedule': schedule(run_every=timedelta(minutes=1)),
+        'options': {'expires': 10 * 60},
     },
     'find_and_renew_first_due_cached_query_task': {
         'task': 'recache.tasks.find_and_renew_first_due_cached_query_task',
