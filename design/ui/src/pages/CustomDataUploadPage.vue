@@ -3,7 +3,7 @@
 <i18n lang="yaml">
 en:
   data_file: Data file to upload
-  data_file_placeholder: Upload a file with tabular data in CSV format
+  data_file_placeholder: Upload a file containing data.
   error: Error
   dismiss: Dismiss
   step1: Data upload
@@ -36,7 +36,7 @@ en:
 
 cs:
   data_file: Datový soubor k nahrání
-  data_file_placeholder: Nahrajte soubor s tabulkovými daty ve formátu CSV
+  data_file_placeholder: Nahrajte soubor, který obsahuje data.
   error: Chyba
   dismiss: Zavřít
   step1: Nahrání dat
