@@ -445,6 +445,7 @@ LOGGING = {
         'requests': {'level': 'INFO'},
         'django': {'level': 'ERROR', 'handlers': ['errorlog', 'mail_admins'], 'propagate': True},
         'logs.logic.materialized_interest': {'level': 'INFO'},
+        'postgres_copy': {'level': 'ERROR'},
     },
     'root': {'level': 'DEBUG', 'handlers': ['console']},
 }

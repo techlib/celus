@@ -1,6 +1,7 @@
 import logging
 import string
 from collections import Counter
+from time import monotonic
 
 import xlsxwriter
 from django.core.management.base import BaseCommand
@@ -8,8 +9,8 @@ from django.db import models
 from django.db.models import Q, Sum, Count
 from django.utils.translation import activate
 
-from logs.models import ReportType, AccessLog, ManualDataUpload
-from sushi.models import SushiFetchAttempt
+from logs.models import ReportType, AccessLog, ManualDataUpload, ImportBatch
+from sushi.models import SushiFetchAttempt, CounterReportType
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,11 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
 
     help = 'Compares the `default` database to the `old` one from the settings and creates a report'
+    annot_keys = ['sum', 'ib_count', 'title_count']
+
+    def __init__(self, stdout=None, stderr=None, no_color=False, force_color=False):
+        super().__init__(stdout, stderr, no_color, force_color)
+        self._cache = {}
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -63,7 +69,7 @@ class Command(BaseCommand):
                 'name': 'detail',
                 'key': ('platform', 'organization', 'report_type', 'date'),
                 'match': 'hide',
-                'extra': ['title_count', 'filenames'],
+                'extra': ['title_count', 'filenames', 'ib_compare'],
             },
         ]:
             print("==", spec['name'], "==")
@@ -92,19 +98,32 @@ class Command(BaseCommand):
             sheet.write_row(0, 0, header_row, self.header_fmt)
 
             query_key = tuple(f'{key_dim}_id' if is_fk[key_dim] else key_dim for key_dim in key)
-            qs = base_qs.values(*query_key).annotate(sum=Sum('value')).order_by(*query_key)
-            old = {tuple(rec[k] for k in query_key): rec['sum'] for rec in qs.using('old')}
+            qs = (
+                base_qs.values(*query_key)
+                .annotate(
+                    sum=Sum('value'),
+                    title_count=Count('target_id', distinct=True),
+                    ib_count=Count('import_batch_id', distinct=True),
+                )
+                .order_by(*query_key)
+            )
+            old = {
+                tuple(rec[k] for k in query_key): {
+                    _k: _v for _k, _v in rec.items() if _k in self.annot_keys
+                }
+                for rec in qs.using('old')
+            }
 
             row_idx = 0
             stats = Counter()
             max_lens = {key_dim: 0 for key_dim in key}
             seen_grp_ids = set()
-            for rec in qs:
+            for i, rec in enumerate(qs):
                 grp_id = tuple(rec[k] for k in query_key)
                 seen_grp_ids.add(grp_id)
-                old_value = old.get(grp_id, 0)
+                old_rec = old.get(grp_id, {k: 0 for k in self.annot_keys})
                 if self.process_row(
-                    row_idx, is_fk, key, mappings, max_lens, old_value, rec, sheet, spec, stats
+                    row_idx, is_fk, key, mappings, max_lens, old_rec, rec, sheet, spec, stats
                 ):
                     row_idx += 1
             # process old stuff to see if something was missing in the new one
@@ -153,8 +172,11 @@ class Command(BaseCommand):
             print(" ", stats)
         workbook.close()
 
-    def process_row(self, i, is_fk, key, mappings, max_lens, old_value, rec, sheet, spec, stats):
+    def process_row(
+        self, i, is_fk, key, mappings, max_lens, old_rec: dict, rec: dict, sheet, spec, stats
+    ):
         new_value = rec['sum']
+        old_value = old_rec['sum']
         if old_value == new_value:
             stats['match'] += 1
             if spec['match'] == 'hide':
@@ -175,9 +197,7 @@ class Command(BaseCommand):
                 max_lens[key_dim] = max(max_lens[key_dim], len(s))
             else:
                 row.append(str(rec[key_dim]))
-        sheet.write_row(
-            i + 1, 0, [*row, old_value, new_value], fmt,
-        )
+        sheet.write_row(i + 1, 0, [*row, old_value, new_value], fmt)
         # writing formulas with empty value to force recalc in LibreOffice
         letter1 = string.ascii_letters[len(row) + 1]
         letter2 = string.ascii_letters[len(row)]
@@ -187,62 +207,92 @@ class Command(BaseCommand):
             i + 1, len(row) + 3, f'={letter3}{i + 2}/{letter2}{i + 2}', cur_perc_fmt, ''
         )
         last_col = len(row) + 3
-        fltr = dict(rec)
-        del fltr['sum']
+        fltr = {k: v for k, v in rec.items() if k not in self.annot_keys}
         # write extra info
         if 'title_count' in spec.get('extra', []):
-            detail_new = (
-                AccessLog.objects.exclude(report_type_id__in=self.ignored_rts)
-                .filter(**fltr)
-                .aggregate(
-                    title_count=Count(
-                        'target_id', distinct=True, filter=Q(target_id__isnull=False)
-                    ),
-                    ib_count=Count('import_batch_id', distinct=True),
-                )
-            )
-            detail_old = (
-                AccessLog.objects.exclude(report_type_id__in=self.ignored_rts)
-                .filter(**fltr)
-                .using('old')
-                .aggregate(
-                    title_count=Count(
-                        'target_id', distinct=True, filter=Q(target_id__isnull=False)
-                    ),
-                    ib_count=Count('import_batch_id', distinct=True),
-                )
-            )
             sheet.write_row(
                 i + 1,
                 last_col + 1,
-                [detail_old['title_count'], detail_new['title_count'], detail_old['ib_count']],
+                [
+                    old_rec.get('title_count', 0),
+                    rec.get('title_count', 0),
+                    old_rec.get('ib_count', 0),
+                ],
                 self.base_fmt,
             )
             last_col += 3
         if 'filenames' in spec.get('extra', []):
-            al_subq = (
-                AccessLog.objects.exclude(report_type_id__in=self.ignored_rts)
-                .filter(**fltr)
-                .values('import_batch_id')
-                .distinct()
-            )
-            fas = SushiFetchAttempt.objects.filter(import_batch_id__in=al_subq.using('old')).using(
+            ib_subq = ImportBatch.objects.filter(**fltr).values('id').distinct()
+            fas = SushiFetchAttempt.objects.filter(import_batch_id__in=ib_subq.using('old')).using(
                 'old'
             )
-            mdus = ManualDataUpload.objects.filter(import_batches__in=al_subq.using('old')).using(
+            mdus = ManualDataUpload.objects.filter(import_batches__in=ib_subq.using('old')).using(
                 'old'
             )
             fnames = [fa.data_file.name for fa in [*fas, *mdus]]
 
             if len(fnames) == 0:
                 # no files, try with current DB
-                fas = SushiFetchAttempt.objects.filter(import_batch_id__in=al_subq)
-                mdus = ManualDataUpload.objects.filter(import_batches__in=al_subq)
+                fas = SushiFetchAttempt.objects.filter(import_batch_id__in=ib_subq)
+                mdus = ManualDataUpload.objects.filter(import_batches__in=ib_subq)
                 fnames = [fa.data_file.name for fa in [*fas, *mdus]]
 
-            sheet.write_comment(
-                i + 1, last_col, "Filenames:\n\n" + '\n'.join(fnames), {'x_scale': 3.0}
-            )
-        sheet.write_string(i + 1, last_col + 1, '', self.base_fmt)
-        last_col += 1
+            # sheet.write_comment(
+            #     i + 1, last_col, "Filenames:\n\n" + '\n'.join(fnames), {'x_scale': 3.0}
+            # )
+            fnames.sort()
+            sheet.write_string(i + 1, last_col + 1, '; '.join(fnames), self.base_fmt)
+            last_col += 1
+            file_comp = []
+            if len(fnames) == 2:
+                try:
+                    dims1 = self.counter_file_stats(fnames[0], fltr['report_type_id'])
+                except Exception as exc:
+                    logger.error(f'Error reading {fnames[0]}: {exc}')
+                    dims1 = {}
+                try:
+                    dims2 = self.counter_file_stats(fnames[1], fltr['report_type_id'])
+                except Exception as exc:
+                    logger.error(f'Error reading {fnames[1]}: {exc}')
+                    dims2 = {}
+                seen_keys = set()
+                for key, values1 in dims1.items():
+                    values2 = dims2.get(key, set())
+                    if values1 ^ values2:
+                        file_comp.append(
+                            f'{key}: {len(values1 - values2)} < {len(values1 & values2)} > '
+                            f'{len(values2 - values1)}'
+                        )
+                    seen_keys.add(key)
+                for key, values2 in dims2.items():
+                    if key not in seen_keys:
+                        file_comp.append(f'{key}: 0 < 0 > {len(values2)}')
+            if file_comp:
+                sheet.write_string(i + 1, last_col + 1, '; '.join(file_comp), self.base_fmt)
+                logger.debug(file_comp)
         return True
+
+    def counter_file_stats(self, filename: str, report_type_id: int):
+        logger.debug(f'reading {filename}')
+        crt = CounterReportType.objects.get(report_type_id=report_type_id)
+
+        is_json = True
+        try:
+            with open('media/' + filename, 'rb') as infile:
+                char = infile.read(1)
+                while char and char.isspace():
+                    char = infile.read(1)
+                if char not in b'[{':
+                    is_json = False
+        except FileNotFoundError:
+            return {}
+
+        reader = crt.get_reader_class(json_format=is_json)()
+        unique_values = {}
+        for rec in reader.file_to_records('media/' + filename):
+            for key, value in rec.dimension_data.items():
+                if key not in unique_values:
+                    unique_values[key] = {value}
+                else:
+                    unique_values[key].add(value)
+        return unique_values

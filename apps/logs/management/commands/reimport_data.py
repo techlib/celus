@@ -1,6 +1,7 @@
 import csv
 import logging
 from collections import Counter
+from io import StringIO
 from time import monotonic
 
 from django.core.management.base import BaseCommand
@@ -65,6 +66,19 @@ class Command(BaseCommand):
             default=None,
             help='File into which to write duration information for each import batch',
         )
+        parser.add_argument(
+            '--skip-stats',
+            dest='skip_stats',
+            action='store_true',
+            help='Skip calculating some costly statistics for the output',
+        )
+        parser.add_argument(
+            '-m',
+            '--show-missing-files',
+            dest='show_missing_files',
+            action='store_true',
+            help='Show more info about missing input files',
+        )
 
     def handle(self, *args, **options):
         filters = Q()
@@ -89,33 +103,70 @@ class Command(BaseCommand):
             f'Delete candidates: {reimport.obsolete.count()}'
         )
         # some statistics on not importable stuff
-        if reimport.no_source.exists():
+        no_source = list(
+            reimport.no_source.select_related('organization', 'platform', 'report_type')
+        )
+        if no_source:
             logger.warning(
-                f'There are {reimport.no_source.count()} import batches to reimport without mdu '
+                f'There are {len(no_source)} import batches to reimport without mdu '
                 f'or fa! They are blocking another {reimport.blocked.count()} import batches'
             )
             stats = Counter()
-            for ib in reimport.no_source:  # type: ImportBatch
-                if SushiCredentials.objects.filter(
-                    platform=ib.platform,
-                    organization=ib.organization,
-                    counter_reports__report_type=ib.report_type,
-                ).exists():
+            creds_cache = {}
+            for ib in no_source:  # type: ImportBatch
+                cache_key = (ib.platform_id, ib.organization_id, ib.report_type_id)
+                exists = creds_cache.get(cache_key)
+                if exists is None:
+                    exists = SushiCredentials.objects.filter(
+                        platform=ib.platform,
+                        organization=ib.organization,
+                        counter_reports__report_type=ib.report_type,
+                    ).exists()
+                    creds_cache[cache_key] = exists
+                if exists:
                     stats['has_credentials'] += 1
+                    ib.has_credentials_ = True
                 else:
                     stats['no_credentials'] += 1
+                    ib.has_credentials_ = False
             logger.info(f'Not reimportable stats: {stats}')
 
-            for key in ('organization', 'platform'):
-                logger.info(f'  {key.upper()}:')
-                for rec in (
-                    reimport.no_source.values(f'{key}__pk', f'{key}__short_name')
-                    .annotate(count=Count('id'))
-                    .order_by('-count')
+            if not options['skip_stats']:
+                for key in ('organization', 'platform'):
+                    detail_stats = Counter()
+                    for ib in no_source:
+                        detail_stats[getattr(ib, f'{key}_id')] += 1
+                    key_remap = {
+                        obj.pk: str(obj)
+                        for obj in ImportBatch._meta.get_field(key).related_model.objects.filter(
+                            pk__in=detail_stats.keys()
+                        )
+                    }
+                    logger.info(f'  {key.capitalize()}:')
+                    for obj_id, value in detail_stats.most_common():
+                        logger.info(f'    {key_remap[obj_id]} (#{obj_id}): {value}')
+                out = StringIO()
+                keys = (
+                    'pk',
+                    'organization_id',
+                    'organization',
+                    'platform_id',
+                    'platform',
+                    'report_type_id',
+                    'report_type',
+                    'date',
+                    'has_credentials_',
+                )
+                writer = csv.DictWriter(out, fieldnames=keys)
+                writer.writeheader()
+                for ib in sorted(
+                    no_source, key=lambda x: tuple(str(getattr(x, _key)) for _key in keys)
                 ):
-                    logger.info(
-                        f'    {rec[f"{key}__short_name"]} (#{rec[f"{key}__pk"]}): {rec["count"]}'
-                    )
+                    writer.writerow({key: str(getattr(ib, key)) for key in keys})
+                logger.info('  Individual import batches:')
+                # we are writing this to stdout for easy redirection into a file
+                self.stdout.write(out.getvalue())
+
         to_do = reimport.reimportable
         if options['older_than']:
             to_do = to_do.filter(last_updated__lte=options['older_than'])
@@ -134,6 +185,11 @@ class Command(BaseCommand):
             missing_file = 0
             for ib in to_do:
                 if not has_source_data_file(ib):
+                    if options['show_missing_files']:
+                        logger.debug(
+                            f'Missing file: {ib.organization}, {ib.platform}, {ib.report_type}, '
+                            f'{ib.date} (timestamp: {ib.created})'
+                        )
                     missing_file += 1
             if missing_file:
                 logger.warning(
