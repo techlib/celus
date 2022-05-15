@@ -28,7 +28,6 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-
 #  - repo: https://github.com/prettier/prettier
 #    rev: "2.1.2" # Use the sha or tag you want to point at
 #    hooks:

@@ -57,6 +57,7 @@ export default new Vuex.Store({
     tour,
   },
   state: {
+    latestPublishedRelease: null,
     user: null,
     invalidUser: false,
     snackbarShow: false,
@@ -305,6 +306,7 @@ export default new Vuex.Store({
     async start({ getters, dispatch }) {
       await dispatch("loadBasicInfo"); // load basic info - this can be done without logging in
       await dispatch("loadSiteConfig"); // site config - name, images, etc.
+      await dispatch("fetchLatestPublishedRelease");
       await dispatch("loadUserData"); // we need user data first
     },
     afterAuthentication({ dispatch, state, getters }) {
@@ -331,6 +333,17 @@ export default new Vuex.Store({
     },
     selectOrganization(context, { id }) {
       context.commit("setSelectedOrganizationId", { id });
+    },
+    async fetchLatestPublishedRelease(context) {
+      try {
+        let response = await axios.get("/api/releases/latest/", {
+          privileged: true,
+        });
+        context.commit("setLatestPublishedRelease", response.data);
+      } catch (error) {
+        console.warn("Could not fetch or set the latest published release");
+        throw error;
+      }
     },
     async loadUserData({ commit, dispatch }) {
       try {
@@ -360,6 +373,30 @@ export default new Vuex.Store({
       commit("setAuthenticated", false);
       //commit('setSelectedOrganizationId', null)
       commit("setOrganizations", null);
+    },
+    async dismissLastRelease(context, markSeen) {
+      if (
+        context.state.latestPublishedRelease &&
+        "version" in context.state.latestPublishedRelease
+      ) {
+        try {
+          let data = {};
+          data["last_dismissed_release"] =
+            context.state.latestPublishedRelease.version;
+          if (markSeen) {
+            data["last_seen_release"] =
+              context.state.latestPublishedRelease.version;
+          }
+          let response = await axios.post("api/user/extra-data", data);
+          context.commit("storeUserExtraData", { extraData: response.data });
+        } catch (error) {
+          let warnSeen = markSeen ? " and last_seen_release" : "";
+          console.warn(
+            `Could not update last_dismissed_release${warnSeen} in user.extra_data`
+          );
+          throw error;
+        }
+      }
     },
     async loadOrganizations({ dispatch, getters }) {
       try {
@@ -487,6 +524,9 @@ export default new Vuex.Store({
   },
 
   mutations: {
+    setLatestPublishedRelease(state, release) {
+      state.latestPublishedRelease = release;
+    },
     setSnackbarShow(state, { show, color }) {
       Vue.set(state, "snackbarColor", color);
       Vue.set(state, "snackbarShow", show);

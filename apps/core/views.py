@@ -128,10 +128,6 @@ class UserExtraDataView(APIView):
     to store anything inside our code - the protection is applied just to the public API
     """
 
-    ALLOWED_KEYS = {
-        'basic_tour_finished': bool,
-    }
-
     def get(self, request):
         if request.user:
             return Response(request.user.extra_data)

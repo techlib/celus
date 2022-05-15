@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
 from core.exceptions import FileConsistencyError
+from releases.releases_parser import parse_source_of_releases
 from core.logic.url import extract_organization_id_from_request_query
 
 UL_NORMAL = 100
@@ -131,8 +132,19 @@ class User(AbstractUser):
         default=settings.LANGUAGES[0][0],
         help_text='User\'s preferred language',
     )
+
+    def default_extra_data():
+        parsed = parse_source_of_releases()
+        parsed_version = parsed[0]['version'] if parsed else None
+        return {
+            'last_seen_release': parsed_version,
+            'last_dismissed_release': parsed_version,
+        }
+
     extra_data = models.JSONField(
-        default=dict, help_text='User state data that do not deserve a dedicated field', blank=True
+        default=default_extra_data,
+        help_text='User state data that do not deserve a dedicated field',
+        blank=False,
     )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)

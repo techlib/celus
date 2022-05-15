@@ -132,6 +132,25 @@ export default new Router({
         hideDateRangeSelector: true,
       },
     },
+
+    {
+      path: "/releases",
+      name: "releases",
+      component: () => import("../pages/ReleasesPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
+    },
+    {
+      path: "/changelog",
+      name: "changelog",
+      component: () => import("../pages/ChangeLogPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
+    },
     {
       path: "/heatmap",
       name: "heatmap",

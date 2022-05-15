@@ -11,6 +11,7 @@ from rest_framework.serializers import (
     PrimaryKeyRelatedField,
     Serializer,
     SerializerMethodField,
+    CharField,
 )
 
 from core.models import TaskProgress, User
@@ -68,6 +69,8 @@ class UserSimpleSerializer(ModelSerializer):
 
 class UserExtraDataSerializer(Serializer):
     basic_tour_finished = BooleanField(required=False, allow_null=True, default=None)
+    last_dismissed_release = CharField(required=False, allow_null=True)
+    last_seen_release = CharField(required=False, allow_null=True)
 
 
 class TaskProgressSerializer(ModelSerializer):

@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'knowledgebase.apps.KnowledgebaseConfig',
     'export.apps.ExportConfig',
     'tags.apps.TagsConfig',
+    'releases.apps.ReleasesConfig',
     'rest_pandas',
     'django_prometheus',
     'import_export',
@@ -665,3 +666,6 @@ print(
     f'query: {CLICKHOUSE_QUERY_ACTIVE}',
     file=sys.stderr,
 )
+
+# Releases and Changelog
+RELEASES_SOURCEFILE = config('RELEASES_SOURCEFILE', default='RELEASES.yaml')

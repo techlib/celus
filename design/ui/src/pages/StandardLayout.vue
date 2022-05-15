@@ -2,16 +2,22 @@
 
 <i18n>
 en:
+    releases: Releases
     email_not_verified: Your email is not verified
     impersonated: You are currently impersonating another user.
     no_help: No help available for this page
     help_panel_tt: Context specific help
+    new_release_message: New version has been released! Read more
+    link: here
 
 cs:
+    releases: Vydání
     email_not_verified: Vaše emailová adresa není ověřená
-    impersonated: Právě se zosobňujete jiného uživatele.
     no_help: Pro tuto stránku není dostupná žádná nápověda
     help_panel_tt: Nápověda pro aktuální stránku
+    impersonated: Právě zosobňujete jiného uživatele.
+    new_release_message: Nová verze byla vydána! Přečtěte si více
+    link: zde
 </i18n>
 
 <template>
@@ -69,6 +75,28 @@ cs:
       <v-toolbar-items>
         <v-divider class="mx-3" inset vertical></v-divider>
 
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <span v-on="on">
+              <router-link :to="{ name: 'releases' }">
+                <v-badge
+                  :value="displayNewReleaseBadge"
+                  color="success"
+                  right
+                  dot
+                  offset-x="16"
+                  offset-y="31"
+                >
+                  <v-icon class="mx-2 mt-5" color="secondary"
+                    >fa fa-bullhorn</v-icon
+                  >
+                </v-badge>
+              </router-link>
+            </span>
+          </template>
+          {{ $t("releases") }}
+        </v-tooltip>
+
         <v-tooltip bottom v-if="impersonator">
           <template v-slot:activator="{ on }">
             <v-icon v-on="on" class="mr-2" color="purple">fa-mask</v-icon>
@@ -119,6 +147,59 @@ cs:
     </v-app-bar>
 
     <v-main v-if="selectedOrganizationId">
+      <v-container fluid px-4 pt-6>
+        <v-alert
+          v-if="displayNewReleaseAlert"
+          @input="dismissLastRelease(false)"
+          dense
+          dismissible
+          outlined
+          icon="fa-bullhorn"
+          text
+          type="success"
+        >
+          {{ $t("new_release_message") }}
+          <span
+            v-if="
+              'links' in latestPublishedRelease
+                ? latestPublishedRelease.links.length > 0
+                : false
+            "
+          >
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <span v-on="on">
+                  <a
+                    :href="latestPublishedRelease.links[0].link"
+                    @click="dismissLastRelease(true)"
+                    target="_blank"
+                  >
+                    {{ $t("link") }}</a
+                  >
+                </span>
+              </template>
+              {{
+                this.latestPublishedRelease.links[0].title[this.appLanguage]
+                  ? this.latestPublishedRelease.links[0].title[this.appLanguage]
+                  : this.latestPublishedRelease.links[0].title.en
+              }}
+            </v-tooltip>
+          </span>
+          <span v-else>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <span v-on="on">
+                  <router-link :to="{ name: 'releases' }">
+                    {{ $t("link") }}</router-link
+                  >
+                </span>
+              </template>
+              {{ $t("releases") }}
+            </v-tooltip>
+          </span>
+          <span>.</span>
+        </v-alert>
+      </v-container>
       <v-container fluid pa-0 pa-sm-2>
         <v-tooltip left v-if="showHelpButton">
           <template #activator="{ on }">
@@ -209,6 +290,7 @@ export default {
       snackbarColor: "snackbarColor",
       selectedOrganizationId: "selectedOrganizationId",
       user: "user",
+      latestPublishedRelease: "latestPublishedRelease",
       siteLogo: (state) => state.siteConfig.siteLogo,
       siteName: (state) => state.siteConfig.siteName,
       footerImages: (state) => state.siteConfig.footerImages,
@@ -226,6 +308,26 @@ export default {
       showCreateOrganizationDialog: "showCreateOrganizationDialog",
       activeLanguageCodes: "activeLanguageCodes",
     }),
+    displayNewReleaseBadge() {
+      if (this.latestPublishedRelease?.version) {
+        return (
+          this.latestPublishedRelease.version !=
+          this.user.extra_data.last_seen_release
+        );
+      } else {
+        return false;
+      }
+    },
+    displayNewReleaseAlert() {
+      if (this.latestPublishedRelease?.version) {
+        return (
+          this.latestPublishedRelease.version !=
+          this.user.extra_data.last_dismissed_release
+        );
+      } else {
+        return false;
+      }
+    },
     snackbarShow: {
       get() {
         return this.$store.state.snackbarShow;
@@ -291,6 +393,7 @@ export default {
       hideSnackbar: "hideSnackbar",
       start: "start",
       backstageChangeTourStatus: "backstageChangeTourStatus",
+      dismissLastRelease: "dismissLastRelease",
     }),
     toggleNavbar() {
       this.navbarExpanded = !this.navbarExpanded;

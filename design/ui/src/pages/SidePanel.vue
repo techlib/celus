@@ -72,7 +72,9 @@
         ></v-btn>
       </div>
       <div class="small subdued text-center mb-2">
-        {{ $t("celus_version") }}: {{ celusVersion }}
+        <router-link :to="{ name: 'changelog' }">
+          {{ $t("celus_version") }}: {{ celusVersion }}
+        </router-link>
       </div>
     </template>
   </v-navigation-drawer>

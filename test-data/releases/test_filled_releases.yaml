@@ -1,0 +1,56 @@
+- version: 4.4.1
+  title:
+    en: new release
+    cs: nové vydání
+  text:
+    en: " Itaque voluptas.
+
+    ### Soluta fuga
+
+    Nihil quod aliquam aut
+
+
+    **provident quibusdam**:
+
+    - Possimus blanditiis *repellat voluptatibus*.
+
+    - Autem ullam [Link Text](https://example.com/) quibusdamquis et ut."
+    cs: toto je nějaký text
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  links:
+    - title:
+         en: blogpost
+         cs: náš blog
+      link: https://example.com/
+- version: 4.4.0
+  title:
+    en: even better features
+  text:
+    en: Itaque quo. Nihil quod aliquam aut.
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: FALSE
+- version: 4.3.3
+  title:
+    en: new feature is here!
+    cs: nové vydání je zde!
+  text:
+    en: Atque v dolore ea soluta.
+    cs: toto je nějaký text
+  is_new_feature: TRUE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  links:
+    - title:
+        en: blog post
+        cs: náš blog
+      link: https://example.com/
+    - title:
+        en: button2 title
+      link: https://example.com/
+    - title:
+        en: button3 title
+        cs: náš třetí blog
+      link: https://example.com/
