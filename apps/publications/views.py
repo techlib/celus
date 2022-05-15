@@ -304,7 +304,7 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 class PlatformInterestViewSet(ViewSet):
     @classmethod
     def get_report_type_and_filters(cls):
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_rt = ReportType.objects.get_interest_rt()
         # parameters for annotation defining an annotation for each of the interest groups
         interest_type_dim = interest_rt.dimensions_sorted[0]
         # we get active InterestGroups in order to filter out unused InterestGroups
@@ -604,7 +604,7 @@ class TitleInterestBriefViewSet(ReadOnlyModelViewSet):
             self.kwargs.get('organization_pk'), self.request.user
         )
         date_filter = date_filter_from_params(self.request.GET)
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_rt = ReportType.objects.get_interest_rt()
         search_filters = []
         pub_type_arg = self.request.query_params.get('pub_type')
         if pub_type_arg:
@@ -653,7 +653,7 @@ class TitleInterestMixin:
         self.interest_groups_names = set()
 
     def _before_queryset(self):
-        self.interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        self.interest_rt = ReportType.objects.get_interest_rt()
         self.interest_type_dim = self.interest_rt.dimensions_sorted[0]
         self.interest_groups_names = {
             x['short_name'] for x in InterestGroup.objects.all().values('short_name')
@@ -827,7 +827,7 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
     serializer_class = TitleCountSerializer
 
     def get_queryset(self):
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_rt = ReportType.objects.get_interest_rt()
         interest_type_dim = interest_rt.dimensions_sorted[0]
         interest_type_name = self.request.query_params.get('order_by', 'full_text')
 
@@ -911,7 +911,7 @@ class InterestByPlatformMixin:
         self.all_platforms = Platform.objects.all()
 
     def _before_queryset(self):
-        self.interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        self.interest_rt = ReportType.objects.get_interest_rt()
 
     def _extra_accesslog_filters(self):
         filters = super()._extra_accesslog_filters()

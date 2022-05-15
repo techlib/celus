@@ -6,8 +6,7 @@ from hcube.api.models.materialized_views import AggregatingMaterializedView
 from hcube.api.models.metrics import IntMetric
 from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
 
-from logs.logic.materialized_interest import interest_report_type
-from logs.models import AccessLog, ImportBatch
+from logs.models import AccessLog, ImportBatch, ReportType
 
 ch_backend = ClickhouseCubeBackend(
     database=settings.CLICKHOUSE_DB,
@@ -153,7 +152,7 @@ class AccessLogCube(Cube):
         Only syncs interest for specific batch by deleting all previous interest records for
         that batch and then recreating it.
         """
-        interest_rt = interest_report_type()
+        interest_rt = ReportType.objects.get_interest_rt()
         to_write = []
         out = 0
         backend.delete_records(

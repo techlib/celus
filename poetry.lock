@@ -405,6 +405,20 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "colorlog"
+version = "6.7.0"
+description = "Add colours to the output of Python's logging module."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+colorama = {version = "*", markers = "sys_platform == \"win32\""}
+
+[package.extras]
+development = ["black", "flake8", "mypy", "pytest", "types-colorama"]
+
+[[package]]
 name = "coverage"
 version = "6.4.2"
 description = "Code coverage measurement for Python"
@@ -2551,7 +2565,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8.10"
-content-hash = "7225234603a75930d3efcb6964a6e6c7f09d63986d340951c71d25ec52b28fec"
+content-hash = "f5773054118c111ff4f5c4a15fe98eb89ebbc3af229851977d735f666b4c80d5"
 
 [metadata.files]
 alabaster = [
@@ -2681,6 +2695,10 @@ clickhouse-pool = [
     {file = "clickhouse_pool-0.5.3-py3-none-any.whl", hash = "sha256:a4cdfb2e0a338672086e3ff7694d7ca40020e29a3f1ed9a5bb18c71719e2f561"},
 ]
 colorama = []
+colorlog = [
+    {file = "colorlog-6.7.0-py2.py3-none-any.whl", hash = "sha256:0d33ca236784a1ba3ff9c532d4964126d8a2c44f1f0cb1d2b0728196f512f662"},
+    {file = "colorlog-6.7.0.tar.gz", hash = "sha256:bd94bd21c1e13fac7bd3153f4bc3a7dc0eb0974b8bc2fdf1a989e474f6e582e5"},
+]
 coverage = []
 dateparser = []
 debugpy = []

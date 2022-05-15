@@ -325,4 +325,4 @@ class IntentionViewSet(ModelViewSet):
             stats.update(SushiFetchAttempt.objects.filter(fetchintention__in=to_delete).delete()[1])
             stats.update(to_delete.delete()[1])
 
-        return Response(stats)
+        return Response(dict(stats))

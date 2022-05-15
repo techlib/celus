@@ -80,6 +80,7 @@ toml = "^0.10.2"
 django-postgres-extra = "^2.0.5"
 django-postgres-copy = "^2.7.0"
 django-colorfield = "^0.7.2"
+colorlog = "^6.7.0"
 
 
 [tool.poetry.dev-dependencies]

@@ -85,7 +85,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
     @action(detail=True, url_path='year-interest')
     def year_interest(self, request, pk):
         org_filter = organization_filter_from_org_id(pk, request.user)
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_rt = ReportType.objects.get_interest_rt()
         result = []
         for rec in (
             AccessLog.objects.filter(report_type=interest_rt, **org_filter)
@@ -102,7 +102,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
     def interest(self, request, pk):
         org_filter = organization_filter_from_org_id(pk, request.user)
         date_filter = date_filter_from_params(request.GET)
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_rt = ReportType.objects.get_interest_rt()
         accesslog_filter_params = {'report_type': interest_rt, **org_filter, **date_filter}
         replace_report_type_with_materialized(accesslog_filter_params)
         # The following is a more natural query for this data, but because aggregate
@@ -136,7 +136,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
     def title_interest_histogram(self, request, pk):
         org_filter = organization_filter_from_org_id(pk, request.user)
         date_filter = date_filter_from_params(request.GET)
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_rt = ReportType.objects.get_interest_rt()
         counter = Counter()
         query = (
             AccessLog.objects.filter(report_type=interest_rt, **org_filter, **date_filter)
@@ -272,7 +272,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         query = recache_queryset(query, origin='APO-titles')
 
         # interest for the titles
-        interest_rt = ReportType.objects.get(short_name='interest', source__isnull=True)
+        interest_rt = ReportType.objects.get_interest_rt()
         title_id_filter = {
             'target_id__in': PlatformTitle.objects.filter(**org_filter, **date_filter_params1)
             .filter(Exists(is_on_other_platform))

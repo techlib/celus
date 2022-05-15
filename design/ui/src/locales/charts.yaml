@@ -43,6 +43,8 @@ en:
   stack:
     yes: Stack series
     no: Series as individual bars
+  series:
+    data_coverage: Data coverage
 cs:
   chart:
     date_metric: Metrika v čase
@@ -87,3 +89,5 @@ cs:
   stack:
     yes: Skládaný graf
     no: Série jako nezávislé sloupce
+  series:
+    data_coverage: Pokrytí daty

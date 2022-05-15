@@ -75,8 +75,11 @@ class ImportBatchFullFactory(factory.django.DjangoModelFactory):
     def create_accesslogs(obj, create, extracted, **kwargs):  # noqa - obj name is ok here
         if not create:
             return
+
         if not (metrics := kwargs.get('metrics')):
             metrics = MetricFactory.create_batch(2)
+        if not (titles := kwargs.get('titles')):
+            titles = TitleFactory.create_batch(10)
         attrs = {
             'import_batch': obj,
             'organization': obj.organization,
@@ -84,14 +87,16 @@ class ImportBatchFullFactory(factory.django.DjangoModelFactory):
             'report_type': obj.report_type,
             'date': obj.date,
         }
-        if not (titles := kwargs.get('titles')):
-            titles = TitleFactory.create_batch(10)
         als = []
-        for metric in metrics:
-            als += [
-                AccessLog(value=fake.random_int(), metric=metric, target=t, **attrs) for t in titles
-            ]
+        for m in metrics:
+            als += [AccessLog(value=fake.random_int(), metric=m, target=t, **attrs) for t in titles]
         AccessLog.objects.bulk_create(als)
+
+        # create OrganizationPlatform link which would be expected if the data were loaded
+        # from a file
+        OrganizationPlatform.objects.get_or_create(
+            platform_id=obj.platform_id, organization_id=obj.organization_id
+        )
         PlatformTitle.objects.bulk_create(
             [
                 PlatformTitle(
@@ -101,9 +106,7 @@ class ImportBatchFullFactory(factory.django.DjangoModelFactory):
             ],
             ignore_conflicts=True,
         )
-        OrganizationPlatform.objects.get_or_create(
-            organization=obj.organization, platform=obj.platform
-        )
+
         if settings.CLICKHOUSE_SYNC_ACTIVE:
             sync_import_batch_with_clickhouse(obj)
 

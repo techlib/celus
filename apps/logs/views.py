@@ -14,17 +14,18 @@ from pandas import DataFrame
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.fields import CharField, ListField
+from rest_framework.fields import BooleanField, CharField, ListField
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.serializers import DateField, IntegerField, Serializer
+from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelatedField, Serializer
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_pandas import PandasView
 
+from charts.models import ReportDataView
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params, parse_month
@@ -74,10 +75,13 @@ from logs.serializers import (
     ReportTypeSerializer,
 )
 from organizations.logic.queries import organization_filter_from_org_id
+from organizations.models import Organization
+from publications.models import Platform
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 from tags.models import Tag
 from . import filters
+from .logic.data_coverage import DataCoverageExtractor
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from .tasks import export_raw_data_task
 
@@ -477,6 +481,60 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             }
             for e in batches
         )
+
+    class DataCoverageParamSerializer(Serializer):
+
+        report_type = PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False)
+        report_view = PrimaryKeyRelatedField(queryset=ReportDataView.objects.all(), required=False)
+        start_date = CharField(validators=[month_validator], required=False)
+        end_date = CharField(validators=[month_validator], required=False)
+        organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
+        platform = PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=False)
+        split_by_org = BooleanField(default=False)
+        split_by_platform = BooleanField(default=False)
+
+        def validate(self, data):
+            data = super().validate(data)
+            if not data.get('report_type') and not data.get('report_view'):
+                raise ValidationError('One of "report_type", "report_view" must be present')
+            if not data.get('report_type') and not data.get('report_view'):
+                raise ValidationError('"report_type" and "report_view" must not be present at once')
+            return data
+
+    @action(
+        detail=False, methods=['get'], url_name='data-coverage', url_path='data-coverage',
+    )
+    def data_coverage(self, request):
+        """
+        For each month in the date range specified by `start_date` and `end_date` params,
+        return how many potential import batches there could be and how many really are,
+        thus creating some kind of score of data coverage for each month.
+        """
+        param_serializer = self.DataCoverageParamSerializer(data=request.GET)
+        param_serializer.is_valid(raise_exception=True)
+        params = param_serializer.validated_data
+        if not (rt := params.get('report_type')):
+            rv = params.get('report_view')
+            rt = rv.base_report_type
+
+        # disable coverage for selected report types
+        if rt.short_name in settings.REPORT_TYPES_WITHOUT_COVERAGE:
+            return Response([])
+
+        start_month = parse_month(params.get('start_date'))
+        end_month = parse_month(params.get('end_date'))
+
+        extractor = DataCoverageExtractor(
+            rt,
+            platform=params.get('platform'),
+            organization=params.get('organization'),
+            split_by_org=bool(params.get('split_by_org')),
+            split_by_platform=bool(params.get('split_by_platform')),
+            start_month=start_month,
+            end_month=end_month,
+        )
+        data = extractor.get_coverage_data()
+        return Response(v for k, v in sorted(data.items()))
 
 
 class ManualDataUploadViewSet(ModelViewSet):

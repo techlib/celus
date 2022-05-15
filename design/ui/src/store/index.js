@@ -231,6 +231,9 @@ export default new Vuex.Store({
     enableTags(state) {
       return state.basicInfo.ENABLE_TAGS ?? false;
     },
+    enableDataCoverage(state) {
+      return state.basicInfo.ENABLE_DATA_COVERAGE ?? false;
+    },
     celusAdminSitePath(state) {
       if ("CELUS_ADMIN_SITE_PATH" in state.basicInfo) {
         return state.basicInfo.CELUS_ADMIN_SITE_PATH;

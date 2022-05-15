@@ -446,7 +446,7 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler'},
+        'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler', 'formatter': 'colored'},
         'errorlog': {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': BASE_DIR / 'error.log',
@@ -460,6 +460,9 @@ LOGGING = {
         'django': {'level': 'ERROR', 'handlers': ['errorlog', 'mail_admins'], 'propagate': True},
         'logs.logic.materialized_interest': {'level': 'INFO'},
         'postgres_copy': {'level': 'ERROR'},
+    },
+    'formatters': {
+        'colored': {'()': 'colorlog.ColoredFormatter', 'format': "%(log_color)s%(message)s"}
     },
     'root': {'level': 'DEBUG', 'handlers': ['console']},
 }
@@ -532,6 +535,15 @@ FAKE_SUSHI_URLS = ['https://sashimi.celus.net/']
 # Should tags be visible in the UI - the following is passed to the frontend and used there
 ENABLE_TAGS = config('ENABLE_TAGS', cast=bool, default=False)
 
+# Should data coverage be visible in the UI
+# the following is passed to the frontend and used there
+ENABLE_DATA_COVERAGE = config('ENABLE_DATA_COVERAGE', cast=bool, default=False)
+# the following influences the backend - empty data will be returned for the RTs listed below
+# as of now, the computation of coverage for interest is not perfect, so we disable it by default
+REPORT_TYPES_WITHOUT_COVERAGE = config(
+    'REPORT_TYPES_WITHOUT_COVERAGE', cast=Csv(), default='interest'
+)
+
 # social authentication providers
 SOCIAL_ACCOUNTS_SUPPORTED = config('SOCIAL_ACCOUNTS_SUPPORTED', cast=Csv(), default='')
 SITE_ID = config('SITE_ID', cast=int, default=1)
@@ -580,6 +592,7 @@ EXPORTED_SETTINGS = [
     'CELUS_ADMIN_SITE_PATH',
     'CONSORTIAL_INSTALLATION',
     'ENABLE_TAGS',
+    'ENABLE_DATA_COVERAGE',
     'HARVESTER_IPV4_ADDRESSES',
     'HARVESTER_IPV6_ADDRESSES',
     'LANGUAGES',

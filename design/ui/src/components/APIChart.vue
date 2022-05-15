@@ -160,9 +160,11 @@
         :option="option"
         :style="{ height: height }"
         :update-options="{
-          replaceMerge: ['xAxis', 'yAxis', 'series'],
+          notMerge: ['series'],
+          replaceMerge: ['xAxis', 'yAxis'],
         }"
         autoresize
+        @click="click"
       >
       </v-chart>
 
@@ -175,6 +177,27 @@
       >
       </ChartDataTable>
     </div>
+    <v-dialog v-model="showCoverageDialog">
+      <v-card>
+        <v-card-title>Coverage</v-card-title>
+        <v-card-text>
+          <CoverageMap
+            :organization-id="organization"
+            :platform-id="platform"
+            :report-type-id="reportTypeId"
+            :raw-report-type="rawReportType"
+            :start-month="dateRangeStart"
+            :end-month="dateRangeEnd"
+          />
+        </v-card-text>
+        <v-card-actions class="pb-4 pr-4">
+          <v-spacer></v-spacer>
+          <v-btn @click="showCoverageDialog = false">{{
+            $t("actions.close")
+          }}</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script>
@@ -185,6 +208,7 @@ import cancellation from "@/mixins/cancellation";
 import ChartDataTable from "./ChartDataTable";
 import { padIntegerWithZeros } from "@/libs/numbers";
 import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
+import CoverageMap from "@/components/charts/CoverageMap";
 
 /* vue-echarts */
 import { use } from "echarts/core";
@@ -198,8 +222,10 @@ import {
   DataZoomComponent,
   MarkLineComponent,
   DatasetComponent,
+  VisualMapComponent,
 } from "echarts/components";
 import VChart from "vue-echarts";
+
 use([
   CanvasRenderer,
   BarChart,
@@ -211,6 +237,7 @@ use([
   DataZoomComponent,
   MarkLineComponent,
   DatasetComponent,
+  VisualMapComponent,
 ]);
 /* ~vue-echarts */
 
@@ -220,6 +247,7 @@ export default {
   name: "APIChart",
   mixins: [cancellation],
   components: {
+    CoverageMap,
     ChartDataTable,
     LoaderWidget,
     VChart,
@@ -316,6 +344,8 @@ export default {
       yearAsSeries: false, // should each year form a separate series?
       error: null,
       doStack: this.stack,
+      coverageData: [],
+      showCoverageDialog: false,
     };
   },
   computed: {
@@ -326,6 +356,7 @@ export default {
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
       selectedOrganization: "selectedOrganization",
+      enableDataCoverage: "enableDataCoverage",
     }),
     monthNames() {
       return months.map((item) =>
@@ -472,9 +503,32 @@ export default {
           },
         };
       } else {
-        return {
-          type: "value",
-        };
+        if (this.coverageData.length) {
+          return [
+            {
+              type: "value",
+            },
+            {
+              name: this.$t("series.data_coverage"),
+              type: "value",
+              min: 0,
+              max: 100,
+              splitLine: {
+                show: false,
+              },
+              axisTick: {
+                show: true,
+              },
+              axisLine: {
+                show: true,
+              },
+            },
+          ];
+        } else {
+          return {
+            type: "value",
+          };
+        }
       }
     },
     toolbox() {
@@ -542,6 +596,57 @@ export default {
     },
     // new stuff for vue-echarts starts here
     option() {
+      let coverageSeries = [];
+      let visualMap = {};
+      if (this.coverageData.length && !this.regroupByYear) {
+        coverageSeries = [
+          {
+            name: this.$t("series.data_coverage"),
+            type: "line",
+            data: this.coverageData.map((item) => item.ratio * 100),
+            yAxisIndex: 1,
+            tooltip: {
+              valueFormatter: (value) => `${value.toFixed(1)} %`,
+            },
+          },
+        ];
+        visualMap = {
+          visualMap: {
+            type: "continuous",
+            show: false, // do not show the slider widget
+            min: 0,
+            max: 100,
+            range: [90, 100],
+            seriesIndex: 0,
+            inRange: {
+              symbol: "diamond",
+              color: [
+                "#ff7777",
+                "#ffbb66",
+                "#ffbb66",
+                "#ffbb66",
+                "#ffcc77",
+                "#ffcc77",
+                "#ffcc77",
+                "#cccc77",
+                "#cccc77",
+                "#cccc77",
+                "#cccc77",
+                "#77cc77",
+              ],
+              symbolSize: [5, 3],
+              opacity: [0.5, 0.5],
+            },
+            outOfRange: {
+              symbol: "diamond",
+              color: ["#ff7777", "#ff7777", "#ffbb66", "#ffcc77"],
+              symbolSize: [10, 6],
+              opacity: [1, 0.5],
+            },
+          },
+        };
+      }
+
       // the returned object itself
       // type "bar" means horizontal bars - taken from the v-charts library
       return {
@@ -553,14 +658,19 @@ export default {
           source: this.displayData,
           dimensions: [this.shownPrimaryDimension, ...this.seriesNames],
         },
-        series: this.seriesNames.map((series, index) => ({
-          id: series,
-          name: this.shownSecondaryDimension ? series : this.$t("chart.count"),
-          type: "bar",
-          stack: this.doStack ? "all" : series,
-          // only add markline to the first series
-          markLine: index === 0 ? this.markLine : {},
-        })),
+        series: [
+          ...coverageSeries,
+          ...this.seriesNames.map((series, index) => ({
+            id: series,
+            name: this.shownSecondaryDimension
+              ? series
+              : this.$t("chart.count"),
+            type: "bar",
+            stack: this.doStack ? "all" : series,
+            // only add markline to the first series
+            markLine: index === 0 ? this.markLine : {},
+          })),
+        ],
         tooltip: {
           trigger: "axis",
           axisPointer: {
@@ -577,9 +687,13 @@ export default {
           itemHeight: 16,
         },
         color: DEFAULT_VCHARTS_COLORS,
+        ...visualMap,
       };
     },
     xValues() {
+      if (this.shownPrimaryDimension === "date" && this.coverageData.length) {
+        return this.coverageData.map((item) => item.date.substring(0, 7));
+      }
       return this.displayData.map((item) => item[this.primaryDimension]);
     },
     seriesNames() {
@@ -657,6 +771,7 @@ export default {
               .map(([a, b]) => b)
               .reduce((x, y) => x + y);
           }
+
           let sum = sumNonPrimary.bind(this);
           out.sort((a, b) => sum(a) - sum(b));
         }
@@ -725,6 +840,37 @@ export default {
       // we use timeout to give the interface time to redraw
       setTimeout(async () => await this.ingestData(response.data.data), 10);
     },
+    async loadCoverageData() {
+      if (this.enableDataCoverage && this.shownPrimaryDimension === "date") {
+        let params = {
+          start_date: this.dateRangeStart,
+          end_date: this.dateRangeEnd,
+        };
+        // the reportTypeId can be either of report type or of report view
+        if (this.rawReportType) {
+          params["report_type"] = this.reportTypeId;
+        } else {
+          params["report_view"] = this.reportTypeId;
+        }
+        if (this.platform) {
+          params["platform"] = this.platform;
+        }
+        if (this.organization && this.organization !== -1) {
+          params["organization"] = this.organization;
+        }
+        const { response, error } = await this.http({
+          url: "/api/import-batch/data-coverage/",
+          params: params,
+        });
+        if (!error) {
+          this.coverageData = response.data;
+        } else {
+          this.coverageData = [];
+        }
+      } else {
+        this.coverageData = [];
+      }
+    },
     pivot() {
       return pivot(
         this.dataRaw,
@@ -733,13 +879,20 @@ export default {
         "count"
       );
     },
+    click() {
+      if (this.coverageData.length) {
+        this.showCoverageDialog = true;
+      }
+    },
   },
   mounted() {
     this.loadData();
+    this.loadCoverageData();
   },
   watch: {
     dataURL() {
       this.loadData();
+      this.loadCoverageData();
     },
     yearAsSeries() {
       this.ingestData(this.rawData);
@@ -758,6 +911,7 @@ export default {
   &.left {
     padding-right: 0;
   }
+
   &.right {
     padding-left: 0;
   }

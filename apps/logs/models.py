@@ -60,6 +60,11 @@ class OrganizationPlatform(models.Model):
         return f'{self.organization} | {self.platform}'
 
 
+class ReportTypeQuerySet(models.QuerySet):
+    def get_interest_rt(self):
+        return self.get(short_name='interest', source__isnull=True)
+
+
 class ReportType(models.Model):
 
     """
@@ -96,6 +101,8 @@ class ReportType(models.Model):
         'Metric', through='ControlledMetric', related_name='controlled'
     )
     ext_id = models.PositiveIntegerField(unique=True, null=True, default=None, blank=True,)
+
+    objects = ReportTypeQuerySet.as_manager()
 
     class Meta:
         verbose_name = _('Report type')
@@ -162,6 +169,10 @@ class ReportType(models.Model):
     @classmethod
     def is_explicit_dimension(cls, dim_name: str) -> bool:
         return bool(re.match(r'dim(\d)', dim_name))
+
+    @property
+    def is_interest_rt(self) -> bool:
+        return self.short_name == 'interest' and self.source is None
 
 
 class ReportMaterializationSpec(models.Model):

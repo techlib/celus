@@ -19,8 +19,6 @@ from logs.models import (
     DimensionText,
     ImportBatch,
     Metric,
-    ReportInterestMetric,
-    ImportBatchSyncLog,
     LastAction,
 )
 from publications.models import Platform
@@ -28,15 +26,11 @@ from publications.models import Platform
 logger = logging.getLogger(__name__)
 
 
-def interest_report_type():
-    return ReportType.objects.get(short_name='interest')
-
-
 def sync_interest_by_import_batches(queryset=None) -> Counter:
     if not queryset:
         queryset = ImportBatch.objects.all()
     stats = Counter()
-    interest_rt = interest_report_type()
+    interest_rt = ReportType.objects.get_interest_rt()
     # we want to make sure that the ImportBatch has some accesslogs because otherwise it might
     # be that we caught it just after creation before any AccessLogs are added to it
     queryset = (
@@ -218,7 +212,7 @@ def remove_interest(queryset=None) -> Counter:
     if not queryset:
         queryset = ImportBatch.objects.all()
     stats = Counter()
-    interest_rt = interest_report_type()
+    interest_rt = ReportType.objects.get_interest_rt()
     for import_batch in queryset.filter(interest_timestamp__isnull=False):
         cur_stats = remove_interest_from_import_batch(import_batch, interest_rt)
         stats += cur_stats
@@ -258,7 +252,7 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
         if total_count == 0:
             # short-circuit to save query for interest report type
             return stats
-        interest_rt = interest_report_type()
+        interest_rt = ReportType.objects.get_interest_rt()
         for i, import_batch in enumerate(queryset.iterator()):
             old_sum = (
                 import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
@@ -356,7 +350,7 @@ def _find_platform_report_type_disconnect():
     batches where the platform and report_type are not (no longer) connected by
     PlatformInterestReport, but there are some interest data anyway
     """
-    interest_rt = interest_report_type()
+    interest_rt = ReportType.objects.get_interest_rt()
     # platforms connected to a report_type referenced by its ID
     pir_platforms = Platform.objects.filter(
         platforminterestreport__report_type_id=OuterRef('report_type_id')
@@ -381,7 +375,7 @@ def _find_report_type_metric_disconnect():
     batches where the report_type and metric are not (no longer) connected by
     ReportInterestMetric, but there are some interest data anyway
     """
-    interest_rt = interest_report_type()
+    interest_rt = ReportType.objects.get_interest_rt()
     access_log_metric_query = (
         AccessLog.objects.filter(report_type=interest_rt, import_batch=OuterRef('pk'))
         .values('metric_id')
@@ -431,7 +425,7 @@ def _find_superseeded_import_batches():
         .distinct()
     )
     interest_al = AccessLog.objects.filter(
-        import_batch=OuterRef('pk'), report_type=interest_report_type()
+        import_batch=OuterRef('pk'), report_type=ReportType.objects.get_interest_rt()
     )
     query = (
         ImportBatch.objects.filter(report_type__superseeded_by__isnull=False)
