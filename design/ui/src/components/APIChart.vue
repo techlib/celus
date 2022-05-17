@@ -55,7 +55,7 @@
   </div>
   <div v-else>
     <v-container class="pa-0" fluid>
-      <v-row class="pb-3">
+      <v-row class="pb-3 pt-4">
         <v-col v-if="showTableToggle" cols="auto" class="pl-5 py-0">
           <v-btn-toggle v-model="tableView" mandatory borderless>
             <v-tooltip bottom>
@@ -81,7 +81,7 @@
             <v-tooltip bottom>
               <template #activator="{ on }">
                 <v-btn :value="false" small v-on="on">
-                  <v-icon x-small>fa fa-ellipsis-h</v-icon>
+                  <v-icon x-small>fa fa-chart-line</v-icon>
                 </v-btn>
               </template>
               <span>{{ $t("x_axis.linear") }}</span>
@@ -94,10 +94,30 @@
                   v-on="on"
                   :disabled="!showYearToYear"
                 >
-                  <v-icon x-small>fa fa-layer-group</v-icon>
+                  <v-icon x-small>fa fa-calendar-alt</v-icon>
                 </v-btn>
               </template>
               <span>{{ $t("x_axis.year_months") }}</span>
+            </v-tooltip>
+          </v-btn-toggle>
+        </v-col>
+        <v-col v-if="isStackable" cols="auto" class="py-0">
+          <v-btn-toggle v-model="doStack" mandatory borderless>
+            <v-tooltip bottom>
+              <template #activator="{ on }">
+                <v-btn :value="false" small v-on="on">
+                  <v-icon x-small>fa fa-ellipsis-h</v-icon>
+                </v-btn>
+              </template>
+              <span>{{ $t("stack.no") }}</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ on }">
+                <v-btn :value="true" small v-on="on">
+                  <v-icon x-small>fa fa-layer-group</v-icon>
+                </v-btn>
+              </template>
+              <span>{{ $t("stack.yes") }}</span>
             </v-tooltip>
           </v-btn-toggle>
         </v-col>
@@ -116,13 +136,13 @@
         <v-col
           cols="auto"
           shrink
-          class="pr-3 pa-0"
+          class="pr-3 pa-0 pt-1"
           v-if="reportedMetrics.length"
         >
           <v-tooltip bottom>
             <template #activator="{ on }">
               <span v-on="on">
-                <v-icon color="info"> fa-info-circle </v-icon>
+                <v-icon color="info">fa-info-circle</v-icon>
               </span>
             </template>
             <strong>{{ $t("reported_metrics_tooltip") }}</strong>
@@ -134,29 +154,21 @@
         </v-col>
       </v-row>
     </v-container>
-    <div :style="{ 'min-height': height }">
-      <component
+    <div :style="{ 'min-height': height }" class="pt-4">
+      <v-chart
         v-if="!tableView"
-        :is="chartComponent"
-        :data="chartData"
-        :settings="chartSettings"
-        :extend="chartExtend"
-        :height="height"
-        :toolbox="chartToolbox"
-        :data-zoom="dataZoom"
-        :mark-line="markLine"
-        :xAxis="xAxis"
-        :legend="{
-          icon: 'path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z',
-          itemWidth: 16,
-          itemGap: 16,
-          itemHeight: 16,
+        :option="option"
+        :style="{ height: height }"
+        :update-options="{
+          replaceMerge: ['xAxis', 'yAxis', 'series'],
         }"
+        autoresize
       >
-      </component>
+      </v-chart>
+
       <ChartDataTable
-        :rows="chartData.rows"
-        :columns="chartData.columns"
+        :rows="displayData"
+        :columns="[shownPrimaryDimension, ...seriesNames]"
         :primary-dimension="shownPrimaryDimension"
         :items-per-page="dashboardChart ? 8 : 12"
         v-else
@@ -166,29 +178,52 @@
   </div>
 </template>
 <script>
-import VeHistogram from "v-charts/lib/histogram.common";
-import VeBar from "v-charts/lib/bar.common";
-import VeLine from "v-charts/lib/line.common";
-// the following two imports are here to ensure the components at hand will be bundled
-// noinspection ES6UnusedImports
-import _dataZoom from "echarts/lib/component/dataZoom";
-// noinspection ES6UnusedImports
-import _toolBox from "echarts/lib/component/toolbox";
-// other imports
 import { mapActions, mapGetters, mapState } from "vuex";
-import "echarts/lib/component/markLine";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import { pivot } from "@/libs/pivot";
 import cancellation from "@/mixins/cancellation";
 import ChartDataTable from "./ChartDataTable";
 import { padIntegerWithZeros } from "@/libs/numbers";
+import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
+
+/* vue-echarts */
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { BarChart, LineChart } from "echarts/charts";
+import {
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  MarkLineComponent,
+  DatasetComponent,
+} from "echarts/components";
+import VChart from "vue-echarts";
+use([
+  CanvasRenderer,
+  BarChart,
+  LineChart,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  MarkLineComponent,
+  DatasetComponent,
+]);
+/* ~vue-echarts */
 
 const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export default {
   name: "APIChart",
   mixins: [cancellation],
-  components: { ChartDataTable, VeHistogram, VeBar, VeLine, LoaderWidget },
+  components: {
+    ChartDataTable,
+    LoaderWidget,
+    VChart,
+  },
   props: {
     type: {
       type: String,
@@ -209,9 +244,6 @@ export default {
     reportTypeId: {
       required: true,
     },
-    metric: {
-      required: false,
-    },
     title: {
       // id of the title to filter on
       type: Number,
@@ -230,10 +262,6 @@ export default {
     dataURLBase: {
       type: String,
       default: "/api/",
-    },
-    extend: {
-      type: Object,
-      default: (ret) => {},
     },
     stack: {
       type: Boolean,
@@ -287,6 +315,7 @@ export default {
       tableView: false,
       yearAsSeries: false, // should each year form a separate series?
       error: null,
+      doStack: this.stack,
     };
   },
   computed: {
@@ -331,77 +360,6 @@ export default {
       }
       return url;
     },
-    columns() {
-      if (this.loading) return [];
-      if (this.dataRaw.length === 0) return [];
-      if (this.shownSecondaryDimension) {
-        let rows = this.rows;
-        return [
-          this.dimensionToName(this.shownPrimaryDimension),
-          ...Object.keys(rows[0]).filter(
-            (item) => item !== this.shownPrimaryDimension
-          ),
-        ];
-      } else {
-        return [this.dimensionToName(this.shownPrimaryDimension), "count"];
-      }
-    },
-    chartData() {
-      return {
-        columns: this.columns,
-        rows: this.rows,
-      };
-    },
-    chartExtend() {
-      let colors = ["#ff0000", "#ff8844", "#ff4488", "#ff4444"];
-      if (this.shownPrimaryDimension === "organization" || this.regroupByYear) {
-        let that = this;
-        return {
-          series(item) {
-            let organizationRowNum = that.organizationRow;
-            let regroupByYear = that.regroupByYear;
-            if (organizationRowNum !== null) {
-              let serIdx = 0;
-              for (let ser of item) {
-                ser.data = ser.data.map((v, index) => ({
-                  value: v,
-                  itemStyle: {
-                    color:
-                      index === organizationRowNum ? colors[serIdx % 4] : null,
-                  },
-                }));
-                serIdx++;
-              }
-            }
-            // Note: the following does gradual lightening of color for year-year chart
-            //       I am preserving it in comment for possible future reference and use
-            // if (regroupByYear) {
-            //   let serIdx = 0;
-            //   const yearNum = that.dataYears.length;
-            //   for (let ser of item) {
-            //     ser.data = ser.data.map((v, index) => ({
-            //       value: v,
-            //       itemStyle: {
-            //         color: Color(
-            //           DEFAULT_VCHARTS_COLORS[
-            //             serIdx % DEFAULT_VCHARTS_COLORS.length
-            //           ]
-            //         )
-            //           .lighten(
-            //             (0.1 / yearNum) * (yearNum - (index % yearNum) - 1)
-            //           )
-            //           .hex(),
-            //       },
-            //     }));
-            //     serIdx++;
-            //   }
-            // }
-            return item;
-          },
-        };
-      }
-      return {};
-    },
     markLine() {
       if (
         this.shownPrimaryDimension === "organization" &&
@@ -416,11 +374,9 @@ export default {
               name: "me",
               yAxis: this.organizationRow,
               lineStyle: {
-                normal: {
-                  color: "#aa0010",
-                  type: "solid",
-                  width: 1,
-                },
+                color: "#aa0010",
+                type: "solid",
+                width: 1,
               },
               label: {
                 formatter: this.$t("chart.my_org"),
@@ -432,44 +388,13 @@ export default {
       }
       return {};
     },
-    rows() {
-      if (this.loading || this.crunchingData) {
-        return [];
-      }
-      return this.displayData;
-    },
     organizationRow() {
       if (!this.selectedOrganization) {
         return null;
       }
-      let i = 0;
-      for (let row of this.rows) {
-        if (row.organization === this.selectedOrganization.name) {
-          return i;
-        }
-        i++;
-      }
-      return null;
-    },
-    chartSettings() {
-      let out = {};
-      if (!this.shownSecondaryDimension) {
-        // count is the metric, we remap it to a different name
-        out["labelMap"] = {
-          count: this.$i18n.t("chart.count"),
-        };
-      } else {
-        if (this.stack) {
-          out["stack"] = {
-            all: [
-              ...Object.keys(this.rows[0]).filter(
-                (item) => item !== this.shownPrimaryDimension
-              ),
-            ],
-          };
-        }
-      }
-      return out;
+      return this.xValues.findIndex(
+        (value) => value === this.selectedOrganization.name
+      );
     },
     dataYears() {
       let yearSet = new Set();
@@ -482,7 +407,7 @@ export default {
         let axis1 = [];
         for (let month of months) {
           for (let year of years) {
-            axis1.push(`${year}`);
+            axis1.push(`${month.toString().padStart(2, "0")}-${year}`);
           }
         }
         return [
@@ -523,11 +448,37 @@ export default {
             },
           },
         ];
+      } else if (this.type === "bar") {
+        // prepare some pieces
+        return {
+          type: "value",
+        };
+      } else {
+        return {
+          type: "category",
+          data: this.xValues,
+        };
       }
-      return null;
     },
-    chartToolbox() {
-      let toolbox = {
+    yAxis() {
+      if (this.type === "bar") {
+        return {
+          type: "category",
+          data: this.xValues,
+          axisLabel: {
+            width: 250,
+            fontSize: this.xValues.length > 20 ? 10 : 12, // smaller font for many values
+            overflow: "truncate",
+          },
+        };
+      } else {
+        return {
+          type: "value",
+        };
+      }
+    },
+    toolbox() {
+      return {
         feature: {
           saveAsImage: {
             show: true,
@@ -546,17 +497,6 @@ export default {
           },
         },
       };
-      if (this.zoom && false) {
-        // temporarily disabled, there is bug in echarts - https://github.com/apache/incubator-echarts/issues/10972
-        toolbox.feature["dataZoom"] = {
-          show: true,
-          title: {
-            zoom: this.$t("chart.toolbox.zoom"),
-            back: this.$t("chart.toolbox.zoom_back"),
-          },
-        };
-      }
-      return toolbox;
     },
     dataZoom() {
       if (this.zoom && !this.regroupByYear) {
@@ -570,15 +510,6 @@ export default {
         ];
       } else {
         return [];
-      }
-    },
-    chartComponent() {
-      if (this.type === "bar") {
-        return VeBar;
-      } else if (this.type === "histogram") {
-        return VeHistogram;
-      } else {
-        return VeLine;
       }
     },
     reportedMetricsText() {
@@ -604,11 +535,72 @@ export default {
       return this.primaryDimension;
     },
     shownSecondaryDimension() {
-      // if (this.regroupByYear) return "year";
       return this.secondaryDimension;
     },
     showYearToYear() {
       return this.allowYearAsSeries && this.primaryDimension === "date";
+    },
+    // new stuff for vue-echarts starts here
+    option() {
+      // the returned object itself
+      // type "bar" means horizontal bars - taken from the v-charts library
+      return {
+        // more space for names when bars are horizontal
+        grid: this.type === "bar" ? { left: "25%" } : {},
+        xAxis: this.xAxis,
+        yAxis: this.yAxis,
+        dataset: {
+          source: this.displayData,
+          dimensions: [this.shownPrimaryDimension, ...this.seriesNames],
+        },
+        series: this.seriesNames.map((series, index) => ({
+          id: series,
+          name: this.shownSecondaryDimension ? series : this.$t("chart.count"),
+          type: "bar",
+          stack: this.doStack ? "all" : series,
+          // only add markline to the first series
+          markLine: index === 0 ? this.markLine : {},
+        })),
+        tooltip: {
+          trigger: "axis",
+          axisPointer: {
+            type: "shadow",
+          },
+        },
+        toolbox: this.toolbox,
+        dataZoom: this.dataZoom,
+        legend: {
+          // checkmarks as icons for the series
+          icon: "path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z",
+          itemWidth: 16,
+          itemGap: 16,
+          itemHeight: 16,
+        },
+        color: DEFAULT_VCHARTS_COLORS,
+      };
+    },
+    xValues() {
+      return this.displayData.map((item) => item[this.primaryDimension]);
+    },
+    seriesNames() {
+      if (this.loading) return [];
+      if (this.dataRaw.length === 0) return [];
+      if (this.shownSecondaryDimension) {
+        let rows = this.displayData;
+        return [
+          ...Object.keys(rows[0]).filter(
+            (item) => item !== this.shownPrimaryDimension
+          ),
+        ];
+      } else {
+        return ["count"];
+      }
+    },
+    isStackable() {
+      return (
+        (this.type === "bar" || this.type === "histogram") &&
+        this.shownSecondaryDimension
+      );
     },
   },
 
@@ -647,9 +639,6 @@ export default {
       if (this.regroupByYear) {
         this.dataRaw.forEach((dict) => {
           dict["year"] = dict["date"].substring(0, 4);
-          // if (this.secondaryDimension) {
-          //   dict.year = dict[this.secondaryDimension];
-          // }
           dict["month"] = dict["date"].substring(5, 7) + "-" + dict.year;
         });
       }
@@ -744,12 +733,6 @@ export default {
         "count"
       );
     },
-    dimensionToName(dim) {
-      if (typeof dim === "number") {
-        return "dim" + dim;
-      }
-      return dim;
-    },
   },
   mounted() {
     this.loadData();
@@ -760,6 +743,9 @@ export default {
     },
     yearAsSeries() {
       this.ingestData(this.rawData);
+    },
+    stack() {
+      this.doStack = this.stack;
     },
   },
 };

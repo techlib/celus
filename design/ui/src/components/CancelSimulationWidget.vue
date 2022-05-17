@@ -40,19 +40,17 @@ cs:
       </div>
       <v-container fluid v-else>
         <v-row no-gutters>
-          <v-col cols="12" md="6" lg="4" offset-lg="2">
-            <VeGauge
-              :data="titleCountChartData"
-              :settings="titleCountChartSettings"
-              height="200px"
-            ></VeGauge>
+          <v-col
+            cols="12"
+            md="6"
+            lg="4"
+            offset-lg="2"
+            :style="{ height: '200px' }"
+          >
+            <v-chart :option="titleCountOption"></v-chart>
           </v-col>
-          <v-col cols="12" md="6" lg="4">
-            <VeGauge
-              :data="interestChartData"
-              :settings="interestChartSettings"
-              height="200px"
-            ></VeGauge>
+          <v-col cols="12" md="6" lg="4" :style="{ height: '200px' }">
+            <v-chart :option="interestOption"></v-chart>
           </v-col>
         </v-row>
         <v-row no-gutters>
@@ -131,10 +129,18 @@ cs:
 import { mapActions, mapGetters, mapState } from "vuex";
 import axios from "axios";
 import { formatInteger } from "@/libs/numbers";
-import VeGauge from "v-charts/lib/gauge.common";
 import { pubTypes } from "@/libs/pub-types";
 import TitleTypeFilterWidget from "@/components/TitleTypeFilterWidget";
 import LoaderWidget from "@/components/util/LoaderWidget";
+
+/* vue-echarts */
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { GaugeChart } from "echarts/charts";
+import VChart from "vue-echarts";
+
+use([CanvasRenderer, GaugeChart]);
+/* ~vue-echarts */
 
 export default {
   name: "CancelSimulationWidget",
@@ -142,7 +148,7 @@ export default {
   components: {
     LoaderWidget,
     TitleTypeFilterWidget,
-    VeGauge,
+    VChart,
   },
 
   data() {
@@ -157,35 +163,6 @@ export default {
       loadingPlatformTitles: null,
       preparingData: null,
       selectedPubTypes: [...pubTypes.map((item) => item.code)],
-      chartSettingsCommon: {
-        dataType: {
-          rate: "percent",
-        },
-        seriesMap: {
-          rate: {
-            radius: "98%",
-            min: 0,
-            max: 1,
-            axisLine: {
-              lineStyle: {
-                color: [
-                  [0.5, "#af5454"],
-                  [0.8, "#4f7fad"],
-                  [1, "#529e6d"],
-                ],
-              },
-            },
-            axisLabel: { show: false },
-            title: {
-              fontSize: 12,
-              fontWeight: "bold",
-            },
-            detail: {
-              fontSize: 20,
-            },
-          },
-        },
-      },
     };
   },
 
@@ -319,41 +296,88 @@ export default {
         .reduce((a, b) => a + b, 0);
       return count;
     },
-    interestChartData() {
+    titleCountOption() {
       return {
-        columns: ["type", "value"],
-        rows: [
+        series: [
           {
-            type: "rate",
-            value: this.selectedInterest / this.totalInterest,
+            ...this.seriesCommon,
+            data: [
+              {
+                type: "rate",
+                value: this.selectedTitleCount / this.totalTitleCount,
+                name: this.$t("labels.title_count_short"),
+              },
+            ],
           },
         ],
       };
     },
-    titleCountChartData() {
+    interestOption() {
       return {
-        columns: ["type", "value"],
-        rows: [
+        series: [
           {
-            type: "rate",
-            value: this.selectedTitleCount / this.totalTitleCount,
+            ...this.seriesCommon,
+            data: [
+              {
+                type: "rate",
+                value: this.selectedInterest / this.totalInterest,
+                name: this.$t("interest"),
+              },
+            ],
           },
         ],
       };
     },
-    interestChartSettings() {
+    seriesCommon() {
       return {
-        ...this.chartSettingsCommon,
-        dataName: {
-          rate: this.$t("interest"),
+        type: "gauge",
+        radius: "98%",
+        min: 0,
+        max: 1,
+        axisLine: {
+          lineStyle: {
+            width: 20,
+            color: [
+              [0.5, "#af5454"],
+              [0.8, "#4f7fad"],
+              [1, "#529e6d"],
+            ],
+          },
         },
-      };
-    },
-    titleCountChartSettings() {
-      return {
-        ...this.chartSettingsCommon,
-        dataName: {
-          rate: this.$t("labels.title_count_short"),
+        pointer: {
+          itemStyle: {
+            color: "auto",
+          },
+        },
+        axisLabel: { show: false },
+        title: {
+          fontSize: 12,
+          fontWeight: "bold",
+          offsetCenter: [0, "-25%"],
+        },
+        detail: {
+          fontSize: 20,
+          valueAnimation: true,
+          formatter: function (value) {
+            return Math.round(value * 1000) / 10 + " %";
+          },
+          color: "auto",
+        },
+        axisTick: {
+          distance: -20,
+          length: 4,
+          lineStyle: {
+            color: "#fff",
+            width: 1,
+          },
+        },
+        splitLine: {
+          distance: -20,
+          length: 20,
+          lineStyle: {
+            color: "#fff",
+            width: 2,
+          },
         },
       };
     },

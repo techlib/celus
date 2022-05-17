@@ -1,5 +1,6 @@
 from time import monotonic
 
+from django.utils.translation import activate
 from pandas import DataFrame
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
@@ -50,6 +51,7 @@ class ReportDataViewChartDefinitions(APIView):
 
 class ChartDataView(APIView):
     def get(self, request, report_view_id):
+        activate(request.user.language)
         report_view = get_object_or_404(ReportDataView, pk=report_view_id)
         computer = StatsComputer()
         start = monotonic()

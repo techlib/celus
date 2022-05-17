@@ -2,17 +2,12 @@
 
 <template>
   <LoaderWidget v-if="loading" icon-name="fa-cog" height="370px" />
-  <ve-pie
-    v-else
-    :data="chartData"
-    :extend="chartExtend"
-    :settings="chartSettings"
-    :height="height"
-  />
+  <div v-else :style="{ height: height }">
+    <v-chart :option="option" />
+  </div>
 </template>
 
 <script>
-import VePie from "v-charts/lib/pie";
 import {
   ATTEMPT_SUCCESS,
   ATTEMPT_ERROR,
@@ -32,12 +27,21 @@ import cancellation from "@/mixins/cancellation";
 
 import LoaderWidget from "@/components/util/LoaderWidget";
 
+/* vue-echarts */
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { PieChart } from "echarts/charts";
+import { TooltipComponent, LegendComponent } from "echarts/components";
+import VChart from "vue-echarts";
+use([CanvasRenderer, TooltipComponent, LegendComponent, PieChart]);
+/* ~vue-echarts */
+
 export default {
   name: "SushiStatusChart",
 
   mixins: [cancellation],
   components: {
-    VePie,
+    VChart,
     LoaderWidget,
   },
 
@@ -54,7 +58,7 @@ export default {
   },
 
   data() {
-    let data = {
+    return {
       showInactive: false,
       rawData: null,
       statusCounter: new Map(),
@@ -73,20 +77,18 @@ export default {
         BROKEN_REPORT,
         BROKEN_CREDENTIALS,
       ],
-      statusToColor: {},
+      statusToColor: {
+        [INTENTION_QUEUED]: "#9e9e9e",
+        [INTENTION_WAITING]: "#cacaca",
+        [ATTEMPT_SUCCESS]: "#7dc17f",
+        [ATTEMPT_ERROR]: "#e58383",
+        [ATTEMPT_NOT_MADE]: "#e8e8e8",
+        [ATTEMPT_EMPTY_DATA]: "#a6cea7",
+        [ATTEMPT_UNKNOWN]: "#f8b765",
+        [BROKEN_CREDENTIALS]: "#bb4652",
+        [BROKEN_REPORT]: "#c2545f",
+      },
     };
-    data.statusToColor[this.$t(`sushi.state.${INTENTION_QUEUED}`)] = "#9e9e9e";
-    data.statusToColor[this.$t(`sushi.state.${INTENTION_WAITING}`)] = "#cacaca";
-    data.statusToColor[this.$t(`sushi.state.${ATTEMPT_SUCCESS}`)] = "#7dc17f";
-    data.statusToColor[this.$t(`sushi.state.${ATTEMPT_ERROR}`)] = "#e58383";
-    data.statusToColor[this.$t(`sushi.state.${ATTEMPT_NOT_MADE}`)] = "#e8e8e8";
-    data.statusToColor[this.$t(`sushi.state.${ATTEMPT_EMPTY_DATA}`)] =
-      "#a6cea7";
-    data.statusToColor[this.$t(`sushi.state.${ATTEMPT_UNKNOWN}`)] = "#f8b765";
-    data.statusToColor[this.$t(`sushi.state.${BROKEN_CREDENTIALS}`)] =
-      "#bb4652";
-    data.statusToColor[this.$t(`sushi.state.${BROKEN_REPORT}`)] = "#c2545f";
-    return data;
   },
 
   computed: {
@@ -102,45 +104,28 @@ export default {
         ...(this.showInactive && { disabled: true }),
       };
     },
-    rows() {
-      return this.states.map((state) => {
-        return {
-          status: this.$t(`sushi.state.${state}`),
-          count: this.statusCounter.get(state),
-        };
-      });
-    },
-    chartData() {
+    option() {
       return {
-        columns: ["status", "count"],
-        rows: this.rows,
-      };
-    },
-    chartSettings() {
-      const legendName = {};
-      for (let state of this.states) {
-        legendName[state] = this.$t(`sushi.state.${state}`);
-      }
-      return {
-        legendName: legendName,
-      };
-    },
-    chartExtend() {
-      const that = this;
-      return {
-        series(item) {
-          for (let ser of item) {
-            ser.data = ser.data.map((v) => ({
-              ...v,
-              // name: that.$t(`sushi.state.${v.name}`),
-              // value: v.value,
-              itemStyle: {
-                color: that.statusToColor[v.name],
-              },
-            }));
-          }
-          return item;
-        },
+        series: [
+          {
+            type: "pie",
+            radius: "55%",
+            center: ["50%", "60%"],
+            data: this.states.map((state) => {
+              return {
+                name: this.$t(`sushi.state.${state}`),
+                value: this.statusCounter.get(state),
+                itemStyle: { color: this.statusToColor[state] },
+                id: state,
+              };
+            }),
+            emphasis: {
+              scaleSize: 10,
+            },
+          },
+        ],
+        legend: {},
+        tooltip: {},
       };
     },
   },

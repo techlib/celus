@@ -35,24 +35,39 @@ cs:
     <v-row no-gutters>
       <v-col :cols="12">
         <LoaderWidget v-if="loading" />
-        <ve-heatmap
-          v-else
-          :data="chartData"
-          :settings="chartSettings"
-          :height="`${height}px`"
-          :xAxis="xAxis"
-        >
-        </ve-heatmap>
+        <div v-else :style="{ height: height + 'px' }">
+          <v-chart :option="option" autoresize />
+        </div>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script>
-import VeHeatmap from "v-charts/lib/heatmap.common";
 import { mapActions, mapGetters, mapState } from "vuex";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import cancellation from "@/mixins/cancellation";
+import percentile from "percentile";
+
+/* vue-echarts */
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { HeatmapChart } from "echarts/charts";
+import {
+  TooltipComponent,
+  GridComponent,
+  VisualMapComponent,
+} from "echarts/components";
+import VChart from "vue-echarts";
+import { formatInteger } from "@/libs/numbers";
+use([
+  CanvasRenderer,
+  TooltipComponent,
+  HeatmapChart,
+  GridComponent,
+  VisualMapComponent,
+]);
+/* ~vue-echarts */
 
 export default {
   name: "OrganizationPlatformInterestHeatmap",
@@ -61,7 +76,7 @@ export default {
 
   components: {
     LoaderWidget,
-    VeHeatmap,
+    VChart,
   },
   data() {
     return {
@@ -94,28 +109,6 @@ export default {
     reportTypeId() {
       return this.interestReportType ? this.interestReportType.pk : null;
     },
-    columns() {
-      return this.loading ? [] : [this.primaryDim, this.secondaryDim, "count"];
-    },
-    chartData() {
-      return {
-        columns: this.columns,
-        rows: this.rows,
-      };
-    },
-    rows() {
-      return this.dataRaw;
-    },
-    chartSettings() {
-      return {
-        yAxisList: [
-          ...new Set(this.dataRaw.map((item) => item[this.secondaryDim])),
-        ].sort((a, b) => -a.localeCompare(b)),
-        xAxisList: [
-          ...new Set(this.dataRaw.map((item) => item[this.primaryDim])),
-        ].sort(),
-      };
-    },
     xAxis() {
       return {
         type: "category",
@@ -130,12 +123,59 @@ export default {
         ].sort(),
       };
     },
+    yAxis() {
+      return {
+        type: "category",
+        splitArea: {
+          show: true,
+        },
+        data: [
+          ...new Set(this.dataRaw.map((item) => item[this.secondaryDim])),
+        ].sort((a, b) => -a.localeCompare(b)),
+      };
+    },
+    option() {
+      return {
+        xAxis: [{ ...this.xAxis }, { ...this.xAxis, position: "top" }],
+        yAxis: this.yAxis,
+        grid: {
+          top: "10%",
+          bottom: "15%",
+          left: "30%",
+        },
+        series: [
+          {
+            type: "heatmap",
+            data: this.dataRaw.map((item) => [
+              item[this.primaryDim],
+              item[this.secondaryDim],
+              item.count,
+            ]),
+          },
+        ],
+        visualMap: {
+          min: 0,
+          max: this.maxRangeValue,
+          calculable: true,
+          orient: "horizontal",
+          left: "center",
+          bottom: "5%",
+          formatter: (value) => formatInteger(value),
+        },
+        tooltip: {
+          formatter: (item) =>
+            `${item.value[0]} ~ ${item.value[1]}<br><strong>${formatInteger(
+              item.value[2]
+            )}</strong>`,
+        },
+      };
+    },
     autoHeight() {
       const primDimUniqueValues = new Set(
         this.dataRaw.map((item) => item[this.secondaryDim])
       );
       return this.dataRaw.length > 0
-        ? primDimUniqueValues.size * 18 + 250
+        ? primDimUniqueValues.size * 20 + 350
         : 600;
     },
     minHeight() {
@@ -143,6 +183,15 @@ export default {
     },
     maxHeight() {
       return this.autoHeight * 1.25;
+    },
+    maxRangeValue() {
+      // don't use max, as there are typically outliers which make the rest
+      // of the values too small. Rather use a high percentile which gives better
+      // visual output
+      return percentile(
+        97,
+        this.dataRaw.map((item) => item.count)
+      );
     },
   },
   methods: {

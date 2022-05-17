@@ -22,7 +22,7 @@ Sentry.init({
 });
 
 // This should be the same as server_name from python part of sentry
-Sentry.setTag("server_name", location.hostname.replace(/\./g, "-"))
+Sentry.setTag("server_name", location.hostname.replace(/\./g, "-"));
 
 require("vue-tour/dist/vue-tour.css");
 

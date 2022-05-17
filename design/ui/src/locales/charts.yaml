@@ -40,6 +40,9 @@ en:
      This avoids summing up incompatible metrics.
   reported_metrics_empty_data_info: "The following metrics were tried, but no data were found:"
   available_charts: Choose a chart
+  stack:
+    yes: Stack series
+    no: Series as individual bars
 cs:
   chart:
     date_metric: Metrika v čase
@@ -81,3 +84,6 @@ cs:
      metriky, které definují zájem. To zabraňuje sčítání nekompatibilních hodnot.
   reported_metrics_empty_data_info: "Následující metriky byly brány v potaz, ale nebyla nalezena žádná data:"
   available_charts: Vyberte graf
+  stack:
+    yes: Skládaný graf
+    no: Série jako nezávislé sloupce

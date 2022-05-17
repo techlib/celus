@@ -18,7 +18,14 @@ cs:
   </div>
   <v-container fluid v-else class="pb-0 px-0 px-sm-2">
     <v-row v-if="!(fixedChart && fixedReportView)">
-      <v-col cols="12" md="6" lg="5" xl="4" v-if="!fixedReportView">
+      <v-col
+        cols="12"
+        md="6"
+        lg="4"
+        xl="4"
+        class="pb-0"
+        v-if="!fixedReportView"
+      >
         <v-select
           :items="reportViewsForSelect"
           item-text="name"
@@ -39,7 +46,7 @@ cs:
           </template>
         </v-select>
       </v-col>
-      <v-col cols="12" md="6" lg="5" xl="4" v-if="!fixedChart">
+      <v-col cols="12" md="6" lg="4" xl="4" class="pb-0" v-if="!fixedChart">
         <ChartTypeSelector
           :report-type="selectedReportView"
           :scope="scope"
@@ -49,9 +56,16 @@ cs:
       </v-col>
       <v-col
         cols="auto"
+        class="pb-0"
         v-if="primaryDimension === 'organization' && this.organizationSelected"
       >
-        <v-switch v-model="showMarkLine" :label="$t('mark_my_org')"></v-switch>
+        <v-switch
+          v-model="showMarkLine"
+          :label="$t('mark_my_org')"
+          dense
+          hide-details
+          class="mt-2"
+        ></v-switch>
       </v-col>
     </v-row>
     <v-row>

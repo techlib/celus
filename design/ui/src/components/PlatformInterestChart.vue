@@ -16,15 +16,8 @@
       </v-col>
     </v-row>
     <v-row no-gutters>
-      <v-col>
-        <VeBar
-          :data="chartData"
-          :settings="chartSettings"
-          :height="height"
-          :toolbox="chartToolbox"
-          :xAxis="{ type: this.logScale ? 'log' : 'value' }"
-          :data-zoom="dataZoom"
-        />
+      <v-col :style="{ height: height }">
+        <v-chart :option="option" autoresize />
       </v-col>
     </v-row>
   </v-container>
@@ -32,14 +25,37 @@
 
 <script>
 import { mapState } from "vuex";
-import VeBar from "v-charts/lib/bar.common";
-// the following import is here to ensure the component at hand will be bundled
-import _toolBox from "echarts/lib/component/toolbox";
-import _dataZoom from "echarts/lib/component/dataZoom";
+import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
+
+/* vue-echarts */
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { BarChart } from "echarts/charts";
+import {
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  DatasetComponent,
+} from "echarts/components";
+import VChart from "vue-echarts";
+
+use([
+  CanvasRenderer,
+  BarChart,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  DatasetComponent,
+]);
+/* ~vue-echarts */
 
 export default {
   name: "PlatformInterestChart",
-  components: { VeBar },
+  components: { VChart },
   props: {
     platforms: { type: Array, required: true },
   },
@@ -52,10 +68,44 @@ export default {
     ...mapState({
       interestGroups: (state) => state.interest.interestGroups,
     }),
-    chartData() {
+    option() {
       return {
-        columns: this.columns,
-        rows: this.rows,
+        grid: { left: "25%" },
+        xAxis: { type: this.logScale ? "log" : "value" },
+        yAxis: {
+          type: "category",
+          axisLabel: {
+            width: 250,
+            fontSize: 10,
+            overflow: "truncate",
+          },
+        },
+        dataset: {
+          source: this.rows,
+          dimensions: this.columns,
+        },
+        series: this.interestGroups.map((series, index) => ({
+          id: series.pk,
+          name: series.name,
+          type: "bar",
+          stack: !this.logScale,
+        })),
+        tooltip: {
+          trigger: "axis",
+          axisPointer: {
+            type: "shadow",
+          },
+        },
+        toolbox: this.toolbox,
+        dataZoom: {},
+        legend: {
+          // checkmarks as icons for the series
+          icon: "path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z",
+          itemWidth: 16,
+          itemGap: 16,
+          itemHeight: 16,
+        },
+        color: DEFAULT_VCHARTS_COLORS,
       };
     },
     columns() {
@@ -77,45 +127,19 @@ export default {
       rows.reverse();
       return rows;
     },
-    chartSettings() {
-      let labelMap = {};
-      this.interestGroups.map((ig) => (labelMap[ig.short_name] = ig.name));
-      if (this.logScale) {
-        return {
-          labelMap: labelMap,
-        };
-      }
-      return {
-        stack: { all: this.interestGroups.map((ig) => ig.short_name) },
-        labelMap: labelMap,
-      };
-    },
     height() {
       return 160 + this.platforms.length * 18 + "px";
     },
-    chartToolbox() {
+    toolbox() {
       return {
         feature: {
           saveAsImage: {
             show: true,
             title: this.$t("chart.toolbox.save_as_image"),
-            excludeComponents: ["toolbox"],
+            excludeComponents: ["toolbox", "dataZoom"],
           },
         },
       };
-    },
-    dataZoom() {
-      if (this.logScale) {
-        return [];
-      }
-      return [
-        {
-          type: "slider",
-          start: 0,
-          end: 100,
-          xAxisIndex: 0,
-        },
-      ];
     },
   },
 };

@@ -60,7 +60,7 @@
               >
             </v-btn-toggle>
 
-            <div v-if="viewType === 'chart'" class="pt-10">
+            <div v-if="viewType === 'chart'" class="pt-10" style="min-height: 70vh">
               <PlatformInterestChart :platforms="platforms">
                 <v-btn
                   :href="platformInterestURL + '&format=csv'"
