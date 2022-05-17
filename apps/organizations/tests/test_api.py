@@ -136,7 +136,7 @@ class TestOrganizationAPI:
         """
         resp = master_client.get(reverse('organization-interest', args=('-1',)))
         assert resp.status_code == 200
-        assert resp.json() == {'days': 0}
+        assert resp.json() == {'days': 0, 'interest_sum': None, 'max_date': None, 'min_date': None}
 
     def test_organization_interest_data(self, master_client, interest_rt):
         """

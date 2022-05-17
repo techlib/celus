@@ -3,7 +3,7 @@ from collections import Counter
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count, Q, Sum, Max, Min, F, Exists, OuterRef
+from django.db.models import Count, Q, Sum, Max, Min, F, Exists, OuterRef, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
 from rest_framework import status
@@ -113,20 +113,17 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         #     interest_sum=Sum('value'), min_date=Min('date'), max_date=Max('date')
         # )
         #
-        # This is why we use the following hack where the .values call does group by
-        # a column that has a NULL value for all records and thus returns the same data
-        # as the previous aggregate but in the form of a queryset
+        # This is why we use the following hack where we annotate a static value
+        # which leads to the same SQL query, but creates a queryset which can be recached.
         data = recache_queryset(
             AccessLog.objects.filter(**accesslog_filter_params)
-            .values('dim7')
+            .annotate(foo=Value(42))
+            .values('foo')
             .annotate(interest_sum=Sum('value'), min_date=Min('date'), max_date=Max('date')),
             origin='organization-interest',
         )
-        if data:
-            data = data[0]
-            del data['dim7']  # residue after grouping, not needed
-        else:
-            data = {}
+        data = data[0]
+        del data['foo']  # residual static value
         if data.get('max_date'):
             # the date might be None and then we do not want to do the math ;)
             data['max_date'] = month_end(data['max_date'])
