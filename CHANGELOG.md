@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [4.4.2]
+
+### Added
+
+#### Frontend
+
+* the SUSHI credentials edit dialog autofills the URL based on existing credentials for other organizations
+
+#### Backend
+
+* cli command for assigning reports to platforms was added
+* cli command for comparison of the current database with an older version was added to help in finding differences after data reimport
+
+
+### Changes
+
+#### Frontend
+
+* more detailed fields in SUSHI credentials edit dialog are disabled until the platform is selected
+
+#### Backend
+
+* cleaner method for recaching aggregate queries in AccessLog table was implemented
+* detection of last interest change was optimized by remembering the last change time
+* django admin was extended to support reimport of manual data uploads
+* email about preflight errors is sent to admins asynchronously
+* the `reimport_data` cli command was improved
+
+
+### Fixed
+
+#### Frontend
+
+* placeholder text for data upload was made more generic to reflect really supported formats
+* when showing status of harvest, full data are preferred over partial data
+* all fetch intentions are now shown when the mode is set to 'All', not just latest ones
+* when validating the SUSHI URL, check `/reports/` not `/report/`
+
+#### Backend
+
+* Gitlab CI config for coverage was fixed
+
+
+
 ## [4.4.1]
 
 ### Added
