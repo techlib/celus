@@ -3,9 +3,11 @@
 <i18n>
 en:
     email_not_verified: Your email is not verified
+    impersonated: You are currently impersonating another user.
 
 cs:
     email_not_verified: Vaše emailová adresa není ověřená
+    impersonated: Právě se zosobňujete jiného uživatele.
 </i18n>
 
 <template>
@@ -59,6 +61,12 @@ cs:
       <v-toolbar-items>
         <v-divider class="mx-3" inset vertical></v-divider>
 
+        <v-tooltip bottom v-if="impersonator">
+          <template v-slot:activator="{ on }">
+            <v-icon v-on="on" class="mr-2" color="purple">fa-mask</v-icon>
+          </template>
+          {{ $t("impersonated") }}
+        </v-tooltip>
         <v-tooltip bottom v-if="!emailVerified">
           <template v-slot:activator="{ on }">
             <span v-on="on">
@@ -181,6 +189,7 @@ export default {
       usernameText: "usernameText",
       bootUpFinished: "bootUpFinished",
       emailVerified: "emailVerified",
+      impersonator: "impersonator",
       tourFinished: "tourFinished",
       tourNeverSeen: "tourNeverSeen",
       showCreateOrganizationDialog: "showCreateOrganizationDialog",

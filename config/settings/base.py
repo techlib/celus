@@ -11,14 +11,13 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 import sys
 import warnings
-
 from datetime import timedelta
-from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
 
-from celery.schedules import schedule, crontab
-from decouple import config, Csv
 import sentry_sdk
+from celery.schedules import crontab, schedule
+from decouple import Csv, config
+from django.core.exceptions import ImproperlyConfigured
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
@@ -71,6 +70,7 @@ INSTALLED_APPS = [
     'django_prometheus',
     'import_export',
     'rest_framework_api_key',
+    'impersonate',
     # allauth is at the end so that we can easily override its templates
     'allauth',
     'allauth.socialaccount',
@@ -91,6 +91,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'core.middleware.EDUIdHeaderMiddleware',
+    'impersonate.middleware.ImpersonateMiddleware',  # should be place after auth middlewares
     'core.middleware.CelusVersionHeaderMiddleware',
     'core.middleware.ClickhouseIntegrationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -399,6 +400,14 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = "optional"  # send verification email, but not required for login
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = False  # Confirmation will be stored in db
 ACCOUNT_ADAPTER = 'core.account.CelusAccountAdapter'
+
+
+# impersonate
+IMPERSONATE = {
+    "CUSTOM_USER_QUERYSET": 'impersonate_api.permissions.users_impersonable',
+    "CUSTOM_ALLOW": 'impersonate_api.permissions.check_allow_impersonate',
+    # ALLOW_SUPERUSER = True
+}
 
 LOGGING = {
     'version': 1,

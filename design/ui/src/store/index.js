@@ -240,6 +240,9 @@ export default new Vuex.Store({
     emailVerified(state) {
       return state.user && state.user.email_verification_status === "verified";
     },
+    impersonator(state) {
+      return state.user && state.user.impersonator;
+    },
     activeLanguageCodes(state) {
       if ("LANGUAGES" in state.basicInfo) {
         return state.basicInfo["LANGUAGES"].map((item) => item[0]);

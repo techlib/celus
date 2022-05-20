@@ -1,8 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.urls import path, include
-
+from django.urls import include, path
 from rest_framework.renderers import JSONOpenAPIRenderer
 from rest_framework.schemas import get_schema_view
 from rest_framework.schemas.openapi import SchemaGenerator
@@ -30,6 +29,7 @@ urlpatterns = [
     path('', include('charts.urls')),
     path('', include('annotations.urls')),
     path('', include('cost.urls')),
+    path('', include('impersonate_api.urls')),
     *local_urls,
     path('export/', include('export.urls')),
     path('scheduler/', include('scheduler.urls')),

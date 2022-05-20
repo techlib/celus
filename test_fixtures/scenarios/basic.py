@@ -10,30 +10,30 @@ Platforms:
 
 """
 from datetime import timedelta
-import pytest
 
-from rest_framework.test import APIClient
+import pytest
 from django.conf import settings
 from django.utils import timezone
-
-from logs.models import ReportInterestMetric, InterestGroup
+from logs.models import InterestGroup, ReportInterestMetric
 from organizations.models import Organization
+from rest_framework.test import APIClient
 from sushi.models import AttemptStatus
+
 from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
-from ..entities.data_souces import DataSourceFactory, DataSource
-from ..entities.identities import IdentityFactory, Identity
+from ..entities.data_souces import DataSource, DataSourceFactory
+from ..entities.identities import Identity, IdentityFactory
 from ..entities.logs import ImportBatchFactory, MetricFactory
 from ..entities.organizations import OrganizationFactory
 from ..entities.platforms import PlatformFactory
 from ..entities.report_types import ReportTypeFactory
-from ..entities.users import UserFactory
 from ..entities.scheduler import (
     AutomaticFactory,
-    HarvestFactory,
     FetchIntentionFactory,
+    HarvestFactory,
     SchedulerFactory,
 )
+from ..entities.users import UserFactory
 
 
 @pytest.fixture
@@ -148,7 +148,7 @@ def platforms(data_sources):
     return locals()
 
 
-def make_client(identity: Identity, login: bool = False) -> APIClient:
+def make_client(identity: Identity, login: bool = True) -> APIClient:
     client = APIClient()
     client.defaults[settings.EDUID_IDENTITY_HEADER] = identity
     if login:

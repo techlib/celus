@@ -1,10 +1,10 @@
-from allauth.account.utils import sync_user_email_addresses, send_email_confirmation
+from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
+from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
-from django.http import HttpResponseForbidden, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils import translation
-from dj_rest_auth.views import PasswordResetConfirmView
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,7 +13,8 @@ from rest_framework.views import APIView
 
 from core.models import User
 from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
-from core.serializers import UserSerializer, EmailVerificationSerializer, UserExtraDataSerializer
+from core.serializers import EmailVerificationSerializer, UserExtraDataSerializer, UserSerializer
+
 from .signals import password_reset_signal
 from .tasks import erms_sync_users_and_identities_task
 
@@ -30,7 +31,7 @@ class UserView(GenericAPIView):
         if request.user:
             translation.activate(request.user.language)
             request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
-            return Response(UserSerializer(request.user).data)
+            return Response(UserSerializer(request.user, context={"request": request}).data)
         return HttpResponseForbidden('user is not logged in')
 
 

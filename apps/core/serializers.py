@@ -1,16 +1,16 @@
 import typing
-
 from datetime import datetime
 
 from rest_framework.fields import BooleanField
 from rest_framework.serializers import (
-    ModelSerializer,
-    Serializer,
-    SerializerMethodField,
+    BooleanField,
     ChoiceField,
     DateTimeField,
+    ModelSerializer,
+    PrimaryKeyRelatedField,
+    Serializer,
+    SerializerMethodField,
 )
-
 
 from core.models import User
 
@@ -23,6 +23,7 @@ class EmailVerificationSerializer(Serializer):
 class UserSerializer(ModelSerializer):
     email_verification_status = SerializerMethodField()
     email_verification_sent = SerializerMethodField(required=False)
+    impersonator = PrimaryKeyRelatedField(read_only=True, required=False)
 
     class Meta:
         model = User
@@ -39,6 +40,7 @@ class UserSerializer(ModelSerializer):
             'email_verification_status',
             'email_verification_sent',
             'extra_data',
+            'impersonator',
         )
 
     def get_email_verification_status(self, obj) -> str:
@@ -46,6 +48,13 @@ class UserSerializer(ModelSerializer):
 
     def get_email_verification_sent(self, obj) -> typing.Optional[datetime]:
         return obj.email_verification["email_sent"]
+
+    def to_representation(self, instance):
+        if impersonator_user := self.context["request"].impersonator:
+            instance.impersonator = impersonator_user.pk
+        else:
+            instance.impersonator = None
+        return super().to_representation(instance)
 
 
 class UserSimpleSerializer(ModelSerializer):
