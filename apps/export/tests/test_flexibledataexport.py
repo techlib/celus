@@ -72,6 +72,7 @@ class TestFlexibleDataExport:
         data = export_output(export)
         assert data.splitlines()[0].startswith('Title/Database,ISSN,EISSN,ISBN,')
 
+    @pytest.mark.parametrize(['split_by'], [('platform',), ('date__year',), ('date',)])
     @pytest.mark.parametrize(
         ['fmt', 'split'],
         [
@@ -82,7 +83,7 @@ class TestFlexibleDataExport:
         ],
     )
     def test_create_output_file_format(
-        self, flexible_slicer_test_data, admin_user, settings, fmt, split
+        self, flexible_slicer_test_data, admin_user, settings, fmt, split, split_by
     ):
         """
         Tests that using title as primary dimension also adds ISBN and other extra columns
@@ -90,7 +91,7 @@ class TestFlexibleDataExport:
         settings.DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
         slicer = FlexibleDataSlicer(primary_dimension='target')
         if split:
-            slicer.add_split_by('platform')
+            slicer.add_split_by(split_by)
         slicer.add_group_by('metric')
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user, fmt=fmt)
         export.create_output_file(raise_exception=True)
