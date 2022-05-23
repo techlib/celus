@@ -32,10 +32,11 @@ class TestUserAPI:
         assert resp_data['username'] == identity.user.username
         assert 'extra_data' in resp_data
 
-    def test_verified_email(self, authenticated_client, valid_identity):
+    def test_verified_email(self, authenticated_client, valid_identity, settings):
         """
         Test which checks email validity status
         """
+        settings.ALLOW_EDUID_LOGIN = False
         user = authenticated_client.user
         sent_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
 
@@ -81,7 +82,10 @@ class TestUserAPI:
         assert resp_data["email_verification_sent"] == sent_time.strftime('%Y-%m-%dT%H:%M:%SZ')
         assert User.objects.get(pk=user.pk).email_verified is True
 
-    def test_send_email_verification(self, authenticated_client, valid_identity, mailoutbox, site):
+    def test_send_email_verification(
+        self, authenticated_client, valid_identity, mailoutbox, site, settings
+    ):
+        settings.ALLOW_EDUID_LOGIN = False
         user = authenticated_client.user
         user.email = valid_identity
         user.save()
@@ -183,10 +187,11 @@ class TestAccountCreationAPI:
         'password2': 'verysecret666',
     }
 
-    def test_create_account(self, mailoutbox, client, site):
+    def test_create_account(self, mailoutbox, client, site, settings):
         """
         Tests that the API endpoint for account creation works as expected by the frontend code
         """
+        settings.ALLOW_EDUID_LOGIN = False
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
         with patch('core.signals.async_mail_admins'):  # fake celery task
@@ -261,12 +266,13 @@ class TestAccountCreationAPI:
         assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
 
     def test_create_account_email_customization_resend(
-        self, mailoutbox, authenticated_client, site
+        self, mailoutbox, authenticated_client, site, settings
     ):
         """
         Tests that the email verification email sent when re-sending verification email has custom
         text and not the one provided with allauth.
         """
+        settings.ALLOW_EDUID_LOGIN = False
         user = authenticated_client.user
         user.email = 'foo@bar.baz'
         user.save()

@@ -240,20 +240,25 @@ class User(AbstractUser):
             "status": self.EMAIL_VERIFICATION_STATUS_UNKNOWN,
             "email_sent": None,
         }
-        try:
-            # get current email address from allauth
-            email_address: EmailAddress = self.emailaddress_set.get(email__iexact=self.email)
-            res["status"] = (
-                self.EMAIL_VERIFICATION_STATUS_VERIFIED
-                if email_address.verified
-                else self.EMAIL_VERIFICATION_STATUS_PENDING
-            )
-            confirmation: EmailConfirmation = email_address.emailconfirmation_set.last()
-            if confirmation:
-                res["email_sent"] = confirmation.sent
+        if settings.ALLOW_EDUID_LOGIN:
+            # we consider EduID users as validated and if EduID login is turned on,
+            # we consider all users as using EduID.
+            res['status'] = self.EMAIL_VERIFICATION_STATUS_VERIFIED
+        else:
+            try:
+                # get current email address from allauth
+                email_address: EmailAddress = self.emailaddress_set.get(email__iexact=self.email)
+                res["status"] = (
+                    self.EMAIL_VERIFICATION_STATUS_VERIFIED
+                    if email_address.verified
+                    else self.EMAIL_VERIFICATION_STATUS_PENDING
+                )
+                confirmation: EmailConfirmation = email_address.emailconfirmation_set.last()
+                if confirmation:
+                    res["email_sent"] = confirmation.sent
 
-        except (EmailAddress.DoesNotExist, EmailConfirmation.DoesNotExist):
-            pass
+            except (EmailAddress.DoesNotExist, EmailConfirmation.DoesNotExist):
+                pass
         return res
 
     @cached_property
