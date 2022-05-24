@@ -8,8 +8,8 @@ from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import ch_backend, AccessLogCube
 from logs.logic.clickhouse import (
     sync_accesslogs_with_clickhouse_superfast,
-    process_one_import_batch_sync_log,
     sync_import_batch_with_clickhouse,
+    process_one_import_batch_sync_log,
 )
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_by_import_batches, smart_interest_sync

@@ -496,6 +496,16 @@ SITE_ID = config('SITE_ID', cast=int, default=1)
 HARVESTER_IPV4_ADDRESSES = config('HARVESTER_IPV4_ADDRESSES', cast=Csv(), default='')
 HARVESTER_IPV6_ADDRESSES = config('HARVESTER_IPV6_ADDRESSES', cast=Csv(), default='')
 
+# Some internal Celus config values
+# The number of records that should be processed at once in import_counter_records
+# it influences RAM consumption and speed.
+# A reasonable minimum is 10_000 which has almost no RAM impact, but the speed is not that great.
+# The default of 50_000 leads to about 2.5x speed up over 10k for a 500k file, but requires about
+# extra 150 MB of RAM (for a 400 MB total).
+# If there is enough memory available, it may help to increase the size to 100k or more
+# but as there are not so many so large files there anyway, it probably does not make much sense
+COUNTER_RECORD_BUFFER_SIZE = config('COUNTER_RECORD_BUFFER_SIZE', cast=int, default='50_000')
+
 # Email
 ADMINS = config('ADMINS', cast=Csv(cast=Csv(post_process=tuple), delimiter=';'), default='')
 EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[Stats] ')

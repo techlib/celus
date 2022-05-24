@@ -2,6 +2,7 @@ import logging
 import os
 import typing
 from datetime import date
+from time import time
 
 from django.conf import settings
 from django.db.transaction import atomic
@@ -57,11 +58,12 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
 
     check_importable_attempt(attempt)
 
-    logger.debug('Processing file: %s', attempt.data_file.name)
+    logger.debug('Processing file: %s; time: %.3f', attempt.data_file.name, time())
 
     reader = reader_cls()
     try:
         records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
+        logger.debug('Records parsed; time: %.3f', time())
     except FileNotFoundError as e:
         logger.error('Cannot find the referenced file - probably deleted?: %s', e)
         attempt.mark_crashed(e)

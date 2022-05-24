@@ -1,16 +1,21 @@
+import csv
 import gc
 import logging
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
+from io import StringIO
 from typing import Optional, Tuple, Set, Iterable, Dict, Generator, List, Union
 
 from django.conf import settings
 from django.db.models import F
 from django.db.models.functions import Lower
 from django.db.transaction import atomic, on_commit
+from django.utils.timezone import now
+from postgres_copy import CopyMapping
 
 from core.logic.debug import log_memory
+from core.models import UL_ROBOT
 from core.task_support import cache_based_lock
 from logs.logic.validation import normalize_issn, normalize_isbn, normalize_title
 from logs.models import ImportBatch
@@ -22,7 +27,7 @@ from ..models import ReportType, Metric, DimensionText, AccessLog
 
 logger = logging.getLogger(__name__)
 
-COUNTER_RECORD_BUFFER_SIZE = 10000
+COUNTER_RECORD_BUFFER_SIZE = settings.COUNTER_RECORD_BUFFER_SIZE
 
 
 def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=None) -> int:
@@ -439,6 +444,14 @@ def import_counter_records(
     # mapping of months to import batches - has to be shared between calls to
     # _import_counter_record so that the same import batches are used for all data
     month_to_ib = {}
+    # the following accumulates values to be inserted later on
+    # the data there are not subject to splitting to buffers because they are relatively
+    # small anyway
+    ib_id_to_key_to_value = {}
+    # the key in the above dict of dicts will be as follows:
+    ib_id_to_key_structure = ['metric_id', 'target_id'] + [
+        f'dim{i+1}' for i, dim in enumerate(report_type.dimensions_sorted)
+    ]
 
     def process_buffer(record_batch: Iterable[CounterRecord]):
         """
@@ -460,8 +473,17 @@ def import_counter_records(
                 month_to_ib[month] = create_import_batch_or_crash(
                     report_type, organization, platform, month, ib_kwargs=import_batch_kwargs
                 )
-        return _import_counter_records(
-            report_type, organization, platform, record_batch, stats, tm, month_to_ib
+        for ib in month_to_ib.values():
+            if ib.pk not in ib_id_to_key_to_value:
+                ib_id_to_key_to_value[ib.pk] = {}
+        return _preprocess_counter_records(
+            report_type,
+            record_batch,
+            stats,
+            tm,
+            month_to_ib,
+            ib_id_to_key_to_value,
+            ib_id_to_key_structure,
         )
 
     buff: List[CounterRecord] = []
@@ -483,7 +505,28 @@ def import_counter_records(
     # flush the rest of the buffer
     if buff:
         process_buffer(buff)
+
+    # after this, the ib_id_to_key_to_value is full and we can process it
     import_batches = list(month_to_ib.values())
+    for ib in import_batches:
+        csv_data = StringIO()
+        writer = csv.writer(csv_data)
+        target_ids = set()
+        for i, (key, value) in enumerate(ib_id_to_key_to_value[ib.pk].items()):
+            rec = dict(zip(ib_id_to_key_structure, key))
+            rec['value'] = value
+            if rec['target_id']:
+                target_ids.add(rec['target_id'])
+            if i == 0:
+                # write the CSV header
+                writer.writerow(list(sorted(rec.keys())))
+            writer.writerow([v for k, v in sorted(rec.items())])
+            stats['new logs'] += 1
+        ingest_import_batch_data(ib, csv_data)
+        # and insert the PlatformTitle links
+        stats += create_platformtitle_links_from_import_batch(ib, target_ids)
+
+    log_memory('XX3')
 
     if not skip_clickhouse_sync and settings.CLICKHOUSE_SYNC_ACTIVE:
         from .clickhouse import sync_import_batch_with_clickhouse
@@ -540,21 +583,21 @@ def create_import_batch_or_crash(
         )
 
 
-def _import_counter_records(
+def _preprocess_counter_records(
     report_type: ReportType,
-    organization: Organization,
-    platform: Platform,
     records: Iterable[CounterRecord],
     stats: Counter,
     tm: TitleManager,
     month_to_import_batch: Dict[str, ImportBatch],
+    ib_id_to_key_to_value: Dict[int, Dict],
+    ib_id_to_key_structure: list,
 ):
     # prepare controlled metrics filtering
     controlled_metrics = list(report_type.controlled_metrics.values_list('short_name', flat=True))
 
     # prepare all remaps
     metrics = {
-        metric["short_name"]: {"pk": metric["pk"], "short_name": metric["short_name"]}
+        metric["short_name"]: metric
         for metric in Metric.objects.values("pk", "short_name")
         if not controlled_metrics or metric["short_name"] in controlled_metrics
     }
@@ -570,8 +613,6 @@ def _import_counter_records(
     tm.prefetch_titles(title_recs)
     # prepare raw data to be inserted into the database
     dimensions = report_type.dimensions_sorted
-    to_insert = {}
-    seen_dates = set()
     log_memory('X-1')
     for title_rec, record in zip(title_recs, records):  # type: TitleRec, CounterRecord
         # attributes that define the identity of the log
@@ -585,13 +626,10 @@ def _import_counter_records(
         else:
             metric_id = get_or_create_metric(metrics, record.metric, controlled_metrics)
         start = record.start if not isinstance(record.start, date) else record.start.isoformat()
+        import_batch = month_to_import_batch[start]
         id_attrs = {
-            'report_type_id': report_type.pk,
             'metric_id': metric_id,
-            'organization_id': organization.pk,
-            'platform_id': platform.pk,
             'target_id': title_id,
-            'date': start,
         }
         for i, dim in enumerate(dimensions):
             dim_value = record.dimension_data.get(dim.short_name)
@@ -605,109 +643,41 @@ def _import_counter_records(
                 )
             id_attrs[f'dim{i+1}'] = dim_value
         # here we detect possible duplicated keys and merge matching records
-        key = tuple(sorted(id_attrs.items()))
+        key = tuple(id_attrs[k] for k in ib_id_to_key_structure)
+        # we prepare the data to insert already split by individual import batch
+        to_insert = ib_id_to_key_to_value[import_batch.pk]
         if key in to_insert:
             to_insert[key] += record.value
         else:
             to_insert[key] = record.value
-        seen_dates.add(record.start)
     logger.info('Title statistics: %s', tm.stats)
-    # compare the prepared data with current database content
-    # get the candidates
-    log_memory('XX')
-    to_compare = {}
-    if to_insert:
-        to_check = AccessLog.objects.filter(
-            organization=organization,
-            platform=platform,
-            report_type=report_type,
-            date__lte=max(seen_dates),
-            date__gte=min(seen_dates),
-        )
-        for al_rec in to_check.values(
-            'pk',
-            'organization_id',
-            'platform_id',
-            'report_type_id',
-            'date',
-            'value',
-            'target_id',
-            'metric_id',
-            *[f'dim{i+1}' for i, d in enumerate(dimensions)],
-        ):
-            pk = al_rec.pop('pk')
-            value = al_rec.pop('value')
-            al_rec['date'] = al_rec['date'].isoformat()
-            key = tuple(sorted(al_rec.items()))
-            to_compare[key] = (pk, value)
-    # make the comparison
-    log_memory('XX2')
-    als_to_insert = []
-    target_date_tuples = set()
-    max_batch_size = 100_000
-    for key, value in to_insert.items():
-        db_pk, db_value = to_compare.get(key, (None, None))
-        rec = dict(key)
-        import_batch = month_to_import_batch[rec['date']]
-        if db_pk:
-            # There is an accesslog with the same dimensions.
-            # It could belong to the same import batch, which means we got it from the same file
-            # but in different batches determined by `buffer_size` in `import_counter_records`.
-            # In such case, we need to merge it with the existing record,
-            # but if it comes from a different IB, we need to raise an error
-            # BTW, this operation is relatively expensive, but it should happen only very seldom,
-            # so we do not care that much
-            clash = AccessLog.objects.get(pk=db_pk)
-            if import_batch.pk == clash.import_batch_id:
-                # we have an AL from the same batch, just update
-                clash.value = F('value') + value
-                clash.save()
-                logger.warning(f'Merging duplicated values in import batch #{import_batch.pk}')
-            else:
-                raise DataStructureError(
-                    f'Clashing accesslog even though import batch level checks passed: {rec}; '
-                    f'Clashing AL is from IB #{clash.import_batch_id} from '
-                    f'{clash.import_batch.created}'
-                )
-        else:
-            rec['value'] = value
-            als_to_insert.append(AccessLog(import_batch=import_batch, **rec))
-            if rec['target_id'] is not None:
-                target_date_tuples.add((rec['target_id'], rec['date']))
-        if len(als_to_insert) >= max_batch_size:
-            log_memory('Batch create')
-            AccessLog.objects.bulk_create(als_to_insert)
-            stats['new logs'] += len(als_to_insert)
-            als_to_insert = []
-    # now insert the records that are clean to be inserted
-    log_memory('XX3')
-    AccessLog.objects.bulk_create(als_to_insert)
-    stats['new logs'] += len(als_to_insert)
-    log_memory('XX4')
-    # and insert the PlatformTitle links
-    stats.update(create_platformtitle_links(organization, platform, target_date_tuples))
-    log_memory('XX5')
 
 
-def create_platformtitle_links(organization, platform, target_date_tuples: Set[Tuple]):
+def create_platformtitle_links_from_import_batch(import_batch: ImportBatch, target_ids: Set[int]):
     """
-    Takes list of dicts that are used to create AccessLogs in `import_counter_records`
+    Based on the platform and organization from the import_batch and a list of unique
+    title_ids creates the corresponding PlatformTitle records
     and creates the explicit PlatformTitle objects from the data
     """
-    existing = {
-        (pt.title_id, pt.date.isoformat())
-        for pt in PlatformTitle.objects.filter(organization=organization, platform=platform)
-    }
+    pt_qs = PlatformTitle.objects.filter(
+        organization_id=import_batch.organization_id,
+        platform_id=import_batch.platform_id,
+        date=import_batch.date,
+    )
+    existing = set(pt_qs.values_list('title_id', flat=True))
     pts = []
-    before_count = PlatformTitle.objects.count()
-    for title_id, rec_date in target_date_tuples - existing:
+    before_count = len(existing)
+    for title_id in target_ids - existing:
         pts.append(
             PlatformTitle(
-                organization=organization, platform=platform, title_id=title_id, date=rec_date
+                organization_id=import_batch.organization_id,
+                platform_id=import_batch.platform_id,
+                title_id=title_id,
+                date=import_batch.date,
             )
         )
     PlatformTitle.objects.bulk_create(pts, ignore_conflicts=True)
-    after_count = PlatformTitle.objects.count()
+    after_count = pt_qs.count()
     return {'new platformtitles': after_count - before_count}
 
 
@@ -732,3 +702,42 @@ def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [Plat
         for rec in (data - possible_clashing)
     ]
     return PlatformTitle.objects.bulk_create(to_create, ignore_conflicts=True)
+
+
+class IBCopyMapping(CopyMapping):
+
+    """
+    The original CopyMapping is not thread-safe as it always uses the same temporary
+    table. This version uses a table name dependent on the import batch ID, which should
+    be safe enough for our use case.
+    """
+
+    def __init__(self, model, csv_path_or_obj, ib_id, **kwargs):
+        # the third argument is mapping, which is detected automatically from the CSV
+        # header, so we just pass an empty dict here
+        super().__init__(model, csv_path_or_obj, {}, **kwargs)
+        self.temp_table_name = f"{self.temp_table_name}_{ib_id}"
+
+
+def ingest_import_batch_data(import_batch: ImportBatch, file_content: StringIO):
+    """
+    Look for a CSV file with the preprocessed data to be ingested into the AccessLog table.
+    """
+    log_memory('XX6')
+    file_content.seek(0)
+    c = IBCopyMapping(
+        AccessLog,
+        file_content,
+        import_batch.pk,
+        static_mapping={
+            'created': now(),
+            'owner_level': UL_ROBOT,
+            'import_batch_id': import_batch.pk,
+            'date': import_batch.date,
+            'platform_id': import_batch.platform_id,
+            'report_type_id': import_batch.report_type_id,
+            'organization_id': import_batch.organization_id,
+        },
+    )
+    c.save()
+    log_memory('XX7')

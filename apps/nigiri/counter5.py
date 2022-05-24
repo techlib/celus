@@ -6,9 +6,9 @@ import json
 import typing
 from copy import copy
 
-import ijson.backends.python as ijson  # TODO yalj2 backend can be faster...
-from core.logic.dates import parse_counter_month
+import ijson.backends.yajl2_c as ijson
 
+from core.logic.dates import parse_counter_month
 from .error_codes import ErrorCode, error_code_to_severity
 from .exceptions import SushiException
 
@@ -219,7 +219,7 @@ class Counter5ReportBase:
         fd.seek(0)
 
         # try to read the header
-        header = dict(ijson.kvitems(fd, "Report_Header"))
+        header = next(ijson.items(fd, "Report_Header"), None)
         fd.seek(0)
         # check whether the header is not located in 'body' element
         if not header:
@@ -247,7 +247,15 @@ class Counter5ReportBase:
             pass
 
         # error can be placed outside of header
-        if not self.errors and not self.warnings and not self.infos:
+        # look for them only if the header is missing or there are no data records
+        # - if we look for them in each case, it can add quite some overhead for large files
+        #   (like 20s for a 50 MB file)
+        if (
+            (not header or not self.record_found)
+            and not self.errors
+            and not self.warnings
+            and not self.infos
+        ):
             # Extract exceptions from root
             self.extract_errors(list(ijson.items(fd, "Exceptions.item")))  # In <root>
             fd.seek(0)

@@ -6,6 +6,7 @@ import typing
 from copy import deepcopy
 from datetime import date
 from enum import Enum
+from pathlib import Path
 
 import magic
 from chardet.universaldetector import UniversalDetector
@@ -403,6 +404,7 @@ class ImportBatch(models.Model):
     and the user who created them.
     """
 
+    PREPROCESSED_DATA_DIR = Path('/tmp/')
     objects = ImportBatchQuerySet.as_manager()
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
@@ -439,6 +441,10 @@ class ImportBatch(models.Model):
     @cached_property
     def accesslog_count(self):
         return self.accesslog_set.count()
+
+    @property
+    def preprocessed_data_file(self) -> Path:
+        return self.PREPROCESSED_DATA_DIR / f"ib-{self.pk}.csv"
 
 
 class AccessLogQuerySet(QuerySet):

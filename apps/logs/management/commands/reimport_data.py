@@ -199,7 +199,8 @@ class Command(BaseCommand):
                     )
                     t = monotonic()
                     ib_id = ib.pk  # pk will be emptied on delete, so we need to preserve it here
-                    reimport_import_batch_with_fa(ib)
+                    new_ib = reimport_import_batch_with_fa(ib)
+                    logger.info(f"Created new IB: #{new_ib.pk}")
                     self.write_trace(ib_id, ib, monotonic() - t)
                 except SourceFileMissingError:
                     stats['fa missing file'] += 1
