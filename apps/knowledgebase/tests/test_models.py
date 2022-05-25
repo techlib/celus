@@ -1,22 +1,20 @@
 import copy
 import json
-import pytest
 import re
+import uuid
+
+import pytest
 import requests_mock
-
-from django.utils.timezone import now
-from django.conf import settings
-
 from core.models import DataSource
+from django.conf import settings
+from django.utils.timezone import now
 from knowledgebase.models import PlatformImportAttempt, RouterSyncAttempt
 from logs.models import ReportType
 from publications.models import Platform
-
-from test_fixtures.scenarios.basic import data_sources, organizations, report_types
-from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.data_souces import DataSourceFactory
 from test_fixtures.entities.api import OrganizationAPIKeyFactory
-
+from test_fixtures.entities.data_souces import DataSourceFactory
+from test_fixtures.entities.platforms import PlatformFactory
+from test_fixtures.scenarios.basic import data_sources, organizations, report_types
 
 INPUT_DATA = [
     {
@@ -53,6 +51,7 @@ INPUT_DATA = [
                 },
             },
         ],
+        "counter_registry_id": None,
         "short_name": "AAP",
         "url": "https://www.aap.org/",
     },
@@ -90,6 +89,7 @@ INPUT_DATA = [
                 },
             },
         ],
+        "counter_registry_id": None,
         "short_name": "AACR",
         "url": "https://www.aacr.org/",
     },
@@ -99,6 +99,7 @@ INPUT_DATA = [
         "provider": "APS",
         "providers": [],
         "short_name": "APS",
+        "counter_registry_id": "00000000-0000-0000-0000-000000000000",
         "url": "https://www.journals.aps.org/",
     },
 ]
@@ -110,6 +111,7 @@ INPUT_DATA2 = [
         "provider": "ABC",
         "providers": [],
         "short_name": "ABC",
+        "counter_registry_id": "11111111-1111-1111-1111-111111111111",
         "url": "https://www.journals.abc.org/",
     },
 ]
@@ -244,6 +246,7 @@ class TestPlatformImportAttempt:
         assert platform1.provider == "AAP"
         assert platform1.name == "AAP - American Academy of Pediatrics"
         assert platform1.ext_id == 328
+        assert platform1.counter_registry_id is None
         assert platform1.knowledgebase["providers"] == INPUT_DATA[0]["providers"]
         assert (
             set(
@@ -259,6 +262,7 @@ class TestPlatformImportAttempt:
         assert platform2.provider == "AACR"
         assert platform2.name == "American Association for Cancer Research"
         assert platform2.ext_id == 327
+        assert platform2.counter_registry_id is None
         assert platform2.knowledgebase["providers"] == INPUT_DATA[1]["providers"]
         assert (
             set(
@@ -274,6 +278,7 @@ class TestPlatformImportAttempt:
         assert platform3.provider == "APS"
         assert platform3.name == "APS"
         assert platform3.ext_id == 339
+        assert platform3.counter_registry_id == uuid.UUID("00000000-0000-0000-0000-000000000000")
         assert platform3.knowledgebase["providers"] == []
         assert (
             set(
@@ -379,6 +384,9 @@ class TestPlatformImportAttempt:
         assert Platform.objects.count() == 5
         assert Platform.objects.values().get(pk=platform_no_source1.pk) == no_source1_values
         assert Platform.objects.get(pk=platform_no_source2.pk).ext_id == INPUT_DATA2[0]["pk"]
+        assert Platform.objects.get(pk=platform_no_source2.pk).counter_registry_id == uuid.UUID(
+            INPUT_DATA2[0]["counter_registry_id"]
+        )
         assert Platform.objects.values().get(pk=platform_erms.pk) == erms_values
 
     def test_perform(self, data_sources, report_types):

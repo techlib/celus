@@ -1,22 +1,21 @@
+import hashlib
 import json
 import logging
-import hashlib
-import requests
 import traceback
 import typing
-
 from collections import Counter
 from enum import Enum, auto
 from urllib.parse import urljoin
 
+import requests
+from core.models import DataSource
 from django.core.validators import MinLengthValidator
 from django.db import models, transaction
 from django.db.transaction import on_commit
 from django.utils import timezone
-
-from core.models import DataSource
 from publications.models import Platform
 
+from .serializers import PlatformSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -237,9 +236,21 @@ class PlatformImportAttempt(ImportAttempt):
     def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.EMPTY_SOURCE):
         counter: typing.Counter[str] = Counter()
 
-        counter["total"] = len(data)
+        UPDATABLE_FIELDS = (
+            'short_name',
+            'name',
+            'provider',
+            'url',
+            'knowledgebase',
+            'counter_registry_id',
+        )
 
-        UPDATABLE_FIELDS = ('short_name', 'name', 'provider', 'url', 'knowledgebase')
+        # parse data
+        serializer = PlatformSerializer(data=data, many=True)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        counter["total"] = len(data)
 
         updated_platforms_ids = []
 
@@ -250,10 +261,11 @@ class PlatformImportAttempt(ImportAttempt):
                 provider=record["provider"],
                 url=record["url"],
                 knowledgebase={"providers": record["providers"]},
+                counter_registry_id=record["counter_registry_id"],
             )
 
             if merge == ImportAttempt.MergeStrategy.NONE:
-                # Only new or existing with the same soure
+                # Only new or existing with the same source
                 platform, created = Platform.objects.get_or_create(
                     defaults=updatable, ext_id=record["pk"], source=self.source
                 )

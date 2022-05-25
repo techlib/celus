@@ -1,10 +1,9 @@
 from collections import Counter
 
-from django.db import models
-from django.db.models import UniqueConstraint, Q
-from django.utils.translation import gettext_lazy as _
-
 from core.models import DataSource
+from django.db import models
+from django.db.models import Q, UniqueConstraint
+from django.utils.translation import gettext_lazy as _
 
 
 class PlatformInterestReport(models.Model):
@@ -29,6 +28,7 @@ class Platform(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     knowledgebase = models.JSONField(blank=True, null=True)
+    counter_registry_id = models.UUIDField(blank=True, null=True)
 
     class Meta:
         ordering = ('short_name',)
@@ -50,6 +50,7 @@ class Platform(models.Model):
                     ext_id__isnull=True
                 ),  # external platforms might have empty short_name
             ),
+            UniqueConstraint(fields=['counter_registry_id'], name='unique_counter_registry_id'),
         ]
 
     def __str__(self):
