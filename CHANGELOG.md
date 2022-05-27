@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [4.4.3]
+
+### Fixed
+
+#### Frontend
+
+* reporting - export of reports split by year and month was fixed
+* users logging in by EduID are no longer warned about missing email validation
+
+#### Backend
+
+* data import was sped up by factor of about 5 with about 2x memory reduction
+
+
 ## [4.4.2]
 
 ### Added
