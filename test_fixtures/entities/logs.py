@@ -5,12 +5,15 @@ import factory
 import faker
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+
+from publications.models import PlatformTitle
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.report_types import ReportTypeFactory
 
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduState, Metric
+from test_fixtures.entities.titles import TitleFactory
 
 fake = faker.Faker()
 
@@ -77,9 +80,20 @@ class ImportBatchFullFactory(factory.django.DjangoModelFactory):
             'report_type': obj.report_type,
             'date': obj.date,
         }
-        als1 = [AccessLog(value=fake.random_int(), metric=m1, **attrs) for _i in range(10)]
-        als2 = [AccessLog(value=fake.random_int(), metric=m2, **attrs) for _i in range(10)]
+        if not (titles := kwargs.get('titles')):
+            titles = TitleFactory.create_batch(10)
+        als1 = [AccessLog(value=fake.random_int(), metric=m1, target=t, **attrs) for t in titles]
+        als2 = [AccessLog(value=fake.random_int(), metric=m2, target=t, **attrs) for t in titles]
         AccessLog.objects.bulk_create(als1 + als2)
+        PlatformTitle.objects.bulk_create(
+            [
+                PlatformTitle(
+                    platform=obj.platform, organization=obj.organization, date=obj.date, title=t
+                )
+                for t in titles
+            ],
+            ignore_conflicts=True,
+        )
         if settings.CLICKHOUSE_SYNC_ACTIVE:
             sync_import_batch_with_clickhouse(obj)
 

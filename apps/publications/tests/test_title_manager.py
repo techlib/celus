@@ -220,6 +220,46 @@ class TestTitleManager:
                 True,
                 id="title only based match - proprietary ids different order",
             ),
+            # title + proprietary IDs subset
+            pytest.param(
+                {'name': 'Nature', 'proprietary_ids': ['bar', 'foo']},
+                {'name': 'Nature', 'proprietary_ids': ['foo']},
+                True,
+                id="same title + one set of proprietary ids is subset of other",
+            ),
+            # title + proprietary IDs with an intersection
+            pytest.param(
+                {'name': 'Nature', 'proprietary_ids': ['bar', 'foo']},
+                {'name': 'Nature', 'proprietary_ids': ['foo', 'boo']},
+                True,
+                id="same title + sets of proprietary ids have intersection",
+            ),
+            # title + proprietary IDs subset + other ids on one side - real life Nature from SD
+            pytest.param(
+                {'name': 'Nature', 'proprietary_ids': ['SN:41586']},
+                {
+                    'name': 'Nature',
+                    'proprietary_ids': [
+                        'EBSCOhost:KBID:50974',
+                        'ProQuest:40569',
+                        'SN:41586',
+                        'gale:0359',
+                    ],
+                    'issn': '0028-0836',
+                    'eissn': '1476-4687',
+                    'doi': '10.1038/41586.1476-4687',
+                },
+                True,
+                id="same title + one set of proprietary ids is subset of other + other ids are "
+                "present on one side",
+            ),
+            # title + different IDs
+            pytest.param(
+                {'name': 'Nature', 'proprietary_ids': ['bar'], 'issn': '1234-5678'},
+                {'name': 'Nature', 'isbn': '978-3-16-148410-0'},
+                False,
+                id="same title but no matching ids",
+            ),
             # strange thing seen in production
             pytest.param(
                 {
