@@ -33,6 +33,8 @@ def sync_import_batch_with_clickhouse(import_batch: ImportBatch, batch_size=10_0
                 ch_backend, import_batch, batch_size=batch_size
             )
         except Exception as exc:
+            # we need to keep the exception in a different variable as exc will get out of scope
+            # for the on_commit error function
             e = exc
             sync_log.state = ImportBatchSyncLog.STATE_SYNC
             sync_log.save()
@@ -81,6 +83,8 @@ def sync_import_batch_interest_with_clickhouse(import_batch: ImportBatch, batch_
                 ch_backend, import_batch, batch_size=batch_size
             )
         except Exception as exc:
+            # we need to keep the exception in a different variable as exc will get out of scope
+            # for the on_commit error function
             e = exc
             sync_log.state = ImportBatchSyncLog.STATE_SYNC_INTEREST
             sync_log.save()
@@ -156,6 +160,8 @@ def delete_import_batch_from_clickhouse(import_batch_id: int):
     try:
         AccessLogCube.delete_import_batch(ch_backend, import_batch_id)
     except Exception as exc:
+        # we need to keep the exception in a different variable as exc will get out of scope
+        # for the on_commit error function
         e = exc
         sync_log.state = ImportBatchSyncLog.STATE_DELETE
         sync_log.save()
@@ -167,6 +173,44 @@ def delete_import_batch_from_clickhouse(import_batch_id: int):
     else:
         # delete the sync log - it is not of any use anymore
         sync_log.delete()
+
+
+@needs_clickhouse_sync
+@atomic()
+def resync_import_batch_with_clickhouse(import_batch: ImportBatch):
+    """
+    To be used after the content of an import batch has changed in the database, and it needs
+    to be re-synced with clickhouse.
+    This involves deleting the whole import batch from CH and resyncing it, so use it sparingly
+    """
+    try:
+        sync_log = ImportBatchSyncLog.objects.select_for_update().get(
+            import_batch_id=import_batch.pk
+        )
+    except ImportBatchSyncLog.DoesNotExist:
+        # the sync log was deleted before we got the lock, nothing to do anymore
+        return
+    # in resync mode, we do not care about the state of the ImportBatchSyncLog
+    # because this overrides everything as it does both delete and sync
+    try:
+        AccessLogCube.delete_import_batch(ch_backend, import_batch.pk)
+    except Exception as exc:
+        # we need to keep the exception in a different variable as exc will get out of scope
+        # for the on_commit error function
+        e = exc
+        sync_log.state = ImportBatchSyncLog.STATE_RESYNC
+        sync_log.save()
+
+        def error():
+            raise e
+
+        on_commit(error)
+    else:
+
+        def do_sync():
+            sync_import_batch_with_clickhouse(import_batch)
+
+        on_commit(do_sync)
 
 
 @needs_clickhouse_sync
@@ -188,5 +232,8 @@ def process_one_import_batch_sync_log(import_batch_id):
         sync_import_batch_interest_with_clickhouse(ib)
     elif sync_log.state == ImportBatchSyncLog.STATE_DELETE:
         delete_import_batch_from_clickhouse(sync_log.import_batch_id)
+    elif sync_log.state == ImportBatchSyncLog.STATE_RESYNC:
+        ib = ImportBatch.objects.get(pk=sync_log.import_batch_id)
+        resync_import_batch_with_clickhouse(ib)
     else:
         raise ValueError(f'ImportBatchSyncLog.state has unknown value "{sync_log.state}"')

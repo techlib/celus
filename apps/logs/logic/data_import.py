@@ -5,10 +5,9 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
 from io import StringIO
-from typing import Optional, Tuple, Set, Iterable, Dict, Generator, List, Union
+from typing import Optional, Set, Iterable, Dict, Generator, List, Union
 
 from django.conf import settings
-from django.db.models import F
 from django.db.models.functions import Lower
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
@@ -184,6 +183,29 @@ class TitleManager:
         logger.debug('Prefetched %d records', len(self.name_to_records))
 
     @classmethod
+    def title_to_titlecomparerec(cls, title: Title) -> TitleCompareRec:
+        id_set = {(attr, getattr(title, attr)) for attr in cls.id_attrs if getattr(title, attr)}
+        return TitleCompareRec(
+            pk=title.pk,
+            pub_type=title.pub_type,
+            id_set=id_set,
+            uris=title.uris,
+            proprietary_ids=title.proprietary_ids,
+        )
+
+    @classmethod
+    def title_to_titlerec(cls, title: Title) -> TitleRec:
+        return TitleRec(
+            name=title.name,
+            pub_type=title.pub_type,
+            issn=title.issn,
+            eissn=title.eissn,
+            isbn=title.isbn,
+            doi=title.doi,
+            proprietary_ids=title.proprietary_ids,
+        )
+
+    @classmethod
     def normalize_title_rec(cls, record: TitleRec) -> TitleRec:
         """
         Normalize specific fields in the record and return a new TitleRec with normalized data.
@@ -296,12 +318,23 @@ class TitleManager:
         self._title_rec_to_title_cache[cache_key] = winner.pk
         return winner.pk
 
-    def _find_matching_title(self, record: TitleRec) -> TitleCompareRec:
-        # try to select amongst Titles with the name
+    def _find_matching_title(self, record: TitleRec) -> Optional[TitleCompareRec]:
+        candidates = self.name_to_records.get(record.name.lower(), [])
+        if candidates:
+            return self.select_best_candidate(record, candidates)
+        return None
+
+    @classmethod
+    def select_best_candidate(
+        cls, record: TitleRec, candidates: List[TitleCompareRec]
+    ) -> Optional[TitleCompareRec]:
+        """
+        Go over the candidates and select the one with which record should be merged. Return None
+        if no candidate is suitable
+        """
         rec_id_set = record.ids_to_set()
         winner = None
         winner_miss_score = (1000, 0)
-        candidates = self.name_to_records.get(record.name.lower(), [])
         # first go over all the candidates and try to find one with the least difference with
         # our record - this should make it more probable to find a match that will not need
         # an upgrade later. It also protects against clashes created by upgrading a worse
@@ -312,12 +345,13 @@ class TitleManager:
                 rec_extra = rec_id_set - candidate.id_set
                 cand_extra = candidate.id_set - rec_id_set
                 clashing_id_names = {x for x, y in rec_extra if y} & {x for x, y in cand_extra if y}
+                common_ids = rec_id_set & candidate.id_set
                 # the first part of score is the number of new values - the lower, the better
                 # because we do not want to update the candidate if possible
                 # the second part of the score is the total number of set IDs in the candidate
                 # here the higher, the better as we want to merge with the most populated title
                 miss_score = (len(rec_extra), -len(cand_extra))
-                if not clashing_id_names and miss_score < winner_miss_score:
+                if common_ids and not clashing_id_names and miss_score < winner_miss_score:
                     # we have a match - if the records do not match, it is on the same fields
                     winner = candidate
                     winner_miss_score = miss_score
@@ -325,10 +359,11 @@ class TitleManager:
             # could not find winner using ids
             if record.proprietary_ids:
                 # let 's try proprietary ids
-                # we only allow this if either the in-memory or in-db record does not have any other
-                # ids - if they had, we would have matched it above, if we did not, they must clash
+                # we only allow this if either the in-memory or in-db record does not have any
+                # other ids - if they had, we would have matched it above, if we did not, they must
+                # clash
                 for candidate in candidates:
-                    if record.proprietary_ids.issubset(candidate.proprietary_ids) and (
+                    if (record.proprietary_ids & candidate.proprietary_ids) and (
                         not rec_id_set or not candidate.id_set
                     ):
                         return candidate

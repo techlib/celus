@@ -3,7 +3,7 @@ from django.db.models import Exists, OuterRef
 from django.db.transaction import atomic
 
 from logs.models import AccessLog
-from publications.models import Title, PlatformTitle
+from publications.models import Title
 
 
 class Command(BaseCommand):

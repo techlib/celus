@@ -1095,11 +1095,13 @@ class ImportBatchSyncLog(CreatedUpdatedMixin, models.Model):
     STATE_SYNC = 1
     STATE_DELETE = 2
     STATE_SYNC_INTEREST = 3
+    STATE_RESYNC = 4
     STATE_CHOICES = (
         (STATE_NO_CHANGE, 'No change'),
         (STATE_SYNC, 'Sync'),
         (STATE_DELETE, 'Delete'),
         (STATE_SYNC_INTEREST, 'Sync interest'),
+        (STATE_RESYNC, 'Resync'),
     )
 
     # Because we need to refer to deleted import batches, we do not use a foreign key here
