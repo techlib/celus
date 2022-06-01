@@ -9,13 +9,15 @@ from urllib.parse import urljoin
 
 import requests
 from core.models import DataSource
+from core.tasks import async_mail_admins
 from django.core.validators import MinLengthValidator
 from django.db import models, transaction
 from django.db.transaction import on_commit
 from django.utils import timezone
+from logs.models import Dimension, Metric, ReportType, ReportTypeToDimension
 from publications.models import Platform
 
-from .serializers import PlatformSerializer
+from .serializers import PlatformSerializer, ReportTypeSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -115,10 +117,17 @@ class ImportAttempt(AuthTokenMixin, models.Model):
         ALL = auto()  # Merges by short_name regardless of the source
 
     KIND_PLATFORM = 'platform'
+    KIND_REPORT_TYPE = 'report_type'
 
-    KINDS = ((KIND_PLATFORM, 'Platform'),)
+    KINDS = (
+        (KIND_PLATFORM, 'Platform'),
+        (KIND_REPORT_TYPE, 'Report type'),
+    )
 
-    URL_MAP = {KIND_PLATFORM: '/knowledgebase/platforms/'}
+    URL_MAP = {
+        KIND_PLATFORM: '/knowledgebase/platforms/',
+        KIND_REPORT_TYPE: '/knowledgebase/report_types/',
+    }
 
     url = models.URLField()
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE)
@@ -349,3 +358,132 @@ class PlatformImportAttempt(ImportAttempt):
     @property
     def required_kind(self):
         return ImportAttempt.KIND_PLATFORM
+
+
+class ReportTypeImportAttempt(ImportAttempt):
+    class Meta:
+        proxy = True
+
+    def plan(self):
+        from .tasks import update_report_types
+
+        update_report_types.delay(self.pk)
+
+    @property
+    def required_kind(self):
+        return ImportAttempt.KIND_REPORT_TYPE
+
+    @transaction.atomic
+    def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.NONE):
+        # merge strategy should be always NONE - we are merging only
+        # reporttypes which were created using import attempt
+
+        counter: typing.Counter[str] = Counter()
+
+        # parse data
+        serializer = ReportTypeSerializer(data=data, many=True)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        counter["total"] = len(data)
+
+        for report_type_data in data:
+            report_type, created = ReportType.objects.get_or_create(
+                source=self.source,
+                ext_id=report_type_data["pk"],
+                defaults={
+                    "name": report_type_data["name"],
+                    "short_name": report_type_data["short_name"],
+                },
+            )
+
+            # Create dimensions (if needed)
+            if created:
+                dimensions = []
+                for dimension_data in report_type_data["dimensions"]:
+                    dimension, dimension_created = Dimension.objects.get_or_create(
+                        source=self.source, short_name=dimension_data['short_name'],
+                    )
+                    if dimension_created:
+                        logger.info(
+                            "Dimension '%s' was created for report type '%s'",
+                            dimension.short_name,
+                            report_type_data['short_name'],
+                        )
+                    dimensions.append(dimension)
+            else:
+                dimensions = []
+
+            # Create metrics (if needed)
+            metrics = []
+            for metric_data in report_type_data["metrics"]:
+                metric, metric_created = Metric.objects.get_or_create(
+                    source=self.source, short_name=metric_data['short_name'],
+                )
+                if metric_created:
+                    logger.info(
+                        "Metric '%s' was created for report type '%s'",
+                        metric.short_name,
+                        report_type_data['short_name'],
+                    )
+
+                metrics.append(metric)
+
+            if created:
+                report_type.controlled_metrics.set(metrics)
+                # create dimensions
+                for position, dimension in enumerate(dimensions):
+                    ReportTypeToDimension.objects.create(
+                        position=position, report_type=report_type, dimension=dimension,
+                    )
+                counter["created"] += 1
+            else:
+                updated = False
+
+                # Compare metrics
+                metrics_differ = set(e.pk for e in report_type.controlled_metrics.all()) != {
+                    e.pk for e in metrics
+                }
+                if metrics_differ:
+                    report_type.controlled_metrics.set(metrics)
+                updated = updated or metrics_differ
+
+                # Compare dimensions and send an email to admins when it differs
+                dimensions = list(
+                    enumerate([e["short_name"] for e in report_type_data["dimensions"]])
+                )
+                orig_dimensions = [
+                    (e.position, e.dimension.short_name)
+                    for e in report_type.reporttypetodimension_set.order_by(
+                        'position'
+                    ).select_related('dimension')
+                ]
+                if dimensions != orig_dimensions:
+                    old_text = "".join(f'{e[0]}. - {e[1]}\n' for e in orig_dimensions)
+                    new_text = "".join(f'{e[0]}. - {e[1]}\n' for e in dimensions)
+                    async_mail_admins.delay(
+                        "Report type dimensions were modified",
+                        f"ReportType: {report_type} (source={report_type.source}, "
+                        f"ext_id={report_type.ext_id})\n\n"
+                        "Old dimensions:\n"
+                        f"{old_text}\n"
+                        "New dimensions:\n"
+                        f"{new_text}\n",
+                    )
+
+                # Set attributes
+                for field in ('short_name', 'name'):
+                    updated = updated or (getattr(report_type, field) != report_type_data[field])
+                    setattr(report_type, field, report_type_data[field])
+
+                if updated:
+                    counter['updated'] += 1
+                    report_type.save()
+                else:
+                    counter['same'] += 1
+
+        # Note that we don't want to delete report types automatically
+        # Because it could seriously affect the data
+
+        self.stats = dict(counter)
+        self.save()

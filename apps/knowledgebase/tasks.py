@@ -1,10 +1,9 @@
 import celery
-from django.db import transaction, DatabaseError
-
 from core.logic.error_reporting import email_if_fails
 from core.models import DataSource
+from django.db import DatabaseError, transaction
 
-from .models import PlatformImportAttempt, ImportAttempt, RouterSyncAttempt
+from .models import ImportAttempt, PlatformImportAttempt, ReportTypeImportAttempt, RouterSyncAttempt
 
 
 @celery.shared_task
@@ -25,6 +24,28 @@ def update_platforms(attempt_id: int):
 
     if attempt.kind != ImportAttempt.KIND_PLATFORM:
         raise ValueError(f"Wrong kind {attempt.kind} expected {ImportAttempt.KIND_PLATFORM}")
+
+    attempt.perform()
+
+
+@celery.shared_task
+@email_if_fails
+def sync_report_types_with_knowledgebase_task():
+    sources = list(DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE))
+    for source in sources:
+        attempt = ReportTypeImportAttempt.objects.create(
+            kind=ReportTypeImportAttempt.KIND_REPORT_TYPE, source=source
+        )
+        attempt.perform()
+
+
+@celery.shared_task
+@email_if_fails
+def update_report_types(attempt_id: int):
+    attempt = ReportTypeImportAttempt.objects.get(pk=attempt_id)
+
+    if attempt.kind != ImportAttempt.KIND_REPORT_TYPE:
+        raise ValueError(f"Wrong kind {attempt.kind} expected {ImportAttempt.KIND_REPORT_TYPE}")
 
     attempt.perform()
 

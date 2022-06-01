@@ -287,6 +287,7 @@ CELERY_TASK_ROUTES = {
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
     'knowledgebase.tasks.sync_route': {'queue': 'celery'},
     'knowledgebase.tasks.sync_platforms_with_knowledgebase_task': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_report_types_with_knowledgebase_task': {'queue': 'celery'},
     'logs.tasks.sync_interest_task': {'queue': 'interest'},
     'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
     'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
@@ -389,6 +390,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=33, hour=2),  # every day at 2:33
         'options': {'expires': 24 * 60 * 60},
     },
+    # 'sync_report_types_with_knowledgebase_task': {
+    #    'task': 'knowledgebase.tasks.sync_report_types_with_knowledgebase_task',
+    #    'schedule': crontab(minute=44, hour=3),  # every day at 2:33
+    #    'options': {'expires': 24 * 60 * 60},
+    # },
 }
 
 ERMS_CELERY_SCHEDULE = {

@@ -92,12 +92,16 @@ class ReportType(models.Model):
     controlled_metrics = models.ManyToManyField(
         'Metric', through='ControlledMetric', related_name='controlled'
     )
+    ext_id = models.PositiveIntegerField(unique=True, null=True, default=None, blank=True,)
 
     class Meta:
         verbose_name = _('Report type')
         constraints = [
             UniqueConstraint(
                 fields=['short_name', 'source'], name='report_type_short_name_source_not_null'
+            ),
+            UniqueConstraint(
+                fields=['source', 'ext_id'], name='report_type_unique_ext_id_per_source'
             ),
             UniqueConstraint(
                 fields=['short_name'],
