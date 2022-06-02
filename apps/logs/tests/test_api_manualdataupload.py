@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from core.tests.conftest import *  # noqa
@@ -22,6 +23,7 @@ from test_fixtures.scenarios.basic import (
 
 @pytest.mark.django_db
 class TestManualUploadForCounterData:
+    @pytest.mark.parametrize(['hash_matches'], [(True,), (False,)])
     @pytest.mark.parametrize(
         ['filename', 'report_code'],
         (
@@ -43,6 +45,79 @@ class TestManualUploadForCounterData:
         settings,
         filename,
         report_code,
+        hash_matches,
+    ):
+        cr_type = counter_report_types[report_code]
+        with (Path(__file__).parent / "data" / filename).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = f"something.{filename.split('.')[-1]}"
+
+        organization = organizations['master']
+        platform = platforms['master']
+        settings.MEDIA_ROOT = tmp_path
+
+        # upload the data
+        response = clients["master"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organization.pk,
+                'report_type_id': cr_type.report_type_id,
+                'data_file': data_file,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+        if not hash_matches:
+            mdu.checksum = 'foobarbaz'
+            mdu.save()
+
+        # calculate preflight in celery
+        with patch('core.models.SourceFileMixin._send_error_mail') as mail_mock:
+            prepare_preflight(mdu.pk)
+
+        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        data = response.json()
+        assert 'preflight' in data
+        if hash_matches:
+            assert 'hits_total' in data['preflight']
+            assert data['preflight']['log_count'] > 0
+            for month_data in data['preflight']['months'].values():
+                assert set(month_data.keys()) == {
+                    'new',
+                    'this_month',
+                    'prev_year_avg',
+                    'prev_year_month',
+                }
+            assert not mail_mock.called, 'email to admin was not sent'
+        else:
+            assert data['error'] == 'general'
+            assert mail_mock.called, 'email to admin was sent'
+
+    @pytest.mark.parametrize(['hash_matches'], [(True,), (False,)])
+    @pytest.mark.parametrize(
+        ['filename', 'report_code'],
+        (
+            ('counter4/counter4_br2.tsv', 'br2'),
+            ('counter5/counter5_table_dr.csv', 'dr'),
+            ('counter5/counter5_table_dr.tsv', 'dr'),
+            ('counter5/counter5_table_pr.csv', 'pr'),
+            ('counter5/counter5_tr_test1.json', 'tr'),
+        ),
+    )
+    def test_counter_manual_import(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        counter_report_types,
+        clients,
+        tmp_path,
+        settings,
+        filename,
+        report_code,
+        hash_matches,
     ):
         cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
@@ -69,19 +144,31 @@ class TestManualUploadForCounterData:
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
+        mdu.refresh_from_db()
+        if not hash_matches:
+            mdu.checksum = 'foobarbaz'
+            mdu.save()
+
+        # try the import - the following just starts the import
+        response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert 'msg' in response.json()
+        # without celery, we need to process it ourselves
+        with patch('core.models.SourceFileMixin._send_error_mail') as mail_mock:
+            import_manual_upload_data(mdu.pk, mdu.user.pk)
+
+        # now we can get the details
         response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
-        assert 'preflight' in data
-        assert 'hits_total' in data['preflight']
-        assert data['preflight']['log_count'] > 0
-        for month_data in data['preflight']['months'].values():
-            assert set(month_data.keys()) == {
-                'new',
-                'this_month',
-                'prev_year_avg',
-                'prev_year_month',
-            }
+        print(data)
+        if hash_matches:
+            assert data['error'] is None
+            assert not mail_mock.called, 'email to admin was not sent'
+        else:
+            assert data['error'] == 'import-error'
+            assert 'checksum' in data['error_details']['exception']
+            assert mail_mock.called, 'email to admin was sent'
 
 
 @pytest.mark.django_db

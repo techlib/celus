@@ -16,3 +16,9 @@ class ModelUsageError(Exception):
     """
     Used when a model is used in a way that is not allowed or supported.
     """
+
+
+class FileConsistencyError(Exception):
+    """
+    Used when a file checksum does not match the stored value.
+    """

@@ -14,7 +14,7 @@ from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     credentials,
     data_sources,
@@ -62,6 +62,8 @@ class TestFileName:
             start_date="2020-01-01",
             end_date="2020-02-01",
             data_file=data_file,
+            checksum='foo',
+            file_size=1,
             credentials_version_hash=credentials.compute_version_hash(),
         )
 
@@ -74,14 +76,14 @@ class TestFileName:
 @pytest.mark.django_db
 class TestSushiFetchAttemptModel:
     def test_conflicting_fully_enclosing(self, credentials, counter_report_types):
-        fa = SushiFetchAttempt.objects.create(
+        fa = FetchAttemptFactory.create(
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
             end_date='2020-01-31',
         )
         assert fa.conflicting(fully_enclosing=True).count() == 0, 'no conflicts'
-        fa2 = SushiFetchAttempt.objects.create(
+        fa2 = FetchAttemptFactory.create(
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
@@ -93,7 +95,7 @@ class TestSushiFetchAttemptModel:
         assert fa2.conflicting(fully_enclosing=True).count() == 0
 
     def test_conflicting_not_fully_enclosing(self, credentials, counter_report_types):
-        fa = SushiFetchAttempt.objects.create(
+        fa = FetchAttemptFactory.create(
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
@@ -101,7 +103,7 @@ class TestSushiFetchAttemptModel:
         )
         # fully_enclosing is False by default, so no need to specify it
         assert fa.conflicting().count() == 0, 'no conflicts'
-        fa2 = SushiFetchAttempt.objects.create(
+        fa2 = FetchAttemptFactory.create(
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
             start_date='2020-01-01',
