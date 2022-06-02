@@ -3,6 +3,7 @@ import pytest
 from django.db.models import Count, Sum, F
 
 from logs.logic.split_fetch_intentions import split_fetch_intentions
+from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 
 from test_fixtures.entities.scheduler import FetchIntentionQueueFactory
 
@@ -232,7 +233,7 @@ class TestFetchIntentionSplittingMigration:
                 **basic_attrs, metric=metric, date='2020-01-01', value=i, import_batch=ib3,
             )
         h1 = Harvest.objects.create()
-        fa1 = SushiFetchAttempt.objects.create(
+        fa1 = FetchAttemptFactory.create(
             import_batch=ib1,
             start_date='2020-01-01',
             end_date='2020-03-31',
@@ -259,7 +260,7 @@ class TestFetchIntentionSplittingMigration:
             queue=queue,
             previous_intention=fi1,
         )
-        fa3 = SushiFetchAttempt.objects.create(
+        fa3 = FetchAttemptFactory.create(
             import_batch=ib3,
             start_date='2020-01-01',
             end_date='2020-01-31',
@@ -277,7 +278,7 @@ class TestFetchIntentionSplittingMigration:
         assert h1.intentions.count() == 3
         # FetchAttempt without ImportBatch
         h2 = Harvest.objects.create()
-        fa4 = SushiFetchAttempt.objects.create(
+        fa4 = FetchAttemptFactory.create(
             start_date='2020-01-01',
             end_date='2020-02-28',
             counter_report=counter_rt,

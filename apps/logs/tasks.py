@@ -215,6 +215,7 @@ def prepare_preflight(mdu_id: int):
     try:
         # select_for_update lock only a single fetch attempts
         mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(pk=mdu_id)
+        mdu.check_self_checksum()  # validate checksum of the underlying file
         if mdu.state == MduState.PREFLIGHT:
             # preflight data already generated => skipping
             logger.warning(
@@ -287,6 +288,7 @@ def import_manual_upload_data(mdu_id: int, user_id: int):
         mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(
             pk=mdu_id, state=MduState.IMPORTING
         )
+        mdu.check_self_checksum()  # check file integrity using a stored checksum
         user = User.objects.get(pk=user_id)
         res = import_custom_data(mdu, user)
         logger.info("Manual upload processed: %s", res)

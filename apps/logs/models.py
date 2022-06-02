@@ -11,7 +11,15 @@ from pathlib import Path
 import magic
 from chardet.universaldetector import UniversalDetector
 from core.exceptions import ModelUsageError
-from core.models import UL_ROBOT, USER_LEVEL_CHOICES, CreatedUpdatedMixin, DataSource, User
+from core.models import (
+    UL_ROBOT,
+    USER_LEVEL_CHOICES,
+    CreatedUpdatedMixin,
+    DataSource,
+    User,
+    SourceFileMixin,
+    where_to_store as core_where_to_store,
+)
 from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist, ValidationError
@@ -607,7 +615,7 @@ class MduState(models.TextChoices):
     FAILED = 'failed', _("Import failed")
 
 
-class ManualDataUpload(models.Model):
+class ManualDataUpload(SourceFileMixin, models.Model):
     PREFLIGHT_FORMAT_VERSION = '2'
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
@@ -622,7 +630,13 @@ class ManualDataUpload(models.Model):
         help_text='Level of user who created this record - used to determine who can modify it',
     )
     created = models.DateTimeField(auto_now_add=True)
-    data_file = models.FileField(upload_to=where_to_store, validators=[validate_mime_type])
+    data_file = models.FileField(
+        upload_to=core_where_to_store,
+        blank=True,
+        null=True,
+        max_length=256,
+        validators=[validate_mime_type],
+    )
     log = models.TextField(blank=True)
     error = models.CharField(max_length=50, null=True, blank=True)
     error_details = models.JSONField(blank=True, null=True)
@@ -694,6 +708,7 @@ class ManualDataUpload(models.Model):
                 return detector.result['encoding']
 
     def to_record_dicts(self) -> [dict]:
+        self.check_self_checksum()  # check the checksum before using the file
         reader = csv.DictReader(codecs.iterdecode(self.data_file.file, self.detect_file_encoding()))
         data = list(reader)
         return data

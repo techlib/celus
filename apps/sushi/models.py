@@ -23,7 +23,14 @@ from pycounter.exceptions import SushiException
 from rest_framework.exceptions import PermissionDenied
 
 from core.logic.dates import parse_date
-from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, CreatedUpdatedMixin, User
+from core.models import (
+    UL_CONS_ADMIN,
+    UL_ORG_ADMIN,
+    UL_CONS_STAFF,
+    CreatedUpdatedMixin,
+    User,
+    SourceFileMixin,
+)
 from core.task_support import cache_based_lock
 from logs.models import AccessLog, ImportBatch
 from nigiri.client import (
@@ -500,6 +507,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             file_data.seek(0)
             data_file = File(file_data)
 
+        checksum, file_size = SourceFileMixin.checksum_fileobj(data_file)
         data_file.name = filename
 
         # Make sure that file is written to disk
@@ -517,6 +525,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             start_date=start_date,
             end_date=end_date,
             data_file=data_file,
+            checksum=checksum,
+            file_size=file_size,
             log=log,
             error_code=error_code,
             when_processed=when_processed,
@@ -622,7 +632,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                         status = AttemptStatus.NO_DATA
 
         # now create the attempt instance
-        file_data.seek(0)  # make sure that file is rewind to the start
+        file_data.seek(0)  # make sure that file is rewound to the start
+        checksum, file_size = SourceFileMixin.checksum_fileobj(file_data)
         django_file = File(file_data)
         django_file.name = filename
 
@@ -641,6 +652,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             end_date=end_date,
             status=status,
             data_file=django_file,
+            checksum=checksum,
+            file_size=file_size,
             log=log,
             error_code=error_code,
             when_processed=when_processed,
@@ -654,6 +667,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         ).annotate(code=F('counter_report__code'))
 
 
+# the following must stay here as it is used in a migration
+# it is however not used anymore
 def where_to_store(instance: 'SushiFetchAttempt', filename):
     root, ext = os.path.splitext(filename)
     ts = now().strftime('%Y%m%d-%H%M%S.%f')
@@ -722,7 +737,7 @@ class AttemptStatus(models.TextChoices):
         return {cls.SUCCESS, cls.NO_DATA, cls.IMPORT_FAILED, cls.PARSING_FAILED, cls.UNPROCESSED}
 
 
-class SushiFetchAttempt(models.Model):
+class SushiFetchAttempt(SourceFileMixin, models.Model):
 
     status = models.CharField(
         max_length=20, choices=AttemptStatus.choices, default=AttemptStatus.INITIAL
@@ -734,7 +749,6 @@ class SushiFetchAttempt(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    data_file = models.FileField(upload_to=where_to_store, blank=True, null=True, max_length=256)
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
     http_status_code = models.PositiveSmallIntegerField(null=True)

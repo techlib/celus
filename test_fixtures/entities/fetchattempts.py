@@ -25,3 +25,11 @@ class FetchAttemptFactory(factory.django.DjangoModelFactory):
     import_batch = None
     status = AttemptStatus.SUCCESS
     data_file = factory.django.FileField()
+    file_size = factory.LazyAttribute(
+        lambda x: x.data_file.size if hasattr(x.data_file, 'size') else 0
+    )
+    checksum = factory.LazyAttribute(
+        lambda x: SushiFetchAttempt.checksum_fileobj(x.data_file)[0]
+        if hasattr(x.data_file, 'seek')
+        else 'foobar'
+    )

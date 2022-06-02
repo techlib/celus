@@ -84,32 +84,6 @@ class ImportBatchFullFactory(factory.django.DjangoModelFactory):
             sync_import_batch_with_clickhouse(obj)
 
 
-class ManualDataUploadFullFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = ManualDataUpload
-
-    organization = factory.SubFactory(OrganizationFactory)
-    platform = factory.SubFactory(PlatformFactory)
-    report_type = factory.SubFactory(ReportTypeFactory)
-
-    state = MduState.IMPORTED
-    when_processed = factory.LazyAttribute(
-        lambda o: fake.date_time_this_year() if o.state == MduState.IMPORTED else None
-    )
-    data_file = factory.django.FileField(data=DATA_FILE)
-
-    @factory.post_generation
-    def create_import_batches(obj, create, extracted, **kwargs):  # noqa - obj name is ok here
-        if not create:
-            return
-
-        if obj.is_processed:
-            ib = ImportBatchFullFactory.create(
-                organization=obj.organization, platform=obj.platform, report_type=obj.report_type
-            )
-            obj.import_batches.set([ib])
-
-
 class ManualDataUploadFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ManualDataUpload
@@ -123,6 +97,14 @@ class ManualDataUploadFactory(factory.django.DjangoModelFactory):
         lambda o: fake.date_time_this_year() if o.state == MduState.IMPORTED else None
     )
     data_file = factory.django.FileField(data=DATA_FILE)
+    file_size = factory.LazyAttribute(
+        lambda x: x.data_file.size if hasattr(x.data_file, 'size') else len(x.data_file)
+    )
+    checksum = factory.LazyAttribute(
+        lambda x: ManualDataUpload.checksum_fileobj(x.data_file)[0]
+        if hasattr(x.data_file, 'seek')
+        else 'foobar'
+    )
 
     @factory.post_generation
     def import_batches(self, create, extracted, **kwargs):  # noqa - obj name is ok here
@@ -131,3 +113,16 @@ class ManualDataUploadFactory(factory.django.DjangoModelFactory):
         if extracted:
             for batch in extracted:
                 self.import_batches.add(batch)
+
+
+class ManualDataUploadFullFactory(ManualDataUploadFactory):
+    @factory.post_generation
+    def import_batches(obj, create, extracted, **kwargs):  # noqa - obj name is ok here
+        if not create:
+            return
+
+        if obj.is_processed:
+            ib = ImportBatchFullFactory.create(
+                organization=obj.organization, platform=obj.platform, report_type=obj.report_type
+            )
+            obj.import_batches.set([ib])

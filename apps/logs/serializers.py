@@ -1,4 +1,4 @@
-from core.models import UL_CONS_STAFF, DataSource
+from core.models import UL_CONS_STAFF, DataSource, SourceFileMixin
 from core.serializers import UserSerializer, UserSimpleSerializer
 from django.utils.translation import gettext as _
 from organizations.models import Organization
@@ -377,6 +377,9 @@ class ManualDataUploadSerializer(ModelSerializer):
         return self._adjust_permissions(result)
 
     def create(self, validated_data):
+        checksum, size = SourceFileMixin.checksum_fileobj(validated_data['data_file'])
+        validated_data['checksum'] = checksum
+        validated_data['file_size'] = size
         result = super().create(validated_data)
         return self._adjust_permissions(result)
 

@@ -3,6 +3,8 @@ import pytest
 import pathlib
 
 from datetime import timedelta, datetime
+
+from django.core.files import File
 from django.core.management import call_command
 from django.utils.timezone import now
 
@@ -33,6 +35,8 @@ class TestFindMissingAttemptFiles:
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
             data_file='test/file.txt',
+            file_size=2,
+            checksum="foobarbaz",
         )
         SushiFetchAttempt.objects.create(
             credentials=credentials,
@@ -40,6 +44,8 @@ class TestFindMissingAttemptFiles:
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
+            file_size=0,
+            checksum="0",
         )
         assert SushiFetchAttempt.objects.count() == 2
         call_command(self.COMMAND_NAME)
@@ -58,6 +64,8 @@ class TestFindMissingAttemptFiles:
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
             data_file='test/file.txt',
+            file_size=2,
+            checksum="foobarbaz",
         )
         SushiFetchAttempt.objects.create(
             credentials=credentials,
@@ -65,6 +73,8 @@ class TestFindMissingAttemptFiles:
             end_date='2020-01-31',
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
+            file_size=0,
+            checksum="0",
         )
         assert SushiFetchAttempt.objects.count() == 2
         call_command(self.COMMAND_NAME, '-d')
@@ -108,7 +118,7 @@ class TestRemoveOrphanedFiles:
             False,
         )
 
-        # File with attempts should neve be deleted
+        # File with attempts should never be deleted
         prepare_file(
             "counter/AA-1234/AAA/5_TR_20200101-777777.888888.json", datetime(2020, 1, 1), True
         )

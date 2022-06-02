@@ -6,7 +6,7 @@ from django.core.files import File
 from django.core.files.base import ContentFile
 from django.urls import reverse
 
-from core.models import Identity, UL_ORG_ADMIN, UL_CONS_STAFF
+from core.models import Identity, UL_ORG_ADMIN, UL_CONS_STAFF, SourceFileMixin
 from core.tests.conftest import *  # noqa
 from organizations.tests.conftest import identity_by_user_type, organizations  # noqa
 from publications.tests.conftest import platforms  # noqa
@@ -14,7 +14,7 @@ from logs.tasks import prepare_preflight, import_manual_upload_data
 from logs.logic.custom_import import custom_data_to_records, import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduState
 from publications.models import Platform
-from test_fixtures.entities.logs import ManualDataUploadFullFactory
+from test_fixtures.entities.logs import ManualDataUploadFullFactory, ManualDataUploadFactory
 
 
 @pytest.mark.django_db
@@ -305,8 +305,14 @@ class TestCustomImport:
         rt = report_type_nd(0)
         settings.MEDIA_ROOT = tmp_path
         file = File(StringIO('Source,2019-01\naaaa,9\n'))
+        checksum, size = SourceFileMixin.checksum_fileobj(file)
         mdu = ManualDataUpload.objects.create(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=owner_level,
+            organization=org,
+            platform=platforms[0],
+            report_type=rt,
+            owner_level=owner_level,
+            checksum=checksum,
+            file_size=size,
         )
         mdu.data_file.save('xxx', file)
         assert mdu.import_batches.count() == 0
@@ -334,7 +340,7 @@ class TestCustomImport:
         file.name = f"something.csv"
         settings.MEDIA_ROOT = tmp_path
 
-        mdu = ManualDataUpload.objects.create(
+        mdu = ManualDataUploadFactory.create(
             report_type=report_type, organization=organization, platform=platform, data_file=file,
         )
         assert len(list(mdu.data_to_records())) == 6
@@ -365,7 +371,7 @@ class TestCustomImport:
         file.name = f"something.csv"
         settings.MEDIA_ROOT = tmp_path
 
-        mdu = ManualDataUpload.objects.create(
+        mdu = ManualDataUploadFactory.create(
             report_type=report_type, organization=organization, platform=platform, data_file=file,
         )
         assert mdu.file_is_json() == is_json

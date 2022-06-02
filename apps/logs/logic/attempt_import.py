@@ -7,6 +7,7 @@ from time import time
 from django.conf import settings
 from django.db.transaction import atomic
 
+from core.exceptions import FileConsistencyError
 from logs.exceptions import DataStructureError
 from logs.logic.data_import import import_counter_records, create_import_batch_or_crash
 from logs.models import OrganizationPlatform
@@ -50,6 +51,13 @@ def check_importable_attempt(attempt: SushiFetchAttempt):
 
 @atomic
 def import_one_sushi_attempt(attempt: SushiFetchAttempt):
+    # check file consistency first
+    try:
+        attempt.check_self_checksum()
+    except FileConsistencyError as exc:
+        attempt.mark_crashed(exc)
+        return
+
     counter_version = attempt.credentials.counter_version
     reader_cls = attempt.counter_report.get_reader_class(json_format=attempt.file_is_json())
     if not reader_cls:

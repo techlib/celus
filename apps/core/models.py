@@ -1,4 +1,6 @@
+import os
 import typing
+from hashlib import blake2b
 
 from allauth.account.models import EmailAddress, EmailConfirmation
 
@@ -11,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 from django.apps import apps
 
+from core.exceptions import FileConsistencyError
 from core.logic.url import extract_organization_id_from_request_query
 
 UL_NORMAL = 100
@@ -293,3 +296,85 @@ class CreatedUpdatedMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+def where_to_store(instance: models.Model, filename):
+    root, ext = os.path.splitext(filename)
+    ts = now().strftime('%Y%m%d-%H%M%S.%f')
+    # we do not use `isinstance` as it would require importing the models modules which
+    # would create circular imports unless we did it locally, which still seems strange.
+    if instance.__class__.__name__ == 'SushiFetchAttempt':
+        organization = instance.credentials.organization
+        return (
+            f'counter/{organization.internal_id or organization.pk}/'
+            f'{instance.credentials.platform.short_name}/'
+            f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
+        )
+    elif instance.__class__.__name__ == 'ManualDataUpload':
+        return (
+            f'custom/{instance.user_id}/{instance.report_type.short_name}-'
+            f'{instance.platform.short_name}_{ts}{ext}'
+        )
+    else:
+        return f'other/{ts}{ext}'
+
+
+class SourceFileMixin(models.Model):
+
+    DIGEST_SIZE = 32  # byte length of the checksum
+
+    data_file = models.FileField(upload_to=where_to_store, blank=True, null=True, max_length=256)
+    checksum = models.CharField(max_length=DIGEST_SIZE * 4)
+    file_size = models.PositiveIntegerField()
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def create_hasher(cls):
+        return blake2b(digest_size=cls.DIGEST_SIZE)
+
+    @classmethod
+    def checksum_fileobj(cls, fileobj) -> (str, int):
+        orig_pos = fileobj.tell()
+        fileobj.seek(0)
+        hasher = cls.create_hasher()
+        size = 0
+        while chunk := fileobj.read(1024 * 1024):
+            if isinstance(chunk, str):
+                chunk = chunk.encode('utf-8')
+            hasher.update(chunk)
+            size += len(chunk)
+        fileobj.seek(orig_pos)
+        return hasher.hexdigest(), size
+
+    def checksum_self(self) -> (str, int):
+        return self.checksum_fileobj(self.data_file)
+
+    def check_fileobj_checksum(self, fileobj):
+        """
+        Raises exception if the checksum of the file object does not match the stored value
+        """
+        file_checksum, file_size = self.checksum_fileobj(fileobj)
+        if file_checksum != self.checksum:
+            self._send_error_mail(fileobj, file_checksum)
+            raise FileConsistencyError(
+                f'File checksum does not match stored value: '
+                f'got "{file_checksum}", expected "{self.checksum}"'
+            )
+
+    def check_self_checksum(self):
+        self.check_fileobj_checksum(self.data_file)
+
+    def _send_error_mail(self, fileobj, file_checksum):
+        """
+        Extracted into a separate method to make testing easier
+        """
+        from core.tasks import async_mail_admins
+
+        async_mail_admins(
+            'File checksum mismatch',
+            f'File: {getattr(fileobj, "name", "unknown")}\n'
+            f'Expected: {self.checksum}\n'
+            f'Got: {file_checksum}\n',
+        )
