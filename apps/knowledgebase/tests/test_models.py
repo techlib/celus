@@ -89,7 +89,7 @@ INPUT_DATA = [
                 },
             },
         ],
-        "counter_registry_id": None,
+        "counter_registry_id": "11111111-1111-1111-1111-111111111111",
         "short_name": "AACR",
         "url": "https://www.aacr.org/",
     },
@@ -262,7 +262,7 @@ class TestPlatformImportAttempt:
         assert platform2.provider == "AACR"
         assert platform2.name == "American Association for Cancer Research"
         assert platform2.ext_id == 327
-        assert platform2.counter_registry_id is None
+        assert platform2.counter_registry_id == uuid.UUID("11111111-1111-1111-1111-111111111111")
         assert platform2.knowledgebase["providers"] == INPUT_DATA[1]["providers"]
         assert (
             set(
@@ -372,6 +372,10 @@ class TestPlatformImportAttempt:
         PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
             INPUT_DATA, PlatformImportAttempt.MergeStrategy.ALL,
         )
+        platform_with_removed_id = Platform.objects.get(short_name="AACR")
+        assert platform_with_removed_id.counter_registry_id == uuid.UUID(
+            "11111111-1111-1111-1111-111111111111"
+        )
         assert Platform.objects.count() == 4
         assert Platform.objects.values().get(pk=platform_no_source1.pk) == no_source1_values
         assert Platform.objects.values().get(pk=platform_erms.pk) == erms_values
@@ -388,6 +392,9 @@ class TestPlatformImportAttempt:
             INPUT_DATA2[0]["counter_registry_id"]
         )
         assert Platform.objects.values().get(pk=platform_erms.pk) == erms_values
+
+        platform_with_removed_id.refresh_from_db()
+        assert platform_with_removed_id.counter_registry_id is None
 
     def test_perform(self, data_sources, report_types):
         with requests_mock.Mocker() as m:

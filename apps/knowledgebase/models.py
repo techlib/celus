@@ -255,6 +255,15 @@ class PlatformImportAttempt(ImportAttempt):
         updated_platforms_ids = []
 
         for record in data:
+
+            # make sure that counter_registry_id is
+            # not used for other platform
+            if record["counter_registry_id"]:
+                Platform.objects.filter(
+                    models.Q(counter_registry_id=record["counter_registry_id"])
+                    & ~models.Q(ext_id=record["pk"])
+                ).update(counter_registry_id=None)
+
             updatable = dict(
                 short_name=record["short_name"],
                 name=record["name"],
