@@ -6,7 +6,6 @@ from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from django_celery_results.models import TaskResult
-from error_report.models import Error
 
 from activity.models import UserActivity
 from annotations.models import Annotation
@@ -44,7 +43,6 @@ class Command(BaseCommand):
             ImportBatch,
             Organization,
             Annotation,
-            Error,
             FlexibleDataExport,
             CachedQuery,
             Harvest,
