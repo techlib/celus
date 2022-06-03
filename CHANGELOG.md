@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [4.4.4]
+
+### Added
+
+#### Backend
+
+* Celus newly stores checksums of files from SUSHI or manually uploaded and checks them on import
+  to prevent against potential data corruption or attacks
+
+### Fixed
+
+#### Backend
+
+* merging of titles was fixed not to merge titles with the same name but without any common ID
+* a cli script for merging title out-of-band was added
+
+
 ## [4.4.3]
 
 ### Fixed
