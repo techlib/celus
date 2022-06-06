@@ -181,7 +181,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
         self.save()
 
         try:
-            # find lastest digest
+            # find latest digest
             latest_download = (
                 ImportAttempt.objects.filter(
                     source=self.source,
@@ -194,7 +194,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
                 .first()
             )
 
-            # donwload
+            # download
             resp = requests.get(self.url, headers=self.request_headers)
             resp.raise_for_status()
 

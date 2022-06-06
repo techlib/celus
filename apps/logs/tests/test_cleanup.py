@@ -1,8 +1,8 @@
 import pytest
 
-from logs.logic.cleanup import clean_obsolete_platform_title_links
+from publications.logic.cleanup import clean_obsolete_platform_title_links
 from logs.logic.data_import import import_counter_records
-from logs.models import ImportBatch, AccessLog
+from logs.models import AccessLog
 from organizations.tests.conftest import organizations  # noqa
 from publications.models import PlatformTitle
 

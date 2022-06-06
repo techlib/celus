@@ -2,8 +2,20 @@ import celery
 from django.db import transaction, DatabaseError
 
 from core.logic.error_reporting import email_if_fails
+from core.models import DataSource
 
 from .models import PlatformImportAttempt, ImportAttempt, RouterSyncAttempt
+
+
+@celery.shared_task
+@email_if_fails
+def sync_platforms_with_knowledgebase_task():
+    sources = list(DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE))
+    for source in sources:
+        attempt = PlatformImportAttempt.objects.create(
+            kind=PlatformImportAttempt.KIND_PLATFORM, source=source
+        )
+        attempt.perform()
 
 
 @celery.shared_task

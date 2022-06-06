@@ -3,7 +3,7 @@ from time import time
 
 from django.core.management.base import BaseCommand
 
-from logs.logic.cleanup import clean_obsolete_platform_title_links
+from publications.logic.cleanup import clean_obsolete_platform_title_links
 
 logger = logging.getLogger(__name__)
 

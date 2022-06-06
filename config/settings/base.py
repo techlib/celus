@@ -286,6 +286,7 @@ CELERY_TASK_ROUTES = {
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
     'knowledgebase.tasks.sync_route': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_platforms_with_knowledgebase_task': {'queue': 'celery'},
     'logs.tasks.sync_interest_task': {'queue': 'interest'},
     'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
     'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
@@ -299,6 +300,8 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.import_manual_upload_data': {'queue': 'import'},
     'logs.tasks.prepare_preflights': {'queue': 'preflight'},
     'logs.tasks.reprocess_mdu_task': {'queue': 'import'},
+    'publications.tasks.clean_obsolete_platform_title_links_task': {'queue': 'interest'},
+    'publications.tasks.merge_titles_task': {'queue': 'interest'},
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
@@ -320,11 +323,6 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': schedule(run_every=timedelta(minutes=5)),
         'options': {'expires': 5 * 60},
     },
-    'remove_old_cached_queries_task': {
-        'task': 'recache.tasks.remove_old_cached_queries_task',
-        'schedule': crontab(minute=17, hour=2),  # every day at 2:17
-        'options': {'expires': 24 * 60 * 60},
-    },
     'find_and_renew_first_due_cached_query_task': {
         'task': 'recache.tasks.find_and_renew_first_due_cached_query_task',
         'schedule': schedule(run_every=timedelta(minutes=29)),
@@ -334,16 +332,6 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'scheduler.tasks.plan_schedulers_triggering',
         'schedule': schedule(run_every=timedelta(minutes=1)),
         'options': {'expires': 60},
-    },
-    'scheduler_update_automatic_harvesting': {
-        'task': 'scheduler.tasks.update_automatic_harvesting',
-        'schedule': crontab(minute=50, hour=23),  # every day at 23:50
-        'options': {'expires': 24 * 60 * 60},
-    },
-    'update_report_approx_record_count_task': {
-        'task': 'logs.tasks.update_report_approx_record_count_task',
-        'schedule': crontab(hour=1, minute=13),  # every day at 1:13
-        'options': {'expires': 24 * 60 * 60},
     },
     'knowledgebase_sync_routes': {
         'task': 'knowledgebase.tasks.sync_routes',
@@ -369,6 +357,37 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'core.tasks.empty_task_export',
         'schedule': schedule(run_every=timedelta(minutes=8)),
         'options': {'expires': 8 * 60},
+    },
+    # crontab schedules - daily stuff
+    'scheduler_update_automatic_harvesting': {
+        'task': 'scheduler.tasks.update_automatic_harvesting',
+        'schedule': crontab(minute=50, hour=23),  # every day at 23:50
+        'options': {'expires': 24 * 60 * 60},
+    },
+    'clean_obsolete_platform_title_links': {
+        'task': 'publications.tasks.clean_obsolete_platform_title_links',
+        'schedule': crontab(hour=0, minute=13),  # every day at 0:13
+        'options': {'expires': 24 * 60 * 60},
+    },
+    'merge_titles_task': {
+        'task': 'publications.tasks.merge_titles_task',
+        'schedule': crontab(hour=0, minute=37),  # every day at 0:37
+        'options': {'expires': 24 * 60 * 60},
+    },
+    'update_report_approx_record_count_task': {
+        'task': 'logs.tasks.update_report_approx_record_count_task',
+        'schedule': crontab(hour=1, minute=13),  # every day at 1:13
+        'options': {'expires': 24 * 60 * 60},
+    },
+    'remove_old_cached_queries_task': {
+        'task': 'recache.tasks.remove_old_cached_queries_task',
+        'schedule': crontab(minute=17, hour=2),  # every day at 2:17
+        'options': {'expires': 24 * 60 * 60},
+    },
+    'sync_platforms_with_knowledgebase_task': {
+        'task': 'knowledgebase.tasks.sync_platforms_with_knowledgebase_task',
+        'schedule': crontab(minute=33, hour=2),  # every day at 2:33
+        'options': {'expires': 24 * 60 * 60},
     },
 }
 

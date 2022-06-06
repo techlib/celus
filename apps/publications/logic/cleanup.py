@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def clean_obsolete_platform_title_links(pretend=False):
     """
-    Doing it in one query is possible, but takes a very long time. Therefore
+    Doing it in one query is possible, but takes a very long time. Therefor
     we go by platform-organization tuples.
     :return:
     """
