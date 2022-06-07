@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [4.4.5]
+
+### Changes
+
+#### Backend
+
+* lowercase 'x' as last character of ISSN is replaced by upper case 'X'
+* `hcube` was update to speed up deleting of data from Clickhouse in newer versions
+
+### Fixed
+
+#### Backend
+
+* synchronization with knowledgebase unassignes `counter_registry_id` from platforms which no longer use it
+
+
 ## [4.4.4]
 
 ### Added
