@@ -5,7 +5,7 @@ tests:run_tests:
   services:
     - postgres
     - redis
-    - name: yandex/clickhouse-server
+    - name: clickhouse/clickhouse-server
       alias: clickhouse
   variables:
     DJANGO_SETTINGS_MODULE: config.settings.test
