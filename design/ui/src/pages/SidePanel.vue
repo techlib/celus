@@ -135,6 +135,11 @@ export default {
               linkTo: "title-list",
             },
             {
+              title: this.$i18n.t("pages.interest_overview"),
+              icon: "far fa-flag",
+              linkTo: "interest-overview",
+            },
+            {
               title: this.$i18n.t("pages.heatmap"),
               icon: "far fa-map",
               linkTo: "heatmap",
@@ -246,10 +251,6 @@ export default {
                   icon: "fa fa-toolbox",
                   linkTo: "maintenance",
                   show: this.showManagementStuff,
-                },
-                {
-                  title: this.$i18n.t("pages.interest_overview"),
-                  linkTo: "interest-overview",
                 },
               ],
             },
