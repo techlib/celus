@@ -131,12 +131,12 @@ def merge_titles(titles: List[Title]) -> Title:
                 )
             ),
         )
-    if save:
-        dest.save()
     logger.debug(
         'Deleting merged titles: %s',
         Title.objects.filter(pk__in=[t.pk for t in to_remove]).delete(),
     )
+    if save:
+        dest.save()
     # deal with clickhouse
     if settings.CLICKHOUSE_SYNC_ACTIVE:
         for ib in ImportBatch.objects.filter(pk__in=ibs_to_resync):
