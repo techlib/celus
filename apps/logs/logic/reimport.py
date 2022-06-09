@@ -162,7 +162,9 @@ def reimport_import_batch_with_fa(ib: ImportBatch) -> ImportBatch:
         raise DataStructureError('Import batch without FA')
     # check that we have the raw data before we delete anything
     if source_fa and (source_fa.data_file == '' or not os.path.isfile(source_fa.data_file.path)):
-        raise SourceFileMissingError()
+        raise SourceFileMissingError(
+            source_fa.data_file.path, source_fa.file_size, source_fa.checksum
+        )
 
     if source_fa.status == AttemptStatus.NO_DATA:
         if (
@@ -198,7 +200,9 @@ def reimport_import_batch_with_fa(ib: ImportBatch) -> ImportBatch:
 @atomic
 def reimport_mdu_batch(mdu_batch: MDUBatch):
     if not os.path.isfile(mdu_batch.mdu.data_file.path):
-        raise SourceFileMissingError()
+        raise SourceFileMissingError(
+            mdu_batch.mdu.data_file.path, mdu_batch.mdu.file_size, mdu_batch.mdu.checksum
+        )
     # those to delete are simply deleted
     mdu_batch.to_delete.delete()
     # those to reimport are also deleted, but clashing IBs are deleted as well,

@@ -73,6 +73,12 @@ class Command(BaseCommand):
             help='Skip calculating some costly statistics for the output',
         )
         parser.add_argument(
+            '--no-filecheck',
+            dest='no_filecheck',
+            action='store_true',
+            help='Skip checking existence of source files',
+        )
+        parser.add_argument(
             '-m',
             '--show-missing-files',
             dest='show_missing_files',
@@ -181,20 +187,21 @@ class Command(BaseCommand):
                 'applied later during the actual processing'
             )
         if not options['do_it']:
-            # at least print some stats about missing files if not processing them
-            missing_file = 0
-            for ib in to_do:
-                if not has_source_data_file(ib):
-                    if options['show_missing_files']:
-                        logger.debug(
-                            f'Missing file: {ib.organization}, {ib.platform}, {ib.report_type}, '
-                            f'{ib.date} (timestamp: {ib.created})'
-                        )
-                    missing_file += 1
-            if missing_file:
-                logger.warning(
-                    f'{missing_file} import batches have source but the file does not exist :('
-                )
+            if not options['no_filecheck']:
+                # at least print some stats about missing files if not processing them
+                missing_file = 0
+                for ib in to_do:
+                    if not has_source_data_file(ib):
+                        if options['show_missing_files']:
+                            logger.debug(
+                                f'Missing file: {ib.organization}, {ib.platform}, '
+                                f'{ib.report_type}, {ib.date} (timestamp: {ib.created})'
+                            )
+                        missing_file += 1
+                if missing_file:
+                    logger.warning(
+                        f'{missing_file} import batches have source but the file does not exist :('
+                    )
             logger.warning('Use --do-it to really do it.')
             return
         if trace_file := options.get('trace_file'):
@@ -227,8 +234,12 @@ class Command(BaseCommand):
                 logger.info(f"Reimport MDU #{mdu_batch.mdu.pk}")
                 try:
                     reimport_mdu_batch(mdu_batch)
-                except SourceFileMissingError:
+                except SourceFileMissingError as exc:
                     stats['mdu missing file'] += 1
+                    logger.warning(
+                        f'Missing source file: {exc.filename}, size: {exc.size}, '
+                        f'checksum: {exc.checksum}'
+                    )
                 except Exception as exc:
                     logger.error('Error when reimporting: %s', exc)
                     stats['mdu reimport error'] += 1
@@ -258,8 +269,12 @@ class Command(BaseCommand):
                     new_ib = reimport_import_batch_with_fa(ib)
                     logger.info(f"Created new IB: #{new_ib.pk}")
                     self.write_trace(ib_id, ib, monotonic() - t)
-                except SourceFileMissingError:
+                except SourceFileMissingError as exc:
                     stats['fa missing file'] += 1
+                    logger.warning(
+                        f'Missing source file: {exc.filename}, size: {exc.size}, '
+                        f'checksum: {exc.checksum}'
+                    )
                 except Exception as exc:
                     logger.error('Error when reimporting: %s', exc)
                     stats['fa reimport error'] += 1

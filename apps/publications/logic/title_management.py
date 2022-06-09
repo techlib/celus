@@ -1,6 +1,6 @@
 import logging
 from itertools import combinations
-from typing import List, Generator, Optional
+from typing import List, Generator, Optional, Set, Union
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -87,10 +87,15 @@ def sort_mergeable_titles(titles: List[Title]) -> List[Title]:
     )
 
 
-def merge_titles(titles: List[Title]) -> Title:
+def merge_titles(titles: List[Title], skip_ch_sync=False) -> (Title, Set[int]):
     """
     Joins data from given titles under the first title and changes other data
     (AccessLogs, PlatformTitles) to match the new title and deletes the other titles.
+
+    if `skip_ch_sync` is given, no sync with Clickhouse will be performed. It is up to the
+    calling code to do it for all the import batches involved (their ids are returned as part 2).
+
+    :return: (remaining title, set of import batch ids modified by the merge)
     """
     dest, *to_remove = titles
     save = False
@@ -108,29 +113,7 @@ def merge_titles(titles: List[Title]) -> Title:
         if uris_extra := set(title.uris) - set(dest.uris):
             dest.uris += list(uris_extra)
             save = True
-        ibs_to_resync |= set(
-            AccessLog.objects.filter(target=title)
-            .values_list('import_batch_id', flat=True)
-            .distinct()
-        )
-        logger.debug(
-            'AccessLog title update: %s',
-            AccessLog.objects.filter(target=title).update(target_id=dest.pk),
-        )
-        logger.debug(
-            'PlatformTitle title update: %d',
-            len(
-                PlatformTitle.objects.bulk_create(
-                    [
-                        PlatformTitle(title=dest, **rec)
-                        for rec in PlatformTitle.objects.filter(title=title).values(
-                            'platform_id', 'organization_id', 'date'
-                        )
-                    ],
-                    ignore_conflicts=True,  # PlatformTitles may already exist, so ignore conflicts
-                )
-            ),
-        )
+        ibs_to_resync |= replace_title(title, dest)
     logger.debug(
         'Deleting merged titles: %s',
         Title.objects.filter(pk__in=[t.pk for t in to_remove]).delete(),
@@ -141,4 +124,36 @@ def merge_titles(titles: List[Title]) -> Title:
     if settings.CLICKHOUSE_SYNC_ACTIVE:
         for ib in ImportBatch.objects.filter(pk__in=ibs_to_resync):
             resync_import_batch_with_clickhouse(ib)
-    return dest
+    return dest, ibs_to_resync
+
+
+def replace_title(source: Title, dest: Union[Title, int]) -> Set[int]:
+    """
+    Replaces the `source` title with the `dest` title in all related models. `dest` may be either
+    a Title instance or a pk of one.
+
+    Returns a set of IDs of import batches touched by the change
+    """
+    dest_pk = dest.pk if isinstance(dest, Title) else dest
+    ibs_to_resync = set(
+        AccessLog.objects.filter(target=source).values_list('import_batch_id', flat=True).distinct()
+    )
+    logger.debug(
+        'AccessLog title update: %s',
+        AccessLog.objects.filter(target=source).update(target_id=dest_pk),
+    )
+    logger.debug(
+        'PlatformTitle title update: %d',
+        len(
+            PlatformTitle.objects.bulk_create(
+                [
+                    PlatformTitle(title_id=dest_pk, **rec)
+                    for rec in PlatformTitle.objects.filter(title=source).values(
+                        'platform_id', 'organization_id', 'date'
+                    )
+                ],
+                ignore_conflicts=True,  # PlatformTitles may already exist, so ignore conflicts
+            )
+        ),
+    )
+    return ibs_to_resync

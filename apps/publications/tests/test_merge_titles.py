@@ -233,7 +233,7 @@ class TestLogicTitleManagement:
         exp_pt_count = (
             PlatformTitle.objects.values('organization', 'platform', 'date').distinct().count()
         )  # only one org, platform for each date
-        remaining = merge_titles(matching_10)
+        remaining, _ibs = merge_titles(matching_10)
         assert Title.objects.count() == 1
         assert prev_count == AccessLog.objects.count(), 'accesslog count must be preserved'
         assert prev_count == remaining.accesslog_set.count(), 'all accesslogs belong to remaining'

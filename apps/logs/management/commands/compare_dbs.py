@@ -4,6 +4,7 @@ from collections import Counter
 from time import monotonic
 
 import xlsxwriter
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import BaseCommand
 from django.db import models
 from django.db.models import Q, Sum, Count
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
 
     help = 'Compares the `default` database to the `old` one from the settings and creates a report'
-    annot_keys = ['sum', 'ib_count', 'title_count']
+    annot_keys = ['sum', 'ib_count_active', 'ib_count_complete', 'ib_ids_active', 'title_count']
 
     def __init__(self, stdout=None, stderr=None, no_color=False, force_color=False):
         super().__init__(stdout, stderr, no_color, force_color)
@@ -92,7 +93,12 @@ class Command(BaseCommand):
 
             header_row += ['before', 'after', 'diff', 'rel. diff']
             if 'title_count' in spec.get('extra', []):
-                header_row += ['titles before', 'titles after', 'IBs before']
+                header_row += [
+                    'titles before',
+                    'titles after',
+                    'IBs before/active',
+                    'IBs before/all',
+                ]
             # add notes column to make sure it is part of the auto-filter created later
             header_row += ['notes']
             sheet.write_row(0, 0, header_row, self.header_fmt)
@@ -103,7 +109,8 @@ class Command(BaseCommand):
                 .annotate(
                     sum=Sum('value'),
                     title_count=Count('target_id', distinct=True),
-                    ib_count=Count('import_batch_id', distinct=True),
+                    ib_count_active=Count('import_batch_id', distinct=True),
+                    ib_ids_active=ArrayAgg('import_batch_id', distinct=True),
                 )
                 .order_by(*query_key)
             )
@@ -113,6 +120,16 @@ class Command(BaseCommand):
                 }
                 for rec in qs.using('old')
             }
+            # ib_count above is only active IBs from ALs, but there may be empty ones
+            # we capture them
+            ib_counts = {
+                tuple(rec[k] for k in query_key): {
+                    _k: _v for _k, _v in rec.items() if _k in self.annot_keys
+                }
+                for rec in ImportBatch.objects.values(*query_key)
+                .annotate(ib_count_complete=Count('id'))
+                .using('old')
+            }
 
             row_idx = 0
             stats = Counter()
@@ -121,9 +138,21 @@ class Command(BaseCommand):
             for i, rec in enumerate(qs):
                 grp_id = tuple(rec[k] for k in query_key)
                 seen_grp_ids.add(grp_id)
-                old_rec = old.get(grp_id, {k: 0 for k in self.annot_keys})
+                old_rec = old.get(
+                    grp_id, {k: 0 if k != 'ib_ids_active' else [] for k in self.annot_keys}
+                )
                 if self.process_row(
-                    row_idx, is_fk, key, mappings, max_lens, old_rec, rec, sheet, spec, stats
+                    row_idx,
+                    is_fk,
+                    key,
+                    mappings,
+                    max_lens,
+                    old_rec,
+                    rec,
+                    sheet,
+                    spec,
+                    stats,
+                    ib_counts,
                 ):
                     row_idx += 1
             # process old stuff to see if something was missing in the new one
@@ -135,7 +164,17 @@ class Command(BaseCommand):
                     }
                     rec['sum'] = 0
                     if self.process_row(
-                        row_idx, is_fk, key, mappings, max_lens, old_value, rec, sheet, spec, stats,
+                        row_idx,
+                        is_fk,
+                        key,
+                        mappings,
+                        max_lens,
+                        old_value,
+                        rec,
+                        sheet,
+                        spec,
+                        stats,
+                        ib_counts,
                     ):
                         row_idx += 1
 
@@ -173,7 +212,18 @@ class Command(BaseCommand):
         workbook.close()
 
     def process_row(
-        self, i, is_fk, key, mappings, max_lens, old_rec: dict, rec: dict, sheet, spec, stats
+        self,
+        i,
+        is_fk,
+        key,
+        mappings,
+        max_lens,
+        old_rec: dict,
+        rec: dict,
+        sheet,
+        spec,
+        stats,
+        ib_counts: dict,
     ):
         new_value = rec['sum']
         old_value = old_rec['sum']
@@ -188,6 +238,7 @@ class Command(BaseCommand):
             cur_perc_fmt = self.warn_perc_fmt if spec['match'] != 'hide' else self.perc_fmt
             stats['mismatch'] += 1
         row = []
+        query_key = []
         for key_dim in key:
             if is_fk[key_dim]:
                 key_attr = f'{key_dim}_id'
@@ -195,8 +246,11 @@ class Command(BaseCommand):
                 s = str(mappings[key_dim].get(rec[key_attr], rec[key_attr]))
                 row.append(s)
                 max_lens[key_dim] = max(max_lens[key_dim], len(s))
+                query_key.append(rec[key_attr])
             else:
                 row.append(str(rec[key_dim]))
+                query_key.append(rec[key_dim])
+        query_key = tuple(query_key)
         sheet.write_row(i + 1, 0, [*row, old_value, new_value], fmt)
         # writing formulas with empty value to force recalc in LibreOffice
         letter1 = string.ascii_letters[len(row) + 1]
@@ -216,35 +270,30 @@ class Command(BaseCommand):
                 [
                     old_rec.get('title_count', 0),
                     rec.get('title_count', 0),
-                    old_rec.get('ib_count', 0),
+                    old_rec.get('ib_count_active', 0),
+                    ib_counts.get(query_key, {}).get('ib_count_complete', 0),
                 ],
                 self.base_fmt,
             )
-            last_col += 3
+            last_col += 4
         if 'filenames' in spec.get('extra', []):
-            ib_subq = ImportBatch.objects.filter(**fltr).values('id').distinct()
-            fas = SushiFetchAttempt.objects.filter(import_batch_id__in=ib_subq.using('old')).using(
-                'old'
-            )
-            mdus = ManualDataUpload.objects.filter(import_batches__in=ib_subq.using('old')).using(
-                'old'
-            )
+            ib_ids = old_rec['ib_ids_active']
+            fas = SushiFetchAttempt.objects.filter(import_batch_id__in=ib_ids).using('old')
+            mdus = ManualDataUpload.objects.filter(import_batches__pk__in=ib_ids).using('old')
             fnames = [fa.data_file.name for fa in [*fas, *mdus]]
 
             if len(fnames) == 0:
                 # no files, try with current DB
+                ib_subq = ImportBatch.objects.filter(**fltr).values('id').distinct()
                 fas = SushiFetchAttempt.objects.filter(import_batch_id__in=ib_subq)
                 mdus = ManualDataUpload.objects.filter(import_batches__in=ib_subq)
                 fnames = [fa.data_file.name for fa in [*fas, *mdus]]
 
-            # sheet.write_comment(
-            #     i + 1, last_col, "Filenames:\n\n" + '\n'.join(fnames), {'x_scale': 3.0}
-            # )
             fnames.sort()
             sheet.write_string(i + 1, last_col + 1, '; '.join(fnames), self.base_fmt)
             last_col += 1
             file_comp = []
-            if len(fnames) == 2:
+            if len(fnames) == 2 and 'ib_compare' in spec.get('extra', []):
                 try:
                     dims1 = self.counter_file_stats(fnames[0], fltr['report_type_id'])
                 except Exception as exc:

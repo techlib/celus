@@ -1,25 +1,17 @@
-import csv
 import logging
-from collections import Counter
-from io import StringIO
-from time import monotonic
 
+from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import Count, Min, Q, F, Value, Exists, OuterRef
+from django.db.models import Count, F, Value, Exists, OuterRef
 from django.db.models.functions import Concat
-from django.db.transaction import atomic
+from django.db.transaction import atomic, on_commit
 
-from logs.logic.reimport import (
-    find_import_batches_to_reimport,
-    reimport_import_batch_with_fa,
-    SourceFileMissingError,
-    has_source_data_file,
-    reimport_mdu_batch,
-)
+from logs.logic.clickhouse import resync_import_batch_with_clickhouse
+from logs.logic.data_import import TitleManager
 from logs.models import ImportBatch, AccessLog
+from publications.logic.title_management import replace_title
 from publications.models import Title
-from sushi.models import SushiCredentials
 
 logger = logging.getLogger(__name__)
 
@@ -34,17 +26,23 @@ class Command(BaseCommand):
     title_prefix = '_foo42_'
 
     def add_arguments(self, parser):
+        parser.add_argument('--details', dest='details', action='store_true')
         parser.add_argument('--do-it', dest='do_it', action='store_true')
         parser.add_argument(
-            'phase', choices=['prepare', 'cleanup'], help='Which phase should be run'
+            'phase',
+            choices=['prepare', 'cleanup', 'resolve_remaining'],
+            help='Which phase should be run',
         )
 
     @atomic
     def handle(self, *args, **options):
+        self.options = options
         if options['phase'] == 'prepare':
             self.prepare()
         elif options['phase'] == 'cleanup':
             self.cleanup()
+        elif options['phase'] == 'resolve_remaining':
+            self.resolve_remaining()
         if not options['do_it']:
             raise CommandError('Not doing anything - use --do-it to really make the changes')
 
@@ -72,8 +70,60 @@ class Command(BaseCommand):
         foo_count = Title.objects.filter(name__startswith=self.title_prefix).count()
         logger.info(f'Original titles with prefix still existing: {foo_count}')
         if foo_count:
-            for title in Title.objects.filter(name__startswith=self.title_prefix).annotate(
-                al_count=Count('accesslog'),
-                ibs=ArrayAgg('accesslog__import_batch_id', distinct=True),
-            ):
-                logger.info(f'{title.pk},{title.name},{title.al_count},{title.ibs}')
+            if self.options['details']:
+                for title in Title.objects.filter(name__startswith=self.title_prefix).annotate(
+                    al_count=Count('accesslog'),
+                    ibs=ArrayAgg('accesslog__import_batch_id', distinct=True),
+                ):
+                    logger.info(f'{title.pk},{title.name},{title.al_count},{title.ibs}')
+            else:
+                logger.info(
+                    'To get more info about these titles, run with --details. To resolve them '
+                    '(merge with existing or rename), run the `resolve_remaining` phase.'
+                )
+
+    def resolve_remaining(self):
+        """
+        Go over all 'foobar' titles and:
+
+        * rename them to the original name if no matching title exists
+        * replace them by new title if it exists - without merging the IDs
+        """
+        ibs_to_resync = set()
+        to_remove = set()
+        renamed_count = 0
+        tt2s = []
+        for title in Title.objects.filter(name__startswith=self.title_prefix):
+            name_clean = title.name[len(self.title_prefix) :]
+            title_rec = TitleManager.title_to_titlerec(title)
+            title_rec.name = name_clean
+            tt2s.append((title, title_rec))
+
+        tm = TitleManager()
+        tm.prefetch_titles([title_rec for _title, title_rec in tt2s])
+        for title, title_rec in tt2s:
+            newer = tm.find_matching_title(title_rec)
+            if newer:
+                logger.debug(f'Replacing "{title}" (#{title.pk}) with #{newer.pk}')
+                ibs_to_resync |= replace_title(title, newer.pk)
+                to_remove.add(title.pk)
+            else:
+                logger.debug(f'Renaming "{title}" back to "{title_rec.name}"')
+                title.name = title_rec.name
+                title.save()
+                renamed_count += 1
+        if to_remove:
+            logger.debug(
+                'Removing replaced titles: %s', Title.objects.filter(pk__in=to_remove).delete()
+            )
+
+        def resync_clickhouse():
+            if ibs_to_resync and settings.CLICKHOUSE_SYNC_ACTIVE:
+                for ib in ImportBatch.objects.filter(pk__in=ibs_to_resync):
+                    resync_import_batch_with_clickhouse(ib)
+
+        on_commit(resync_clickhouse)
+
+        logger.info('Renamed %d titles; replaced %d titles', renamed_count, len(to_remove))
+        foo_count = Title.objects.filter(name__startswith=self.title_prefix).count()
+        logger.info(f'Original titles with prefix still existing: {foo_count}')

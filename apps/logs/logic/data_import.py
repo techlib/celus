@@ -132,6 +132,7 @@ class TitleManager:
 
     def __init__(self):
         self.name_to_records: Dict[str, List[TitleCompareRec]] = {}
+        self._prefetch_done = False
         self.stats = Counter()
         # below we cache the incoming name and ids and map them to the TitleRecord to speed up
         # processing. We similarly cache the TitleRecord -> Title conversion
@@ -180,6 +181,7 @@ class TitleManager:
                     proprietary_ids=row['proprietary_ids'],
                 )
             )
+        self._prefetch_done = True
         logger.debug('Prefetched %d records', len(self.name_to_records))
 
     @classmethod
@@ -250,7 +252,7 @@ class TitleManager:
         if not self.name_to_records:
             self.prefetch_titles([record])
 
-        winner = self._find_matching_title(record)
+        winner = self.find_matching_title(record)
 
         if not winner:
             # let's create the title
@@ -318,7 +320,9 @@ class TitleManager:
         self._title_rec_to_title_cache[cache_key] = winner.pk
         return winner.pk
 
-    def _find_matching_title(self, record: TitleRec) -> Optional[TitleCompareRec]:
+    def find_matching_title(self, record: TitleRec) -> Optional[TitleCompareRec]:
+        if not self._prefetch_done:
+            raise ValueError('.prefetch_titles was not done - you must do it before calling this')
         candidates = self.name_to_records.get(record.name.lower(), [])
         if candidates:
             return self.select_best_candidate(record, candidates)

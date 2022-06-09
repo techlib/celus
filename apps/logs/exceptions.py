@@ -10,6 +10,12 @@ class SourceFileMissingError(Exception):
     Used in re-importing code if is finds that the file to read is not there
     """
 
+    def __init__(self, filename, size, checksum, *args: object) -> None:
+        super().__init__(*args)
+        self.filename = filename
+        self.size = size
+        self.checksum = checksum
+
 
 class WrongState(RuntimeError):
     """
