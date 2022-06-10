@@ -1,20 +1,27 @@
 from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
 from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils import translation
-from rest_framework import status
+from django_celery_results.models import TaskResult
+from rest_framework import status, mixins
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 
-from core.models import User
+from core.models import User, TaskProgress
 from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
-from core.serializers import EmailVerificationSerializer, UserExtraDataSerializer, UserSerializer
-
+from core.serializers import (
+    EmailVerificationSerializer,
+    UserExtraDataSerializer,
+    UserSerializer,
+    TaskProgressSerializer,
+)
 from .signals import password_reset_signal
 from .tasks import erms_sync_users_and_identities_task
 
@@ -177,3 +184,10 @@ class UserPasswordResetView(PasswordResetConfirmView):
         response = super().post(request, *args, **kwargs)
         password_reset_signal.send(self.__class__, request=request, user=serializer.user)
         return response
+
+
+class CeleryTaskStatusViewSet(mixins.RetrieveModelMixin, GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TaskProgressSerializer
+    queryset = TaskProgress.objects.all()
+    lookup_field = 'task_id'

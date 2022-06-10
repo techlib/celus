@@ -4,14 +4,58 @@
 en:
   no_info: Unfortunately there are no data about titles available for this platform.
   sushi: Sushi
+  raw_export_text: |
+    You can export all records stored for this platform in a CSV format.
+    The data will be in a raw format very closely matching the structure of the Celus database.
+    The format is not suitable for reporting, but rather for further machine processing.
+  raw_export_reporting_link: For smarter and very configurable data export use the {reporting_module}.
+  reporting_module: Reporting module
+  data_management: Data management
+  delete_data_text: |
+    If you for some reason need to delete all data for this platform, you can do it using the button below.
+    It will remove all the harvested and/or manually uploaded usage data. If you have
+    SUSHI credentials present, they will be preserved to allow you subsequent reharvesting of the data.
+    Also any harvests planned for the future will be preserved and run at their assigned time.
+  error_loading_data: There was an error loading data for this platform.
+  platform_does_not_exist: Sorry, such platform does not exist.
+  unconnected_platform: |
+    The platform "{platform}" is not associated with the selected organization. To be able to
+    display usage data for you, you need to create SUSHI credentials for this platform or manually
+    upload some data for it.
 
 cs:
   no_info: Pro tuto platformu bohužel nejsou dostupná žádná data o titulech.
   sushi: Sushi
+  raw_export_text: |
+    Zde můžete vyexportovat všechna data pro tuto platformu ve formátu CSV.
+    Data budou uložena v surové podobě, která blízce odpovídá struktuře databáze Celus.
+    Formát není vhodný pro přímý reporting, hodí se zejména pro další strojové zpracování.
+  raw_export_reporting_link: Pro chytřejší a vysoce konfigurovatelný export doporučujeme {reporting_module}.
+  reporting_module: modul Reporting
+  data_management: Správa dat
+  delete_data_text: |
+    Pokud z nějakého důvodu potřebujete smazat všechna data pro tuto platformu, můžete použít tlačítko níže.
+    Smažete tak všechna stažená a/nebo ručně nahraná data o využívanosti. Pokud máte pro platformu
+    uloženy přihlašovací údaje pro SUSHI, budou zachována pro případné následné stažení nových dat.
+    Také sklízení dat naplánované do budoucnosti bude zachováno a spouštěno ve stanoveném čase.
+  error_loading_data: Při přípravě informací o této platformě došlo k chybě.
+  platform_does_not_exist: Je nám líto, ale taková platofma neexistuje.
+  unconnected_platform: |
+    Platforma "{platform}" není přiřazená k právě vybrané instituci. Abychom vám pro ni mohli zobrazit data,
+    je třeba pro ni nejprve přidat přihlašovací údaje SUSHI a nebo manuálně nahrát data.
 </i18n>
 
 <template>
-  <div class="px-md-2">
+  <div v-if="loading">
+    <LoaderWidget />
+  </div>
+  <div v-else-if="errorLoadingDetails" class="mt-10 mx-6">
+    <ErrorPlaceholder :text="$t('error_loading_data')" />
+  </div>
+  <div v-else-if="platformDoesNotExist" class="mt-10 mx-6">
+    <ErrorPlaceholder :text="$t('platform_does_not_exist')" />
+  </div>
+  <div v-else class="px-md-2">
     <div>
       <v-breadcrumbs :items="breadcrumbs" class="pl-0">
         <template v-slot:item="props">
@@ -28,20 +72,20 @@ cs:
       </v-breadcrumbs>
     </div>
 
-    <h2 class="mb-0">{{ platform ? platform.name : "" }}</h2>
+    <h2 class="mb-0">{{ platformObj ? platformObj.name : "" }}</h2>
 
     <v-container fluid class="px-0">
       <v-row>
         <v-col cols="auto" mr-sm-4>
-          <table v-if="platform" class="overview mb-4 elevation-2">
+          <table v-if="platformObj" class="overview mb-4 elevation-2">
             <tr>
               <th>{{ $t("labels.provider") }}</th>
-              <td>{{ platform.provider }}</td>
+              <td>{{ platformObj.provider }}</td>
             </tr>
             <tr>
               <th>{{ $t("labels.url") }}</th>
               <td>
-                <a :href="platform.url">{{ platform.url }}</a>
+                <a :href="platformObj.url">{{ platformObj.url }}</a>
               </td>
             </tr>
           </table>
@@ -108,28 +152,26 @@ cs:
               </div>
               <div v-if="showAdminStuff">
                 <AddAnnotationButton
-                  :platform="platform"
+                  :platform="platformObj"
                   fix-platform
                   @update="refreshAnnotations()"
                   text
                   small
                 />
               </div>
-
-              <raw-data-export-widget
-                :platform="platformId"
-                text
-                small
-              ></raw-data-export-widget>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
     </v-container>
 
-    <section class="mb-5" v-if="platform">
+    <v-alert v-if="unconnectedPlatform" type="warning" outlined>
+      {{ $t("unconnected_platform", { platform: unconnectedPlatform.name }) }}
+    </v-alert>
+
+    <section class="mb-5" v-if="platformObj">
       <AnnotationsWidget
-        :platform="platform"
+        :platform="platformObj"
         :allow-add="showAdminStuff"
         fix-platform
         ref="annotWidget"
@@ -146,17 +188,21 @@ cs:
     >
       <v-tabs-slider></v-tabs-slider>
 
-      <v-tab href="#chart">
+      <v-tab href="#chart" v-if="platform">
         <v-icon class="mr-2">fa-chart-bar</v-icon>
         <span v-text="$t('charts')"></span>
       </v-tab>
-      <v-tab href="#titles">
+      <v-tab href="#titles" v-if="platform">
         <v-icon class="mr-2">fa-bars</v-icon>
         <span v-text="$t('titles')"></span>
       </v-tab>
-      <v-tab v-if="showAdminStuff" href="#sushi">
+      <v-tab v-if="showAdminStuff && platformObj" href="#sushi">
         <v-icon class="mr-2">fa-download</v-icon>
         <span v-text="$t('sushi')"></span>
+      </v-tab>
+      <v-tab v-if="showAdminStuff && platform" href="#admin">
+        <v-icon class="mr-2">fa-tools</v-icon>
+        <span v-text="$t('data_management')"></span>
       </v-tab>
 
       <v-tabs-items v-model="activeTab" class="platform-page">
@@ -202,6 +248,64 @@ cs:
           >
           </SushiCredentialsManagementWidget>
         </v-tab-item>
+
+        <v-tab-item value="admin" v-if="showAdminStuff">
+          <v-sheet class="ma-1">
+            <v-card>
+              <v-card-text>
+                <v-container class="pa-2 pb-10">
+                  <v-row>
+                    <v-col>
+                      <h3 class="text-h4">{{ $t("labels.data_export") }}</h3>
+                    </v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col>
+                      <p>{{ $t("raw_export_text") }}</p>
+                      <p>
+                        <i18n path="raw_export_reporting_link">
+                          <template #reporting_module="">
+                            <router-link :to="{ name: 'flexitable' }">{{
+                              $t("reporting_module")
+                            }}</router-link>
+                          </template>
+                        </i18n>
+                      </p>
+                    </v-col>
+                  </v-row>
+                  <v-row no-gutters>
+                    <v-col>
+                      <raw-data-export-widget
+                        color="primary"
+                        :platform="platformId"
+                      ></raw-data-export-widget>
+                    </v-col>
+                  </v-row>
+
+                  <v-row class="pt-4">
+                    <v-col>
+                      <h3 class="text-h4">{{ $t("labels.delete_data") }}</h3>
+                    </v-col>
+                  </v-row>
+
+                  <v-row>
+                    <v-col>
+                      <p>{{ $t("delete_data_text") }}</p>
+                    </v-col>
+                  </v-row>
+                  <v-row no-gutters>
+                    <v-col>
+                      <DeletePlatformDataWidget
+                        :platform="platform"
+                        @finished="deleteFinished"
+                      />
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-card-text>
+            </v-card>
+          </v-sheet>
+        </v-tab-item>
       </v-tabs-items>
     </v-tabs>
   </div>
@@ -218,10 +322,16 @@ import AddAnnotationButton from "@/components/AddAnnotationButton";
 import InterestGroupSelector from "@/components/InterestGroupSelector";
 import RawDataExportWidget from "@/components/RawDataExportWidget";
 import SushiCredentialsManagementWidget from "@/components/sushi/SushiCredentialsManagementWidget";
+import DeletePlatformDataWidget from "@/components/admin/DeletePlatformDataWidget";
+import ErrorPlaceholder from "@/components/util/ErrorPlaceholder";
+import LoaderWidget from "@/components/util/LoaderWidget";
 
 export default {
   name: "PlatformDetailPage",
   components: {
+    LoaderWidget,
+    ErrorPlaceholder,
+    DeletePlatformDataWidget,
     SushiCredentialsManagementWidget,
     TitleList,
     CounterChartSet,
@@ -237,6 +347,11 @@ export default {
     return {
       platform: null,
       activeTab: this.$route.query.tab || "chart",
+      platformNotConnected: false,
+      unconnectedPlatform: null, // here we store the platform data if it is not connected
+      platformDoesNotExist: false,
+      errorLoadingDetails: null,
+      loading: false,
     };
   },
   computed: {
@@ -284,6 +399,12 @@ export default {
       }
       return null;
     },
+    unconnectedPlatformDetailUrl() {
+      if (this.selectedOrganizationId) {
+        return `/api/organization/${this.selectedOrganizationId}/all-platform/${this.platformId}/`;
+      }
+      return null;
+    },
     breadcrumbs() {
       return [
         {
@@ -291,7 +412,12 @@ export default {
           linkName: "platform-list",
         },
         {
-          text: this.platform === null ? "" : this.platform.name,
+          text:
+            this.platform === null
+              ? this.unconnectedPlatform
+                ? this.unconnectedPlatform.name
+                : ""
+              : this.platform.name,
         },
       ];
     },
@@ -302,6 +428,9 @@ export default {
       }
       return null;
     },
+    platformObj() {
+      return this.platform || this.unconnectedPlatform;
+    },
   },
 
   methods: {
@@ -311,6 +440,7 @@ export default {
     formatInteger: formatInteger,
     async loadPlatform() {
       if (this.platformDetailUrl) {
+        this.loading = true;
         try {
           let response = await axios.get(this.platformDetailUrl);
           this.platform = response.data;
@@ -320,7 +450,20 @@ export default {
             this.loadPlatformInterest(),
           ]);
         } catch (error) {
-          this.showSnackbar({ content: "Error loading platforms: " + error });
+          if (error.response?.status === 404) {
+            // the platform is not available, but this may be that it is just
+            // not connected to the current organization
+            if (this.organizationSelected) {
+              await this.loadUnconnectedPlatform();
+            } else {
+              this.platformDoesNotExist = true;
+            }
+          } else {
+            this.showSnackbar({ content: "Error loading platforms: " + error });
+            this.errorLoadingDetails = error;
+          }
+        } finally {
+          this.loading = false;
         }
       }
     },
@@ -356,6 +499,27 @@ export default {
     },
     refreshAnnotations() {
       this.$refs.annotWidget.fetchAnnotations();
+    },
+    async loadUnconnectedPlatform() {
+      if (this.unconnectedPlatformDetailUrl) {
+        try {
+          let response = await axios.get(this.unconnectedPlatformDetailUrl);
+          this.unconnectedPlatform = response.data;
+        } catch (error) {
+          if (error.response?.status === 404) {
+            // the platform is not available
+            this.platformDoesNotExist = true;
+          } else {
+            this.showSnackbar({ content: "Error loading platforms: " + error });
+            this.errorLoadingDetails = error;
+          }
+        }
+      }
+    },
+    deleteFinished({ platformId }) {
+      if (platformId === this.platformId) {
+        this.loadPlatform();
+      }
     },
   },
   created() {

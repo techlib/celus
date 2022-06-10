@@ -81,7 +81,7 @@ export default {
         this.emailVerified = true;
       } catch (error) {
         this.errorObj = error;
-        if (error.response.status === 404 && "detail" in error.response.data) {
+        if (error.response?.status === 404 && error.response?.data?.detail) {
           this.error = "no_such_key";
         } else {
           this.error = "some_error";

@@ -286,7 +286,7 @@ export default {
         });
         this.harvestId = response.data.pk;
       } catch (error) {
-        if (error.response.status === 400 && error.response.data) {
+        if (error.response?.status === 400 && error.response?.data) {
           this.error = error;
         } else {
           this.showSnackbar({

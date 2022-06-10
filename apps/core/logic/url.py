@@ -23,8 +23,9 @@ def extract_organization_id_from_request_data(request) -> (int, bool):
 
 
 def extract_field_from_request(request: Request, field_name: str) -> typing.Optional[int]:
-    """ Extracts attribte from request
-        if attribute is present in data it has precedence over query parameters
+    """
+    Extracts attribte from request
+    if attribute is present in data it has precedence over query parameters
     """
 
     try:

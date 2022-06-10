@@ -128,6 +128,9 @@ en:
     credentials: Credentials
     settings: Settings
     report_name: Report name
+    data_export: Data export
+    delete_data: Delete data
+    delete_all_platform_data: Delete all platform data
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -296,6 +299,9 @@ cs:
     credentials: Přihlašovací údaje
     settings: Nastavení
     report_name: Jméno reportu
+    data_export: Export dat
+    delete_data: Mazání dat
+    delete_all_platform_data: Smazat všechna data pro platformu
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

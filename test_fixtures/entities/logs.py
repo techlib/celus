@@ -12,7 +12,14 @@ from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.report_types import ReportTypeFactory
 
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
-from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduState, Metric
+from logs.models import (
+    AccessLog,
+    ImportBatch,
+    ManualDataUpload,
+    MduState,
+    Metric,
+    OrganizationPlatform,
+)
 from test_fixtures.entities.titles import TitleFactory
 
 fake = faker.Faker()
@@ -96,6 +103,9 @@ class ImportBatchFullFactory(factory.django.DjangoModelFactory):
                 for t in titles
             ],
             ignore_conflicts=True,
+        )
+        OrganizationPlatform.objects.get_or_create(
+            organization=obj.organization, platform=obj.platform
         )
         if settings.CLICKHOUSE_SYNC_ACTIVE:
             sync_import_batch_with_clickhouse(obj)

@@ -636,7 +636,7 @@ export default {
           },
         });
       } catch (error) {
-        if (error.response && error.response.status === 400) {
+        if (error.response?.status === 400) {
           let info = error.response.data;
           if ("data_file" in info) {
             // this.showSnackbar({content: 'Data file error: ' + info.data_file[0], color: 'error'})

@@ -9,36 +9,36 @@ axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
 axios.interceptors.request.use(
-  function(config) {
+  function (config) {
     config.headers["celus-version"] = store.getters.celusVersion;
     return config;
   },
-  function(error) {
+  function (error) {
     return Promise.reject(error);
   }
 );
 
 axios.interceptors.response.use(
-  function(response) {
+  function (response) {
     // Clear the version diaolog when no error is returned
     store.dispatch("setNewCelusVersion", { new_version: null });
     // Do something with response data
     return response;
   },
-  function(error) {
+  function (error) {
     // Do something with response error
     if (axios.isCancel(error)) {
       // we ignore this
     } else if (
-      error.response &&
-      (error.response.status === 401 || error.response.status === 403)
+      error.response?.status === 401 ||
+      error.response?.status === 403
     ) {
       // if there is 401 error, try to (re)authenticate
       store.dispatch("setShowLoginDialog", { show: true });
-    } else if (typeof error.response && error.response.status === 409) {
+    } else if (error.response?.status === 409) {
       // Display new celus version dialog
       store.dispatch("setNewCelusVersion", {
-        new_version: error.response.headers["celus-version"]
+        new_version: error.response.headers["celus-version"],
       });
     } else if (typeof error.response === "undefined") {
       // we are getting redirected to the EduID login page, but 302 is transparent for us
@@ -116,7 +116,7 @@ const http = async (args) => {
   try {
     return {
       response: await axios(config),
-      error: null
+      error: null,
     };
   } catch (e) {
     if (axios.isCancel(e)) {

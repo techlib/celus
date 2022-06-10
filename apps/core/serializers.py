@@ -1,7 +1,7 @@
 import typing
 from datetime import datetime
 
-from rest_framework.fields import BooleanField
+from django_celery_results.models import TaskResult
 from rest_framework.serializers import (
     BooleanField,
     ChoiceField,
@@ -10,9 +10,10 @@ from rest_framework.serializers import (
     PrimaryKeyRelatedField,
     Serializer,
     SerializerMethodField,
+    IntegerField,
 )
 
-from core.models import User
+from core.models import User, TaskProgress
 
 
 class EmailVerificationSerializer(Serializer):
@@ -65,3 +66,18 @@ class UserSimpleSerializer(ModelSerializer):
 
 class UserExtraDataSerializer(Serializer):
     basic_tour_finished = BooleanField(required=False, allow_null=True, default=None)
+
+
+class TaskProgressSerializer(ModelSerializer):
+    class Meta:
+        model = TaskProgress
+        fields = (
+            'task_id',
+            'status',
+            'task_name',
+            'worker',
+            'date_created',
+            'date_done',
+            'progress_total',
+            'progress_current',
+        )

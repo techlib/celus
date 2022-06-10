@@ -254,8 +254,15 @@ export default {
               : this.reportViewsForSelect[1];
           }
         } catch (error) {
-          console.log("ERROR: ", error);
-          this.showSnackbar({ content: "Error loading title: " + error });
+          if (error.response?.status === 404) {
+            // this is ok, it just means no views are available because the
+            // platform is not connected to the organization
+            this.reportViews = [];
+            this.selectedReportView = null;
+          } else {
+            console.log("ERROR: ", error);
+            this.showSnackbar({ content: "Error loading title: " + error });
+          }
         } finally {
           this.loading = false;
         }

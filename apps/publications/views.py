@@ -1,3 +1,5 @@
+from django.http import HttpResponseForbidden
+
 from api.auth import extract_org_from_request_api_key
 from api.permissions import HasOrganizationAPIKey
 from charts.models import ReportDataView
@@ -7,7 +9,11 @@ from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
 from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
-from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
+from core.permissions import (
+    SuperuserOrAdminPermission,
+    ViewPlatformPermission,
+    AdminAccessForOrganization,
+)
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
@@ -45,10 +51,11 @@ from publications.serializers import (
     TitleCountSerializer,
     UseCaseSerializer,
 )
+from .logic.cleanup import delete_platform_data
 
 from .logic.use_cases import get_use_cases
 from .serializers import DetailedPlatformSerializer, PlatformSerializer, TitleSerializer
-from .tasks import erms_sync_platforms_task
+from .tasks import erms_sync_platforms_task, delete_platform_data_task
 
 
 class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
@@ -146,7 +153,7 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
                 Permission = generate_permission(obj.source.organization.pk)
                 permission_classes = [e & Permission for e in permission_classes]
             else:
-                # dissallow updating platform without organization
+                # disallow updating platform without organization
                 class Permission:
                     def has_permission(self, *args, **kwargs):
                         return False
@@ -219,7 +226,6 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 
     @action(methods=['GET'], url_path='title-count', url_name='title-count', detail=False)
     def title_count(self, request, organization_pk):
-
         date_filter_params = date_filter_from_params(request.GET)
         if request.USE_CLICKHOUSE:
             from logs.cubes import AccessLogCube, ch_backend
@@ -283,6 +289,16 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
                 result[platform_id] = []
             result[platform_id].append(title_id)
         return Response(result)
+
+    @action(methods=['POST'], url_path='delete-all-data', url_name='delete-all-data', detail=True)
+    def delete_all_data(self, request, pk, organization_pk):
+        org_filter = organization_filter_from_org_id(
+            organization_pk, request.user, prefix=None, admin_required=True
+        )
+        task = delete_platform_data_task.delay(
+            pk, [org.pk for org in Organization.objects.filter(**org_filter)]
+        )
+        return Response({'success': True, 'task_id': task.id})
 
 
 class PlatformInterestViewSet(ViewSet):

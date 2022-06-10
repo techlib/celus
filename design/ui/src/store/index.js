@@ -47,7 +47,7 @@ const vuexLocal = new VuexPersistence({
 });
 
 export default new Vuex.Store({
-  plugins: [ vuexLocal.plugin ],
+  plugins: [vuexLocal.plugin],
   modules: {
     cancellation,
     interest,
@@ -247,7 +247,7 @@ export default new Vuex.Store({
       if ("LANGUAGES" in state.basicInfo) {
         return state.basicInfo["LANGUAGES"].map((item) => item[0]);
       }
-      return [ "en" ];
+      return ["en"];
     },
     celusVersion() {
       return process.env.VUE_APP_VERSION;
@@ -283,7 +283,7 @@ export default new Vuex.Store({
     hideSnackbar(context) {
       context.commit("setSnackbarShow", { show: false });
     },
-    showError({ dispatch }, { label, error}) {
+    showError({ dispatch }, { label, error }) {
       dispatch("showSnackbar", {
         content: `Error loading ${label ? label : "data"}: ${error}`,
         color: "error",
@@ -299,14 +299,13 @@ export default new Vuex.Store({
         commit("setAppLanguage", { lang: response.data.language });
         dispatch("afterAuthentication");
       } catch (error) {
-        if (error.response && error.response.status === 403) {
+        if (error.response?.status === 403) {
           // we could not get user data because of 403 Forbidden error
           // thus we must inform the user that he will not see anything
           commit("setInvalidUser", { value: true });
         } else if (
-          error.response &&
-          error.response.status === 401 &&
-          error.response.headers["www-authenticate"] === "Session"
+          error.response?.status === 401 &&
+          error.response?.headers?.["www-authenticate"] === "Session"
         ) {
           dispatch("setShowLoginDialog", { show: true });
         } else {

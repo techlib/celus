@@ -1,10 +1,19 @@
+import uuid
+from unittest import mock
+
 import pytest
+from django.urls import reverse
+
 from api.models import OrganizationAPIKey
 from core.models import DataSource, Identity
-from core.tests.conftest import authenticated_client  # noqa - fixtures
-from core.tests.conftest import authentication_headers  # noqa - fixtures
-from core.tests.conftest import invalid_identity, master_client, master_identity, valid_identity
-from django.urls import reverse
+from core.tests.conftest import (  # noqa - fixtures
+    authenticated_client,
+    authentication_headers,
+    invalid_identity,
+    master_client,
+    master_identity,
+    valid_identity,
+)
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import (
@@ -21,8 +30,13 @@ from organizations.models import UserOrganization
 from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
 from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ImportBatchFactory, ImportBatchFullFactory, MetricFactory
+from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.scenarios.basic import *  # noqa - fixtures
+
+
+class MockTask:
+    def __init__(self):
+        self.id = uuid.uuid4()
 
 
 @pytest.mark.django_db
@@ -324,6 +338,71 @@ class TestPlatformAPI:
             },
         )
         assert resp.status_code == 403
+
+    @pytest.mark.parametrize(
+        ['user', 'can_delete'],
+        [
+            ['user1', False],
+            ['user2', False],
+            ['admin1', False],
+            ['admin2', True],
+            ['master', True],
+            ['su', True],
+        ],
+    )
+    def test_platform_delete_all_data(
+        self, basic1, clients, platforms, organizations, user, can_delete
+    ):
+        platform = platforms['standalone']
+        organization = organizations['standalone']
+        ImportBatchFullFactory.create(platform=platform, organization=organization)
+        assert AccessLog.objects.filter(organization=organization, platform=platform).count() > 0
+
+        with mock.patch('publications.views.delete_platform_data_task') as task_mock:
+            task_mock.delay.return_value = MockTask()
+            resp = clients[user].post(
+                reverse('platform-delete-all-data', args=[organization.pk, platform.pk]),
+            )
+            if can_delete:
+                assert resp.status_code == 200
+                task_mock.delay.assert_called()
+            else:
+                assert resp.status_code in (403, 404)
+                task_mock.delay.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ['user', 'can_delete'],
+        [
+            ['user1', False],
+            ['user2', False],
+            ['admin1', False],
+            ['admin2', False],
+            ['master', True],
+            ['su', True],
+        ],
+    )
+    def test_platform_delete_all_data_all_organizations(
+        self, basic1, clients, platforms, organizations, user, can_delete
+    ):
+        platform = platforms['standalone']
+        org_to_al_count = {}
+        for organization in organizations.values():
+            ImportBatchFullFactory.create(platform=platform, organization=organization)
+            al_count = AccessLog.objects.filter(
+                organization=organization, platform=platform
+            ).count()
+            assert al_count > 0
+            org_to_al_count[organization.pk] = al_count
+
+        with mock.patch('publications.views.delete_platform_data_task') as task_mock:
+            task_mock.delay.return_value = MockTask()
+            resp = clients[user].post(reverse('platform-delete-all-data', args=[-1, platform.pk]))
+            if can_delete:
+                assert resp.status_code == 200
+                task_mock.delay.assert_called()
+            else:
+                assert resp.status_code in (403, 404)
+                task_mock.delay.assert_not_called()
 
 
 @pytest.mark.django_db

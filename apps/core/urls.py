@@ -1,6 +1,10 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 
 from . import views
+
+router = DefaultRouter()
+router.register(r'task-status', views.CeleryTaskStatusViewSet, basename='task-status')
 
 urlpatterns = [
     path('user/', views.UserView.as_view(), name='user_api_view'),
@@ -17,4 +21,4 @@ urlpatterns = [
     ),
     path('test-email/', views.TestEmailView.as_view(), name='test_email_api_view'),
     path('test-error/', views.TestErrorView.as_view(), name='test_error_api_view'),
-]
+] + router.urls

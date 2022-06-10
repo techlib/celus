@@ -284,7 +284,7 @@ export default {
         );
         this.savedReportType = response.data;
       } catch (error) {
-        if (error.response && error.response.status === 400) {
+        if (error.response?.status === 400) {
           let info = error.response.data;
           let error_msg = "";
           if (info.index("non_field_errors") >= 0) {

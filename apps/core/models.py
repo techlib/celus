@@ -1,17 +1,20 @@
 import os
 import typing
 from hashlib import blake2b
+from typing import Optional
 
 from allauth.account.models import EmailAddress, EmailConfirmation
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.cache import cache
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 from django.apps import apps
+from django_celery_results.models import TaskResult
 
 from core.exceptions import FileConsistencyError
 from core.logic.url import extract_organization_id_from_request_query
@@ -228,6 +231,9 @@ class User(AbstractUser):
     def admin_organizations(self):
         from organizations.models import UserOrganization, Organization
 
+        if self.is_superuser or self.is_from_master_organization:
+            # user is part of one of the master organizations - he should have access to all orgs
+            return Organization.objects.all()
         return Organization.objects.filter(
             pk__in=UserOrganization.objects.filter(user=self, is_admin=True).values_list(
                 'organization_id', flat=True
@@ -378,3 +384,28 @@ class SourceFileMixin(models.Model):
             f'Expected: {self.checksum}\n'
             f'Got: {file_checksum}\n',
         )
+
+
+class TaskProgress(TaskResult):
+    class Meta:
+        proxy = True
+
+    @property
+    def cache_key_total(self) -> str:
+        return f'{self.task_id}-total'
+
+    @property
+    def cache_key_current(self) -> str:
+        return f'{self.task_id}-current'
+
+    @property
+    def progress_current(self) -> Optional[int]:
+        return cache.get(self.cache_key_current)
+
+    @property
+    def progress_total(self) -> Optional[int]:
+        return cache.get(self.cache_key_total)
+
+    def store_progress(self, current: Optional[int], total: Optional[int]):
+        cache.set(self.cache_key_current, current)
+        cache.set(self.cache_key_total, total)

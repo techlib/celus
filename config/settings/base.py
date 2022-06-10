@@ -268,6 +268,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BROKER_URL = 'redis://localhost'
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
 
 # Note about priorities - it is not clear from the Celery documentation, but from my experiments
 # it looks like:
