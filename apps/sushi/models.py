@@ -4,64 +4,58 @@ import logging
 import os
 import traceback
 from copy import deepcopy
-from datetime import timedelta, date
+from datetime import date, timedelta
 from functools import reduce
 from hashlib import blake2b
 from tempfile import TemporaryFile
-from typing import Optional, Dict, Iterable, IO, Union
+from typing import IO, Dict, Iterable, Optional, Union
 
 import requests
 import reversion
-from django.conf import settings
-from django.core.files.base import ContentFile, File
-from django.db import models
-from django.db.models import F, Exists, OuterRef
-from django.db.transaction import atomic
-from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
-from pycounter.exceptions import SushiException
-from rest_framework.exceptions import PermissionDenied
-
 from core.logic.dates import parse_date
 from core.models import (
     UL_CONS_ADMIN,
-    UL_ORG_ADMIN,
     UL_CONS_STAFF,
+    UL_ORG_ADMIN,
     CreatedUpdatedMixin,
-    User,
     SourceFileMixin,
+    User,
 )
 from core.task_support import cache_based_lock
+from django.conf import settings
+from django.core.files.base import ContentFile, File
+from django.db import models
+from django.db.models import Exists, F, OuterRef
+from django.db.transaction import atomic
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from logs.models import AccessLog, ImportBatch
-from nigiri.client import (
-    Sushi5Client,
-    Sushi4Client,
-    SushiException as SushiExceptionNigiri,
-    SushiClientBase,
-    SushiError,
-)
+from nigiri.client import Sushi4Client, Sushi5Client, SushiClientBase, SushiError
+from nigiri.client import SushiException as SushiExceptionNigiri
 from nigiri.counter4 import (
-    Counter4JR1Report,
-    Counter4BR2Report,
-    Counter4DB1Report,
-    Counter4PR1Report,
     Counter4BR1Report,
-    Counter4JR2Report,
-    Counter4DB2Report,
+    Counter4BR2Report,
     Counter4BR3Report,
+    Counter4DB1Report,
+    Counter4DB2Report,
+    Counter4JR1Report,
+    Counter4JR2Report,
     Counter4MR1Report,
+    Counter4PR1Report,
 )
 from nigiri.counter5 import (
     Counter5DRReport,
+    Counter5IRM1Report,
     Counter5PRReport,
+    Counter5TableReport,
     Counter5TRReport,
     TransportError,
-    Counter5TableReport,
-    Counter5IRM1Report,
 )
 from nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
+from pycounter.exceptions import SushiException
+from rest_framework.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
 
@@ -929,6 +923,26 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             self.extracted_data = ext_data
             return True
         return False
+
+    def any_import_batch_lately(self, days: int = 3 * 30):
+        return SushiFetchAttempt.objects.filter(
+            credentials=self.credentials,
+            credentials__version_hash=F('credentials_version_hash'),
+            when_processed__gte=now() - timedelta(days=days),
+            import_batch__isnull=False,
+        ).exists()
+
+    @property
+    def broken_credentials(self):
+        """ Credentials of this attempt are currently broken """
+        return (
+            self.credentials.is_broken()
+            or CounterReportsToCredentials.objects.filter(
+                credentials=self.credentials,
+                counter_report=self.counter_report,
+                broken__isnull=False,
+            ).exists()
+        )
 
 
 class CounterReportsToCredentials(BrokenCredentialsMixin):

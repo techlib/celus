@@ -12,6 +12,7 @@ from sushi.models import BrokenCredentialsMixin as BC
 from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.logs import ImportBatchFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
@@ -157,6 +158,81 @@ class TestSushiFetchAttemptModel:
                 counter_report=counter_report_types["tr"],
             )
             assert attempt.any_success_lately() is True
+
+    def test_any_import_batch_lately(self, credentials, counter_report_types):
+        now = timezone.now()
+
+        with freeze_time(now):
+            # add unsuccessful attempt which happened right now
+            attempt = FetchAttemptFactory(
+                credentials=credentials["standalone_tr"],
+                end_date="2020-01-31",
+                when_processed=now,
+                status=AttemptStatus.SUCCESS,
+                counter_report=counter_report_types["tr"],
+            )
+            assert attempt.any_import_batch_lately() is False
+
+            # add unsuccessful in lately period
+            attempt = FetchAttemptFactory(
+                credentials=credentials["standalone_tr"],
+                end_date="2020-01-31",
+                when_processed=now - timedelta(days=5),
+                status=AttemptStatus.SUCCESS,
+                counter_report=counter_report_types["tr"],
+            )
+            assert attempt.any_import_batch_lately() is False
+
+            # successful after lately period
+            attempt = FetchAttemptFactory(
+                credentials=credentials["standalone_tr"],
+                end_date="2020-01-31",
+                when_processed=now - timedelta(days=91),
+                status=AttemptStatus.SUCCESS,
+                counter_report=counter_report_types["tr"],
+                import_batch=ImportBatchFactory(
+                    report_type=counter_report_types["tr"].report_type,
+                ),
+            )
+            assert attempt.any_import_batch_lately() is False
+
+            # successful in lately period
+            attempt = FetchAttemptFactory(
+                credentials=credentials["standalone_tr"],
+                end_date="2020-01-31",
+                when_processed=now - timedelta(days=90),
+                status=AttemptStatus.SUCCESS,
+                counter_report=counter_report_types["tr"],
+                import_batch=ImportBatchFactory(
+                    report_type=counter_report_types["tr"].report_type,
+                ),
+            )
+            assert attempt.any_import_batch_lately() is True
+
+    def test_broken_credentials(self, credentials, counter_report_types):
+        attempt = FetchAttemptFactory(
+            credentials=credentials["standalone_tr"],
+            end_date="2020-01-31",
+            status=AttemptStatus.SUCCESS,
+            counter_report=counter_report_types["tr"],
+            import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type,),
+        )
+        assert attempt.broken_credentials is False
+        credentials["standalone_tr"].set_broken(FetchAttemptFactory(), 'http')
+        assert attempt.broken_credentials is True
+
+        attempt = FetchAttemptFactory(
+            credentials=credentials["branch_pr"],
+            end_date="2020-01-31",
+            status=AttemptStatus.SUCCESS,
+            counter_report=counter_report_types["pr"],
+            import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type,),
+        )
+        assert attempt.broken_credentials is False
+        CounterReportsToCredentials.objects.get(
+            counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"]
+        ).set_broken(FetchAttemptFactory(), 'sushi')
+        assert attempt.broken_credentials is True
 
     @pytest.mark.parametrize(
         "status,http_status,sushi_status,lately,broken_credentials,broken_cr2c",

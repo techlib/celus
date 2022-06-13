@@ -26,6 +26,7 @@ from sushi.models import (
 )
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.logs import ImportBatchFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory, HarvestFactory, SchedulerFactory
 from test_fixtures.scenarios.basic import (
     counter_report_types,
@@ -297,11 +298,13 @@ class TestFetchIntention:
         }
 
     @pytest.mark.parametrize(
-        "error_code,status,delays,last_canceled",
+        "error_code,status,recent_success,empty_ib,delays,last_canceled",
         (
             (
                 ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,
                 AttemptStatus.NO_DATA,
+                False,
+                True,
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -317,6 +320,8 @@ class TestFetchIntention:
             (
                 ErrorCode.NO_DATA_FOR_DATE_ARGS.value,
                 AttemptStatus.NO_DATA,
+                False,
+                True,
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -332,6 +337,8 @@ class TestFetchIntention:
             (
                 ErrorCode.PARTIAL_DATA_RETURNED.value,
                 AttemptStatus.NO_DATA,
+                False,
+                True,
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -347,6 +354,8 @@ class TestFetchIntention:
             (
                 ErrorCode.PREPARING_DATA.value,
                 AttemptStatus.DOWNLOAD_FAILED,
+                False,
+                False,
                 [
                     timedelta(minutes=1),
                     timedelta(minutes=2),
@@ -366,6 +375,8 @@ class TestFetchIntention:
             (
                 ErrorCode.SERVICE_BUSY.value,
                 AttemptStatus.DOWNLOAD_FAILED,
+                False,
+                False,
                 [
                     timedelta(minutes=1),
                     timedelta(minutes=2),
@@ -383,8 +394,28 @@ class TestFetchIntention:
                 True,
             ),
             (
+                ErrorCode.TOO_MANY_REQUESTS.value,
+                AttemptStatus.DOWNLOAD_FAILED,
+                False,
+                False,
+                [
+                    timedelta(hours=1),
+                    timedelta(hours=1),
+                    timedelta(hours=1),
+                    timedelta(hours=1),
+                    timedelta(hours=1),
+                    timedelta(hours=1),
+                    timedelta(hours=1),
+                    timedelta(hours=1),
+                    timedelta(hours=1),
+                ],
+                True,
+            ),
+            (
                 ErrorCode.SERVICE_NOT_AVAILABLE.value,
                 AttemptStatus.DOWNLOAD_FAILED,
+                False,
+                False,
                 [
                     timedelta(minutes=60),
                     timedelta(minutes=120),
@@ -398,6 +429,26 @@ class TestFetchIntention:
             (
                 "",
                 AttemptStatus.NO_DATA,
+                False,
+                True,
+                [
+                    timedelta(days=1),
+                    timedelta(days=2),
+                    timedelta(days=4),
+                    timedelta(days=8),
+                    timedelta(days=8),
+                    timedelta(days=8),
+                    timedelta(days=8),
+                    None,
+                ],
+                False,
+            ),
+            ("", AttemptStatus.DOWNLOAD_FAILED, False, False, [None,], False,),
+            (
+                "",
+                AttemptStatus.DOWNLOAD_FAILED,
+                True,
+                False,
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -417,8 +468,11 @@ class TestFetchIntention:
             "partial_data",
             "preparing_data",
             "service_busy",
+            "too_many_requests",
             "service_not_available",
             "empty",
+            "error",
+            "success_then_error",
         ),
     )
     def test_process_retry_chain(
@@ -428,6 +482,8 @@ class TestFetchIntention:
         monkeypatch,
         error_code,
         status,
+        recent_success,
+        empty_ib,
         delays,
         last_canceled,
         settings,
@@ -435,9 +491,22 @@ class TestFetchIntention:
         settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
         scheduler = SchedulerFactory(url=credentials["standalone_tr"].url)
 
-        def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True,
-        ):
+        start = datetime(2020, 1, 2, 0, 0, 0, 0, tzinfo=current_tz)
+
+        if recent_success:
+            with freeze_time(start - timedelta(days=30)):
+                FetchAttemptFactory(
+                    when_processed=timezone.now() + timedelta(minutes=5),
+                    status=AttemptStatus.SUCCESS,
+                    credentials=credentials["standalone_tr"],
+                    counter_report=counter_report_types["tr"],
+                    error_code="",
+                    import_batch=ImportBatchFactory(
+                        report_type=counter_report_types["tr"].report_type
+                    ),
+                )
+
+        def mocked_fetch_report(*args, **kwargs):
             return FetchAttemptFactory(
                 status=status,
                 error_code=error_code,
@@ -463,22 +532,19 @@ class TestFetchIntention:
                             fi.attempt.import_batch is not None
                         ), "last partial data should contain ib after import"
 
-                    if error_code in [
-                        ErrorCode.SERVICE_NOT_AVAILABLE.value,
-                        ErrorCode.SERVICE_BUSY,
-                        ErrorCode.PREPARING_DATA,
-                    ]:
-                        assert (
-                            fi.attempt.import_batch is None
-                        ), "no ib should be present so it can be retried later"
-
-                    else:
+                    if empty_ib:
                         assert (
                             fi.attempt.import_batch is not None
                         ), "there should be import batch at the end of a chain"
                         assert (
                             fi.attempt.import_batch.accesslog_set.count() == 0
                         ), "import batch should be empty if partial_data is not returned"
+
+                    else:
+                        assert (
+                            fi.attempt.import_batch is None
+                        ), "no ib should be present so it can be retried later"
+
                 else:
                     assert fi.attempt.import_batch is None
             new_fi = FetchIntention.objects.order_by('pk').last()
@@ -498,8 +564,6 @@ class TestFetchIntention:
                 assert new_fi.is_processed, "marked as processed"
 
             return new_fi
-
-        start = datetime(2020, 1, 2, 0, 0, 0, 0, tzinfo=current_tz)
 
         with freeze_time(start):
             fi = FetchIntentionFactory(

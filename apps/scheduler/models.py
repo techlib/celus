@@ -464,6 +464,12 @@ class FetchIntention(models.Model):
         elif error_code == ErrorCode.PARTIAL_DATA_RETURNED:
             return cls.handle_partial_data
 
+        if attempt.status == AttemptStatus.DOWNLOAD_FAILED:
+            # Check if there was a successful download recently
+            # and if so try to ack like 3030
+            if attempt.any_import_batch_lately(30 * 3) and not attempt.broken_credentials:
+                return cls.handle_retry_failed
+
         return None
 
     def process(self) -> ProcessResponse:
@@ -631,7 +637,7 @@ class FetchIntention(models.Model):
             retry.cancel()
             return
 
-    def handle_data_not_ready(self):
+    def handle_data_not_ready(self, final_import_batch=True):
         next_time, _ = FetchIntention.next_exponential(
             self.data_not_ready_retry,
             DATA_NOT_READY_RETRY_PERIOD.total_seconds(),
@@ -639,22 +645,23 @@ class FetchIntention(models.Model):
         )
 
         if self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
-            # giving up - last retry will be we showing empty data
-            # represented by empty import batch
-            try:
-                self.attempt.import_batch = create_import_batch_or_crash(
-                    report_type=self.counter_report.report_type,
-                    organization=self.credentials.organization,
-                    platform=self.credentials.platform,
-                    month=self.start_date,
-                )
-            except DataStructureError:
-                # skip if there is already existing import batch
-                # Note that this function should not raise an exception
-                # The transaction needs to be committed otherwise
-                # the same function is goint to be retriggered in celery
-                pass
-            self.attempt.save()
+            if final_import_batch:
+                # giving up - last retry will be we showing empty data
+                # represented by empty import batch
+                try:
+                    self.attempt.import_batch = create_import_batch_or_crash(
+                        report_type=self.counter_report.report_type,
+                        organization=self.credentials.organization,
+                        platform=self.credentials.platform,
+                        month=self.start_date,
+                    )
+                except DataStructureError:
+                    # skip if there is already existing import batch
+                    # Note that this function should not raise an exception
+                    # The transaction needs to be committed otherwise
+                    # the same function is going to be retriggered in celery
+                    pass
+                self.attempt.save()
             return
 
         # prepare retry
@@ -663,6 +670,10 @@ class FetchIntention(models.Model):
     def handle_no_data(self):
         """ Some vendors use no_data status as data_not_ready status """
         self.handle_data_not_ready()
+
+    def handle_retry_failed(self):
+        """ Retry failed attempts """
+        self.handle_data_not_ready(final_import_batch=False)
 
     def handle_too_many_requests(self):
         # just add a constant delay set in scheduler
