@@ -14,13 +14,15 @@ from logs.models import (
     Metric,
     Dimension,
     DimensionText,
+    ImportBatch,
 )
 from organizations.models import UserOrganization
 from publications.models import Platform
+from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.models import AttemptStatus, CounterReportsToCredentials
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ManualDataUploadFullFactory
+from test_fixtures.entities.logs import ManualDataUploadFullFactory, ImportBatchFullFactory
 
 from ..logic.data_import import import_counter_records
 from core.tests.conftest import (  # noqa - fixtures
@@ -32,7 +34,7 @@ from core.tests.conftest import (  # noqa - fixtures
     master_client,
     admin_identity,
 )
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     users,
     report_types,
     data_sources,
@@ -46,7 +48,11 @@ from test_fixtures.scenarios.basic import (
     client_by_user_type,
     clients,
     basic1,
-)  # noqa
+)
+from ..logic.materialized_interest import (
+    sync_interest_by_import_batches,
+    sync_interest_for_import_batch,
+)
 
 
 @pytest.mark.django_db
@@ -675,3 +681,30 @@ class TestReportInterestMetricAPI:
         assert len(data["DR"]["interest_metric_set"]) == 0
         assert len(data["JR1"]["interest_metric_set"]) == 2
         assert len(data["BR2"]["interest_metric_set"]) == 1
+
+
+@pytest.mark.django_db
+class TestRawDataAPI:
+    def test_raw_data_ib(
+        self, authenticated_client, report_types, interests, interest_rt, platforms
+    ):
+        # we need to use the right rt, platform and metric so that interest is defined
+        ib = ImportBatchFullFactory.create(
+            report_type=report_types['jr1'],
+            platform=platforms['branch'],
+            create_accesslogs__metrics=[Metric.objects.get(short_name='metric1')],
+        )
+        resp = authenticated_client.get(reverse('raw_data'), {'ib': ib.pk, 'format': 'json'})
+        assert resp.status_code == 200
+        data = resp.json()
+        log_count = ib.accesslog_set.count()
+        assert len(data) == log_count
+        sync_interest_for_import_batch(ib, interest_rt)
+        assert ib.accesslog_set.count() > log_count, 'ib should have extra interest records'
+        # recheck that there is no interest in the data
+        resp = authenticated_client.get(
+            reverse('raw_data'), {'import_batch': ib.pk, 'format': 'json'}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert log_count == len(data), 'interest data is not in the output'

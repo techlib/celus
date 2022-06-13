@@ -22,7 +22,7 @@ from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import BadRequest
-from django.db.models import Count, Exists, OuterRef, Prefetch, Q
+from django.db.models import Count, Exists, OuterRef, Prefetch, Q, F
 from django.db.transaction import atomic
 from django.http import JsonResponse
 from django.urls import reverse
@@ -231,6 +231,10 @@ class RawDataExportView(PandasView):
                 request.GET, dimensions=cls.implicit_dims, mdu_filter=True
             )
         )
+        if 'import_batch' in query_params:
+            # add also a filter for report type so that only records with
+            # rt matching the import batches rt are shown - no interest, no materialized
+            query_params['report_type_id'] = F('import_batch__report_type_id')
         return query_params
 
 

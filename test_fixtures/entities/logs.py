@@ -71,8 +71,8 @@ class ImportBatchFullFactory(factory.django.DjangoModelFactory):
     def create_accesslogs(obj, create, extracted, **kwargs):  # noqa - obj name is ok here
         if not create:
             return
-        m1 = MetricFactory.create()
-        m2 = MetricFactory.create()
+        if not (metrics := kwargs.get('metrics')):
+            metrics = MetricFactory.create_batch(2)
         attrs = {
             'import_batch': obj,
             'organization': obj.organization,
@@ -82,9 +82,12 @@ class ImportBatchFullFactory(factory.django.DjangoModelFactory):
         }
         if not (titles := kwargs.get('titles')):
             titles = TitleFactory.create_batch(10)
-        als1 = [AccessLog(value=fake.random_int(), metric=m1, target=t, **attrs) for t in titles]
-        als2 = [AccessLog(value=fake.random_int(), metric=m2, target=t, **attrs) for t in titles]
-        AccessLog.objects.bulk_create(als1 + als2)
+        als = []
+        for metric in metrics:
+            als += [
+                AccessLog(value=fake.random_int(), metric=metric, target=t, **attrs) for t in titles
+            ]
+        AccessLog.objects.bulk_create(als)
         PlatformTitle.objects.bulk_create(
             [
                 PlatformTitle(
