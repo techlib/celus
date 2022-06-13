@@ -427,12 +427,28 @@ class FetchIntention(models.Model):
 
     @classmethod
     def get_handler(
-        cls, error_code_str: typing.Optional[str]
+        cls, attempt: SushiFetchAttempt
     ) -> typing.Optional[typing.Callable[['FetchIntention'], None]]:
 
         try:
-            error_code = int(error_code_str or "")
+            if attempt.error_code:
+                error_code = int(attempt.error_code)
+            else:
+                # Empty data return without an error status code
+                # we'll treat this situation in the same way as
+                # we treat NO_DATA_FOR_DATE_ARGS (3030) status
+                if attempt.status == AttemptStatus.NO_DATA:
+                    attempt.log += (
+                        "\nEmpty data without a corresponding SUSHI exception occured"
+                        "-> assuming a 3030 exception."
+                    )
+                    attempt.save()
+                    error_code = ErrorCode.NO_DATA_FOR_DATE_ARGS
+                else:
+                    error_code = ""
+
         except ValueError:
+            logger.warning("Wrong error code '%s'", attempt.error_code)
             return None
 
         if error_code == ErrorCode.SERVICE_NOT_AVAILABLE:
@@ -479,7 +495,7 @@ class FetchIntention(models.Model):
         self.when_processed = timezone.now()
         self.save()
 
-        handler = self.get_handler(attempt.error_code)
+        handler = self.get_handler(attempt)
         if handler:
             handler(self)
 
