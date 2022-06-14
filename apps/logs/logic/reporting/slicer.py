@@ -3,7 +3,7 @@ import operator
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
-from typing import List, Iterable, Optional, Tuple, Type
+from typing import List, Iterable, Optional, Type
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
@@ -12,14 +12,12 @@ from django.db.models import (
     Q,
     DateField,
     Sum,
-    Field,
-    CharField,
     OuterRef,
     Subquery,
     F,
     IntegerField,
 )
-from django.db.models.functions import Coalesce, Cast, Concat
+from django.db.models.functions import Coalesce, Concat
 
 from core.logic.dates import parse_month, month_end, date_range_from_params
 from core.logic.serialization import parse_b64json
@@ -30,7 +28,7 @@ from logs.logic.reporting.filters import (
     ForeignKeyDimensionFilter,
     ExplicitDimensionFilter,
 )
-from logs.models import AccessLog, Dimension, DimensionText, ReportType
+from logs.models import AccessLog, DimensionText, ReportType
 from organizations.logic.queries import extend_query_filter
 from organizations.models import Organization
 
@@ -120,11 +118,6 @@ class FlexibleDataSlicer:
                 SlicerConfigErrorCode.E106,
             )
 
-    def accesslog_queryset(self, ignore_dimensions=None):
-        self.check_params()
-        query_params = self.create_filters(ignore_dimensions=ignore_dimensions)
-        return AccessLog.objects.filter(**query_params)
-
     def get_queryset(self, part: Optional[list] = None):
         self.check_params()
         self.check_params_for_data_query()
@@ -149,20 +142,35 @@ class FlexibleDataSlicer:
 
         field, modifier = AccessLog.get_dimension_field(self.primary_dimension)
         if isinstance(field, ForeignKey):
-            primary_cls = field.remote_field.model
-            qs = primary_cls.objects.all()
-            if primary_cls is Organization and self.organization_filter is not None:
-                qs = qs.filter(pk__in=self.organization_filter)
-            qs = (
-                qs.filter(**self._primary_dimension_filter())
-                .annotate(
-                    relevant_accesslogs=FilteredRelation(
-                        'accesslog', condition=Q(**extend_query_filter(filters, 'accesslog__'))
+            if self.include_all_zero_rows or self.primary_dimension in [
+                ob.lstrip('-') for ob in self.order_by
+            ]:
+                # we need to put the primary dimension model into play because zero usage is
+                # requested, or we are sorting by the primary dimension
+                primary_cls = field.remote_field.model
+                qs = primary_cls.objects.all()
+                if primary_cls is Organization and self.organization_filter is not None:
+                    qs = qs.filter(pk__in=self.organization_filter)
+                qs = (
+                    qs.filter(**self._primary_dimension_filter())
+                    .annotate(
+                        relevant_accesslogs=FilteredRelation(
+                            'accesslog', condition=Q(**extend_query_filter(filters, 'accesslog__'))
+                        )
                     )
+                    .values('pk')
+                    .annotate(**self._prepare_annotations())
                 )
-                .values('pk')
-                .annotate(**self._prepare_annotations())
-            )
+            else:
+                # zero usage is not needed - we can just aggregate the accesslogs, which can be
+                # much faster
+                qs = (
+                    AccessLog.objects.filter(**filters)
+                    .annotate(pk=F(self.primary_dimension))
+                    .values('pk')
+                    .distinct()
+                    .annotate(**self._prepare_annotations(accesslog_prefix=''))
+                )
         elif field and self.primary_dimension.startswith('dim'):
             qs = (
                 AccessLog.objects.filter(**filters)
@@ -322,11 +330,19 @@ class FlexibleDataSlicer:
         if type(dimensions) not in (tuple, list, set):
             dimensions = [dimensions]
         ignore_dimensions = dimensions if ignore_self else None
-        query = (
-            self.accesslog_queryset(ignore_dimensions=ignore_dimensions)
-            .values(*dimensions)
-            .distinct()
-        )
+        self.check_params()
+        query_params = self.create_filters(ignore_dimensions=ignore_dimensions)
+        # check if we could use a materialized rt
+        if len(rt_fltr := query_params.get('report_type_id__in', [])) == 1:
+            # we can only use it if there is one RT
+            rt = ReportType.objects.get(pk=rt_fltr[0])
+            used_dimensions = {
+                dim.split('__')[0] for dim in query_params.keys() if dim != 'report_type_id__in'
+            }
+            new_rt = find_best_materialized_view(rt, used_dimensions)
+            if new_rt:
+                query_params['report_type_id__in'] = [new_rt.pk]
+        query = AccessLog.objects.filter(**query_params).values(*dimensions).distinct()
         return query
 
     def get_possible_groups_queryset(self):
@@ -488,18 +504,6 @@ class FlexibleDataSlicer:
         # ordering
         order_by = params.get('order_by')
         if order_by:
-            ob_field, _modifier = AccessLog.get_dimension_field(order_by)
-            if isinstance(ob_field, ForeignKey):
-                remote_cls = ob_field.remote_field.model
-                try:
-                    remote_cls._meta.get_field('name_en')
-                except FieldDoesNotExist:
-                    order_by = 'name'
-                else:
-                    order_by = 'name_en'
-            desc = params.get('desc')
-            if desc in (True, 'true', '1'):
-                order_by = '-' + order_by
             slicer.order_by = [order_by]
         # extra stuff
         # the zero_rows value should be recoded to python bool, but we want to make sure

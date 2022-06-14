@@ -45,6 +45,10 @@ def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list
 
 @pytest.mark.django_db
 class TestFlexibleDataSlicerComputations:
+    @pytest.fixture(params=[True, False])
+    def show_zero(self, request):
+        return request.param
+
     def test_data_generator(self, flexible_slicer_test_data):
         # the 1 + 3 bellow is 1 for report type with 1 dimension and 3 for report type with
         # 2 dimensions which contributes 4* the number of records
@@ -73,7 +77,7 @@ class TestFlexibleDataSlicerComputations:
         with pytest.raises(SlicerConfigError):
             slicer.get_data()
 
-    def test_org_sum_by_platform(self, flexible_slicer_test_data):
+    def test_org_sum_by_platform(self, flexible_slicer_test_data, show_zero):
         """
         Primary dimension: organization
         Group by: platform
@@ -81,6 +85,7 @@ class TestFlexibleDataSlicerComputations:
         """
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
         data.sort(key=lambda rec: rec['pk'])
@@ -91,7 +96,7 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'org3', 'pl1': 1709046, 'pl2': 1907334, 'pl3': 2105622},
         ]
 
-    def test_org_sum_by_platform_filter_metric(self, flexible_slicer_test_data):
+    def test_org_sum_by_platform_filter_metric(self, flexible_slicer_test_data, show_zero):
         """
         Primary dimension: organization
         Group by: platform
@@ -99,6 +104,7 @@ class TestFlexibleDataSlicerComputations:
         """
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
+        slicer.include_all_zero_rows = show_zero
         metric = flexible_slicer_test_data['metrics'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('metric', [metric.pk]))
         data = list(slicer.get_data())
@@ -111,7 +117,7 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'org3', 'pl1': 547650, 'pl2': 613746, 'pl3': 679842},
         ]
 
-    def test_org_sum_by_platform_filter_platform(self, flexible_slicer_test_data):
+    def test_org_sum_by_platform_filter_platform(self, flexible_slicer_test_data, show_zero):
         """
         Primary dimension: organization
         Group by: platform
@@ -120,6 +126,7 @@ class TestFlexibleDataSlicerComputations:
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         platforms = flexible_slicer_test_data['platforms'][1:]
         slicer.add_filter(ForeignKeyDimensionFilter('platform', platforms), add_group=True)
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
         data.sort(key=lambda rec: rec['pk'])
@@ -130,7 +137,7 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
         ]
 
-    def test_org_sum_by_platform_filter_platform_metric(self, flexible_slicer_test_data):
+    def test_org_sum_by_platform_filter_platform_metric(self, flexible_slicer_test_data, show_zero):
         """
         Primary dimension: organization
         Group by: platform
@@ -141,6 +148,7 @@ class TestFlexibleDataSlicerComputations:
         metrics = flexible_slicer_test_data['metrics'][1:]
         slicer.add_filter(ForeignKeyDimensionFilter('platform', platforms), add_group=True)
         slicer.add_filter(ForeignKeyDimensionFilter('metric', metrics), add_group=False)
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
         data.sort(key=lambda rec: rec['pk'])
@@ -151,7 +159,7 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'org3', 'pl2': 1293588, 'pl3': 1425780},
         ]
 
-    def test_org_sum_by_platform_filter_organization(self, flexible_slicer_test_data):
+    def test_org_sum_by_platform_filter_organization(self, flexible_slicer_test_data, show_zero):
         """
         Primary dimension: organization
         Group by: platform
@@ -164,6 +172,7 @@ class TestFlexibleDataSlicerComputations:
             add_group=False,
         )
         slicer.add_group_by('platform')
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == len(organizations)
         data.sort(key=lambda rec: rec['pk'])
@@ -173,7 +182,9 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'org3', 'pl1': 1709046, 'pl2': 1907334, 'pl3': 2105622},
         ]
 
-    def test_org_sum_by_platform_filter_platform_organization(self, flexible_slicer_test_data):
+    def test_org_sum_by_platform_filter_platform_organization(
+        self, flexible_slicer_test_data, show_zero
+    ):
         """
         Primary dimension: organization
         Group by: platform
@@ -189,6 +200,7 @@ class TestFlexibleDataSlicerComputations:
             ForeignKeyDimensionFilter('organization', [org.pk for org in organizations]),
             add_group=False,
         )
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == len(organizations)
         data.sort(key=lambda rec: rec['pk'])
@@ -198,7 +210,9 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
         ]
 
-    def test_org_sum_by_platform_metric_filter_platform_metric(self, flexible_slicer_test_data):
+    def test_org_sum_by_platform_metric_filter_platform_metric(
+        self, flexible_slicer_test_data, show_zero
+    ):
         """
         Primary dimension: organization
         Group by: platform, metric
@@ -213,6 +227,7 @@ class TestFlexibleDataSlicerComputations:
         slicer.add_filter(
             ForeignKeyDimensionFilter('metric', [met.pk for met in metrics]), add_group=True
         )
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
         data.sort(key=lambda rec: rec['pk'])
@@ -225,7 +240,7 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'org3', 'pl2-m2': 635778, 'pl3-m2': 701874, 'pl2-m3': 657810, 'pl3-m3': 723906},
         ]
 
-    def test_platform_sum_by_metric_filter_dim1(self, flexible_slicer_test_data):
+    def test_platform_sum_by_metric_filter_dim1(self, flexible_slicer_test_data, show_zero):
         """
         Primary dimension: platform
         Group by: metric
@@ -236,6 +251,7 @@ class TestFlexibleDataSlicerComputations:
         dim1_ids = DimensionText.objects.filter(text__in=texts).values_list('pk', flat=True)
         slicer.add_filter(ExplicitDimensionFilter('dim1', dim1_ids), add_group=False)
         slicer.add_group_by('metric')
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Platform.objects.count()
         data.sort(key=lambda rec: rec['pk'])
@@ -247,7 +263,7 @@ class TestFlexibleDataSlicerComputations:
         ]
 
     @pytest.mark.parametrize(['order_by'], (('platform',), ('-platform',)))
-    def test_platform_order_by_platform(self, flexible_slicer_test_data, order_by):
+    def test_platform_order_by_platform(self, flexible_slicer_test_data, order_by, show_zero):
         """
         Primary dimension: platform
         Group by: metric
@@ -257,6 +273,7 @@ class TestFlexibleDataSlicerComputations:
         slicer = FlexibleDataSlicer(primary_dimension='platform')
         slicer.add_group_by('metric')
         slicer.order_by = [order_by]
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Platform.objects.count()
         remapped = [remap_row_keys_to_short_names(row, Platform, [Metric]) for row in data]
@@ -282,7 +299,9 @@ class TestFlexibleDataSlicerComputations:
             ("date__year",),
         ],
     )
-    def test_order_by_primary_dim(self, flexible_slicer_test_data, primary_dim, order_by_sign):
+    def test_order_by_primary_dim(
+        self, flexible_slicer_test_data, primary_dim, order_by_sign, show_zero
+    ):
         """
         Test that ordering by primary dimension works for any primary dimension - the purpose
         of the test is to make sure it does not crash
@@ -291,6 +310,7 @@ class TestFlexibleDataSlicerComputations:
         report_type = flexible_slicer_test_data['report_types'][1]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
+        slicer.include_all_zero_rows = show_zero
         slicer.order_by = [order_by_sign + primary_dim]
         data = list(slicer.get_data())
         assert len(data) > 0
@@ -312,7 +332,7 @@ class TestFlexibleDataSlicerComputations:
         with pytest.raises(SlicerConfigError):
             slicer.get_data()
 
-    def test_platform_sum_by_metric_filter_dim1_rt(self, flexible_slicer_test_data):
+    def test_platform_sum_by_metric_filter_dim1_rt(self, flexible_slicer_test_data, show_zero):
         """
         Primary dimension: platform
         Group by: metric
@@ -325,6 +345,7 @@ class TestFlexibleDataSlicerComputations:
         slicer.add_filter(ExplicitDimensionFilter('dim1', dim1_ids), add_group=False)
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Platform.objects.count()
         data.sort(key=lambda rec: rec['pk'])
@@ -335,7 +356,7 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'pl3', 'm1': 40176, 'm2': 42768, 'm3': 45360},
         ]
 
-    def test_platform_sum_by_metric_dim1_filter_dim1_rt(self, flexible_slicer_test_data):
+    def test_platform_sum_by_metric_dim1_filter_dim1_rt(self, flexible_slicer_test_data, show_zero):
         """
         Primary dimension: platform
         Group by: metric, dim1
@@ -348,6 +369,7 @@ class TestFlexibleDataSlicerComputations:
         slicer.add_filter(ExplicitDimensionFilter('dim1', dim1_ids), add_group=True)
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.add_group_by('metric')
+        slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Platform.objects.count()
         data.sort(key=lambda rec: rec['pk'])
