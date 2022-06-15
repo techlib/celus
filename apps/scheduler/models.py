@@ -562,7 +562,12 @@ class FetchIntention(models.Model):
         inc_data_not_ready_retry: bool = False,
         inc_service_not_available_retry: bool = False,
         inc_service_busy_retry: bool = False,
-    ) -> 'FetchIntention':
+    ) -> typing.Optional['FetchIntention']:
+
+        if self.broken_credentials:
+            logger.warning(
+                "Credentials are broken. Can't create retry for FetchIntention %s", self.pk
+            )
 
         kwargs = {
             'data_not_ready_retry': self.data_not_ready_retry
@@ -611,12 +616,11 @@ class FetchIntention(models.Model):
         self.scheduler.save()
 
         # prepare retry
-        retry = self._create_retry(next_time, inc_service_not_available_retry=True)
-
-        # giving up for the next retry
-        if max_reached:
-            retry.cancel()
-            return
+        if retry := self._create_retry(next_time, inc_service_not_available_retry=True):
+            # giving up for the next retry
+            if max_reached:
+                retry.cancel()
+                return
 
     def handle_service_busy(self):
         next_time, max_reached = FetchIntention.next_exponential(
@@ -630,12 +634,11 @@ class FetchIntention(models.Model):
         self.scheduler.save()
 
         # prepare retry
-        retry = self._create_retry(self.scheduler.when_ready, inc_service_busy_retry=True)
-
-        # giving up for the next retry
-        if max_reached:
-            retry.cancel()
-            return
+        if retry := self._create_retry(self.scheduler.when_ready, inc_service_busy_retry=True):
+            # giving up for the next retry
+            if max_reached:
+                retry.cancel()
+                return
 
     def handle_data_not_ready(self, final_import_batch=True):
         next_time, _ = FetchIntention.next_exponential(
