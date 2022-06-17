@@ -68,7 +68,14 @@ class Command(BaseCommand):
                                 counter_report=counter_report,
                             )
                         )
-                    ibs_to_delete.append(ib.pk)
+                    # we delete the import batch but also all that are "blocked" by it
+                    # - these should be also not reimportable but older
+                    ibs_to_delete += ImportBatch.objects.filter(
+                        organization_id=ib.organization_id,
+                        platform_id=ib.platform_id,
+                        report_type_id=ib.report_type_id,
+                        date=ib.date,
+                    ).values_list('pk', flat=True)
 
         logger.info(
             'Deleting import batches: %s', ImportBatch.objects.filter(pk__in=ibs_to_delete).delete()
