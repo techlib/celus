@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0]
+
+### Added
+
+#### Frontend
+
+* possibility to impersonate another user was added to the consortium administrator users
+
+#### Backend
+
+* periodic housekeeping jobs were added to remove obsolete platform-title links, merge matching
+  titles and synchronize platforms with knowledgebase.
+
+
+### Changes
+
+#### Frontend
+
+* the v-charts library was replaced by vue-echarts (the former was not maintained anymore)
+* information about interest definition was moved to the `Content` section of the menu
+* when displaying raw harvested data, additional records (such as interest or materialized data) are
+  not shown anymore
+
+#### Backend
+
+* empty data in SUSHI response without a corresponding exception are treated as having exception 3030
+* Celus newly tries to re-harvest data from failed attempts (regardless of the error) if the
+  credentials were successfully used to harvest some data lately
+* reporting speed was optimized in case when non-zero rows are not requested, most significantly
+  those with titles in rows
+* cli commands for reimport and subsequent analysis were extended and improved
+
+### Fixed
+
+#### Backend
+
+* an error in title merging caused by incorrect order of update and delete was fixed
+
 
 ## [4.4.5]
 
@@ -19,7 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-* synchronization with knowledgebase unassignes `counter_registry_id` from platforms which no longer use it
+* synchronization with knowledgebase unassignes `counter_registry_id` from platforms which no longer
+  use it
 
 
 ## [4.4.4]
@@ -59,12 +98,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-* the SUSHI credentials edit dialog autofills the URL based on existing credentials for other organizations
+* the SUSHI credentials edit dialog autofills the URL based on existing credentials for other
+  organizations
 
 #### Backend
 
 * cli command for assigning reports to platforms was added
-* cli command for comparison of the current database with an older version was added to help in finding differences after data reimport
+* cli command for comparison of the current database with an older version was added to help in
+  finding differences after data reimport
 
 
 ### Changes
