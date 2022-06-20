@@ -465,10 +465,7 @@ class FetchIntention(models.Model):
             return cls.handle_partial_data
 
         if attempt.status == AttemptStatus.DOWNLOAD_FAILED:
-            # Check if there was a successful download recently
-            # and if so try to ack like 3030
-            if attempt.any_import_batch_lately(30 * 3) and not attempt.broken_credentials:
-                return cls.handle_retry_failed
+            return cls.handle_retry_failed
 
         return None
 
@@ -641,6 +638,11 @@ class FetchIntention(models.Model):
                 return
 
     def handle_data_not_ready(self, final_import_batch=True):
+
+        # Only automatic downloads with verified credentials can produce retries
+        if not self.harvest.is_automatic or not self.credentials.get_verified():
+            return
+
         next_time, _ = FetchIntention.next_exponential(
             self.data_not_ready_retry,
             DATA_NOT_READY_RETRY_PERIOD.total_seconds(),
@@ -676,6 +678,11 @@ class FetchIntention(models.Model):
 
     def handle_retry_failed(self):
         """ Retry failed attempts """
+
+        # Skip when credentials were not verified or they are marked as broken
+        if not self.credentials.get_verified() or self.attempt.broken_credentials:
+            return
+
         self.handle_data_not_ready(final_import_batch=False)
 
     def handle_too_many_requests(self):
@@ -689,6 +696,11 @@ class FetchIntention(models.Model):
         self._create_retry(self.scheduler.when_ready)
 
     def handle_partial_data(self):
+
+        # Only automatic downloads with verified credentials can produce retries
+        if not self.harvest.is_automatic or not self.credentials.get_verified():
+            return
+
         next_time, _ = FetchIntention.next_exponential(
             self.data_not_ready_retry,
             PARTIAL_DATA_RETRY_PERIOD.total_seconds(),
@@ -923,6 +935,10 @@ class Harvest(CreatedUpdatedMixin):
                 'duplicate_of',
             )
         )
+
+    @property
+    def is_automatic(self):
+        return Automatic.objects.filter(harvest=self).exists()
 
 
 class Automatic(models.Model):

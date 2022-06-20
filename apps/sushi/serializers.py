@@ -1,38 +1,37 @@
+from core.logic.dates import month_end
+from core.models import UL_CONS_STAFF
 from django.utils import timezone
+from organizations.models import Organization
+from organizations.serializers import OrganizationSerializer
+from publications.models import Platform
+from publications.serializers import PlatformSerializer, SimplePlatformSerializer
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import (
     BooleanField,
-    CurrentUserDefault,
-    ChoiceField,
     CharField,
-    DateTimeField,
+    ChoiceField,
+    CurrentUserDefault,
     DateField,
+    DateTimeField,
     HiddenField,
     IntegerField,
-    SerializerMethodField,
     ReadOnlyField,
+    SerializerMethodField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import (
     ModelSerializer,
     Serializer,
-    ValidationError,
     SlugRelatedField,
+    ValidationError,
 )
 
-
-from core.logic.dates import month_end
-from core.models import UL_CONS_STAFF
-from organizations.models import Organization
-from organizations.serializers import OrganizationSerializer
-from publications.models import Platform
-from publications.serializers import PlatformSerializer, SimplePlatformSerializer
 from .models import (
     COUNTER_REPORTS,
-    SushiCredentials,
-    CounterReportType,
-    SushiFetchAttempt,
     CounterReportsToCredentials,
+    CounterReportType,
+    SushiCredentials,
+    SushiFetchAttempt,
 )
 
 
@@ -86,6 +85,7 @@ class SushiCredentialsSerializer(ModelSerializer):
     can_lock = BooleanField(read_only=True)
     submitter = HiddenField(default=CurrentUserDefault())
     locked = SerializerMethodField()
+    verified = BooleanField(read_only=True)
 
     class Meta:
         model = SushiCredentials
@@ -114,6 +114,7 @@ class SushiCredentialsSerializer(ModelSerializer):
             'locked',
             'outside_consortium',
             'broken',
+            'verified',
         )
 
     def get_locked(self, obj: SushiCredentials):

@@ -27,6 +27,7 @@ from django.core.files.base import ContentFile, File
 from django.db import models
 from django.db.models import Exists, F, OuterRef
 from django.db.transaction import atomic
+from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from logs.models import AccessLog, ImportBatch
@@ -162,6 +163,22 @@ class CounterReportType(models.Model):
 
 
 class SushiCredentialsQuerySet(models.QuerySet):
+    def annotate_verified(self):
+        """
+        Annotates that credentials are verified
+        this means that credentials needs to have
+        download attempt (NO_DATA or SUCCESS) with current hash
+        """
+        return self.annotate(
+            verified=Exists(
+                SushiFetchAttempt.objects.filter(
+                    credentials_id=OuterRef('pk'),
+                    status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
+                    credentials_version_hash=OuterRef('version_hash'),
+                )
+            )
+        )
+
     def working(self):
         """ Were these credentials working? Do we have any data? """
         return self.annotate(
@@ -280,6 +297,13 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         if owner_level >= self.lock_level:
             return True
         return False
+
+    @cached_property
+    def get_verified(self):
+        return self.sushifetchattempt_set.filter(
+            status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
+            credentials_version_hash=self.version_hash,
+        ).exists()
 
     def create_sushi_client(self) -> SushiClientBase:
         attrs = {

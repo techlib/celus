@@ -27,7 +27,12 @@ from sushi.models import (
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory, HarvestFactory, SchedulerFactory
+from test_fixtures.entities.scheduler import (
+    AutomaticFactory,
+    FetchIntentionFactory,
+    HarvestFactory,
+    SchedulerFactory,
+)
 from test_fixtures.scenarios.basic import (
     counter_report_types,
     credentials,
@@ -215,6 +220,7 @@ class TestFetchIntention:
         monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
 
         fi = FetchIntentionFactory(
+            harvest=AutomaticFactory(harvest__last_updated_by=users["user1"]).harvest,
             not_before=timezone.now(),
             scheduler=sch,
             credentials=credentials["standalone_tr"],
@@ -298,12 +304,13 @@ class TestFetchIntention:
         }
 
     @pytest.mark.parametrize(
-        "error_code,status,recent_success,empty_ib,delays,last_canceled",
+        "error_code,status,recent_success,automatic,empty_ib,delays,last_canceled",
         (
             (
                 ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,
                 AttemptStatus.NO_DATA,
                 False,
+                True,
                 True,
                 [
                     timedelta(days=1),
@@ -322,6 +329,7 @@ class TestFetchIntention:
                 AttemptStatus.NO_DATA,
                 False,
                 True,
+                True,
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -339,6 +347,7 @@ class TestFetchIntention:
                 AttemptStatus.NO_DATA,
                 False,
                 True,
+                True,
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -355,6 +364,7 @@ class TestFetchIntention:
                 ErrorCode.PREPARING_DATA.value,
                 AttemptStatus.DOWNLOAD_FAILED,
                 False,
+                True,
                 False,
                 [
                     timedelta(minutes=1),
@@ -376,6 +386,7 @@ class TestFetchIntention:
                 ErrorCode.SERVICE_BUSY.value,
                 AttemptStatus.DOWNLOAD_FAILED,
                 False,
+                True,
                 False,
                 [
                     timedelta(minutes=1),
@@ -397,6 +408,7 @@ class TestFetchIntention:
                 ErrorCode.TOO_MANY_REQUESTS.value,
                 AttemptStatus.DOWNLOAD_FAILED,
                 False,
+                True,
                 False,
                 [
                     timedelta(hours=1),
@@ -415,6 +427,7 @@ class TestFetchIntention:
                 ErrorCode.SERVICE_NOT_AVAILABLE.value,
                 AttemptStatus.DOWNLOAD_FAILED,
                 False,
+                True,
                 False,
                 [
                     timedelta(minutes=60),
@@ -431,6 +444,7 @@ class TestFetchIntention:
                 AttemptStatus.NO_DATA,
                 False,
                 True,
+                True,
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -443,10 +457,11 @@ class TestFetchIntention:
                 ],
                 False,
             ),
-            ("", AttemptStatus.DOWNLOAD_FAILED, False, False, [None,], False,),
+            ("", AttemptStatus.DOWNLOAD_FAILED, False, True, False, [None,], False,),
             (
                 "",
                 AttemptStatus.DOWNLOAD_FAILED,
+                True,
                 True,
                 False,
                 [
@@ -461,6 +476,37 @@ class TestFetchIntention:
                 ],
                 False,
             ),
+            (
+                ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,
+                AttemptStatus.NO_DATA,
+                False,
+                False,
+                False,
+                [None],
+                False,
+            ),
+            (
+                ErrorCode.PREPARING_DATA.value,
+                AttemptStatus.DOWNLOAD_FAILED,
+                False,
+                False,
+                False,
+                [
+                    timedelta(minutes=1),
+                    timedelta(minutes=2),
+                    timedelta(minutes=4),
+                    timedelta(minutes=8),
+                    timedelta(minutes=16),
+                    timedelta(minutes=32),
+                    timedelta(minutes=64),
+                    timedelta(minutes=128),
+                    timedelta(minutes=256),
+                    timedelta(minutes=512),
+                    timedelta(minutes=1024),
+                    None,
+                ],
+                True,
+            ),
         ),
         ids=(
             "not_ready",
@@ -473,6 +519,8 @@ class TestFetchIntention:
             "empty",
             "error",
             "success_then_error",
+            "not_ready_no_automatic",
+            "preparing_data_no_automatic",
         ),
     )
     def test_process_retry_chain(
@@ -483,6 +531,7 @@ class TestFetchIntention:
         error_code,
         status,
         recent_success,
+        automatic,
         empty_ib,
         delays,
         last_canceled,
@@ -566,7 +615,13 @@ class TestFetchIntention:
             return new_fi
 
         with freeze_time(start):
+            if automatic:
+                harvest = AutomaticFactory().harvest
+            else:
+                harvest = HarvestFactory(automatic=None)
             fi = FetchIntentionFactory(
+                attempt=None,
+                harvest=harvest,
                 not_before=timezone.now(),
                 scheduler=scheduler,
                 credentials=credentials["standalone_tr"],

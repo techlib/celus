@@ -1,24 +1,24 @@
-from django.utils import timezone
 import pytest
-from rest_framework.exceptions import PermissionDenied
-from pycounter.report import CounterReport
-
-from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF, Identity
-from nigiri.client import Sushi5Client, Sushi4Client
+from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN, Identity
+from core.tests.conftest import master_identity, valid_identity
+from django.utils import timezone
+from logs.models import AccessLog, ImportBatch, Metric
+from nigiri.client import Sushi4Client, Sushi5Client
 from nigiri.counter4 import Counter4ReportBase
 from nigiri.counter5 import Counter5ReportBase
 from organizations.models import UserOrganization
-from sushi.logic.data_import import import_sushi_credentials
-from ..models import SushiCredentials, CounterReportType, SushiFetchAttempt
-from publications.models import Platform
 from organizations.tests.conftest import organizations
+from publications.models import Platform
 from publications.tests.conftest import platforms
-from core.tests.conftest import master_identity, valid_identity
-
+from pycounter.report import CounterReport
+from rest_framework.exceptions import PermissionDenied
+from sushi.logic.data_import import import_sushi_credentials
+from sushi.models import AttemptStatus
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.scenarios.basic import counter_report_types, report_types
-from logs.models import ImportBatch, AccessLog, Metric
+
+from ..models import CounterReportType, SushiCredentials, SushiFetchAttempt
 
 
 @pytest.mark.django_db
@@ -320,6 +320,33 @@ class TestCredentialsQuerySet:
         )
 
         assert SushiCredentials.objects.all().working().count() == 1
+
+    def test_verified(self, report_types, counter_report_types):
+
+        # empty
+        cr1 = CredentialsFactory()
+        assert cr1.get_verified() is False
+        SushiCredentials.objects.verified().filter(pk=cr1.pk).verified is False
+
+        # Successful download
+        FetchAttemptFactory(
+            credentials=cr1, status=AttemptStatus.SUCCESS, credentials_version_hash=cr1.version_hash
+        )
+        assert cr1.get_verified() is True
+        assert SushiCredentials.objects.verified().get(pk=cr1.pk).verified is True
+
+        # after updating credentials credentials should become unverified
+        cr1.requestor_id += "X"
+        cr1.save()
+        assert cr1.get_verified() is False
+        assert SushiCredentials.objects.verified().get(pk=cr1.pk).verified is False
+
+        # Download with no data
+        FetchAttemptFactory(
+            credentials=cr1, status=AttemptStatus.NO_DATA, credentials_version_hash=cr1.version_hash
+        )
+        assert cr1.get_verified() is True
+        assert SushiCredentials.objects.verified().get(pk=cr1.pk).verified is True
 
     def test_not_fake(self, report_types, counter_report_types, settings):
         settings.FAKE_SUSHI_URLS = ['https://fake.it', 'https://skip.it']
