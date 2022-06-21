@@ -51,7 +51,6 @@ class ReportDataViewChartDefinitions(APIView):
 
 class ChartDataView(APIView):
     def get(self, request, report_view_id):
-        activate(request.user.language)
         report_view = get_object_or_404(ReportDataView, pk=report_view_id)
         computer = StatsComputer()
         start = monotonic()

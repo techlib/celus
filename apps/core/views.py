@@ -25,11 +25,11 @@ class UserView(GenericAPIView):
     action = 'current'
 
     def get(self, request):
-        """ Obtains info about currently logged user
+        """
+        Obtains info about currently logged user
         """
 
         if request.user:
-            translation.activate(request.user.language)
             request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
             return Response(UserSerializer(request.user, context={"request": request}).data)
         return HttpResponseForbidden('user is not logged in')
@@ -64,7 +64,6 @@ class UserLanguageView(APIView):
             except ValidationError as e:
                 return HttpResponseBadRequest(str(e))
             else:
-                translation.activate(request.user.language)
                 request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
                 return Response({'ok': True})
         return HttpResponseForbidden('user is not logged in')

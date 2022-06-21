@@ -1,5 +1,6 @@
 import logging
 
+from django.utils.translation import activate
 from rest_framework import status
 
 from django.conf import settings
@@ -87,3 +88,13 @@ class ClickhouseIntegrationMiddleware:
         )
         response = self.get_response(request)
         return response
+
+
+class UserLanguageMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user and hasattr(request.user, 'language'):
+            activate(request.user.language)
+        return self.get_response(request)
