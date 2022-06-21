@@ -224,6 +224,28 @@ class TestSushiFetching:
             assert "Traceback" not in attempt.log, "no raw exception traceback in the log"
             assert "report not found" in attempt.log
 
+    @pytest.mark.parametrize(
+        ('path', 'error_code', 'partial'), (('sushi_3040.xml', '3040', True,),),
+    )
+    def test_c4_partial_data(
+        self, path, error_code, partial, counter_report_types, organizations, platforms,
+    ):
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
+        )
+        with requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / 'data/counter4' / path) as datafile:
+                m.post(
+                    re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200,
+                )
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                counter_report_types["db1"], start_date='2020-05-01', end_date='2020-05-31'
+            )
+            assert m.called
+            assert str(attempt.error_code) == error_code
+            assert attempt.partial_data == partial
+            assert attempt.status == AttemptStatus.NO_DATA
+
     @pytest.mark.parametrize('time', ('2017-04-01', '2017-02-15'))
     def test_c5_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
@@ -276,6 +298,7 @@ class TestSushiFetching:
         (
             ('partial_data1.json', '3210', True,),
             ('partial_data2.json', '3210', True,),
+            ('partial_data3.json', '3040', True,),
             ('5_TR_with_warning.json', '3032', True,),
             ('data_simple.json', '', False,),
         ),
@@ -297,6 +320,8 @@ class TestSushiFetching:
             assert m.called
             assert attempt.error_code == error_code
             assert attempt.partial_data == partial
+            if error_code == "3040":
+                assert attempt.status == AttemptStatus.NO_DATA
 
     @pytest.mark.parametrize(
         ('path', 'import_passes'),

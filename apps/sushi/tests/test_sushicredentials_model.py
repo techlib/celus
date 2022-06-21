@@ -325,28 +325,31 @@ class TestCredentialsQuerySet:
 
         # empty
         cr1 = CredentialsFactory()
-        assert cr1.get_verified() is False
-        SushiCredentials.objects.verified().filter(pk=cr1.pk).verified is False
+        assert cr1.is_verified is False
+        SushiCredentials.objects.annotate_verified().get(pk=cr1.pk).verified is False
 
         # Successful download
         FetchAttemptFactory(
             credentials=cr1, status=AttemptStatus.SUCCESS, credentials_version_hash=cr1.version_hash
         )
-        assert cr1.get_verified() is True
-        assert SushiCredentials.objects.verified().get(pk=cr1.pk).verified is True
+        cr1 = SushiCredentials.objects.get(pk=cr1.pk)
+        assert cr1.is_verified is True
+        assert SushiCredentials.objects.annotate_verified().get(pk=cr1.pk).verified is True
 
         # after updating credentials credentials should become unverified
         cr1.requestor_id += "X"
         cr1.save()
-        assert cr1.get_verified() is False
-        assert SushiCredentials.objects.verified().get(pk=cr1.pk).verified is False
+        cr1 = SushiCredentials.objects.get(pk=cr1.pk)
+        assert cr1.is_verified is False
+        assert SushiCredentials.objects.annotate_verified().get(pk=cr1.pk).verified is False
 
         # Download with no data
         FetchAttemptFactory(
             credentials=cr1, status=AttemptStatus.NO_DATA, credentials_version_hash=cr1.version_hash
         )
-        assert cr1.get_verified() is True
-        assert SushiCredentials.objects.verified().get(pk=cr1.pk).verified is True
+        cr1 = SushiCredentials.objects.get(pk=cr1.pk)
+        assert cr1.is_verified is True
+        assert SushiCredentials.objects.annotate_verified().get(pk=cr1.pk).verified is True
 
     def test_not_fake(self, report_types, counter_report_types, settings):
         settings.FAKE_SUSHI_URLS = ['https://fake.it', 'https://skip.it']

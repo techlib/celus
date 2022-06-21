@@ -640,7 +640,7 @@ class FetchIntention(models.Model):
     def handle_data_not_ready(self, final_import_batch=True):
 
         # Only automatic downloads with verified credentials can produce retries
-        if not self.harvest.is_automatic or not self.credentials.get_verified():
+        if not self.harvest.is_automatic or not self.credentials.is_verified:
             return
 
         next_time, _ = FetchIntention.next_exponential(
@@ -680,7 +680,7 @@ class FetchIntention(models.Model):
         """ Retry failed attempts """
 
         # Skip when credentials were not verified or they are marked as broken
-        if not self.credentials.get_verified() or self.attempt.broken_credentials:
+        if not self.credentials.is_verified or self.attempt.broken_credentials:
             return
 
         self.handle_data_not_ready(final_import_batch=False)
@@ -698,7 +698,7 @@ class FetchIntention(models.Model):
     def handle_partial_data(self):
 
         # Only automatic downloads with verified credentials can produce retries
-        if not self.harvest.is_automatic or not self.credentials.get_verified():
+        if not self.harvest.is_automatic or not self.credentials.is_verified:
             return
 
         next_time, _ = FetchIntention.next_exponential(

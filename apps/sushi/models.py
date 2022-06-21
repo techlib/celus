@@ -299,7 +299,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         return False
 
     @cached_property
-    def get_verified(self):
+    def is_verified(self):
         return self.sushifetchattempt_set.filter(
             status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
             credentials_version_hash=self.version_hash,
@@ -482,6 +482,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                     if any(
                         str(e.code)
                         in (
+                            str(ErrorCode.PARTIAL_DATA_RETURNED.value),
                             str(ErrorCode.NO_DATA_FOR_DATE_ARGS.value),
                             str(ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value),
                         )
