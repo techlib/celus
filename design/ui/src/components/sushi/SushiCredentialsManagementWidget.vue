@@ -130,10 +130,7 @@ cs:
                           </v-list-item>
                         </label>
                       </form>
-                      <form
-                        action="/api/sushi-credentials/export-credentials/"
-                        method="post"
-                      >
+                      <form :action="exportUrl" method="post">
                         <input
                           type="hidden"
                           name="csrfmiddlewaretoken"
@@ -546,6 +543,13 @@ export default {
         this.visibleSushiCredentials.map((item) => item.pk)
       );
       return this.checkedRows.filter((item) => visibleIds.has(item.pk));
+    },
+    exportUrl() {
+      let base = `/api/sushi-credentials/export-credentials/?organization=${this.organizationId}`;
+      if (this.platformId) {
+        base += `&platform=${this.platformId}`;
+      }
+      return base;
     },
   },
 

@@ -138,12 +138,12 @@ class SushiCredentialsViewSet(ModelViewSet):
     @action(detail=False, methods=['post'], url_path="export-credentials")
     def export_credentials(self, request):
         pks = request.data.getlist('pk')
-        queryset = self.get_queryset()
+        qs = self.get_queryset()
         if pks:
-            queryset = queryset.filter(pk__in=pks)
-        queryset = queryset.prefetch_related('counter_reports')
+            qs = qs.filter(pk__in=pks)
+        qs = qs.prefetch_related('counter_reports')
 
-        data = SushiCredentialsResource().export(queryset)
+        data = SushiCredentialsResource().export(qs)
         data_in_csv = data.csv
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         return StreamingHttpResponse(
