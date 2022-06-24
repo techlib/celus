@@ -33,6 +33,62 @@ from test_fixtures.scenarios.basic import (
 
 @pytest.mark.django_db()
 class TestSushiCredentialsViewSet:
+    @pytest.mark.parametrize('use_org_id', [(True,), (False,)])
+    @pytest.mark.parametrize(
+        "user,can_list",
+        (
+            ("master_admin", True),
+            ("master_user", False),
+            ("admin1", False),
+            ("admin2", True),  # is admin of standalone
+            ("user1", False),
+            ("user2", False),  # user2 is part of standalone, but not an admin
+        ),
+    )
+    def test_list_permissions(
+        self, basic1, organizations, platforms, clients, user, can_list, use_org_id
+    ):
+        CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=platforms["standalone"],
+            counter_version=5,
+            lock_level=SushiCredentials.UNLOCKED,
+        )
+        params = {'organization': organizations['standalone'].pk} if use_org_id else {}
+        resp = clients[user].get(reverse('sushi-credentials-list'), params)
+        if can_list:
+            assert resp.status_code == 200
+            assert len(resp.json()) == 1
+        else:
+            # there are actually two mechanisms how the access could be denied -
+            # either the list is empty or 404 is returned. The latter is used when
+            # an organization filter is used which is incompatible with the currently active user
+            assert resp.status_code == 404 or len(resp.json()) == 0
+
+    @pytest.mark.parametrize(
+        "user,can_see",
+        (
+            ("master_admin", True),
+            ("master_user", False),
+            ("admin1", False),
+            ("admin2", True),  # is admin of standalone
+            ("user1", False),
+            ("user2", False),  # user2 is part of standalone, but not an admin
+        ),
+    )
+    def test_detail_permissions(self, basic1, organizations, platforms, clients, user, can_see):
+        credentials = CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=platforms["standalone"],
+            counter_version=5,
+            lock_level=SushiCredentials.UNLOCKED,
+        )
+        resp = clients[user].get(reverse('sushi-credentials-detail', args=(credentials.pk,)))
+        if can_see:
+            assert resp.status_code == 200
+        else:
+            assert resp.status_code == 404
+
     def test_lock_action(self, basic1, organizations, platforms, clients):
         credentials = CredentialsFactory(
             organization=organizations["master"],
@@ -118,7 +174,7 @@ class TestSushiCredentialsViewSet:
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         new_url = 'http://x.y.com/'
         resp = clients["user1"].patch(url, {'url': new_url})
-        assert resp.status_code == 403
+        assert resp.status_code == 404
 
     def test_edit_action_locked_higher(self, basic1, organizations, platforms, clients):
         """

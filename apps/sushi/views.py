@@ -37,11 +37,15 @@ class SushiCredentialsViewSet(ModelViewSet):
     queryset = SushiCredentials.objects.none()
 
     def get_queryset(self):
-        user_organizations = self.request.user.accessible_organizations()
+        user_organizations = self.request.user.admin_organizations()
         qs = SushiCredentials.objects.filter(organization__in=user_organizations)
         organization_id = self.request.query_params.get('organization')
         if organization_id:
-            qs = qs.filter(**organization_filter_from_org_id(organization_id, self.request.user))
+            qs = qs.filter(
+                **organization_filter_from_org_id(
+                    organization_id, self.request.user, admin_required=True
+                )
+            )
         # platform filter
         platform_id = self.request.query_params.get('platform')
         if platform_id:
