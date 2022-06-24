@@ -2,18 +2,17 @@ import uuid
 from unittest import mock
 
 import pytest
-from django.urls import reverse
-
 from api.models import OrganizationAPIKey
 from core.models import DataSource, Identity
-from core.tests.conftest import (  # noqa - fixtures
-    authenticated_client,
+from core.tests.conftest import authenticated_client  # noqa - fixtures
+from core.tests.conftest import (
     authentication_headers,
     invalid_identity,
-    master_client,
-    master_identity,
+    master_user_client,
+    master_user_identity,
     valid_identity,
 )
+from django.urls import reverse
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import (
@@ -129,7 +128,8 @@ class TestPlatformAPI:
         "client,organization,data_source,code",
         (
             ("su", "standalone", None, 201),  # superuser
-            ("master", "standalone", "standalone", 201),  # master
+            ("master_admin", "standalone", "standalone", 201),
+            ("master_user", "standalone", "standalone", 403),
             ("admin2", "standalone", None, 201),  # this admin
             ("admin1", "standalone", "standalone", 403),  # other admin
             ("user2", "standalone", None, 403),  # other user
@@ -238,7 +238,7 @@ class TestPlatformAPI:
         assert resp.status_code == 403
 
     def test_list_platforms_for_all_organization(self, basic1, clients, organizations, client):
-        resp = clients["master"].get(reverse('platform-list', args=[-1]))
+        resp = clients["master_admin"].get(reverse('platform-list', args=[-1]))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 7
@@ -251,7 +251,7 @@ class TestPlatformAPI:
         assert mapped["shared"]["source"] is None
         assert mapped["standalone"]["source"]["organization"]["name"] == "standalone"
 
-        resp = clients["master"].get(reverse('platform-list', args=[-1]) + "?used_only")
+        resp = clients["master_admin"].get(reverse('platform-list', args=[-1]) + "?used_only")
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 3
@@ -265,7 +265,8 @@ class TestPlatformAPI:
         "client,organization,platform,code",
         (
             ("su", "standalone", "standalone", 200),  # superuser
-            ("master", "standalone", "standalone", 200),  # master
+            ("master_admin", "standalone", "standalone", 200),
+            ("master_user", "standalone", "standalone", 403),
             ("admin2", "standalone", "standalone", 200),  # this admin
             ("admin1", "standalone", "standalone", 403),  # other admin
             ("user2", "standalone", "standalone", 403),  # other user
@@ -346,7 +347,8 @@ class TestPlatformAPI:
             ['user2', False],
             ['admin1', False],
             ['admin2', True],
-            ['master', True],
+            ['master_admin', True],
+            ['master_user', False],
             ['su', True],
         ],
     )
@@ -377,7 +379,8 @@ class TestPlatformAPI:
             ['user2', False],
             ['admin1', False],
             ['admin2', False],
-            ['master', True],
+            ['master_admin', True],
+            ['master_user', False],
             ['su', True],
         ],
     )
@@ -869,7 +872,7 @@ class TestPlatformTitleAPI:
             assert rec['total_interest'] == 7
 
     def test_organization_all_platform_overlap_all_orgs(
-        self, master_client, accesslogs_with_interest, platforms
+        self, master_user_client, accesslogs_with_interest, platforms
     ):
         organization = accesslogs_with_interest['organization']
         platform = accesslogs_with_interest['platform']
@@ -878,7 +881,7 @@ class TestPlatformTitleAPI:
         PlatformTitle.objects.create(
             platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
         )
-        resp = master_client.get(reverse('organization-all-platforms-overlap', args=['-1']))
+        resp = master_user_client.get(reverse('organization-all-platforms-overlap', args=['-1']))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2, '2 records for 2 platforms'
@@ -891,12 +894,12 @@ class TestPlatformTitleAPI:
                 assert rec['overlap_interest'] == 0, 'no interest on platform 2'
                 assert rec['total_interest'] == 0, 'no interest on platform 2'
 
-    def test_platform_title_ids_list(self, master_client, accesslogs_with_interest):
+    def test_platform_title_ids_list(self, master_user_client, accesslogs_with_interest):
         """
         Test the 'title-ids-list' custom action of platform viewset
         """
         url = reverse('platform-title-ids-list', args=[-1])
-        resp = master_client.get(url)
+        resp = master_user_client.get(url)
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -907,14 +910,14 @@ class TestPlatformTitleAPI:
         }
 
     def test_platform_title_ids_list_one_organization(
-        self, master_client, accesslogs_with_interest
+        self, master_user_client, accesslogs_with_interest
     ):
         """
         Test the 'title-ids-list' custom action of platform viewset
         """
         organization = accesslogs_with_interest['organization']
         url = reverse('platform-title-ids-list', args=[organization.pk])
-        resp = master_client.get(url)
+        resp = master_user_client.get(url)
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -924,12 +927,14 @@ class TestPlatformTitleAPI:
             title.pk for title in accesslogs_with_interest['titles']
         }
 
-    def test_platform_title_ids_list_with_filter(self, master_client, accesslogs_with_interest):
+    def test_platform_title_ids_list_with_filter(
+        self, master_user_client, accesslogs_with_interest
+    ):
         """
         Test the 'title-ids-list' custom action of platform viewset with publication type filter
         """
         url = reverse('platform-title-ids-list', args=[-1])
-        resp = master_client.get(url + '?pub_type=U')
+        resp = master_user_client.get(url + '?pub_type=U')
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 0
@@ -937,12 +942,12 @@ class TestPlatformTitleAPI:
     @pytest.mark.clickhouse
     @pytest.mark.usefixtures('clickhouse_on_off')
     @pytest.mark.django_db(transaction=True)
-    def test_platform_title_count(self, master_client, accesslogs_with_interest):
+    def test_platform_title_count(self, master_user_client, accesslogs_with_interest):
         """
         Test the 'title-count' custom action of platform viewset
         """
         url = reverse('platform-title-count', args=[-1])
-        resp = master_client.get(url)
+        resp = master_user_client.get(url)
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -951,13 +956,13 @@ class TestPlatformTitleAPI:
         assert record['platform'] == platform.pk
         assert record['title_count'] == len(accesslogs_with_interest['titles'])
 
-    def test_platform_title_count_detail(self, master_client, accesslogs_with_interest):
+    def test_platform_title_count_detail(self, master_user_client, accesslogs_with_interest):
         """
         Test the 'title-count' detail custom action of platform viewset
         """
         platform = accesslogs_with_interest['platform']
         url = reverse('platform-title-count', args=[-1, platform.pk])
-        resp = master_client.get(url)
+        resp = master_user_client.get(url)
         assert resp.status_code == 200
         data = resp.json()
         assert data['title_count'] == 2
@@ -971,7 +976,7 @@ class TestPlatformTitleAPI:
     )
     def test_platform_title_list_filtering_with_eissn(
         self,
-        master_client,
+        master_user_client,
         platform,
         organizations,
         has_issn,
@@ -1005,7 +1010,7 @@ class TestPlatformTitleAPI:
             platform=platform, title=t, organization=org, date='2020-01-01'
         )
         q = base_attrs[matched_field][-4:] if matched_field else ''  # end of matched string
-        resp = master_client.get(
+        resp = master_user_client.get(
             reverse('platform-title-list', args=[org.pk, platform.pk]), {'q': q},
         )
         assert resp.status_code == 200
@@ -1021,21 +1026,23 @@ class TestPlatformTitleAPI:
 @pytest.mark.django_db
 class TestPlatformInterestAPI:
     @pytest.mark.parametrize("fmt", (None, "csv", "xlsx"))
-    def test_platfrom_interest_list_empty(self, master_client, interest_rt, organizations, fmt):
+    def test_platfrom_interest_list_empty(
+        self, master_user_client, interest_rt, organizations, fmt
+    ):
         url = reverse('platform-interest-list', args=(organizations["standalone"].pk,))
         if fmt:
             url += f"?format={fmt}"
-        resp = master_client.get(url)
+        resp = master_user_client.get(url)
         assert resp.status_code == 200
         if fmt is None:
             assert resp.json() == []
 
     @pytest.mark.parametrize("fmt", (None, "csv", "xlsx"))
-    def test_platfrom_interest_list_all_org_empty(self, master_client, interest_rt, fmt):
+    def test_platfrom_interest_list_all_org_empty(self, master_user_client, interest_rt, fmt):
         url = reverse('platform-interest-list', args=(-1,))
         if fmt:
             url += f"?format={fmt}"
-        resp = master_client.get(url)
+        resp = master_user_client.get(url)
         assert resp.status_code == 200
         if fmt is None:
             assert resp.json() == []
@@ -1048,7 +1055,8 @@ class TestAllPlatformsAPI:
         ["client", "status", "organization", "available"],
         [
             ["unauthenticated", (401, 403), "empty", None],
-            ["master", (200,), "empty", ["brain", "empty", "master", "shared"]],
+            ["master_admin", (200,), "empty", ["brain", "empty", "master", "shared"]],
+            ["master_user", (200,), "empty", ["brain", "empty", "master", "shared"]],
             ["admin1", (200,), "root", ["brain", "master", "empty", "root", "shared"]],
             ["admin2", (200,), "master", ["brain", "master", "empty", "shared"]],
             ["user1", (200,), "branch", ["brain", "master", "empty", "branch", "shared"]],
@@ -1056,7 +1064,8 @@ class TestAllPlatformsAPI:
         ],
         ids=[
             "unauthenticated-empty",
-            "master-empty",
+            "master_admin-empty",
+            "master_user-empty",
             "admin1-root",
             "admin2-master",
             "user1-branch",
@@ -1079,7 +1088,8 @@ class TestAllPlatformsAPI:
         ["client", "organization", "available"],
         [
             ["unauthenticated", "empty", set()],
-            ["master", "empty", {"brain", "empty", "master", "shared"}],
+            ["master_admin", "empty", {"brain", "empty", "master", "shared"}],
+            ["master_user", "empty", {"brain", "empty", "master", "shared"}],
             ["admin1", "root", {"brain", "master", "empty", "root", "shared"}],
             ["admin2", "master", {"brain", "master", "empty", "shared"}],
             ["user1", "branch", {"brain", "master", "empty", "branch", "shared"}],
@@ -1087,7 +1097,8 @@ class TestAllPlatformsAPI:
         ],
         ids=[
             "unauthenticated-empty",
-            "master-empty",
+            "master_admin-empty",
+            "master_user-empty",
             "admin1-root",
             "admin2-master",
             "user1-branch",
@@ -1112,7 +1123,12 @@ class TestAllPlatformsAPI:
         [
             ["unauthenticated", (401, 403), None],
             [
-                "master",
+                "master_admin",
+                (200,),
+                ["brain", "empty", "master", "shared", "root", "branch", "standalone"],
+            ],
+            [
+                "master_user",
                 (200,),
                 ["brain", "empty", "master", "shared", "root", "branch", "standalone"],
             ],
@@ -1124,7 +1140,8 @@ class TestAllPlatformsAPI:
         ],
         ids=[
             "unauthenticated-empty",
-            "master-empty",
+            "master_admin-empty",
+            "master_user-empty",
             "admin1-root",
             "admin2-master",
             "user1-branch",
@@ -1234,7 +1251,12 @@ class TestGlobalPlatformsAPI:
         [
             ["unauthenticated", (401, 403), None],
             [
-                "master",
+                "master_admin",
+                (200,),
+                {"brain", "master", "empty", "root", "shared", "standalone", "branch"},
+            ],
+            [
+                "master_user",
                 (200,),
                 {"brain", "master", "empty", "root", "shared", "standalone", "branch"},
             ],
@@ -1243,7 +1265,15 @@ class TestGlobalPlatformsAPI:
             ["user1", (200,), {"brain", "master", "empty", "branch", "shared"}],
             ["user2", (200,), {"brain", "master", "empty", "standalone", "shared"}],
         ],
-        ids=["unauthenticated", "master", "admin1", "admin2", "user1", "user2"],
+        ids=[
+            "unauthenticated",
+            "master_admin",
+            "master_user",
+            "admin1",
+            "admin2",
+            "user1",
+            "user2",
+        ],
     )
     def test_all_platform_list(self, client, status, available, clients, platforms, organizations):
 
@@ -1281,13 +1311,28 @@ class TestGlobalPlatformsAPI:
         ["client", "available"],
         [
             ["unauthenticated", set()],
-            ["master", {"brain", "master", "empty", "root", "shared", "standalone", "branch"}],
+            [
+                "master_admin",
+                {"brain", "master", "empty", "root", "shared", "standalone", "branch"},
+            ],
+            [
+                "master_user",
+                {"brain", "master", "empty", "root", "shared", "standalone", "branch"},
+            ],
             ["admin1", {"brain", "master", "empty", "root", "branch", "shared"}],
             ["admin2", {"brain", "master", "empty", "shared", "standalone"}],
             ["user1", {"brain", "master", "empty", "branch", "shared"}],
             ["user2", {"brain", "master", "empty", "standalone", "shared"}],
         ],
-        ids=["unauthenticated", "mastery", "admin1", "admin2", "user1", "user2"],
+        ids=[
+            "unauthenticated",
+            "master_admin",
+            "master_user",
+            "admin1",
+            "admin2",
+            "user1",
+            "user2",
+        ],
     )
     def test_all_platform_detail(self, client, available, clients, platforms, organizations):
         for platform in platforms.values():
@@ -1370,9 +1415,9 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
 @pytest.mark.usefixtures('clickhouse_on_off')
 @pytest.mark.django_db(transaction=True)
 class TestTopTitleInterestViewSet:
-    def test_all_organizations(self, accesslogs_with_interest, master_client):
+    def test_all_organizations(self, accesslogs_with_interest, master_user_client):
         titles = accesslogs_with_interest['titles']
-        resp = master_client.get(
+        resp = master_user_client.get(
             reverse('top-title-interest-list', args=['-1']), {'order_by': 'interest1'}
         )
         assert resp.status_code == 200
@@ -1385,10 +1430,10 @@ class TestTopTitleInterestViewSet:
         assert data[1]['name'] == titles[1].name
         assert data[1]['interests']['interest1'] == 4  # 4
 
-    def test_one_organization(self, accesslogs_with_interest, master_client):
+    def test_one_organization(self, accesslogs_with_interest, master_user_client):
         organization = accesslogs_with_interest['organization']
         titles = accesslogs_with_interest['titles']
-        resp = master_client.get(
+        resp = master_user_client.get(
             reverse('top-title-interest-list', args=[organization.pk]), {'order_by': 'interest1'}
         )
         assert resp.status_code == 200
@@ -1400,9 +1445,9 @@ class TestTopTitleInterestViewSet:
         assert data[1]['isbn'] == titles[0].isbn
         assert data[1]['interests']['interest1'] == 3  # 2 + 1
 
-    def test_all_organizations_date_filter(self, accesslogs_with_interest, master_client):
+    def test_all_organizations_date_filter(self, accesslogs_with_interest, master_user_client):
         titles = accesslogs_with_interest['titles']
-        resp = master_client.get(
+        resp = master_user_client.get(
             reverse('top-title-interest-list', args=['-1']),
             {'order_by': 'interest1', 'start': '2019-02'},
         )
@@ -1416,9 +1461,9 @@ class TestTopTitleInterestViewSet:
         assert data[1]['name'] == titles[1].name
         assert data[1]['interests']['interest1'] == 4  # 4
 
-    def test_all_organizations_pub_type_filter(self, accesslogs_with_interest, master_client):
+    def test_all_organizations_pub_type_filter(self, accesslogs_with_interest, master_user_client):
         titles = accesslogs_with_interest['titles']
-        resp = master_client.get(
+        resp = master_user_client.get(
             reverse('top-title-interest-list', args=['-1']),
             {'order_by': 'interest1', 'pub_type': 'J'},
         )
@@ -1432,8 +1477,8 @@ class TestTopTitleInterestViewSet:
 
 @pytest.mark.django_db
 class TestTitleInterestBrief:
-    def test_list(self, master_client, accesslogs_with_interest):
-        resp = master_client.get(reverse('title-interest-brief-list', args=[-1]))
+    def test_list(self, master_user_client, accesslogs_with_interest):
+        resp = master_user_client.get(reverse('title-interest-brief-list', args=[-1]))
         assert resp.status_code == 200
         data = resp.json()
         titles = accesslogs_with_interest['titles']
@@ -1446,9 +1491,9 @@ class TestTitleInterestBrief:
             else:
                 assert False, 'such record should not exist'
 
-    def test_list_one_org(self, master_client, accesslogs_with_interest):
+    def test_list_one_org(self, master_user_client, accesslogs_with_interest):
         organization = accesslogs_with_interest['organization']
-        resp = master_client.get(reverse('title-interest-brief-list', args=[organization.pk]))
+        resp = master_user_client.get(reverse('title-interest-brief-list', args=[organization.pk]))
         assert resp.status_code == 200
         data = resp.json()
         titles = accesslogs_with_interest['titles']
@@ -1461,10 +1506,10 @@ class TestTitleInterestBrief:
             else:
                 assert False, 'such record should not exist'
 
-    def test_detail(self, master_client, accesslogs_with_interest):
+    def test_detail(self, master_user_client, accesslogs_with_interest):
         organization = accesslogs_with_interest['organization']
         title = accesslogs_with_interest['titles'][0]
-        resp = master_client.get(
+        resp = master_user_client.get(
             reverse('title-interest-brief-detail', args=[organization.pk, title.pk])
         )
         assert resp.status_code == 200

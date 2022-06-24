@@ -1,10 +1,9 @@
 import pytest
-
 from core.models import Identity
 from core.tests.conftest import *
+from test_fixtures.entities.organizations import OrganizationFactory
 
 from ..models import Organization, UserOrganization
-from test_fixtures.entities.organizations import OrganizationFactory
 
 
 @pytest.fixture()
@@ -54,11 +53,16 @@ def organization_random():
 
 @pytest.fixture
 def identity_by_user_type(
-    admin_identity, invalid_identity, master_identity, organizations, valid_identity
+    admin_identity,
+    invalid_identity,
+    master_user_identity,
+    master_admin_identity,
+    organizations,
+    valid_identity,
 ):
     def fn(user_type):
         org = organizations[0]
-        # we do not use admin_client, master_client, etc. because the way the fixtures work
+        # we do not use admin_client, master_admin_client, etc. because the way the fixtures work
         # they all point to the same client object which obviously does not work
         if user_type == 'no_user':
             identity = None
@@ -81,7 +85,9 @@ def identity_by_user_type(
                 is_admin=True,
             )
         elif user_type == 'master_user':
-            identity = master_identity
+            identity = master_user_identity
+        elif user_type == 'master_admin':
+            identity = master_admin_identity
         elif user_type == 'superuser':
             identity = admin_identity
         else:

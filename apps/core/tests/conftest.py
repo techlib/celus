@@ -1,9 +1,8 @@
 import pytest
+from core.models import Identity
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-
-from core.models import Identity
 from organizations.models import Organization
 
 
@@ -21,9 +20,9 @@ def invalid_identity():
 
 
 @pytest.fixture
-def master_identity():
-    id_string = 'master@user.test'
-    user = get_user_model().objects.create(username='master')
+def master_admin_identity():
+    id_string = 'masteradmin@user.test'
+    user = get_user_model().objects.create(username='master_admin')
     Identity.objects.create(user=user, identity=id_string)
     user.organizations.add(
         Organization.objects.get_or_create(
@@ -34,9 +33,32 @@ def master_identity():
                 ico='12345',
                 name_cs='šéf',
                 name_en='boss',
-                short_name='master',
+                short_name='master_admin',
             ),
-        )[0]
+        )[0],
+        through_defaults={"is_admin": True},
+    )
+    yield id_string
+
+
+@pytest.fixture
+def master_user_identity():
+    id_string = 'masteruser@user.test'
+    user = get_user_model().objects.create(username='master_user')
+    Identity.objects.create(user=user, identity=id_string)
+    user.organizations.add(
+        Organization.objects.get_or_create(
+            internal_id=settings.MASTER_ORGANIZATIONS[0],
+            defaults=dict(
+                ext_id=1235712,
+                parent=None,
+                ico='65432',
+                name_cs='pozorovatel',
+                name_en='observer',
+                short_name='master_user',
+            ),
+        )[0],
+        through_defaults={"is_admin": True},
     )
     yield id_string
 
@@ -57,8 +79,14 @@ def authenticated_client(client, valid_identity):
 
 
 @pytest.fixture
-def master_client(client, master_identity):
-    client.defaults[settings.EDUID_IDENTITY_HEADER] = master_identity
+def master_admin_client(client, master_admin_identity):
+    client.defaults[settings.EDUID_IDENTITY_HEADER] = master_admin_identity
+    yield client
+
+
+@pytest.fixture
+def master_user_client(client, master_user_identity):
+    client.defaults[settings.EDUID_IDENTITY_HEADER] = master_user_identity
     yield client
 
 
@@ -85,8 +113,10 @@ def site():
 
 __all__ = [
     'admin_identity',
-    'master_client',
-    'master_identity',
+    'master_admin_client',
+    'master_user_client',
+    'master_admin_identity',
+    'master_user_identity',
     'authentication_headers',
     'authentication_headers',
     'authenticated_client',

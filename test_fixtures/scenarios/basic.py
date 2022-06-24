@@ -41,7 +41,8 @@ def users():
     empty = UserFactory(username="empty")
     user1 = UserFactory(username="user1")
     user2 = UserFactory(username="user2")
-    master = UserFactory(username="master")
+    master_admin = UserFactory(username="master_admin")
+    master_user = UserFactory(username="master_user")
     admin1 = UserFactory(username="admin1")
     admin2 = UserFactory(username="admin2")
     su = UserFactory(username="su", is_superuser=True)
@@ -90,7 +91,8 @@ def data_sources(organizations):
 def identities(users):
     user1 = IdentityFactory(user=users["user1"])
     user2 = IdentityFactory(user=users["user2"])
-    master = IdentityFactory(user=users["master"])
+    master_admin = IdentityFactory(user=users["master_admin"])
+    master_user = IdentityFactory(user=users["master_user"])
     admin1 = IdentityFactory(user=users["admin1"])
     admin2 = IdentityFactory(user=users["admin2"])
     su = IdentityFactory(user=users["su"])
@@ -162,7 +164,8 @@ def clients(identities):
     invalid = make_client("invalid@celus.test", False)
     user1 = make_client(identities["user1"])
     user2 = make_client(identities["user2"])
-    master = make_client(identities["master"])
+    master_admin = make_client(identities["master_admin"])
+    master_user = make_client(identities["master_user"])
     admin1 = make_client(identities["admin1"])
     admin2 = make_client(identities["admin2"])
     su = make_client(identities["su"])
@@ -173,7 +176,12 @@ def clients(identities):
 @pytest.fixture
 def basic1(users, organizations, platforms, data_sources, identities, clients):  # noqa
     # link users and organizations
-    users["master"].organizations.add(organizations["master"], through_defaults=dict(is_admin=True))
+    users["master_admin"].organizations.add(
+        organizations["master"], through_defaults=dict(is_admin=True)
+    )
+    users["master_user"].organizations.add(
+        organizations["master"], through_defaults=dict(is_admin=False)
+    )
     users["admin1"].organizations.add(organizations["root"], through_defaults=dict(is_admin=True))
     users["admin2"].organizations.add(
         organizations["standalone"], through_defaults=dict(is_admin=True)
@@ -493,7 +501,9 @@ def client_by_user_type(
         elif user_type == 'related_admin':
             return clients["admin2"], organizations["standalone"]
         elif user_type == 'master_user':
-            return clients["master"], organizations["branch"]
+            return clients["master_user"], organizations["branch"]
+        elif user_type == 'master_admin':
+            return clients["master_admin"], organizations["branch"]
         elif user_type == 'superuser':
             return clients["su"], organizations["branch"]
         else:

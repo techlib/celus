@@ -6,14 +6,14 @@ from rest_framework.serializers import (
     BooleanField,
     ChoiceField,
     DateTimeField,
+    IntegerField,
     ModelSerializer,
     PrimaryKeyRelatedField,
     Serializer,
     SerializerMethodField,
-    IntegerField,
 )
 
-from core.models import User, TaskProgress
+from core.models import TaskProgress, User
 
 
 class EmailVerificationSerializer(Serializer):
@@ -36,7 +36,8 @@ class UserSerializer(ModelSerializer):
             'last_name',
             'email',
             'language',
-            'is_from_master_organization',
+            'is_user_of_master_organization',
+            'is_admin_of_master_organization',
             'is_superuser',
             'email_verification_status',
             'email_verification_sent',

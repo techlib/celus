@@ -147,7 +147,7 @@ export default new Vuex.Store({
       // can the user admin the organization that is selected?
       return (
         (state.user &&
-          (state.user.is_from_master_organization ||
+          (state.user.is_admin_of_master_organization ||
             state.user.is_superuser)) ||
         (getters.selectedOrganization && getters.selectedOrganization.is_admin)
       );
@@ -156,7 +156,13 @@ export default new Vuex.Store({
       // can the user manage the system?
       return (
         state.user &&
-        (state.user.is_from_master_organization || state.user.is_superuser)
+        (state.user.is_admin_of_master_organization || state.user.is_superuser)
+      );
+    },
+    showConsortialStuff(state) {
+      return (
+        state.user &&
+        (state.user.is_user_of_master_organization || state.user.is_superuser)
       );
     },
     organizationSelected(state) {
@@ -333,7 +339,7 @@ export default new Vuex.Store({
           }
           organizations[rec.pk] = rec;
         }
-        if (getters.showManagementStuff) {
+        if (getters.showConsortialStuff) {
           organizations[-1] = {
             name: "All",
             name_cs: "Všechny",

@@ -1,8 +1,8 @@
 from django.conf import settings
-from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
-
-from core.logic.url import extract_organization_id_from_request_data, extract_field_from_request
 from organizations.models import UserOrganization
+from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
+
+from core.logic.url import extract_field_from_request, extract_organization_id_from_request_data
 
 
 class OwnerLevelBasedPermissions(BasePermission):
@@ -97,7 +97,7 @@ class CanAccessOrganizationFromGETAttrs(BasePermission):
         if organization is None:
             return False
         if organization == '-1':
-            return request.user.is_superuser or request.user.is_from_master_organization
+            return request.user.is_superuser or request.user.is_user_of_master_organization
         else:
             return request.user.accessible_organizations().filter(pk=organization).exists()
 
@@ -114,7 +114,7 @@ class AdminAccessForOrganization(BasePermission):
 
         if not organization or organization == -1:
             # master use required to access all organizations
-            return request.user.is_superuser or request.user.is_from_master_organization
+            return request.user.is_superuser or request.user.is_admin_of_master_organization
 
         return request.user.has_organization_admin_permission(organization)
 
@@ -138,14 +138,14 @@ class OrganizationRequiredInDataForNonSuperusers(BasePermission):
 class SuperuserOrAdminPermission(BasePermission):
     def has_permission(self, request, view):
         if request.user.is_superuser or (
-            hasattr(request.user, 'is_from_master_organization')
-            and request.user.is_from_master_organization
+            hasattr(request.user, 'is_admin_of_master_organization')
+            and request.user.is_admin_of_master_organization
         ):
             return True
         return False
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser or request.user.is_from_master_organization:
+        if request.user.is_superuser or request.user.is_admin_of_master_organization:
             return True
         return False
 
@@ -156,6 +156,14 @@ class SuperuserPermission(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return request.user.is_superuser
+
+
+class SuperuserOrMasterUserPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_user_of_master_organization
+
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_user_of_master_organization
 
 
 class EnabledInSettingsPermission(BasePermission):

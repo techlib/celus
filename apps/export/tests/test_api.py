@@ -1,16 +1,15 @@
 from unittest.mock import patch
 
 import pytest
-from django.urls import reverse
-
 from core.logic.serialization import b64json
+from django.urls import reverse
 from export.models import FlexibleDataExport
 
 
 @pytest.fixture
 def exports_for_users(users):
     FlexibleDataExport.objects.create(owner=users['user1'])
-    FlexibleDataExport.objects.create(owner=users['master'])
+    FlexibleDataExport.objects.create(owner=users['master_admin'])
 
 
 @pytest.mark.django_db
@@ -19,7 +18,9 @@ class TestFlexibleExportApi:
         resp = admin_client.get(reverse('flexible-export-list'))
         assert resp.status_code == 200
 
-    @pytest.mark.parametrize(['user_name'], [['user1'], ['user2'], ['master'], ['admin1']])
+    @pytest.mark.parametrize(
+        ['user_name'], [['user1'], ['user2'], ['master_admin'], ['master_user'], ['admin1']]
+    )
     def test_list_user_access(self, exports_for_users, users, user_name, client):
         """Check that user has only access to export created by himself"""
         user = users[user_name]

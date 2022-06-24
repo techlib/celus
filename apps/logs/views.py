@@ -16,13 +16,14 @@ from core.permissions import (
     OrganizationRequiredInDataForNonSuperusers,
     OwnerLevelBasedPermissions,
     SuperuserOrAdminPermission,
+    SuperuserOrMasterUserPermission,
 )
 from core.prometheus import report_access_time_summary, report_access_total_counter
 from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import BadRequest
-from django.db.models import Count, Exists, OuterRef, Prefetch, Q, F
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.transaction import atomic
 from django.http import JsonResponse
 from django.urls import reverse
@@ -244,6 +245,7 @@ class RawDataDelayedExportView(APIView):
         IsAuthenticated
         & (
             SuperuserOrAdminPermission
+            | SuperuserOrMasterUserPermission
             | (OrganizationRequiredInDataForNonSuperusers & CanAccessOrganizationFromGETAttrs)
         )
     ]
@@ -368,7 +370,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         # only accesible batches
-        batches = filters.AccessibleFilter().filter_queryset(
+        batches = filters.ModifiableFilter().filter_queryset(
             request, ImportBatch.objects.filter(pk__in=serializer.data["batches"]), self
         )
 
@@ -783,7 +785,7 @@ class FlexibleReportViewSet(ModelViewSet):
 
     def _check_write_permissions(self, request, owner, owner_organization):
         # only superuser can set other user as owner
-        if not (request.user.is_superuser or request.user.is_from_master_organization):
+        if not (request.user.is_superuser or request.user.is_admin_of_master_organization):
             if owner not in (None, request.user.pk):
                 raise PermissionDenied(f'Not allowed to set owner {owner}')
         if owner_organization:
@@ -794,7 +796,7 @@ class FlexibleReportViewSet(ModelViewSet):
                 )
         if not owner and not owner_organization:
             # this should be consortial access level
-            if not (request.user.is_superuser or request.user.is_from_master_organization):
+            if not (request.user.is_superuser or request.user.is_admin_of_master_organization):
                 raise PermissionDenied(f'Not allowed to create consortial level report')
 
     def create(self, request, *args, **kwargs):
@@ -817,17 +819,17 @@ class FlexibleReportViewSet(ModelViewSet):
         # generic permission to edit based on current access_level
         if obj.access_level == FlexibleReport.Level.PRIVATE:
             # only owner or superuser may edit
-            if not (user == obj.owner or user.is_superuser or user.is_from_master_organization):
+            if not (user == obj.owner or user.is_superuser or user.is_admin_of_master_organization):
                 raise PermissionDenied(f'Not allowed to change private report')
         elif obj.access_level == FlexibleReport.Level.ORGANIZATION:
             # only admin of owner_organization or superuser may edit
-            if not (user.is_superuser or user.is_from_master_organization):
+            if not (user.is_superuser or user.is_admin_of_master_organization):
                 rel = request.user.organization_relationship(obj.owner_organization_id)
                 if rel < REL_ORG_ADMIN:
                     raise PermissionDenied(f'Not allowed to change organization report')
         else:
             # only superuser may edit consortium level reports
-            if not (user.is_superuser or user.is_from_master_organization):
+            if not (user.is_superuser or user.is_admin_of_master_organization):
                 raise PermissionDenied(f'Not allowed to change consortial report')
 
         if not delete:

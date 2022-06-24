@@ -111,7 +111,7 @@ class FlexiReport {
     if (this.owner && this.owner === user.pk) {
       return true;
     }
-    if (user.is_superuser || user.is_from_master_organization) {
+    if (user.is_superuser || user.is_admin_of_master_organization) {
       return true;
     }
     if (this.ownerOrganization) {

@@ -1,10 +1,11 @@
 <i18n lang="yaml">
 en:
   is_superuser: Superuser
-  is_from_master_organization: Consortium staff
+  is_admin_of_master_organization: Consortium staff
+  is_user_of_master_organization: Consortium observer
   associated_organizations: Associated organizations
   associated_organizations_note:
-    Super users and consortium staff users have access to all available organizations, but only
+    Super users and consortium users have access to all available organizations, but only
     those listed below are explicitly associated with this account
   organization: Organization
   is_admin: Admin
@@ -28,10 +29,12 @@ en:
     member: Member of organization
     admin: Admin of organization
     manager: Manager of entire consortium
+    consortial_user: User of entire consortium
 
 cs:
   is_superuser: Superuživatel
-  is_from_master_organization: Člen konzorciálního týmu
+  is_admin_of_master_organization: Správce konzorciálního týmu
+  is_user_of_master_organization: Uživatel konzorciálního týmu
   associated_organizations: Přiřazené organizace
   associated_organizations_note:
     Superuživatelé a členové konzorciálního týmu mají přístup ke všem organizacím. Níže jsou
@@ -58,6 +61,7 @@ cs:
     member: Člen organizace
     admin: Administrátor organizace
     manager: Správce celého konzorcia
+    consortial_user: Uživatel celého konzorcia
 </i18n>
 
 <template>
@@ -105,8 +109,12 @@ cs:
         <div class="font-weight-black">
           <span v-if="user.is_superuser" v-text="$t('is_superuser')"></span>
           <span
-            v-else-if="user.is_from_master_organization"
-            v-text="$t('is_from_master_organization')"
+            v-else-if="user.is_admin_of_master_organization"
+            v-text="$t('is_admin_of_master_organization')"
+          ></span>
+          <span
+            v-else-if="user.is_user_of_master_organization"
+            v-text="$t('is_user_of_master_organization')"
           ></span>
         </div>
       </v-col>
@@ -138,7 +146,7 @@ cs:
         <h2 v-text="$t('associated_organizations')"></h2>
         <div
           class="font-weight-light mt-2 mb-4"
-          v-if="user.is_superuser || user.is_from_master_organization"
+          v-if="user.is_superuser || user.is_user_of_master_organization"
           v-text="'* ' + $t('associated_organizations_note')"
         ></div>
       </v-col>
@@ -204,7 +212,7 @@ cs:
           <template v-slot:item.email="{ item }">
             <v-tooltip
               bottom
-              v-if="item.is_superuser || item.is_from_master_organization"
+              v-if="item.is_superuser || item.is_admin_of_master_organization"
             >
               <template #activator="{ on }">
                 <v-icon v-on="on" small color="amber" class="mr-1">
@@ -212,6 +220,14 @@ cs:
                 </v-icon>
               </template>
               {{ $t("impersonification.manager") }}
+            </v-tooltip>
+            <v-tooltip bottom v-else-if="item.is_user_of_master_organization">
+              <template #activator="{ on }">
+                <v-icon v-on="on" small color="blue-grey lighten-2" class="mr-1">
+                  fas fa-crown
+                </v-icon>
+              </template>
+              {{ $t("impersonification.consortial_user") }}
             </v-tooltip>
             <v-badge
               v-if="item.real_user"
@@ -306,7 +322,7 @@ export default {
     },
     showImpersonate() {
       return (
-        this.user.is_from_master_organization ||
+        this.user.is_admin_of_master_organization ||
         this.user.is_superuser ||
         this.impersonated
       );

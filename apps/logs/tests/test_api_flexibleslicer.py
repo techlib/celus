@@ -30,7 +30,7 @@ class TestSlicerAPI:
         """
         user = users['user1']
         assert not user.is_superuser, 'user must be unprivileged'
-        assert not user.is_from_master_organization, 'user must be unprivileged'
+        assert not user.is_user_of_master_organization, 'user must be unprivileged'
         client.force_login(user)
         resp = client.get(
             reverse('flexible-slicer'),
@@ -50,7 +50,7 @@ class TestSlicerAPI:
         user = users['user1']
         UserOrganization.objects.create(user=user, organization=organization)
         assert not user.is_superuser, 'user must be unprivileged'
-        assert not user.is_from_master_organization, 'user must be unprivileged'
+        assert not user.is_user_of_master_organization, 'user must be unprivileged'
         client.force_login(user)
         resp = client.get(
             reverse('flexible-slicer'),

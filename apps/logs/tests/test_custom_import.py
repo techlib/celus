@@ -76,7 +76,13 @@ class TestCustomImport:
                 assert record.metric == 'MX'
 
     def test_custom_data_import_process(
-        self, organizations, report_type_nd, tmp_path, settings, master_client, master_identity
+        self,
+        organizations,
+        report_type_nd,
+        tmp_path,
+        settings,
+        master_admin_client,
+        master_admin_identity,
     ):
         """
         Complex test
@@ -97,7 +103,7 @@ class TestCustomImport:
         settings.MEDIA_ROOT = tmp_path
 
         # upload the data
-        response = master_client.post(
+        response = master_admin_client.post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -114,32 +120,36 @@ class TestCustomImport:
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
-        response = master_client.get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = master_admin_client.get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
         assert data['preflight']['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
 
         # let's process the mdu
         assert AccessLog.objects.count() == 0
-        response = master_client.post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = master_admin_client.post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 200
         # import data (this should be handled via celery)
         import_manual_upload_data(mdu.pk, mdu.user.pk)
 
         mdu.refresh_from_db()
         assert mdu.is_processed
-        assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
+        assert mdu.user_id == Identity.objects.get(identity=master_admin_identity).user_id
         assert AccessLog.objects.count() == 6
         assert mdu.import_batches.count() == 3, '3 months of data'
 
         # reprocess
-        response = master_client.post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = master_admin_client.post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 200, "already imported, nothing needs to be done"
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
 
         # the whole thing once again
         file.seek(0)
-        response = master_client.post(
+        response = master_admin_client.post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -155,20 +165,28 @@ class TestCustomImport:
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
-        response = master_client.get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = master_admin_client.get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
         assert data['preflight']['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
         assert len(data['clashing_months']) == 3, 'all 3 months are already there'
         assert data['can_import'] is False, 'preflight signals that import is not possible'
-        response = master_client.post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = master_admin_client.post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 409
         assert AccessLog.objects.count() == 6, 'no new AccessLogs'
         mdu.refresh_from_db()
         assert not mdu.is_processed, 'crash - should not mark mdu as processed'
 
     def test_manual_data_upload_api_delete(
-        self, organizations, report_type_nd, tmp_path, settings, master_client, master_identity
+        self,
+        organizations,
+        report_type_nd,
+        tmp_path,
+        settings,
+        master_admin_client,
+        master_admin_identity,
     ):
         """
         When deleting manual data upload, we need to delete the import_batch as well.
@@ -181,7 +199,7 @@ class TestCustomImport:
         csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
         file = StringIO(csv_content)
         settings.MEDIA_ROOT = tmp_path
-        response = master_client.post(
+        response = master_admin_client.post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -199,20 +217,22 @@ class TestCustomImport:
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
-        response = master_client.post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = master_admin_client.post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 200
 
         import_manual_upload_data(mdu.pk, mdu.user.pk)
 
         mdu.refresh_from_db()
         assert mdu.is_processed
-        assert mdu.user_id == Identity.objects.get(identity=master_identity).user_id
+        assert mdu.user_id == Identity.objects.get(identity=master_admin_identity).user_id
         assert AccessLog.objects.count() == 6
         assert mdu.import_batches.count() == 3, '3 months of data = 3 import batches'
         assert mdu.accesslogs.count() == 6
         assert ImportBatch.objects.count() == 3
         # let's delete the object
-        response = master_client.delete(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = master_admin_client.delete(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 204
         assert ManualDataUpload.objects.filter(pk=mdu.pk).count() == 0
         assert ImportBatch.objects.count() == 0

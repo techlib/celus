@@ -1,6 +1,5 @@
-from django.http import Http404
-
 from core.models import User
+from django.http import Http404
 
 
 def organization_filter_from_org_id(
@@ -18,7 +17,7 @@ def organization_filter_from_org_id(
     :return:
     """
     if org_id in ('-1', -1):
-        if user.is_superuser or user.is_from_master_organization:
+        if user.is_superuser or user.is_user_of_master_organization:
             return {}
         else:
             raise Http404()
@@ -28,7 +27,7 @@ def organization_filter_from_org_id(
         org_qs = user.admin_organizations() if admin_required else user.accessible_organizations()
         if (
             user.is_superuser
-            or user.is_from_master_organization
+            or user.is_user_of_master_organization
             or org_qs.filter(pk=org_id).exists()
         ):
             # for django, we cannot use `organization_id` as it would not work for m2m links

@@ -1,17 +1,21 @@
 from unittest.mock import patch
 
 import pytest
+from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
+from core.tests.conftest import (
+    authenticated_client,
+    master_admin_client,
+    master_admin_identity,
+    valid_identity,
+)
 from django.urls import reverse
-
-from charts.models import ReportDataView, ChartDefinition, ReportViewToChartType
-from core.tests.conftest import master_client, master_identity, authenticated_client, valid_identity
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import import_counter_records
-from logs.models import OrganizationPlatform, AccessLog, Metric, ImportBatch
-from logs.tests.conftest import report_type_nd, counter_records_0d
-from publications.models import Title, Platform
-from publications.tests.conftest import platform
+from logs.models import AccessLog, ImportBatch, Metric, OrganizationPlatform
+from logs.tests.conftest import counter_records_0d, report_type_nd
 from organizations.tests.conftest import organizations
+from publications.models import Platform, Title
+from publications.tests.conftest import platform
 
 
 @pytest.fixture
@@ -30,19 +34,19 @@ def simple_report_view(report_type_nd):
 
 @pytest.mark.django_db
 class TestReportViewToChartAPI:
-    def test_api_list_simple(self, master_client):
-        resp = master_client.get(reverse('report-view-to-chart-list'))
+    def test_api_list_simple(self, master_admin_client):
+        resp = master_admin_client.get(reverse('report-view-to-chart-list'))
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_api_list_full(self, simple_report_view, master_client, charts):
+    def test_api_list_full(self, simple_report_view, master_admin_client, charts):
         rvch1 = ReportViewToChartType.objects.create(
             report_data_view=simple_report_view, chart_definition=charts[0], position=10
         )
         rvch2 = ReportViewToChartType.objects.create(
             report_data_view=simple_report_view, chart_definition=charts[1], position=20
         )
-        resp = master_client.get(reverse('report-view-to-chart-list'))
+        resp = master_admin_client.get(reverse('report-view-to-chart-list'))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2
@@ -62,11 +66,11 @@ class TestReportViewToChartAPI:
             },
         ]
 
-    def test_patch(self, simple_report_view, master_client, charts):
+    def test_patch(self, simple_report_view, master_admin_client, charts):
         rvch = ReportViewToChartType.objects.create(
             report_data_view=simple_report_view, chart_definition=charts[0], position=10
         )
-        resp = master_client.patch(
+        resp = master_admin_client.patch(
             reverse('report-view-to-chart-detail', args=(rvch.pk,)),
             {'position': 100},
             content_type='application/json',
@@ -75,9 +79,9 @@ class TestReportViewToChartAPI:
         rvch.refresh_from_db()
         assert rvch.position == 100
 
-    def test_post(self, simple_report_view, master_client, charts):
+    def test_post(self, simple_report_view, master_admin_client, charts):
         assert ReportViewToChartType.objects.count() == 0
-        resp = master_client.post(
+        resp = master_admin_client.post(
             reverse('report-view-to-chart-list'),
             dict(
                 report_data_view=simple_report_view.pk, chart_definition=charts[0].pk, position=10
@@ -89,19 +93,19 @@ class TestReportViewToChartAPI:
 
 @pytest.mark.django_db
 class TestReportViewAPI:
-    def test_api_list_simple(self, master_client):
-        resp = master_client.get(reverse('report-view-list'))
+    def test_api_list_simple(self, master_admin_client):
+        resp = master_admin_client.get(reverse('report-view-list'))
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_api_list_full(self, simple_report_view, master_client):
-        resp = master_client.get(reverse('report-view-list'))
+    def test_api_list_full(self, simple_report_view, master_admin_client):
+        resp = master_admin_client.get(reverse('report-view-list'))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         assert data[0]['pk'] == simple_report_view.pk
 
-    def test_api_list_ordering(self, report_type_nd, master_client):
+    def test_api_list_ordering(self, report_type_nd, master_admin_client):
         """
         Check that report data views are ordered by position in reply, not by name or short_name
         """
@@ -109,12 +113,12 @@ class TestReportViewAPI:
         ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
         ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
         ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
-        resp = master_client.get(reverse('report-view-list'))
+        resp = master_admin_client.get(reverse('report-view-list'))
         assert resp.status_code == 200
         data = resp.json()
         assert [rec['position'] for rec in data] == [1, 2, 3]
 
-    def test_api_list_for_report_type_ordering(self, report_type_nd, master_client):
+    def test_api_list_for_report_type_ordering(self, report_type_nd, master_admin_client):
         """
         Check that report data views are ordered by position in reply, not by name or short_name
         - for report-type-to-report-data-view
@@ -123,7 +127,7 @@ class TestReportViewAPI:
         ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
         ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
         ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
-        resp = master_client.get(reverse('report-type-to-report-data-view', args=(rt.pk,)))
+        resp = master_admin_client.get(reverse('report-type-to-report-data-view', args=(rt.pk,)))
         assert resp.status_code == 200
         data = resp.json()
         assert [rec['position'] for rec in data] == [1, 2, 3]
@@ -132,7 +136,7 @@ class TestReportViewAPI:
     @pytest.mark.usefixtures('clickhouse_on_off')
     @pytest.mark.django_db(transaction=True)
     def test_api_list_for_platform_ordering(
-        self, report_type_nd, master_client, platform, organizations
+        self, report_type_nd, master_admin_client, platform, organizations
     ):
         """
         Check that report data views are ordered by position in reply, not by name or short_name
@@ -160,7 +164,7 @@ class TestReportViewAPI:
         # sync with clickhouse as we have circumvented the normal creation of accesslogs
         sync_import_batch_with_clickhouse(ib)
 
-        resp = master_client.get(
+        resp = master_admin_client.get(
             reverse(
                 'platform-report-data-views-list',
                 kwargs={'organization_pk': organization.pk, 'platform_pk': platform.pk},
@@ -174,7 +178,7 @@ class TestReportViewAPI:
     @pytest.mark.usefixtures('clickhouse_on_off')
     @pytest.mark.django_db(transaction=True)
     def test_api_list_for_platform_and_title_ordering(
-        self, report_type_nd, master_client, platform, organizations
+        self, report_type_nd, master_admin_client, platform, organizations
     ):
         """
         Check that report data views are ordered by position in reply, not by name or short_name
@@ -203,7 +207,7 @@ class TestReportViewAPI:
         )
         # sync with clickhouse as we have circumvented the normal creation of accesslogs
         sync_import_batch_with_clickhouse(ib)
-        resp = master_client.get(
+        resp = master_admin_client.get(
             reverse(
                 'platform-title-report-data-views-list',
                 kwargs={
@@ -220,19 +224,19 @@ class TestReportViewAPI:
 
 @pytest.mark.django_db
 class TestChartsAPI:
-    def test_api_list_simple(self, master_client):
+    def test_api_list_simple(self, master_admin_client):
         """
         Simply test that the endpoint exists and returns some response
         """
-        resp = master_client.get(reverse('chart-definition-list'))
+        resp = master_admin_client.get(reverse('chart-definition-list'))
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_api_list_full(self, master_client, charts):
+    def test_api_list_full(self, master_admin_client, charts):
         """
         Test that the endpoint reports the currently defined charts
         """
-        resp = master_client.get(reverse('chart-definition-list'))
+        resp = master_admin_client.get(reverse('chart-definition-list'))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2

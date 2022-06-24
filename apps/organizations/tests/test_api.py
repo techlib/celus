@@ -1,15 +1,10 @@
 import pytest
-from django.urls import reverse
-
 from core.models import Identity, User
-from core.tests.conftest import (  # noqa - fixtures
-    authenticated_client,
-    authentication_headers,
-    invalid_identity,
-    valid_identity,
-)
-from logs.models import AccessLog, Metric, ImportBatch
-from organizations.models import UserOrganization, Organization
+from core.tests.conftest import authenticated_client  # noqa - fixtures
+from core.tests.conftest import authentication_headers, invalid_identity, valid_identity
+from django.urls import reverse
+from logs.models import AccessLog, ImportBatch, Metric
+from organizations.models import Organization, UserOrganization
 from publications.tests.conftest import interest_rt  # noqa - fixture
 
 
@@ -130,15 +125,15 @@ class TestOrganizationAPI:
         admin_user = User.objects.get(is_superuser=True)
         assert admin_user.organizations.count() == 1
 
-    def test_organization_interest_no_data(self, master_client, interest_rt):
+    def test_organization_interest_no_data(self, master_user_client, interest_rt):
         """
         Test the `interest` custom action of organization ViewSet without any data
         """
-        resp = master_client.get(reverse('organization-interest', args=('-1',)))
+        resp = master_user_client.get(reverse('organization-interest', args=('-1',)))
         assert resp.status_code == 200
         assert resp.json() == {'days': 0, 'interest_sum': None, 'max_date': None, 'min_date': None}
 
-    def test_organization_interest_data(self, master_client, interest_rt):
+    def test_organization_interest_data(self, master_user_client, interest_rt):
         """
         Test the `interest` custom action of organization ViewSet with some data
         """
@@ -147,7 +142,7 @@ class TestOrganizationAPI:
         AccessLog.objects.create(
             report_type=interest_rt, value=5, date='2020-01-01', metric=metric, import_batch=ib
         )
-        resp = master_client.get(reverse('organization-interest', args=('-1',)))
+        resp = master_user_client.get(reverse('organization-interest', args=('-1',)))
         assert resp.status_code == 200
         assert resp.json() == {
             'days': 31,
@@ -157,7 +152,7 @@ class TestOrganizationAPI:
         }
 
     def test_organization_interest_data_organizations(
-        self, master_client, interest_rt, organizations
+        self, master_user_client, interest_rt, organizations
     ):
         """
         Test the `interest` custom action of organization ViewSet with some data and a specific
@@ -181,7 +176,7 @@ class TestOrganizationAPI:
             import_batch=ib,
             organization=organizations[1],
         )
-        resp = master_client.get(reverse('organization-interest', args=(organizations[0].pk,)))
+        resp = master_user_client.get(reverse('organization-interest', args=(organizations[0].pk,)))
         assert resp.status_code == 200
         assert resp.json() == {
             'days': 31,
@@ -189,7 +184,7 @@ class TestOrganizationAPI:
             'max_date': '2020-01-31',
             'min_date': '2020-01-01',
         }
-        resp = master_client.get(reverse('organization-interest', args=(organizations[1].pk,)))
+        resp = master_user_client.get(reverse('organization-interest', args=(organizations[1].pk,)))
         assert resp.status_code == 200
         assert resp.json() == {
             'days': 29,

@@ -39,7 +39,7 @@ from test_fixtures.scenarios.basic import (
 class TestHarvestAPI:
     def test_list(self, basic1, clients, harvests):
         url = reverse('harvest-list')
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 4
@@ -78,7 +78,7 @@ class TestHarvestAPI:
     )
     def test_list_order_by(self, basic1, clients, harvests, desc, column):
         url = reverse('harvest-list')
-        resp = clients["master"].get(url, {'order_by': column, 'desc': desc})
+        resp = clients["master_admin"].get(url, {'order_by': column, 'desc': desc})
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 4
@@ -98,17 +98,17 @@ class TestHarvestAPI:
 
         url = reverse('harvest-list')
         # test finished filter
-        resp = clients["master"].get(url + "?finished=yes", {})
+        resp = clients["master_admin"].get(url + "?finished=yes", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
         assert len(data1) == 1
 
-        resp = clients["master"].get(url + "?finished=no", {})
+        resp = clients["master_admin"].get(url + "?finished=no", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
         assert len(data2) == 3
 
-        resp = clients["master"].get(url + "?finished=working", {})
+        resp = clients["master_admin"].get(url + "?finished=working", {})
         assert resp.status_code == 200
         data3 = resp.json()["results"]
         assert len(data3) == 0
@@ -120,12 +120,12 @@ class TestHarvestAPI:
 
         url = reverse('harvest-list')
         # test finished filter
-        resp = clients["master"].get(url + "?automatic=1", {})
+        resp = clients["master_admin"].get(url + "?automatic=1", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
         assert len(data1) == 1
 
-        resp = clients["master"].get(url + "?automatic=0", {})
+        resp = clients["master_admin"].get(url + "?automatic=0", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
         assert len(data2) == 3
@@ -146,12 +146,12 @@ class TestHarvestAPI:
 
         url = reverse('harvest-list')
         # test finished filter
-        resp = clients["master"].get(url + "?broken=1", {})
+        resp = clients["master_admin"].get(url + "?broken=1", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
         assert len(data1) == 3
 
-        resp = clients["master"].get(url + "?broken=0", {})
+        resp = clients["master_admin"].get(url + "?broken=0", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
         assert len(data2) == 1
@@ -160,53 +160,53 @@ class TestHarvestAPI:
 
         url = reverse('harvest-list')
         # test finished filter
-        resp = clients["master"].get(url + "?month=2020-01", {})
+        resp = clients["master_admin"].get(url + "?month=2020-01", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
         assert len(data1) == 4
 
-        resp = clients["master"].get(url + "?month=2020-03", {})
+        resp = clients["master_admin"].get(url + "?month=2020-03", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
         assert len(data2) == 1
 
     def test_list_filter_platforms(self, basic1, clients, harvests, platforms):
         url = reverse('harvest-list')
-        resp = clients["master"].get(url + f"?platforms={platforms['branch'].pk}", {})
+        resp = clients["master_admin"].get(url + f"?platforms={platforms['branch'].pk}", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
         assert len(data1) == 2
 
         url += f"?platforms={platforms['branch'].pk},{platforms['standalone'].pk}"
-        resp = clients["master"].get(url, {},)
+        resp = clients["master_admin"].get(url, {},)
         assert resp.status_code == 200
         data2 = resp.json()["results"]
         assert len(data2) == 4
 
     def test_get(self, basic1, clients, harvests):
         url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["stats"] == {"total": 3, "planned": 2, "attempt_count": 2, "working": 0}
         assert len(data["intentions"]) == 3
 
         url = reverse('harvest-detail', args=(harvests["user1"].pk,))
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
         assert len(data["intentions"]) == 2
 
         url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
         assert len(data["intentions"]) == 2
 
         url = reverse('harvest-detail', args=(harvests["user2"].pk,))
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
@@ -227,7 +227,7 @@ class TestHarvestAPI:
 
         monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
 
-        resp = clients["master"].post(
+        resp = clients["master_admin"].post(
             url,
             json.dumps(
                 {
@@ -254,7 +254,7 @@ class TestHarvestAPI:
         data = resp.json()
         assert data["stats"] == {"total": 2, "planned": 2, "attempt_count": 0, "working": 0}
         assert len(data["intentions"]) == 2
-        assert data["last_updated_by"] == users["master"].pk
+        assert data["last_updated_by"] == users["master_admin"].pk
         assert stored_intentions_count + 2 == FetchIntention.objects.count()
         assert FetchIntention.objects.order_by('-pk')[0].priority >= FetchIntention.PRIORITY_NOW
         assert FetchIntention.objects.order_by('-pk')[1].priority >= FetchIntention.PRIORITY_NOW
@@ -265,7 +265,15 @@ class TestHarvestAPI:
         }
 
     @pytest.mark.parametrize(
-        "user,length", (("master", 4), ("admin1", 0), ("admin2", 1), ("user1", 1), ("user2", 1),)
+        "user,length",
+        (
+            ("master_admin", 4),
+            ("master_user", 0),
+            ("admin1", 0),
+            ("admin2", 1),
+            ("user1", 1),
+            ("user2", 1),
+        ),
     )
     def test_list_filtering(self, basic1, harvests, clients, user, length):
         url = reverse('harvest-list')
@@ -277,7 +285,8 @@ class TestHarvestAPI:
     @pytest.mark.parametrize(
         "user,anonymous_status,automatic_status,user1_status",
         (
-            ("master", 200, 200, 200),
+            ("master_admin", 200, 200, 200),
+            ("master_user", 404, 404, 404),
             ("admin1", 404, 404, 404),
             ("admin2", 404, 200, 404),
             ("user1", 404, 404, 200),
@@ -363,7 +372,7 @@ class TestHarvestAPI:
 
     def test_create_empty(self, clients):
         url = reverse('harvest-list')
-        resp = clients["master"].post(
+        resp = clients["master_admin"].post(
             url, json.dumps({"intentions": []}), content_type='application/json',
         )
         assert resp.status_code == 400, "At least one intention has to be used"
@@ -399,7 +408,7 @@ class TestHarvestAPI:
         cr2c_br1.save()
 
         # only jr1 ok
-        resp = clients["master"].post(
+        resp = clients["master_admin"].post(
             url,
             json.dumps(
                 {
@@ -424,7 +433,7 @@ class TestHarvestAPI:
         assert resp.status_code == 201
 
         # tr included -> broken
-        resp = clients["master"].post(
+        resp = clients["master_admin"].post(
             url,
             json.dumps(
                 {
@@ -449,7 +458,7 @@ class TestHarvestAPI:
         assert resp.status_code == 400
 
         # br1 included -> broken
-        resp = clients["master"].post(
+        resp = clients["master_admin"].post(
             url,
             json.dumps(
                 {
@@ -478,7 +487,7 @@ class TestHarvestAPI:
     ):
 
         url = reverse('harvest-list')
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 0
@@ -487,7 +496,7 @@ class TestHarvestAPI:
         Automatic.update_for_this_month()
 
         url = reverse('harvest-list')
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 2
@@ -496,7 +505,7 @@ class TestHarvestAPI:
 
         # check whether atomic is are present in details
         url = reverse('harvest-detail', args=(data[0]['pk'],))
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["automatic"] is not None
@@ -512,7 +521,7 @@ class TestHarvestFetchIntentionAPI:
     def test_list(self, basic1, clients, harvests):
 
         url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 3
@@ -521,7 +530,7 @@ class TestHarvestFetchIntentionAPI:
         assert all("canceled" in record for record in data)
 
         url = reverse('harvest-intention-list', args=(harvests["user1"].pk,))
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2
@@ -529,7 +538,7 @@ class TestHarvestFetchIntentionAPI:
         assert all("canceled" in record for record in data)
 
         url = reverse('harvest-intention-list', args=(harvests["automatic"].pk,))
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2
@@ -540,7 +549,12 @@ class TestHarvestFetchIntentionAPI:
 
     @pytest.mark.parametrize(
         "user,anonymous_status,user1_status",
-        (("master", 200, 200), ("user1", 404, 200), ("user2", 404, 404),),
+        (
+            ("master_admin", 200, 200),
+            ("master_user", 404, 404),
+            ("user1", 404, 200),
+            ("user2", 404, 404),
+        ),
     )
     def test_list_permissions(
         self, basic1, harvests, clients, user, anonymous_status, user1_status
@@ -558,7 +572,7 @@ class TestHarvestFetchIntentionAPI:
             'harvest-intention-detail',
             args=(harvests["anonymous"].pk, harvests["anonymous"].latest_intentions.first().pk),
         )
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert "broken_credentials" in data
@@ -568,7 +582,7 @@ class TestHarvestFetchIntentionAPI:
             args=(harvests["user1"].pk, harvests["anonymous"].latest_intentions.first().pk),
         )
 
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 404
 
     def test_retry(self, basic1, clients, harvests):
@@ -580,7 +594,7 @@ class TestHarvestFetchIntentionAPI:
             'harvest-intention-detail',
             args=(harvests['anonymous'].pk, harvests['anonymous'].latest_intentions.first().pk),
         )
-        resp = clients["master"].get(url, {})
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         # create new intention by setting .pk to None and saving
         old_pk = resp.json()['pk']
@@ -593,23 +607,23 @@ class TestHarvestFetchIntentionAPI:
         intention.queue.save()
 
         # try to get old and new intentions via get
-        resp = clients['master'].get(
+        resp = clients['master_admin'].get(
             reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, intention.pk),)
         )
         assert resp.status_code == 200, 'new intention should be reachable'
-        resp = clients['master'].get(
+        resp = clients['master_admin'].get(
             reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, old_pk),)
         )
         assert resp.status_code == 200, 'old intention should be reachable as well'
 
         # try to get old and new intentions via list
-        resp = clients['master'].get(
+        resp = clients['master_admin'].get(
             reverse('harvest-intention-list', args=(harvests['anonymous'].pk,),)
         )
         assert resp.status_code == 200
         assert old_pk not in [e["pk"] for e in resp.json()], 'by default old should be hidden'
 
-        resp = clients['master'].get(
+        resp = clients['master_admin'].get(
             reverse('harvest-intention-list', args=(harvests['anonymous'].pk,),) + '?list_all=1'
         )
         assert resp.status_code == 200
@@ -617,7 +631,12 @@ class TestHarvestFetchIntentionAPI:
 
     @pytest.mark.parametrize(
         "user,anonymous_status,user1_status",
-        (("master", 200, 200), ("user1", 404, 200), ("user2", 404, 404),),
+        (
+            ("master_admin", 200, 200),
+            ("master_user", 404, 404),
+            ("user1", 404, 200),
+            ("user2", 404, 404),
+        ),
     )
     def test_get_permissions(self, basic1, harvests, clients, user, anonymous_status, user1_status):
         url = reverse(
@@ -637,8 +656,10 @@ class TestHarvestFetchIntentionAPI:
     @pytest.mark.parametrize(
         "user,processed,status,planned",
         (
-            ("master", False, 200, True),
-            ("master", True, 400, False),
+            ("master_admin", False, 200, True),
+            ("master_admin", True, 400, False),
+            ("master_user", False, 404, False),
+            ("master_user", False, 404, False),
             ("user1", False, 200, True),
             ("user1", True, 400, False),
             ("user2", True, 404, False),
@@ -671,8 +692,10 @@ class TestHarvestFetchIntentionAPI:
     @pytest.mark.parametrize(
         "user,cancelable,status",
         (
-            ("master", True, 200),
-            ("master", False, 400),
+            ("master_admin", True, 200),
+            ("master_admin", False, 400),
+            ("master_user", True, 404),
+            ("master_user", False, 404),
             ("user1", True, 200),
             ("user1", False, 400),
             ("user2", False, 404),
@@ -708,7 +731,8 @@ class TestFetchIntentionAPI:
             ['user2', 404],
             ['admin1', 200],
             ['admin2', 404],
-            ['master', 200],
+            ['master_admin', 200],
+            ['master_user', 200],
             ['su', 200],
         ],
     )
@@ -886,12 +910,12 @@ class TestIntentionDeleteView:
             ['user2', 403],
             ['admin1', 200],
             ['admin2', 403],
-            ['master', 200],
+            ['master_admin', 200],
+            ['master_user', 403],
             ['su', 200],
         ],
     )
     def test_intention_delete_view(self, basic1, clients, user, status_code, settings):
-        # the basic1 fixture is necessary for the master user to really be master
         cr1 = CredentialsFactory()
         cr2 = CredentialsFactory()
         fi1 = FetchIntentionFactory.create(credentials=cr1, start_date=date(2021, 1, 1))

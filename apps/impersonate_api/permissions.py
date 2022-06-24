@@ -22,8 +22,8 @@ def check_allow_impersonate(request: Request):
     def check_user(user: User):
         if user.is_superuser:
             return True
-        if hasattr(user, "is_from_master_organization"):
-            return user.is_from_master_organization
+        if hasattr(user, "is_admin_of_master_organization"):
+            return user.is_admin_of_master_organization
         return False
 
     if check_user(request.user):

@@ -3,7 +3,14 @@ from rest_framework import filters
 
 class AccessibleFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        if not request.user.is_from_master_organization:
+        if not request.user.is_user_of_master_organization:
+            queryset = queryset.filter(organization__in=request.user.accessible_organizations())
+        return queryset
+
+
+class ModifiableFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        if not request.user.is_admin_of_master_organization:
             queryset = queryset.filter(organization__in=request.user.accessible_organizations())
         return queryset
 

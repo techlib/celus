@@ -89,7 +89,7 @@ export default {
     ...mapState(["user", "organizations"]),
     ...mapGetters(["organizationItems"]),
     canCreateOrganizationReport() {
-      if (this.user.is_superuser || this.user.is_from_master_organization) {
+      if (this.user.is_superuser || this.user.is_admin_of_master_organization) {
         return true;
       }
       if (this.organizationItems.find((item) => item.is_admin)) {
@@ -98,7 +98,9 @@ export default {
       return false;
     },
     canCreateConsortialReport() {
-      return this.user.is_superuser || this.user.is_from_master_organization;
+      return (
+        this.user.is_superuser || this.user.is_admin_of_master_organization
+      );
     },
     ownershipTypes() {
       let ret = [
@@ -130,7 +132,7 @@ export default {
           (item) =>
             item.is_admin ||
             ((this.user.is_superuser ||
-              this.user.is_from_master_organization) &&
+              this.user.is_user_of_master_organization) &&
               item.pk !== -1)
         )
         .map((item) => ({ value: item.pk, text: item.name }));

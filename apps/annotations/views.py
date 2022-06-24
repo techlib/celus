@@ -99,7 +99,7 @@ class AnnotationsViewSet(ModelViewSet):
             if not annot.organization_id:
                 user_org_level = (
                     UL_CONS_STAFF
-                    if user.is_superuser or user.is_from_master_organization
+                    if user.is_superuser or user.is_admin_of_master_organization
                     else UL_NORMAL
                 )
             else:

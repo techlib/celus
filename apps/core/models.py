@@ -4,16 +4,15 @@ from hashlib import blake2b
 from typing import Optional
 
 from allauth.account.models import EmailAddress, EmailConfirmation
-
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.cache import cache
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
-from django.apps import apps
+from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
 
 from core.exceptions import FileConsistencyError
@@ -148,7 +147,7 @@ class User(AbstractUser):
 
     def accessible_organizations(self):
         Organization = apps.get_model(app_label='organizations', model_name='Organization')
-        if self.is_superuser or self.is_from_master_organization:
+        if self.is_superuser or self.is_user_of_master_organization:
             # user is part of one of the master organizations - he should have access to all orgs
             return Organization.objects.all()
         return (
@@ -185,7 +184,13 @@ class User(AbstractUser):
         return Platform.objects.filter(~models.Q(source__type=DataSource.TYPE_ORGANIZATION) | query)
 
     @cached_property
-    def is_from_master_organization(self):
+    def is_admin_of_master_organization(self):
+        return self.userorganization_set.filter(
+            organization__internal_id__in=settings.MASTER_ORGANIZATIONS, is_admin=True
+        ).exists()
+
+    @cached_property
+    def is_user_of_master_organization(self):
         return self.organizations.filter(internal_id__in=settings.MASTER_ORGANIZATIONS).exists()
 
     def request_relationship(self, request):
@@ -194,22 +199,22 @@ class User(AbstractUser):
         :param request:
         :return:
         """
-        from organizations.models import UserOrganization, Organization
+        from organizations.models import Organization, UserOrganization
 
         if self.is_superuser:
             return REL_SUPERUSER
-        elif self.is_from_master_organization:
+        elif self.is_admin_of_master_organization:
             return REL_MASTER_ORG
         else:
             org_id = extract_organization_id_from_request_query(request)
             return self.organization_relationship(org_id)
 
     def organization_relationship(self, org_id: int):
-        from organizations.models import UserOrganization, Organization
+        from organizations.models import Organization, UserOrganization
 
         if self.is_superuser:
             return REL_SUPERUSER
-        elif self.is_from_master_organization:
+        elif self.is_admin_of_master_organization:
             return REL_MASTER_ORG
         else:
             if org_id:
@@ -221,17 +226,24 @@ class User(AbstractUser):
                         # user may be from other related organizations
                         self.accessible_organizations().get(pk=org_id)
                     except Organization.DoesNotExist:
-                        return REL_UNREL_USER
+                        if self.is_user_of_master_organization:
+                            return REL_ORG_USER
+                        else:
+                            return REL_UNREL_USER
                     else:
                         return REL_ORG_USER
                 else:
                     return REL_ORG_ADMIN
-            return REL_UNREL_USER
+
+            if self.is_user_of_master_organization:
+                return REL_ORG_USER
+            else:
+                return REL_UNREL_USER
 
     def admin_organizations(self):
-        from organizations.models import UserOrganization, Organization
+        from organizations.models import Organization, UserOrganization
 
-        if self.is_superuser or self.is_from_master_organization:
+        if self.is_superuser or self.is_admin_of_master_organization:
             # user is part of one of the master organizations - he should have access to all orgs
             return Organization.objects.all()
         return Organization.objects.filter(
@@ -245,10 +257,7 @@ class User(AbstractUser):
 
     @cached_property
     def email_verification(self) -> dict:
-        res = {
-            "status": self.EMAIL_VERIFICATION_STATUS_UNKNOWN,
-            "email_sent": None,
-        }
+        res = {"status": self.EMAIL_VERIFICATION_STATUS_UNKNOWN, "email_sent": None}
         if settings.ALLOW_EDUID_LOGIN:
             # we consider EduID users as validated and if EduID login is turned on,
             # we consider all users as using EduID.

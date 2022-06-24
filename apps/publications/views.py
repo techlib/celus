@@ -1,5 +1,3 @@
-from django.http import HttpResponseForbidden
-
 from api.auth import extract_org_from_request_api_key
 from api.permissions import HasOrganizationAPIKey
 from charts.models import ReportDataView
@@ -10,15 +8,16 @@ from core.logic.dates import date_filter_from_params
 from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
 from core.permissions import (
+    AdminAccessForOrganization,
     SuperuserOrAdminPermission,
     ViewPlatformPermission,
-    AdminAccessForOrganization,
 )
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import Count, Exists, FilteredRelation, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
+from django.http import HttpResponseForbidden
 from hcube.api.models.aggregation import Count as CubeCount
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import replace_report_type_with_materialized
@@ -51,11 +50,11 @@ from publications.serializers import (
     TitleCountSerializer,
     UseCaseSerializer,
 )
-from .logic.cleanup import delete_platform_data
 
+from .logic.cleanup import delete_platform_data
 from .logic.use_cases import get_use_cases
 from .serializers import DetailedPlatformSerializer, PlatformSerializer, TitleSerializer
-from .tasks import erms_sync_platforms_task, delete_platform_data_task
+from .tasks import delete_platform_data_task, erms_sync_platforms_task
 
 
 class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
@@ -143,7 +142,7 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 
             return Permission
 
-        if self.action == 'create':
+        if self.action in ['create', 'delete_all_data']:
             organization_id = self.kwargs['organization_pk']
             Permission = generate_permission(organization_id)
             permission_classes = [e & Permission for e in permission_classes]

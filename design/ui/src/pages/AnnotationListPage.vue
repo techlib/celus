@@ -20,7 +20,7 @@ cs:
         <h2>{{ $t("labels.annotations") }}</h2>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col class="pb-0" cols="auto">
+      <v-col class="pb-0" cols="auto" v-if="showAdminStuff">
         <AddAnnotationButton @update="fetchAnnotations" />
       </v-col>
     </v-row>
@@ -98,7 +98,7 @@ cs:
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapGetters } from "vuex";
 import debounce from "lodash/debounce";
 import AddAnnotationButton from "@/components/AddAnnotationButton";
 import AnnotationList from "@/components/AnnotationList";
@@ -140,6 +140,9 @@ export default {
     ...mapState({
       organizations: "organizations",
       selectedOrganizationId: "selectedOrganizationId",
+    }),
+    ...mapGetters({
+      showAdminStuff: "showAdminStuff",
     }),
     basePlatformUrl() {
       return `/api/organization/${this.selectedOrganizationId}/platform/`;

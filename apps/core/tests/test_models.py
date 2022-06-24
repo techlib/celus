@@ -1,14 +1,16 @@
 import pytest
 from allauth.account.models import EmailAddress
-
 from core.models import User
 from test_fixtures.scenarios.basic import *  # noqa
 
 
 @pytest.mark.django_db
 def test_accessible_platforms(basic1):  # noqa
-    # master admin can access all platforms
-    assert [e for e in basic1["users"]["master"].accessible_platforms()] == sorted(
+    # master admin/user can access all platforms
+    assert [e for e in basic1["users"]["master_admin"].accessible_platforms()] == sorted(
+        basic1["platforms"].values(), key=lambda x: x.name
+    )
+    assert [e for e in basic1["users"]["master_user"].accessible_platforms()] == sorted(
         basic1["platforms"].values(), key=lambda x: x.name
     )
 

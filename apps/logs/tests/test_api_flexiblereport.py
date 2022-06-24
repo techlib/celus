@@ -1,10 +1,8 @@
 import pytest
-from django.urls import reverse
-
 from core.logic.serialization import b64json
+from django.urls import reverse
 from logs.models import FlexibleReport
 from organizations.models import UserOrganization
-
 from organizations.tests.conftest import organizations  # noqa
 from test_fixtures.scenarios.basic import users  # noqa
 
@@ -24,7 +22,8 @@ class TestFlexibleReportAPI:
             ['admin1', {'public', 'org1 report'}],
             ['admin2', {'public', 'org2 report'}],
             ['empty', {'public', 'org1 report', 'org2 report'}],
-            ['master', {'public'}],
+            ['master_admin', {'public'}],
+            ['master_user', {'public'}],
             ['su', {'public', 'org1 report', 'org2 report'}],  # cannot see private
         ],
     )
@@ -72,8 +71,12 @@ class TestFlexibleReportAPI:
         UserOrganization.objects.create(user=users['user2'], organization=org2)
         UserOrganization.objects.create(user=users['admin1'], organization=org1, is_admin=True)
         UserOrganization.objects.create(user=users['admin2'], organization=org2, is_admin=True)
-        UserOrganization.objects.create(user=users['master'], organization=org1, is_admin=True)
-        UserOrganization.objects.create(user=users['master'], organization=org2, is_admin=True)
+        UserOrganization.objects.create(
+            user=users['master_admin'], organization=org1, is_admin=True
+        )
+        UserOrganization.objects.create(
+            user=users['master_admin'], organization=org2, is_admin=True
+        )
 
     @pytest.mark.parametrize(
         ['user', 'can_private', 'can_org1', 'can_org2', 'can_consortium'],
@@ -83,7 +86,8 @@ class TestFlexibleReportAPI:
             ['user2', True, False, False, False],  # normal user, connected to org2
             ['admin1', True, True, False, False],  # admin of org1
             ['admin2', True, False, True, False],  # admin of org2
-            ['master', True, True, True, False],  # admin of org1 and org2
+            ['master_admin', True, True, True, False],  # admin of org1 and org2
+            ['master_user', True, False, False, False],  # only private
             ['su', True, True, True, True],  # superuser
         ],
     )
@@ -228,7 +232,7 @@ class TestFlexibleReportAPI:
                 },
             ],
             [
-                'master',  # admin of org1 and org2
+                'master_admin',  # admin of org1 and org2
                 {
                     'user1': (None, None, None, None, None),  # what he can do to report user1
                     'user2': (None, None, None, None, None),  # what he can do to report user2
@@ -236,6 +240,18 @@ class TestFlexibleReportAPI:
                     'admin2': (None, None, None, None, None),  # what he can do to report admin2
                     'org1': (True, True, True, True, False),  # what he can do to report org1
                     'org2': (True, True, True, True, False),  # what he can do to report org2
+                    'consortium': (False, False, False, False, False),  # what he can do to cons...
+                },
+            ],
+            [
+                'master_user',  # user of org1 and org2
+                {
+                    'user1': (None, None, None, None, None),  # what he can do to report user1
+                    'user2': (None, None, None, None, None),  # what he can do to report user2
+                    'admin1': (None, None, None, None, None),  # what he can do to report admin1
+                    'admin2': (None, None, None, None, None),  # what he can do to report admin2
+                    'org1': (None, None, None, None, None),  # what he can do to report org1
+                    'org2': (None, None, None, None, None),  # what he can do to report org2
                     'consortium': (False, False, False, False, False),  # what he can do to cons...
                 },
             ],
@@ -367,7 +383,7 @@ class TestFlexibleReportAPI:
                 },
             ],
             [
-                'master',  # admin of org1 and org2
+                'master_admin',  # admin of org1 and org2
                 {
                     'user1': None,  # what he can do to report user1
                     'user2': None,  # what he can do to report user2
@@ -375,6 +391,18 @@ class TestFlexibleReportAPI:
                     'admin2': None,  # what he can do to report admin2
                     'org1': True,  # what he can do to report org1
                     'org2': True,  # what he can do to report org2
+                    'consortium': False,  # what he can do to cons...
+                },
+            ],
+            [
+                'master_user',  # user of org1 and org2
+                {
+                    'user1': None,  # what he can do to report user1
+                    'user2': None,  # what he can do to report user2
+                    'admin1': None,  # what he can do to report admin1
+                    'admin2': None,  # what he can do to report admin2
+                    'org1': None,  # what he can do to report org1
+                    'org2': None,  # what he can do to report org2
                     'consortium': False,  # what he can do to cons...
                 },
             ],

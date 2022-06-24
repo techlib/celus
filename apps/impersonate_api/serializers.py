@@ -31,7 +31,8 @@ class ImpersonateListSerializer(serializers.ModelSerializer):
             'email',
             'current',
             'real_user',
-            'is_from_master_organization',
+            'is_admin_of_master_organization',
+            'is_user_of_master_organization',
             'is_superuser',
         )
 

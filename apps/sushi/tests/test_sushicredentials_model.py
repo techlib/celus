@@ -1,6 +1,6 @@
 import pytest
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN, Identity
-from core.tests.conftest import master_identity, valid_identity
+from core.tests.conftest import master_admin_identity, valid_identity
 from django.utils import timezone
 from logs.models import AccessLog, ImportBatch, Metric
 from nigiri.client import Sushi4Client, Sushi5Client
@@ -34,7 +34,7 @@ class TestLocking:
     def test_can_lock_to_level_permissions(
         self,
         admin_user,
-        master_identity,
+        master_admin_identity,
         valid_identity,
         organizations,
         platforms,
@@ -48,7 +48,9 @@ class TestLocking:
         credentials = SushiCredentials.objects.create(
             organization=org, platform=platforms[0], counter_version=5,
         )
-        user = self._user_code_to_user(user_code, org, admin_user, master_identity, valid_identity)
+        user = self._user_code_to_user(
+            user_code, org, admin_user, master_admin_identity, valid_identity
+        )
         self._test_change_lock(credentials, user, UL_ORG_ADMIN, can_lock_org_admin)
         credentials.lock_level = 0
         credentials.save()
@@ -68,7 +70,7 @@ class TestLocking:
     def test_can_unlock_from_level(
         self,
         admin_user,
-        master_identity,
+        master_admin_identity,
         valid_identity,
         organizations,
         platforms,
@@ -81,7 +83,9 @@ class TestLocking:
         credentials = SushiCredentials.objects.create(
             organization=org, platform=platforms[0], counter_version=5, lock_level=UL_ORG_ADMIN,
         )
-        user = self._user_code_to_user(user_code, org, admin_user, master_identity, valid_identity)
+        user = self._user_code_to_user(
+            user_code, org, admin_user, master_admin_identity, valid_identity
+        )
         self._test_change_lock(credentials, user, 0, can_unlock_org_admin)
         credentials.lock_level = UL_CONS_STAFF
         credentials.save()
@@ -92,7 +96,7 @@ class TestLocking:
 
     @classmethod
     def _user_code_to_user(
-        cls, code: str, organization, admin_user, master_identity, valid_identity
+        cls, code: str, organization, admin_user, master_admin_identity, valid_identity
     ):
         if code == 'org_admin':
             user = Identity.objects.get(identity=valid_identity).user
@@ -101,7 +105,7 @@ class TestLocking:
         elif code == 'superuser':
             return admin_user
         elif code == 'staff':
-            return Identity.objects.get(identity=master_identity).user
+            return Identity.objects.get(identity=master_admin_identity).user
         raise ValueError(f'wrong code {code}')
 
     @classmethod

@@ -4,51 +4,41 @@ from io import StringIO
 from unittest.mock import patch
 
 import pytest
-from django.db.models import Min, Max
-from django.urls import reverse
-
-from core.logic.dates import month_start, month_end
-from logs.models import (
-    ReportType,
-    AccessLog,
-    Metric,
-    Dimension,
-    DimensionText,
-    ImportBatch,
+from core.logic.dates import month_end, month_start
+from core.tests.conftest import admin_identity  # noqa - fixtures
+from core.tests.conftest import (
+    authenticated_client,
+    authentication_headers,
+    invalid_identity,
+    master_admin_client,
+    master_admin_identity,
+    valid_identity,
 )
+from django.db.models import Max, Min
+from django.urls import reverse
+from logs.models import AccessLog, Dimension, DimensionText, ImportBatch, Metric, ReportType
 from organizations.models import UserOrganization
 from publications.models import Platform
 from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.models import AttemptStatus, CounterReportsToCredentials
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ManualDataUploadFullFactory, ImportBatchFullFactory
-
-from ..logic.data_import import import_counter_records
-from core.tests.conftest import (  # noqa - fixtures
-    valid_identity,
-    authenticated_client,
-    authentication_headers,
-    invalid_identity,
-    master_identity,
-    master_client,
-    admin_identity,
-)
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
-    users,
-    report_types,
-    data_sources,
-    platforms,
-    metrics,
-    organizations,
-    data_sources,
-    metrics,
-    identities,
-    interests,
+from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
+from test_fixtures.scenarios.basic import basic1  # noqa - fixtures
+from test_fixtures.scenarios.basic import (
     client_by_user_type,
     clients,
-    basic1,
+    data_sources,
+    identities,
+    interests,
+    metrics,
+    organizations,
+    platforms,
+    report_types,
+    users,
 )
+
+from ..logic.data_import import import_counter_records
 from ..logic.materialized_interest import (
     sync_interest_by_import_batches,
     sync_interest_for_import_batch,
@@ -192,7 +182,7 @@ class TestChartDataAPI:
         primary_dim,
         secondary_dim,
         result,
-        master_client,
+        master_admin_client,
     ):
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
@@ -218,7 +208,7 @@ class TestChartDataAPI:
                 params['sec_dim'] = report_type.dimensions_sorted[secondary_dim - 1].short_name
             else:
                 params['sec_dim'] = secondary_dim
-        resp = master_client.get(reverse('chart_data_raw', args=(report_type.pk,)), params)
+        resp = master_admin_client.get(reverse('chart_data_raw', args=(report_type.pk,)), params)
         assert resp.status_code == 200
         data = json.loads(resp.content)
         assert 'data' in data
@@ -397,7 +387,7 @@ class TestChartDataAPI:
 @pytest.mark.django_db
 class TestManualDataUpload:
     def test_can_create_manual_data_upload(
-        self, organizations, master_client, report_type_nd, tmp_path, settings
+        self, organizations, master_admin_client, report_type_nd, tmp_path, settings
     ):
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
@@ -405,7 +395,7 @@ class TestManualDataUpload:
         report_type = report_type_nd(0)
         file = StringIO('Source,2019-01\naaaa,9\n')
         settings.MEDIA_ROOT = tmp_path
-        response = master_client.post(
+        response = master_admin_client.post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -416,9 +406,9 @@ class TestManualDataUpload:
         )
         assert response.status_code == 201
 
-    def test_manual_upload_data_disabled(self, master_client, settings):
+    def test_manual_upload_data_disabled(self, master_admin_client, settings):
         settings.ALLOW_MANUAL_UPLOAD = False
-        response = master_client.get(reverse('manual-data-upload-list'))
+        response = master_admin_client.get(reverse('manual-data-upload-list'))
         assert response.status_code == 403
 
 
@@ -519,6 +509,7 @@ class TestRawDataExport:
             ['unrelated', False],
             ['related_user', True],
             ['related_admin', True],
+            ['master_admin', True],
             ['master_user', True],
             ['superuser', True],
         ],
@@ -545,6 +536,7 @@ class TestRawDataExport:
             ['unrelated', False],
             ['related_user', False],
             ['related_admin', False],
+            ['master_admin', True],
             ['master_user', True],
             ['superuser', True],
         ],

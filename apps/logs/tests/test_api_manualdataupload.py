@@ -57,7 +57,7 @@ class TestManualUploadForCounterData:
         settings.MEDIA_ROOT = tmp_path
 
         # upload the data
-        response = clients["master"].post(
+        response = clients["master_admin"].post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -76,7 +76,7 @@ class TestManualUploadForCounterData:
         with patch('core.models.SourceFileMixin._send_error_mail') as mail_mock:
             prepare_preflight(mdu.pk)
 
-        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
         assert 'preflight' in data
@@ -129,7 +129,7 @@ class TestManualUploadForCounterData:
         settings.MEDIA_ROOT = tmp_path
 
         # upload the data
-        response = clients["master"].post(
+        response = clients["master_admin"].post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -150,7 +150,9 @@ class TestManualUploadForCounterData:
             mdu.save()
 
         # try the import - the following just starts the import
-        response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 200
         assert 'msg' in response.json()
         # without celery, we need to process it ourselves
@@ -158,7 +160,7 @@ class TestManualUploadForCounterData:
             import_manual_upload_data(mdu.pk, mdu.user.pk)
 
         # now we can get the details
-        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
         print(data)
@@ -196,7 +198,7 @@ class TestManualUploadControlledMetrics:
         metrics_objs = [MetricFactory(short_name=e) for e in metrics]
 
         # upload the data
-        response = clients["master"].post(
+        response = clients["master_admin"].post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -208,11 +210,13 @@ class TestManualUploadControlledMetrics:
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
-        response = clients["master"].post(reverse('manual-data-upload-preflight', args=(mdu.pk,)))
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-preflight', args=(mdu.pk,))
+        )
         assert response.status_code == 200
         prepare_preflight(mdu.pk)
 
-        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         # Should be able to import
         assert response.data["can_import"] is True
@@ -223,11 +227,13 @@ class TestManualUploadControlledMetrics:
         cr_type.report_type.controlled_metrics.set(metrics_objs[:2])
 
         # regenerate preflight
-        response = clients["master"].post(reverse('manual-data-upload-preflight', args=(mdu.pk,)))
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-preflight', args=(mdu.pk,))
+        )
         assert response.status_code == 200
         prepare_preflight(mdu.pk)
 
-        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         # Should be able to import
         assert response.data["can_import"] is False
@@ -235,7 +241,9 @@ class TestManualUploadControlledMetrics:
         assert set(response.data["preflight"]["metrics"].keys()) == set(metrics)
 
         # Should fail to import data
-        response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 400
         assert response.data == {'error': 'can-not-import'}
 
@@ -243,14 +251,16 @@ class TestManualUploadControlledMetrics:
         cr_type.report_type.controlled_metrics.set(metrics_objs)
 
         # Get mdu again
-        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         assert response.data["can_import"] is True
         assert len(response.data["report_type"]["controlled_metrics"]) > 0
         assert set(response.data["preflight"]["metrics"].keys()) == set(metrics)
 
         # Import should pass
-        response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 200
 
 
@@ -275,7 +285,7 @@ class TestManualUploadConflicts:
         platform = platforms['master']
         settings.MEDIA_ROOT = tmp_path
 
-        response = clients["master"].post(
+        response = clients["master_admin"].post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -291,13 +301,15 @@ class TestManualUploadConflicts:
         prepare_preflight(mdu.pk)
 
         # process data
-        response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 200
 
         # import data (this should be handled via celery)
         import_manual_upload_data(mdu.pk, mdu.user.pk)
 
-        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         batches = sorted(e['pk'] for e in response.data["import_batches"])
         batches_months = sorted(e['date'] for e in response.data["import_batches"])
@@ -305,7 +317,7 @@ class TestManualUploadConflicts:
         # Upload the same data
         data_file.seek(0)
 
-        response = clients["master"].post(
+        response = clients["master_admin"].post(
             reverse('manual-data-upload-list'),
             data={
                 'platform': platform.id,
@@ -321,13 +333,15 @@ class TestManualUploadConflicts:
         prepare_preflight(mdu.pk)
 
         # fail preflight
-        response = clients["master"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         assert response.data["can_import"] is False
         assert batches_months == sorted(e for e in response.data["clashing_months"])
 
         # fail processing
-        response = clients["master"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
         assert response.status_code == 409
         assert batches == sorted(
             e["pk"] for e in response.data["clashing_import_batches"]

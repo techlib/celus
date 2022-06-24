@@ -1,30 +1,22 @@
 from datetime import date
-
-import pytest
-
-from freezegun import freeze_time
 from unittest.mock import patch
 
+import pytest
+from core.models import UL_CONS_STAFF, UL_ORG_ADMIN
 from django.urls import reverse
 from django.utils import timezone
-
-from core.models import UL_CONS_STAFF, UL_ORG_ADMIN
+from freezegun import freeze_time
 from organizations.tests.conftest import identity_by_user_type  # noqa
-from sushi.models import (
-    SushiCredentials,
-    SushiFetchAttempt,
-    AttemptStatus,
-    BrokenCredentialsMixin as BS,
-    CounterReportsToCredentials,
-)
-
+from sushi.models import AttemptStatus
+from sushi.models import BrokenCredentialsMixin as BS
+from sushi.models import CounterReportsToCredentials, SushiCredentials, SushiFetchAttempt
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
-from test_fixtures.scenarios.basic import (  # noqa
+from test_fixtures.entities.scheduler import FetchIntentionFactory
+from test_fixtures.scenarios.basic import (
     basic1,
-    clients,
+    clients,  # noqa
     counter_report_types,
     credentials,
     data_sources,
@@ -49,7 +41,7 @@ class TestSushiCredentialsViewSet:
             lock_level=SushiCredentials.UNLOCKED,
         )
         url = reverse('sushi-credentials-lock', args=(credentials.pk,))
-        resp = clients["master"].post(url, {})
+        resp = clients["master_admin"].post(url, {})
         assert resp.status_code == 200
         credentials.refresh_from_db()
         assert credentials.lock_level == UL_CONS_STAFF
@@ -211,7 +203,7 @@ class TestSushiCredentialsViewSet:
         Test the month-overview custom action - month attr should be given
         """
         url = reverse('sushi-credentials-month-overview')
-        resp = clients["master"].get(url)
+        resp = clients["master_admin"].get(url)
         assert resp.status_code == 400, 'Month URL param must be present'
 
     def test_month_overview(
@@ -266,7 +258,7 @@ class TestSushiCredentialsViewSet:
             ),
         )
         url = reverse('sushi-credentials-month-overview')
-        resp = clients["master"].get(url, {'month': '2020-01'})
+        resp = clients["master_admin"].get(url, {'month': '2020-01'})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, 'there should be one record for one set of credentials'
@@ -277,10 +269,10 @@ class TestSushiCredentialsViewSet:
         # now disable the credentials and observe the result
         credentials.enabled = False
         credentials.save()
-        resp = clients["master"].get(url, {'month': '2020-01'})
+        resp = clients["master_admin"].get(url, {'month': '2020-01'})
         assert len(resp.json()) == 0
         # now add param that says disabled should be included
-        resp = clients["master"].get(url, {'month': '2020-01', 'disabled': 'true'})
+        resp = clients["master_admin"].get(url, {'month': '2020-01', 'disabled': 'true'})
         assert len(resp.json()) == 1
 
     def test_month_overview_long_attempts(
@@ -329,25 +321,25 @@ class TestSushiCredentialsViewSet:
         )
         url = reverse('sushi-credentials-month-overview')
         # 2020-01 - there are two attempts for this month
-        resp = clients["master"].get(url, {'month': '2020-01'})
+        resp = clients["master_admin"].get(url, {'month': '2020-01'})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, 'there should be one record for this period'
         rec = data[0]
         assert rec['pk'] == intention2.pk, 'the second (newer) attempt should be reported'
         # 2020-02 - there is one attempt for this month
-        resp = clients["master"].get(url, {'month': '2020-02'})
+        resp = clients["master_admin"].get(url, {'month': '2020-02'})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, 'there should be one record for this period'
         rec = data[0]
         assert rec['pk'] == intention1.pk, 'the attempt spanning to this month should be reported'
         # 2020-03 - there is one attempt for this month
-        resp = clients["master"].get(url, {'month': '2020-03'})
+        resp = clients["master_admin"].get(url, {'month': '2020-03'})
         assert resp.status_code == 200
         assert len(resp.json()) == 1, 'there should be one record for this period'
         # 2020-04 - no attempt for this month
-        resp = clients["master"].get(url, {'month': '2020-04'})
+        resp = clients["master_admin"].get(url, {'month': '2020-04'})
         assert resp.status_code == 200
         assert len(resp.json()) == 0, 'there should be no record for this period'
 
@@ -368,7 +360,7 @@ class TestSushiCredentialsViewSet:
 
         # unset entire credentials (both reports and mappings are unset)
         url = reverse('sushi-credentials-unset-broken', args=(credentials["standalone_tr"].pk,))
-        resp = clients["master"].post(url, None)
+        resp = clients["master_admin"].post(url, None)
         assert resp.status_code == 200
         credentials["standalone_tr"].refresh_from_db()
         assert credentials["standalone_tr"].broken is None
@@ -404,7 +396,7 @@ class TestSushiCredentialsViewSet:
         url = reverse(
             'sushi-credentials-unset-broken', args=(credentials["standalone_br1_jr1"].pk,)
         )
-        resp = clients["master"].post(url, {"counter_reports": ["JR1"]})
+        resp = clients["master_admin"].post(url, {"counter_reports": ["JR1"]})
         assert resp.status_code == 200
         credentials["standalone_br1_jr1"].refresh_from_db()
         assert credentials["standalone_br1_jr1"].broken == BS.BROKEN_SUSHI
@@ -417,11 +409,11 @@ class TestSushiCredentialsViewSet:
         assert cr2c_jr1.first_broken_attempt is None
 
         # Wrong type
-        resp = clients["master"].post(url, {"counter_reports": ["WRONG_TYPE"]})
+        resp = clients["master_admin"].post(url, {"counter_reports": ["WRONG_TYPE"]})
         assert resp.status_code == 400
 
         # Non not assigned report type
-        resp = clients["master"].post(url, {"counter_reports": ["BR1", "DB1"]})
+        resp = clients["master_admin"].post(url, {"counter_reports": ["BR1", "DB1"]})
         assert resp.status_code == 200
         cr2c_br1.refresh_from_db()
         assert cr2c_br1.broken is None
@@ -429,7 +421,7 @@ class TestSushiCredentialsViewSet:
 
         # Credentials not found
         url = reverse('sushi-credentials-unset-broken', args=(0,))
-        resp = clients["master"].post(url, {"counter_reports": ["JR1"]})
+        resp = clients["master_admin"].post(url, {"counter_reports": ["JR1"]})
         assert resp.status_code == 404
 
     def test_credential_details(self, basic1, credentials, clients, counter_report_types):
@@ -445,7 +437,7 @@ class TestSushiCredentialsViewSet:
         cr2c_br1.save()
 
         url = reverse('sushi-credentials-detail', args=(credentials["standalone_br1_jr1"].pk,))
-        resp = clients["master"].get(url)
+        resp = clients["master_admin"].get(url)
         assert resp.status_code == 200
 
         data = resp.json()
@@ -473,7 +465,7 @@ class TestSushiCredentialsViewSet:
         credentials['standalone_tr'].broken = BS.BROKEN_HTTP
         credentials['standalone_tr'].save()
 
-        resp = clients["master"].get(reverse('sushi-credentials-count'))
+        resp = clients["master_admin"].get(reverse('sushi-credentials-count'))
         assert resp.status_code == 200
         assert resp.json() == {'count': 3, 'broken': 1, 'broken_reports': 1}
 
@@ -528,7 +520,7 @@ class TestSushiCredentialsViewSet:
         )
 
         # Just test premade scenarios
-        resp = clients["master"].get(
+        resp = clients["master_admin"].get(
             reverse('sushi-credentials-data', args=(credentials["standalone_tr"].pk,))
         )
         assert resp.status_code == 200
@@ -554,7 +546,7 @@ class TestSushiCredentialsViewSet:
                 assert data[1][month][0]["status"] == "untried"
                 assert data[0][month][0]["can_harvest"] is True
 
-        resp = clients["master"].get(
+        resp = clients["master_admin"].get(
             reverse('sushi-credentials-data', args=(credentials["standalone_br1_jr1"].pk,))
         )
         assert resp.status_code == 200
@@ -589,7 +581,7 @@ class TestSushiCredentialsViewSet:
                 assert data[1][month][1]["can_harvest"] is True
                 assert data[1][month][0]["can_harvest"] is False
 
-        resp = clients["master"].get(
+        resp = clients["master_admin"].get(
             reverse('sushi-credentials-data', args=(credentials["branch_pr"].pk,))
         )
         assert resp.status_code == 200

@@ -22,8 +22,9 @@ class TestImpersonateAPI:
     @pytest.mark.parametrize(
         "client,count",
         (
-            ("su", 7),  # admin{1,2}, user{1,2}, empty, master, su
-            ("master", 6),  # admin{1,2}, user{1,2}, empty, master
+            ("su", 8),  # admin{1,2}, user{1,2}, empty, master_{admin,user}, su
+            ("master_admin", 7),  # admin{1,2}, user{1,2}, empty, master_{admin,user}
+            ("master_user", 0),
             ("admin1", 0),
             ("admin2", 0),
             ("user1", 0),
@@ -51,11 +52,14 @@ class TestImpersonateAPI:
         "from_client,to_user,success",
         (
             ("su", "user1", True),
-            ("su", "master", True),
-            ("master", "user1", True),
-            ("master", "su", False),
+            ("su", "master_admin", True),
+            ("master_admin", "user1", True),
+            ("master_admin", "master_user", True),
+            ("master_admin", "admin1", True),
+            ("master_admin", "su", False),
+            ("master_user", "user1", False),
             ("admin1", "user1", False),
-            ("admin1", "master", False),
+            ("admin1", "master_admin", False),
             ("admin1", "su", False),
         ),
     )
