@@ -53,7 +53,7 @@ cs:
         </v-card>
       </v-col>
 
-      <v-col cols="12" lg="6">
+      <v-col v-if="showAdminStuff" cols="12" lg="6">
         <v-card min-height="480">
           <v-card-title
             v-text="$t('sushi_status')"
@@ -123,7 +123,7 @@ cs:
         </v-card>
       </v-col>
 
-      <v-col cols="auto">
+      <v-col v-if="showAdminStuff" cols="auto">
         <v-card height="100%" min-height="320" min-width="200">
           <v-card-title v-text="$t('sushi_overview')"></v-card-title>
           <v-card-text>
@@ -203,6 +203,7 @@ export default {
       dateRangeEnd: "dateRangeEndText",
       loggedIn: "loggedIn",
       showIntro: "showIntro",
+      showAdminStuff: "showAdminStuff",
     }),
     interestGroupTitlesSorted() {
       let igs = this.interestGroups.filter(
