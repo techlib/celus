@@ -8,7 +8,7 @@
   >
     <template v-slot:activator="{ on }">
       <v-text-field
-        v-model="date"
+        v-model="month"
         :label="label"
         prepend-icon="fa-calendar-alt"
         readonly
@@ -19,7 +19,7 @@
       ></v-text-field>
     </template>
     <v-date-picker
-      v-model="date"
+      v-model="month"
       type="month"
       no-title
       scrollable
@@ -44,13 +44,13 @@ export default {
   data() {
     return {
       menuOpen: false,
-      date: this.value,
+      month: this.value,
     };
   },
 
   watch: {
-    date() {
-      this.$emit("input", this.date);
+    month() {
+      this.$emit("input", this.month);
     },
   },
 };

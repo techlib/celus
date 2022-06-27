@@ -294,14 +294,17 @@ cs:
                       />
                     </v-col>
 
+                    <v-col v-if="filters.includes('date')" cols="auto">
+                      <FromToMonthEntry
+                        v-model="selectedDateRange"
+                        :disabled="readOnly"
+                      />
+                    </v-col>
                     <v-col
-                      v-if="
-                        filters.includes('date') ||
-                        filters.includes('date__year')
-                      "
+                      v-else-if="filters.includes('date__year')"
                       cols="auto"
                     >
-                      <FromToMonthEntry
+                      <FromToYearEntry
                         v-model="selectedDateRange"
                         :disabled="readOnly"
                       />
@@ -437,6 +440,7 @@ cs:
 import axios from "axios";
 import { mapActions, mapGetters, mapState } from "vuex";
 import FromToMonthEntry from "@/components/util/FromToMonthEntry";
+import FromToYearEntry from "@/components/util/FromToYearEntry";
 import DimensionKeySelector from "@/components/DimensionKeySelector";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
 import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
@@ -470,6 +474,7 @@ export default {
     FlexiTableOutput,
     ExportMonitorWidget,
     FromToMonthEntry,
+    FromToYearEntry,
     DimensionKeySelector,
   },
 

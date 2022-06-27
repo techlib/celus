@@ -1,25 +1,25 @@
 <i18n lang="yaml">
 en:
-  date_start: Start date
-  date_end: End date
+  month_start: Start month
+  month_end: End month
 
 cs:
-  date_start: Počáteční datum
-  date_end: Koncové datum
+  month_start: Počáteční měsíc
+  month_end: Koncový měsíc
 </i18n>
 
 <template>
   <div class="d-flex">
     <span class="pr-4">
       <MonthEntry
-        v-model="startDate"
+        v-model="startMonth"
         :label="textStart"
         :allowed-months="allowedStartMonths"
         :disabled="disabled"
       ></MonthEntry>
     </span>
     <MonthEntry
-      v-model="endDate"
+      v-model="endMonth"
       :label="textEnd"
       :allowed-months="allowedEndMonths"
       :disabled="disabled"
@@ -43,47 +43,47 @@ export default {
 
   data() {
     return {
-      startDate: null,
-      endDate: null,
+      startMonth: null,
+      endMonth: null,
     };
   },
 
   computed: {
     textStart() {
-      return this.startLabel ?? this.$t("date_start");
+      return this.startLabel ?? this.$t("month_start");
     },
     textEnd() {
-      return this.endLabel ?? this.$t("date_end");
+      return this.endLabel ?? this.$t("month_end");
     },
   },
 
   methods: {
     allowedEndMonths(value) {
-      if (this.startDate) {
-        return value >= this.startDate;
+      if (this.startMonth) {
+        return value >= this.startMonth;
       }
       return true;
     },
     allowedStartMonths(value) {
-      if (this.endDate) {
-        return value <= this.endDate;
+      if (this.endMonth) {
+        return value <= this.endMonth;
       }
       return true;
     },
   },
 
   watch: {
-    startDate() {
-      this.$emit("input", { start: this.startDate, end: this.endDate });
+    startMonth() {
+      this.$emit("input", { start: this.startMonth, end: this.endMonth });
     },
-    endDate() {
-      this.$emit("input", { start: this.startDate, end: this.endDate });
+    endMonth() {
+      this.$emit("input", { start: this.startMonth, end: this.endMonth });
     },
     value: {
       immediate: true,
       handler() {
-        this.startDate = this.value.start;
-        this.endDate = this.value.end;
+        this.startMonth = this.value.start;
+        this.endMonth = this.value.end;
       },
     },
   },
