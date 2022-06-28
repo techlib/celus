@@ -1,7 +1,7 @@
 <template>
   <SushiCredentialsManagementWidget
     :organization-id="organizationId"
-    :show-broken-only="brokenOnly"
+    :show-problematic-only="brokenOnly"
   />
 </template>
 

@@ -8,8 +8,8 @@ en:
   add_custom_param_tooltip: Use this to add parameters for which there is no specific field elsewhere.
   test_dialog: Test SUSHI credentials
   all_versions_used: All versions already defined for this organization and platform - to make changes, edit the corresponding record
-  save_and_test: Save & test harvesting
-  save_and_test_tooltip: Saves current version of credentials and displays a dialog allowing harvesting of data for specified period using these credentials. Very useful to <strong>validate credentials and/or manually download data</strong>.
+  save_and_verify: Save & verify
+  save_and_verify_tooltip: Saves current version of credentials and displays a dialog allowing harvesting of data for specified period using these credentials. Very useful to <strong>verify credentials and/or manually download data</strong>.
   outside: Purchased outside of consortium
   outside_tooltip: Marks if access to this resource was purchased outside the consortium.
   only_managers_can_change: Only managers may change this option.
@@ -36,14 +36,18 @@ en:
   duplicate: Name must be unique
   active_report_types: Active report types
   error_saving: It was not possible to save the credentials. Please review the entered values.
+  unverified_title: Credentials are not verified
+  unverified_details: There are no successful harvests using the current version of these credentials.
+  unverified_note: Please verify the credentials by performing a harvest. Note that the credentials won't be used for automatic harvesting unless a successful harvest is performed.
+  plan_harvest: Plan harvest
 
 cs:
   add_custom_param: Přidat vlastní parametr
   add_custom_param_tooltip: Použijte toto tlačítko pro data, pro která nenajdete odpovídající políčko jinde.
   test_dialog: Test přihlašovacích údajů SUSHI
   all_versions_used: Pro tuto platformu a organizaci jsou již všechny verze použity - pro změnu editujte příslušný záznam
-  save_and_test: Uložit a otestovat stahování
-  save_and_test_tooltip:
+  save_and_verify: Uložit a ověřit
+  save_and_verify_tooltip:
     Uloží tuto verzi přihlašovacích údajů a zobrazí dialog pro stahování dat za vybrané období. Tato funkce
     je velmi užitečná pro <strong>ověření správnosti přihlašovacích údajů a/nebo manuální stahování dat</strong>.
   outside: Nákup mimo konzorcium
@@ -72,6 +76,10 @@ cs:
   duplicate: Název musí být unikátní
   active_report_types: Aktivní typy reportů
   error_saving: Přihlašovací údaje nebylo možné uložit. Zkontrolujte prosím zadané hodnoty.
+  unverified_title: Přihlašovací údaje nejsou ověřeny
+  unverified_details: Současná verze těcho přihlašovacích údajů zatím nebyla úspěšně použita pro stažení dat.
+  unverified_note: Ověřte prosím platnost přihlašovacích údajů stažením dat. Upozorňujeme, že dokud nebdou přihlašovací údaje ověřeny, nebude u nich probíhat automatické stahování dat.
+  plan_harvest: Naplánovat stahování
 </i18n>
 
 <template>
@@ -87,6 +95,20 @@ cs:
           <div>
             <v-btn color="error" outlined @click="markFixed()">{{
               $t("mark_fixed")
+            }}</v-btn>
+          </div>
+        </v-alert>
+        <v-alert
+          v-else-if="credentials && !credentials.verified"
+          type="warning"
+          outlined
+        >
+          <p class="bold">{{ $t("unverified_title") }}</p>
+          <p>{{ $t("unverified_details") }}</p>
+          <p>{{ $t("unverified_note") }}</p>
+          <div>
+            <v-btn color="warning" outlined @click="showTestDialog = true">{{
+              $t("plan_harvest")
             }}</v-btn>
           </div>
         </v-alert>
@@ -463,10 +485,10 @@ cs:
                     :loading="saving"
                   >
                     <v-icon small class="mr-1">fa fa-play</v-icon>
-                    {{ $t("save_and_test") }}
+                    {{ $t("save_and_verify") }}
                   </v-btn>
                 </template>
-                <span v-html="$t('save_and_test_tooltip')"></span>
+                <span v-html="$t('save_and_verify_tooltip')"></span>
               </v-tooltip>
               <v-btn
                 color="primary"
@@ -509,6 +531,7 @@ cs:
 
 <script>
 import axios from "axios";
+import { isEqual } from "lodash";
 import { mapActions, mapGetters } from "vuex";
 import { badge } from "@/libs/sources.js";
 import AddPlatformButton from "@/components/AddPlatformButton";
@@ -552,7 +575,7 @@ export default {
       platforms: [],
       errors: {},
       savedCredentials: null,
-      enabled: true,
+      enabled: false,
       outsideConsortium: true,
       title: "",
       loadingPlatforms: false,
@@ -791,7 +814,7 @@ export default {
         this.selectedReportTypes = [];
         this.errors = {};
         this.savedCredentials = null;
-        this.enabled = true;
+        this.enabled = false;
         this.outsideConsortium = true;
       } else {
         let extraParams = [];
@@ -933,7 +956,7 @@ export default {
           color: "success",
         });
         this.$emit("update-credentials", response.data);
-        return true;
+        return response.data;
       } catch (error) {
         this.showSnackbar({
           content: this.$t("error_saving"),
@@ -942,7 +965,7 @@ export default {
         if (error.response != null) {
           this.processErrors(error.response.data);
         }
-        return false;
+        return null;
       } finally {
         this.saving = false;
       }
@@ -999,17 +1022,34 @@ export default {
     async saveAndClose() {
       this.$refs.form.validate();
       if (this.isValid) {
-        let ok = await this.saveData();
-        if (ok) {
-          this.$emit("input", false);
+        let data = await this.saveData();
+        if (data) {
+          if (data.verified) {
+            this.$emit("input", false);
+          } else {
+            let text = `${this.$t("unverified_details")}<br /><br />${this.$t(
+              "unverified_note"
+            )}`;
+            const res = await this.$confirm(text, {
+              title: this.$t("unverified_title"),
+              buttonTrueText: this.$t("plan_harvest"),
+              buttonFalseText: this.$t("close"),
+              width: 450,
+            });
+            if (res) {
+              this.showTestDialog = true;
+            } else {
+              this.$emit("input", false);
+            }
+          }
         }
       }
     },
     async saveAndTest() {
       this.$refs.form.validate();
       if (this.isValid) {
-        let ok = await this.saveData();
-        if (ok) {
+        let data = await this.saveData();
+        if (data) {
           if (this.$refs.testWidget) {
             this.$refs.testWidget.clean();
           }

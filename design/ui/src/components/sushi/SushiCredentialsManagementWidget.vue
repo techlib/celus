@@ -21,6 +21,7 @@ en:
     Automatic harvesting was postponed until the credentials are manually fixed.
   no_credentials_selected: No credentials selected
   select_at_least_one_credentials: Please select at least one set of SUSHI credentials using the checkboxes in the credentials list.
+  unverified_tooltip: No data has been obtained yet using the current version of these credentials. Please verify the credentials by manually harvesting some data.
 cs:
   add_new: Přidat nové SUSHI
   export: Exportuj
@@ -40,6 +41,7 @@ cs:
     bylo pozastaveno do doby než budou údaje ručně opraveny.
   no_credentials_selected: Nejsou vybrány žádné přihlašovací údaje
   select_at_least_one_credentials: Vyberte prosím alespoň jedny přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
+  unverified_tooltip: Žádná data zatím nebyla stažena se současnou verzí těchto přístupových údajů. Ověřte prosím platnost přihlašovacích údajů manuálním stažením dat.
 </i18n>
 
 <template>
@@ -160,8 +162,8 @@ cs:
 
             <v-col cols="auto">
               <v-switch
-                v-model="brokenOnly"
-                :label="$t('labels.broken_only')"
+                v-model="problematicOnly"
+                :label="$t('labels.problematic_only')"
               ></v-switch>
             </v-col>
             <v-col cols="3" :md="2" :xl="1">
@@ -267,6 +269,12 @@ cs:
             false-color="error"
             v-if="item.broken"
           />
+          <CheckMark
+            :value="item.enabled"
+            true-color="warning"
+            false-color="warning"
+            v-else-if="!item.verified"
+          />
           <CheckMark :value="item.enabled" v-else />
           <v-tooltip bottom v-if="item.broken" max-width="400">
             <template v-slot:activator="{ on }">
@@ -275,6 +283,14 @@ cs:
               </v-btn>
             </template>
             {{ $t("is_broken") }}
+          </v-tooltip>
+          <v-tooltip bottom v-else-if="!item.verified" max-width="400">
+            <template v-slot:activator="{ on }">
+              <v-btn text icon v-on="on"
+                ><v-icon small color="warning">fa-exclamation-triangle</v-icon>
+              </v-btn>
+            </template>
+            {{ $t("unverified_tooltip") }}
           </v-tooltip>
         </template>
         <template v-slot:item.outside_consortium="{ item }">
@@ -426,7 +442,7 @@ export default {
       type: Number,
       required: false,
     },
-    showBrokenOnly: {
+    showProblematicOnly: {
       default: false,
       type: Boolean,
     },
@@ -447,7 +463,7 @@ export default {
       counterVersion: null,
       checkedRows: [],
       showTestDialog: false,
-      brokenOnly: this.showBrokenOnly,
+      problematicOnly: this.showProblematicOnly,
       exportAllCredentialsUrl:
         "/api/sushi-credentials/export-all-credentials/?export_all=true",
     };
@@ -529,7 +545,9 @@ export default {
     visibleSushiCredentials() {
       return this.sushiCredentialsList
         .filter((item) =>
-          this.brokenOnly ? item.broken || item.has_broken_reports : true
+          this.problematicOnly
+            ? !item.verified || item.broken || item.has_broken_reports
+            : true
         )
         .filter(
           (item) =>

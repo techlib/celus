@@ -113,7 +113,7 @@ en:
     chart: Chart
     report_view: Report
     position: Position
-    broken_only: Problematic only
+    problematic_only: Problematic only
     overlap: Overlap
     relative: Relative
     total: Total
@@ -291,7 +291,7 @@ cs:
     chart: Graf
     report_view: Report
     position: Pozice
-    broken_only: Jen problematické
+    problematic_only: Jen problematické
     overlap: Překryv
     relative: Relativně
     total: Celkem

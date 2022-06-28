@@ -78,7 +78,14 @@ class SushiCredentialsViewSet(ModelViewSet):
     @method_decorator(create_revision())
     def update(self, request, *args, **kwargs):
         reversion.set_comment('Updated through API')
-        return super().update(request, *args, **kwargs)
+        super().update(request, *args, **kwargs)
+        instance = self.get_object()
+
+        # Need to update verified status so it is up-to-date
+        instance.verified = instance.is_verified
+        serializer = self.get_serializer(instance)
+
+        return Response(serializer.data)
 
     @method_decorator(create_revision())
     def create(self, request, *args, **kwargs):
