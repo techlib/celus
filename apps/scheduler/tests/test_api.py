@@ -3,6 +3,7 @@ from datetime import date
 from itertools import product
 
 import pytest
+from core.logic.dates import month_end, this_month
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
@@ -11,7 +12,8 @@ from logs.cubes import AccessLogCube, ch_backend
 from logs.models import AccessLog, ImportBatch
 from organizations.models import UserOrganization
 from scheduler import tasks
-from scheduler.models import Automatic, FetchIntention
+from scheduler.models import Automatic, FetchIntention, Harvest
+from sushi.models import AttemptStatus
 from sushi.models import BrokenCredentialsMixin as BS
 from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 from test_fixtures.entities.credentials import CredentialsFactory
@@ -32,6 +34,7 @@ from test_fixtures.scenarios.basic import (
     report_types,
     schedulers,
     users,
+    verified_credentials,
 )
 
 
@@ -42,36 +45,46 @@ class TestHarvestAPI:
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
-        assert len(data) == 4
+        assert len(data) == 6
         assert data[0]["pk"] < data[1]["pk"] < data[2]["pk"], "default sort by pk asc"
 
         # stats
         assert data[0]["stats"] == {"total": 3, "planned": 2, "attempt_count": 2, "working": 0}
         assert data[1]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
-        assert data[2]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
-        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
+        assert data[2]["stats"] == {"total": 1, "planned": 1, "attempt_count": 0, "working": 0}
+        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
+        assert data[4]["stats"] == {"total": 1, "planned": 1, "attempt_count": 0, "working": 0}
+        assert data[5]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
 
         # start and end dates
         assert data[0]["start_date"] == "2020-01-01"
         assert data[0]["end_date"] == "2020-01-31"
         assert data[1]["start_date"] == "2020-01-01"
         assert data[1]["end_date"] == "2020-01-31"
-        assert data[2]["start_date"] == "2020-01-01"
-        assert data[2]["end_date"] == "2020-03-31"
+        assert data[2]["start_date"] == this_month().strftime("%Y-%m-%d")
+        assert data[2]["end_date"] == month_end(this_month()).strftime("%Y-%m-%d")
         assert data[3]["start_date"] == "2020-01-01"
-        assert data[3]["end_date"] == "2020-01-31"
+        assert data[3]["end_date"] == "2020-03-31"
+        assert data[4]["start_date"] == this_month().strftime("%Y-%m-%d")
+        assert data[4]["end_date"] == month_end(this_month()).strftime("%Y-%m-%d")
+        assert data[5]["start_date"] == "2020-01-01"
+        assert data[5]["end_date"] == "2020-01-31"
 
         # last processed fetch intention
         assert data[0]["last_processed"] is not None
         assert data[1]["last_processed"] is not None
-        assert data[2]["last_processed"] is not None
-        assert data[3]["last_processed"] is None
+        assert data[2]["last_processed"] is None
+        assert data[3]["last_processed"] is not None
+        assert data[4]["last_processed"] is None
+        assert data[5]["last_processed"] is None
 
         # test broken
         assert data[0]["broken"] == 0
         assert data[1]["broken"] == 0
         assert data[2]["broken"] == 0
         assert data[3]["broken"] == 0
+        assert data[4]["broken"] == 0
+        assert data[5]["broken"] == 0
 
     @pytest.mark.parametrize(
         ['column', 'desc'], list(product(['pk', 'created'], ['true', 'false']))
@@ -81,7 +94,7 @@ class TestHarvestAPI:
         resp = clients["master_admin"].get(url, {'order_by': column, 'desc': desc})
         assert resp.status_code == 200
         data = resp.json()["results"]
-        assert len(data) == 4
+        assert len(data) == 6
         if desc == 'true':
             assert (
                 data[0][column] > data[1][column] > data[2][column]
@@ -106,7 +119,7 @@ class TestHarvestAPI:
         resp = clients["master_admin"].get(url + "?finished=no", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
-        assert len(data2) == 3
+        assert len(data2) == 5
 
         resp = clients["master_admin"].get(url + "?finished=working", {})
         assert resp.status_code == 200
@@ -123,7 +136,7 @@ class TestHarvestAPI:
         resp = clients["master_admin"].get(url + "?automatic=1", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
-        assert len(data1) == 1
+        assert len(data1) == 3
 
         resp = clients["master_admin"].get(url + "?automatic=0", {})
         assert resp.status_code == 200
@@ -154,7 +167,7 @@ class TestHarvestAPI:
         resp = clients["master_admin"].get(url + "?broken=0", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
-        assert len(data2) == 1
+        assert len(data2) == 2
 
     def test_list_filter_month(self, basic1, clients, harvests):
 
@@ -175,13 +188,13 @@ class TestHarvestAPI:
         resp = clients["master_admin"].get(url + f"?platforms={platforms['branch'].pk}", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
-        assert len(data1) == 2
+        assert len(data1) == 3
 
         url += f"?platforms={platforms['branch'].pk},{platforms['standalone'].pk}"
         resp = clients["master_admin"].get(url, {},)
         assert resp.status_code == 200
         data2 = resp.json()["results"]
-        assert len(data2) == 4
+        assert len(data2) == 6
 
     def test_get(self, basic1, clients, harvests):
         url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
@@ -267,10 +280,10 @@ class TestHarvestAPI:
     @pytest.mark.parametrize(
         "user,length",
         (
-            ("master_admin", 4),
+            ("master_admin", 6),
             ("master_user", 0),
             ("admin1", 0),
-            ("admin2", 1),
+            ("admin2", 2),
             ("user1", 1),
             ("user2", 1),
         ),
@@ -483,8 +496,10 @@ class TestHarvestAPI:
         assert resp.status_code == 400
 
     def test_automatic(
-        self, basic1, clients, credentials,
+        self, basic1, clients, credentials, verified_credentials,
     ):
+        # remove all automatic harvests
+        Harvest.objects.filter(automatic__isnull=False).delete()
 
         url = reverse('harvest-list')
         resp = clients["master_admin"].get(url, {})
@@ -514,6 +529,22 @@ class TestHarvestAPI:
         assert 'pk' in data['automatic']['organization']
         assert 'name' in data['automatic']['organization']
         assert 'short_name' in data['automatic']['organization']
+
+    def test_automatic_no_verified(self, basic1, clients, credentials):
+        url = reverse('harvest-list')
+        resp = clients["master_admin"].get(url, {})
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 0
+
+        # this should create automatic harvests
+        Automatic.update_for_this_month()
+
+        url = reverse('harvest-list')
+        resp = clients["master_admin"].get(url, {})
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 0
 
 
 @pytest.mark.django_db()

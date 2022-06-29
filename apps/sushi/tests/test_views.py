@@ -14,9 +14,9 @@ from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory
+from test_fixtures.scenarios.basic import clients  # noqa
 from test_fixtures.scenarios.basic import (
     basic1,
-    clients,  # noqa
     counter_report_types,
     credentials,
     data_sources,
@@ -665,7 +665,7 @@ class TestSushiCredentialsViewSet:
                 assert data[1][month][0]["can_harvest"] is True
             elif month in ["06"]:
                 assert data[1][month][0]["status"] == "success"
-                assert data[1][month][0]["planned"] is False
+                assert data[1][month][0]["planned"] is True, "planned via automatic harvesting"
                 assert data[1][month][0]["can_harvest"] is False
             else:
                 assert data[1][month][0]["status"] == "untried"

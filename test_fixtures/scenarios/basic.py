@@ -22,6 +22,7 @@ from sushi.models import AttemptStatus
 from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
 from ..entities.data_souces import DataSource, DataSourceFactory
+from ..entities.fetchattempts import FetchAttemptFactory
 from ..entities.identities import Identity, IdentityFactory
 from ..entities.logs import ImportBatchFactory, MetricFactory
 from ..entities.organizations import OrganizationFactory
@@ -330,6 +331,25 @@ def credentials(counter_report_types, organizations, platforms):
     branch_pr.counter_reports.add(counter_report_types["pr"])
 
     return locals()
+
+
+@pytest.fixture
+def verified_credentials(credentials):
+    FetchAttemptFactory(
+        credentials=credentials["standalone_tr"],
+        status=AttemptStatus.SUCCESS,
+        credentials_version_hash=credentials["standalone_tr"].version_hash,
+    )
+    FetchAttemptFactory(
+        credentials=credentials["standalone_br1_jr1"],
+        status=AttemptStatus.SUCCESS,
+        credentials_version_hash=credentials["standalone_br1_jr1"].version_hash,
+    )
+    FetchAttemptFactory(
+        credentials=credentials["branch_pr"],
+        status=AttemptStatus.SUCCESS,
+        credentials_version_hash=credentials["branch_pr"].version_hash,
+    )
 
 
 @pytest.fixture

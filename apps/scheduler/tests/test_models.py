@@ -44,6 +44,7 @@ from test_fixtures.scenarios.basic import (
     report_types,
     schedulers,
     users,
+    verified_credentials,
 )
 
 current_tz = timezone.get_current_timezone()
@@ -538,6 +539,7 @@ class TestFetchIntention:
         settings,
     ):
         settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
+        settings.AUTOMATIC_HARVESTING_ENABLED = False  # to disable auto creation of FI
         scheduler = SchedulerFactory(url=credentials["standalone_tr"].url)
 
         start = datetime(2020, 1, 2, 0, 0, 0, 0, tzinfo=current_tz)
@@ -972,7 +974,10 @@ class TestHarvest:
 
         assert urls == {credentials["standalone_tr"].url, credentials["standalone_br1_jr1"].url}
 
-    def test_stats(self, counter_report_types, credentials):
+    def test_stats(self, counter_report_types, credentials, settings):
+        # Extra harvests would be created if AUTOMATIC_HARVESTING_ENABLED were enabled
+        settings.AUTOMATIC_HARVESTING_ENABLED = False
+
         harvest1 = HarvestFactory()
         harvest2 = HarvestFactory()
         harvest3 = HarvestFactory()
@@ -1139,7 +1144,12 @@ class TestHarvest:
 class TestAutomatic:
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_update_for_this_month(
-        self, credentials, organizations, counter_report_types, disable_automatic_scheduling,
+        self,
+        credentials,
+        organizations,
+        counter_report_types,
+        disable_automatic_scheduling,
+        verified_credentials,
     ):
         start_date = date(2020, 2, 1)
 
@@ -1226,24 +1236,57 @@ class TestAutomatic:
             broken_type=SushiCredentials.BROKEN_SUSHI,
         )
 
-        assert Automatic.update_for_this_month() == {"deleted": 0, "added": 2}
+        assert Automatic.update_for_this_month() == {"deleted": 0, "added": 1}
+        assert FetchIntention.objects.count() == 2
+
+        # make cred1 verified
+        FetchAttemptFactory(
+            credentials=creds1,
+            status=AttemptStatus.NO_DATA,
+            credentials_version_hash=creds1.version_hash,
+        )
+
+        assert Automatic.update_for_this_month() == {"deleted": 0, "added": 1}
         assert FetchIntention.objects.count() == 3
+
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
-        self, counter_report_types, credentials, enable_automatic_scheduling
+        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
     ):
         """ Test whether automatic harvests are update when
             credentials or credentails to counter report mapping
             changes
         """
+        # Clear all harvests
+        Harvest.objects.all().delete()
+
         start_date = date(2020, 2, 1)
 
         assert FetchIntention.objects.all().count() == 0
         assert Automatic.objects.all().count() == 0
 
-        # Save credentials
+        # Add successful Attempt which should trigger Automatic harvest creation
+        FetchAttemptFactory(
+            credentials=credentials["branch_pr"],
+            status=AttemptStatus.SUCCESS,
+            credentials_version_hash=credentials["branch_pr"],
+            counter_report=counter_report_types["pr"],
+        )
+        assert FetchIntention.objects.all().count() == 1
+        assert Automatic.objects.all().count() == 1
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
+
+        # Altering credentials should cause it to be disabled
+        credentials["branch_pr"].customer_id += "X"
+        credentials["branch_pr"].save()
+        assert FetchIntention.objects.all().count() == 1
+        assert Automatic.objects.all().count() == 1
+        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
+
+        # Save credentials to its previous version should enable automatic again
+        credentials["branch_pr"].customer_id = credentials["branch_pr"].customer_id[:-1]
         credentials["branch_pr"].save()
         assert Automatic.objects.all().count() == 1
         automatic_branch = Automatic.objects.first()

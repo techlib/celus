@@ -1008,6 +1008,10 @@ class Automatic(models.Model):
         for cr2c in CounterReportsToCredentials.objects.filter(
             credentials__enabled=True, broken__isnull=True, credentials__broken__isnull=True
         ):
+            # only verified credentials can be automatically planned
+            if not cr2c.credentials.is_verified:
+                continue
+
             new_intentions.append(
                 FetchIntention(
                     not_before=cls.trigger_time(month_last),

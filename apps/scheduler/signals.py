@@ -1,16 +1,25 @@
+from core.logic.dates import month_end, this_month
 from django.conf import settings
 from django.db import transaction
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-
-from core.logic.dates import month_end, this_month
-from sushi.models import SushiCredentials, CounterReportsToCredentials
+from sushi.models import (
+    AttemptStatus,
+    CounterReportsToCredentials,
+    SushiCredentials,
+    SushiFetchAttempt,
+)
 
 from .models import Automatic, FetchIntention, FetchIntentionQueue
 
 
 def _update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
-    if cr2c.credentials.enabled and cr2c.broken is None and cr2c.credentials.broken is None:
+    if (
+        cr2c.credentials.enabled
+        and cr2c.broken is None
+        and cr2c.credentials.broken is None
+        and cr2c.credentials.is_verified
+    ):
         # add intention
         FetchIntention.objects.get_or_create(
             not_before=Automatic.trigger_time(automatic.month),
@@ -42,7 +51,7 @@ def update_intentions_from_cred_post_save(
     with transaction.atomic():
         if not created:
             automatic = Automatic.get_or_create(this_month(), instance.organization)
-            if instance.enabled and not instance.broken:
+            if instance.enabled and not instance.broken and instance.is_verified:
                 # Make sure that Automatic harvest is planned
                 for cr2c in instance.counterreportstocredentials_set.all():
                     _update_cr2c(automatic, cr2c)
@@ -93,3 +102,32 @@ def fill_in_queue(sender, instance, created, raw, using, update_fields, **kwargs
     if not instance.queue:
         queue = FetchIntentionQueue.objects.create(id=instance.pk, start=instance, end=instance)
         FetchIntention.objects.filter(pk=instance.pk).update(queue=queue)
+
+
+@receiver(post_save, sender=SushiFetchAttempt)
+def update_verified_for_success(sender, instance, created, raw, using, update_fields, **kwargs):
+
+    if not settings.AUTOMATIC_HARVESTING_ENABLED:
+        # skip when automatic scheduling disabled
+        return
+
+    # Only when the attempt is successful
+    if instance.status not in [AttemptStatus.SUCCESS, AttemptStatus.NO_DATA]:
+        return
+
+    # Only update for current credentials
+    if not instance.credentials.is_verified:
+        return
+
+    try:
+        cr2c = CounterReportsToCredentials.objects.get(
+            credentials=instance.credentials, counter_report=instance.counter_report
+        )
+    except CounterReportsToCredentials.DoesNotExist:
+        # Report is not set for the credentials
+        return
+
+    automatic = Automatic.get_or_create(
+        month=this_month(), organization=instance.credentials.organization
+    )
+    _update_cr2c(automatic, cr2c)
