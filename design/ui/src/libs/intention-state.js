@@ -25,8 +25,7 @@ function annotateIntention(intention) {
     attemptState(intention.attempt) === ATTEMPT_AWAITING_IMPORT;
   intention.isFinished =
     !!(intention.hasAttempt || intention.whenProcessed) && !intention.importing;
-  intention.brokenCredentials =
-    intention.broken_credentials && !intention.isFinished;
+  intention.brokenCredentials = !!intention.broken_credentials;
 
   // let's deal with the case the intention is duplicate of some other intention
   // we copy most of the attributes from the target intention to this one

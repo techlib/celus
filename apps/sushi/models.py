@@ -311,7 +311,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             'requestor_id': self.requestor_id,
             'customer_id': self.customer_id,
         }
-        extra = self.extra_params or {}
+        extra = deepcopy(self.extra_params) or {}
         if self.api_key:
             extra['api_key'] = self.api_key
         if self.http_password and self.http_username and self.counter_version == 4:
