@@ -20,8 +20,9 @@ en:
   title_tooltip: You can give the credentials a descriptive title for easier identification. A title is required when you have more than one set of credentials for the same SUSHI server.
   title_in_conflict: <strong>Use a different title</strong>. When creating more than one set of credentials for the same organization, platform and COUNTER version, you need to use distinct titles in order to distinguish between the sets.
   title_in_conflict_hint: Unique title is required
-  optional_args: Extra attributes - fill only if instructed by provider
-  optional_args_tooltip: The following section is used for attributes which are only used by some providers. If the credentials given to you by the provider contain fields that do not correspond to any of the fields above, you can fill them in here.
+  extra_attributes: Extra attributes - fill only if instructed by provider
+  extra_attributes_tooltip: The following section is used for attributes which are only used by some providers. If the credentials given to you by the provider contain fields that do not correspond to any of the fields above, you can fill them in here.
+  platform_filter_tooltip: This field is used only by some providers. If the credentials given to you by the provider contain filter "platform", you can fill it in here.
   really_delete: Do you really want to delete these credentials? (Downloaded data will be preserved)
   broken: These credentials were marked as broken. Harvesting will be disabled until the credentials are changed.
   broken_unbreak_manually:
@@ -60,8 +61,9 @@ cs:
   title_tooltip: Přihlašovacím údajům můžete přiřadit název pro lepší identifikaci. Název je také vyžadován v případě, že máte více než jednu sadu přihlašovacích údajů pro stejný SUSHI server.
   title_in_conflict: <strong>Použijte jiný název</strong>. Pokud vytváříte více přihlašovacích údajů pro stejnout organizaci, platformu a verzi COUNTER, musíte použít různé názvy, aby bylo možné přihlašovací údaje rozlišit.
   title_in_conflict_hint: Je vyžadován unikátní název
-  optional_args: Další parametry - vyplňte pouze pokud to poskytovatel vyžaduje
-  optional_args_tooltip: Následující sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
+  extra_attributes: Extra atributy - vyplňte pouze pokud to poskytovatel vyžaduje
+  extra_attributes_tooltip: Tato sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
+  platform_filter_tooltip: Toto pole je používáno jen některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi obsahují filtr "platform", můžete jej vyplnit zde.
   really_delete: Chcete opravdu smazat tyto přihlašovací údaje? (Stažená data budou zachována)
   broken: Tyto přihlašovací údaje byly označené jako nefunkční. Stahování bude vypnuto dokud nebudou údaje upraveny.
   broken_unbreak_manually:
@@ -227,7 +229,7 @@ cs:
           </v-row>
 
           <v-row>
-            <v-col cols="12" :sm="6">
+            <v-col cols="12" :sm="counterVersion === 5 ? 4 : 6">
               <v-text-field
                 v-model="requestorId"
                 :label="$t('labels.requestor_id')"
@@ -235,12 +237,22 @@ cs:
               >
               </v-text-field>
             </v-col>
-            <v-col cols="12" :sm="6">
+            <v-col cols="12" :sm="counterVersion === 5 ? 4 : 6">
               <v-text-field
                 v-model="customerId"
                 :label="$t('labels.customer_id')"
                 :rules="[ruleRequired]"
                 :disabled="!activePlatform"
+              >
+              </v-text-field>
+            </v-col>
+
+            <v-col v-if="counterVersion === 5" cols="12" :sm="4">
+              <v-text-field
+                v-model="apiKey"
+                :label="$t('labels.api_key')"
+                :disabled="!activePlatform"
+                :rules="[ruleAPIkey]"
               >
               </v-text-field>
             </v-col>
@@ -323,97 +335,115 @@ cs:
               <v-tooltip bottom max-width="600px">
                 <template #activator="{ on }">
                   <h4
-                    v-on="on"
+                    v-on="counterVersion === 4 ? on : null"
                     class="font-weight-light pl-2"
-                    v-text="$t('optional_args')"
+                    v-text="$t('extra_attributes')"
                   ></h4>
                 </template>
-                {{ $t("optional_args_tooltip") }}
+                {{ $t("extra_attributes_tooltip") }}
               </v-tooltip>
-
               <v-container fluid class="pa-0 pl-md-8">
-                <v-row v-if="counterVersion === 4">
-                  <v-col cols="auto" class="mt-6 py-0">
-                    <span class="font-weight-light">{{
-                      $t("labels.http_authentication")
-                    }}</span>
-                  </v-col>
-                  <v-col md="3" class="py-0">
-                    <v-text-field
-                      v-model="httpUsername"
-                      :label="$t('labels.http_username')"
-                      :disabled="!activePlatform"
-                    >
-                    </v-text-field>
-                  </v-col>
-                  <v-col md="4" class="py-0">
-                    <v-text-field
-                      v-model="httpPassword"
-                      :label="$t('labels.http_password')"
-                      :disabled="!activePlatform"
-                    >
-                    </v-text-field>
-                  </v-col>
-                </v-row>
                 <v-row v-if="counterVersion === 5">
-                  <v-col class="py-0" cols="12" md="8">
+                  <v-col md="5" class="py-0">
                     <v-text-field
-                      v-model="apiKey"
-                      :label="$t('labels.api_key')"
+                      v-model="platformFilter"
+                      :label="$t('labels.platform_filter')"
                       :disabled="!activePlatform"
+                      :rules="[rulePlatform]"
                     >
-                    </v-text-field>
-                  </v-col>
-                </v-row>
-                <v-row v-for="(param, index) in extraParams" :key="index">
-                  <v-col cols="10" sm="4" md="3" class="py-0">
-                    <v-text-field
-                      v-model="param.key"
-                      :label="$t('labels.variable')"
-                      :rules="[ruleRequired, ruleExtraNoDuplicateKey]"
-                      :disabled="!activePlatform"
-                    >
-                    </v-text-field>
-                  </v-col>
-                  <v-col cols="10" sm="6" md="5" class="py-0">
-                    <v-text-field
-                      v-model="param.value"
-                      :label="$t('labels.variable_value')"
-                      :rules="[ruleRequired]"
-                      :disabled="!activePlatform"
-                    >
-                    </v-text-field>
-                  </v-col>
-                  <v-col cols="auto">
-                    <v-btn @click="removeExtraParam(index)" icon color="error">
-                      <v-icon>fa-times</v-icon>
-                    </v-btn>
-                  </v-col>
-                </v-row>
-                <v-row>
-                  <v-col cols="12" class="py-0">
-                    <v-tooltip bottom>
-                      <template #activator="{ on }">
-                        <v-btn
-                          v-on="on"
-                          @click="addExtraParam()"
-                          outlined
-                          text
-                          color="secondary"
-                          :disabled="!activePlatform"
-                        >
-                          <v-icon left x-small>fa-plus</v-icon>
-                          {{ $t("add_custom_param") }}
-                        </v-btn>
+                      <template v-slot:append>
+                        <v-tooltip right>
+                          <template #activator="{ on }">
+                            <v-icon v-on="on" small color="secondary"
+                              >fa-info-circle</v-icon
+                            >
+                          </template>
+                          <div
+                            v-html="$t('platform_filter_tooltip')"
+                            style="max-width: 400px"
+                          ></div>
+                        </v-tooltip>
                       </template>
-                      {{ $t("add_custom_param_tooltip") }}
-                    </v-tooltip>
+                    </v-text-field>
                   </v-col>
                 </v-row>
+                <div v-if="counterVersion === 4">
+                  <v-row>
+                    <v-col cols="auto" class="mt-6 py-0">
+                      <span class="font-weight-light">{{
+                        $t("labels.http_authentication")
+                      }}</span>
+                    </v-col>
+                    <v-col md="3" class="py-0">
+                      <v-text-field
+                        v-model="httpUsername"
+                        :label="$t('labels.http_username')"
+                        :disabled="!activePlatform"
+                      >
+                      </v-text-field>
+                    </v-col>
+                    <v-col md="4" class="py-0">
+                      <v-text-field
+                        v-model="httpPassword"
+                        :label="$t('labels.http_password')"
+                        :disabled="!activePlatform"
+                      >
+                      </v-text-field>
+                    </v-col>
+                  </v-row>
+                  <v-row v-for="(param, index) in extraParams" :key="index">
+                    <v-col cols="10" sm="4" md="3" class="py-0">
+                      <v-text-field
+                        v-model="param.key"
+                        :label="$t('labels.variable')"
+                        :rules="[ruleRequired, ruleExtraNoDuplicateKey]"
+                        :disabled="!activePlatform"
+                      >
+                      </v-text-field>
+                    </v-col>
+                    <v-col cols="10" sm="6" md="5" class="py-0">
+                      <v-text-field
+                        v-model="param.value"
+                        :label="$t('labels.variable_value')"
+                        :rules="[ruleRequired]"
+                        :disabled="!activePlatform"
+                      >
+                      </v-text-field>
+                    </v-col>
+                    <v-col cols="auto">
+                      <v-btn
+                        @click="removeExtraParam(index)"
+                        icon
+                        color="error"
+                      >
+                        <v-icon>fa-times</v-icon>
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col cols="12" class="py-0">
+                      <v-tooltip bottom>
+                        <template #activator="{ on }">
+                          <v-btn
+                            v-on="on"
+                            @click="addExtraParam()"
+                            outlined
+                            text
+                            color="secondary"
+                            :disabled="!activePlatform"
+                          >
+                            <v-icon left x-small>fa-plus</v-icon>
+                            {{ $t("add_custom_param") }}
+                          </v-btn>
+                        </template>
+                        {{ $t("add_custom_param_tooltip") }}
+                      </v-tooltip>
+                    </v-col>
+                  </v-row>
+                </div>
               </v-container>
             </v-col>
           </v-row>
-
           <v-row>
             <v-col v-if="anyBrokenReports">
               <v-alert type="warning" outlined class="mb-0">
@@ -568,6 +598,7 @@ export default {
       httpUsername: "",
       httpPassword: "",
       apiKey: "",
+      platformFilter: "",
       extraParams: [],
       selectedReportTypes: [],
       showTestDialog: false,
@@ -583,6 +614,8 @@ export default {
       valid: false,
       saving: false,
       useCasesData: [],
+      prefixApiKey: "",
+      prefixPlatform: "",
     };
   },
   computed: {
@@ -614,6 +647,9 @@ export default {
       let extraParams = {};
       for (let rec of this.extraParams) {
         if (rec.key.trim()) extraParams[rec.key] = rec.value;
+      }
+      if (this.counterVersion === 5) {
+        extraParams.platform = this.platformFilter;
       }
       let data = {
         title: this.title,
@@ -819,6 +855,9 @@ export default {
       } else {
         let extraParams = [];
         for (let [key, value] of Object.entries(credentials.extra_params)) {
+          if (key === "platform") {
+            this.platformFilter = value;
+          }
           extraParams.push({ key: key, value: value });
         }
         this.title = credentials.title;
@@ -1119,6 +1158,32 @@ export default {
     },
     removeExtraParam(index) {
       this.extraParams.splice(index, 1);
+    },
+    ruleAPIkey(value) {
+      let pattern = /api_?key[:=]/i;
+      let isMatch = pattern.test(value);
+      if (isMatch) {
+        this.prefixApiKey = pattern.exec(value)[0];
+      } else {
+        this.prefixApiKey = "";
+      }
+      return (
+        !isMatch ||
+        `Please remove the "${this.prefixApiKey}" part of your input.`
+      );
+    },
+    rulePlatform(value) {
+      let pattern = /platform[:=]/i;
+      let isMatch = pattern.test(value);
+      if (isMatch) {
+        this.prefixPlatform = pattern.exec(value)[0];
+      } else {
+        this.prefixPlatform = "";
+      }
+      return (
+        !isMatch ||
+        `Please remove the "${this.prefixPlatform}" part of your input.`
+      );
     },
     ruleRequired(value) {
       return !!value || this.$t("required");

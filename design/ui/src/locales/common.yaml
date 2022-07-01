@@ -124,6 +124,7 @@ en:
     relative: Relative
     total: Total
     platform: Platform
+    platform_filter: Platform filter
     finished: Finished
     year: Year
     year_and_month: Year and month
@@ -379,6 +380,7 @@ cs:
     relative: Relativně
     total: Celkem
     platform: Platforma
+    platform_filter: Filtr platformy
     finished: Dokončeno
     year: Rok
     year_and_month: Rok a měsíc
