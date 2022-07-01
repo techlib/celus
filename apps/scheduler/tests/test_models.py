@@ -1142,8 +1142,8 @@ class TestHarvest:
 
 @pytest.mark.django_db
 class TestAutomatic:
-    @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
-    def test_update_for_this_month(
+    @freeze_time(datetime(2020, 2, 1, 0, 0, 0, 0, tzinfo=current_tz))
+    def test_update_for_last_month(
         self,
         credentials,
         organizations,
@@ -1155,7 +1155,7 @@ class TestAutomatic:
 
         # all empty
         assert FetchIntention.objects.count() == 0
-        assert Automatic.update_for_this_month() == {"added": 4, "deleted": 0}
+        assert Automatic.update_for_last_month() == {"added": 4, "deleted": 0}
         last = Automatic.objects.last()
         assert last.month == date(2020, 1, 1)
         assert last.harvest.intentions.count() == 1
@@ -1186,7 +1186,7 @@ class TestAutomatic:
             counter_report=counter_report_types["tr"]
         ).delete()
 
-        assert Automatic.update_for_this_month() == {"deleted": 3, "added": 0}
+        assert Automatic.update_for_last_month() == {"deleted": 3, "added": 0}
         assert FetchIntention.objects.count() == 1
         remained = FetchIntention.objects.last()
         assert remained.counter_report == counter_report_types["br1"]
@@ -1236,7 +1236,7 @@ class TestAutomatic:
             broken_type=SushiCredentials.BROKEN_SUSHI,
         )
 
-        assert Automatic.update_for_this_month() == {"deleted": 0, "added": 1}
+        assert Automatic.update_for_last_month() == {"deleted": 0, "added": 1}
         assert FetchIntention.objects.count() == 2
 
         # make cred1 verified
@@ -1246,7 +1246,7 @@ class TestAutomatic:
             credentials_version_hash=creds1.version_hash,
         )
 
-        assert Automatic.update_for_this_month() == {"deleted": 0, "added": 1}
+        assert Automatic.update_for_last_month() == {"deleted": 0, "added": 1}
         assert FetchIntention.objects.count() == 3
 
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())

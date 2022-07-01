@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from enum import Enum, auto
 
 from celery import states
-from core.logic.dates import month_end, month_start
+from core.logic.dates import month_end, month_start, this_month
 from core.models import CreatedUpdatedMixin, User
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -1070,8 +1070,16 @@ class Automatic(models.Model):
     @transaction.atomic
     def update_for_this_month(cls) -> Counter:
         """ Updates automatic harvesting for current month """
-        this_month = month_start(datetime.now(timezone.get_current_timezone()))
-        return cls.update_for_month(this_month)
+        return cls.update_for_month(this_month())
+
+    @classmethod
+    @transaction.atomic
+    def update_for_last_month(cls) -> Counter:
+        """
+        Updates automatic harvesting for last month
+        Note that it should be triggered within days or hours
+        """
+        return cls.update_for_month(month_start(this_month() - relativedelta(months=1)))
 
     @classmethod
     def get_or_create(cls, month: date, organization: Organization) -> 'Automatic':
