@@ -550,6 +550,15 @@ SERVER_EMAIL = config('SERVER_EMAIL', default='root@localhost')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='root@localhost')
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')
 
+# password reset and invitation token timeout (in seconds)
+# the purpose of the timeout is to guard against someone getting access to an old email account
+# with unused reset tokens, so it should be safe to have it set to longer period than the default
+# 3 days. It would make the invitation links much more convenient.
+#
+# https://docs.djangoproject.com/en/3.2/ref/settings/#password-reset-timeout
+#
+PASSWORD_RESET_TIMEOUT = config('PASSWORD_RESET_TIMEOUT', cast=int, default=864000)  # 10 days
+
 CELUS_ADMIN_SITE_PATH = config('CELUS_ADMIN_SITE_PATH', default='wsEc67YNV2sq/')
 
 EXPORTED_SETTINGS = [
