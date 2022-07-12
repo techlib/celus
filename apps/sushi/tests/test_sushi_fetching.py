@@ -19,10 +19,11 @@ from test_fixtures.scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestSushiFetching:
     @pytest.mark.parametrize(
-        ('path', 'status1', 'status2', 'log', 'breaks', 'checksum'),
+        ('path', 'counter_report', 'status1', 'status2', 'log', 'breaks', 'checksum'),
         (
             (
                 'C5_PR_test.json',
+                'pr',
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
                 '',
@@ -31,6 +32,7 @@ class TestSushiFetching:
             ),
             (
                 'naked_errors.json',
+                'pr',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
                 'Warnings: Warning #1011: Report Queued for Processing; '
@@ -40,6 +42,7 @@ class TestSushiFetching:
             ),
             (
                 'naked_error.json',
+                'pr',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
                 'Warnings: Warning #1011: Report Queued for Processing\n\n',
@@ -48,6 +51,7 @@ class TestSushiFetching:
             ),
             (
                 '5_TR_ProQuestEbookCentral_exception.json',
+                'tr',
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
                 'Errors: Error #3030: No Usage Available for Requested Dates.\n\n',
@@ -56,6 +60,7 @@ class TestSushiFetching:
             ),
             (
                 'error-in-root.json',
+                'tr',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
                 'Errors: Error #2090: Got response code: 404 for request: '
@@ -65,6 +70,7 @@ class TestSushiFetching:
             ),
             (
                 'no_data.json',
+                'tr',
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
                 '',
@@ -73,6 +79,7 @@ class TestSushiFetching:
             ),
             (
                 'invalid-customer.json',
+                'dr',
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
                 'Errors: Error #1030: Invalid Customer Id\n\n',
@@ -81,6 +88,7 @@ class TestSushiFetching:
             ),
             (
                 'code-zero.json',
+                'tr',
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
                 'Infos: Info #0: Some description\n\n',
@@ -89,6 +97,7 @@ class TestSushiFetching:
             ),
             (
                 'no_data_3062.json',
+                'tr',
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
                 'Infos: Info #3062: Invalid ReportAttribute Value\n\n',
@@ -97,6 +106,7 @@ class TestSushiFetching:
             ),
             (
                 'some_data_3062.json',
+                'tr',
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
                 'Infos: Info #3062: Invalid ReportAttribute Value\n\n',
@@ -105,6 +115,7 @@ class TestSushiFetching:
             ),
             (
                 'no_data_3050.json',
+                'tr',
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
                 'Infos: Info #3050: Parameter Not Recognized in this Context\n\n',
@@ -113,6 +124,7 @@ class TestSushiFetching:
             ),
             (
                 'some_data_3050.json',
+                'pr',
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
                 'Infos: Info #3050: Parameter Not Recognized in this Context; '
@@ -125,9 +137,10 @@ class TestSushiFetching:
         ),
         ids=lambda x: "" if isinstance(x, str) and not x.endswith('.json') else x,
     )
-    def test_c5_pr(
+    def test_c5(
         self,
         path,
+        counter_report,
         status1,
         status2,
         log,
@@ -147,7 +160,7 @@ class TestSushiFetching:
                 m.get(re.compile(f'^{credentials.url}.*'), text=content)
                 file_size = len(content)
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+                counter_report_types[counter_report], start_date='2019-04-01', end_date='2019-04-30'
             )
             assert m.called
             assert attempt.status == status1
@@ -324,32 +337,32 @@ class TestSushiFetching:
                 assert attempt.status == AttemptStatus.NO_DATA
 
     @pytest.mark.parametrize(
-        ('path', 'import_passes'),
+        ('path', 'counter_report', 'import_passes'),
         (
-            ('5_DR_ProQuestEbookCentral_exception.json', False,),
-            ('5_TR_ProQuestEbookCentral.json', True,),
-            ('5_TR_ProQuestEbookCentral_exception.json', False,),
-            ('5_TR_with_warning.json', False,),
-            ('C5_PR_test.json', True,),
-            ('counter5_tr_test1.json', True,),
-            ('data_incorrect.json', False,),
-            ('data_simple.json', True,),
-            ('error-in-root.json', False,),
-            ('naked_error.json', False,),
-            ('naked_error_3000.json', False,),
-            ('naked_error_lowercase.json', False,),
-            ('naked_errors.json', False,),
-            ('no_data.json', False,),
-            ('partial_data1.json', False,),
-            ('partial_data2.json', False,),
-            ('severity-missing.json', False,),
-            ('severity-number.json', False,),
-            ('stringified_error.json', False,),
-            ('null-in-Item_ID.json', True,),
+            ('5_DR_ProQuestEbookCentral_exception.json', 'dr', False,),
+            ('5_TR_ProQuestEbookCentral.json', 'tr', True,),
+            ('5_TR_ProQuestEbookCentral_exception.json', 'tr', False,),
+            ('5_TR_with_warning.json', 'tr', False,),
+            ('C5_PR_test.json', 'pr', True,),
+            ('counter5_tr_test1.json', 'tr', True,),
+            ('data_incorrect.json', 'tr', False,),
+            ('data_simple.json', 'tr', True,),
+            ('error-in-root.json', 'tr', False,),
+            ('naked_error.json', 'tr', False,),
+            ('naked_error_3000.json', 'tr', False,),
+            ('naked_error_lowercase.json', 'tr', False,),
+            ('naked_errors.json', 'tr', False,),
+            ('no_data.json', 'tr', False,),
+            ('partial_data1.json', 'tr', False,),
+            ('partial_data2.json', 'tr', False,),
+            ('severity-missing.json', 'dr', False,),
+            ('severity-number.json', 'dr', False,),
+            ('stringified_error.json', 'tr', False,),
+            ('null-in-Item_ID.json', 'tr', True,),
         ),
     )
     def test_c5_all_cases(
-        self, path, import_passes, counter_report_types, organizations, platforms,
+        self, path, counter_report, import_passes, counter_report_types, organizations, platforms,
     ):
         """ Just test that processing of test data works as excpected """
         credentials = CredentialsFactory(
@@ -361,7 +374,7 @@ class TestSushiFetching:
                     re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200,
                 )
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+                counter_report_types[counter_report], start_date='2019-04-01', end_date='2019-04-30'
             )
             if import_passes:
                 import_one_sushi_attempt(attempt)

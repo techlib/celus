@@ -7,8 +7,8 @@ import typing
 from copy import copy
 
 import ijson.backends.yajl2_c as ijson
-
 from core.logic.dates import parse_counter_month
+
 from .error_codes import ErrorCode, error_code_to_severity
 from .exceptions import SushiException
 
@@ -102,10 +102,43 @@ class TransportError:
         return f'Transport error{http}: {self.message}'
 
 
+ALLOWED_ITEM_IDS = {
+    'DR': {'Proprietary': 'Proprietary', 'Proprietary_ID': 'Proprietary'},
+    'TR': {
+        'DOI': 'DOI',
+        'Online_ISSN': 'Online_ISSN',
+        'Print_ISSN': 'Print_ISSN',
+        'ISBN': 'ISBN',
+        'Proprietary': 'Proprietary',
+        'Proprietary_ID': 'Proprietary_ID',
+        'URI': 'URI',
+    },
+    'PR': {'Proprietary': 'Proprietary', 'Proprietary_ID': 'Proprietary'},
+    'IR': {
+        'DOI': 'DOI',
+        'Online_ISSN': 'Online_ISSN',
+        'Print_ISSN': 'Print_ISSN',
+        'ISBN': 'ISBN',
+        'Proprietary': 'Proprietary',
+        'Proprietary_ID': 'Proprietary_ID',
+        'URI': 'URI',
+    },
+    'IR_M1': {
+        'DOI': 'DOI',
+        'Online_ISSN': 'Online_ISSN',
+        'Print_ISSN': 'Print_ISSN',
+        'ISBN': 'ISBN',
+        'Proprietary': 'Proprietary',
+        'Proprietary_ID': 'Proprietary_ID',
+        'URI': 'URI',
+    },
+}
+
+
 class Counter5ReportBase:
 
     dimensions = []  # this should be redefined in subclasses
-    allowed_item_ids = ['DOI', 'Online_ISSN', 'Print_ISSN', 'ISBN', 'Proprietary', 'URI']
+    allowed_item_ids: typing.Dict[str, str] = {}  # this should be redefined in subclasses
 
     def __init__(self, report: typing.Optional[typing.IO[bytes]] = None, http_status_code=None):
         self.records = []
@@ -131,6 +164,7 @@ class Counter5ReportBase:
         self.header = header
 
         for item in items:
+            self.check_item(item)
             record = CounterRecord()
             record.title = self._item_get_title(item)
             record.title_ids = self._extract_title_ids(item.get('Item_ID', []) or [])
@@ -151,6 +185,18 @@ class Counter5ReportBase:
         for field in ['report_id', 'customer_id']:  # mandatory header fields
             if field not in lower_keys:
                 raise SushiException('Incorrect format', content=fd.read())
+
+    def check_item(self, item: dict):
+        """ Check whether the item is valid """
+        self.check_no_extra_ids(item)
+
+    def check_no_extra_ids(self, item: dict):
+        """ Check that there are no extra title IDs """
+        allowed = {e.lower() for e in self.allowed_item_ids}
+        ids_keys = {e["Type"].lower() for e in (item.get("Item_ID", []) or [])}
+        extra = ids_keys - allowed
+        if extra:
+            raise SushiException(f"Extra IDs not allowed {extra}", content=json.dumps(item))
 
     def extract_errors(self, data):
         from .client import Sushi5Client
@@ -286,8 +332,8 @@ class Counter5ReportBase:
     def _extract_title_ids(self, values: list) -> dict:
         ret = {}
         for value in values:
-            if value.get('Type') in self.allowed_item_ids:
-                ret[value.get('Type')] = value.get('Value')
+            if id_type := self.allowed_item_ids.get(value.get('Type')):
+                ret[id_type] = value.get('Value')
         return ret
 
     @classmethod
@@ -302,6 +348,7 @@ class Counter5ReportBase:
 class Counter5DRReport(Counter5ReportBase):
 
     dimensions = ['Access_Method', 'Data_Type', 'Publisher', 'Platform']
+    allowed_item_ids = ALLOWED_ITEM_IDS["DR"]
 
     @classmethod
     def _item_get_title(cls, item):
@@ -309,7 +356,6 @@ class Counter5DRReport(Counter5ReportBase):
 
 
 class Counter5TRReport(Counter5ReportBase):
-
     dimensions = [
         'Access_Type',
         'Access_Method',
@@ -319,11 +365,13 @@ class Counter5TRReport(Counter5ReportBase):
         'Publisher',
         'Platform',
     ]
+    allowed_item_ids = ALLOWED_ITEM_IDS["TR"]
 
 
 class Counter5PRReport(Counter5ReportBase):
 
     dimensions = ['Access_Method', 'Data_Type', 'Platform']
+    allowed_item_ids = ALLOWED_ITEM_IDS["PR"]
 
     @classmethod
     def _item_get_title(cls, item):
@@ -334,6 +382,7 @@ class Counter5PRReport(Counter5ReportBase):
 class Counter5IRReport(Counter5ReportBase):
 
     dimensions = ['Access_Type', 'Access_Method', 'Data_Type', 'YOP', 'Publisher', 'Platform']
+    allowed_item_ids = ALLOWED_ITEM_IDS["IR"]
 
     @classmethod
     def _item_get_title(cls, item):
@@ -343,6 +392,7 @@ class Counter5IRReport(Counter5ReportBase):
 class Counter5IRM1Report(Counter5IRReport):
 
     dimensions = ['Publisher', 'Platform']
+    allowed_item_ids = ALLOWED_ITEM_IDS["IR_M1"]
 
 
 class Counter5TableReport:
@@ -382,6 +432,7 @@ class Counter5TableReport:
         'Print_ISSN': 'Print_ISSN',
         'Online_ISSN': 'Online_ISSN',
         'Proprietary_ID': 'Proprietary',
+        'Proprietary': 'Proprietary',
         'URI': 'URI',
     }
 
@@ -395,6 +446,11 @@ class Counter5TableReport:
         with open(filename, 'r') as infile:
             for rec in self._fd_to_records(infile):
                 yield rec
+
+    def check_title_ids(self, report_type: str, title_ids: typing.Dict[str, str]):
+        extra = set(title_ids.keys()) - set(ALLOWED_ITEM_IDS[report_type])
+        if extra:
+            raise ValueError("Unsupported IDs ({extra}) for report_type {report_type}")
 
     def _fd_to_records(self, infile) -> typing.Generator[CounterRecord, None, None]:
         # guess TSV or CSV and other csv stuff (e.g. how strings are escaped)
@@ -443,6 +499,9 @@ class Counter5TableReport:
                         title_ids[self.title_id_columns[key]] = value
                     else:
                         raise KeyError(f'We don\'t know how to interpret the column "{key}"')
+
+            self.check_title_ids(report_type, title_ids)
+
             # we put initial data into the data we read - these are usually dimensions that are fixed
             # for the whole import and are not part of the data itself
             # for key, value in initial_data.items():

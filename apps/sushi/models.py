@@ -812,19 +812,26 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
     def ok(self):
         return self.status not in AttemptStatus.errors()
 
+    @staticmethod
+    def file_is_json_s(data_file) -> bool:
+        """
+        Returns True if the file seems to be a JSON file.
+        """
+        char = data_file.read(1)
+        while char and char.isspace():
+            char = data_file.read(1)
+        data_file.seek(0)
+        if char in b'[{':
+            return True
+        return False
+
     def file_is_json(self) -> Optional[bool]:
         """
         Returns True if the file seems to be a JSON file.
         """
         if not self.data_file:
             return None
-        char = self.data_file.read(1)
-        while char and char.isspace():
-            char = self.data_file.read(1)
-        self.data_file.seek(0)
-        if char in b'[{':
-            return True
-        return False
+        return SushiFetchAttempt.file_is_json_s(self.data_file)
 
     def conflicting(self, fully_enclosing: bool = False) -> Iterable['SushiFetchAttempt']:
         """

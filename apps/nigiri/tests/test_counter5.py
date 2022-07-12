@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from ..counter5 import Counter5ReportBase, Counter5TableReport, Counter5TRReport
+from ..counter5 import Counter5DRReport, Counter5ReportBase, Counter5TableReport, Counter5TRReport
 from ..exceptions import SushiException
 
 
 class TestCounter5Reading:
-    def test_record_simple(self):
-        reader = Counter5ReportBase()
+    def test_record_simple_tr(self):
+        reader = Counter5TRReport()
         records = [
             e
             for e in reader.file_to_records(
@@ -21,24 +21,7 @@ class TestCounter5Reading:
         assert records[0].value == 10
         assert records[0].start == '2019-05-01'
         assert records[0].end == '2019-05-31'
-        assert records[0].dimension_data == {}
-        assert records[1].value == 8
-        # both records should have the same values for these attributes as they come from the
-        # same item in the data
-        for attr in ('title', 'start', 'end'):
-            assert getattr(records[0], attr) == getattr(records[1], attr)
-
-    def test_record_simple_tr(self):
-        reader = Counter5TRReport()
-        records = [
-            e
-            for e in reader.file_to_records(
-                Path(__file__).parent / 'data/counter5/data_simple.json'
-            )
-        ]
-        assert len(records) == 2
         assert records[0].value == 10
-        # just test what is different in TR report
         assert records[0].dimension_data == {
             'Access_Type': 'OA_Gold',
             'Publisher': 'Pub1',
@@ -48,6 +31,10 @@ class TestCounter5Reading:
             'Data_Type': 'Book',
             'Platform': 'PlOne',
         }
+        # same item in the data
+        for attr in ('title', 'start', 'end'):
+            assert getattr(records[0], attr) == getattr(records[1], attr)
+        assert records[1].value == 8
 
     def test_reading_incorrect_data(self):
         """
@@ -201,6 +188,18 @@ class TestCounter5Reading:
         assert str(error.code) == '3010'
         assert str(error.severity.lower()) == 'error'
 
+    def test_no_extra_ids(self):
+        reader = Counter5DRReport()
+        counter = 0
+        with pytest.raises(SushiException):
+            for e in reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/dr-extra-ids.json'
+            ):
+                counter += 1
+                pass
+
+        assert counter == 7, "Some data were processed"
+
 
 @pytest.mark.django_db
 class TestCounter5TableReports:
@@ -238,3 +237,13 @@ class TestCounter5TableReports:
         )
         assert len(records) == count
         assert records[0].value == first_number
+
+    def test_mismatched_report_types(self):
+        reader = Counter5TableReport()
+        with pytest.raises(ValueError):
+            records = reader.file_to_records(
+                Path(__file__).parent / 'data/counter5/counter5_table_mismatched_rt.csv'
+            )
+
+            for record in records:
+                pass
