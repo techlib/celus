@@ -1,28 +1,28 @@
 import codecs
 import tempfile
 from abc import ABC, abstractmethod
-from typing import Optional, Callable, Type, Tuple, Any, Union
-from zipfile import ZipFile, ZIP_DEFLATED
+from typing import Any, Callable, Optional, Tuple, Type, Union
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import xlsxwriter
 from django.conf import settings
-from django.db.models import Model, ForeignKey, Field
+from django.db.models import Field, ForeignKey, Model, QuerySet
 from django.db.models.base import ModelBase
+from django.db.models.functions import Coalesce
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from mptt.models import MPTTModelBase
-
 from logs.logic.export_utils import (
-    XlsxListWriter,
-    MappingXlsxDictWriter,
     CSVListWriter,
-    MappingCSVDictWriter,
     DictWriter,
     ListWriter,
+    MappingCSVDictWriter,
+    MappingXlsxDictWriter,
+    XlsxListWriter,
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer
-from logs.models import DimensionText, ReportType, AccessLog
+from logs.models import AccessLog, DimensionText, ReportType
+from mptt.models import MPTTModelBase
 from organizations.models import Organization
 
 
@@ -55,10 +55,7 @@ class FlexibleDataExporter(ABC):
                     for obj in DimensionText.objects.filter(dimension=prim_dim).values('pk', 'text')
                 }
             else:
-                self.prim_dim_remap = {
-                    obj['pk']: obj
-                    for obj in prim_dim.objects.all().values('pk', *self.remapped_keys())
-                }
+                self.prim_dim_remap = self.prepare_implicit_remap(prim_dim.objects.all())
                 self.prim_dim_key = 'pk'
         else:
             self.prim_dim_remap = {}
@@ -68,6 +65,18 @@ class FlexibleDataExporter(ABC):
         return self.object_remapped_dims.get(self.slicer.primary_dimension, {}).get(
             'columns', ['name']
         )
+
+    def prepare_implicit_remap(self, qs: QuerySet) -> dict:
+        # Fallback to name->short_name (e.g. for Metric)
+        if 'name' in self.remapped_keys() and hasattr(qs.model, 'short_name'):
+            remaps = list(qs.values('pk', 'short_name', *self.remapped_keys()))
+            for item in remaps:
+                if not item["name"].strip():
+                    item["name"] = item["short_name"] or ""
+                del item["short_name"]
+            return {obj["pk"]: obj for obj in remaps}
+
+        return {obj["pk"]: obj for obj in qs.values('pk', *self.remapped_keys())}
 
     @abstractmethod
     def stream_data_to_sink(
