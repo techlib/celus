@@ -69,14 +69,38 @@ export default new Vuex.Store({
     dateRangeEnd: null,
     dateRangeIndex: 0,
     dateRanges: [
-      { name: "date_range.all_available", start: null, end: null },
-      { name: "date_range.last_12_mo", start: -12, end: 0 },
+      {
+        name: "date_range.current_plus_2y_back",
+        start: startOfYear(addYears(new Date(), -2)),
+        end: null,
+        desc: "date_range_desc.current_plus_2y_back",
+      },
+      {
+        name: "date_range.current_plus_1y_back",
+        start: startOfYear(addYears(new Date(), -1)),
+        end: null,
+      },
       {
         name: "date_range.previous_year",
         start: startOfYear(addYears(new Date(), -1)),
         end: endOfYear(addYears(new Date(), -1)),
       },
-      { name: "date_range.custom", custom: true },
+      {
+        name: "date_range.previous_2_years",
+        start: startOfYear(addYears(new Date(), -2)),
+        end: endOfYear(addYears(new Date(), -1)),
+      },
+      {
+        name: "date_range.last_12_mo",
+        start: addMonths(new Date(), -12),
+        end: null,
+      },
+      { name: "date_range.all_available", start: null, end: null },
+      {
+        name: "date_range.custom",
+        custom: true,
+        desc: "date_range_desc.custom",
+      },
     ],
     numberFormat: {
       notation: "fixed",

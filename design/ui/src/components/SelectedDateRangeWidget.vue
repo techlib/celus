@@ -27,9 +27,11 @@ cs:
             >
               <v-container>
                 <v-row>{{ rangeName }}</v-row>
-                <v-row class="small subdued">{{ rangeValueText }}</v-row>
+                <v-row class="small subdued">
+                  <DateRangeText :start="start" :end="end" />
+                </v-row>
 
-                <v-dialog v-model="showDialog" max-width="520px">
+                <v-dialog v-model="showDialog" max-width="640px">
                   <v-card>
                     <v-card-title>{{ $t("select_date_range") }}</v-card-title>
                     <v-divider></v-divider>
@@ -48,7 +50,9 @@ cs:
               <div class="pl-2"><v-icon>fa-caret-down</v-icon></div>
             </div>
           </template>
-          <span v-text="$t('tooltip')"></span>
+          <div>
+            <span v-text="$t('tooltip')"></span>
+          </div>
         </v-tooltip>
       </v-col>
     </v-row>
@@ -57,12 +61,12 @@ cs:
 
 <script>
 import { mapGetters, mapState } from "vuex";
-import { ymDateFormat } from "../libs/dates";
 import DateRangeSelector from "./DateRangeSelector";
+import DateRangeText from "@/components/util/DateRangeText";
 
 export default {
   name: "SelectedDateRangeWidget",
-  components: { DateRangeSelector },
+  components: { DateRangeText, DateRangeSelector },
   props: {
     inputLikeLabel: { default: false, type: Boolean },
   },
@@ -81,26 +85,6 @@ export default {
     }),
     rangeName() {
       return this.$i18n.t(this.rangeObject.name);
-    },
-    rangeValueText() {
-      let start = this.startDate;
-      let end = this.endDate;
-      if (start || end) {
-        return `${start} - ${end}`;
-      }
-      return "";
-    },
-    startDate() {
-      if (this.start) {
-        return ymDateFormat(this.start);
-      }
-      return "";
-    },
-    endDate() {
-      if (this.end) {
-        return ymDateFormat(this.end);
-      }
-      return "";
     },
   },
 };

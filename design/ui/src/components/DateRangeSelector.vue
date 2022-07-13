@@ -10,7 +10,23 @@
           v-model="selectedRangeIndex"
           item-value="index"
           item-text="nameLocal"
-        ></v-select>
+        >
+          <template #item="{ item }">
+            <v-list-item-content>
+              <v-list-item-title v-text="$t(item.name)"></v-list-item-title>
+              <v-list-item-subtitle>
+                <DateRangeText
+                  :start="item.start"
+                  :end="item.end"
+                  class="float-right"
+                />
+                <span v-if="item.desc" class="text-caption">
+                  {{ $t(item.desc) }}
+                </span>
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </template>
+        </v-select>
       </v-col>
     </v-row>
     <v-row v-if="dateRange.custom">
@@ -75,9 +91,11 @@
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import { ymDateFormat, parseDateTime } from "@/libs/dates";
+import DateRangeText from "@/components/util/DateRangeText";
 
 export default {
   name: "DateRangeSelector",
+  components: { DateRangeText },
   data() {
     return {
       menuStart: false,
