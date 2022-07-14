@@ -39,6 +39,7 @@ class UserSerializer(ModelSerializer):
             'is_user_of_master_organization',
             'is_admin_of_master_organization',
             'is_superuser',
+            'is_staff',
             'email_verification_status',
             'email_verification_sent',
             'extra_data',
