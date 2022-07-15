@@ -192,7 +192,7 @@ class InterestGroupAdmin(TranslationAdmin):
 @admin.register(models.ImportBatch)
 class ImportBatchAdmin(admin.ModelAdmin):
 
-    list_display = ['created', 'report_type', 'organization', 'platform', 'user', 'log_count']
+    list_display = ['created', 'report_type', 'organization', 'platform', 'date', 'log_count']
     list_filter = ['report_type', 'organization', 'platform']
     list_select_related = ['report_type', 'organization', 'platform']
 
