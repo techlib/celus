@@ -36,7 +36,6 @@ cs:
         disableItemsPerPage: true,
       }"
       dense
-      hide-default-footer
       :loading="loading"
     >
       <template #item.created="{ item }">
