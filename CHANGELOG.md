@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.0]
+
+### Added
+
+#### Frontend
+
+* SUSHI credentials are newly marked as verified on first successful use. Automatic harvesting is
+  only enabled for verified credentials.
+* user role "consortial user" was added - it has the same access level as normal user but can see
+  data for all consortium members without them being explicitly assigned
+* possibility to delete all platform usage data from the platform detail page was added
+* a new tab 'Data management' was added to the platform detail page
+* more options were added to the data range selection widget
+
+#### Backend
+
+* support was added for retrieving report type information from knowledgebase
+* a CLI script was added to move credentials with all the associated data into a new custom platform
+
+
+### Changes
+
+#### Frontend
+
+* raw data export functionality was moved to the 'Data management' tab
+* SUSHI credentials export now respects the selected organization and platform
+* the SUSHI related dashboard widgets are no longer shown to non-admin user
+* the default displayed data period was changed from 'all' to 'current + last two whole years'
+
+#### Backend
+
+* retries of failed SUSHI harvesting were modified:
+  - only automatically created harvest are retried
+  - retries are done only for credentials which were verified (successfully used for harvesting)
+  - retries are done for all non-breaking fetch attempt states
+* partial data downloads are marked as containing no data until imported at the end of the retry
+  period
+* validity of invitations and password reset tokens was extended from 3 to 10 days
+* the user detail API endpoint was extended to include the `is_staff` attribute
+* automatically created harvests are planned a few days before month start, not whole month
+
+### Fixed
+
+#### Frontend
+
+* the platform detail page of a platform not connected to the current organization no longer
+  displays error messages and contains more information about the platform
+* fix missing metric (and potentially other objects) names in exports from the reporting module
+* all import batches are shown in the delete confirmation dialog, not just the first 10
+
+#### Backend
+
+* user preferred language is always explicitly selected on the backend to ensure correct data
+  localization
+* marking SUSHI credentials as broken no longer lead to duplication of stored extra parameters
+* access rights to the SUSHI credentials API endpoint was fixed to only include admin users
+* the django admin list interface for import batches now shows `date` instead of `user`
+
+
 ## [4.5.0]
 
 ### Added
