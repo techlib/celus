@@ -15,6 +15,7 @@ image:test_image:
       when: never
     - changes:
         - poetry.lock
+        - ci/Dockerfile
       when: on_success
       allow_failure: true
 

@@ -30,6 +30,10 @@ RUN \
 	curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 ENV PATH="${PATH}:/root/.poetry/bin"
 
+# install latest pip
+RUN \
+	pip install --upgrade pip
+
 # install dependencies
 COPY poetry.lock poetry.lock
 COPY pyproject.toml pyproject.toml
