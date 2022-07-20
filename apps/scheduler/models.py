@@ -20,7 +20,7 @@ from logs.exceptions import DataStructureError
 from logs.logic.data_import import create_import_batch_or_crash
 from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
-from nigiri.error_codes import ErrorCode
+from celus_nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
 from sushi.models import (

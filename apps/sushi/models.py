@@ -31,9 +31,9 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from logs.models import AccessLog, ImportBatch
-from nigiri.client import Sushi4Client, Sushi5Client, SushiClientBase, SushiError
-from nigiri.client import SushiException as SushiExceptionNigiri
-from nigiri.counter4 import (
+from celus_nigiri.client import Sushi4Client, Sushi5Client, SushiClientBase, SushiError
+from celus_nigiri.client import SushiException as SushiExceptionNigiri
+from celus_nigiri.counter4 import (
     Counter4BR1Report,
     Counter4BR2Report,
     Counter4BR3Report,
@@ -44,7 +44,7 @@ from nigiri.counter4 import (
     Counter4MR1Report,
     Counter4PR1Report,
 )
-from nigiri.counter5 import (
+from celus_nigiri.counter5 import (
     Counter5DRReport,
     Counter5IRM1Report,
     Counter5PRReport,
@@ -52,7 +52,7 @@ from nigiri.counter5 import (
     Counter5TRReport,
     TransportError,
 )
-from nigiri.error_codes import ErrorCode
+from celus_nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
 from pycounter.exceptions import SushiException

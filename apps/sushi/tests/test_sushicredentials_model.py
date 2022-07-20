@@ -3,9 +3,9 @@ from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN, Identity
 from core.tests.conftest import master_admin_identity, valid_identity
 from django.utils import timezone
 from logs.models import AccessLog, ImportBatch, Metric
-from nigiri.client import Sushi4Client, Sushi5Client
-from nigiri.counter4 import Counter4ReportBase
-from nigiri.counter5 import Counter5ReportBase
+from celus_nigiri.client import Sushi4Client, Sushi5Client
+from celus_nigiri.counter4 import Counter4ReportBase
+from celus_nigiri.counter5 import Counter5ReportBase
 from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations
 from publications.models import Platform

@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 
-from nigiri.client import Sushi5Client
+from celus_nigiri.client import Sushi5Client
 
 logger = logging.getLogger(__name__)
 

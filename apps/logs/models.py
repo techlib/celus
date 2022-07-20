@@ -9,6 +9,8 @@ from enum import Enum
 from pathlib import Path
 
 import magic
+from celus_nigiri.celus import custom_data_to_records
+from celus_nigiri.counter5 import CounterRecord
 from chardet.universaldetector import UniversalDetector
 from core.exceptions import ModelUsageError
 from core.models import (
@@ -16,10 +18,10 @@ from core.models import (
     USER_LEVEL_CHOICES,
     CreatedUpdatedMixin,
     DataSource,
-    User,
     SourceFileMixin,
-    where_to_store as core_where_to_store,
+    User,
 )
+from core.models import where_to_store as core_where_to_store
 from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist, ValidationError
@@ -40,7 +42,6 @@ from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
-from nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Platform, Title
 
@@ -724,8 +725,6 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             crt = None
         if not crt:
             # this is really custom data - there is no special counter report type associated
-            from logs.logic.custom_import import custom_data_to_records
-
             data = self.to_record_dicts()
             default_metric, _created = Metric.objects.get_or_create(
                 short_name='visits',

@@ -11,9 +11,9 @@ from core.exceptions import FileConsistencyError
 from logs.exceptions import DataStructureError
 from logs.logic.data_import import import_counter_records, create_import_batch_or_crash
 from logs.models import OrganizationPlatform
-from nigiri.client import Sushi5Client, SushiException, SushiError
-from nigiri.counter4 import Counter4ReportBase
-from nigiri.counter5 import Counter5ReportBase, TransportError
+from celus_nigiri.client import Sushi5Client, SushiException, SushiError
+from celus_nigiri.counter4 import Counter4ReportBase
+from celus_nigiri.counter5 import Counter5ReportBase, TransportError
 from sushi.models import SushiFetchAttempt, AttemptStatus
 
 logger = logging.getLogger(__name__)

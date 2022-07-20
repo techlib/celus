@@ -4,13 +4,13 @@ import pathlib
 import sys
 from collections import Counter
 
+from celus_nigiri.client import SushiException
 from core.models import SourceFileMixin
 from django.conf import settings
 from django.core.files.base import File
 from django.core.management.base import BaseCommand
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import Coalesce
-from nigiri.client import SushiException
 from sushi.models import AttemptStatus, CounterReportType, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)

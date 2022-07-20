@@ -1,4 +1,3 @@
-import dateparser
 from distutils.util import strtobool
 
 from django.shortcuts import get_object_or_404

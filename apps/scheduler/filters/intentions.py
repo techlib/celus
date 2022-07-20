@@ -4,7 +4,7 @@ from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import filters
 
-from core.logic.dates import parse_date_fuzzy
+from celus_nigiri.utils import parse_date_fuzzy
 from sushi.models import AttemptStatus
 
 

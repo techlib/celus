@@ -7,7 +7,7 @@ from django.db.transaction import atomic
 from pycounter import report
 
 from publications.models import Platform
-from nigiri.counter4 import Counter4JR1Report
+from celus_nigiri.counter4 import Counter4JR1Report
 from ...logic.data_import import import_counter_records
 from ...models import ReportType, OrganizationPlatform
 from organizations.models import Organization

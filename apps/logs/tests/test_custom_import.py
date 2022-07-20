@@ -2,19 +2,19 @@ from datetime import date
 from io import StringIO
 
 import pytest
+from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, Identity, SourceFileMixin
+from core.tests.conftest import *  # noqa
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.urls import reverse
-
-from core.models import Identity, UL_ORG_ADMIN, UL_CONS_STAFF, SourceFileMixin
-from core.tests.conftest import *  # noqa
-from organizations.tests.conftest import identity_by_user_type, organizations  # noqa
-from publications.tests.conftest import platforms  # noqa
-from logs.tasks import prepare_preflight, import_manual_upload_data
-from logs.logic.custom_import import custom_data_to_records, import_custom_data
+from logs.logic.custom_import import import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduState
+from logs.tasks import import_manual_upload_data, prepare_preflight
+from organizations.tests.conftest import identity_by_user_type  # noqa
+from organizations.tests.conftest import organizations
 from publications.models import Platform
-from test_fixtures.entities.logs import ManualDataUploadFullFactory, ManualDataUploadFactory
+from publications.tests.conftest import platforms  # noqa
+from test_fixtures.entities.logs import ManualDataUploadFactory, ManualDataUploadFullFactory
 
 
 @pytest.mark.django_db
@@ -23,57 +23,6 @@ class TestCustomImport:
     """
     Tests functionality of the logic.custom_import module
     """
-
-    def test_custom_data_to_records_1(self):
-        data = [
-            {'Metric': 'M1', 'Jan 2019': 10, 'Feb 2019': 7, 'Mar 2019': 11},
-            {'Metric': 'M2', 'Jan 2019': 1, 'Feb 2019': 2, 'Mar 2019': 3},
-        ]
-        records = [e for e in custom_data_to_records(data)]
-        assert len(records) == 6
-        for record in records:
-            assert record.value in (1, 2, 3, 7, 10, 11)
-            assert record.start in (date(2019, 1, 1), date(2019, 2, 1), date(2019, 3, 1))
-            if record.value in (10, 7, 11):
-                assert record.metric == 'M1'
-                if record.start == date(2019, 1, 1):
-                    assert record.value == 10
-            else:
-                assert record.metric == 'M2'
-
-    def test_custom_data_to_records_with_column_map(self):
-        data = [
-            {'MetricXX': 'M1', 'Jan 2019': 10, 'Feb 2019': 7, 'Mar 2019': 11},
-            {'MetricXX': 'M2', 'Jan 2019': 1, 'Feb 2019': 2, 'Mar 2019': 3},
-        ]
-        records = custom_data_to_records(data, column_map={'MetricXX': 'metric'})
-        records = [e for e in records]  # convert generator to a list
-        assert len(records) == 6
-        for record in records:
-            assert record.value in (1, 2, 3, 7, 10, 11)
-            assert record.start in (date(2019, 1, 1), date(2019, 2, 1), date(2019, 3, 1))
-            if record.value in (10, 7, 11):
-                assert record.metric == 'M1'
-                if record.start == date(2019, 1, 1):
-                    assert record.value == 10
-            else:
-                assert record.metric == 'M2'
-
-    def test_custom_data_to_records_no_metric(self):
-        data = [
-            {'Jan 2019': 10, 'Feb 2019': 7, 'Mar 2019': 11},
-            {'Jan 2019': 1, 'Feb 2019': 2, 'Mar 2019': 3, 'Metric': 'MX'},
-        ]
-        records = custom_data_to_records(data, initial_data={'metric': 'MD'})
-        records = [e for e in records]  # convert generator to a list
-        assert len(records) == 6
-        for record in records:
-            assert record.value in (1, 2, 3, 7, 10, 11)
-            assert record.start in (date(2019, 1, 1), date(2019, 2, 1), date(2019, 3, 1))
-            if record.value in (10, 7, 11):
-                assert record.metric == 'MD'
-            else:
-                assert record.metric == 'MX'
 
     def test_custom_data_import_process(
         self,
@@ -361,7 +310,7 @@ class TestCustomImport:
         settings.MEDIA_ROOT = tmp_path
 
         mdu = ManualDataUploadFactory.create(
-            report_type=report_type, organization=organization, platform=platform, data_file=file,
+            report_type=report_type, organization=organization, platform=platform, data_file=file
         )
         assert len(list(mdu.data_to_records())) == 6
 
@@ -392,7 +341,7 @@ class TestCustomImport:
         settings.MEDIA_ROOT = tmp_path
 
         mdu = ManualDataUploadFactory.create(
-            report_type=report_type, organization=organization, platform=platform, data_file=file,
+            report_type=report_type, organization=organization, platform=platform, data_file=file
         )
         assert mdu.file_is_json() == is_json
 

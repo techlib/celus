@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 
 from faker import Faker
 
-from nigiri.counter5 import CounterRecord
+from celus_nigiri.counter5 import CounterRecord
 
 fake = Faker()
 

@@ -2,9 +2,8 @@ from copy import deepcopy
 
 import pytest
 
-from nigiri.counter5 import Counter5ReportBase
-
-from nigiri.client import Sushi5Client
+from celus_nigiri.client import Sushi5Client
+from celus_nigiri.counter5 import Counter5ReportBase
 from publications.models import Platform
 from sushi.logic.data_import import import_sushi_credentials
 from sushi.models import SushiCredentials, CounterReportType

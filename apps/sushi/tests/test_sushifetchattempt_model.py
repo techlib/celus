@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from freezegun import freeze_time
-from nigiri.error_codes import ErrorCode
+from celus_nigiri.error_codes import ErrorCode
 from sushi.models import AttemptStatus
 from sushi.models import BrokenCredentialsMixin as BC
 from sushi.models import CounterReportsToCredentials, SushiFetchAttempt

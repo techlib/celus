@@ -7,8 +7,8 @@ from django.db.models import Count, Sum
 from django.urls import reverse
 
 from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
-from nigiri.counter4 import Counter4BR2Report
-from nigiri.counter5 import Counter5TableReport, Counter5TRReport
+from celus_nigiri.counter4 import Counter4BR2Report
+from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
 from organizations.tests.conftest import organizations, organization_random  # noqa - fixture
 from publications.models import Title, PlatformTitle
 from test_fixtures.entities.logs import ManualDataUploadFullFactory, ImportBatchFullFactory

@@ -18,7 +18,7 @@ from core.models import UL_ROBOT
 from core.task_support import cache_based_lock
 from logs.logic.validation import normalize_issn, normalize_isbn, normalize_title
 from logs.models import ImportBatch
-from nigiri.counter5 import CounterRecord
+from celus_nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Title, Platform, PlatformTitle
 from ..exceptions import DataStructureError, UnknownMetric, UnsupportedMetric

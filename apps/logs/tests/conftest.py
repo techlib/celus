@@ -4,7 +4,7 @@ from itertools import product
 import faker
 import pytest
 
-from core.logic.dates import parse_date_fuzzy
+from celus_nigiri.utils import parse_date_fuzzy
 from logs.models import (
     ReportType,
     Dimension,
@@ -14,7 +14,7 @@ from logs.models import (
     DimensionText,
     AccessLog,
 )
-from nigiri.counter5 import CounterRecord
+from celus_nigiri.counter5 import CounterRecord
 from organizations.models import Organization
 from publications.models import Platform, Title
 

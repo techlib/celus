@@ -18,7 +18,7 @@ from logs.models import (
     InterestGroup,
 )
 from logs.models import ReportType
-from nigiri.counter5 import CounterRecord
+from celus_nigiri.counter5 import CounterRecord
 from publications.models import Platform, PlatformInterestReport
 from organizations.tests.conftest import organizations
 from publications.tests.conftest import platform

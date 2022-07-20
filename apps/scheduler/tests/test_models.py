@@ -8,7 +8,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.tasks import import_one_sushi_attempt_task
-from nigiri.error_codes import ErrorCode
+from celus_nigiri.error_codes import ErrorCode
 from scheduler import tasks
 from scheduler.models import (
     Automatic,

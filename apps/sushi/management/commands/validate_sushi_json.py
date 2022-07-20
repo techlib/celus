@@ -3,7 +3,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from nigiri.counter5 import Counter5TRReport
+from celus_nigiri.counter5 import Counter5TRReport
 
 logger = logging.getLogger(__name__)
 
