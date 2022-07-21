@@ -171,15 +171,6 @@ cs:
           </tr>
         </table>
       </v-col>
-      <v-spacer></v-spacer>
-      <v-col cols="auto">
-        <img
-          v-if="coverImg"
-          :alt="$t('cover_image')"
-          :src="coverImg"
-          class="cover-image"
-        />
-      </v-col>
     </v-row>
 
     <section class="my-4" id="annotations">
@@ -236,7 +227,6 @@ export default {
     return {
       title: null,
       platformData: null,
-      coverImg: null,
       annotationsCount: 0,
       availableFromPlatforms: null,
     };
@@ -332,7 +322,6 @@ export default {
         try {
           const response = await axios.get(url);
           this.title = response.data;
-          this.getCoverImg();
         } catch (error) {
           this.showSnackbar({ content: "Error loading title: " + error });
         }
@@ -367,23 +356,6 @@ export default {
             color: "error",
           });
         }
-      }
-    },
-    getCoverImg() {
-      if (this.title.isbn) {
-        let isbn = this.title.isbn.replace(/-/g, "");
-        axios
-          .get(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`)
-          .then((response) => {
-            let items = response.data.items;
-            if (items.length > 0) {
-              let item = items[0];
-              this.coverImg = item.volumeInfo.imageLinks.thumbnail;
-            }
-          })
-          .catch((error) => {
-            console.info("Could not load cover image: " + error);
-          });
       }
     },
     annotationsLoaded({ count }) {
@@ -425,9 +397,5 @@ table.overview {
     text-align: left;
     padding-right: 1.5rem;
   }
-}
-
-img.cover-image {
-  max-width: 300px;
 }
 </style>
