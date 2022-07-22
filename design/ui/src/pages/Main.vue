@@ -1,6 +1,6 @@
 <template>
   <v-app v-if="newCelusVersion">
-    <NewCelusVersionDialog/>
+    <NewCelusVersionDialog />
   </v-app>
 
   <router-view v-else-if="$route.meta.outsideNormalLayout"> </router-view>
@@ -115,6 +115,36 @@ div.v-input {
 
   @media screen and (min-height: 720px) {
     top: 10vh !important;
+  }
+}
+
+table.overview-card {
+  padding: 1rem;
+
+  tr.header {
+    th {
+      font-variant: small-caps;
+      font-weight: 500;
+      font-size: 82.5%;
+      border-bottom: solid 1px #dddddd;
+      padding-top: 0.5rem;
+    }
+    &:first-child {
+      th {
+        padding-top: 0;
+      }
+    }
+  }
+
+  th {
+    text-align: left;
+    padding-right: 1.5rem;
+    font-weight: 300;
+
+    &.subdued-th {
+      //font-weight: normal;
+      color: #999999;
+    }
   }
 }
 </style>

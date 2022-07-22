@@ -77,7 +77,7 @@ cs:
     <v-container fluid class="px-0">
       <v-row>
         <v-col cols="auto" mr-sm-4>
-          <table v-if="platformObj" class="overview mb-4 elevation-2">
+          <table v-if="platformObj" class="overview-card mb-4 elevation-2">
             <tr>
               <th>{{ $t("labels.provider") }}</th>
               <td>{{ platformObj.provider }}</td>
@@ -91,7 +91,7 @@ cs:
           </table>
         </v-col>
         <v-col cols="auto" mr-sm-4>
-          <table v-if="platform" class="overview mb-4 elevation-2">
+          <table v-if="platform" class="overview-card mb-4 elevation-2">
             <tr>
               <th>{{ $t("labels.title_count") }}</th>
               <td class="text-right">
@@ -545,40 +545,6 @@ export default {
 </script>
 
 <style lang="scss">
-.thin {
-  font-weight: 300;
-}
-
-table.overview {
-  padding: 1rem;
-
-  tr.header {
-    th {
-      font-variant: small-caps;
-      font-weight: 500;
-      font-size: 82.5%;
-      border-bottom: solid 1px #dddddd;
-      padding-top: 0.5rem;
-    }
-    &:first-child {
-      th {
-        padding-top: 0;
-      }
-    }
-  }
-
-  th {
-    text-align: left;
-    padding-right: 1.5rem;
-    font-weight: 300;
-
-    &.subdued-th {
-      //font-weight: normal;
-      color: #999999;
-    }
-  }
-}
-
 .v-tab--active {
   background-color: #e0f2f1aa;
 }

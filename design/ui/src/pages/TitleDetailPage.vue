@@ -42,7 +42,7 @@ cs:
     </v-row>
     <v-row>
       <v-col cols="auto">
-        <table class="overview elevation-2">
+        <table class="overview-card elevation-2">
           <tr v-if="this.platformId">
             <th>{{ $t("platform") }}</th>
             <td>{{ platformName }}</td>
@@ -63,7 +63,7 @@ cs:
         </table>
       </v-col>
       <v-col cols="auto" v-if="title">
-        <table class="overview elevation-2">
+        <table class="overview-card elevation-2">
           <tr class="header">
             <th colspan="2" v-text="$t('interest')"></th>
           </tr>
@@ -93,7 +93,7 @@ cs:
         </table>
       </v-col>
       <v-col cols="auto" v-if="availableFromPlatforms">
-        <table class="overview elevation-2">
+        <table class="overview-card elevation-2">
           <tr class="header">
             <th colspan="2" v-text="$t('available_from_platforms')"></th>
           </tr>
@@ -385,17 +385,4 @@ export default {
 };
 </script>
 
-<style scoped lang="scss">
-.thin {
-  font-weight: 300;
-}
-
-table.overview {
-  padding: 1rem;
-
-  th {
-    text-align: left;
-    padding-right: 1.5rem;
-  }
-}
-</style>
+<style scoped lang="scss"></style>
