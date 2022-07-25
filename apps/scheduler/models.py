@@ -974,7 +974,7 @@ class Automatic(models.Model):
         # remove those which were e.g. disabled (no in new list)
         to_delete: typing.List[FetchIntention] = []
         for ekey, intention in existing_map.items():
-            if ekey not in new_map:
+            if ekey not in new_map and not intention.when_processed:
                 to_delete.append(intention)
 
         # add those which are not in list
@@ -997,7 +997,7 @@ class Automatic(models.Model):
 
     @classmethod
     @transaction.atomic
-    def update_for_month(cls, month: date):
+    def update_for_month(cls, month: date) -> Counter:
         """ Updates automatic updates for selected month """
         counter = Counter({"added": 0, "deleted": 0})
 
@@ -1026,7 +1026,7 @@ class Automatic(models.Model):
         # group by organization
         organization_to_intentions = {
             e.organization: []
-            for e in Automatic.objects.filter(month=month)  # prefill with allready planned
+            for e in Automatic.objects.filter(month=month)  # prefill with already planned
         }
 
         for intention in new_intentions:
@@ -1047,7 +1047,6 @@ class Automatic(models.Model):
                         start_date=month,
                         end_date=month_last,
                         credentials__organization=organization,
-                        when_processed__isnull=True,
                     )
                 )
                 to_add, to_delete = cls._cmp_intentions(intentions, existing_intentions)

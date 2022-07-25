@@ -1251,6 +1251,34 @@ class TestAutomatic:
 
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
+    @freeze_time(datetime(2020, 2, 1, 0, 0, 0, 0, tzinfo=current_tz))
+    def test_update_for_last_month_rerun(
+        self,
+        credentials,
+        organizations,
+        counter_report_types,
+        disable_automatic_scheduling,
+        verified_credentials,
+    ):
+        # all empty
+        assert FetchIntention.objects.count() == 0
+        assert Automatic.update_for_last_month() == {"added": 4, "deleted": 0}
+        # try again
+        assert Automatic.update_for_last_month() == {"added": 0, "deleted": 0}
+        # try again after the intentions were processed
+        for fi in FetchIntention.objects.all():
+            fi.when_processed = datetime(2020, 2, 1, 10, 0, 0)
+            fi.save()
+        assert Automatic.update_for_last_month() == {"added": 0, "deleted": 0}, 'no new intentions'
+        # now break some credentials and check that processed were not deleted
+        for fi in FetchIntention.objects.all():
+            fi.credentials.broken = True
+            fi.credentials.save()
+        assert Automatic.update_for_last_month() == {
+            "added": 0,
+            "deleted": 0,
+        }, 'no intentions deleted'
+
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
         self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
