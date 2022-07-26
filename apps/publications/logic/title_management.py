@@ -1,4 +1,6 @@
 import logging
+import operator
+from functools import reduce
 from itertools import combinations
 from typing import List, Generator, Optional, Set, Union
 
@@ -15,7 +17,7 @@ from publications.models import Title, PlatformTitle
 logger = logging.getLogger(__name__)
 
 
-def find_mergeable_titles() -> Generator[List[Title], None, None]:
+def find_mergeable_titles(batch_size: int = 100) -> Generator[List[Title], None, None]:
     """
     Goes over all titles and identifies those that could be merged.
     :return: List of lists of titles - first title in a list is the one that should be preserved
@@ -29,10 +31,24 @@ def find_mergeable_titles() -> Generator[List[Title], None, None]:
         .annotate(title_count=Count('pk'), title_ids=ArrayAgg('pk'))
         .filter(title_count__gt=1)
     )
-    for rec in qs:
-        titles = list(Title.objects.filter(pk__in=rec['title_ids']))
-        for grp in titles_to_matching_groups(titles):
-            yield sort_mergeable_titles(grp)
+    logger.info('Found %d potentially mergeable title groups', qs.count())
+
+    # because there may be a large number of candidates (tens of thousands), we do not want
+    # to make a db query for each group. Therefor we use a buffer to group several groups
+    # together for query. It makes the code more complicated, but much faster
+    buffer = []
+
+    def process_buffer():
+        buffer_ids = reduce(operator.add, [buf_rec['title_ids'] for buf_rec in buffer])
+        buffer_titles = {t.pk: t for t in Title.objects.filter(pk__in=buffer_ids)}
+        for record in buffer:
+            titles = [buffer_titles[t_id] for t_id in record['title_ids']]
+            for group in titles_to_matching_groups(titles):
+                yield sort_mergeable_titles(group)
+
+    qs_it = iter(qs)
+    while chunk := list(itertools.islice(qs_it, batch_size)):
+        process_chunk(chunk)
 
 
 def titles_to_matching_groups(titles: List[Title]) -> List[List[Title]]:
