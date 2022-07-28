@@ -3,6 +3,7 @@ import csv
 import os
 import re
 import typing
+from collections import Counter
 from copy import deepcopy
 from datetime import date
 from enum import Enum
@@ -40,12 +41,13 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
+from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 from organizations.models import Organization
 from publications.models import Platform, Title
 
-from .exceptions import WrongState
+from .exceptions import WrongOrganizations, WrongState
 
 
 class OrganizationPlatform(models.Model):
@@ -621,7 +623,7 @@ class MduState(models.TextChoices):
 
 
 class ManualDataUpload(SourceFileMixin, models.Model):
-    PREFLIGHT_FORMAT_VERSION = '2'
+    PREFLIGHT_FORMAT_VERSION = '3'
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -764,10 +766,17 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             # Otherwise try to parse data file
             months = {record.start for record in self.data_to_records()}
 
+        # get actual orgnizations
+        organizations_with_names = self.organizations_from_data()
+        if wrong_organizations := [e[0] for e in organizations_with_names if e[1] is None]:
+            raise WrongOrganizations(wrong_organizations)
+
+        organizations = [e[1] for e in organizations_with_names] or [self.organization]
+
         return ImportBatch.objects.filter(
             date__in=months,
             report_type=self.report_type,
-            organization=self.organization,
+            organization__in=organizations,
             platform=self.platform,
         )
 
@@ -785,6 +794,14 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         ):
             return None
 
+        # get actual orgnizations
+        organizations_with_names = self.organizations_from_data()
+        if any(e[0] is None for e in organizations_with_names):
+            # Unable to resolve organization from data => can determine whether
+            # there are clashing data present
+            return None
+        organizations = [e[1] for e in organizations_with_names] or [self.organization]
+
         # preflight was performed
         return sorted(
             {
@@ -792,16 +809,75 @@ class ManualDataUpload(SourceFileMixin, models.Model):
                 for e in ImportBatch.objects.filter(
                     report_type=self.report_type,
                     platform=self.platform,
-                    organization=self.organization,
+                    organization__in=organizations,
                     date__in=[e for e in self.preflight["months"]],
                 )
             }
         )
 
-    @property
-    def can_import(self):
+    def preflight_organizations_names(self) -> typing.Optional[typing.List[str]]:
+        if self.preflight and self.preflight.get('organizations'):
+            return list(self.preflight["organizations"])
+
+    @classmethod
+    def organizations_from_data_cls(
+        cls, organizations: typing.Optional[typing.List[str]]
+    ) -> typing.List[typing.Tuple[str, typing.Optional[Organization]]]:
+        if not organizations:
+            return []
+
+        def slugified_cmp(first: str, second: str) -> bool:
+            return slugify(first, allow_unicode=True) == slugify(second, allow_unicode=True)
+
+        res = []
+        # Assuming that there will be a reasonable number of organizations
+        org_instances = list(Organization.objects.all())
+        for organization_name in organizations:
+            matched_org = None
+            for org_instance in org_instances:
+                # first try to match on entire name
+                if slugified_cmp(organization_name, org_instance.name_en) or slugified_cmp(
+                    organization_name, org_instance.name_cs
+                ):
+                    matched_org = org_instance
+                    break
+
+            else:
+                # no relevant name, lets try short_name
+                for org_instance in org_instances:
+                    if slugified_cmp(
+                        organization_name, org_instance.short_name_en
+                    ) or slugified_cmp(organization_name, org_instance.short_name_cs):
+                        matched_org = org_instance
+                        break
+
+            res.append((organization_name, matched_org))
+
+        return res
+
+    def organizations_from_data(
+        self,
+    ) -> typing.List[typing.Tuple[str, typing.Optional[Organization]]]:
+        """
+        Return organizations names from data mapped to actual Organization models
+        """
+        return self.organizations_from_data_cls(self.preflight_organizations_names())
+
+    def wrong_organizations(self) -> typing.Optional[typing.List[str]]:
+        """
+        Returns wrong organizations names
+        """
+        if self.preflight:
+            return [k for k, v in self.preflight["organizations"].items() if v.get("pk") is None]
+        return None
+
+    def can_import(self, user: User):
         # check state
         if self.state != MduState.PREFLIGHT:
+            return False
+
+        # check whether all organizations from data can be
+        if self.multiple_organizations and self.wrong_organizations():
             return False
 
         # check clashing
@@ -812,6 +888,13 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         if "metrics" not in self.preflight:
             # metrics should be contained in preflight
             return False
+
+        # check permissions for multiple_organizations
+        if "organizations" in self.preflight:
+            if self.multiple_organizations:
+                # only master admins are allowed to import multiple organizations
+                if not (user.is_superuser or user.is_user_of_master_organization):
+                    return False
 
         controlled_metrics = list(
             self.report_type.controlled_metrics.values_list('short_name', flat=True)
@@ -846,7 +929,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             return False
 
     def plan_import(self, user: User):
-        if self.can_import:
+        if self.can_import(user):
             self.state = MduState.IMPORTING
             self.save()
 
@@ -908,6 +991,14 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         metrics = [e.short_name for e in Metric.objects.filter(pk__in=metric_ids).order_by('pk')]
 
         return counts, metrics
+
+    @property
+    def multiple_organizations(self) -> typing.Optional[bool]:
+        if not self.preflight or "organizations" not in self.preflight:
+            # preflight not calculated or older version of preflight
+            return None
+
+        return self.preflight["organizations"] is not None
 
 
 class ManualDataUploadImportBatch(models.Model):

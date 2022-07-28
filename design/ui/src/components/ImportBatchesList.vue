@@ -6,6 +6,7 @@ en:
       created: Created
       month: Month
       user: User
+      organization: Organization
       source: Source
       report_type: Report type
     tooltip:
@@ -19,6 +20,7 @@ cs:
       created: Vytvořeno
       month: Měsíc
       user: Uživatel
+      organization: Organizace
       source: Zdroj
       report_type: Typ reportu
     tooltip:
@@ -107,6 +109,10 @@ export default {
         {
           text: this.$i18n.t("import_batches_list.header.user"),
           value: "user.email",
+        },
+        {
+          text: this.$i18n.t("import_batches_list.header.organization"),
+          value: "organization.short_name",
         },
         {
           text: this.$i18n.t("import_batches_list.header.source"),

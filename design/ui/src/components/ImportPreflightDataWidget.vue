@@ -6,6 +6,7 @@ en:
   upload: Upload
   total_hits: Sum of hits
   imported_metrics: Found metrics
+  imported_organizations: Found organizations
   title_count: Title count
   hits: hits
   is_interest_metric: This metric defines interest for this report type
@@ -31,6 +32,10 @@ en:
   comparison_with_existing_sum: Comparison with the sum of hits with existing data
   comparison_with_last_year_average_sum: Comparison with the average sum of hits from previous year
   comparison_with_last_year_month_sum: Comparison with sum of hits from the same month previous year
+  organization_not_found: Could not match this organization with an existing one.
+  organizations_were_not_found: The following organizations defined in the file were not found, thus data can't be imported
+  organizations_not_found_fix: Please make sure that the provided name(s) matches the names from
+  organizations_not_found_fix_list: the organization list
 
 cs:
   output_logs: Vygenerované záznamy
@@ -39,6 +44,7 @@ cs:
   upload: Nahrát
   total_hits: Součet zásahů
   imported_metrics: Nalezené metriky
+  imported_organizations: Nalezené organizace
   title_count: Počet titulů
   hits: zásahů
   is_interest_metric: Tato metrika definuje zájem pro tento typ reportu
@@ -64,12 +70,16 @@ cs:
   comparison_with_existing_sum: Porovnání součtu zásahů s již existujícími daty
   comparison_with_last_year_average_sum: Porovnání součtu zásahů s průměrem součtu zásahů za minulý rok
   comparison_with_last_year_month_sum: Porovnání součtu zásahů se stejným měsícem v minulém roce
+  organization_not_found: Nebylo možné namapovat tuto organizaci na existující organizace.
+  organizations_were_not_found: Vyznačené organizace, které jsou definované v souboru, nebyly nalezeny a kvůli tomu nemohou být data naimportována
+  organizations_not_found_fix: Prosím ujistěte se, poskytnutá jména odpovídají jménům u
+  organizations_not_found_fix_list: seznamu organizací
 </i18n>
 
 <template>
   <v-container fluid>
     <v-row>
-      <v-col cols="auto">
+      <v-col cols="auto" v-if="!wrongOrganizationPresent">
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("output_logs") }}</h4>
@@ -79,7 +89,7 @@ cs:
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="auto">
+      <v-col cols="auto" v-if="!wrongOrganizationPresent">
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("total_hits") }}</h4>
@@ -90,7 +100,7 @@ cs:
         </v-card>
       </v-col>
 
-      <v-col cols="auto">
+      <v-col cols="auto" v-if="!wrongOrganizationPresent">
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("title_count") }}</h4>
@@ -100,7 +110,7 @@ cs:
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="auto">
+      <v-col cols="auto" v-if="!wrongOrganizationPresent">
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("imported_months") }}</h4>
@@ -200,7 +210,7 @@ cs:
         </v-card>
       </v-col>
 
-      <v-col cols="auto">
+      <v-col cols="auto" v-if="!wrongOrganizationPresent">
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("imported_metrics") }}</h4>
@@ -241,8 +251,61 @@ cs:
           </v-card-text>
         </v-card>
       </v-col>
+
+      <v-col cols="auto">
+        <v-card hover v-if="organizationsSorted">
+          <v-card-text>
+            <h4>{{ $t("imported_organizations") }}</h4>
+            <div class="text-right">
+              <table>
+                <tr v-for="rec in organizationsSorted" :key="rec.name">
+                  <td class="text-left pr-4">
+                    <v-tooltip v-if="!rec.value.pk" bottom>
+                      <template #activator="{ on }">
+                        <span v-on="on">
+                          {{ rec.name }}
+                          <v-icon class="ml-1" x-small color="error" v-on="on">
+                            fa fa-exclamation-triangle
+                          </v-icon>
+                        </span>
+                      </template>
+                      {{ $t("organization_not_found") }}
+                    </v-tooltip>
+                    <span v-else v-text="rec.name"></span>
+                  </td>
+                  <td>{{ formatInteger(rec.value.sum) }}</td>
+                </tr>
+              </table>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
     </v-row>
-    <v-row v-if="clashingMonths.length > 0 || failedMetrics.length > 0">
+    <v-row v-if="wrongOrganizationPresent">
+      <v-col>
+        <v-alert type="error" outlined>
+          <h4 class="mb-2 text-h6">{{ $t("import_not_allowed") }}</h4>
+          <div class="mb-2">
+            {{ $t("organizations_were_not_found") }}:
+            <ul class="pt-1">
+              <li v-for="org in wrongOrganizations" :key="org.name">
+                {{ org.name }}
+              </li>
+            </ul>
+            <p class="mt-2">
+              <strong>
+                {{ $t("organizations_not_found_fix") }}
+                <router-link :to="{ name: 'organization-list' }">
+                  {{ $t("organizations_not_found_fix_list") }}
+                </router-link>
+                .
+              </strong>
+            </p>
+          </div>
+        </v-alert>
+      </v-col>
+    </v-row>
+    <v-row v-else-if="clashingMonths.length > 0 || failedMetrics.length > 0">
       <v-col>
         <v-alert type="error" outlined>
           <h4 class="mb-2 text-h6">{{ $t("import_not_allowed") }}</h4>
@@ -306,15 +369,23 @@ export default {
         })
         .sort((a, b) => a.name.localeCompare(b.name));
     },
-
     metricsSorted() {
       return Object.entries(this.preflightData.metrics)
         .map(([key, value]) => {
           return { name: key, value: value };
         })
-        .sort((a, b) => a.value - b.value);
+        .sort((a, b) => b.value.sum - a.value.sum);
     },
-
+    organizationsSorted() {
+      if (!this.preflightData.organizations) {
+        return null;
+      }
+      return Object.entries(this.preflightData.organizations)
+        .map(([key, value]) => {
+          return { name: key, value: value };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
+    },
     titleCount() {
       return this.preflightData.title_count;
     },
@@ -331,6 +402,15 @@ export default {
     },
     clashingMonths() {
       return this.preflightData.clashing_months;
+    },
+    wrongOrganizations() {
+      if (this.organizationsSorted) {
+        return this.organizationsSorted.filter((e) => !e.value.pk);
+      }
+      return null;
+    },
+    wrongOrganizationPresent() {
+      return this.wrongOrganizations && this.wrongOrganizations.length > 0;
     },
     usedMetrics() {
       return this.preflightData.used_metrics;

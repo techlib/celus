@@ -31,6 +31,7 @@ from .models import (
     ImportBatch,
     InterestGroup,
     ManualDataUpload,
+    MduState,
     Metric,
     ReportInterestMetric,
     ReportType,
@@ -308,6 +309,32 @@ class ManualDataUploadSimpleSerializer(ModelSerializer):
         )
 
 
+class ManualDataUploadUpdateSerializer(ModelSerializer):
+    organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), allow_null=True,)
+    platform = PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=False)
+
+    class Meta:
+        model = ManualDataUpload
+        fields = ['organization', 'platform']
+
+    def update(self, instance: ManualDataUpload, validated_data):
+        organization = validated_data.get("organization")
+
+        if instance.state not in [MduState.PREFLIGHT, MduState.INITIAL]:
+            raise ValidationError("MDU can't be updated")
+
+        if (
+            organization
+            and not self.context['request']
+            .user.accessible_organizations()
+            .filter(pk=organization.pk)
+            .exists()
+        ):
+            raise ValidationError({"organization": "user cannot access selected organization"})
+
+        return super().update(instance, validated_data)
+
+
 class ImportBatchVerboseSerializer(ModelSerializer):
 
     user = UserSimpleSerializer(read_only=True)
@@ -392,6 +419,10 @@ class ManualDataUploadSerializer(ModelSerializer):
             instance.owner_level = UL_CONS_STAFF
         instance.save()
         return instance
+
+    def to_representation(self, instance):
+        instance.can_import = instance.can_import(self.context["request"].user)
+        return super().to_representation(instance)
 
 
 class ManualDataUploadVerboseSerializer(ModelSerializer):

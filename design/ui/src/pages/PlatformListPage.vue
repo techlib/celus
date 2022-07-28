@@ -21,11 +21,7 @@
             >
               <AddPlatformButton @update-platforms="loadPlatforms()" />
             </v-col>
-            <v-col
-              cols="auto"
-              class="pa-1"
-              v-if="allowManualDataUpload && organizationSelected"
-            >
+            <v-col cols="auto" class="pa-1" v-if="allowManualDataUpload">
               <ManualUploadButton />
             </v-col>
             <v-col cols="auto" class="pa-1 pr-0">

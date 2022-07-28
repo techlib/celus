@@ -13,7 +13,7 @@ from django.views import View
 from pandas import DataFrame
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.fields import CharField, ListField
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
@@ -67,6 +67,7 @@ from logs.serializers import (
     ImportBatchVerboseSerializer,
     InterestGroupSerializer,
     ManualDataUploadSerializer,
+    ManualDataUploadUpdateSerializer,
     ManualDataUploadVerboseSerializer,
     MetricSerializer,
     ReportTypeInterestSerializer,
@@ -480,7 +481,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
 class ManualDataUploadViewSet(ModelViewSet):
 
-    serializer_class = ManualDataUploadSerializer
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
         IsAuthenticated
@@ -509,6 +509,12 @@ class ManualDataUploadViewSet(ModelViewSet):
         )
     ]
 
+    def get_serializer_class(self):
+        if self.action in ["update", "partial_update"]:
+            return ManualDataUploadUpdateSerializer
+        else:
+            return ManualDataUploadSerializer
+
     @action(methods=['POST'], detail=True, url_path='preflight')
     def preflight(self, request, pk):
         """ triggers preflight computation """
@@ -534,9 +540,13 @@ class ManualDataUploadViewSet(ModelViewSet):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @action(methods=['POST'], detail=True, url_path='import-data')
+    @atomic
+    @action(
+        methods=['POST'], detail=True, url_path='import-data',
+    )
     def import_data(self, request, pk):
-        mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)  # type: ManualDataUpload
+        mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
+
         if mdu.state == MduState.IMPORTED:
             stats = {
                 'existing logs': AccessLog.objects.filter(
@@ -551,6 +561,18 @@ class ManualDataUploadViewSet(ModelViewSet):
                     ).data,
                 }
             )
+        elif (
+            mdu.multiple_organizations
+            and not request.user.is_superuser
+            and not request.user.is_admin_of_master_organization
+        ):
+            return Response({"error": "not-allowed"}, status.HTTP_403_FORBIDDEN)
+        elif mdu.multiple_organizations and mdu.wrong_organizations():
+            return Response(
+                {"error": "wrong-organization", "organizations": mdu.wrong_organizations()},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         elif mdu.clashing_months:
             if clashing_ibs := mdu.clashing_batches():
                 clashing = ImportBatchVerboseSerializer(clashing_ibs, many=True).data
@@ -560,7 +582,13 @@ class ManualDataUploadViewSet(ModelViewSet):
                 )
         elif mdu.state == MduState.IMPORTING:
             return Response({"msg": "already importing"})
-        elif mdu.can_import:
+        elif mdu.can_import(request.user):
+
+            # Set organization to None if organization is read from data
+            if mdu.multiple_organizations:
+                mdu.organization = None
+                mdu.save()
+
             mdu.plan_import(request.user)
             return Response({"msg": "import started"})
 

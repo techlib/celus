@@ -221,6 +221,8 @@ def report_types():
     pr1 = ReportTypeFactory(name="Counter 4 - Platform report 1", short_name="PR1")
     mr1 = ReportTypeFactory(name="Counter 4 - Multimedia report 1", short_name="MR1")
 
+    custom1 = ReportTypeFactory(name="Custom1", short_name="custom1")
+
     return locals()
 
 

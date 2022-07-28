@@ -22,6 +22,7 @@ export default {
     platform: { required: false },
     title: { required: false },
     mduId: { required: false, type: Number },
+    showOrganization: { required: false, type: Boolean, default: false },
   },
   data() {
     return {
@@ -37,6 +38,11 @@ export default {
           text: this.$i18n.t("labels.date"),
           value: "date",
         },
+        ...(
+          this.showOrganization
+          ? [ { text: this.$i18n.t("labels.organization"), value: "organization"} ]
+          : []
+        ),
         {
           text: this.$i18n.t("labels.title"),
           value: "target",

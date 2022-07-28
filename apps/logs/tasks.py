@@ -2,38 +2,37 @@
 Celery tasks reside here
 """
 import logging
+import traceback
 from collections import Counter
 from datetime import timedelta
-import traceback
 
 import celery
+from core.context_managers import needs_clickhouse_sync
+from core.logic.error_reporting import email_if_fails
+from core.models import User
+from core.task_support import cache_based_lock
+from core.tasks import async_mail_admins
 from django.db import DatabaseError
 from django.db.models import Q
 from django.db.transaction import atomic
 from django.utils.timezone import now
+from sushi.models import AttemptStatus, SushiFetchAttempt
 
-from core.models import User
-from core.context_managers import needs_clickhouse_sync
-from core.logic.error_reporting import email_if_fails
-from core.task_support import cache_based_lock
-from core.tasks import async_mail_admins
-from logs.exceptions import DataStructureError
-from logs.logic.custom_import import import_custom_data
-from logs.logic.attempt_import import import_one_sushi_attempt, check_importable_attempt
+from logs.exceptions import DataStructureError, ImportNotPossible
+from logs.logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
 from logs.logic.clickhouse import process_one_import_batch_sync_log
+from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import (
-    sync_interest_by_import_batches,
     recompute_interest_by_batch,
     smart_interest_sync,
+    sync_interest_by_import_batches,
 )
-from logs.logic.custom_import import custom_import_preflight_check
 from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
 )
 from logs.models import ImportBatchSyncLog, ManualDataUpload, MduState
-from sushi.models import SushiFetchAttempt, AttemptStatus
 
 logger = logging.getLogger(__file__)
 
@@ -305,7 +304,7 @@ def import_manual_upload_data(mdu_id: int, user_id: int):
     except DatabaseError as e:
         logger.warning("mdu '%s' is already being processed. (%s)", mdu_id, e)
 
-    except (Exception, DataStructureError) as e:
+    except (Exception, DataStructureError, ImportNotPossible) as e:
         # generic import error handling
 
         mdu.log = f"""\
@@ -317,7 +316,12 @@ Exception: {e}
 Traceback: {traceback.format_exc()}
 """
 
-        mdu.error = "clashing-data" if isinstance(e, DatabaseError) else "import-error"
+        if isinstance(e, DataStructureError):
+            mdu.error = "clashing-data"
+        elif isinstance(e, ImportNotPossible):
+            mdu.error = "import-not-possible"
+        else:
+            mdu.error = "import-error"
         mdu.error_details = {
             "exception": str(e),
             "traceback": traceback.format_exc(),

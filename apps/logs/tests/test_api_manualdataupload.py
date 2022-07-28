@@ -5,9 +5,10 @@ import pytest
 from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
-from logs.models import ManualDataUpload
+from logs.models import ManualDataUpload, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
 from test_fixtures.entities.logs import MetricFactory
+from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.scenarios.basic import clients  # noqa
 from test_fixtures.scenarios.basic import (
     basic1,
@@ -163,7 +164,6 @@ class TestManualUploadForCounterData:
         response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
-        print(data)
         if hash_matches:
             assert data['error'] is None
             assert not mail_mock.called, 'email to admin was not sent'
@@ -350,3 +350,192 @@ class TestManualUploadConflicts:
     @pytest.mark.skip()
     def test_conflict_with_sushi(self):
         raise NotImplementedError()
+
+
+@pytest.mark.django_db
+class TestManualUploadNonCounter:
+    def test_multiple_organizations_unauthorized(
+        self, platforms, organizations, settings, tmp_path, clients, report_types, basic1
+    ):
+
+        with (
+            Path(__file__).parent / "data/custom/custom_data-2d-3x2x3-org-isodate.csv"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "something.csv"
+
+        organization = organizations['standalone']
+        platform = platforms['standalone']
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients["admin2"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organization.pk,
+                'report_type_id': report_types['custom1'].pk,
+                'data_file': data_file,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        # Check that it is not possible to import
+        response = clients["admin2"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert response.data["can_import"] is False
+        assert response.data["preflight"]["organizations"] == {
+            'Org1': {'sum': 315, 'count': 18, "pk": None},
+            'Org2': {'sum': 347, 'count': 18, "pk": None},
+        }
+
+        # Try to import it
+        response = clients["admin2"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+
+        assert response.status_code == 403
+
+    @pytest.mark.parametrize(['organization_set'], [(True,), (False,)])
+    def test_multiple_organizations_authorized(
+        self,
+        platforms,
+        organizations,
+        settings,
+        tmp_path,
+        clients,
+        report_types,
+        basic1,
+        organization_set,
+    ):
+
+        with (
+            Path(__file__).parent / "data/custom/custom_data-2d-3x2x3-org-isodate.csv"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "something.csv"
+
+        organization = organizations['standalone'] if organization_set else None
+        platform = platforms['standalone']
+        settings.MEDIA_ROOT = tmp_path
+
+        post_data = {
+            'platform': platform.id,
+            'report_type_id': report_types['custom1'].pk,
+            'data_file': data_file,
+        }
+        if organization_set:
+            post_data["organization"] = organization.pk
+        response = clients["master_admin"].post(reverse('manual-data-upload-list'), data=post_data,)
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        update_data = {"organization": organization.pk} if organization else {"organization": ""}
+        # Try to update organization
+        response = clients["master_admin"].patch(
+            reverse('manual-data-upload-detail', args=(mdu.pk,)), data=update_data
+        )
+        assert response.status_code == 200, "Organization can be updated in initial state"
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        # Check that it is not possible to import
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert response.data["can_import"] is False
+        assert response.data["preflight"]["organizations"] == {
+            'Org1': {'sum': 315, 'count': 18, 'pk': None},
+            'Org2': {'sum': 347, 'count': 18, 'pk': None},
+        }
+
+        # Try to import it
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
+
+        assert response.status_code == 400
+
+        # Create organizations which are present in the file
+        org1 = OrganizationFactory(short_name="Org1", name="Organization1")
+        org2 = OrganizationFactory(short_name="Org2", name="Organization2")
+
+        # Try to import it
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
+        assert response.status_code == 400, "failed again need to regenrate preflight"
+
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-preflight', args=(mdu.pk,))
+        )
+        assert response.status_code == 200
+
+        # Try to set organization during before preflight is ready
+        response = clients["master_admin"].patch(
+            reverse('manual-data-upload-detail', args=(mdu.pk,)), data=update_data
+        )
+        assert response.status_code == 200, "Organization can be updated in initial state"
+
+        prepare_preflight(mdu.pk)
+
+        # Check that it is not possible to again
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert response.data["can_import"] is True
+        assert response.data["preflight"]["organizations"] == {
+            'Org1': {'sum': 315, 'count': 18, 'pk': org1.pk},
+            'Org2': {'sum': 347, 'count': 18, 'pk': org2.pk},
+        }
+
+        # Try to update organization
+        response = clients["master_admin"].patch(
+            reverse('manual-data-upload-detail', args=(mdu.pk,)), data=update_data
+        )
+        assert response.status_code == 200, "Organization can be updated in preflight state"
+
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
+        assert response.status_code == 200, "import should pass"
+
+        mdu.refresh_from_db()
+        assert mdu.organization is None, "Organization was unset even when imported from data"
+
+        # Now import should pass
+        import_manual_upload_data(mdu.pk, mdu.user.pk)
+        mdu.refresh_from_db()
+        assert mdu.state == MduState.IMPORTED
+
+        # Check the status
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert len(response.data["import_batches"]) == 6
+        assert response.data["import_batches"][0]["organization"] == "Organization1"
+        assert response.data["import_batches"][1]["organization"] == "Organization1"
+        assert response.data["import_batches"][2]["organization"] == "Organization1"
+        assert response.data["import_batches"][3]["organization"] == "Organization2"
+        assert response.data["import_batches"][4]["organization"] == "Organization2"
+        assert response.data["import_batches"][5]["organization"] == "Organization2"
+
+        # Try to reimport the same data (to see whether it clashes)
+        data_file.seek(0)
+        response = clients["master_admin"].post(reverse('manual-data-upload-list'), data=post_data,)
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        # Check that it is not possible to import
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert response.data["can_import"] is False
+        assert response.data["clashing_months"] == ["2019-01-01", "2019-02-01", "2019-03-01"]
+
+        # Try to import it
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
+        assert response.status_code == 409, "failed due to clashing data"

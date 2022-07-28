@@ -8,9 +8,11 @@ from django.conf import settings
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
+from logs.exceptions import ImportNotPossible, MultipleOrganizationsFound, OrganizationNotFound
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import ManualDataUpload, OrganizationPlatform
+from organizations.models import Organization
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,7 @@ def histograms_with_stats(
     cnt = Counter()
     for x in iterable:
         for attr in attrs:
-            value = str(getattr(x, attr))
+            value = str(getattr(x, attr) or "")
             rec = histograms[attr].get(value, {"sum": 0, "count": 0})
             rec["sum"] += x.value
             rec["count"] += 1
@@ -64,11 +66,28 @@ def histograms_with_stats(
 
 
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    histograms, counts = histograms_with_stats(['start', 'metric', 'title'], mdu.data_to_records())
+    histograms, counts = histograms_with_stats(
+        ['start', 'metric', 'title', 'organization'], mdu.data_to_records()
+    )
     months = {
         k: {"new": v, "this_month": None, "prev_year_avg": None, "prev_year_month": 0}
         for k, v in histograms["start"].items()
     }
+    if len(histograms["organization"]) == 1 and (
+        None in histograms["organization"] or "" in histograms["organization"]
+    ):
+        # Only root organization is present
+        # don't export organizations to preflight
+        organizations = None
+    else:
+        organizations = histograms["organization"]
+        resolved_organizations = dict(
+            ManualDataUpload.organizations_from_data_cls(organizations.keys())
+        )
+        # fill in pks to organizations
+        for name, org_data in organizations.items():
+            organization = resolved_organizations[name]
+            org_data['pk'] = organization and organization.pk
 
     # prepare month statistics
     related_months, used_metrics = mdu.related_months_data()
@@ -102,6 +121,7 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
         'metrics': histograms["metric"],
         'used_metrics': used_metrics,
         'title_count': len(histograms["title"]),
+        'organizations': organizations,
     }
 
 
@@ -116,18 +136,41 @@ def import_custom_data(
                    see `import_counter_records` for more details how this works
     :return: import statistics
     """
-    records = mdu.data_to_records()
-    # TODO: the owner level should be derived from the user and the organization at hand
-    import_batches, stats = import_counter_records(
-        mdu.report_type,
-        mdu.organization,
-        mdu.platform,
-        records,
-        months=months,
-        import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
-    )
-    # explicitly connect the organization and the platform
-    OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=mdu.organization)
+    stats = Counter()
+
+    organizations = mdu.preflight.get("organizations", [None]) or [None]
+    import_batches = []
+    for preflight_org in organizations:
+
+        records = mdu.data_to_records()
+        if not preflight_org:
+            organization = mdu.organization
+            records = (e for e in records if not e.organization)
+        else:
+            # Try to get organization
+            try:
+                organization = Organization.objects.get(short_name=preflight_org)
+            except Organization.DoesNotExist:
+                raise OrganizationNotFound(preflight_org)
+            except Organization.MultipleObjectsReturned:
+                raise MultipleOrganizationsFound(preflight_org)
+
+            records = (e for e in records if e.organization == preflight_org)
+
+        # TODO: the owner level should be derived from the user and the organization at hand
+        new_ibs, new_stats = import_counter_records(
+            mdu.report_type,
+            organization,
+            mdu.platform,
+            records,
+            months=months,
+            import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
+        )
+        # explicitly connect the organization and the platform
+        OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=organization)
+        import_batches.extend(new_ibs)
+        stats.update(new_stats)
+
     mdu.import_batches.set(import_batches)
     mdu.mark_processed()  # this also saves the model
 

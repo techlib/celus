@@ -1,14 +1,12 @@
 from collections import namedtuple
 from io import StringIO
 
-from django.urls import reverse
-
-from core.models import UL_CONS_ADMIN, UL_ORG_ADMIN, UL_CONS_STAFF
+from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN
 from core.tests.conftest import *  # noqa  - test fixtures
-from logs.models import ManualDataUpload
+from django.urls import reverse
+from logs.models import ManualDataUpload, MduState
 from organizations.tests.conftest import *  # noqa  - test fixtures
 from publications.tests.conftest import *
-
 from test_fixtures.entities.logs import ManualDataUploadFullFactory
 
 
@@ -38,22 +36,35 @@ MDUSet = namedtuple('MDUSet', ['rel_admin', 'unrel_admin', 'master', 'super'])
 
 @pytest.fixture()
 def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organizations):
-    def do_it(org):
+    def do_it(org, state=MduState.IMPORTED):
         rt = report_type_nd(0)
         mdu_rel_admin = ManualDataUploadFullFactory(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN
+            organization=org,
+            platform=platforms[0],
+            report_type=rt,
+            owner_level=UL_ORG_ADMIN,
+            state=state,
         )
         mdu_unrel_admin = ManualDataUploadFullFactory(
             organization=organizations[1],
             platform=platforms[0],
             report_type=rt,
             owner_level=UL_ORG_ADMIN,
+            state=state,
         )
         mdu_master = ManualDataUploadFullFactory(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_CONS_STAFF
+            organization=org,
+            platform=platforms[0],
+            report_type=rt,
+            owner_level=UL_CONS_STAFF,
+            state=state,
         )
         mdu_super = ManualDataUploadFullFactory(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_CONS_ADMIN
+            organization=org,
+            platform=platforms[0],
+            report_type=rt,
+            owner_level=UL_CONS_ADMIN,
+            state=state,
         )
         return MDUSet(
             rel_admin=mdu_rel_admin, unrel_admin=mdu_unrel_admin, master=mdu_master, super=mdu_super
@@ -234,7 +245,7 @@ class TestAuthorization:
         mdu_with_user_levels,
     ):
         identity, org = identity_by_user_type(user_type)
-        mdu_set = mdu_with_user_levels(org)
+        mdu_set = mdu_with_user_levels(org, state=MduState.PREFLIGHT)
         for i, (mdu, can) in enumerate(
             (
                 (mdu_set.rel_admin, can_modify_rel_org_admin),
@@ -272,7 +283,11 @@ class TestAuthorization:
         identity, org = identity_by_user_type(user_type)
         rt = report_type_nd(0)
         mdu = ManualDataUploadFullFactory(
-            organization=org, platform=platforms[0], report_type=rt, owner_level=UL_ORG_ADMIN
+            organization=org,
+            platform=platforms[0],
+            report_type=rt,
+            owner_level=UL_ORG_ADMIN,
+            state=MduState.PREFLIGHT,
         )
         for i, (can, org_obj) in enumerate(
             ((can_set_rel_org, org), (can_set_unrel_org, organizations[1]))

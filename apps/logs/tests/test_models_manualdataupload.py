@@ -1,11 +1,15 @@
 import pytest
+from logs.logic.custom_import import custom_import_preflight_check
+from logs.models import ManualDataUpload
+from logs.tasks import prepare_preflight
 from test_fixtures.entities.logs import (
     AccessLogFactory,
     ImportBatchFactory,
     ManualDataUploadFactory,
-    MetricFactory,
     MduState,
+    MetricFactory,
 )
+from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.scenarios.basic import (
     data_sources,
     metrics,
@@ -13,9 +17,6 @@ from test_fixtures.scenarios.basic import (
     platforms,
     report_types,
 )
-
-from logs.tasks import prepare_preflight
-from logs.logic.custom_import import custom_import_preflight_check
 
 
 @pytest.mark.django_db
@@ -126,3 +127,24 @@ C,Metric2,4,8,12,18
         }
 
         assert preflight["used_metrics"] == ["metric1", "metric2"]
+
+    def test_organization_from_data(self):
+        org1 = OrganizationFactory(
+            name_en="C Z C U", name_cs="Č Ž Č Ú", short_name_en="CZCU", short_name_cs="ČŽČÚ",
+        )
+        org2 = OrganizationFactory(
+            name_en="C", name_cs="Č", short_name_en="C Z C U", short_name_cs="Č Ž Č Ú",
+        )
+        assert ManualDataUpload.organizations_from_data_cls([]) == []
+        assert ManualDataUpload.organizations_from_data_cls(None) == []
+        assert ManualDataUpload.organizations_from_data_cls(
+            ["not_found", "czcu", "čžčú", "c z c u", "č ž č ú", "c", "č"]
+        ) == [
+            ("not_found", None),
+            ("czcu", org1),
+            ("čžčú", org1),
+            ("c z c u", org1),
+            ("č ž č ú", org1),
+            ("c", org2),
+            ("č", org2),
+        ]

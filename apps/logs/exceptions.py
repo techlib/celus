@@ -35,3 +35,39 @@ class UnsupportedMetric(Exception):
     """
     Raised when unsupported metric for report type is found during import.
     """
+
+
+class ImportNotPossible(Exception):
+    """
+    Raised when an import is request for ManualDataUpload which can't be imported
+    """
+
+
+class OrganizationNotFound(Exception):
+    """
+    Raised when organization is not found during the import
+    """
+
+    def __init__(self, organization):
+        super().__init__(organization)
+        self.organization = organization
+
+
+class MultipleOrganizationsFound(Exception):
+    """
+    Raised when there are multiple organizations matching the short_name during the import
+    """
+
+    def __init__(self, organization):
+        super().__init__(organization)
+        self.organization = organization
+
+
+class WrongOrganizations(Exception):
+    """
+    Unable to resolve organizations from a file
+    """
+
+    def __init__(self, organizations):
+        self.organizations = organizations
+        super().__init__(organizations)

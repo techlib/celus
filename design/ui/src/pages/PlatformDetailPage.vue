@@ -140,7 +140,7 @@ cs:
         <v-col cols="auto" v-if="showAdminStuff">
           <v-card>
             <v-card-text>
-              <div v-if="organizationSelected && allowManualDataUpload">
+              <div v-if="allowManualDataUpload">
                 <v-btn
                   text
                   small

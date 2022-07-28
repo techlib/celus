@@ -67,6 +67,7 @@ en:
     queued: Queued
     status: Status
     platforms: Platforms
+    report_types: Report types
     nonzero_platforms: Non-zero interest platforms
     total_interest: Total interest
     ratios: Ratio
@@ -320,6 +321,7 @@ cs:
     queued: Odloženo
     status: Stav
     platforms: Platformy
+    report_types: Typy reportů
     nonzero_platforms: Platformy s nenulovým zájmem
     total_interest: Celkový zájem
     ratios: Rozložení

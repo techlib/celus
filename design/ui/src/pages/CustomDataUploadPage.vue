@@ -23,7 +23,9 @@ en:
   import_error_found: The following error was found when data were imported
   back_to_start: Back to data upload
   no_report_types: There are not reports defined for this platform - contact administrators to add some
-  please_select_organization: It is necessary to select an organization before uploading data.
+  organization_from_data: No organization is selected. Organization will be derived from data.
+  missing_organization_in_data: Data does not contain organization. Please select the organization for which you are importing data from the page toolbar.
+  need_to_unset_organization: The uploaded file contains explicit organization column. The currently selected organization will be ignored when importing data.
   clashing_import_batches_title: Can't import data
   clashing_import_batches_text: Imported file contains data for dates for which there already are existing records in the database. To import this file you need to delete the existing data first.
   delete_existing: Delete existing
@@ -33,6 +35,8 @@ en:
     requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
     unknown_preflight_error: An unknown error has occured during data check.
     unknown_import_error: An unknown error has occured during data import.
+  unauthorized_multiple_org_title: Unauthorized to import
+  unauthorized_multiple_org_text: This file contains data for multiple organizations and only consortial admin is allowed to import it.
 
 cs:
   data_file: Datový soubor k nahrání
@@ -56,7 +60,9 @@ cs:
   import_error_found: Při nahrávání dat byla nalezena následující chyba
   back_to_start: Zpět na nahrání dat
   no_report_types: Pro tuto platformu nejsou definovány žádné reporty - kontaktujte administrátory pro jejich přidání
-  please_select_organization: Pro nahrání dat je potřeba nejprve vybrat organizaci.
+  organization_from_data: Organizace nebyla vybrána a bude odvozena ze vstupních dat.
+  missing_organization_in_data: Data neobsahují informace o organizaci. Prosím vyberte organizaci, pro kterou nahráváte data, z menu v horní liště.
+  need_to_unset_organization: Soubor obsahuje sloupec s explicitně uvedenou organizací. Aktuálně vybraná organizace bude při importu dat ignorována.
   clashing_import_batches_title: Není možné naimportovat data
   clashing_import_batches_text: Nahrávaný soubor obsahuje data za období, pro které jsou již v databázi uložena data. Pro nahrání souboru je třeba nejprve existující data smazat.
   delete_existing: Smazat existující
@@ -66,6 +72,8 @@ cs:
     requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
     unknown_preflight_error: Během kontroly dat se vyskytla neznámá chyba.
     unknown_import_error: Během importu dat se vyskytla neznámá chyba.
+  unauthorized_multiple_org_title: Neautorizovaný import
+  unauthorized_multiple_org_text: Tento soubor obsahuje data pro více organizací a pouze konzorciální admin může nahrávat data pro více organizací z jednoho souboru.
 </i18n>
 
 <template>
@@ -179,7 +187,7 @@ cs:
               <v-col class="d-flex align-center">
                 <v-btn
                   @click="postData"
-                  :disabled="!valid || !$store.getters.organizationSelected"
+                  :disabled="!valid"
                   :loading="uploading"
                   >{{ $t("upload") }}</v-btn
                 >
@@ -197,7 +205,7 @@ cs:
                 class="d-inline-block"
                 v-if="!$store.getters.organizationSelected"
               >
-                {{ $t("please_select_organization") }}
+                {{ $t("organization_from_data") }}
               </v-alert>
             </v-row>
           </v-container>
@@ -249,13 +257,32 @@ cs:
               <strong v-text="$t('clashing_import_batches_title')"></strong>:
               <span v-text="$t('clashing_import_batches_text')"></span>
             </v-alert>
+            <v-alert
+              v-if="!hasImportPermission"
+              type="warning"
+              class="mt-2 mb-1"
+            >
+              <strong v-text="$t('unauthorized_multiple_org_title')"></strong>:
+              <span v-text="$t('unauthorized_multiple_org_text')"></span>
+            </v-alert>
+            <v-alert
+              type="warning"
+              class="d-inline-block"
+              v-if="missingOrgInData && state == 'preflight'"
+            >
+              {{ $t("missing_organization_in_data") }}
+            </v-alert>
+            <v-alert type="info" class="d-inline-block" v-if="needToUnsetOrg">
+              {{ $t("need_to_unset_organization") }}
+            </v-alert>
           </v-card-text>
           <v-card-actions v-if="state == 'preflight'">
             <v-btn
               v-if="
                 preflightData &&
                 preflightDataFormatValid &&
-                preflightData.clashing_months.length
+                preflightData.clashing_months.length &&
+                !this.wrongOrganizations.length > 0
               "
               color="warning"
               @click="showConfirmDeleteDialog = true"
@@ -315,7 +342,10 @@ cs:
                 <MDUChart :mdu-id="uploadObject.pk" />
               </v-tab-item>
               <v-tab-item value="data">
-                <AccessLogList :mdu-id="uploadObject.pk" />
+                <AccessLogList
+                  :mdu-id="uploadObject.pk"
+                  :show-organization="multipleOrganizations"
+                />
               </v-tab-item>
             </v-tabs-items>
             <v-container fluid>
@@ -461,6 +491,8 @@ export default {
       reportTypesFetched: false,
       metrics: [],
       metricsFetched: false,
+      organizations: [],
+      organizationsFetched: false,
       selectedReportType: null,
       showErrorDialog: false,
       showConfirmDeleteDialog: false,
@@ -485,6 +517,7 @@ export default {
     }),
     ...mapGetters({
       automaticallyCreateMetrics: "automaticallyCreateMetrics",
+      showManagementStuff: "showManagementStuff",
     }),
     breadcrumbs() {
       return [
@@ -528,6 +561,9 @@ export default {
       }
       return [];
     },
+    multipleOrganizations() {
+        return !!this.preflightData?.organizations;
+    },
     slicesToDelete() {
       if (
         this.preflightData &&
@@ -535,14 +571,30 @@ export default {
         this.organizationId &&
         this.uploadObject
       ) {
-        return [
-          {
-            platform: this.platformId,
-            organization: this.organizationId,
-            report_type: this.uploadObject.report_type.pk,
-            months: this.preflightData.clashing_months,
-          },
-        ];
+        if (this.wrongOrganizations.length > 0) {
+          // can't delete when there are wrong organizations in data
+          return null;
+        }
+        if (!this.multipleOrganizations) {
+          return [
+            {
+              platform: this.platformId,
+              organization: this.organizationId,
+              report_type: this.uploadObject.report_type.pk,
+              months: this.preflightData.clashing_months,
+            },
+          ];
+        } else {
+          // There are several organizations in the data file
+          return Object.values(this.preflightData.organizations).map(
+            (org_data) => ({
+              platform: this.platformId,
+              organization: org_data.pk,
+              report_type: this.uploadObject.report_type.pk,
+              months: this.preflightData.clashing_months,
+            })
+          );
+        }
       }
       return [];
     },
@@ -553,11 +605,47 @@ export default {
         return null;
       }
     },
+    missingOrgInData() {
+      if (
+        parseInt(this.organizationId) < 0 &&
+        !this.preflightData?.organizations
+      ) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    needToUnsetOrg() {
+      if (
+        !!this.uploadObject?.organization &&
+        this.uploadObject?.state == "preflight" &&
+        !!this.uploadObject?.preflight?.organizations
+      ) {
+        return true;
+      }
+      return false;
+    },
     canImport() {
       if (this.uploadObject) {
-        return this.uploadObject.can_import;
+        return this.uploadObject.can_import && !this.missingOrgInData;
+      }
+      return false; // not uploaded yet
+    },
+    wrongOrganizations() {
+      if (this.preflightData?.organizations) {
+        return Object.keys(this.preflightData.organizations).filter(
+          (name) => !this.preflightData.organizations[name].pk
+        );
       } else {
-        return false; // not uploaded yet
+        return [];
+      }
+    },
+    hasImportPermission() {
+      if (this.preflightData?.organizations) {
+        return this.showManagementStuff;
+      } else {
+        // no multiple organizations in preflight
+        return true;
       }
     },
     error() {
@@ -576,7 +664,7 @@ export default {
     },
     preflightDataFormatValid() {
       if (this.uploadObject) {
-        return this.uploadObject.preflight.format_version === "2";
+        return this.uploadObject.preflight.format_version === "3";
       } else {
         return false;
       }
@@ -614,7 +702,9 @@ export default {
     async postData() {
       let formData = new FormData();
       formData.append("data_file", this.dataFile);
-      formData.append("organization", this.organizationId);
+      if (parseInt(this.organizationId) > 0) {
+        formData.append("organization", this.organizationId);
+      }
       formData.append("platform", this.platformId);
       formData.append("report_type_id", this.selectedReportType.pk);
 
@@ -643,6 +733,7 @@ export default {
             this.showErrorDialog = true;
             this.errors = info.data_file;
           }
+          this.showSnackbar({ content: "Error sending data: " + error });
         } else {
           this.showSnackbar({ content: "Error sending data: " + error });
         }
@@ -693,6 +784,16 @@ export default {
         }
       }
     },
+    async loadOrganizations() {
+      let url = `/api/organization/`;
+      try {
+        const response = await axios.get(url);
+        this.organizations = response.data;
+        this.organizationsFetched = true;
+      } catch (error) {
+        this.showSnackbar({ content: "Error loading organizations: " + error });
+      }
+    },
     async loadMetrics() {
       let url = `/api/metric/`;
       try {
@@ -701,6 +802,22 @@ export default {
         this.metricsFetched = true;
       } catch (error) {
         this.showSnackbar({ content: "Error loading metrics: " + error });
+      }
+    },
+    async updateMDU() {
+      if (this.uploadObject && this.state == "preflight") {
+        let url = `/api/manual-data-upload/${this.uploadObject.pk}/`;
+        try {
+          let data = {
+            organization:
+              parseInt(this.organizationId) > 0 ? this.organizationId : null,
+          };
+          await axios.patch(url, data);
+        } catch (error) {
+          this.showSnackbar({ content: "Error processing data: " + error });
+        }
+        // regenarete preflight
+        await this.regeneratePreflight();
       }
     },
     async triggerImportData() {
@@ -743,7 +860,7 @@ export default {
     async loadMdu() {
       this.cancelRefreshTimeout();
 
-      // Try to fetch metrics first
+      // Try to fetch metrics
       if (!this.metricsFetched) {
         await this.loadMetrics();
       }
@@ -816,6 +933,7 @@ export default {
       // so waiting for it to finish would be inconvenient
       // loading attribte is v-select use used instead
       this.loadReportTypes();
+      this.loadOrganizations();
       await Promise.all([this.loadMetrics(), this.loadPlatform()]);
       this.globalSpinnerOn = false;
     },
@@ -836,6 +954,9 @@ export default {
   watch: {
     showAddReportTypeDialog() {
       this.loadReportTypes();
+    },
+    organizationId() {
+      this.updateMDU();
     },
   },
 };
