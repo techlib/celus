@@ -575,7 +575,7 @@ export default {
       platforms: [],
       errors: {},
       savedCredentials: null,
-      enabled: false,
+      enabled: true,
       outsideConsortium: true,
       title: "",
       loadingPlatforms: false,
@@ -814,7 +814,7 @@ export default {
         this.selectedReportTypes = [];
         this.errors = {};
         this.savedCredentials = null;
-        this.enabled = false;
+        this.enabled = true;
         this.outsideConsortium = true;
       } else {
         let extraParams = [];
