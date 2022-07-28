@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [4.6.2]
+
+### Fixed
+
+#### Frontend
+
+* fix regression which caused automatic harvesting of new SUSHI credentials to be off by default
+* fix styling inconsistencies of platform and title detail pages if user got there directly without
+  visiting a different page before
+
+#### Backend
+
+* fix planning of new intentions for last month not respecting already harvested data
+* when reporting SUSHI status from the API, prefer fetch intentions with import_batch over newer
+  ones without it.
+* the code for merging titles was sped up to avoid "timeouts" in celery jobs
+
+
 ## [4.6.1]
 
 ### Fixed
