@@ -46,9 +46,15 @@ def find_mergeable_titles(batch_size: int = 100) -> Generator[List[Title], None,
             for group in titles_to_matching_groups(titles):
                 yield sort_mergeable_titles(group)
 
-    qs_it = iter(qs)
-    while chunk := list(itertools.islice(qs_it, batch_size)):
-        process_chunk(chunk)
+    for i, rec in enumerate(qs):
+        buffer.append(rec)
+        if len(buffer) == batch_size:
+            for grp in process_buffer():
+                yield grp
+            buffer = []
+    if buffer:
+        for grp in process_buffer():
+            yield grp
 
 
 def titles_to_matching_groups(titles: List[Title]) -> List[List[Title]]:
