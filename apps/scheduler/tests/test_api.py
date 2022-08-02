@@ -3,7 +3,7 @@ from datetime import date
 from itertools import product
 
 import pytest
-from core.logic.dates import month_end, this_month
+from core.logic.dates import last_month, month_end
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
@@ -61,12 +61,12 @@ class TestHarvestAPI:
         assert data[0]["end_date"] == "2020-01-31"
         assert data[1]["start_date"] == "2020-01-01"
         assert data[1]["end_date"] == "2020-01-31"
-        assert data[2]["start_date"] == this_month().strftime("%Y-%m-%d")
-        assert data[2]["end_date"] == month_end(this_month()).strftime("%Y-%m-%d")
+        assert data[2]["start_date"] == last_month().strftime("%Y-%m-%d")
+        assert data[2]["end_date"] == month_end(last_month()).strftime("%Y-%m-%d")
         assert data[3]["start_date"] == "2020-01-01"
         assert data[3]["end_date"] == "2020-03-31"
-        assert data[4]["start_date"] == this_month().strftime("%Y-%m-%d")
-        assert data[4]["end_date"] == month_end(this_month()).strftime("%Y-%m-%d")
+        assert data[4]["start_date"] == last_month().strftime("%Y-%m-%d")
+        assert data[4]["end_date"] == month_end(last_month()).strftime("%Y-%m-%d")
         assert data[5]["start_date"] == "2020-01-01"
         assert data[5]["end_date"] == "2020-01-31"
 
@@ -149,12 +149,14 @@ class TestHarvestAPI:
     def test_list_filter_broken(self, basic1, clients, harvests, credentials, counter_report_types):
 
         # broken credentials
-        attempt_tr = FetchAttemptFactory(
+        fi = FetchIntentionFactory(
+            harvest=harvests["automatic"],
             credentials=credentials["standalone_br1_jr1"],
             counter_report=counter_report_types["br1"],
+            when_processed=timezone.now(),
         )
         credentials["standalone_br1_jr1"].broken = BS.BROKEN_HTTP
-        credentials["standalone_br1_jr1"].first_broken_attempt = attempt_tr
+        credentials["standalone_br1_jr1"].first_broken_attempt = fi.attempt
         credentials["standalone_br1_jr1"].save()
 
         url = reverse('harvest-list')
@@ -162,12 +164,12 @@ class TestHarvestAPI:
         resp = clients["master_admin"].get(url + "?broken=1", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
-        assert len(data1) == 3
+        assert len(data1) == 2
 
         resp = clients["master_admin"].get(url + "?broken=0", {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
-        assert len(data2) == 2
+        assert len(data2) == 3
 
     def test_list_filter_month(self, basic1, clients, harvests):
 

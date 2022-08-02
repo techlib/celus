@@ -80,6 +80,10 @@ def next_month() -> datetime.date:
     return month_start(this_month() + datetime.timedelta(days=32))
 
 
+def last_month() -> datetime.date:
+    return month_start(this_month() - datetime.timedelta(days=1))
+
+
 def date_range_from_params(params: dict) -> (datetime.date, datetime.date):
     """
     Returns start and end dates based on data provided in the params dict.

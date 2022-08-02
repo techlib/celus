@@ -1290,7 +1290,7 @@ class TestAutomatic:
         # Clear all harvests
         Harvest.objects.all().delete()
 
-        start_date = date(2020, 2, 1)
+        start_date = date(2020, 1, 1)
 
         assert FetchIntention.objects.all().count() == 0
         assert Automatic.objects.all().count() == 0
