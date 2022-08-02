@@ -1,4 +1,4 @@
-from core.logic.dates import month_end, this_month
+from core.logic.dates import last_month, month_end
 from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
@@ -31,7 +31,7 @@ def _update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
         )
     else:
         # delete otherwise
-        FetchIntention.objects.filter(
+        FetchIntention.objects.select_for_update(skip_locked=True).filter(
             harvest=automatic.harvest,
             start_date=automatic.month,
             end_date=automatic.month_end,
@@ -50,15 +50,19 @@ def update_intentions_from_cred_post_save(
 
     with transaction.atomic():
         if not created:
-            automatic = Automatic.get_or_create(this_month(), instance.organization)
+            automatic = Automatic.get_or_create(last_month(), instance.organization)
             if instance.enabled and not instance.broken and instance.is_verified:
                 # Make sure that Automatic harvest is planned
                 for cr2c in instance.counterreportstocredentials_set.all():
                     _update_cr2c(automatic, cr2c)
 
             else:
-                # Remove from Automatic harvest
-                automatic.harvest.intentions.filter(credentials=instance).delete()
+                # Remove FetchIntentions from all unprocessed automatic harvests
+                FetchIntention.objects.select_for_update(skip_locked=True).filter(
+                    harvest__automatic__isnull=False,
+                    when_processed__isnull=True,
+                    credentials=instance,
+                ).delete(),
 
 
 @receiver(post_save, sender=CounterReportsToCredentials)
@@ -72,7 +76,7 @@ def update_intentions_from_cr2c_post_save(
 
     with transaction.atomic():
         automatic = Automatic.get_or_create(
-            month=this_month(), organization=instance.credentials.organization
+            month=last_month(), organization=instance.credentials.organization
         )
         _update_cr2c(automatic, instance)
 
@@ -85,12 +89,8 @@ def update_intentions_from_cr2c_post_delete(sender, instance, using, **kwargs):
         return
 
     with transaction.atomic():
-        start_date = this_month()
-        end_date = month_end(start_date)
-        FetchIntention.objects.filter(
+        FetchIntention.objects.select_for_update(skip_locked=True).filter(
             harvest__automatic__isnull=False,
-            start_date=start_date,
-            end_date=end_date,
             when_processed__isnull=True,
             credentials=instance.credentials,
             counter_report=instance.counter_report,
@@ -128,6 +128,6 @@ def update_verified_for_success(sender, instance, created, raw, using, update_fi
         return
 
     automatic = Automatic.get_or_create(
-        month=this_month(), organization=instance.credentials.organization
+        month=last_month(), organization=instance.credentials.organization
     )
     _update_cr2c(automatic, cr2c)

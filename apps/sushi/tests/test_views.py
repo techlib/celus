@@ -663,9 +663,13 @@ class TestSushiCredentialsViewSet:
                 assert data[1][month][0]["status"] == "untried"
                 assert data[1][month][0]["planned"] is True
                 assert data[1][month][0]["can_harvest"] is True
+            elif month in ["05"]:
+                assert data[1][month][0]["status"] == "untried"
+                assert data[1][month][0]["planned"] is True, "planned via automatic harvesting"
+                assert data[1][month][0]["can_harvest"] is True
             elif month in ["06"]:
                 assert data[1][month][0]["status"] == "success"
-                assert data[1][month][0]["planned"] is True, "planned via automatic harvesting"
+                assert data[1][month][0]["planned"] is False
                 assert data[1][month][0]["can_harvest"] is False
             else:
                 assert data[1][month][0]["status"] == "untried"
