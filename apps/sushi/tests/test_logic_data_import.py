@@ -1,9 +1,12 @@
 import pytest
 
+from core.models import DataSource
 from sushi.logic.data_import import import_sushi_credentials
+from test_fixtures.entities.data_souces import DataSourceFactory
+from test_fixtures.entities.platforms import PlatformFactory
 from ..models import SushiCredentials
 from publications.models import Platform
-from organizations.tests.conftest import organizations
+from organizations.tests.conftest import organizations  # noqa - fixture
 
 
 @pytest.mark.django_db
@@ -87,3 +90,52 @@ class TestLogicDataImport:
         credentials = SushiCredentials.objects.get(url='http://new.url/')
         assert credentials.http_password == ''
         assert credentials.http_username == ''
+
+    @pytest.mark.parametrize('organization_idx', [0, 1])
+    def test_sushi_import_with_custom_platforms(self, organizations, organization_idx):
+        assert SushiCredentials.objects.count() == 0
+        pl_global = PlatformFactory.create(short_name='pl-global', ext_id=10)
+        s1, _ = DataSource.objects.get_or_create(
+            short_name='s1', organization=organizations[0], type=DataSource.TYPE_ORGANIZATION
+        )
+        s2, _ = DataSource.objects.get_or_create(
+            short_name='s2', organization=organizations[1], type=DataSource.TYPE_ORGANIZATION
+        )
+        pl_org1 = PlatformFactory.create(short_name='pl-org1', source=s1, ext_id=11)
+        pl_org2 = PlatformFactory.create(short_name='pl-org2', source=s2, ext_id=12)
+        data = [
+            {
+                'platform': pl_global.short_name,
+                'organization': organizations[organization_idx].internal_id,
+                'customer_id': 'AAA',
+                'requestor_id': 'RRR',
+                'URL': 'http://this.is/test/',
+                'version': 4,
+            },
+            {
+                'platform': pl_org1.short_name,
+                'organization': organizations[organization_idx].internal_id,
+                'customer_id': 'BBB',
+                'requestor_id': 'RRRX',
+                'URL': 'http://this.is/test/2',
+                'version': 5,
+            },
+            {
+                'platform': pl_org2.short_name,
+                'organization': organizations[organization_idx].internal_id,
+                'customer_id': 'BBB',
+                'requestor_id': 'RRRX',
+                'URL': 'http://this.is/test/2',
+                'version': 5,
+            },
+        ]
+        stats = import_sushi_credentials(data)
+        assert stats['added'] == 2, 'one global and one for org specific platform'
+        assert stats['error'] == 1, 'one org specific platform not matching'
+        assert SushiCredentials.objects.count() == 2, 'one global and one for org specific platform'
+        used_pl_names = [sc.platform.short_name for sc in SushiCredentials.objects.all()]
+        used_pl_names.sort()
+        if organization_idx == 0:
+            assert used_pl_names == ['pl-global', 'pl-org1']
+        else:
+            assert used_pl_names == ['pl-global', 'pl-org2']
