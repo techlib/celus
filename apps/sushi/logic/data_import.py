@@ -34,8 +34,9 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
         for cr in SushiCredentials.objects.all()
     }
     platform_objects = Platform.objects.all()
-    platforms = {pl.short_name: pl for pl in platform_objects}
-    platforms.update({pl.name: pl for pl in platform_objects})
+    source_id = lambda pl: pl.source.organization_id if pl.source else None
+    platforms = {(pl.short_name, source_id(pl)): pl for pl in platform_objects}
+    platforms.update({(pl.name, source_id(pl)): pl for pl in platform_objects})
     organization_objects = Organization.objects.all()
     organizations = {org.internal_id: org for org in organization_objects}
     organizations.update({org.short_name: org for org in organization_objects})
@@ -49,11 +50,19 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
             )
             stats['error'] += 1
             continue
-        platform = platforms.get(record.get('platform').strip())
+        # at first try global platforms
+        platform = platforms.get((record.get('platform').strip(), None))
         if not platform:
-            logger.error('Unknown platform: "%s"', record.get('platform', '').strip())
-            stats['error'] += 1
-            continue
+            # then platforms specific for the organization
+            platform = platforms.get((record.get('platform').strip(), organization.id))
+            if not platform:
+                logger.error(
+                    'Unknown platform: "%s" for organization "%s"',
+                    record.get('platform', '').strip(),
+                    organization.short_name,
+                )
+                stats['error'] += 1
+                continue
         version = int(record.get('version'))
         key = (organization.pk, platform.pk, version)
         extra_attrs = record.get('extra_attrs', {})
