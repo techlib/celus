@@ -21,14 +21,18 @@ def _update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
         and cr2c.credentials.is_verified
     ):
         # add intention
-        FetchIntention.objects.get_or_create(
-            not_before=Automatic.trigger_time(automatic.month),
-            harvest=automatic.harvest,
-            start_date=automatic.month,
-            end_date=automatic.month_end,
-            credentials=cr2c.credentials,
-            counter_report=cr2c.counter_report,
-        )
+        try:
+            FetchIntention.objects.get_or_create(
+                not_before=Automatic.trigger_time(automatic.month),
+                harvest=automatic.harvest,
+                start_date=automatic.month,
+                end_date=automatic.month_end,
+                credentials=cr2c.credentials,
+                counter_report=cr2c.counter_report,
+            )
+        except FetchIntention.MultipleObjectsReturned:
+            # we do not care about this - it means some intention exists and that is good enough
+            pass
     else:
         # delete otherwise
         FetchIntention.objects.select_for_update(skip_locked=True).filter(
@@ -37,6 +41,7 @@ def _update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
             end_date=automatic.month_end,
             credentials=cr2c.credentials,
             counter_report=cr2c.counter_report,
+            when_processed__isnull=True,
         ).delete()
 
 
