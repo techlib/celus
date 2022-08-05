@@ -425,8 +425,10 @@ class FetchIntention(models.Model):
             ).exists()  # skip broken or non existing counter report to credentials mapping
         )
 
-    @classmethod
-    def get_handler(
+    def get_handler(self) -> typing.Optional[typing.Callable[['FetchIntention'], None]]:
+        return self.get_handler_cls(self.attempt)
+
+    def get_handler_cls(
         cls, attempt: SushiFetchAttempt
     ) -> typing.Optional[typing.Callable[['FetchIntention'], None]]:
 
@@ -498,9 +500,9 @@ class FetchIntention(models.Model):
         self.when_processed = timezone.now()
         self.save()
 
-        handler = self.get_handler(attempt)
+        handler = self.get_handler()
         if handler:
-            handler(self)
+            handler()
 
         # plan data import
         if attempt.can_import_data:
