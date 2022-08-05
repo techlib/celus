@@ -1533,6 +1533,6 @@ class TestPlatformInterestReport:
         assert len(data["standalone"]["interest_reports"]) == 2
         assert (
             len(data["standalone"]["interest_reports"][0]['interest_metric_set'])
-            + len(data["standalone"]["interest_reports"][0]['interest_metric_set'])
-            == 4
+            + len(data["standalone"]["interest_reports"][1]['interest_metric_set'])
+            == 2
         )
