@@ -364,12 +364,12 @@ export default {
             ) ?? this.$t("blank_value");
           if (this.row === "target") {
             // extra data for titles
-            let obj = this.translators[this.row].translateKey(
-              newItem.pk ?? newItem[this.row]
-            );
-            Object.keys(this.titleColumns).forEach((key) => {
-              newItem[key] = obj[key];
-            });
+            let obj = this.translators[this.row].translateKey(newItem.pk);
+            if (obj) {
+              Object.keys(this.titleColumns).forEach((key) => {
+                newItem[key] = obj[key];
+              });
+            }
           }
         }
         for (let key of Object.keys(newItem)) {
