@@ -20,19 +20,32 @@ def _update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
         and cr2c.credentials.broken is None
         and cr2c.credentials.is_verified
     ):
-        # add intention
-        try:
-            FetchIntention.objects.get_or_create(
-                not_before=Automatic.trigger_time(automatic.month),
-                harvest=automatic.harvest,
-                start_date=automatic.month,
-                end_date=automatic.month_end,
-                credentials=cr2c.credentials,
-                counter_report=cr2c.counter_report,
+        # We need to make sure that the intentions exists
+        attrs = {
+            "harvest": automatic.harvest,
+            "start_date": automatic.month,
+            "end_date": automatic.month_end,
+            "credentials": cr2c.credentials,
+            "counter_report": cr2c.counter_report,
+        }
+
+        # There is already an intention which is going to be performed
+        if FetchIntention.objects.filter(**attrs, when_processed__isnull=True).exists():
+            return
+
+        # There might be an unfinished retry chain
+        # we need to obtain the last intention
+        if last_fi := FetchIntention.objects.filter(**attrs).order_by('pk').last():
+            # Try to run handler to recreate a retry
+            if handler := last_fi.get_handler():
+                handler()
+
+        else:
+            # No intention found -> create a new one
+            FetchIntention.objects.create(
+                not_before=Automatic.trigger_time(automatic.month), **attrs
             )
-        except FetchIntention.MultipleObjectsReturned:
-            # we do not care about this - it means some intention exists and that is good enough
-            pass
+
     else:
         # delete otherwise
         FetchIntention.objects.select_for_update(skip_locked=True).filter(

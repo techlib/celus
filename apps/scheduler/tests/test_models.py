@@ -1388,3 +1388,68 @@ class TestAutomatic:
         credentials["standalone_br1_jr1"].delete()
         assert automatic_standalone.harvest.intentions.count() == 1
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
+
+    @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
+    def test_credentials_signals_with_retry_chains(
+        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
+    ):
+
+        # Clear all harvests
+        Harvest.objects.all().delete()
+
+        def mock_3031(intention: FetchIntention):
+            intention.attempt = FetchAttemptFactory(
+                start_date=intention.start_date,
+                end_date=intention.end_date,
+                credentials=credentials["standalone_tr"],
+                error_code="3031",
+                status=AttemptStatus.NO_DATA,
+                import_batch=None,
+            )
+            intention.when_processed = timezone.now()
+            intention.save()
+
+        # And delete some credentials
+        credentials["standalone_br1_jr1"].delete()
+        credentials["branch_pr"].delete()
+
+        assert FetchIntention.objects.all().count() == 0
+        assert Automatic.objects.all().count() == 0
+
+        # Trigger signal (upate credentials)
+        credentials["standalone_tr"].save()
+
+        assert FetchIntention.objects.all().count() == 1
+        assert Automatic.objects.all().count() == 1
+
+        fi = FetchIntention.objects.order_by('pk').last()
+        mock_3031(fi)
+        fi.refresh_from_db()
+
+        # Plan new one
+        fi.get_handler()()
+        assert FetchIntention.objects.all().count() == 2
+
+        # Make credentials broken
+        credentials["standalone_tr"].set_broken(
+            FetchAttemptFactory(
+                counter_report=counter_report_types["tr"], credentials=credentials["standalone_tr"]
+            ),
+            broken_type=SushiCredentials.BROKEN_HTTP,
+        )
+        assert FetchIntention.objects.all().count() == 1
+
+        fi.refresh_from_db()
+        assert fi.queue.start == fi, "fi is first in queue"
+        assert fi.queue.end is None, "last in queue was deleted"
+
+        # Now unset broken
+        credentials["standalone_tr"].unset_broken()
+
+        assert FetchIntention.objects.all().count() == 2
+
+        fi.refresh_from_db()
+        assert fi.queue.start == fi, "fi is first in queue"
+        assert fi.queue.end is not None, "queue is complete"
+        assert fi.queue.end != fi, "new fi at the end of the line"
+        assert fi.queue.end.when_processed is None, "last is not finished"
