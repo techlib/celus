@@ -11,6 +11,7 @@
 import {
   ATTEMPT_SUCCESS,
   ATTEMPT_ERROR,
+  ATTEMPT_IMPORT_FAILED,
   ATTEMPT_NOT_MADE,
   ATTEMPT_EMPTY_DATA,
   ATTEMPT_UNKNOWN,
@@ -74,6 +75,7 @@ export default {
         ATTEMPT_EMPTY_DATA,
         ATTEMPT_UNKNOWN,
         ATTEMPT_ERROR,
+        ATTEMPT_IMPORT_FAILED,
         BROKEN_REPORT,
         BROKEN_CREDENTIALS,
       ],
@@ -82,6 +84,7 @@ export default {
         [INTENTION_WAITING]: "#cacaca",
         [ATTEMPT_SUCCESS]: "#7dc17f",
         [ATTEMPT_ERROR]: "#e58383",
+        [ATTEMPT_IMPORT_FAILED]: "#e58383",
         [ATTEMPT_NOT_MADE]: "#e8e8e8",
         [ATTEMPT_EMPTY_DATA]: "#a6cea7",
         [ATTEMPT_UNKNOWN]: "#f8b765",
