@@ -56,6 +56,7 @@ from logs.models import (
     ImportBatch,
     InterestGroup,
     ManualDataUpload,
+    ManualDataUploadImportBatch,
     MduState,
     Metric,
     ReportInterestMetric,
@@ -428,17 +429,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         do not have a direct link to credentials and it would be too costly to remove this extra
         data.
         """
-        # Note:
-        #
-        # This endpoint uses fetch attempt data for sushi data and access logs for manually
-        # uploaded data. We could simplify it by:
-        #  * splitting data from manually uploaded data into one-month import batches
-        #  * adding date to import batches
-        #  * creating empty import batches for 3030 when we decide there is no reason to retry
-        #
-        # After these changes, we could simply query import batches to get the data for this view.
-        # TODO: FIX THIS FOR IMPORT BATCHES -
-        #       we need to create empty import batches for 3030 for that
         param_serializer = self.DataPresenceParamSerializer(data=request.GET)
         param_serializer.is_valid(raise_exception=True)
         params = param_serializer.validated_data
@@ -448,56 +438,44 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         credentials = SushiCredentials.objects.filter(
             pk__in=credentials_ids, organization__in=request.user.accessible_organizations()
         )
-        qs = SushiFetchAttempt.objects.filter(
-            start_date__gte=parse_month(params['start_date']),
-            start_date__lte=parse_month(params['end_date']),
-            credentials__in=credentials,
-            status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
-        ).select_related('credentials', 'counter_report')
-        records = {
-            tuple(rec): 'sushi'
-            for rec in qs.values_list(
-                'counter_report__report_type_id',
-                'credentials__platform_id',
-                'credentials__organization_id',
-                'start_date',
-            ).distinct()
-        }
 
-        # now manually uploaded data - we need to go by AccessLog, there is no other place with
-        # date info
-        qs = AccessLog.objects.filter(
-            import_batch__mdu_link__isnull=False,
-            date__gte=parse_month(params['start_date']),
-            date__lte=parse_month(params['end_date']),
+        # decompose credentials to (platform, organization, report_type) tripplets
+        pors = []
+        for creds in credentials.prefetch_related('counter_reports'):
+            for cr in creds.counter_reports.all():
+                pors.append((creds.platform_id, creds.organization_id, cr.report_type_id))
+
+        # filter import batches
+        qs_args = reduce(
+            lambda x, y: (Q(platform_id=y[0]) & Q(organization_id=y[1]) & Q(report_type_id=y[2]))
+            | x,
+            pors,
+            Q(),
         )
-        filters = []
-        # we do not add report type filter to each Q below because it seems to slow the query
-        # down - instead we add a report_type filter later to allow the query to skip some
-        # partitions
-        for cred in credentials:
-            filters.append(Q(organization_id=cred.organization_id, platform_id=cred.platform_id))
-        if not filters:
-            raise BadRequest(
-                "The 'credentials' param must resolve to at least one set of SUSHI credentials."
+
+        batches = (
+            ImportBatch.objects.filter(
+                date__gte=parse_month(params['start_date']),
+                date__lte=parse_month(params['end_date']),
             )
-        rts = ReportType.objects.filter(
-            counterreporttype__counterreportstocredentials__credentials__in=credentials
+            .filter(qs_args)
+            .annotate(
+                has_fa=Exists(SushiFetchAttempt.objects.filter(import_batch_id=OuterRef('pk'))),
+                has_mdu=Exists(
+                    ManualDataUploadImportBatch.objects.filter(import_batch_id=OuterRef('pk'))
+                ),
+            )
         )
-        qs = qs.filter(reduce(lambda x, y: x | y, filters, Q())).filter(report_type_id__in=rts)
-        qs = qs.values_list('report_type_id', 'platform_id', 'organization_id', 'date').distinct()
-        for rec in qs:
-            records[tuple(rec)] = 'manual'
 
         return Response(
             {
-                'report_type_id': rt,
-                'platform_id': plat,
-                'organization_id': org,
-                'date': date,
-                'source': source,
+                'report_type_id': e.report_type_id,
+                'platform_id': e.platform_id,
+                'organization_id': e.organization_id,
+                'date': e.date,
+                'source': 'sushi' if e.has_fa else ('manual' if e.has_mdu else 'unknown'),
             }
-            for (rt, plat, org, date), source in records.items()
+            for e in batches
         )
 
 

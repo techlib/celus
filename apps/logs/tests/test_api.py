@@ -28,6 +28,7 @@ from test_fixtures.scenarios.basic import basic1  # noqa - fixtures
 from test_fixtures.scenarios.basic import (
     client_by_user_type,
     clients,
+    counter_report_types,
     data_sources,
     identities,
     interests,
@@ -603,7 +604,7 @@ class TestDimensionTextAPI:
 
 @pytest.mark.django_db
 class TestImportBatchViewSet:
-    def test_data_presence(self, admin_client):
+    def test_data_presence(self, admin_client, counter_report_types):
         # create a manual data upload which is one of the things that enter into the data presence
         # calculation
         mdu = ManualDataUploadFullFactory.create()
@@ -614,16 +615,25 @@ class TestImportBatchViewSet:
 
         # create fetch attempts - these are used for detecting data from SUSHI
         cr = CredentialsFactory.create(organization=mdu.organization, platform=mdu.platform)
+        # the credentials from factory are not connected to the counter report type, do it here
+
+        CounterReportsToCredentials.objects.create(
+            credentials=cr, counter_report=counter_report_types['tr']
+        )
         # the counter_report_type should match the report_type created for the mdu
         end_date_fa = month_start(end_date_mdu + timedelta(days=40))
-        fa = FetchAttemptFactory.create(
+        FetchAttemptFactory.create(
             credentials=cr,
             status=AttemptStatus.SUCCESS,
             start_date=end_date_fa,
             end_date=month_end(end_date_fa),
+            import_batch=ImportBatchFullFactory(
+                date=end_date_fa,
+                organization=cr.organization,
+                platform=cr.platform,
+                report_type=counter_report_types['tr'].report_type,
+            ),
         )
-        # the credentials from factory are not connected to the counter report type, do it here
-        CounterReportsToCredentials.objects.create(credentials=cr, counter_report=fa.counter_report)
 
         # test without params
         resp = admin_client.get(reverse('import-batch-data-presence'))
@@ -638,13 +648,26 @@ class TestImportBatchViewSet:
         data = resp.json()
         assert len(data) == 2, 'two months, the same organization, platform and report_type'
 
-    @pytest.mark.parametrize(['attempt_state'], [(status,) for status in AttemptStatus])
-    def test_data_presence_attempt_state(self, admin_client, attempt_state):
+    @pytest.mark.parametrize('import_batch', ((True,), (False,)))
+    def test_data_presence_attempt_ib(self, admin_client, import_batch):
         cr = CredentialsFactory.create()
         start_date = '2021-10-01'
         fa = FetchAttemptFactory.create(
-            credentials=cr, status=attempt_state, start_date=start_date, end_date='2021-10-31'
+            credentials=cr,
+            status=AttemptStatus.SUCCESS,
+            start_date=start_date,
+            end_date='2021-10-31',
         )
+        if import_batch:
+            ib = ImportBatchFullFactory(
+                date=start_date,
+                platform=cr.platform,
+                organization=cr.organization,
+                report_type=fa.counter_report.report_type,
+            )
+            fa.import_batch = ib
+            fa.save()
+
         # the credentials from factory are not connected to the counter report type, do it here
         CounterReportsToCredentials.objects.create(credentials=cr, counter_report=fa.counter_report)
 
@@ -654,10 +677,10 @@ class TestImportBatchViewSet:
         )
         assert resp.status_code == 200
         data = resp.json()
-        if attempt_state in (AttemptStatus.SUCCESS, AttemptStatus.NO_DATA):
-            assert len(data) == 1
+        if import_batch:
+            assert len(data) == 1, 'import_batch present'
         else:
-            assert len(data) == 0, 'status should not be counted in data presence'
+            assert len(data) == 0, 'no import_batch => no data'
 
 
 @pytest.mark.django_db
