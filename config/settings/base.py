@@ -368,7 +368,7 @@ CELERY_BEAT_SCHEDULE = {
         'options': {'expires': 24 * 60 * 60},
     },
     'clean_obsolete_platform_title_links': {
-        'task': 'publications.tasks.clean_obsolete_platform_title_links',
+        'task': 'publications.tasks.clean_obsolete_platform_title_links_task',
         'schedule': crontab(hour=0, minute=13),  # every day at 0:13
         'options': {'expires': 24 * 60 * 60},
     },
