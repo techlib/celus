@@ -37,7 +37,7 @@
       <td :colspan="headers.length" v-if="enableTags">
         <div class="py-2 d-inline-block">
           <TagCard
-            item-type="organization"
+            scope="organization"
             :item-id="item.pk"
             @update="fetchTags"
             :elevation="0"
@@ -75,7 +75,6 @@ export default {
     return {
       sortBy: "name",
       expanded: [],
-      selectedTags: [],
       search: "",
     };
   },
@@ -95,7 +94,6 @@ export default {
         return this.organizations.filter((org) => {
           if (this.objIdToTags.has(org.pk)) {
             const objTagIds = this.objIdToTags.get(org.pk).map((tag) => tag.pk);
-            console.log(objTagIds, this.selectedTags);
             return intersection(this.selectedTags, objTagIds).length > 0;
           } else {
             return false;

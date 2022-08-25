@@ -21,9 +21,11 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from core.exceptions import BadRequestException
+from core.filters import PkMultiValueFilterBackend
 from logs.views import StandardResultsSetPagination
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer, TitleSerializer
+from tags.filters import TagClassScopeFilter
 from tags.models import ItemTag, Tag, TagClass, TagScope, TaggingBatch, TaggingBatchState
 from tags.permissions import TagClassPermissions, TagPermissions
 from tags.serializers import (
@@ -45,6 +47,7 @@ class TagClassViewSet(ModelViewSet):
     queryset = TagClass.objects.none()
     serializer_class = TagClassSerializer
     permission_classes = [IsAuthenticated, TagClassPermissions]
+    filter_backends = [TagClassScopeFilter]
 
     def get_queryset(self):
         return TagClass.objects.user_accessible_tag_classes(self.request.user)
@@ -54,6 +57,7 @@ class TagViewSet(ModelViewSet):
 
     queryset = Tag.objects.none()
     permission_classes = [IsAuthenticated, TagPermissions]
+    filter_backends = [PkMultiValueFilterBackend]
 
     def get_serializer_class(self):
         if self.action in ("create", "update", "partial_update"):
@@ -211,10 +215,29 @@ class TaggingBatchViewSet(ModelViewSet):
             'tag', 'tag__tag_class', 'tag_class'
         )
 
-    def perform_create(self, serializer):
-        super().perform_create(serializer)
+    @action(methods=['post'], detail=True, url_name='preflight', url_path='preflight')
+    def preflight(self, request, pk):
+        try:
+            tb = self.get_queryset().select_related().select_for_update(nowait=True).get(pk=pk)
+            if tb.state != TaggingBatchState.INITIAL:
+                raise BadRequestException(
+                    {'error': f'Cannot use batch with state "{tb.state}" to do preflight'}
+                )
+        except DatabaseError as exc:
+            return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
+        except TaggingBatch.DoesNotExist:
+            raise Http404({'error': 'Tagging batch not found'})
         url_base = build_absolute_uri(self.request, '/')
-        tagging_batch_preflight_task.delay(serializer.data['pk'], url_base)
+        tb.state = TaggingBatchState.PREPROCESSING
+        tb.save()
+        task = tagging_batch_preflight_task.apply_async(args=(tb.pk, url_base), countdown=2)
+        return Response(
+            {
+                'task_id': task.id,
+                'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
+            },
+            status=HTTP_202_ACCEPTED,
+        )
 
     @action(methods=['post'], detail=True, url_name='assign-tags', url_path='assign-tags')
     def assign_tags(self, request, pk):
@@ -249,9 +272,7 @@ class TaggingBatchViewSet(ModelViewSet):
                 },
                 status=HTTP_202_ACCEPTED,
             )
-        raise BadRequestException(
-            {'error': 'Parameter `tags` with comma separated list of tag IDs is required'}
-        )
+        raise BadRequestException({'error': 'Parameter `tag` with tag ID is required'})
 
     @action(methods=['post'], detail=True, url_name='unassign', url_path='unassign')
     def unassign(self, request, pk):

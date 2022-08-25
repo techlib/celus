@@ -4,6 +4,7 @@ from django.urls import reverse
 from logs.models import FlexibleReport
 from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations  # noqa
+from tags.logic.fake_data import TagForTitleFactory
 from test_fixtures.scenarios.basic import users  # noqa
 
 
@@ -62,6 +63,54 @@ class TestFlexibleReportAPI:
         assert report.last_updated_by == admin_user
         assert report.report_config['primary_dimension'] == 'platform'
         assert report.report_config['group_by'] == ['metric']
+
+    def test_create_with_tag_roll_up(self, admin_client, admin_user):
+        resp = admin_client.post(
+            reverse('flexible-report-list'),
+            {
+                'name': 'test report',
+                'config': {
+                    'primary_dimension': 'platform',
+                    'groups': b64json(['metric']),
+                    'tag_roll_up': 'true',
+                    'tag_class': 1,
+                },
+            },
+            content_type='application/json',
+        )
+        assert resp.status_code == 201
+        report = FlexibleReport.objects.get(pk=resp.json()['pk'])
+        assert report.owner == admin_user
+        assert report.owner_organization is None
+        assert report.last_updated_by == admin_user
+        assert report.report_config['primary_dimension'] == 'platform'
+        assert report.report_config['group_by'] == ['metric']
+        assert report.report_config['tag_roll_up'] is True
+        assert report.report_config['tag_class'] == 1
+
+    def test_create_with_tag_filter(self, admin_client, admin_user):
+        tag = TagForTitleFactory.create()
+        resp = admin_client.post(
+            reverse('flexible-report-list'),
+            {
+                'name': 'test report',
+                'config': {
+                    'primary_dimension': 'target',
+                    'groups': b64json(['metric']),
+                    'filters': b64json({'tag__target': [tag.pk]}),
+                },
+            },
+            content_type='application/json',
+        )
+        assert resp.status_code == 201
+        report = FlexibleReport.objects.get(pk=resp.json()['pk'])
+        assert report.owner == admin_user
+        assert report.owner_organization is None
+        assert report.last_updated_by == admin_user
+        assert report.report_config['primary_dimension'] == 'target'
+        assert report.report_config['group_by'] == ['metric']
+        assert report.report_config['filters'][0]['dimension'] == 'target'
+        assert report.report_config['filters'][0]['tag_ids'] == [tag.pk]
 
     @pytest.fixture()
     def user_organizations(self, users, organizations):

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from zipfile import ZipFile
 
 import pytest
+from django.db.models import Q
 
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,
@@ -22,7 +23,7 @@ from logs.models import AccessLog, DimensionText, Metric
 from organizations.models import Organization
 from publications.models import Platform, Title
 from tags.logic.fake_data import TagFactory, TagForTitleFactory
-from tags.models import TagScope
+from tags.models import Tag, TagScope
 
 
 def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list) -> dict:
@@ -493,6 +494,61 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'Title 1', 'pl1': 342018, 'pl2': 408114},
             {'pk': 'Title 3', 'pl1': 356706, 'pl2': 422802},
         ]
+
+    @pytest.mark.parametrize('show_zero', [True, False])
+    def test_group_by_title_tag(self, flexible_slicer_test_data_with_tags, show_zero):
+        """
+        Primary dimension: title/target
+        Group by: metric
+        Tag roll-up: True
+        """
+        slicer = FlexibleDataSlicer(
+            primary_dimension='target', tag_roll_up=True, include_all_zero_rows=show_zero
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('metric', flexible_slicer_test_data_with_tags['metrics'][0]),
+            add_group=True,
+        )
+        data = list(slicer.get_data())
+        assert len(data) == (3 if show_zero else 2)
+        data.sort(key=lambda rec: rec['pk'])
+        exp_data = [
+            {'pk': 'tag1', 'm1': 2470716},
+            {'pk': 'tag2', 'm1': 1268406},
+            {'pk': 'tag3', 'm1': 0},
+        ]
+        assert [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in data] == (
+            exp_data if show_zero else exp_data[:-1]
+        )
+
+    @pytest.mark.parametrize('show_zero', [True, False])
+    def test_group_by_title_tag_with_tag_filter(
+        self, flexible_slicer_test_data_with_tags, show_zero
+    ):
+        """
+        Primary dimension: title/target
+        Group by: metric
+        Tag roll-up: True
+        Tag filter: tag1, tag3
+        """
+        slicer = FlexibleDataSlicer(
+            primary_dimension='target', tag_roll_up=True, include_all_zero_rows=show_zero
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('metric', flexible_slicer_test_data_with_tags['metrics'][0]),
+            add_group=True,
+        )
+        slicer.tag_filter = Q(name__in=['tag1', 'tag3'])
+        data = list(slicer.get_data())
+        assert len(data) == (2 if show_zero else 1)
+        data.sort(key=lambda rec: rec['pk'])
+        exp_data = [
+            {'pk': 'tag1', 'm1': 2470716},
+            {'pk': 'tag3', 'm1': 0},
+        ]
+        assert [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in data] == (
+            exp_data if show_zero else exp_data[:-1]
+        )
 
 
 @pytest.mark.django_db

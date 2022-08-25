@@ -18,39 +18,11 @@ cs:
         <v-container fluid>
           <v-row>
             <v-col>
-              <v-select
+              <TagClassSelector
                 v-model="tagClass"
-                :items="tagClasses"
-                item-text="name"
-                item-value="pk"
-                :loading="tagClassesLoading"
-                :label="$t('labels.tag_class')"
-                :rules="[rules.required]"
                 :disabled="tag !== null"
-              >
-                <template #item="{ item }">
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      {{ item.name }}
-                      <span class="float-right text-caption">{{
-                        $t(item.scope)
-                      }}</span>
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </template>
-
-                <template #append-item>
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      <AddTagClassButton
-                        small
-                        class="ml-4"
-                        @saved="assignNewClass"
-                      />
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </template>
-              </v-select>
+                ref="classSelector"
+              />
             </v-col>
             <v-col>
               <v-text-field
@@ -71,10 +43,10 @@ cs:
               <ColorEntry v-model="bgColor" :label="$t('labels.tag_color')" />
             </v-col>
             <v-col cols="3" class="align-self-center">
-              <TagChip :tag="tagPreview" />
+              <TagChip v-if="tagClass" :tag="tagPreview" />
             </v-col>
             <v-col cols="3" class="align-self-center">
-              <TagChip v-if="tagClassFull" :tag="tagPreviewFull" show-class />
+              <TagChip v-if="tagClass" :tag="tagPreviewFull" show-class />
             </v-col>
           </v-row>
         </v-container>
@@ -99,17 +71,15 @@ import formRulesMixin from "@/mixins/formRulesMixin";
 import { mapActions, mapGetters } from "vuex";
 import ColorEntry from "@/components/util/ColorEntry";
 import TagChip from "@/components/tags/TagChip";
-import AddTagClassButton from "@/components/tags/AddTagClassButton";
 import tagAccessLevels from "@/mixins/tagAccessLevels";
-import TagAccessLevelSelector from "@/components/tags/TagAccessLevelSelector";
 import tagColors from "@/mixins/tagColors";
 import { accessLevels } from "@/libs/tags";
+import TagClassSelector from "@/components/tags/TagClassSelector";
 
 export default {
   name: "EditTagWidget",
   components: {
-    TagAccessLevelSelector,
-    AddTagClassButton,
+    TagClassSelector,
     TagChip,
     ColorEntry,
   },
@@ -125,8 +95,6 @@ export default {
       canSee: accessLevels.OWNER,
       canAssign: accessLevels.OWNER,
       tagClass: null,
-      tagClasses: [],
-      tagClassesLoading: false,
       valid: false,
       justCreating: false,
       desc: "",
@@ -138,8 +106,11 @@ export default {
       selectedOrganization: "selectedOrganization",
     }),
     tagPreview() {
+      if (!this.tagClass) {
+        return null;
+      }
       let data = {
-        tag_class: this.tagClass,
+        tag_class: this.tagClass.pk,
         name: this.name,
         text_color: this.textColor,
         bg_color: this.bgColor,
@@ -157,29 +128,19 @@ export default {
       }
       return data;
     },
-    tagClassFull() {
-      return this.tagClasses.find((cls) => cls.pk === this.tagClass);
-    },
     tagPreviewFull() {
-      if (this.tagClassFull) {
+      if (this.tagClass) {
         return {
           ...this.tagPreview,
-          tag_class: this.tagClassFull,
+          tag_class: this.tagClass,
         };
       }
+      return null;
     },
   },
 
   methods: {
     ...mapActions({ showSnackbar: "showSnackbar" }),
-    async fetchTagClasses() {
-      this.tagClassesLoading = true;
-      const reply = await this.http({ url: "/api/tags/tag-class/" });
-      this.tagClassesLoading = false;
-      if (!reply.error) {
-        this.tagClasses = reply.response.data;
-      }
-    },
     async saveTag() {
       this.justCreating = true;
       let reply;
@@ -216,23 +177,19 @@ export default {
         this.bgColor = this.tag.bg_color;
         this.name = this.tag.name;
         this.desc = this.tag.desc;
-        this.tagClass = this.tag.tag_class.pk;
+        this.tagClass = this.tag.tag_class;
         this.canAssign = this.tag.can_assign;
         this.canSee = this.tag.can_see;
       }
     },
-    assignNewClass(newClass) {
-      this.tagClasses.push(newClass);
-      this.tagClasses.sort((a, b) => a.name.localeCompare(b.name));
-      this.tagClass = newClass.pk;
-    },
     async reload() {
-      await this.fetchTagClasses();
+      if (this.$refs.classSelector) {
+        await this.$refs.classSelector.reload();
+      }
     },
   },
 
   mounted() {
-    this.fetchTagClasses();
     this.changeTag();
   },
 
@@ -243,11 +200,10 @@ export default {
     tagClass() {
       if (!this.tag) {
         // update some stuff to the defaults of the tag class
-        const cls = this.tagClasses.find((item) => item.pk === this.tagClass);
-        if (cls) {
-          this.bgColor = cls.bg_color;
-          this.canSee = cls.default_tag_can_see;
-          this.canAssign = cls.default_tag_can_assign;
+        if (this.tagClass) {
+          this.bgColor = this.tagClass.bg_color;
+          this.canSee = this.tagClass.default_tag_can_see;
+          this.canAssign = this.tagClass.default_tag_can_assign;
         }
       }
     },

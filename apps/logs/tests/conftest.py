@@ -3,20 +3,23 @@ from itertools import product
 
 import faker
 import pytest
-
-from celus_nigiri.utils import parse_date_fuzzy
-from logs.models import (
-    ReportType,
-    Dimension,
-    ReportTypeToDimension,
-    Metric,
-    ImportBatch,
-    DimensionText,
-    AccessLog,
-)
 from celus_nigiri.counter5 import CounterRecord
+from celus_nigiri.utils import parse_date_fuzzy
+
+from logs.models import (
+    AccessLog,
+    Dimension,
+    DimensionText,
+    ImportBatch,
+    Metric,
+    ReportType,
+    ReportTypeToDimension,
+)
 from organizations.models import Organization
 from publications.models import Platform, Title
+from tags.logic.fake_data import TagClassFactory, TagForTitleFactory
+from tags.models import AccessibleBy, TagScope
+from test_fixtures.scenarios.basic import users  # noqa - fixture
 
 
 @pytest.fixture
@@ -343,4 +346,26 @@ def flexible_slicer_test_data2(report_type_nd):
         'targets': targets,
         'dates': dates,
         'dimension_values': dimension_values,
+    }
+
+
+@pytest.fixture
+def flexible_slicer_test_data_with_tags(flexible_slicer_test_data, users):
+    """
+    The same data as `flexible_slicer_test_data`, but adds tags to the titles
+    """
+    t1, t2, t3 = flexible_slicer_test_data['targets']
+    tc1 = TagClassFactory.create(scope=TagScope.TITLE)
+    tag1 = TagForTitleFactory.create(tag_class=tc1, name='tag1', owner=users['su'])
+    tag2 = TagForTitleFactory.create(
+        tag_class=tc1, name='tag2', owner=users['admin2'], can_see=AccessibleBy.OWNER
+    )
+    tag3 = TagForTitleFactory.create(name='tag3', owner=users['su'])
+    tag1.tag(t1, users['su'])
+    tag1.tag(t2, users['su'])
+    tag2.tag(t3, users['admin2'])
+    return {
+        'tags': [tag1, tag2, tag3],
+        'tag_classes': [tc1, tag3.tag_class],
+        **flexible_slicer_test_data,
     }

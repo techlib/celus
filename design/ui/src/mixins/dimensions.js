@@ -29,7 +29,7 @@ let dimensionMixin = {
   data() {
     let dimensions = [];
     let dimensionToTitle = new Map();
-    implicitDimensions.forEach(item => {
+    implicitDimensions.forEach((item) => {
       dimensions.push({ id: item.shortName, name: this.$t(item.nameKey) });
       dimensionToTitle.set(item.shortName, this.$t(item.nameKey));
     });

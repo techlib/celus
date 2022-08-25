@@ -96,6 +96,11 @@ class FlexiReport {
     this.owner = null;
     this.ownerOrganization = null;
     this.includeZeroRows = false;
+    this.tagRollUp = false;
+    this._tagDimension = new Dimension("tag");
+    this._tagDimension.shortName = "tag";
+    this._tagDimension.name = "labels.tag";
+    this.tagClass = null;
   }
 
   get accessLevel() {
@@ -104,6 +109,10 @@ class FlexiReport {
 
   get accessLevelIcon() {
     return FlexiReport.accessLeveLToIcon[this.accessLevel];
+  }
+
+  get effectivePrimaryDimension() {
+    return this.tagRollUp ? this._tagDimension : this.primaryDimension;
   }
 
   canEdit(user, organizationMap) {
@@ -158,6 +167,7 @@ class FlexiReport {
         if (item.values) res["values"] = item.values;
         if (item.start) res["start"] = item.start;
         if (item.end) res["end"] = item.end;
+        if (item.tag_ids) res["tag_ids"] = item.tag_ids;
         return res;
       });
     // group by
@@ -174,6 +184,8 @@ class FlexiReport {
         : null;
     // extra params
     this.includeZeroRows = config.zero_rows ?? false;
+    this.tagRollUp = config.tag_roll_up ?? false;
+    this.tagClass = config.tag_class ?? null;
   }
 
   async resolveReportType(id, allReportTypes = null) {
@@ -207,6 +219,8 @@ class FlexiReport {
     this.filters.forEach((item) => {
       if (item.start || item.end) {
         filters[item.dimension.ref] = { start: item.start, end: item.end };
+      } else if (item.tag_ids) {
+        filters["tag__" + item.dimension.ref] = item.tag_ids;
       } else {
         filters[item.dimension.ref] = item.values;
       }
@@ -219,6 +233,8 @@ class FlexiReport {
       split_by: this.splitBy ? toBase64JSON([this.splitBy.ref]) : null,
       order_by: this.orderBy.join(";"),
       zero_rows: this.includeZeroRows,
+      tag_roll_up: this.tagRollUp,
+      tag_class: this.tagClass,
     };
   }
 

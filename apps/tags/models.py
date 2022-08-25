@@ -1,4 +1,5 @@
 import codecs
+import csv
 import operator
 import os
 import tempfile
@@ -203,6 +204,18 @@ class TagClass(CreatedUpdatedMixin, models.Model):
         raise ValueError(f'Unexpected scope "{self.scope}"')
 
     @classmethod
+    def tag_scope_from_target_class(
+        cls, target_class: Union[Type[Platform], Type[Title], Type[Organization]]
+    ) -> TagScope:
+        if target_class is Title:
+            return TagScope.TITLE
+        elif target_class is Platform:
+            return TagScope.PLATFORM
+        elif target_class is Organization:
+            return TagScope.ORGANIZATION
+        raise ValueError(f'Unexpected target class "{target_class}"')
+
+    @classmethod
     def can_set_access_level(
         cls, user: User, level: AccessibleBy, organization: Optional[Organization] = None
     ):
@@ -288,6 +301,7 @@ class Tag(CreatedUpdatedMixin, models.Model):
 
     class Meta:
         ordering = ['name']
+        verbose_name = _('Tag')
         constraints = [
             models.CheckConstraint(
                 # owner must be set if can_see or can_assign is set to OWNER
@@ -337,6 +351,16 @@ class Tag(CreatedUpdatedMixin, models.Model):
         elif isinstance(target, Organization):
             return OrganizationTag
         raise ValueError(f'unsupported target object of class "{target.__class__}"')
+
+    @classmethod
+    def target_attr_from_scope(cls, scope: TagScope) -> str:
+        if scope == TagScope.TITLE:
+            return 'titles'
+        elif scope == TagScope.PLATFORM:
+            return 'platforms'
+        elif scope == TagScope.ORGANIZATION:
+            return 'organizations'
+        raise ValueError(f'unsupported scope "{scope}"')
 
     def tag(self, target: Union[Title, Platform, Organization], user: User) -> 'ItemTag':
         """
@@ -436,6 +460,7 @@ class TaggingBatchState(models.TextChoices):
     """
 
     INITIAL = 'initial', _("Initial")
+    PREPROCESSING = 'preprocessing', _("Preprocessing")
     PREFLIGHT = 'preflight', _("Preflight")
     IMPORTING = 'importing', _("Importing")
     IMPORTED = 'imported', _("Imported")
@@ -495,20 +520,33 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             )
         ]
 
+    def file_row_count(self):
+        orig_pos = self.source_file.tell()
+        self.source_file.seek(0)
+        check_reader = csv.reader(codecs.getreader('utf-8')(self.source_file))
+        total = sum(1 for _ in check_reader) - 1  # -1 because of header
+        self.source_file.seek(orig_pos)
+        return total
+
     def compute_preflight(
-        self, dump_file: Optional[BinaryIO] = None, title_id_formatter: Callable[[int], str] = str
+        self,
+        dump_file: Optional[BinaryIO] = None,
+        title_id_formatter: Callable[[int], str] = str,
+        progress_monitor: Optional[Callable[[int, int], None]] = None,
     ) -> dict:
         """
         :param dump_file: opened file where a copy of input will be written with extra data from
                           the processing
         :param title_id_formatter: converter of title id into string
+        :param progress_monitor: callback to report progress, should send (current, total) ints
         :return:
         """
         reader = CsvTitleListReader()
         stats = Counter()
         unique_title_ids = set()
+        total = self.file_row_count()
         for rec in reader.process_source(
-            codecs.iterdecode(self.source_file, 'utf-8'),
+            codecs.getreader('utf-8')(self.source_file),
             dump_file=dump_file,
             dump_id_formatter=title_id_formatter,
         ):
@@ -516,6 +554,8 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             unique_title_ids |= rec.title_ids
             if not rec.title_ids:
                 stats['no_match'] += 1
+            if progress_monitor:
+                progress_monitor(stats['row_count'], total)
         stats['unique_matched_titles'] = len(unique_title_ids)
         return {
             'stats': stats,
@@ -525,9 +565,14 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             ),
         }
 
-    def do_preflight(self, title_id_formatter: Callable[[int], str] = str):
+    def do_preflight(
+        self,
+        title_id_formatter: Callable[[int], str] = str,
+        progress_monitor: Optional[Callable[[int, int], None]] = None,
+    ):
         """
         :param title_id_formatter: converts title ids to string in the annotated file
+        :param progress_monitor: callback to report progress, should send (current, total) ints
         :return:
         """
         try:
@@ -545,12 +590,16 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             self.save()
 
     def assign_tag(
-        self, create_missing_titles=False, title_id_formatter: Callable[[int], str] = str
+        self,
+        create_missing_titles=False,
+        title_id_formatter: Callable[[int], str] = str,
+        progress_monitor: Optional[Callable[[int, int], None]] = None,
     ) -> None:
         """
         :param create_missing_titles: if True, titles which are not found in the database will
                                       be created
         :param title_id_formatter: converts title ids to string in the annotated file
+        :param progress_monitor: callback to report progress, should send (current, total) ints
         """
         if self.state != TaggingBatchState.IMPORTING:
             raise ValueError(f'Cannot assign tag for batch in state "{self.state}"')
@@ -560,6 +609,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         stats = Counter()
         unique_title_ids = set()
         unmatched_title_recs = []
+        rows_total = self.file_row_count()
         with tempfile.NamedTemporaryFile('wb') as dump_file:
             for rec in reader.process_source(
                 codecs.iterdecode(self.source_file, 'utf-8'),
@@ -572,6 +622,10 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
                     stats['no_match'] += 1
                     if create_missing_titles:
                         unmatched_title_recs.append(rec.title_rec)
+                if progress_monitor:
+                    # report only half of the progress, because we are doing the insertion into
+                    # the database later
+                    progress_monitor(stats['row_count'] // 2, rows_total)
             dump_file.seek(0)
             with open(dump_file.name, 'rb') as infile:
                 if self.annotated_file:
@@ -602,24 +656,39 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             )
             for title_id in unique_title_ids
         ]
+        if progress_monitor:
+            # report another part of the progress
+            progress_monitor(2 * stats['row_count'] // 3, rows_total)
         # because of ignore_conflicts all object from `to_insert` will be returned, even if they
         # were not inserted because of a conflict. This is why we use the actual count of
         # titletags as count of tagged titles
         TitleTag.objects.bulk_create(to_insert, ignore_conflicts=True)
         stats['tagged_titles'] = self.titletag_set.count()
+        if progress_monitor:
+            # report the rest of the progress
+            progress_monitor(stats['row_count'], rows_total)
         self.postflight = {'stats': stats}
         self.state = TaggingBatchState.IMPORTED
         self.save()
 
-    def unassign_tag(self) -> None:
+    def unassign_tag(self, progress_monitor: Optional[Callable[[int, int], None]] = None,) -> None:
         """
         Remove all the TitleTags created by this batch
+        :param progress_monitor: callback to report progress, should send (current, total) ints
         """
         if self.state != TaggingBatchState.UNDOING:
             raise ValueError(f'Cannot un-assign tag for batch in state "{self.state}"')
         if not self.tag.can_user_assign(self.last_updated_by):
-            raise PermissionDenied(f'User cannot un-assing tag #{self.tag_id}')
+            raise PermissionDenied(f'User cannot assing tag #{self.tag_id}')
+        # we report progress just to be compatible with the other operations, but the way
+        # we do it, the operation is almost immediate
+        rows_total = self.titletag_set.count()
+        if progress_monitor:
+            # report start
+            progress_monitor(0, rows_total)
         self.titletag_set.all().delete()
+        if progress_monitor:
+            progress_monitor(rows_total, rows_total)
 
     def create_annotated_file_name(self) -> str:
         if not self.source_file:

@@ -1,27 +1,26 @@
 import pytest
+from celus_nigiri.counter5 import CounterRecord
 from django.core.management import call_command
 from django.utils.timezone import now
 
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch
 from logs.logic.materialized_reports import (
-    sync_materialized_reports,
     materialized_import_batch_queryset,
+    sync_materialized_reports,
 )
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import (
-    ImportBatch,
     AccessLog,
-    ReportMaterializationSpec,
-    ReportInterestMetric,
-    Metric,
     InterestGroup,
+    Metric,
+    ReportInterestMetric,
+    ReportMaterializationSpec,
+    ReportType,
 )
-from logs.models import ReportType
-from celus_nigiri.counter5 import CounterRecord
-from publications.models import Platform, PlatformInterestReport
-from organizations.tests.conftest import organizations
-from publications.tests.conftest import platform
+from organizations.tests.conftest import organizations  # noqa - fixture
+from publications.models import PlatformInterestReport
+from publications.tests.conftest import platform  # noqa - fixture
 
 
 @pytest.mark.django_db()

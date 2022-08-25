@@ -132,7 +132,7 @@ en:
         :tag="editedTag"
         @close="showEditDialog = false"
         @saved="onSave()"
-        ref="tag_edit_widget"
+        ref="tagEditWidget"
       />
     </v-dialog>
     <v-dialog v-model="showClassEditDialog" max-width="720px">
@@ -262,8 +262,8 @@ export default {
     },
     editTag(tag) {
       this.editedTag = tag;
-      if (this.$refs.tag_edit_widget) {
-        this.$refs.tag_edit_widget.reload();
+      if (this.$refs.tagEditWidget) {
+        this.$refs.tagEditWidget.reload();
       }
       this.showEditDialog = true;
     },

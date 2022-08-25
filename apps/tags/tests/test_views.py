@@ -28,6 +28,16 @@ class TestTagViews:
         assert resp.status_code == 200
         assert len(resp.json()) == 6, 'everybody + self owned'
 
+    def test_tag_list_with_pk_filter(self, clients, users):
+        user = users['user1']
+        t1 = TagFactory.create(can_see=AccessibleBy.EVERYBODY)
+        t2 = TagFactory.create(can_see=AccessibleBy.OWNER, owner=user)
+        t3 = TagFactory.create(can_see=AccessibleBy.OWNER, owner=users['user2'])
+        resp = clients['user1'].get(reverse('tag-list'), {'pks': f'{t1.pk},{t3.pk}'})
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1, 'only t1 - t2 is filtered out by pk, t3 is not visible'
+        assert resp.json()[0]['pk'] == t1.pk
+
     @pytest.mark.parametrize(
         ['scope', 'tag_count'],
         [(TagScope.TITLE, 8), (TagScope.ORGANIZATION, 4), (TagScope.PLATFORM, 2)],
@@ -470,6 +480,18 @@ class TestTagClassViews:
         resp = clients['user1'].get(reverse('tag-class-list'))
         assert resp.status_code == 200
         assert len(resp.json()) == 6, 'everybody + self owned'
+
+    @pytest.mark.parametrize(
+        ['scope', 'count'],
+        [(TagScope.ORGANIZATION, 2), (TagScope.PLATFORM, 4), (TagScope.TITLE, 8)],
+    )
+    def test_tag_class_list_with_scope_filter(self, clients, users, scope, count):
+        TagClassFactory.create_batch(2, scope=TagScope.ORGANIZATION)
+        TagClassFactory.create_batch(4, scope=TagScope.PLATFORM)
+        TagClassFactory.create_batch(8, scope=TagScope.TITLE)
+        resp = clients['user1'].get(reverse('tag-class-list'), {'scope': scope})
+        assert resp.status_code == 200
+        assert len(resp.json()) == count
 
     def test_tag_class_list_user_access_attrs(self, clients, users):
         """

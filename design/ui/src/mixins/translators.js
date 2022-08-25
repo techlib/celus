@@ -11,6 +11,7 @@ export default {
         target: new IdTranslation("/api/title/"),
         report_type: new IdTranslation("/api/report-type/"),
         explicitDimension: explicitDimensionTranslator,
+        tag: new IdTranslation("/api/tags/tag/"),
         dim1: null,
         dim2: null,
         dim3: null,

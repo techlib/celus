@@ -20,6 +20,7 @@ from django.db.models.functions import Coalesce, Concat
 
 from core.logic.dates import parse_month, month_end, date_range_from_params
 from core.logic.serialization import parse_b64json
+from core.logic.type_conversion import to_bool
 from logs.logic.queries import logger, find_best_materialized_view
 from logs.logic.reporting.filters import (
     DimensionFilter,
@@ -31,12 +32,13 @@ from logs.logic.reporting.filters import (
 from logs.models import AccessLog, DimensionText, ReportType
 from organizations.logic.queries import extend_query_filter
 from organizations.models import Organization
+from tags.models import Tag, TagClass, TagScope
 
 
 class FlexibleDataSlicer:
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'report_type']
 
-    def __init__(self, primary_dimension):
+    def __init__(self, primary_dimension, tag_roll_up=False, include_all_zero_rows=False):
         self.primary_dimension = primary_dimension
         self.dimension_filters: List[DimensionFilter] = []
         self.group_by = []
@@ -44,7 +46,10 @@ class FlexibleDataSlicer:
         self.split_by = []
         self._annotations = []
         self.organization_filter = None
-        self.include_all_zero_rows = False
+        self.include_all_zero_rows = include_all_zero_rows
+        self.tag_roll_up = tag_roll_up
+        self.tag_filter: Optional[Q] = None
+        self.tag_class: Optional[int] = None
 
     def config(self):
         return {
@@ -54,6 +59,8 @@ class FlexibleDataSlicer:
             "order_by": self.order_by,
             "zero_rows": self.include_all_zero_rows,
             "split_by": self.split_by,
+            "tag_roll_up": self.tag_roll_up,
+            "tag_class": self.tag_class,
         }
 
     @property
@@ -142,12 +149,33 @@ class FlexibleDataSlicer:
 
         field, modifier = AccessLog.get_dimension_field(self.primary_dimension)
         if isinstance(field, ForeignKey):
-            if self.include_all_zero_rows or self.primary_dimension in [
+            primary_cls = field.remote_field.model
+            if self.tag_roll_up:
+                # we will be summing up by tag, so the query is a bit different
+                # (slightly similar to mapped primary dimension)
+                tag_scope = TagClass.tag_scope_from_target_class(primary_cls)
+                target_attr = Tag.target_attr_from_scope(tag_scope)
+                tag_filters = [self.tag_filter] if self.tag_filter else []
+                if self.tag_class:
+                    tag_filters.append(Q(tag_class_id=self.tag_class))
+                qs = (
+                    Tag.objects.filter(tag_class__scope=tag_scope, *tag_filters)
+                    .annotate(
+                        relevant_accesslogs=FilteredRelation(
+                            f'{target_attr}__accesslog',
+                            condition=Q(
+                                **extend_query_filter(filters, f'{target_attr}__accesslog__')
+                            ),
+                        )
+                    )
+                    .values('pk')
+                    .annotate(**self._prepare_annotations())
+                )
+            elif self.include_all_zero_rows or self.primary_dimension in [
                 ob.lstrip('-') for ob in self.order_by
             ]:
                 # we need to put the primary dimension model into play because zero usage is
                 # requested, or we are sorting by the primary dimension
-                primary_cls = field.remote_field.model
                 qs = primary_cls.objects.all()
                 if primary_cls is Organization and self.organization_filter is not None:
                     qs = qs.filter(pk__in=self.organization_filter)
@@ -370,6 +398,9 @@ class FlexibleDataSlicer:
             prefix = '-' if ob.startswith('-') else ''
             ob = ob.lstrip('-')
             dealt_with = False
+            if ob == 'tag' and self.tag_roll_up:
+                dealt_with = True
+                obs.append(prefix + 'name')
             if ob.startswith('dim'):
                 # when sorting by dimX we need to map the IDs to the corresponding texts
                 # because the mapping does not use a Foreign key relationship, we use a subquery
@@ -489,8 +520,7 @@ class FlexibleDataSlicer:
         Takes the parameters as they would be obtained from the API and creates a new slicer
         instance based on those.
         """
-        primary_dimension = params.get('primary_dimension')
-        if not primary_dimension:
+        if not (primary_dimension := params.get('primary_dimension')):
             raise SlicerConfigError(
                 '"primary_dimension" key must be present', SlicerConfigErrorCode.E104
             )
@@ -511,12 +541,13 @@ class FlexibleDataSlicer:
         for split in splits:
             slicer.add_split_by(split)
         # ordering
-        order_by = params.get('order_by')
-        if order_by:
+        if order_by := params.get('order_by'):
             slicer.order_by = [order_by]
         # extra stuff
         # the zero_rows value should be recoded to python bool, but we want to make sure
-        slicer.include_all_zero_rows = params.get('zero_rows', '') in (True, 'true', '1', 1)
+        slicer.include_all_zero_rows = to_bool(params.get('zero_rows', ''))
+        slicer.tag_roll_up = to_bool(params.get('tag_roll_up', ''))
+        slicer.tag_class = params.get('tag_class')
         return slicer
 
     @classmethod
@@ -534,11 +565,14 @@ class FlexibleDataSlicer:
         filters = params.get('filters', [])
         for fltr in filters:
             dim = fltr['dimension']
-            filter_class = cls.filter_class(dim)
-            if filter_class is DateDimensionFilter:
-                dim_filter = filter_class(dim, fltr['start'], fltr['end'])
+            if 'tag_ids' in fltr:
+                dim_filter = TagDimensionFilter(dim, fltr['tag_ids'])
             else:
-                dim_filter = filter_class(dim, fltr['values'])
+                filter_class = cls.filter_class(dim)
+                if filter_class is DateDimensionFilter:
+                    dim_filter = filter_class(dim, fltr['start'], fltr['end'])
+                else:
+                    dim_filter = filter_class(dim, fltr['values'])
             slicer.add_filter(dim_filter)
         # groups
         slicer.group_by = params.get('group_by', [])
@@ -548,6 +582,8 @@ class FlexibleDataSlicer:
         slicer.order_by = params.get('order_by', [])
         # extra stuff
         slicer.include_all_zero_rows = params.get('zero_rows', False)
+        slicer.tag_roll_up = params.get('tag_roll_up', False)
+        slicer.tag_class = params.get('tag_class')
         return slicer
 
     def filter_to_str(self, fltr):
@@ -565,6 +601,8 @@ class FlexibleDataSlicer:
         elif isinstance(fltr, DateDimensionFilter):
             field, _modifier = AccessLog.get_dimension_field(fltr.dimension)
             return f'{field.verbose_name}: {fltr.value_str}'
+        elif isinstance(fltr, TagDimensionFilter):
+            return f'{fltr.dimension}: {fltr.value_str}'
         raise NotImplementedError(f'Unsupported filter class: {fltr.__class__.__name__}')
 
 

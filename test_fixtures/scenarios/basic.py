@@ -1,14 +1,3 @@
-"""
-Users:
-    TODO description
-
-Organizations:
-    TODO description
-
-Platforms:
-    TODO description
-
-"""
 from datetime import timedelta
 
 import pytest
@@ -534,20 +523,21 @@ def client_by_user_type(
 
 
 __all__ = [
-    'platforms',
-    'report_types',
+    'basic1',
+    'client_by_user_type',
+    'clients',
     'counter_report_types',
-    'harvests',
-    'schedulers',
     'credentials',
+    'data_sources',
+    'harvests',
+    'identities',
     'import_batches',
     'interests',
-    'basic1',
-    'clients',
-    'metrics',
     'make_client',
-    'identities',
-    'data_sources',
+    'metrics',
     'organizations',
+    'platforms',
+    'report_types',
+    'schedulers',
     'users',
 ]

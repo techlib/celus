@@ -34,8 +34,11 @@ class TestBatchTagging:
     def test_tagging_batch_preflight(self, inmemory_media):
         TitleFactory.create(isbn='9780787960186')
         TitleFactory.create(issn='1234-5678')
-        tb = TaggingBatchFactory.create(source_file=plain_test_file)
+        tb = TaggingBatchFactory.create(
+            source_file=plain_test_file, state=TaggingBatchState.PREPROCESSING
+        )
         tb.do_preflight()
+        assert tb.state == TaggingBatchState.PREFLIGHT
         assert tb.preflight != {}
         assert tb.preflight['stats'] == {'row_count': 6, 'no_match': 3, 'unique_matched_titles': 2}
         assert tb.preflight['explicit_tags'] is False
@@ -193,12 +196,52 @@ class TestBatchTaggingAPI:
             'tags.views.tagging_batch_preflight_task'
         ) as preflight_task:
             resp = clients['admin1'].post(reverse('tagging-batch-list'), {'source_file': infile})
-            preflight_task.delay.assert_called(), 'preflight should be started on batch creation'
-            preflight_task.delay.assert_called_with(resp.json()['pk'], 'http://testserver/')
+            assert (
+                not preflight_task.delay.called
+            ), 'preflight should not be started on batch creation'
+            assert (
+                not preflight_task.apply_async.called
+            ), 'preflight should not be started on batch creation'
         assert resp.status_code == 201
         tb = TaggingBatch.objects.get()
         assert resp.json()['pk'] == tb.pk
         assert tb.last_updated_by == users['admin1']
+
+    @pytest.mark.parametrize(
+        ['existing_tb', 'tb_state', 'status_code'],
+        [
+            (True, TaggingBatchState.INITIAL, 202),
+            (True, TaggingBatchState.PREPROCESSING, 400),
+            (True, TaggingBatchState.PREFLIGHT, 400),
+            (True, TaggingBatchState.PREFAILED, 400),
+            (False, TaggingBatchState.INITIAL, 404),
+        ],
+    )
+    def test_tagging_batch_preflight(
+        self, inmemory_media, clients, users, existing_tb, tb_state, status_code
+    ):
+        # prepare the batch
+        TitleFactory.create(isbn='9780787960186')
+        TitleFactory.create(issn='1234-5678')
+        tb = TaggingBatchFactory.create(
+            source_file=plain_test_file, last_updated_by=users['admin1']
+        )
+        tb.state = tb_state
+        tb.save()
+        with patch('tags.views.tagging_batch_preflight_task') as preflight_task:
+            preflight_task.apply_async.return_value = MockTask()
+            resp = clients['admin1'].post(
+                reverse('tagging-batch-preflight', args=[tb.pk if existing_tb else tb.pk + 1])
+            )
+            assert resp.status_code == status_code
+            if status_code == 202:
+                assert preflight_task.apply_async.called, 'the tagging task should be started'
+                tb.refresh_from_db()
+                assert tb.state == TaggingBatchState.PREPROCESSING
+            else:
+                assert (
+                    not preflight_task.apply_async.called
+                ), 'the tagging task should not be started'
 
     @pytest.mark.parametrize(
         ['existing_tb', 'existing_tag', 'tb_state', 'status_code'],
@@ -324,11 +367,11 @@ class TestBatchTaggingAPI:
 class TestTasks:
     @pytest.mark.parametrize(
         ['state', 'is_processed'],
-        [(TaggingBatchState.INITIAL, True),]
+        [(TaggingBatchState.PREPROCESSING, True),]
         + [
             (state, False)
             for state in TaggingBatchState.values
-            if state != TaggingBatchState.INITIAL
+            if state != TaggingBatchState.PREPROCESSING
         ],
     )
     def test_tagging_batch_preflight_task(self, inmemory_media, users, state, is_processed):
@@ -394,6 +437,6 @@ class TestTasks:
                 ), 'the preflight task should not be called'
         tb.refresh_from_db()
         if is_undone:
-            assert tb.state == TaggingBatchState.INITIAL
+            assert tb.state == TaggingBatchState.PREPROCESSING
         else:
             assert tb.state == state

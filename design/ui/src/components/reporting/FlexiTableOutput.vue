@@ -73,6 +73,10 @@ cs:
           dense
         />
       </template>
+
+      <template #item.tag="{ item }">
+        <TagChip :tag="item.tag" show-class small />
+      </template>
     </v-data-table>
     <div v-else-if="errorCode">
       <v-card>
@@ -105,10 +109,11 @@ import { djangoToDataTableOrderBy } from "@/libs/sorting";
 import { isEqual } from "lodash";
 import { toBase64JSON } from "@/libs/serialization";
 import cancellation from "@/mixins/cancellation";
+import TagChip from "@/components/tags/TagChip";
 
 export default {
   name: "FlexiTableOutput",
-
+  components: { TagChip },
   mixins: [translators, cancellation],
 
   props: {
@@ -168,8 +173,8 @@ export default {
         }));
         let ret = [
           {
-            text: this.report.primaryDimension.getName(this.$i18n),
-            value: this.report.primaryDimension.ref,
+            text: this.report.effectivePrimaryDimension.getName(this.$i18n),
+            value: this.report.effectivePrimaryDimension.ref,
             sortable: !this.readonly,
           },
           ...titleHeaders,
@@ -180,7 +185,7 @@ export default {
       return [];
     },
     row() {
-      return this.report.primaryDimension.ref;
+      return this.report.effectivePrimaryDimension.ref;
     },
     dataUrl() {
       return "/api/flexible-slicer/";
@@ -357,18 +362,27 @@ export default {
       this.cleanData = this.data.map((item) => {
         let newItem = { ...item };
         if (this.translators[this.row]) {
-          newItem[this.row] =
-            this.translators[this.row].translateKeyToString(
-              newItem.pk ?? newItem[this.row],
-              this.$i18n.locale
-            ) ?? this.$t("blank_value");
-          if (this.row === "target") {
-            // extra data for titles
-            let obj = this.translators[this.row].translateKey(newItem.pk);
-            if (obj) {
-              Object.keys(this.titleColumns).forEach((key) => {
-                newItem["target__" + key] = obj[key];
-              });
+          if (this.row === "tag") {
+            // for tags, we translate to whole objects in order to be able
+            // to display the tag chip
+            newItem[this.row] =
+              this.translators[this.row].translateKey(
+                newItem.pk ?? newItem[this.row]
+              ) ?? null;
+          } else {
+            newItem[this.row] =
+              this.translators[this.row].translateKeyToString(
+                newItem.pk ?? newItem[this.row],
+                this.$i18n.locale
+              ) ?? this.$t("blank_value");
+            if (this.row === "target") {
+              // extra data for titles
+              let obj = this.translators[this.row].translateKey(newItem.pk);
+              if (obj) {
+                Object.keys(this.titleColumns).forEach((key) => {
+                  newItem["target__" + key] = obj[key];
+                });
+              }
             }
           }
         }

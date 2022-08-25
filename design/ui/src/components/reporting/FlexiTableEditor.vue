@@ -21,6 +21,8 @@ en:
   title_tags_tt: |
     Tags are used to simplify filtering of titles. You can add tags to individual titles on their corresponding pages
     or in one batch by uploading a title list.
+  tag_class_filter: Limit returned tags by tag class
+  no_tag_class_filter: Allow all tag classes
 
 cs:
   run_report: Spustit report
@@ -42,6 +44,8 @@ cs:
   title_tags_tt: |
     Pro zjednodušení filtrování titulů jsou použity štítky. Můžete je k titulům přidávat na stránce daného titulu nebo
     nahrát celý titulový seznam ze souboru.
+  tag_class_filter: Omezit štítky na vybraný typ
+  no_tag_class_filter: Použít všchny typy štítků
 </i18n>
 
 <template>
@@ -223,13 +227,33 @@ cs:
           </v-col>
         </v-row>
 
-        <v-row v-if="filters.length">
+        <v-row v-if="filters.length || tagRollUpPossible">
           <v-col>
             <v-card>
               <v-card-title>{{ $t("labels.filter_settings") }}</v-card-title>
               <v-card-text>
                 <v-container fluid>
-                  <v-row>
+                  <v-row align="start">
+                    <v-col v-if="tagRollUpPossible" cols="12" md="6" xl="4">
+                      <v-checkbox
+                        v-model="tagRollUp"
+                        :label="$t('labels.tag_roll_up')"
+                        dense
+                        hide-details
+                        class="mt-1"
+                        :disabled="!reportTypeSelected || readOnly"
+                      >
+                      </v-checkbox>
+                      <TagClassSelector
+                        v-if="tagRollUp"
+                        :scope="tagScope"
+                        v-model="selectedTagClass"
+                        :label="$t('tag_class_filter')"
+                        :placeholder="$t('no_tag_class_filter')"
+                        clearable
+                        class="ps-8 pt-4 pe-8"
+                      />
+                    </v-col>
                     <v-col
                       cols="12"
                       md="6"
@@ -277,6 +301,7 @@ cs:
                         :label="$t('title_tags')"
                         :tooltip="$t('title_tags_tt')"
                         scope="title"
+                        dont-check-exclusive
                       />
                     </v-col>
 
@@ -480,6 +505,7 @@ import { parseDateTime, ymDateFormat } from "@/libs/dates";
 import cancellation from "@/mixins/cancellation";
 import { toBase64JSON } from "@/libs/serialization";
 import TagSelector from "@/components/tags/TagSelector";
+import TagClassSelector from "@/components/tags/TagClassSelector";
 
 export default {
   name: "FlexiTableEditor",
@@ -493,6 +519,7 @@ export default {
   ],
 
   components: {
+    TagClassSelector,
     TagSelector,
     AccessLevelSelector,
     ReportLoadingWidget,
@@ -522,6 +549,8 @@ export default {
       selectedDateRange: { start: null, end: null },
       selectedDimValues: [],
       selectedTitleTags: [],
+      selectedTagClass: null,
+      tagRollUp: false,
       formValid: false,
       headerFormValid: false,
       dateModifier: "__year",
@@ -682,6 +711,8 @@ export default {
       rt.owner = access.owner ?? null;
       rt.ownerOrganization = access.owner_organization ?? null;
       rt.includeZeroRows = this.showZeroRows;
+      rt.tagRollUp = this.tagRollUp;
+      rt.tagClass = this.selectedTagClass?.pk;
       return rt;
     },
     canEdit() {
@@ -691,6 +722,20 @@ export default {
     },
     accessLevel() {
       return this.owner ? "user" : this.ownerOrganization ? "org" : "sys";
+    },
+    tagRollUpPossible() {
+      return (
+        this.enableTags &&
+        ["target", "platform", "organization"].includes(this.row)
+      );
+    },
+    tagScope() {
+      if (this.row === "target") {
+        return "title";
+      } else {
+        // the name is the same as the name of the row dimension
+        return this.row;
+      }
     },
   },
 
@@ -861,6 +906,9 @@ export default {
               end: end ? ymDateFormat(end) : null,
             };
             this.filters.push(filter.dimension);
+          } else if (filter.tag_ids && filter.dimension === "target") {
+            this.selectedTitleTags = filter.tag_ids;
+            this.filters.push(filter.dimension);
           } else {
             console.warn(`Unrecognized filter "${filter.dimension}"`);
           }
@@ -878,6 +926,8 @@ export default {
         this.splitBy = null;
       }
       this.showZeroRows = config.zero_rows ?? false;
+      this.tagRollUp = config.tag_roll_up ?? false;
+      this.selectedTagClass = config.tag_class ?? null;
       this.reportName = settings.name;
       this.reportPk = settings.pk;
       this.owner = settings.owner;
@@ -926,6 +976,9 @@ export default {
   watch: {
     row() {
       this.columns = this.columns.filter((dim) => dim !== this.row);
+      // empty the tag class on row change to prevent unrelated class
+      // from being used in filter
+      this.selectedTagClass = null;
     },
     splitBy() {
       this.columns = this.columns.filter((dim) => dim !== this.splitBy);

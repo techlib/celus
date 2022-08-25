@@ -14,13 +14,7 @@
       expand-icon="fa fa-caret-down"
     >
       <template #top>
-        <v-btn
-          color="primary"
-          @click="
-            showDialog = true;
-            selectedBatch = null;
-          "
-        >
+        <v-btn color="primary" @click="uploadNew()">
           <v-icon small class="pr-2">fa fa-upload</v-icon>
           {{ $t("tagging.create_new_title_list") }}
         </v-btn>
@@ -71,15 +65,7 @@
       <template #item.actions="{ item }">
         <v-tooltip bottom>
           <template #activator="{ on }">
-            <v-btn
-              @click="
-                selectedBatch = item;
-                showDialog = true;
-              "
-              icon
-              small
-              v-on="on"
-            >
+            <v-btn @click="openBatch(item)" icon small v-on="on">
               <v-icon small>fa fa-edit</v-icon>
             </v-btn>
           </template>
@@ -108,6 +94,7 @@
       <TaggingBatchProcessingWidget
         :batch="selectedBatch"
         @close="hideDialog"
+        ref="processingWidget"
       />
     </v-dialog>
   </div>
@@ -213,10 +200,34 @@ export default {
         }
       }
     },
+    uploadNew() {
+      this.selectedBatch = null;
+      this.showDialog = true;
+      if (this.$refs.processingWidget) {
+        this.$refs.processingWidget.cleanup();
+      }
+    },
+    openBatch(item) {
+      if (this.$refs.processingWidget) {
+        this.$refs.processingWidget.cleanup();
+      }
+      this.selectedBatch = item;
+      this.showDialog = true;
+    },
   },
 
   mounted() {
     this.fetchTaggingBatches();
+  },
+
+  watch: {
+    showDialog(newValue) {
+      if (!newValue) {
+        if (this.$refs.processingWidget) {
+          this.$refs.processingWidget.cleanup();
+        }
+      }
+    },
   },
 };
 </script>

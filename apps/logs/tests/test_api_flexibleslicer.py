@@ -6,7 +6,7 @@ from organizations.models import UserOrganization
 from tags.logic.fake_data import TagFactory
 from tags.models import TagScope
 
-from test_fixtures.scenarios.basic import users  # noqa
+from test_fixtures.scenarios.basic import users, clients, identities  # noqa
 
 
 @pytest.mark.django_db
@@ -154,3 +154,74 @@ class TestSlicerAPI:
         data = resp.json()
         assert data['count'] == 2
         assert len(data['values']) == 2
+
+    @pytest.mark.parametrize('show_zero', [True, False])
+    def test_parts_api_with_tag_roll_up(
+        self, flexible_slicer_test_data_with_tags, clients, show_zero
+    ):
+        """
+        Test that tag_roll_up is properly applied to the data. Also checks that only visible
+        tags are returned.
+        """
+        resp = clients['su'].get(
+            reverse('flexible-slicer'),
+            {
+                'primary_dimension': 'target',
+                'groups': b64json(['metric']),
+                'tag_roll_up': 'true',
+                'zero_rows': str(show_zero).lower(),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == (2 if show_zero else 1)
+        tags = flexible_slicer_test_data_with_tags['tags']
+        assert [row['pk'] for row in data['results']] == (
+            [tags[0].pk, tags[2].pk] if show_zero else [tags[0].pk]
+        )
+
+    @pytest.mark.parametrize(['sort_desc'], [(True,), (False,)])
+    def test_parts_api_with_tag_roll_up_order_by_tag(
+        self, flexible_slicer_test_data_with_tags, clients, sort_desc
+    ):
+        """
+        Test that it is possible to sort by tag when tag_roll_up is used.
+        """
+        resp = clients['su'].get(
+            reverse('flexible-slicer'),
+            {
+                'primary_dimension': 'target',
+                'groups': b64json(['metric']),
+                'tag_roll_up': 'true',
+                'order_by': ('-' if sort_desc else '') + 'tag',
+                'zero_rows': 'true',
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == 2
+        if sort_desc:
+            assert data['results'][0]['pk'] == flexible_slicer_test_data_with_tags['tags'][2].pk
+        else:
+            assert data['results'][0]['pk'] == flexible_slicer_test_data_with_tags['tags'][0].pk
+
+    def test_parts_api_with_tag_roll_up_tag_class_filter(
+        self, flexible_slicer_test_data_with_tags, clients
+    ):
+        """
+        Test that tag_class filter works in the api when tag_roll_up is used.
+        """
+        resp = clients['su'].get(
+            reverse('flexible-slicer'),
+            {
+                'primary_dimension': 'target',
+                'groups': b64json(['metric']),
+                'tag_roll_up': 'true',
+                'zero_rows': 'true',
+                'tag_class': flexible_slicer_test_data_with_tags['tag_classes'][0].pk,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == 1
+        assert data['results'][0]['pk'] == flexible_slicer_test_data_with_tags['tags'][0].pk

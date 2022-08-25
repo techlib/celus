@@ -14,7 +14,22 @@
           :expanded.sync="expandedRows"
           sort-by="name"
           :loading="loading"
+          :search="search"
         >
+          <template #top>
+            <v-row>
+              <v-spacer></v-spacer>
+              <v-col cols="auto">
+                <v-text-field
+                  v-model="search"
+                  clearable
+                  clear-icon="fa-times"
+                  :label="$t('labels.search')"
+                  append-icon="fa-search"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </template>
           <template #item.actions="{ item }">
             <v-tooltip bottom>
               <template #activator="{ on }">
@@ -31,10 +46,19 @@
             </v-tooltip>
 
             <v-menu offset-y class="mb-3">
-              <template v-slot:activator="{ on }">
-                <v-btn icon color="blue lighten-2" v-on="on">
-                  <v-icon small>fa fa-download</v-icon>
-                </v-btn>
+              <template v-slot:activator="menu">
+                <v-tooltip bottom>
+                  <template #activator="tooltip">
+                    <v-btn
+                      icon
+                      color="blue lighten-2"
+                      v-on="{ ...menu.on, ...tooltip.on }"
+                    >
+                      <v-icon small>fa fa-download</v-icon>
+                    </v-btn>
+                  </template>
+                  {{ $t("export_tt") }}
+                </v-tooltip>
               </template>
               <v-list>
                 <v-list-item @click="runExport(item, 'xlsx')">
@@ -47,11 +71,6 @@
                 </v-list-item>
               </v-list>
             </v-menu>
-
-            <v-tooltip bottom>
-              <template #activator="{ on }"> </template>
-              {{ $t("export_tt") }}
-            </v-tooltip>
 
             <v-tooltip bottom>
               <template #activator="{ on }">
@@ -114,7 +133,7 @@
             </span>
           </template>
 
-          <template #item.name="{ item, value }">
+          <template #item.name="{ item }">
             <v-hover v-slot="{ hover }">
               <div class="d-flex high100">
                 <v-edit-dialog
@@ -137,6 +156,12 @@
 
           <template #item.primaryDimension.name="{ item }">
             {{ item.primaryDimension.getName($i18n) }}
+            <v-tooltip bottom>
+              <template #activator="{ on }">
+                <v-icon v-if="item.tagRollUp" x-small v-on="on">fa-tags</v-icon>
+              </template>
+              {{ $t("tag_roll_up_tt") }}
+            </v-tooltip>
           </template>
 
           <template #item.splitBy.name="{ item }">
@@ -174,11 +199,16 @@
                 <tr>
                   <th>{{ $t("labels.settings") }}:</th>
                   <td>
-                    {{
-                      item.includeZeroRows
-                        ? $t("show_zero_rows_yes")
-                        : $t("show_zero_rows_no")
-                    }}
+                    <ul class="no-bullets">
+                      <li>
+                        {{
+                          item.includeZeroRows
+                            ? $t("show_zero_rows_yes")
+                            : $t("show_zero_rows_no")
+                        }}
+                      </li>
+                      <li v-if="item.tagRollUp">{{ $t("tag_roll_up_tt") }}</li>
+                    </ul>
                   </td>
                 </tr>
               </table>
@@ -275,6 +305,7 @@ export default {
       editedName: "",
       copiedReport: null,
       loading: false,
+      search: "",
     };
   },
 

@@ -103,10 +103,13 @@ export default {
     },
     to() {
       if (this.link) {
-        if (this.tag.tag_class.scope === "title") {
-          return { name: "title-list", query: { tags: this.tag.pk } };
-        } else if (this.tag.tag_class.scope === "platform") {
-          return { name: "platform-list", query: { tags: this.tag.pk } };
+        switch (this.tag.tag_class.scope) {
+          case "title":
+            return { name: "title-list", query: { tags: this.tag.pk } };
+          case "organization":
+            return { name: "organization-list", query: { tags: this.tag.pk } };
+          case "platform":
+            return { name: "platform-list", query: { tags: this.tag.pk } };
         }
       }
       return null;

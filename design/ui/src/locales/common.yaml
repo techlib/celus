@@ -172,6 +172,7 @@ en:
     state: State
     source_file: Source file
     error: Error
+    tag_roll_up: Merge rows by tag
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -242,6 +243,7 @@ en:
     unassign_tag_tt: Unassign tag from all titles in the list
   tag_state:
     initial: Just uploaded
+    preprocessing: Preprocessing
     preflight: Ready for tagging
     prefailed: Preprocessing failed
     failed: Processing failed
@@ -423,6 +425,7 @@ cs:
     state: Stav
     source_file: Zdrojový soubor
     error: Chyba
+    tag_roll_up: Sloučit řádky podle štítků
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu
@@ -493,6 +496,7 @@ cs:
     unassign_tag_tt: Odstraní odpovídající štítky z nalezených titulů
   tag_state:
     initial: Právě nahráno
+    preprocessing: Probíhá předzpracování
     preflight: Připraveno k šťítkování
     prefailed: Předzpracování selhalo
     failed: Zpracování selhalo

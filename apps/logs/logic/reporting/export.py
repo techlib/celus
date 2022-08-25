@@ -24,6 +24,7 @@ from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import AccessLog, DimensionText, ReportType
 from mptt.models import MPTTModelBase
 from organizations.models import Organization
+from tags.models import Tag
 
 
 class FlexibleDataExporter(ABC):
@@ -61,10 +62,14 @@ class FlexibleDataExporter(ABC):
             self.prim_dim_remap = {}
         self._fields = []
 
+    @property
+    def effective_prim_dim(self) -> str:
+        if not self.slicer.tag_roll_up:
+            return self.slicer.primary_dimension
+        return 'tag'
+
     def remapped_keys(self):
-        return self.object_remapped_dims.get(self.slicer.primary_dimension, {}).get(
-            'columns', ['name']
-        )
+        return self.object_remapped_dims.get(self.effective_prim_dim, {}).get('columns', ['name'])
 
     def prepare_implicit_remap(self, qs: QuerySet) -> dict:
         # Fallback to name->short_name (e.g. for Metric)
@@ -207,6 +212,8 @@ class FlexibleDataExporter(ABC):
         """
         field, _modifier = AccessLog.get_dimension_field(ref)
         if isinstance(field, ForeignKey):
+            if ref == self.slicer.primary_dimension and self.slicer.tag_roll_up:
+                return False, True, Tag
             return False, True, field.remote_field.model
         elif ref.startswith('dim'):
             # we need the report types to deal with this

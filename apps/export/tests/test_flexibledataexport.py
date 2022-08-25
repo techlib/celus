@@ -4,9 +4,15 @@ from zipfile import ZipFile
 import pytest
 from export.enums import FileFormat
 from export.models import FlexibleDataExport
-from logs.logic.reporting.filters import ExplicitDimensionFilter, ForeignKeyDimensionFilter
+from logs.logic.reporting.filters import (
+    ExplicitDimensionFilter,
+    ForeignKeyDimensionFilter,
+    TagDimensionFilter,
+)
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import DimensionText
+from tags.logic.fake_data import TagClassFactory, TagForTitleFactory
+from tags.models import TagScope
 from test_fixtures.entities.logs import MetricFactory
 
 
@@ -37,6 +43,18 @@ def slicer2(flexible_slicer_test_data):
     slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
     slicer.add_group_by('platform')
     return slicer
+
+
+@pytest.fixture
+def tagged_titles(flexible_slicer_test_data, admin_user):
+    titles = flexible_slicer_test_data['targets']
+    tc = TagClassFactory.create(name='TC', scope=TagScope.TITLE)
+    tag1 = TagForTitleFactory(tag_class=tc, name='Tag 1')
+    tag1.tag(titles[0], admin_user)
+    tag1.tag(titles[1], admin_user)
+    tag2 = TagForTitleFactory(tag_class=tc, name='Tag 2')
+    tag2.tag(titles[2], admin_user)
+    return locals()
 
 
 @pytest.fixture
@@ -83,6 +101,43 @@ class TestFlexibleDataExport:
             'Metric 2,13590,17478,21366,13626,17514,21402',
             'Metric 3,14886,18774,22662,14922,18810,22698',
             'MS,0,0,0,0,0,0',
+        ]
+
+    def test_create_output_file_with_tag_rollup(
+        self, tagged_titles, flexible_slicer_test_data, admin_user, export_output
+    ):
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        report_type = flexible_slicer_test_data['report_types'][0]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        slicer.tag_roll_up = True
+        slicer.primary_dimension = 'target'
+        slicer.add_group_by('metric')
+
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        assert data.splitlines() == [
+            'Tag,Metric 1,Metric 2,Metric 3',
+            'Tag 1,96012,103788,111564',
+            'Tag 2,49950,53838,57726',
+        ]
+
+    def test_create_output_file_with_tag_filter(
+        self, tagged_titles, flexible_slicer_test_data, admin_user, export_output
+    ):
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        report_type = flexible_slicer_test_data['report_types'][0]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        slicer.add_filter(TagDimensionFilter('target', tagged_titles['tag1']))
+        slicer.primary_dimension = 'target'
+        slicer.add_group_by('metric')
+        t1, t2, _ = tagged_titles['titles']
+
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        assert data.splitlines() == [
+            'Title/Database,ISSN,EISSN,ISBN,Metric 1,Metric 2,Metric 3',
+            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},47358,51246,55134',
+            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},48654,52542,56430',
         ]
 
     def test_create_output_file_with_title(

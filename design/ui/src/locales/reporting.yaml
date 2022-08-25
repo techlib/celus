@@ -9,7 +9,7 @@ en:
     sys: Consortium
   run_report_tt: Show report output in table
   cancel_report_tt: Cancel report creation
-  export_tt: Export report into CSV
+  export_tt: Export report output to file
   view_report_tt: View report definition details
   edit_report_tt: Edit report definition
   copy_report_tt: Create copy of report
@@ -26,6 +26,7 @@ en:
   show_zero_rows: Include rows with zero usage
   show_zero_rows_no: Only rows with non-zero usage
   show_zero_rows_yes: Includes rows with zero usage
+  tag_roll_up_tt: Rows are merged by tag
   export_status:
     not_started: Not started
     in_progress: In progress
@@ -46,7 +47,7 @@ cs:
     sys: Konzorcium
   run_report_tt: Zobrazit výstup v tabulce
   cancel_report_tt: Zrušit tvorbu reportu
-  export_tt: Exportovat data do CSV
+  export_tt: Exportovat data do souboru
   view_report_tt: Zobrazení detailu definice reportu
   edit_report_tt: Úprava definice reportu
   copy_report_tt: Vytvoří kopii existujícího reportu
@@ -63,6 +64,7 @@ cs:
   show_zero_rows: Zahrnout i řádky s nulovým využitím
   show_zero_rows_no: Jen řádky s nenulovým využitím
   show_zero_rows_yes: Zahrnuje řádky s nulovým využitím
+  tag_roll_up_tt: Řádky jsou sloučeny podle štítku
   export_status:
     not_started: Nespuštěno
     in_progress: Probíhá export

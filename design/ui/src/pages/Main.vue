@@ -164,4 +164,9 @@ span.time {
   font-weight: 300;
   font-size: 87.5%;
 }
+
+ul.no-bullets {
+  list-style: none;
+  padding-left: 0;
+}
 </style>
