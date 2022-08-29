@@ -27,6 +27,7 @@ en:
     ad_hoc_report: Ad hoc report
     flexi_reports: Reports
     tags: Tags
+    organizations: Organizations
   menu: Menu
   organization: Organization
   platform: Platform
@@ -37,6 +38,7 @@ en:
   title_fields:
     id: ID
     name: Name
+    short_name: Short name
     type: Type
     isbn: ISBN
     issn: ISSN
@@ -239,6 +241,7 @@ cs:
     ad_hoc_report: Ad hoc report
     flexi_reports: Reporty
     tags: Štítky
+    organizations: Organizace
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -249,6 +252,7 @@ cs:
   title_fields:
     id: ID
     name: Název
+    short_name: Krátký název
     type: Typ
     isbn: ISBN
     issn: ISSN

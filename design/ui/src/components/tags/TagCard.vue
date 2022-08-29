@@ -1,7 +1,7 @@
 <i18n lang="yaml" src="../../locales/common.yaml"></i18n>
 
 <template>
-  <v-card>
+  <v-card :elevation="elevation">
     <v-card-title
       class="py-2"
       style="font-variant: small-caps; font-size: 82.5%"
@@ -67,6 +67,10 @@ export default {
     showClass: {
       default: false,
       type: Boolean,
+    },
+    elevation: {
+      default: 2,
+      type: Number,
     },
   },
 

@@ -126,6 +126,12 @@ export default {
               linkTo: "dashboard",
             },
             {
+              title: this.$i18n.t("pages.organizations"),
+              icon: "fa fa-university",
+              linkTo: "organization-list",
+              show: this.showManagementStuff,
+            },
+            {
               title: this.$i18n.t("pages.platforms"),
               icon: "far fa-list-alt",
               linkTo: "platform-list",

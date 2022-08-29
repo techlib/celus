@@ -61,6 +61,15 @@ export default new Router({
       component: () => import("../pages/PlatformListPage.vue"),
     },
     {
+      path: "/organizations/",
+      name: "organization-list",
+      component: () => import("../pages/OrganizationListPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
+    },
+    {
       path: "/titles/",
       name: "title-list",
       component: () => import("../pages/AllTitlesListPage.vue"),
