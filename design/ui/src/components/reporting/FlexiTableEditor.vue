@@ -639,8 +639,8 @@ export default {
       rt.orderBy = this.orderBy;
       rt.splitBy = this.splitBy ? rt.resolveDim(this.splitBy) : this.splitBy;
       let access = this.accessLevelParams;
-      rt.owner = access.owner;
-      rt.ownerOrganization = access.owner_organization;
+      rt.owner = access.owner ?? null;
+      rt.ownerOrganization = access.owner_organization ?? null;
       rt.includeZeroRows = this.showZeroRows;
       return rt;
     },
