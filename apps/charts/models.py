@@ -158,6 +158,11 @@ class ChartDefinition(models.Model):
         'This is useful to compare platforms for one title.',
     )
     scope = models.CharField(max_length=10, choices=SCOPE_CHOICES, default=SCOPE_ALL, blank=True)
+    is_generic = models.BooleanField(
+        default=False,
+        help_text='A generic chart will be used implicitly for reports which do not have a chart '
+        'explicitly assigned',
+    )
 
     def __str__(self):
         return self.name
@@ -168,7 +173,7 @@ class ReportViewToChartType(models.Model):
     report_data_view = models.ForeignKey(ReportDataView, on_delete=models.CASCADE)
     chart_definition = models.ForeignKey(ChartDefinition, on_delete=models.CASCADE)
     position = models.PositiveIntegerField(
-        default=0, help_text='Used to sort the chart types for ' 'a report view'
+        default=0, help_text='Used to sort the chart types for a report view'
     )
 
     class Meta:

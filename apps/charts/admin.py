@@ -41,6 +41,7 @@ class ChartDefinitionAdmin(TranslationAdmin):
     list_display = [
         'name',
         'desc',
+        'is_generic',
         'primary_dimension',
         'primary_implicit_dimension',
         'secondary_dimension',

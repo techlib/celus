@@ -1,21 +1,21 @@
-from unittest.mock import patch
-
 import pytest
+from django.urls import reverse
+
+from charts.logic.fake_data import ReportDataViewFactory, ChartDefinitionFactory
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
-from core.tests.conftest import (
+from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,
     master_admin_client,
     master_admin_identity,
     valid_identity,
 )
-from django.urls import reverse
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import import_counter_records
 from logs.models import AccessLog, ImportBatch, Metric, OrganizationPlatform
-from logs.tests.conftest import counter_records_0d, report_type_nd
-from organizations.tests.conftest import organizations
-from publications.models import Platform, Title
-from publications.tests.conftest import platform
+from logs.tests.conftest import counter_records_0d, report_type_nd  # noqa - fixture
+from organizations.tests.conftest import organizations  # noqa - fixture
+from publications.models import Title
+from publications.tests.conftest import platform  # noqa - fixture
 
 
 @pytest.fixture
@@ -132,6 +132,25 @@ class TestReportViewAPI:
         data = resp.json()
         assert [rec['position'] for rec in data] == [1, 2, 3]
 
+    def test_api_list_for_report_type_without_report_view(
+        self, report_type_nd, master_admin_client
+    ):
+        """
+        Tests that a on-the-fly created view will be returned if no explicit view is created
+        """
+        rt = report_type_nd(0)
+        resp = master_admin_client.get(reverse('report-type-to-report-data-view', args=(rt.pk,)))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        view = data[0]
+        assert view['pk'] == rt.pk
+        assert view['short_name'] == rt.short_name
+        assert view['name'] == rt.name
+        assert view['position'] == 1
+        assert view['is_proxy'] is True
+        assert view['is_standard_view'] is True
+
     @pytest.mark.clickhouse
     @pytest.mark.usefixtures('clickhouse_on_off')
     @pytest.mark.django_db(transaction=True)
@@ -241,6 +260,33 @@ class TestChartsAPI:
         data = resp.json()
         assert len(data) == 2
         assert {rec['pk'] for rec in data} == {ch.pk for ch in charts}
+
+    @pytest.mark.parametrize('empty_view_id', [True, False])
+    def test_api_report_data_view_list(self, master_admin_client, empty_view_id):
+        """
+        Test that the endpoint listing charts for a report_view works as expected
+        """
+        rv = ReportDataViewFactory.create()
+        chart1, chart2 = ChartDefinitionFactory.create_batch(2)
+        chart3 = ChartDefinitionFactory.create(is_generic=True)
+        ReportViewToChartType.objects.create(
+            report_data_view=rv, chart_definition=chart1, position=1
+        )
+        ReportViewToChartType.objects.create(
+            report_data_view=rv, chart_definition=chart3, position=2
+        )
+
+        resp = master_admin_client.get(
+            reverse('report-data-view-chart-definitions', args=(-1 if empty_view_id else rv.pk,))
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        if empty_view_id:
+            assert len(data) == 1
+            assert {rec['pk'] for rec in data} == {chart3.pk}
+        else:
+            assert len(data) == 2
+            assert {rec['pk'] for rec in data} == {chart1.pk, chart3.pk}
 
 
 @pytest.mark.django_db

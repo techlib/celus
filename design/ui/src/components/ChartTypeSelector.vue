@@ -80,6 +80,10 @@ export default {
         return item;
       });
     },
+    chartsUrl() {
+      const rvid = this.reportType.is_proxy ? -1 : this.reportType.pk;
+      return `/api/report-data-view/${rvid}/chart-definitions/`;
+    },
   },
   methods: {
     ...mapActions({
@@ -88,9 +92,7 @@ export default {
     async loadChartTypes() {
       if (this.reportType !== null) {
         try {
-          let response = await axios.get(
-            `/api/report-data-view/${this.reportType.pk}/chart-definitions/`
-          );
+          let response = await axios.get(this.chartsUrl);
           this.chartTypes = response.data.filter(
             (item) => item.scope === "" || item.scope === this.scope
           );

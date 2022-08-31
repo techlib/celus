@@ -82,13 +82,14 @@ cs:
           :import-batch="importBatchId"
           :mdu-id="mduId"
           :stack="
-            this.selectedChartType.stack === undefined
-              ? this.selectedChartType.chart_type === 'h-bar'
-              : this.selectedChartType.stack
+            selectedChartType.stack === undefined
+              ? selectedChartType.chart_type === 'h-bar'
+              : selectedChartType.stack
           "
-          :order-by="this.selectedChartType.ordering"
+          :order-by="selectedChartType.ordering"
           :ignore-date-range="!!(importBatchId || mduId)"
           :show-mark-line="showMarkLine"
+          :raw-report-type="selectedReportView.is_proxy"
           ref="chart"
         >
         </APIChart>
@@ -252,6 +253,8 @@ export default {
             this.selectedReportView = toSelect
               ? toSelect
               : this.reportViewsForSelect[1];
+          } else {
+            this.selectedReportView = null;
           }
         } catch (error) {
           if (error.response?.status === 404) {

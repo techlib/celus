@@ -18,6 +18,7 @@ from charts.serializers import (
 from core.permissions import SuperuserOrAdminPermission
 from core.prometheus import report_access_time_summary, report_access_total_counter
 from logs.logic.queries import StatsComputer, TooMuchDataError, BadRequestError
+from logs.models import ReportType
 from logs.serializers import DimensionSerializer, MetricSerializer
 
 
@@ -35,7 +36,18 @@ class ReportTypeToReportDataViewView(APIView):
         rdvs = ReportDataView.objects.filter(base_report_type_id=report_type_pk).order_by(
             'position'
         )
-        return Response(ReportDataViewSerializer(rdvs, many=True).data)
+        serializer_class = self.get_serializer_class()
+        if rdvs.count():
+            return Response(serializer_class(rdvs, many=True).data)
+        else:
+            # if no data view is defined for the current report type, return a proxy based
+            # on the report_type itself
+            proxy_data_view = ReportType.objects.get(pk=report_type_pk)
+            data = serializer_class(proxy_data_view).data
+            data['position'] = 1
+            data['is_proxy'] = True
+            data['is_standard_view'] = True
+            return Response([data])
 
 
 class ReportDataViewChartDefinitions(APIView):
@@ -43,10 +55,13 @@ class ReportDataViewChartDefinitions(APIView):
         return ChartDefinitionSerializer
 
     def get(self, request, view_pk):
-        chd = ChartDefinition.objects.filter(
-            reportviewtocharttype__report_data_view_id=view_pk
-        ).order_by('reportviewtocharttype__position')
-        return Response(ChartDefinitionSerializer(chd, many=True).data)
+        if int(view_pk) == -1:
+            chd = ChartDefinition.objects.filter(is_generic=True)
+        else:
+            chd = ChartDefinition.objects.filter(
+                reportviewtocharttype__report_data_view_id=view_pk
+            ).order_by('reportviewtocharttype__position')
+        return Response(self.get_serializer_class()(chd, many=True).data)
 
 
 class ChartDataView(APIView):
