@@ -164,7 +164,7 @@ export default {
         );
         let titleHeaders = this.activeTitleColumns.map((key) => ({
           text: this.$t("title_fields." + key),
-          value: key,
+          value: "target__" + key,
         }));
         let ret = [
           {
@@ -367,7 +367,7 @@ export default {
             let obj = this.translators[this.row].translateKey(newItem.pk);
             if (obj) {
               Object.keys(this.titleColumns).forEach((key) => {
-                newItem[key] = obj[key];
+                newItem["target__" + key] = obj[key];
               });
             }
           }
