@@ -19,65 +19,89 @@ cs:
 </i18n>
 
 <template>
-  <div>
+  <div ref="base" v-resize="updateSize">
     <div v-if="loadingParts">
       <v-progress-linear indeterminate :height="24" class="mb-4">
         <span class="text-caption" v-text="$t('loading_parts')"></span>
       </v-progress-linear>
     </div>
-    <v-data-table
+
+    <div
       v-else-if="
         cleanData.length ||
         (loading && !errorCode) ||
         (report && report.splitBy && splitParts.length && currentPart)
       "
-      :items="cleanData"
-      :headers="tableHeaders"
-      item-key="pk"
-      :loading="loading"
-      dense
-      :footer-props="{ itemsPerPageOptions: [20, 50, 100] }"
-      :options.sync="options"
-      :server-items-length="totalRowCount"
     >
-      <template #loading>
-        <v-skeleton-loader type="paragraph@10" loading class="py-10 px-5" />
-      </template>
+      <!-- part selector -->
+      <div class="d-flex py-4 justify-space-between">
+        <div v-if="report.splitBy && splitParts.length">
+          <v-slide-group v-if="partsSideBySide" v-model="currentPart">
+            <v-slide-item
+              v-for="item in splitParts"
+              :key="item.id"
+              v-slot="{ active, toggle }"
+              :value="item.id"
+            >
+              <v-btn @click="toggle" :input-value="active" text outlined tile>{{
+                item.text
+              }}</v-btn>
+            </v-slide-item>
+          </v-slide-group>
+          <!-- if there are too many parts, use a select -->
+          <v-autocomplete
+            v-else
+            :items="splitParts"
+            v-model="currentPart"
+            :label="$tc('available_parts', splitParts.length)"
+            item-value="id"
+            outlined
+            dense
+          />
+        </div>
+        <div v-else></div>
 
-      <template #top v-if="report.splitBy && splitParts.length">
-        <v-slide-group
-          v-if="splitParts.length < 16"
-          v-model="currentPart"
-          class="py-4"
-        >
-          <v-slide-item
-            v-for="item in splitParts"
-            :key="item.id"
-            v-slot="{ active, toggle }"
-            :value="item.id"
-          >
-            <v-btn @click="toggle" :input-value="active" text outlined tile>{{
-              item.text
-            }}</v-btn>
-          </v-slide-item>
-        </v-slide-group>
-        <!-- if there are too many parts, use a select -->
-        <v-autocomplete
-          v-else
-          :items="splitParts"
-          v-model="currentPart"
-          :label="$tc('available_parts', splitParts.length)"
-          item-value="id"
-          class="py-4 ps-4"
-          outlined
-          dense
-        />
-      </template>
+        <div class="ps-4">
+          <v-btn-toggle v-model="view" dense>
+            <v-btn value="table"><v-icon small>fa-table</v-icon></v-btn>
+            <v-btn value="chart"><v-icon small>fa-chart-bar</v-icon></v-btn>
+          </v-btn-toggle>
+        </div>
+      </div>
 
-      <template #item.tag="{ item }">
-        <TagChip :tag="item.tag" show-class small />
-      </template>
-    </v-data-table>
+      <v-data-table
+        v-if="view === 'table'"
+        :items="formattedData"
+        :headers="tableHeaders"
+        item-key="pk"
+        :loading="loading"
+        dense
+        :footer-props="{ itemsPerPageOptions: [20, 50, 100] }"
+        :options.sync="options"
+        :server-items-length="totalRowCount"
+      >
+        <template #loading>
+          <v-skeleton-loader type="paragraph@10" loading class="py-10 px-5" />
+        </template>
+
+        <template #item.tag="{ item }">
+          <TagChip :tag="item.tag" show-class small />
+        </template>
+      </v-data-table>
+
+      <ReportingChart
+        v-else
+        :data="cleanData"
+        :primary-dimension="row"
+        :secondary-dimension="report.groupBy[0].ref"
+        :series="chartSeries"
+        :type="row.startsWith('date') ? 'histogram' : 'bar'"
+        :height="
+          (row.startsWith('date') ? 480 : 260 + cleanData.length * 20) + 'px'
+        "
+      />
+    </div>
+
     <div v-else-if="errorCode">
       <v-card>
         <v-card-title>
@@ -110,10 +134,11 @@ import { isEqual } from "lodash";
 import { toBase64JSON } from "@/libs/serialization";
 import cancellation from "@/mixins/cancellation";
 import TagChip from "@/components/tags/TagChip";
+import ReportingChart from "@/components/reporting/ReportingChart";
 
 export default {
   name: "FlexiTableOutput",
-  components: { TagChip },
+  components: { TagChip, ReportingChart },
   mixins: [translators, cancellation],
 
   props: {
@@ -145,6 +170,8 @@ export default {
       splitParts: [],
       currentPart: null,
       loadingParts: false,
+      view: "table",
+      baseWidth: 0,
     };
   },
 
@@ -202,6 +229,29 @@ export default {
         return this.$t(this.errorCode, this.errorDetails);
       }
       return "";
+    },
+    chartSeries() {
+      return Object.fromEntries(
+        this.headersFromData.map((item) => [item.value, item.text])
+      );
+    },
+    formattedData() {
+      return this.cleanData.map((item) => {
+        let newItem = { ...item };
+        for (let key of Object.keys(newItem)) {
+          if (key.substr(0, 4) === "grp-") {
+            newItem[key] = formatInteger(newItem[key]);
+          }
+        }
+        return newItem;
+      });
+    },
+    partsSideBySide() {
+      if (this.baseWidth && this.splitParts.length) {
+        const textWidth = this.splitParts.reduce((acc, item) => (acc + item.text.length), 0);
+        return this.baseWidth / textWidth > 12;
+      }
+      return false;
     },
   },
 
@@ -275,12 +325,13 @@ export default {
         }
         this.splitParts.sort((a, b) => a.text.localeCompare(b.text));
         if (
-          this.splitParts &&
+          this.splitParts.length &&
           (!this.currentPart ||
             !this.splitParts.find((item) => item.id === this.currentPart))
         )
           this.currentPart = this.splitParts[0].id;
       }
+      this.updateSize();
       this.loadingParts = false;
     },
     cancelReport() {
@@ -385,11 +436,8 @@ export default {
               }
             }
           }
-        }
-        for (let key of Object.keys(newItem)) {
-          if (key.substr(0, 4) === "grp-") {
-            newItem[key] = formatInteger(newItem[key]);
-          }
+        } else {
+          newItem[this.row] = newItem[this.row].toString();
         }
         return newItem;
       });
@@ -432,6 +480,9 @@ export default {
       let ob = djangoToDataTableOrderBy(report.orderBy);
       this.options.sortBy = ob.sortBy;
       this.options.sortDesc = ob.sortDesc;
+    },
+    updateSize() {
+      this.baseWidth = this.$refs.base.clientWidth;
     },
   },
 
