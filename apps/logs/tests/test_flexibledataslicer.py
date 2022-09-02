@@ -318,6 +318,32 @@ class TestFlexibleDataSlicerComputations:
         data = list(slicer.get_data())
         assert len(data) > 0
 
+    @pytest.mark.parametrize(
+        ['primary_dim', 'order_by', 'record_count'],
+        [("target", "target__issn", 3), ("target", "target__isbn", 3)],
+    )
+    def test_order_by_related_field(
+        self,
+        flexible_slicer_test_data,
+        primary_dim,
+        order_by,
+        record_count,
+        order_by_sign,
+        show_zero,
+    ):
+        """
+        Test ordering by fields related to the primary dimension.
+        We just want to test that it does not crash and returns the correct number of records
+        """
+        slicer = FlexibleDataSlicer(primary_dimension=primary_dim)
+        report_type = flexible_slicer_test_data['report_types'][1]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        slicer.add_group_by('metric')
+        slicer.include_all_zero_rows = show_zero
+        slicer.order_by = [order_by_sign + order_by]
+        data = list(slicer.get_data())
+        assert len(data) == record_count
+
     def test_platform_sum_by_metric_dim1_filter_dim1(self, flexible_slicer_test_data):
         """
         Primary dimension: platform
@@ -494,6 +520,21 @@ class TestFlexibleDataSlicerComputations:
             {'pk': 'Title 1', 'pl1': 342018, 'pl2': 408114},
             {'pk': 'Title 3', 'pl1': 356706, 'pl2': 422802},
         ]
+
+    def test_org_sum_by_metric_with_target_ordering(self, flexible_slicer_test_data):
+        """
+        Primary dimension: organization
+        Group by: metric
+        Sort by: target
+
+        Note: sorting by target is invalid in this context, we are testing mitigation of the error
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        slicer.add_group_by('metric')
+        slicer.include_all_zero_rows = False
+        slicer.order_by = ['target']
+        data = list(slicer.get_data())
+        assert len(data) == len(flexible_slicer_test_data['organizations'])
 
     @pytest.mark.parametrize('show_zero', [True, False])
     def test_group_by_title_tag(self, flexible_slicer_test_data_with_tags, show_zero):

@@ -50,6 +50,10 @@ class FlexibleDataSlicer:
         self.tag_roll_up = tag_roll_up
         self.tag_filter: Optional[Q] = None
         self.tag_class: Optional[int] = None
+        # if True, the query is run against the model described by the primary dimension
+        # for example Title and annotated with access log data
+        # if False, the query is done against the access log model
+        self._primary_dimension_query = False
 
     def config(self):
         return {
@@ -172,7 +176,7 @@ class FlexibleDataSlicer:
                     .annotate(**self._prepare_annotations())
                 )
             elif self.include_all_zero_rows or self.primary_dimension in [
-                ob.lstrip('-') for ob in self.order_by
+                ob.lstrip('-').split('__')[0] for ob in self.order_by
             ]:
                 # we need to put the primary dimension model into play because zero usage is
                 # requested, or we are sorting by the primary dimension
@@ -189,6 +193,7 @@ class FlexibleDataSlicer:
                     .values('pk')
                     .annotate(**self._prepare_annotations())
                 )
+                self._primary_dimension_query = True
             else:
                 # zero usage is not needed - we can just aggregate the accesslogs, which can be
                 # much faster
@@ -423,9 +428,24 @@ class FlexibleDataSlicer:
                     qs = qs.annotate(sort_name=Concat(F(f'name_{lang}'), F('short_name')))
                     obs.append(prefix + 'sort_name')
                 dealt_with = True
+            elif ob.startswith(self.primary_dimension):
+                if self._primary_dimension_query:
+                    # we are querying the related model, not accesslog, we need to process the
+                    # order by definition
+                    start, *rest, end = ob.split('__')
+                    obs.append(prefix + end)
+                else:
+                    # we do not validate this, so it could be a problem, but it would crash rather
+                    # than produce wrong results, so we leave it as is
+                    obs.append(prefix + ob)
+                dealt_with = True
             if not dealt_with:
-                obs.append(prefix + ob)
+                # this means that the order by is not consistent with the rest of the query
+                # it would be prudent to raise an error, but there are already existing data
+                # which have this problem, so we just ignore it and drop the ordering
+                logger.error('Dropping inconsistent order by "%s"', ob)
         qs = qs.order_by(*obs)
+        logger.debug('Query: %s', qs.query)
         return qs
 
     def resolve_explicit_dimension(self, dim_ref: str):

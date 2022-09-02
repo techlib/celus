@@ -144,7 +144,7 @@ cs:
               <v-card-title class="pt-2">{{ $t("labels.rows") }}</v-card-title>
               <v-card-text>
                 <v-radio-group
-                  v-model="row"
+                  v-model="watchedRow"
                   hide-details
                   class="mt-1"
                   :disabled="!reportTypeSelected || readOnly"
@@ -587,6 +587,19 @@ export default {
       dateRangeEnd: "dateRangeEndText",
       enableTags: "enableTags",
     }),
+    watchedRow: {
+      get() {
+        return this.row;
+      },
+      set(value) {
+        // here we can react to changes in the row that were done by the user
+        // not by the loading code, etc.
+        // BTW, this approach seems to be an interesting way to handle
+        // similar cases where the reactivity gets in the way during initialization
+        this.row = value;
+        this.orderBy = [];
+      },
+    },
     readOnly() {
       return !this.edit || !this.canEdit;
     },
