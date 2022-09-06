@@ -51,8 +51,10 @@ class SushiCredentialsViewSet(ModelViewSet):
         platform_id = self.request.query_params.get('platform')
         if platform_id:
             qs = qs.filter(platform_id=platform_id)
-        qs = qs.prefetch_related('counterreportstocredentials_set__counter_report').select_related(
-            'organization', 'platform', 'platform__source'
+        qs = (
+            qs.annotate_verified()
+            .prefetch_related('counterreportstocredentials_set__counter_report')
+            .select_related('organization', 'platform', 'platform__source')
         )
         # we add info about locked status for current user
         org_to_level = {}
@@ -70,10 +72,6 @@ class SushiCredentialsViewSet(ModelViewSet):
                 sc.can_lock = True
             else:
                 sc.can_lock = False
-
-        # Annotate whether credentials are verified
-        qs = qs.annotate_verified()
-
         return qs
 
     @method_decorator(create_revision())

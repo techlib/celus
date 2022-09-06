@@ -11,12 +11,12 @@ en:
   is_locked: These credentials are locked.
   is_unlocked: These credentials are not locked, you may edit them.
   cannot_edit: You cannot edit them.
-  can_edit: Because of your priviledges, you can still edit them.
+  can_edit: Because of your privileges, you can still edit them.
   can_lock: You may lock/unlock these credentials - click to do so.
   test_checked: Harvest
   test_checked_tooltip: Opens a dialog for one-off harvesting of data for all selected SUSHI credentials.
   test_dialog: Manual SUSHI harvesting
-  is_broken:
+  is_broken: |
     These credentials have been marked as broken because of harvesting failures.
     Automatic harvesting was postponed until the credentials are manually fixed.
   no_credentials_selected: No credentials selected
@@ -36,7 +36,7 @@ cs:
   test_checked: Stáhni
   test_checked_tooltip: Otevře dialog pro jednorázové stažení dat pro všechny vybrané přístupové údaje SUSHI.
   test_dialog: Manuální stahování SUSHI
-  is_broken:
+  is_broken: |
     Tyto přihlašovací údaje byly označeny jako nefunkční, kvůli neúspěchům při stahování. Automatické stahování
     bylo pozastaveno do doby než budou údaje ručně opraveny.
   no_credentials_selected: Nejsou vybrány žádné přihlašovací údaje

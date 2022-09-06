@@ -35,18 +35,18 @@ from test_fixtures.scenarios.basic import (
 class TestSushiCredentialsViewSet:
     @pytest.mark.parametrize('use_org_id', [(True,), (False,)])
     @pytest.mark.parametrize(
-        "user,can_list",
+        "user,can_list,can_lock",
         (
-            ("master_admin", True),
-            ("master_user", False),
-            ("admin1", False),
-            ("admin2", True),  # is admin of standalone
-            ("user1", False),
-            ("user2", False),  # user2 is part of standalone, but not an admin
+            ("master_admin", True, True),
+            ("master_user", False, False),
+            ("admin1", False, False),
+            ("admin2", True, False),  # is admin of standalone
+            ("user1", False, False),
+            ("user2", False, False),  # user2 is part of standalone, but not an admin
         ),
     )
     def test_list_permissions(
-        self, basic1, organizations, platforms, clients, user, can_list, use_org_id
+        self, basic1, organizations, platforms, clients, user, can_list, use_org_id, can_lock
     ):
         CredentialsFactory(
             organization=organizations["standalone"],
@@ -59,6 +59,7 @@ class TestSushiCredentialsViewSet:
         if can_list:
             assert resp.status_code == 200
             assert len(resp.json()) == 1
+            assert resp.json()[0]['can_lock'] == can_lock
         else:
             # there are actually two mechanisms how the access could be denied -
             # either the list is empty or 404 is returned. The latter is used when
