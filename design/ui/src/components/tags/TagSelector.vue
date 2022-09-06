@@ -7,6 +7,7 @@
     item-text="name"
     item-value="pk"
     :multiple="!singleTag"
+    :deletable-chips="!singleTag"
     :label="labelToShow"
     clearable
     clear-icon="fa-times"
@@ -28,7 +29,14 @@
     <template #selection="{ item }">
       <!-- tooltips on tags work strange in autocomplete and the whole tag
       sometimes disappears, so we disable the tooltip here -->
-      <TagChip :tag="item" small hide-icon hide-tooltip />
+      <TagChip
+        :tag="item"
+        small
+        hide-icon
+        hide-tooltip
+        removable
+        @remove="unselect(item.pk)"
+      />
     </template>
 
     <template #prepend v-if="tooltip">
@@ -127,6 +135,9 @@ export default {
       if (!reply.error) {
         this.tags = reply.response.data;
       }
+    },
+    unselect(itemId) {
+      this.selectedTags = this.selectedTags.filter((item) => item !== itemId);
     },
   },
 

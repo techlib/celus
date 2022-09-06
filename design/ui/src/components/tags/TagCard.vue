@@ -111,7 +111,7 @@ export default {
         this.loading = false;
       }
     },
-    async removeTag(tagId) {
+    async removeTag({ tagId }) {
       await this.http({
         url: `/api/tags/tag/${tagId}/${this.scope}/remove/`,
         method: "delete",

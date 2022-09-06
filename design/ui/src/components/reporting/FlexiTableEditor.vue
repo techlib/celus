@@ -21,6 +21,8 @@ en:
   title_tags_tt: |
     Tags are used to simplify filtering of titles. You can add tags to individual titles on their corresponding pages
     or in one batch by uploading a title list.
+  organization_tags: Tags for organization filtering
+  platform_tags: Tags for platform filtering
   tag_class_filter: Limit returned tags by tag class
   no_tag_class_filter: Allow all tag classes
 
@@ -44,6 +46,8 @@ cs:
   title_tags_tt: |
     Pro zjednodušení filtrování titulů jsou použity štítky. Můžete je k titulům přidávat na stránce daného titulu nebo
     nahrát celý titulový seznam ze souboru.
+  platform_tags: Štítky pro filtrování platforem
+  organization_tags: Štítky pro filtrování organizací
   tag_class_filter: Omezit štítky na vybraný typ
   no_tag_class_filter: Použít všchny typy štítků
 </i18n>
@@ -227,38 +231,50 @@ cs:
           </v-col>
         </v-row>
 
-        <v-row v-if="filters.length || tagRollUpPossible">
+        <v-row v-if="tagRollUpPossible">
+          <v-col>
+            <v-card class="pa-2">
+              <v-card-title class="pt-2 float-left">{{
+                $t("labels.tags")
+              }}</v-card-title>
+              <v-card-text class="pt-1">
+                <div class="d-flex">
+                  <v-checkbox
+                    v-model="tagRollUp"
+                    :label="$t('labels.tag_roll_up')"
+                    dense
+                    hide-details
+                    class="mt-1"
+                    :disabled="!reportTypeSelected || readOnly"
+                  >
+                  </v-checkbox>
+                  <TagClassSelector
+                    v-if="tagRollUp"
+                    :scope="tagScope"
+                    v-model="selectedTagClass"
+                    :label="$t('tag_class_filter')"
+                    :placeholder="$t('no_tag_class_filter')"
+                    clearable
+                    class="ps-8 pt-4 pe-8"
+                  />
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="filters.length">
           <v-col>
             <v-card>
               <v-card-title>{{ $t("labels.filter_settings") }}</v-card-title>
               <v-card-text>
                 <v-container fluid>
                   <v-row align="start">
-                    <v-col v-if="tagRollUpPossible" cols="12" md="6" xl="4">
-                      <v-checkbox
-                        v-model="tagRollUp"
-                        :label="$t('labels.tag_roll_up')"
-                        dense
-                        hide-details
-                        class="mt-1"
-                        :disabled="!reportTypeSelected || readOnly"
-                      >
-                      </v-checkbox>
-                      <TagClassSelector
-                        v-if="tagRollUp"
-                        :scope="tagScope"
-                        v-model="selectedTagClass"
-                        :label="$t('tag_class_filter')"
-                        :placeholder="$t('no_tag_class_filter')"
-                        clearable
-                        class="ps-8 pt-4 pe-8"
-                      />
-                    </v-col>
+                    <!-- organization -->
                     <v-col
                       cols="12"
                       md="6"
-                      xl="4"
-                      class="d-flex"
+                      xl="3"
                       v-if="filters.includes('organization')"
                     >
                       <DimensionKeySelector
@@ -274,8 +290,24 @@ cs:
                     <v-col
                       cols="12"
                       md="6"
-                      xl="4"
-                      class="d-flex"
+                      xl="3"
+                      v-if="filters.includes('organization')"
+                    >
+                      <TagSelector
+                        scope="organization"
+                        v-model="selectedOrganizationTags"
+                        :disabled="disableDimValuesSelectors"
+                        :read-only="readOnly"
+                        :label="$t('organization_tags')"
+                        dont-check-exclusive
+                      />
+                    </v-col>
+
+                    <!-- platform -->
+                    <v-col
+                      cols="12"
+                      md="6"
+                      xl="3"
                       v-if="filters.includes('platform')"
                     >
                       <DimensionKeySelector
@@ -286,6 +318,21 @@ cs:
                         :name="$t('labels.platform')"
                         :disabled="disableDimValuesSelectors"
                         :read-only="readOnly"
+                      />
+                    </v-col>
+                    <v-col
+                      cols="12"
+                      md="6"
+                      xl="3"
+                      v-if="filters.includes('platform')"
+                    >
+                      <TagSelector
+                        scope="platform"
+                        v-model="selectedPlatformTags"
+                        :disabled="disableDimValuesSelectors"
+                        :read-only="readOnly"
+                        :label="$t('platform_tags')"
+                        dont-check-exclusive
                       />
                     </v-col>
 
@@ -322,25 +369,27 @@ cs:
                         :read-only="readOnly"
                       />
                     </v-col>
-                    <v-col
-                      v-for="(ed, index) in explicitDims"
-                      :key="index"
-                      class="d-flex"
-                      cols="12"
-                      md="6"
-                      xl="4"
-                      v-if="filters.includes(`dim${index + 1}`)"
-                    >
-                      <DimensionKeySelector
-                        :query-url="selectorBaseUrl"
-                        v-model="selectedDimValues[index]"
-                        :dimension="`dim${index + 1}`"
-                        :name="ed.name"
-                        :translator="translators.explicitDimension"
-                        :disabled="disableDimValuesSelectors"
-                        :read-only="readOnly"
-                      />
-                    </v-col>
+
+                    <template v-for="(ed, index) in explicitDims">
+                      <v-col
+                        :key="index"
+                        class="d-flex"
+                        cols="12"
+                        md="6"
+                        xl="4"
+                        v-if="filters.includes(`dim${index + 1}`)"
+                      >
+                        <DimensionKeySelector
+                          :query-url="selectorBaseUrl"
+                          v-model="selectedDimValues[index]"
+                          :dimension="`dim${index + 1}`"
+                          :name="ed.name"
+                          :translator="translators.explicitDimension"
+                          :disabled="disableDimValuesSelectors"
+                          :read-only="readOnly"
+                        />
+                      </v-col>
+                    </template>
 
                     <v-col v-if="filters.includes('date')" cols="auto">
                       <FromToMonthEntry
@@ -549,6 +598,8 @@ export default {
       selectedDateRange: { start: null, end: null },
       selectedDimValues: [],
       selectedTitleTags: [],
+      selectedPlatformTags: [],
+      selectedOrganizationTags: [],
       selectedTagClass: null,
       tagRollUp: false,
       formValid: false,
@@ -642,6 +693,20 @@ export default {
         this.selectedTitleTags.length > 0
       ) {
         ret["tag__target"] = this.selectedTitleTags;
+      }
+      // platform tags
+      if (
+        this.filters.includes("platform") &&
+        this.selectedPlatformTags.length > 0
+      ) {
+        ret["tag__platform"] = this.selectedPlatformTags;
+      }
+      // organization tags
+      if (
+        this.filters.includes("organization") &&
+        this.selectedOrganizationTags.length > 0
+      ) {
+        ret["tag__organization"] = this.selectedOrganizationTags;
       }
       // explicit dims
       this.explicitDims.forEach((dim, index) => {
@@ -919,8 +984,15 @@ export default {
               end: end ? ymDateFormat(end) : null,
             };
             this.filters.push(filter.dimension);
-          } else if (filter.tag_ids && filter.dimension === "target") {
-            this.selectedTitleTags = filter.tag_ids;
+          } else if (filter.tag_ids) {
+            // deal with tag based filtering
+            if (filter.dimension === "target") {
+              this.selectedTitleTags = filter.tag_ids;
+            } else if (filter.dimension === "platform") {
+              this.selectedPlatformTags = filter.tag_ids;
+            } else if (filter.dimension === "organization") {
+              this.selectedOrganizationTags = filter.tag_ids;
+            }
             this.filters.push(filter.dimension);
           } else {
             console.warn(`Unrecognized filter "${filter.dimension}"`);

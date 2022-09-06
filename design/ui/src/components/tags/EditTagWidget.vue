@@ -21,6 +21,7 @@ cs:
               <TagClassSelector
                 v-model="tagClass"
                 :disabled="tag !== null"
+                allow-create
                 ref="classSelector"
               />
             </v-col>

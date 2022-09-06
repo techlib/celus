@@ -12,6 +12,7 @@
     :rules="clearable ? [] : [rules.required]"
     :disabled="disabled"
     :clearable="clearable"
+    clear-icon="fa-times"
     :placeholder="placeholder"
     :persistent-placeholder="!!placeholder"
   >
@@ -24,7 +25,7 @@
       </v-list-item-content>
     </template>
 
-    <template #append-item>
+    <template #append-item v-if="allowCreate">
       <v-list-item-content>
         <v-list-item-title>
           <AddTagClassButton small class="ml-4" @saved="assignNewClass" />
@@ -52,6 +53,7 @@ export default {
     clearable: { type: Boolean, default: false },
     label: { type: String, default: "" },
     placeholder: { type: String, default: "" },
+    allowCreate: { type: Boolean, default: false },
   },
 
   data() {

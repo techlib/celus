@@ -28,7 +28,9 @@ cs:
       deletable-chips
       :disabled="disabled || loading || readOnly"
       clearable
+      clear-icon="fa-times"
       :loading="loading"
+      small-chips
     ></v-autocomplete>
     <div v-else class="full-width">
       <TwoPaneSelector

@@ -81,10 +81,18 @@ class FlexibleDataSlicer:
             ignore_dimensions = set()
         ret = {}
         for df in self.dimension_filters:
-            if df.dimension not in ignore_dimensions:
+            if df.dimension not in ignore_dimensions or isinstance(df, TagDimensionFilter):
+                # tag filters are not ignored even if they are for an ignored dimension
                 ret.update(df.query_params())
+        logger.info('filters: %s', ret)
         if self.organization_filter is not None:
-            ret['organization__in'] = self.organization_filter
+            if 'organization__in' in ret:
+                ret['organization__in'] = ret['organization__in'].filter(
+                    pk__in=self.organization_filter
+                )
+            else:
+                ret['organization__in'] = self.organization_filter
+        logger.info('filters with org: %s', ret)
         return ret
 
     def add_extra_organization_filter(self, org_filter: Iterable):
@@ -351,6 +359,7 @@ class FlexibleDataSlicer:
         if pks:
             query = query.filter(**self.create_pk_filter(dimension, pks))
         # get count and decide if we need to sort
+        logger.debug('Query: %s', query.query)
         count = query.count()
         cropped = False
         if max_values_count and count > max_values_count:

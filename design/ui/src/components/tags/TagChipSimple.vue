@@ -1,6 +1,5 @@
 <template>
   <v-chip
-    v-else
     :small="small"
     :key="tag.pk"
     :color="color"
@@ -118,7 +117,7 @@ export default {
 
   methods: {
     close() {
-      this.$emit("remove", this.tag.pk);
+      this.$emit("remove", { tagId: this.tag.pk });
     },
   },
 };

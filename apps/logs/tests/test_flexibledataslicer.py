@@ -606,6 +606,55 @@ class TestFlexibleDataSlicerOther:
         metric_data = slicer.get_possible_dimension_values('metric')
         assert metric_data['count'] == len(metrics)
 
+    @pytest.mark.parametrize('ignore_self', [True, False])
+    @pytest.mark.parametrize('primary_dimension', ['platform', 'target', 'organization'])
+    def test_get_possible_dimension_values_with_direct_tag_filter(
+        self, flexible_slicer_test_data, admin_user, ignore_self, primary_dimension
+    ):
+        """
+        When filtering by tag, we also want to filter the tagged dimension itself,
+        even if `ignore_self` is given.
+        It must also work the same regardless of the primary dimension.
+        """
+        tag = TagFactory.create(name='my_tag', tag_class__scope=TagScope.PLATFORM)
+        for pl in flexible_slicer_test_data['platforms'][:2]:
+            tag.tag(pl, admin_user)
+        slicer = FlexibleDataSlicer(primary_dimension=primary_dimension)
+        slicer.add_filter(TagDimensionFilter('platform', [tag.pk]))
+        platform_data = slicer.get_possible_dimension_values('platform', ignore_self=ignore_self)
+        assert platform_data['count'] == 2
+
+    @pytest.mark.parametrize('tagged_count', [0, 2])
+    @pytest.mark.parametrize('primary_dimension', ['platform', 'target', 'organization'])
+    @pytest.mark.parametrize('tagged_dimension', ['platform', 'target', 'organization'])
+    def test_get_possible_dimension_values_with_direct_empty_tag_filter(
+        self,
+        flexible_slicer_test_data,
+        admin_user,
+        tagged_count,
+        primary_dimension,
+        tagged_dimension,
+    ):
+        """
+        Check that when filtering by tag and the tag has nothing associated with it,
+        the result is empty. Check that extra organization filter does not affect the result.
+        """
+        tag = TagFactory.create(
+            name='my_tag',
+            tag_class__scope={
+                'platform': TagScope.PLATFORM,
+                'target': TagScope.TITLE,
+                'organization': TagScope.ORGANIZATION,
+            }[tagged_dimension],
+        )
+        for pl in flexible_slicer_test_data[f'{tagged_dimension}s'][:tagged_count]:
+            tag.tag(pl, admin_user)
+        slicer = FlexibleDataSlicer(primary_dimension=primary_dimension)
+        slicer.add_filter(TagDimensionFilter(tagged_dimension, [tag.pk]))
+        slicer.organization_filter = Organization.objects.all()
+        platform_data = slicer.get_possible_dimension_values(tagged_dimension, ignore_self=True)
+        assert platform_data['count'] == tagged_count
+
     def test_get_possible_dimension_values_with_indirect_filter(self, flexible_slicer_test_data):
         slicer = FlexibleDataSlicer(primary_dimension='platform')
         metrics = flexible_slicer_test_data['metrics'][1:]
