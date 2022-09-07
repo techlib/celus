@@ -15,9 +15,10 @@ from django.db import models, transaction
 from django.db.transaction import on_commit
 from django.utils import timezone
 from logs.models import Dimension, Metric, ReportType, ReportTypeToDimension
+from nibbler.models import ParserDefinition
 from publications.models import Platform
 
-from .serializers import PlatformSerializer, ReportTypeSerializer
+from .serializers import ParserDefinitionSerializer, PlatformSerializer, ReportTypeSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -118,15 +119,18 @@ class ImportAttempt(AuthTokenMixin, models.Model):
 
     KIND_PLATFORM = 'platform'
     KIND_REPORT_TYPE = 'report_type'
+    KIND_PARSER_DEFINITION = 'parser_definition'
 
     KINDS = (
         (KIND_PLATFORM, 'Platform'),
         (KIND_REPORT_TYPE, 'Report type'),
+        (KIND_PARSER_DEFINITION, 'Parser definition'),
     )
 
     URL_MAP = {
         KIND_PLATFORM: '/knowledgebase/platforms/',
         KIND_REPORT_TYPE: '/knowledgebase/report_types/',
+        KIND_PARSER_DEFINITION: '/knowledgebase/parsers/',
     }
 
     url = models.URLField()
@@ -486,6 +490,53 @@ class ReportTypeImportAttempt(ImportAttempt):
 
         # Note that we don't want to delete report types automatically
         # Because it could seriously affect the data
+
+        self.stats = dict(counter)
+        self.save()
+
+
+class ParserDefinitionImportAttempt(ImportAttempt):
+    class Meta:
+        proxy = True
+
+    def plan(self):
+        from .tasks import update_parser_definitions
+
+        update_parser_definitions.delay(self.pk)
+
+    @property
+    def required_kind(self):
+        return ImportAttempt.KIND_PARSER_DEFINITION
+
+    @transaction.atomic
+    def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.NONE):
+
+        # Check whether the data are valid
+        ParserDefinitionSerializer(data=data, many=True).is_valid(raise_exception=True)
+
+        counter = Counter()
+        seen_ids = set()
+        for definition in data:
+            counter["total"] += 1
+            pk = definition.pop("pk")
+            seen_ids.add(pk)
+
+            parser_definition, created = ParserDefinition.objects.get_or_create(
+                pk=pk, source=self.source, defaults={"definition": definition},
+            )
+
+            if created:
+                counter["created"] += 1
+            else:
+                if parser_definition.definition == definition:
+                    counter["same"] += 1
+                else:
+                    counter["updated"] += 1
+                    parser_definition.definition = definition
+                    parser_definition.save()
+
+        if deleted_count := ParserDefinition.objects.exclude(pk__in=seen_ids).delete()[0]:
+            counter["wiped"] = deleted_count
 
         self.stats = dict(counter)
         self.save()

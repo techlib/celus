@@ -85,9 +85,13 @@ cs:
         <template #item.report_type.short_name="{ item }">
           <v-tooltip bottom v-if="item.can_edit">
             <template v-slot:activator="{ on }">
-              <span v-on="on" v-text="item.report_type.short_name"></span>
+              <span
+                v-if="!!item.report_type"
+                v-on="on"
+                v-text="item.report_type.short_name"
+              ></span>
             </template>
-            <span v-text="item.report_type.name"></span>
+            <span v-if="!!item.report_type" v-text="item.report_type.name"></span>
           </v-tooltip>
         </template>
 
@@ -260,7 +264,7 @@ cs:
                       <!-- This is the name of the organization found in data -->
                       <td>{{ org_name }}</td>
                     </tr>
-                    <tr>
+                    <tr v-if="!!selectedMDU.report_type">
                       <th v-text="$t('labels.report_type')"></th>
                       <td>
                         {{ selectedMDU.report_type.short_name }} &ndash;

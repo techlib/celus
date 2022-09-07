@@ -9,8 +9,8 @@ from enum import Enum
 from pathlib import Path
 
 import magic
+from celus_nigiri import CounterRecord
 from celus_nigiri.celus import custom_data_to_records
-from celus_nigiri.counter5 import CounterRecord
 from celus_nigiri.csv_detect import detect_file_encoding
 from core.exceptions import ModelUsageError
 from core.models import (
@@ -43,6 +43,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
+from nibbler.models import ParserDefinition, get_records_from_nibbler_output
 from organizations.models import Organization
 from publications.models import Platform, Title
 
@@ -595,6 +596,7 @@ def validate_mime_type(fileobj):
         'application/csv',
         'text/x-Algol68',
         'application/json',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ):
         raise ValidationError(
             _(
@@ -634,9 +636,9 @@ class MduState(models.TextChoices):
 
 
 class ManualDataUpload(SourceFileMixin, models.Model):
-    PREFLIGHT_FORMAT_VERSION = '3'
+    PREFLIGHT_FORMAT_VERSION = '4'
 
-    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(
@@ -666,6 +668,15 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         default=dict, blank=True, help_text='Data derived during pre-flight check'
     )
     state = models.CharField(max_length=20, choices=MduState.choices, default=MduState.INITIAL)
+    use_nibbler = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = (
+            models.CheckConstraint(
+                check=~((models.Q(use_nibbler=False) & models.Q(report_type__isnull=True))),
+                name='non-nibbler-needs-report-type',
+            ),
+        )
 
     def __str__(self):
         return f'{self.user.username if self.user else ""}: {self.report_type}, {self.platform}'
@@ -723,6 +734,15 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         return data
 
     def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
+        if self.use_nibbler:
+
+            nibbler_output = ParserDefinition.objects.parse_file(
+                self.data_file.path, self.platform.short_name
+            )
+
+            # Extract data
+            return get_records_from_nibbler_output(nibbler_output)
+
         try:
             crt = self.report_type.counterreporttype
         except ObjectDoesNotExist:

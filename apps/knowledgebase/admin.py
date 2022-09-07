@@ -4,7 +4,13 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.urls import path
 
-from .models import ImportAttempt, PlatformImportAttempt, ReportTypeImportAttempt, RouterSyncAttempt
+from .models import (
+    ImportAttempt,
+    ParserDefinitionImportAttempt,
+    PlatformImportAttempt,
+    ReportTypeImportAttempt,
+    RouterSyncAttempt,
+)
 
 
 class ImportAttemptAdminMixin:
@@ -88,6 +94,25 @@ class PlatformImportAttemptAdmin(ImportAttemptAdminMixin, admin.ModelAdmin):
             pk=request.POST["source"]
         )
         attempt = PlatformImportAttempt.objects.create(source=source)
+        # plan it in celery
+        # on_commit is required because there is some race condition
+        # which causes DoesNotExist exception in celery task
+        transaction.on_commit(lambda: attempt.plan())
+
+        return HttpResponseRedirect("../")
+
+
+@admin.register(ParserDefinitionImportAttempt)
+class ParserDefinitionImportAttemptAdmin(ImportAttemptAdminMixin, admin.ModelAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(kind=ImportAttempt.KIND_PARSER_DEFINITION)
+
+    def run_sync(self, request):
+
+        source = DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE).get(
+            pk=request.POST["source"]
+        )
+        attempt = ParserDefinitionImportAttempt.objects.create(source=source)
         # plan it in celery
         # on_commit is required because there is some race condition
         # which causes DoesNotExist exception in celery task

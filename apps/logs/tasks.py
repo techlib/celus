@@ -16,9 +16,21 @@ from django.db import DatabaseError
 from django.db.models import Q
 from django.db.transaction import atomic
 from django.utils.timezone import now
+from nibbler.models import (
+    ParserDefinition,
+    get_errors,
+    get_report_types_from_nibbler_output,
+    is_success,
+)
 from sushi.models import AttemptStatus, SushiFetchAttempt
 
-from logs.exceptions import DataStructureError, ImportNotPossible
+from logs.exceptions import (
+    DataStructureError,
+    ImportNotPossible,
+    MultipleReportTypeInPreflight,
+    NibblerErrors,
+    UnknownReportTypeInPreflight,
+)
 from logs.logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
 from logs.logic.clickhouse import process_one_import_batch_sync_log
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
@@ -221,10 +233,40 @@ def prepare_preflight(mdu_id: int):
                 f"Preflight data (for mdu={mdu.pk}) are already generated: {mdu.preflight}"
             )
         elif mdu.state == MduState.INITIAL:
+
+            if mdu.use_nibbler:
+                # detect report type from existing data
+                nibbler_output = ParserDefinition.objects.parse_file(
+                    mdu.data_file.path, mdu.platform.short_name
+                )
+
+                if not is_success(nibbler_output):
+                    raise NibblerErrors(get_errors(nibbler_output))
+
+                report_types, rt_names = get_report_types_from_nibbler_output(nibbler_output)
+                rt_names = ", ".join(f'"{e}"' for e in set(rt_names))
+
+                if not report_types:
+                    # No report types found
+                    raise UnknownReportTypeInPreflight(
+                        f"File parsed, but no matching ReportType found: {rt_names}"
+                    )
+
+                if len(report_types) > 1:
+                    # Altough nibbler allows you to have different report_types on
+                    # different sheets, in celus you may have only the same report type
+                    # on all sheets
+                    raise MultipleReportTypeInPreflight(
+                        f"Multiple ReportTypes found in the data: {rt_names}"
+                    )
+
+                mdu.report_type = report_types[0]
+
             mdu.preflight = custom_import_preflight_check(mdu)
             mdu.error = None
             mdu.error_details = None
             mdu.state = MduState.PREFLIGHT
+
             mdu.save()
         else:
             logger.error(f"Can't generate preflight data for mdu={mdu.pk} (state={mdu.state})")
@@ -235,12 +277,25 @@ def prepare_preflight(mdu_id: int):
 
     except DatabaseError as e:
         logger.warning("mdu '%s' is already being processed. (%s)", mdu_id, e)
+
     except UnicodeDecodeError as e:
         mdu.log = str(e)
         mdu.error = "unicode-decode"
         mdu.error_details = {
             "exception": str(e),
             "traceback": traceback.format_exc(),
+        }
+        mdu.when_processed = now()
+        mdu.state = MduState.PREFAILED
+        mdu.save()
+
+    except NibblerErrors as e:
+        mdu.log = "\n\n".join(repr(i) for i in e.errors)
+        mdu.error = "nibbler"
+        mdu.error_details = {
+            "exception": str(e),
+            "traceback": traceback.format_exc(),
+            "nibbler": [i.dict() for i in e.errors],
         }
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
@@ -255,8 +310,13 @@ Exception: {e}
 
 Traceback: {traceback.format_exc()}
 """
+        error = "general"
+        if isinstance(e, UnknownReportTypeInPreflight):
+            error = "unknown-report-type"
+        elif isinstance(e, MultipleReportTypeInPreflight):
+            error = "multiple-report-type"
         mdu.log = body
-        mdu.error = "general"
+        mdu.error = error
         mdu.error_details = {
             "exception": str(e),
             "traceback": traceback.format_exc(),
@@ -303,6 +363,18 @@ def import_manual_upload_data(mdu_id: int, user_id: int):
 
     except DatabaseError as e:
         logger.warning("mdu '%s' is already being processed. (%s)", mdu_id, e)
+
+    except NibblerErrors as e:
+        mdu.log = "\n\n".join(repr(i) for i in e.errors)
+        mdu.error = "nibbler"
+        mdu.error_details = {
+            "exception": str(e),
+            "traceback": traceback.format_exc(),
+            "nibbler": [i.dict() for i in e.errors],
+        }
+        mdu.when_processed = now()
+        mdu.state = MduState.FAILED
+        mdu.save()
 
     except (Exception, DataStructureError, ImportNotPossible) as e:
         # generic import error handling

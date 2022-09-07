@@ -2,6 +2,9 @@
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
 <i18n lang="yaml">
 en:
+  description:
+    On this page, you can upload data for platforms which do not offer a SUSHI interface
+    or older data which are not longer available through SUSHI.
   data_file: Data file to upload
   data_file_placeholder: Upload a file containing data.
   error: Error
@@ -22,7 +25,6 @@ en:
   preflight_error_found: Error occured during data check
   import_error_found: The following error was found when data were imported
   back_to_start: Back to data upload
-  no_report_types: There are not reports defined for this platform - contact administrators to add some
   organization_from_data: No organization is selected. Organization will be derived from data.
   missing_organization_in_data: Data does not contain organization. Please select the organization for which you are importing data from the page toolbar.
   need_to_unset_organization: The uploaded file contains explicit organization column. The currently selected organization will be ignored when importing data.
@@ -35,10 +37,16 @@ en:
     requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
     unknown_preflight_error: An unknown error has occured during data check.
     unknown_import_error: An unknown error has occured during data import.
+    no_parser_found: Sorry, but we cannot detect the format of the uploaded file.
+    unknown_report_type: We were able to process the file, but we could not determine the report type for storage. Please contact the administrator to fix the problem.
   unauthorized_multiple_org_title: Unauthorized to import
   unauthorized_multiple_org_text: This file contains data for multiple organizations and only consortial admin is allowed to import it.
+  no_non_counter_for_platform: This platform does not support non-counter data.
 
 cs:
+  description:
+    Tato stránka umožňuje nahrání dat k platformám, které neposkytují rozhraní SUSHI a nebo
+    starších dat, která již nejsou na platformě v rámci SUSHI k dispozici.
   data_file: Datový soubor k nahrání
   data_file_placeholder: Nahrajte soubor, který obsahuje data.
   error: Chyba
@@ -59,7 +67,6 @@ cs:
   preflight_error_found: Chyba při kontrole dat
   import_error_found: Při nahrávání dat byla nalezena následující chyba
   back_to_start: Zpět na nahrání dat
-  no_report_types: Pro tuto platformu nejsou definovány žádné reporty - kontaktujte administrátory pro jejich přidání
   organization_from_data: Organizace nebyla vybrána a bude odvozena ze vstupních dat.
   missing_organization_in_data: Data neobsahují informace o organizaci. Prosím vyberte organizaci, pro kterou nahráváte data, z menu v horní liště.
   need_to_unset_organization: Soubor obsahuje sloupec s explicitně uvedenou organizací. Aktuálně vybraná organizace bude při importu dat ignorována.
@@ -72,8 +79,11 @@ cs:
     requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
     unknown_preflight_error: Během kontroly dat se vyskytla neznámá chyba.
     unknown_import_error: Během importu dat se vyskytla neznámá chyba.
+    no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru.
+    unknown_report_type: Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Kontaktujte prosím administrátora, aby nesrovnalosti vyřešil.
   unauthorized_multiple_org_title: Neautorizovaný import
   unauthorized_multiple_org_text: Tento soubor obsahuje data pro více organizací a pouze konzorciální admin může nahrávat data pro více organizací z jednoho souboru.
+  no_non_counter_for_platform: Tato platforma nepodporuje formáty mimo counter.
 </i18n>
 
 <template>
@@ -101,7 +111,7 @@ cs:
       </v-row>
       <v-row>
         <v-col>
-          <CustomUploadInfoWidget />
+          <p v-html="$t('description')"></p>
         </v-col>
       </v-row>
     </v-container>
@@ -120,30 +130,38 @@ cs:
         {{ $t("step1") }}
       </v-stepper-step>
       <v-stepper-content step="1">
+        <CustomUploadInfoWidget v-model="helpTab" />
         <v-form ref="form" v-model="valid">
           <v-container fluid elevation-3 pa-5>
             <v-row no-gutters>
               <v-col cols="12">
                 <ReportTypeInfoWidget
-                  v-if="selectedReportType"
+                  v-if="
+                    selectedReportType &&
+                    selectedReportType.pk &&
+                    canSelecteReportType
+                  "
                   :report-type="selectedReportType"
                 />
-                <v-alert type="warning" v-else-if="reportTypesFetched">
-                  {{ $t("no_report_types") }}
+              </v-col>
+            </v-row>
+            <v-row v-if="reportTypesToSelect.length === 0 && helpTab != 'raw'">
+              <v-col>
+                <v-alert type="error">
+                  {{ $t("no_non_counter_for_platform") }}
                 </v-alert>
               </v-col>
             </v-row>
             <v-row>
-              <v-col cols="12" md="6">
+              <v-col cols="12" md="6" v-if="canSelecteReportType">
                 <v-select
                   v-model="selectedReportType"
-                  :items="reportTypes"
+                  :items="reportTypesToSelect"
                   item-text="name"
                   item-value="pk"
                   required
                   return-object
                   :label="$t('labels.report_type')"
-                  :no-data-text="$t('no_report_types')"
                   :rules="[filledIn]"
                   :loading="!reportTypesFetched"
                 >
@@ -178,7 +196,6 @@ cs:
                   :placeholder="$t('data_file_placeholder')"
                   required
                   :rules="[filledIn]"
-                  :disabled="!selectedReportType"
                 >
                 </v-file-input>
               </v-col>
@@ -187,7 +204,7 @@ cs:
               <v-col class="d-flex align-center">
                 <v-btn
                   @click="postData"
-                  :disabled="!valid"
+                  :disabled="!canUpload"
                   :loading="uploading"
                   >{{ $t("upload") }}</v-btn
                 >
@@ -237,17 +254,36 @@ cs:
             />
             <v-alert v-else-if="state == 'prefailed'" type="error">
               <h3 v-text="$t('preflight_error_found')" class="pb-2"></h3>
-              <strong v-if="error == 'unicode-decode'">
-                {{ $t("errors.requires_utf8") }}
-              </strong>
-              <strong v-else>
-                {{ $t("errors.unknown_preflight_error") }}
-              </strong>
-              <pre
-                v-text="errorDetails.exception"
-                v-if="errorDetails && errorDetails.exception"
-                class="pt-2"
-              ></pre>
+              <v-expansion-panels flat>
+                <v-expansion-panel>
+                  <v-expansion-panel-header color="error">
+                    <strong v-if="error == 'unicode-decode'">
+                      {{ $t("errors.requires_utf8") }}
+                    </strong>
+                    <strong v-else-if="error == 'nibbler'">
+                      {{ $t(nibblerReason(errorDetails.nibbler)) }}
+                    </strong>
+                    <strong
+                      v-else-if="
+                        error == 'multiple-report-type' ||
+                        error == 'unknown-report-type'
+                      "
+                    >
+                      {{ $t("errors.unknown_report_type") }}
+                    </strong>
+                    <strong v-else>
+                      {{ $t("errors.unknown_preflight_error") }}
+                    </strong>
+                  </v-expansion-panel-header>
+                  <v-expansion-panel-content color="error">
+                    <pre
+                      v-text="errorDetails.exception"
+                      v-if="errorDetails && errorDetails.exception"
+                      class="pt-2"
+                    ></pre>
+                  </v-expansion-panel-content>
+                </v-expansion-panel>
+              </v-expansion-panels>
             </v-alert>
             <v-alert
               v-else-if="preflightData && preflightData.clashing_months.length"
@@ -509,6 +545,7 @@ export default {
       importing: false,
       preflighting: false,
       uploadProgress: 0,
+      helpTab: "non-counter",
     };
   },
   computed: {
@@ -562,7 +599,7 @@ export default {
       return [];
     },
     multipleOrganizations() {
-        return !!this.preflightData?.organizations;
+      return !!this.preflightData?.organizations;
     },
     slicesToDelete() {
       if (
@@ -631,6 +668,17 @@ export default {
       }
       return false; // not uploaded yet
     },
+    canUpload() {
+      switch (this.helpTab) {
+        case "non-counter":
+        case "counter":
+          return this.reportTypesToSelect.length > 0 && this.valid;
+        case "raw":
+          return this.valid;
+        default:
+          return false;
+      }
+    },
     wrongOrganizations() {
       if (this.preflightData?.organizations) {
         return Object.keys(this.preflightData.organizations).filter(
@@ -664,7 +712,7 @@ export default {
     },
     preflightDataFormatValid() {
       if (this.uploadObject) {
-        return this.uploadObject.preflight.format_version === "3";
+        return this.uploadObject.preflight.format_version === "4";
       } else {
         return false;
       }
@@ -684,6 +732,19 @@ export default {
         return result;
       } else {
         return null;
+      }
+    },
+    canSelecteReportType() {
+      return this.helpTab != "raw";
+    },
+    reportTypesToSelect() {
+      switch (this.helpTab) {
+        case "non-counter":
+          return this.reportTypes.filter((e) => !e.counter_report_type);
+        case "counter":
+          return this.reportTypes.filter((e) => !!e.counter_report_type);
+        default:
+          return [];
       }
     },
   },
@@ -706,7 +767,10 @@ export default {
         formData.append("organization", this.organizationId);
       }
       formData.append("platform", this.platformId);
-      formData.append("report_type_id", this.selectedReportType.pk);
+      if (this.canSelecteReportType) {
+        formData.append("report_type_id", this.selectedReportType.pk);
+      }
+      formData.append("use_nibbler", !this.canSelecteReportType);
 
       this.uploading = true;
       this.uploadProgress = 0;
@@ -761,21 +825,26 @@ export default {
       if (url) {
         try {
           const response = await axios.get(url);
+
           this.reportTypes = response.data.sort((a, b) =>
             a.name.localeCompare(b.name)
           );
-          if (this.reportTypes.length > 0) {
-            this.selectedReportType = this.reportTypes[0]; // default
-            if (this.$router.currentRoute.query?.report_type_id) {
-              let rt_id = parseInt(
-                this.$router.currentRoute.query.report_type_id
-              );
-              this.selectedReportType = this.reportTypes.find(
+
+          if (this.$router.currentRoute.query?.report_type_id) {
+            let rt_id = parseInt(
+              this.$router.currentRoute.query.report_type_id
+            );
+            if (rt_id) {
+              this.selectedReportType = this.reportTypesToSelect.find(
                 (rt) => rt.pk === rt_id
               );
-              this.selectedReportType ??= this.reportTypes[0];
             }
           }
+
+          // Select default report type
+          this.selectedReportType ??=
+            this.reportTypes.length > 0 ? this.reportTypesToSelect[0] : null;
+
           this.reportTypesFetched = true;
         } catch (error) {
           this.showSnackbar({
@@ -911,7 +980,15 @@ export default {
       return true;
     },
     async backToStart() {
-      let reportTypeId = this.uploadObject.report_type;
+      let reportTypeId = this.uploadObject.report_type.pk;
+
+      let tab = "non-counter";
+      if (this.uploadObject.use_nibbler) {
+        tab = "raw";
+      } else if (this.uploadObject.report_type.counter_report_type) {
+        tab = "counter";
+      }
+
       this.uploadObject = null;
       await this.$router.replace({
         name: "platform-upload-data",
@@ -920,6 +997,7 @@ export default {
         },
         query: {
           report_type_id: reportTypeId,
+          tab: tab,
         },
       });
     },
@@ -937,8 +1015,19 @@ export default {
       await Promise.all([this.loadMetrics(), this.loadPlatform()]);
       this.globalSpinnerOn = false;
     },
+    nibblerReason(errors, preflight) {
+      if (errors.every((e) => e.name.startsWith("NoParser"))) {
+        return "errors.no_parser_found";
+      }
+      return preflight
+        ? "errors.unknown_preflight_error"
+        : "errors.unknown_import_error";
+    },
   },
   mounted() {
+    if (this.$router.currentRoute.query.tab) {
+      this.helpTab = this.$router.currentRoute.query.tab;
+    }
     if (this.uploadObjectId && this.step == 1) {
       // If object is present move to step2
       this.step = 2;
@@ -957,6 +1046,13 @@ export default {
     },
     organizationId() {
       this.updateMDU();
+    },
+    helpTab() {
+      if (this.reportTypesToSelect.length > 0) {
+        this.selectedReportType = this.reportTypesToSelect[0];
+      } else {
+        this.selectedReportType = null;
+      }
     },
   },
 };

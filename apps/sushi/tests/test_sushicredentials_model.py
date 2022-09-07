@@ -1,13 +1,12 @@
 import pytest
+from celus_nigiri.client import Sushi4Client, Sushi5Client
+from celus_nigiri.counter4 import Counter4ReportBase
+from celus_nigiri.counter5 import Counter5ReportBase
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN, Identity
 from core.tests.conftest import master_admin_identity, valid_identity
 from django.utils import timezone
 from logs.models import AccessLog, ImportBatch, Metric
-from celus_nigiri.client import Sushi4Client, Sushi5Client
-from celus_nigiri.counter4 import Counter4ReportBase
-from celus_nigiri.counter5 import Counter5ReportBase
 from organizations.models import UserOrganization
-from organizations.tests.conftest import organizations
 from publications.models import Platform
 from publications.tests.conftest import platforms
 from pycounter.report import CounterReport
@@ -16,7 +15,12 @@ from sushi.logic.data_import import import_sushi_credentials
 from sushi.models import AttemptStatus
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.scenarios.basic import counter_report_types, report_types
+from test_fixtures.scenarios.basic import (
+    counter_report_types,
+    data_sources,
+    organizations,
+    report_types,
+)
 
 from ..models import CounterReportType, SushiCredentials, SushiFetchAttempt
 
@@ -44,7 +48,7 @@ class TestLocking:
         can_lock_staff,
     ):
 
-        org = organizations[0]
+        org = organizations["branch"]
         credentials = SushiCredentials.objects.create(
             organization=org, platform=platforms[0], counter_version=5,
         )
@@ -79,7 +83,7 @@ class TestLocking:
         can_unlock_org_admin,
         can_unlock_staff,
     ):
-        org = organizations[0]
+        org = organizations["branch"]
         credentials = SushiCredentials.objects.create(
             organization=org, platform=platforms[0], counter_version=5, lock_level=UL_ORG_ADMIN,
         )
@@ -127,7 +131,7 @@ class TestCredentialsVersioning:
         data = [
             {
                 'platform': 'XXX',
-                'organization': organizations[1].internal_id,
+                'organization': organizations["branch"].internal_id,
                 'customer_id': 'BBB',
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
@@ -156,7 +160,7 @@ class TestCredentialsVersioning:
         data = [
             {
                 'platform': 'XXX',
-                'organization': organizations[1].internal_id,
+                'organization': organizations["branch"].internal_id,
                 'customer_id': 'BBB',
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
@@ -184,7 +188,7 @@ class TestCredentialsVersioning:
         data = [
             {
                 'platform': 'XXX',
-                'organization': organizations[1].internal_id,
+                'organization': organizations["branch"].internal_id,
                 'customer_id': 'BBB',
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
@@ -214,7 +218,7 @@ class TestCredentialsVersioning:
         data = [
             {
                 'platform': 'XXX',
-                'organization': organizations[1].internal_id,
+                'organization': organizations["branch"].internal_id,
                 'customer_id': 'BBB',
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',
@@ -254,7 +258,7 @@ class TestCredentialsVersioning:
         data = [
             {
                 'platform': 'XXX',
-                'organization': organizations[1].internal_id,
+                'organization': organizations["branch"].internal_id,
                 'customer_id': 'BBB',
                 'requestor_id': 'RRRX',
                 'URL': 'http://this.is/test/2',

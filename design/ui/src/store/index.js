@@ -223,6 +223,9 @@ export default new Vuex.Store({
       }
       return true;
     },
+    enableNibbler(state) {
+      return state.basicInfo.ENABLE_NIBBLER ?? false;
+    },
     automaticallyCreateMetrics(state) {
       if ("AUTOMATICALLY_CREATE_METRICS" in state.basicInfo) {
         return state.basicInfo["AUTOMATICALLY_CREATE_METRICS"];

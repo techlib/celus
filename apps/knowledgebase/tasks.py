@@ -3,7 +3,13 @@ from core.logic.error_reporting import email_if_fails
 from core.models import DataSource
 from django.db import DatabaseError, transaction
 
-from .models import ImportAttempt, PlatformImportAttempt, ReportTypeImportAttempt, RouterSyncAttempt
+from .models import (
+    ImportAttempt,
+    ParserDefinitionImportAttempt,
+    PlatformImportAttempt,
+    ReportTypeImportAttempt,
+    RouterSyncAttempt,
+)
 
 
 @celery.shared_task
@@ -48,6 +54,30 @@ def update_report_types(attempt_id: int):
         raise ValueError(f"Wrong kind {attempt.kind} expected {ImportAttempt.KIND_REPORT_TYPE}")
 
     attempt.perform()
+
+
+@celery.shared_task
+@email_if_fails
+def update_parser_definitions(attempt_id: int):
+    attempt = ParserDefinitionImportAttempt.objects.get(pk=attempt_id)
+
+    if attempt.kind != ImportAttempt.KIND_PARSER_DEFINITION:
+        raise ValueError(
+            f"Wrong kind {attempt.kind} expected {ImportAttempt.KIND_PARSER_DEFINITION}"
+        )
+
+    attempt.perform()
+
+
+@celery.shared_task
+@email_if_fails
+def sync_parser_definitions_with_knowledgebase_task():
+    sources = list(DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE))
+    for source in sources:
+        attempt = ReportTypeImportAttempt.objects.create(
+            kind=ReportTypeImportAttempt.KIND_PARSER_DEFINITION, source=source
+        )
+        attempt.perform()
 
 
 @celery.shared_task

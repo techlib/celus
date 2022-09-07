@@ -9,13 +9,26 @@ import requests_mock
 from core.models import DataSource
 from django.conf import settings
 from django.utils.timezone import now
-from knowledgebase.models import PlatformImportAttempt, ReportTypeImportAttempt, RouterSyncAttempt
+from knowledgebase.models import (
+    ParserDefinitionImportAttempt,
+    PlatformImportAttempt,
+    ReportTypeImportAttempt,
+    RouterSyncAttempt,
+)
 from logs.models import ReportType
+from nibbler.models import ParserDefinition
 from publications.models import Platform
 from test_fixtures.entities.api import OrganizationAPIKeyFactory
 from test_fixtures.entities.data_souces import DataSourceFactory
 from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.scenarios.basic import data_sources, organizations, report_types
+from test_fixtures.scenarios.basic import (
+    data_sources,
+    metrics,
+    organizations,
+    parser_definitions,
+    platforms,
+    report_types,
+)
 
 PLATFORM_INPUT_DATA = [
     {
@@ -623,3 +636,28 @@ class TestReportTypeImportAttempt:
                 'position', 'dimension__short_name'
             )
         ) == [(0, 'dim4'), (1, 'dim3'),]
+
+
+@pytest.mark.django_db
+class TestParserDefinitionImportAttempt:
+    def test_process(self, data_sources, parser_definitions):
+        definition = copy.deepcopy(parser_definitions["parser1"].definition)
+        definition["pk"] = parser_definitions["parser1"].pk
+
+        attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process([copy.deepcopy(definition)])
+        assert attempt.stats == {"same": 1, "total": 1}, "All same"
+
+        definition["parser_name"] = "parserX"
+        attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process([copy.deepcopy(definition)])
+        assert attempt.stats == {"updated": 1, "total": 1}, "One updated"
+
+        definition["pk"] += 1
+        definition["parser_name"] = "parserY"
+        attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process([copy.deepcopy(definition)])
+        assert attempt.stats == {"created": 1, "total": 1, "wiped": 1}, "One deleted one created"

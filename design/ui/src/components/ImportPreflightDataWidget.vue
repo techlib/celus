@@ -6,6 +6,7 @@ en:
   upload: Upload
   total_hits: Sum of hits
   imported_metrics: Found metrics
+  found_dimensions: Found dimensions
   imported_organizations: Found organizations
   title_count: Title count
   hits: hits
@@ -44,6 +45,7 @@ cs:
   upload: Nahrát
   total_hits: Součet zásahů
   imported_metrics: Nalezené metriky
+  found_dimensions: Nalezené dimenze
   imported_organizations: Nalezené organizace
   title_count: Počet titulů
   hits: zásahů
@@ -252,6 +254,24 @@ cs:
         </v-card>
       </v-col>
 
+      <v-col
+        cols="auto"
+        v-if="!wrongOrganizationPresent && foundDimensions.length > 0"
+      >
+        <v-card hover>
+          <v-card-text>
+            <h4>{{ $t("found_dimensions") }}</h4>
+            <div class="text-right">
+              <table>
+                <tr v-for="rec in foundDimensions" :key="rec">
+                  <td>{{ rec }}</td>
+                </tr>
+              </table>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
       <v-col cols="auto">
         <v-card hover v-if="organizationsSorted">
           <v-card-text>
@@ -414,6 +434,9 @@ export default {
     },
     usedMetrics() {
       return this.preflightData.used_metrics;
+    },
+    foundDimensions() {
+      return this.preflightData.dimensions || [];
     },
   },
 

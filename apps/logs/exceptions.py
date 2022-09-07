@@ -71,3 +71,32 @@ class WrongOrganizations(Exception):
     def __init__(self, organizations):
         self.organizations = organizations
         super().__init__(organizations)
+
+
+class PreflightFailed(Exception):
+    """
+    Exception which occurs during the preflight phase
+    """
+
+
+class UnknownReportTypeInPreflight(PreflightFailed):
+    """
+    ReportType from nibbler is not known in this Celus
+    """
+
+
+class MultipleReportTypeInPreflight(PreflightFailed):
+    """
+    ReportType from nibbler matches multiple reportype in this Celus
+    """
+
+
+class NibblerErrors(Exception):
+    """
+    Nibbler error wrapper
+    It may occur during the preflight or during data import phase of processing MDU
+    """
+
+    def __init__(self, errors):
+        super().__init__(errors)
+        self.errors = errors

@@ -15,7 +15,9 @@ from test_fixtures.scenarios.basic import (
     counter_report_types,
     data_sources,
     identities,
+    metrics,
     organizations,
+    parser_definitions,
     platforms,
     report_types,
     users,
@@ -539,3 +541,63 @@ class TestManualUploadNonCounter:
             reverse('manual-data-upload-import-data', args=(mdu.pk,))
         )
         assert response.status_code == 409, "failed due to clashing data"
+
+
+@pytest.mark.django_db
+class TestManualUploadNibbler:
+    def test_nibbler_workflow(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        report_types,
+        clients,
+        parser_definitions,
+        tmp_path,
+        settings,
+    ):
+        with (Path(__file__).parent / "data/custom/custom_data-nibbler-simple.csv").open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "nibbler.csv"
+
+        organization = organizations['master']
+        platform = platforms['brain']
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organization.pk,
+                'data_file': data_file,
+                'use_nibbler': True,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert (
+            response.data['report_type']['pk'] == report_types['custom1'].pk
+        ), "report type was selected"
+        assert response.data["clashing_months"] == []
+        assert response.data["can_import"] is True
+        assert mdu.import_batches.count() == 0
+
+        # process data
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
+        assert response.status_code == 200
+
+        # import data (this should be handled via celery)
+        import_manual_upload_data(mdu.pk, mdu.user.pk)
+
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert response.data["use_nibbler"] is True
+        assert response.data["can_import"] is False
+        assert mdu.import_batches.count() == 1

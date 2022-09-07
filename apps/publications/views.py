@@ -43,6 +43,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
+from tags.models import Tag
 
 from publications.models import Platform, PlatformTitle, Title
 from publications.serializers import (
@@ -50,7 +51,6 @@ from publications.serializers import (
     TitleCountSerializer,
     UseCaseSerializer,
 )
-from tags.models import Tag
 
 from .logic.cleanup import delete_platform_data
 from .logic.use_cases import get_use_cases
@@ -113,6 +113,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
                 | Q(counterreporttype__isnull=False, source__isnull=True)
             )
             .distinct()
+            .select_related("counterreporttype")
             .prefetch_related(
                 'reportinterestmetric_set__metric',
                 'reportinterestmetric_set__interest_group',

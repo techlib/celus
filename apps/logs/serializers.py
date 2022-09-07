@@ -207,6 +207,7 @@ class ReportTypeExtendedSerializer(ModelSerializer):
     interest_metric_set = ReportInterestMetricSerializer(
         many=True, read_only=True, source='reportinterestmetric_set'
     )
+    counter_report_type = PrimaryKeyRelatedField(source='counterreporttype', read_only=True)
     source = DataSourceSerializer()
 
     class Meta:
@@ -222,6 +223,7 @@ class ReportTypeExtendedSerializer(ModelSerializer):
             'dimensions_sorted',
             'interest_metric_set',
             'controlled_metrics',
+            'counter_report_type',
         )
 
 
@@ -366,7 +368,7 @@ class ManualDataUploadSerializer(ModelSerializer):
     user = HiddenField(default=CurrentUserDefault())
     import_batches = ImportBatchSerializer(read_only=True, many=True)
     report_type = ReportTypeExtendedSerializer(read_only=True)
-    report_type_id = IntegerField(write_only=True)
+    report_type_id = IntegerField(write_only=True, required=False)
     can_edit = BooleanField(read_only=True)
     can_import = BooleanField(read_only=True)
     clashing_months = ListField(child=DateField(), read_only=True)
@@ -393,10 +395,26 @@ class ManualDataUploadSerializer(ModelSerializer):
             'owner_level',
             'state',
             'clashing_months',
+            'use_nibbler',
         )
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
+        if self.context['view'].action == "create":
+            if attrs["use_nibbler"]:
+                if "report_type_id" in attrs:
+                    raise ValidationError(
+                        {"report_type_id": "should not be present when `use_nibbler=True`"}
+                    )
+            else:
+                if "report_type_id" not in attrs:
+                    raise ValidationError({"report_type_id": "is missing"})
+        else:
+            if "report_type_id" in attrs:
+                raise ValidationError(
+                    {"report_type_id": "can't set report type of existing object"}
+                )
+
         return attrs
 
     def update(self, instance: ManualDataUpload, validated_data):
@@ -450,6 +468,7 @@ class ManualDataUploadVerboseSerializer(ModelSerializer):
             'can_edit',
             'owner_level',
             'state',
+            'use_nibbler',
         )
 
 

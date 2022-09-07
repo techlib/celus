@@ -1,6 +1,12 @@
+import json
 from datetime import timedelta
 
 import pytest
+from celus_nibbler import conditions as nibbler_conditions
+from celus_nibbler import coordinates as nibbler_coordinates
+from celus_nibbler import data_headers as nibbler_data_headers
+from celus_nibbler import definitions as nibbler_definitions
+from celus_nibbler import sources as nibbler_sources
 from django.conf import settings
 from django.utils import timezone
 from logs.models import InterestGroup, ReportInterestMetric
@@ -14,6 +20,7 @@ from ..entities.data_souces import DataSource, DataSourceFactory
 from ..entities.fetchattempts import FetchAttemptFactory
 from ..entities.identities import Identity, IdentityFactory
 from ..entities.logs import ImportBatchFactory, MetricFactory
+from ..entities.nibbler import ParserDefinitionFactory
 from ..entities.organizations import OrganizationFactory
 from ..entities.platforms import PlatformFactory
 from ..entities.report_types import ReportTypeFactory
@@ -59,7 +66,10 @@ def data_sources(organizations):
     api = DataSourceFactory(short_name='api', type=DataSource.TYPE_API)
 
     brain = DataSourceFactory(
-        short_name='brain.celus.net', type=DataSource.TYPE_API, url='https://brain.celus.net'
+        short_name='brain.celus.net',
+        type=DataSource.TYPE_KNOWLEDGEBASE,
+        url='https://brain.celus.net',
+        token="a" * 64,
     )
 
     root = DataSourceFactory(
@@ -185,7 +195,7 @@ def basic1(users, organizations, platforms, data_sources, identities, clients): 
 
 
 @pytest.fixture
-def report_types():
+def report_types(data_sources):
     # Counter 5
     tr = ReportTypeFactory(
         name="Counter 5 - Title report", short_name="TR", default_platform_interest=True
@@ -221,7 +231,9 @@ def report_types():
     pr1 = ReportTypeFactory(name="Counter 4 - Platform report 1", short_name="PR1")
     mr1 = ReportTypeFactory(name="Counter 4 - Multimedia report 1", short_name="MR1")
 
-    custom1 = ReportTypeFactory(name="Custom1", short_name="custom1")
+    custom1 = ReportTypeFactory(
+        name="Custom1", short_name="custom1", source=data_sources['brain'], ext_id=999,
+    )
 
     return locals()
 
@@ -522,6 +534,58 @@ def client_by_user_type(
         return identity, org
 
     return fn
+
+
+@pytest.fixture
+def parser_definitions(data_sources, platforms, metrics, report_types):
+    parser1 = ParserDefinitionFactory(
+        id=1,
+        source=data_sources["brain"],
+        definition=json.loads(
+            nibbler_definitions.DateBasedDefinition(
+                parser_name="parser1",
+                data_format=nibbler_data_headers.DataFormatDefinition(
+                    name=report_types["custom1"].short_name, id=report_types["custom1"].ext_id,
+                ),
+                platforms=[platforms["brain"].short_name],
+                heuristics=nibbler_conditions.AndCondition(
+                    conds=[
+                        nibbler_conditions.RegexCondition("Title", nibbler_coordinates.Coord(0, 0))
+                    ]
+                ),
+                areas=[
+                    nibbler_definitions.DateBasedAreaDefinition(
+                        data_headers=nibbler_data_headers.DataHeaders(
+                            roles=[
+                                nibbler_sources.DateSource(
+                                    source=nibbler_coordinates.CoordRange(
+                                        nibbler_coordinates.Coord(0, 1),
+                                        nibbler_coordinates.Direction.RIGHT,
+                                    ),
+                                ),
+                            ],
+                            data_direction=nibbler_coordinates.Direction.DOWN,
+                            data_cells=nibbler_coordinates.CoordRange(
+                                nibbler_coordinates.Coord(1, 1),
+                                nibbler_coordinates.Direction.RIGHT,
+                            ),
+                        ),
+                        titles=nibbler_sources.TitleSource(
+                            nibbler_coordinates.CoordRange(
+                                nibbler_coordinates.Coord(1, 0), nibbler_coordinates.Direction.DOWN,
+                            )
+                        ),
+                        title_ids=[],
+                        dimensions=[],
+                        metrics=nibbler_sources.MetricSource(
+                            source=nibbler_coordinates.Value(value=metrics["metric1"].short_name)
+                        ),
+                    )
+                ],
+            ).json()
+        ),
+    )
+    return locals()
 
 
 __all__ = [

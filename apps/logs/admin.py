@@ -1,13 +1,13 @@
 from django import forms
 from django.contrib import admin, messages
-from django.contrib.admin import widgets, TabularInline
+from django.contrib.admin import TabularInline, widgets
 from django.db.models import Count
 from django.utils.translation import ngettext
 from modeltranslation.admin import TranslationAdmin
 
 from . import models
-from .models import ReportInterestMetric, MduState
-from .tasks import reprocess_mdu_task, import_manual_upload_data
+from .models import MduState, ReportInterestMetric
+from .tasks import import_manual_upload_data, reprocess_mdu_task
 
 
 @admin.register(models.OrganizationPlatform)
@@ -239,7 +239,14 @@ class HasImportBatch(admin.SimpleListFilter):
 @admin.register(models.ManualDataUpload)
 class ManualDataUploadAdmin(admin.ModelAdmin):
 
-    list_filter = ['state', 'report_type', 'organization', 'platform', HasImportBatch]
+    list_filter = [
+        'state',
+        'report_type',
+        'organization',
+        'platform',
+        HasImportBatch,
+        'use_nibbler',
+    ]
     list_display = ['created', 'report_type', 'platform', 'organization', 'user', 'state']
     list_select_related = ['report_type', 'organization', 'platform', 'user']
     readonly_fields = [

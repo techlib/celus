@@ -349,10 +349,13 @@ def where_to_store(instance: models.Model, filename):
             f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
         )
     elif instance.__class__.__name__ == 'ManualDataUpload':
-        return (
-            f'custom/{instance.user_id}/{instance.report_type.short_name}-'
-            f'{instance.platform.short_name}_{ts}{ext}'
-        )
+        if instance.report_type:
+            return (
+                f'custom/{instance.user_id}/{instance.report_type.short_name}-'
+                f'{instance.platform.short_name}_{ts}{ext}'
+            )
+        else:
+            return f'custom/{instance.user_id}/NIBBLER-{instance.platform.short_name}_{ts}{ext}'
     else:
         return f'other/{ts}{ext}'
 

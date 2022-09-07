@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'recache.apps.RecacheConfig',
     'knowledgebase.apps.KnowledgebaseConfig',
+    'nibbler.apps.NibblerConfig',
     'export.apps.ExportConfig',
     'tags.apps.TagsConfig',
     'releases.apps.ReleasesConfig',
@@ -619,6 +620,7 @@ EXPORTED_SETTINGS = [
     'SOCIAL_ACCOUNTS_SUPPORTED',
     'USES_ERMS',
     'EXPORT_DELETING_PERIOD',
+    'ENABLE_NIBBLER',
 ]
 
 # Enables Automatic harvesting
@@ -669,3 +671,6 @@ print(
 
 # Releases and Changelog
 RELEASES_SOURCEFILE = config('RELEASES_SOURCEFILE', default='RELEASES.yaml')
+
+# nibbler
+ENABLE_NIBBLER = config('ENABLE_NIBBLER', cast=bool, default=False)

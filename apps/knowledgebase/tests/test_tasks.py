@@ -13,3 +13,9 @@ from .. import tasks
 class TestCeleryTasks:
     def test_sync_platforms_with_knowledgebase_task(self):
         tasks.sync_platforms_with_knowledgebase_task()
+
+    def test_sync_report_types_with_knowledgebase_task(self):
+        tasks.sync_report_types_with_knowledgebase_task()
+
+    def test_sync_parser_definitions_with_knowledgebase_task(self):
+        tasks.sync_parser_definitions_with_knowledgebase_task()

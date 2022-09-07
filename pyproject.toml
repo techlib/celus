@@ -37,6 +37,7 @@ license = "MIT"
 python = "^3.8.10"
 
 celery = "~5.2.3"
+celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v7.1.1" }
 celus-nigiri = { git = "https://github.com/Big-Dig-Data/celus-nigiri.git", tag="v1.2.1" }
 diskcache = "5.3"
 Django = "~3.2.7"
@@ -54,7 +55,7 @@ djangorestframework = "~3.11.0"
 drf-nested-routers = "~0.91.0"
 lz4 = "~3.0.2"
 pycounter = {git = "https://github.com/beda42/pycounter.git", rev = "7d3b8470d909e3a9c989492c01fd8d40b89248cd"}
-openpyxl = "~3.0.7, !=3.0.8"  # openpyxl 3.0.8 was removed after release :/ grrrr, so we need to prevent it
+openpyxl = "~3.0.9"
 python-magic = "~0.4.15"
 pytz = "*"
 psutil = "~5.7.0"

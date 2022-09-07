@@ -1,6 +1,11 @@
 from rest_framework import serializers
 
 
+class DataFormat(serializers.Serializer):
+    name = serializers.CharField(required=True)
+    id = serializers.IntegerField(required=False)
+
+
 class PlatformSerializer(serializers.Serializer):
     pk = serializers.IntegerField(required=True)
     name = serializers.CharField(allow_blank=True)
@@ -32,3 +37,17 @@ class ReportTypeSerializer(serializers.Serializer):
     name = serializers.CharField(allow_blank=True)
     metrics = MetricSerializer(many=True)
     dimensions = DimensionSerializer(many=True)
+
+
+class ParserDefinitionSerializer(serializers.Serializer):
+    pk = serializers.IntegerField(required=True)
+    parser_name = serializers.CharField(required=True)
+    data_format = DataFormat
+    areas = serializers.JSONField(required=True)
+    platforms = serializers.JSONField(required=True)
+    metrics_to_skip = serializers.JSONField(required=True)
+    titles_to_skip = serializers.JSONField(required=True)
+    dimensions_to_skip = serializers.JSONField(required=True)
+    metric_aliases = serializers.JSONField(required=True)
+    dimension_aliases = serializers.JSONField(required=True)
+    heuristics = serializers.JSONField(required=True)

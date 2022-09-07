@@ -2,6 +2,7 @@ import logging
 import typing
 from collections import Counter
 
+from celus_nigiri import CounterRecord
 from celus_nigiri.utils import parse_date_fuzzy
 from core.models import User
 from django.conf import settings
@@ -49,11 +50,13 @@ def custom_data_import_precheck(
 
 
 def histograms_with_stats(
-    attrs: typing.List[str], iterable
+    attrs: typing.List[str], iterable: typing.Iterable[CounterRecord],
 ) -> typing.Tuple[typing.Dict[str, Counter], Counter]:
     histograms = {e: {} for e in attrs}
+    dimensions = set()
     cnt = Counter()
     for x in iterable:
+        dimensions |= set(x.dimension_data.keys())
         for attr in attrs:
             value = str(getattr(x, attr) or "")
             rec = histograms[attr].get(value, {"sum": 0, "count": 0})
@@ -62,11 +65,11 @@ def histograms_with_stats(
             histograms[attr][value] = rec
         cnt["sum"] += x.value
         cnt["count"] += 1
-    return histograms, cnt
+    return histograms, cnt, list(dimensions)
 
 
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    histograms, counts = histograms_with_stats(
+    histograms, counts, dimensions = histograms_with_stats(
         ['start', 'metric', 'title', 'organization'], mdu.data_to_records()
     )
     months = {
@@ -122,6 +125,7 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
         'used_metrics': used_metrics,
         'title_count': len(histograms["title"]),
         'organizations': organizations,
+        'dimensions': dimensions,
     }
 
 

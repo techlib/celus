@@ -1,8 +1,6 @@
 import factory
-
-from faker import Faker
 from core.models import DataSource
-
+from faker import Faker
 
 fake = Faker()
 
