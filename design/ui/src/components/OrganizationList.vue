@@ -8,7 +8,7 @@
     :items-per-page="-1"
     :sort-by="sortBy"
     :expanded="expanded"
-    show-expand
+    :show-expand="enableTags"
     expand-icon="fa fa-caret-down"
     :search="search"
   >
