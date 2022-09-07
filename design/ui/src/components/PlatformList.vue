@@ -38,7 +38,7 @@ cs:
 <template>
   <v-container fluid class="pt-0 px-0 px-sm-2">
     <v-row>
-      <v-col class="pt-0">
+      <v-col v-if="enableTags" class="pt-0">
         <TagSelector
           v-model="selectedTags"
           scope="platform"

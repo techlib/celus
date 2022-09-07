@@ -14,7 +14,7 @@
   >
     <template #top>
       <v-row>
-        <v-col>
+        <v-col v-if="enableTags">
           <TagSelector
             v-model="selectedTags"
             scope="organization"
