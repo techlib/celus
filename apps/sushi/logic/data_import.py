@@ -13,14 +13,20 @@ from publications.models import Platform
 logger = logging.getLogger(__name__)
 
 
-def import_sushi_credentials_from_csv(filename, reversion_comment: Optional[str] = None) -> dict:
+def import_sushi_credentials_from_csv(
+    filename, prefer_brain_urls: bool = False, reversion_comment: Optional[str] = None
+) -> dict:
     with open(filename, 'r') as infile:
         reader = csv.DictReader(infile)
         records = list(reader)  # read all records from the reader
-    return import_sushi_credentials(records, reversion_comment=reversion_comment)
+    return import_sushi_credentials(
+        records, prefer_brain_urls=prefer_brain_urls, reversion_comment=reversion_comment
+    )
 
 
-def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] = None) -> dict:
+def import_sushi_credentials(
+    records: [dict], prefer_brain_urls: bool = False, reversion_comment: Optional[str] = None
+) -> dict:
     """
     Imports SUSHI credentials from a list of dicts describing the data
     :param reversion_comment: comment that will be passed to the reversion version, if None a
@@ -41,7 +47,12 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
     organizations = {org.internal_id: org for org in organization_objects}
     organizations.update({org.short_name: org for org in organization_objects})
     for record in records:
-        organization = organizations.get(record.get('organization', '').strip())
+        organization_name = record.get('organization')
+        if not organization_name:
+            logger.error('Organization name is missing')
+            stats['error'] += 1
+            continue
+        organization = organizations.get(organization_name.strip())
         if not organization:
             logger.error(
                 'Unknown organization: "%s" in "%s"',
@@ -51,7 +62,7 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
             stats['error'] += 1
             continue
         # at first try global platforms
-        platform = platforms.get((record.get('platform').strip(), None))
+        platform = platforms.get((record.get('platform').strip(), None))  # type: Platform
         if not platform:
             # then platforms specific for the organization
             platform = platforms.get((record.get('platform').strip(), organization.id))
@@ -82,13 +93,31 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
             optional['api_key'] = record['api_key']
         else:
             optional['api_key'] = ''
+        url = record.get('URL') or record.get('url')
+        if prefer_brain_urls:
+            if platform.knowledgebase:
+                providers = [
+                    p
+                    for p in platform.knowledgebase.get('providers', [])
+                    if p['counter_version'] == version
+                    and 'provider' in p
+                    and 'url' in p['provider']
+                ]
+                if providers:
+                    url = providers[0]['provider']['url']
+                    stats['url_brain'] += 1
+                else:
+                    stats['url_no_provider'] += 1
+            else:
+                stats['url_no_brain'] += 1
+
         if key in db_credentials:
             # we update it
             cr = db_credentials[key]
             to_sync = dict(
                 customer_id=record.get('customer_id'),
                 requestor_id=record.get('requestor_id'),
-                url=record.get('URL') or record.get('url'),
+                url=url,
                 extra_params=extra_attrs,
                 **optional,
             )
@@ -115,7 +144,7 @@ def import_sushi_credentials(records: [dict], reversion_comment: Optional[str] =
                     counter_version=version,
                     customer_id=record.get('customer_id'),
                     requestor_id=record.get('requestor_id'),
-                    url=record.get('URL') or record.get('url'),
+                    url=url,
                     extra_params=extra_attrs,
                     **optional,
                 )
