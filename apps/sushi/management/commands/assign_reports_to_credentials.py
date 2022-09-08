@@ -2,6 +2,7 @@ import logging
 from collections import Counter
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.db.transaction import atomic
 
 from sushi.models import CounterReportType, SushiCredentials
@@ -31,15 +32,26 @@ class Command(BaseCommand):
             default='TR,DR,PR',
             help='Default reports when knowledgebase is not given - separated by comma (,)',
         )
+        parser.add_argument(
+            '-o',
+            '--organization',
+            dest='organization',
+            help='Pk or name of the organization to process',
+        )
         parser.add_argument('--do-it', dest='doit', action='store_true')
 
     @atomic
     def handle(self, *args, **options):
         stats = Counter()
         report_types = {rt.code: rt for rt in CounterReportType.objects.all()}
-        for cr in SushiCredentials.objects.filter(
-            counter_reports__isnull=True, counter_version=5
-        ).select_related('platform'):
+        qs = SushiCredentials.objects.filter(counter_version=5, counter_reports__isnull=True)
+        if options['organization']:
+            org = options['organization']
+            if org.isdigit():
+                qs = qs.filter(organization__pk=options['organization'])
+            else:
+                qs = qs.filter(organization__name=options['organization'])
+        for cr in qs.select_related('platform'):
             kb = cr.platform.knowledgebase or {}
             for provider in kb.get('providers', []):
                 if provider.get('counter_version') == cr.counter_version:
