@@ -18,7 +18,9 @@ class UserOrganization(serializers.ModelSerializer):
 class ImpersonateListSerializer(serializers.ModelSerializer):
     current = serializers.BooleanField(required=True)
     real_user = serializers.BooleanField(required=True)
-    organizations = UserOrganization(source='userorganization_set', read_only=True, many=True)
+    organizations = UserOrganization(
+        source='userorganization_set_prefetched', read_only=True, many=True
+    )
 
     class Meta:
         model = User

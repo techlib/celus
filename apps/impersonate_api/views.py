@@ -27,6 +27,7 @@ class ImpersonateViewSet(
             Prefetch(
                 'userorganization_set',
                 queryset=UserOrganization.objects.select_related('organization'),
+                to_attr='userorganization_set_prefetched',
             )
         )
 

@@ -185,12 +185,23 @@ class User(AbstractUser):
 
     @cached_property
     def is_admin_of_master_organization(self):
+        if hasattr(self, 'userorganization_set_prefetched'):
+            return any(
+                user_org.organization.internal_id in settings.MASTER_ORGANIZATIONS
+                and user_org.is_admin
+                for user_org in self.userorganization_set_prefetched
+            )
         return self.userorganization_set.filter(
             organization__internal_id__in=settings.MASTER_ORGANIZATIONS, is_admin=True
         ).exists()
 
     @cached_property
     def is_user_of_master_organization(self):
+        if hasattr(self, 'userorganization_set_prefetched'):
+            return any(
+                user_org.organization.internal_id in settings.MASTER_ORGANIZATIONS
+                for user_org in self.userorganization_set_prefetched
+            )
         return self.organizations.filter(internal_id__in=settings.MASTER_ORGANIZATIONS).exists()
 
     def request_relationship(self, request):
