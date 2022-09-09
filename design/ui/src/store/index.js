@@ -239,13 +239,13 @@ export default new Vuex.Store({
     harvesterIPv6Addresses(state) {
       return state.basicInfo.HARVESTER_IPV6_ADDRESSES || [];
     },
-    letAxiosThrough(state, getters) {
+    letAxiosThrough(state) {
       /*
         when true, all requests by axios will be put through,
         otherwise only requests with privileged=true in config will be let through and
         others will have to wait for this to become true
       */
-      if (state.user !== null && getters.selectedOrganization) {
+      if (state.user !== null && state.organizations !== null) {
         return true;
       }
       return false;
