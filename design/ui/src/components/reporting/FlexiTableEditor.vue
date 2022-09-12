@@ -1065,17 +1065,13 @@ export default {
       //   * columns = interest type
       if (this.selectedReportTypes.length === 0) {
         const interest = this.allReportTypes.find(
-          (rt) => rt.short_name === "interest"
+          (rt) => rt.short_name === "TR"
         );
         if (interest) {
           this.selectedReportTypes.push(interest.pk);
           this.row = "platform";
-          const interestType = interest.dimensionObjs.find(
-            (dim) => dim.shortName === "Interest_Type"
-          );
-          if (interestType)
-            // this change has to be done after all watchers, etc. have run
-            this.$nextTick(() => (this.columns = [interestType.ref]));
+          // this change has to be done after all watchers, etc. have run
+          this.$nextTick(() => (this.columns = ["metric"]));
         }
       }
       await this.fetchSettings();
