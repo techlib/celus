@@ -30,6 +30,7 @@ import {
   TooltipComponent,
 } from "echarts/components";
 import VChart from "vue-echarts";
+import { tagText } from "@/libs/tags";
 
 use([
   CanvasRenderer,
@@ -103,12 +104,15 @@ export default {
           Object.keys(this.series).map((k) => [k, item[k]])
         );
 
-        const key = item[this.shownPrimaryDimension];
+        let key = item[this.shownPrimaryDimension];
+        if (this.shownPrimaryDimension === "tag") {
+          key = tagText(key);
+        }
         let count = keyToCount.get(key) || 0;
         if (count > 0) {
-          newItem[this.shownPrimaryDimension] = `${key} #${ count + 1 }`;
+          newItem[this.shownPrimaryDimension] = `${key} #${count + 1}`;
         } else {
-          newItem[this.primaryDimension] = item[this.primaryDimension];
+          newItem[this.shownPrimaryDimension] = key;
         }
         keyToCount.set(key, count + 1);
         return newItem;

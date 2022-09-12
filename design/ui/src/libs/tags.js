@@ -7,4 +7,8 @@ const accessLevels = {
   SYSTEM: 100,
 };
 
-export { accessLevels };
+function tagText(tag) {
+  return `${tag.tag_class.name} / ${tag.name}`;
+}
+
+export { accessLevels, tagText };
