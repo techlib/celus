@@ -118,6 +118,15 @@ export default {
         return newItem;
       });
     },
+    tagToColor() {
+      if (this.shownPrimaryDimension === "tag") {
+        return Object.fromEntries(
+          this.data.map((item) => [tagText(item.tag), item.tag.bg_color])
+        );
+      } else {
+        return {};
+      }
+    },
     xAxis() {
       if (this.type === "bar") {
         // prepare some pieces
@@ -140,6 +149,11 @@ export default {
             width: 250,
             fontSize: this.xValues.length > 20 ? 10 : 12, // smaller font for many values
             overflow: "truncate",
+            // map tags to colors
+            color: (value) =>
+              this.shownPrimaryDimension === "tag"
+                ? this.tagToColor[value]
+                : "#000000",
           },
         };
       } else {
