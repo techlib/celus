@@ -1,6 +1,7 @@
 import codecs
 import tempfile
 from abc import ABC, abstractmethod
+from itertools import chain, islice
 from typing import Any, Callable, Optional, Tuple, Type, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -8,10 +9,11 @@ import xlsxwriter
 from django.conf import settings
 from django.db.models import Field, ForeignKey, Model, QuerySet
 from django.db.models.base import ModelBase
-from django.db.models.functions import Coalesce
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
+from mptt.models import MPTTModelBase
+
 from logs.logic.export_utils import (
     CSVListWriter,
     DictWriter,
@@ -22,14 +24,19 @@ from logs.logic.export_utils import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import AccessLog, DimensionText, ReportType
-from mptt.models import MPTTModelBase
 from organizations.models import Organization
-from tags.models import Tag
+from tags.models import Tag, TagClass, TagScope
 
 
 class FlexibleDataExporter(ABC):
 
     object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
+    taggable_rows = {
+        'target': {'scope': TagScope.TITLE, 'related_attr': 'title'},
+        'platform': {'scope': TagScope.PLATFORM, 'related_attr': 'platform'},
+        'organization': {'scope': TagScope.ORGANIZATION, 'related_attr': 'organization'},
+    }
+    tag_delimiter = ' | '
 
     def __init__(
         self,
@@ -37,10 +44,16 @@ class FlexibleDataExporter(ABC):
         column_parts_separator: str = ' / ',
         report_name: str = '',
         report_owner=None,
+        include_tags: bool = False,  # tag column will be added to the report
     ):
         self.slicer = slicer
         self.report_name = report_name
         self.report_owner = report_owner
+        self._include_tags = include_tags
+        if self.include_tags and not self.report_owner:
+            raise ValueError(
+                'report_owner must be set if include_tags is True because tags are user-specific'
+            )
 
         self.involved_report_types = self.slicer.involved_report_types()
         self.column_parts_separator = column_parts_separator
@@ -61,6 +74,18 @@ class FlexibleDataExporter(ABC):
         else:
             self.prim_dim_remap = {}
         self._fields = []
+        # mapping between primary dim value and connected tags, used in batch processing
+        # inside write_qs_to_output
+        self._tag_cache = {}
+
+    @property
+    def include_tags(self):
+        return (
+            self._include_tags
+            and settings.ENABLE_TAGS
+            and self.slicer.primary_dimension in self.taggable_rows
+            and not self.slicer.tag_roll_up
+        )
 
     @property
     def effective_prim_dim(self) -> str:
@@ -104,9 +129,15 @@ class FlexibleDataExporter(ABC):
         """
 
     def write_qs_to_output(
-        self, output, qs, progress_monitor: Optional[Callable[[int, int], None]] = None, **kwargs,
+        self,
+        output,
+        qs,
+        progress_monitor: Optional[Callable[[int, int], None]] = None,
+        batch_size=100,
+        **kwargs,
     ) -> int:
         """
+        :param batch_size: when fetching tags, how many rows at once to process
         `kwargs` will be passed to the writer
         """
         total = 0
@@ -124,6 +155,9 @@ class FlexibleDataExporter(ABC):
         remap_keys = self.remapped_keys()
         for key in remap_keys[1:]:
             fields.append((key, key.upper()))
+        # add tag column if needed
+        if self.include_tags:
+            fields.append(('tags', _('Tags')))
         # fields from groups
         other_fields = []
         for key in row:
@@ -134,19 +168,39 @@ class FlexibleDataExporter(ABC):
         fields += other_fields
         self._fields = fields
         writer = self.create_writer(output, fields)
-        self.writerow(writer, row)
-        count = 1
-        for i, row in enumerate(data):
-            self.writerow(writer, row)
-            count += 1
-            if progress_monitor and count % 100 == 0:
-                progress_monitor(count, total)
+        count = 0
+
+        # we need to get the first row back into the data
+        all_data = chain([row], data)
+        while batch := list(islice(all_data, batch_size)):
+            # potentially prefetch tags
+            if self.include_tags:
+                self._tag_cache = {}
+                tag_spec = self.taggable_rows[self.slicer.primary_dimension]
+                link_class = Tag.link_class_from_scope(tag_spec['scope'])
+                batch_pks = [obj[self.prim_dim_key] for obj in batch]
+                for link in link_class.objects.filter(
+                    tag__in=Tag.objects.user_accessible_tags(self.report_owner),
+                    target_id__in=batch_pks,
+                ).select_related('tag', 'tag__tag_class'):
+                    self._tag_cache.setdefault(link.target_id, []).append(link.tag)
+
+            for row in batch:
+                self.writerow(writer, row)
+                count += 1
+                if progress_monitor and count % 100 == 0:
+                    progress_monitor(count, total)
         if progress_monitor:
             progress_monitor(total, total)
         writer.finalize()
         return count
 
     def writerow(self, writer, row):
+        if self.include_tags:
+            # add tag column
+            row['tags'] = self.tag_delimiter.join(
+                t.full_name for t in self._tag_cache.get(row[self.prim_dim_key], [])
+            )
         if self.remapped_prim_dim:
             if self.explicit_prim_dim:
                 # remap to text using the DimensionText mapping - mapper converts directly to text
@@ -359,19 +413,8 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
 
     object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
 
-    def __init__(
-        self,
-        slicer: FlexibleDataSlicer,
-        column_parts_separator: str = ' / ',
-        report_name: str = '',
-        report_owner=None,
-    ):
-        super().__init__(
-            slicer,
-            column_parts_separator=column_parts_separator,
-            report_name=report_name,
-            report_owner=report_owner,
-        )
+    def __init__(self, slicer: FlexibleDataSlicer, **kwargs):
+        super().__init__(slicer, **kwargs)
         self._seen_sheetnames = set()
         self.base_fmt = None
         self.header_fmt = None

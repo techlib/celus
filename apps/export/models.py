@@ -124,7 +124,9 @@ class FlexibleDataExport(ExportBase):
         slicer = FlexibleDataSlicer.create_from_config(self.export_params)
         slicer.add_extra_organization_filter(self.owner.accessible_organizations())
         export_cls = self.format_to_exporter[self.file_format]
-        exporter = export_cls(slicer, report_name=self.name, report_owner=self.owner)
+        exporter = export_cls(
+            slicer, report_name=self.name, report_owner=self.owner, include_tags=True
+        )
         return exporter.stream_data_to_sink(stream, progress_monitor=progress_monitor)
 
     def create_output_file(self, progress_monitor=None, raise_exception=False):

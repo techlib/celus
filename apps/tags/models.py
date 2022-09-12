@@ -340,6 +340,10 @@ class Tag(CreatedUpdatedMixin, models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def full_name(self):
+        return f'{self.tag_class.name} / {self.name}'
+
     @classmethod
     def link_class_from_target(
         cls, target: Union[Title, Platform, Organization]
@@ -351,6 +355,16 @@ class Tag(CreatedUpdatedMixin, models.Model):
         elif isinstance(target, Organization):
             return OrganizationTag
         raise ValueError(f'unsupported target object of class "{target.__class__}"')
+
+    @classmethod
+    def link_class_from_scope(cls, scope: TagScope) -> Type['ItemTag']:
+        if scope == TagScope.TITLE:
+            return TitleTag
+        elif scope == TagScope.PLATFORM:
+            return PlatformTag
+        elif scope == TagScope.ORGANIZATION:
+            return OrganizationTag
+        raise ValueError(f'unsupported scope "{scope}"')
 
     @classmethod
     def target_attr_from_scope(cls, scope: TagScope) -> str:

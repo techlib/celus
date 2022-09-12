@@ -2,6 +2,7 @@ from io import BytesIO
 from zipfile import ZipFile
 
 import pytest
+
 from export.enums import FileFormat
 from export.models import FlexibleDataExport
 from logs.logic.reporting.filters import (
@@ -11,6 +12,7 @@ from logs.logic.reporting.filters import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import DimensionText
+from publications.logic.fake_data import TitleFactory
 from tags.logic.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import TagScope
 from test_fixtures.entities.logs import MetricFactory
@@ -86,10 +88,10 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Platform,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,B / Metric 2,B / Metric 3',
-            'Platform 1,12294,13590,14886,12330,13626,14922',
-            'Platform 2,16182,17478,18774,16218,17514,18810',
-            'Platform 3,20070,21366,22662,20106,21402,22698',
+            'Platform,Tags,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,B / Metric 2,B / Metric 3',
+            'Platform 1,,12294,13590,14886,12330,13626,14922',
+            'Platform 2,,16182,17478,18774,16218,17514,18810',
+            'Platform 3,,20070,21366,22662,20106,21402,22698',
         ]
 
     def test_create_output_file_for_slicer2(self, slicer2, admin_user, export_output):
@@ -124,10 +126,11 @@ class TestFlexibleDataExport:
     def test_create_output_file_with_tag_filter(
         self, tagged_titles, flexible_slicer_test_data, admin_user, export_output
     ):
+        tag1 = tagged_titles['tag1']
         slicer = FlexibleDataSlicer(primary_dimension='platform')
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
-        slicer.add_filter(TagDimensionFilter('target', tagged_titles['tag1']))
+        slicer.add_filter(TagDimensionFilter('target', tag1))
         slicer.primary_dimension = 'target'
         slicer.add_group_by('metric')
         t1, t2, _ = tagged_titles['titles']
@@ -135,10 +138,36 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Title/Database,ISSN,EISSN,ISBN,Metric 1,Metric 2,Metric 3',
-            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},47358,51246,55134',
-            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},48654,52542,56430',
+            'Title/Database,ISSN,EISSN,ISBN,Tags,Metric 1,Metric 2,Metric 3',
+            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag1.full_name},47358,51246,55134',
+            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag1.full_name},48654,52542,56430',
         ]
+
+    def test_tagged_output_query_count(
+        self,
+        tagged_titles,
+        flexible_slicer_test_data,
+        admin_user,
+        export_output,
+        django_assert_max_num_queries,
+    ):
+        tag1 = tagged_titles['tag1']
+        # create 100 tagged titles
+        title100 = TitleFactory.create_batch(100)
+        for title in title100:
+            tag1.tag(title, admin_user)
+        slicer = FlexibleDataSlicer(primary_dimension='platform', include_all_zero_rows=True)
+        report_type = flexible_slicer_test_data['report_types'][0]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        slicer.primary_dimension = 'target'
+        slicer.add_group_by('metric')
+
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        with django_assert_max_num_queries(20):
+            # we want to avoid the n+1 query problem, so the number of queries should
+            # be much lower than the number of titles
+            data = export_output(export)
+        assert len(data.splitlines()) == 104, 'should have 103 titles plus header'
 
     def test_create_output_file_with_title(
         self, flexible_slicer_test_data, admin_user, export_output

@@ -28,7 +28,7 @@ class TitleFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Title
 
-    name = factory.Faker('')
+    name = factory.Faker('sentence')
     isbn = maybe_blank(fake.isbn13, fn_kwargs={"separator": ""})
     issn = maybe_blank(fake.bothify, fn_kwargs={"text": "####-####"})
     eissn = maybe_blank(fake.bothify, fn_kwargs={"text": "####-####"})

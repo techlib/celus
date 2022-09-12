@@ -22,8 +22,8 @@ from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 from logs.models import AccessLog, DimensionText, Metric
 from organizations.models import Organization
 from publications.models import Platform, Title
-from tags.logic.fake_data import TagFactory, TagForTitleFactory
-from tags.models import Tag, TagScope
+from tags.logic.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
+from tags.models import AccessibleBy, Tag, TagScope
 
 
 def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list) -> dict:
@@ -802,7 +802,7 @@ class TestFlexibleDataSimpleCSVExporter:
         """
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
-        exporter = FlexibleDataSimpleCSVExporter(slicer)
+        exporter = FlexibleDataSimpleCSVExporter(slicer, include_tags=False)
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
@@ -813,6 +813,49 @@ class TestFlexibleDataSimpleCSVExporter:
             'Organization 2,1114182,1312470,1510758',
             'Organization 3,1709046,1907334,2105622',
         ]
+
+    @pytest.mark.parametrize('include_tags', [True, False])
+    def test_org_sum_by_platform_with_tags(self, flexible_slicer_test_data, include_tags, users):
+        """
+        Primary dimension: organization
+        Group by: platform
+        DimensionFilter:
+        """
+        admin_user = users['admin1']
+        tc = TagClassFactory(scope=TagScope.ORGANIZATION, name='foo')
+        tag1 = TagFactory(tag_class=tc, name='bar')
+        tag2 = TagFactory(tag_class=tc, name='baz')
+        tag3 = TagFactory(
+            tag_class=tc, name='invisible', owner=users['admin2'], can_see=AccessibleBy.OWNER
+        )  # invisible to admin_user
+        tag1.tag(flexible_slicer_test_data['organizations'][0], admin_user)
+        tag2.tag(flexible_slicer_test_data['organizations'][0], admin_user)
+        tag2.tag(flexible_slicer_test_data['organizations'][1], admin_user)
+        tag3.tag(flexible_slicer_test_data['organizations'][1], admin_user)
+
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        slicer.add_group_by('platform')
+        exporter = FlexibleDataSimpleCSVExporter(
+            slicer, include_tags=include_tags, report_owner=admin_user
+        )
+        out = StringIO()
+        exporter.stream_data_to_sink(out)
+        output = out.getvalue()
+        assert len(output.splitlines()) == Organization.objects.count() + 1
+        if include_tags:
+            assert output.splitlines() == [
+                'Organization,Tags,Platform 1,Platform 2,Platform 3',
+                'Organization 1,foo / bar | foo / baz,519318,717606,915894',
+                'Organization 2,foo / baz,1114182,1312470,1510758',
+                'Organization 3,,1709046,1907334,2105622',
+            ]
+        else:
+            assert output.splitlines() == [
+                'Organization,Platform 1,Platform 2,Platform 3',
+                'Organization 1,519318,717606,915894',
+                'Organization 2,1114182,1312470,1510758',
+                'Organization 3,1709046,1907334,2105622',
+            ]
 
     def test_platform_sum_by_metric_dim1_filter_dim1_rt(self, flexible_slicer_test_data):
         """
@@ -858,6 +901,47 @@ class TestFlexibleDataSimpleCSVExporter:
             'Platform 2,39042,39285,39528,39771',
             'Platform 3,47790,48033,48276,48519',
         ]
+
+    @pytest.mark.parametrize('include_tags', [True, False])
+    def test_platform_sum_by_date_filter_rt_with_tags(
+        self, flexible_slicer_test_data, include_tags, admin_user
+    ):
+        """
+        Primary dimension: platform
+        Group by: date
+        DimensionFilter: report_type
+        """
+        tc = TagClassFactory(scope=TagScope.PLATFORM, name='foo')
+        tag1 = TagFactory(tag_class=tc, name='bar')
+        tag2 = TagFactory(tag_class=tc, name='baz')
+        tag1.tag(flexible_slicer_test_data['platforms'][0], admin_user)
+        tag2.tag(flexible_slicer_test_data['platforms'][0], admin_user)
+        tag2.tag(flexible_slicer_test_data['platforms'][1], admin_user)
+
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        report_type = flexible_slicer_test_data['report_types'][0]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+        slicer.add_group_by('date')
+        exporter = FlexibleDataSimpleCSVExporter(
+            slicer, include_tags=include_tags, report_owner=admin_user
+        )
+        out = StringIO()
+        exporter.stream_data_to_sink(out)
+        output = out.getvalue()
+        if include_tags:
+            assert output.splitlines() == [
+                'Platform,Tags,2019-12-01,2020-01-01,2020-02-01,2020-03-01',
+                'Platform 1,foo / bar | foo / baz,30294,30537,30780,31023',
+                'Platform 2,foo / baz,39042,39285,39528,39771',
+                'Platform 3,,47790,48033,48276,48519',
+            ]
+        else:
+            assert output.splitlines() == [
+                'Platform,2019-12-01,2020-01-01,2020-02-01,2020-03-01',
+                'Platform 1,30294,30537,30780,31023',
+                'Platform 2,39042,39285,39528,39771',
+                'Platform 3,47790,48033,48276,48519',
+            ]
 
     def test_platform_sum_by_date__year_filter_rt(self, flexible_slicer_test_data):
         """
@@ -970,7 +1054,6 @@ class TestFlexibleDataSimpleCSVExporter:
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
-        assert len(output.splitlines()) == 2
         assert output.splitlines() == [
             'Organization,Platform 1,Platform 2,Platform 3',
             'Organization 2,1114182,1312470,1510758',

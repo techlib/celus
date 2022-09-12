@@ -87,6 +87,16 @@ cs:
         <template #item.tag="{ item }">
           <TagChip :tag="item.tag" show-class small />
         </template>
+
+        <template #item.assignedTags="{ item }">
+          <TagChip
+            v-for="tag in objIdToTags.get(item.pk)"
+            :key="tag.pk"
+            :tag="tag"
+            small
+            show-class
+          />
+        </template>
       </v-data-table>
 
       <ReportingChart
@@ -127,7 +137,7 @@ cs:
 import axios from "axios";
 import { splitGroup } from "@/libs/group-ids";
 import { formatInteger } from "@/libs/numbers";
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 import translators from "@/mixins/translators";
 import { djangoToDataTableOrderBy } from "@/libs/sorting";
 import { isEqual } from "lodash";
@@ -135,11 +145,12 @@ import { toBase64JSON } from "@/libs/serialization";
 import cancellation from "@/mixins/cancellation";
 import TagChip from "@/components/tags/TagChip";
 import ReportingChart from "@/components/reporting/ReportingChart";
+import tags from "@/mixins/tags";
 
 export default {
   name: "FlexiTableOutput",
   components: { TagChip, ReportingChart },
-  mixins: [translators, cancellation],
+  mixins: [translators, cancellation, tags],
 
   props: {
     readonly: { default: false, type: Boolean },
@@ -172,10 +183,16 @@ export default {
       loadingParts: false,
       view: "table",
       baseWidth: 0,
+      rowToTagScope: {
+        target: "title",
+        platform: "platform",
+        organization: "organization",
+      },
     };
   },
 
   computed: {
+    ...mapGetters({ enableTags: "enableTags" }),
     loading() {
       return this.loadingData || this.dataComputing || this.translatorsUpdating;
     },
@@ -198,12 +215,23 @@ export default {
           text: this.$t("title_fields." + key),
           value: "target__" + key,
         }));
+        let tagHeaders =
+          this.taggableRow && this.enableTags
+            ? [
+                {
+                  text: this.$t("labels.tags"),
+                  value: "assignedTags",
+                  sortable: false,
+                },
+              ]
+            : [];
         let ret = [
           {
             text: this.report.effectivePrimaryDimension.getName(this.$i18n),
             value: this.report.effectivePrimaryDimension.ref,
             sortable: !this.readonly,
           },
+          ...tagHeaders,
           ...titleHeaders,
           ...headers,
         ];
@@ -213,6 +241,9 @@ export default {
     },
     row() {
       return this.report.effectivePrimaryDimension.ref;
+    },
+    taggableRow() {
+      return this.row in this.rowToTagScope;
     },
     dataUrl() {
       return "/api/flexible-slicer/";
@@ -248,7 +279,10 @@ export default {
     },
     partsSideBySide() {
       if (this.baseWidth && this.splitParts.length) {
-        const textWidth = this.splitParts.reduce((acc, item) => (acc + item.text.length), 0);
+        const textWidth = this.splitParts.reduce(
+          (acc, item) => acc + item.text.length,
+          0
+        );
         return this.baseWidth / textWidth > 12;
       }
       return false;
@@ -380,6 +414,12 @@ export default {
         this.cancelTokenSource = null;
       }
       await this.updateTranslators();
+      if (this.taggableRow) {
+        await this.getTagsForObjectsById(
+          this.rowToTagScope[this.row],
+          this.data.map((item) => item.pk)
+        );
+      }
       this.recomputeData();
     },
     async updateTranslators() {
