@@ -1416,7 +1416,7 @@ class TestAutomatic:
         assert FetchIntention.objects.all().count() == 0
         assert Automatic.objects.all().count() == 0
 
-        # Trigger signal (upate credentials)
+        # Trigger signal (update credentials)
         credentials["standalone_tr"].save()
 
         assert FetchIntention.objects.all().count() == 1
@@ -1453,3 +1453,44 @@ class TestAutomatic:
         assert fi.queue.end is not None, "queue is complete"
         assert fi.queue.end != fi, "new fi at the end of the line"
         assert fi.queue.end.when_processed is None, "last is not finished"
+
+    @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
+    def test_credentials_signals_with_no_error_code(
+        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
+    ):
+        # Clear all harvests
+        Harvest.objects.all().delete()
+
+        # And delete some credentials
+        credentials["standalone_br1_jr1"].delete()
+        credentials["branch_pr"].delete()
+
+        assert FetchIntention.objects.all().count() == 0
+        assert Automatic.objects.all().count() == 0
+
+        # Trigger signal (update credentials)
+        credentials["standalone_tr"].save()
+
+        assert FetchIntention.objects.all().count() == 1
+        assert Automatic.objects.all().count() == 1
+
+        # Prepare attempt
+        fi = FetchIntention.objects.order_by('pk').last()
+        fi.attempt = FetchAttemptFactory(
+            start_date=fi.start_date,
+            end_date=fi.end_date,
+            credentials=credentials["standalone_tr"],
+            error_code="",
+            status=AttemptStatus.NO_DATA,
+            import_batch=None,
+        )
+        fi.when_processed = timezone.now()
+        fi.save()
+
+        fi.refresh_from_db()
+
+        # Plan new one
+        fi.get_handler()()
+        assert FetchIntention.objects.all().count() == 2
+        fi.attempt.refresh_from_db()
+        assert "assuming a 3030 exception" in fi.attempt.log

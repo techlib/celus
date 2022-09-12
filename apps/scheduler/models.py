@@ -426,11 +426,7 @@ class FetchIntention(models.Model):
         )
 
     def get_handler(self) -> typing.Optional[typing.Callable[['FetchIntention'], None]]:
-        return self.get_handler_cls(self.attempt)
-
-    def get_handler_cls(
-        cls, attempt: SushiFetchAttempt
-    ) -> typing.Optional[typing.Callable[['FetchIntention'], None]]:
+        attempt = self.attempt
 
         try:
             if attempt.error_code:
@@ -440,11 +436,13 @@ class FetchIntention(models.Model):
                 # we'll treat this situation in the same way as
                 # we treat NO_DATA_FOR_DATE_ARGS (3030) status
                 if attempt.status == AttemptStatus.NO_DATA:
-                    attempt.log += (
+                    # We are updating attempt.log and we don't want to
+                    # trigger a signal which would cause infinite recursion call
+                    new_log = attempt.log + (
                         "\nEmpty data without a corresponding SUSHI exception occured"
                         "-> assuming a 3030 exception."
                     )
-                    attempt.save()
+                    SushiFetchAttempt.objects.filter(pk=attempt.pk).update(log=new_log)
                     error_code = ErrorCode.NO_DATA_FOR_DATE_ARGS
                 else:
                     error_code = ""
@@ -454,20 +452,20 @@ class FetchIntention(models.Model):
             return None
 
         if error_code == ErrorCode.SERVICE_NOT_AVAILABLE:
-            return cls.handle_service_not_available
+            return self.handle_service_not_available
         elif error_code in [ErrorCode.SERVICE_BUSY, ErrorCode.PREPARING_DATA]:
-            return cls.handle_service_busy
+            return self.handle_service_busy
         elif error_code == ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS:
-            return cls.handle_data_not_ready
+            return self.handle_data_not_ready
         elif error_code == ErrorCode.NO_DATA_FOR_DATE_ARGS:
-            return cls.handle_no_data
+            return self.handle_no_data
         elif error_code == ErrorCode.TOO_MANY_REQUESTS:
-            return cls.handle_too_many_requests
+            return self.handle_too_many_requests
         elif error_code == ErrorCode.PARTIAL_DATA_RETURNED:
-            return cls.handle_partial_data
+            return self.handle_partial_data
 
         if attempt.status == AttemptStatus.DOWNLOAD_FAILED:
-            return cls.handle_retry_failed
+            return self.handle_retry_failed
 
         return None
 
