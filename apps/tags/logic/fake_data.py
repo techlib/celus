@@ -40,7 +40,7 @@ class TagFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('tag_class', 'name')
 
     tag_class = factory.SubFactory(TagClassFactory)
-    name = factory.Faker('word')
+    name = factory.Sequence(lambda counter: f'tag-{counter:04d}')  # ensures uniqueness
     text_color = factory.Faker('safe_hex_color')
     bg_color = factory.Faker('safe_hex_color')
     desc = factory.Faker('sentence')

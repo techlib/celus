@@ -274,6 +274,72 @@ class TestTagVisibility:
                     user
                 ), f'{user_key} should not be able to assign {key}'
 
+    @pytest.mark.parametrize(
+        [
+            'user_key',
+            'can_modify_u1',
+            'can_modify_u2',
+            'can_modify_org2',
+            'can_modify_org2_admin',
+            'can_modify_cons',
+            'can_modify_evbd',
+            'can_modify_system',
+        ],
+        [
+            ('user1', True, False, False, False, False, True, False),
+            ('user2', False, True, True, False, False, True, False),
+            ('admin1', False, False, False, False, False, True, False),
+            ('admin2', False, False, True, True, False, True, False),
+            ('master_admin', False, False, True, True, True, True, False),
+            ('master_user', False, False, True, False, False, True, False),
+            ('su', False, False, True, True, True, True, False),
+        ],
+    )
+    def test_user_modifiable_tags(
+        self,
+        basic1,
+        users,
+        organizations,
+        user_key,
+        can_modify_u1,
+        can_modify_u2,
+        can_modify_evbd,
+        can_modify_cons,
+        can_modify_system,
+        can_modify_org2,
+        can_modify_org2_admin,
+    ):
+        tag_classes = {
+            'u1': TagClassFactory.create(
+                name='u1', owner=users['user1'], can_create_tags=AccessibleBy.OWNER
+            ),
+            'u2': TagClassFactory.create(
+                name='u2', owner=users['user2'], can_create_tags=AccessibleBy.OWNER
+            ),
+            'evbd': TagClassFactory.create(name='evbd', can_create_tags=AccessibleBy.EVERYBODY),
+            'org2': TagClassFactory.create(
+                name='org2',
+                owner_org=organizations['standalone'],
+                can_create_tags=AccessibleBy.ORG_USERS,
+            ),
+            'org2_admin': TagClassFactory.create(
+                name='org2_admin',
+                owner_org=organizations['standalone'],
+                can_create_tags=AccessibleBy.ORG_ADMINS,
+            ),
+            'cons': TagClassFactory.create(name='cons', can_create_tags=AccessibleBy.CONS_ADMINS),
+            'system': TagClassFactory.create(name='system', can_create_tags=AccessibleBy.SYSTEM),
+        }
+        tags = {key: TagFactory.create(tag_class=tc) for key, tc in tag_classes.items()}
+        user = users[user_key]
+        for key, tag in tags.items():
+            if locals()[f'can_modify_{key}']:
+                assert tag.can_user_modify(user), f'{user_key} should be able to modify {key}'
+            else:
+                assert not tag.can_user_modify(
+                    user
+                ), f'{user_key} should not be able to modify {key}'
+
 
 @pytest.mark.django_db
 class TestTagClassConstraints:

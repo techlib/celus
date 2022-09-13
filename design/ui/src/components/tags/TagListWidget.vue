@@ -36,7 +36,7 @@ en:
             />
           </v-col>
           <v-col>
-            <v-switch v-model="showClass" label="Show class" />
+            <v-switch v-model="showClass" :label="$t('labels.show_class')" />
           </v-col>
           <v-col>
             <v-switch
@@ -79,12 +79,12 @@ en:
       </template>
 
       <template #item.actions="{ item }">
-        <v-btn @click="editTag(item)" small icon
-          ><v-icon small>fa fa-edit</v-icon></v-btn
-        >
-        <v-btn @click="deleteTag(item)" small icon
-          ><v-icon small>fa fa-trash</v-icon></v-btn
-        >
+        <v-btn @click="editTag(item)" small icon v-if="item.user_can_modify">
+          <v-icon small>fa fa-edit</v-icon>
+        </v-btn>
+        <v-btn @click="deleteTag(item)" small icon v-if="item.user_can_modify">
+          <v-icon small>fa fa-trash</v-icon>
+        </v-btn>
       </template>
 
       <template

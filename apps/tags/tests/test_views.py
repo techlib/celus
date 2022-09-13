@@ -72,19 +72,27 @@ class TestTagViews:
         else:
             assert len(resp.json()) == 14, 'visible by everybody + self owned'
 
-    def test_tag_list_user_access_attr(self, clients, users):
+    def test_tag_list_user_access_attr(self, clients, users, django_assert_max_num_queries):
         """
         Test that the list returned by tag list api contains the access params related to the
         current user
         """
         user = users['user1']
-        TagFactory.create_batch(2, can_assign=AccessibleBy.OWNER, owner=users['user2'])
+        tc = TagClassFactory.create(can_create_tags=AccessibleBy.OWNER, owner=users['user2'])
+        TagFactory.create_batch(
+            2, can_assign=AccessibleBy.OWNER, owner=users['user2'], tag_class=tc
+        )
         TagFactory.create_batch(4, can_assign=AccessibleBy.OWNER, owner=user)
-        TagFactory.create_batch(8, can_assign=AccessibleBy.EVERYBODY)
-        resp = clients['user1'].get(reverse('tag-list'))
+        TagFactory.create_batch(80, can_assign=AccessibleBy.EVERYBODY, tag_class=tc)
+        with django_assert_max_num_queries(20):
+            # here we guard against the n+1 problem
+            resp = clients['user1'].get(reverse('tag-list'))
         assert resp.status_code == 200
-        assert len(resp.json()) == 14, 'can see all the tags'
-        assert len([tag for tag in resp.json() if tag['user_can_assign']]) == 12
+        assert len(resp.json()) == 86, 'can see all the tags'
+        assert len([tag for tag in resp.json() if tag['user_can_assign']]) == 84
+        assert (
+            len([tag for tag in resp.json() if tag['user_can_modify']]) == 4
+        ), 'can only modify those where class permits tag creation'
 
     def test_tag_tagged_titles(self, clients, users):
         user = users['user1']

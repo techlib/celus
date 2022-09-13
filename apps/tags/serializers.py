@@ -105,6 +105,7 @@ class TagSerializer(ModelSerializer):
 
     tag_class = TagClassSerializer()
     user_can_assign = SerializerMethodField()
+    user_can_modify = SerializerMethodField()
 
     class Meta:
         model = Tag
@@ -120,6 +121,7 @@ class TagSerializer(ModelSerializer):
             'owner',
             'owner_org',
             'user_can_assign',
+            'user_can_modify',
         )
 
     def get_user_can_assign(self, tag: Tag):
@@ -129,6 +131,20 @@ class TagSerializer(ModelSerializer):
     def _user_assignable_tag_ids(self):
         return set(
             Tag.objects.user_assignable_tags(self.context['request'].user).values_list(
+                'pk', flat=True
+            )
+        )
+
+    def get_user_can_modify(self, tag: Tag):
+        return tag.pk in self._user_modifiable_ids
+
+    @cached_property
+    def _user_modifiable_ids(self):
+        """
+        caching reduces the number of db queries done per request to 1
+        """
+        return set(
+            Tag.objects.user_modifiable_tags(self.context['request'].user).values_list(
                 'pk', flat=True
             )
         )

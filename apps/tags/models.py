@@ -255,6 +255,9 @@ class TagQuerySet(models.QuerySet):
     def user_assignable_tags(self, user: User) -> QuerySet['Tag']:
         return self.filter(access_filters('can_assign', user))
 
+    def user_modifiable_tags(self, user: User) -> QuerySet['Tag']:
+        return self.filter(tag_class__in=TagClass.objects.user_accessible_tag_classes(user))
+
 
 class Tag(CreatedUpdatedMixin, models.Model):
 
@@ -401,6 +404,9 @@ class Tag(CreatedUpdatedMixin, models.Model):
 
     def can_user_assign(self, user: User) -> bool:
         return Tag.objects.user_assignable_tags(user).filter(pk=self.pk).exists()
+
+    def can_user_modify(self, user: User) -> bool:
+        return Tag.objects.user_modifiable_tags(user).filter(pk=self.pk).exists()
 
 
 class ItemTag(CreatedUpdatedMixin, models.Model):
