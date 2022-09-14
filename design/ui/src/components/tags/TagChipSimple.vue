@@ -127,7 +127,7 @@ export default {
 .chip-class {
   border-radius: 14px 0 0 14px;
   font-size: 80%;
-  opacity: 90%;
+  opacity: 0.9;
   margin: 0 8px 0 -10px;
   line-height: 28px;
   padding: 0 4px;
