@@ -4,29 +4,22 @@ Functions that help in constructing django queries
 import logging
 from typing import Iterable, Optional, Union
 
-from django.db import models
-from django.db.models import (
-    Sum,
-    Q,
-    QuerySet,
-    Exists,
-    OuterRef,
-)
-from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404
-
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
+from django.db import models
+from django.db.models import Exists, OuterRef, Q, QuerySet, Sum
+from django.db.models.functions import Coalesce
+from django.shortcuts import get_object_or_404
 from logs.logic.remap import remap_dicts
 from logs.models import (
     AccessLog,
-    ReportType,
     Dimension,
     DimensionText,
+    ManualDataUpload,
     Metric,
     ReportInterestMetric,
+    ReportType,
 )
-from logs.serializers import ReportTypeInterestSerializer
 from recache.util import recache_queryset
 
 logger = logging.getLogger(__name__)
@@ -123,6 +116,20 @@ def extract_accesslog_attr_query_params(
                 query_params[dim_name] = value
     # MDUs are connected through import batches m2m, so we need to handle them differently
     if mdu_filter and (mdu_id := params.get('mdu')):
+        # Postgres sometimes has trouble efficiently planning the query when the mdu filter is
+        # applied, and it takes a long time to execute. Maybe it has to do with the extra
+        # partitioning on K1, I am not sure.
+        # We help it by providing extra context derived from the MDU (I got something like 80x
+        # speed-up in one case on K1)
+        try:
+            mdu = ManualDataUpload.objects.get(pk=mdu_id)
+        except ManualDataUpload.DoesNotExist:
+            pass
+        else:
+            if mdu.organization:
+                query_params['organization'] = mdu.organization
+            query_params['platform_id'] = mdu.platform_id
+            query_params['report_type_id'] = mdu.report_type_id
         query_params['import_batch__mdu__pk'] = mdu_id
     return query_params
 

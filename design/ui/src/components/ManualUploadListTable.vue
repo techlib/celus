@@ -91,7 +91,10 @@ cs:
                 v-text="item.report_type.short_name"
               ></span>
             </template>
-            <span v-if="!!item.report_type" v-text="item.report_type.name"></span>
+            <span
+              v-if="!!item.report_type"
+              v-text="item.report_type.name"
+            ></span>
           </v-tooltip>
         </template>
 
@@ -442,6 +445,7 @@ export default {
       // extract unique report types
       let res = Object.values(
         this.mdus
+          .filter((mdu) => mdu.report_type)
           .map((mdu) => mdu.report_type)
           .reduce((acc, rt) => ({ ...acc, [rt.pk]: rt }), {})
       );

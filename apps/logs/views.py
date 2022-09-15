@@ -214,14 +214,28 @@ class RawDataExportView(PandasView):
         data = AccessLog.objects.filter(**query_params).select_related(*self.implicit_dims)[
             : self.export_size_limit
         ]
-        text_id_to_text = {
-            dt['id']: dt['text'] for dt in DimensionText.objects.all().values('id', 'text')
-        }
-        tr_to_dimensions = {rt.pk: rt.dimensions_sorted for rt in ReportType.objects.all()}
+        text_id_to_text = {}
+        tr_to_dimensions = {}
+        seen_dims = set()
         for al in data:
             al.mapped_dim_values_ = {}
-            for i, dim in enumerate(tr_to_dimensions[al.report_type_id]):
+            if (dimensions := tr_to_dimensions.get(al.report_type_id)) is None:
+                rt = ReportType.objects.get(pk=al.report_type_id)
+                dimensions = rt.dimensions_sorted
+                tr_to_dimensions[rt.pk] = dimensions
+            for i, dim in enumerate(dimensions):
                 value = getattr(al, f'dim{i+1}')
+                if dim.pk not in seen_dims:
+                    # we need to fetch the mappings for this dimension
+                    text_id_to_text.update(
+                        {
+                            dt['id']: dt['text']
+                            for dt in DimensionText.objects.filter(dimension=dim).values(
+                                'id', 'text'
+                            )
+                        }
+                    )
+                    seen_dims.add(dim.pk)
                 al.mapped_dim_values_[dim.short_name] = text_id_to_text.get(value, value)
             if al.target:
                 al.mapped_dim_values_['isbn'] = al.target.isbn
