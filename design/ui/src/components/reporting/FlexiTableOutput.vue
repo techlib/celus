@@ -8,6 +8,7 @@ en:
   error_intro: The following error was reported during the preparation of the report.
   available_parts: Select part - {count} available | Select part - {count} available | Select part - {count} available
   loading_parts: Loading list of parts
+  no_data: No data matching the current setup was found.
 
 cs:
   detail: Detail
@@ -16,6 +17,7 @@ cs:
   error_intro: Následující chyba byla nahlášena při přípravě požadovaného reportu.
   available_parts: Vyberte část - {count} možnost | Vyberte část - {count} možnosti | Vyberte část - {count} možností
   loading_parts: Nahrávám seznam částí
+  no_data: Nebyla nalezena žádná data odpovídající aktuálnímu nastavení.
 </i18n>
 
 <template>
@@ -130,6 +132,10 @@ cs:
           </p>
         </v-card-text>
       </v-card>
+    </div>
+
+    <div v-else-if="report">
+      <v-alert type="info" outlined>{{ $t("no_data") }}</v-alert>
     </div>
   </div>
 </template>
@@ -413,6 +419,7 @@ export default {
         this.loadingData = false;
         this.cancelTokenSource = null;
       }
+      this.dataComputing = true;
       await this.updateTranslators();
       if (this.taggableRow) {
         await this.getTagsForObjectsById(
@@ -421,6 +428,7 @@ export default {
         );
       }
       this.recomputeData();
+      this.dataComputing = false;
     },
     async updateTranslators() {
       this.translatorsUpdating = true;
@@ -448,7 +456,6 @@ export default {
       this.translatorsUpdating = false;
     },
     recomputeData() {
-      this.dataComputing = true;
       // process the data to translate the primary dimension
       this.cleanData = this.data.map((item) => {
         let newItem = { ...item };
@@ -510,7 +517,6 @@ export default {
       this.headersFromData = headersFromData.sort((a, b) =>
         a.text.localeCompare(b.text)
       );
-      this.dataComputing = false;
     },
     showError(code, details) {
       this.errorCode = code;
