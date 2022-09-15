@@ -8,6 +8,9 @@ const accessLevels = {
 };
 
 function tagText(tag) {
+  if (typeof tag === "string") {
+    return tag;
+  }
   return `${tag.tag_class.name} / ${tag.name}`;
 }
 

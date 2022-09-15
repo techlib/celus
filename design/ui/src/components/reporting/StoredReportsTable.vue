@@ -222,6 +222,16 @@
                         }}
                       </li>
                       <li v-if="item.tagRollUp">{{ $t("tag_roll_up_tt") }}</li>
+                      <li v-if="item.showUntaggedRemainder">
+                        <v-tooltip bottom>
+                          <template #activator="{ on }">
+                            <span v-on="on">{{
+                              $t("tags_show_remainder")
+                            }}</span>
+                          </template>
+                          {{ $t("tags_show_remainder_tt") }}
+                        </v-tooltip>
+                      </li>
                     </ul>
                   </td>
                 </tr>

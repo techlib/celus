@@ -10,6 +10,7 @@ from django.db.models import (
     FilteredRelation,
     Q,
     DateField,
+    QuerySet,
     Sum,
     OuterRef,
     Subquery,
@@ -32,6 +33,7 @@ from logs.logic.reporting.filters import (
 from logs.models import AccessLog, DimensionText, ReportType
 from organizations.logic.queries import extend_query_filter
 from organizations.models import Organization
+from publications.models import Title
 from tags.models import Tag, TagClass, TagScope
 
 
@@ -50,6 +52,9 @@ class FlexibleDataSlicer:
         self.tag_roll_up = tag_roll_up
         self.tag_filter: Optional[Q] = None
         self.tag_class: Optional[int] = None
+        # the following is only here for storage - we do not use it in the code, but
+        # we need it for serialization
+        self.show_untagged_remainder: bool = False
         # if True, the query is run against the model described by the primary dimension
         # for example Title and annotated with access log data
         # if False, the query is done against the access log model
@@ -65,6 +70,7 @@ class FlexibleDataSlicer:
             "split_by": self.split_by,
             "tag_roll_up": self.tag_roll_up,
             "tag_class": self.tag_class,
+            "show_untagged_remainder": self.show_untagged_remainder,
         }
 
     @property
@@ -140,21 +146,10 @@ class FlexibleDataSlicer:
     def get_queryset(self, part: Optional[list] = None):
         self.check_params()
         self.check_params_for_data_query()
-        filters = {**self.filters}
+        self.check_part(part)
 
-        # handle part and split_by
-        if self.split_by:
-            if not part:
-                raise SlicerConfigError(
-                    code=SlicerConfigErrorCode.E108,
-                    message='`part` argument must be given when `split_by` is used',
-                )
-            if len(self.split_by) != len(part):
-                raise SlicerConfigError(
-                    'The `part` value must be the same length as `split_by`',
-                    code=SlicerConfigErrorCode.E109,
-                    details={'split_by': self.split_by, 'part': part},
-                )
+        filters = {**self.filters}
+        if part:
             for dim, value in zip(self.split_by, part):
                 fltr = self.filter_instance(dim, value)
                 filters.update(fltr.query_params())
@@ -170,8 +165,15 @@ class FlexibleDataSlicer:
                 tag_filters = [self.tag_filter] if self.tag_filter else []
                 if self.tag_class:
                     tag_filters.append(Q(tag_class_id=self.tag_class))
+                # if we apply the tag filter on the qs itself, it for some reason creates
+                # an extremely slow query (at least on K1), maybe because joins with organization
+                # created for organization specific tags
+                # If we resolve the tags beforehand and use the pks, the query is much faster
+                tag_ids = Tag.objects.filter(tag_class__scope=tag_scope, *tag_filters).values_list(
+                    'pk', flat=True
+                )
                 qs = (
-                    Tag.objects.filter(tag_class__scope=tag_scope, *tag_filters)
+                    Tag.objects.filter(pk__in=tag_ids)
                     .annotate(
                         relevant_accesslogs=FilteredRelation(
                             f'{target_attr}__accesslog',
@@ -397,7 +399,7 @@ class FlexibleDataSlicer:
             return self.get_possible_dimension_values_queryset(self.split_by)
         return None
 
-    def get_data(self, lang='en', part: Optional[list] = None):
+    def get_data(self, lang='en', part: Optional[list] = None) -> QuerySet[dict]:
         """
         :param lang: language in which texts should be obtained - influences sorting
         :param part: when `split_by` is set, this defines for which part the result should be
@@ -457,8 +459,81 @@ class FlexibleDataSlicer:
                 # which have this problem, so we just ignore it and drop the ordering
                 logger.error('Dropping inconsistent order by "%s"', ob)
         qs = qs.order_by(*obs)
-        logger.debug('Query: %s', qs.query)
+        logger.debug('Slicer query: %s', qs.query)
         return qs
+
+    def get_remainder(self, part: Optional[list] = None) -> dict:
+        """
+        In case `tag_roll_up` is active, this gets the remaining usage for untagged objects.
+        Because it would be complicated to make it part of the standard interface provided
+        by `get_data`, we have a separate method for it.
+
+        :param part: when `split_by` is set, this defines for which part the result should be
+                     obtained. It should be a list of the same length as `split_by`
+        """
+        # handle part and split_by
+        self.check_part(part)
+
+        field, modifier = AccessLog.get_dimension_field(self.primary_dimension)
+        if isinstance(field, ForeignKey):
+            primary_cls = field.remote_field.model
+            if self.tag_roll_up:
+                tag_scope = TagClass.tag_scope_from_target_class(primary_cls)
+                tag_filters = [self.tag_filter] if self.tag_filter else []
+                if self.tag_class:
+                    tag_filters.append(Q(tag_class_id=self.tag_class))
+                # find all untagged objects
+                # tag_scope.value is used to enforce string value - cachalot does not like enums
+                qs = primary_cls.objects.exclude(
+                    tags__in=Tag.objects.filter(tag_class__scope=tag_scope.value, *tag_filters)
+                )
+                # apply the same filters that are used for the main query
+                if primary_cls is Organization and self.organization_filter is not None:
+                    qs = qs.filter(pk__in=self.organization_filter)
+                # use the same query as for the main query when the primary object are annotated
+                # but then aggregate everything to a single row
+                filters = {**self.filters}
+                if self.split_by and part:
+                    for dim, value in zip(self.split_by, part):
+                        fltr = self.filter_instance(dim, value)
+                        filters.update(fltr.query_params())
+                return (
+                    qs.filter(**self._primary_dimension_filter())
+                    .annotate(
+                        relevant_accesslogs=FilteredRelation(
+                            'accesslog', condition=Q(**extend_query_filter(filters, 'accesslog__')),
+                        )
+                    )
+                    .values('pk')
+                    .aggregate(**self._prepare_annotations())
+                )
+            raise ValueError('Remainder can only be computed when `tag_roll_up` is active')
+        # the following will happen if the primary dimension is not a foreign key
+        # and thus cannot be one of the taggable models (Organization, Platform, Title)
+        raise ValueError('Remainder can only be computed when primary dimension supports tags')
+
+    def check_part(self, part):
+        """
+        Checks that the `split_by` definition is compatible with the part value given
+        """
+        if self.split_by:
+            if not part:
+                raise SlicerConfigError(
+                    code=SlicerConfigErrorCode.E108,
+                    message='`part` argument must be given when `split_by` is used',
+                )
+            if len(self.split_by) != len(part):
+                raise SlicerConfigError(
+                    'The `part` value must be the same length as `split_by`',
+                    code=SlicerConfigErrorCode.E109,
+                    details={'split_by': self.split_by, 'part': part},
+                )
+        elif part:
+            # part cannot be used if `split_by` is not set up
+            raise SlicerConfigError(
+                code=SlicerConfigErrorCode.E110,
+                message='`split_by` must be set up when `part` argument is given',
+            )
 
     def resolve_explicit_dimension(self, dim_ref: str):
         rts = self.involved_report_types()
@@ -580,6 +655,7 @@ class FlexibleDataSlicer:
         slicer.include_all_zero_rows = to_bool(params.get('zero_rows', ''))
         slicer.tag_roll_up = to_bool(params.get('tag_roll_up', ''))
         slicer.tag_class = params.get('tag_class')
+        slicer.show_untagged_remainder = to_bool(params.get('show_untagged_remainder', ''))
         return slicer
 
     @classmethod
@@ -616,6 +692,7 @@ class FlexibleDataSlicer:
         slicer.include_all_zero_rows = params.get('zero_rows', False)
         slicer.tag_roll_up = params.get('tag_roll_up', False)
         slicer.tag_class = params.get('tag_class')
+        slicer.show_untagged_remainder = params.get('show_untagged_remainder', False)
         return slicer
 
     def filter_to_str(self, fltr):
@@ -649,6 +726,7 @@ class SlicerConfigErrorCode(Enum):
     E107 = "E107"
     E108 = "E108"
     E109 = "E109"
+    E110 = "E110"
 
     def __str__(self):
         return self.value
@@ -668,6 +746,7 @@ class SlicerConfigError(Exception):
     E107: The queried dimension is not supported.
     E108: Part is not specified and `split_by` is used.
     E109: Part specification is incompatible with `split_by`.
+    E110: Part was specified without `split_by` being active.
     """
 
     def __init__(self, message, code: SlicerConfigErrorCode, *args, details=None, **kwargs):

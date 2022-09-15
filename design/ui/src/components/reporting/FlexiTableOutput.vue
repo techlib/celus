@@ -8,6 +8,7 @@ en:
   error_intro: The following error was reported during the preparation of the report.
   available_parts: Select part - {count} available | Select part - {count} available | Select part - {count} available
   loading_parts: Loading list of parts
+  remainder: Remainder without any tags
   no_data: No data matching the current setup was found.
 
 cs:
@@ -17,6 +18,7 @@ cs:
   error_intro: Následující chyba byla nahlášena při přípravě požadovaného reportu.
   available_parts: Vyberte část - {count} možnost | Vyberte část - {count} možnosti | Vyberte část - {count} možností
   loading_parts: Nahrávám seznam částí
+  remainder: Zbytek bez přiřazeného štítku
   no_data: Nebyla nalezena žádná data odpovídající aktuálnímu nastavení.
 </i18n>
 
@@ -30,7 +32,7 @@ cs:
 
     <div
       v-else-if="
-        cleanData.length ||
+        dataToShow.length ||
         (loading && !errorCode) ||
         (report && report.splitBy && splitParts.length && currentPart)
       "
@@ -87,7 +89,8 @@ cs:
         </template>
 
         <template #item.tag="{ item }">
-          <TagChip :tag="item.tag" show-class small />
+          <TagChip :tag="item.tag" show-class small v-if="item.pk" />
+          <span v-else class="text--secondary">{{ item.tag }}</span>
         </template>
 
         <template #item.assignedTags="{ item }">
@@ -99,17 +102,41 @@ cs:
             show-class
           />
         </template>
+
+        <template
+          #body.append="{ headers }"
+          v-if="remainderVisible && (remainder || loadingRemainder)"
+        >
+          <tr>
+            <td
+              v-for="header in headers"
+              :key="header.text"
+              style="background-color: #e7e7e7"
+              :class="header.value === 'tag' ? 'text--secondary' : 'text-end'"
+            >
+              <span v-if="header.value === 'tag'">
+                {{ $t("remainder") }}
+              </span>
+              <span v-else-if="loadingRemainder">
+                <v-icon small>fas fa-spinner fa-spin</v-icon>
+              </span>
+              <span v-else-if="remainder">
+                {{ formatInteger(remainder[header.value]) }}
+              </span>
+            </td>
+          </tr>
+        </template>
       </v-data-table>
 
       <ReportingChart
         v-else
-        :data="cleanData"
+        :data="dataWithRemainder"
         :primary-dimension="row"
         :secondary-dimension="report.groupBy[0].ref"
         :series="chartSeries"
         :type="row.startsWith('date') ? 'histogram' : 'bar'"
         :height="
-          (row.startsWith('date') ? 480 : 260 + cleanData.length * 20) + 'px'
+          (row.startsWith('date') ? 480 : 260 + dataToShow.length * 20) + 'px'
         "
       />
     </div>
@@ -160,7 +187,6 @@ export default {
 
   props: {
     readonly: { default: false, type: Boolean },
-    showZeroRows: { default: false, type: Boolean },
     // if the organization and selected dates should be used from the UI,
     // and not from the report, set this to true
     contextOverride: { default: false, type: Boolean },
@@ -174,6 +200,7 @@ export default {
       cleanData: [],
       totalRowCount: null,
       loadingData: false,
+      loadingRemainder: false,
       dataComputing: false,
       translatorsUpdating: false,
       headersFromData: [],
@@ -192,6 +219,7 @@ export default {
       loadingParts: false,
       view: "table",
       baseWidth: 0,
+      remainder: null,
       rowToTagScope: {
         target: "title",
         platform: "platform",
@@ -214,7 +242,7 @@ export default {
     },
     activeTitleColumns() {
       let titleHeaders = [];
-      if (this.report.primaryDimension.ref === "target") {
+      if (this.row === "target") {
         titleHeaders = Object.entries(this.titleColumns)
           .filter(([key, value]) => value)
           .map(([key, value]) => key);
@@ -256,7 +284,7 @@ export default {
       return [];
     },
     row() {
-      return this.report.effectivePrimaryDimension.ref;
+      return this.report?.effectivePrimaryDimension?.ref;
     },
     taggableRow() {
       return this.row in this.rowToTagScope;
@@ -283,15 +311,27 @@ export default {
       );
     },
     formattedData() {
-      return this.cleanData.map((item) => {
+      return this.dataToShow.map((item) => {
         let newItem = { ...item };
         for (let key of Object.keys(newItem)) {
-          if (key.substr(0, 4) === "grp-") {
+          if (key.startsWith("grp-")) {
             newItem[key] = formatInteger(newItem[key]);
           }
         }
         return newItem;
       });
+    },
+    dataToShow() {
+      return this.cleanData;
+    },
+    dataWithRemainder() {
+      if (this.remainder) {
+        return [
+          ...this.dataToShow,
+          { ...this.remainder, tag: this.$t("remainder") },
+        ];
+      }
+      return this.dataToShow;
     },
     partsSideBySide() {
       if (this.baseWidth && this.splitParts.length) {
@@ -303,6 +343,9 @@ export default {
       }
       return false;
     },
+    remainderVisible() {
+      return this.row === "tag" && this.report.showUntaggedRemainder;
+    },
     itemsPerPageOptions() {
       return this.contextOverride ? [20, 50, 100, -1] : [20, 50, 100];
     },
@@ -310,6 +353,7 @@ export default {
 
   methods: {
     ...mapActions(["showSnackbar"]),
+    formatInteger,
     async updateOutput(report, clean = true) {
       this.report = report;
 
@@ -393,6 +437,7 @@ export default {
     },
     async fetchData() {
       this.loadingData = true;
+      this.remainder = null;
       this.cancelTokenSource = axios.CancelToken.source();
       let filterOverride = null;
       if (this.contextOverride) {
@@ -446,6 +491,7 @@ export default {
         this.loadingData = false;
         this.cancelTokenSource = null;
       }
+      // post-processing
       this.dataComputing = true;
       await this.updateTranslators();
       if (this.taggableRow) {
@@ -456,6 +502,23 @@ export default {
       }
       this.recomputeData();
       this.dataComputing = false;
+      // remainder
+      if (this.remainderVisible) {
+        this.loadingRemainder = true;
+        try {
+          let resp = await axios.get(this.dataUrl + "remainder/", {
+            params: params,
+          });
+          this.remainder = resp.data;
+        } catch (error) {
+          this.showSnackbar({
+            content: "Could not load remainder: " + error,
+            color: "error",
+          });
+        } finally {
+          this.loadingRemainder = false;
+        }
+      }
     },
     async updateTranslators() {
       this.translatorsUpdating = true;

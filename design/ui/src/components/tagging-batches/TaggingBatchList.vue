@@ -58,7 +58,15 @@
                 : $t("tagging.matched_titles_tt")
             }}
           </div>
-          <div>{{ $t("tagging.title_number_note") }}</div>
+          <div>
+            {{
+              item.state === "imported" &&
+              (item.postflight?.stats?.tagged_titles || 0) <
+                (item.postflight?.stats?.unique_matched_titles || 0)
+                ? $t("tagging.tagged_titles_note")
+                : $t("tagging.title_number_note")
+            }}
+          </div>
         </v-tooltip>
       </template>
 
@@ -85,16 +93,15 @@
       <template #expanded-item="{ item, headers }">
         <td :colspan="headers.length" class="px-0">
           <v-sheet class="ma-2 text--secondary">
-            <TaggingBatchPreflightInfo :tagging-batch="item" show-file-name />
+            <TaggingBatchStats :tagging-batch="item" show-file-name />
           </v-sheet>
         </td>
       </template>
     </v-data-table>
-    <v-dialog v-model="showDialog" max-width="720px">
+    <v-dialog v-model="showDialog" v-if="showDialog" max-width="720px">
       <TaggingBatchProcessingWidget
         :batch="selectedBatch"
         @close="hideDialog"
-        ref="processingWidget"
       />
     </v-dialog>
   </div>
@@ -105,7 +112,7 @@ import cancellation from "@/mixins/cancellation";
 import TaggingBatchProcessingWidget from "@/components/tagging-batches/TaggingBatchProcessingWidget";
 import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
 import TagChip from "@/components/tags/TagChip";
-import TaggingBatchPreflightInfo from "@/components/tagging-batches/TaggingBatchPreflightInfo";
+import TaggingBatchStats from "@/components/tagging-batches/TaggingBatchStats";
 import TaggingBatchStateIcon from "@/components/tagging-batches/TaggingBatchStateIcon";
 import { mapActions } from "vuex";
 
@@ -113,7 +120,7 @@ export default {
   name: "TaggingBatchList",
   components: {
     TaggingBatchStateIcon,
-    TaggingBatchPreflightInfo,
+    TaggingBatchStats,
     TagChip,
     TaggingBatchProcessingWidget,
   },
@@ -203,14 +210,8 @@ export default {
     uploadNew() {
       this.selectedBatch = null;
       this.showDialog = true;
-      if (this.$refs.processingWidget) {
-        this.$refs.processingWidget.cleanup();
-      }
     },
     openBatch(item) {
-      if (this.$refs.processingWidget) {
-        this.$refs.processingWidget.cleanup();
-      }
       this.selectedBatch = item;
       this.showDialog = true;
     },
@@ -218,16 +219,6 @@ export default {
 
   mounted() {
     this.fetchTaggingBatches();
-  },
-
-  watch: {
-    showDialog(newValue) {
-      if (!newValue) {
-        if (this.$refs.processingWidget) {
-          this.$refs.processingWidget.cleanup();
-        }
-      }
-    },
   },
 };
 </script>

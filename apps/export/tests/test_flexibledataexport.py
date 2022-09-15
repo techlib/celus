@@ -105,23 +105,38 @@ class TestFlexibleDataExport:
             'MS,0,0,0,0,0,0',
         ]
 
+    @pytest.mark.parametrize('show_remainder', [True, False])
     def test_create_output_file_with_tag_rollup(
-        self, tagged_titles, flexible_slicer_test_data, admin_user, export_output
+        self, tagged_titles, flexible_slicer_test_data, admin_user, export_output, show_remainder
     ):
         slicer = FlexibleDataSlicer(primary_dimension='platform')
         report_type = flexible_slicer_test_data['report_types'][0]
         slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
         slicer.tag_roll_up = True
         slicer.primary_dimension = 'target'
+        slicer.show_untagged_remainder = show_remainder
         slicer.add_group_by('metric')
 
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
-        assert data.splitlines() == [
+        expected = [
             'Tag,Metric 1,Metric 2,Metric 3',
             'Tag 1,96012,103788,111564',
             'Tag 2,49950,53838,57726',
         ]
+        if show_remainder:
+            expected += ['-- untagged remainder --,0,0,0']
+        assert data.splitlines() == expected
+        if show_remainder:
+            # try untagging and recomputing
+            tagged_titles['tag2'].delete()
+            export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+            data = export_output(export)
+            assert data.splitlines() == [
+                'Tag,Metric 1,Metric 2,Metric 3',
+                'Tag 1,96012,103788,111564',
+                '-- untagged remainder --,49950,53838,57726',
+            ]
 
     def test_create_output_file_with_tag_filter(
         self, tagged_titles, flexible_slicer_test_data, admin_user, export_output

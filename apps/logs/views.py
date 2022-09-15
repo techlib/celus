@@ -762,7 +762,6 @@ class FlexibleSlicerView(FlexibleSlicerBaseView):
             part = request.query_params.get('part') if slicer.split_by else None
             if part:
                 part = parse_b64json(part)
-            print(part)
             data = slicer.get_data(part=part, lang=request.user.language)
         except SlicerConfigError as e:
             return Response(
@@ -772,6 +771,22 @@ class FlexibleSlicerView(FlexibleSlicerBaseView):
         pagination = StandardResultsSetPagination()
         page = pagination.paginate_queryset(data, request)
         return pagination.get_paginated_response(page)
+
+
+class FlexibleSlicerRemainderView(FlexibleSlicerBaseView):
+    def get(self, request):
+        slicer = self.create_slicer(request)
+        try:
+            part = request.query_params.get('part') if slicer.split_by else None
+            if part:
+                part = parse_b64json(part)
+            data = slicer.get_remainder(part=part)
+            return Response(data)
+        except SlicerConfigError as e:
+            return Response(
+                {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
+                status=HTTP_400_BAD_REQUEST,
+            )
 
 
 class FlexibleSlicerPossibleValuesView(FlexibleSlicerBaseView):

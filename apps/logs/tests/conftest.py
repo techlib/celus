@@ -15,7 +15,7 @@ from logs.models import (
     ReportType,
     ReportTypeToDimension,
 )
-from organizations.models import Organization
+from organizations.models import Organization, UserOrganization
 from publications.models import Platform, Title
 from tags.logic.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import AccessibleBy, TagScope
@@ -364,6 +364,13 @@ def flexible_slicer_test_data_with_tags(flexible_slicer_test_data, users):
     tag1.tag(t1, users['su'])
     tag1.tag(t2, users['su'])
     tag2.tag(t3, users['admin2'])
+    # connect users with some organizations
+    UserOrganization.objects.create(
+        user=users['admin1'], organization=flexible_slicer_test_data['organizations'][0]
+    )
+    UserOrganization.objects.create(
+        user=users['admin2'], organization=flexible_slicer_test_data['organizations'][1]
+    )
     return {
         'tags': [tag1, tag2, tag3],
         'tag_classes': [tc1, tag3.tag_class],

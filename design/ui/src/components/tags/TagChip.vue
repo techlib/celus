@@ -1,11 +1,9 @@
 <template>
   <v-tooltip bottom v-if="tag.desc && !hideTooltip">
     <template #activator="{ on }">
-      <TagChipSimple
-        v-on="{ ...on, ...$listeners }"
-        :tag="tag"
-        v-bind="$attrs"
-      />
+      <span v-on="on">
+        <TagChipSimple v-on="$listeners" :tag="tag" v-bind="$attrs" />
+      </span>
     </template>
     {{ tag.desc }}
   </v-tooltip>

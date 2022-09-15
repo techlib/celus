@@ -12,7 +12,7 @@
     <tr v-if="taggingBatch.tag">
       <th>{{ $t("labels.tag") }}</th>
       <td class="text-right">
-        <TagChip :tag="taggingBatch.tag" />
+        <TagChip :tag="taggingBatch.tag" show-class />
       </td>
     </tr>
     <tr v-if="showFileName">
@@ -47,6 +47,9 @@
         >
       </td>
     </tr>
+
+    <!-- stats -->
+    <!-- total row count -->
     <tr v-if="stats">
       <th class="pt-6">
         <v-tooltip bottom>
@@ -65,44 +68,7 @@
         </v-tooltip>
       </td>
     </tr>
-    <tr v-if="stats">
-      <th>
-        <v-tooltip bottom>
-          <template #activator="{ on }">
-            <span v-on="on">{{
-              finished
-                ? $t("tagging.tagged_titles")
-                : $t("tagging.matched_titles")
-            }}</span>
-          </template>
-          <div>
-            {{
-              finished
-                ? $t("tagging.tagged_titles_tt")
-                : $t("tagging.matched_titles_tt")
-            }}
-          </div>
-          <div>{{ $t("tagging.title_number_note") }}</div>
-        </v-tooltip>
-      </th>
-      <td class="text-right">
-        <v-tooltip bottom>
-          <template #activator="{ on }">
-            <span v-on="on">{{
-              finished ? stats.tagged_titles : stats.unique_matched_titles
-            }}</span>
-          </template>
-          <div>
-            {{
-              finished
-                ? $t("tagging.tagged_titles_tt")
-                : $t("tagging.matched_titles_tt")
-            }}
-          </div>
-          <div>{{ $t("tagging.title_number_note") }}</div>
-        </v-tooltip>
-      </td>
-    </tr>
+    <!-- unmatched row count -->
     <tr v-if="stats">
       <th>
         <v-tooltip bottom>
@@ -123,6 +89,96 @@
         </v-tooltip>
       </td>
     </tr>
+
+    <!-- matched titles count -->
+    <tr v-if="stats">
+      <th :class="finished ? 'pt-4' : ''">
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">{{ $t("tagging.matched_titles") }}</span>
+          </template>
+          <div>{{ $t("tagging.matched_titles_tt") }}</div>
+          <div>{{ $t("tagging.title_number_note") }}</div>
+        </v-tooltip>
+      </th>
+      <td class="text-right" :class="finished ? 'pt-4' : ''">
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">{{ stats.unique_matched_titles }}</span>
+          </template>
+          <div>{{ $t("tagging.matched_titles_tt") }}</div>
+          <div>{{ $t("tagging.title_number_note") }}</div>
+        </v-tooltip>
+      </td>
+    </tr>
+
+    <!-- already tagged titles count -->
+    <tr v-if="finished && stats && stats.already_tagged_titles">
+      <th class="pl-3 font-weight-light">
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">{{ $t("tagging.already_tagged_titles") }}</span>
+          </template>
+          <div>{{ $t("tagging.already_tagged_titles_tt") }}</div>
+        </v-tooltip>
+      </th>
+      <td class="text-right">
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">{{ stats.already_tagged_titles }}</span>
+          </template>
+          <div>{{ $t("tagging.already_tagged_titles_tt") }}</div>
+        </v-tooltip>
+      </td>
+    </tr>
+
+    <!-- titles with a clashing exclusive tag -->
+    <tr v-if="finished && stats && stats.exclusively_tagged_titles">
+      <th class="pl-3 font-weight-light">
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">{{ $t("tagging.exclusively_tagged_titles") }}</span>
+          </template>
+          <div>{{ $t("tagging.exclusively_tagged_titles_tt") }}</div>
+        </v-tooltip>
+      </th>
+      <td class="text-right">
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">{{ stats.exclusively_tagged_titles }}</span>
+          </template>
+          <div>{{ $t("tagging.exclusively_tagged_titles_tt") }}</div>
+        </v-tooltip>
+      </td>
+    </tr>
+
+    <!-- tagged titles count -->
+    <tr v-if="finished && stats">
+      <th>
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">{{
+              stats.tagged_titles !== stats.unique_matched_titles
+                ? $t("tagging.actually_tagged_titles")
+                : $t("tagging.tagged_titles")
+            }}</span>
+          </template>
+          <div>{{ $t("tagging.tagged_titles_tt") }}</div>
+          <div>{{ $t("tagging.tagged_titles_note") }}</div>
+        </v-tooltip>
+      </th>
+      <td class="text-right">
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">{{ stats.tagged_titles }}</span>
+          </template>
+          <div>{{ $t("tagging.tagged_titles_tt") }}</div>
+          <div>{{ $t("tagging.tagged_titles_note") }}</div>
+        </v-tooltip>
+      </td>
+    </tr>
+
+    <!-- recognized columns -->
     <tr v-if="!finished && stats">
       <th>
         <v-tooltip bottom>
@@ -165,7 +221,7 @@
 import TaggingBatchStateIcon from "@/components/tagging-batches/TaggingBatchStateIcon";
 import TagChip from "@/components/tags/TagChip";
 export default {
-  name: "TaggingBatchPreflightInfo",
+  name: "TaggingBatchStats",
   components: { TagChip, TaggingBatchStateIcon },
   props: {
     taggingBatch: { type: Object, required: true },

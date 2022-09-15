@@ -67,7 +67,7 @@ cs:
             <v-col>
               <v-card elevation="1">
                 <v-card-text>
-                  <TaggingBatchPreflightInfo
+                  <TaggingBatchStats
                     :tagging-batch="taggingBatch"
                     show-file-name
                     full-width
@@ -147,14 +147,18 @@ cs:
 <script>
 import cancellation from "@/mixins/cancellation";
 import { mapActions } from "vuex";
-import TaggingBatchPreflightInfo from "@/components/tagging-batches/TaggingBatchPreflightInfo";
 import TagSelector from "@/components/tags/TagSelector";
 import ServerTask from "@/libs/server-task";
 import ServerTaskMonitor from "@/components/tasks/ServerTaskMonitor";
+import TaggingBatchStats from "@/components/tagging-batches/TaggingBatchStats";
 
 export default {
   name: "TaggingBatchProcessingWidget",
-  components: { ServerTaskMonitor, TagSelector, TaggingBatchPreflightInfo },
+  components: {
+    TaggingBatchStats,
+    ServerTaskMonitor,
+    TagSelector,
+  },
   mixins: [cancellation],
 
   props: {
@@ -168,6 +172,7 @@ export default {
       uploading: false,
       tag: this.batch?.tag,
       task: null,
+      timeout: null,
     };
   },
 
@@ -234,7 +239,10 @@ export default {
         )
       ) {
         await this.fetchBatch();
-        setTimeout(this.refreshBatch, 1000);
+        this.timeout = setTimeout(this.refreshBatch, 1000);
+      } else {
+        // no more refreshes
+        this.timeout = null;
       }
     },
     async unassign() {
@@ -248,32 +256,23 @@ export default {
         await this.refreshBatch();
       }
     },
-    cleanup() {
-      // for some reason the watcher below doesn't work all the time,
-      // so we have this explicit method here to clean up the batch
-      this.taggingBatch = null;
-      this.task = null;
-      if (this.$refs.taskMonitor) {
-        this.$refs.taskMonitor.stop();
-      }
-    },
     async taskFinished() {
       this.task = null;
       await this.refreshBatch();
     },
   },
 
-  watch: {
-    batch: {
-      deep: true,
-      handler() {
-        this.taggingBatch = this.batch;
-        if (this.taggingBatch) {
-          this.tag = this.taggingBatch.tag;
-        }
-        this.refreshBatch();
-      },
-    },
+  mounted() {
+    this.refreshBatch();
+  },
+
+  beforeDestroy() {
+    if (this.$refs.taskMonitor) {
+      this.$refs.taskMonitor.stop();
+    }
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
   },
 };
 </script>

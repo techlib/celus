@@ -9,6 +9,7 @@ en:
   E107: The queried dimension is not supported.
   E108: Part was not specified when requesting split report.
   E109: Part specification is not compatible with the requested splitting of the report.
+  E110: Part was specified for report without splitting.
 
 cs:
   E100: Není možné vytvořit sloupce z rozměru, který je specifický pro report, pokud není vybrán právě jeden typ reportu.
@@ -19,5 +20,6 @@ cs:
   E105: Požadavek musí obsahovat atribut 'dimension'.
   E106: Musí být vybrán alespoň jeden rozměr definující sloupce výstupu.
   E107: Dotazovaný rozměr není podporovaný.
-  E108: Specifickace části nebyla součástí požadavku i když je požadován rozdělený report.
+  E108: Specifickace části nebyla součástí požadavku i přesto, že je požadován rozdělený report.
   E109: Specifikace části není kompatibilní s požadovaným dělením reportu.
+  E110: Specifikace části byla zadána pro report i přesto, že není požadován rozdělený report.

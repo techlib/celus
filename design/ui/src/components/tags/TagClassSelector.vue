@@ -54,6 +54,7 @@ export default {
     label: { type: String, default: "" },
     placeholder: { type: String, default: "" },
     allowCreate: { type: Boolean, default: false },
+    withVisibleTags: { type: Boolean, default: false },
   },
 
   data() {
@@ -66,7 +67,10 @@ export default {
 
   computed: {
     url() {
-      const url = "/api/tags/tag-class/";
+      let url = "/api/tags/tag-class/";
+      if (this.withVisibleTags) {
+        url += "visible-tags/";
+      }
       if (this.scope) {
         return url + "?scope=" + this.scope;
       } else {

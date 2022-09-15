@@ -2,7 +2,7 @@ import codecs
 import tempfile
 from abc import ABC, abstractmethod
 from itertools import chain, islice
-from typing import Any, Callable, Optional, Tuple, Type, Union
+from typing import Any, Callable, Optional, TextIO, Tuple, Type, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import xlsxwriter
@@ -25,7 +25,7 @@ from logs.logic.export_utils import (
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import AccessLog, DimensionText, ReportType
 from organizations.models import Organization
-from tags.models import Tag, TagClass, TagScope
+from tags.models import Tag, TagScope
 
 
 class FlexibleDataExporter(ABC):
@@ -130,20 +130,29 @@ class FlexibleDataExporter(ABC):
 
     def write_qs_to_output(
         self,
-        output,
-        qs,
+        output: TextIO,
+        qs: QuerySet,
+        extra_row_fn: Optional[Callable[[], dict]] = None,
         progress_monitor: Optional[Callable[[int, int], None]] = None,
         batch_size=100,
         **kwargs,
     ) -> int:
         """
+        :param output: output stream - a file-like object
+        :param qs: QuerySet to export
         :param batch_size: when fetching tags, how many rows at once to process
+        :param extra_row_fn: a function that returns a dict with one extra row to be added to the
+                             output
+        :param progress_monitor: a function that will be called with a tuple
+                                (current_count, total_count) during the export
         `kwargs` will be passed to the writer
         """
         total = 0
         if progress_monitor:
             # we put out the total as soon as possible
             total = qs.count()
+            if extra_row_fn:
+                total += 1
             progress_monitor(0, total)
         data = qs.iterator()
         try:
@@ -171,7 +180,7 @@ class FlexibleDataExporter(ABC):
         count = 0
 
         # we need to get the first row back into the data
-        all_data = chain([row], data)
+        all_data = chain([row], data, [extra_row_fn()] if extra_row_fn else [])
         while batch := list(islice(all_data, batch_size)):
             # potentially prefetch tags
             if self.include_tags:
@@ -344,11 +353,19 @@ class FlexibleDataExporter(ABC):
             for org in orgs.order_by('name'):
                 writer.writerow(['', org.name])
 
+    def _remainder_fn(self, part=None):
+        if self.slicer.show_untagged_remainder:
+            return lambda: {
+                'pk': _('-- untagged remainder --'),
+                **self.slicer.get_remainder(part=part),
+            }
+        return None
+
 
 class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
 
     """
-    Simple CSV output exporter which does not support multi-part output and/or metadata output
+    Simple CSV output exporter which does not support multipart output and/or metadata output
     """
 
     def remapped_keys(self):
@@ -357,10 +374,12 @@ class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
         )
 
     def stream_data_to_sink(
-        self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None,
-    ) -> int:
+        self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
+    ):
         qs = self.slicer.get_data()
-        self.write_qs_to_output(sink, qs, progress_monitor=progress_monitor)
+        self.write_qs_to_output(
+            sink, qs, extra_row_fn=self._remainder_fn(), progress_monitor=progress_monitor
+        )
 
     def create_writer(self, output, fields: list) -> DictWriter:
         return MappingCSVDictWriter(output, fields=fields)
@@ -369,12 +388,12 @@ class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
 class FlexibleDataZipCSVExporter(FlexibleDataExporter):
 
     """
-    Exporter creating zipped CSV files with support for metadata and multi-part output
+    Exporter creating zipped CSV files with support for metadata and multipart output
     """
 
     def stream_data_to_sink(
-        self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None,
-    ) -> int:
+        self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
+    ):
         parts = self.slicer.get_parts_queryset() if self.slicer.split_by else None
         with ZipFile(sink, 'w', compression=ZIP_DEFLATED) as outzip:
             # add metadata sheet
@@ -387,21 +406,25 @@ class FlexibleDataZipCSVExporter(FlexibleDataExporter):
             # output data itself
             if parts is None:
                 qs = self.slicer.get_data()
+                extra_row_fn = self._remainder_fn()
                 fname = "report"
                 with outzip.open(fname + '.csv', 'w', force_zip64=True) as outfile:
                     writer = codecs.getwriter('utf-8')
                     encoder = writer(outfile)
-                    self.write_qs_to_output(encoder, qs, progress_monitor=progress_monitor)
+                    self.write_qs_to_output(
+                        encoder, qs, extra_row_fn=extra_row_fn, progress_monitor=progress_monitor
+                    )
             else:
                 total = parts.count()
                 for i, part in enumerate(parts):
                     key = [part[name] for name in self.slicer.split_by]
                     qs = self.slicer.get_data(part=key)
+                    extra_row_fn = self._remainder_fn(part=key)
                     fname = "-".join([slugify(p) for p in self.translate_part_key(part)])
                     with outzip.open(fname + '.csv', 'w', force_zip64=True) as outfile:
                         writer = codecs.getwriter('utf-8')
                         encoder = writer(outfile)
-                        self.write_qs_to_output(encoder, qs)
+                        self.write_qs_to_output(encoder, qs, extra_row_fn=extra_row_fn)
                     if progress_monitor:
                         progress_monitor(i + 1, total)
 
@@ -420,10 +443,10 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         self.header_fmt = None
 
     def stream_data_to_sink(
-        self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None,
-    ) -> int:
+        self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
+    ):
         parts = self.slicer.get_parts_queryset() if self.slicer.split_by else None
-        # if we have multi-part output
+        # if we have multipart output
         #  - we will monitor on part basis - not on row basis
         #  - we will generate data for the output part by part
         with tempfile.NamedTemporaryFile('wb') as tmp_file:
@@ -458,7 +481,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 sheetname = "report"
                 sheet = workbook.add_worksheet(sheetname)
                 self.write_qs_to_output(
-                    sheet, qs, progress_monitor=progress_monitor,
+                    sheet, qs, extra_row_fn=self._remainder_fn(), progress_monitor=progress_monitor,
                 )
                 self.add_chart_sheet(workbook, sheetname, row_count=qs.count())
             else:
@@ -478,9 +501,12 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 for i, (sheetname, part) in enumerate(sheetname_parts):
                     key = [part[name] for name in self.slicer.split_by]
                     qs = self.slicer.get_data(part=key)
+
                     sheet = workbook.add_worksheet(sheetname)
-                    self.write_qs_to_output(sheet, qs)
-                    self.add_chart_sheet(workbook, sheetname, row_count=qs.count())
+                    row_count = self.write_qs_to_output(
+                        sheet, qs, extra_row_fn=self._remainder_fn(part=key)
+                    )
+                    self.add_chart_sheet(workbook, sheetname, row_count=row_count)
                     if progress_monitor:
                         progress_monitor(i + 1, total)
 

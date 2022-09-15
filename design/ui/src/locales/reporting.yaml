@@ -30,6 +30,8 @@ en:
   show_zero_rows_no: Only rows with non-zero usage
   show_zero_rows_yes: Includes rows with zero usage
   tag_roll_up_tt: Rows are merged by tag
+  tags_show_remainder: Show remainder without any tags
+  tags_show_remainder_tt: Adds an extra line to the output which represents a summary for untagged items.
   delete_export_tt: Delete export
   export_status:
     not_started: Not started
@@ -75,6 +77,8 @@ cs:
   show_zero_rows_no: Jen řádky s nenulovým využitím
   show_zero_rows_yes: Zahrnuje řádky s nulovým využitím
   tag_roll_up_tt: Řádky jsou sloučeny podle štítku
+  tags_show_remainder: Zobrazit zbytek bez štítku
+  tags_show_remainder_tt: Přidá do výstupu další řádek, který obsahuje souhrn pro tituly bez štítku.
   delete_export_tt: Smazat export
   export_status:
     not_started: Nespuštěno

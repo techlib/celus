@@ -72,7 +72,6 @@ INSTALLED_APPS = [
     'import_export',
     'rest_framework_api_key',
     'django.contrib.postgres',
-    'psqlextra',
     'impersonate',
     'colorfield',
     # allauth is at the end so that we can easily override its templates
@@ -140,11 +139,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-POSTGRES_EXTRA_DB_BACKEND_BASE = 'django_prometheus.db.backends.postgresql'
-
 DATABASES = {
     'default': {
-        'ENGINE': 'psqlextra.backend',
+        'ENGINE': 'django_prometheus.db.backends.postgresql',
         'NAME': config('DB_NAME', default='celus'),
         'USER': config('DB_USER', default='celus'),
         'PASSWORD': config('DB_PASSWORD'),
@@ -246,12 +243,14 @@ CACHES = {
 }
 
 # Cachalot related settings
+CACHALOT_DATABASES = ['default']
 CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
     (
         'charts_chartdefinition',
         'charts_dimensionfilter',
         'charts_reportdataview',
         'charts_reportviewtocharttype',
+        'core_user',
         'logs_accesslog',
         'logs_dimension',
         'logs_dimensiontext',
@@ -261,6 +260,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         'logs_reportinterestmetric',
         'logs_reporttype',
         'logs_reporttypetodimension',
+        'logs_reportmaterializationspec',
         'organizations_organization',
         'organizations_userorganization',
         'publications_platform',
@@ -268,6 +268,12 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         'publications_platformtitle',
         'publications_title',
         'sushi_counterreporttype',
+        'tags_tag',
+        'tags_tagclass',
+        'tags_itemtag',
+        'tags_titletag',
+        'tags_organizationtag',
+        'tags_platformtag',
     )
 )
 # CACHALOT_UNCACHABLE_TABLES = frozenset(('django_migrations',))
@@ -471,6 +477,7 @@ LOGGING = {
         'django': {'level': 'ERROR', 'handlers': ['errorlog', 'mail_admins'], 'propagate': True},
         'logs.logic.materialized_interest': {'level': 'INFO'},
         'postgres_copy': {'level': 'ERROR'},
+        'django_cachalot': {'level': 'DEBUG'},
     },
     'formatters': {
         'colored': {'()': 'colorlog.ColoredFormatter', 'format': "%(log_color)s%(message)s"}

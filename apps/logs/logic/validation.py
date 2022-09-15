@@ -5,6 +5,7 @@ from isbnlib import is_isbn13, is_isbn10, to_isbn13, canonical
 
 logger = logging.getLogger(__name__)
 issn_matcher = re.compile(r'(\d{4})-?(\d{3}[\dXx])')
+issn_number_matcher = re.compile(r'^\d{0,7}[\dXx]$')
 
 
 class ValidationError(Exception):
@@ -21,9 +22,14 @@ def normalize_issn(text: str, raise_error=True) -> str:
     if m := issn_matcher.search(clean):
         # upper() because 'X' can be also lowercase
         return m.group(1) + '-' + m.group(2).upper()
+    # sometimes the leading zeros are missing, so we add them
+    if issn_number_matcher.match(clean):
+        clean = (8 - len(clean)) * '0' + clean
+        return clean[:4] + '-' + clean[4:].upper()
     if raise_error:
         raise ValidationError(f'Invalid ISSN: "{text}"')
-    logger.warning('Invalid ISSN: "%s"', text)
+    if clean:
+        logger.warning('Invalid ISSN: "%s"', text)
     # only 9 characters - we do not support more
     return clean[:9]
 

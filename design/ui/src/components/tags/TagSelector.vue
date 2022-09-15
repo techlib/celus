@@ -12,6 +12,7 @@
     clearable
     clear-icon="fa-times"
     item-disabled="disabled"
+    :disabled="disabled"
   >
     <template #item="{ item }">
       <v-list-item-content>
@@ -60,6 +61,7 @@ export default {
 
   props: {
     value: {},
+    disabled: { type: Boolean, default: false },
     hiddenTags: { type: Array, default: () => [] },
     usedExclusiveClasses: { type: Array, default: () => [] },
     label: { type: String, default: "" },

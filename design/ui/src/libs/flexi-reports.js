@@ -101,6 +101,7 @@ class FlexiReport {
     this._tagDimension.shortName = "tag";
     this._tagDimension.name = "labels.tag";
     this.tagClass = null;
+    this.showUntaggedRemainder = false;
   }
 
   get accessLevel() {
@@ -186,6 +187,7 @@ class FlexiReport {
     this.includeZeroRows = config.zero_rows ?? false;
     this.tagRollUp = config.tag_roll_up ?? false;
     this.tagClass = config.tag_class ?? null;
+    this.showUntaggedRemainder = config.show_untagged_remainder ?? false;
   }
 
   async resolveReportType(id, allReportTypes = null) {
@@ -238,6 +240,7 @@ class FlexiReport {
       zero_rows: this.includeZeroRows,
       tag_roll_up: this.tagRollUp,
       tag_class: this.tagClass,
+      show_untagged_remainder: this.showUntaggedRemainder,
     };
   }
 

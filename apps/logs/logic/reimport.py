@@ -44,8 +44,10 @@ class ImportBatchReimport:
         They would be deleted during the reimport of the newer IB, but may as well be deleted
         directly, so that they do not remain orphaned after the MDU is reimported
         """
+        # .order_by() resets the default ordering on the IB which breaks the query
         for rec in (
-            self.reimportable.filter(mdu__isnull=False)
+            self.reimportable.order_by()
+            .filter(mdu__isnull=False)
             .values('mdu')
             .annotate(ib_ids=ArrayAgg('id'))
         ):

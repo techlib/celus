@@ -493,6 +493,25 @@ class TestTagClassViews:
         ['scope', 'count'],
         [(TagScope.ORGANIZATION, 2), (TagScope.PLATFORM, 4), (TagScope.TITLE, 8)],
     )
+    def test_tag_class_list_visible_tags_with_scope_filter(self, clients, users, scope, count):
+        """
+        Test that the `visible-tags` custom action takes the `scope` filter into account.
+        """
+        tc_org = TagClassFactory.create_batch(2, scope=TagScope.ORGANIZATION)
+        [TagFactory.create(tag_class=tc) for tc in tc_org]
+        tc_pla = TagClassFactory.create_batch(4, scope=TagScope.PLATFORM)
+        [TagFactory.create(tag_class=tc) for tc in tc_pla]
+        tc_tt = TagClassFactory.create_batch(8, scope=TagScope.TITLE)
+        [TagFactory.create(tag_class=tc) for tc in tc_tt]
+
+        resp = clients['user1'].get(reverse('tag-class-visible-tags'), {'scope': scope})
+        assert resp.status_code == 200
+        assert len(resp.json()) == count
+
+    @pytest.mark.parametrize(
+        ['scope', 'count'],
+        [(TagScope.ORGANIZATION, 2), (TagScope.PLATFORM, 4), (TagScope.TITLE, 8)],
+    )
     def test_tag_class_list_with_scope_filter(self, clients, users, scope, count):
         TagClassFactory.create_batch(2, scope=TagScope.ORGANIZATION)
         TagClassFactory.create_batch(4, scope=TagScope.PLATFORM)
@@ -520,6 +539,40 @@ class TestTagClassViews:
         assert len(data) == 6, 'everybody + self owned'
         assert len([rec for rec in data if rec['user_can_modify']]) == 4
         assert len([rec for rec in data if not rec['user_can_modify']]) == 2
+
+    @pytest.mark.parametrize(
+        ['visibility_1', 'visibility_2', 'visibility_3', 'count'],
+        [
+            (AccessibleBy.EVERYBODY, AccessibleBy.EVERYBODY, AccessibleBy.EVERYBODY, 1 + 1 + 1),
+            (AccessibleBy.EVERYBODY, AccessibleBy.OWNER, AccessibleBy.EVERYBODY, 1 + 0 + 1),
+            (AccessibleBy.OWNER, AccessibleBy.OWNER, AccessibleBy.EVERYBODY, 0 + 0 + 1),
+            (AccessibleBy.OWNER, AccessibleBy.OWNER, AccessibleBy.OWNER, 0 + 0 + 0),
+        ],
+    )
+    def test_tag_class_list_with_visible_tags(
+        self, clients, users, visibility_1, visibility_2, visibility_3, count
+    ):
+        """
+        Tests the `with_visible_tags` custom action which lists only tag classes from which
+        the user can see at least one tag.
+
+        The result is independent of the ownership of the tag class itself - we test it here by
+        using 3 different tag classes with different owners.
+        """
+        user = users['user1']
+        tc1 = TagClassFactory.create(can_create_tags=AccessibleBy.EVERYBODY)
+        tc2 = TagClassFactory.create(can_create_tags=AccessibleBy.OWNER, owner=user)
+        tc3, tc4 = TagClassFactory.create_batch(
+            2, can_create_tags=AccessibleBy.OWNER, owner=users['user2']
+        )
+        # some tags visible by user1
+        TagFactory.create_batch(1, tag_class=tc1, owner=users['user2'], can_see=visibility_1)
+        TagFactory.create_batch(2, tag_class=tc2, owner=users['user2'], can_see=visibility_2)
+        TagFactory.create_batch(4, tag_class=tc3, owner=users['user2'], can_see=visibility_3)
+
+        resp = clients['user1'].get(reverse('tag-class-visible-tags'))
+        assert resp.status_code == 200
+        assert len(resp.json()) == count
 
     @pytest.mark.parametrize(['permission_type'], [('can_modify',), ('can_create_tags',)])
     @pytest.mark.parametrize(

@@ -25,6 +25,7 @@ en:
   platform_tags: Tags for platform filtering
   tag_class_filter: Limit returned tags by tag class
   no_tag_class_filter: Allow all tag classes
+  no_tags_present: There are no tags available for the selected rows.
   organization_count_tt: |
     The number of organizations you have access to. Without an organization filter, the report will be run for all
     these organizations.
@@ -53,6 +54,7 @@ cs:
   organization_tags: Štítky pro filtrování organizací
   tag_class_filter: Omezit štítky na vybraný typ
   no_tag_class_filter: Použít všchny typy štítků
+  no_tags_present: Pro zvolené řádky nejsou k dispozici žádné štítky.
   organization_count_tt: |
     Počet organizací, ke kterým máte přístup. Bez filtru organizací bude report spuštěn pro všechny tyto organizace.
 </i18n>
@@ -261,26 +263,53 @@ cs:
                 $t("labels.tags")
               }}</v-card-title>
               <v-card-text class="pt-1">
-                <div class="d-flex">
-                  <v-checkbox
-                    v-model="tagRollUp"
-                    :label="$t('labels.tag_roll_up')"
-                    dense
-                    hide-details
-                    class="mt-1"
-                    :disabled="!reportTypeSelected || readOnly"
-                  >
-                  </v-checkbox>
-                  <TagClassSelector
-                    v-if="tagRollUp"
-                    :scope="tagScope"
-                    v-model="selectedTagClass"
-                    :label="$t('tag_class_filter')"
-                    :placeholder="$t('no_tag_class_filter')"
-                    clearable
-                    class="ps-8 pt-4 pe-8"
-                  />
-                </div>
+                <v-row class="align-baseline">
+                  <v-col cols="auto" md="3" lg="auto" sm="5">
+                    <v-checkbox
+                      v-model="tagRollUp"
+                      :label="$t('labels.tag_roll_up')"
+                      dense
+                      class="mt-1"
+                      :disabled="
+                        !reportTypeSelected || readOnly || !anyAccessibleTag
+                      "
+                      :hint="!anyAccessibleTag ? $t('no_tags_present') : ''"
+                      persistent-hint
+                      :hide-details="anyAccessibleTag"
+                    >
+                    </v-checkbox>
+                  </v-col>
+                  <v-col md="6" lg="4" sm="7">
+                    <TagClassSelector
+                      v-if="tagRollUp"
+                      :scope="tagScope"
+                      v-model="selectedTagClass"
+                      :label="$t('tag_class_filter')"
+                      :placeholder="$t('no_tag_class_filter')"
+                      clearable
+                      class="ps-8 pt-4 pe-8"
+                      :disabled="readOnly"
+                      with-visible-tags
+                    />
+                  </v-col>
+                  <v-col cols="auto" md="3" lg="auto">
+                    <v-tooltip bottom v-if="tagRollUp">
+                      <template #activator="{ on }">
+                        <span v-on="on">
+                          <v-checkbox
+                            v-model="showRemainder"
+                            :label="$t('tags_show_remainder')"
+                            :disabled="readOnly"
+                            dense
+                            hide-details
+                            class="mt-1"
+                          />
+                        </span>
+                      </template>
+                      {{ $t("tags_show_remainder_tt") }}
+                    </v-tooltip>
+                  </v-col>
+                </v-row>
               </v-card-text>
             </v-card>
           </v-col>
@@ -319,8 +348,7 @@ cs:
                       <TagSelector
                         scope="organization"
                         v-model="selectedOrganizationTags"
-                        :disabled="disableDimValuesSelectors"
-                        :read-only="readOnly"
+                        :disabled="disableDimValuesSelectors || readOnly"
                         :label="$t('organization_tags')"
                         dont-check-exclusive
                       />
@@ -352,8 +380,7 @@ cs:
                       <TagSelector
                         scope="platform"
                         v-model="selectedPlatformTags"
-                        :disabled="disableDimValuesSelectors"
-                        :read-only="readOnly"
+                        :disabled="disableDimValuesSelectors || readOnly"
                         :label="$t('platform_tags')"
                         dont-check-exclusive
                       />
@@ -367,10 +394,11 @@ cs:
                       v-if="filters.includes('target') && enableTags"
                     >
                       <TagSelector
+                        scope="title"
                         v-model="selectedTitleTags"
+                        :disabled="disableDimValuesSelectors || readOnly"
                         :label="$t('title_tags')"
                         :tooltip="$t('title_tags_tt')"
-                        scope="title"
                         dont-check-exclusive
                       />
                     </v-col>
@@ -546,11 +574,7 @@ cs:
 
     <v-row>
       <v-col>
-        <FlexiTableOutput
-          v-show="displayReport"
-          ref="outputTable"
-          :show-zero-rows="showZeroRows"
-        />
+        <FlexiTableOutput v-show="displayReport" ref="outputTable" />
       </v-col>
     </v-row>
   </v-container>
@@ -645,6 +669,10 @@ export default {
       showZeroRows: false,
       reportRunning: false,
       displayReport: false,
+      accessibleTags: [],
+      loadingTags: false,
+      showRemainder: false,
+      setupInProgress: false, // when true, some watchers are disabled to prevent many updates
     };
   },
 
@@ -814,6 +842,7 @@ export default {
       rt.includeZeroRows = this.showZeroRows;
       rt.tagRollUp = this.tagRollUp;
       rt.tagClass = this.selectedTagClass?.pk;
+      rt.showUntaggedRemainder = this.showRemainder;
       return rt;
     },
     canEdit() {
@@ -837,6 +866,9 @@ export default {
         // the name is the same as the name of the row dimension
         return this.row;
       }
+    },
+    anyAccessibleTag() {
+      return this.accessibleTags.length > 0;
     },
     organizationCount() {
       return Object.keys(this.organizations).filter((key) => key > 0).length;
@@ -946,8 +978,10 @@ export default {
       this.loading = true;
       if (this.reportPk) {
         try {
+          this.setupInProgress = true;
           let resp = await axios.get(`/api/flexible-report/${this.reportPk}/`);
           this.loadSettings(resp.data);
+          this.$nextTick(() => (this.setupInProgress = false));
         } catch (error) {
           this.showSnackbar({
             content: "Could not fetch stored report: " + error,
@@ -1039,6 +1073,7 @@ export default {
       this.showZeroRows = config.zero_rows ?? false;
       this.tagRollUp = config.tag_roll_up ?? false;
       this.selectedTagClass = config.tag_class ?? null;
+      this.showRemainder = config.show_untagged_remainder ?? false;
       this.reportName = settings.name;
       this.reportPk = settings.pk;
       this.owner = settings.owner;
@@ -1051,12 +1086,36 @@ export default {
     updateAccessLevel(data) {
       this.accessLevelParams = data;
     },
+    async fetchAccessibleTags() {
+      if (this.tagRollUpPossible) {
+        this.loadingTags = true;
+        this.accessibleTags = [];
+        const askedScope = this.tagScope;
+        let reply = await this.http({
+          url: "/api/tags/tag/",
+          params: { scope: this.tagScope },
+        });
+        if (askedScope === this.tagScope) {
+          // due to async nature of the request, we need to check if the scope
+          // is still the same because it could have changed in the meantime
+          this.loadingTags = false;
+          if (!reply.error) {
+            this.accessibleTags = reply.response.data;
+            if (!this.accessibleTags.length) {
+              this.selectedTagClass = null;
+              this.tagRollUp = false;
+            }
+          }
+        }
+      }
+    },
   },
 
   async mounted() {
     this.loading = true;
     try {
       await this.fetchReportTypes();
+      await this.fetchSettings();
       // we want to select something so that the user immediately has a report
       // he can run and see how it works. Here we select something the users
       // already know from the platforms page:
@@ -1074,7 +1133,6 @@ export default {
           this.$nextTick(() => (this.columns = ["metric"]));
         }
       }
-      await this.fetchSettings();
     } finally {
       this.loading = false;
     }
@@ -1083,9 +1141,12 @@ export default {
   watch: {
     row() {
       this.columns = this.columns.filter((dim) => dim !== this.row);
-      // empty the tag class on row change to prevent unrelated class
-      // from being used in filter
-      this.selectedTagClass = null;
+      if (!this.setupInProgress) {
+        // empty the tag class on row change to prevent unrelated class
+        // from being used in filter
+        this.selectedTagClass = null;
+      }
+      this.fetchAccessibleTags();
     },
     splitBy() {
       this.columns = this.columns.filter((dim) => dim !== this.splitBy);
@@ -1165,6 +1226,8 @@ export default {
 
 <style scoped lang="scss">
 .lst-item {
+  color: #f5cdd5;
+
   &::after {
     content: ", ";
   }

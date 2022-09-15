@@ -463,6 +463,7 @@ class ImportBatch(models.Model):
     class Meta:
         verbose_name_plural = "Import batches"
         indexes = (BrinIndex(fields=('date',)),)
+        ordering = ('id',)
 
     @cached_property
     def accesslog_count(self):
@@ -1021,6 +1022,7 @@ class ManualDataUploadImportBatch(models.Model):
 
     class Meta:
         constraints = [UniqueConstraint(fields=('import_batch',), name='one_import_batch_per_mdu')]
+        ordering = ('mdu_id', 'import_batch_id')
 
 
 class FlexibleReport(models.Model):

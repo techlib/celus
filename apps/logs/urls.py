@@ -35,6 +35,11 @@ urlpatterns = [
         views.FlexibleSlicerSplitParts.as_view(),
         name='flexible-slicer-split-parts',
     ),
+    path(
+        'flexible-slicer/remainder/',
+        views.FlexibleSlicerRemainderView.as_view(),
+        name='flexible-slicer-remainder',
+    ),
 ]
 
 urlpatterns += router.urls

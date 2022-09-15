@@ -32,6 +32,8 @@ class TestNormalizeISSN:
             pytest.param(
                 'ISSN=1050124xFOO', '1050-124X', id='finding in text with case normalization'
             ),
+            pytest.param('123456', '0012-3456', id='adding missing leading zeros'),
+            pytest.param('X12x', 'X12x', id='invalid ISSN, previously falsely normalized'),
         ],
     )
     def test_normalize_issn(self, inp, expected):

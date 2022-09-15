@@ -231,9 +231,15 @@ en:
     matched_titles_tt: Total number of unique matched titles
     title_number_note: One row may match more than one title, so this number may be higher than the number of matched rows
     tagged_titles: Tagged titles
-    tagged_titles_tt: Total number of unique tagged titles
+    tagged_titles_tt: Total number of tagged titles.
+    tagged_titles_note: This number may be lower than the number of matched titles, because some titles may have already been tagged with the same or a clashing exclusive tag.
+    actually_tagged_titles: Actually tagged titles
     no_match_rows: Rows without match
     no_match_rows_tt: The number of rows which did not match any title
+    already_tagged_titles: Already tagged titles
+    already_tagged_titles_tt: Number of titles which had already been tagged with the selected tag
+    exclusively_tagged_titles: Exclusively tagged titles
+    exclusively_tagged_titles_tt: Number of titles which had already been tagged with a clashing exclusive tag
     recognized_columns: Recognized columns
     recognized_columns_tt: Names of columns from the uploaded sheet which were recognized as containing title identifiers
     create_new_title_list: Upload a new list
@@ -241,7 +247,7 @@ en:
     preprocessing_data: Preprocessing
     annotated_source_file: Annotated source file
     annotated_source_file_tt: Copy of the source file annotated with information about identified titles. Use it to review what exactly was matched.
-    delete_batch_text: Do you really want to delete the title list? All assigned tags will be preserved, just the list itself will be deleted.
+    delete_batch_text: Do you really want to delete the title list? All assigned tags will be removed together with the list itself.
     batch_delete_success: Title list was successfully deleted
     unassign_tag: Unassign tag
     unassign_tag_tt: Unassign tag from all titles in the list
@@ -488,9 +494,15 @@ cs:
     matched_titles_tt: Počet unikátních identifikovaných titulů
     title_number_note: Jeden řádek může odpovídat více titulům. Je tedy možné, že toto číslo bude větší než počet identifikovaných řádků.
     tagged_titles: Oštítkované tituly
-    tagged_titles_tt: Celkový počet unikátních oštítkovaných titulů
+    tagged_titles_tt: Celkový počet oštítkovaných titulů.
+    tagged_titles_note: Toto číslo může být menší než počet identifikovaných titulů, pokud byly některé tituly již oštítkovány stejným nebo kolidujícím exkluzivním štítkem.
+    actually_tagged_titles: Skutečně oštítkované tituly
     no_match_rows: Řádky bez odpovídajícího titulu
     no_match_rows_tt: Počet řádků, které neodpovídají žádnému titulu v databázi
+    already_tagged_titles: Již dříve oštítkované tituly
+    already_tagged_titles_tt: Počet titulů, které odpovídají nahranému souboru, ale byly již dříve označeny stejným štítkem
+    exclusively_tagged_titles: Exklusivně oštítkované tituly
+    exclusively_tagged_titles_tt: Počet titulů, které odpovídají nahranému souboru, ale byly již dříve označeny jiným exklusivním štítkem
     recognized_columns: Rozeznané sloupce
     recognized_columns_tt: Názvy sloupců z nahrané tabulky, které byly rozeznány jako použitelné pro identifikaci titulů
     create_new_title_list: Nahrát nový seznam
@@ -498,7 +510,7 @@ cs:
     preprocessing_data: Probíhá předzpracování
     annotated_source_file: Anotovaný zdrojový soubor
     annotated_source_file_tt: Kopie zdrojového souboru doplněná o informace o identifikovaných titulech.
-    delete_batch_text: Opravdu si přejete smazat tento seznam titulů? Všechny přiřazené štítky budou zachovány, smazán bude jen samotný seznam.
+    delete_batch_text: Opravdu si přejete smazat tento seznam titulů? Všechny přiřazené štítky odstraněny spolu se samotným seznamem.
     batch_delete_success: Seznam titulů byl úspěšně smazán
     unassign_tag: Odstranit štítky
     unassign_tag_tt: Odstraní odpovídající štítky z nalezených titulů

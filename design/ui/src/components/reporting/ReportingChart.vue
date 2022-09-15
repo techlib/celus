@@ -105,7 +105,7 @@ export default {
         );
 
         let key = item[this.shownPrimaryDimension];
-        if (this.shownPrimaryDimension === "tag") {
+        if (this.shownPrimaryDimension === "tag" && typeof key === "object") {
           key = tagText(key);
         }
         let count = keyToCount.get(key) || 0;
@@ -121,7 +121,10 @@ export default {
     tagToColor() {
       if (this.shownPrimaryDimension === "tag") {
         return Object.fromEntries(
-          this.data.map((item) => [tagText(item.tag), item.tag.bg_color])
+          this.data.map((item) => [
+            tagText(item.tag),
+            item?.tag?.bg_color || "#666666",
+          ])
         );
       } else {
         return {};

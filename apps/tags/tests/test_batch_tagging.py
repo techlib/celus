@@ -91,6 +91,45 @@ class TestBatchTagging:
         assert tb.titletag_set.count() == 1, 'only one titletag'
         assert tb.postflight['stats']['tagged_titles'] == 1
 
+    @pytest.mark.parametrize('exclusive', [True, False])
+    def test_tagging_with_existing_tags_and_exclusive_tags(self, inmemory_media, users, exclusive):
+        t1 = TitleFactory.create(isbn='9780787960186')
+        t2 = TitleFactory.create(issn='1234-5678')
+        tc = TagClassFactory.create(exclusive=exclusive, scope=TagScope.TITLE)
+        tag1 = TagForTitleFactory.create(tag_class=tc)
+        tag2 = TagForTitleFactory.create(tag_class=tc)
+        tag1.tag(t1, users['admin1'])  # t1 has a different exclusive tag
+        tag2.tag(t2, users['admin1'])  # t2 already has the tag
+        #
+        tb = TaggingBatchFactory.build(
+            source_file=plain_test_file,
+            last_updated_by=users['admin1'],
+            tag=tag2,
+            state=TaggingBatchState.IMPORTING,
+        )
+        tb.save()
+        tb.assign_tag()
+        assert tb.state == TaggingBatchState.IMPORTED
+        if exclusive:
+            assert t1.tags.count() == 1, 't1 should have only the first tag'
+            assert t1.tags.all()[0] == tag1, 't1 should have the first tag'
+            assert t2.tags.count() == 1, 't2 should be tagged with the second tag'
+            assert t2.tags.all()[0] == tag2, 't2 should have the second tag'
+            assert tb.postflight['stats']['unique_matched_titles'] == 2
+            assert tb.titletag_set.count() == 0, 'no new tagged title'
+            assert tb.postflight['stats']['tagged_titles'] == 0
+            assert tb.postflight['stats']['already_tagged_titles'] == 1
+            assert tb.postflight['stats']['exclusively_tagged_titles'] == 1
+        else:
+            assert t1.tags.count() == 2, 't1 should both tags'
+            assert t2.tags.count() == 1, 't2 should be tagged with the second tag'
+            assert t2.tags.all()[0] == tag2, 't2 should have the second tag'
+            assert tb.postflight['stats']['unique_matched_titles'] == 2
+            assert tb.titletag_set.count() == 1, '1 new tagged title'
+            assert tb.postflight['stats']['tagged_titles'] == 1
+            assert tb.postflight['stats']['already_tagged_titles'] == 1
+            assert tb.postflight['stats']['exclusively_tagged_titles'] == 0
+
     def test_batch_tagging_file_content(self, inmemory_media, users):
         """
         Test that an annotated_file is correctly created during preflight and processing
@@ -312,7 +351,7 @@ class TestBatchTaggingAPI:
         resp = clients['admin1'].delete(reverse('tagging-batch-detail', args=[tb.pk]))
         assert resp.status_code == 204
         assert TaggingBatch.objects.filter(pk=tb.pk).count() == 0, 'batch was deleted'
-        assert tag.titles.count() > 0, 'the tag is still assigned to the titles'
+        assert tag.titles.count() == 0, 'the tag was also removed from the titles'
 
     @pytest.mark.parametrize(
         ['user_type', 'can_delete'],

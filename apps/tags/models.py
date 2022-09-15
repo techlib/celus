@@ -62,6 +62,9 @@ def access_filters(attr_name: str, user: User) -> Q:
 
 class TagClassQuerySet(models.QuerySet):
     def user_accessible_tag_classes(self, user: User) -> QuerySet['TagClass']:
+        """
+        These are the tag classes to which the user can add tags
+        """
         return self.filter(access_filters('can_create_tags', user))
 
     def user_modifiable_tag_classes(self, user: User) -> QuerySet['TagClass']:
@@ -415,7 +418,7 @@ class ItemTag(CreatedUpdatedMixin, models.Model):
     target = models.ForeignKey(Title, on_delete=models.CASCADE)  # just to have something here
     tagging_batch = models.ForeignKey(
         'TaggingBatch',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         help_text='If the tagging was done in a batch, this is the batch',
@@ -515,6 +518,12 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
     state = models.CharField(
         max_length=20, choices=TaggingBatchState.choices, default=TaggingBatchState.INITIAL
     )
+    internal_name = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text='When given, it marks the batch as internal. Such batches are not shown in the '
+        'UI. It also serves as identification of such batches internally.',
+    )
 
     class Meta:
         verbose_name_plural = 'Tagging batches'
@@ -537,7 +546,12 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
                         | (Q(tag__isnull=False) & Q(tag_class__isnull=True))
                     )
                 ),
-            )
+            ),
+            models.UniqueConstraint(
+                fields=['internal_name'],
+                condition=~Q(internal_name=''),
+                name='internal_name_unique',
+            ),
         ]
 
     def file_row_count(self):
@@ -598,7 +612,9 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         try:
             with tempfile.NamedTemporaryFile('r+b') as dump_file:
                 self.preflight = self.compute_preflight(
-                    dump_file=dump_file, title_id_formatter=title_id_formatter
+                    dump_file=dump_file,
+                    title_id_formatter=title_id_formatter,
+                    progress_monitor=progress_monitor,
                 )
                 self.state = TaggingBatchState.PREFLIGHT
                 dump_file.seek(0)
@@ -684,6 +700,23 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         # titletags as count of tagged titles
         TitleTag.objects.bulk_create(to_insert, ignore_conflicts=True)
         stats['tagged_titles'] = self.titletag_set.count()
+        # we want to count what was already tagged before and what is tagged with a different
+        # exclusive tag
+        stats['exclusively_tagged_titles'] = (
+            0
+            if not self.tag.tag_class.exclusive
+            else (
+                TitleTag.objects.filter(
+                    tag__tag_class=self.tag.tag_class, target_id__in=unique_title_ids
+                )
+                .exclude(tag=self.tag)
+                .count()
+            )
+        )
+        # if it is not exclusively tagged and was not tagged, it must have been tagged before
+        stats['already_tagged_titles'] = (
+            len(unique_title_ids) - stats['tagged_titles'] - stats['exclusively_tagged_titles']
+        )
         if progress_monitor:
             # report the rest of the progress
             progress_monitor(stats['row_count'], rows_total)

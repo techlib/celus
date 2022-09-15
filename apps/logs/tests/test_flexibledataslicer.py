@@ -591,6 +591,75 @@ class TestFlexibleDataSlicerComputations:
             exp_data if show_zero else exp_data[:-1]
         )
 
+    @pytest.mark.parametrize(
+        ['included_tags', 'expected'],
+        [
+            ([], 3739122),
+            (['tag1'], 1268406),
+            (['tag2'], 2470716),
+            (['tag3'], 3739122),
+            (['tag1', 'tag2'], 0),
+            (['tag1', 'tag3'], 1268406),
+            (['tag2', 'tag3'], 2470716),
+            (['tag1', 'tag2', 'tag3'], 0),
+        ],
+    )
+    def test_tag_remainder(self, flexible_slicer_test_data_with_tags, included_tags, expected):
+        """
+        Tests the computation of the remaining usage for stuff without any tag
+
+        Primary dimension: title/target
+        Group by: metric
+        Tag roll-up: True
+        """
+        slicer = FlexibleDataSlicer(
+            primary_dimension='target', tag_roll_up=True, include_all_zero_rows=False
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('metric', flexible_slicer_test_data_with_tags['metrics'][0]),
+            add_group=True,
+        )
+        slicer.tag_filter = Q(name__in=included_tags)
+        remainder = slicer.get_remainder()
+        data = remap_row_keys_to_short_names(remainder, Tag, [Metric])
+        assert data == {'m1': expected}
+
+    @pytest.mark.parametrize(
+        ['included_tags', 'expected'],
+        [
+            ([], 651510),
+            (['tag1'], 224514),
+            (['tag2'], 426996),
+            (['tag3'], 651510),
+            (['tag1', 'tag2'], 0),
+        ],
+    )
+    def test_tag_remainder_with_parts(
+        self, flexible_slicer_test_data_with_tags, included_tags, expected
+    ):
+        """
+        Tests the computation of the remaining usage for stuff without any tag
+
+        Primary dimension: title/target
+        Group by: metric
+        Split by: organization
+        Tag roll-up: True
+        """
+        slicer = FlexibleDataSlicer(
+            primary_dimension='target', tag_roll_up=True, include_all_zero_rows=False
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('metric', flexible_slicer_test_data_with_tags['metrics'][0]),
+            add_group=True,
+        )
+        slicer.tag_filter = Q(name__in=included_tags)
+        slicer.add_split_by('organization')
+        remainder = slicer.get_remainder(
+            part=[flexible_slicer_test_data_with_tags['organizations'][0]]
+        )
+        data = remap_row_keys_to_short_names(remainder, Tag, [Metric])
+        assert data == {'m1': expected}
+
 
 @pytest.mark.django_db
 class TestFlexibleDataSlicerOther:

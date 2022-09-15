@@ -257,3 +257,34 @@ class TestSlicerAPI:
         data = resp.json()
         assert data['count'] == 1
         assert data['results'][0]['pk'] == flexible_slicer_test_data_with_tags['tags'][0].pk
+
+    @pytest.mark.parametrize(
+        ['user_type', 'expected'],
+        [
+            ('su', 1268406),  # cannot see tag2
+            ('admin1', 224514),  # cannot see tag2, can only see org1
+            ('admin2', 0),  # can see all tags, remainder should be zero
+        ],
+    )
+    def test_tag_remainder(self, flexible_slicer_test_data_with_tags, user_type, expected, clients):
+        """
+        Tests the computation of the remaining usage for stuff without any tag
+
+        Primary dimension: title/target
+        Group by: metric
+        Tag roll-up: True
+        """
+        metric_pk = flexible_slicer_test_data_with_tags['metrics'][0].pk
+        resp = clients[user_type].get(
+            reverse('flexible-slicer-remainder'),
+            {
+                'primary_dimension': 'target',
+                'groups': b64json(['metric']),
+                'filters': b64json({'metric': [metric_pk]}),
+                'tag_roll_up': 'true',
+                'zero_rows': 'false',
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data[f'grp-{metric_pk}'] == expected

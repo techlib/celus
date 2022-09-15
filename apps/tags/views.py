@@ -22,6 +22,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
+from core.logic.type_conversion import to_bool
 from logs.views import StandardResultsSetPagination
 from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer, TitleSerializer
@@ -51,6 +52,18 @@ class TagClassViewSet(ModelViewSet):
 
     def get_queryset(self):
         return TagClass.objects.user_accessible_tag_classes(self.request.user)
+
+    @action(detail=False, methods=['get'], url_name='visible-tags', url_path='visible-tags')
+    def with_visible_tags(self, request):
+        """
+        Return a list of tag classes with visible tags for the current user.
+        """
+        in_visible_tags = (
+            Tag.objects.user_accessible_tags(self.request.user).values('tag_class_id').distinct()
+        )
+        qs = self.filter_queryset(TagClass.objects.filter(Q(id__in=in_visible_tags)))
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
 
 
 class TagViewSet(ModelViewSet):
