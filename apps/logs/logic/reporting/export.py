@@ -199,7 +199,7 @@ class FlexibleDataExporter(ABC):
         if self.include_tags:
             # add tag column
             row['tags'] = self.tag_delimiter.join(
-                t.full_name for t in self._tag_cache.get(row[self.prim_dim_key], [])
+                sorted(t.full_name for t in self._tag_cache.get(row[self.prim_dim_key], []))
             )
         if self.remapped_prim_dim:
             if self.explicit_prim_dim:
