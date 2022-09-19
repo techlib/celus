@@ -1,7 +1,7 @@
 import factory
 
 from faker import Faker
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationAltName
 
 
 fake = Faker()
@@ -21,3 +21,12 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
     fte = factory.Faker('pyint')
     address = factory.LazyAttribute(lambda x: {'street': fake.street_address()})
     parent = None
+
+
+class OrganizationAltNameFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = OrganizationAltName
+        django_get_or_create = ('name',)
+
+    name = factory.Faker('company')
+    organization = factory.SubFactory(OrganizationFactory)

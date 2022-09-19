@@ -9,7 +9,7 @@ from test_fixtures.entities.logs import (
     MduState,
     MetricFactory,
 )
-from test_fixtures.entities.organizations import OrganizationFactory
+from test_fixtures.entities.organizations import OrganizationFactory, OrganizationAltNameFactory
 from test_fixtures.scenarios.basic import (
     data_sources,
     metrics,
@@ -135,10 +135,12 @@ C,Metric2,4,8,12,18
         org2 = OrganizationFactory(
             name_en="C", name_cs="Č", short_name_en="C Z C U", short_name_cs="Č Ž Č Ú",
         )
+        OrganizationAltNameFactory(name="X", organization=org1)
+        OrganizationAltNameFactory(name="y", organization=org2)
         assert ManualDataUpload.organizations_from_data_cls([]) == []
         assert ManualDataUpload.organizations_from_data_cls(None) == []
         assert ManualDataUpload.organizations_from_data_cls(
-            ["not_found", "czcu", "čžčú", "c z c u", "č ž č ú", "c", "č"]
+            ["not_found", "czcu", "čžčú", "c z c u", "č ž č ú", "c", "č", "x", "Y"]
         ) == [
             ("not_found", None),
             ("czcu", org1),
@@ -147,4 +149,6 @@ C,Metric2,4,8,12,18
             ("č ž č ú", org1),
             ("c", org2),
             ("č", org2),
+            ("x", org1),
+            ("Y", org2),
         ]

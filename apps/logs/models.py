@@ -44,7 +44,7 @@ from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 from nibbler.models import ParserDefinition, get_records_from_nibbler_output
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
 
 from .exceptions import WrongOrganizations, WrongState
@@ -854,6 +854,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         res = []
         # Assuming that there will be a reasonable number of organizations
         org_instances = list(Organization.objects.all())
+        alt_names = list(OrganizationAltName.objects.all().select_related("organization"))
         for organization_name in organizations:
             matched_org = None
             for org_instance in org_instances:
@@ -872,6 +873,12 @@ class ManualDataUpload(SourceFileMixin, models.Model):
                     ) or slugified_cmp(organization_name, org_instance.short_name_cs):
                         matched_org = org_instance
                         break
+                else:
+                    # Lets try to match by alternative name
+                    for alt_org_name in alt_names:
+                        if slugified_cmp(alt_org_name.name, organization_name):
+                            matched_org = alt_org_name.organization
+                            break
 
             res.append((organization_name, matched_org))
 
