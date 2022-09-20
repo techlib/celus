@@ -340,6 +340,15 @@ cs:
               {{ $t("import") }}
             </v-btn>
             <v-btn
+              v-else
+              color="primary"
+              @click="regeneratePreflight"
+              :disabled="importing"
+            >
+              <v-icon small class="pr-2">fas fa-redo</v-icon>
+              {{ $t("regenerate_preflight") }}
+            </v-btn>
+            <v-btn
               @click="backToStart()"
               v-text="$t('back_to_start')"
               color="secondary"
