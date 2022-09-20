@@ -142,24 +142,22 @@ def import_custom_data(
     """
     stats = Counter()
 
-    organizations = mdu.preflight.get("organizations", [None]) or [None]
+    organizations = mdu.preflight.get("organizations", {"": {}}) or {"": {}}
     import_batches = []
-    for preflight_org in organizations:
+    for org_name, org_data in organizations.items():
 
         records = mdu.data_to_records()
-        if not preflight_org:
+        if not org_name:
             organization = mdu.organization
             records = (e for e in records if not e.organization)
         else:
             # Try to get organization
             try:
-                organization = Organization.objects.get(short_name=preflight_org)
+                organization = Organization.objects.get(pk=org_data.get("pk", 0))
             except Organization.DoesNotExist:
-                raise OrganizationNotFound(preflight_org)
-            except Organization.MultipleObjectsReturned:
-                raise MultipleOrganizationsFound(preflight_org)
+                raise OrganizationNotFound(org_name)
 
-            records = (e for e in records if e.organization == preflight_org)
+            records = (e for e in records if e.organization == org_name)
 
         # TODO: the owner level should be derived from the user and the organization at hand
         new_ibs, new_stats = import_counter_records(
