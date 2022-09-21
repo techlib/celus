@@ -4,10 +4,14 @@
 en:
     email_not_verified: Your email is not verified
     impersonated: You are currently impersonating another user.
+    no_help: No help available for this page
+    help_panel_tt: Context specific help
 
 cs:
     email_not_verified: Vaše emailová adresa není ověřená
     impersonated: Právě se zosobňujete jiného uživatele.
+    no_help: Pro tuto stránku není dostupná žádná nápověda
+    help_panel_tt: Nápověda pro aktuální stránku
 </i18n>
 
 <template>
@@ -18,7 +22,13 @@ cs:
       :tour-name="userBasicTourFinished ? 'basic' : null"
     />
 
-    <v-app-bar app clipped-left data-tour="app-bar">
+    <v-navigation-drawer right app v-model="showHelpPanel" clipped>
+      <div class="pa-3">
+        <router-view name="helpPanel" />
+      </div>
+    </v-navigation-drawer>
+
+    <v-app-bar app clipped-left clipped-right data-tour="app-bar">
       <v-toolbar-title class="flex-sm-shrink-0">
         <img
           :src="
@@ -112,6 +122,26 @@ cs:
 
     <v-main>
       <v-container fluid pa-0 pa-sm-2>
+        <v-tooltip left v-if="showHelpButton">
+          <template #activator="{ on }">
+            <v-btn
+              color="info"
+              fab
+              small
+              fixed
+              bottom
+              right
+              v-on="on"
+              @click="helpPanelOpen = !helpPanelOpen"
+            >
+              <v-icon
+                >{{ helpPanelOpen ? "fa-angle-right" : "fa-question" }}
+              </v-icon>
+            </v-btn>
+          </template>
+          {{ $t("help_panel_tt") }}
+        </v-tooltip>
+
         <router-view :key="$route.fullPath" v-if="loggedIn" />
 
         <v-snackbar v-model="snackbarShow" :color="snackbarColor">
@@ -124,6 +154,7 @@ cs:
         </v-snackbar>
       </v-container>
     </v-main>
+
     <v-footer app absolute inset height="128px" v-if="footerImages.length">
       <v-container fluid>
         <v-row no-gutters wrap>
@@ -171,6 +202,7 @@ export default {
       navbarExpanded: false,
       showSidePanel: true,
       basicsTourName: "basic",
+      helpPanelOpen: false,
     };
   },
   computed: {
@@ -217,6 +249,17 @@ export default {
     },
     showLanguageSelector() {
       return this.activeLanguageCodes.length > 1;
+    },
+    showHelpButton() {
+      return !!this.$route.matched[0].components.helpPanel;
+    },
+    showHelpPanel: {
+      get() {
+        return this.showHelpButton && this.helpPanelOpen;
+      },
+      set(value) {
+        this.helpPanelOpen = value;
+      },
     },
   },
 
