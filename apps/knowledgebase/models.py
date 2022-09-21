@@ -403,8 +403,10 @@ class ReportTypeImportAttempt(ImportAttempt):
                 },
             )
 
+            report_type_used = report_type.importbatch_set.all().exists()
+
             # Create dimensions (if needed)
-            if created:
+            if created or not report_type_used:
                 dimensions = []
                 for dimension_data in report_type_data["dimensions"]:
                     dimension, dimension_created = Dimension.objects.get_or_create(
@@ -455,7 +457,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                 updated = updated or metrics_differ
 
                 # Compare dimensions and send an email to admins when it differs
-                dimensions = list(
+                new_dimensions = list(
                     enumerate([e["short_name"] for e in report_type_data["dimensions"]])
                 )
                 orig_dimensions = [
@@ -464,18 +466,30 @@ class ReportTypeImportAttempt(ImportAttempt):
                         'position'
                     ).select_related('dimension')
                 ]
-                if dimensions != orig_dimensions:
-                    old_text = "".join(f'{e[0]}. - {e[1]}\n' for e in orig_dimensions)
-                    new_text = "".join(f'{e[0]}. - {e[1]}\n' for e in dimensions)
-                    async_mail_admins.delay(
-                        "Report type dimensions were modified",
-                        f"ReportType: {report_type} (source={report_type.source}, "
-                        f"ext_id={report_type.ext_id})\n\n"
-                        "Old dimensions:\n"
-                        f"{old_text}\n"
-                        "New dimensions:\n"
-                        f"{new_text}\n",
-                    )
+                if new_dimensions != orig_dimensions:
+                    if report_type_used:
+                        old_text = "".join(f'{e[0]}. - {e[1]}\n' for e in orig_dimensions)
+                        new_text = "".join(f'{e[0]}. - {e[1]}\n' for e in new_dimensions)
+                        async_mail_admins.delay(
+                            "Report type dimensions were modified",
+                            f"ReportType: {report_type} (source={report_type.source}, "
+                            f"ext_id={report_type.ext_id})\n\n"
+                            "Old dimensions:\n"
+                            f"{old_text}\n"
+                            "New dimensions:\n"
+                            f"{new_text}\n",
+                        )
+                    else:
+                        # unlink dimensions
+                        report_type.reporttypetodimension_set.all().delete()
+
+                        # link dimensions
+                        for position, dimension in enumerate(dimensions):
+                            ReportTypeToDimension.objects.create(
+                                position=position, report_type=report_type, dimension=dimension,
+                            )
+
+                        updated = True
 
                 # Set attributes
                 for field in ('short_name', 'name'):

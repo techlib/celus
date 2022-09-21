@@ -20,6 +20,7 @@ from nibbler.models import ParserDefinition
 from publications.models import Platform
 from test_fixtures.entities.api import OrganizationAPIKeyFactory
 from test_fixtures.entities.data_souces import DataSourceFactory
+from test_fixtures.entities.logs import ImportBatchFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.scenarios.basic import (
     data_sources,
@@ -150,6 +151,13 @@ REPORT_TYPE_INPUT_DATA = [
 
 
 REPORT_TYPE_INPUT_DATA2 = [
+    {
+        "pk": 111,
+        "short_name": "one",
+        "name": "first",
+        "dimensions": [{"pk": 1, "short_name": "dim1", "aliases": ["dimension1", "DIM1", "d1"]}],
+        "metrics": [],
+    },
     {
         "pk": 222,
         "short_name": "Two",
@@ -594,19 +602,27 @@ class TestReportTypeImportAttempt:
             )
         ) == [(0, 'dim1'), (1, 'dim2'),]
 
+        # Create import batch for on of the report types
+        ImportBatchFactory(report_type=report_type2)
+
         # Update report types agian
         with patch('knowledgebase.models.async_mail_admins') as email_task:
             attempt.process(REPORT_TYPE_INPUT_DATA2)
             assert email_task.delay.called, 'email about inconsistent dimensions sent'
 
-        assert attempt.stats == {"created": 1, "updated": 1, "total": 2}
+        assert attempt.stats == {"created": 1, "updated": 2, "total": 3}
         assert rt_count + 3 == ReportType.objects.count()
 
         report_type1 = ReportType.objects.get(short_name="one")
         assert report_type1.name == "first"
         assert report_type1.ext_id == 111
         assert report_type1.controlled_metrics.count() == 0
-        assert report_type1.dimensions.count() == 0
+        assert report_type1.dimensions.count() == 1
+        assert list(
+            report_type1.reporttypetodimension_set.order_by('position').values_list(
+                'position', 'dimension__short_name'
+            )
+        ) == [(0, 'dim1')]
 
         report_type2 = ReportType.objects.get(short_name="Two")
         assert report_type2.name == "SECOND"
