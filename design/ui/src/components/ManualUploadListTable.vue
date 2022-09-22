@@ -9,6 +9,8 @@ en:
   delete_success: Successfully deleted selected manually uploaded data
   mdu_page: To processing page
   no_data: There are no manually uploaded data yet
+  data_file: Data file
+  data_file_tt: Download a copy of the file that was uploaded
 
 cs:
   state: Stav
@@ -16,6 +18,8 @@ cs:
   delete_success: Vybraná ručně nahraná data byla úspěšně smazána
   mdu_page: Na stránku zpracování
   no_data: Zatím nebyla ručně nahrána žádná data
+  data_file: Soubor s daty
+  data_file_tt: Stáhněte si kopii souboru, který byl nahrán
 </i18n>
 
 <template>
@@ -169,6 +173,24 @@ cs:
           </v-tooltip>
         </template>
 
+        <template #item.data_file="{ item }">
+          <v-tooltip bottom v-if="item.data_file">
+            <template v-slot:activator="{ on }">
+              <v-btn
+                icon
+                small
+                color="secondary"
+                v-on="on"
+                :href="item.data_file"
+                target="_blank"
+              >
+                <v-icon small>fa-download</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ $t("data_file_tt") }}</span>
+          </v-tooltip>
+        </template>
+
         <template #item.state="{ item }">
           <ManualUploadState :state="item.state" />
         </template>
@@ -223,8 +245,14 @@ cs:
                       <td>{{ selectedMDU.organization.name }}</td>
                     </tr>
                     <tr
-                      v-else-if="selectedMDU && selectedMDU.preflight && selectedMDU.preflight.organizations"
-                      v-for="(org_name, idx) in Object.keys(selectedMDU.preflight.organizations)"
+                      v-else-if="
+                        selectedMDU &&
+                        selectedMDU.preflight &&
+                        selectedMDU.preflight.organizations
+                      "
+                      v-for="(org_name, idx) in Object.keys(
+                        selectedMDU.preflight.organizations
+                      )"
                       v-bind:key="org_name"
                     >
                       <th v-text="$t('organization')" v-if="idx == 0"></th>
@@ -268,7 +296,6 @@ cs:
           </v-card-actions>
         </v-card>
       </v-dialog>
-
     </v-card-text>
   </v-card>
 </template>
@@ -342,6 +369,10 @@ export default {
           value: "state",
         },
         {
+          text: this.$t("data_file"),
+          value: "data_file",
+        },
+        {
           text: this.$t("title_fields.actions"),
           value: "actions",
         },
@@ -355,30 +386,38 @@ export default {
       return out;
     },
     organizationMap() {
-      return Object.values(this.organizations).reduce((acc, o) => ({ ...acc, [o.pk]: o}), {});
+      return Object.values(this.organizations).reduce(
+        (acc, o) => ({ ...acc, [o.pk]: o }),
+        {}
+      );
     },
     mdusProcessed() {
       let res = [];
       for (const record of this.mdus) {
-
         // apply filters
-        if (this.filterReportTypes.length > 0 && !this.filterReportTypes.includes(record.report_type.pk)) {
+        if (
+          this.filterReportTypes.length > 0 &&
+          !this.filterReportTypes.includes(record.report_type.pk)
+        ) {
           continue;
         }
-        if (this.filterPlatforms.length > 0 && !this.filterPlatforms.includes(record.platform.pk)) {
+        if (
+          this.filterPlatforms.length > 0 &&
+          !this.filterPlatforms.includes(record.platform.pk)
+        ) {
           continue;
         }
 
-        let updated = {...record};
+        let updated = { ...record };
         if (record.organization) {
           updated.orgs = [record.organization.name];
         } else {
           if (record.preflight && record.preflight.organizations) {
             updated.orgs = Object.entries(record.preflight.organizations).map(
               ([raw_name, data]) => {
-                if ('pk' in data) {
-                  if (data['pk'] in this.organizationMap) {
-                    return this.organizationMap[data['pk']].name;
+                if ("pk" in data) {
+                  if (data["pk"] in this.organizationMap) {
+                    return this.organizationMap[data["pk"]].name;
                   }
                 }
                 return raw_name;
@@ -396,30 +435,24 @@ export default {
       // derived from data
       // extract unique report types
       let res = Object.values(
-        this.mdus.map(
-          (mdu) => (mdu.report_type)
-        ).reduce(
-          (acc, rt) => ({ ...acc, [rt.pk]: rt}),
-          {}
-        )
+        this.mdus
+          .map((mdu) => mdu.report_type)
+          .reduce((acc, rt) => ({ ...acc, [rt.pk]: rt }), {})
       );
       // sort report types
-      res.sort((a, b) => (a.name.localeCompare(b.name)));
+      res.sort((a, b) => a.name.localeCompare(b.name));
       return res;
     },
     platforms() {
       // derived from data
       // extract unique report types
       let res = Object.values(
-        this.mdus.map(
-          (mdu) => (mdu.platform)
-        ).reduce(
-          (acc, p) => ({ ...acc, [p.pk]: p}),
-          {}
-        )
+        this.mdus
+          .map((mdu) => mdu.platform)
+          .reduce((acc, p) => ({ ...acc, [p.pk]: p }), {})
       );
       // sort report types
-      res.sort((a, b) => (a.name.localeCompare(b.name)));
+      res.sort((a, b) => a.name.localeCompare(b.name));
       return res;
     },
     url() {
