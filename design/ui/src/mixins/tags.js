@@ -21,6 +21,9 @@ export default {
 
   methods: {
     async getTagsForObjectsById(objectType, objectIds) {
+      if (objectIds.length === 0) {
+        return;
+      }
       let linksPromise = this.http({
         url: "/api/tags/tag-item-links/",
         params: { item_type: objectType, item_id: objectIds },

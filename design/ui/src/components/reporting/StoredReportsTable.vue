@@ -348,7 +348,7 @@ export default {
         }
       } catch (error) {
         this.showSnackbar({
-          content: "Could not load the list of exports",
+          content: "Could not load the list of stored reports",
           color: "error",
         });
       } finally {

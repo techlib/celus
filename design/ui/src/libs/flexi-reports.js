@@ -214,7 +214,7 @@ class FlexiReport {
     return new Dimension(ref);
   }
 
-  urlParams() {
+  urlParams(filterOverride = null) {
     let filters = {};
     this.filters.forEach((item) => {
       if (item.start || item.end) {
@@ -226,6 +226,9 @@ class FlexiReport {
       }
     });
     filters["report_type"] = this.reportTypes.map((item) => item.pk);
+    if (filterOverride) {
+      filters = { ...filters, ...filterOverride };
+    }
     return {
       primary_dimension: this.primaryDimension.ref,
       filters: toBase64JSON(filters),

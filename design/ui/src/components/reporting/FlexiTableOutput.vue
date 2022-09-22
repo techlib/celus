@@ -78,7 +78,7 @@ cs:
         item-key="pk"
         :loading="loading"
         dense
-        :footer-props="{ itemsPerPageOptions: [20, 50, 100] }"
+        :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
         :options.sync="options"
         :server-items-length="totalRowCount"
       >
@@ -143,7 +143,7 @@ cs:
 import axios from "axios";
 import { splitGroup } from "@/libs/group-ids";
 import { formatInteger } from "@/libs/numbers";
-import { mapActions, mapGetters } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import translators from "@/mixins/translators";
 import { djangoToDataTableOrderBy } from "@/libs/sorting";
 import { isEqual } from "lodash";
@@ -161,6 +161,9 @@ export default {
   props: {
     readonly: { default: false, type: Boolean },
     showZeroRows: { default: false, type: Boolean },
+    // if the organization and selected dates should be used from the UI,
+    // and not from the report, set this to true
+    contextOverride: { default: false, type: Boolean },
   },
 
   data() {
@@ -174,7 +177,7 @@ export default {
       dataComputing: false,
       translatorsUpdating: false,
       headersFromData: [],
-      options: { itemsPerPage: 20, page: 1 },
+      options: { itemsPerPage: this.contextOverride ? -1 : 20, page: 1 },
       titleColumns: {
         issn: true,
         eissn: true,
@@ -198,7 +201,14 @@ export default {
   },
 
   computed: {
-    ...mapGetters({ enableTags: "enableTags" }),
+    ...mapGetters({
+      enableTags: "enableTags",
+      dateRangeStart: "dateRangeStartText",
+      dateRangeEnd: "dateRangeEndText",
+    }),
+    ...mapState({
+      selectedOrganizationId: "selectedOrganizationId",
+    }),
     loading() {
       return this.loadingData || this.dataComputing || this.translatorsUpdating;
     },
@@ -293,6 +303,9 @@ export default {
       }
       return false;
     },
+    itemsPerPageOptions() {
+      return this.contextOverride ? [20, 50, 100, -1] : [20, 50, 100];
+    },
   },
 
   methods: {
@@ -380,8 +393,21 @@ export default {
     async fetchData() {
       this.loadingData = true;
       this.cancelTokenSource = axios.CancelToken.source();
+      let filterOverride = null;
+      if (this.contextOverride) {
+        filterOverride = {
+          date: { start: this.dateRangeStart, end: this.dateRangeEnd },
+        };
+        if (this.selectedOrganizationId === null) {
+          // we do not want to do anything if no org is selected and contextOverride is true
+          return;
+        }
+        if (this.selectedOrganizationId !== -1) {
+          filterOverride.organization = [this.selectedOrganizationId];
+        }
+      }
       let params = {
-        ...this.report.urlParams(),
+        ...this.report.urlParams(filterOverride),
         page_size: this.options.itemsPerPage,
         page: this.options.page,
         ...this.orderByParam,
@@ -543,6 +569,21 @@ export default {
     },
     currentPart() {
       this.fetchData();
+    },
+    dateRangeStart() {
+      if (this.contextOverride) {
+        this.fetchData();
+      }
+    },
+    dateRangeEnd() {
+      if (this.contextOverride) {
+        this.fetchData();
+      }
+    },
+    selectedOrganizationId() {
+      if (this.contextOverride) {
+        this.fetchData();
+      }
     },
   },
 };
