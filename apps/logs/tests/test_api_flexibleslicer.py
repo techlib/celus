@@ -133,6 +133,38 @@ class TestSlicerAPI:
         )
         assert resp.status_code == 200
 
+    @pytest.mark.parametrize('sorted_dim', ['organization', 'platform', 'metric', 'target', 'dim1'])
+    @pytest.mark.parametrize('desc', [True, False])
+    @pytest.mark.parametrize('col_idx', [0, 1, 2])
+    def test_order_by(self, flexible_slicer_test_data, admin_client, desc, col_idx, sorted_dim):
+        """
+        Test that ordering by both explicit and implicit dimensions works
+        """
+        rt = flexible_slicer_test_data['report_types'][0]  # type: ReportType
+        slicer_def = {
+            'primary_dimension': 'organization' if sorted_dim != 'organization' else 'platform',
+            'groups': b64json([sorted_dim]),
+            'filters': b64json({'report_type': rt.pk}),
+        }
+        resp = admin_client.get(
+            reverse('flexible-slicer-possible-values'), {'dimension': sorted_dim, **slicer_def}
+        )
+        assert resp.status_code == 200
+        groups = resp.json()['values']
+        assert len(groups) == 3
+        col_name = f'grp-{groups[col_idx][sorted_dim]}'
+        sign = '-' if desc else ''
+        resp = admin_client.get(
+            reverse('flexible-slicer'), {'order_by': f'{sign}{col_name}', **slicer_def}
+        )
+        assert resp.status_code == 200
+        data = resp.json()['results']
+        assert len(data) == 3
+        if desc:
+            assert data[0][col_name] >= data[1][col_name] >= data[2][col_name]
+        else:
+            assert data[0][col_name] <= data[1][col_name] <= data[2][col_name]
+
     # tags
     def test_parts_api_with_tags(self, flexible_slicer_test_data, admin_client, admin_user):
         """
