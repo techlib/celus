@@ -382,6 +382,9 @@ class FlexibleDataSlicer:
                     # we ignore sort groups that are not in the data
                     logger.debug('Ignoring unknown order by "%s"', ob)
                     dealt_with = True
+                else:
+                    obs.append(prefix + ob)
+                    dealt_with = True
             elif ob == self.primary_dimension and not ob.startswith('date'):
                 if ob == 'target':
                     # title does not have `short_name`, just `name`
