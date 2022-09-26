@@ -25,6 +25,9 @@ en:
   platform_tags: Tags for platform filtering
   tag_class_filter: Limit returned tags by tag class
   no_tag_class_filter: Allow all tag classes
+  organization_count_tt: |
+    The number of organizations you have access to. Without an organization filter, the report will be run for all
+    these organizations.
 
 cs:
   run_report: Spustit report
@@ -50,6 +53,8 @@ cs:
   organization_tags: Štítky pro filtrování organizací
   tag_class_filter: Omezit štítky na vybraný typ
   no_tag_class_filter: Použít všchny typy štítků
+  organization_count_tt: |
+    Počet organizací, ke kterým máte přístup. Bez filtru organizací bude report spuštěn pro všechny tyto organizace.
 </i18n>
 
 <template>
@@ -210,22 +215,40 @@ cs:
                 $t("labels.filters")
               }}</v-card-title>
               <v-card-text>
-                <v-checkbox
-                  v-for="row in possibleRows"
-                  v-model="filters"
-                  :label="row.name"
-                  :value="row.id"
-                  dense
-                  hide-details
-                  class="mt-1"
-                  :disabled="
-                    (row.id === 'date' && filters.includes('date__year')) ||
-                    (row.id === 'date__year' && filters.includes('date')) ||
-                    !reportTypeSelected ||
-                    readOnly
-                  "
-                  :key="row.id"
-                ></v-checkbox>
+                <div v-for="row in possibleRows" :key="row.id">
+                  <v-checkbox
+                    v-model="filters"
+                    :label="row.name"
+                    :value="row.id"
+                    dense
+                    hide-details
+                    class="mt-1"
+                    :disabled="
+                      (row.id === 'date' && filters.includes('date__year')) ||
+                      (row.id === 'date__year' && filters.includes('date')) ||
+                      !reportTypeSelected ||
+                      readOnly
+                    "
+                  >
+                    <template #label>
+                      {{ row.name }}
+
+                      <v-tooltip
+                        bottom
+                        v-if="
+                          row.id === 'organization' && organizationCount > 1
+                        "
+                      >
+                        <template #activator="{ on }">
+                          <v-chip small class="ms-2" v-on="on"
+                            >{{ organizationCount }}
+                          </v-chip>
+                        </template>
+                        {{ $t("organization_count_tt") }}
+                      </v-tooltip>
+                    </template>
+                  </v-checkbox>
+                </div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -814,6 +837,9 @@ export default {
         // the name is the same as the name of the row dimension
         return this.row;
       }
+    },
+    organizationCount() {
+      return Object.keys(this.organizations).filter((key) => key > 0).length;
     },
   },
 
