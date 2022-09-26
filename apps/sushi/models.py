@@ -12,25 +12,6 @@ from typing import IO, Dict, Iterable, Optional, Union
 
 import requests
 import reversion
-from core.logic.dates import parse_date
-from core.models import (
-    UL_CONS_ADMIN,
-    UL_CONS_STAFF,
-    UL_ORG_ADMIN,
-    CreatedUpdatedMixin,
-    SourceFileMixin,
-    User,
-)
-from core.task_support import cache_based_lock
-from django.conf import settings
-from django.core.files.base import ContentFile, File
-from django.db import models
-from django.db.models import Exists, F, OuterRef
-from django.db.transaction import atomic
-from django.utils.functional import cached_property
-from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
-from logs.models import AccessLog, ImportBatch
 from celus_nigiri.client import Sushi4Client, Sushi5Client, SushiClientBase, SushiError
 from celus_nigiri.client import SushiException as SushiExceptionNigiri
 from celus_nigiri.counter4 import (
@@ -53,6 +34,25 @@ from celus_nigiri.counter5 import (
     TransportError,
 )
 from celus_nigiri.error_codes import ErrorCode
+from core.logic.dates import parse_date
+from core.models import (
+    UL_CONS_ADMIN,
+    UL_CONS_STAFF,
+    UL_ORG_ADMIN,
+    CreatedUpdatedMixin,
+    SourceFileMixin,
+    User,
+)
+from core.task_support import cache_based_lock
+from django.conf import settings
+from django.core.files.base import ContentFile, File
+from django.db import models
+from django.db.models import Exists, F, OuterRef
+from django.db.transaction import atomic
+from django.utils.functional import cached_property
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
+from logs.models import AccessLog, ImportBatch
 from organizations.models import Organization
 from publications.models import Platform
 from pycounter.exceptions import SushiException
@@ -300,10 +300,14 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
     @cached_property
     def is_verified(self):
+        return self.current_successful_attempts.exists()
+
+    @property
+    def current_successful_attempts(self):
         return self.sushifetchattempt_set.filter(
             status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
             credentials_version_hash=self.version_hash,
-        ).exists()
+        )
 
     def create_sushi_client(self) -> SushiClientBase:
         attrs = {
@@ -420,6 +424,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             fetch_attempt = SushiFetchAttempt.objects.create(**attempt_params)
 
         fetch_attempt.update_broken()
+
+        from scheduler.logic.automatic import update_verified_for_automatic_scheduling
+
+        # credentials may become verified
+        update_verified_for_automatic_scheduling(fetch_attempt)
 
         return fetch_attempt
 
@@ -892,13 +901,9 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             self.update_broken_report_type()
 
     def any_success_lately(self, days: int = 15) -> bool:
-        for attempt in SushiFetchAttempt.objects.filter(
-            credentials=self.credentials, credentials_version_hash=self.credentials_version_hash,
-        ).filter(when_processed__gte=now() - timedelta(days=days)):
-            if attempt.status in (AttemptStatus.NO_DATA, AttemptStatus.SUCCESS):
-                return True
-
-        return False
+        return self.credentials.current_successful_attempts.filter(
+            when_processed__gte=now() - timedelta(days=days),
+        ).exists()
 
     def update_broken_credentials(self):
         # Check http status code

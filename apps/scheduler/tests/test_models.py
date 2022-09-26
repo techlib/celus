@@ -1281,7 +1281,12 @@ class TestAutomatic:
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
-        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
+        self,
+        counter_report_types,
+        credentials,
+        enable_automatic_scheduling,
+        verified_credentials,
+        monkeypatch,
     ):
         """ Test whether automatic harvests are update when
             credentials or credentails to counter report mapping
@@ -1295,13 +1300,31 @@ class TestAutomatic:
         assert FetchIntention.objects.all().count() == 0
         assert Automatic.objects.all().count() == 0
 
-        # Add successful Attempt which should trigger Automatic harvest creation
-        FetchAttemptFactory(
-            credentials=credentials["branch_pr"],
-            status=AttemptStatus.SUCCESS,
-            credentials_version_hash=credentials["branch_pr"],
-            counter_report=counter_report_types["pr"],
+        # Mock successful report fetching
+        def mocked_fetch_report_v5(
+            self, client, counter_report, start_date, end_date, file_data,
+        ):
+            return dict(
+                credentials=credentials["branch_pr"],
+                counter_report=counter_report,
+                start_date=start_date,
+                end_date=end_date,
+                status=AttemptStatus.IMPORTING,
+                data_file=None,
+                checksum="",
+                file_size=0,
+                log="",
+                error_code="",
+                when_processed=timezone.now(),
+                http_status_code=200,
+                partial_data=False,
+            )
+
+        monkeypatch.setattr(SushiCredentials, '_fetch_report_v5', mocked_fetch_report_v5)
+        credentials["branch_pr"].fetch_report(
+            counter_report_types["pr"], date(2019, 1, 1), date(2019, 1, 31)
         )
+
         assert FetchIntention.objects.all().count() == 1
         assert Automatic.objects.all().count() == 1
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
@@ -1454,9 +1477,16 @@ class TestAutomatic:
         assert fi.queue.end != fi, "new fi at the end of the line"
         assert fi.queue.end.when_processed is None, "last is not finished"
 
+    @pytest.mark.parametrize(['retry_count', 'has_ib'], [(0, False), (2, False), (10, True)])
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals_with_no_error_code(
-        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
+        self,
+        counter_report_types,
+        credentials,
+        enable_automatic_scheduling,
+        verified_credentials,
+        retry_count,
+        has_ib,
     ):
         # Clear all harvests
         Harvest.objects.all().delete()
@@ -1476,6 +1506,8 @@ class TestAutomatic:
 
         # Prepare attempt
         fi = FetchIntention.objects.order_by('pk').last()
+        fi.data_not_ready_retry = retry_count
+        fi.save()
         fi.attempt = FetchAttemptFactory(
             start_date=fi.start_date,
             end_date=fi.end_date,
@@ -1487,10 +1519,15 @@ class TestAutomatic:
         fi.when_processed = timezone.now()
         fi.save()
 
+        fi.get_handler()()
         fi.refresh_from_db()
 
-        # Plan new one
-        fi.get_handler()()
-        assert FetchIntention.objects.all().count() == 2
+        if has_ib:
+            assert FetchIntention.objects.all().count() == 1, 'FI is updated'
+            assert fi.attempt.import_batch is not None
+        else:
+            assert FetchIntention.objects.all().count() == 2, 'new FI is created'
+            assert fi.attempt.import_batch is None
+
         fi.attempt.refresh_from_db()
         assert "assuming a 3030 exception" in fi.attempt.log

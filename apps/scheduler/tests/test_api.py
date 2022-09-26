@@ -41,6 +41,10 @@ from test_fixtures.scenarios.basic import (
 @pytest.mark.django_db
 class TestHarvestAPI:
     def test_list(self, basic1, clients, harvests):
+
+        # Make sure that automatic are planned
+        Automatic.update_for_last_month()
+
         url = reverse('harvest-list')
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
@@ -51,30 +55,30 @@ class TestHarvestAPI:
         # stats
         assert data[0]["stats"] == {"total": 3, "planned": 2, "attempt_count": 2, "working": 0}
         assert data[1]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
-        assert data[2]["stats"] == {"total": 1, "planned": 1, "attempt_count": 0, "working": 0}
-        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
-        assert data[4]["stats"] == {"total": 1, "planned": 1, "attempt_count": 0, "working": 0}
-        assert data[5]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
+        assert data[2]["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
+        assert data[3]["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
+        assert data[4]["stats"] == {"total": 2, "planned": 2, "attempt_count": 0, "working": 0}
+        assert data[5]["stats"] == {"total": 1, "planned": 1, "attempt_count": 0, "working": 0}
 
         # start and end dates
         assert data[0]["start_date"] == "2020-01-01"
         assert data[0]["end_date"] == "2020-01-31"
         assert data[1]["start_date"] == "2020-01-01"
         assert data[1]["end_date"] == "2020-01-31"
-        assert data[2]["start_date"] == last_month().strftime("%Y-%m-%d")
-        assert data[2]["end_date"] == month_end(last_month()).strftime("%Y-%m-%d")
+        assert data[2]["start_date"] == "2020-01-01"
+        assert data[2]["end_date"] == "2020-03-31"
         assert data[3]["start_date"] == "2020-01-01"
-        assert data[3]["end_date"] == "2020-03-31"
+        assert data[3]["end_date"] == "2020-01-31"
         assert data[4]["start_date"] == last_month().strftime("%Y-%m-%d")
         assert data[4]["end_date"] == month_end(last_month()).strftime("%Y-%m-%d")
-        assert data[5]["start_date"] == "2020-01-01"
-        assert data[5]["end_date"] == "2020-01-31"
+        assert data[5]["start_date"] == last_month().strftime("%Y-%m-%d")
+        assert data[5]["end_date"] == month_end(last_month()).strftime("%Y-%m-%d")
 
         # last processed fetch intention
         assert data[0]["last_processed"] is not None
         assert data[1]["last_processed"] is not None
-        assert data[2]["last_processed"] is None
-        assert data[3]["last_processed"] is not None
+        assert data[2]["last_processed"] is not None
+        assert data[3]["last_processed"] is None
         assert data[4]["last_processed"] is None
         assert data[5]["last_processed"] is None
 
@@ -90,6 +94,10 @@ class TestHarvestAPI:
         ['column', 'desc'], list(product(['pk', 'created'], ['true', 'false']))
     )
     def test_list_order_by(self, basic1, clients, harvests, desc, column):
+
+        # Make sure that automatic are planned
+        Automatic.update_for_last_month()
+
         url = reverse('harvest-list')
         resp = clients["master_admin"].get(url, {'order_by': column, 'desc': desc})
         assert resp.status_code == 200
@@ -105,6 +113,9 @@ class TestHarvestAPI:
             ), "asc sorting should be active"
 
     def test_list_filter_finished(self, basic1, clients, harvests):
+
+        # Make sure that automatic are planned
+        Automatic.update_for_last_month()
 
         # remove unfinished from one harvest
         harvests["anonymous"].intentions.filter(when_processed__isnull=True).delete()
@@ -131,6 +142,9 @@ class TestHarvestAPI:
 
     def test_list_filter_automatic(self, basic1, clients, harvests):
 
+        # Make sure that automatic are planned
+        Automatic.update_for_last_month()
+
         url = reverse('harvest-list')
         # test finished filter
         resp = clients["master_admin"].get(url + "?automatic=1", {})
@@ -147,6 +161,9 @@ class TestHarvestAPI:
         assert data1[0]["pk"] != data2[1]["pk"]
 
     def test_list_filter_broken(self, basic1, clients, harvests, credentials, counter_report_types):
+
+        # Make sure that automatic are planned
+        Automatic.update_for_last_month()
 
         # broken credentials
         fi = FetchIntentionFactory(
@@ -186,6 +203,10 @@ class TestHarvestAPI:
         assert len(data2) == 1
 
     def test_list_filter_platforms(self, basic1, clients, harvests, platforms):
+
+        # Make sure that automatic are planned
+        Automatic.update_for_last_month()
+
         url = reverse('harvest-list')
         resp = clients["master_admin"].get(url + f"?platforms={platforms['branch'].pk}", {})
         assert resp.status_code == 200
@@ -291,6 +312,10 @@ class TestHarvestAPI:
         ),
     )
     def test_list_filtering(self, basic1, harvests, clients, user, length):
+
+        # Make sure that automatic are planned
+        Automatic.update_for_last_month()
+
         url = reverse('harvest-list')
         resp = clients[user].get(url, {})
         assert resp.status_code == 200

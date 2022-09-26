@@ -436,13 +436,11 @@ class FetchIntention(models.Model):
                 # we'll treat this situation in the same way as
                 # we treat NO_DATA_FOR_DATE_ARGS (3030) status
                 if attempt.status == AttemptStatus.NO_DATA:
-                    # We are updating attempt.log and we don't want to
-                    # trigger a signal which would cause infinite recursion call
-                    new_log = attempt.log + (
+                    attempt.log = attempt.log + (
                         "\nEmpty data without a corresponding SUSHI exception occured"
                         "-> assuming a 3030 exception."
                     )
-                    SushiFetchAttempt.objects.filter(pk=attempt.pk).update(log=new_log)
+                    attempt.save()
                     error_code = ErrorCode.NO_DATA_FOR_DATE_ARGS
                 else:
                     error_code = ""
