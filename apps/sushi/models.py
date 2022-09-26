@@ -300,10 +300,14 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
     @cached_property
     def is_verified(self):
+        return self.current_successful_attempts.exists()
+
+    @property
+    def current_successful_attempts(self):
         return self.sushifetchattempt_set.filter(
             status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
             credentials_version_hash=self.version_hash,
-        ).exists()
+        )
 
     def create_sushi_client(self) -> SushiClientBase:
         attrs = {
@@ -420,6 +424,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             fetch_attempt = SushiFetchAttempt.objects.create(**attempt_params)
 
         fetch_attempt.update_broken()
+
+        from scheduler.logic.automatic import update_verified_for_automatic_scheduling
+
+        # credentials may become verified
+        update_verified_for_automatic_scheduling(fetch_attempt)
 
         return fetch_attempt
 
@@ -812,19 +821,26 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
     def ok(self):
         return self.status not in AttemptStatus.errors()
 
+    @staticmethod
+    def file_is_json_s(data_file) -> bool:
+        """
+        Returns True if the file seems to be a JSON file.
+        """
+        char = data_file.read(1)
+        while char and char.isspace():
+            char = data_file.read(1)
+        data_file.seek(0)
+        if char in b'[{':
+            return True
+        return False
+
     def file_is_json(self) -> Optional[bool]:
         """
         Returns True if the file seems to be a JSON file.
         """
         if not self.data_file:
             return None
-        char = self.data_file.read(1)
-        while char and char.isspace():
-            char = self.data_file.read(1)
-        self.data_file.seek(0)
-        if char in b'[{':
-            return True
-        return False
+        return SushiFetchAttempt.file_is_json_s(self.data_file)
 
     def conflicting(self, fully_enclosing: bool = False) -> Iterable['SushiFetchAttempt']:
         """
@@ -885,13 +901,9 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             self.update_broken_report_type()
 
     def any_success_lately(self, days: int = 15) -> bool:
-        for attempt in SushiFetchAttempt.objects.filter(
-            credentials=self.credentials, credentials_version_hash=self.credentials_version_hash,
-        ).filter(when_processed__gte=now() - timedelta(days=days)):
-            if attempt.status in (AttemptStatus.NO_DATA, AttemptStatus.SUCCESS):
-                return True
-
-        return False
+        return self.credentials.current_successful_attempts.filter(
+            when_processed__gte=now() - timedelta(days=days),
+        ).exists()
 
     def update_broken_credentials(self):
         # Check http status code

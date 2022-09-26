@@ -1,5 +1,4 @@
 from datetime import date
-from unittest.mock import patch
 
 import pytest
 from core.models import UL_CONS_STAFF, UL_ORG_ADMIN
@@ -7,16 +6,17 @@ from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
 from organizations.tests.conftest import identity_by_user_type  # noqa
+from scheduler.models import Automatic
 from sushi.models import AttemptStatus
 from sushi.models import BrokenCredentialsMixin as BS
-from sushi.models import CounterReportsToCredentials, SushiCredentials, SushiFetchAttempt
+from sushi.models import CounterReportsToCredentials, SushiCredentials
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory
-from test_fixtures.scenarios.basic import clients  # noqa
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
+    clients,
     counter_report_types,
     credentials,
     data_sources,
@@ -576,6 +576,9 @@ class TestSushiCredentialsViewSet:
             ),
         )
 
+        # Make sure that automatic harvesting is planned
+        Automatic.update_for_last_month()
+
         # Just test premade scenarios
         resp = clients["master_admin"].get(
             reverse('sushi-credentials-data', args=(credentials["standalone_tr"].pk,))
@@ -628,6 +631,13 @@ class TestSushiCredentialsViewSet:
                 assert data[1][month][0]["status"] == "no_data"
                 assert data[1][month][1]["planned"] is True
                 assert data[1][month][0]["planned"] is True
+                assert data[1][month][1]["can_harvest"] is True
+                assert data[1][month][0]["can_harvest"] is False
+            elif month in ["05"]:
+                assert data[1][month][1]["status"] == "untried"
+                assert data[1][month][0]["status"] == "untried"
+                assert data[1][month][1]["planned"] is True
+                assert data[1][month][0]["planned"] is False
                 assert data[1][month][1]["can_harvest"] is True
                 assert data[1][month][0]["can_harvest"] is False
             else:
