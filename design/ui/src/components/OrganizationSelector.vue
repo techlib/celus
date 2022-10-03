@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="../locales/dialog.yaml"></i18n>
 
 <template>
   <v-container align-baseline fluid>
@@ -22,6 +23,7 @@
           :filter="filter"
           :label="label"
           data-tour="organization-select"
+          :rules="[required]"
         >
           <template v-slot:item="{ item }">
             <span
@@ -67,6 +69,9 @@ export default {
     ...mapActions({
       selectOrganization: "selectOrganization",
     }),
+    required(v) {
+      return !!v || this.$t("value_required");
+    },
     filter(item, queryText) {
       const words = queryText.toLowerCase().split(/ /);
       for (let word of words) {

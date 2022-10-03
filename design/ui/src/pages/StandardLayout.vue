@@ -118,7 +118,7 @@ cs:
       </v-btn>
     </v-app-bar>
 
-    <v-main>
+    <v-main v-if="selectedOrganizationId">
       <v-container fluid pa-0 pa-sm-2>
         <v-tooltip left v-if="showHelpButton">
           <template #activator="{ on }">
@@ -207,6 +207,7 @@ export default {
     ...mapState({
       snackbarText: "snackbarContent",
       snackbarColor: "snackbarColor",
+      selectedOrganizationId: "selectedOrganizationId",
       user: "user",
       siteLogo: (state) => state.siteConfig.siteLogo,
       siteName: (state) => state.siteConfig.siteName,
