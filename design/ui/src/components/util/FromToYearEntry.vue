@@ -29,6 +29,8 @@ cs:
 
 <script>
 import YearEntry from "@/components/util/YearEntry";
+import isEqual from "lodash/isEqual";
+
 export default {
   name: "FromToYearEntry",
 
@@ -42,13 +44,20 @@ export default {
     yearsBack: { required: false, type: Number, default: 10 },
   },
 
+  data() {
+    return {
+      startYear: this.value.start?.year ?? null,
+      endYear: this.value.end?.year ?? null,
+    };
+  },
+
   computed: {
     availableStartYears() {
       let year = new Date().getFullYear();
       let result = [...Array(this.yearsBack).keys()].map((i) => ({
         text: year - i,
         value: year - i,
-        disabled: this.endYear < year - i,
+        disabled: this.endYear && this.endYear < year - i,
       }));
       return result;
     },
@@ -57,7 +66,7 @@ export default {
       let result = [...Array(this.yearsBack).keys()].map((i) => ({
         text: year - i,
         value: year - i,
-        disabled: this.startYear > year - i,
+        disabled: this.startYear && this.startYear > year - i,
       }));
       return result;
     },
@@ -68,36 +77,27 @@ export default {
       return this.endLabel ?? this.$t("year_end");
     },
     overlappingYears() {
-      return this.startYear > this.endYear;
+      return this.startYear && this.endYear && this.startYear > this.endYear;
     },
-    startYear: {
-      get() {
-        return this.stripMonthAndRetypeToInt(this.value.start);
-      },
-      set(newValue) {
-        this.$emit("input", {
-          start: newValue ? `${newValue}-01` : "",
-          end: this.endYear,
-        });
-      },
-    },
-    endYear: {
-      get() {
-        return this.stripMonthAndRetypeToInt(this.value.end);
-      },
-      set(newValue) {
-        this.$emit("input", {
-          start: this.startYear,
-          end: newValue ? `${newValue}-12` : "",
-        });
-      },
+    dateRange() {
+      return {
+        start: this.startYear ? `${this.startYear}-01` : null,
+        end: this.endYear ? `${this.endYear}-12` : null,
+      };
     },
   },
 
-  methods: {
-    stripMonthAndRetypeToInt(yearMonth) {
-      if (yearMonth) {
-        return new Date(yearMonth + "").getFullYear();
+  watch: {
+    startYear() {
+      this.$emit("input", this.dateRange);
+    },
+    endYear() {
+      this.$emit("input", this.dateRange);
+    },
+    value() {
+      if (!isEqual(this.value, this.dateRange)) {
+        this.startYear = this.value.start?.year ?? null;
+        this.endYear = this.value.end?.year ?? null;
       }
     },
   },
