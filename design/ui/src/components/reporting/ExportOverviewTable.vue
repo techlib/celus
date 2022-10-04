@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/dialog.yaml" />
 <i18n lang="yaml" src="@/locales/reporting.yaml" />
 
 <template>
@@ -13,22 +14,35 @@
     :sort-desc="[true]"
   >
     <template #item.outputFile="{ item }">
-      <v-btn
-        :href="item.outputFile"
-        v-if="item.status === EXPORT_FINISHED"
-        text
-        color="primary"
-      >
-        <v-icon small class="mr-2">fa fa-download</v-icon>
-        {{ $t("actions.download") }}
-      </v-btn>
-      <ExportMonitorWidget v-else :export-id="item.pk" @finished="fetchData" />
+      <div class="d-inline" width="140px">
+        <v-btn
+          :href="item.outputFile"
+          v-if="item.status === EXPORT_FINISHED"
+          text
+          color="primary"
+        >
+          <v-icon small class="mr-2">fa fa-download</v-icon>
+          {{ $t("actions.download") }}
+        </v-btn>
+        <ExportMonitorWidget
+          v-else
+          :export-id="item.pk"
+          @finished="fetchData"
+        />
+      </div>
+      <v-tooltip bottom>
+        <template #activator="{ on }">
+          <v-btn v-on="on" color="error" icon @click="deleteExport(item.pk)">
+            <v-icon small>fa fa-trash-alt</v-icon>
+          </v-btn>
+        </template>
+        {{ $t("delete_export_tt") }}
+      </v-tooltip>
     </template>
 
     <template #item.created="{ item }">
       <span v-html="formatDate(item.created)"></span>
     </template>
-
     <template #item.fileSize="{ item }">
       {{ filesize(item.fileSize) }}
     </template>
@@ -163,6 +177,35 @@ export default {
           content: "Could not load the list of exports",
           color: "error",
         });
+      }
+    },
+    async deleteExport(pk) {
+      let thisExport = this.exports.find((item) => item.pk === pk);
+      const res = await this.$confirm(
+        this.$t("really_delete_export", {
+          title: thisExport.name,
+          date: this.formatDate(thisExport.created),
+        }),
+        {
+          title: this.$t("confirm_delete"),
+          buttonTrueText: this.$t("delete"),
+          buttonFalseText: this.$t("cancel"),
+        }
+      );
+      if (res) {
+        try {
+          await axios.delete(`/api/export/flexible-export/${pk}`);
+          this.fetchData();
+          this.showSnackbar({
+            content: this.$t("delete_export_success"),
+            color: "success",
+          });
+        } catch (error) {
+          this.showSnackbar({
+            content: "Error deleting export: " + error,
+            color: "error",
+          });
+        }
       }
     },
     formatDate(date) {

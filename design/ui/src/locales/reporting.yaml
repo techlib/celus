@@ -13,9 +13,12 @@ en:
   view_report_tt: View report definition details
   edit_report_tt: Edit report definition
   copy_report_tt: Create copy of report
+  delete_report_tt: Delete report
   copy_report: Create report copy
-  really_delete: Do you really want to delete report <b>{title}</b>? <br/><br/>This action cannot be undone.
-  delete_success: Report was deleted
+  really_delete_report: Do you really want to delete report <b>{title}</b>?<br/><br/>This action cannot be undone.
+  really_delete_export: "Do you really want to delete this export?<ul><li>created on: <b>{date}</b></li><li>created of report: <b>{title}</b></li></ul><br/><br/>This action cannot be undone."
+  delete_report_success: Report was deleted
+  delete_export_success: Export was deleted
   change_name: Change title
   copy_success: Report was successfully copied
   copy_error: Error copying report
@@ -27,6 +30,7 @@ en:
   show_zero_rows_no: Only rows with non-zero usage
   show_zero_rows_yes: Includes rows with zero usage
   tag_roll_up_tt: Rows are merged by tag
+  delete_export_tt: Delete export
   export_status:
     not_started: Not started
     in_progress: In progress
@@ -51,9 +55,12 @@ cs:
   view_report_tt: Zobrazení detailu definice reportu
   edit_report_tt: Úprava definice reportu
   copy_report_tt: Vytvoří kopii existujícího reportu
+  delete_report_tt: Smazat report
   copy_report: Vytvořit kopii reportu
-  really_delete: Opravdu chcete smazat report <b>{title}</b>? <br/><br/>Tuto akci není možné vrátit.
-  delete_success: Report byl smazán
+  really_delete_report: Opravdu chcete smazat report <b>{title}</b>? <br/><br/>Tuto akci není možné vrátit.
+  really_delete_export: "Opravdu chcete smazat tento export?<ul><li>vytvořen: <b>{date}</b></li><li>vytvořen z reportu: <b>{title}</b></li></ul><br/><br/>Tuto akci není možné vrátit."
+  delete_report_success: Report byl smazán
+  delete_export_success: Export byl smazán
   change_name: Změnit titul
   copy_success: Report byl úspěšně smazán
   copy_error: Došlo k chybě při mazání reportu
@@ -65,6 +72,7 @@ cs:
   show_zero_rows_no: Jen řádky s nenulovým využitím
   show_zero_rows_yes: Zahrnuje řádky s nulovým využitím
   tag_roll_up_tt: Řádky jsou sloučeny podle štítku
+  delete_export_tt: Smazat export
   export_status:
     not_started: Nespuštěno
     in_progress: Probíhá export

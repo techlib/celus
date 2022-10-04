@@ -111,6 +111,20 @@
               </template>
               {{ $t("copy_report_tt") }}
             </v-tooltip>
+            <v-tooltip bottom>
+              <template #activator="{ on }">
+                <v-btn
+                  v-on="on"
+                  color="error"
+                  icon
+                  @click="deleteReport(item.pk)"
+                  v-if="item.canEdit(user, organizations)"
+                >
+                  <v-icon small>fa fa-trash-alt</v-icon>
+                </v-btn>
+              </template>
+              {{ $t("delete_report_tt") }}
+            </v-tooltip>
 
             <span
               v-if="exportHandle && exportHandle.reportId === item.pk"
@@ -212,16 +226,6 @@
                   </td>
                 </tr>
               </table>
-            </td>
-            <td>
-              <v-btn
-                color="error"
-                icon
-                @click="deleteReport(item.pk)"
-                v-if="item.canEdit(user, organizations)"
-              >
-                <v-icon small>fa fa-trash-alt</v-icon>
-              </v-btn>
             </td>
           </template>
 
@@ -395,7 +399,7 @@ export default {
     async deleteReport(id) {
       let report = this.reports.find((item) => item.pk === id);
       const res = await this.$confirm(
-        this.$t("really_delete", { title: report.name }),
+        this.$t("really_delete_report", { title: report.name }),
         {
           title: this.$t("confirm_delete"),
           buttonTrueText: this.$t("delete"),
@@ -411,7 +415,7 @@ export default {
             this.activeReport = null;
           }
           this.showSnackbar({
-            content: this.$t("delete_success"),
+            content: this.$t("delete_report_success"),
             color: "success",
           });
         } catch (error) {
