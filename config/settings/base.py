@@ -433,7 +433,7 @@ ACCOUNT_ADAPTER = 'core.account.CelusAccountAdapter'
 IMPERSONATE = {
     "CUSTOM_USER_QUERYSET": 'impersonate_api.permissions.users_impersonable',
     "CUSTOM_ALLOW": 'impersonate_api.permissions.check_allow_impersonate',
-    # ALLOW_SUPERUSER = True
+    "ADMIN_DELETE_PERMISSION": True,
 }
 
 LOGGING = {
