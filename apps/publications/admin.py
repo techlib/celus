@@ -24,7 +24,16 @@ create_default_interests.short_description = "Create default interest for select
 @admin.register(models.Platform)
 class PlatformAdmin(TranslationAdmin):
 
-    list_display = ['short_name', 'name', 'provider', 'url', 'has_knowledgebase', 'source']
+    list_display = [
+        'short_name',
+        'name',
+        'provider',
+        'url',
+        'has_knowledgebase',
+        'source',
+        'ext_id',
+        'duplicates',
+    ]
     list_select_related = ['source']
     list_filter = [('knowledgebase', admin.EmptyFieldListFilter), 'source']
     ordering = ['short_name']

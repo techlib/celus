@@ -53,6 +53,7 @@ PLATFORM_INPUT_DATA = [
             },
         ],
         "counter_registry_id": None,
+        "duplicates": [],
         "short_name": "AAP",
         "url": "https://www.aap.org/",
     },
@@ -91,6 +92,7 @@ PLATFORM_INPUT_DATA = [
             },
         ],
         "counter_registry_id": "11111111-1111-1111-1111-111111111111",
+        "duplicates": [],
         "short_name": "AACR",
         "url": "https://www.aacr.org/",
     },
@@ -100,6 +102,7 @@ PLATFORM_INPUT_DATA = [
         "provider": "APS",
         "providers": [],
         "short_name": "APS",
+        "duplicates": [999, 888],
         "counter_registry_id": "00000000-0000-0000-0000-000000000000",
         "url": "https://www.journals.aps.org/",
     },
@@ -321,6 +324,7 @@ class TestPlatformImportAttempt:
         assert platform3.provider == "APS"
         assert platform3.name == "APS"
         assert platform3.ext_id == 339
+        assert platform3.duplicates == [999, 888]
         assert platform3.counter_registry_id == uuid.UUID("00000000-0000-0000-0000-000000000000")
         assert platform3.knowledgebase["providers"] == []
         assert (

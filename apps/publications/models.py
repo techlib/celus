@@ -1,6 +1,7 @@
 from collections import Counter
 
 from core.models import DataSource
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 from django.utils.translation import gettext_lazy as _
@@ -29,6 +30,12 @@ class Platform(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     knowledgebase = models.JSONField(blank=True, null=True)
     counter_registry_id = models.UUIDField(blank=True, null=True)
+    duplicates = ArrayField(
+        models.PositiveIntegerField(),
+        default=list,
+        help_text="Links to other platform's ext_id",
+        blank=True,
+    )
 
     class Meta:
         ordering = ('short_name',)

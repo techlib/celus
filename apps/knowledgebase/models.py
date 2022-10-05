@@ -252,6 +252,7 @@ class PlatformImportAttempt(ImportAttempt):
             'url',
             'knowledgebase',
             'counter_registry_id',
+            'duplicates',
         )
 
         # parse data
@@ -280,6 +281,7 @@ class PlatformImportAttempt(ImportAttempt):
                 url=record["url"],
                 knowledgebase={"providers": record["providers"]},
                 counter_registry_id=record["counter_registry_id"],
+                duplicates=record.get("duplicates", []),
             )
 
             if merge == ImportAttempt.MergeStrategy.NONE:
