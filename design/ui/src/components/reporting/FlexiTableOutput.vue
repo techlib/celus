@@ -341,6 +341,7 @@ export default {
         this.data = [];
         this.cleanData = [];
         this.setOrdering(report);
+        this.options.page = 1;
       }
       await this.fetchData();
     },
