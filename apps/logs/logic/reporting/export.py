@@ -427,7 +427,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         #  - we will monitor on part basis - not on row basis
         #  - we will generate data for the output part by part
         with tempfile.NamedTemporaryFile('wb') as tmp_file:
-            workbook = xlsxwriter.Workbook(tmp_file.name)
+            workbook = xlsxwriter.Workbook(tmp_file.name, {'constant_memory': True})
             base_fmt_dict = {'font_name': 'Arial', 'font_size': 9}  # , 'num_format': '#,##0'}
             self.base_fmt = workbook.add_format(base_fmt_dict)
             self.header_fmt = workbook.add_format({'bold': True, **base_fmt_dict})
