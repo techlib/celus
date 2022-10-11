@@ -55,7 +55,8 @@ from publications.serializers import (
 from .logic.cleanup import delete_platform_data
 from .logic.use_cases import get_use_cases
 from .serializers import DetailedPlatformSerializer, PlatformSerializer, TitleSerializer
-from .tasks import delete_platform_data_task, erms_sync_platforms_task
+from .tasks import erms_sync_platforms_task, delete_platform_data_task
+from .filters import PlatformFilter
 
 
 class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
@@ -66,6 +67,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
     permission_classes = [ViewPlatformPermission]
 
     serializer_class = PlatformSerializer
+    filter_backends = [PlatformFilter]
 
     @classmethod
     def _organization_pk_to_obj(cls, organization_pk):
@@ -165,16 +167,20 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        organization = get_object_or_404(Organization, pk=self.kwargs['organization_pk'])
-        if organization.source is None:
-            # get the soruce of the organization
-            source, _ = DataSource.objects.get_or_create(
-                organization_id=self.kwargs['organization_pk'], type=DataSource.TYPE_ORGANIZATION
-            )
-            organization.source = source
-            organization.save()
+        if self.kwargs['organization_pk'] != '-1':
+            organization = get_object_or_404(Organization, pk=self.kwargs['organization_pk'])
+            if organization.source is None:
+                # get the soruce of the organization
+                source, _ = DataSource.objects.get_or_create(
+                    organization_id=self.kwargs['organization_pk'],
+                    type=DataSource.TYPE_ORGANIZATION,
+                )
+                organization.source = source
+                organization.save()
+            else:
+                source = organization.source
         else:
-            source = organization.source
+            source = None
 
         serializer.is_valid()  # -> sets validated_data
         if Platform.objects.filter(

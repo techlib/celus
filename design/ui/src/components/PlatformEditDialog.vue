@@ -23,7 +23,6 @@ en:
     invalid_url: "Invalid URL (valid URL starts with 'http(s)://', e.g. 'https://www.cambridge.org/core')"
     saving_error: Failed to save the platform.
 
-
 cs:
   title:
     edit: Editace platformy
@@ -54,19 +53,17 @@ cs:
       <v-card-title v-if="isEdit" class="headline">{{
         $t("title.edit")
       }}</v-card-title>
-      <v-card-title v-else class="headline">{{
-        $t("title.add")
-      }}</v-card-title>
+      <v-card-title v-else class="headline">{{ $t("title.add") }}</v-card-title>
       <v-card-text>
         <v-container fluid class="pb-0">
           <v-row>
             <v-col>
-            <p class="font-italic" v-if=isEdit>
-              {{ $t('texts.editing_platform') }}
-            </p>
-            <p class="font-italic" v-else>
-              {{ $t('texts.adding_platform') }}
-            </p>
+              <p class="font-italic" v-if="isEdit">
+                {{ $t("texts.editing_platform") }}
+              </p>
+              <p class="font-italic" v-else>
+                {{ $t("texts.adding_platform") }}
+              </p>
             </v-col>
           </v-row>
           <v-row>
@@ -80,6 +77,12 @@ cs:
                 :disabled="fixedOrganization"
                 :rules="[ruleRequired]"
               >
+                <template v-slot:item="{ item }">
+                  <span
+                    :class="{ bold: item.extra, org: true }"
+                    v-text="item.name"
+                  ></span>
+                </template>
               </v-select>
             </v-col>
           </v-row>
@@ -107,14 +110,12 @@ cs:
           </v-row>
           <v-row>
             <v-col cols="12" :sm="6" v-if="similarPlatforms.length > 0">
-              <v-alert
-                type="warning"
-                dense
-                outlined
-              >
+              <v-alert type="warning" dense outlined>
                 {{ $t("form.similar_platform_name") }}:
                 <ul>
-                    <li v-for="name in similarPlatforms" :key="name"><strong>{{ name }}</strong></li>
+                  <li v-for="name in similarPlatforms" :key="name">
+                    <strong>{{ name }}</strong>
+                  </li>
                 </ul>
               </v-alert>
             </v-col>
@@ -134,9 +135,7 @@ cs:
               <v-text-field
                 v-model="platform.url"
                 :label="$t('form.url')"
-                :rules="[
-                  ruleUrlValid,
-                ]"
+                :rules="[ruleUrlValid]"
                 validate-on-blur
                 :error-messages="errors.url"
                 :hint="$t('form.hint.url')"
@@ -145,7 +144,6 @@ cs:
               </v-text-field>
             </v-col>
           </v-row>
-
         </v-container>
       </v-card-text>
       <v-card-actions>
@@ -180,7 +178,7 @@ import stringSimilarity from "string-similarity";
 export default {
   name: "PlatformEditDialog",
   props: {
-    platformId: { required: false, type: Number},
+    platformId: { required: false, type: Number },
   },
   data() {
     return {
@@ -202,7 +200,7 @@ export default {
       selectedOrganization: "selectedOrganization",
     }),
     isEdit() {
-      return !!(this.platformId);
+      return !!this.platformId;
     },
     fixedOrganization() {
       return this.selectedOrganization.pk != -1 || this.isEdit;
@@ -223,10 +221,10 @@ export default {
       return this.valid;
     },
     platformsBaseUrl() {
-      return `/api/organization/${this.selectedOrganization.pk}/platform/`;
+      return `/api/organization/${this.organization.pk}/platform/`;
     },
     platformsAllUrl() {
-      return `/api/organization/${this.selectedOrganization.pk}/all-platform/`;
+      return `/api/organization/${this.organization.pk}/all-platform/?public_only=True`;
     },
     similarPlatforms() {
       const SIMILAR_CONST = 0.5;
@@ -241,19 +239,31 @@ export default {
           continue;
         }
         if (
-          stringSimilarity.compareTwoStrings(this.platform.short_name.toLowerCase(), platform.name.toLowerCase()) >= SIMILAR_CONST ||
-          stringSimilarity.compareTwoStrings(this.platform.name.toLowerCase(), platform.name.toLowerCase()) >= SIMILAR_CONST
+          stringSimilarity.compareTwoStrings(
+            this.platform.short_name.toLowerCase(),
+            platform.name.toLowerCase()
+          ) >= SIMILAR_CONST ||
+          stringSimilarity.compareTwoStrings(
+            this.platform.name.toLowerCase(),
+            platform.name.toLowerCase()
+          ) >= SIMILAR_CONST
         ) {
           res.push(platform.name);
         }
         if (
-          stringSimilarity.compareTwoStrings(this.platform.short_name.toLowerCase(), platform.short_name.toLowerCase()) >= SIMILAR_CONST ||
-          stringSimilarity.compareTwoStrings(this.platform.name.toLowerCase(), platform.short_name.toLowerCase()) >= SIMILAR_CONST
+          stringSimilarity.compareTwoStrings(
+            this.platform.short_name.toLowerCase(),
+            platform.short_name.toLowerCase()
+          ) >= SIMILAR_CONST ||
+          stringSimilarity.compareTwoStrings(
+            this.platform.name.toLowerCase(),
+            platform.short_name.toLowerCase()
+          ) >= SIMILAR_CONST
         ) {
           res.push(platform.short_name);
         }
       }
-      return [...new Set(res)];  // unique
+      return [...new Set(res)]; // unique
     },
   },
 
@@ -273,6 +283,15 @@ export default {
       try {
         let result = await axios.get("/api/organization/");
         this.organizations = result.data;
+        if (this.$store.getters.showManagementStuff) {
+          this.organizations.unshift({
+            name: "All",
+            name_cs: "Všechny",
+            name_en: "All",
+            pk: -1,
+            extra: true,
+          });
+        }
       } catch (error) {
         this.showSnackbar({
           content: "Error loading organizations: " + error,
@@ -288,8 +307,7 @@ export default {
           this.platform = result.data;
         } catch (error) {
           this.showSnackbar({
-            content:
-              `Error loading platform id:${this.platformId}: ` + error,
+            content: `Error loading platform id:${this.platformId}: ` + error,
           });
         }
       } else {
@@ -303,7 +321,7 @@ export default {
           let result = await axios.get(this.platformsAllUrl);
           this.platforms = result.data;
         } catch (error) {
-            this.showSnackbar({ content: "Error loading platforms: " + error });
+          this.showSnackbar({ content: "Error loading platforms: " + error });
         }
       }
     },
@@ -322,7 +340,10 @@ export default {
           );
         } else {
           // we create new platform
-          response = await axios.post(`/api/organization/${this.organization.pk}/platform/`, this.apiData);
+          response = await axios.post(
+            `/api/organization/${this.organization.pk}/platform/`,
+            this.apiData
+          );
         }
         this.showSnackbar({
           content: "Successfully saved Platform",
@@ -365,8 +386,6 @@ export default {
         this.organization = this.organizations[0];
       }
 
-      await this.loadPlatforms();
-
       if (this.$refs.form) {
         this.$refs.form.resetValidation();
       }
@@ -396,7 +415,7 @@ export default {
   },
 
   watch: {
-    platformsBaseUrl() {
+    organization() {
       this.loadPlatforms();
     },
   },

@@ -30,6 +30,7 @@ from publications.models import Platform, PlatformInterestReport, PlatformTitle,
 from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
+from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.scenarios.basic import *  # noqa - fixtures
 
 
@@ -133,6 +134,12 @@ class TestPlatformAPI:
             ("admin2", "standalone", None, 201),  # this admin
             ("admin1", "standalone", "standalone", 403),  # other admin
             ("user2", "standalone", None, 403),  # other user
+            ("su", None, None, 201),  # superuser
+            ("master_admin", None, None, 201),
+            ("master_user", None, None, 403),
+            ("admin2", None, None, 403),  # this admin
+            ("admin1", None, None, 403),  # other admin
+            ("user2", None, None, 403),  # other user
         ),
     )
     def test_create_platform_for_organization(
@@ -150,12 +157,14 @@ class TestPlatformAPI:
     ):
         settings.ALLOW_USER_CREATED_PLATFORMS = True
         # Set data source for the organization
-        organizations[organization].source = data_sources[data_source] if data_source else None
-        organizations[organization].save()
+        if organization:
+            organizations[organization].source = data_sources[data_source] if data_source else None
+            organizations[organization].save()
 
         # su client
+        organization_pk = organizations[organization].pk if organization else -1
         resp = clients[client].post(
-            reverse('platform-list', args=[organizations[organization].pk]),
+            reverse('platform-list', args=[organization_pk]),
             {
                 'ext_id': 122,  # ext_id may not be present and will be overriden to None
                 'short_name': 'platform',
@@ -167,7 +176,8 @@ class TestPlatformAPI:
         assert resp.status_code == code
         if resp.status_code // 100 == 2:
             new_platform = Platform.objects.order_by('pk').last()
-            assert new_platform.source == data_sources["standalone"]
+            if organization:
+                assert new_platform.source == data_sources["standalone"]
             assert new_platform.ext_id is None
             assert new_platform.short_name == 'platform'
             assert new_platform.name == 'long_platform'
@@ -180,7 +190,7 @@ class TestPlatformAPI:
             ) == {'TR', 'DR', 'JR1', 'BR2', 'DB1'}, "Interest report types created check"
 
         resp = clients[client].post(
-            reverse('platform-list', args=[organizations[organization].pk]),
+            reverse('platform-list', args=[organization_pk]),
             {
                 'ext_id': 122,  # ext_id may not be present and will be overriden to None
                 'short_name': 'platform',
@@ -1051,6 +1061,17 @@ class TestPlatformInterestAPI:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("basic1")
 class TestAllPlatformsAPI:
+    def test_all_platform_public_only_param(self, clients, data_sources):
+        plat_source_type_not_org = PlatformFactory.create(source=data_sources['api'])
+        plat_source_type_org = PlatformFactory.create(source=data_sources['branch'])
+        resp = clients['admin1'].get(
+            reverse("all-platforms-list", args=[-1]), {'public_only': 'True'}
+        )
+        assert resp.status_code == 200
+        resp_pks = {plat["pk"] for plat in resp.data}
+        assert plat_source_type_not_org.pk in resp_pks
+        assert plat_source_type_org.pk not in resp_pks
+
     @pytest.mark.parametrize(
         ["client", "status", "organization", "available"],
         [
