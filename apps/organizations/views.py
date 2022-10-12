@@ -1,8 +1,10 @@
 import json
 from collections import Counter
+from time import monotonic
 
 from django.conf import settings
-from django.db import transaction
+from django.core.cache import cache
+from django.db import transaction, connection
 from django.db.models import Count, Q, Sum, Max, Min, F, Exists, OuterRef, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
@@ -15,6 +17,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from core.filters import PkMultiValueFilterBackend
 from core.logic.bins import bin_hits
 from core.logic.dates import date_filter_from_params, month_end
+from core.logic.util import text_hash
 from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
 from logs.logic.queries import replace_report_type_with_materialized
@@ -224,30 +227,62 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         """
         API that returns a specific reply for platform-platform overlap analysis
         """
-        org_filter = organization_filter_from_org_id(pk, request.user)
-        date_filter_params1 = date_filter_from_params(request.GET)
-        date_filter_params2 = date_filter_from_params(
-            request.GET, key_start='title__platformtitle__'
-        )
-        query = (
-            PlatformTitle.objects.filter(**org_filter, **date_filter_params1)
-            .filter(
-                title=F("title__platformtitle__title"),
-                organization=F("title__platformtitle__organization"),
-                **date_filter_params2,
+        org_filter = organization_filter_from_org_id(pk, request.user, prefix=None)
+        date_filter = date_filter_from_params(request.GET)
+        main_where_parts = []
+        sub_where_parts = []
+        where_params = {}
+        if 'date__gte' in date_filter:
+            sub_where_parts.append('date >= %(date__gte)s')
+            where_params.update(date_filter)
+        if 'date__lte' in date_filter:
+            sub_where_parts.append('A.date <= %(date__lte)s')
+            where_params.update(date_filter)
+        if org_filter:
+            main_where_parts.append(
+                "A.organization_id = %(org_id)s AND B.organization_id = %(org_id)s"
             )
-            .values("platform", "title__platformtitle__platform_id")
-            .annotate(count=Count("title_id", distinct=True))
-        )
-        query = recache_queryset(query, origin='overlap-analysis')
-        result = [
-            {
-                'platform1': rec['platform'],
-                'platform2': rec['title__platformtitle__platform_id'],
-                'overlap': rec['count'],
-            }
-            for rec in query
-        ]
+            where_params['org_id'] = org_filter['pk']
+
+        main_where_part = ' AND '.join(main_where_parts)
+        if main_where_part:
+            main_where_part = 'WHERE ' + main_where_part
+
+        sub_where_part = ' AND '.join(sub_where_parts)
+        if sub_where_part:
+            sub_where_part = 'WHERE ' + sub_where_part
+
+        query = f'''
+          SELECT A."platform_id",
+                 B."platform_id",
+                 COUNT(DISTINCT A."title_id") AS "count"
+          FROM
+              (SELECT DISTINCT organization_id, platform_id, title_id FROM
+               publications_platformtitle {sub_where_part}) AS A
+            INNER JOIN
+              (SELECT DISTINCT organization_id, platform_id, title_id FROM
+               publications_platformtitle {sub_where_part}) AS B
+            ON (A."title_id" = B."title_id" AND A."organization_id" = B."organization_id")
+            {main_where_part}
+          GROUP BY A."platform_id", B."platform_id";'''
+
+        # neither recache not cachalot do support raw queries, so we cache it using django caching
+        cache_key = text_hash(query % where_params)
+        if not (result := cache.get(cache_key, None)):
+            with connection.cursor() as cursor:
+                start = monotonic()
+                cursor.execute(query, where_params)
+                result = [
+                    {'platform1': p1, 'platform2': p2, 'overlap': overlap}
+                    for p1, p2, overlap in cursor.fetchall()
+                ]
+                if monotonic() - start > 2:
+                    # only cache results that take more than 2 seconds to compute
+                    # we also use a short time for caching to avoid stale results
+                    # (the purpose of the cache is just to allow quick return to the corresponding
+                    #  frontend page after the user tried some other overlap related page)
+                    cache.set(cache_key, result, timeout=5 * 60)
+
         return Response(result)
 
     @action(detail=True, url_path='all-platforms-overlap')

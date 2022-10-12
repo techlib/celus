@@ -13,9 +13,9 @@ en:
   info:
     The following table shows how many titles are shared between platforms. It contains only platforms which
     have at least one title common with other platform.
-  info2:
-    You can switch between absolute and relative overlap representation. If unclear, use the tooltip for each value
-    in the table for explanation of the meaning of the number.
+  info2: You can switch between absolute and relative overlap representation.
+  info2_tooltips: If unclear, use the tooltip for each value in the table for explanation of the meaning of the number.
+  info2_no_tooltips: Please note that tooltips were disabled for performance reasons due to the large number of platforms.
   info_vs_all:
     The following table shows for each platform how many titles are shared with other platforms. The right part of
     the table shows interest in the overlapping titles.
@@ -174,13 +174,22 @@ cs:
                     >
                       <div>
                         {{ $t("info2") }}
+                        <span>
+                          {{
+                            disableTooltips2
+                              ? $t("info2_no_tooltips")
+                              : $t("info2_tooltips")
+                          }}
+                        </span>
                       </div>
                     </v-alert>
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col>
-                    <PlatformOverlapTable />
+                    <PlatformOverlapTable
+                      @disableTooltips="disableTooltips2m"
+                    />
                   </v-col>
                 </v-row>
               </v-container>
@@ -247,6 +256,7 @@ export default {
   data() {
     return {
       tab: "one-vs-all",
+      disableTooltips2: false,
     };
   },
 
@@ -254,6 +264,12 @@ export default {
     ...mapState({
       selectedOrganizationId: "selectedOrganizationId",
     }),
+  },
+
+  methods: {
+    disableTooltips2m(value) {
+      this.disableTooltips2 = value;
+    },
   },
 };
 </script>

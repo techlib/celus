@@ -27,7 +27,7 @@ def recache_queryset(
       - it is still valid -> return the cached data
       - it is not valid but not too old -> return the cached data + initialize renewal
       - it is too old -> renew and return the new data
-    - queryset it not cached
+    - queryset is not cached
       - create a new cache
     """
     logger.debug('Recaching queryset')

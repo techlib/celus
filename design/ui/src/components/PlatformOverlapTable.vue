@@ -74,7 +74,7 @@ cs:
             :class="{ 'self-overlap': platform1.pk === platform2.pk }"
             :style="{ backgroundColor: overlapColor(platform1, platform2) }"
           >
-            <v-tooltip bottom>
+            <v-tooltip bottom v-if="!disableTooltips">
               <template #activator="{ on }">
                 <span v-on="on" class="full">
                   {{ overlapValue(platform1, platform2, relative) }}
@@ -114,6 +114,9 @@ cs:
                 {{ overlapValue(platform1, platform2, false) }} titles
               </span>
             </v-tooltip>
+            <span v-else>
+              {{ overlapValue(platform1, platform2, relative) }}
+            </span>
           </td>
         </tr>
       </tbody>
@@ -183,6 +186,9 @@ export default {
         a.short_name.localeCompare(b.short_name)
       );
     },
+    disableTooltips() {
+      return this.usedPlatforms.length >= 30;
+    },
   },
 
   methods: {
@@ -231,7 +237,7 @@ export default {
       let overlapMap = new Map();
       this.overlapData.forEach((item) => {
         overlapMap.set(`${item.platform1}-${item.platform2}`, item.overlap);
-        if (item.platform1 != item.platform2) {
+        if (item.platform1 !== item.platform2) {
           // reverse mapping
           overlapMap.set(`${item.platform2}-${item.platform1}`, item.overlap);
         }
@@ -278,6 +284,9 @@ export default {
     },
     platformListUrl() {
       this.fetchPlatformList();
+    },
+    disableTooltips() {
+      this.$emit("disableTooltips", this.disableTooltips);
     },
   },
 };
