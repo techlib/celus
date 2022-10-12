@@ -16,7 +16,11 @@ class FlexibleDataExportViewSet(ModelViewSet):
     serializer_class = FlexibleDataExportSerializer
 
     def get_queryset(self):
-        return FlexibleDataExport.objects.filter(owner=self.request.user).order_by('-created')
+        return (
+            FlexibleDataExport.objects.annotate_obsolete()
+            .filter(owner=self.request.user, obsolete=False)
+            .order_by('-created')
+        )
 
     def create(self, request, *args, **kwargs):
         try:

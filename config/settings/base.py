@@ -316,7 +316,11 @@ CELERY_TASK_ROUTES = {
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
+    'export.tasks.delete_expired_flexible_data_exports_task': {'queue': 'celery'},
 }
+
+# FlexibleDataExport settings
+EXPORT_DELETING_PERIOD = timedelta(days=config('EXPORT_DELETING_DAYS', cast=int, default=7))
 
 CELERY_BEAT_SCHEDULE = {
     'smart_interest_sync_task': {
@@ -405,6 +409,11 @@ CELERY_BEAT_SCHEDULE = {
     #    'schedule': crontab(minute=44, hour=3),  # every day at 2:33
     #    'options': {'expires': 24 * 60 * 60},
     # },
+    'delete_expired_flexible_data_exports_task': {
+        'task': 'export.tasks.delete_expired_flexible_data_exports_task',
+        'schedule': crontab(hour=3, minute=0),  # every day at 3:00
+        'options': {'expires': 24 * 60 * 60},
+    },
 }
 
 ERMS_CELERY_SCHEDULE = {
@@ -601,6 +610,7 @@ EXPORTED_SETTINGS = [
     'REFERENCE_CURRENCY',
     'SOCIAL_ACCOUNTS_SUPPORTED',
     'USES_ERMS',
+    'EXPORT_DELETING_PERIOD',
 ]
 
 # Enables Automatic harvesting

@@ -47,6 +47,19 @@
       {{ filesize(item.fileSize) }}
     </template>
 
+    <template #header.expiresIn="{ header }">
+      <v-tooltip top>
+        <template #activator="{ on }">
+          <span v-on="on">{{ header.text }}</span>
+        </template>
+        <p class="mb-0">{{ $t("expires_in_tt_1") }}</p>
+        <p>{{ $t("expires_in_tt_2") }}</p>
+      </v-tooltip>
+    </template>
+    <template #item.expiresIn="{ item }">
+      <span v-html="getExpiration(item.created)"></span>
+    </template>
+
     <template #item.primaryDimension="{ item }">
       {{ item.primaryDimension.getName($i18n) }}
     </template>
@@ -107,7 +120,8 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
+import { formatDistanceToNow } from "date-fns";
 import axios from "axios";
 import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
 import filesize from "filesize";
@@ -132,6 +146,11 @@ export default {
   },
 
   computed: {
+    ...mapState({ appLanguage: "appLanguage" }),
+    ...mapGetters({
+      exportDeletingPeriodInSec: "exportDeletingPeriodInSec",
+      dateFnOptions: "dateFnOptions",
+    }),
     headers() {
       return [
         { text: this.$t("labels.date"), value: "created" },
@@ -154,6 +173,7 @@ export default {
           value: "fileFormat",
         },
         { text: this.$t("labels.exported_data"), value: "outputFile" },
+        { text: this.$t("expires_in"), value: "expiresIn" },
       ];
     },
   },
@@ -163,6 +183,12 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     filesize,
+    expiresOn(createdOn) {
+      return new Date(
+        parseDateTime(createdOn).getTime() +
+          Math.round(this.exportDeletingPeriodInSec) * 1000
+      );
+    },
     async fetchData() {
       try {
         let resp = await axios.get("/api/export/flexible-export/");
@@ -210,6 +236,9 @@ export default {
     },
     formatDate(date) {
       return isoDateTimeFormatSpans(parseDateTime(date));
+    },
+    getExpiration(createdOn) {
+      return formatDistanceToNow(this.expiresOn(createdOn), this.dateFnOptions);
     },
   },
 

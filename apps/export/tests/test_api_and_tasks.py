@@ -1,5 +1,7 @@
 from unittest.mock import patch
-
+from django.utils.timezone import now
+from datetime import timedelta
+from apps.export.tasks import delete_expired_flexible_data_exports_task
 import pytest
 from core.logic.serialization import b64json
 from django.urls import reverse
@@ -14,6 +16,19 @@ def exports_for_users(users):
         FlexibleDataExport.objects.create(owner=users['user1']),
         FlexibleDataExport.objects.create(owner=users['master_admin']),
     )
+
+
+@pytest.fixture
+def export_pk(users, settings):
+    user = users['user1']
+    not_obsolete = FlexibleDataExport.objects.create(owner=user)
+    not_obsolete.created = now() - settings.EXPORT_DELETING_PERIOD + timedelta(days=1)
+    not_obsolete.save()
+
+    obsolete = FlexibleDataExport.objects.create(owner=user)
+    obsolete.created = now() - settings.EXPORT_DELETING_PERIOD - timedelta(days=1)
+    obsolete.save()
+    return {"not_obsolete": not_obsolete.pk, "obsolete": obsolete.pk}
 
 
 @pytest.mark.django_db
@@ -84,3 +99,22 @@ class TestFlexibleExportApi:
         assert res.status_code == 204
         assert not FlexibleDataExport.objects.filter(id=export.id).exists()
         assert not Path(export.output_file.path).exists()
+
+    def test_list_not_obsolete_exports(self, client, users, export_pk):
+        user = users['user1']
+        client.force_login(user)
+        resp = client.get(reverse('flexible-export-list'))
+        resp_pks = [export['pk'] for export in resp.json()]
+
+        assert export_pk["not_obsolete"] in resp_pks
+        assert export_pk["obsolete"] not in resp_pks
+
+
+@pytest.mark.django_db
+class TestFlexibleExportTasks:
+    def test_delete_expired_flexible_data_exports_task(self, export_pk):
+        assert FlexibleDataExport.objects.filter(pk=export_pk["not_obsolete"]).exists()
+        assert FlexibleDataExport.objects.filter(pk=export_pk["obsolete"]).exists()
+        delete_expired_flexible_data_exports_task()
+        assert FlexibleDataExport.objects.filter(pk=export_pk["not_obsolete"]).exists()
+        assert not FlexibleDataExport.objects.filter(pk=export_pk["obsolete"]).exists()

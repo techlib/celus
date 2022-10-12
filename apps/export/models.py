@@ -3,15 +3,24 @@ from typing import Tuple, Optional, Union
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
+from django.db.models import ExpressionWrapper, BooleanField, Q
 from django.utils.timezone import now
 
 from export.enums import FileFormat
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 from logs.logic.reporting.export import (
-    FlexibleDataExporter,
     FlexibleDataExcelExporter,
     FlexibleDataZipCSVExporter,
 )
+
+
+class AnnotateObsoleteQueryset(models.QuerySet):
+    def annotate_obsolete(self):
+        return self.annotate(
+            obsolete=ExpressionWrapper(
+                Q(created__lt=now() - settings.EXPORT_DELETING_PERIOD), output_field=BooleanField(),
+            )
+        )
 
 
 class ExportBase(models.Model):
@@ -77,6 +86,7 @@ class ExportBase(models.Model):
 
 class FlexibleDataExport(ExportBase):
 
+    objects = AnnotateObsoleteQueryset.as_manager()
     format_to_exporter = {
         FileFormat.XLSX: FlexibleDataExcelExporter,
         FileFormat.ZIP_CSV: FlexibleDataZipCSVExporter,

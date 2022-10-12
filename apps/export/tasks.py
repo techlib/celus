@@ -1,8 +1,7 @@
 import celery
+from core.logic.error_reporting import email_if_fails
 from django.core.cache import cache
 from django.utils import translation
-
-from core.logic.error_reporting import email_if_fails
 from export.models import FlexibleDataExport
 
 
@@ -20,3 +19,9 @@ def process_flexible_export_task(export_id: int):
         with translation.override(export.owner.language or 'en'):
             # set the language of the export to the one preferred by the owner
             export.create_output_file(progress_monitor=monitor)
+
+
+@celery.shared_task
+@email_if_fails
+def delete_expired_flexible_data_exports_task():
+    FlexibleDataExport.objects.annotate_obsolete().filter(obsolete=True).delete()

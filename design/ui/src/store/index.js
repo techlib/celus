@@ -246,6 +246,9 @@ export default new Vuex.Store({
     harvesterIPv6Addresses(state) {
       return state.basicInfo.HARVESTER_IPV6_ADDRESSES || [];
     },
+    exportDeletingPeriodInSec(state) {
+      return state.basicInfo.EXPORT_DELETING_PERIOD;
+    },
     letAxiosThrough(state) {
       /*
         when true, all requests by axios will be put through,

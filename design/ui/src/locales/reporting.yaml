@@ -39,6 +39,9 @@ en:
   format:
     excel: Excel
     csv: CSV
+  expires_in: Expires in
+  expires_in_tt_1: We delete exports periodically just to keep order here.
+  expires_in_tt_2: But don't worry - you can create new exports again from any report at any time.
 
 cs:
   access_level_tt:
@@ -81,3 +84,6 @@ cs:
   format:
     excel: Excel
     csv: CSV
+  expires_in: Expiruje za
+  expires_in_tt_1: Pravidelně mažeme exporty pro udržení přehlednosti.
+  expires_in_tt_2: Nemusíte se ale bát - kdykoliv si můžete vytvořit export z jakéhokoliv reportu znova.
