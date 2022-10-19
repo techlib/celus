@@ -24,7 +24,7 @@ cs:
           </template>
           <template #adhoc>
             <router-link :to="{ name: 'flexitable' }">{{
-              $t("pages.ad_hoc_report")
+              $t("pages.create_report")
             }}</router-link>
           </template>
         </i18n>

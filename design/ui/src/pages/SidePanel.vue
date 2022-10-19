@@ -183,12 +183,12 @@ export default {
               icon: "fa fa-border-all",
               items: [
                 {
-                  title: this.$i18n.t("pages.flexi_reports"),
-                  linkTo: "flexireports",
+                  title: this.$i18n.t("pages.create_report"),
+                  linkTo: "flexitable",
                 },
                 {
-                  title: this.$i18n.t("pages.ad_hoc_report"),
-                  linkTo: "flexitable",
+                  title: this.$i18n.t("pages.flexi_reports"),
+                  linkTo: "flexireports",
                 },
                 {
                   title: this.$t("pages.exports"),

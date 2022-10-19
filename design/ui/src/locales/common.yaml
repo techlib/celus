@@ -24,7 +24,7 @@ en:
     data_management: Data management
     subscriptions: Overlap analysis
     exports: Exports
-    ad_hoc_report: Ad hoc report
+    create_report: Create report
     flexi_reports: Reports
     tags: Tags
     tag_management: Tag management
@@ -279,7 +279,7 @@ cs:
     data_management: Správa dat
     subscriptions: Analýza překryvů
     exports: Exporty
-    ad_hoc_report: Ad hoc report
+    create_report: Vytvořit report
     flexi_reports: Reporty
     tags: Štítky
     tag_management: Správa štítků
