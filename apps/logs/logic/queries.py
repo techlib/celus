@@ -464,20 +464,20 @@ class StatsComputer:
             and self.sec_dim_name != 'metric'
             and 'metric' not in self.params
         ):
+            interest_metrics = set(
+                self.original_used_report_type.interest_metrics.order_by().values_list(
+                    'pk', flat=True
+                )
+            )
+            if interest_metrics:
+                self.query = self.query.filter(metric_id__in=interest_metrics)
+
+            # we want to list only the metrics which are actually used - regardless of
+            # interest_metrics
+            used_metric_ids = set(self.query.values_list('metric_id', flat=True).distinct())
             self.reported_metrics = {
-                im.pk: im for im in self.original_used_report_type.interest_metrics.order_by()
+                im.pk: im for im in Metric.objects.filter(pk__in=used_metric_ids)
             }
-            if self.reported_metrics:
-                self.query = self.query.filter(metric_id__in=self.reported_metrics.keys())
-            else:
-                # if there are no interest metrics associated with the report_type
-                # we need to tell the user that all possible metrics were used
-                used_metric_ids = {
-                    rec['metric_id'] for rec in self.query.values('metric_id').distinct()
-                }
-                self.reported_metrics = {
-                    im.pk: im for im in Metric.objects.filter(pk__in=used_metric_ids)
-                }
 
     @classmethod
     def remap_implicit_dim(cls, data, dim_name, to_text_fn=str):
