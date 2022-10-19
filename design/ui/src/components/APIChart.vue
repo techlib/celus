@@ -33,10 +33,7 @@
     id="loading"
   >
     <div>
-      <i
-        class="far fa-frown"
-        :style="{ marginTop: reportedMetrics.length ? '36px' : null }"
-      ></i>
+      <i class="far fa-frown" :style="{ marginTop: '36px' }"></i>
       <div class="infotext">{{ $t("chart.no_data") }}</div>
       <v-alert
         v-if="reportedMetrics.length"
@@ -328,6 +325,10 @@ export default {
       default: false,
       type: Boolean,
     },
+    metric: {
+      default: null,
+      type: Number,
+    },
   },
   data() {
     return {
@@ -388,6 +389,9 @@ export default {
       if (this.mduId) url += `&mdu=${this.mduId}`;
       if (this.dashboardChart) {
         url += "&dashboard=true";
+      }
+      if (this.metric) {
+        url += `&metric=${this.metric}`;
       }
       return url;
     },

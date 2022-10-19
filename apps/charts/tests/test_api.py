@@ -358,3 +358,24 @@ class TestChartDataAPIView:
         )
         assert resp.status_code == 200
         assert 'data' in resp.json()
+
+    def test_available_metrics(
+        self, counter_records_0d, organizations, report_type_nd, authenticated_client, platform
+    ):
+        """
+        Test the api for getting list of metrics used in a chart
+        """
+        organization = organizations[0]
+        report_type = report_type_nd(0)  # type: ReportType
+        import_counter_records(report_type, organization, platform, counter_records_0d)
+        assert AccessLog.objects.count() == 1
+        metric = Metric.objects.get()
+        report_view = ReportDataView.objects.create(base_report_type=report_type)
+        resp = authenticated_client.get(
+            reverse('chart_data_metrics', args=(report_view.pk,)),
+            {'organization': organization.pk, 'platform': platform.pk, 'prim_dim': 'date',},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['pk'] == metric.pk

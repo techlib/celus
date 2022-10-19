@@ -21,6 +21,11 @@ urlpatterns = [
         views.ReportTypeToReportDataViewView.as_view(),
         name='report-type-to-report-data-view',
     ),
+    path(
+        'chart-data/<report_view_id>/metrics/',
+        views.ChartDataAvailableMetricsView.as_view(),
+        name='chart_data_metrics',
+    ),
     path('chart-data/<report_view_id>/', views.ChartDataView.as_view(), name='chart_data'),
 ]
 

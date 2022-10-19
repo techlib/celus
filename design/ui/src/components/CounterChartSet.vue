@@ -55,6 +55,25 @@ cs:
         />
       </v-col>
       <v-col
+        cols="12"
+        md="6"
+        lg="4"
+        xl="4"
+        class="pb-0"
+        v-if="!fixedChart && metricFilterNeeded"
+      >
+        <v-select
+          :items="availableMetrics"
+          v-model="selectedMetric"
+          item-text="short_name"
+          item-value="pk"
+          :label="$t('labels.metric')"
+          :loading="loadingMetrics"
+          outlined
+          dense
+        ></v-select>
+      </v-col>
+      <v-col
         cols="auto"
         class="pb-0"
         v-if="primaryDimension === 'organization' && this.organizationSelected"
@@ -90,6 +109,7 @@ cs:
           :ignore-date-range="!!(importBatchId || mduId)"
           :show-mark-line="showMarkLine"
           :raw-report-type="selectedReportView.is_proxy"
+          :metric="selectedMetric"
           ref="chart"
         >
         </APIChart>
@@ -142,7 +162,10 @@ export default {
       reportViews: [],
       selectedReportView: this.fixedReportView,
       selectedChartType: this.fixedChart,
+      selectedMetric: null,
+      availableMetrics: [],
       loading: false,
+      loadingMetrics: false,
       showMarkLine: true,
     };
   },
@@ -228,6 +251,18 @@ export default {
       }
       return null;
     },
+    metricFilterNeeded() {
+      if (
+        this.selectedChartType &&
+        this.selectedReportView.short_name !== "interest_view"
+      ) {
+        return !(
+          this.primaryDimension === "metric" ||
+          this.secondaryDimension === "metric"
+        );
+      }
+      return false;
+    },
   },
   methods: {
     ...mapActions({
@@ -276,6 +311,58 @@ export default {
         this.$refs.chart.loadData();
       }
     },
+    async loadAvailableMetrics() {
+      this.availableMetrics = [];
+      this.selectedMetric = null;
+      this.loadingMetrics = true;
+      let url = `/api/chart-data/${this.selectedReportView.pk}/metrics/?prim_dim=${this.primaryDimension}`;
+      if (!this.mduId && !this.importBatchId) {
+        url += `&start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
+      }
+      if (this.secondaryDimension) {
+        url += `&sec_dim=${this.secondaryDimension}`;
+      }
+      if (this.platformId) url += `&platform=${this.platformId}`;
+      if (this.organization)
+        url += `&organization=${this.organizationForChart}`;
+      if (this.titleId) url += `&target=${this.titleId}`;
+      if (this.importBatch) url += `&import_batch=${this.importBatch}`;
+      if (this.mduId) url += `&mdu=${this.mduId}`;
+
+      try {
+        let resp = await axios.get(url);
+        this.availableMetrics = resp.data;
+        if (this.availableMetrics.length > 0) {
+          // we want to select preferentially a metric which defined interest
+          // and then one with "Requests" in the name (to penalize denial
+          // metrics, such as No_License, and Investigation metrics)
+          let metrics = [...this.availableMetrics];
+          metrics.sort((a, b) =>
+            [
+              !a.is_interest_metric,
+              !a.short_name.includes("Requests"),
+              a.short_name,
+              a.pk,
+            ] >
+            [
+              !b.is_interest_metric,
+              !b.short_name.includes("Requests"),
+              b.short_name,
+              b.pk,
+            ]
+              ? 1
+              : -1
+          );
+          this.selectedMetric = metrics[0].pk;
+        } else {
+          this.selectedMetric = null;
+        }
+      } catch (error) {
+        this.showSnackbar({ content: "Error loading metrics: " + error });
+      } finally {
+        this.loadingMetrics = false;
+      }
+    },
   },
   mounted() {
     this.loadReportViews();
@@ -289,6 +376,12 @@ export default {
     },
     fixedChart() {
       this.selectedChartType = this.fixedChart;
+    },
+    selectedChartType() {
+      this.selectedMetric = null;
+      if (this.metricFilterNeeded) {
+        this.loadAvailableMetrics();
+      }
     },
   },
 };

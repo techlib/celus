@@ -2,7 +2,7 @@ from time import monotonic
 
 from django.utils.translation import activate
 from pandas import DataFrame
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -67,13 +67,13 @@ class ReportDataViewChartDefinitions(APIView):
 class ChartDataView(APIView):
     def get(self, request, report_view_id):
         report_view = get_object_or_404(ReportDataView, pk=report_view_id)
-        computer = StatsComputer()
         start = monotonic()
         # special attribute signaling that this view is used on dashboard and thus we
         # want to cache the data for extra speed using recache
         dashboard_view = 'dashboard' in request.GET
         try:
-            data = computer.get_data(report_view, request.GET, request.user, recache=dashboard_view)
+            computer = StatsComputer(report_view, request.GET)
+            data = computer.get_data(request.user, recache=dashboard_view)
         except TooMuchDataError:
             return Response({'too_much_data': True})
         except BadRequestError as exc:
@@ -108,6 +108,24 @@ class ChartDataView(APIView):
             computer.reported_metrics.values(), many=True
         ).data
         return Response(reply)
+
+
+class ChartDataAvailableMetricsView(APIView):
+    class Serializer(MetricSerializer):
+        is_interest_metric = serializers.BooleanField()
+
+        class Meta(MetricSerializer.Meta):
+            fields = MetricSerializer.Meta.fields + ('is_interest_metric',)
+
+    def get(self, request, report_view_id):
+        report_view = get_object_or_404(ReportDataView, pk=report_view_id)
+        try:
+            computer = StatsComputer(report_view, request.GET)
+            data = computer.get_available_metrics()
+        except BadRequestError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(self.Serializer(data, many=True).data)
 
 
 class ReportViewToChartTypeViewSet(ModelViewSet):

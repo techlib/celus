@@ -100,12 +100,12 @@ class Counter5DataView(APIView):
 
     def get(self, request, report_type_id):
         report_type = get_object_or_404(ReportType, pk=report_type_id)
-        computer = StatsComputer()
+        computer = StatsComputer(report_type, request.GET)
         start = monotonic()
         # special attribute signaling that this view is used on dashboard and thus we
         # want to cache the data for extra speed using recache
         dashboard_view = 'dashboard' in request.GET
-        data = computer.get_data(report_type, request.GET, request.user, recache=dashboard_view)
+        data = computer.get_data(request.user, recache=dashboard_view)
         label_attrs = dict(view_type='chart_data_raw', report_type=computer.used_report_type.pk)
         report_access_total_counter.labels(**label_attrs).inc()
         report_access_time_summary.labels(**label_attrs).observe(monotonic() - start)

@@ -8,6 +8,9 @@ from django.db import models
 from django.db.models import (
     Sum,
     Q,
+    QuerySet,
+    Exists,
+    OuterRef,
 )
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
@@ -15,7 +18,15 @@ from django.shortcuts import get_object_or_404
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from logs.logic.remap import remap_dicts
-from logs.models import AccessLog, ReportType, Dimension, DimensionText, Metric
+from logs.models import (
+    AccessLog,
+    ReportType,
+    Dimension,
+    DimensionText,
+    Metric,
+    ReportInterestMetric,
+)
+from logs.serializers import ReportTypeInterestSerializer
 from recache.util import recache_queryset
 
 logger = logging.getLogger(__name__)
@@ -223,7 +234,8 @@ class StatsComputer:
     }
     hard_result_count_limit = 20_000
 
-    def __init__(self):
+    def __init__(self, report_type: Union[ReportType, ReportDataView], params: dict):
+        # basic setup
         self.io_prim_dim_name = None  # name of dimension that was requested and will be outputted
         self.prim_dim_name = None
         self.prim_dim_obj = None
@@ -232,10 +244,34 @@ class StatsComputer:
         self.sec_dim_obj = None
         self.dim_raw_name_to_name = {}
         self.reported_metrics = {}
+        self.dim_raw_name_to_name = {}  # gets filled in during query preparation
+        self.query: Optional[QuerySet] = None
+
+        # storage and pre-processing of params
+        self.report_type = report_type
+        self.params = params
         # the following represents the report type that was actually used to make the db query
         # if a materialized report is used later on, the following value will be changed
         # to the new report type in order to signal the change to the outside
-        self.used_report_type = None
+        self.used_report_type = (
+            self.report_type.base_report_type
+            if isinstance(self.report_type, ReportDataView)
+            else self.report_type
+        )
+        # `used_report_type` may be replaced by a materialized report later on
+        # here we present the original report type
+        self.original_used_report_type = self.used_report_type
+        # decode the dimensions to find out what we need to have in the query
+        (
+            self.io_prim_dim_name,
+            self.prim_dim_name,
+            self.prim_dim_obj,
+        ) = self._translate_dimension_spec(params.get('prim_dim', 'date'))
+        self.io_sec_dim_name, self.sec_dim_name, self.sec_dim_obj = self._translate_dimension_spec(
+            params.get('sec_dim')
+        )
+        # construct the accesslog query
+        self.query = self.construct_accesslog_query()
 
     def _translate_dimension_spec(self, dim_name: str) -> (str, str, Optional[Dimension]):
         """
@@ -271,27 +307,7 @@ class StatsComputer:
             )
         return dimension.short_name, f'dim{dim_idx+1}', dimension
 
-    def _extract_dimension_specs(self, primary_dim: str, secondary_dim: Optional[str]):
-        """
-        Here we get the primary and secondary dimension name and corresponding objects from the
-        request based on the report_type
-        :param primary_dim: name of the dimension
-        :param secondary_dim: name of the secondary dimension, may be None
-        :return:
-        """
-        # decode the dimensions to find out what we need to have in the query
-        (
-            self.io_prim_dim_name,
-            self.prim_dim_name,
-            self.prim_dim_obj,
-        ) = self._translate_dimension_spec(primary_dim)
-        self.io_sec_dim_name, self.sec_dim_name, self.sec_dim_obj = self._translate_dimension_spec(
-            secondary_dim
-        )
-
-    def get_data(
-        self, report_type: Union[ReportType, ReportDataView], params: dict, user, recache=False
-    ):
+    def get_data(self, user, recache=False):
         """
         This method encapsulates most of the stuff that is done by this view.
         Based on report_type_id and the request object, it loads, post-processes, etc. the data
@@ -302,25 +318,20 @@ class StatsComputer:
         :param recache: should recache be used to cache the database query?
         :return:
         """
-        secondary_dim = params.get('sec_dim')
-        primary_dim = params.get('prim_dim', 'date')
-        self.used_report_type = (
-            report_type.base_report_type if isinstance(report_type, ReportDataView) else report_type
-        )
-        self._extract_dimension_specs(primary_dim, secondary_dim)
-        # construct the query
-        query, self.dim_raw_name_to_name = self.construct_query(report_type, params)
+        # we use the prepared self.query where accesslogs are filtered
+        # we just need to enforce one-metric rule if metric is not specified in the request
+        self.enforce_metric_filter()
         # get the data - we need two separate queries for 1d and 2d cases
         if self.sec_dim_name:
             data = (
-                query.values(self.prim_dim_name, self.sec_dim_name)
+                self.query.values(self.prim_dim_name, self.sec_dim_name)
                 .annotate(count=Sum('value'))
                 .values(self.prim_dim_name, 'count', self.sec_dim_name)
                 .order_by(self.prim_dim_name, self.sec_dim_name)
             )
         else:
             data = (
-                query.values(self.prim_dim_name)
+                self.query.values(self.prim_dim_name)
                 .annotate(count=Sum('value'))
                 .values(self.prim_dim_name, 'count')
                 .order_by(self.prim_dim_name)
@@ -367,25 +378,25 @@ class StatsComputer:
                 rec[new_sec_dim_name] = rec[self.sec_dim_name]
                 del rec[self.sec_dim_name]
 
-    def construct_query(self, report_type, params):
-        if report_type:
+    def construct_accesslog_query(self) -> QuerySet[AccessLog]:
+        if self.report_type:
             query_params = {'report_type': self.used_report_type, 'metric__active': True}
         else:
             query_params = {'metric__active': True}
         # go over implicit dimensions and add them to the query if GET params are given for this
         query_params.update(
             extract_accesslog_attr_query_params(
-                params, dimensions=self.implicit_dims, mdu_filter=True
+                self.params, dimensions=self.implicit_dims, mdu_filter=True
             )
         )
         # now go over the extra dimensions and add them to filter if requested
-        dim_raw_name_to_name = {}
-        if report_type:
-            for i, dim in enumerate(report_type.dimensions_sorted):
+        self.dim_raw_name_to_name = {}
+        if self.report_type:
+            for i, dim in enumerate(self.report_type.dimensions_sorted):
                 dim_raw_name = 'dim{}'.format(i + 1)
                 dim_name = dim.short_name
-                dim_raw_name_to_name[dim_raw_name] = dim_name
-                value = params.get(dim_name)
+                self.dim_raw_name_to_name[dim_raw_name] = dim_name
+                value = self.params.get(dim_name)
                 if value:
                     try:
                         value = DimensionText.objects.get(dimension=dim, text=value).pk
@@ -395,18 +406,18 @@ class StatsComputer:
                     query_params[dim_raw_name] = value
         # remap dimension names if the query dim name is different from the i/o one
         if self.prim_dim_name != self.io_prim_dim_name:
-            dim_raw_name_to_name[self.prim_dim_name] = self.io_prim_dim_name
+            self.dim_raw_name_to_name[self.prim_dim_name] = self.io_prim_dim_name
         if self.sec_dim_name != self.io_sec_dim_name:
-            dim_raw_name_to_name[self.sec_dim_name] = self.io_sec_dim_name
+            self.dim_raw_name_to_name[self.sec_dim_name] = self.io_sec_dim_name
         # add extra filters if requested
         prim_extra = self.extra_query_params.get(self.io_prim_dim_name)
         if prim_extra:
-            query_params.update(prim_extra(report_type))
+            query_params.update(prim_extra(self.report_type))
         sec_extra = self.extra_query_params.get(self.io_sec_dim_name)
         if sec_extra:
-            query_params.update(sec_extra(report_type))
+            query_params.update(sec_extra(self.report_type))
         # add filter for dates
-        query_params.update(date_filter_from_params(params))
+        query_params.update(date_filter_from_params(self.params))
 
         # maybe use materialized report if available
         extra_dims = {self.prim_dim_name}
@@ -415,39 +426,58 @@ class StatsComputer:
         rt_change = replace_report_type_with_materialized(
             query_params, other_used_dimensions=extra_dims
         )
-        # we preserve the original value of used_report_type for use in later code
-        original_used_report_type = self.used_report_type
         if rt_change:
+            # the original value is still preserved in self.original_used_report_type
             self.used_report_type = query_params.get('report_type')
 
         # construct the query
         query = AccessLog.objects.filter(**query_params)
-        if report_type and isinstance(report_type, ReportDataView):
-            query = query.filter(**report_type.accesslog_filters)
+        if self.report_type and isinstance(self.report_type, ReportDataView):
+            query = query.filter(**self.report_type.accesslog_filters)
+        return query
 
+    def get_available_metrics(self) -> QuerySet[Metric]:
+        used_metric_ids = set(self.query.values_list('metric_id', flat=True).distinct())
+        return Metric.objects.filter(pk__in=used_metric_ids).annotate(
+            is_interest_metric=Exists(
+                ReportInterestMetric.objects.filter(
+                    metric_id=OuterRef('pk'), report_type_id=self.original_used_report_type.pk
+                )
+            ),
+        )
+
+    def enforce_metric_filter(self) -> None:
+        """
+        If metric is neither the primary nor the secondary dimension, we need to filter the
+        results to contain only metrics that can be summed up.
+
+        Rationale: summing up different metrics together does not make much sense
+        for example Total_Item_Requests and Unique_Item_Requests are dependent on each
+        other and in fact the latter is a subset of the former. Thus we only use the
+        metrics that define interest for computation if metric itself is not the primary
+        or secondary dimension
+        """
         # filter to only interest metrics if metric neither primary nor secondary dim
-        if report_type and self.prim_dim_name != 'metric' and self.sec_dim_name != 'metric':
-            # Rationale: summing up different metrics together does not make much sense
-            # for example Total_Item_Requests and Unique_Item_Requests are dependent on each
-            # other and in fact the latter is a subset of the former. Thus we only use the
-            # metrics that define interest for computation if metric itself is not the primary
-            # or secondary dimension
-            # Technical note: putting the filter into the query leads to a very slow response
-            # (2500 ms instead of 60 ms in a test case) - this is why we get the pks of the metrics
-            # first and then use the "in" filter.
+        if (
+            self.report_type
+            and self.prim_dim_name != 'metric'
+            and self.sec_dim_name != 'metric'
+            and 'metric' not in self.params
+        ):
             self.reported_metrics = {
-                im.pk: im for im in original_used_report_type.interest_metrics.order_by()
+                im.pk: im for im in self.original_used_report_type.interest_metrics.order_by()
             }
             if self.reported_metrics:
-                query = query.filter(metric_id__in=self.reported_metrics.keys())
+                self.query = self.query.filter(metric_id__in=self.reported_metrics.keys())
             else:
                 # if there are no interest metrics associated with the report_type
                 # we need to tell the user that all possible metrics were used
-                used_metric_ids = {rec['metric_id'] for rec in query.values('metric_id').distinct()}
+                used_metric_ids = {
+                    rec['metric_id'] for rec in self.query.values('metric_id').distinct()
+                }
                 self.reported_metrics = {
                     im.pk: im for im in Metric.objects.filter(pk__in=used_metric_ids)
                 }
-        return query, dim_raw_name_to_name
 
     @classmethod
     def remap_implicit_dim(cls, data, dim_name, to_text_fn=str):
