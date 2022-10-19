@@ -817,6 +817,11 @@ export default {
           });
         }
         this.displayData = this.dataRaw;
+        this.displayData.forEach((item) => {
+          if (item[this.primaryDimension] === null) {
+            item[this.primaryDimension] = this.$t("labels.empty_value");
+          }
+        });
       }
       this.crunchingData = false;
     },
