@@ -89,6 +89,7 @@ COUNTER_REPORTS = (
     ('PR', 5, False, Counter5TableReport, False),
     ('DR', 5, False, Counter5TableReport, False),
     ('IR', 5, False, Counter5TableReport, False),
+    ('IR_M1', 5, False, Counter5TableReport, False),
 )
 
 
