@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 
 from logs.models import ReportType, ReportTypeToDimension, Dimension
-from sushi.models import COUNTER_REPORTS
+from sushi.models import COUNTER_REPORTS, CounterReportType
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,11 @@ class Command(BaseCommand):
 
     dim_name_remap = {
         'Platform': {'en': 'Platform in COUNTER data', 'cs': 'Platforma v COUNTER datech'}
+    }
+
+    code_to_name_remap = {
+        'IR_M1': 'Counter 5 - Multimedia item report',
+        'MR1': 'Counter 4 - Multimedia report 1',
     }
 
     def add_arguments(self, parser):
@@ -35,7 +40,9 @@ class Command(BaseCommand):
                 stats['missing_rt'] += 1
                 rt = None
                 if fix_it:
-                    rt = ReportType.objects.create(short_name=code, name=code, source=None)
+                    rt = ReportType.objects.create(
+                        short_name=code, name=self.code_to_name_remap.get(code, code), source=None
+                    )
             if rt:
                 reader_dims = set(reader.dimensions)
                 rt_dims = set(rt.dimension_short_names)
@@ -65,4 +72,15 @@ class Command(BaseCommand):
                 else:
                     print('OK:', code)
                     stats['ok'] += 1
+                # check COUNTER report type as well
+                if not CounterReportType.objects.filter(report_type=rt).exists():
+                    print('Missing CRT:', code)
+                    stats['missing_crt'] += 1
+                    if fix_it:
+                        CounterReportType.objects.create(
+                            code=code,
+                            name=self.code_to_name_remap.get(code, rt.name),
+                            report_type=rt,
+                            counter_version=version,
+                        )
         print('Stats:', stats)
