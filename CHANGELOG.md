@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+
+## [4.7.0]
+
+### Added
+
+#### Backend
+
+* add missing reader for IR_M1 reports in table form
+* update CLI script `check_report_type_dimensions` to also create missing COUNTER reports
+
+
+### Changes
+
+#### Backend
+
+* allow deleting of user accounts from Django admin by allowing deleting of impersonation logs
+* use constant memory mode when creating Excel exports in reporting
+
+
+### Fixed
+
+#### Frontend
+
+* do not try to translate '-- blank --' id into title name
+* show import errors in dashboard SUSHI overview widget
+* fix sorting by title attributes (such as ISSN, ISBN, etc.) in reporting
+* fix locking of SUSHI credentials by adding the missing `can_lock` attribute to the API endpoint
+* fix situation where it was not possible to leave impersonation of a user without an assigned
+  organization
+* fix regression in sorting by explicit dimensions in reporting
+* reset pagination when report is changed in reporting
+
+#### Backend
+
+* fix celery task name for cleaning obsolete platform-title links
+* fix incorrect behavior of harvest plannig after credentials are verified
+* fix computation of data-presence by using ImportBatche presence rather than FetchAttempt status
+* properly store owner attributes when saving a new report
+* skip custom platforms from other organizations when importing SUSHI credentials using CLI
+
+
 ## [4.6.2]
 
 ### Fixed
