@@ -19,7 +19,7 @@ cs:
     <SidePanel
       v-model="showSidePanel"
       data-tour="side-panel"
-      :tour-name="userBasicTourFinished ? 'basic' : null"
+      :tour-name="offeredTour"
     />
 
     <v-navigation-drawer right app v-model="showHelpPanel" clipped>
@@ -44,15 +44,13 @@ cs:
       <OrganizationSelector
         internal-label
         :lang="appLanguage"
-        v-if="
-          $vuetify.breakpoint.mdAndUp && !$route.meta.hideOrganizationSelector
-        "
+        v-if="showOrganizationSelector"
         class="d-flex"
       />
       <SelectedDateRangeWidget
         input-like-label
         class="d-flex"
-        v-if="$vuetify.breakpoint.smAndUp && !$route.meta.hideDateRangeSelector"
+        v-if="showDateRangeSelector"
       />
 
       <v-spacer></v-spacer>
@@ -250,6 +248,30 @@ export default {
     showLanguageSelector() {
       return this.activeLanguageCodes.length > 1;
     },
+    showOrganizationSelector() {
+      return (
+        this.$vuetify.breakpoint.mdAndUp &&
+        !this.$route.meta.hideOrganizationSelector
+      );
+    },
+    showDateRangeSelector() {
+      return (
+        this.$vuetify.breakpoint.mdAndUp &&
+        !this.$route.meta.hideOrganizationSelector
+      );
+    },
+    canShowBasicTour() {
+      // the tour requires date range and organization selectors to be visible
+      return this.showOrganizationSelector && this.showDateRangeSelector;
+    },
+    offeredTour() {
+      // it should only be offered in the side bar when it has already been
+      // finished by the user
+      if (this.canShowBasicTour && this.userBasicTourFinished) {
+        return "basic";
+      }
+      return null;
+    },
     showHelpButton() {
       return !!this.$route.matched[0].components.helpPanel;
     },
@@ -280,7 +302,11 @@ export default {
 
   async mounted() {
     this.$i18n.locale = this.appLanguage;
-    if (!this.userBasicTourFinished && !this.showCreateOrganizationDialog) {
+    if (
+      !this.userBasicTourFinished &&
+      !this.showCreateOrganizationDialog &&
+      this.canShowBasicTour
+    ) {
       this.$tours[this.basicsTourName].start();
     }
   },
@@ -291,7 +317,7 @@ export default {
     },
 
     userBasicTourFinished() {
-      if (!this.userBasicTourFinished) {
+      if (!this.userBasicTourFinished && this.canShowBasicTour) {
         this.$tours[this.basicsTourName].start();
       }
     },
