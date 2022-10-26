@@ -4,8 +4,9 @@ en:
   loading_harvest_slots: Checking existing data
   slot_tooltip_: This data will be harvested
   slot_tooltip_sushi: Data was already harvested via SUSHI. Will not harvest.
-  slot_tooltip_manual: Data aleady exists from manual upload. Will not harvest.
+  slot_tooltip_manual: Data already exists from manual upload. Will not harvest.
   slot_tooltip_broken: The credentials or the report type were marked as broken. Will not harvest.
+  slot_tooltip_unknown: Data already exists in the database, probably from a deleted source. Will not harvest.
 
 cs:
   loading_harvest_slots: Kontroluji existující data
@@ -13,6 +14,7 @@ cs:
   slot_tooltip_sushi: Data již byla stažena pomocí SUSHI. Stahování nebude provedeno.
   slot_tooltip_manual: Data již existují z manuálního importu. Stahování nebude provedeno.
   slot_tooltip_broken: Přihlašovací údaje nebo report byly označeny jako nefunkční. Stahování nebude provedeno.
+  slot_tooltip_unknown: Data již existují v databázi, pravděpodobně z odstraněného zdroje. Stahování nebude provedeno.
 </i18n>
 
 <template>
@@ -36,6 +38,7 @@ cs:
           <v-icon v-else-if="type === 'broken'" color="#ffaaaa" small
             >far fa-fw fa-times-circle
           </v-icon>
+          <v-icon v-else color="#dddddd" small>fa fa-fw fa-database</v-icon>
         </td>
         <td>
           <span class="text-right font-weight-bold caption px-2">{{
@@ -87,6 +90,12 @@ cs:
                     color="#ffaaaa"
                     small
                     >far fa-times-circle
+                  </v-icon>
+                  <v-icon
+                    v-else-if="row.months[month] === 'unknown'"
+                    color="#dddddd"
+                    small
+                    >fa fa-database
                   </v-icon>
                   <v-icon v-else color="success" small
                     >fa fa-cloud-download-alt</v-icon
