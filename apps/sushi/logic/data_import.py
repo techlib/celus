@@ -14,23 +14,29 @@ logger = logging.getLogger(__name__)
 
 
 def import_sushi_credentials_from_csv(
-    filename, prefer_brain_urls: bool = False, reversion_comment: Optional[str] = None
+    filename, prefer_knowledgebase_urls: bool = False, reversion_comment: Optional[str] = None
 ) -> dict:
     with open(filename, 'r') as infile:
         reader = csv.DictReader(infile)
         records = list(reader)  # read all records from the reader
     return import_sushi_credentials(
-        records, prefer_brain_urls=prefer_brain_urls, reversion_comment=reversion_comment
+        records,
+        prefer_knowledgebase_urls=prefer_knowledgebase_urls,
+        reversion_comment=reversion_comment,
     )
 
 
 def import_sushi_credentials(
-    records: [dict], prefer_brain_urls: bool = False, reversion_comment: Optional[str] = None
+    records: [dict],
+    prefer_knowledgebase_urls: bool = False,
+    reversion_comment: Optional[str] = None,
 ) -> dict:
     """
     Imports SUSHI credentials from a list of dicts describing the data
     :param reversion_comment: comment that will be passed to the reversion version, if None a
-         default will be provided.
+         default will be provided
+    :param prefer_knowledgebase_urls: if True, the urls from the knowledgebase will be used instead
+            of the ones from the file
     :param records:
     :return:
     """
@@ -94,7 +100,7 @@ def import_sushi_credentials(
         else:
             optional['api_key'] = ''
         url = record.get('URL') or record.get('url')
-        if prefer_brain_urls:
+        if prefer_knowledgebase_urls:
             if platform.knowledgebase:
                 providers = [
                     p
@@ -105,11 +111,11 @@ def import_sushi_credentials(
                 ]
                 if providers:
                     url = providers[0]['provider']['url']
-                    stats['url_brain'] += 1
+                    stats['url_knowledgebase'] += 1
                 else:
                     stats['url_no_provider'] += 1
             else:
-                stats['url_no_brain'] += 1
+                stats['url_no_knowlegdebase'] += 1
 
         if key in db_credentials:
             # we update it
