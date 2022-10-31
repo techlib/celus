@@ -189,7 +189,6 @@ en:
   actions:
     edit: Edit
     close: Close
-    upload_custom_data: Upload custom data
     upload_data: Upload data
     cancel: Cancel
     show_attempts: Downloads
@@ -452,7 +451,6 @@ cs:
   actions:
     edit: Editovat
     close: Zavřít
-    upload_custom_data: Nahrát vlastní data
     upload_data: Nahrát data
     cancel: Zrušit
     show_attempts: Stažení

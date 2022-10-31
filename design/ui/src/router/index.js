@@ -274,7 +274,7 @@ export default new Router({
     },
     {
       path: "/platforms/:platformId/upload-data/:uploadObjectId",
-      name: "platform-upload-data-step2",
+      name: "platform-upload-data-step-preflight",
       component: () => import("../pages/CustomDataUploadPage.vue"),
       props: (route) => ({
         platformId: Number.parseInt(route.params.platformId, 10),

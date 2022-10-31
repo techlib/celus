@@ -4,14 +4,12 @@ en:
     non_counter: Non-counter
     counter: Counter
     raw: From file
-
   description: For correct import of data, it is necessary to provide data in the <strong>right format</strong>.
-
   non_counter:
     part1:
       For platforms that do not use COUNTER, you need to <strong>prepare data according to the rules below</strong>.
       Files in the Microsoft <strong>Excel format are not supported</strong>.
-    non_counter_data_h: non-COUNTER data
+    non_counter_data_h: More information about the expected format of data
     non_counter_data:
       Because of the large variability in formats that providers use to deliver non-COUNTER
       data, it is not possible to implement support for all of them. Instead, you have to convert
@@ -49,12 +47,11 @@ en:
       dimensions <i>Publisher</i> and <i>Success</i>.
 
   raw:
-    report_type_detected_warning: This function is experimental and may not work for all data formats.
-    text1: You can also try to upload the file and Celus will try to guess the report type. The file can be in <strong>CSV</strong>, <strong>TSV</strong> or <strong>XLSX</strong> format.
+    text1: Please upload a <strong>CSV</strong>, <strong>TSV</strong> or <strong>XLSX</strong> file with non-COUNTER data for this platform.
+    note: Please note that this function is experimental and not all formats are supported.
 
   counter:
-    text1: For platforms that support <strong>COUNTER</strong>, you
-      can use COUNTER data saved in <strong>CSV</strong> or <strong>TSV</strong> file.
+    text1: Reports in <strong>COUNTER</strong> format can be imported from <strong>CSV</strong>, <strong>TSV</strong> or <strong>JSON</strong> files. Files in the Microsoft <strong>Excel format are not supported</strong>.
 
 cs:
   tabs:
@@ -69,7 +66,7 @@ cs:
       Pro platformy, které nevyužívají standardní formát COUNTER, je třeba data
       <strong>připravit podle níže uvedených pravidel</strong>.
       Soubory ve formátu Microsoft <strong>Excel nejsou podporovány</strong>.
-    non_counter_data_h: Data mimo formát COUNTER
+    non_counter_data_h: Více informací o očekávaném formátu dat
     non_counter_data:
       Vzhledem k velké rozmanitosti formátů, ve který poskytovatelé dodávají data mimo formát
       COUNTER není možné implementovat jejich podporu. Je proto nutné pro import data připravit
@@ -104,8 +101,8 @@ cs:
       rozměry <i>Publisher</i> a <i>Success</i>.
 
   raw:
-    report_type_detected_warning: Tato funkce je pouze experimentalní a nelze ji použít na všechny formáty dat.
-    text1: Můžete zkusit nahrát soubor a Celus se pokusí uhádnout jeho typ reportu. Soubor může být ve formátu <strong>CSV</strong>, <strong>TSV</strong> nebo <strong>XLSX</strong>.
+    text1: Nahrajte prosím soubor ve formátu <strong>CSV</strong>, <strong>TSV</strong> nebo <strong>XLSX</strong> s ne-COUNTER daty pro tuto platformu.
+    note: Upozorňujeme, že tato funkce je experimentální a nejsou podporovány všechny možné formáty.
 
   counter:
     text1: Pro platformy, které jej podporují, můžete data nahrát
@@ -115,82 +112,48 @@ cs:
 
 <template>
   <div>
-    <p v-html="$t('description')"></p>
-
-    <v-tabs v-model="tab" @change="$emit('input', tabName)" centered>
-      <v-tab>
-        {{ $t("tabs.non_counter") }}
-      </v-tab>
-      <v-tab>
-        {{ $t("tabs.counter") }}
-      </v-tab>
-      <v-tab v-if="enableNibbler">
-        {{ $t("tabs.raw") }}
-      </v-tab>
-    </v-tabs>
-
-    <v-tabs-items v-model="tab" class="mt-2">
-      <v-tab-item>
-        <p v-html="$t('non_counter.part1')"></p>
-        <v-expansion-panels>
-          <v-expansion-panel>
-            <v-expansion-panel-header>
-              <h4 v-text="$t('non_counter.non_counter_data_h')"></h4>
-            </v-expansion-panel-header>
-            <v-expansion-panel-content>
-              <p v-html="$t('non_counter.non_counter_data')"></p>
-              <h4 v-text="$t('non_counter.ncd_file_format_h')"></h4>
-              <p v-html="$t('non_counter.ncd_file_format')"></p>
-              <h4 v-text="$t('non_counter.ncd_file_content_h')"></h4>
-              <p v-html="$t('non_counter.ncd_file_content')"></p>
-              <h4 v-text="$t('non_counter.ncd_file_example_h')"></h4>
-              <img
-                src="../assets/ex-title-metric-publisher-success.png"
-                alt="example"
-              />
-              <div v-html="$t('non_counter.example_img_desc')"></div>
-            </v-expansion-panel-content>
-          </v-expansion-panel>
-        </v-expansion-panels>
-      </v-tab-item>
-      <v-tab-item>
-        <p v-html="$t('counter.text1')"></p>
-      </v-tab-item>
-      <v-tab-item v-if="enableNibbler">
-        <p v-html="$t('raw.text1')"></p>
-        <v-alert type="warning" outlined>
-          {{ $t("raw.report_type_detected_warning") }}
-        </v-alert>
-      </v-tab-item>
-    </v-tabs-items>
+    <div v-if="method === 'celus'">
+      <p v-html="$t('non_counter.part1')"></p>
+      <v-expansion-panels>
+        <v-expansion-panel>
+          <v-expansion-panel-header>
+            <h4 v-text="$t('non_counter.non_counter_data_h')"></h4>
+          </v-expansion-panel-header>
+          <v-expansion-panel-content>
+            <p v-html="$t('non_counter.non_counter_data')"></p>
+            <h4 v-text="$t('non_counter.ncd_file_format_h')"></h4>
+            <p v-html="$t('non_counter.ncd_file_format')"></p>
+            <h4 v-text="$t('non_counter.ncd_file_content_h')"></h4>
+            <p v-html="$t('non_counter.ncd_file_content')"></p>
+            <h4 v-text="$t('non_counter.ncd_file_example_h')"></h4>
+            <img
+              src="../assets/ex-title-metric-publisher-success.png"
+              alt="example"
+            />
+            <div v-html="$t('non_counter.example_img_desc')"></div>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </div>
+    <div v-else-if="method === 'counter'">
+      <p v-html="$t('counter.text1')"></p>
+    </div>
+    <div v-else-if="method === 'nibbler'">
+      <p v-html="$t('raw.text1')"></p>
+      <v-alert type="info" outlined class="mb-0">{{ $t("raw.note") }}</v-alert>
+    </div>
   </div>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-
 export default {
   name: "CustomUploadInfoWidget",
-  data() {
-    return {
-      tab: 0,
-    };
-  },
-  computed: {
-    ...mapGetters({
-      enableNibbler: "enableNibbler",
-    }),
-    tabName() {
-      switch (this.tab) {
-        case 0:
-          return "non-counter";
-        case 1:
-          return "counter";
-        case 2:
-          return "raw";
-        default:
-          return null;
-      }
+
+  props: {
+    method: {
+      type: String,
+      default: "counter",
+      validate: (value) => ["counter", "nibbler", "celus"].includes(value),
     },
   },
 };

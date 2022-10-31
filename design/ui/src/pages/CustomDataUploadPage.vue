@@ -1,17 +1,19 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  description:
-    On this page, you can upload data for platforms which do not offer a SUSHI interface
-    or older data which are not longer available through SUSHI.
+  description: |
+    On this page, you can upload data for platforms which do not offer a SUSHI interface,
+    older data which are not longer available through SUSHI or for non-COUNTER platforms.
   data_file: Data file to upload
   data_file_placeholder: Upload a file containing data.
   error: Error
   dismiss: Dismiss
-  step1: Data upload
-  step2: Check before data import
-  step3: Imported data view
+  step_method: Select method
+  step_upload: Data upload
+  step_preflight: Check before data import
+  step_done: Imported data view
   input_rows: Read input data rows
   overview: Overview
   upload: Upload
@@ -42,18 +44,27 @@ en:
   unauthorized_multiple_org_title: Unauthorized to import
   unauthorized_multiple_org_text: This file contains data for multiple organizations and only consortial admin is allowed to import it.
   no_non_counter_for_platform: This platform does not support non-counter data.
+  method_counter_label_name: COUNTER
+  method_counter_label_text: Use this method to import data from COUNTER table and JSON reports.
+  method_nibbler_label_name: Raw non-COUNTER data
+  method_nibbler_label_text: Upload a non-COUNTER report as you received it from the publisher. Celus will try to automatically detect the format.
+  method_celus_label_name: Celus non-COUNTER custom format
+  method_celus_label_text: Upload data prepared in the custom Celus format for non-COUNTER data.
+  method_celus_disabled_tt: There are no non-COUNTER reports defined for this platform.
+  method_nibbler_disabled_tt: There are no raw reports supported for this platform.
 
 cs:
-  description:
-    Tato stránka umožňuje nahrání dat k platformám, které neposkytují rozhraní SUSHI a nebo
-    starších dat, která již nejsou na platformě v rámci SUSHI k dispozici.
+  description: |
+    Tato stránka umožňuje nahrání dat k platformám, které neposkytují rozhraní SUSHI,
+    starších dat, která již nejsou na platformě v rámci SUSHI k dispozici, nebo pro ne-COUNTER platformy.
   data_file: Datový soubor k nahrání
   data_file_placeholder: Nahrajte soubor, který obsahuje data.
   error: Chyba
   dismiss: Zavřít
-  step1: Nahrání dat
-  step2: Kontrola před importem
-  step3: Zobrazení importovaných dat
+  step_method: Vyberte metodu
+  step_upload: Nahrání dat
+  step_preflight: Kontrola před importem
+  step_done: Zobrazení importovaných dat
   input_rows: Načtené datové řádky
   overview: Přehled
   upload: Nahrát
@@ -84,10 +95,18 @@ cs:
   unauthorized_multiple_org_title: Neautorizovaný import
   unauthorized_multiple_org_text: Tento soubor obsahuje data pro více organizací a pouze konzorciální admin může nahrávat data pro více organizací z jednoho souboru.
   no_non_counter_for_platform: Tato platforma nepodporuje formáty mimo counter.
+  method_counter_label_name: COUNTER
+  method_counter_label_text: Použijte tuto metodu pro import dat v tabulkovém COUNTER formátu a ve formě JSON reportu.
+  method_nibbler_label_name: Surová ne-COUNTER data
+  method_nibbler_label_text: Nahrát ne-COUNTER report v takovém formátu v jakém jste ho obdrželi od vydavatele. Celus se pokusí automaticky zdetekovat formát.
+  method_celus_label_name: Vlastní Celus ne-COUNTER formát
+  method_celus_label_text: Nahraná data jsou připravena ve vlastním ne-COUNTER formátu.
+  method_celus_disabled_tt: Neexistují žádné non-COUNTER reporty definované pro tuto platformu.
+  method_nibbler_disabled_tt: Pro tuto platformu nejsou surové reporty podporované.
 </i18n>
 
 <template>
-  <div>
+  <div class="px-2">
     <v-container fluid>
       <v-row>
         <v-breadcrumbs :items="breadcrumbs" class="pl-0">
@@ -126,34 +145,102 @@ cs:
       />
     </v-sheet>
     <v-stepper v-model="step" v-else vertical>
-      <v-stepper-step step="1" :complete="!!uploadObjectId || step > 1">
-        {{ $t("step1") }}
+      <v-stepper-step
+        :step="steps.method"
+        :complete="method && step > steps.method"
+      >
+        {{ $t("step_method") }}
+        <span v-if="method && step > steps.method"
+          >(<span class="font-weight-light">{{
+            $t("method_" + method + "_label_name")
+          }}</span
+          >)</span
+        >
       </v-stepper-step>
-      <v-stepper-content step="1">
-        <CustomUploadInfoWidget v-model="helpTab" />
+      <v-stepper-content :step="steps.method">
+        <v-sheet class="pa-2 pt-0">
+          <v-radio-group v-model="method" class="">
+            <v-radio value="counter">
+              <template #label>
+                <strong class="font-weight-black">{{
+                  $t("method_counter_label_name")
+                }}</strong
+                >:
+                <span class="pl-1">{{ $t("method_counter_label_text") }}</span>
+              </template>
+            </v-radio>
+            <v-radio
+              value="nibbler"
+              :readonly="!canImportNibblerFormat"
+              v-if="enableNibbler"
+            >
+              <template #label>
+                <span>
+                  <span :class="canImportNibblerFormat ? '' : 'text--disabled'">
+                    <strong class="font-weight-black">{{
+                      $t("method_nibbler_label_name")
+                    }}</strong
+                    >:
+                    <span class="pl-1">{{
+                      $t("method_nibbler_label_text")
+                    }}</span>
+                  </span>
+                  <v-tooltip bottom v-if="!canImportNibblerFormat">
+                    <template #activator="{ on }">
+                      <v-icon class="pl-1" v-on="on" small color="info"
+                        >fa-info-circle</v-icon
+                      >
+                    </template>
+                    <span>{{ $t("method_nibbler_disabled_tt") }}</span>
+                  </v-tooltip>
+                </span>
+              </template>
+            </v-radio>
+            <v-radio value="celus" :readonly="!canImportCelusFormat">
+              <!-- cannot use disabled because it disables the tooltip -->
+              <template #label>
+                <span>
+                  <span :class="canImportCelusFormat ? '' : 'text--disabled'">
+                    <strong class="font-weight-black">{{
+                      $t("method_celus_label_name")
+                    }}</strong
+                    >:
+                    <span class="pl-1">{{
+                      $t("method_celus_label_text")
+                    }}</span>
+                    <v-tooltip bottom v-if="!canImportCelusFormat">
+                      <template #activator="{ on }">
+                        <v-icon class="pl-1" v-on="on" small color="info"
+                          >fa-info-circle</v-icon
+                        >
+                      </template>
+                      <span>{{ $t("method_celus_disabled_tt") }}</span>
+                    </v-tooltip>
+                  </span>
+                </span>
+              </template>
+            </v-radio>
+          </v-radio-group>
+          <v-btn @click="step++">{{ $t("continue") }}</v-btn>
+        </v-sheet>
+      </v-stepper-content>
+
+      <v-stepper-step
+        :step="steps.upload"
+        :complete="!!uploadObjectId || step > steps.upload"
+      >
+        {{ $t("step_upload") }}
+      </v-stepper-step>
+      <v-stepper-content :step="steps.upload">
         <v-form ref="form" v-model="valid">
-          <v-container fluid elevation-3 pa-5>
-            <v-row no-gutters>
-              <v-col cols="12">
-                <ReportTypeInfoWidget
-                  v-if="
-                    selectedReportType &&
-                    selectedReportType.pk &&
-                    canSelecteReportType
-                  "
-                  :report-type="selectedReportType"
-                />
-              </v-col>
-            </v-row>
-            <v-row v-if="reportTypesToSelect.length === 0 && helpTab != 'raw'">
+          <v-container fluid class="pb-5 pt-0">
+            <v-row>
               <v-col>
-                <v-alert type="error">
-                  {{ $t("no_non_counter_for_platform") }}
-                </v-alert>
+                <CustomUploadInfoWidget :method="method" />
               </v-col>
             </v-row>
             <v-row>
-              <v-col cols="12" md="6" v-if="canSelecteReportType">
+              <v-col cols="12" md="6" v-if="canSelectReportType">
                 <v-select
                   v-model="selectedReportType"
                   :items="reportTypesToSelect"
@@ -200,7 +287,23 @@ cs:
                 </v-file-input>
               </v-col>
             </v-row>
+            <v-row no-gutters class="pt-2">
+              <v-col cols="12">
+                <ReportTypeInfoWidget
+                  v-if="
+                    method === 'celus' &&
+                    selectedReportType &&
+                    selectedReportType.pk &&
+                    canSelectReportType
+                  "
+                  :report-type="selectedReportType"
+                />
+              </v-col>
+            </v-row>
             <v-row>
+              <v-col cols="auto">
+                <v-btn @click="step--">{{ $t("back") }}</v-btn>
+              </v-col>
               <v-col class="d-flex align-center">
                 <v-btn
                   @click="postData"
@@ -229,22 +332,25 @@ cs:
         </v-form>
       </v-stepper-content>
 
-      <v-stepper-step step="2" :complete="step > 2">
-        {{ $t("step2") }}
+      <v-stepper-step
+        :step="steps.preflight"
+        :complete="step > steps.preflight"
+      >
+        {{ $t("step_preflight") }}
       </v-stepper-step>
-      <v-stepper-content step="2">
+      <v-stepper-content :step="steps.preflight">
         <v-card>
           <v-card-title>{{ $t("overview") }}</v-card-title>
           <v-card-text>
-            <LargeSpinner v-if="state == 'initial' || spinnerOn || !state" />
+            <LargeSpinner v-if="state === 'initial' || spinnerOn || !state" />
             <v-alert
-              v-else-if="state == 'preflight' && !preflightDataFormatValid"
+              v-else-if="state === 'preflight' && !preflightDataFormatValid"
               type="warning"
             >
               <span v-text="$t('preflight_data_outdated')"></span>
             </v-alert>
             <ImportPreflightDataWidget
-              v-else-if="state == 'preflight'"
+              v-else-if="state === 'preflight'"
               :preflight-data="preflightData"
               :interest-metrics="selectedInterestMetrics"
               :usable-metrics="usableMetrics"
@@ -252,21 +358,21 @@ cs:
               :auto-create-metrics="automaticallyCreateMetrics"
               :metrics="metrics"
             />
-            <v-alert v-else-if="state == 'prefailed'" type="error">
+            <v-alert v-else-if="state === 'prefailed'" type="error">
               <h3 v-text="$t('preflight_error_found')" class="pb-2"></h3>
               <v-expansion-panels flat>
                 <v-expansion-panel>
                   <v-expansion-panel-header color="error">
-                    <strong v-if="error == 'unicode-decode'">
+                    <strong v-if="error === 'unicode-decode'">
                       {{ $t("errors.requires_utf8") }}
                     </strong>
-                    <strong v-else-if="error == 'nibbler'">
+                    <strong v-else-if="error === 'nibbler'">
                       {{ $t(nibblerReason(errorDetails.nibbler)) }}
                     </strong>
                     <strong
                       v-else-if="
-                        error == 'multiple-report-type' ||
-                        error == 'unknown-report-type'
+                        error === 'multiple-report-type' ||
+                        error === 'unknown-report-type'
                       "
                     >
                       {{ $t("errors.unknown_report_type") }}
@@ -304,7 +410,7 @@ cs:
             <v-alert
               type="warning"
               class="d-inline-block"
-              v-if="missingOrgInData && state == 'preflight'"
+              v-if="missingOrgInData && state === 'preflight'"
             >
               {{ $t("missing_organization_in_data") }}
             </v-alert>
@@ -312,7 +418,7 @@ cs:
               {{ $t("need_to_unset_organization") }}
             </v-alert>
           </v-card-text>
-          <v-card-actions v-if="state == 'preflight'">
+          <v-card-actions v-if="state === 'preflight'">
             <v-btn
               v-if="
                 preflightData &&
@@ -330,7 +436,7 @@ cs:
               v-if="canImport"
               @click="triggerImportData()"
               color="success"
-              :loading="state == 'importing' || importing"
+              :loading="state === 'importing' || importing"
               :disabled="
                 (preflightData && !!preflightData.clashing_months.length) ||
                 preflighting
@@ -354,7 +460,7 @@ cs:
               color="secondary"
             ></v-btn>
           </v-card-actions>
-          <v-card-actions v-else-if="state == 'prefailed'">
+          <v-card-actions v-else-if="state === 'prefailed'">
             <v-btn
               color="primary"
               @click="regeneratePreflight"
@@ -372,12 +478,12 @@ cs:
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step step="3" :complete="step > 3">
-        {{ $t("step3") }}
+      <v-stepper-step :step="steps.done" :complete="step > steps.done">
+        {{ $t("step_done") }}
       </v-stepper-step>
-      <v-stepper-content step="3">
+      <v-stepper-content :step="steps.done">
         <v-card>
-          <v-card-text v-if="state == 'imported'">
+          <v-card-text v-if="state === 'imported'">
             <v-tabs v-model="tab" dark background-color="primary" fixed-tabs>
               <v-tab href="#chart">{{ $t("tab_chart") }}</v-tab>
               <v-tab href="#data">{{ $t("tab_data") }}</v-tab>
@@ -421,7 +527,7 @@ cs:
               </v-row>
             </v-container>
           </v-card-text>
-          <v-card-text v-else-if="state == 'failed'">
+          <v-card-text v-else-if="state === 'failed'">
             <v-container>
               <v-row>
                 <v-col cols="auto">
@@ -481,20 +587,6 @@ cs:
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="showAddReportTypeDialog" max-width="880px">
-      <v-card class="pa-3">
-        <v-card-title>{{ $t("add_report_type") }}</v-card-title>
-        <v-card-text>
-          <ReportTypeCreateWidget>
-            <template v-slot:extra="props">
-              <v-btn @click="showAddReportTypeDialog = false">{{
-                $t("dismiss")
-              }}</v-btn>
-            </template>
-          </ReportTypeCreateWidget>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -502,7 +594,6 @@ cs:
 import axios from "axios";
 import { mapActions, mapGetters, mapState } from "vuex";
 import AccessLogList from "@/components/AccessLogList";
-import ReportTypeCreateWidget from "@/components/ReportTypeCreateWidget";
 import LargeSpinner from "@/components/util/LargeSpinner";
 import CustomUploadInfoWidget from "@/components/CustomUploadInfoWidget";
 import ReportTypeInfoWidget from "@/components/ReportTypeInfoWidget";
@@ -518,7 +609,6 @@ export default {
     ImportBatchesDeleteConfirm,
     ImportPreflightDataWidget,
     LargeSpinner,
-    ReportTypeCreateWidget,
     AccessLogList,
     CustomUploadInfoWidget,
     ReportTypeInfoWidget,
@@ -544,9 +634,7 @@ export default {
       errors: [],
       step: 1,
       uploadObject: null,
-      showAddReportTypeDialog: false,
       tab: "chart",
-      deleting: false,
       refreshTimeout: null,
       spinnerOn: false,
       globalSpinnerOn: true,
@@ -554,7 +642,13 @@ export default {
       importing: false,
       preflighting: false,
       uploadProgress: 0,
-      helpTab: "non-counter",
+      steps: {
+        method: 1,
+        upload: 2,
+        preflight: 3,
+        done: 4,
+      },
+      method: "counter",
     };
   },
   computed: {
@@ -564,6 +658,7 @@ export default {
     ...mapGetters({
       automaticallyCreateMetrics: "automaticallyCreateMetrics",
       showManagementStuff: "showManagementStuff",
+      enableNibbler: "enableNibbler",
     }),
     breadcrumbs() {
       return [
@@ -579,7 +674,7 @@ export default {
           },
         },
         {
-          text: this.$t("actions.upload_custom_data"),
+          text: this.$t("actions.upload_data"),
         },
       ];
     },
@@ -664,7 +759,7 @@ export default {
     needToUnsetOrg() {
       if (
         !!this.uploadObject?.organization &&
-        this.uploadObject?.state == "preflight" &&
+        this.uploadObject?.state === "preflight" &&
         !!this.uploadObject?.preflight?.organizations
       ) {
         return true;
@@ -678,15 +773,7 @@ export default {
       return false; // not uploaded yet
     },
     canUpload() {
-      switch (this.helpTab) {
-        case "non-counter":
-        case "counter":
-          return this.reportTypesToSelect.length > 0 && this.valid;
-        case "raw":
-          return this.valid;
-        default:
-          return false;
-      }
+      return this.valid;
     },
     wrongOrganizations() {
       if (this.preflightData?.organizations) {
@@ -743,18 +830,24 @@ export default {
         return null;
       }
     },
-    canSelecteReportType() {
-      return this.helpTab != "raw";
+    canSelectReportType() {
+      return this.method === "counter" || this.method === "celus";
     },
     reportTypesToSelect() {
-      switch (this.helpTab) {
-        case "non-counter":
+      switch (this.method) {
+        case "celus":
           return this.reportTypes.filter((e) => !e.counter_report_type);
         case "counter":
           return this.reportTypes.filter((e) => !!e.counter_report_type);
         default:
           return [];
       }
+    },
+    canImportCelusFormat() {
+      return !!this.reportTypes.find((e) => !e.counter_report_type);
+    },
+    canImportNibblerFormat() {
+      return this.platform?.knowledgebase?.report_types?.length > 0;
     },
   },
   methods: {
@@ -776,10 +869,10 @@ export default {
         formData.append("organization", this.organizationId);
       }
       formData.append("platform", this.platformId);
-      if (this.canSelecteReportType) {
+      if (this.canSelectReportType) {
         formData.append("report_type_id", this.selectedReportType.pk);
       }
-      formData.append("use_nibbler", !this.canSelecteReportType);
+      formData.append("use_nibbler", !this.canSelectReportType);
 
       this.uploading = true;
       this.uploadProgress = 0;
@@ -790,9 +883,9 @@ export default {
         });
         // this.showSnackbar({content: 'Data successfully sent', color: 'success'})
         this.uploadObject = response.data;
-        this.step = 2;
+        this.step = this.steps.preflight;
         await this.$router.push({
-          name: "platform-upload-data-step2",
+          name: "platform-upload-data-step-preflight",
           params: {
             uploadObjectId: this.uploadObject.pk,
             platformId: this.platformId,
@@ -883,7 +976,7 @@ export default {
       }
     },
     async updateMDU() {
-      if (this.uploadObject && this.state == "preflight") {
+      if (this.uploadObject && this.state === "preflight") {
         let url = `/api/manual-data-upload/${this.uploadObject.pk}/`;
         try {
           let data = {
@@ -894,7 +987,7 @@ export default {
         } catch (error) {
           this.showSnackbar({ content: "Error processing data: " + error });
         }
-        // regenarete preflight
+        // regenerate preflight
         await this.regeneratePreflight();
       }
     },
@@ -952,19 +1045,19 @@ export default {
           switch (this.uploadObject.state) {
             case "initial":
             case "prefailed":
-              this.step = 2;
+              this.step = this.steps.preflight;
               break;
             case "preflight":
               // Auto regenarete outdated preflights
               if (!this.preflightDataFormatValid) {
                 this.regeneratePreflight();
               }
-              this.step = 2;
+              this.step = this.steps.preflight;
               break;
             case "importing":
             case "imported":
             case "failed":
-              this.step = 3;
+              this.step = this.steps.done;
               break;
           }
           if (["initial", "importing"].includes(this.uploadObject.state)) {
@@ -988,25 +1081,25 @@ export default {
       if (v === null) return "File must be filled in";
       return true;
     },
-    async backToStart() {
-      let reportTypeId = this.uploadObject.report_type.pk;
-
-      let tab = "non-counter";
-      if (this.uploadObject.use_nibbler) {
-        tab = "raw";
-      } else if (this.uploadObject.report_type.counter_report_type) {
-        tab = "counter";
+    getMethodFromMdu(mdu) {
+      let method = "celus";
+      if (mdu.use_nibbler) {
+        method = "nibbler";
+      } else if (mdu.report_type?.counter_report_type) {
+        method = "counter";
       }
-
-      this.uploadObject = null;
-      await this.$router.replace({
+      return method;
+    },
+    async backToStart() {
+      let reportTypeId = this.uploadObject?.report_type?.pk;
+      await this.$router.push({
         name: "platform-upload-data",
         params: {
           platformId: this.platformId,
         },
         query: {
           report_type_id: reportTypeId,
-          tab: tab,
+          method: this.method,
         },
       });
     },
@@ -1018,7 +1111,7 @@ export default {
     async loadRequiredData() {
       // report type API call is quite time consuming
       // so waiting for it to finish would be inconvenient
-      // loading attribte is v-select use used instead
+      // loading attribute is v-select use used instead
       this.loadReportTypes();
       this.loadOrganizations();
       await Promise.all([this.loadMetrics(), this.loadPlatform()]);
@@ -1033,30 +1126,29 @@ export default {
         : "errors.unknown_import_error";
     },
   },
-  mounted() {
-    if (this.$router.currentRoute.query.tab) {
-      this.helpTab = this.$router.currentRoute.query.tab;
+  async mounted() {
+    if (this.$router.currentRoute.query.method) {
+      this.method = this.$router.currentRoute.query.method;
+      this.step = this.steps.upload;
     }
-    if (this.uploadObjectId && this.step == 1) {
-      // If object is present move to step2
-      this.step = 2;
+    if (this.uploadObjectId && this.step === this.steps.upload) {
+      // If object is present move to preflight step
+      this.step = this.steps.preflight;
     }
-    this.loadRequiredData();
+    await this.loadRequiredData();
     if (this.uploadObjectId) {
-      this.loadMdu();
+      await this.loadMdu();
+      this.method = this.getMethodFromMdu(this.uploadObject);
     }
   },
   beforeDestroy() {
     this.cancelRefreshTimeout();
   },
   watch: {
-    showAddReportTypeDialog() {
-      this.loadReportTypes();
-    },
     organizationId() {
       this.updateMDU();
     },
-    helpTab() {
+    method() {
       if (this.reportTypesToSelect.length > 0) {
         this.selectedReportType = this.reportTypesToSelect[0];
       } else {

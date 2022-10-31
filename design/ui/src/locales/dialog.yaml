@@ -12,6 +12,8 @@ en:
   confirm_delete: Confirm delete
   copy: Copy
   email_required: Please enter a valid email address
+  back: Back
+  continue: Continue
 
 cs:
   value_required: Toto pole je povinné
@@ -27,3 +29,5 @@ cs:
   confirm_delete: Potvrďte smazání
   copy: Vytvořit kopii
   email_required: Zadejte platnou emailovou adresu
+  back: Zpět
+  continue: Pokračovat

@@ -150,7 +150,7 @@ cs:
                   }"
                 >
                   <v-icon small class="mr-2">fa-upload</v-icon>
-                  {{ $t("actions.upload_custom_data") }}
+                  {{ $t("actions.upload_data") }}
                 </v-btn>
               </div>
               <div v-if="showAdminStuff">

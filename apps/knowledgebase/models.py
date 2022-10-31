@@ -285,7 +285,7 @@ class PlatformImportAttempt(ImportAttempt):
                 url=record["url"],
                 knowledgebase={
                     "providers": record["providers"],
-                    "report_types": record["report_types"],
+                    "report_types": record.get("report_types", []),
                 },
                 counter_registry_id=record["counter_registry_id"],
                 duplicates=record.get("duplicates", []),

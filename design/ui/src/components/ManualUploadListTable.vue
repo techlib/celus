@@ -166,7 +166,7 @@ cs:
                 color="secondary"
                 v-on="on"
                 :to="{
-                  name: 'platform-upload-data-step2',
+                  name: 'platform-upload-data-step-preflight',
                   params: {
                     platformId: item.platform.pk,
                     uploadObjectId: item.pk,
