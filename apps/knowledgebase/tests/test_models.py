@@ -66,6 +66,7 @@ PLATFORM_INPUT_DATA = [
                 },
             },
         ],
+        "report_types": [],
         "counter_registry_id": None,
         "duplicates": [],
         "short_name": "AAP",
@@ -105,6 +106,9 @@ PLATFORM_INPUT_DATA = [
                 },
             },
         ],
+        "report_types": [
+            {"pk": 15, "short_name": "MY", "name": "MyReport", "definitions": [999, 888]},
+        ],
         "counter_registry_id": "11111111-1111-1111-1111-111111111111",
         "duplicates": [],
         "short_name": "AACR",
@@ -115,6 +119,7 @@ PLATFORM_INPUT_DATA = [
         "pk": 339,
         "provider": "APS",
         "providers": [],
+        "report_types": [],
         "short_name": "APS",
         "duplicates": [999, 888],
         "counter_registry_id": "00000000-0000-0000-0000-000000000000",
@@ -128,6 +133,7 @@ PLATFORM_INPUT_DATA2 = [
         "pk": 340,
         "provider": "ABC",
         "providers": [],
+        "report_types": [],
         "short_name": "ABC",
         "counter_registry_id": "11111111-1111-1111-1111-111111111111",
         "url": "https://www.journals.abc.org/",
@@ -315,6 +321,7 @@ class TestPlatformImportAttempt:
         assert platform1.ext_id == 328
         assert platform1.counter_registry_id is None
         assert platform1.knowledgebase["providers"] == PLATFORM_INPUT_DATA[0]["providers"]
+        assert platform1.knowledgebase["report_types"] == PLATFORM_INPUT_DATA[0]["report_types"]
         assert (
             set(
                 platform1.platforminterestreport_set.values_list(
@@ -331,6 +338,7 @@ class TestPlatformImportAttempt:
         assert platform2.ext_id == 327
         assert platform2.counter_registry_id == uuid.UUID("11111111-1111-1111-1111-111111111111")
         assert platform2.knowledgebase["providers"] == PLATFORM_INPUT_DATA[1]["providers"]
+        assert platform2.knowledgebase["report_types"] == PLATFORM_INPUT_DATA[1]["report_types"]
         assert (
             set(
                 platform2.platforminterestreport_set.values_list(
@@ -348,6 +356,7 @@ class TestPlatformImportAttempt:
         assert platform3.duplicates == [999, 888]
         assert platform3.counter_registry_id == uuid.UUID("00000000-0000-0000-0000-000000000000")
         assert platform3.knowledgebase["providers"] == []
+        assert platform3.knowledgebase["report_types"] == []
         assert (
             set(
                 platform3.platforminterestreport_set.values_list(
@@ -371,6 +380,7 @@ class TestPlatformImportAttempt:
 
         platform = Platform.objects.get(short_name="AACR")
         assert platform.knowledgebase["providers"] == []
+        assert platform.knowledgebase["report_types"] == PLATFORM_INPUT_DATA[1]["report_types"]
 
     @pytest.mark.parametrize(
         "strategy,count,no_source,erms",
