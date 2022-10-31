@@ -5,6 +5,109 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0]
+
+### Added
+
+#### Frontend
+
+- tags were introduced (this feature needs to be explicitly enabled in settings to activate it)
+  - the ability to tag titles, platforms and organizations was added
+  - the possibility to tag titles loaded from a CSV file was added
+  - full support for tag based filtering and summarization was added to reporting
+- it is now possible to upload data for multiple organizations from one CSV file
+- a simple page listing all organizations was added to consortial installations
+- filtering by whole years was added to reporting
+- simple chart output was added to reporting
+- reporting - show the number of accessible organizations to make it obvious that a filter may be
+  necessary
+- show accessible stored reports from reporting on the platform list page
+- "data coverage" chart series was added to all reports except interest (this feature needs to be
+  explicitly enabled in settings to activate it)
+- data coverage tab was added to the platform detail page (this feature needs to be explicitly
+  enabled in settings to activate it)
+- show a link to the source file in the list of manually uploaded data
+- help widget (sidebar) was added to the dashboard and tag list pages
+- reporting - users can now manually delete exports
+- reporting - exports are now automatically deleted after 7 days
+- charts which do not have a metric on one of the axes now display a metric selector to choose
+  which metric will be used (previously all interest defining metrics were used)
+- changelog view was added to the UI (linked from the version number in the footer)
+- a list of releases with their main changes was added together with alerts for new releases
+- the manual upload of data was reworked to
+  - separate import of COUNTER and non-COUNTER reports
+  - new experimental feature to import data non-COUNTER data from a raw format obtained from the
+    publisher was added
+- the ability to import non-COUNTER data for multiple organizations from one CSV file was added
+- it is now possible to create system-wide platforms using the UI (for consortial managers only)
+- 'Select all' button was added to the SUSHI credentials overview dialog to allow selecting of all
+  available slots at once
+
+
+#### Backend
+
+- a script was added for finding and removing import batches without data and for resolving
+  conflicting import batches
+- CLI script for tagging titles using the (publicly available) Scopus title list was added
+- information about supported report types was added to the platform information from the
+  knowledgebase
+
+
+
+### Changes
+
+#### Frontend
+
+- the "Extra attributes" section in SUSHI credentials dialog was reworked to better handle specifics
+  of individual COUNTER versions
+- most forms were modified to support submitting with the Enter key
+- reporting - when no data were found, display an explicit message instead of an empty table
+- reporting - the default report type was changed to COUNTER 5 TR instead of interest
+- "Ad hoc report" menu entry was renamed to "Create report"
+- tooltips are disabled in the platform overlap widget when the table is too large to avoid
+  performance issues
+- images used in the `FirstSushiHelpWidget` were updated to match the current UI
+
+#### Backend
+
+- COUNTER 5 report processing was made stricter to avoid errors on publisher side
+- the `nigiri` library was moved to a separate repository
+- if no report view is defined for a report type, a proxy view is returned to allow for some data
+  display
+- charts can be marked as `default`. Such charts will be shown for proxy report views (see above)
+- a field listing duplicates of a platform record was added to enable storage of this information
+- a much faster algorithm for computing platform overlap was introduced
+- the CLI script for importing of SUSHI credentials was extended to allow for using SUSHI URL from
+  the knowledgebase rather than from the file itself
+- missing leading zeros are automatically added to ISSNs given as plain number
+- performance of the `raw-data` API endpoint was optimized
+- allow syncing of report type dimensions with the knowledgebase if the report type is not yet
+  used in any usage data
+- unique_together database constraints were added to the `ReportInterestMetric` model
+
+
+### Fixed
+
+#### Frontend
+
+- handle `unknown` state in the data presence information in harvesting dialog
+- prevent the "Basic tour" to be activated on pages where the necessary elements are not present
+- it is no longer possible to have no organization selected in the top menu bar
+- null values are remapped to "- empty -" in charts to prevent them from being omited
+- the header of the introductory "wizard" (shown where no data are yet present for the current user)
+  was prevented from overflowing to the text on small screens
+- sorting was disabled for columns which do not have natural sorting order (actions, etc.) in
+  several tables (annotation, manual data uploads, interest overview, etc.)
+- incorrect display of "success" icon instead of "empty data" icon for some downloads was fixed
+- SUSHI credentials verification is checked immediately after the test dialog is closed to avoid
+  the need to reload the page
+- double loading of data for the Dashboard top-titles widgets was fixed
+
+#### Backend
+
+- the number of queries in the impersonation API was optimized
+- detection of CSV encoding and dialect (used delimiter, etc.) was improved
+
 
 
 ## [4.7.0]
@@ -13,38 +116,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-* add missing reader for IR_M1 reports in table form
-* update CLI script `check_report_type_dimensions` to also create missing COUNTER reports
+- add missing reader for IR_M1 reports in table form
+- update CLI script `check_report_type_dimensions` to also create missing COUNTER reports
 
 
 ### Changes
 
 #### Backend
 
-* allow deleting of user accounts from Django admin by allowing deleting of impersonation logs
-* use constant memory mode when creating Excel exports in reporting
+- allow deleting of user accounts from Django admin by allowing deleting of impersonation logs
+- use constant memory mode when creating Excel exports in reporting
 
 
 ### Fixed
 
 #### Frontend
 
-* do not try to translate '-- blank --' id into title name
-* show import errors in dashboard SUSHI overview widget
-* fix sorting by title attributes (such as ISSN, ISBN, etc.) in reporting
-* fix locking of SUSHI credentials by adding the missing `can_lock` attribute to the API endpoint
-* fix situation where it was not possible to leave impersonation of a user without an assigned
+- do not try to translate '-- blank --' id into title name
+- show import errors in dashboard SUSHI overview widget
+- fix sorting by title attributes (such as ISSN, ISBN, etc.) in reporting
+- fix locking of SUSHI credentials by adding the missing `can_lock` attribute to the API endpoint
+- fix situation where it was not possible to leave impersonation of a user without an assigned
   organization
-* fix regression in sorting by explicit dimensions in reporting
-* reset pagination when report is changed in reporting
+- fix regression in sorting by explicit dimensions in reporting
+- reset pagination when report is changed in reporting
 
 #### Backend
 
-* fix celery task name for cleaning obsolete platform-title links
-* fix incorrect behavior of harvest plannig after credentials are verified
-* fix computation of data-presence by using ImportBatche presence rather than FetchAttempt status
-* properly store owner attributes when saving a new report
-* skip custom platforms from other organizations when importing SUSHI credentials using CLI
+- fix celery task name for cleaning obsolete platform-title links
+- fix incorrect behavior of harvest planing after credentials are verified
+- fix computation of data-presence by using ImportBatch presence rather than FetchAttempt status
+- properly store owner attributes when saving a new report
+- skip custom platforms from other organizations when importing SUSHI credentials using CLI
 
 
 ## [4.6.2]
@@ -53,16 +156,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-* fix regression which caused automatic harvesting of new SUSHI credentials to be off by default
-* fix styling inconsistencies of platform and title detail pages if user got there directly without
+- fix regression which caused automatic harvesting of new SUSHI credentials to be off by default
+- fix styling inconsistencies of platform and title detail pages if user got there directly without
   visiting a different page before
 
 #### Backend
 
-* fix planning of new intentions for last month not respecting already harvested data
-* when reporting SUSHI status from the API, prefer fetch intentions with import_batch over newer
+- fix planning of new intentions for last month not respecting already harvested data
+- when reporting SUSHI status from the API, prefer fetch intentions with import_batch over newer
   ones without it.
-* the code for merging titles was sped up to avoid "timeouts" in celery jobs
+- the code for merging titles was sped up to avoid "timeouts" in celery jobs
 
 
 ## [4.6.1]
@@ -71,7 +174,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-* visiting a page of a title with ISBN caused the user to be logged out due to an error when
+- visiting a page of a title with ISBN caused the user to be logged out due to an error when
   fetching cover image data from Google. The cover image functionality was removed to fix the issue.
 
 
@@ -82,57 +185,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-* SUSHI credentials are newly marked as verified on first successful use. Automatic harvesting is
+- SUSHI credentials are newly marked as verified on first successful use. Automatic harvesting is
   only enabled for verified credentials.
-* user role "consortial user" was added - it has the same access level as normal user but can see
+- user role "consortial user" was added - it has the same access level as normal user but can see
   data for all consortium members without them being explicitly assigned
-* possibility to delete all platform usage data from the platform detail page was added
-* a new tab 'Data management' was added to the platform detail page
-* more options were added to the data range selection widget
+- possibility to delete all platform usage data from the platform detail page was added
+- a new tab 'Data management' was added to the platform detail page
+- more options were added to the data range selection widget
 
 #### Backend
 
-* support was added for retrieving report type information from knowledgebase
-* a CLI script was added to move credentials with all the associated data into a new custom platform
+- support was added for retrieving report type information from knowledgebase
+- a CLI script was added to move credentials with all the associated data into a new custom platform
 
 
 ### Changes
 
 #### Frontend
 
-* raw data export functionality was moved to the 'Data management' tab
-* SUSHI credentials export now respects the selected organization and platform
-* the SUSHI related dashboard widgets are no longer shown to non-admin user
-* the default displayed data period was changed from 'all' to 'current + last two whole years'
+- raw data export functionality was moved to the 'Data management' tab
+- SUSHI credentials export now respects the selected organization and platform
+- the SUSHI related dashboard widgets are no longer shown to non-admin user
+- the default displayed data period was changed from 'all' to 'current + last two whole years'
 
 #### Backend
 
-* retries of failed SUSHI harvesting were modified:
+- retries of failed SUSHI harvesting were modified:
   - only automatically created harvest are retried
   - retries are done only for credentials which were verified (successfully used for harvesting)
   - retries are done for all non-breaking fetch attempt states
-* partial data downloads are marked as containing no data until imported at the end of the retry
+- partial data downloads are marked as containing no data until imported at the end of the retry
   period
-* validity of invitations and password reset tokens was extended from 3 to 10 days
-* the user detail API endpoint was extended to include the `is_staff` attribute
-* automatically created harvests are planned a few days before month start, not whole month
+- validity of invitations and password reset tokens was extended from 3 to 10 days
+- the user detail API endpoint was extended to include the `is_staff` attribute
+- automatically created harvests are planned a few days before month start, not whole month
 
 ### Fixed
 
 #### Frontend
 
-* the platform detail page of a platform not connected to the current organization no longer
+- the platform detail page of a platform not connected to the current organization no longer
   displays error messages and contains more information about the platform
-* fix missing metric (and potentially other objects) names in exports from the reporting module
-* all import batches are shown in the delete confirmation dialog, not just the first 10
+- fix missing metric (and potentially other objects) names in exports from the reporting module
+- all import batches are shown in the delete confirmation dialog, not just the first 10
 
 #### Backend
 
-* user preferred language is always explicitly selected on the backend to ensure correct data
+- user preferred language is always explicitly selected on the backend to ensure correct data
   localization
-* marking SUSHI credentials as broken no longer lead to duplication of stored extra parameters
-* access rights to the SUSHI credentials API endpoint was fixed to only include admin users
-* the django admin list interface for import batches now shows `date` instead of `user`
+- marking SUSHI credentials as broken no longer lead to duplication of stored extra parameters
+- access rights to the SUSHI credentials API endpoint was fixed to only include admin users
+- the django admin list interface for import batches now shows `date` instead of `user`
 
 
 ## [4.5.0]
@@ -873,6 +976,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   files in chunks
 - translation admin is properly used for all models using database translations
 - uniform report type ordering is used in the SUSHI data view
+
 
 ## [3.0.2]
 
