@@ -14,7 +14,7 @@
 <script>
 import FlexiTableEditor from "@/components/reporting/FlexiTableEditor";
 export default {
-  name: "MaintenancePage",
+  name: "FlexiTablePage",
 
   components: {
     FlexiTableEditor,

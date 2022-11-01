@@ -54,35 +54,4 @@ export default {
       }
     },
   },
-
-  watch: {
-    selectedTags: {
-      deep: true,
-      handler() {
-        let tags = this.selectedTags.length
-          ? this.selectedTags.join(",")
-          : undefined;
-        // using `undefined` will remove the key from the query
-        history.pushState(
-          { tags: this.selectedTags },
-          null,
-          this.$router.resolve({
-            path: this.$route.path,
-            query: {
-              ...this.$route.query,
-              tags: tags,
-            },
-          }).href
-        );
-      },
-    },
-  },
-
-  mounted() {
-    // install listener for back/forward button
-    let vm = this;
-    window.addEventListener("popstate", function (event) {
-      vm.selectedTags = event.state.tags || [];
-    });
-  },
 };

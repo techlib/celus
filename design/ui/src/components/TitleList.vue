@@ -60,17 +60,19 @@ cs:
         </v-col>
       </v-row>
     </v-card-title>
+    <v-skeleton-loader v-if="loading && titles.length === 0" type="table" />
     <v-data-table
+      v-else
       :items="filteredTitles"
-      :headers="headers"
       :loading="loading"
+      :headers="headers"
       :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
       :server-items-length="totalTitleCount"
       :must-sort="true"
-      :items-per-page="25"
-      sort-by="name"
-      :page="1"
-      :options.sync="options"
+      :items-per-page.sync="itemsPerPage"
+      :sort-by.sync="orderBy"
+      :page.sync="page"
+      :sort-desc.sync="orderDesc"
       :no-data-text="emptyDataText"
     >
       <template v-slot:item.name="{ item }">
@@ -164,11 +166,12 @@ import TagSelector from "@/components/tags/TagSelector";
 import cancellation from "@/mixins/cancellation";
 import tags from "@/mixins/tags";
 import TagChip from "@/components/tags/TagChip";
+import stateTracking from "@/mixins/stateTracking";
 
 export default {
   name: "TitleList",
 
-  mixins: [cancellation, tags],
+  mixins: [cancellation, tags, stateTracking],
 
   components: { TagChip, TagSelector, ShortenText, SimplePie },
 
@@ -190,11 +193,45 @@ export default {
       selectedPubType: null,
       searchString: "",
       pubTypes: [],
-      options: {
-        sortDesc: [!!this.orderInterest],
-        sortBy: [this.orderInterest ? this.orderInterest : "name"],
-      },
       cancelTokenSource: null,
+      // table state
+      orderBy: this.orderInterest ? this.orderInterest : "name",
+      orderDesc: !!this.orderInterest,
+      page: 1,
+      itemsPerPage: 25,
+      // state tracking support
+      watchedAttrs: [
+        {
+          name: "search",
+          type: String,
+        },
+        {
+          name: "selectedPubType",
+          type: String,
+        },
+        { name: "selectedTags", type: Object },
+        {
+          name: "showDOI",
+          type: Boolean,
+        },
+        {
+          name: "orderBy",
+          type: String,
+        },
+        {
+          name: "orderDesc",
+          type: Boolean,
+        },
+        {
+          name: "page",
+          type: Number,
+        },
+        {
+          name: "itemsPerPage",
+          type: Number,
+          var: "ipp",
+        },
+      ],
     };
   },
 
@@ -284,20 +321,12 @@ export default {
       return this.titles;
     },
     fullUrl() {
-      let { sortBy, sortDesc, page, itemsPerPage } = this.options;
       if (this.url) {
-        if (!sortBy) {
-          sortBy = "";
-        } else {
-          if (Array.isArray(sortBy)) {
-            sortBy = sortBy[0];
-          }
+        let sortBy = this.orderBy;
+        if (sortBy) {
           if (sortBy.startsWith("interests.")) {
             sortBy = sortBy.replace("interests.", "");
           }
-        }
-        if (Array.isArray(sortDesc)) {
-          sortDesc = sortDesc[0];
         }
         let tags = "";
         if (this.selectedTags.length) {
@@ -305,9 +334,11 @@ export default {
         }
         return (
           this.url +
-          `&page_size=${itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}&page=${page}&q=${
-            this.search ?? ""
-          }&pub_type=${this.selectedPubType || ""}${tags}`
+          `&page_size=${this.itemsPerPage}&order_by=${sortBy}&desc=${
+            this.orderDesc
+          }&page=${this.page}&q=${this.search ?? ""}&pub_type=${
+            this.selectedPubType || ""
+          }${tags}`
         );
       }
       return this.url;
@@ -342,15 +373,16 @@ export default {
           this.titles = response.data.results;
           this.totalTitleCount = response.data.count;
           this.postprocessData();
-          this.loading = false;
         } catch (error) {
           if (axios.isCancel(error)) {
             console.debug("Request cancelled");
+            return;
           } else {
             this.showSnackbar({
               content: "Error loading title list: " + error,
             });
             this.loading = false;
+            return;
           }
         } finally {
           // normally, we would do this.loading = false here, but we do not want to do it
@@ -358,16 +390,17 @@ export default {
           // and this is not the most recent request
         }
 
-        if (!this.selectedPubType) {
-          // if we do not filter by pubType, we extract the available pub types here
-          this.pubTypes = this.extractPubTypes(i18n);
-        }
+        // if (!this.selectedPubType) {
+        //   // if we do not filter by pubType, we extract the available pub types here
+        this.pubTypes = this.extractPubTypes(i18n);
+        // }
         if (this.titles.length) {
           await this.getTagsForObjectsById(
             "title",
             this.titles.map((item) => item.pk)
           );
         }
+        this.loading = false;
       }
     },
     extractPubTypes(i18n) {
@@ -391,6 +424,11 @@ export default {
     slotName: (ig) => "item.interests." + ig.short_name,
     color: (index) => echartPalette[index % echartPalette.length],
   },
+
+  mounted() {
+    this.loadData();
+  },
+
   watch: {
     fullUrl() {
       this.loadData();

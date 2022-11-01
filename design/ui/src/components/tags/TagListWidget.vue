@@ -23,18 +23,22 @@ cs:
 
 <template>
   <div>
+    <v-skeleton-loader v-if="loading" type="table" />
     <v-data-table
+      v-else
       :items="visibleTags"
       :headers="headers"
-      :loading="loading"
       item-key="pk"
-      :items-per-page="-1"
+      :items-per-page.sync="itemsPerPage"
+      :page.sync="page"
+      :sort-by.sync="orderBy"
+      :sort-desc.sync="orderDesc"
       hide-default-footer
       :search="search"
       :group-by="groupByClass ? '_group_sorter' : null"
       :custom-group="groupingFn"
     >
-      <template #top="">
+      <template #top>
         <v-row v-if="optimizePerformance">
           <v-col cols="12" class="pb-0">
             <v-alert type="info" dense text>
@@ -204,6 +208,7 @@ import tagAccessLevels from "@/mixins/tagAccessLevels";
 import EditTagClassWidget from "@/components/tags/EditTagClassWidget";
 import TagClassScopeWidget from "@/components/tags/TagClassScopeWidget";
 import { accessLevels } from "@/libs/tags";
+import stateTracking from "@/mixins/stateTracking";
 
 export default {
   name: "TagListWidget",
@@ -215,7 +220,7 @@ export default {
     AddTagButton,
     TagChip,
   },
-  mixins: [cancellation, tagAccessLevels],
+  mixins: [cancellation, tagAccessLevels, stateTracking],
 
   props: {
     performanceThreshold: {
@@ -241,6 +246,52 @@ export default {
       showClassEditDialog: false,
       showClass: false,
       showSystemTags: false,
+      // table state
+      orderBy: null,
+      orderDesc: false,
+      page: 1,
+      itemsPerPage: -1,
+      // state tracking support
+      watchedAttrs: [
+        {
+          name: "orderBy",
+          type: String,
+        },
+        {
+          name: "orderDesc",
+          type: Boolean,
+        },
+        {
+          name: "page",
+          type: Number,
+        },
+        {
+          name: "itemsPerPage",
+          type: Number,
+          var: "ipp",
+        },
+        {
+          name: "search",
+          type: String,
+        },
+        {
+          name: "tagScope",
+          type: String,
+        },
+        {
+          name: "showClass",
+          type: Boolean,
+        },
+        {
+          name: "showSystemTags",
+          type: Boolean,
+        },
+        {
+          name: "groupByClass",
+          type: Boolean,
+          alwaysTrack: true,
+        },
+      ],
     };
   },
 

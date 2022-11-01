@@ -58,13 +58,16 @@ cs:
     </v-row>
     <v-row>
       <v-col class="px-0 px-sm-2">
+        <v-skeleton-loader v-if="loading" type="table" />
         <v-data-table
+          v-else
           :items="visiblePlatforms"
           :headers="headers"
-          :items-per-page="-1"
           :search="search"
-          sort-by="name"
-          :loading="loading"
+          :page.sync="page"
+          :items-per-page.sync="itemsPerPage"
+          :sort-by.sync="orderBy"
+          :sort-desc.sync="orderDesc"
         >
           <template v-slot:item.name="{ item }">
             <router-link
@@ -184,6 +187,7 @@ import tags from "@/mixins/tags";
 import TagChip from "@/components/tags/TagChip";
 import TagSelector from "@/components/tags/TagSelector";
 import { intersection } from "lodash";
+import stateTracking from "@/mixins/stateTracking";
 
 export default {
   name: "PlatformList",
@@ -194,7 +198,7 @@ export default {
     PlatformEditDialog,
   },
 
-  mixins: [cancellation, tags],
+  mixins: [cancellation, tags, stateTracking],
 
   props: {
     dialogMaxWidth: {
@@ -210,6 +214,39 @@ export default {
       search: "",
       showEditDialog: false,
       selectedPlatform: null,
+      // table options
+      page: 1,
+      itemsPerPage: -1,
+      orderBy: "name",
+      orderDesc: false,
+      // state tracking support
+      watchedAttrs: [
+        {
+          name: "search",
+          type: String,
+        },
+        {
+          name: "page",
+          type: Number,
+        },
+        {
+          name: "itemsPerPage",
+          type: Number,
+          var: "ipp",
+        },
+        {
+          name: "orderBy",
+          type: String,
+        },
+        {
+          name: "orderDesc",
+          type: Boolean,
+        },
+        {
+          name: "selectedTags",
+          type: Object,
+        },
+      ],
     };
   },
 

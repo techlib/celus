@@ -41,7 +41,7 @@ cs:
 <script>
 import ExportOverviewTable from "@/components/reporting/ExportOverviewTable";
 export default {
-  name: "MaintenancePage",
+  name: "ExportOverviewPage",
   components: {
     ExportOverviewTable,
   },

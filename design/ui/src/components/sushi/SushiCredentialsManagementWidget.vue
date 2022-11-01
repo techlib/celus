@@ -192,15 +192,18 @@ cs:
         </v-container>
       </v-card-title>
 
+      <v-skeleton-loader v-if="loading" type="table" class="mt-5" />
       <v-data-table
+        v-else
         v-model="checkedRows"
         :items="visibleSushiCredentials"
         :headers="headers"
         :items-per-page.sync="itemsPerPage"
-        :sort-by="orderBy"
+        :sort-by.sync="orderBy"
+        :sort-desc.sync="orderDesc"
+        :page.sync="page"
         multi-sort
         :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
-        :loading="loading"
         show-select
         item-key="pk"
         ref="credentialsTable"
@@ -414,6 +417,7 @@ import CheckMark from "@/components/util/CheckMark";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
+import stateTracking from "@/mixins/stateTracking";
 
 export default {
   name: "SushiCredentialsManagementWidget",
@@ -426,6 +430,7 @@ export default {
     SushiCredentialsDataDialog,
     CheckMark,
   },
+  mixins: [stateTracking],
 
   props: {
     dialogMaxWidth: {
@@ -452,13 +457,11 @@ export default {
     return {
       sushiCredentialsList: [],
       search: "",
-      itemsPerPage: 25,
       selectedCredentials: null,
       showEditDialog: false,
       showDetailsDialog: false,
       showCreateDialog: false,
       showDataDialog: false,
-      orderBy: ["organization.name", "platform.name", "counter_version"],
       loading: false,
       counterVersion: null,
       checkedRows: [],
@@ -466,6 +469,44 @@ export default {
       problematicOnly: this.showProblematicOnly,
       exportAllCredentialsUrl:
         "/api/sushi-credentials/export-all-credentials/?export_all=true",
+      // table options
+      page: 1,
+      itemsPerPage: 25,
+      orderBy: ["organization.name", "platform.name", "counter_version"],
+      orderDesc: [false, false, false],
+      // state tracking support
+      watchedAttrs: [
+        {
+          name: "problematicOnly",
+          type: Boolean,
+        },
+        {
+          name: "search",
+          type: String,
+        },
+        {
+          name: "counterVersion",
+          type: Number,
+        },
+        {
+          name: "page",
+          type: Number,
+        },
+        {
+          name: "itemsPerPage",
+          type: Number,
+          var: "ipp",
+        },
+        {
+          name: "orderBy",
+          type: Array,
+          alwaysTrack: true,
+        },
+        {
+          name: "orderDesc",
+          type: Array,
+        },
+      ],
     };
   },
   computed: {

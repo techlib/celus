@@ -3,12 +3,17 @@
 
 <template>
   <div>
+    <v-skeleton-loader v-if="loading" type="table" />
     <v-data-table
+      v-else
       :items="taggingBatches"
       :headers="headers"
       item-key="pk"
-      sort-by="created"
-      sort-desc
+      :sort-by.sync="orderBy"
+      :sort-desc.sync="orderDesc"
+      :page.sync="page"
+      :items-per-page.sync="itemsPerPage"
+      :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
       show-expand
       :expanded.sync="expanded"
       expand-icon="fa fa-caret-down"
@@ -115,6 +120,7 @@ import TagChip from "@/components/tags/TagChip";
 import TaggingBatchStats from "@/components/tagging-batches/TaggingBatchStats";
 import TaggingBatchStateIcon from "@/components/tagging-batches/TaggingBatchStateIcon";
 import { mapActions } from "vuex";
+import stateTracking from "@/mixins/stateTracking";
 
 export default {
   name: "TaggingBatchList",
@@ -124,7 +130,7 @@ export default {
     TagChip,
     TaggingBatchProcessingWidget,
   },
-  mixins: [cancellation],
+  mixins: [cancellation, stateTracking],
 
   data() {
     return {
@@ -132,6 +138,32 @@ export default {
       selectedBatch: null,
       showDialog: false,
       expanded: [],
+      loading: false,
+      // table state
+      orderBy: "created",
+      orderDesc: true,
+      page: 1,
+      itemsPerPage: 25,
+      // state tracking support
+      watchedAttrs: [
+        {
+          name: "orderBy",
+          type: String,
+        },
+        {
+          name: "orderDesc",
+          type: Boolean,
+        },
+        {
+          name: "page",
+          type: Number,
+        },
+        {
+          name: "itemsPerPage",
+          type: Number,
+          var: "ipp",
+        },
+      ],
     };
   },
 
@@ -172,10 +204,12 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     async fetchTaggingBatches() {
+      this.loading = true;
       const result = await this.http({ url: "/api/tags/tagging-batch/" });
       if (!result.error) {
         this.taggingBatches = result.response.data;
       }
+      this.loading = false;
     },
     formatDate(date) {
       return isoDateTimeFormatSpans(parseDateTime(date));
