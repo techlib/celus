@@ -395,21 +395,6 @@ export default {
     fullUrl() {
       this.loadData();
     },
-    selectedTags: {
-      deep: true,
-      handler() {
-        const tags = this.selectedTags.join(",");
-        if (tags !== "") {
-          history.pushState({}, null, this.$route.path + `?tags=${tags}`);
-        } else {
-          history.pushState({}, null, this.$route.path);
-        }
-      },
-    },
-  },
-  mounted() {
-    // it seems that watching fullUrl is enough
-    //this.loadData()
   },
 };
 </script>

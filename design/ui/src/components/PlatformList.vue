@@ -318,17 +318,6 @@ export default {
         );
       }
     },
-    selectedTags: {
-      deep: true,
-      handler() {
-        const tags = this.selectedTags.join(",");
-        if (tags !== "") {
-          history.pushState({}, null, this.$route.path + `?tags=${tags}`);
-        } else {
-          history.pushState({}, null, this.$route.path);
-        }
-      },
-    },
   },
 };
 </script>
