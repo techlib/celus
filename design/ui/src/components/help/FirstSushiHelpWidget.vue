@@ -106,54 +106,17 @@ cs:
 </i18n>
 <template>
   <v-stepper v-model="step" non-linear>
-    <v-stepper-header>
+    <v-stepper-header style="height: auto">
       <v-stepper-step
-        :step="1"
-        :complete="step > 1"
+        v-for="num in steps"
+        :key="num"
+        :step="num"
+        :complete="step > num"
         editable
         edit-icon="fa-check fa-small"
+        class="pa-4"
       >
-        {{ $t("step1") }}
-      </v-stepper-step>
-      <v-stepper-step
-        :step="2"
-        :complete="step > 2"
-        editable
-        edit-icon="fa-check fa-small"
-      >
-        {{ $t("step2") }}
-      </v-stepper-step>
-      <v-stepper-step
-        :step="3"
-        :complete="step > 3"
-        editable
-        edit-icon="fa-check fa-small"
-      >
-        {{ $t("step3") }}
-      </v-stepper-step>
-      <v-stepper-step
-        :step="4"
-        :complete="step > 4"
-        editable
-        edit-icon="fa-check fa-small"
-      >
-        {{ $t("step4") }}
-      </v-stepper-step>
-      <v-stepper-step
-        :step="5"
-        :complete="step > 5"
-        editable
-        edit-icon="fa-check fa-small"
-      >
-        {{ $t("step5") }}
-      </v-stepper-step>
-      <v-stepper-step
-        :step="6"
-        :complete="step > 6"
-        editable
-        edit-icon="fa-check fa-small"
-      >
-        {{ $t("step6") }}
+        {{ $t("step" + num) }}
       </v-stepper-step>
     </v-stepper-header>
 
@@ -186,11 +149,17 @@ cs:
       <v-stepper-content :step="3">
         <p v-html="$t('step3_text')"></p>
         <p v-html="$t('step3_text_2')"></p>
-        <ul v-for="IPv4Address in this.harvesterIPv4Addresses" :key="IPv4Address">
-          <li>{{IPv4Address}} (IPv4)</li>
+        <ul
+          v-for="IPv4Address in this.harvesterIPv4Addresses"
+          :key="IPv4Address"
+        >
+          <li>{{ IPv4Address }} (IPv4)</li>
         </ul>
-        <ul v-for="IPv6Address in this.harvesterIPv6Addresses" :key="IPv6Address">
-          <li>{{IPv6Address}} (IPv6)</li>
+        <ul
+          v-for="IPv6Address in this.harvesterIPv6Addresses"
+          :key="IPv6Address"
+        >
+          <li>{{ IPv6Address }} (IPv6)</li>
         </ul>
         <p class="text-right">
           <v-btn @click="step++">{{ $t("continue") }}</v-btn>
@@ -256,6 +225,7 @@ export default {
     return {
       step: 1,
       showCredentialsDialog: false,
+      steps: [1, 2, 3, 4, 5, 6],
     };
   },
 
