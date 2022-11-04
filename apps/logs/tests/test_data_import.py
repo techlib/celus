@@ -296,7 +296,27 @@ class TestCounter5Import:
                     assert title.uris == exp_uris
                     break
             else:
+
                 assert False, 'expected title was not found'
+
+    @pytest.mark.parametrize(
+        ['filename', 'count'],
+        [
+            ('counter5_table_dr.csv', 121),
+            ('counter5_table_dr.tsv', 121),
+            ('counter5_table_ir_m1.csv', 22788),
+            ('counter5_table_pr.csv', 252),
+        ],
+    )
+    def test_c5_table_record_count(
+        self, organization_random, report_type_nd, platform, filename, count
+    ):
+        # we do not care much about the dimensions - just about titles
+        rt = report_type_nd(0)
+
+        reader = Counter5TableReport()
+        records = reader.file_to_records(str(Path(__file__).parent / 'data/counter5' / filename))
+        assert count == len(list(records))
 
     def test_c5_tr_nature_merging(self, organization_random, report_type_nd, platform):
         # we do not care much about the dimensions - just about titles

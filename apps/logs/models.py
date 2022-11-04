@@ -3,7 +3,6 @@ import csv
 import os
 import re
 import typing
-from collections import Counter
 from copy import deepcopy
 from datetime import date
 from enum import Enum
@@ -12,7 +11,7 @@ from pathlib import Path
 import magic
 from celus_nigiri.celus import custom_data_to_records
 from celus_nigiri.counter5 import CounterRecord
-from chardet.universaldetector import UniversalDetector
+from celus_nigiri.csv_detect import detect_file_encoding
 from core.exceptions import ModelUsageError
 from core.models import (
     UL_ROBOT,
@@ -715,16 +714,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             returns encoding of the file uploaded
             """
         with open(self.data_file.path, "rb") as file:
-            detector = UniversalDetector()
-            for line in file.readlines():
-                detector.feed(line)
-                if detector.done:
-                    break
-            detector.close()
-            if detector.result['confidence'] < 0.8:
-                return 'utf-8-sig'
-            else:
-                return detector.result['encoding']
+            return detect_file_encoding(file)
 
     def to_record_dicts(self) -> [dict]:
         self.check_self_checksum()  # check the checksum before using the file
