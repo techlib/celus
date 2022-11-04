@@ -144,6 +144,7 @@ export default {
         {
           text: this.$i18n.t("labels.report_type"),
           value: "reports",
+          sortable: false,
         },
       ];
     },

@@ -213,6 +213,7 @@ export default {
         {
           text: this.$i18n.t("title_fields.actions"),
           value: "actions",
+          sortable: false,
         },
       ];
     },

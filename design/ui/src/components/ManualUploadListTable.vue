@@ -371,10 +371,12 @@ export default {
         {
           text: this.$t("data_file"),
           value: "data_file",
+          sortable: false,
         },
         {
           text: this.$t("title_fields.actions"),
           value: "actions",
+          sortable: false,
         },
       ];
       if (!this.organizationSelected) {

@@ -282,6 +282,7 @@ export default {
           value: "pricePerInterest." + ig.short_name,
           class: "wrap text-xs-right",
           align: "right",
+          // sortable: false,
         });
       }
       return base;
@@ -392,9 +393,8 @@ export default {
             ...new Set(this.interestData.map((item) => item.date__year)),
           ].sort();
           if (this.availableYears && this.availableYears.length > 0) {
-            this.selectedYear = this.availableYears[
-              this.availableYears.length - 1
-            ];
+            this.selectedYear =
+              this.availableYears[this.availableYears.length - 1];
           }
         } catch (error) {
           this.showSnackbar({

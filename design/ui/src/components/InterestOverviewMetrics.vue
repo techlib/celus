@@ -207,6 +207,7 @@ export default {
         {
           text: this.$i18n.t("labels.metrics"),
           value: "metrics",
+          sortable: false,
         },
         {
           text: this.$i18n.t("labels.used_by_platforms"),

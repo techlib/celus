@@ -172,7 +172,11 @@ export default {
           text: this.$t("labels.file_format"),
           value: "fileFormat",
         },
-        { text: this.$t("labels.exported_data"), value: "outputFile" },
+        {
+          text: this.$t("labels.exported_data"),
+          value: "outputFile",
+          sortable: false,
+        },
         { text: this.$t("expires_in"), value: "expiresIn" },
       ];
     },

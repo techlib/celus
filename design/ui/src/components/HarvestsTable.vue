@@ -130,6 +130,7 @@ cs:
           dense
           :options.sync="tableOptions"
           :server-items-length="totalCount"
+          :must-sort="true"
         >
           <template v-slot:footer.prepend>
             <v-btn x-small plain elevation="2" @click="fetchHarvestsData()">
@@ -331,8 +332,10 @@ export default {
           break;
       }
       let filterMonth = this.filterMonth ? `&month=${this.filterMonth}` : "";
-      let sortBy = this.tableOptions.sortBy ? this.tableOptions.sortBy[0] : "";
-      let sortDesc = this.tableOptions.sortDesc
+      let sortBy = this.tableOptions.sortBy.length
+        ? this.tableOptions.sortBy[0]
+        : "";
+      let sortDesc = this.tableOptions.sortDesc.length
         ? this.tableOptions.sortDesc[0]
         : false;
       switch (sortBy) {
