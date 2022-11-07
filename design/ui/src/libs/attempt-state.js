@@ -11,26 +11,32 @@ const BROKEN_CREDENTIALS = "broken";
 const BROKEN_REPORT = "broken_report";
 
 function attemptState(attempt) {
-  if (attempt.status == "untried") {
+  if (attempt.status === "untried") {
     // untried is status only for monthly overview
     return ATTEMPT_NOT_MADE;
-  } else if (attempt.status == "import_failed") {
+  } else if (attempt.status === "import_failed") {
     return ATTEMPT_IMPORT_FAILED;
   } else if (attempt.import_batch) {
+    if (attempt.status === "no_data") {
+      return ATTEMPT_EMPTY_DATA;
+    }
     if (attempt.partial_data) {
       return ATTEMPT_PARTIAL_DATA;
     }
     return ATTEMPT_SUCCESS;
   } else if (attempt.error_code) {
-    if (attempt.error_code === "3030" && attempt.status == "no_data") {
+    if (attempt.error_code === "3030" && attempt.status === "no_data") {
       return ATTEMPT_EMPTY_DATA;
     }
     return ATTEMPT_ERROR;
-  } else if (attempt.status == "importing") {
+  } else if (attempt.status === "importing") {
     return ATTEMPT_AWAITING_IMPORT;
-  } else if (attempt.status == "no_data") {
+  } else if (attempt.status === "no_data") {
     return ATTEMPT_EMPTY_DATA;
-  } else if (attempt.status == "canceled" || attempt.status == "unprocessed") {
+  } else if (
+    attempt.status === "canceled" ||
+    attempt.status === "unprocessed"
+  ) {
     return ATTEMPT_CANCELED;
   }
   return ATTEMPT_UNKNOWN;

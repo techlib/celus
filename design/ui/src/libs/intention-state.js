@@ -1,7 +1,6 @@
 import { parseDateTime } from "@/libs/dates";
 import {
   ATTEMPT_AWAITING_IMPORT,
-  ATTEMPT_EMPTY_DATA,
   ATTEMPT_ERROR,
   attemptState,
   attemptStateToIcon,
@@ -51,11 +50,12 @@ function annotateIntention(intention) {
   intention.isForceRunPossible =
     intention.notBefore > new Date() && // skip already planned
     intention.endDate < new Date() && // skip for future data
-    (intention.state == INTENTION_WAITING ||
-      intention.state == INTENTION_QUEUED);
+    (intention.state === INTENTION_WAITING ||
+      intention.state === INTENTION_QUEUED);
   intention.isCancelPossible =
-    intention.state == INTENTION_WAITING || intention.state == INTENTION_QUEUED;
-  intention.isCanceled = intention.state == INTENTION_CANCELED;
+    intention.state === INTENTION_WAITING ||
+    intention.state === INTENTION_QUEUED;
+  intention.isCanceled = intention.state === INTENTION_CANCELED;
   intention.loading = false;
 }
 
