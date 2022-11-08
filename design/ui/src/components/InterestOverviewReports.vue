@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
   no_report_defined: No report is assigned as defining interest for this platform. No interest will be extracted from this platform's data.

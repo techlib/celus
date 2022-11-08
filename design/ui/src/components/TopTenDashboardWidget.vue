@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="../locales/pub-types.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/pub-types.yaml"></i18n>
 
 <i18n lang="yaml">
 en:

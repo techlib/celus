@@ -1,5 +1,5 @@
-<i18n lang="yaml" src="../locales/charts.yaml"></i18n>
-<i18n lang="yaml" src="../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/charts.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <i18n lang="yaml">
 en:

@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="../../locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml" />
 <i18n lang="yaml">
 en:
   loading_harvest_slots: Checking existing data

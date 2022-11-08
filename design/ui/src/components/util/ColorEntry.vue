@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="../../locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
   <v-menu
