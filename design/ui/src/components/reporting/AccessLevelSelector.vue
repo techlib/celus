@@ -60,7 +60,7 @@
 </template>
 <script>
 import { mapGetters, mapState } from "vuex";
-import OrganizationSelector from "@/components/OrganizationSelector";
+import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import { FlexiReport } from "@/libs/flexi-reports";
 import formRulesMixin from "@/mixins/formRulesMixin";
 

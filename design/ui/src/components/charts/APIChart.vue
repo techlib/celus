@@ -202,7 +202,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import { pivot } from "@/libs/pivot";
 import cancellation from "@/mixins/cancellation";
-import ChartDataTable from "./ChartDataTable";
+import ChartDataTable from "../ChartDataTable";
 import { padIntegerWithZeros } from "@/libs/numbers";
 import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
 import CoverageMap from "@/components/charts/CoverageMap";

@@ -35,7 +35,7 @@ cs:
   </span>
 </template>
 <script>
-import PlatformSelectionWidget from "./PlatformSelectionWidget";
+import PlatformSelectionWidget from "./selectors/PlatformSelectionWidget";
 
 export default {
   name: "ManualUploadButton",

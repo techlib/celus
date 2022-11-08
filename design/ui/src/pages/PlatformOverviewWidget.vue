@@ -37,7 +37,7 @@
   </v-card>
 </template>
 <script>
-import InterestGroupSelector from "@/components/InterestGroupSelector";
+import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
 import PlatformCostList from "@/components/PlatformCostList";
 import PlatformInterestChart from "@/components/PlatformInterestChart";
 import PlatformList from "@/components/PlatformList";

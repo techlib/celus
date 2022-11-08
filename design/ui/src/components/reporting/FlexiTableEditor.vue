@@ -585,7 +585,7 @@ import axios from "axios";
 import { mapActions, mapGetters, mapState } from "vuex";
 import FromToMonthEntry from "@/components/util/FromToMonthEntry";
 import FromToYearEntry from "@/components/util/FromToYearEntry";
-import DimensionKeySelector from "@/components/DimensionKeySelector";
+import DimensionKeySelector from "@/components/selectors/DimensionKeySelector";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
 import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
 import translators from "@/mixins/translators";

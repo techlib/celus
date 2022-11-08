@@ -173,10 +173,7 @@ export default {
     splitByPlatform() {
       return this.rows === "platform" || this.cols === "platform";
     },
-  },
-
-  methods: {
-    async loadCoverageData() {
+    dataUrl() {
       let params = {
         start_date: this.startMonth,
         end_date: this.endMonth,
@@ -199,10 +196,18 @@ export default {
       if (this.splitByPlatform) {
         params["split_by_platform"] = true;
       }
+      return this.$router.resolve({
+        path: "/api/import-batch/data-coverage/",
+        query: params,
+      }).href;
+    },
+  },
+
+  methods: {
+    async loadCoverageData() {
       this.loading = true;
       const { response, error } = await this.http({
-        url: "/api/import-batch/data-coverage/",
-        params: params,
+        url: this.dataUrl,
       });
       if (!error) {
         this.coverageData = response.data;
@@ -222,6 +227,12 @@ export default {
 
   mounted() {
     this.loadCoverageData();
+  },
+
+  watch: {
+    dataUrl() {
+      this.loadCoverageData();
+    },
   },
 };
 </script>

@@ -199,6 +199,10 @@ cs:
         <v-icon class="mr-2">fa-bars</v-icon>
         <span v-text="$t('titles')"></span>
       </v-tab>
+      <v-tab href="#coverage" v-if="platform && enableDataCoverage">
+        <v-icon class="mr-2">fa-layer-group</v-icon>
+        <span v-text="$t('series.data_coverage')"></span>
+      </v-tab>
       <v-tab v-if="showAdminStuff && platformObj" href="#sushi">
         <v-icon class="mr-2">fa-download</v-icon>
         <span v-text="$t('sushi')"></span>
@@ -241,6 +245,12 @@ cs:
                 >{{ $t("no_info") }}</v-alert
               >
             </v-container>
+          </section>
+        </v-tab-item>
+
+        <v-tab-item value="coverage">
+          <section v-if="platform && enableDataCoverage">
+            <CoverageOverviewWidget :platform-id="platformId" />
           </section>
         </v-tab-item>
 
@@ -318,21 +328,23 @@ cs:
 import { mapActions, mapGetters, mapState } from "vuex";
 import TitleList from "@/components/TitleList";
 import axios from "axios";
-import CounterChartSet from "@/components/CounterChartSet";
+import CounterChartSet from "@/components/charts/CounterChartSet";
 import { formatInteger } from "@/libs/numbers";
 import AnnotationsWidget from "@/components/AnnotationsWidget";
 import AddAnnotationButton from "@/components/AddAnnotationButton";
-import InterestGroupSelector from "@/components/InterestGroupSelector";
+import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
 import RawDataExportWidget from "@/components/RawDataExportWidget";
 import SushiCredentialsManagementWidget from "@/components/sushi/SushiCredentialsManagementWidget";
 import DeletePlatformDataWidget from "@/components/admin/DeletePlatformDataWidget";
 import ErrorPlaceholder from "@/components/util/ErrorPlaceholder";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import TagCard from "@/components/tags/TagCard";
+import CoverageOverviewWidget from "@/components/charts/CoverageOverviewWidget";
 
 export default {
   name: "PlatformDetailPage",
   components: {
+    CoverageOverviewWidget,
     TagCard,
     LoaderWidget,
     ErrorPlaceholder,
@@ -367,6 +379,7 @@ export default {
       organizationSelected: "organizationSelected",
       allowManualDataUpload: "allowManualDataUpload",
       enableTags: "enableTags",
+      enableDataCoverage: "enableDataCoverage",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",

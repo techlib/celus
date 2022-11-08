@@ -257,7 +257,7 @@ cs:
 <script>
 import SidePanel from "./SidePanel";
 import { mapActions, mapGetters, mapState } from "vuex";
-import OrganizationSelector from "@/components/OrganizationSelector";
+import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
 import LoginDialog from "@/components/account/LoginDialog";
 import VGravatar from "vue-gravatar";

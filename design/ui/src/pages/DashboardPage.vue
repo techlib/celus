@@ -152,7 +152,7 @@ cs:
 </template>
 
 <script>
-import APIChart from "@/components/APIChart";
+import APIChart from "@/components/charts/APIChart";
 import { mapActions, mapGetters, mapState } from "vuex";
 import LargeSpinner from "@/components/util/LargeSpinner";
 import { formatInteger, smartFormatFloat } from "@/libs/numbers";

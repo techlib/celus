@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import CounterChartSet from "./CounterChartSet";
+import CounterChartSet from "./charts/CounterChartSet";
 import axios from "axios";
 import { mapActions } from "vuex";
 export default {

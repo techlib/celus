@@ -81,7 +81,7 @@
 </template>
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import OrganizationSelector from "@/components/OrganizationSelector";
+import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
 import MenuListItem from "@/components/util/MenuListItem";
 

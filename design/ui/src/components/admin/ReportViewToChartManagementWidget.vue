@@ -109,7 +109,7 @@
 <script>
 import axios from "axios";
 import { mapActions } from "vuex";
-import CounterChartSet from "@/components/CounterChartSet";
+import CounterChartSet from "@/components/charts/CounterChartSet";
 
 export default {
   name: "ReportViewToChartManagementWidget",

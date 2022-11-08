@@ -209,7 +209,7 @@ cs:
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import CounterChartSet from "@/components/CounterChartSet";
+import CounterChartSet from "@/components/charts/CounterChartSet";
 import DataExportWidget from "@/components/DataExportWidget";
 import AnnotationsWidget from "@/components/AnnotationsWidget";
 import goTo from "vuetify/es5/services/goto";
