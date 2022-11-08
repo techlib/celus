@@ -147,59 +147,58 @@ cs:
     </v-app-bar>
 
     <v-main v-if="selectedOrganizationId">
-      <v-container fluid px-4 pt-6>
-        <v-alert
-          v-if="displayNewReleaseAlert"
-          @input="dismissLastRelease(false)"
-          dense
-          dismissible
-          outlined
-          icon="fa-bullhorn"
-          text
-          type="success"
+      <v-alert
+        class="ma-4 mt-6"
+        v-if="displayNewReleaseAlert"
+        @input="dismissLastRelease(false)"
+        dense
+        dismissible
+        outlined
+        icon="fa-bullhorn"
+        text
+        type="success"
+      >
+        {{ $t("new_release_message") }}
+        <span
+          v-if="
+            'links' in latestPublishedRelease
+              ? latestPublishedRelease.links.length > 0
+              : false
+          "
         >
-          {{ $t("new_release_message") }}
-          <span
-            v-if="
-              'links' in latestPublishedRelease
-                ? latestPublishedRelease.links.length > 0
-                : false
-            "
-          >
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <span v-on="on">
-                  <a
-                    :href="latestPublishedRelease.links[0].link"
-                    @click="dismissLastRelease(true)"
-                    target="_blank"
-                  >
-                    {{ $t("link") }}</a
-                  >
-                </span>
-              </template>
-              {{
-                this.latestPublishedRelease.links[0].title[this.appLanguage]
-                  ? this.latestPublishedRelease.links[0].title[this.appLanguage]
-                  : this.latestPublishedRelease.links[0].title.en
-              }}
-            </v-tooltip>
-          </span>
-          <span v-else>
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <span v-on="on">
-                  <router-link :to="{ name: 'releases' }">
-                    {{ $t("link") }}</router-link
-                  >
-                </span>
-              </template>
-              {{ $t("releases") }}
-            </v-tooltip>
-          </span>
-          <span>.</span>
-        </v-alert>
-      </v-container>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <span v-on="on">
+                <a
+                  :href="latestPublishedRelease.links[0].link"
+                  @click="dismissLastRelease(true)"
+                  target="_blank"
+                >
+                  {{ $t("link") }}</a
+                >
+              </span>
+            </template>
+            {{
+              this.latestPublishedRelease.links[0].title[this.appLanguage]
+                ? this.latestPublishedRelease.links[0].title[this.appLanguage]
+                : this.latestPublishedRelease.links[0].title.en
+            }}
+          </v-tooltip>
+        </span>
+        <span v-else>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <span v-on="on">
+                <router-link :to="{ name: 'releases' }">
+                  {{ $t("link") }}</router-link
+                >
+              </span>
+            </template>
+            {{ $t("releases") }}
+          </v-tooltip>
+        </span>
+        <span>.</span>
+      </v-alert>
       <v-container fluid pa-0 pa-sm-2>
         <v-tooltip left v-if="showHelpButton">
           <template #activator="{ on }">
