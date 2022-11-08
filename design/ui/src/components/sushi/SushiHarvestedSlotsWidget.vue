@@ -29,7 +29,7 @@ cs:
           <v-icon v-if="type === ''" color="success" small>
             fa fa-fw fa-cloud-download-alt</v-icon
           >
-          <v-icon v-if="type === 'sushi'" color="#dddddd" small
+          <v-icon v-else-if="type === 'sushi'" color="#dddddd" small
             >fa fa-fw fa-file-download
           </v-icon>
           <v-icon v-else-if="type === 'manual'" color="#dddddd" small
@@ -38,7 +38,7 @@ cs:
           <v-icon v-else-if="type === 'broken'" color="#ffaaaa" small
             >far fa-fw fa-times-circle
           </v-icon>
-          <v-icon v-else color="#dddddd" small>fa fa-fw fa-database</v-icon>
+          <v-icon v-else color="#00ff00" small>fa fa-fw fa-database</v-icon>
         </td>
         <td>
           <span class="text-right font-weight-bold caption px-2">{{
@@ -93,7 +93,7 @@ cs:
                   </v-icon>
                   <v-icon
                     v-else-if="row.months[month] === 'unknown'"
-                    color="#dddddd"
+                    color="#ff0000"
                     small
                     >fa fa-database
                   </v-icon>

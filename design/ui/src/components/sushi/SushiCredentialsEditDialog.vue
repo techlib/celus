@@ -1101,7 +1101,6 @@ export default {
         this.$refs.testWidget.clean();
       }
       this.showTestDialog = false;
-      this.$emit("set-dirty");
     },
     isBroken(report) {
       if (this.credentials) {
@@ -1232,6 +1231,20 @@ export default {
     badge(item) {
       return badge(item);
     },
+    async reloadCredentials() {
+      try {
+        let response = await axios.get(
+          `/api/sushi-credentials/${this.credentials.pk}/`
+        );
+        this.savedCredentials = response.data;
+        this.$emit("update-credentials", this.savedCredentials);
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error reloading credentials",
+          color: "error",
+        });
+      }
+    },
   },
 
   async mounted() {
@@ -1269,6 +1282,12 @@ export default {
     },
     url() {
       delete this.errors.url;
+    },
+    async showTestDialog(value) {
+      // on dialog close, we reload the credentials
+      if (!value) {
+        await this.reloadCredentials();
+      }
     },
   },
 };
