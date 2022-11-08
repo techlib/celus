@@ -88,14 +88,14 @@ export default {
   },
 
   computed: {
-    request() {
+    url() {
       let { url, params } = this.requestBase;
       params = {
         ...params,
         order_by: this.interestGroup.short_name,
         ...(this.selectedPubType && { pub_type: this.selectedPubType }),
       };
-      return { url, params };
+      return this.$router.resolve({ path: url, query: params }).href;
     },
   },
 
@@ -108,7 +108,7 @@ export default {
 
       this.loading = true;
       const { response } = await this.http({
-        ...this.request,
+        url: this.url,
         label: this.interestGroup.name,
       });
       this.loading = false;
@@ -121,7 +121,9 @@ export default {
   },
 
   watch: {
-    request: "fetchTitleInterest",
+    url() {
+      this.fetchTitleInterest();
+    },
   },
 
   mounted() {
