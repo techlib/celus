@@ -207,6 +207,8 @@ en:
     add_tag: Add tag
     create: Create
     assign_tag: Assign tag
+    select_all: Select all
+    clear_selection: Clear selection
   in_czech: Czech
   in_english: English
   cover_image: Cover image
@@ -469,6 +471,8 @@ cs:
     add_tag: Přidat štítek
     create: Vytvořit
     assign_tag: Oštítkovat
+    select_all: Vybrat vše
+    clear_selection: Zrušit výběr
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky

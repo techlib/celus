@@ -46,7 +46,7 @@ cs:
     credentials_broken: Přístupové údaje jsou rozbité - položku nelze přidat ke stahování.
     report_type_broken: Rozbitý report - položku nelze přidat ke stahování.
   delete_mode: Mazací mód
-  delete_mode_info: aktivujte pro mazání data
+  delete_mode_info: aktivujte pro mazání dat
   delete_ok: Vybraná data byla smazána.
 </i18n>
 
@@ -182,6 +182,14 @@ cs:
                     </v-tooltip>
                   </td>
                 </tr>
+              </template>
+              <template #footer.prepend>
+                <v-btn small color="success" @click="selectAll" class="me-2">{{
+                  $t("actions.select_all")
+                }}</v-btn>
+                <v-btn small color="secondary" @click="unselectAll">{{
+                  $t("actions.clear_selection")
+                }}</v-btn>
               </template>
             </v-data-table>
             <v-dialog max-width="1100px" v-model="showConfirmDeleteDialog">
@@ -368,7 +376,7 @@ export default {
           };
           for (const month of this.months) {
             for (const row of year_data[month]) {
-              if (row.counter_report.code == counterReport.code) {
+              if (row.counter_report.code === counterReport.code) {
                 record[month] = {
                   status: row.status,
                   planned: row.planned,
@@ -447,6 +455,7 @@ export default {
           value: "counter_report",
           class: "wrap",
           align: "center",
+          sortable: false,
         },
       ];
       for (let i = 1; i <= 12; i++) {
@@ -524,13 +533,15 @@ export default {
       if (!this.isSelectable(item[month]))
         // do not allow re-harvesting of successful downloads
         return false;
+      return !this.isFutureDate(year, month_int);
+    },
+    isFutureDate(year, month) {
       let current = new Date();
       let current_year = current.getFullYear();
       let current_month = current.getMonth() + 1;
-      return year < current_year ||
-        (year == current_year && month_int < current_month)
-        ? true
-        : false;
+      return (
+        year > current_year || (year === current_year && month >= current_month)
+      );
     },
     buttonColor: (report) => {
       if (report.planned) {
@@ -561,7 +572,7 @@ export default {
           (rt_id) => !brokenIds.includes(rt_id)
         );
         broken_counter_report =
-          broken_counter_report || orig_len != selected[key].length;
+          broken_counter_report || orig_len !== selected[key].length;
       });
       if (broken_counter_report) {
         this.showSnackbar({
@@ -591,6 +602,36 @@ export default {
     deletePerformed() {
       this.showConfirmDeleteDialog = false;
       this.loadCredentialsData();
+    },
+    selectAll() {
+      let pageIdx = this.tableOptions.page - 1;
+      let itemsPerPage = this.tableOptions.itemsPerPage;
+      if (this.tableOptions.sortDesc[0]) {
+        pageIdx = this.processedData.length - (pageIdx + 1) * itemsPerPage;
+        if (pageIdx < 0) pageIdx = 0;
+      }
+      let end = pageIdx + itemsPerPage;
+      let visibleLines = this.processedData.slice(pageIdx, end);
+      let bs = {};
+      visibleLines.forEach((line) => {
+        this.months.forEach((month) => {
+          if (this.isFutureDate(line.year, Number.parseInt(month, 10))) return;
+          let key = `${line.year}-${month}`;
+          if (!bs[key]) {
+            bs[key] = [];
+          }
+          if (
+            !bs[key].includes(line.counterReport.id) &&
+            this.isSelectable(line[month])
+          ) {
+            bs[key].push(line.counterReport.id);
+          }
+        });
+      });
+      this.buttonsSelected = bs;
+    },
+    unselectAll() {
+      this.buttonsSelected = {};
     },
   },
 
