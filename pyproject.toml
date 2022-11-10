@@ -34,7 +34,7 @@ authors = ["Beda Kosata <beda@bigdigdata.com>", "Stepan Henek <stepan@bigdigdata
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8.10"
+python = "^3.8.8"
 
 celery = "~5.2.3"
 celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v7.1.1" }
@@ -77,7 +77,6 @@ djangorestframework-api-key = "^2.0.0"
 hcube = "0.3.1"
 XlsxWriter = "^3.0.3"
 toml = "^0.10.2"
-django-postgres-extra = "^2.0.5"
 django-postgres-copy = "^2.7.0"
 django-colorfield = "^0.7.2"
 colorlog = "^6.7.0"
@@ -88,7 +87,6 @@ black = {version = "19.10b0", allow-prereleases = true}
 click = "~8.0.4"  # black does not work with higher version of click and does not say so :(
 django-debug-toolbar = "^3.2.1"
 django-querycount = "^0.7.0"
-jupyter = "^1.0.0"
 pre-commit = "^2.4.0"
 pytest = "^6.2.3"
 pytest-env = "^0.6.2"
