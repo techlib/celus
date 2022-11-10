@@ -2,8 +2,19 @@
 <i18n lang="yaml">
 en:
   confirm_tag_delete: Confirm tag delete
-  delete_tag_item_count: Do you wan't to delete tag "{tag}" used by {count} item? | Do you wan't to delete tag "{tag}" used by {count} items?
+  delete_tag_item_count: Do you want to delete tag "{tag}" used by {count} item? | Do you wan't to delete tag "{tag}" used by {count} items?
   tag_delete_success: Tag "{tag}" was successfully deleted
+  confirm_tag_class_delete: Confirm tag class delete
+  delete_tag_class_tag_count: Do you want to delete tag class "{tag_class}" with {count} tag? | Do you want to delete tag class "{tag_class}" with {count} tags?
+  tag_class_delete_success: Tag class "{tag_class}" was successfully deleted
+
+cs:
+  confirm_tag_delete: Potvrzení smazání štítku
+  delete_tag_item_count: Opravdu chcete smazat štítek "{tag}" použitý u {count} položky? | Opravdu chcete smazat štítek "{tag}" použitý u {count} položek?
+  tag_delete_success: Štítek "{tag}" byl úspěšně smazán
+  confirm_tag_class_delete: Potvrzení smazání typu štítků
+  delete_tag_class_tag_count: Opravdu chcete smazat typ štítků "{name}" s {count} štítkem? | Opravdu chcete smazat typ štítků "{name}" s {count} štítky?
+  tag_class_delete_success: Typ štítků "{name}" byl úspěšně smazán
 </i18n>
 
 <template>
@@ -123,6 +134,16 @@ en:
             @click="editClass(group)"
           >
             <v-icon small>fa-edit</v-icon>
+          </v-btn>
+          <v-btn
+            v-if="
+              classIdToObj.has(group) && classIdToObj.get(group).user_can_modify
+            "
+            small
+            icon
+            @click="deleteClass(group)"
+          >
+            <v-icon small>fa-trash</v-icon>
           </v-btn>
         </td>
       </template>
@@ -298,6 +319,33 @@ export default {
             });
             this.tags = this.tags.filter((item) => item.pk !== tag.pk);
           }
+        }
+      }
+    },
+    async deleteClass(clsId) {
+      const cls = this.classIdToObj.get(clsId);
+      const tagCount = this.tags.filter(
+        (tag) => tag.tag_class.pk === cls.pk
+      ).length;
+      const goOn = await this.$confirm(
+        this.$tc("delete_tag_class_tag_count", tagCount, cls),
+        {
+          title: this.$t("confirm_tag_class_delete"),
+          buttonTrueText: this.$t("actions.delete"),
+          buttonFalseText: this.$t("actions.cancel"),
+        }
+      );
+      if (goOn) {
+        const reply = await this.http({
+          url: `/api/tags/tag-class/${cls.pk}/`,
+          method: "delete",
+        });
+        if (!reply.error) {
+          this.showSnackbar({
+            content: this.$t("tag_class_delete_success", cls),
+            color: "success",
+          });
+          this.tags = this.tags.filter((item) => item.tag_class.pk !== cls.pk);
         }
       }
     },
