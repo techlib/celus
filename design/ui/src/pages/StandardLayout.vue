@@ -28,7 +28,13 @@ cs:
       :tour-name="offeredTour"
     />
 
-    <v-navigation-drawer right app v-model="showHelpPanel" clipped>
+    <v-navigation-drawer
+      right
+      app
+      v-model="showHelpPanel"
+      clipped
+      disable-resize-watcher
+    >
       <div class="pa-3">
         <router-view name="helpPanel" />
       </div>
