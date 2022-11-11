@@ -1,15 +1,15 @@
-<i18n>
+<i18n lang="yaml">
 en:
-    no_such_key: Sorry, but we could not verify your email - the verification link is probably malformed
-    some_error: 'Sorry, but we could not verify your email due to the following error: "{error}"'
-    success: Your address was successfully verified
-    go_to_celus: Continue to Celus
+  no_such_key: Sorry, but we could not verify your email - the verification link is probably malformed
+  some_error: 'Sorry, but we could not verify your email due to the following error: "{error}"'
+  success: Your address was successfully verified
+  go_to_celus: Continue to Celus
 
 cs:
-    no_such_key: Je nám to líto, ale nemohli jsme ověřit váš email - ověřovací odkaz je pravděpodobně poškozený
-    some_error: 'Je nám to líto, ale nemohli jsme ověřit váš email z důvodu následující chyby: "{error}"'
-    success: Vaše adresa byla úspěšně ověřena
-    go_to_celus: Pokračujte do aplikace Celus
+  no_such_key: Je nám to líto, ale nemohli jsme ověřit váš email - ověřovací odkaz je pravděpodobně poškozený
+  some_error: 'Je nám to líto, ale nemohli jsme ověřit váš email z důvodu následující chyby: "{error}"'
+  success: Vaše adresa byla úspěšně ověřena
+  go_to_celus: Pokračujte do aplikace Celus
 </i18n>
 
 <template>

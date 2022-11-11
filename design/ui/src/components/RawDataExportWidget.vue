@@ -1,38 +1,39 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
-<i18n>
+<i18n lang="yaml">
 en:
-    export_raw_data: Export raw data
-    info_text: It is possible to export all data related to this platform here. The
-               amount of data is potentially quite huge, so the data is exported in CSV format
-               inside a ZIP archive.
-    record_count: Number of records to export
-    error: There was an error exporting the data
-    download_data: Download data
-    preparing: Initializing export
-    calculating: Calculating
-    start_export: Start export
-    export_running: Export is running, please wait.
-    data_ready: Data is ready.
-    error_during_progress: There was an error getting progress data from the server
-    retrying_connection: Retrying to fetch data - attempt {number} / {total}
-    retrying_failed: "Already retried {number} times without success - it looks like something went horribly wrong"
+  export_raw_data: Export raw data
+  info_text:
+    It is possible to export all data related to this platform here. The
+    amount of data is potentially quite huge, so the data is exported in CSV format
+    inside a ZIP archive.
+  record_count: Number of records to export
+  error: There was an error exporting the data
+  download_data: Download data
+  preparing: Initializing export
+  calculating: Calculating
+  start_export: Start export
+  export_running: Export is running, please wait.
+  data_ready: Data is ready.
+  error_during_progress: There was an error getting progress data from the server
+  retrying_connection: Retrying to fetch data - attempt {number} / {total}
+  retrying_failed: "Already retried {number} times without success - it looks like something went horribly wrong"
 
 cs:
-    export_raw_data: Export všech dat
-    info_text: Zde je možné vyexportovat veškerá data k této platformě. Množství těchto
-               dat může být potenciálně obrovské a data jsou proto exportována to formátu CSV
-               zabaleného do ZIP archivu.
-    record_count: Počet záznamů k exportu
-    error: Během exportu došlo k neznámé chybě
-    download_data: Stáhnout data
-    preparing: Inicializuji export
-    calculating: Počítám
-    start_export: Spustit export
-    export_running: Probíhá export, vydržte prosím.
-    data_ready: Data jsou připravena.
-    error_during_progress: Při získávání dat o průběhu ze serveru došlo k chybě
-    retrying_failed: "{number} pokusů o stažení bylo neúspěšných - pravděpodobně se něco rozbilo"
-
+  export_raw_data: Export všech dat
+  info_text:
+    Zde je možné vyexportovat veškerá data k této platformě. Množství těchto
+    dat může být potenciálně obrovské a data jsou proto exportována to formátu CSV
+    zabaleného do ZIP archivu.
+  record_count: Počet záznamů k exportu
+  error: Během exportu došlo k neznámé chybě
+  download_data: Stáhnout data
+  preparing: Inicializuji export
+  calculating: Počítám
+  start_export: Spustit export
+  export_running: Probíhá export, vydržte prosím.
+  data_ready: Data jsou připravena.
+  error_during_progress: Při získávání dat o průběhu ze serveru došlo k chybě
+  retrying_failed: "{number} pokusů o stažení bylo neúspěšných - pravděpodobně se něco rozbilo"
 </i18n>
 
 <template>

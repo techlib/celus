@@ -1,6 +1,6 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml" />
 
-<i18n>
+<i18n lang="yaml">
 en:
     releases: Celus releases
     email_not_verified: Your email is not verified

@@ -1,9 +1,9 @@
-<i18n>
+<i18n lang="yaml">
 en:
-    total: Total
+  total: Total
 
 cs:
-    total: Celkem
+  total: Celkem
 </i18n>
 
 <template>

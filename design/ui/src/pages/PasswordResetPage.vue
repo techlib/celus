@@ -1,16 +1,16 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml" />
-<i18n>
+<i18n lang="yaml">
 en:
-    new_password: New password
-    password_reset_header: Celus password reset
-    password_reset_info: You are going to reset password for your Celus account. Fill in a new password and click "Reset".
-    invitation_header: Accept Celus invitation
-    invitation_info: To accept your invitation into Celus, choose a password and click "Register".
-    bad_data: Sorry, this password reset link is not valid. You may have only copied a part of it or your email application messed it up.
-    some_error: The attempt to change password was not successful. The link you used is either not valid or too old.
-    password_reset_success: Your password was successfully reset. You can now log in {here}.
-    here: here
-    invitation_success: Your password was successfully set and registration completed. You can now log in {here}.
+  new_password: New password
+  password_reset_header: Celus password reset
+  password_reset_info: You are going to reset password for your Celus account. Fill in a new password and click "Reset".
+  invitation_header: Accept Celus invitation
+  invitation_info: To accept your invitation into Celus, choose a password and click "Register".
+  bad_data: Sorry, this password reset link is not valid. You may have only copied a part of it or your email application messed it up.
+  some_error: The attempt to change password was not successful. The link you used is either not valid or too old.
+  password_reset_success: Your password was successfully reset. You can now log in {here}.
+  here: here
+  invitation_success: Your password was successfully set and registration completed. You can now log in {here}.
 </i18n>
 
 <template>
