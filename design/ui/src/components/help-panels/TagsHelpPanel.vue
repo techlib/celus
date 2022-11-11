@@ -10,6 +10,8 @@ en:
     which allows grouping similar tags together. For example, tags used to group
     titles from different collections can be grouped together under the class
     "Collection".
+  link: For more information on tags, see the {target} section of the Celus documentation.
+  target: Tags
 
 cs:
   p1: >
@@ -22,12 +24,27 @@ cs:
     přiřazený typ, který umožňuje seskupení podobných štítků. Například
     štítky použité k seskupení titulů z různých kolekcí mohou být seskupeny
     pod typem "Kolekce".
+  link: Pro více informací o štítcích, podívejte se do sekce {target} Celus dokumentace.
+  target: Tags
 </i18n>
 
 <template>
   <div>
     <p>{{ $t("p1") }}</p>
     <p>{{ $t("p2") }}</p>
+    <p>
+      <i18n path="link" tag="span">
+        <template #target>
+          <a
+            href="https://docs.celus.net/tags.html"
+            target="_blank"
+            class="font-weight-black"
+            >{{ $t("target") }}
+            <v-icon small>fa fa-external-link-alt</v-icon>
+          </a>
+        </template>
+      </i18n>
+    </p>
   </div>
 </template>
 
