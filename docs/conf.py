@@ -18,11 +18,11 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Celus'
-copyright = '2020, CzechELib'
+copyright = '2022, BigDigData'
 author = 'Beda Kosata'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0'
+release = '5.0'
 
 
 # -- General configuration ---------------------------------------------------

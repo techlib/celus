@@ -22,5 +22,6 @@ sources which do not offer this API.
 
    admin.rst
    user.rst
+   topics.rst
    install.rst
    server-maintenance.rst
