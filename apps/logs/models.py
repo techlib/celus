@@ -43,6 +43,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
+from nibbler.logic.celus_format import celus_format_to_records
 from nibbler.models import ParserDefinition, get_records_from_nibbler_output
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
@@ -100,7 +101,7 @@ class ReportType(models.Model):
     controlled_metrics = models.ManyToManyField(
         'Metric', through='ControlledMetric', related_name='controlled'
     )
-    ext_id = models.PositiveIntegerField(unique=True, null=True, default=None, blank=True,)
+    ext_id = models.PositiveIntegerField(unique=True, null=True, default=None, blank=True)
 
     objects = ReportTypeQuerySet.as_manager()
 
@@ -317,7 +318,7 @@ class ControlledMetric(models.Model):
             UniqueConstraint(
                 fields=['metric_id', 'report_type_id'],
                 name='controlled_report_type_and_metric_unique',
-            ),
+            )
         ]
 
 
@@ -494,10 +495,7 @@ class AccessLog(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
     target = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        null=True,
-        help_text='Title for which this log was created',
+        Title, on_delete=models.CASCADE, null=True, help_text='Title for which this log was created'
     )
     dim1 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #1')
     dim2 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #2')
@@ -610,25 +608,6 @@ def validate_mime_type(fileobj):
         )
 
 
-def check_can_parse(fileobj):
-    from logs.logic.custom_import import custom_data_import_precheck
-
-    reader = csv.reader(codecs.iterdecode(fileobj, 'utf-8'))
-    first_row = next(reader)
-    try:
-        second_row = next(reader)
-    except StopIteration:
-        raise ValidationError(
-            _('Only one row in the uploaded file, there is not data to ' 'import')
-        )
-    fileobj.seek(0)
-    problems = custom_data_import_precheck(first_row, [second_row])
-    if problems:
-        raise ValidationError(
-            _('Errors understanding uploaded data: {}').format('; '.join(problems))
-        )
-
-
 class MduState(models.TextChoices):
     INITIAL = 'initial', _("Initial")
     PREFLIGHT = 'preflight', _("Preflight")
@@ -725,18 +704,19 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
     def detect_file_encoding(self) -> str:
         """
-            returns encoding of the file uploaded
-            """
+        returns encoding of the file uploaded
+        """
         with open(self.data_file.path, "rb") as file:
             return detect_file_encoding(file)
 
     def to_record_dicts(self) -> [dict]:
-        self.check_self_checksum()  # check the checksum before using the file
         reader = csv.DictReader(codecs.iterdecode(self.data_file.file, self.detect_file_encoding()))
         data = list(reader)
         return data
 
     def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
+        self.check_self_checksum()  # check the checksum before using the file
+
         if self.use_nibbler:
 
             nibbler_output = ParserDefinition.objects.parse_file(
@@ -744,7 +724,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             )
 
             # Extract data
-            return get_records_from_nibbler_output(nibbler_output)
+            yield from get_records_from_nibbler_output(nibbler_output)
 
         try:
             crt = self.report_type.counterreporttype
@@ -752,22 +732,31 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             crt = None
         if not crt:
             # this is really custom data - there is no special counter report type associated
-            data = self.to_record_dicts()
             default_metric, _created = Metric.objects.get_or_create(
                 short_name='visits',
                 name_en='Visits',
                 name_cs='Návštěvy',
                 source=self.report_type.source,
             )
-            records = custom_data_to_records(
-                data,
-                extra_dims=self.report_type.dimension_short_names,
-                initial_data={'metric': default_metric.pk},
-            )
+            if settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT:
+                yield from celus_format_to_records(
+                    os.path.join(settings.MEDIA_ROOT, self.data_file.name),
+                    default_metric,
+                    self.report_type,
+                    self.platform,
+                )
+            else:
+                yield from custom_data_to_records(
+                    self.to_record_dicts(),
+                    extra_dims=self.report_type.dimension_short_names,
+                    initial_data={'metric': default_metric.pk},
+                )
+
         else:
             reader = crt.get_reader_class(json_format=self.file_is_json())()
-            records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, self.data_file.name))
-        return records
+            yield from reader.file_to_records(
+                os.path.join(settings.MEDIA_ROOT, self.data_file.name)
+            )
 
     def file_is_json(self) -> bool:
         """
@@ -782,7 +771,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         return False
 
     def clashing_batches(self) -> models.QuerySet[ImportBatch]:
-        """ Get list of all conflicting batches """
+        """Get list of all conflicting batches"""
 
         if self.preflight and 'months' in self.preflight:
             # Months can be present in preflight
@@ -807,7 +796,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
     @cached_property
     def clashing_months(self) -> typing.Optional[typing.List[date]]:
-        """ Display which months are in conflict with data to be imported
+        """Display which months are in conflict with data to be imported
 
         return: list of months
         """
@@ -976,8 +965,8 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             raise WrongState("MDU can't be imported in current state")
 
     def related_months_data(self) -> typing.Tuple[typing.Dict[str, int], typing.List[str]]:
-        """ Returns the number of access logs per month of all existing data which matches this MDU
-            and a list of all metrics
+        """Returns the number of access logs per month of all existing data which matches this MDU
+        and a list of all metrics
         """
 
         # Get all counts for same (org, platform, report_type)

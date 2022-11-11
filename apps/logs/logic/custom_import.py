@@ -3,50 +3,17 @@ import typing
 from collections import Counter
 
 from celus_nigiri import CounterRecord
-from celus_nigiri.utils import parse_date_fuzzy
 from core.models import User
 from django.conf import settings
 from django.db.transaction import atomic
 from django.utils.timezone import now
-from django.utils.translation import gettext as _
-from logs.exceptions import ImportNotPossible, MultipleOrganizationsFound, OrganizationNotFound
+from logs.exceptions import OrganizationNotFound
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import ManualDataUpload, OrganizationPlatform
 from organizations.models import Organization
 
 logger = logging.getLogger(__name__)
-
-
-def custom_data_import_precheck(
-    header, rows, expected_dimensions=('Institution', 'Source', 'Title', 'Metric')
-) -> list:
-    problems = []
-    month_columns = []
-    # check that we understand all the column names
-    for i, col_name in enumerate(header):
-        if col_name in expected_dimensions:
-            pass
-        else:
-            month = parse_date_fuzzy(col_name)
-            if month is None:
-                problems.append(_('Column name not understood: "{}"').format(col_name))
-            else:
-                month_columns.append(i)
-    # check that there are numbers in the columns we expect them
-    for i, row in enumerate(rows):
-        for j in month_columns:
-            cell = row[j]
-            try:
-                int(cell)
-            except ValueError:
-                problems.append(
-                    _(
-                        'Value cannot be converted into integer, row {row}, '
-                        'column "{column}", value: "{value}"'
-                    ).format(row=i + 1, column=header[j], value=cell)
-                )
-    return problems
 
 
 def histograms_with_stats(

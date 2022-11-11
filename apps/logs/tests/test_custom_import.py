@@ -17,6 +17,11 @@ from publications.tests.conftest import platforms  # noqa
 from test_fixtures.entities.logs import ManualDataUploadFactory, ManualDataUploadFullFactory
 
 
+@pytest.fixture(params=[True, False])
+def enable_nibbler_for_celus_format(request):
+    yield request.param
+
+
 @pytest.mark.django_db
 class TestCustomImport:
 
@@ -32,6 +37,7 @@ class TestCustomImport:
         settings,
         master_admin_client,
         master_admin_identity,
+        enable_nibbler_for_celus_format,
     ):
         """
         Complex test
@@ -42,13 +48,16 @@ class TestCustomImport:
           - reimport the same data
           - test that the import does not create new AccessLogs
         """
+        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
         report_type = report_type_nd(0)
         organization = organizations[0]
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
+
         csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
-        file = StringIO(csv_content)
+        file = ContentFile(csv_content)
+        file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
 
         # upload the data
@@ -145,9 +154,12 @@ class TestCustomImport:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
+
         csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
-        file = StringIO(csv_content)
+        file = ContentFile(csv_content)
+        file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
+
         response = master_admin_client.post(
             reverse('manual-data-upload-list'),
             data={
@@ -210,14 +222,17 @@ class TestCustomImport:
         platforms,
         client,
         authentication_headers,
+        enable_nibbler_for_celus_format,
     ):
+        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
         identity, org = identity_by_user_type(user_type)
         report_type = report_type_nd(0)
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
         csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
-        file = StringIO(csv_content)
+        file = ContentFile(csv_content)
+        file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
 
         # upload the data
@@ -270,10 +285,15 @@ class TestCustomImport:
         report_type_nd,
         platforms,
     ):
+        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = True
         identity, org = identity_by_user_type(user_type)
         rt = report_type_nd(0)
+
+        csv_content = "Source,2019-01\naaaa,9\n'"
+        file = ContentFile(csv_content)
+        file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
-        file = File(StringIO('Source,2019-01\naaaa,9\n'))
+
         checksum, size = SourceFileMixin.checksum_fileobj(file)
         mdu = ManualDataUpload.objects.create(
             organization=org,
@@ -282,8 +302,8 @@ class TestCustomImport:
             owner_level=owner_level,
             checksum=checksum,
             file_size=size,
+            data_file=file,
         )
-        mdu.data_file.save('xxx', file)
         assert mdu.import_batches.count() == 0
         user = Identity.objects.get(identity=identity).user
         import_custom_data(mdu, user)
@@ -294,19 +314,27 @@ class TestCustomImport:
 
     @pytest.mark.parametrize(['content_prefix'], [[''], ['\ufeff']])
     def test_mdu_data_to_records(
-        self, organizations, report_type_nd, tmp_path, settings, content_prefix
+        self,
+        organizations,
+        report_type_nd,
+        tmp_path,
+        settings,
+        content_prefix,
+        enable_nibbler_for_celus_format,
     ):
         """
         Check that CSV data are correctly ingested - regardless of BOM presence
         """
+        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
         report_type = report_type_nd(0)
         organization = organizations[0]
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
+
         csv_content = f'{content_prefix}Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
         file = ContentFile(csv_content)
-        file.name = f"something.csv"
+        file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
 
         mdu = ManualDataUploadFactory.create(
@@ -336,8 +364,9 @@ class TestCustomImport:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
+
         file = ContentFile(content)
-        file.name = f"something.csv"
+        file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
 
         mdu = ManualDataUploadFactory.create(

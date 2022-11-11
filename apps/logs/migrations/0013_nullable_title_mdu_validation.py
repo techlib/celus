@@ -26,8 +26,7 @@ class Migration(migrations.Migration):
             model_name='manualdataupload',
             name='data_file',
             field=models.FileField(
-                upload_to=logs.models.where_to_store,
-                validators=[logs.models.validate_mime_type, logs.models.check_can_parse],
+                upload_to=logs.models.where_to_store, validators=[logs.models.validate_mime_type],
             ),
         ),
     ]

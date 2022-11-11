@@ -690,3 +690,6 @@ RELEASES_SOURCEFILE = config('RELEASES_SOURCEFILE', default='RELEASES.yaml')
 
 # nibbler
 ENABLE_NIBBLER = config('ENABLE_NIBBLER', cast=bool, default=False)
+ENABLE_NIBBLER_FOR_CELUS_FORMAT = config(
+    'ENABLE_NIBBLER_FOR_CELUS_FORMAT', cast=bool, default=False
+)

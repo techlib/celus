@@ -9,7 +9,7 @@ from test_fixtures.entities.logs import (
     MduState,
     MetricFactory,
 )
-from test_fixtures.entities.organizations import OrganizationFactory, OrganizationAltNameFactory
+from test_fixtures.entities.organizations import OrganizationAltNameFactory, OrganizationFactory
 from test_fixtures.scenarios.basic import (
     data_sources,
     metrics,
@@ -68,6 +68,7 @@ C,Metric2,4,8,12,18
             report_type=report_types["tr"],
             platform=platforms["standalone"],
             data_file__data=DATA,
+            data_file__filename="something.csv",
             state=MduState.INITIAL,
         )
 
