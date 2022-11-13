@@ -1,0 +1,41 @@
+- version: 5.0.0
+  title:
+    en: Celus version 5.0.0 is up and running!   (max_length=150, required=True)
+    cs: Nová verze Celus je tady!   (max_length=150, required=False, allow_null=True)
+  text:
+    en: |
+      ### New features
+
+      - it is now possible to tag titles, platforms and organizations and filter data by these tags in reporting. Try it out!
+      - reporting now includes filtering by whole years and simple charts output
+      - stored reports are accessible on the platform list page
+      - platform detail page now includes data coverage tab
+      - you can manually delete exports in reporting, otherwise they will be automatically deleted after seven days
+      - you can now import non-COUNTER data from a raw format (experimental feature)
+      - we added a "Select all" button to the SUSHI harvesting screen
+
+      #### New features for consortial admins
+
+      - you can now upload data for multiple organizations from one CSV file
+      - a list of all organizations under your consortial installations is now available under "Organizations" tab
+      - you can import non-COUNTER data for multiple organizations from one CSV file
+      - it is now possible to create consortial-wide platform
+
+    cs: |
+      ### Nové funkce
+      - nově je možné přidávat štítky k jednotlivým titulům, platformám i organizacím a podle štítků filtrovat data
+      - přidali jsme možnost filtrovat data podle celých roků a jednoduché grafy
+      - uložené reporty jsou k nalezení na stránce platforem (stejně jako pokrytí dat)
+      - exporty v reportingu lze manuálně smazat. Automaticky se mažou po sedmi dnech
+      - CELUS nyní umožňuje vkládat non-COUNTER data (funkce je zatím zkušební)
+      - přidali jsme možnost "Vybrat vše" na stránce stahovaní dat přes SUSHI
+
+      #### Nové funkce pro manažery konzorcií
+      - z jednoho CSV souboru lze nahrát data pro více organizací najednou
+      - na stránce "Organizace" nové naleznete přehled všech organizací spadajících pod Vaše konzorcium
+      - z jednoho CSV souboru lze nahrát NON-COUNTER data pro více organizací najednou
+      - přidali jsme možnost založit platformu pro celé konzorcium
+
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
