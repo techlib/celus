@@ -1,14 +1,14 @@
 - version: 5.0.0
   title:
-    en: Celus version 5.0.0 is up and running!   (max_length=150, required=True)
-    cs: Nová verze Celus je tady!   (max_length=150, required=False, allow_null=True)
+    en: Celus version 5.0.0 is up and running!
+    cs: Nová verze Celus je tady!
   text:
     en: |
       ### New features
 
       - it is now possible to tag titles, platforms and organizations and filter data by these tags in reporting. Try it out!
       - reporting now includes filtering by whole years and simple charts output
-      - stored reports are accessible on the platform list page
+      - when you create a report with platforms in rows, it is automatically made accessible on the platform list page
       - platform detail page now includes data coverage tab
       - you can manually delete exports in reporting, otherwise they will be automatically deleted after seven days
       - you can now import non-COUNTER data from a raw format (experimental feature)
@@ -25,7 +25,7 @@
       ### Nové funkce
       - nově je možné přidávat štítky k jednotlivým titulům, platformám i organizacím a podle štítků filtrovat data
       - přidali jsme možnost filtrovat data podle celých roků a jednoduché grafy
-      - uložené reporty jsou k nalezení na stránce platforem (stejně jako pokrytí dat)
+      - když vytvoříte report s platformami v řádcích, bude automaticky přístupný i na stránce se seznamem platforem
       - exporty v reportingu lze manuálně smazat. Automaticky se mažou po sedmi dnech
       - CELUS nyní umožňuje vkládat non-COUNTER data (funkce je zatím zkušební)
       - přidali jsme možnost "Vybrat vše" na stránce stahovaní dat přes SUSHI
@@ -39,3 +39,9 @@
   is_new_feature: TRUE
   is_update: TRUE
   is_bug_fix: TRUE
+
+  links:
+    - title:
+        en: More about tags
+        cs: Více o štítcích
+      link: https://docs.celus.net/tags.html

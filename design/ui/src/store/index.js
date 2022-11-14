@@ -314,6 +314,14 @@ export default new Vuex.Store({
     },
     afterAuthentication({ dispatch, state, getters }) {
       dispatch("loadOrganizations");
+      // store current version as last seen if user value is undefined
+      // this should only happen for new users, for whom we do not want to show the release notes
+      if (
+        state.user.extra_data?.last_seen_release === undefined ||
+        state.user.extra_data?.last_dismissed_release === undefined
+      ) {
+        dispatch("dismissLastRelease", true);
+      }
       dispatch("changeDateRangeObject", state.dateRangeIndex);
       dispatch("interest/fetchInterestGroups");
       dispatch("loadSushiCredentialsCount");
@@ -377,21 +385,25 @@ export default new Vuex.Store({
       //commit('setSelectedOrganizationId', null)
       commit("setOrganizations", null);
     },
-    async dismissLastRelease(context, markSeen) {
-      if (
-        context.state.latestPublishedRelease &&
-        "version" in context.state.latestPublishedRelease
-      ) {
+    async dismissLastRelease({ state, commit }, markSeen) {
+      if (state.latestPublishedRelease?.version) {
         try {
-          let data = {};
-          data["last_dismissed_release"] =
-            context.state.latestPublishedRelease.version;
-          if (markSeen) {
-            data["last_seen_release"] =
-              context.state.latestPublishedRelease.version;
+          let data = {
+            last_dismissed_release: state.latestPublishedRelease.version,
+            last_seen_release: markSeen
+              ? state.latestPublishedRelease.version
+              : undefined,
+          };
+          const ed = state.user.extra_data;
+          let existing = {
+            last_dismissed_release: ed.last_dismissed_release,
+            last_seen_release: markSeen ? ed.last_seen_release : undefined,
+          };
+          if (!isEqual(existing, data)) {
+            // only update if necessary
+            let response = await axios.post("/api/user/extra-data", data);
+            commit("storeUserExtraData", { extraData: response.data });
           }
-          let response = await axios.post("api/user/extra-data", data);
-          context.commit("storeUserExtraData", { extraData: response.data });
         } catch (error) {
           let warnSeen = markSeen ? " and last_seen_release" : "";
           console.warn(

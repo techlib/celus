@@ -169,4 +169,14 @@ ul.no-bullets {
   list-style: none;
   padding-left: 0;
 }
+
+.markdown {
+  h3 {
+    margin-bottom: 0.5rem;
+  }
+  h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+}
 </style>

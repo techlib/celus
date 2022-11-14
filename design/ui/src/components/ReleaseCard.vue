@@ -1,23 +1,30 @@
+<i18n lang="yaml" src="@/locales/common.yaml" />
+
 <template>
   <v-card class="mb-6" max-width="900">
-    <v-card-title>{{ getTheRightContent(release.title) }}</v-card-title>
-    <v-card-subtitle>{{ release.version }}</v-card-subtitle>
+    <v-card-title>
+      {{ $t("release.version", { number: release.version }) }}
+    </v-card-title>
     <v-card-text class="pb-0">
-      <p v-html="textMarkdownToHtml"></p>
+      <p v-html="textMarkdownToHtml" class="markdown"></p>
     </v-card-text>
     <v-card-text class="pt-0 pb-0">
-      <v-chip-group>
-        <v-chip :disabled="!release.is_new_feature">new feature</v-chip>
-        <v-chip :disabled="!release.is_update">update</v-chip>
-        <v-chip :disabled="!release.is_bug_fix">bug fix</v-chip>
-      </v-chip-group>
+      <v-chip :disabled="!release.is_new_feature" class="me-1">{{
+        $t("release.new_feature")
+      }}</v-chip>
+      <v-chip :disabled="!release.is_update" class="me-1">{{
+        $t("release.update")
+      }}</v-chip>
+      <v-chip :disabled="!release.is_bug_fix" class="me-1">{{
+        $t("release.bug_fix")
+      }}</v-chip>
     </v-card-text>
     <v-card-actions>
       <v-spacer />
       <v-btn
         :to="`/changelog#${versionToAnchor(release.version)}`"
         color="secondary"
-        v-text="'changelog'"
+        v-text="$t('release.changelog')"
       >
       </v-btn>
       <v-btn
@@ -25,7 +32,7 @@
         :key="'link-' + i"
         color="primary"
         :href="link.link"
-        target="blank"
+        target="_blank"
         v-text="getTheRightContent(link.title)"
       >
       </v-btn>
@@ -45,8 +52,7 @@ export default {
       return content[this.appLanguage] ? content[this.appLanguage] : content.en;
     },
     versionToAnchor(version) {
-      let anchor = "version-" + version.replace(/\./g, "_");
-      return anchor;
+      return "version-" + version.replace(/\./g, "_");
     },
   },
   computed: {
@@ -54,8 +60,7 @@ export default {
       appLanguage: "appLanguage",
     }),
     textMarkdownToHtml() {
-      let textHtml = marked.parse(this.getTheRightContent(this.release.text));
-      return textHtml;
+      return marked.parse(this.getTheRightContent(this.release.text));
     },
   },
 };

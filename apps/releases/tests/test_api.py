@@ -1,4 +1,5 @@
 import json
+import os
 import re
 
 import pytest
@@ -27,13 +28,20 @@ class TestReleasesAPI:
         response = clients['user1'].get(url)
         assert response.status_code == 200
 
-    def test_actual_releases_file(self, clients):
+    def test_current_releases_file(self, clients, settings):
         if parse_source_of_releases():
             serialized_source_data = ReleaseSerializer(data=parse_source_of_releases(), many=True)
-            assert serialized_source_data.is_valid(raise_exception=True) == True
+            assert serialized_source_data.is_valid(raise_exception=True)
         url = reverse('releases-list')
         response = clients['user1'].get(url)
         assert response.status_code == 200
+        with open(settings.RELEASES_SOURCEFILE, 'r') as f:
+            text = f.read()
+            if any(char for char in text if not char.isspace()):
+                # if the file contains anything but whitespace, it should produce at least one record
+                assert len(response.data) > 0
+            else:
+                assert len(response.data) == 0
 
     def test_releases_list_creation(self, clients, settings, releases_source):
         settings.RELEASES_SOURCEFILE = 'test-data/releases/test_filled_releases.yaml'

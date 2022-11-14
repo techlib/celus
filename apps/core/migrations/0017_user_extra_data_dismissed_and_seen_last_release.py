@@ -20,14 +20,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='user',
-            name='extra_data',
-            field=models.JSONField(
-                default=core.models.User.default_extra_data,
-                help_text='User state data that do not deserve a dedicated field',
-            ),
-        ),
         migrations.RunPython(
             insert_dismissed_and_seen_last_release, reverse_code=special.RunPython.noop,
         ),

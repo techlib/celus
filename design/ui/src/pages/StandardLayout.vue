@@ -2,22 +2,20 @@
 
 <i18n>
 en:
-    releases: Releases
+    releases: Celus releases
     email_not_verified: Your email is not verified
     impersonated: You are currently impersonating another user.
     no_help: No help available for this page
     help_panel_tt: Context specific help
-    new_release_message: New version has been released! Read more
-    link: here
+    click_for_more_info: Click for more information about the release
 
 cs:
-    releases: Vydání
+    releases: Vydání Celusu
     email_not_verified: Vaše emailová adresa není ověřená
     no_help: Pro tuto stránku není dostupná žádná nápověda
     help_panel_tt: Nápověda pro aktuální stránku
     impersonated: Právě zosobňujete jiného uživatele.
-    new_release_message: Nová verze byla vydána! Přečtěte si více
-    link: zde
+    click_for_more_info: Klikněte pro více informací o vydání
 </i18n>
 
 <template>
@@ -164,46 +162,19 @@ cs:
         text
         type="success"
       >
-        {{ $t("new_release_message") }}
-        <span
-          v-if="
-            'links' in latestPublishedRelease
-              ? latestPublishedRelease.links.length > 0
-              : false
-          "
-        >
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <span v-on="on">
-                <a
-                  :href="latestPublishedRelease.links[0].link"
-                  @click="dismissLastRelease(true)"
-                  target="_blank"
-                >
-                  {{ $t("link") }}</a
-                >
-              </span>
-            </template>
-            {{
-              this.latestPublishedRelease.links[0].title[this.appLanguage]
-                ? this.latestPublishedRelease.links[0].title[this.appLanguage]
-                : this.latestPublishedRelease.links[0].title.en
-            }}
-          </v-tooltip>
-        </span>
-        <span v-else>
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <span v-on="on">
-                <router-link :to="{ name: 'releases' }">
-                  {{ $t("link") }}</router-link
-                >
-              </span>
-            </template>
-            {{ $t("releases") }}
-          </v-tooltip>
-        </span>
-        <span>.</span>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <span v-on="on">
+              <router-link :to="{ name: 'releases' }">
+                {{
+                  latestPublishedRelease.title[appLanguage] ||
+                  latestPublishedRelease.title.en
+                }}</router-link
+              >
+            </span>
+          </template>
+          {{ $t("click_for_more_info") }}
+        </v-tooltip>
       </v-alert>
       <v-container fluid pa-0 pa-sm-2>
         <v-tooltip left v-if="showHelpButton">

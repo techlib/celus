@@ -18,19 +18,14 @@ cs:
       <v-layout column>
         <v-flex>
           <v-col v-if="releases === null"> <LargeSpinner /></v-col>
-          <v-col
-            v-else-if="
-              Object.keys(releases).length === 0 &&
-              Object.getPrototypeOf(releases) === Object.prototype
-            "
-          >
+          <v-col v-else-if="releases.length === 0">
             <p>{{ $t("releases_unavailable") }}</p></v-col
           >
           <v-col v-else>
             <ReleaseCard
               v-for="release in releases"
               :release="release"
-              :key="release.id"
+              :key="release.version"
           /></v-col>
         </v-flex>
       </v-layout>
@@ -49,11 +44,13 @@ export default {
     ReleaseCard,
     LargeSpinner,
   },
+
   data() {
     return {
       releases: null,
     };
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",

@@ -20,7 +20,7 @@ class Releases(ViewSet):
             serializer.is_valid(raise_exception=True)
             return Response(serializer.validated_data)
         else:
-            return Response({})
+            return Response([])
 
     @action(detail=False, methods=['GET'])
     def latest(self, request):

@@ -261,6 +261,12 @@ en:
     importing: Tagging in progress
     imported: Tag assigned
     undoing: Unassigning tags
+  release:
+    bug_fix: Bug fix
+    new_feature: New feature
+    update: Update
+    changelog: Changelog
+    version: Version {number}
 
 cs:
   pages:
@@ -525,3 +531,9 @@ cs:
     importing: Probíhá štítkování
     imported: Štítkování dokončeno
     undoing: Odstraňování štítků
+  release:
+    bug_fix: Oprava chyby
+    new_feature: Nová funkce
+    update: Aktualizace
+    changelog: Seznam změn
+    version: Verze {number}
