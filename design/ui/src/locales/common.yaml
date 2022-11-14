@@ -148,7 +148,7 @@ en:
     group_by_class: Group by class
     tag_name: Tag name
     tag_class: Tag class
-    new_tag: Create new tag
+    new_tag: New tag
     tags: Tags
     tag: Tag
     text_color: Text color
@@ -160,7 +160,7 @@ en:
     tag_scope: Tag scope
     tag_scope_hint: What type of object can this tag be assigned to
     all_tags: All
-    new_tag_class: Create new tag class
+    new_tag_class: New tag class
     tag_class_name: Tag class name
     tag_can_see: Who can see tag
     tag_can_assign: Who can assign tag
@@ -421,7 +421,7 @@ cs:
     group_by_class: Seskupit podle typu
     tag_name: Název štítku
     tag_class: Typ štítku
-    new_tag: Přidat nový štítek
+    new_tag: Nový štítek
     tags: Štítky
     tag: Štítek
     text_color: Barva textu
@@ -433,7 +433,7 @@ cs:
     tag_scope: Cíl štítku
     tag_scope_hint: K jakému typu objektu může být štítek připojen
     all_tags: Všechny
-    new_tag_class: Přidat nový typ štítku
+    new_tag_class: Nový typ štítku
     tag_class_name: Název typu štítku
     tag_can_see: Kdo štítek uvidí
     tag_can_assign: Kdo může štítek přiřazovat

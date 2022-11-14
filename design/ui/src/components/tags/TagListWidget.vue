@@ -7,6 +7,8 @@ en:
   confirm_tag_class_delete: Confirm tag class delete
   delete_tag_class_tag_count: Do you want to delete tag class "{tag_class}" with {count} tag? | Do you want to delete tag class "{tag_class}" with {count} tags?
   tag_class_delete_success: Tag class "{tag_class}" was successfully deleted
+  performance_warning: In order to optimize performance when many tags are shown, only the text of the tags is shown, not a full preview.
+  show_system_tags: Show system tags
 
 cs:
   confirm_tag_delete: Potvrzení smazání štítku
@@ -15,6 +17,8 @@ cs:
   confirm_tag_class_delete: Potvrzení smazání typu štítků
   delete_tag_class_tag_count: Opravdu chcete smazat typ štítků "{name}" s {count} štítkem? | Opravdu chcete smazat typ štítků "{name}" s {count} štítky?
   tag_class_delete_success: Typ štítků "{name}" byl úspěšně smazán
+  performance_warning: Pro optimalizaci výkonu, když je zobrazeno mnoho štítků, je zobrazen pouze text štítku, nikoliv plný náhled.
+  show_system_tags: Zobrazit systémové štítky
 </i18n>
 
 <template>
@@ -24,13 +28,20 @@ cs:
       :headers="headers"
       :loading="loading"
       item-key="pk"
-      :items-per-page="50"
-      :footer-props="{ itemsPerPageOptions: [50, 100, -1] }"
+      :items-per-page="-1"
+      hide-default-footer
       :search="search"
       :group-by="groupByClass ? '_group_sorter' : null"
       :custom-group="groupingFn"
     >
       <template #top="">
+        <v-row v-if="optimizePerformance">
+          <v-col cols="12" class="pb-0">
+            <v-alert type="info" dense text>
+              {{ $t("performance_warning") }}
+            </v-alert>
+          </v-col>
+        </v-row>
         <v-row class="d-flex">
           <v-col class="align-self-center" cols="auto">
             <AddTagClassButton @saved="fetchTagClasses()" small />
@@ -39,6 +50,12 @@ cs:
             <AddTagButton @saved="fetchTags()" small />
           </v-col>
           <v-spacer></v-spacer>
+          <v-col cols="auto">
+            <v-switch
+              v-model="showSystemTags"
+              :label="$t('show_system_tags')"
+            />
+          </v-col>
           <v-col>
             <v-select
               :items="tagScopes"
@@ -46,15 +63,16 @@ cs:
               :label="$t('labels.tag_scope')"
             />
           </v-col>
-          <v-col>
+          <v-col cols="auto" v-if="!optimizePerformance">
             <v-switch v-model="showClass" :label="$t('labels.show_class')" />
           </v-col>
-          <v-col>
+          <!-- the following switch is probably not very useful, let's turn off -->
+          <!--v-col cols="auto">
             <v-switch
               v-model="groupByClass"
               :label="$t('labels.group_by_class')"
             />
-          </v-col>
+          </v-col-->
           <v-col>
             <v-text-field
               v-model="search"
@@ -65,12 +83,21 @@ cs:
         </v-row>
       </template>
 
-      <template #item.name="{ item }">
+      <template #item.name="{ item }" v-if="optimizePerformance">
+        <span class="fa fa-tag pe-1" :style="{ color: item.bg_color }"></span>
+        {{ item.name }}
+      </template>
+      <template #item.name="{ item }" v-else>
         <TagChip :tag="item" :show-class="showClass" link />
       </template>
 
-      <template #item._group_sorter="{ item }">
+      <template #item._group_sorter="{ item }" v-if="optimizePerformance">
         {{ item.tag_class.name }}
+        <span class="text-caption text--secondary"
+          >[{{ $t(item.tag_class.scope) }}]</span
+        >
+      </template>
+      <template #item._group_sorter="{ item }" v-else>
         <TagClassScopeWidget
           :scope="item.tag_class.scope"
           class="pl-3 text-caption text--disabled"
@@ -176,6 +203,7 @@ import AddTagClassButton from "@/components/tags/AddTagClassButton";
 import tagAccessLevels from "@/mixins/tagAccessLevels";
 import EditTagClassWidget from "@/components/tags/EditTagClassWidget";
 import TagClassScopeWidget from "@/components/tags/TagClassScopeWidget";
+import { accessLevels } from "@/libs/tags";
 
 export default {
   name: "TagListWidget",
@@ -188,6 +216,15 @@ export default {
     TagChip,
   },
   mixins: [cancellation, tagAccessLevels],
+
+  props: {
+    performanceThreshold: {
+      // if the number of tags is above this, we don't show the tag chips
+      // and try to optimize the performance
+      type: Number,
+      default: 200,
+    },
+  },
 
   data() {
     return {
@@ -203,6 +240,7 @@ export default {
       editedTagClass: null,
       showClassEditDialog: false,
       showClass: false,
+      showSystemTags: false,
     };
   },
 
@@ -237,10 +275,14 @@ export default {
       ];
     },
     visibleTags() {
+      let out = this.tags;
       if (this.tagScope) {
-        return this.tags.filter((tag) => tag.tag_class.scope === this.tagScope);
+        out = out.filter((tag) => tag.tag_class.scope === this.tagScope);
       }
-      return this.tags;
+      if (!this.showSystemTags) {
+        out = out.filter((tag) => tag.can_assign !== accessLevels.SYSTEM);
+      }
+      return out;
     },
     tagScopes() {
       return [
@@ -255,6 +297,9 @@ export default {
       this.tags.forEach((tag) => map.set(tag.tag_class.pk, tag.tag_class));
       this.tagClasses.forEach((tc) => map.set(tc.pk, tc));
       return map;
+    },
+    optimizePerformance() {
+      return this.visibleTags.length > this.performanceThreshold;
     },
   },
 
@@ -396,4 +441,13 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+.tag {
+  padding: 0.5rem 0.75rem;
+  border-radius: 1.5rem;
+
+  span.fa {
+    font-size: 0.75rem;
+  }
+}
+</style>
