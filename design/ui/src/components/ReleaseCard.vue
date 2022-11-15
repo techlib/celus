@@ -4,20 +4,25 @@
   <v-card class="mb-6" max-width="900">
     <v-card-title>
       {{ $t("release.version", { number: release.version }) }}
+      <v-spacer />
+      <span class="ps-6">
+        <template v-for="attr in releaseAttrs">
+          <v-tooltip bottom v-if="release[`is_${attr.name}`]">
+            <template #activator="{ on }">
+              <v-chip class="ps-2 me-1" :color="attr.color" v-on="on">
+                <v-icon color="white" class="pe-2 ps-0" small>{{
+                  attr.icon
+                }}</v-icon>
+                {{ $t(`release.${attr.name}`) }}
+              </v-chip>
+            </template>
+            <span>{{ $t(`release.${attr.name}_tt`) }}</span>
+          </v-tooltip>
+        </template>
+      </span>
     </v-card-title>
     <v-card-text class="pb-0">
       <p v-html="textMarkdownToHtml" class="markdown"></p>
-    </v-card-text>
-    <v-card-text class="pt-0 pb-0">
-      <v-chip :disabled="!release.is_new_feature" class="me-1">{{
-        $t("release.new_feature")
-      }}</v-chip>
-      <v-chip :disabled="!release.is_update" class="me-1">{{
-        $t("release.update")
-      }}</v-chip>
-      <v-chip :disabled="!release.is_bug_fix" class="me-1">{{
-        $t("release.bug_fix")
-      }}</v-chip>
     </v-card-text>
     <v-card-actions>
       <v-spacer />
@@ -46,7 +51,19 @@ import { mapState } from "vuex";
 
 export default {
   name: "ReleaseCard",
+
   props: ["release"],
+
+  data() {
+    return {
+      releaseAttrs: [
+        { name: "new_feature", color: "success", icon: "fa-plus" },
+        { name: "update", color: "info", icon: "fa-arrow-up" },
+        { name: "bug_fix", color: "warning", icon: "fa-bug" },
+      ],
+    };
+  },
+
   methods: {
     getTheRightContent(content) {
       return content[this.appLanguage] ? content[this.appLanguage] : content.en;
@@ -55,6 +72,7 @@ export default {
       return "version-" + version.replace(/\./g, "_");
     },
   },
+
   computed: {
     ...mapState({
       appLanguage: "appLanguage",

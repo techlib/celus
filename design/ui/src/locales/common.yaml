@@ -265,8 +265,11 @@ en:
     bug_fix: Bug fix
     new_feature: New feature
     update: Update
-    changelog: Changelog
+    changelog: Full changelog
     version: Version {number}
+    bug_fix_tt: This releases contains bug fixes
+    new_feature_tt: This release contains new features
+    update_tt: This release contains updates of existing features
 
 cs:
   pages:
@@ -535,5 +538,8 @@ cs:
     bug_fix: Oprava chyby
     new_feature: Nová funkce
     update: Aktualizace
-    changelog: Seznam změn
+    changelog: Úplný seznam změn
     version: Verze {number}
+    bug_fix_tt: Toto vydaní obsahuje opravy chyb
+    new_feature_tt: Toto vydaní obsahuje nové funkce
+    update_tt: Toto vydaní obsahuje aktualizace existujících funkcí
