@@ -14,7 +14,7 @@ cs:
         <h2>{{ $t("pages.tags") }}</h2>
       </v-col>
       <v-col cols="auto">
-        <v-alert type="" outlined>
+        <v-alert outlined>
           <i18n path="hint">
             <template #button>
               <v-btn color="info" x-small fab>
