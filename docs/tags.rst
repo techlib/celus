@@ -218,3 +218,86 @@ shown tags will be shown in a separate row at the bottom of the table.
 Please note that if you limit the shown tags to a specific tag class, the "remainder" row will
 contain the usage of items which are not tagged with any of the tags of the selected class -
 regardless of whether they have other tags assigned.
+
+-----------------------------------------
+Tagging many titles at once - title lists
+-----------------------------------------
+
+It is very common to want to tag many titles at once. Typically you would want to tag all titles
+belonging to one collection. To make this process easier, Celus allows you to upload a file
+containing a list of titles and then assign a tag to all of them at once.
+
+To create a title list, go to the “Title lists” section of the main menu and click the “Upload
+a new list” button. You will be presented with a form where you can upload a CSV file with the
+titles.
+
+.. image:: images/tagging-batch-upload-5_0.png
+   :scale: 60%
+
+The file must contain at least one column with the title IDs. It can be any of ISSN, eISSN,
+ISBN. This means that at least on of the columns should be named "ISSN", "eISSN" or "ISBN"
+(case is not important, so both "issn" and "ISSN" will do).
+There may be other columns present, but they will be ignored.
+
+A example file may look like this:
+
+.. image:: images/tagging-batch-example-5_0.png
+   :scale: 60%
+
+After you upload the file, a preprocessing step will be performed. Depending on the number of
+titles in the file, this may take a few minutes. When the preprocessing is done, you will be
+presented with an overview of how well the titles were matched to the database.
+
+.. image:: images/tagging-batch-preprocess-5_0.png
+   :scale: 60%
+
+In the example above, you can see that out of a 1000 rows in the file (excluding the header),
+521 titles were matched to the database. Also, there were 530 rows which did not match any titles
+in the database. Please note that one row may match more than one title, so the sum of the matched
+titles and the unmatched rows may be higher than the number of rows in the file. If fact, the
+number of matched titles may be higher than the total number of rows in the file.
+
+If you wish to review in detail which titles were matched and which were not, there is a link
+to the annotated source file. This file will contain the same rows as the original file, but
+an extra column (`_Celus info_`) will be added with the result of the matching. It shows the
+number of matched for that line and contains links to the matched titles.
+
+You will also be shown which columns were used for the matching. If you find that some of the
+columns you expected to be used were not used, you can recheck and reupload the file.
+
+When you are satisfied with the results, you can select the tag to be used and click the
+“Assign tag” button.
+
+.. image:: images/tagging-batch-assign-5_0.png
+   :scale: 60%
+
+After some crunching, the tag will be assigned to all titles which were matched
+and the tagging statistics will be updated (the numbers of matched titles may change slightly
+if new titles appeared in the database between the time of upload and time of tagging).
+
+.. image:: images/tagging-batch-done-5_0.png
+   :scale: 60%
+
+At this point, the tag is already applied to all the matched titles and you can use it everywhere
+else in Celus.
+
+If you find out that some of the titles were not matched correctly or have some other reason, you
+can remove the tag from all the tagged titles. The title list remembers which titles were tagged
+from that particular file, so if you hit the “Unassign tag” button above, the tag will be removed
+only from the matched titles. It will be preserved for the titles which were tagged manually or
+from other files.
+
+The same will happen if you delete the title list completely. The only difference is that you
+would loose the uploaded file itself and would need to reupload it if you want to use it again.
+
+You can accomplish this by clicking the “trashbin” button in the title list table shown below.
+
+.. image:: images/tagging-batch-list-5_0.png
+   :scale: 60%
+
+Please note that you can interrupt the tagging process at any time and return to it later.
+Any uploaded title list will be preserved in the list of title lists and you can continue
+working with it where you left off.
+
+.. image:: images/tagging-batch-list-2-5_0.png
+   :scale: 60%
