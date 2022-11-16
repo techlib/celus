@@ -102,6 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SUSHI credentials verification is checked immediately after the test dialog is closed to avoid
   the need to reload the page
 - double loading of data for the Dashboard top-titles widgets was fixed
+- a corner case where stale data could be displayed in reporting when ordering of data was changed
+  during data loading was fixed
 
 #### Backend
 

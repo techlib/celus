@@ -214,6 +214,7 @@ export default {
       errorCode: null,
       errorDetails: null,
       cancelTokenSource: null,
+      justFetchingParams: null,
       splitParts: [],
       currentPart: null,
       loadingParts: false,
@@ -436,9 +437,8 @@ export default {
       this.cancelTokenSource.cancel("request canceled by user");
     },
     async fetchData() {
-      this.loadingData = true;
       this.remainder = null;
-      this.cancelTokenSource = axios.CancelToken.source();
+      // prepare the request params
       let filterOverride = null;
       if (this.contextOverride) {
         filterOverride = {
@@ -461,6 +461,28 @@ export default {
       if (this.report.splitBy && this.currentPart) {
         params["part"] = toBase64JSON([this.currentPart]);
       }
+
+      // check if a request is already in progress and if it is for different
+      // parameters or for the same ones
+      // - if it is for different parameters, we cancel the previous request
+      // - if it is for the same parameters, we do nothing
+      //
+      // BTW, we need this because the report may be fetched twice
+      // - once explicitly by user pressing a button
+      // - once implicitly by the watcher on the report properties
+      if (this.cancelTokenSource) {
+        if (!isEqual(params, this.justFetchingParams)) {
+          this.cancelTokenSource.cancel("request cancelled by newer request");
+        } else {
+          // this request is already in progress, so we do nothing
+          return;
+        }
+      }
+
+      // start fetching data
+      this.loadingData = true;
+      this.cancelTokenSource = axios.CancelToken.source();
+      this.justFetchingParams = { ...params };
       try {
         let resp = await axios({
           method: "GET",
@@ -472,7 +494,7 @@ export default {
         this.totalRowCount = resp.data.count;
       } catch (error) {
         if (axios.isCancel(error)) {
-          console.debug("Request cancelled by customer");
+          console.debug("Cancelled request: ", error.message);
         } else if (
           error.response.data &&
           error.response.data.error &&
@@ -490,6 +512,7 @@ export default {
       } finally {
         this.loadingData = false;
         this.cancelTokenSource = null;
+        this.justFetchingParams = null;
       }
       // post-processing
       this.dataComputing = true;
@@ -626,7 +649,7 @@ export default {
     options: {
       deep: true,
       handler(oldVal, newVal) {
-        if (!this.loading && !isEqual(newVal, oldVal)) {
+        if (!isEqual(newVal, oldVal)) {
           this.fetchData();
         }
       },
