@@ -2,11 +2,13 @@ from typing import Union
 from unittest.mock import patch
 
 import pytest
+from django.db import connection
 from django.db.models import Sum
 from hcube.api.models.aggregation import Sum as HSum
 
 from logs.cubes import ch_backend, AccessLogCube
 from logs.logic.clickhouse import (
+    compare_db_with_clickhouse,
     sync_accesslogs_with_clickhouse_superfast,
     sync_import_batch_with_clickhouse,
     process_one_import_batch_sync_log,
@@ -334,3 +336,57 @@ class TestClickhouseSync:
         with pytest.raises(TypeError):
             # value error about string not being comparable to int should be raised
             sync_import_batch_with_clickhouse(ibs[0], batch_size='aaaa')
+
+
+@pytest.mark.clickhouse
+@pytest.mark.usefixtures('clickhouse_db')
+@pytest.mark.django_db(transaction=True)
+class TestClickhouseSync:
+    @pytest.mark.parametrize(
+        ['in_db', 'in_ch'],
+        [
+            ([0, 1, 2], [0, 1, 2]),  # all ibs are in db and in ch
+            ([0, 1, 2], [0, 1]),  # ib 2 is missing in ch
+            ([0, 1], [0, 1, 2]),  # ib 2 is missing in db
+            ([], [0, 1, 2]),  # all ibs are missing in db
+            ([0, 1, 2], []),  # all ibs are missing in ch
+            ([0, 1], [0, 2]),  # ib 1 is missing in both db and ch
+            ([1], [0, 2]),  # no overlap between db and ch
+            ([0, 2], [1]),  # no overlap between db and ch
+        ],
+    )
+    def test_compare_with_clickhouse(
+        self, counter_records, organizations, report_type_nd, in_db, in_ch
+    ):
+        platform, _created = Platform.objects.get_or_create(
+            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        )
+        data = [
+            ['Title1', '2018-01-01', '1v1', '2v1', '3v1', 1],
+            ['Title1', '2018-01-01', '1v2', '2v1', '3v1', 2],
+            ['Title2', '2018-01-01', '1v2', '2v2', '3v1', 4],
+            ['Title1', '2018-02-01', '1v1', '2v1', '3v1', 8],
+            ['Title2', '2018-02-01', '1v1', '2v2', '3v2', 16],
+            ['Title1', '2018-03-01', '1v1', '2v3', '3v2', 32],
+        ]
+        crs = list(counter_records(data, metric='hits', platform='Platform1'))
+        organization = organizations[0]
+        report_type = report_type_nd(3)
+        import_batches, _stats = import_counter_records(
+            report_type, organization, platform, crs, skip_clickhouse_sync=False
+        )
+        assert len(import_batches) == 3
+        for ib_idx, ib in enumerate(import_batches):
+            if ib_idx not in in_db:
+                with connection.cursor() as cursor:
+                    # we must do a low level query to delete the ibs from db
+                    # without disturbing clickhouse
+                    cursor.execute('DELETE FROM logs_accesslog WHERE import_batch_id=%s', [ib.pk])
+                    cursor.execute('DELETE FROM logs_importbatch WHERE id = %s', [ib.pk])
+                assert ImportBatch.objects.filter(pk=ib.pk).count() == 0
+            if ib_idx not in in_ch:
+                ch_backend.delete_records(AccessLogCube.query().filter(import_batch_id=ib.pk))
+        result = compare_db_with_clickhouse()
+        print(result.stats)
+        assert len(result.import_batches_to_resync) == len(set(in_db) - set(in_ch))
+        assert len(result.import_batches_to_delete) == len(set(in_ch) - set(in_db))
