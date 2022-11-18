@@ -1,12 +1,17 @@
 import logging
+from collections import Counter
+from dataclasses import dataclass, field
+from itertools import chain
+from typing import Dict, List, Set
 
-from django.db.models import Q, F
+from django.db.models import F, Q, Sum
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
+from hcube.api.models.aggregation import Sum as HSum
 
 from core.context_managers import needs_clickhouse_sync
 from ..cubes import AccessLogCube, ch_backend
-from ..models import ImportBatch, AccessLog, ImportBatchSyncLog
+from ..models import AccessLog, ImportBatch, ImportBatchSyncLog
 
 logger = logging.getLogger(__name__)
 
@@ -239,3 +244,78 @@ def process_one_import_batch_sync_log(import_batch_id):
         resync_import_batch_with_clickhouse(ib)
     else:
         raise ValueError(f'ImportBatchSyncLog.state has unknown value "{sync_log.state}"')
+
+
+@dataclass
+class ComparisonResult:
+    stats: Dict[str, int] = field(default_factory=Counter)
+    import_batches_to_resync: Set[int] = field(default_factory=set)
+    import_batches_to_delete: Set[int] = field(default_factory=set)
+    log: List[str] = field(default_factory=list)
+
+
+def compare_db_with_clickhouse() -> ComparisonResult:
+    result = ComparisonResult()
+    in_db = (
+        AccessLog.objects.values('import_batch_id', 'metric_id')
+        .filter(report_type__materialization_spec__isnull=True)
+        .order_by('import_batch_id', 'metric_id')
+        .annotate(score=Sum('value'))
+        .iterator()
+    )
+    in_ch = ch_backend.get_records(
+        AccessLogCube.query()
+        .group_by('import_batch_id', 'metric_id')
+        .order_by('import_batch_id', 'metric_id')
+        .aggregate(score=HSum('value'))
+    )
+
+    ch_rec = next(in_ch, None)
+    db_rec = next(in_db, None)
+    while db_rec:
+        db_ib_id = db_rec['import_batch_id']
+        db_m_id = db_rec['metric_id']
+        db_score = db_rec['score']
+        if ch_rec and (db_ib_id, db_m_id) == (ch_rec.import_batch_id, ch_rec.metric_id):
+            # we are on the same record
+            if db_score != ch_rec.score:
+                result.log.append(f'!! {db_ib_id}, {db_m_id}: DB: {db_score}, CH: {ch_rec.score}')
+                result.stats['value mismatch'] += 1
+                result.import_batches_to_resync.add(db_ib_id)
+            else:
+                result.stats['ok'] += 1
+            ch_rec = next(in_ch, None)
+            db_rec = next(in_db, None)
+        elif ch_rec and (db_ib_id, db_m_id) > (ch_rec.import_batch_id, ch_rec.metric_id):
+            # this record is only in CH
+            while ch_rec and (db_ib_id, db_m_id) > (ch_rec.import_batch_id, ch_rec.metric_id):
+                result.log.append(
+                    f'CH {ch_rec.import_batch_id}, {ch_rec.metric_id}: {ch_rec.score}'
+                )
+                result.stats['ch extra'] += 1
+                result.import_batches_to_delete.add(ch_rec.import_batch_id)
+                ch_rec = next(in_ch, None)
+        else:
+            # this record is only in DB
+            result.log.append(f'DB {db_ib_id}, {db_m_id}: {db_score}')
+            result.stats['db extra'] += 1
+            result.import_batches_to_resync.add(db_ib_id)
+            db_rec = next(in_db, None)
+    # we might have some records left in CH
+    # if ch was exhausted, ch_rec should be None, if not, we have to add the rest
+    all_in_ch = chain([ch_rec], in_ch) if ch_rec else in_ch
+    for ch_rec in all_in_ch:
+        result.log.append(f'CH {ch_rec.import_batch_id}, {ch_rec.metric_id}: {ch_rec.score}')
+        result.stats['ch extra'] += 1
+        result.import_batches_to_delete.add(ch_rec.import_batch_id)
+    return result
+
+
+@needs_clickhouse_sync
+def deal_with_comparison_results(results: ComparisonResult):
+    for ib in ImportBatch.objects.filter(pk__in=results.import_batches_to_resync):
+        logger.debug('Resyncing #%s', ib.pk)
+        resync_import_batch_with_clickhouse(ib)
+    for ib_id in results.import_batches_to_delete:
+        logger.debug('Deleting #%s', ib_id)
+        AccessLogCube.delete_import_batch(ch_backend, ib_id)
