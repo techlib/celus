@@ -206,6 +206,8 @@ def resync_import_batch_with_clickhouse(import_batch: ImportBatch):
 
         on_commit(error)
     else:
+        sync_log.state = ImportBatchSyncLog.STATE_SYNC
+        sync_log.save()
 
         def do_sync():
             sync_import_batch_with_clickhouse(import_batch)
