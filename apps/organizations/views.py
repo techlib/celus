@@ -1,4 +1,5 @@
 import json
+import logging
 from collections import Counter
 from time import monotonic
 
@@ -29,6 +30,9 @@ from recache.util import recache_queryset
 from sushi.models import SushiCredentials
 from .models import UserOrganization, Organization
 from .serializers import OrganizationSerializer, OrganizationSimpleSerializer
+
+
+logger = logging.getLogger(__name__)
 
 
 class OrganizationViewSet(ReadOnlyModelViewSet):
@@ -236,7 +240,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             sub_where_parts.append('date >= %(date__gte)s')
             where_params.update(date_filter)
         if 'date__lte' in date_filter:
-            sub_where_parts.append('A.date <= %(date__lte)s')
+            sub_where_parts.append('date <= %(date__lte)s')
             where_params.update(date_filter)
         if org_filter:
             main_where_parts.append(
@@ -265,6 +269,8 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             ON (A."title_id" = B."title_id" AND A."organization_id" = B."organization_id")
             {main_where_part}
           GROUP BY A."platform_id", B."platform_id";'''
+
+        logger.debug('Overlap raw query: %s', query)
 
         # neither recache not cachalot do support raw queries, so we cache it using django caching
         cache_key = text_hash(query % where_params)

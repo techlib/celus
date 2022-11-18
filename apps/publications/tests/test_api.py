@@ -792,6 +792,17 @@ class TestPlatformTitleAPI:
         assert (
             len([rec for rec in data if rec['platform1'] == rec['platform2']]) == 1
         ), '1 self-overlap'
+        # then with end_date which removes the overlapping records
+        resp = authenticated_client.get(
+            reverse('organization-platform-overlap', args=[organization.pk]),
+            {'start': '2019-01', 'end': '2019-02'},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, 'only 1 self overlap'
+        assert (
+            len([rec for rec in data if rec['platform1'] == rec['platform2']]) == 1
+        ), '1 self-overlap'
 
     def test_organization_all_platform_overlap(
         self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
