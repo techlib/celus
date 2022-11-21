@@ -329,6 +329,10 @@ export default {
       default: null,
       type: Number,
     },
+    noCoverage: {
+      default: false,
+      type: Boolean,
+    }, // exclude coverage from chart
   },
   data() {
     return {
@@ -896,12 +900,16 @@ export default {
   },
   mounted() {
     this.loadData();
-    this.loadCoverageData();
+    if (!this.noCoverage) {
+      this.loadCoverageData();
+    }
   },
   watch: {
     dataURL() {
       this.loadData();
-      this.loadCoverageData();
+      if (!this.noCoverage) {
+        this.loadCoverageData();
+      }
     },
     yearAsSeries() {
       this.ingestData(this.rawData);

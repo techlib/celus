@@ -92,6 +92,7 @@ cs:
           :show-mark-line="showMarkLine"
           :raw-report-type="selectedReportView.is_proxy"
           :metric="selectedMetric"
+          :no-coverage="noCoverage"
           ref="chart"
         >
         </APIChart>
@@ -139,6 +140,7 @@ export default {
     fixedChart: { required: false, default: null },
     // if `preferFullReport` is true then the full/master report will be selected by default
     preferFullReport: { default: false, type: Boolean },
+    noCoverage: { default: false, type: Boolean }, // exclude coverage from chart
   },
   data() {
     return {

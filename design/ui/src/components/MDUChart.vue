@@ -9,6 +9,7 @@
           :report-views-url="reportViewsUrl"
           prefer-full-report
           ignore-organization
+          no-coverage
         />
       </v-col>
     </v-row>
