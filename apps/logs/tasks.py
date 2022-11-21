@@ -2,9 +2,11 @@
 Celery tasks reside here
 """
 import logging
+import traceback
 from collections import Counter
 from datetime import timedelta
-import traceback
+from random import randint
+from time import monotonic
 
 import celery
 from django.db import DatabaseError
@@ -12,22 +14,22 @@ from django.db.models import Q
 from django.db.transaction import atomic
 from django.utils.timezone import now
 
-from core.models import User
 from core.context_managers import needs_clickhouse_sync
 from core.logic.error_reporting import email_if_fails
+from core.models import User
 from core.task_support import cache_based_lock
 from core.tasks import async_mail_admins
 from logs.exceptions import DataStructureError
-from logs.logic.custom_import import import_custom_data
 from logs.logic.attempt_import import import_one_sushi_attempt, check_importable_attempt
-from logs.logic.clickhouse import process_one_import_batch_sync_log
+from logs.logic.clickhouse import process_one_import_batch_sync_log, compare_db_with_clickhouse
+from logs.logic.custom_import import custom_import_preflight_check
+from logs.logic.custom_import import import_custom_data
 from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import (
     sync_interest_by_import_batches,
     recompute_interest_by_batch,
     smart_interest_sync,
 )
-from logs.logic.custom_import import custom_import_preflight_check
 from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
@@ -200,6 +202,40 @@ def process_outstanding_import_batch_sync_logs_task(age_threshold: int = 600):
         )
     for sync_log in qs:
         process_one_import_batch_sync_log_task.delay(sync_log.pk)
+
+
+@celery.shared_task
+@email_if_fails
+@needs_clickhouse_sync
+@atomic
+def compare_db_with_clickhouse_task():
+    """
+    Compares the database with Clickhouse and sends an email with the results
+    """
+    start = monotonic()
+    result = compare_db_with_clickhouse()
+    if list(result.stats.keys()) != ['ok']:
+        # there are some differences - we need to report it to admins
+        # (in the future we might want to fix it automatically, but not now)
+        log = '\n'.join(result.log)
+        body = (
+            f'**Differences found**:\n\n{log}\n\n**Stats**:\n\n{result.stats}\n\n'
+            f'Duration: {monotonic() - start:.2f} s'
+        )
+        async_mail_admins.delay('Found differences between database and Clickhouse', body)
+        logger.warning('Send email about differences between database and Clickhouse: %s', body)
+
+
+@celery.shared_task
+@email_if_fails
+def compare_db_with_clickhouse_delayed_task():
+    """
+    Schedules `compare_db_with_clickhouse_task` to be run in the future with a random delay.
+    This is used to avoid running the task at the same time on all containers.
+    """
+    delay = randint(0, 30 * 60)
+    logger.info('Scheduling `compare_db_with_clickhouse_task` in %d seconds', delay)
+    compare_db_with_clickhouse_task.apply_async(countdown=delay)
 
 
 @celery.shared_task

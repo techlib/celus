@@ -398,7 +398,7 @@ class SourceFileMixin(models.Model):
         """
         from core.tasks import async_mail_admins
 
-        async_mail_admins(
+        async_mail_admins.delay(
             'File checksum mismatch',
             f'File: {getattr(fileobj, "name", "unknown")}\n'
             f'Expected: {self.checksum}\n'
