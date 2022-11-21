@@ -1,4 +1,5 @@
 import codecs
+import logging
 import tempfile
 from abc import ABC, abstractmethod
 from itertools import chain, islice
@@ -26,6 +27,8 @@ from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import AccessLog, DimensionText, ReportType
 from organizations.models import Organization
 from tags.models import Tag, TagScope
+
+logger = logging.getLogger(__name__)
 
 
 class FlexibleDataExporter(ABC):
@@ -480,10 +483,11 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 qs = self.slicer.get_data()
                 sheetname = "report"
                 sheet = workbook.add_worksheet(sheetname)
-                self.write_qs_to_output(
+                row_count = self.write_qs_to_output(
                     sheet, qs, extra_row_fn=self._remainder_fn(), progress_monitor=progress_monitor,
                 )
-                self.add_chart_sheet(workbook, sheetname, row_count=qs.count())
+                if row_count > 0:
+                    self.add_chart_sheet(workbook, sheetname, row_count=row_count)
             else:
                 total = parts.count()
                 sheetname_parts = [
@@ -506,7 +510,8 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                     row_count = self.write_qs_to_output(
                         sheet, qs, extra_row_fn=self._remainder_fn(part=key)
                     )
-                    self.add_chart_sheet(workbook, sheetname, row_count=row_count)
+                    if row_count > 0:
+                        self.add_chart_sheet(workbook, sheetname, row_count=row_count)
                     if progress_monitor:
                         progress_monitor(i + 1, total)
 

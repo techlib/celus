@@ -1252,26 +1252,6 @@ class TestFlexibleDataSimpleCSVExporter:
                 assert data[7] == ['Columns', 'Metric']
                 assert data[8] == ['Applied filters', f'Report type: {report_type.name}']
 
-    @pytest.mark.parametrize(
-        ['name_in', 'name_out'],
-        [
-            ('Sheet', 'Sheet'),
-            (
-                'Very long name of the sheet that does not fit into 32',
-                'Very long name of the sheet th…',
-            ),
-            ('Forbidden & ?: characters \\/ etc.', 'Forbidden & characters etc.'),
-            ("More forbidden'", 'More forbidden'),
-            ("History", 'History_'),
-            ("history'", 'history_'),
-            ("'", 'Sheet'),
-            ('Long that fits after []??? removal', 'Long that fits after removal',),
-            ('Long that does not fit after []??? removal', 'Long that does not fit after r…',),
-        ],
-    )
-    def test_xslx_cleanup_sheetname(self, name_in, name_out):
-        assert FlexibleDataExcelExporter.cleanup_sheetname(name_in) == name_out
-
     def test_metadata_unfiltered_orgs(self, flexible_slicer_test_data):
         """
         Test that when organization is not part of split_by, group_by or a filter, that a list
@@ -1361,3 +1341,30 @@ class TestFiltersInSlicerContext:
         fltr = ExplicitDimensionFilter('dim1', dim1_ids)
         value = '; '.join(texts)
         assert slicer.filter_to_str(fltr) == f'dim1name: {value}'
+
+
+@pytest.mark.django_db
+class TestFlexibleDataExcelExporter:
+    """
+    Tests for exporting data to excel format
+    """
+
+    @pytest.mark.parametrize(
+        ['name_in', 'name_out'],
+        [
+            ('Sheet', 'Sheet'),
+            (
+                'Very long name of the sheet that does not fit into 32',
+                'Very long name of the sheet th…',
+            ),
+            ('Forbidden & ?: characters \\/ etc.', 'Forbidden & characters etc.'),
+            ("More forbidden'", 'More forbidden'),
+            ("History", 'History_'),
+            ("history'", 'history_'),
+            ("'", 'Sheet'),
+            ('Long that fits after []??? removal', 'Long that fits after removal',),
+            ('Long that does not fit after []??? removal', 'Long that does not fit after r…',),
+        ],
+    )
+    def test_xslx_cleanup_sheetname(self, name_in, name_out):
+        assert FlexibleDataExcelExporter.cleanup_sheetname(name_in) == name_out
