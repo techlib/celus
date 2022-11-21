@@ -111,6 +111,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - detection of CSV encoding and dialect (used delimiter, etc.) was improved
 
 
+## [4.7.1]
+
+### Added
+
+#### Backend
+
+- celery task for periodic checking of database-clickhouse synchronization was added
+- automatic resolving of differences between database and clickhouse was added into the CLI command
+
+
+### Fixed
+
+#### Frontend
+
+- 'unknown' state in data presence view in harvesting dialog was fixed
+
+#### Backend
+
+- incorrect state when doing resync in clickhouse after error was fixed
+- some missed cases where detection of database-clickhouse difference did not work correctly were
+  fixed
+
 
 ## [4.7.0]
 
