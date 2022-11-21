@@ -24,7 +24,7 @@ class Command(BaseCommand):
         if not task_path:
             self.stderr.write(self.style.ERROR(f'Cannot find task: {task_name}'))
             self.stderr.write(self.style.WARNING('Available tasks:'))
-            for key in self.tasks.keys():
+            for key in sorted(self.tasks.keys()):
                 self.stderr.write(self.style.WARNING(f' - {key}'))
         else:
             self.stderr.write(self.style.SUCCESS(f'Starting task: {task_name}'))

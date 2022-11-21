@@ -280,6 +280,30 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
 )
 # CACHALOT_UNCACHABLE_TABLES = frozenset(('django_migrations',))
 
+# Clickhouse integration
+# should data be synced to clickhouse on write?
+CLICKHOUSE_SYNC_ACTIVE = config('CLICKHOUSE_SYNC_ACTIVE', cast=bool, default=False)
+# should data from clickhouse be used when answering queries?
+CLICKHOUSE_QUERY_ACTIVE = config('CLICKHOUSE_QUERY_ACTIVE', cast=bool, default=False)
+if CLICKHOUSE_QUERY_ACTIVE and not CLICKHOUSE_SYNC_ACTIVE:
+    warnings.warn(
+        'Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is likely an '
+        'error as the data will not be up to date in queries.'
+    )
+CLICKHOUSE_DB = config('CLICKHOUSE_DB', default='celus')
+CLICKHOUSE_USER = config('CLICKHOUSE_USER', default='celus')
+CLICKHOUSE_PASSWORD = config('CLICKHOUSE_PASSWORD', default='celus')
+CLICKHOUSE_HOST = config('CLICKHOUSE_HOST', default='localhost')
+CLICKHOUSE_PORT = config('CLICKHOUSE_PORT', default=9000, cast=int)
+CLICKHOUSE_SECURE = config('CLICKHOUSE_SECURE', default=False, cast=bool)
+
+print(
+    f'Clickhouse db: {CLICKHOUSE_DB}; sync: {CLICKHOUSE_SYNC_ACTIVE}; '
+    f'query: {CLICKHOUSE_QUERY_ACTIVE}',
+    file=sys.stderr,
+)
+
+
 # Celery
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BROKER_URL = 'redis://localhost'
@@ -319,6 +343,8 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.import_manual_upload_data': {'queue': 'import'},
     'logs.tasks.prepare_preflights': {'queue': 'preflight'},
     'logs.tasks.reprocess_mdu_task': {'queue': 'import'},
+    'logs.tasks.compare_db_with_clickhouse_task': {'queue': 'import'},
+    'logs.tasks.compare_db_with_clickhouse_delayed_task': {'queue': 'celery'},
     'publications.tasks.clean_obsolete_platform_title_links_task': {'queue': 'interest'},
     'publications.tasks.merge_titles_task': {'queue': 'interest'},
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
@@ -424,6 +450,7 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+# add ERMS related tasks
 ERMS_CELERY_SCHEDULE = {
     'erms_sync_platforms_task': {
         'task': 'publications.tasks.erms_sync_platforms_task',
@@ -441,9 +468,21 @@ ERMS_CELERY_SCHEDULE = {
         'options': {'expires': 30 * 60},
     },
 }
-
 if USES_ERMS:
     CELERY_BEAT_SCHEDULE.update(ERMS_CELERY_SCHEDULE)
+
+
+# add clickhouse related tasks
+CLICKHOUSE_CELERY_SCHEDULE = {
+    'compare_db_with_clickhouse_delayed_task': {
+        'task': 'logs.tasks.compare_db_with_clickhouse_delayed_task',
+        'schedule': crontab(minute=0, hour=22),  # every day at 22:00
+        'options': {'expires': 22 * 60 * 60},  # expires in 22 hours to leave room for random delays
+    },
+}
+if CLICKHOUSE_SYNC_ACTIVE:
+    CELERY_BEAT_SCHEDULE.update(CLICKHOUSE_CELERY_SCHEDULE)
+
 
 # allauth config
 ACCOUNT_EMAIL_REQUIRED = True
@@ -645,29 +684,6 @@ if SENTRY_URL:
     )
     # ignore pycounter errors
     ignore_logger("pycounter.sushi")
-
-# Clickhouse integration
-# should data be synced to clickhouse on write?
-CLICKHOUSE_SYNC_ACTIVE = config('CLICKHOUSE_SYNC_ACTIVE', cast=bool, default=False)
-# should data from clickhouse be used when answering queries?
-CLICKHOUSE_QUERY_ACTIVE = config('CLICKHOUSE_QUERY_ACTIVE', cast=bool, default=False)
-if CLICKHOUSE_QUERY_ACTIVE and not CLICKHOUSE_SYNC_ACTIVE:
-    warnings.warn(
-        'Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is likely an '
-        'error as the data will not be up to date in queries.'
-    )
-CLICKHOUSE_DB = config('CLICKHOUSE_DB', default='celus')
-CLICKHOUSE_USER = config('CLICKHOUSE_USER', default='celus')
-CLICKHOUSE_PASSWORD = config('CLICKHOUSE_PASSWORD', default='celus')
-CLICKHOUSE_HOST = config('CLICKHOUSE_HOST', default='localhost')
-CLICKHOUSE_PORT = config('CLICKHOUSE_PORT', default=9000, cast=int)
-CLICKHOUSE_SECURE = config('CLICKHOUSE_SECURE', default=False, cast=bool)
-
-print(
-    f'Clickhouse db: {CLICKHOUSE_DB}; sync: {CLICKHOUSE_SYNC_ACTIVE}; '
-    f'query: {CLICKHOUSE_QUERY_ACTIVE}',
-    file=sys.stderr,
-)
 
 # Releases and Changelog
 RELEASES_SOURCEFILE = config('RELEASES_SOURCEFILE', default='RELEASES.yaml')
