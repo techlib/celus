@@ -18,7 +18,7 @@ en:
   select_help_delete: You can select records to delete in the table
   harvest_button: Harvest
   delete_button: Delete
-  data_harvest: Harvesting credentials
+  data_harvest: Harvesting data
   snack_bar:
     credentials_broken: Entire credentials are broken - can't select item for harvesting.
     report_type_broken: Broken report type - can't select item for harvesting.
@@ -41,7 +41,7 @@ cs:
   select_help: Můžete vybrat neúspěšné záznamy z tabulky
   harvest_button: Stáhnout
   delete_button: Smazat
-  data_harvest: Stahuji data k přístupovým udajům
+  data_harvest: Stahuji data
   snack_bar:
     credentials_broken: Přístupové údaje jsou rozbité - položku nelze přidat ke stahování.
     report_type_broken: Rozbitý report - položku nelze přidat ke stahování.
