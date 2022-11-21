@@ -891,7 +891,7 @@ class FlexibleReportViewSet(ModelViewSet):
         if not owner and not owner_organization:
             # this should be consortial access level
             if not (request.user.is_superuser or request.user.is_admin_of_master_organization):
-                raise PermissionDenied(f'Not allowed to create consortial level report')
+                raise PermissionDenied('Not allowed to create consortial level report')
 
     def create(self, request, *args, **kwargs):
         config = self._preprocess_config(request)

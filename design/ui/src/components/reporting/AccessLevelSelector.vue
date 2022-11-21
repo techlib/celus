@@ -157,6 +157,13 @@ export default {
     },
   },
 
+  mounted() {
+    // Reset value if user doesn't have permissions
+    if (!this.ownershipTypes.map((e) => e.value).includes(this.value)) {
+      this.ownershipType = this.ownershipTypes[0].value;
+    }
+  },
+
   watch: {
     value() {
       this.ownershipType = this.value;
