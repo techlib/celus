@@ -22,7 +22,12 @@ class UserOrganizationAdmin(admin.ModelAdmin):
     autocomplete_fields = ['user', 'organization']
     list_filter = ['source']
     list_select_related = ['source', 'organization', 'user']
-    search_fields = ['user__username', 'user__email']
+    search_fields = [
+        'user__username',
+        'user__email',
+        'organization__name',
+        'organization__short_name',
+    ]
 
 
 @admin.register(models.OrganizationAltName)
