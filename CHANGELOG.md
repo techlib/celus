@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - it is now possible to create system-wide platforms using the UI (for consortial managers only)
 - 'Select all' button was added to the SUSHI credentials overview dialog to allow selecting of all
   available slots at once
+- documentation was updated with parts about tags and tagging
 
 
 #### Backend
@@ -51,7 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI script for tagging titles using the (publicly available) Scopus title list was added
 - information about supported report types was added to the platform information from the
   knowledgebase
-
+- automatic resolving of differences between database and clickhouse was added to the CLI script
+- celery task for periodic checking of sync between database and clickhouse was added
 
 
 ### Changes
@@ -67,6 +69,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - tooltips are disabled in the platform overlap widget when the table is too large to avoid
   performance issues
 - images used in the `FirstSushiHelpWidget` were updated to match the current UI
+- in reporting the default visibility was fixed not to include values not available for the
+  current user
+- possible crash in reporting XLSX export was fixed when a report was empty
+
 
 #### Backend
 
@@ -104,11 +110,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - double loading of data for the Dashboard top-titles widgets was fixed
 - a corner case where stale data could be displayed in reporting when ordering of data was changed
   during data loading was fixed
+- the title 'Harvesting credentials' was changed to 'Harvesting data' in the harvesting dialog
 
 #### Backend
 
 - the number of queries in the impersonation API was optimized
 - detection of CSV encoding and dialect (used delimiter, etc.) was improved
+- automatic resync with clickhouse after a previous sync failed was fixed
+- detection of differences between the database and clickhouse was fixed to cover all cases
 
 
 ## [4.7.1]
