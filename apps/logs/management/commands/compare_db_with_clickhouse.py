@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
         logger.debug('Duration: %.2f s', time() - start)
         logger.info('Stats: %s', result.stats)
-        if list(result.stats.keys()) != ['ok']:
+        if not result.is_ok():
             logger.error('FOUND DIFFERENCES BETWEEN DB AND CH!')
             logger.info('\n'.join(result.log))
             if options['fix_it']:

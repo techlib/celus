@@ -253,6 +253,9 @@ class ComparisonResult:
     import_batches_to_delete: Set[int] = field(default_factory=set)
     log: List[str] = field(default_factory=list)
 
+    def is_ok(self):
+        return not any(key for key in self.stats.keys() if key != 'ok')
+
 
 def compare_db_with_clickhouse() -> ComparisonResult:
     result = ComparisonResult()

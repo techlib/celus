@@ -8,6 +8,7 @@ from hcube.api.models.aggregation import Sum as HSum
 
 from logs.cubes import ch_backend, AccessLogCube
 from logs.logic.clickhouse import (
+    ComparisonResult,
     compare_db_with_clickhouse,
     sync_accesslogs_with_clickhouse_superfast,
     sync_import_batch_with_clickhouse,
@@ -23,7 +24,10 @@ from logs.models import (
     InterestGroup,
     ImportBatchSyncLog,
 )
-from logs.tasks import process_outstanding_import_batch_sync_logs_task
+from logs.tasks import (
+    compare_db_with_clickhouse_task,
+    process_outstanding_import_batch_sync_logs_task,
+)
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from publications.models import Platform, PlatformInterestReport
 
@@ -390,3 +394,16 @@ class TestClickhouseSync:
         print(result.stats)
         assert len(result.import_batches_to_resync) == len(set(in_db) - set(in_ch))
         assert len(result.import_batches_to_delete) == len(set(in_ch) - set(in_db))
+
+    @pytest.mark.parametrize(
+        ['stats', 'is_ok'],
+        [({}, True), ({'ok': 1}, True), ({'ok': 1, 'x': 2}, False), ({'x': 2}, False)],
+    )
+    def test_compare_with_clickhouse_task_problem_detection(self, stats, is_ok):
+        with patch('logs.tasks.compare_db_with_clickhouse') as mock, patch(
+            'logs.tasks.async_mail_admins'
+        ) as mailmock:
+            mock.return_value = ComparisonResult(stats=stats)
+            compare_db_with_clickhouse_task()
+            mock.assert_called_once()
+            assert mailmock.delay.call_count == (1 if not is_ok else 0)

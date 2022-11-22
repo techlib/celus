@@ -226,7 +226,7 @@ def compare_db_with_clickhouse_task():
     """
     start = monotonic()
     result = compare_db_with_clickhouse()
-    if list(result.stats.keys()) != ['ok']:
+    if not result.is_ok():
         # there are some differences - we need to report it to admins
         # (in the future we might want to fix it automatically, but not now)
         log = '\n'.join(result.log)
