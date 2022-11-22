@@ -911,7 +911,7 @@ class TestHarvest:
         urls = set()
 
         def mocked_trigger_scheduler(
-            url, fihish,
+            url, finish,
         ):
             urls.add(url)
 

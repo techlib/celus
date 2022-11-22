@@ -275,7 +275,6 @@ export default {
       platformList: [],
       showHarvestDialog: false,
       currentHarvest: null,
-      orderBy: ["harvest.pk"],
       loading: false,
       loadingPlatforms: false,
       filterFinished: "",

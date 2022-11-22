@@ -91,7 +91,7 @@ class TestHarvestAPI:
         assert data[5]["broken"] == 0
 
     @pytest.mark.parametrize(
-        ['column', 'desc'], list(product(['pk', 'created'], ['true', 'false']))
+        ['column', 'desc'], list(product(['pk', 'created'], ['true', 'false', 'undefined']))
     )
     def test_list_order_by(self, basic1, clients, harvests, desc, column):
 
@@ -214,7 +214,7 @@ class TestHarvestAPI:
         assert len(data1) == 3
 
         url += f"?platforms={platforms['branch'].pk},{platforms['standalone'].pk}"
-        resp = clients["master_admin"].get(url, {},)
+        resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data2 = resp.json()["results"]
         assert len(data2) == 6
@@ -256,9 +256,7 @@ class TestHarvestAPI:
         stored_intentions_count = FetchIntention.objects.count()
         planned_urls = set()
 
-        def mocked_trigger_scheduler(
-            url, fihish,
-        ):
+        def mocked_trigger_scheduler(url, finish):
             planned_urls.add(url)
 
         monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
@@ -353,9 +351,7 @@ class TestHarvestAPI:
     ):
         url = reverse('harvest-list')
 
-        def mocked_trigger_scheduler(
-            url, fihish,
-        ):
+        def mocked_trigger_scheduler(url, finish):
             pass
 
         monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
@@ -413,16 +409,14 @@ class TestHarvestAPI:
     def test_create_empty(self, clients):
         url = reverse('harvest-list')
         resp = clients["master_admin"].post(
-            url, json.dumps({"intentions": []}), content_type='application/json',
+            url, json.dumps({"intentions": []}), content_type='application/json'
         )
         assert resp.status_code == 400, "At least one intention has to be used"
 
     def test_create_broken(self, basic1, clients, counter_report_types, credentials, monkeypatch):
         url = reverse('harvest-list')
 
-        def mocked_trigger_scheduler(
-            url, fihish,
-        ):
+        def mocked_trigger_scheduler(url, finish):
             pass
 
         monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
@@ -522,9 +516,7 @@ class TestHarvestAPI:
         )
         assert resp.status_code == 400
 
-    def test_automatic(
-        self, basic1, clients, credentials, verified_credentials,
-    ):
+    def test_automatic(self, basic1, clients, credentials, verified_credentials):
         # remove all automatic harvests
         Harvest.objects.filter(automatic__isnull=False).delete()
 
@@ -666,23 +658,23 @@ class TestHarvestFetchIntentionAPI:
 
         # try to get old and new intentions via get
         resp = clients['master_admin'].get(
-            reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, intention.pk),)
+            reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, intention.pk))
         )
         assert resp.status_code == 200, 'new intention should be reachable'
         resp = clients['master_admin'].get(
-            reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, old_pk),)
+            reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, old_pk))
         )
         assert resp.status_code == 200, 'old intention should be reachable as well'
 
         # try to get old and new intentions via list
         resp = clients['master_admin'].get(
-            reverse('harvest-intention-list', args=(harvests['anonymous'].pk,),)
+            reverse('harvest-intention-list', args=(harvests['anonymous'].pk,))
         )
         assert resp.status_code == 200
         assert old_pk not in [e["pk"] for e in resp.json()], 'by default old should be hidden'
 
         resp = clients['master_admin'].get(
-            reverse('harvest-intention-list', args=(harvests['anonymous'].pk,),) + '?list_all=1'
+            reverse('harvest-intention-list', args=(harvests['anonymous'].pk,)) + '?list_all=1'
         )
         assert resp.status_code == 200
         assert old_pk in [e["pk"] for e in resp.json()], '"list_all" param will show all'
@@ -732,13 +724,11 @@ class TestHarvestFetchIntentionAPI:
         else:
             intention = harvests["user1"].latest_intentions.last()
 
-        url = reverse('harvest-intention-trigger', args=(intention.harvest.pk, intention.pk),)
+        url = reverse('harvest-intention-trigger', args=(intention.harvest.pk, intention.pk))
 
         planned_urls = set()
 
-        def mocked_trigger_scheduler(
-            url, fihish,
-        ):
+        def mocked_trigger_scheduler(url, finish):
             planned_urls.add(url)
 
         monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
@@ -766,7 +756,7 @@ class TestHarvestFetchIntentionAPI:
         else:
             intention = harvests["user1"].intentions.latest_intentions().order_by('pk')[0]
 
-        url = reverse('harvest-intention-cancel', args=(intention.harvest.pk, intention.pk),)
+        url = reverse('harvest-intention-cancel', args=(intention.harvest.pk, intention.pk))
 
         resp = clients[user].post(url, {})
         assert resp.status_code == status, "status code matches"
@@ -830,7 +820,7 @@ class TestFetchIntentionAPI:
         assert cr.platform_id != cr2.platform_id
         FetchIntentionFactory.create_batch(3, credentials=cr, attempt__credentials=cr)
         fi = FetchIntentionFactory(
-            credentials=cr2, attempt__credentials=cr2, when_processed=timezone.now(),
+            credentials=cr2, attempt__credentials=cr2, when_processed=timezone.now()
         )
         fi.refresh_from_db()
         FetchIntentionFactory.create_batch(

@@ -1,10 +1,16 @@
+import typing
 from distutils.util import strtobool
 
-from django.shortcuts import get_object_or_404
-from django.db.models import F, Q
+from core.logic.dates import parse_month
+from django.db.models import F
 from rest_framework import filters
 
-from core.logic.dates import parse_month, month_end
+
+def str2bool(string: str) -> typing.Optional[bool]:
+    try:
+        return bool(strtobool(string))
+    except Exception:
+        return None
 
 
 class FinishedFilter(filters.BaseFilterBackend):
@@ -22,7 +28,7 @@ class FinishedFilter(filters.BaseFilterBackend):
 class BrokenFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         if broken := request.query_params.get('broken', None):
-            if strtobool(broken):
+            if str2bool(broken):
                 queryset = queryset.filter(broken__gt=0)
             else:
                 queryset = queryset.filter(broken=0)
@@ -43,9 +49,10 @@ class PlatformsFilter(filters.BaseFilterBackend):
 class AutomaticFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         if automatic := request.query_params.get('automatic', None):
-            if strtobool(automatic):
+            automatic = str2bool(automatic)
+            if automatic is True:
                 queryset = queryset.filter(automatic__isnull=False)
-            else:
+            elif automatic is False:
                 queryset = queryset.filter(automatic__isnull=True)
 
         return queryset
@@ -63,7 +70,7 @@ class MonthFilter(filters.BaseFilterBackend):
 class OrderingFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         order_by = request.query_params.get('order_by', '')
-        desc = strtobool(request.query_params.get('desc', 'false'))
+        desc = str2bool(request.query_params.get('desc', 'false')) or False
         if order_by:
             if order_by not in (
                 'created',
