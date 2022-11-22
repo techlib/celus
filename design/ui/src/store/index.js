@@ -353,7 +353,6 @@ export default new Vuex.Store({
         context.commit("setLatestPublishedRelease", response.data);
       } catch (error) {
         console.warn("Could not fetch or set the latest published release");
-        throw error;
       }
     },
     async loadUserData({ commit, dispatch }) {
