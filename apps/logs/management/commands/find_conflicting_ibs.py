@@ -41,6 +41,7 @@ class Command(BaseCommand):
 
         qs = (
             ImportBatch.objects.all()
+            .order_by()  # remove default ordering
             .values('platform_id', 'organization_id', 'report_type_id', 'date')
             .annotate(ib_count=Count('id'), ib_ids=ArrayAgg('id'))
             .filter(ib_count__gt=1)
@@ -69,11 +70,12 @@ class Command(BaseCommand):
                 logger.info('IB set #%s: Removable', i)
                 for ib in ibs:
                     logger.debug(
-                        "  %s: %d: fa: %s, mdu: %s",
+                        "  %s: %d: fa: %s, mdu: %s, als: %s ",
                         'keep  ' if ib.has_als else 'delete',
                         ib.pk,
                         ib.has_fa,
                         ib.has_mdu,
+                        ib.has_als,
                     )
                     if not ib.has_als:
                         to_delete.append(ib.pk)
@@ -124,13 +126,14 @@ class Command(BaseCommand):
                 )
                 for ib in ibs:
                     logger.debug(
-                        "  %d: als: %s, fa: %s, mdu: %s, al_count: %d, has_source_file: %s",
+                        "  %d: als: %s, fa: %s, mdu: %s, al_count: %d, has_source_file: %s (%s)",
                         ib.pk,
                         ib.has_als,
                         ib.has_fa,
                         [(mdu.pk, mdu.state) for mdu in ib.mdu.all()] if ib.has_mdu else None,
                         ib.accesslog_set.count(),
                         ib.has_source_file,
+                        ib.sushifetchattempt.data_file.name if ib.has_fa else '',
                     )
                 if options['force_fixit']:
                     # we keep the one with the most access logs
