@@ -16,6 +16,7 @@ def organizations():
         name_cs='AAA',
         name_en='AAA',
         short_name='AA',
+        raw_data_import_enabled=False,
     )
     parent2, _ = Organization.objects.get_or_create(
         ext_id=2,
@@ -25,6 +26,7 @@ def organizations():
         name_cs='BBB',
         name_en='BBB',
         short_name='BB',
+        raw_data_import_enabled=True,
     )
     child1, _ = Organization.objects.get_or_create(
         ext_id=3,
@@ -34,6 +36,7 @@ def organizations():
         name_cs='AAA1',
         name_en='AAA1',
         short_name='AA1',
+        raw_data_import_enabled=False,
     )
     return [parent1, parent2, child1]
 

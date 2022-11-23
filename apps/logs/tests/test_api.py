@@ -4,12 +4,9 @@ from io import StringIO
 from unittest.mock import patch
 
 import pytest
-from django.db.models import Max, Min
-from django.urls import reverse
-
 from core.logic.dates import month_end, month_start
-from core.tests.conftest import (  # noqa - fixtures
-    admin_identity,
+from core.tests.conftest import admin_identity  # noqa - fixtures
+from core.tests.conftest import (
     authenticated_client,
     authentication_headers,
     invalid_identity,
@@ -17,7 +14,9 @@ from core.tests.conftest import (  # noqa - fixtures
     master_admin_identity,
     valid_identity,
 )
-from logs.models import AccessLog, Dimension, DimensionText, Metric, ReportType
+from django.db.models import Max, Min
+from django.urls import reverse
+from logs.models import AccessLog, Dimension, DimensionText, MduMethod, Metric, ReportType
 from organizations.models import UserOrganization
 from publications.models import Platform
 from publications.tests.conftest import interest_rt  # noqa - fixtures
@@ -25,8 +24,8 @@ from sushi.models import AttemptStatus, CounterReportsToCredentials
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
-    basic1,
+from test_fixtures.scenarios.basic import basic1  # noqa - fixtures
+from test_fixtures.scenarios.basic import (
     client_by_user_type,
     clients,
     counter_report_types,
@@ -39,6 +38,7 @@ from test_fixtures.scenarios.basic import (  # noqa - fixtures
     report_types,
     users,
 )
+
 from ..logic.data_import import import_counter_records
 from ..logic.materialized_interest import sync_interest_for_import_batch
 
@@ -400,6 +400,7 @@ class TestManualDataUpload:
                 'organization': organizations["branch"].pk,
                 'report_type_id': report_type.pk,
                 'data_file': file,
+                'method': MduMethod.CELUS,
             },
         )
         assert response.status_code == 201

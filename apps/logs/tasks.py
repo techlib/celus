@@ -9,16 +9,23 @@ from random import randint
 from time import monotonic
 
 import celery
-from django.db import DatabaseError
-from django.db.models import Q
-from django.db.transaction import atomic
-from django.utils.timezone import now
-
 from core.context_managers import needs_clickhouse_sync
 from core.logic.error_reporting import email_if_fails
 from core.models import User
 from core.task_support import cache_based_lock
 from core.tasks import async_mail_admins
+from django.db import DatabaseError
+from django.db.models import Q
+from django.db.transaction import atomic
+from django.utils.timezone import now
+from nibbler.models import (
+    ParserDefinition,
+    get_errors,
+    get_report_types_from_nibbler_output,
+    is_success,
+)
+from sushi.models import AttemptStatus, SushiFetchAttempt
+
 from logs.exceptions import (
     DataStructureError,
     ImportNotPossible,
@@ -27,8 +34,7 @@ from logs.exceptions import (
     UnknownReportTypeInPreflight,
 )
 from logs.logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
-from logs.logic.clickhouse import compare_db_with_clickhouse
-from logs.logic.clickhouse import process_one_import_batch_sync_log
+from logs.logic.clickhouse import compare_db_with_clickhouse, process_one_import_batch_sync_log
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import (
@@ -40,14 +46,7 @@ from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
 )
-from logs.models import ImportBatchSyncLog, ManualDataUpload, MduState
-from nibbler.models import (
-    ParserDefinition,
-    get_errors,
-    get_report_types_from_nibbler_output,
-    is_success,
-)
-from sushi.models import AttemptStatus, SushiFetchAttempt
+from logs.models import ImportBatchSyncLog, ManualDataUpload, MduMethod, MduState
 
 logger = logging.getLogger(__file__)
 
@@ -271,7 +270,7 @@ def prepare_preflight(mdu_id: int):
             )
         elif mdu.state == MduState.INITIAL:
 
-            if mdu.use_nibbler:
+            if mdu.method == MduMethod.RAW:
                 # detect report type from existing data
                 nibbler_output = ParserDefinition.objects.parse_file(
                     mdu.data_file.path, mdu.platform.short_name

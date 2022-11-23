@@ -1,7 +1,7 @@
+from django.conf import settings
 from django.contrib import admin
-from mptt.admin import MPTTModelAdmin
-
 from modeltranslation.admin import TranslationAdmin
+from mptt.admin import MPTTModelAdmin
 
 from . import models
 
@@ -9,9 +9,13 @@ from . import models
 @admin.register(models.Organization)
 class OrganizationAdmin(MPTTModelAdmin, TranslationAdmin):
 
-    list_display = ['short_name', 'internal_id', 'name', 'ico', 'source']
+    list_display = ['short_name', 'internal_id', 'name', 'ico', 'source',] + (
+        ['raw_data_import_enabled'] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
+    )
     search_fields = ['internal_id', 'short_name', 'name', 'ico']
-    list_filter = ['source']
+    list_filter = ['source'] + (
+        ['raw_data_import_enabled'] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
+    )
     list_select_related = ['source']
 
 

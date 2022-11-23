@@ -46,12 +46,12 @@ en:
   no_non_counter_for_platform: This platform does not support non-counter data.
   method_counter_label_name: COUNTER
   method_counter_label_text: Use this method to import data from COUNTER table and JSON reports.
-  method_nibbler_label_name: Raw non-COUNTER data
-  method_nibbler_label_text: Upload a non-COUNTER report as you received it from the publisher. Celus will try to automatically detect the format.
+  method_raw_label_name: Raw non-COUNTER data
+  method_raw_label_text: Upload a non-COUNTER report as you received it from the publisher. Celus will try to automatically detect the format.
   method_celus_label_name: Celus non-COUNTER custom format
   method_celus_label_text: Upload data prepared in the custom Celus format for non-COUNTER data.
   method_celus_disabled_tt: There are no non-COUNTER reports defined for this platform.
-  method_nibbler_disabled_tt: There are no raw reports supported for this platform.
+  method_raw_disabled_tt: There are no raw reports supported for this platform.
 
 cs:
   description: |
@@ -97,12 +97,12 @@ cs:
   no_non_counter_for_platform: Tato platforma nepodporuje formáty mimo counter.
   method_counter_label_name: COUNTER
   method_counter_label_text: Použijte tuto metodu pro import dat v tabulkovém COUNTER formátu a ve formě JSON reportu.
-  method_nibbler_label_name: Surová ne-COUNTER data
-  method_nibbler_label_text: Nahrát ne-COUNTER report v takovém formátu v jakém jste ho obdrželi od vydavatele. Celus se pokusí automaticky zdetekovat formát.
-  method_celus_label_name: Vlastní Celus ne-COUNTER formát
-  method_celus_label_text: Nahraná data jsou připravena ve vlastním ne-COUNTER formátu.
-  method_celus_disabled_tt: Neexistují žádné non-COUNTER reporty definované pro tuto platformu.
-  method_nibbler_disabled_tt: Pro tuto platformu nejsou surové reporty podporované.
+  method_raw_label_name: Surová ne-COUNTER data
+  method_raw_label_text: ne-COUNTER report je nahrán v takovém formátu, v jakém jste ho obdrželi od vydavatele. Celus se pokusí automaticky detekovat formát dat.
+  method_celus_label_name: Celus formát pro ne-COUNTER data
+  method_celus_label_text: Nahraná data jsou připravena ve vlastním formátu, který Celus používá pro ne-COUNTER data.
+  method_celus_disabled_tt: Pro tuto platformu nejsou definovány žádné non-COUNTER reporty.
+  method_raw_disabled_tt: Pro tuto platformu nejsou surové reporty podporované.
 </i18n>
 
 <template>
@@ -170,28 +170,28 @@ cs:
               </template>
             </v-radio>
             <v-radio
-              value="nibbler"
-              :readonly="!canImportNibblerFormat"
-              v-if="enableNibbler"
+              value="raw"
+              :readonly="!canImportRawData"
+              v-if="isRawEnabled"
             >
               <template #label>
                 <span>
-                  <span :class="canImportNibblerFormat ? '' : 'text--disabled'">
+                  <span :class="canImportRawData ? '' : 'text--disabled'">
                     <strong class="font-weight-black">{{
-                      $t("method_nibbler_label_name")
+                      $t("method_raw_label_name")
                     }}</strong
                     >:
                     <span class="pl-1">{{
-                      $t("method_nibbler_label_text")
+                      $t("method_raw_label_text")
                     }}</span>
                   </span>
-                  <v-tooltip bottom v-if="!canImportNibblerFormat">
+                  <v-tooltip bottom v-if="!canImportRawData">
                     <template #activator="{ on }">
                       <v-icon class="pl-1" v-on="on" small color="info"
                         >fa-info-circle</v-icon
                       >
                     </template>
-                    <span>{{ $t("method_nibbler_disabled_tt") }}</span>
+                    <span>{{ $t("method_raw_disabled_tt") }}</span>
                   </v-tooltip>
                 </span>
               </template>
@@ -221,7 +221,9 @@ cs:
               </template>
             </v-radio>
           </v-radio-group>
-          <v-btn @click="step++">{{ $t("continue") }}</v-btn>
+          <v-btn @click="step++" :disabled="!method">
+            {{ $t("continue") }}
+          </v-btn>
         </v-sheet>
       </v-stepper-content>
 
@@ -355,8 +357,10 @@ cs:
               :interest-metrics="selectedInterestMetrics"
               :usable-metrics="usableMetrics"
               :check-metrics="checkMetrics"
+              :raw-disabled-per-organization="rawDisabledPerOrganization"
               :auto-create-metrics="automaticallyCreateMetrics"
               :metrics="metrics"
+              :method="method"
             />
             <v-alert v-else-if="state === 'prefailed'" type="error">
               <h3 v-text="$t('preflight_error_found')" class="pb-2"></h3>
@@ -424,7 +428,8 @@ cs:
                 preflightData &&
                 preflightDataFormatValid &&
                 preflightData.clashing_months.length &&
-                !this.wrongOrganizations.length > 0
+                !this.wrongOrganizations.length > 0 &&
+                !this.rawDisabledPerOrganization.length > 0
               "
               color="warning"
               @click="showConfirmDeleteDialog = true"
@@ -658,8 +663,21 @@ export default {
     ...mapGetters({
       automaticallyCreateMetrics: "automaticallyCreateMetrics",
       showManagementStuff: "showManagementStuff",
-      enableNibbler: "enableNibbler",
+      enableRawDataImport: "enableRawDataImport",
     }),
+    isRawEnabled() {
+      let org_id = parseInt(this.organizationId);
+      if (org_id < 0) {
+        // No organization selectect -> check global flag
+        return this.canUseRaw;
+      } else {
+        // Check selected organization
+        return this.isRawEnabledPerOrg(org_id);
+      }
+    },
+    canUseRaw() {
+      return ["All", "PerOrg"].includes(this.enableRawDataImport);
+    },
     breadcrumbs() {
       return [
         {
@@ -716,6 +734,10 @@ export default {
           // can't delete when there are wrong organizations in data
           return null;
         }
+        if (this.rawDisabledPerOrganization.length > 0) {
+          // can't delete when data can't be reimported
+          return null;
+        }
         if (!this.multipleOrganizations) {
           return [
             {
@@ -756,6 +778,13 @@ export default {
         return false;
       }
     },
+    checkRawPerOrgPermission() {
+      if (this.method == "raw") {
+        return this.rawDisabledPerOrganization.length === 0;
+      } else {
+        return true;
+      }
+    },
     needToUnsetOrg() {
       if (
         !!this.uploadObject?.organization &&
@@ -768,7 +797,11 @@ export default {
     },
     canImport() {
       if (this.uploadObject) {
-        return this.uploadObject.can_import && !this.missingOrgInData;
+        return (
+          this.uploadObject.can_import &&
+          !this.missingOrgInData &&
+          this.checkRawPerOrgPermission
+        );
       }
       return false; // not uploaded yet
     },
@@ -779,6 +812,18 @@ export default {
       if (this.preflightData?.organizations) {
         return Object.keys(this.preflightData.organizations).filter(
           (name) => !this.preflightData.organizations[name].pk
+        );
+      } else {
+        return [];
+      }
+    },
+    rawDisabledPerOrganization() {
+      if (this.preflightData?.organizations) {
+        const ids = Object.values(this.preflightData.organizations)
+          .filter((o) => !!o.pk)
+          .map((e) => e.pk);
+        return this.organizations.filter(
+          (o) => ids.includes(o.pk) && !o.is_raw_data_import_enabled
         );
       } else {
         return [];
@@ -846,8 +891,18 @@ export default {
     canImportCelusFormat() {
       return !!this.reportTypes.find((e) => !e.counter_report_type);
     },
-    canImportNibblerFormat() {
+    canImportRawData() {
       return this.platform?.knowledgebase?.report_types?.length > 0;
+    },
+    currentOrganization() {
+      if ((this.organizationId || -1) > 0) {
+        const organizations = this.organizations.filter(
+          (e) => e.pk == this.organizationId
+        );
+        return organizations.length > 0 ? organizations[0] : null;
+      } else {
+        return null;
+      }
     },
   },
   methods: {
@@ -872,7 +927,7 @@ export default {
       if (this.canSelectReportType) {
         formData.append("report_type_id", this.selectedReportType.pk);
       }
-      formData.append("use_nibbler", !this.canSelectReportType);
+      formData.append("method", this.method);
 
       this.uploading = true;
       this.uploadProgress = 0;
@@ -1081,15 +1136,6 @@ export default {
       if (v === null) return "File must be filled in";
       return true;
     },
-    getMethodFromMdu(mdu) {
-      let method = "celus";
-      if (mdu.use_nibbler) {
-        method = "nibbler";
-      } else if (mdu.report_type?.counter_report_type) {
-        method = "counter";
-      }
-      return method;
-    },
     async backToStart() {
       let reportTypeId = this.uploadObject?.report_type?.pk;
       await this.$router.push({
@@ -1125,20 +1171,39 @@ export default {
         ? "errors.unknown_preflight_error"
         : "errors.unknown_import_error";
     },
+    isRawEnabledPerOrg(org_id) {
+      for (const org of this.organizations) {
+        if (org.pk == org_id) {
+          return !!org.is_raw_data_import_enabled;
+        }
+      }
+      return false;
+    },
   },
   async mounted() {
+    await this.loadRequiredData();
     if (this.$router.currentRoute.query.method) {
-      this.method = this.$router.currentRoute.query.method;
-      this.step = this.steps.upload;
+      // Check whether this method can be set
+      if (
+        this.$router.currentRoute.query.method == "raw" &&
+        this.currentOrganization &&
+        !this.currentOrganization.is_raw_data_import_enabled
+      ) {
+        // choose method again
+        this.method = "counter";
+        this.step = this.steps.method;
+      } else {
+        this.method = this.$router.currentRoute.query.method;
+        this.step = this.steps.upload;
+      }
     }
     if (this.uploadObjectId && this.step === this.steps.upload) {
       // If object is present move to preflight step
       this.step = this.steps.preflight;
     }
-    await this.loadRequiredData();
     if (this.uploadObjectId) {
       await this.loadMdu();
-      this.method = this.getMethodFromMdu(this.uploadObject);
+      this.method = this.uploadObject.method;
     }
   },
   beforeDestroy() {
@@ -1147,6 +1212,16 @@ export default {
   watch: {
     organizationId() {
       this.updateMDU();
+      // Choose method again if selected organization can't import raw data
+      if (
+        this.step == this.steps.upload &&
+        this.method == "raw" &&
+        this.currentOrganization &&
+        !this.currentOrganization.is_raw_data_import_enabled
+      ) {
+        this.method = "counter";
+        this.step = this.steps.method;
+      }
     },
     method() {
       if (this.reportTypesToSelect.length > 0) {

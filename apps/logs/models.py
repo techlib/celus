@@ -617,6 +617,12 @@ class MduState(models.TextChoices):
     FAILED = 'failed', _("Import failed")
 
 
+class MduMethod(models.TextChoices):
+    COUNTER = 'counter', _("Counter format")
+    CELUS = 'celus', _("Celus format")
+    RAW = 'raw', _("Raw data")
+
+
 class ManualDataUpload(SourceFileMixin, models.Model):
     PREFLIGHT_FORMAT_VERSION = '4'
 
@@ -650,13 +656,18 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         default=dict, blank=True, help_text='Data derived during pre-flight check'
     )
     state = models.CharField(max_length=20, choices=MduState.choices, default=MduState.INITIAL)
-    use_nibbler = models.BooleanField(default=False)
+    method = models.CharField(max_length=20, choices=MduMethod.choices, default=MduMethod.COUNTER)
 
     class Meta:
         constraints = (
             models.CheckConstraint(
-                check=~((models.Q(use_nibbler=False) & models.Q(report_type__isnull=True))),
-                name='non-nibbler-needs-report-type',
+                check=~(
+                    (
+                        models.Q(method__in=[MduMethod.COUNTER, MduMethod.CELUS])
+                        & models.Q(report_type__isnull=True)
+                    )
+                ),
+                name='non-raw-needs-report-type',
             ),
         )
 
@@ -717,7 +728,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
         self.check_self_checksum()  # check the checksum before using the file
 
-        if self.use_nibbler:
+        if self.method == MduMethod.RAW:
 
             nibbler_output = ParserDefinition.objects.parse_file(
                 self.data_file.path, self.platform.short_name
@@ -725,6 +736,8 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
             # Extract data
             yield from get_records_from_nibbler_output(nibbler_output)
+
+            return
 
         try:
             crt = self.report_type.counterreporttype
@@ -753,10 +766,13 @@ class ManualDataUpload(SourceFileMixin, models.Model):
                 )
 
         else:
-            reader = crt.get_reader_class(json_format=self.file_is_json())()
-            yield from reader.file_to_records(
-                os.path.join(settings.MEDIA_ROOT, self.data_file.name)
-            )
+            if settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT:
+                raise NotImplementedError()
+            else:
+                reader = crt.get_reader_class(json_format=self.file_is_json())()
+                yield from reader.file_to_records(
+                    os.path.join(settings.MEDIA_ROOT, self.data_file.name)
+                )
 
     def file_is_json(self) -> bool:
         """
@@ -891,6 +907,12 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         if self.preflight:
             return [k for k, v in self.preflight["organizations"].items() if v.get("pk") is None]
         return None
+
+    def check_organization_permissions(self, organization: Organization):
+        # Permission are check only when RAW format is used
+        if self.method == MduMethod.RAW:
+            return organization.is_raw_data_import_enabled
+        return True
 
     def can_import(self, user: User):
         # check state

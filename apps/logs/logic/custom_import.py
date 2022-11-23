@@ -7,7 +7,7 @@ from core.models import User
 from django.conf import settings
 from django.db.transaction import atomic
 from django.utils.timezone import now
-from logs.exceptions import OrganizationNotFound
+from logs.exceptions import OrganizationNotAllowedToImportRawData, OrganizationNotFound
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import ManualDataUpload, OrganizationPlatform
@@ -125,6 +125,9 @@ def import_custom_data(
                 raise OrganizationNotFound(org_name)
 
             records = (e for e in records if e.organization == org_name)
+
+        if not mdu.check_organization_permissions(organization):
+            raise OrganizationNotAllowedToImportRawData(organization)
 
         # TODO: the owner level should be derived from the user and the organization at hand
         new_ibs, new_stats = import_counter_records(

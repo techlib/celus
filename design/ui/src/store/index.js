@@ -223,8 +223,8 @@ export default new Vuex.Store({
       }
       return true;
     },
-    enableNibbler(state) {
-      return state.basicInfo.ENABLE_NIBBLER ?? false;
+    enableRawDataImport(state) {
+      return state.basicInfo.ENABLE_RAW_DATA_IMPORT || "None";
     },
     automaticallyCreateMetrics(state) {
       if ("AUTOMATICALLY_CREATE_METRICS" in state.basicInfo) {

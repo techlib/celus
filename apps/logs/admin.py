@@ -245,7 +245,7 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
         'organization',
         'platform',
         HasImportBatch,
-        'use_nibbler',
+        'method',
     ]
     list_display = ['created', 'report_type', 'platform', 'organization', 'user', 'state']
     list_select_related = ['report_type', 'organization', 'platform', 'user']

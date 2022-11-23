@@ -5,7 +5,7 @@ import pytest
 from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
-from logs.models import ManualDataUpload, MduState
+from logs.models import ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
 from test_fixtures.entities.logs import MetricFactory
 from test_fixtures.entities.organizations import OrganizationFactory
@@ -67,6 +67,7 @@ class TestManualUploadForCounterData:
                 'organization': organization.pk,
                 'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
+                'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
@@ -139,6 +140,7 @@ class TestManualUploadForCounterData:
                 'organization': organization.pk,
                 'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
+                'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
@@ -207,6 +209,7 @@ class TestManualUploadControlledMetrics:
                 'organization': organization.pk,
                 'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
+                'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
@@ -294,6 +297,7 @@ class TestManualUploadConflicts:
                 'organization': organization.pk,
                 'report_type_id': report_types['br2'].pk,
                 'data_file': data_file,
+                'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
@@ -326,6 +330,7 @@ class TestManualUploadConflicts:
                 'organization': organization.pk,
                 'report_type_id': report_types['br2'].pk,
                 'data_file': data_file,
+                'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
@@ -377,6 +382,7 @@ class TestManualUploadNonCounter:
                 'organization': organization.pk,
                 'report_type_id': report_types['custom1'].pk,
                 'data_file': data_file,
+                'method': MduMethod.CELUS,
             },
         )
         assert response.status_code == 201
@@ -426,6 +432,7 @@ class TestManualUploadNonCounter:
             'platform': platform.id,
             'report_type_id': report_types['custom1'].pk,
             'data_file': data_file,
+            'method': MduMethod.CELUS,
         }
         if organization_set:
             post_data["organization"] = organization.pk
@@ -563,6 +570,7 @@ class TestManualUploadNibbler:
         organization = organizations['master']
         platform = platforms['brain']
         settings.MEDIA_ROOT = tmp_path
+        settings.ENABLE_RAW_DATA_IMPORT = "All"
 
         response = clients["master_admin"].post(
             reverse('manual-data-upload-list'),
@@ -570,7 +578,7 @@ class TestManualUploadNibbler:
                 'platform': platform.id,
                 'organization': organization.pk,
                 'data_file': data_file,
-                'use_nibbler': True,
+                'method': MduMethod.RAW,
             },
         )
         assert response.status_code == 201
@@ -598,6 +606,6 @@ class TestManualUploadNibbler:
 
         response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
-        assert response.data["use_nibbler"] is True
+        assert response.data["method"] == MduMethod.RAW
         assert response.data["can_import"] is False
         assert mdu.import_batches.count() == 1

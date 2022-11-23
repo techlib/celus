@@ -31,6 +31,7 @@ from .models import (
     ImportBatch,
     InterestGroup,
     ManualDataUpload,
+    MduMethod,
     MduState,
     Metric,
     ReportInterestMetric,
@@ -395,16 +396,16 @@ class ManualDataUploadSerializer(ModelSerializer):
             'owner_level',
             'state',
             'clashing_months',
-            'use_nibbler',
+            'method',
         )
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
         if self.context['view'].action == "create":
-            if attrs["use_nibbler"]:
+            if attrs["method"] == MduMethod.RAW:
                 if "report_type_id" in attrs:
                     raise ValidationError(
-                        {"report_type_id": "should not be present when `use_nibbler=True`"}
+                        {"report_type_id": "should not be present when `method='raw'`"}
                     )
             else:
                 if "report_type_id" not in attrs:
@@ -468,7 +469,7 @@ class ManualDataUploadVerboseSerializer(ModelSerializer):
             'can_edit',
             'owner_level',
             'state',
-            'use_nibbler',
+            'method',
         )
 
 

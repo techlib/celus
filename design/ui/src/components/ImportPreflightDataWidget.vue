@@ -34,9 +34,11 @@ en:
   comparison_with_last_year_average_sum: Comparison with the average sum of hits from previous year
   comparison_with_last_year_month_sum: Comparison with sum of hits from the same month previous year
   organization_not_found: Could not match this organization with an existing one.
+  organization_raw_data_disabled: Raw non-counter data import is disabled for this organization.
   organizations_were_not_found: The following organizations defined in the file were not found, thus data can't be imported
   organizations_not_found_fix: Please make sure that the provided name(s) matches the names from
   organizations_not_found_fix_list: the organization list
+  organizations_with_raw_import_disabled: Raw data import is disabled for the following organizations, thus data can't be imported
 
 cs:
   output_logs: Vygenerované záznamy
@@ -73,9 +75,11 @@ cs:
   comparison_with_last_year_average_sum: Porovnání součtu zásahů s průměrem součtu zásahů za minulý rok
   comparison_with_last_year_month_sum: Porovnání součtu zásahů se stejným měsícem v minulém roce
   organization_not_found: Nebylo možné namapovat tuto organizaci na existující organizace.
+  organization_raw_data_disabled: Pro tuto organizaci není dovoleno nahrávat surová data v ne-COUNTER formátu.
   organizations_were_not_found: Vyznačené organizace, které jsou definované v souboru, nebyly nalezeny a kvůli tomu nemohou být data naimportována
   organizations_not_found_fix: Prosím ujistěte se, poskytnutá jména odpovídají jménům u
   organizations_not_found_fix_list: seznamu organizací
+  organizations_with_raw_import_disabled: Pro následující organizace není dovoleno nahrávat surová data a není tedy možné data naimportovat
 </i18n>
 
 <template>
@@ -291,6 +295,23 @@ cs:
                       </template>
                       {{ $t("organization_not_found") }}
                     </v-tooltip>
+                    <v-tooltip
+                      v-else-if="
+                        method == 'raw' &&
+                        rawDisabledPk.includes(rec.value.pk)
+                      "
+                      bottom
+                    >
+                      <template #activator="{ on }">
+                        <span v-on="on">
+                          {{ rec.name }}
+                          <v-icon class="ml-1" x-small color="error" v-on="on">
+                            fa fa-exclamation-triangle
+                          </v-icon>
+                        </span>
+                      </template>
+                      {{ $t("organization_raw_data_disabled") }}
+                    </v-tooltip>
                     <span v-else v-text="rec.name"></span>
                   </td>
                   <td>{{ formatInteger(rec.value.sum) }}</td>
@@ -305,10 +326,10 @@ cs:
       <v-col>
         <v-alert type="error" outlined>
           <h4 class="mb-2 text-h6">{{ $t("import_not_allowed") }}</h4>
-          <div class="mb-2">
+          <div class="mb-2" v-if="notFoundOrg.length > 0">
             {{ $t("organizations_were_not_found") }}:
             <ul class="pt-1">
-              <li v-for="org in wrongOrganizations" :key="org.name">
+              <li v-for="org in notFoundOrg" :key="org.name">
                 {{ org.name }}
               </li>
             </ul>
@@ -321,6 +342,14 @@ cs:
                 .
               </strong>
             </p>
+          </div>
+          <div class="mb-2" v-if="rawDisabledOrg.length > 0">
+            {{ $t("organizations_with_raw_import_disabled") }}:
+            <ul class="pt-1">
+              <li v-for="org in rawDisabledOrg" :key="org.name">
+                {{ org.name }}
+              </li>
+            </ul>
           </div>
         </v-alert>
       </v-col>
@@ -379,6 +408,8 @@ export default {
       default: () => false,
     },
     autoCreateMetrics: { required: true, type: Boolean },
+    method: { required: true, type: String },
+    rawDisabledPerOrganization: { required: false, default: [] },
   },
 
   computed: {
@@ -423,20 +454,33 @@ export default {
     clashingMonths() {
       return this.preflightData.clashing_months;
     },
-    wrongOrganizations() {
+    rawDisabledOrg() {
+      if (this.organizationsSorted && this.method == "raw") {
+        return this.organizationsSorted.filter(
+          (e) => !!e.value.pk && this.rawDisabledPk.includes(e.value.pk)
+        );
+      } else {
+        return [];
+      }
+    },
+    notFoundOrg() {
       if (this.organizationsSorted) {
         return this.organizationsSorted.filter((e) => !e.value.pk);
+      } else {
+        return [];
       }
-      return null;
     },
     wrongOrganizationPresent() {
-      return this.wrongOrganizations && this.wrongOrganizations.length > 0;
+      return this.notFoundOrg.length > 0 || this.rawDisabledOrg.length > 0;
     },
     usedMetrics() {
       return this.preflightData.used_metrics;
     },
     foundDimensions() {
       return this.preflightData.dimensions || [];
+    },
+    rawDisabledPk() {
+      return this.rawDisabledPerOrganization.map((e) => e.pk);
     },
   },
 

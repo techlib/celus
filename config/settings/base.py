@@ -16,7 +16,7 @@ from pathlib import Path
 
 import sentry_sdk
 from celery.schedules import crontab, schedule
-from decouple import Csv, config
+from decouple import Choices, Csv, config
 from django.core.exceptions import ImproperlyConfigured
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -659,7 +659,7 @@ EXPORTED_SETTINGS = [
     'SOCIAL_ACCOUNTS_SUPPORTED',
     'USES_ERMS',
     'EXPORT_DELETING_PERIOD',
-    'ENABLE_NIBBLER',
+    'ENABLE_RAW_DATA_IMPORT',
 ]
 
 # Enables Automatic harvesting
@@ -689,7 +689,12 @@ if SENTRY_URL:
 RELEASES_SOURCEFILE = config('RELEASES_SOURCEFILE', default='RELEASES.yaml')
 
 # nibbler
-ENABLE_NIBBLER = config('ENABLE_NIBBLER', cast=bool, default=False)
+ENABLE_RAW_DATA_IMPORT = config(
+    'ENABLE_RAW_DATA_IMPORT', cast=Choices(['All', 'PerOrg', 'None']), default='None'
+)
 ENABLE_NIBBLER_FOR_CELUS_FORMAT = config(
     'ENABLE_NIBBLER_FOR_CELUS_FORMAT', cast=bool, default=False
+)
+ENABLE_NIBBLER_FOR_COUNTER_FORMAT = config(
+    'ENABLE_NIBBLER_FOR_COUNTER_FORMAT', cast=bool, default=False
 )

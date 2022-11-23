@@ -4,7 +4,7 @@ from io import StringIO
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN
 from core.tests.conftest import *  # noqa  - test fixtures
 from django.urls import reverse
-from logs.models import ManualDataUpload, MduState
+from logs.models import ManualDataUpload, MduMethod, MduState
 from organizations.tests.conftest import *  # noqa  - test fixtures
 from publications.tests.conftest import *
 from test_fixtures.entities.logs import ManualDataUploadFullFactory
@@ -23,6 +23,7 @@ def mdu_api_post(platforms, report_type_nd, tmp_path, settings, client, authenti
                 'organization': organization.pk,
                 'report_type_id': report_type.pk,
                 'data_file': file,
+                'method': MduMethod.CELUS,
             },
             **authentication_headers(identity),
         )

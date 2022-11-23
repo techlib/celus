@@ -6,6 +6,7 @@ from django.urls import reverse
 from logs.models import AccessLog, ImportBatch, Metric
 from organizations.models import Organization, UserOrganization
 from publications.tests.conftest import interest_rt  # noqa - fixture
+from test_fixtures.scenarios.basic import clients, identities, users
 
 
 @pytest.mark.django_db
@@ -42,6 +43,25 @@ class TestOrganizationAPI:
         assert resp.status_code == 200
         assert len(resp.json()) == 1
         assert resp.json()[0]['pk'] == organizations[1].pk
+
+    @pytest.mark.parametrize(
+        ['settings_nibbler', 'result'],
+        (
+            ('All', [True, True, True]),
+            ('None', [False, False, False]),
+            ('PerOrg', [False, True, False]),
+        ),
+    )
+    def test_list_nibbler(self, clients, organizations, settings, settings_nibbler, result):
+        """
+        Check whether organization is allowed to use nibbler
+        """
+        settings.ENABLE_RAW_DATA_IMPORT = settings_nibbler
+        resp = clients["su"].get(reverse('organization-list'))
+        assert resp.status_code == 200
+        data = sorted(resp.json(), key=lambda x: x['pk'])
+        assert len(data) == 3
+        assert [e["is_raw_data_import_enabled"] for e in data] == result
 
     def test_authorized_user_no_authorization_detail(self, authenticated_client, organizations):
         """

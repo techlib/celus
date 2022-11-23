@@ -53,6 +53,16 @@ class OrganizationNotFound(Exception):
         self.organization = organization
 
 
+class OrganizationNotAllowedToImportRawData(Exception):
+    """
+    Raised when organization not allowed to import raw data
+    """
+
+    def __init__(self, organization):
+        super().__init__(organization)
+        self.organization = organization
+
+
 class MultipleOrganizationsFound(Exception):
     """
     Raised when there are multiple organizations matching the short_name during the import

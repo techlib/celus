@@ -1,10 +1,9 @@
 from django.conf import settings
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import Q, UniqueConstraint
 from django.utils.translation import ugettext as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
-
 from publications.models import Platform
 
 
@@ -46,6 +45,7 @@ class Organization(MPTTModel):
     platforms = models.ManyToManyField('publications.Platform', through='logs.OrganizationPlatform')
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+    raw_data_import_enabled = models.BooleanField(default=False)
 
     class Meta:
         ordering = ('name',)
@@ -68,6 +68,14 @@ class Organization(MPTTModel):
 
     def __str__(self):
         return self.name
+
+    @property
+    def is_raw_data_import_enabled(self) -> bool:
+        if settings.ENABLE_RAW_DATA_IMPORT == "All":
+            return True
+        elif settings.ENABLE_RAW_DATA_IMPORT == "PerOrg":
+            return self.raw_data_import_enabled
+        return False
 
 
 class OrganizationAltName(models.Model):

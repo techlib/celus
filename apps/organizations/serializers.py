@@ -22,6 +22,7 @@ class OrganizationSerializer(ModelSerializer):
             'parent',
             'is_admin',
             'is_member',
+            'is_raw_data_import_enabled',
         ) + tuple('name_' + lang[0] for lang in settings.LANGUAGES)
 
 
