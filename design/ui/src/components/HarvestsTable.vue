@@ -295,42 +295,43 @@ export default {
       dateFnOptions: "dateFnOptions",
     }),
     harvestsUrl() {
-      let filterFinished = "";
+      let finished = "";
       switch (this.filterFinished) {
         case "working":
-          filterFinished = "&finished=working";
+          finished = "working";
           break;
         case "unfinished":
-          filterFinished = "&finished=no";
+          finished = "no";
           break;
         case "ready":
-          filterFinished = "&finished=yes";
+          finished = "yes";
           break;
       }
-      let filterPlatforms = "";
+      let platforms = "";
       if (this.filterPlatforms.length > 0) {
-        let pks = this.filterPlatforms.map((platform) => platform.pk).join(",");
-        filterPlatforms = `&platforms=${pks}`;
+        platforms = this.filterPlatforms
+          .map((platform) => platform.pk)
+          .join(",");
       }
-      let filterManual = "";
+      let automatic = "";
       switch (this.filterManual) {
         case "automatic":
-          filterManual = "&automatic=1";
+          automatic = "1";
           break;
         case "manual":
-          filterManual = "&automatic=0";
+          automatic = "0";
           break;
       }
-      let filterBroken = "";
+      let broken = "";
       switch (this.filterBroken) {
         case "yes":
-          filterBroken = "&broken=1";
+          broken = "1";
           break;
         case "no":
-          filterBroken = "&broken=0";
+          broken = "0";
           break;
       }
-      let filterMonth = this.filterMonth ? `&month=${this.filterMonth}` : "";
+      let month = this.filterMonth || undefined;
       let sortBy = this.tableOptions.sortBy.length
         ? this.tableOptions.sortBy[0]
         : "";
@@ -355,7 +356,20 @@ export default {
           sortBy = "start_date";
           break;
       }
-      return `/api/scheduler/harvest/?page=${this.tableOptions.page}&page_size=${this.tableOptions.itemsPerPage}&order_by=${sortBy}&desc=${sortDesc}${filterFinished}${filterManual}${filterMonth}${filterBroken}${filterPlatforms}`;
+      return this.$router.resolve({
+        path: "/api/scheduler/harvest/",
+        query: {
+          page: this.tableOptions.page,
+          page_size: this.tableOptions.itemsPerPage,
+          order_by: sortBy,
+          desc: sortDesc,
+          finished,
+          automatic,
+          month,
+          broken,
+          platforms,
+        },
+      }).href;
     },
     headers() {
       const headersHead = [
