@@ -10,6 +10,7 @@ from logs.cubes import ch_backend, AccessLogCube
 from logs.logic.clickhouse import (
     ComparisonResult,
     compare_db_with_clickhouse,
+    resync_import_batch_with_clickhouse,
     sync_accesslogs_with_clickhouse_superfast,
     sync_import_batch_with_clickhouse,
     process_one_import_batch_sync_log,
@@ -30,6 +31,7 @@ from logs.tasks import (
 )
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from publications.models import Platform, PlatformInterestReport
+from test_fixtures.entities.logs import ImportBatchFullFactory
 
 
 @pytest.mark.clickhouse
@@ -341,11 +343,63 @@ class TestClickhouseSync:
             # value error about string not being comparable to int should be raised
             sync_import_batch_with_clickhouse(ibs[0], batch_size='aaaa')
 
+    def test_resync_import_batch_with_clickhouse(self):
+        """
+        Tests that resync really works
+        """
+        ib = ImportBatchFullFactory.create()
+        sum_db_orig = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum('value'))['sum']
+        assert sum_db_orig > 0
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        assert sum_db_orig == sum_cube
+        # modify one of the accesslogs
+        al = AccessLog.objects.filter(import_batch=ib).first()
+        diff = al.value + 1
+        al.value = al.value + diff
+        al.save()
+        sum_db = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum('value'))['sum']
+        assert sum_db == sum_db_orig + diff
+        # resync and check
+        resync_import_batch_with_clickhouse(ib)
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        assert sum_db == sum_cube
+        # and once again
+        resync_import_batch_with_clickhouse(ib)
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        assert sum_db == sum_cube
+
+    def test_resync_import_batch_with_clickhouse_with_al_replacement(self):
+        """
+        Tests that resync really works when we replace accesslogs inside an import batch
+        """
+        ib = ImportBatchFullFactory.create()
+        sum_db_orig = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum('value'))['sum']
+        assert sum_db_orig > 0
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        assert sum_db_orig == sum_cube
+        # modify one of the accesslogs
+        al = AccessLog.objects.filter(import_batch=ib).first()
+        diff = al.value + 1
+        AccessLog.objects.filter(pk=al.id).delete(i_know_what_i_am_doing=True)  # delete original
+        al.value = al.value + diff
+        al.id = None  # create new al with new id
+        al.save()
+        sum_db = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum('value'))['sum']
+        assert sum_db == sum_db_orig + diff
+        # resync and check
+        resync_import_batch_with_clickhouse(ib)
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        assert sum_db == sum_cube, 'first resync'
+        # and once again
+        resync_import_batch_with_clickhouse(ib)
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        assert sum_db == sum_cube, 'second resync'
+
 
 @pytest.mark.clickhouse
 @pytest.mark.usefixtures('clickhouse_db')
 @pytest.mark.django_db(transaction=True)
-class TestClickhouseSync:
+class TestClickhouseCompare:
     @pytest.mark.parametrize(
         ['in_db', 'in_ch'],
         [
