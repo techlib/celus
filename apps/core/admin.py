@@ -4,6 +4,8 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import TabularInline
 from django.contrib.auth.admin import UserAdmin
+from django.utils.translation import gettext_lazy as _
+from django.db.models import Exists, OuterRef
 
 from organizations.models import UserOrganization
 from .models import User, Identity, DataSource
@@ -12,6 +14,45 @@ from .models import User, Identity, DataSource
 class UserOrganizationInline(TabularInline):
     model = UserOrganization
     fields = ['organization', 'is_admin']
+    extra = 1
+
+
+class IsAdminInAtLeastOneOrganization(admin.SimpleListFilter):
+    title = _('is admin in at least one organization')
+
+    parameter_name = 'is_admin'
+
+    def lookups(self, request, model_admin):
+        return (('Yes', _('Yes')), ('No', _('No')))
+
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(userorganization__is_admin=True).distinct()
+        if self.value() == 'No':
+            return queryset.exclude(userorganization__is_admin=True).distinct()
+
+
+class IsAdminOfMasterOrganization(admin.SimpleListFilter):
+    title = _('is consortial admin')
+
+    parameter_name = 'is_consortial_admin'
+
+    def lookups(self, request, model_admin):
+        return (('Yes', _('Yes')), ('No', _('No')))
+
+    def queryset(self, request, queryset):
+        master_admin_filter = Exists(
+            UserOrganization.objects.filter(
+                is_admin=True,
+                user=OuterRef('pk'),
+                organization__internal_id__in=settings.MASTER_ORGANIZATIONS,
+            )
+        )
+        if self.value() == 'Yes':
+            return queryset.filter(master_admin_filter)
+
+        if self.value() == 'No':
+            return queryset.filter(~master_admin_filter)
 
 
 @admin.register(User)
@@ -35,7 +76,11 @@ class MyUserAdmin(UserAdmin):
     )
     add_fieldsets = UserAdmin.add_fieldsets + (("Celus", {'fields': custom_fields}),)
 
-    list_filter = ('source',) + UserAdmin.list_filter
+    list_filter = (
+        'source',
+        IsAdminInAtLeastOneOrganization,
+        IsAdminOfMasterOrganization,
+    ) + UserAdmin.list_filter
 
     actions = ['send_invitation_emails']
     inlines = [UserOrganizationInline]
