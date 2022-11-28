@@ -635,7 +635,7 @@ class FetchIntention(models.Model):
                 retry.cancel()
                 return
 
-    def handle_data_not_ready(self, final_import_batch=True):
+    def handle_data_not_ready(self, final_import_batch=False):
 
         # Only automatic downloads with verified credentials can produce retries
         if not self.harvest.is_automatic or not self.credentials.is_verified:
@@ -672,7 +672,7 @@ class FetchIntention(models.Model):
 
     def handle_no_data(self):
         """ Some vendors use no_data status as data_not_ready status """
-        self.handle_data_not_ready()
+        self.handle_data_not_ready(final_import_batch=True)
 
     def handle_retry_failed(self):
         """ Retry failed attempts """

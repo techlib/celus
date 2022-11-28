@@ -312,7 +312,7 @@ class TestFetchIntention:
                 AttemptStatus.NO_DATA,
                 False,
                 True,
-                True,
+                False,
                 [
                     timedelta(days=1),
                     timedelta(days=2),
