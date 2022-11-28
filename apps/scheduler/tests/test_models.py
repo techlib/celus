@@ -4,15 +4,16 @@ import uuid
 from datetime import date, datetime, timedelta
 
 import pytest
+from celus_nigiri.error_codes import ErrorCode
 from django.utils import timezone
 from freezegun import freeze_time
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.tasks import import_one_sushi_attempt_task
-from celus_nigiri.error_codes import ErrorCode
 from scheduler import tasks
 from scheduler.models import (
     Automatic,
     FetchIntention,
+    FetchIntentionQueue,
     Harvest,
     ProcessResponse,
     RunResponse,
@@ -242,7 +243,6 @@ class TestFetchIntention:
             assert (last.not_before - fi.not_before).total_seconds() == seconds_not_before
             assert last.queue_id == fi.pk
             assert fi.queue_id == fi.pk
-            assert fi.attempt.queue_id == fi.pk
         else:
             assert last.pk == fi.pk
 
@@ -568,7 +568,11 @@ class TestFetchIntention:
 
         monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
 
-        def check_retry(fi: FetchIntention, expected: typing.Optional[datetime]) -> FetchIntention:
+        def check_retry(
+            fi: FetchIntention,
+            expected: typing.Optional[datetime],
+            queue: typing.Optional[FetchIntentionQueue],
+        ) -> FetchIntention:
             with freeze_time(fi.not_before):
                 fi.scheduler = scheduler
                 assert fi.process() == ProcessResponse.SUCCESS
@@ -606,6 +610,9 @@ class TestFetchIntention:
                 assert new_fi.not_before == expected, "new planned date matches"
                 assert not new_fi.is_processed, "new intention is not processed"
                 assert new_fi.canceled is False, "fetch not canceled"
+                assert new_fi.queue is not None, "New intetions is a part of a queue"
+                if queue:
+                    assert new_fi.queue == queue, "Queue equals queue of prev intention"
             else:
                 if last_canceled:
                     assert fi.pk != new_fi.pk, "new intention created"
@@ -632,8 +639,10 @@ class TestFetchIntention:
                 when_processed=None,
             )
 
+        queue_to_check = None
         for delay in delays:
-            fi = check_retry(fi, start + delay if delay else None)
+            fi = check_retry(fi, start + delay if delay else None, None)
+            queue_to_check = queue_to_check if queue_to_check else fi.queue
             if delay:
                 start += delay
 
@@ -1531,3 +1540,64 @@ class TestAutomatic:
 
         fi.attempt.refresh_from_db()
         assert "assuming a 3030 exception" in fi.attempt.log
+
+    @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
+    def test_same_queue_reenabled_intentions(
+        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
+    ):
+        # Clear all harvests
+        Harvest.objects.all().delete()
+
+        # And delete some credentials
+        credentials["standalone_br1_jr1"].delete()
+        credentials["branch_pr"].delete()
+
+        # Prepare intention
+        assert FetchIntention.objects.all().count() == 0
+        assert Automatic.objects.all().count() == 0
+
+        Automatic.update_for_last_month()
+
+        assert FetchIntention.objects.all().count() == 1
+        assert Automatic.objects.all().count() == 1
+
+        # Create 3030 fetch attempt and replan next
+        fi = FetchIntention.objects.order_by('pk').last()
+        assert fi.queue is not None
+        queue = fi.queue
+        fi.attempt = FetchAttemptFactory(
+            start_date=fi.start_date,
+            end_date=fi.end_date,
+            credentials=credentials["standalone_tr"],
+            error_code="3030",
+            status=AttemptStatus.NO_DATA,
+            import_batch=None,
+        )
+        fi.when_processed = timezone.now()
+        fi.save()
+
+        # Call hanlder to replan
+        fi.get_handler()()
+
+        assert FetchIntention.objects.all().count() == 2, 'new FI is created'
+        assert FetchIntention.objects.order_by('pk').last().queue == queue
+
+        # Disable credentials
+        credentials["standalone_tr"].enabled = False
+        credentials["standalone_tr"].save()
+
+        assert FetchIntention.objects.all().count() == 1, 'new FI is deleted'
+        Automatic.update_for_last_month()
+        assert FetchIntention.objects.all().count() == 1, 'nothing updated'
+
+        # Reenable credentials
+        credentials["standalone_tr"].enabled = True
+        credentials["standalone_tr"].save()
+
+        # Replan
+        Automatic.update_for_last_month()
+
+        assert FetchIntention.objects.all().count() == 2, 'new FI is recreated'
+        assert (
+            FetchIntention.objects.order_by('pk').last().queue == queue
+        ), 'queue matches the one which was interrupted'

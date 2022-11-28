@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from enum import Enum, auto
 
 from celery import states
+from celus_nigiri.error_codes import ErrorCode
 from core.logic.dates import month_end, month_start, this_month
 from core.models import CreatedUpdatedMixin, User
 from dateutil.relativedelta import relativedelta
@@ -20,7 +21,6 @@ from logs.exceptions import DataStructureError
 from logs.logic.data_import import create_import_batch_or_crash
 from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
-from celus_nigiri.error_codes import ErrorCode
 from organizations.models import Organization
 from publications.models import Platform
 from sushi.models import (
@@ -489,7 +489,6 @@ class FetchIntention(models.Model):
             self.counter_report, self.start_date, self.end_date, use_url_lock=False,
         )
         attempt.triggered_by = self.harvest.last_updated_by
-        attempt.queue_id = self.queue_id
         attempt.save()
 
         self.attempt = attempt
@@ -577,8 +576,6 @@ class FetchIntention(models.Model):
             if not self.queue:
                 self.queue = FetchIntentionQueue.objects.create(id=self.pk, start=self, end=self)
                 self.save()
-                self.attempt.queue_id = self.queue_id
-                self.attempt.save()
 
             fi = FetchIntention.objects.create(
                 not_before=not_before,
@@ -887,13 +884,8 @@ class Harvest(CreatedUpdatedMixin):
         FetchIntention.objects.bulk_create(intentions)
         # There is no signal if bulk_create is used
         # We need to set a proper queue here
-        for fi in harvest.intentions.all():
-            fi.queue, created = FetchIntentionQueue.objects.get_or_create(
-                id=fi.pk, defaults={"start": fi, "end": fi}
-            )
-            if not created:
-                fi.queue.end = fi
-                fi.queue.save()
+        for fi in harvest.intentions.filter(queue__isnull=True):
+            fi.queue = FetchIntentionQueue.objects.create(id=fi.pk, start=fi, end=fi)
             fi.save()
 
         if priority >= FetchIntention.PRIORITY_NOW:
@@ -1051,7 +1043,6 @@ class Automatic(models.Model):
                 counter.update({"added": len(to_add), "deleted": len(to_delete)})
                 # Delete extra intentions
                 FetchIntention.objects.filter(pk__in=[e.pk for e in to_delete]).delete()
-
                 # Extends harvest with new intentions
                 Harvest.plan_harvesting(to_add, automatic.harvest)
 
