@@ -48,7 +48,9 @@
       :key="index"
       subheader
     >
-      <v-subheader>{{ group.title }}</v-subheader>
+      <v-subheader>
+        {{ group.title }}
+      </v-subheader>
 
       <MenuListItem
         v-for="item in group.items.filter((item) =>
@@ -57,6 +59,7 @@
         :item="item"
         :key="item.title"
         :notifications="notifications"
+        :chip="item.chip"
       >
       </MenuListItem>
     </v-list>
@@ -146,6 +149,7 @@ export default {
             {
               title: this.$i18n.t("pages.tags"),
               icon: "fa fa-tags",
+              chip: { text: this.$t("labels.new_menu_item"), color: "error" },
               show: this.enableTags,
               items: [
                 {

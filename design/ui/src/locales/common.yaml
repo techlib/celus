@@ -177,6 +177,7 @@ en:
     tag_roll_up: Merge rows by tag
     show_class: Show class
     empty_value: "- empty -"
+    new_menu_item: new
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -450,6 +451,7 @@ cs:
     tag_roll_up: Sloučit řádky podle štítků
     show_class: Zobrazit typ
     empty_value: "- prázdné -"
+    new_menu_item: novinka
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

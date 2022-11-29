@@ -8,7 +8,17 @@
         <v-icon class="fa-fw">{{ item.icon }}</v-icon>
       </v-list-item-icon>
       <v-list-item-content>
-        <v-list-item-title>{{ item.title }}</v-list-item-title>
+        <v-list-item-title>
+          {{ item.title }}
+          <v-chip
+            v-if="item.chip"
+            :color="item.chip.color"
+            x-small
+            class="float-right"
+          >
+            {{ item.chip.text }}
+          </v-chip>
+        </v-list-item-title>
       </v-list-item-content>
     </template>
     <template #appendIcon>
@@ -72,6 +82,7 @@ export default {
     item: { required: true, type: Object },
     notifications: { required: true, type: Object },
     level: { default: 0, type: Number },
+    chip: { default: null, type: Object },
   },
 
   data() {
