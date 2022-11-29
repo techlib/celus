@@ -648,8 +648,8 @@ export default {
       for (let rec of this.extraParams) {
         if (rec.key.trim()) extraParams[rec.key] = rec.value;
       }
-      if (this.counterVersion === 5) {
-        extraParams.platform = this.platformFilter;
+      if (this.counterVersion === 5 && this.platformFilter.trim()) {
+        extraParams.platform = this.platformFilter.trim();
       }
       let data = {
         title: this.title,
@@ -855,10 +855,11 @@ export default {
       } else {
         let extraParams = [];
         for (let [key, value] of Object.entries(credentials.extra_params)) {
-          if (key === "platform") {
+          if (key === "platform" && credentials.counter_version === 5) {
             this.platformFilter = value;
+          } else {
+            extraParams.push({ key: key, value: value });
           }
-          extraParams.push({ key: key, value: value });
         }
         this.title = credentials.title;
         this.organizationId = credentials.organization.id;
