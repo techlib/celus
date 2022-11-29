@@ -36,7 +36,7 @@ class Releases(ViewSet):
 
 class Changelog(ViewSet):
     def list(self, request):
-        with open(settings.BASE_DIR / "CHANGELOG.md") as f:
+        with open(settings.BASE_DIR / "CHANGELOG.md", 'rt', encoding='utf-8') as f:
             content = f.read()
             list_of_releases = content.split("## [")
             list_of_releases.pop(0)

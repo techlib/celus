@@ -8,17 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.0.1]
 
-
 ### Fixed
 
 #### Frontend
 
 * empty `platform` attribute is no longer stored when SUSHI credentials are saved
 * display of the list of harvests was fixed for cases where sorting was switched off
+* changelog for the oldest versions was fixed and the changelog API endpoint was fixed
+  for platforms where UTF-8 is not the default encoding
 
 #### Backend
 
 * deleting from Clickhouse was fixed to avoid slow performance for some queries
+
 
 
 ## [5.0.0]
@@ -1531,21 +1533,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - StopIteration error occurring for empty Counter 4 files was fixed
 - error ingesting JR1 GOA report was fixed
 
-## [2.1.2] (2020-08-19)
+## [2.1.2]
 
 ### Fixes
 
 - fix metric display in charts - remapping should not be shown the same way as in the admin
 - fix storing of TSV files instead of raw XML for successful C4 attempts
 
-## [2.1.1] (2020-08-18)
+## [2.1.1]
 
 ### Fixes
 
 - fix mismatch of version hash between credentials and attempts causing
   incorrect display of attempt status on SUSHI downloads page
 
-## [2.1.0] (2020-08-18)
+## [2.1.0]
 
 ### Added
 
