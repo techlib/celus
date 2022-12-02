@@ -709,7 +709,7 @@ class TitleInterestMixin:
         desc = self.request.query_params.get('desc', 'true')
         if order_by:
             prefix = '-' if desc == 'true' else ''
-            result = result.order_by(prefix + order_by)
+            result = result.order_by(prefix + order_by, prefix + 'pk')
         return result
 
 

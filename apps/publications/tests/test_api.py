@@ -926,8 +926,9 @@ class TestPlatformTitleAPI:
         assert len(data) == 1
         platform = accesslogs_with_interest['platform']
         assert str(platform.pk) in data
+        # the last title is not linked to the platform
         assert set(data[str(platform.pk)]) == {
-            title.pk for title in accesslogs_with_interest['titles']
+            title.pk for title in accesslogs_with_interest['titles'][:2]
         }
 
     def test_platform_title_ids_list_one_organization(
@@ -944,8 +945,9 @@ class TestPlatformTitleAPI:
         assert len(data) == 1
         platform = accesslogs_with_interest['platform']
         assert str(platform.pk) in data
+        # the last title is not linked to the platform
         assert set(data[str(platform.pk)]) == {
-            title.pk for title in accesslogs_with_interest['titles']
+            title.pk for title in accesslogs_with_interest['titles'][:2]
         }
 
     def test_platform_title_ids_list_with_filter(
@@ -975,7 +977,8 @@ class TestPlatformTitleAPI:
         record = data[0]
         platform = accesslogs_with_interest['platform']
         assert record['platform'] == platform.pk
-        assert record['title_count'] == len(accesslogs_with_interest['titles'])
+        # the last title is not linked to the platform
+        assert record['title_count'] == len(accesslogs_with_interest['titles']) - 1
 
     def test_platform_title_count_detail(self, master_user_client, accesslogs_with_interest):
         """
@@ -1513,7 +1516,8 @@ class TestTitleInterestBrief:
         resp = master_user_client.get(reverse('title-interest-brief-list', args=[-1]))
         assert resp.status_code == 200
         data = resp.json()
-        titles = accesslogs_with_interest['titles']
+        # last title is not in the response because it has no interest
+        titles = accesslogs_with_interest['titles'][:2]
         assert len(data) == len(titles)
         for rec in data:
             if rec['target_id'] == titles[0].pk:
@@ -1528,7 +1532,8 @@ class TestTitleInterestBrief:
         resp = master_user_client.get(reverse('title-interest-brief-list', args=[organization.pk]))
         assert resp.status_code == 200
         data = resp.json()
-        titles = accesslogs_with_interest['titles']
+        # last title is not in the response because it has no interest
+        titles = accesslogs_with_interest['titles'][:2]
         assert len(data) == len(titles)
         for rec in data:
             if rec['target_id'] == titles[0].pk:
@@ -1568,3 +1573,26 @@ class TestPlatformInterestReport:
             + len(data["standalone"]["interest_reports"][1]['interest_metric_set'])
             == 2
         )
+
+
+@pytest.mark.django_db()
+class TestTitleInterestViewSet:
+    @pytest.mark.parametrize('column', ['name', 'pub_type', 'issn', 'interest1'])
+    @pytest.mark.parametrize('desc', ['true', 'false', 'undefined'])
+    def test_all_titles_order_by(self, accesslogs_with_interest, master_user_client, column, desc):
+        titles = accesslogs_with_interest['titles']
+        resp = master_user_client.get(
+            reverse('title-interest-list', args=['-1']), {'order_by': column, 'desc': desc}
+        )
+        assert resp.status_code == 200
+        data = resp.json()['results']
+        assert len(data) == len(titles)
+        # to ensure that the sorting is always the same (which is especially important with
+        # pagination), we should mix the pk into the sorting on the backend. This is why we use the
+        # pk below as a secondary sorting key as well
+        if column == 'interest1':
+            values = [(rec['interests'][column], rec['pk']) for rec in data]
+        else:
+            values = [(rec[column], rec['pk']) for rec in data]
+        resorted = list(sorted(values, reverse=desc == 'true'))
+        assert values == resorted

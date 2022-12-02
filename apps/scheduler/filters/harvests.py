@@ -84,6 +84,8 @@ class OrderingFilter(filters.BaseFilterBackend):
             ):
                 order_by = 'pk'
             order_desc = "desc" if desc else "asc"
-            queryset = queryset.order_by(getattr(F(order_by), order_desc)(nulls_last=True))
+            queryset = queryset.order_by(
+                getattr(F(order_by), order_desc)(nulls_last=True), ('-' if desc else '') + 'pk'
+            )
 
         return queryset

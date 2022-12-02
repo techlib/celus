@@ -30,7 +30,8 @@ def titles():
     t2 = Title.objects.create(
         name='Title 2', pub_type='J', issn='1234-5678', eissn='2345-6789', doi='10.1234/y'
     )
-    yield [t1, t2]
+    t3 = Title.objects.create(name='Title 1', pub_type='B', isbn='123-464-666')
+    yield [t1, t2, t3]
 
 
 @pytest.fixture

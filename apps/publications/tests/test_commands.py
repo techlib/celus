@@ -14,7 +14,7 @@ class TestRemoveUnusedTitles:
             organization=organization_random, platform=platform, report_type=interest_rt
         )
         metric = Metric.objects.create(short_name='m1', name='Metric 1')
-        title1, title2 = titles
+        title1, title2, title3 = titles
         AccessLog.objects.create(
             import_batch=ib,
             organization=organization_random,
@@ -25,11 +25,11 @@ class TestRemoveUnusedTitles:
             metric=metric,
             value=3,
         )
-        assert Title.objects.count() == 2
+        assert Title.objects.count() == 3
         args = ['--do-it'] if do_it else []
         call_command('remove_unused_titles', *args)
         if do_it:
-            assert Title.objects.count() == 1, 'title2 is deleted as it has no usage'
+            assert Title.objects.count() == 1, 'title2 and 3 are deleted as they have no usage'
             assert Title.objects.get().pk == title1.pk
         else:
-            assert Title.objects.count() == 2, 'no titles is deleted'
+            assert Title.objects.count() == 3, 'no titles is deleted'

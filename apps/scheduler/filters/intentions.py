@@ -101,7 +101,7 @@ class OrderingFilter(filters.BaseFilterBackend):
         desc = request.query_params.get('desc', 'false')
         if order_by:
             prefix = '-' if desc == 'true' else ''
-            queryset = queryset.order_by(prefix + order_by)
+            queryset = queryset.order_by(prefix + order_by, prefix + 'pk')
         return queryset
 
 

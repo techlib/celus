@@ -90,9 +90,8 @@ class TestHarvestAPI:
         assert data[4]["broken"] == 0
         assert data[5]["broken"] == 0
 
-    @pytest.mark.parametrize(
-        ['column', 'desc'], list(product(['pk', 'created'], ['true', 'false', 'undefined']))
-    )
+    @pytest.mark.parametrize('column', ['pk', 'created', 'start_date', 'attempt_count'])
+    @pytest.mark.parametrize('desc', ['true', 'false', 'undefined'])
     def test_list_order_by(self, basic1, clients, harvests, desc, column):
 
         # Make sure that automatic are planned
@@ -103,14 +102,15 @@ class TestHarvestAPI:
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 6
-        if desc == 'true':
-            assert (
-                data[0][column] > data[1][column] > data[2][column]
-            ), "desc sorting should be active"
+        # to ensure that the sorting is always the same (which is especially important with
+        # pagination), we should mix the pk into the sorting on the backend. This is why we use the
+        # pk below as a secondary sorting key as well
+        if column == 'attempt_count':
+            values = [(rec['stats'][column], rec['pk']) for rec in data]
         else:
-            assert (
-                data[0][column] < data[1][column] < data[2][column]
-            ), "asc sorting should be active"
+            values = [(rec[column], rec['pk']) for rec in data]
+        resorted = list(sorted(values, reverse=desc == 'true'))
+        assert values == resorted
 
     def test_list_filter_finished(self, basic1, clients, harvests):
 
@@ -884,10 +884,13 @@ class TestFetchIntentionAPI:
         assert resp.status_code == 200
         records = resp.json()['results']
         assert len(records) == 30
+        # to ensure that the sorting is always the same (which is especially important with
+        # pagination), we should mix the pk into the sorting on the backend. This is why we use the
+        # pk below as a secondary sorting key as well
         if order_by in ["timestamp", "error_code"]:
-            values = [x['attempt'][order_by] for x in records]
+            values = [(x['attempt'][order_by], x['pk']) for x in records]
         else:
-            values = [x[order_by] for x in records]
+            values = [(x[order_by], x['pk']) for x in records]
         assert values == list(sorted(values, reverse=bool(desc)))
 
     @pytest.mark.parametrize(
