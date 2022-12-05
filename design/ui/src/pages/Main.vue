@@ -179,4 +179,15 @@ ul.no-bullets {
     margin-bottom: 0.5rem;
   }
 }
+
+.chart-value {
+  font-weight: bold;
+  color: #555555;
+  text-align: right;
+  padding-left: 1rem;
+}
+
+.chart-missing-data {
+  color: #ff6633;
+}
 </style>

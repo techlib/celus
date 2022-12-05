@@ -47,6 +47,7 @@ cs:
               raw-report-type
               stack
               dashboard-chart
+              fill-date-range
             >
             </APIChart>
           </v-card-text>

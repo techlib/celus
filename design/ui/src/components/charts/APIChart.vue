@@ -206,22 +206,25 @@ import ChartDataTable from "../ChartDataTable";
 import { padIntegerWithZeros } from "@/libs/numbers";
 import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
 import CoverageMap from "@/components/charts/CoverageMap";
+import addMonths from "date-fns/addMonths";
+import startOfMonth from "date-fns/startOfMonth";
 
 /* vue-echarts */
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { BarChart, LineChart } from "echarts/charts";
 import {
-  TooltipComponent,
-  LegendComponent,
-  GridComponent,
-  ToolboxComponent,
-  DataZoomComponent,
-  MarkLineComponent,
   DatasetComponent,
+  DataZoomComponent,
+  GridComponent,
+  LegendComponent,
+  MarkLineComponent,
+  ToolboxComponent,
+  TooltipComponent,
   VisualMapComponent,
 } from "echarts/components";
 import VChart from "vue-echarts";
+import { monthsBetween, ymDateFormat } from "@/libs/dates";
 
 use([
   CanvasRenderer,
@@ -333,6 +336,10 @@ export default {
       default: false,
       type: Boolean,
     }, // exclude coverage from chart
+    fillDateRange: {
+      default: false,
+      type: Boolean,
+    }, // fill in missing months with 0s
   },
   data() {
     return {
@@ -359,7 +366,7 @@ export default {
     }),
     ...mapGetters({
       dateRangeStart: "dateRangeStartText",
-      dateRangeEnd: "dateRangeEndText",
+      dateRangeEnd: "dateRangeExplicitEndText",
       selectedOrganization: "selectedOrganization",
       enableDataCoverage: "enableDataCoverage",
     }),
@@ -496,6 +503,7 @@ export default {
         return {
           type: "category",
           data: this.xValues,
+          axisTick: { alignWithLabel: true },
         };
       }
     },
@@ -654,7 +662,22 @@ export default {
           },
         };
       }
+      // special series for display of missing data
+      // we use a special tooltip formatter to display the missing data
+      // if no other series is present, otherwise we hide it
+      let missingDataSeries = [];
+      if (this.dateRange) {
+        missingDataSeries = [
+          {
+            name: "missing_data",
+            type: "line",
+            data: this.dateRange.map((_month) => null),
+            yAxisIndex: 0,
+          },
+        ];
+      }
 
+      const me = this;
       // the returned object itself
       // type "bar" means horizontal bars - taken from the v-charts library
       return {
@@ -668,6 +691,7 @@ export default {
         },
         series: [
           ...coverageSeries,
+          ...missingDataSeries,
           ...this.seriesNames.map((series, index) => ({
             id: series,
             name: this.shownSecondaryDimension
@@ -684,6 +708,36 @@ export default {
           axisPointer: {
             type: "shadow",
           },
+          formatter: function (params) {
+            let out = `<div class="tooltip-title">${params[0].axisValueLabel}</div>`;
+            // if there is no other series than `missing_data` we render it in a different way
+            if (
+              params.length === 1 &&
+              params[0].seriesName === "missing_data"
+            ) {
+              return `<div>${out}
+                <div class="chart-missing-data">${me.$t(
+                  "chart.missing_data"
+                )}</div></div>`;
+            }
+            // this is normal output
+            let inside = "";
+            params
+              .filter((p) => p.seriesName !== "missing_data")
+              .forEach((p) => {
+                let value =
+                  typeof p.value === "object" ? p.value[p.seriesName] : p.value;
+                if (
+                  coverageSeries.length > 0 &&
+                  p.seriesName === coverageSeries[0].name
+                ) {
+                  value = `${value.toFixed(1)} %`;
+                }
+                inside += `<tr><td>${p.marker} ${p.seriesName}</td>
+                           <td class="chart-value">${value}</td></tr>`;
+              });
+            return `<div>${out}<table>${inside}</table></div>`;
+          },
         },
         toolbox: this.toolbox,
         dataZoom: this.dataZoom,
@@ -693,14 +747,20 @@ export default {
           itemWidth: 16,
           itemGap: 16,
           itemHeight: 16,
+          data: this.seriesNames,
         },
         color: DEFAULT_VCHARTS_COLORS,
         ...visualMap,
       };
     },
     xValues() {
-      if (this.shownPrimaryDimension === "date" && this.coverageData.length) {
-        return this.coverageData.map((item) => item.date.substring(0, 7));
+      if (this.shownPrimaryDimension === "date") {
+        if (this.fillDateRange) {
+          return this.dateRange;
+        } else if (this.coverageData.length) {
+          return this.coverageData.map((item) => item.date.substring(0, 7));
+        }
+        // otherwise, just use the dates from the data as with any other x-axis
       }
       return this.displayData.map((item) => item[this.primaryDimension]);
     },
@@ -722,6 +782,14 @@ export default {
       return (
         (this.type === "bar" || this.type === "histogram") &&
         this.shownSecondaryDimension
+      );
+    },
+    dateRange() {
+      // returns the months between the first and last date as set in the app preferences
+      if (this.shownPrimaryDimension !== "date") return null;
+      if (!this.dateRangeStart) return null;
+      return monthsBetween(this.dateRangeStart, this.dateRangeEnd).map(
+        ymDateFormat
       );
     },
   },

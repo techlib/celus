@@ -19,6 +19,7 @@ import siteConfig from "./modules/site-config";
 import isEqual from "lodash/isEqual";
 import sleep from "@/libs/sleep";
 import { cs } from "date-fns/locale";
+import startOfMonth from "date-fns/startOfMonth";
 
 Vue.use(Vuex);
 
@@ -164,6 +165,13 @@ export default new Vuex.Store({
         return ymDateFormat(state.dateRangeEnd);
       }
       return "";
+    },
+    dateRangeExplicitEndText(state) {
+      // if the end date is not set, it is the last finished month
+      return (
+        state.dateRangeEndText ||
+        ymDateFormat(addMonths(startOfMonth(new Date()), -1))
+      );
     },
     formatNumber(state) {
       return (number) =>

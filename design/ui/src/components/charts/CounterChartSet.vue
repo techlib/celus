@@ -93,6 +93,7 @@ cs:
           :raw-report-type="selectedReportView.is_proxy"
           :metric="selectedMetric"
           :no-coverage="noCoverage"
+          :fill-date-range="!noCoverage && !importBatchId && !mduId"
           ref="chart"
         >
         </APIChart>

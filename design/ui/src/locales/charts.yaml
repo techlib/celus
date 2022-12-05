@@ -25,6 +25,7 @@ en:
     preparing_data: Crunching data
     crunching_records: Crunching {n} record | Crunching {n} records
     request_error: Could not load data due to an error
+    missing_data: No data for this month
   chart_view:
     table: Table view
     chart: Chart view
@@ -72,6 +73,7 @@ cs:
     preparing_data: Zpracovávám data
     crunching_records: Zpracovávám {n} záznam | Zpracovávám {n} záznamů
     request_error: Nebylo možné nahrát data kvůli chybě
+    missing_data: Žádná data za tento měsíc
   chart_view:
     table: Tabulkové zobrazení
     chart: Zobrazení v grafu
