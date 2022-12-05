@@ -207,12 +207,11 @@ class TestFlexibleDataExport:
         ],
     )
     def test_create_output_file_format(
-        self, flexible_slicer_test_data, admin_user, settings, fmt, split, split_by
+        self, flexible_slicer_test_data, admin_user, fmt, split, split_by, inmemory_media
     ):
         """
         Tests that using title as primary dimension also adds ISBN and other extra columns
         """
-        settings.DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
         slicer = FlexibleDataSlicer(primary_dimension='target')
         if split:
             slicer.add_split_by(split_by)

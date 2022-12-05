@@ -37,8 +37,8 @@ license = "MIT"
 python = "^3.8.8"
 
 celery = "~5.2.3"
-celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v7.3.0" }
-celus-nigiri = { git = "https://github.com/Big-Dig-Data/celus-nigiri.git", tag="v1.2.1" }
+celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v7.3.1" }
+celus-nigiri = { git = "https://github.com/Big-Dig-Data/celus-nigiri.git", tag="v1.2.2" }
 diskcache = "5.3"
 Django = "~3.2.7"
 django-allauth = "~0.41.0"
@@ -80,6 +80,7 @@ toml = "^0.10.2"
 django-postgres-copy = "^2.7.0"
 django-colorfield = "^0.7.2"
 colorlog = "^6.7.0"
+setuptools = "^65.6.3"
 
 
 [tool.poetry.dev-dependencies]

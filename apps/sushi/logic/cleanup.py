@@ -92,3 +92,28 @@ def cleanup_fetch_attempts_with_no_data(
         logger.info("%s FetchAttempts deleted", delete_counter)
 
     return counter
+
+
+def fetch_attempt_fill_in_missing_header_data():
+    """
+    Re-processes headers of all fetch attempts which are missing `extracted_data` and fills the
+    data in.
+    """
+    stats = Counter()
+    attempts = SushiFetchAttempt.objects.filter(
+        extracted_data={}, counter_report__counter_version=5, data_file__isnull=False
+    )
+    logger.debug('Found %s attempts to process', attempts.count())
+    for attempt in attempts:
+        try:
+            success = attempt.reextract_header_data()
+        except Exception as e:
+            logger.warning('Error: %s', e)
+            stats[e.__class__.__name__] += 1
+        else:
+            state = 'success' if success else 'failure'
+            stats[state] += 1
+        finally:
+            attempt.data_file.close()
+
+    logger.debug('Stats: %s', stats)

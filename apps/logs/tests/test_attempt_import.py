@@ -2,6 +2,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
+from core.logic.dates import month_end, parse_date
 from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
 from django.db.models import Sum
@@ -209,7 +211,51 @@ class TestAttemptImport:
             == "Warnings: Warning #3032: Usage No Longer Available for Requested Dates"
         )
 
-    def test_counter5_extracted_data(self, organizations, counter_report_type_named, platforms):
+    @pytest.mark.parametrize(
+        ['filename', 'start_date', 'expected', 'status'],
+        [
+            (
+                '5_TR_ProQuestEbookCentral.json',
+                '2019-11-01',
+                {
+                    'Institution_Name': 'Hidden',
+                    'Institution_ID': [{"Type": "Proprietary", "Value": "EBC:hidden"}],
+                    'Created_By': 'ProQuest Ebook Central',
+                },
+                AttemptStatus.SUCCESS,
+            ),
+            (
+                '5_TR_ProQuestEbookCentral_exception.json',
+                '2017-01-01',
+                {
+                    "Institution_Name": "Hidden",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBC:hidden"}],
+                    "Created_By": "ProQuest Ebook Central",
+                },
+                AttemptStatus.IMPORT_FAILED,
+            ),
+            (
+                '5_TR_with_warning.json',
+                '2018-11-01',
+                {
+                    "Created_By": "Someone",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
+                },
+                AttemptStatus.SUCCESS,
+            ),
+        ],
+    )
+    def test_counter5_extracted_data(
+        self,
+        organizations,
+        counter_report_type_named,
+        platforms,
+        filename,
+        start_date,
+        expected,
+        status,
+    ):
         cr_type = counter_report_type_named('TR', version=5)
 
         creds = SushiCredentials.objects.create(
@@ -220,7 +266,7 @@ class TestAttemptImport:
             url="http://a.b.c/",
         )
 
-        with (Path(__file__).parent / "data/counter5/5_TR_ProQuestEbookCentral.json").open() as f:
+        with (Path(__file__).parent / f"data/counter5/{filename}").open() as f:
 
             data_file = ContentFile(f.read())
             data_file.name = "something.json"
@@ -228,20 +274,16 @@ class TestAttemptImport:
         fetch_attempt = FetchAttemptFactory.create(
             credentials=creds,
             counter_report=cr_type,
-            start_date="2019-11-01",
-            end_date="2019-11-30",
+            start_date=start_date,
+            end_date=month_end(parse_date(start_date)),
             data_file=data_file,
             status=AttemptStatus.IMPORTING,
         )
 
         import_one_sushi_attempt(fetch_attempt)
 
-        assert fetch_attempt.status == AttemptStatus.SUCCESS
-        assert fetch_attempt.extracted_data['Institution_Name'] == 'Hidden'
-        assert fetch_attempt.extracted_data['Institution_ID'] == [
-            {"Type": "Proprietary", "Value": "EBC:hidden"}
-        ]
-        assert fetch_attempt.extracted_data['Created_By'] == 'ProQuest Ebook Central'
+        assert fetch_attempt.status == status, 'check status'
+        assert fetch_attempt.extracted_data == expected, 'check extracted_data matches'
 
     @pytest.mark.parametrize(
         "autocreate", (True, False),

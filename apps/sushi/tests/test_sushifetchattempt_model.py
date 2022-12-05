@@ -1,15 +1,19 @@
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
-from core.models import UL_ORG_ADMIN
-from django.conf import settings
+from celus_nigiri.error_codes import ErrorCode
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from freezegun import freeze_time
-from celus_nigiri.error_codes import ErrorCode
-from sushi.models import AttemptStatus
-from sushi.models import BrokenCredentialsMixin as BC
-from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
+
+from core.models import UL_ORG_ADMIN
+from sushi.models import (
+    AttemptStatus,
+    BrokenCredentialsMixin as BC,
+    CounterReportsToCredentials,
+    SushiFetchAttempt,
+)
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFactory
@@ -367,3 +371,24 @@ class TestSushiFetchAttemptModel:
         assert creds.first_broken_attempt is None
         assert cr2c.broken is None
         assert cr2c.first_broken_attempt is None
+
+    @pytest.mark.parametrize('status', ('SUCCESS', 'NO_DATA', 'QUEUED', 'FAILURE'))
+    def test_reextract_header_data(self, status, inmemory_media):
+        """
+        Tests that the FA object has a method for re-extracting header data from the stored
+        file and that it does what it should do.
+        """
+        with (Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral.json').open(
+            'rb'
+        ) as f:
+            data_file = ContentFile(f.read())
+            data_file.name = f"something.json"
+
+        fa = FetchAttemptFactory.create(data_file=data_file, status=status)
+        assert fa.extracted_data == {}
+        fa.reextract_header_data()
+        assert fa.extracted_data == {
+            'Institution_Name': 'Hidden',
+            'Institution_ID': [{"Type": "Proprietary", "Value": "EBC:hidden"}],
+            'Created_By': 'ProQuest Ebook Central',
+        }

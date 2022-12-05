@@ -91,6 +91,9 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.error_code = e.text.code
         else:
             attempt.log = str(e)
+        # fill in extracted_data
+        if hasattr(reader, 'header') and type(reader.header) is dict:
+            attempt.extract_header_data(reader.header)
         attempt.save()
         return
     # we need to create explicit connection between organization and platform

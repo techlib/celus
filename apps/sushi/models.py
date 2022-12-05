@@ -831,13 +831,15 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         while char and char.isspace():
             char = data_file.read(1)
         data_file.seek(0)
+        if char and type(char) is not bytes:
+            char = char.encode('utf-8', errors='ignore')
         if char in b'[{':
             return True
         return False
 
     def file_is_json(self) -> Optional[bool]:
         """
-        Returns True if the file seems to be a JSON file.
+        Returns True if the `data_file` seems to be a JSON file.
         """
         if not self.data_file:
             return None
@@ -961,6 +963,34 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             self.extracted_data = ext_data
             return True
         return False
+
+    def reextract_header_data(self) -> bool:
+        """
+        Reparses the header of the stored file and runs `extract_header_data` on it to
+        update the extracted data.
+        """
+        if not self.data_file:
+            return False
+        if self.counter_report.counter_version != 5:
+            raise NotImplementedError('Header data is only extracted from COUNTER 5 reports')
+        if not self.file_is_json():
+            raise NotImplementedError('Header data is only extracted from JSON reports')
+
+        reader_cls = self.counter_report.get_reader_class(json_format=True)
+        reader = reader_cls()
+        # the following will parse the header and prepare a generator with the records
+        # we do not care about the actual data, so we just discard it
+        # reader.file_to_records(os.path.join(settings.MEDIA_ROOT, self.data_file.name))
+        if hasattr(reader, 'fd_to_dicts') and callable(reader.fd_to_dicts):
+            header, _records = reader.fd_to_dicts(self.data_file)
+            if header:
+                if success := self.extract_header_data(header):
+                    self.save()
+                return success
+            logger.info('No header data found in %s', self.data_file.name)
+            return False
+        else:
+            raise NotImplementedError('Reader does not support header extraction')
 
     def any_import_batch_lately(self, days: int = 3 * 30):
         return SushiFetchAttempt.objects.filter(
