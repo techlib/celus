@@ -70,4 +70,7 @@ class TestChangelogAPI:
         for release in response.data:
             assert release.get("version")
             assert release.get("markdown")
-            assert re.search("^[0-9]+\.[0-9]+\.[0-9]+", release["version"]) is not None
+            assert (
+                re.search("^[0-9]+\.[0-9]+\.[0-9]+", release["version"]) is not None
+                or release["version"] == "Unreleased"
+            )

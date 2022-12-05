@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+#### Backend
+
+* parsing of the internal Celus format for non-COUNTER data has been reimplemented in the nibbler
+  library. It is now possible to activate this new parser by setting the
+  `ENABLE_NIBBLER_FOR_CELUS_FORMAT` environment variable to `true`.
+
+### Fixed
+
+#### Frontend
+
+* sorting of titles, harvests and fetch-intentions in corresponding tables was fixed for cases
+  where the sorting column values were not unique. This caused issues when switching between pages -
+  some rows may have been missing or duplicated.
+
 
 ## [5.0.1]
 

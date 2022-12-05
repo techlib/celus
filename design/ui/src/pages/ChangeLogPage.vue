@@ -30,7 +30,11 @@ cs:
                   :id="'version-' + swapCharacters(entry.version)"
                   :key="'version-' + i"
                 >
-                  {{ $t("version") + " " + entry.version }}
+                  {{
+                    entry.version === "Unreleased"
+                      ? entry.version
+                      : $t("version") + " " + entry.version
+                  }}
                 </h2>
                 <div
                   v-html="markdownToHtml(entry.markdown)"
@@ -105,8 +109,17 @@ export default {
 
 <style lang="scss">
 .changelog-entry {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: solid 1px #ccc;
+  &:first-child {
+    padding-top: 0;
+    margin-top: 0;
+    border-top: none;
+  }
+
   h2 {
-    padding: 4rem 0 0.25rem 0;
+    padding: 1rem 0 0.25rem 0.75rem;
     color: #444;
     font-size: 1.35rem;
   }
