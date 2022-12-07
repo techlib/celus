@@ -76,7 +76,7 @@ from logs.serializers import (
 )
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.models import Organization
-from publications.models import Platform
+from publications.models import Platform, Title
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 from tags.models import Tag
@@ -504,6 +504,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         end_date = CharField(validators=[month_validator], required=False)
         organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
         platform = PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=False)
+        title = PrimaryKeyRelatedField(queryset=Title.objects.all(), required=False)
         split_by_org = BooleanField(default=False)
         split_by_platform = BooleanField(default=False)
 
@@ -542,6 +543,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             rt,
             platform=params.get('platform'),
             organization=params.get('organization'),
+            title=params.get('title'),
             split_by_org=bool(params.get('split_by_org')),
             split_by_platform=bool(params.get('split_by_platform')),
             start_month=start_month,

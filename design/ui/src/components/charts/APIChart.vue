@@ -181,10 +181,12 @@
           <CoverageMap
             :organization-id="organization"
             :platform-id="platform"
+            :title-id="title"
             :report-type-id="reportTypeId"
             :raw-report-type="rawReportType"
             :start-month="dateRangeStart"
             :end-month="dateRangeEnd"
+            :rows="coverageRows"
           />
         </v-card-text>
         <v-card-actions class="pb-4 pr-4">
@@ -206,8 +208,6 @@ import ChartDataTable from "../ChartDataTable";
 import { formatInteger, padIntegerWithZeros } from "@/libs/numbers";
 import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
 import CoverageMap from "@/components/charts/CoverageMap";
-import addMonths from "date-fns/addMonths";
-import startOfMonth from "date-fns/startOfMonth";
 
 /* vue-echarts */
 import { use } from "echarts/core";
@@ -369,6 +369,7 @@ export default {
       dateRangeEnd: "dateRangeExplicitEndText",
       selectedOrganization: "selectedOrganization",
       enableDataCoverage: "enableDataCoverage",
+      organizationSelected: "organizationSelected",
     }),
     monthNames() {
       return months.map((item) =>
@@ -794,6 +795,15 @@ export default {
         ymDateFormat
       );
     },
+    coverageRows() {
+      if (this.title && this.organizationSelected) {
+        // if one title is selected and only one organization is selected
+        // we can show the coverage split by platform, which is more useful
+        return "platform";
+      }
+      // otherwise split by organization
+      return "organization";
+    },
   },
 
   methods: {
@@ -937,6 +947,9 @@ export default {
         }
         if (this.platform) {
           params["platform"] = this.platform;
+        }
+        if (this.title) {
+          params["title"] = this.title;
         }
         if (this.organization && this.organization !== -1) {
           params["organization"] = this.organization;

@@ -29,6 +29,7 @@ import {
 } from "echarts/components";
 import VChart from "vue-echarts";
 import { mapState } from "vuex";
+import IdTranslation from "@/libs/id-translation";
 
 use([
   CanvasRenderer,
@@ -59,6 +60,10 @@ export default {
       required: false,
     },
     platformId: {
+      type: Number,
+      required: false,
+    },
+    titleId: {
       type: Number,
       required: false,
     },
@@ -187,6 +192,9 @@ export default {
       if (this.platformId) {
         params["platform"] = this.platformId;
       }
+      if (this.titleId) {
+        params["title"] = this.titleId;
+      }
       if (this.organizationId) {
         params["organization"] = this.organizationId;
       }
@@ -212,11 +220,21 @@ export default {
       if (!error) {
         this.coverageData = response.data;
         if (this.splitByOrg) {
-          this.coverageData.forEach(
-            (item) =>
-              (item.organization =
-                this.organizations[item.organization_id][`name_${this.lang}`])
-          );
+          this.coverageData.forEach((item) => {
+            item.organization =
+              this.organizations[item.organization_id][`name_${this.lang}`];
+          });
+        }
+        if (this.splitByPlatform) {
+          // we need to remap the ids to names, but we have a mechanism for that
+          let platformIds = [
+            ...new Set(this.coverageData.map((item) => item.platform_id)),
+          ];
+          let trans = new IdTranslation("/api/platform/");
+          await trans.prepareTranslation(platformIds);
+          this.coverageData.forEach((item) => {
+            item.platform = trans.translateKeyToString(item.platform_id);
+          });
         }
       } else {
         this.coverageData = [];

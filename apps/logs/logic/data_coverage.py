@@ -6,7 +6,7 @@ from django.db.models import Count, Exists, Max, Min, OuterRef, Q, QuerySet, Sub
 from core.logic.dates import months_in_range
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform, ReportType
 from organizations.models import Organization
-from publications.models import Platform
+from publications.models import Platform, PlatformTitle, Title
 from sushi.models import SushiCredentials
 
 
@@ -16,6 +16,7 @@ class DataCoverageExtractor:
         report_type: ReportType,
         organization: Optional[Organization] = None,
         platform: Optional[Platform] = None,
+        title: Optional[Title] = None,
         split_by_org: bool = False,
         split_by_platform: bool = False,
         start_month: date = None,
@@ -26,6 +27,7 @@ class DataCoverageExtractor:
         :param report_type:
         :param organization: limit the data to this organization
         :param platform: limit the data to this platform
+        :param title: limit the data to this title by only considering platforms having that title
         :param split_by_org: split resulting data by organization
         :param split_by_platform: split resulting data by platform
         :param start_month: if not given, it will be obtained from the database
@@ -35,6 +37,7 @@ class DataCoverageExtractor:
         self.report_type = report_type
         self.organization = organization
         self.platform = platform
+        self.title = title
         self.split_by_org = split_by_org
         self.split_by_platform = split_by_platform
         self.start_month = start_month
@@ -52,6 +55,17 @@ class DataCoverageExtractor:
             extra_filters.append(Q(platform=self.platform))
         if self.organization:
             extra_filters.append(Q(organization=self.organization))
+        if self.title:
+            # we need to filter the platforms having this title
+            extra_filters.append(
+                Q(
+                    Exists(
+                        PlatformTitle.objects.filter(
+                            title=self.title, platform=OuterRef('platform')
+                        )
+                    )
+                )
+            )
         return extra_filters
 
     @property

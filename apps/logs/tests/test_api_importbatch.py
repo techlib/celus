@@ -4,6 +4,7 @@ from django.urls import reverse
 from charts.models import ReportDataView
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import ImportBatch, ReportInterestMetric, Metric, InterestGroup
+from publications.logic.fake_data import TitleFactory
 from publications.models import PlatformInterestReport
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
@@ -40,19 +41,20 @@ class TestImportBatchesAPI:
         """
         The created data from IB perspective are
 
-        date    | RT  | platform   | organization | source
-        --------+-----+------------+--------------+-------
-        2020-01 | TR  | standalone | standalone   | fa
-        2020-02 | TR  | standalone | standalone   | fa
-        2020-03 | TR  | standalone | standalone   | mdu
-        2020-04 | TR  | standalone | standalone   | mdu
-        2020-02 | BR1 | standalone | standalone   | fa
-        2020-01 | PR  | branch     | branch       | fa
-        2020-02 | PR  | branch     | branch       | mdu
-        2020-03 | PR  | branch     | branch       | mdu
-        2020-04 | PR  | branch     | branch       | mdu
+        date    | RT  | platform   | organization | source | titles
+        --------+-----+------------+--------------+--------+--------
+        2020-01 | TR  | standalone | standalone   | fa     | t1
+        2020-02 | TR  | standalone | standalone   | fa     | t1,t2
+        2020-03 | TR  | standalone | standalone   | mdu    | t2,t3
+        2020-04 | TR  | standalone | standalone   | mdu    | t1,t2,t3
+        2020-02 | BR1 | standalone | standalone   | fa     | t1
+        2020-01 | PR  | branch     | branch       | fa     | t2
+        2020-02 | PR  | branch     | branch       | mdu    | random 10
+        2020-03 | PR  | branch     | branch       | mdu    | random 10
+        2020-04 | PR  | branch     | branch       | mdu    | random 10
         """
         metric1 = MetricFactory.create()
+        t1, t2, t3, t4 = TitleFactory.create_batch(4)
         FetchIntentionFactory(
             start_date="2020-01-01",
             end_date="2020-01-31",
@@ -84,6 +86,7 @@ class TestImportBatchesAPI:
                     platform=platforms["standalone"],
                     report_type=report_types["tr"],
                     create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t1],
                 ),
             ),
         )
@@ -103,6 +106,7 @@ class TestImportBatchesAPI:
                     platform=platforms["standalone"],
                     report_type=report_types["tr"],
                     create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t1, t2],
                 ),
             ),
         )
@@ -122,6 +126,7 @@ class TestImportBatchesAPI:
                     platform=platforms["standalone"],
                     report_type=report_types["br1"],
                     create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t1],
                 ),
             ),
         )
@@ -141,6 +146,7 @@ class TestImportBatchesAPI:
                     platform=platforms["branch"],
                     report_type=report_types["pr"],
                     create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t2],
                 ),
             ),
         )
@@ -155,6 +161,7 @@ class TestImportBatchesAPI:
                     platform=platforms["standalone"],
                     report_type=report_types["tr"],
                     create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t2, t3],
                 ),
                 ImportBatchFullFactory(
                     date="2020-04-01",
@@ -162,6 +169,7 @@ class TestImportBatchesAPI:
                     platform=platforms["standalone"],
                     report_type=report_types["tr"],
                     create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t1, t2, t3],
                 ),
             ),
         )
@@ -193,7 +201,7 @@ class TestImportBatchesAPI:
                 ),
             ),
         )
-        return {'metric1': metric1}
+        return {'metric1': metric1, 't1': t1, 't2': t2, 't3': t3, 't4': t4}
 
     def test_lookup(self, data, clients, organizations, platforms, report_types):
         # empty lookup
@@ -268,7 +276,7 @@ class TestImportBatchesAPI:
 
         assert resp.status_code == 200
         assert resp.data == {
-            'logs.AccessLog': 10,
+            'logs.AccessLog': 1,
             'sushi.SushiFetchAttempt': 2,
             'scheduler.FetchIntention': 2,
             'logs.ImportBatch': 1,
@@ -301,7 +309,7 @@ class TestImportBatchesAPI:
         resp = clients["su"].post(self.purge_url, {"batches": batches}, format="json")
         assert resp.status_code == 200
         assert resp.data == {
-            'logs.AccessLog': 50,
+            'logs.AccessLog': 9,
             'logs.ImportBatch': 5,
             'logs.ManualDataUpload': 1,
             'logs.ManualDataUploadImportBatch': 2,
@@ -545,3 +553,62 @@ class TestImportBatchesAPI:
         assert len(data) == 3
         assert [rec['ib_max'] for rec in data] == ib_max_counts, "ib_max should match"
         assert [rec['ib_count'] for rec in data] == ib_counts, "ib_count should match"
+
+    @pytest.mark.parametrize(
+        ['rt', 'title_id', 'ib_counts'],
+        [
+            ('TR', 't1', [1, 1, 1]),  # `standalone` has TR for all 3 months, t1 is on `standalone`
+            ('TR', 't2', [1, 1, 1]),  # `standalone` has TR for all 3 months, t2 is on `standalone`
+            ('TR', 't3', [1, 1, 1]),  # `standalone` has TR for all 3 months, t3 is on `standalone`
+            ('TR', 't4', [0, 0, 0]),  # t4 is on no platform
+            ('BR1', 't1', [0, 1, 0]),  # `standalone` has BR1 for month #2, t1 is on `standalone`
+            ('BR1', 't2', [0, 1, 0]),  # `standalone` has BR1 for month #2, t2 is on `standalone`
+            ('BR1', 't3', [0, 1, 0]),  # `standalone` has BR1 for month #2, t3 is on `standalone`
+            ('BR1', 't4', [0, 0, 0]),  # t4 is on no platform
+            ('PR', 't1', [0, 0, 0]),  # t1 is not on `branch`
+            ('PR', 't2', [1, 1, 1]),  # `branch` has PR for all 3 months, t2 is on `branch`
+            ('PR', 't3', [0, 0, 0]),  # t3 is not on `branch`
+            ('PR', 't4', [0, 0, 0]),  # t4 is on no platform
+        ],
+    )
+    def test_data_coverage_title(
+        self, data, clients, organizations, platforms, report_types, rt, title_id, ib_counts
+    ):
+        """
+        Test the data coverage on the title level. The coverage data in this case does not
+        mean that the title was present in the IB, but that we have an IB for a platform
+        which usually has that title.
+
+        It is thus not necessary to have data for the title, it is enough to have data
+        for the platform. There is no need to re-harvest or something if the title usage
+        is 0 - the platform is there, so we have all the data we can get.
+
+        The created data from title perspective are
+
+        date    | RT  | platform   | organization | source | titles
+        --------+-----+------------+--------------+--------+--------
+        2020-01 | TR  | standalone | standalone   | fa     | t1
+        2020-02 | TR  | standalone | standalone   | fa     | t1,t2
+        2020-03 | TR  | standalone | standalone   | mdu    | t2,t3
+        2020-04 | TR  | standalone | standalone   | mdu    | t1,t2,t3
+        2020-02 | BR1 | standalone | standalone   | fa     | t1
+        2020-01 | PR  | branch     | branch       | fa     | t2
+        2020-02 | PR  | branch     | branch       | mdu    | -
+        2020-03 | PR  | branch     | branch       | mdu    | -
+        2020-04 | PR  | branch     | branch       | mdu    | -
+        """
+        title = data[title_id]
+        resp = clients['su'].get(
+            reverse('import-batch-list') + "data-coverage/",
+            {
+                'start_date': '2020-01',
+                'end_date': '2020-03',
+                'report_type': report_types[rt.lower()].pk,
+                'title': title.pk,
+            },
+        )
+        assert resp.status_code == 200
+        assert 'date' in resp.json()[0]
+        assert 'organization_id' not in resp.json()[0]
+        assert [rec['date'] for rec in resp.json()] == ['2020-01-01', '2020-02-01', '2020-03-01']
+        assert [rec['ib_count'] for rec in resp.json()] == ib_counts
