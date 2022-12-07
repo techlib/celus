@@ -203,7 +203,7 @@ import LoaderWidget from "@/components/util/LoaderWidget";
 import { pivot } from "@/libs/pivot";
 import cancellation from "@/mixins/cancellation";
 import ChartDataTable from "../ChartDataTable";
-import { padIntegerWithZeros } from "@/libs/numbers";
+import { formatInteger, padIntegerWithZeros } from "@/libs/numbers";
 import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
 import CoverageMap from "@/components/charts/CoverageMap";
 import addMonths from "date-fns/addMonths";
@@ -691,7 +691,6 @@ export default {
         },
         series: [
           ...coverageSeries,
-          ...missingDataSeries,
           ...this.seriesNames.map((series, index) => ({
             id: series,
             name: this.shownSecondaryDimension
@@ -702,6 +701,7 @@ export default {
             // only add markline to the first series
             markLine: index === 0 ? this.markLine : {},
           })),
+          ...missingDataSeries,
         ],
         tooltip: {
           trigger: "axis",
@@ -732,6 +732,8 @@ export default {
                   p.seriesName === coverageSeries[0].name
                 ) {
                   value = `${value.toFixed(1)} %`;
+                } else {
+                  value = formatInteger(value);
                 }
                 inside += `<tr><td>${p.marker} ${p.seriesName}</td>
                            <td class="chart-value">${value}</td></tr>`;
