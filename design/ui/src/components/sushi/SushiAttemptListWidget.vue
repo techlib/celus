@@ -122,7 +122,7 @@ cs:
                 >
                   <template v-slot:activator="{ on }">
                     <v-btn
-                      text
+                      icon
                       small
                       color="secondary"
                       @click.stop="
@@ -132,7 +132,7 @@ cs:
                       "
                       v-on="on"
                     >
-                      <v-icon left small>fa-microscope</v-icon>
+                      <v-icon small>fa-microscope</v-icon>
                     </v-btn>
                   </template>
                   <span>{{ $t("show_raw_data") }}</span>
@@ -143,7 +143,7 @@ cs:
                 >
                   <template v-slot:activator="{ on }">
                     <v-btn
-                      text
+                      icon
                       small
                       color="secondary"
                       @click.stop="
@@ -153,7 +153,7 @@ cs:
                       "
                       v-on="on"
                     >
-                      <v-icon left small>fa-chart-bar</v-icon>
+                      <v-icon small>fa-chart-bar</v-icon>
                     </v-btn>
                   </template>
                   <span>{{ $t("show_chart") }}</span>
