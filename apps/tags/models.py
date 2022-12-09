@@ -7,6 +7,7 @@ from collections import Counter
 from functools import reduce
 from typing import BinaryIO, Callable, Optional, Tuple, Type, Union
 
+import magic
 from colorfield.fields import ColorField
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -15,7 +16,7 @@ from django.db import models
 from django.db.models import Q, QuerySet
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from core.models import CreatedUpdatedMixin, REL_ORG_ADMIN, User
 from logs.logic.data_import import TitleManager
@@ -492,9 +493,36 @@ class TaggingBatchState(models.TextChoices):
     UNDOING = 'undoing', _('Undoing')
 
 
+def validate_mime_type(fileobj):
+    pos = fileobj.tell()
+    fileobj.seek(0)
+    try:
+        detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
+    finally:
+        fileobj.seek(pos)
+    # there is not one type to rule them all - magic is not perfect and we need to consider
+    # other possibilities that could be detected - for example the text/x-Algol68 seems
+    # to be returned for some CSV files with some version of libmagic
+    # (the library magic uses internally)
+    if detected_type not in ('text/csv', 'text/plain', 'application/csv', 'text/x-Algol68'):
+        raise ValidationError(
+            _(
+                "The uploaded file does not seem to be a CSV file. "
+                "The file type seems to be '{detected_type}'. "
+                "Please upload a CSV file."
+            ).format(detected_type=detected_type)
+        )
+
+
 class TaggingBatch(CreatedUpdatedMixin, models.Model):
 
-    source_file = models.FileField(upload_to=where_to_store, blank=True, null=True, max_length=256)
+    source_file = models.FileField(
+        upload_to=where_to_store,
+        blank=True,
+        null=True,
+        max_length=256,
+        validators=[validate_mime_type],
+    )
     annotated_file = models.FileField(
         upload_to='tagging_batch/',
         blank=True,

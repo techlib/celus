@@ -141,6 +141,11 @@ cs:
         <v-btn @click="$emit('close')">{{ $t("actions.close") }}</v-btn>
       </v-card-actions>
     </v-card>
+    <ErrorDialog
+      v-if="showErrorDialog"
+      v-model="showErrorDialog"
+      :errors="errors"
+    />
   </v-form>
 </template>
 
@@ -151,10 +156,12 @@ import TagSelector from "@/components/tags/TagSelector";
 import ServerTask from "@/libs/server-task";
 import ServerTaskMonitor from "@/components/tasks/ServerTaskMonitor";
 import TaggingBatchStats from "@/components/tagging-batches/TaggingBatchStats";
+import ErrorDialog from "@/components/util/ErrorDialog";
 
 export default {
   name: "TaggingBatchProcessingWidget",
   components: {
+    ErrorDialog,
     TaggingBatchStats,
     ServerTaskMonitor,
     TagSelector,
@@ -173,6 +180,8 @@ export default {
       tag: this.batch?.tag,
       task: null,
       timeout: null,
+      showErrorDialog: false,
+      errors: [],
     };
   },
 
@@ -203,6 +212,12 @@ export default {
       if (!result.error) {
         this.taggingBatch = result.response.data;
         await this.startPreflight();
+      } else {
+        let info = result.error?.response?.data;
+        if (info && "source_file" in info) {
+          this.showErrorDialog = true;
+          this.errors = info.source_file;
+        }
       }
       this.uploading = false;
     },

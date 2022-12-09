@@ -8,7 +8,6 @@ en:
     older data which are not longer available through SUSHI or for non-COUNTER platforms.
   data_file: Data file to upload
   data_file_placeholder: Upload a file containing data.
-  error: Error
   dismiss: Dismiss
   step_method: Select method
   step_upload: Data upload
@@ -59,7 +58,6 @@ cs:
     starších dat, která již nejsou na platformě v rámci SUSHI k dispozici, nebo pro ne-COUNTER platformy.
   data_file: Datový soubor k nahrání
   data_file_placeholder: Nahrajte soubor, který obsahuje data.
-  error: Chyba
   dismiss: Zavřít
   step_method: Vyberte metodu
   step_upload: Nahrání dat
@@ -181,9 +179,7 @@ cs:
                       $t("method_raw_label_name")
                     }}</strong
                     >:
-                    <span class="pl-1">{{
-                      $t("method_raw_label_text")
-                    }}</span>
+                    <span class="pl-1">{{ $t("method_raw_label_text") }}</span>
                   </span>
                   <v-tooltip bottom v-if="!canImportRawData">
                     <template #activator="{ on }">
@@ -573,25 +569,11 @@ cs:
         @deleted="deletePerformed()"
       />
     </v-dialog>
-    <v-dialog v-model="showErrorDialog" max-width="640px">
-      <v-card class="pa-3">
-        <v-card-title>{{ $t("error") }}</v-card-title>
-        <v-card-text>
-          <v-list>
-            <v-list-item v-for="(error, index) in errors" :key="index">
-              <v-list-item-avatar>
-                <v-icon color="error">fa-exclamation-circle</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>{{ error }}</v-list-item-content>
-            </v-list-item>
-          </v-list>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn @click="showErrorDialog = false">{{ $t("dismiss") }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ErrorDialog
+      v-if="showErrorDialog"
+      v-model="showErrorDialog"
+      :errors="errors"
+    />
   </div>
 </template>
 
@@ -606,10 +588,12 @@ import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm"
 import ImportPreflightDataWidget from "@/components/ImportPreflightDataWidget";
 import { badge } from "@/libs/sources.js";
 import MDUChart from "@/components/MDUChart";
+import ErrorDialog from "@/components/util/ErrorDialog";
 
 export default {
   name: "CustomDataUploadPage",
   components: {
+    ErrorDialog,
     MDUChart,
     ImportBatchesDeleteConfirm,
     ImportPreflightDataWidget,

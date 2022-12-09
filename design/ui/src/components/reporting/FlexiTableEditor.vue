@@ -656,7 +656,6 @@ export default {
       exportHint: false,
       reportName: "",
       ignoreUrlFilteringParams: false,
-      showErrorDialog: false,
       reportTypeSetOnLoad: false, // helps guard against updates when loading data from a stored report
       reportPk: this.reportId,
       loading: false,

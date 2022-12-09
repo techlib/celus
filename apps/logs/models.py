@@ -601,8 +601,8 @@ def validate_mime_type(fileobj):
     ):
         raise ValidationError(
             _(
-                "The uploaded file is not in required file type or is corrupted."
-                "The file type seems to be '{detected_type}'."
+                "The uploaded file is not in required file type or is corrupted. "
+                "The file type seems to be '{detected_type}'. "
                 "Please upload your file in required file type."
             ).format(detected_type=detected_type)
         )

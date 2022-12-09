@@ -14,6 +14,8 @@ en:
   email_required: Please enter a valid email address
   back: Back
   continue: Continue
+  error: Error
+  dismiss: Dismiss
 
 cs:
   value_required: Toto pole je povinné
@@ -31,3 +33,5 @@ cs:
   email_required: Zadejte platnou emailovou adresu
   back: Zpět
   continue: Pokračovat
+  error: Chyba
+  dismiss: Zavřít
