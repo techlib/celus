@@ -193,6 +193,18 @@
                   </td>
                 </tr>
                 <tr>
+                  <th>{{ $t("title_fields.split_by") }}:</th>
+                  <td>
+                    {{ item.splitBy?.getName($i18n) }}
+                  </td>
+                </tr>
+                <tr>
+                  <th>{{ $t("labels.rows") }}:</th>
+                  <td>
+                    {{ item.primaryDimension.getName($i18n) }}
+                  </td>
+                </tr>
+                <tr>
                   <th>{{ $t("labels.columns") }}:</th>
                   <td>
                     {{
