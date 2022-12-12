@@ -178,24 +178,9 @@ class AccessLogCube(Cube):
 AccessLogCubeRecord = AccessLogCube.record_type()
 
 
-class PlatformTitleOrganization(AggregatingMaterializedView):
-
-    cube = AccessLogCube
-    preserved_dimensions = ['target_id', 'platform_id', 'organization_id', 'date']
-    aggregated_metrics = ['value']
-
-
 class PlatformTitleOrganizationProjection(AggregatingMaterializedView):
 
     cube = AccessLogCube
     preserved_dimensions = ['target_id', 'platform_id', 'organization_id', 'date']
     aggregated_metrics = ['value']
     projection = True
-
-
-class OrganizationImportantTitles(AggregatingMaterializedView):
-
-    cube = AccessLogCube
-    preserved_dimensions = ['report_type_id', 'organization_id', 'dim1', 'date', 'target_id']
-    aggregated_metrics = ['value']
-    projection = False

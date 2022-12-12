@@ -3,44 +3,58 @@ import operator
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
-from typing import List, Iterable, Optional, Type
+from typing import Iterable, List, Optional, Type
 
+from django.conf import settings
+from django.core.exceptions import EmptyResultSet
 from django.db.models import (
-    ForeignKey,
-    FilteredRelation,
-    Q,
     DateField,
-    QuerySet,
-    Sum,
-    OuterRef,
-    Subquery,
     F,
+    FilteredRelation,
+    ForeignKey,
     IntegerField,
+    OuterRef,
+    Q,
+    QuerySet,
+    Subquery,
+    Sum,
 )
 from django.db.models.functions import Coalesce, Concat
+from hcube.api.models.aggregation import Sum as HSum
 
-from core.logic.dates import parse_month, month_end, date_range_from_params
+from core.logic.dates import date_range_from_params, month_end, parse_month
 from core.logic.serialization import parse_b64json
 from core.logic.type_conversion import to_bool
-from logs.logic.queries import logger, find_best_materialized_view
+from logs.cubes import AccessLogCube, ch_backend
+from logs.logic.queries import find_best_materialized_view, logger
 from logs.logic.reporting.filters import (
-    DimensionFilter,
+    CLICKHOUSE_ID_COUNT_LIMIT,
+    ClickhouseIncompatibleFilter,
     DateDimensionFilter,
-    ForeignKeyDimensionFilter,
+    DimensionFilter,
     ExplicitDimensionFilter,
+    ForeignKeyDimensionFilter,
     TagDimensionFilter,
 )
 from logs.models import AccessLog, DimensionText, ReportType
 from organizations.logic.queries import extend_query_filter
 from organizations.models import Organization
-from publications.models import Title
-from tags.models import Tag, TagClass, TagScope
+from tags.models import Tag, TagClass
 
 
 class FlexibleDataSlicer:
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'report_type']
 
-    def __init__(self, primary_dimension, tag_roll_up=False, include_all_zero_rows=False):
+    def __init__(
+        self,
+        primary_dimension,
+        tag_roll_up=False,
+        include_all_zero_rows=False,
+        use_clickhouse=None,
+    ):
+        self.use_clickhouse = (
+            settings.CLICKHOUSE_QUERY_ACTIVE if use_clickhouse is None else use_clickhouse
+        )
         self.primary_dimension = primary_dimension
         self.dimension_filters: List[DimensionFilter] = []
         self.group_by = []
@@ -77,7 +91,7 @@ class FlexibleDataSlicer:
     def filters(self) -> dict:
         return self.create_filters()
 
-    def create_filters(self, ignore_dimensions=None):
+    def create_filters(self, ignore_dimensions=None, use_clickhouse=False):
         if ignore_dimensions:
             if type(ignore_dimensions) in (list, tuple, set):
                 ignore_dimensions = set(ignore_dimensions)
@@ -89,15 +103,20 @@ class FlexibleDataSlicer:
         for df in self.dimension_filters:
             if df.dimension not in ignore_dimensions or isinstance(df, TagDimensionFilter):
                 # tag filters are not ignored even if they are for an ignored dimension
-                ret.update(df.query_params())
+                ret.update(df.query_params(clickhouse_compatible=use_clickhouse))
         logger.info('filters: %s', ret)
         if self.organization_filter is not None:
-            if 'organization__in' in ret:
-                ret['organization__in'] = ret['organization__in'].filter(
-                    pk__in=self.organization_filter
-                )
+            # convert organization filter to a list of ids for easier compatibility with
+            # clickhouse and for simpler query (even though that is not a big deal)
+            if type(self.organization_filter) in (list, tuple, set):
+                org_filter_pks = self.organization_filter
             else:
-                ret['organization__in'] = self.organization_filter
+                org_filter_pks = set(self.organization_filter.values_list('pk', flat=True))
+            if 'organization_id__in' in ret:
+                orig_orgs = set(ret['organization_id__in'])
+                ret['organization_id__in'] = list(orig_orgs & org_filter_pks)
+            else:
+                ret['organization_id__in'] = list(org_filter_pks)
         logger.info('filters with org: %s', ret)
         return ret
 
@@ -300,27 +319,40 @@ class FlexibleDataSlicer:
             operator.or_, (Q(**{f'{text_field}__ilike': text}) for text_field in text_fields)
         )
 
-    def create_text_filter(self, dimension, text_filter) -> (dict, dict):
+    def create_text_filter(self, dimension, text_filter, clickhouse_compatible=False) -> dict:
         """
         Creates a dict that can be used in queryset filter to filter only those instances of
         `dimension` which contain the text from `text_filter`.
+
+        If `clickhouse_compatible` is True, the filter query will be resolved to a list of ids,
+        otherwise it will remain as a subquery. The former is useful for clickhouse, the latter
+        is faster if normal django ORM is used.
         """
         field, modifier = AccessLog.get_dimension_field(dimension)
-        extra_annot = {}
         if isinstance(field, ForeignKey):
             primary_cls = field.remote_field.model
-            subfilter = primary_cls.objects.filter(self._text_to_filter(text_filter)).values('id')
+            subfilter = primary_cls.objects.filter(self._text_to_filter(text_filter)).values_list(
+                'pk', flat=True
+            )
+            if clickhouse_compatible:
+                if subfilter.count() > CLICKHOUSE_ID_COUNT_LIMIT:
+                    raise ClickhouseIncompatibleFilter('Too many ids to resolve')
+                subfilter = list(subfilter)
             extra_filter = {f'{dimension}_id__in': subfilter}
         elif field and dimension.startswith('dim'):
             subfilter = DimensionText.objects.filter(
                 self._text_to_filter(text_filter, text_fields=('text', 'text_local'))
-            ).values('id')
+            ).values_list('pk', flat=True)
+            if clickhouse_compatible:
+                if subfilter.count() > CLICKHOUSE_ID_COUNT_LIMIT:
+                    raise ClickhouseIncompatibleFilter('Too many ids to resolve')
+                subfilter = list(subfilter)
             extra_filter = {f'{dimension}__in': subfilter}
         else:
             raise SlicerConfigError(
                 'The requested dimension is not supported', SlicerConfigErrorCode.E107
             )
-        return extra_annot, extra_filter
+        return extra_filter
 
     @classmethod
     def create_pk_filter(cls, dimension, pks: list) -> dict:
@@ -339,6 +371,43 @@ class FlexibleDataSlicer:
             )
         return extra_filter
 
+    def get_possible_dimension_values_clickhouse(
+        self, dimension, max_values_count=100, ignore_self=False, text_filter=None, pks=None,
+    ):
+        # the following can throw a ClickhouseIncompatibleFilter exception
+        # if some of the normal filters are not supported by clickhouse
+        query = self.get_possible_dimension_values_queryset(
+            dimension, ignore_self=ignore_self, use_clickhouse=True
+        )
+        if text_filter:
+            # when filtering by text, we must first resolve the IDs of the matched objects
+            # and then use them in the clickhouse query. Because there is a limit on the
+            # number of IDs that can be passed to clickhouse, we must check against such limit
+            # and if it is exceeded, we must use the django ORM
+            # the following can throw a ClickhouseIncompatibleFilter exception
+            tf = self.create_text_filter(dimension, text_filter, clickhouse_compatible=True)
+            query = query.filter(**tf)
+        if pks:
+            query = query.filter(**self.create_pk_filter(dimension, pks))
+
+        count = ch_backend.get_count(query)
+        cropped = False
+        if max_values_count and count > max_values_count:
+            cropped = True
+            query = query[:max_values_count]
+        result = ch_backend.get_records(query)
+        # the output should not contain the _id suffix for foreign key fields,
+        # but it is contained in clickhouse names, so we need to remap it
+        data = [
+            {(k if k != f'{dimension}_id' else dimension): v for k, v in rec._asdict().items()}
+            for rec in result
+        ]
+        return {
+            'count': count,
+            'values': data,
+            'cropped': cropped,
+        }
+
     def get_possible_dimension_values(
         self, dimension, max_values_count=100, ignore_self=False, text_filter=None, pks=None,
     ):
@@ -347,6 +416,25 @@ class FlexibleDataSlicer:
         be filtered/grouped on.
         If `ignore_self` is True, the dimensions themselves will not be used in the filter.
         """
+        if self.use_clickhouse:
+            try:
+                return self.get_possible_dimension_values_clickhouse(
+                    dimension,
+                    max_values_count=max_values_count,
+                    ignore_self=ignore_self,
+                    text_filter=text_filter,
+                    pks=pks,
+                )
+            except ClickhouseIncompatibleFilter:
+                # clickhouse cannot be used for this case, fall back to django ORM
+                #
+                # Note: this should only happen if the query involves too many tagged titles
+                # or a very loose text filter, so it should not be a common case
+                # and the processing will take so long that this extra processing will
+                # not be noticeable
+                pass
+
+        # normal django query
         # we can ignore primary because it does not have any influence on the filtering
         self._replace_report_type_with_materialized(
             extra_dimensions_to_preserve={dimension}, ignore_primary=True
@@ -354,14 +442,15 @@ class FlexibleDataSlicer:
         query = self.get_possible_dimension_values_queryset(dimension, ignore_self=ignore_self)
         # add text filter
         if text_filter:
-            extra_annot, extra_filter = self.create_text_filter(dimension, text_filter)
-            if extra_annot:
-                query = query.annotate(**extra_annot)
+            extra_filter = self.create_text_filter(dimension, text_filter)
             query = query.filter(**extra_filter)
         if pks:
             query = query.filter(**self.create_pk_filter(dimension, pks))
         # get count and decide if we need to sort
-        logger.debug('Query: %s', query.query)
+        try:
+            logger.debug('Query: %s', query.query)
+        except EmptyResultSet:
+            logger.debug('Query: EmptyResultSet')
         count = query.count()
         cropped = False
         if max_values_count and count > max_values_count:
@@ -370,24 +459,46 @@ class FlexibleDataSlicer:
             query = query[:max_values_count]
         return {'count': count, 'values': list(query), 'cropped': cropped}
 
-    def get_possible_dimension_values_queryset(self, dimensions, ignore_self=False):
+    def get_possible_dimension_values_queryset(
+        self, dimensions, ignore_self=False, use_clickhouse=False
+    ):
         if type(dimensions) not in (tuple, list, set):
             dimensions = [dimensions]
         ignore_dimensions = dimensions if ignore_self else None
         self.check_params()
-        query_params = self.create_filters(ignore_dimensions=ignore_dimensions)
-        # check if we could use a materialized rt
-        if len(rt_fltr := query_params.get('report_type_id__in', [])) == 1:
-            # we can only use it if there is one RT
-            rt = ReportType.objects.get(pk=rt_fltr[0])
-            used_dimensions = {
-                dim.split('__')[0] for dim in query_params.keys() if dim != 'report_type_id__in'
-            }
-            new_rt = find_best_materialized_view(rt, used_dimensions)
-            if new_rt:
-                query_params['report_type_id__in'] = [new_rt.pk]
-        query = AccessLog.objects.filter(**query_params).values(*dimensions).distinct()
-        return query
+        query_params = self.create_filters(
+            ignore_dimensions=ignore_dimensions, use_clickhouse=use_clickhouse
+        )
+        if use_clickhouse:
+            # clickhouse uses column names with the _id suffix
+            dims = [
+                f'{dim}_id' if f'{dim}_id' in AccessLogCube._dimensions else dim
+                for dim in dimensions
+            ]
+            query = (
+                AccessLogCube.query()
+                .filter(**query_params)
+                .group_by(*dims)
+                .aggregate(score=HSum('value'))
+                .order_by('-score')
+            )
+            return query
+        else:
+            # check if we could use a materialized rt
+            if len(rt_fltr := query_params.get('report_type_id__in', [])) == 1:
+                # we can only use it if there is one RT
+                rt = ReportType.objects.get(pk=rt_fltr[0])
+                used_dimensions = {
+                    dim.split('__')[0] for dim in query_params.keys() if dim != 'report_type_id__in'
+                }
+                used_dimensions = [
+                    dim[:-3] if dim.endswith('_id') else dim for dim in used_dimensions
+                ]
+                new_rt = find_best_materialized_view(rt, used_dimensions)
+                if new_rt:
+                    query_params['report_type_id__in'] = [new_rt.pk]
+            query = AccessLog.objects.filter(**query_params).values(*dimensions).distinct()
+            return query
 
     def get_possible_groups_queryset(self):
         if self.group_by:
@@ -459,7 +570,10 @@ class FlexibleDataSlicer:
                 # which have this problem, so we just ignore it and drop the ordering
                 logger.error('Dropping inconsistent order by "%s"', ob)
         qs = qs.order_by(*obs)
-        logger.debug('Slicer query: %s', qs.query)
+        try:
+            logger.debug('Slicer query: %s', qs.query)
+        except EmptyResultSet:
+            logger.debug('Slicer query: empty')
         return qs
 
     def get_remainder(self, part: Optional[list] = None) -> dict:

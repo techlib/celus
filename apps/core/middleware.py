@@ -83,9 +83,9 @@ class ClickhouseIntegrationMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        request.USE_CLICKHOUSE = (
-            settings.CLICKHOUSE_QUERY_ACTIVE and 'DISABLE-CLICKHOUSE' not in request.headers
-        )
+        request.USE_CLICKHOUSE = settings.CLICKHOUSE_QUERY_ACTIVE and request.headers.get(
+            'DISABLE-CLICKHOUSE'
+        ) not in ('1', 'true')
         response = self.get_response(request)
         return response
 

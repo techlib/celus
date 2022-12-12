@@ -297,6 +297,11 @@ CLICKHOUSE_HOST = config('CLICKHOUSE_HOST', default='localhost')
 CLICKHOUSE_PORT = config('CLICKHOUSE_PORT', default=9000, cast=int)
 CLICKHOUSE_SECURE = config('CLICKHOUSE_SECURE', default=False, cast=bool)
 
+# 256k chars is the default max limit of clickhouse query
+# it can be increased by setting max_query_size in config.xml, so we make it configurable.
+# It influences how many IDs may be passed to the clickhouse database in one "IN" query
+CLICKHOUSE_QUERY_SIZE_LIMIT = config('CLICKHOUSE_QUERY_SIZE_LIMIT', default=250_000, cast=int)
+
 print(
     f'Clickhouse db: {CLICKHOUSE_DB}; sync: {CLICKHOUSE_SYNC_ACTIVE}; '
     f'query: {CLICKHOUSE_QUERY_ACTIVE}',

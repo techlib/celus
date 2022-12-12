@@ -7,6 +7,7 @@ from zipfile import ZipFile
 import pytest
 from django.db.models import Q
 
+from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,
     FlexibleDataSimpleCSVExporter,
@@ -661,8 +662,10 @@ class TestFlexibleDataSlicerComputations:
         assert data == {'m1': expected}
 
 
-@pytest.mark.django_db
-class TestFlexibleDataSlicerOther:
+@pytest.mark.clickhouse
+@pytest.mark.usefixtures('clickhouse_on_off')
+@pytest.mark.django_db(transaction=True)
+class TestFlexibleDataSlicerPossibleDimensionValues:
     def test_get_possible_dimension_values_unfiltered(self, flexible_slicer_test_data):
         slicer = FlexibleDataSlicer(primary_dimension='platform')
         metric_data = slicer.get_possible_dimension_values('metric')
@@ -724,7 +727,9 @@ class TestFlexibleDataSlicerOther:
         platform_data = slicer.get_possible_dimension_values(tagged_dimension, ignore_self=True)
         assert platform_data['count'] == tagged_count
 
-    def test_get_possible_dimension_values_with_indirect_filter(self, flexible_slicer_test_data):
+    def test_get_possible_dimension_values_with_indirect_filter(
+        self, flexible_slicer_test_data, clickhouse_on_off
+    ):
         slicer = FlexibleDataSlicer(primary_dimension='platform')
         metrics = flexible_slicer_test_data['metrics'][1:]
         organization = flexible_slicer_test_data['organizations'][0]
@@ -738,6 +743,9 @@ class TestFlexibleDataSlicerOther:
         AccessLog.objects.filter(metric__in=metrics, organization=organization).delete(
             i_know_what_i_am_doing=True
         )
+        if clickhouse_on_off:
+            # we need to sync clickhouse because we did not use the standard way of deleting data
+            ch_backend.delete_records(AccessLogCube.query().filter(organization_id=organization.pk))
         organization_data = slicer.get_possible_dimension_values('organization')
         assert (
             organization_data['count'] == Organization.objects.count() - 1
@@ -811,6 +819,9 @@ class TestFlexibleDataSlicerOther:
         metric_data = slicer.get_possible_dimension_values('dim2', text_filter=search_text)
         assert metric_data['count'] == result_count
 
+
+@pytest.mark.django_db
+class TestFlexibleDataSlicerOther:
     def test_create_from_config(self):
         """
         Test that slicer created from config has the same params as the original slicer

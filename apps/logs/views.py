@@ -758,6 +758,7 @@ class FlexibleSlicerBaseView(APIView):
     def create_slicer(self, request):
         try:
             slicer = FlexibleDataSlicer.create_from_params(request.query_params)
+            slicer.use_clickhouse = request.USE_CLICKHOUSE
             if slicer.tag_roll_up:
                 slicer.tag_filter = Q(pk__in=Tag.objects.user_accessible_tags(request.user))
             slicer.add_extra_organization_filter(request.user.accessible_organizations())

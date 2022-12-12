@@ -791,7 +791,7 @@ six = "*"
 
 [[package]]
 name = "hcube"
-version = "0.4.0"
+version = "0.7.1"
 description = "HCube is a simple ORM for working with hyper-cube OLAP data stored in various backends."
 category = "main"
 optional = false
@@ -1900,7 +1900,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8.8"
-content-hash = "e248f82581e5dc11f153537c510435c157662900ff9e4e76bd0c4f9a252e1dd0"
+content-hash = "631321fae3e7e91ed52e7e546b5d41bf138c91fbc6e2f3a264b8f9dbbbb92ef3"
 
 [metadata.files]
 alabaster = [
@@ -2297,8 +2297,8 @@ freezegun = [
     {file = "freezegun-0.3.15.tar.gz", hash = "sha256:e2062f2c7f95cc276a834c22f1a17179467176b624cc6f936e8bc3be5535ad1b"},
 ]
 hcube = [
-    {file = "hcube-0.4.0-py3-none-any.whl", hash = "sha256:9df43cbd2187dc39932db15d03304ca68522a7ff34338c3446fd55cacea3b629"},
-    {file = "hcube-0.4.0.tar.gz", hash = "sha256:eefbc5f0f25068e5c6022b5de1538bd81a5594ee0e6105b0273f4f07a6fa83b7"},
+    {file = "hcube-0.7.1-py3-none-any.whl", hash = "sha256:619e479498247c966c3290aebde4d2c6a2c69bccd34182b5b1120690d2423c51"},
+    {file = "hcube-0.7.1.tar.gz", hash = "sha256:2585939d8e44fe3832ef648c834cd01c7c970a2445270b1e2768ddd7470c0b28"},
 ]
 identify = [
     {file = "identify-2.5.9-py2.py3-none-any.whl", hash = "sha256:a390fb696e164dbddb047a0db26e57972ae52fbd037ae68797e5ae2f4492485d"},

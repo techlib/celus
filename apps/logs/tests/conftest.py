@@ -6,6 +6,7 @@ import pytest
 from celus_nigiri.counter5 import CounterRecord
 from celus_nigiri.utils import parse_date_fuzzy
 
+from logs.logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
 from logs.models import (
     AccessLog,
     Dimension,
@@ -253,6 +254,7 @@ def flexible_slicer_test_data(report_type_nd):
     #                 al.value,
     #             ]
     #         )
+    sync_accesslogs_with_clickhouse_superfast()
     return {
         'report_types': report_types,
         'organizations': organizations,
@@ -338,6 +340,7 @@ def flexible_slicer_test_data2(report_type_nd):
             )
 
     AccessLog.objects.bulk_create(accesslogs)
+    sync_accesslogs_with_clickhouse_superfast()
     return {
         'report_types': report_types,
         'organizations': organizations,
