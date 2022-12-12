@@ -6,9 +6,31 @@ from django.contrib.admin import TabularInline
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Exists, OuterRef
+from import_export.admin import ExportActionMixin
+from import_export.resources import ModelResource
 
 from organizations.models import UserOrganization
 from .models import User, Identity, DataSource
+
+
+class MyUserResource(ModelResource):
+    """
+    This is used by django-import-export to facilitate CSV export in Django admin
+    """
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'last_login',
+            'is_active',
+            'is_staff',
+            'source',
+        )
+        export_order = fields
 
 
 class UserOrganizationInline(TabularInline):
@@ -56,7 +78,7 @@ class IsAdminOfMasterOrganization(admin.SimpleListFilter):
 
 
 @admin.register(User)
-class MyUserAdmin(UserAdmin):
+class MyUserAdmin(ExportActionMixin, UserAdmin):
 
     list_display = (
         'username',
@@ -84,6 +106,7 @@ class MyUserAdmin(UserAdmin):
 
     actions = ['send_invitation_emails']
     inlines = [UserOrganizationInline]
+    resource_class = MyUserResource  # for django-import-export
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
         res = super().formfield_for_choice_field(db_field, request, **kwargs)
