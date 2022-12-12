@@ -9,6 +9,7 @@ from django.db import transaction, connection
 from django.db.models import Count, Q, Sum, Max, Min, F, Exists, OuterRef, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -30,6 +31,7 @@ from recache.util import recache_queryset
 from sushi.models import SushiCredentials
 from .models import UserOrganization, Organization
 from .serializers import OrganizationSerializer, OrganizationSimpleSerializer
+from core.tasks import async_mail_admins
 
 
 logger = logging.getLogger(__name__)
@@ -223,6 +225,21 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         # associate the user with this organization as admin
         UserOrganization.objects.create(
             user=request.user, organization=org, is_admin=True, source=data_source
+        )
+        async_mail_admins.delay(
+            "New organization created",
+            f"""\
+A new organization was created by the user.
+
+User name: {request.user.first_name} {request.user.last_name}
+User email: {request.user.email}
+Organization name: {org.name}
+Organization id: {org.id}
+
+For more info see Django admin: {request.build_absolute_uri(
+    reverse('admin:organizations_organization_change', args=[org.id])
+    )}.
+""",
         )
         return Response(OrganizationSerializer(org).data, status=status.HTTP_201_CREATED)
 

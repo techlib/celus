@@ -7,6 +7,7 @@ from logs.models import AccessLog, ImportBatch, Metric
 from organizations.models import Organization, UserOrganization
 from publications.tests.conftest import interest_rt  # noqa - fixture
 from test_fixtures.scenarios.basic import clients, identities, users
+from unittest.mock import patch
 
 
 @pytest.mark.django_db
@@ -77,9 +78,13 @@ class TestOrganizationAPI:
         settings.ALLOW_USER_REGISTRATION = True
         url = reverse('organization-create-user-default')
         assert Organization.objects.count() == 0
-        resp = authenticated_client.post(
-            url, {'name': 'test organization'}, content_type='application/json'
-        )
+        with patch('organizations.views.async_mail_admins') as email_task:  # fake celery task
+            resp = authenticated_client.post(
+                url, {'name': 'test organization'}, content_type='application/json'
+            )
+            assert (
+                email_task.delay.called
+            ), 'email informing about a default organization created by user should be sent to admin'
         assert resp.status_code == 201
         assert Organization.objects.count() == 1
         org = Organization.objects.get()
