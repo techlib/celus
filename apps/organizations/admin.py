@@ -1,14 +1,15 @@
 from django.conf import settings
 from django.contrib import admin
 from modeltranslation.admin import TranslationAdmin
+from necronomicon.admin import NecronomiconAdminMixin
 
 from . import models
 
 
 @admin.register(models.Organization)
-class OrganizationAdmin(TranslationAdmin):
+class OrganizationAdmin(NecronomiconAdminMixin, TranslationAdmin):
 
-    list_display = ['short_name', 'internal_id', 'name', 'ico', 'source',] + (
+    list_display = ['short_name', 'internal_id', 'name', 'ico', 'source'] + (
         ['raw_data_import_enabled'] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
     )
     search_fields = ['internal_id', 'short_name', 'name', 'ico']

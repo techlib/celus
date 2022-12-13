@@ -1,12 +1,10 @@
+from core.models import DataSource
 from django.conf import settings
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 from django.utils.translation import ugettext as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
-
-from core.models import DataSource
-from publications.models import Platform
 
 
 class Organization(MPTTModel):

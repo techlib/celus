@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'export.apps.ExportConfig',
     'tags.apps.TagsConfig',
     'releases.apps.ReleasesConfig',
+    'necronomicon.apps.NecronomiconConfig',
     'rest_pandas',
     'django_prometheus',
     'import_export',
@@ -452,6 +453,16 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'export.tasks.delete_expired_flexible_data_exports_task',
         'schedule': crontab(hour=3, minute=0),  # every day at 3:00
         'options': {'expires': 24 * 60 * 60},
+    },
+    'necronomicon_prepare': {
+        'task': 'necronomicon.tasks.prepare_batches',
+        'schedule': schedule(run_every=timedelta(hours=1)),
+        'options': {'expires': 60 * 60},
+    },
+    'necronomicon_delete': {
+        'task': 'necronomicon.tasks.delete_batches_targets',
+        'schedule': schedule(run_every=timedelta(hours=1)),
+        'options': {'expires': 60 * 60},
     },
 }
 

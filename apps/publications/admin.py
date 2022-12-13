@@ -1,10 +1,10 @@
 import json
 
-from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
 from modeltranslation.admin import TranslationAdmin
+from necronomicon.admin import NecronomiconAdminMixin
 
 from . import models
 
@@ -22,7 +22,7 @@ create_default_interests.short_description = "Create default interest for select
 
 
 @admin.register(models.Platform)
-class PlatformAdmin(TranslationAdmin):
+class PlatformAdmin(NecronomiconAdminMixin, TranslationAdmin):
 
     list_display = [
         'short_name',

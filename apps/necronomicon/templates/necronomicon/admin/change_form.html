@@ -1,0 +1,13 @@
+{% extends 'admin/change_form.html' %}
+{% load i18n %}
+
+{% block submit_buttons_bottom %}
+  <div class="submit-row">
+  {% if original.can_delete %}
+    <p class="deletelink-box">
+      <input type="submit" value="{% trans 'Delete Linked Objects' %}" name="_delete_objects" class="deletelink" style="background: var(--delete-button-bg);">
+    </p>
+  {% endif %}
+    <a href="{% url 'admin:necronomicon_batch_changelist' %}" class="closelink">{% trans 'Close' %}</a>
+  </div>
+{% endblock %}
