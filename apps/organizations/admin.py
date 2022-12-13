@@ -1,13 +1,12 @@
 from django.conf import settings
 from django.contrib import admin
 from modeltranslation.admin import TranslationAdmin
-from mptt.admin import MPTTModelAdmin
 
 from . import models
 
 
 @admin.register(models.Organization)
-class OrganizationAdmin(MPTTModelAdmin, TranslationAdmin):
+class OrganizationAdmin(TranslationAdmin):
 
     list_display = ['short_name', 'internal_id', 'name', 'ico', 'source',] + (
         ['raw_data_import_enabled'] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
