@@ -455,9 +455,14 @@ export default new Vuex.Store({
     selectFirstOrganization({ state, commit }) {
       if (!state.organizations) return;
       if (!(state.selectedOrganizationId in state.organizations)) {
+        // vuex-persist stores selectedOrganizationId in window.localStorage,
+        // therefore on app start the state.selectedOrganizationId is not necessary `null`.
         if (Object.keys(state.organizations).length > 0) {
           commit("setSelectedOrganizationId", {
-            id: Number.parseInt(Object.keys(state.organizations)[0], 10),
+            id:
+              -1 in state.organizations
+                ? -1 // preselect organization All for consortial users logging in for the first time
+                : Number.parseInt(Object.keys(state.organizations)[0], 10),
           });
         } else {
           commit("setSelectedOrganizationId", { id: null });

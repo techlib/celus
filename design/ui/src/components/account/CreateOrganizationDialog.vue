@@ -16,9 +16,7 @@ cs:
 
 <template>
   <v-dialog v-model="showCreateOrganizationDialog" persistent max-width="600">
-    <v-form
-      v-model="valid"
-      @submit.prevent="createOrganization">
+    <v-form v-model="valid" @submit.prevent="createOrganization">
       <v-card>
         <v-card-title class="headline">{{
           $t("create_organization")
@@ -74,8 +72,6 @@ export default {
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
-      setOrganizations: "setOrganizations",
-      selectFirstOrganization: "selectFirstOrganization",
       loadOrganizations: "loadOrganizations",
     }),
     isRequired(v) {
