@@ -245,7 +245,7 @@ class TestReimport:
 
         # check clickhouse
         if settings.CLICKHOUSE_SYNC_ACTIVE:
-            assert self._clickhouse_ib_sum(old_ib_id) == 0, "no data for the deleted IB"
+            assert self._clickhouse_ib_sum(old_ib_id) in (0, None), "no data for the deleted IB"
             assert self._clickhouse_ib_sum(new_ib.pk) > 0, "some data for the new IB in CH"
 
     def test_reimport_batch_with_fa_no_data(self, clashing_fis, monkeypatch):
@@ -395,8 +395,9 @@ class TestReimport:
 
         # check clickhouse
         if settings.CLICKHOUSE_SYNC_ACTIVE:
-            assert (
-                self._clickhouse_ib_sum([ib1.pk, ib2.pk, ib3.pk]) == 0
+            assert self._clickhouse_ib_sum([ib1.pk, ib2.pk, ib3.pk]) in (
+                0,
+                None,
             ), "data for old IBs was removed from CH"
             assert self._clickhouse_ib_sum(new_ib_ids) > 0, "some data for the new IB in CH"
             assert self._clickhouse_ib_sum(ib2c.pk) > 0, "some data for the FA IB"
