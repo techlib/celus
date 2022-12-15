@@ -204,7 +204,7 @@ class TestReimport:
 
         # check clickhouse
         if settings.CLICKHOUSE_SYNC_ACTIVE:
-            assert self._clickhouse_ib_sum(old_ib_id) == 0, "no data for the deleted IB"
+            assert self._clickhouse_ib_sum(old_ib_id) in (0, None), "no data for the deleted IB"
             assert self._clickhouse_ib_sum(new_ib.pk) > 0, "some data for the new IB in CH"
 
     @pytest.mark.clickhouse
