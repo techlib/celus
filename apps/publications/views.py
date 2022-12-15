@@ -169,16 +169,7 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
     def perform_create(self, serializer):
         if self.kwargs['organization_pk'] != '-1':
             organization = get_object_or_404(Organization, pk=self.kwargs['organization_pk'])
-            if organization.source is None:
-                # get the soruce of the organization
-                source, _ = DataSource.objects.get_or_create(
-                    organization_id=self.kwargs['organization_pk'],
-                    type=DataSource.TYPE_ORGANIZATION,
-                )
-                organization.source = source
-                organization.save()
-            else:
-                source = organization.source
+            source = organization.get_or_create_private_source()
         else:
             source = None
 

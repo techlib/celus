@@ -111,8 +111,9 @@ class DataSource(models.Model):
         return f'{self.short_name}: {self.get_type_display()}'
 
     @classmethod
-    def create_default_short_name(cls, user: 'User', organization_name: str):
-        return f"{slugify(user.username)}#{ slugify(organization_name) }"[:50]
+    def create_default_short_name(cls, user: Optional['User'], organization_name: str):
+        user_part = slugify(user.username) if user else 'internal'
+        return f"{user_part}#{ slugify(organization_name) }"[:50]
 
 
 class User(AbstractUser):

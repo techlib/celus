@@ -130,6 +130,9 @@ class TestPlatformAPI:
         (
             ("su", "standalone", None, 201),  # superuser
             ("master_admin", "standalone", "standalone", 201),
+            ("master_admin", "standalone", None, 201),
+            # we do not have organizations in brain, but it serves as a random global source
+            ("master_admin", "standalone", "brain", 201),
             ("master_user", "standalone", "standalone", 403),
             ("admin2", "standalone", None, 201),  # this admin
             ("admin1", "standalone", "standalone", 403),  # other admin
@@ -174,10 +177,12 @@ class TestPlatformAPI:
             },
         )
         assert resp.status_code == code
-        if resp.status_code // 100 == 2:
+        if resp.status_code == 201:
             new_platform = Platform.objects.order_by('pk').last()
             if organization:
-                assert new_platform.source == data_sources["standalone"]
+                assert new_platform.source == DataSource.objects.get(
+                    organization=organizations[organization], type=DataSource.TYPE_ORGANIZATION
+                )
             assert new_platform.ext_id is None
             assert new_platform.short_name == 'platform'
             assert new_platform.name == 'long_platform'
@@ -219,8 +224,7 @@ class TestPlatformAPI:
         assert resp.status_code == 201
 
         organizations["master"].refresh_from_db()
-        assert organizations["master"].source.organization == organizations["master"]
-        assert organizations["master"].source.type == DataSource.TYPE_ORGANIZATION
+        assert organizations["master"].source is None, "no change to organization source"
 
         resp = clients["su"].post(
             reverse('platform-list', args=[organizations["master"].pk]),
@@ -232,6 +236,34 @@ class TestPlatformAPI:
             },
         )
         assert resp.status_code == 400, "Already created"
+
+    def test_create_platform_for_two_organizations_with_no_data_source(
+        self, basic1, clients, organizations, client, settings
+    ):
+        """
+        This is a test for a bug which caused all auto-created data sources to have empty
+        `short_name` field and thus only one data source could be created.
+        """
+        settings.ALLOW_USER_CREATED_PLATFORMS = True
+        # make sure there is no data source for organizations
+        DataSource.objects.filter(type=DataSource.TYPE_ORGANIZATION).delete()
+
+        master_org = organizations["master"]
+        assert master_org.source is None
+        resp = clients["su"].post(
+            reverse('platform-list', args=[master_org.pk]),
+            {'short_name': 'platform', 'name': "long_platform", "provider": "provider"},
+        )
+        assert resp.status_code == 201
+
+        # try it for another organization
+        standalone_org = organizations["standalone"]
+        assert standalone_org.source is None
+        resp = clients["su"].post(
+            reverse('platform-list', args=[standalone_org.pk]),
+            {'short_name': 'platform2', 'name': "long_platform2", "provider": "provider"},
+        )
+        assert resp.status_code == 201
 
     def test_create_platform_when_disabled(self, basic1, clients, organizations, client, settings):
         settings.ALLOW_USER_CREATED_PLATFORMS = False

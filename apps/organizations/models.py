@@ -4,6 +4,8 @@ from django.db.models import Q, UniqueConstraint
 from django.utils.translation import ugettext as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
+
+from core.models import DataSource
 from publications.models import Platform
 
 
@@ -76,6 +78,12 @@ class Organization(MPTTModel):
         elif settings.ENABLE_RAW_DATA_IMPORT == "PerOrg":
             return self.raw_data_import_enabled
         return False
+
+    def get_or_create_private_source(self):
+        def_name = DataSource.create_default_short_name(None, self.name)
+        return DataSource.objects.get_or_create(
+            organization=self, type=DataSource.TYPE_ORGANIZATION, defaults={'short_name': def_name}
+        )[0]
 
 
 class OrganizationAltName(models.Model):

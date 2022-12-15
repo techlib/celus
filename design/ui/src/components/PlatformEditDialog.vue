@@ -5,8 +5,8 @@ en:
     edit: Edit platform
     add: Add platform
   texts:
-    adding_platform: You are adding a new platform, please make sure not to duplicate and already existing one.
-    editing_platform: You are editing an existing platform, please make sure not to duplicate and already existing one.
+    adding_platform: You are adding a new platform, please make sure not to duplicate an already existing one.
+    editing_platform: You are editing an existing platform, please make sure not to duplicate an already existing one.
   form:
     short_name: Short Name
     name: Name
