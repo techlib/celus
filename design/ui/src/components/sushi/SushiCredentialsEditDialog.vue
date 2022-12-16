@@ -561,7 +561,6 @@ cs:
 
 <script>
 import axios from "axios";
-import { isEqual } from "lodash";
 import { mapActions, mapGetters } from "vuex";
 import { badge } from "@/libs/sources.js";
 import AddPlatformButton from "@/components/AddPlatformButton";
@@ -584,31 +583,43 @@ export default {
     fixedPlatform: { required: false, type: Number },
   },
   data() {
+    const credentials = this.credentialsObject;
+    let extraParams = [];
+    let platformFilter = "";
+    if (credentials) {
+      for (let [key, value] of Object.entries(credentials.extra_params)) {
+        if (key === "platform" && credentials.counter_version === 5) {
+          platformFilter = value;
+        } else {
+          extraParams.push({ key: key, value: value });
+        }
+      }
+    }
     return {
       allReportTypes: [],
-      organizationId: null,
-      organization: "",
-      platformId: null,
-      platform: "",
-      requestorId: "",
-      customerId: "",
-      counterVersion: 5,
-      url: "",
+      organization: credentials ? credentials.organization : null,
+      platform: credentials ? credentials.platform : null,
+      requestorId: credentials ? credentials.requestor_id : "",
+      customerId: credentials ? credentials.customer_id : "",
+      counterVersion: credentials ? credentials.counter_version : 5,
+      url: credentials ? credentials.url : "",
       urlManuallyEdited: false,
-      httpUsername: "",
-      httpPassword: "",
-      apiKey: "",
-      platformFilter: "",
-      extraParams: [],
-      selectedReportTypes: [],
+      httpUsername: credentials ? credentials.http_username : "",
+      httpPassword: credentials ? credentials.http_password : "",
+      apiKey: credentials ? credentials.api_key : "",
+      platformFilter: platformFilter,
+      extraParams: extraParams,
+      selectedReportTypes: credentials
+        ? [...credentials.counter_reports_long.map((item) => item.id)]
+        : [],
       showTestDialog: false,
       organizations: [],
       platforms: [],
       errors: {},
       savedCredentials: null,
-      enabled: true,
-      outsideConsortium: true,
-      title: "",
+      enabled: credentials ? credentials.enabled : true,
+      outsideConsortium: credentials ? credentials.outside_consortium : true,
+      title: credentials ? credentials.title : "",
       loadingPlatforms: false,
       loadingReportTypes: false,
       valid: false,
@@ -616,6 +627,7 @@ export default {
       useCasesData: [],
       prefixApiKey: "",
       prefixPlatform: "",
+      initializing: true,
     };
   },
   computed: {
@@ -752,9 +764,7 @@ export default {
       return this.valid;
     },
     allowedPlatforms() {
-      return this.platforms.sort((a, b) =>
-        a.name ? a.name.localeCompare(b.name) : -1
-      );
+      return this.platforms;
     },
     allowedCounterVersions() {
       return [4, 5];
@@ -766,7 +776,7 @@ export default {
        * UI
        * */
       return !!this.similarCredentials.filter(
-        (cred) => cred.title == this.title
+        (cred) => cred.title === this.title
       ).length;
     },
     similarCredentials() {
@@ -776,11 +786,11 @@ export default {
       if (this.existingCredentials) {
         return this.existingCredentials.filter(
           (cred) =>
-            cred.organization.pk === this.organization.pk &&
+            cred.organization.pk === this.organization?.pk &&
             this.platform &&
-            cred.platform.pk === this.platform.pk &&
+            cred.platform.pk === this.platform?.pk &&
             cred.counter_version === this.counterVersion &&
-            (!this.credentials || cred.pk !== this.credentials.pk)
+            (!this.credentials || cred.pk !== this.credentials?.pk)
         );
       }
       return [];
@@ -792,7 +802,7 @@ export default {
       return false;
     },
     platformsBaseUrl() {
-      if (this.organization && this.organization.pk) {
+      if (this.organization?.pk) {
         return `/api/organization/${this.organization.pk}/all-platform/`;
       }
       return null;
@@ -830,57 +840,6 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
-    credentialsPropToData() {
-      let credentials = this.credentials;
-      if (!credentials) {
-        // no credentials - we init to the initial state
-        this.title = "";
-        this.organizationId = null;
-        this.organization = { name: "" };
-        this.platformId = null;
-        this.platform = { name: "" };
-        this.requestorId = "";
-        this.customerId = "";
-        this.counterVersion = 5;
-        this.url = "";
-        this.httpUsername = "";
-        this.httpPassword = "";
-        this.apiKey = "";
-        this.extraParams = [];
-        this.selectedReportTypes = [];
-        this.errors = {};
-        this.savedCredentials = null;
-        this.enabled = true;
-        this.outsideConsortium = true;
-      } else {
-        let extraParams = [];
-        for (let [key, value] of Object.entries(credentials.extra_params)) {
-          if (key === "platform" && credentials.counter_version === 5) {
-            this.platformFilter = value;
-          } else {
-            extraParams.push({ key: key, value: value });
-          }
-        }
-        this.title = credentials.title;
-        this.organizationId = credentials.organization.id;
-        this.organization = credentials.organization;
-        this.platformId = credentials.platform.id;
-        this.platform = credentials.platform;
-        this.requestorId = credentials.requestor_id;
-        this.customerId = credentials.customer_id;
-        this.counterVersion = credentials.counter_version;
-        this.url = credentials.url;
-        this.httpUsername = credentials.http_username;
-        this.httpPassword = credentials.http_password;
-        this.apiKey = credentials.api_key;
-        this.extraParams = extraParams;
-        this.selectedReportTypes = [
-          ...credentials.counter_reports_long.map((item) => item.id),
-        ];
-        this.enabled = credentials.enabled;
-        this.outsideConsortium = credentials.outside_consortium;
-      }
-    },
     async loadReportTypes() {
       this.loadingReportTypes = true;
       try {
@@ -939,12 +898,15 @@ export default {
           try {
             let result = await axios.get(this.platformsBaseUrl);
             this.platforms = result.data;
+            this.platforms.sort((a, b) =>
+              a.name ? a.name.localeCompare(b.name) : -1
+            );
             if (this.platform) {
-              const machingPlatforms = this.platforms.filter(
+              const machingPlatform = this.platforms.find(
                 (item) => item.pk === this.platform.pk
               );
-              if (machingPlatforms) {
-                this.platform = machingPlatforms[0];
+              if (machingPlatform) {
+                this.platform = machingPlatform;
               } else {
                 this.platform = this.platforms[0];
               }
@@ -1116,18 +1078,6 @@ export default {
     inKnowledgebase(report) {
       return this.knowledgebaseReportTypes.includes(report.code);
     },
-    async init() {
-      this.savedCredentials = null;
-      this.credentialsPropToData();
-      if (!this.credentials) {
-        await this.loadOrganizations();
-        await this.loadPlatforms();
-        await this.loadUseCases();
-      }
-      if (this.$refs.form) {
-        this.$refs.form.resetValidation();
-      }
-    },
     guessUrl() {
       if (!this.url) {
         // reset edited state for empty urls
@@ -1142,7 +1092,7 @@ export default {
       this.url = "";
       if (this.currentKnowledgebase) {
         let providers = this.currentKnowledgebase.providers.filter(
-          (provider) => provider.counter_version == this.counterVersion
+          (provider) => provider.counter_version === this.counterVersion
         );
         if (providers.length > 0) {
           // provider found lets perform update
@@ -1249,21 +1199,26 @@ export default {
   },
 
   async mounted() {
-    await this.loadReportTypes();
-    await this.init();
+    try {
+      let promises = [this.loadReportTypes()];
+      if (!this.credentialsObject) {
+        // we need organizations first before all the rest is loaded
+        await this.loadOrganizations();
+        promises.push(this.loadPlatforms());
+        promises.push(this.loadUseCases());
+      }
+      await Promise.all(promises);
+    } finally {
+      this.initializing = false;
+    }
   },
 
   watch: {
-    credentialsObject(value) {
-      if (value) {
-        this.init();
-      }
-    },
-    value(value) {
-      if (value === true) this.init();
-    },
     platformsBaseUrl() {
-      this.loadPlatforms();
+      if (!this.initializing) {
+        this.loadPlatforms();
+        this.loadUseCases();
+      }
     },
     activePlatform() {
       if (!this.credentials) {

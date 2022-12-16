@@ -334,7 +334,11 @@ cs:
       </v-data-table>
     </v-card>
 
-    <v-dialog v-model="showEditDialog" :max-width="dialogMaxWidth">
+    <v-dialog
+      v-model="showEditDialog"
+      v-if="showEditDialog"
+      :max-width="dialogMaxWidth"
+    >
       <SushiCredentialsEditDialog
         :credentials-object="selectedCredentials"
         v-model="showEditDialog"
@@ -346,7 +350,11 @@ cs:
       ></SushiCredentialsEditDialog>
     </v-dialog>
 
-    <v-dialog v-model="showCreateDialog" :max-width="dialogMaxWidth">
+    <v-dialog
+      v-model="showCreateDialog"
+      v-if="showCreateDialog"
+      :max-width="dialogMaxWidth"
+    >
       <SushiCredentialsEditDialog
         v-model="showCreateDialog"
         @update-credentials="updateCredentials"

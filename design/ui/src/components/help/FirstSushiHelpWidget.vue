@@ -200,6 +200,7 @@ cs:
 
         <v-dialog v-model="showCredentialsDialog">
           <SushiCredentialsEditDialog
+            v-if="showCredentialsDialog"
             v-model="showCredentialsDialog"
             key="create"
           ></SushiCredentialsEditDialog>
