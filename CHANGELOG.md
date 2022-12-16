@@ -5,23 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+
+## [5.1.0]
 
 ### Added
 
+#### Frontend
+
+- all charts now show the whole selected date range even if there is no data for some months
+  (if the end of the range is open, the chart will end with the last calendar month)
+- the data coverage tab on title page was extended to split the coverage by platform
+- more information about the report (rows, split-by) was added to the exports list
+- a check for the file type of the uploaded file was added to the title list page
+- several pages listing items (titles, organization, platforms, harvests) now store their settings
+  (sorting column, sorting order, page size) in the URL, making it possible to share the link
+  and get the same view and to use the browser's back button to return to the previous view
+- a test version of an overview page for Spanish libraries was added under the `/spanish-report` URL
+
 #### Backend
 
-* parsing of the internal Celus format for non-COUNTER data has been reimplemented in the nibbler
+- parsing of the internal Celus format for non-COUNTER data has been reimplemented in the nibbler
   library. It is now possible to activate this new parser by setting the
   `ENABLE_NIBBLER_FOR_CELUS_FORMAT` environment variable to `true`.
+- added `is_admin` and `is_consortial_admin` filters to User model in django admin
+- it is now possible to enable import of raw non-COUNTER reports on a per-organization basis
+- `export` action was added to the `User` model in django admin
+- Clickhouse support was added to the `possible-values` endpoint in the reporting API
+- support for asynchronous deleting of platforms and organizations was added to the django admin
+- the backend now sends email notification to admins when a new organization is created by a user
+
+
+### Changes
+
+#### Frontend
+
+- When a new report is created in the reporting module, it inherits the filters for currently
+  selected organization and date range
+- All organizations are now selected by default in the first session of consortium admin (instead of
+  the first organization in the list)
+
 
 ### Fixed
 
 #### Frontend
 
-* sorting of titles, harvests and fetch-intentions in corresponding tables was fixed for cases
+- sorting of titles, harvests and fetch-intentions in corresponding tables was fixed for cases
   where the sorting column values were not unique. This caused issues when switching between pages -
   some rows may have been missing or duplicated.
+- action icons on the sushi fetch attempt list were optimized to take less space
+- data coverage display on title level without a platform selected was fixed to include only the
+  relevant platforms
+- the SUSHI credentials edit dialog was refactored to remove the possibility of previously entered
+  data passing into the next instance of the dialog
+
+#### Backend
+
+- when SUSHI harvesting returns 3031 (data not available for the requested date range) even after
+  1.5 months, the download is now marked as failed instead of being closed as "empty data".
+- when SUSHI credentials are edited, the corresponding chains of retries (for 3031, 3030, etc.)
+  are no longer broken leading to incorrect counting of previous attempts
+- header data are extracted from COUNTER reports even for failed downloads (e.g. 3031, 3030, etc.)
+- sorting is now working for organizations in the django admin
+- automatically created organization-specific sources were fixed to contain a unique name
+  (fixes a bug where it was not possible to create new custom platforms for some organizations)
+- when creating custom platforms, the source is properly set to the organization-specific source,
+  not the source used for the organization itself.
 
 
 ## [5.0.1]
@@ -30,14 +78,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-* empty `platform` attribute is no longer stored when SUSHI credentials are saved
-* display of the list of harvests was fixed for cases where sorting was switched off
-* changelog for the oldest versions was fixed and the changelog API endpoint was fixed
+- empty `platform` attribute is no longer stored when SUSHI credentials are saved
+- display of the list of harvests was fixed for cases where sorting was switched off
+- changelog for the oldest versions was fixed and the changelog API endpoint was fixed
   for platforms where UTF-8 is not the default encoding
 
 #### Backend
 
-* deleting from Clickhouse was fixed to avoid slow performance for some queries
+- deleting from Clickhouse was fixed to avoid slow performance for some queries
 
 
 
