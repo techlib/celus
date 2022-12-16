@@ -166,10 +166,10 @@ export default new Vuex.Store({
       }
       return "";
     },
-    dateRangeExplicitEndText(state) {
+    dateRangeExplicitEndText(state, getters) {
       // if the end date is not set, it is the last finished month
       return (
-        state.dateRangeEndText ||
+        getters.dateRangeEndText ||
         ymDateFormat(addMonths(startOfMonth(new Date()), -1))
       );
     },
