@@ -34,3 +34,10 @@ class OrderByFilter(filters.BaseFilterBackend):
         else:
             order_by = [order_by]
         return queryset.order_by(*order_by)
+
+
+class DimensionFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        if dimension_id := request.GET.get('dimension'):
+            queryset = queryset.filter(dimension_id=dimension_id)
+        return queryset

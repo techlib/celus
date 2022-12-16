@@ -285,6 +285,10 @@ export default new Router({
       },
     },
     {
+      path: "/spanish-report",
+      component: () => import("../pages/SpanishReportPage.vue"),
+    },
+    {
       path: "/secure",
       name: "after-login-page",
       component: () => import("../pages/AfterLoginPage.vue"),

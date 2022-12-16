@@ -81,6 +81,7 @@ from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 from tags.models import Tag
 from . import filters
+from .filters import DimensionFilter
 from .logic.data_coverage import DataCoverageExtractor
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from .tasks import export_raw_data_task
@@ -182,7 +183,7 @@ class DimensionTextViewSet(ReadOnlyModelViewSet):
     serializer_class = DimensionTextSerializer
     queryset = DimensionText.objects.all()
     pagination_class = StandardResultsSetPagination
-    filter_backends = [PkMultiValueFilterBackend]
+    filter_backends = [PkMultiValueFilterBackend, DimensionFilter]
 
     @property
     def paginator(self):
