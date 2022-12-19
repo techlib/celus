@@ -684,6 +684,7 @@ export default {
     }),
     ...mapGetters({
       organizationSelected: "organizationSelected",
+      globallySelectedOrganization: "selectedOrganization",
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
       enableTags: "enableTags",
@@ -1122,12 +1123,26 @@ export default {
       //   * rows = platform
       //   * columns = interest type
       if (this.selectedReportTypes.length === 0) {
-        const interest = this.allReportTypes.find(
+        const defaultReport = this.allReportTypes.find(
           (rt) => rt.short_name === "TR"
         );
-        if (interest) {
-          this.selectedReportTypes.push(interest.pk);
+        if (defaultReport) {
+          this.selectedReportTypes.push(defaultReport.pk);
           this.row = "platform";
+          if (this.organizationSelected) {
+            this.filters.push("organization");
+            this.selectedOrganizations = [this.globallySelectedOrganization.pk];
+          }
+          if (this.dateRangeStart) {
+            this.filters.push("date");
+            this.selectedDateRange.start = this.dateRangeStart;
+          }
+          if (this.dateRangeEnd) {
+            if (!this.filters.includes("date")) {
+              this.filters.push("date");
+            }
+            this.selectedDateRange.end = this.dateRangeEnd;
+          }
           // this change has to be done after all watchers, etc. have run
           this.$nextTick(() => (this.columns = ["metric"]));
         }
