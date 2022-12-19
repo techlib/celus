@@ -1,7 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml" />
 
 <template>
-  <v-card class="mb-6" max-width="900">
+  <v-card class="mb-6 pa-4" elevation="5" max-width="900">
     <v-card-title>
       {{ $t("release.version", { number: release.version }) }}
       <v-spacer />
@@ -9,10 +9,14 @@
         <template v-for="attr in releaseAttrs">
           <v-tooltip bottom v-if="release[`is_${attr.name}`]">
             <template #activator="{ on }">
-              <v-chip class="ps-2 me-1" :color="attr.color" v-on="on">
-                <v-icon color="white" class="pe-2 ps-0" small>{{
-                  attr.icon
-                }}</v-icon>
+              <v-chip
+                small
+                outlined
+                class="ps-2 me-1"
+                :color="attr.color"
+                v-on="on"
+              >
+                <v-icon class="pe-2 ps-0" small>{{ attr.icon }}</v-icon>
                 {{ $t(`release.${attr.name}`) }}
               </v-chip>
             </template>
