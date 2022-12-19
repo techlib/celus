@@ -195,7 +195,7 @@ class TestSushiCredentialsViewSet:
         assert resp.status_code == 403
 
     def test_edit_action_with_report_types(
-        self, basic1, organizations, platforms, clients, counter_report_type_named,
+        self, basic1, organizations, platforms, clients, counter_report_type_named
     ):
         """
         Test changing report types using the API update action works
@@ -210,14 +210,11 @@ class TestSushiCredentialsViewSet:
         url = reverse('sushi-credentials-detail', args=(credentials.pk,))
         new_rt1 = counter_report_type_named('new1')
         new_rt2 = counter_report_type_named('new2')
-        resp = clients["admin1"].patch(url, {'counter_reports': [new_rt1.pk, new_rt2.pk]},)
+        resp = clients["admin1"].patch(url, {'counter_reports': [new_rt1.pk, new_rt2.pk]})
         assert resp.status_code == 200
         credentials.refresh_from_db()
         assert credentials.counter_reports.count() == 2
-        assert {cr.pk for cr in credentials.counter_reports.all()} == {
-            new_rt1.pk,
-            new_rt2.pk,
-        }
+        assert {cr.pk for cr in credentials.counter_reports.all()} == {new_rt1.pk, new_rt2.pk}
 
     def test_destroy_locked_higher(self, basic1, organizations, platforms, clients):
         """

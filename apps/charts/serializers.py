@@ -52,9 +52,4 @@ class ChartDefinitionSerializer(ModelSerializer):
 class ReportViewToChartTypeSerializer(ModelSerializer):
     class Meta:
         model = ReportViewToChartType
-        fields = (
-            'pk',
-            'report_data_view',
-            'chart_definition',
-            'position',
-        )
+        fields = ('pk', 'report_data_view', 'chart_definition', 'position')

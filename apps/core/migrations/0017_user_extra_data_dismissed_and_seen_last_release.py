@@ -15,12 +15,10 @@ def insert_dismissed_and_seen_last_release(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0016_taskprogress'),
-    ]
+    dependencies = [('core', '0016_taskprogress')]
 
     operations = [
         migrations.RunPython(
-            insert_dismissed_and_seen_last_release, reverse_code=special.RunPython.noop,
-        ),
+            insert_dismissed_and_seen_last_release, reverse_code=special.RunPython.noop
+        )
     ]

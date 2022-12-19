@@ -5,8 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0064_manualdataupload_error_details'),
-    ]
+    dependencies = [('logs', '0064_manualdataupload_error_details')]
 
     operations = [migrations.RemoveField(model_name='dimension', name='type')]

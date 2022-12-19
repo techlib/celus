@@ -5,10 +5,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0004_pub_type_verbose_name'),
-    ]
+    dependencies = [('publications', '0004_pub_type_verbose_name')]
 
     operations = [
-        migrations.AlterModelOptions(name='title', options={'ordering': ('name', 'pub_type')},),
+        migrations.AlterModelOptions(name='title', options={'ordering': ('name', 'pub_type')})
     ]

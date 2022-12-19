@@ -35,7 +35,7 @@ class ImportBatchReimport:
     # from those clashing import batches were mixed together
     blocked: QuerySet[ImportBatch] = ImportBatch.objects.none()
 
-    def gen_mdu_batches(self,) -> Generator[MDUBatch, None, None]:
+    def gen_mdu_batches(self) -> Generator[MDUBatch, None, None]:
         """
         Import batches from one MDU have to be grouped together for reimport. This method
         generates tuples (mdu, [ibs_to_reimport], [ibs_to_delete]). The last member of the tuple

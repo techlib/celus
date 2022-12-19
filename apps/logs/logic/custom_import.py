@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def histograms_with_stats(
-    attrs: typing.List[str], iterable: typing.Iterable[CounterRecord],
+    attrs: typing.List[str], iterable: typing.Iterable[CounterRecord]
 ) -> typing.Tuple[typing.Dict[str, Counter], Counter]:
     histograms = {e: {} for e in attrs}
     dimensions = set()

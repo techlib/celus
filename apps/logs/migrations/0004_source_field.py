@@ -6,10 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0003_datasource'),
-        ('logs', '0003_split_accesslog_source'),
-    ]
+    dependencies = [('core', '0003_datasource'), ('logs', '0003_split_accesslog_source')]
 
     operations = [
         migrations.AddField(
@@ -43,19 +40,19 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='dimension', name='short_name', field=models.CharField(max_length=100),
+            model_name='dimension', name='short_name', field=models.CharField(max_length=100)
         ),
         migrations.AlterField(
-            model_name='metric', name='short_name', field=models.CharField(max_length=100),
+            model_name='metric', name='short_name', field=models.CharField(max_length=100)
         ),
         migrations.AlterField(
-            model_name='reporttype', name='short_name', field=models.CharField(max_length=100),
+            model_name='reporttype', name='short_name', field=models.CharField(max_length=100)
         ),
         migrations.AlterUniqueTogether(
-            name='dimension', unique_together={('short_name', 'source')},
+            name='dimension', unique_together={('short_name', 'source')}
         ),
-        migrations.AlterUniqueTogether(name='metric', unique_together={('short_name', 'source')},),
+        migrations.AlterUniqueTogether(name='metric', unique_together={('short_name', 'source')}),
         migrations.AlterUniqueTogether(
-            name='reporttype', unique_together={('short_name', 'source')},
+            name='reporttype', unique_together={('short_name', 'source')}
         ),
     ]

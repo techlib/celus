@@ -5,16 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0056_importbatch_logs_import_date_brin'),
-    ]
+    dependencies = [('logs', '0056_importbatch_logs_import_date_brin')]
 
     operations = [
         migrations.AlterModelOptions(
-            name='metric', options={'ordering': ('short_name', 'name'), 'verbose_name': 'Metric'},
+            name='metric', options={'ordering': ('short_name', 'name'), 'verbose_name': 'Metric'}
         ),
         migrations.AlterModelOptions(name='reporttype', options={'verbose_name': 'Report type'}),
         migrations.AlterField(
-            model_name='accesslog', name='date', field=models.DateField(verbose_name='Date'),
+            model_name='accesslog', name='date', field=models.DateField(verbose_name='Date')
         ),
     ]

@@ -24,10 +24,6 @@ def fill_empty_platform_name(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0026_title_type_data_migration'),
-    ]
+    dependencies = [('publications', '0026_title_type_data_migration')]
 
-    operations = [
-        migrations.RunPython(fill_empty_platform_name, migrations.RunPython.noop),
-    ]
+    operations = [migrations.RunPython(fill_empty_platform_name, migrations.RunPython.noop)]

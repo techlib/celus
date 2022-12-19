@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('charts', '0002_chartdefinition_reportviewtocharttype'),
-    ]
+    dependencies = [('charts', '0002_chartdefinition_reportviewtocharttype')]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=False,
                 help_text='When checked, this chart will ignore selected organization. Thus it allows creation of charts with organization comparison.',
             ),
-        ),
+        )
     ]

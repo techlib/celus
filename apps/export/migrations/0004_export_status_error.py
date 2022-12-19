@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('export', '0003_created_autoaddnow'),
-    ]
+    dependencies = [('export', '0003_created_autoaddnow')]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 choices=[(0, 'not started'), (1, 'in progress'), (2, 'finished'), (3, 'error')],
                 default=0,
             ),
-        ),
+        )
     ]

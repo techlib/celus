@@ -21,5 +21,5 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE,
                 to='core.DataSource',
             ),
-        ),
+        )
     ]

@@ -406,7 +406,7 @@ class TestBatchTaggingAPI:
 class TestTasks:
     @pytest.mark.parametrize(
         ['state', 'is_processed'],
-        [(TaggingBatchState.PREPROCESSING, True),]
+        [(TaggingBatchState.PREPROCESSING, True)]
         + [
             (state, False)
             for state in TaggingBatchState.values
@@ -430,7 +430,7 @@ class TestTasks:
 
     @pytest.mark.parametrize(
         ['state', 'is_assigned'],
-        [(TaggingBatchState.IMPORTING, True),]
+        [(TaggingBatchState.IMPORTING, True)]
         + [
             (state, False)
             for state in TaggingBatchState.values
@@ -440,7 +440,7 @@ class TestTasks:
     def test_tagging_batch_assign_tag_task(self, inmemory_media, users, state, is_assigned):
         tag = TagForTitleFactory.create()
         tb = TaggingBatchFactory.build(
-            source_file=plain_test_file, last_updated_by=users['admin1'], state=state, tag=tag,
+            source_file=plain_test_file, last_updated_by=users['admin1'], state=state, tag=tag
         )
         tb.save()
         tagging_batch_assign_tag_task(tb.pk, 'foo')
@@ -453,7 +453,7 @@ class TestTasks:
 
     @pytest.mark.parametrize(
         ['state', 'is_undone'],
-        [(TaggingBatchState.UNDOING, True),]
+        [(TaggingBatchState.UNDOING, True)]
         + [
             (state, False)
             for state in TaggingBatchState.values
@@ -463,7 +463,7 @@ class TestTasks:
     def test_tagging_batch_unassign_task(self, inmemory_media, users, state, is_undone):
         tag = TagForTitleFactory.create()
         tb = TaggingBatchFactory.build(
-            source_file=plain_test_file, last_updated_by=users['admin1'], state=state, tag=tag,
+            source_file=plain_test_file, last_updated_by=users['admin1'], state=state, tag=tag
         )
         tb.save()
         with patch('tags.tasks.tagging_batch_preflight_task') as preflight_task:

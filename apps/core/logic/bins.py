@@ -38,11 +38,11 @@ def bin_hits(
                 break
         else:
             digits = len(str(hits)) - 1
-            unit = 10 ** digits
+            unit = 10**digits
             if hits == unit:
                 # for example 10_000 hits would end up between 1 and 10_000 which would be strange
                 digits -= 1
-                unit = 10 ** digits
+                unit = 10**digits
             start = unit * ((hits - 1) // unit)
             end = start + unit
             start += 1

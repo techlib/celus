@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0069_merge_20220603_1325'),
-    ]
+    dependencies = [('logs', '0069_merge_20220603_1325')]
 
     operations = [
         migrations.AddField(

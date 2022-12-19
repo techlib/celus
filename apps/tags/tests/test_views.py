@@ -379,12 +379,12 @@ class TestTagging:
         title = TitleFactory.create()
         # user1_tag
         resp = clients[user_key].post(
-            reverse('tagged-titles-list', args=[user1_tag.pk]) + 'add/', data={"item_id": title.pk},
+            reverse('tagged-titles-list', args=[user1_tag.pk]) + 'add/', data={"item_id": title.pk}
         )
         assert resp.status_code == (201 if can_add_user1_tag else 403)
         # admin_tag
         resp = clients[user_key].post(
-            reverse('tagged-titles-list', args=[admin_tag.pk]) + 'add/', data={"item_id": title.pk},
+            reverse('tagged-titles-list', args=[admin_tag.pk]) + 'add/', data={"item_id": title.pk}
         )
         assert resp.status_code == (201 if can_add_admin_tag else 403)
 
@@ -470,7 +470,7 @@ class TestTagging:
             )
         platform = PlatformFactory.create(source=source)
         resp = clients['user1'].post(
-            reverse('tagged-platforms-list', args=[tag.pk]) + 'add/', data={'item_id': platform.pk},
+            reverse('tagged-platforms-list', args=[tag.pk]) + 'add/', data={'item_id': platform.pk}
         )
         if can_tag:
             assert resp.status_code == 201
@@ -721,11 +721,7 @@ class TestTagClassViews:
         tc = TagClassFactory.create(
             name='foo', scope='title', can_modify=access_permission, **extra
         )
-        new_data = {
-            'name': 'bar',
-            'can_create_tags': AccessibleBy.OWNER,
-            'text_color': '#abcdef',
-        }
+        new_data = {'name': 'bar', 'can_create_tags': AccessibleBy.OWNER, 'text_color': '#abcdef'}
         resp = clients[user_key].patch(reverse('tag-class-detail', args=[tc.pk]), new_data)
         assert resp.status_code == (200 if can_update else 403)
         if can_update:

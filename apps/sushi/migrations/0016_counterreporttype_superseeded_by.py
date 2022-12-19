@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0015_help_text'),
-    ]
+    dependencies = [('sushi', '0015_help_text')]
 
     operations = [
         migrations.AddField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
                 related_name='superseeds',
                 to='sushi.CounterReportType',
             ),
-        ),
+        )
     ]

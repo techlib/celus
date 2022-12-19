@@ -23,7 +23,7 @@ def fix_queues(apps, schema_editor):
             # queue is missing for the previous intention
             # this should not happen, but lets fix that, just in case
             fi.previous_intention.queue = FetchIntentionQueue.objects.create(
-                pk=fi.previous_intention.pk, start=fi.previous_intention, end=fi.previous_intention,
+                pk=fi.previous_intention.pk, start=fi.previous_intention, end=fi.previous_intention
             )
             fi.previous_intention.save()
             queue = fi.previous_intention.queue
@@ -42,10 +42,6 @@ def fix_queues(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0015_fetchintention_timestamp'),
-    ]
+    dependencies = [('scheduler', '0015_fetchintention_timestamp')]
 
-    operations = [
-        RunPython(fix_queues, RunPython.noop),
-    ]
+    operations = [RunPython(fix_queues, RunPython.noop)]

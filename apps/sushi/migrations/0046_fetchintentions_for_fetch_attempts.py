@@ -55,6 +55,4 @@ class Migration(migrations.Migration):
         ('scheduler', '0011_fetchintention_previous'),
     ]
 
-    operations = [
-        migrations.RunPython(add_fetch_intention, migrations.RunPython.noop),
-    ]
+    operations = [migrations.RunPython(add_fetch_intention, migrations.RunPython.noop)]

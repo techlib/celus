@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0023_sushicredentials_last_updated_by'),
-    ]
+    dependencies = [('sushi', '0023_sushicredentials_last_updated_by')]
 
     operations = [
         migrations.AlterField(
@@ -23,5 +21,5 @@ class Migration(migrations.Migration):
                 default=300,
                 help_text='Only user with the same or higher level can unlock it and/or edit it',
             ),
-        ),
+        )
     ]

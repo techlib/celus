@@ -5,12 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('organizations', '0020_organization_unique_shortname'),
-    ]
+    dependencies = [('organizations', '0020_organization_unique_shortname')]
 
     operations = [
         migrations.AlterModelOptions(
-            name='organization', options={'ordering': ('name',), 'verbose_name': 'Organization'},
-        ),
+            name='organization', options={'ordering': ('name',), 'verbose_name': 'Organization'}
+        )
     ]

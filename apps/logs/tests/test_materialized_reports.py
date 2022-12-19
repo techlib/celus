@@ -135,9 +135,9 @@ class TestMaterializedReport:
         """
         cr = CounterRecord
         crs1 = [
-            cr(start='2018-01-01', end='2018-01-31', metric='m1', value=1, title='Title1',),
-            cr(start='2018-01-01', end='2018-01-31', metric='m2', value=2, title='Title2',),
-            cr(start='2018-03-01', end='2018-03-31', metric='m2', value=4, title='Title3',),
+            cr(start='2018-01-01', end='2018-01-31', metric='m1', value=1, title='Title1'),
+            cr(start='2018-01-01', end='2018-01-31', metric='m2', value=2, title='Title2'),
+            cr(start='2018-03-01', end='2018-03-31', metric='m2', value=4, title='Title3'),
         ]
         report_type = report_type_nd(1)
         organization = organizations[0]

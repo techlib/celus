@@ -19,10 +19,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(model_name='fetchintention', name='created',),
-        migrations.RemoveField(model_name='fetchintention', name='group_id',),
-        migrations.RemoveField(model_name='fetchintention', name='last_updated',),
-        migrations.RemoveField(model_name='fetchintention', name='last_updated_by',),
+        migrations.RemoveField(model_name='fetchintention', name='created'),
+        migrations.RemoveField(model_name='fetchintention', name='group_id'),
+        migrations.RemoveField(model_name='fetchintention', name='last_updated'),
+        migrations.RemoveField(model_name='fetchintention', name='last_updated_by'),
         migrations.CreateModel(
             name='Harvest',
             fields=[

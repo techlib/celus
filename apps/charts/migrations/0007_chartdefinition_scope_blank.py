@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('charts', '0006_chartdefinition_scope'),
-    ]
+    dependencies = [('charts', '0006_chartdefinition_scope')]
 
     operations = [
         migrations.AlterField(
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
                 default='',
                 max_length=10,
             ),
-        ),
+        )
     ]

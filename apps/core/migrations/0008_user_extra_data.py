@@ -6,9 +6,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0007_timestamps'),
-    ]
+    dependencies = [('core', '0007_timestamps')]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
             field=django.contrib.postgres.fields.jsonb.JSONField(
                 default=dict, help_text='User state data that do not deserve a dedicated field'
             ),
-        ),
+        )
     ]

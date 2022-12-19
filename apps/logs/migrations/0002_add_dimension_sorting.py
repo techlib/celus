@@ -5,15 +5,13 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0001_initial'),
-    ]
+    dependencies = [('logs', '0001_initial')]
 
     operations = [
         migrations.AlterModelOptions(
-            name='dimension', options={'ordering': ('reporttypetodimension',)},
+            name='dimension', options={'ordering': ('reporttypetodimension',)}
         ),
         migrations.AlterModelOptions(
-            name='reporttypetodimension', options={'ordering': ('position',)},
+            name='reporttypetodimension', options={'ordering': ('position',)}
         ),
     ]

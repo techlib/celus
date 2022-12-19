@@ -59,7 +59,7 @@ class ProcessResponse(Enum):
 
 # TODO scheduler cleanup (to many invalid urls)
 class Scheduler(models.Model):
-    """ Represents attempt scheduling based on remote URL """
+    """Represents attempt scheduling based on remote URL"""
 
     DEFAULT_COOLDOWN_DELAY = 5  # in seconds
     DEFAULT_TOO_MANY_REQUESTS_DELAY = 60 * 60  # in seconds
@@ -125,7 +125,7 @@ class Scheduler(models.Model):
             try:
                 # lock this instance by evaluating select_for_update query
                 Scheduler.objects.select_for_update(nowait=True).get(
-                    pk=self.pk, current_intention__isnull=True, current_celery_task_id__isnull=True,
+                    pk=self.pk, current_intention__isnull=True, current_celery_task_id__isnull=True
                 )
             except (Scheduler.DoesNotExist, DatabaseError):
                 # Locked - currently processing data
@@ -315,7 +315,7 @@ class FetchIntentionQuerySet(models.QuerySet):
         return list(res)
 
     def latest_intentions(self) -> models.QuerySet:
-        """ Only latest intentions, retried intentions are skipped """
+        """Only latest intentions, retried intentions are skipped"""
 
         return self.filter(pk=F('queue__end__pk'))
 
@@ -353,7 +353,7 @@ class FetchIntention(models.Model):
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
     scheduler = models.ForeignKey(
-        Scheduler, related_name="intentions", on_delete=models.CASCADE, null=True, blank=True,
+        Scheduler, related_name="intentions", on_delete=models.CASCADE, null=True, blank=True
     )
     start_date = models.DateField()
     end_date = models.DateField()
@@ -468,7 +468,7 @@ class FetchIntention(models.Model):
         return None
 
     def process(self) -> ProcessResponse:
-        """ Should be run only from celery
+        """Should be run only from celery
 
         :returns: None if processed, False if credentials are broken, True on success
         """
@@ -486,7 +486,7 @@ class FetchIntention(models.Model):
 
         # fetch attempt
         attempt: SushiFetchAttempt = self.credentials.fetch_report(
-            self.counter_report, self.start_date, self.end_date, use_url_lock=False,
+            self.counter_report, self.start_date, self.end_date, use_url_lock=False
         )
         attempt.triggered_by = self.harvest.last_updated_by
         attempt.save()
@@ -533,14 +533,14 @@ class FetchIntention(models.Model):
     def next_exponential(
         retry_number: int, initial_delay: int, max_delay: typing.Optional[int] = None
     ) -> typing.Tuple[datetime, bool]:
-        """ Calculates next_time as expoential
+        """Calculates next_time as expoential
         :param retry_number: number of retries
         :param initial_delay: delay interval (in seconds)
         :param max_delay: max interval (in newer interval is biger max delay is returned instead)
         :returns: (new interval and max delay was reached indicator)
         """
         now = timezone.now()
-        delta = timedelta(seconds=initial_delay * 2 ** retry_number)
+        delta = timedelta(seconds=initial_delay * 2**retry_number)
         if max_delay:
             max_delta = timedelta(seconds=max_delay)
             if max_delta > delta:
@@ -668,11 +668,11 @@ class FetchIntention(models.Model):
         self._create_retry(next_time, inc_data_not_ready_retry=True)
 
     def handle_no_data(self):
-        """ Some vendors use no_data status as data_not_ready status """
+        """Some vendors use no_data status as data_not_ready status"""
         self.handle_data_not_ready(final_import_batch=True)
 
     def handle_retry_failed(self):
-        """ Retry failed attempts """
+        """Retry failed attempts"""
 
         # Skip when credentials were not verified or they are marked as broken
         if not self.credentials.is_verified or self.attempt.broken_credentials:
@@ -730,10 +730,10 @@ class FetchIntention(models.Model):
 
 class HarvestQuerySet(models.QuerySet):
     def wipe(self):
-        """ Erases Harvests and all its related data
+        """Erases Harvests and all its related data
 
-            Note that by default SET_NULL is used when FetchIntention is deleted
-            So no data are deleted here.
+        Note that by default SET_NULL is used when FetchIntention is deleted
+        So no data are deleted here.
         """
         # Remove ImportBatches -> should remove all AccessLogs
         ib_stats = ImportBatch.objects.filter(
@@ -810,7 +810,7 @@ class Harvest(CreatedUpdatedMixin):
                 setattr(self, name, value)
 
     def stats(self) -> typing.Tuple[dict, int]:
-        """ Returns how many intentions are finished.
+        """Returns how many intentions are finished.
         Note that it considers replaned intentions as one
 
         :returns: stats dict
@@ -862,7 +862,7 @@ class Harvest(CreatedUpdatedMixin):
         priority: int = FetchIntention.PRIORITY_NORMAL,
         user: typing.Optional[User] = None,
     ) -> 'Harvest':
-        """  Plans fetching of FetchIntentions
+        """Plans fetching of FetchIntentions
 
         :param intentions: unsaved FetchIntentions (for batch_create)
         :param harvest: id of harvest which is used to fetch groups of fetch intentions
@@ -903,7 +903,7 @@ class Harvest(CreatedUpdatedMixin):
 
     @property
     def latest_intentions(self):
-        """ Only latest intentions, retried intentions are skipped """
+        """Only latest intentions, retried intentions are skipped"""
 
         if hasattr(self, 'prefetched_latest_intentions'):
             return self.prefetched_latest_intentions
@@ -979,16 +979,16 @@ class Automatic(models.Model):
     def trigger_time(cls, month: date):
         return (
             datetime.combine(
-                month_start(month), datetime.min.time(), tzinfo=timezone.get_current_timezone(),
+                month_start(month), datetime.min.time(), tzinfo=timezone.get_current_timezone()
             )
-            + timedelta(days=2,)  # TODO customizable delta per scheduler
+            + timedelta(days=2)  # TODO customizable delta per scheduler
             + relativedelta(months=1)  # triger one month after
         )
 
     @classmethod
     @transaction.atomic
     def update_for_month(cls, month: date) -> Counter:
-        """ Updates automatic updates for selected month """
+        """Updates automatic updates for selected month"""
         counter = Counter({"added": 0, "deleted": 0})
 
         month = month_start(month)
@@ -1057,7 +1057,7 @@ class Automatic(models.Model):
     @classmethod
     @transaction.atomic
     def update_for_this_month(cls) -> Counter:
-        """ Updates automatic harvesting for current month """
+        """Updates automatic harvesting for current month"""
         return cls.update_for_month(this_month())
 
     @classmethod

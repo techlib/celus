@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('annotations', '0002_no_title_no_report_type'),
-    ]
+    dependencies = [('annotations', '0002_no_title_no_report_type')]
 
     operations = [
         migrations.AddField(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                 default='info',
                 max_length=20,
             ),
-        ),
+        )
     ]

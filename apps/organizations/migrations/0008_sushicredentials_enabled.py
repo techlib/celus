@@ -5,12 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('organizations', '0007_sushicredentials'),
-    ]
+    dependencies = [('organizations', '0007_sushicredentials')]
 
     operations = [
         migrations.AddField(
-            model_name='sushicredentials', name='enabled', field=models.BooleanField(default=True),
-        ),
+            model_name='sushicredentials', name='enabled', field=models.BooleanField(default=True)
+        )
     ]

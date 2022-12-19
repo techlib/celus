@@ -8,9 +8,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('sites', '0002_alter_domain_unique'),
-    ]
+    dependencies = [('sites', '0002_alter_domain_unique')]
 
     operations = [
         migrations.CreateModel(
@@ -31,7 +29,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sites.Site'),
                 ),
             ],
-            options={'unique_together': {('site',)},},
+            options={'unique_together': {('site',)}},
         ),
         migrations.CreateModel(
             name='FooterImage',
@@ -57,6 +55,6 @@ class Migration(migrations.Migration):
                     models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sites.Site'),
                 ),
             ],
-            options={'unique_together': {('site', 'position')},},
+            options={'unique_together': {('site', 'position')}},
         ),
     ]

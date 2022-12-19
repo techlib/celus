@@ -5,14 +5,12 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0021_virtual_report_type_to_report_data_view'),
-    ]
+    dependencies = [('logs', '0021_virtual_report_type_to_report_data_view')]
 
     operations = [
-        migrations.RemoveField(model_name='reportdataview', name='base_report_type',),
-        migrations.RemoveField(model_name='reportdataview', name='primary_dimension',),
-        migrations.RemoveField(model_name='reportdataview', name='source',),
-        migrations.DeleteModel(name='DimensionFilter',),
-        migrations.DeleteModel(name='ReportDataView',),
+        migrations.RemoveField(model_name='reportdataview', name='base_report_type'),
+        migrations.RemoveField(model_name='reportdataview', name='primary_dimension'),
+        migrations.RemoveField(model_name='reportdataview', name='source'),
+        migrations.DeleteModel(name='DimensionFilter'),
+        migrations.DeleteModel(name='ReportDataView'),
     ]

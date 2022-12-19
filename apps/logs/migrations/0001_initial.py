@@ -10,10 +10,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('publications', '0001_initial'),
-        ('organizations', '0001_initial'),
-    ]
+    dependencies = [('publications', '0001_initial'), ('organizations', '0001_initial')]
 
     operations = [
         migrations.CreateModel(
@@ -236,6 +233,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'unique_together': {('dimension', 'text')},},
+            options={'unique_together': {('dimension', 'text')}},
         ),
     ]

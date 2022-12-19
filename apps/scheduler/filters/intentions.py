@@ -78,7 +78,7 @@ class ModeFilter(filters.BaseFilterBackend):
         else:
             # a.k.a default 'current' mode
             return queryset.filter(
-                attempt__credentials_version_hash=F('credentials__version_hash'),
+                attempt__credentials_version_hash=F('credentials__version_hash')
             ).latest_intentions()
 
 

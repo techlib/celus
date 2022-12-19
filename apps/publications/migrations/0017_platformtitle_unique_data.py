@@ -39,8 +39,6 @@ def remove_duplicities(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0016_title_trgm_index'),
-    ]
+    dependencies = [('publications', '0016_title_trgm_index')]
 
     operations = [migrations.RunPython(remove_duplicities, reverse_code=migrations.RunPython.noop)]

@@ -6,9 +6,7 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0021_sushifetchattempt_import_crashed'),
-    ]
+    dependencies = [('sushi', '0021_sushifetchattempt_import_crashed')]
 
     operations = [
         migrations.AddField(

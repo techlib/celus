@@ -52,9 +52,7 @@ class AnnotationSerializer(ModelSerializer):
             'submitter',
             'author',
         )
-        extra_kwargs = {
-            'subject_en': {'allow_blank': False},
-        }
+        extra_kwargs = {'subject_en': {'allow_blank': False}}
 
     def update(self, instance: Annotation, validated_data):
         # in patch updates, the submitter field might not be present

@@ -6,9 +6,7 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0037_jsonfield'),
-    ]
+    dependencies = [('logs', '0037_jsonfield')]
 
     operations = [
         migrations.AddField(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                 default=django.utils.timezone.now,
                 help_text='All data materialized before this data will be recomputed - can be used to force recomputation',
             ),
-        ),
+        )
     ]

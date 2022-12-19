@@ -15,10 +15,6 @@ def noop(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0025_platform_unique_shortname'),
-    ]
+    dependencies = [('publications', '0025_platform_unique_shortname')]
 
-    operations = [
-        migrations.RunPython(fix_unknown_pub_types, noop),
-    ]
+    operations = [migrations.RunPython(fix_unknown_pub_types, noop)]

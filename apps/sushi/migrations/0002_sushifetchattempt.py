@@ -7,9 +7,7 @@ import sushi.models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0001_initial'),
-    ]
+    dependencies = [('sushi', '0001_initial')]
 
     operations = [
         migrations.AlterModelOptions(

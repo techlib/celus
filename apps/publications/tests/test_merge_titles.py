@@ -18,7 +18,7 @@ def natures():
         issn='0028-0836',
         eissn='1476-4687',
         doi='10.1038/41586.1476-4687',
-        proprietary_ids=['EBSCOhost:KBID:50974', 'ProQuest:40569', 'SN:41586', 'gale:0359',],
+        proprietary_ids=['EBSCOhost:KBID:50974', 'ProQuest:40569', 'SN:41586', 'gale:0359'],
     )
     t3 = Title(
         name='Nature',

@@ -6,10 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0003_datasource'),
-        ('organizations', '0003_non_unique_ico'),
-    ]
+    dependencies = [('core', '0003_datasource'), ('organizations', '0003_non_unique_ico')]
 
     operations = [
         migrations.AddField(
@@ -22,5 +19,5 @@ class Migration(migrations.Migration):
                 related_name='defined_organizations',
                 to='core.DataSource',
             ),
-        ),
+        )
     ]

@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0030_sushicredentials_title'),
-    ]
+    dependencies = [('sushi', '0030_sushicredentials_title')]
 
     operations = [
         migrations.AddField(
             model_name='sushifetchattempt',
             name='last_updated',
             field=models.DateTimeField(auto_now=True),
-        ),
+        )
     ]

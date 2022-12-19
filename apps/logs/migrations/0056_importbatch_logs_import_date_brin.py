@@ -6,9 +6,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0055_accesslog_logs_access_platfor_cdb3c4_idx'),
-    ]
+    dependencies = [('logs', '0055_accesslog_logs_access_platfor_cdb3c4_idx')]
 
     operations = [
         migrations.AddIndex(
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
             index=django.contrib.postgres.indexes.BrinIndex(
                 fields=['date'], name='logs_import_date_269c60_brin'
             ),
-        ),
+        )
     ]

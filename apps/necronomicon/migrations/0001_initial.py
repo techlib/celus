@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'verbose_name_plural': 'Batches',},
+            options={'verbose_name_plural': 'Batches'},
         ),
         migrations.CreateModel(
             name='Candidate',

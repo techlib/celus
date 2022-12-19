@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0019_virtualreporttype_primary_dimension'),
-    ]
+    dependencies = [('logs', '0019_virtualreporttype_primary_dimension')]
 
     operations = [
         migrations.AddField(

@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0027_queue_previous_reverse_name'),
-    ]
+    dependencies = [('sushi', '0027_queue_previous_reverse_name')]
 
     operations = [
         migrations.AddField(
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
                 max_length=32,
             ),
             preserve_default=False,
-        ),
+        )
     ]

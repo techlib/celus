@@ -22,7 +22,7 @@ class Command(BaseCommand):
     @atomic
     def handle(self, *args, **options):
         queryset = SushiFetchAttempt.objects.select_for_update(skip_locked=True).filter(
-            status=AttemptStatus.IMPORTING,
+            status=AttemptStatus.IMPORTING
         )
         if options['report_type']:
             queryset = queryset.filter(counter_report__code=options['report_type'])

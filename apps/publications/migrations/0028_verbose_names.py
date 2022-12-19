@@ -5,13 +5,11 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0027_fill_platform_name'),
-    ]
+    dependencies = [('publications', '0027_fill_platform_name')]
 
     operations = [
         migrations.AlterModelOptions(
-            name='platform', options={'ordering': ('short_name',), 'verbose_name': 'Platform'},
+            name='platform', options={'ordering': ('short_name',), 'verbose_name': 'Platform'}
         ),
         migrations.AlterModelOptions(
             name='title',

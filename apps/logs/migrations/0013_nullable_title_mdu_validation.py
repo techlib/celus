@@ -7,9 +7,7 @@ import logs.models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0012_manualdataupload'),
-    ]
+    dependencies = [('logs', '0012_manualdataupload')]
 
     operations = [
         migrations.AlterField(
@@ -26,7 +24,7 @@ class Migration(migrations.Migration):
             model_name='manualdataupload',
             name='data_file',
             field=models.FileField(
-                upload_to=logs.models.where_to_store, validators=[logs.models.validate_mime_type],
+                upload_to=logs.models.where_to_store, validators=[logs.models.validate_mime_type]
             ),
         ),
     ]

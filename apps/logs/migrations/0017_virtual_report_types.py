@@ -7,13 +7,10 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0007_timestamps'),
-        ('logs', '0016_report_interest_metrics'),
-    ]
+    dependencies = [('core', '0007_timestamps'), ('logs', '0016_report_interest_metrics')]
 
     operations = [
-        migrations.AlterModelOptions(name='metric', options={'ordering': ('short_name', 'name')},),
+        migrations.AlterModelOptions(name='metric', options={'ordering': ('short_name', 'name')}),
         migrations.CreateModel(
             name='VirtualReportType',
             fields=[

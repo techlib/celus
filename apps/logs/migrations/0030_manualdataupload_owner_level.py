@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0029_remove_importbatch_interest_processed'),
-    ]
+    dependencies = [('logs', '0029_remove_importbatch_interest_processed')]
 
     operations = [
         migrations.AddField(
@@ -24,5 +22,5 @@ class Migration(migrations.Migration):
                 default=200,
                 help_text='Level of user who created this record - used to determine who can modify it',
             ),
-        ),
+        )
     ]

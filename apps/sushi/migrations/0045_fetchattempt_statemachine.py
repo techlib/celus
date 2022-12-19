@@ -32,9 +32,7 @@ def bools_to_state(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0044_fix_data_already_imported'),
-    ]
+    dependencies = [('sushi', '0044_fix_data_already_imported')]
 
     operations = [
         migrations.AddField(
@@ -59,11 +57,11 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(bools_to_state, migrations.RunPython.noop),
-        migrations.RemoveField(model_name='sushifetchattempt', name='contains_data',),
-        migrations.RemoveField(model_name='sushifetchattempt', name='download_success',),
-        migrations.RemoveField(model_name='sushifetchattempt', name='import_crashed',),
-        migrations.RemoveField(model_name='sushifetchattempt', name='in_progress',),
-        migrations.RemoveField(model_name='sushifetchattempt', name='is_processed',),
-        migrations.RemoveField(model_name='sushifetchattempt', name='processing_success',),
-        migrations.RemoveField(model_name='sushifetchattempt', name='queued',),
+        migrations.RemoveField(model_name='sushifetchattempt', name='contains_data'),
+        migrations.RemoveField(model_name='sushifetchattempt', name='download_success'),
+        migrations.RemoveField(model_name='sushifetchattempt', name='import_crashed'),
+        migrations.RemoveField(model_name='sushifetchattempt', name='in_progress'),
+        migrations.RemoveField(model_name='sushifetchattempt', name='is_processed'),
+        migrations.RemoveField(model_name='sushifetchattempt', name='processing_success'),
+        migrations.RemoveField(model_name='sushifetchattempt', name='queued'),
     ]

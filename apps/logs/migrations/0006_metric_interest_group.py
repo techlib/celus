@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0005_metric_active'),
-    ]
+    dependencies = [('logs', '0005_metric_active')]
 
     operations = [
         migrations.CreateModel(

@@ -8,8 +8,6 @@ router.register(r'footer-image', views.FooterImageViewSet, basename='footer-imag
 router.register(r'site-logo', views.SiteLogoViewSet, basename='site-logo')
 router.register(r'site', views.SiteViewSet, basename='site')
 
-urlpatterns = [
-    path('overview/', views.SiteOverview.as_view(), name='deployment-overview'),
-]
+urlpatterns = [path('overview/', views.SiteOverview.as_view(), name='deployment-overview')]
 
 urlpatterns += router.urls

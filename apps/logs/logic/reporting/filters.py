@@ -104,10 +104,7 @@ class ForeignKeyDimensionFilter(DimensionFilter):
         return {f'{self.dimension}_id__in': self.values}
 
     def config(self):
-        return {
-            'dimension': self.dimension,
-            'values': self.values,
-        }
+        return {'dimension': self.dimension, 'values': self.values}
 
 
 class ExplicitDimensionFilter(DimensionFilter):
@@ -123,10 +120,7 @@ class ExplicitDimensionFilter(DimensionFilter):
         return {f'{self.dimension}__in': self.values}
 
     def config(self):
-        return {
-            'dimension': self.dimension,
-            'values': self.values,
-        }
+        return {'dimension': self.dimension, 'values': self.values}
 
 
 class TagDimensionFilter(DimensionFilter):
@@ -177,7 +171,4 @@ class TagDimensionFilter(DimensionFilter):
         return {f'{self.dimension}_id__in': obj_ids}
 
     def config(self):
-        return {
-            'dimension': self.dimension,
-            'tag_ids': self.tag_ids,
-        }
+        return {'dimension': self.dimension, 'tag_ids': self.tag_ids}

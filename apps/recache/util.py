@@ -81,6 +81,6 @@ def safe_create_cached_query(queryset, timeout, lifetime, origin):
         # we simply ignore it and return the queryset
         # the worst that can happen is that there would be no cache created
         logger.info(
-            'Could not create CachedQuery, probably due to race condition in its creation: %s', exc,
+            'Could not create CachedQuery, probably due to race condition in its creation: %s', exc
         )
     return None

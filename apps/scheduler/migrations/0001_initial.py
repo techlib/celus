@@ -56,7 +56,7 @@ class Migration(migrations.Migration):
                         default=django.utils.timezone.now, help_text="Don't plan before"
                     ),
                 ),
-                ('priority', models.SmallIntegerField(default=50),),
+                ('priority', models.SmallIntegerField(default=50)),
                 ('start_date', models.DateField()),
                 ('end_date', models.DateField()),
                 (
@@ -110,6 +110,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'abstract': False,},
+            options={'abstract': False},
         ),
     ]

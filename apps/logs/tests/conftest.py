@@ -296,10 +296,7 @@ def flexible_slicer_test_data2(report_type_nd):
     ]
 
     dates = ['2019-12-01', '2020-01-01', '2020-02-01']
-    dimension_values = [
-        ['A', 'B', 'C'],
-        [1999, 2000, 2001, 2002, 2003, 2004],
-    ]
+    dimension_values = [['A', 'B', 'C'], [1999, 2000, 2001, 2002, 2003, 2004]]
     values = value_generator()
     accesslogs = []
     dimension_texts = {}

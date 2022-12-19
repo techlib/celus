@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('recache', '0003_cachedquery_origin'),
-    ]
+    dependencies = [('recache', '0003_cachedquery_origin')]
 
     operations = [
         migrations.AlterField(

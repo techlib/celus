@@ -6,10 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0007_timestamps'),
-        ('publications', '0011_unlocalize_short_name'),
-    ]
+    dependencies = [('core', '0007_timestamps'), ('publications', '0011_unlocalize_short_name')]
 
     operations = [
         migrations.AddField(
@@ -21,5 +18,5 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE,
                 to='core.DataSource',
             ),
-        ),
+        )
     ]

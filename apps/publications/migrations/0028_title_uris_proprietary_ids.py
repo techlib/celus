@@ -5,13 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0027_fill_platform_name'),
-    ]
+    dependencies = [('publications', '0027_fill_platform_name')]
 
     operations = [
         migrations.AddField(
-            model_name='title', name='proprietary_ids', field=models.JSONField(default=list),
+            model_name='title', name='proprietary_ids', field=models.JSONField(default=list)
         ),
         migrations.AddField(model_name='title', name='uris', field=models.JSONField(default=list)),
     ]

@@ -60,10 +60,7 @@ from rest_framework.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
 
-COUNTER_VERSIONS = (
-    (4, 'COUNTER 4'),
-    (5, 'COUNTER 5'),
-)
+COUNTER_VERSIONS = ((4, 'COUNTER 4'), (5, 'COUNTER 5'))
 
 COUNTER_REPORTS = (
     # (code, version, json, reader, sushi_compatible)
@@ -97,10 +94,7 @@ class BrokenCredentialsMixin(models.Model):
     BROKEN_HTTP = 'http'
     BROKEN_SUSHI = 'sushi'
 
-    BROKEN_CHOICES = (
-        (BROKEN_HTTP, 'HTTP'),
-        (BROKEN_SUSHI, 'SUSHI'),
-    )
+    BROKEN_CHOICES = ((BROKEN_HTTP, 'HTTP'), (BROKEN_SUSHI, 'SUSHI'))
 
     first_broken_attempt = models.OneToOneField(
         'SushiFetchAttempt',
@@ -181,7 +175,7 @@ class SushiCredentialsQuerySet(models.QuerySet):
         )
 
     def working(self):
-        """ Were these credentials working? Do we have any data? """
+        """Were these credentials working? Do we have any data?"""
         return self.annotate(
             has_access_log=Exists(
                 AccessLog.objects.filter(
@@ -191,7 +185,7 @@ class SushiCredentialsQuerySet(models.QuerySet):
         ).filter(has_access_log=True)
 
     def not_fake(self):
-        """ List credentials which are not from fake URLs """
+        """List credentials which are not from fake URLs"""
         # Constructs condition - Q() | Q(url__icontains=url1) | Q(url__icontains=url2) ...
         cond = reduce(
             lambda x, y: x | models.Q(url__icontains=y), settings.FAKE_SUSHI_URLS, models.Q()
@@ -267,7 +261,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
                 # remove broken from all reports to credentials
                 CounterReportsToCredentials.objects.filter(credentials=self).update(
-                    first_broken_attempt=None, broken=None,
+                    first_broken_attempt=None, broken=None
                 )
 
             super().save(*args, **kwargs)
@@ -449,7 +443,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
         try:
             report = client.get_report_data(
-                counter_report.code, start_date, end_date, output_content=file_data, params=params,
+                counter_report.code, start_date, end_date, output_content=file_data, params=params
             )
         except SushiException as e:
             logger.warning("pycounter Error: %s", e)
@@ -466,10 +460,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                         errors.insert(
                             0,
                             SushiError(
-                                code='non-sushi',
-                                text=str(e),
-                                full_log=str(e),
-                                severity='Exception',
+                                code='non-sushi', text=str(e), full_log=str(e), severity='Exception'
                             ),
                         )
                     else:
@@ -747,11 +738,7 @@ class AttemptStatus(models.TextChoices):
 
     @classmethod
     def errors(cls):
-        return {
-            cls.IMPORT_FAILED,
-            cls.PARSING_FAILED,
-            cls.DOWNLOAD_FAILED,
-        }
+        return {cls.IMPORT_FAILED, cls.PARSING_FAILED, cls.DOWNLOAD_FAILED}
 
     @classmethod
     def warnings(cls):
@@ -905,7 +892,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
     def any_success_lately(self, days: int = 15) -> bool:
         return self.credentials.current_successful_attempts.filter(
-            when_processed__gte=now() - timedelta(days=days),
+            when_processed__gte=now() - timedelta(days=days)
         ).exists()
 
     def update_broken_credentials(self):
@@ -1002,7 +989,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
     @property
     def broken_credentials(self):
-        """ Credentials of this attempt are currently broken """
+        """Credentials of this attempt are currently broken"""
         return (
             self.credentials.is_broken()
             or CounterReportsToCredentials.objects.filter(

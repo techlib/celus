@@ -203,9 +203,7 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
     serializer_class = FetchIntentionSerializer
 
     def get_queryset(self):
-        kwargs = {
-            "pk": self.kwargs["harvest_pk"],
-        }
+        kwargs = {"pk": self.kwargs["harvest_pk"]}
         if not SuperuserOrAdminPermission().has_permission(self.request, self):
             kwargs["last_updated_by"] = self.request.user
 
@@ -298,7 +296,7 @@ class IntentionViewSet(ModelViewSet):
     @atomic
     @action(detail=False, methods=['post'], serializer_class=PurgeSerializer)
     def purge(self, request):
-        """ Removes all intentions and related data """
+        """Removes all intentions and related data"""
         stats = Counter()
         serializer = self.PurgeSerializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)

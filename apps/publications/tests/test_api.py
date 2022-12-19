@@ -405,7 +405,7 @@ class TestPlatformAPI:
         with mock.patch('publications.views.delete_platform_data_task') as task_mock:
             task_mock.delay.return_value = MockTask()
             resp = clients[user].post(
-                reverse('platform-delete-all-data', args=[organization.pk, platform.pk]),
+                reverse('platform-delete-all-data', args=[organization.pk, platform.pk])
             )
             if can_delete:
                 assert resp.status_code == 200
@@ -1067,7 +1067,7 @@ class TestPlatformTitleAPI:
         )
         q = base_attrs[matched_field][-4:] if matched_field else ''  # end of matched string
         resp = master_user_client.get(
-            reverse('platform-title-list', args=[org.pk, platform.pk]), {'q': q},
+            reverse('platform-title-list', args=[org.pk, platform.pk]), {'q': q}
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -1267,7 +1267,7 @@ class TestAllPlatformsAPI:
             assert {rec['pk'] for rec in data} == {rt_counter.pk, rt_counter_no_interest.pk}
 
     @pytest.mark.parametrize(
-        ["organization", "record_count"], [("branch", 1), ("standalone", 1), (None, 2),],
+        ["organization", "record_count"], [("branch", 1), ("standalone", 1), (None, 2)]
     )
     def test_use_cases(
         self,
@@ -1382,10 +1382,7 @@ class TestGlobalPlatformsAPI:
                 "master_admin",
                 {"brain", "master", "empty", "root", "shared", "standalone", "branch"},
             ],
-            [
-                "master_user",
-                {"brain", "master", "empty", "root", "shared", "standalone", "branch"},
-            ],
+            ["master_user", {"brain", "master", "empty", "root", "shared", "standalone", "branch"}],
             ["admin1", {"brain", "master", "empty", "root", "branch", "shared"}],
             ["admin2", {"brain", "master", "empty", "shared", "standalone"}],
             ["user1", {"brain", "master", "empty", "branch", "shared"}],
@@ -1591,7 +1588,7 @@ class TestTitleInterestBrief:
 @pytest.mark.django_db
 class TestPlatformInterestReport:
     def test_get_platform_interest_report(
-        self, authenticated_client, platforms, report_types, metrics, interests,
+        self, authenticated_client, platforms, report_types, metrics, interests
     ):
         url = reverse("platform-interest-report-list")
         resp = authenticated_client.get(url)

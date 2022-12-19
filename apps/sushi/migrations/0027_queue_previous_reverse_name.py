@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0026_customer_id_requestor_id_blank_fix'),
-    ]
+    dependencies = [('sushi', '0026_customer_id_requestor_id_blank_fix')]
 
     operations = [
         migrations.AlterField(
@@ -22,5 +20,5 @@ class Migration(migrations.Migration):
                 related_query_name='queue_following',
                 to='sushi.SushiFetchAttempt',
             ),
-        ),
+        )
     ]

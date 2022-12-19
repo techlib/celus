@@ -77,10 +77,7 @@ def extract_interests_from_objects(interest_rt: ReportType, objects: Iterable):
         interests = {}
         for int_param_name, dt in int_param_name_to_interest_type.items():
             if hasattr(obj, int_param_name):
-                interests[dt.text] = {
-                    'value': getattr(obj, int_param_name),
-                    'name': dt.text_local,
-                }
+                interests[dt.text] = {'value': getattr(obj, int_param_name), 'name': dt.text_local}
         obj.interests = interests
 
 
@@ -450,7 +447,7 @@ class StatsComputer:
                 ReportInterestMetric.objects.filter(
                     metric_id=OuterRef('pk'), report_type_id=self.original_used_report_type.pk
                 )
-            ),
+            )
         )
 
     def enforce_metric_filter(self) -> None:

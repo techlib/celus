@@ -44,12 +44,7 @@ class UserSyncer(ERMSObjectSyncer):
 
     allowed_attrs = ['username', 'first_name', 'last_name', 'ext_id', 'email']
 
-    attr_map = {
-        'name': 'name',
-        'name_cs': 'name_cs',
-        'name_en': 'name_en',
-        'email': 'email',
-    }
+    attr_map = {'name': 'name', 'name_cs': 'name_cs', 'name_en': 'name_en', 'email': 'email'}
 
     def __init__(self, data_source: DataSource):
         self._org_user_status = {}

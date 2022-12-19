@@ -5,12 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0010_platform_interest_reports'),
-    ]
+    dependencies = [('publications', '0010_platform_interest_reports')]
 
     operations = [
-        migrations.AlterModelOptions(name='platform', options={'ordering': ('short_name',)},),
-        migrations.RemoveField(model_name='platform', name='short_name_cs',),
-        migrations.RemoveField(model_name='platform', name='short_name_en',),
+        migrations.AlterModelOptions(name='platform', options={'ordering': ('short_name',)}),
+        migrations.RemoveField(model_name='platform', name='short_name_cs'),
+        migrations.RemoveField(model_name='platform', name='short_name_en'),
     ]

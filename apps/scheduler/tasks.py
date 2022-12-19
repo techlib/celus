@@ -17,7 +17,7 @@ BUSY_TIMEOUT = 5.0  # in seconds
 @celery.shared_task
 @email_if_fails
 def plan_schedulers_triggering():
-    """ This job should be run in cron mode with high frequency. """
+    """This job should be run in cron mode with high frequency."""
     logger.info("Trying to unlock schedulers which are stucked.")
     Scheduler.unlock_stucked_schedulers()
     logger.info("Planning schedulers triggering")
@@ -29,7 +29,7 @@ def plan_schedulers_triggering():
 @celery.shared_task(bind=True, time_limit=Scheduler.JOB_TIME_LIMIT)
 @email_if_fails
 def trigger_scheduler(self, url: str, finish: bool = False):
-    """ finish - tries to process entire scheduler queue """
+    """finish - tries to process entire scheduler queue"""
     logger.info("Running scheduler for url %s (finish=%s)", url, finish)
     # Get or create scheduler
     (scheduler, created) = Scheduler.objects.get_or_create(url=url)

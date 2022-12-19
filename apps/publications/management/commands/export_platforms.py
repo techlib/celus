@@ -52,9 +52,7 @@ class Command(BaseCommand):
             report_types = (
                 creds.sushifetchattempt_set.annotate(
                     has_access_log=Exists(
-                        AccessLog.objects.filter(
-                            import_batch__sushifetchattempt__pk=OuterRef('pk'),
-                        )
+                        AccessLog.objects.filter(import_batch__sushifetchattempt__pk=OuterRef('pk'))
                     )
                 )
                 .filter(has_access_log=True, credentials__counter_version=creds.counter_version)
@@ -66,7 +64,7 @@ class Command(BaseCommand):
 
         result = {
             "origin": domain_name,
-            "platforms": list(platforms.values("pk", "name", "short_name", "provider", "url",)),
+            "platforms": list(platforms.values("pk", "name", "short_name", "provider", "url")),
             "credentials": converted_credentials,
         }
 

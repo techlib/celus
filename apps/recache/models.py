@@ -91,7 +91,7 @@ class CachedQuery(models.Model):
     )
     model = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     query_hash = models.CharField(
-        max_length=BLAKE_HASH_SIZE * 2, help_text='Hash of the query string',
+        max_length=BLAKE_HASH_SIZE * 2, help_text='Hash of the query string'
     )
     query_string = models.TextField()
     queryset_pickle = models.BinaryField(help_text='Pickle of the evaluated queryset with results')

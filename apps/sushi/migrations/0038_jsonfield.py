@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0037_broken_credentials'),
-    ]
+    dependencies = [('sushi', '0037_broken_credentials')]
 
     operations = [
         migrations.AlterField(

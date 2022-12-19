@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0017_sushifetchattempt_processing_info'),
-    ]
+    dependencies = [('sushi', '0017_sushifetchattempt_processing_info')]
 
     operations = [
         migrations.AddField(
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False, help_text='True if the data is still downloading'
             ),
-        ),
+        )
     ]

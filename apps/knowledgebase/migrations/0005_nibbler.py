@@ -5,15 +5,13 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('knowledgebase', '0004_report_type_in_knowledgebase'),
-    ]
+    dependencies = [('knowledgebase', '0004_report_type_in_knowledgebase')]
 
     operations = [
         migrations.CreateModel(
             name='ParserDefinitionImportAttempt',
             fields=[],
-            options={'proxy': True, 'indexes': [], 'constraints': [],},
+            options={'proxy': True, 'indexes': [], 'constraints': []},
             bases=('knowledgebase.importattempt',),
         ),
         migrations.AlterField(

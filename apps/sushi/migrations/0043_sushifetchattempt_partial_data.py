@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0042_counterreporttype_code_update'),
-    ]
+    dependencies = [('sushi', '0042_counterreporttype_code_update')]
 
     operations = [
         migrations.AddField(
             model_name='sushifetchattempt',
             name='partial_data',
             field=models.BooleanField(default=False, help_text='Data may not be complete'),
-        ),
+        )
     ]

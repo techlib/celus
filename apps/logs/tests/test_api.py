@@ -513,13 +513,11 @@ class TestRawDataExport:
             ['superuser', True],
         ],
     )
-    def test_raw_export_start_organization_access(
-        self, user_type, can_access, client_by_user_type,
-    ):
+    def test_raw_export_start_organization_access(self, user_type, can_access, client_by_user_type):
         client, org = client_by_user_type(user_type)
         url = reverse('raw_data_export')
         with patch('logs.views.export_raw_data_task') as export_task:
-            resp = client.post(url + f'?organization={org.pk}', content_type='application/json',)
+            resp = client.post(url + f'?organization={org.pk}', content_type='application/json')
             expected_status_code = (200,) if can_access else (401, 403)
             assert resp.status_code in expected_status_code
             if can_access:
@@ -541,12 +539,12 @@ class TestRawDataExport:
         ],
     )
     def test_raw_export_start_no_organization_access(
-        self, user_type, can_access, client_by_user_type,
+        self, user_type, can_access, client_by_user_type
     ):
         client, org = client_by_user_type(user_type)
         url = reverse('raw_data_export')
         with patch('logs.views.export_raw_data_task') as export_task:
-            resp = client.post(url, content_type='application/json',)
+            resp = client.post(url, content_type='application/json')
             expected_status_code = (200,) if can_access else (401, 403)
             assert resp.status_code in expected_status_code
             if can_access:
@@ -684,7 +682,7 @@ class TestImportBatchViewSet:
 @pytest.mark.django_db
 class TestReportInterestMetricAPI:
     def test_get_report_interest_metric(
-        self, authenticated_client, platforms, report_types, metrics, interests,
+        self, authenticated_client, platforms, report_types, metrics, interests
     ):
         url = reverse("reporttype-list")
         resp = authenticated_client.get(url)

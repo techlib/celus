@@ -151,7 +151,7 @@ DATABASES = {
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', cast=int, default=5432),
         'ATOMIC_REQUESTS': True,
-    },
+    }
 }
 
 print(f'Using database: {DATABASES["default"]["NAME"]}', file=sys.stderr)
@@ -494,7 +494,7 @@ CLICKHOUSE_CELERY_SCHEDULE = {
         'task': 'logs.tasks.compare_db_with_clickhouse_delayed_task',
         'schedule': crontab(minute=0, hour=22),  # every day at 22:00
         'options': {'expires': 22 * 60 * 60},  # expires in 22 hours to leave room for random delays
-    },
+    }
 }
 if CLICKHOUSE_SYNC_ACTIVE:
     CELERY_BEAT_SCHEDULE.update(CLICKHOUSE_CELERY_SCHEDULE)

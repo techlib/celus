@@ -21,7 +21,7 @@ class BatchStatus(models.TextChoices):
 
 
 class Batch(models.Model):
-    """ Transaction unit -> all changes are done here or none """
+    """Transaction unit -> all changes are done here or none"""
 
     created = models.DateTimeField(default=now)
     status = models.CharField(

@@ -462,7 +462,7 @@ class TestImportBatchesAPI:
 
     def test_data_coverage_no_dates(self, data, clients, organizations, platforms, report_types):
         resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/", {'report_type': report_types['tr'].pk},
+            reverse('import-batch-list') + "data-coverage/", {'report_type': report_types['tr'].pk}
         )
         assert resp.status_code == 200
         assert {rec['date'] for rec in resp.json()} == {
@@ -477,7 +477,7 @@ class TestImportBatchesAPI:
     ):
         rv = ReportDataView.objects.create(base_report_type=report_types['tr'], name='TR')
         resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/", {'report_view': rv.pk},
+            reverse('import-batch-list') + "data-coverage/", {'report_view': rv.pk}
         )
         assert resp.status_code == 200
         assert {rec['date'] for rec in resp.json()} == {

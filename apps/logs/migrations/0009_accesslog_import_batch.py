@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0008_importbatch'),
-    ]
+    dependencies = [('logs', '0008_importbatch')]
 
     operations = [
         migrations.AddField(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                 default=None, on_delete=django.db.models.deletion.CASCADE, to='logs.ImportBatch'
             ),
             preserve_default=False,
-        ),
+        )
     ]

@@ -131,10 +131,10 @@ C,Metric2,4,8,12,18
 
     def test_organization_from_data(self):
         org1 = OrganizationFactory(
-            name_en="C Z C U", name_cs="Č Ž Č Ú", short_name_en="CZCU", short_name_cs="ČŽČÚ",
+            name_en="C Z C U", name_cs="Č Ž Č Ú", short_name_en="CZCU", short_name_cs="ČŽČÚ"
         )
         org2 = OrganizationFactory(
-            name_en="C", name_cs="Č", short_name_en="C Z C U", short_name_cs="Č Ž Č Ú",
+            name_en="C", name_cs="Č", short_name_en="C Z C U", short_name_cs="Č Ž Č Ú"
         )
         OrganizationAltNameFactory(name="X", organization=org1)
         OrganizationAltNameFactory(name="y", organization=org2)

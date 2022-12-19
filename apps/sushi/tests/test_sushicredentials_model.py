@@ -50,7 +50,7 @@ class TestLocking:
 
         org = organizations["branch"]
         credentials = SushiCredentials.objects.create(
-            organization=org, platform=platforms[0], counter_version=5,
+            organization=org, platform=platforms[0], counter_version=5
         )
         user = self._user_code_to_user(
             user_code, org, admin_user, master_admin_identity, valid_identity
@@ -85,7 +85,7 @@ class TestLocking:
     ):
         org = organizations["branch"]
         credentials = SushiCredentials.objects.create(
-            organization=org, platform=platforms[0], counter_version=5, lock_level=UL_ORG_ADMIN,
+            organization=org, platform=platforms[0], counter_version=5, lock_level=UL_ORG_ADMIN
         )
         user = self._user_code_to_user(
             user_code, org, admin_user, master_admin_identity, valid_identity
@@ -137,7 +137,7 @@ class TestCredentialsVersioning:
                 'URL': 'http://this.is/test/2',
                 'version': 5,
                 'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
-            },
+            }
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         import_sushi_credentials(data)
@@ -166,7 +166,7 @@ class TestCredentialsVersioning:
                 'URL': 'http://this.is/test/2',
                 'version': 5,
                 'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
-            },
+            }
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         import_sushi_credentials(data)
@@ -194,7 +194,7 @@ class TestCredentialsVersioning:
                 'URL': 'http://this.is/test/2',
                 'version': 5,
                 'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
-            },
+            }
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         import_sushi_credentials(data)
@@ -224,7 +224,7 @@ class TestCredentialsVersioning:
                 'URL': 'http://this.is/test/2',
                 'version': 5,
                 'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
-            },
+            }
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         import_sushi_credentials(data)
@@ -264,7 +264,7 @@ class TestCredentialsVersioning:
                 'URL': 'http://this.is/test/2',
                 'version': 4,
                 'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
-            },
+            }
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         import_sushi_credentials(data)

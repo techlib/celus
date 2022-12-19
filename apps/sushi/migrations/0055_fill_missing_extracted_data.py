@@ -21,10 +21,6 @@ def fill_missing_extracted_data(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0054_file_checksums'),
-    ]
+    dependencies = [('sushi', '0054_file_checksums')]
 
-    operations = [
-        migrations.RunPython(fill_missing_extracted_data, migrations.RunPython.noop),
-    ]
+    operations = [migrations.RunPython(fill_missing_extracted_data, migrations.RunPython.noop)]

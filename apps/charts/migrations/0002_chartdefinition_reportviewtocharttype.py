@@ -6,10 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0022_move_some_models_to_charts'),
-        ('charts', '0001_initial'),
-    ]
+    dependencies = [('logs', '0022_move_some_models_to_charts'), ('charts', '0001_initial')]
 
     operations = [
         migrations.CreateModel(
@@ -135,7 +132,7 @@ class Migration(migrations.Migration):
                 'unique_together': {
                     ('report_data_view', 'chart_definition'),
                     ('report_data_view', 'position'),
-                },
+                }
             },
         ),
     ]

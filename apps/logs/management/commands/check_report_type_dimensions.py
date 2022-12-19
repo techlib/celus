@@ -62,7 +62,7 @@ class Command(BaseCommand):
                             else:
                                 def_names = {'name': dim_name}
                             dim, _ = Dimension.objects.get_or_create(
-                                short_name=dim_name, source=None, defaults=def_names,
+                                short_name=dim_name, source=None, defaults=def_names
                             )
                             ReportTypeToDimension.objects.create(
                                 report_type=rt, dimension=dim, position=pos + i

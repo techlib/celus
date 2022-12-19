@@ -113,7 +113,7 @@ class FlexibleDataExporter(ABC):
 
     @abstractmethod
     def stream_data_to_sink(
-        self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None,
+        self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
     ) -> int:
         """
         If progress monitor is given, it will be called with a tuple (current_count, total_count)
@@ -335,7 +335,7 @@ class FlexibleDataExporter(ABC):
                         '(No organization filter was applied, the data represent the following '
                         'organizations)'
                     ),
-                ],
+                ]
             )
             if self.slicer.organization_filter:
                 # if an explicit filter was applied, use it
@@ -484,7 +484,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 sheetname = "report"
                 sheet = workbook.add_worksheet(sheetname)
                 row_count = self.write_qs_to_output(
-                    sheet, qs, extra_row_fn=self._remainder_fn(), progress_monitor=progress_monitor,
+                    sheet, qs, extra_row_fn=self._remainder_fn(), progress_monitor=progress_monitor
                 )
                 if row_count > 0:
                     self.add_chart_sheet(workbook, sheetname, row_count=row_count)

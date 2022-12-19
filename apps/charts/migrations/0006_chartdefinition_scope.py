@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('charts', '0005_chartdefinition_ignore_platform'),
-    ]
+    dependencies = [('charts', '0005_chartdefinition_ignore_platform')]
 
     operations = [
         migrations.AddField(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                 default='',
                 max_length=10,
             ),
-        ),
+        )
     ]

@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('export', '0004_export_status_error'),
-    ]
+    dependencies = [('export', '0004_export_status_error')]
 
     operations = [
         migrations.AddField(

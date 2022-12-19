@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0012_datasource_set_null'),
-    ]
+    dependencies = [('core', '0012_datasource_set_null')]
 
     operations = [
         migrations.AlterField(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                 default=dict,
                 help_text='User state data that do not deserve a dedicated field',
             ),
-        ),
+        )
     ]

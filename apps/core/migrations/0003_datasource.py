@@ -6,10 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('organizations', '0003_non_unique_ico'),
-        ('core', '0002_identity'),
-    ]
+    dependencies = [('organizations', '0003_non_unique_ico'), ('core', '0002_identity')]
 
     operations = [
         migrations.CreateModel(

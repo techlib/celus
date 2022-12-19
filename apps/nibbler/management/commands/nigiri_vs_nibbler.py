@@ -73,9 +73,7 @@ class Command(BaseCommand):
 
     def compare(
         self, path: Path, report_type: ReportType
-    ) -> typing.Tuple[
-        typing.Optional[int], typing.Optional[int], bool,
-    ]:
+    ) -> typing.Tuple[typing.Optional[int], typing.Optional[int], bool,]:
         nigiri_output = self.parse_nigiri(path, report_type)
         nigiri_count = len(nigiri_output) if nigiri_output else nigiri_output
         nibbler_output = self.parse_nibbler(path, report_type)
@@ -98,7 +96,7 @@ class Command(BaseCommand):
             reader = csv.DictReader(codecs.iterdecode(f, detect_file_encoding(f)))
             try:
                 records = custom_data_to_records(
-                    reader, extra_dims=report_type.dimension_short_names,
+                    reader, extra_dims=report_type.dimension_short_names
                 )
                 return sorted([self.format_record(r) for r in records])
             except Exception as e:
@@ -119,7 +117,7 @@ class Command(BaseCommand):
             parser = CelusFormatParserDefinition(
                 parser_name="Tabular",
                 data_format=DataFormatDefinition(
-                    name=report_type.short_name, id=report_type.ext_id,
+                    name=report_type.short_name, id=report_type.ext_id
                 ),
                 areas=[parser_area],
                 platforms=[],

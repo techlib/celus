@@ -6,9 +6,7 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('organizations', '0011_userorganization_source'),
-    ]
+    dependencies = [('organizations', '0011_userorganization_source')]
 
     operations = [
         migrations.AddField(

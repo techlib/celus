@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0040_broken_blank_true'),
-    ]
+    dependencies = [('sushi', '0040_broken_blank_true')]
 
     operations = [
         migrations.AlterField(
@@ -37,5 +35,5 @@ class Migration(migrations.Migration):
                 ],
                 max_length=10,
             ),
-        ),
+        )
     ]

@@ -48,5 +48,5 @@ class Migration(migrations.Migration):
                 ),
             ],
             bases=(knowledgebase.models.AuthTokenMixin, models.Model),
-        ),
+        )
     ]

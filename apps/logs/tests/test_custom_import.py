@@ -150,7 +150,7 @@ class TestCustomImport:
         assert not mdu.is_processed, 'crash - should not mark mdu as processed'
 
     def test_manual_data_upload_api_delete(
-        self, organizations, platforms, report_types, tmp_path, settings, clients, users, basic1,
+        self, organizations, platforms, report_types, tmp_path, settings, clients, users, basic1
     ):
         """
         When deleting manual data upload, we need to delete the import_batch as well.
@@ -260,19 +260,19 @@ class TestCustomImport:
             # calculate preflight in celery
             prepare_preflight(mdu.pk)
 
-            response = clients[client].get(reverse('manual-data-upload-detail', args=(mdu.pk,)),)
+            response = clients[client].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
             assert response.status_code == 200
 
             # let's process the mdu
             response = clients[client].post(
-                reverse('manual-data-upload-import-data', args=(mdu.pk,)),
+                reverse('manual-data-upload-import-data', args=(mdu.pk,))
             )
 
             assert response.status_code == 200
 
     @pytest.mark.parametrize(
         ['user', 'owner_level'],
-        [['admin2', UL_ORG_ADMIN], ['master_user', UL_CONS_STAFF], ['su', UL_CONS_STAFF],],
+        [['admin2', UL_ORG_ADMIN], ['master_user', UL_CONS_STAFF], ['su', UL_CONS_STAFF]],
     )
     def test_custom_data_import_owner_level(
         self,

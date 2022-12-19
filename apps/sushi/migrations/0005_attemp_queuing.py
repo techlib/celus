@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0004_processing_info'),
-    ]
+    dependencies = [('sushi', '0004_processing_info')]
 
     operations = [
         migrations.AddField(

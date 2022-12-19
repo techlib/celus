@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0011_datasource_knowledgebase'),
-    ]
+    dependencies = [('core', '0011_datasource_knowledgebase')]
 
     operations = [
         migrations.AlterField(

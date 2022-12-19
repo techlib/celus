@@ -43,9 +43,6 @@ class Changelog(ViewSet):
             parsed_changelog = []
             for release in list_of_releases:
                 rel_parts = release.split("\n\n", 1)
-                rel_dict = {
-                    "version": rel_parts[0].rstrip("]"),
-                    "markdown": rel_parts[1],
-                }
+                rel_dict = {"version": rel_parts[0].rstrip("]"), "markdown": rel_parts[1]}
                 parsed_changelog.append(rel_dict)
             return Response(parsed_changelog)

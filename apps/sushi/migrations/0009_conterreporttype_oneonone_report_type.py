@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0008_sushiattemp_importbatch_onetoone'),
-    ]
+    dependencies = [('sushi', '0008_sushiattemp_importbatch_onetoone')]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
             field=models.OneToOneField(
                 on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
             ),
-        ),
+        )
     ]

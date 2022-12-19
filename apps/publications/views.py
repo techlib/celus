@@ -92,7 +92,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
 
     @action(detail=False, url_path='use-cases', serializer_class=UseCaseSerializer)
     def use_cases(self, request, organization_pk):
-        """ Returns data how are the platforms successfully used """
+        """Returns data how are the platforms successfully used"""
         platforms = self.get_queryset()
         use_cases = get_use_cases(platforms)
         serializer = UseCaseSerializer(data=list(use_cases), many=True)

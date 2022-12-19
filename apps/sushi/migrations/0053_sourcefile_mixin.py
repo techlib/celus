@@ -6,9 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0052_select_best_empty_importbatch'),
-    ]
+    dependencies = [('sushi', '0052_select_best_empty_importbatch')]
 
     operations = [
         migrations.AddField(

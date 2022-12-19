@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('tags', '0005_alter_tag_options'),
-    ]
+    dependencies = [('tags', '0005_alter_tag_options')]
 
     operations = [
         migrations.AlterField(

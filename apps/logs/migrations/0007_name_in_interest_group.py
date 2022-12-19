@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0006_metric_interest_group'),
-    ]
+    dependencies = [('logs', '0006_metric_interest_group')]
 
     operations = [
         migrations.AddField(
@@ -40,7 +38,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='metric', name='name', field=models.CharField(blank=True, max_length=250),
+            model_name='metric', name='name', field=models.CharField(blank=True, max_length=250)
         ),
         migrations.AlterField(
             model_name='metric',

@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('annotations', '0003_annotation_level'),
-    ]
+    dependencies = [('annotations', '0003_annotation_level')]
 
     operations = [
         migrations.AddField(
@@ -24,5 +22,5 @@ class Migration(migrations.Migration):
                 default=300,
                 help_text='Level of user who created this record - used to determine who can modify it',
             ),
-        ),
+        )
     ]

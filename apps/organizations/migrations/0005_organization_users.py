@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
                 through='organizations.UserOrganization',
                 to=settings.AUTH_USER_MODEL,
             ),
-        ),
+        )
     ]

@@ -13,14 +13,7 @@ from django.utils.timezone import now
 
 from core.task_support import cache_based_lock
 from logs.constants import ACTION_INTEREST_SMART_SYNC, ACTION_INTEREST_CHANGE
-from logs.models import (
-    ReportType,
-    AccessLog,
-    DimensionText,
-    ImportBatch,
-    Metric,
-    LastAction,
-)
+from logs.models import ReportType, AccessLog, DimensionText, ImportBatch, Metric, LastAction
 from publications.models import Platform
 
 logger = logging.getLogger(__name__)

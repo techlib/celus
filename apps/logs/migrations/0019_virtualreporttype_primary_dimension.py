@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0018_virtual_report_types_translation'),
-    ]
+    dependencies = [('logs', '0018_virtual_report_types_translation')]
 
     operations = [
         migrations.AddField(
@@ -20,5 +18,5 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.SET_NULL,
                 to='logs.Dimension',
             ),
-        ),
+        )
     ]

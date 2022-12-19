@@ -6,7 +6,7 @@ from rest_framework.request import Request
 
 # Should be used in CUSTOM_USER_QUERYSET settings value
 def users_impersonable(request: Request):
-    """ Users which can be impersonated """
+    """Users which can be impersonated"""
     q = Q(is_superuser=False, is_active=True)
 
     if hasattr(request, 'real_user'):
@@ -17,7 +17,7 @@ def users_impersonable(request: Request):
 
 # Should be used in CUSTOM_ALLOW settings value
 def check_allow_impersonate(request: Request):
-    """ Checks whether the user can impersonate """
+    """Checks whether the user can impersonate"""
 
     def check_user(user: User):
         if user.is_superuser:

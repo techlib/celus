@@ -6,9 +6,7 @@ import django.db.models.expressions
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0004_automatic'),
-    ]
+    dependencies = [('scheduler', '0004_automatic')]
 
     operations = [
         migrations.AddConstraint(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 check=models.Q(start_date__lt=django.db.models.expressions.F('end_date')),
                 name='timeline',
             ),
-        ),
+        )
     ]

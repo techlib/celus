@@ -5,13 +5,11 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0030_merge_0028_verbose_names_0029_title_default_pub_type'),
-    ]
+    dependencies = [('publications', '0030_merge_0028_verbose_names_0029_title_default_pub_type')]
 
     operations = [
         migrations.AlterUniqueTogether(
             name='title',
             unique_together={('name', 'isbn', 'issn', 'eissn', 'doi', 'proprietary_ids')},
-        ),
+        )
     ]

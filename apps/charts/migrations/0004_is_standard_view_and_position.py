@@ -5,12 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('charts', '0003_chartdefinition_ignore_organization'),
-    ]
+    dependencies = [('charts', '0003_chartdefinition_ignore_organization')]
 
     operations = [
-        migrations.AlterModelOptions(name='reportdataview', options={'ordering': ('position',)},),
+        migrations.AlterModelOptions(name='reportdataview', options={'ordering': ('position',)}),
         migrations.AddField(
             model_name='reportdataview',
             name='is_standard_view',

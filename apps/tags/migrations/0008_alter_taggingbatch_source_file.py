@@ -6,9 +6,7 @@ import tags.models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('tags', '0007_tagging_batch_internal_name'),
-    ]
+    dependencies = [('tags', '0007_tagging_batch_internal_name')]
 
     operations = [
         migrations.AlterField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
                 upload_to=tags.models.where_to_store,
                 validators=[tags.models.validate_mime_type],
             ),
-        ),
+        )
     ]

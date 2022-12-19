@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0002_sushifetchattempt'),
-    ]
+    dependencies = [('sushi', '0002_sushifetchattempt')]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=True,
                 help_text='When turned off, this type of report will not be automatically downloaded',
             ),
-        ),
+        )
     ]

@@ -584,10 +584,7 @@ class TestFlexibleDataSlicerComputations:
         data = list(slicer.get_data())
         assert len(data) == (2 if show_zero else 1)
         data.sort(key=lambda rec: rec['pk'])
-        exp_data = [
-            {'pk': 'tag1', 'm1': 2470716},
-            {'pk': 'tag3', 'm1': 0},
-        ]
+        exp_data = [{'pk': 'tag1', 'm1': 2470716}, {'pk': 'tag3', 'm1': 0}]
         assert [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in data] == (
             exp_data if show_zero else exp_data[:-1]
         )
@@ -1373,8 +1370,8 @@ class TestFlexibleDataExcelExporter:
             ("History", 'History_'),
             ("history'", 'history_'),
             ("'", 'Sheet'),
-            ('Long that fits after []??? removal', 'Long that fits after removal',),
-            ('Long that does not fit after []??? removal', 'Long that does not fit after r…',),
+            ('Long that fits after []??? removal', 'Long that fits after removal'),
+            ('Long that does not fit after []??? removal', 'Long that does not fit after r…'),
         ],
     )
     def test_xslx_cleanup_sheetname(self, name_in, name_out):

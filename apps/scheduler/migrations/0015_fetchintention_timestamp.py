@@ -6,9 +6,7 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0014_finalizing_import_batch'),
-    ]
+    dependencies = [('scheduler', '0014_finalizing_import_batch')]
 
     operations = [
         migrations.AddField(

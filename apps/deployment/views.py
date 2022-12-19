@@ -40,11 +40,7 @@ class SiteOverview(APIView):
             .values('img', 'alt_text')
         ]
         site_logo = SiteLogo.objects.filter(site_id=settings.SITE_ID).values('img', 'alt_text')
-        data = {
-            'site_name': site.name,
-            'site_domain': site.domain,
-            'footer_images': footer_images,
-        }
+        data = {'site_name': site.name, 'site_domain': site.domain, 'footer_images': footer_images}
         if site_logo:
             data['site_logo'] = site_logo[0]  # it is an iterable from the query
             data['site_logo']['img'] = settings.MEDIA_URL + data['site_logo']['img']

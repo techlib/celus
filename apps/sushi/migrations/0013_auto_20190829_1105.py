@@ -6,13 +6,11 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0012_sushifetchattempt_contains_data'),
-    ]
+    dependencies = [('sushi', '0012_sushifetchattempt_contains_data')]
 
     operations = [
         migrations.RenameField(
-            model_name='sushifetchattempt', old_name='success', new_name='download_success',
+            model_name='sushifetchattempt', old_name='success', new_name='download_success'
         ),
         migrations.AddField(
             model_name='sushifetchattempt',

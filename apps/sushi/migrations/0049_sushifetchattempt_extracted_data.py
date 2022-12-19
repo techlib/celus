@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0048_discard_credentials_broken_state'),
-    ]
+    dependencies = [('sushi', '0048_discard_credentials_broken_state')]
 
     operations = [
         migrations.AddField(
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
             field=models.JSONField(
                 default=dict, help_text='Information extracted from the SUSHI data header'
             ),
-        ),
+        )
     ]

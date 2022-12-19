@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('recache', '0005_remove_cachedquery_query_pickle'),
-    ]
+    dependencies = [('recache', '0005_remove_cachedquery_query_pickle')]
 
     operations = [
         migrations.AlterField(
@@ -16,6 +14,6 @@ class Migration(migrations.Migration):
             field=models.CharField(help_text='Hash of the query string', max_length=32),
         ),
         migrations.AlterUniqueTogether(
-            name='cachedquery', unique_together={('query_hash', 'django_version')},
+            name='cachedquery', unique_together={('query_hash', 'django_version')}
         ),
     ]

@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0004_source_field'),
-    ]
+    dependencies = [('logs', '0004_source_field')]
 
     operations = [
         migrations.AddField(
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=True, help_text='Only active metrics are reported to users'
             ),
-        ),
+        )
     ]

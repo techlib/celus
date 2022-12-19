@@ -10,7 +10,4 @@ router.register('intention', IntentionViewSet, basename='intention')
 harvest_router = NestedSimpleRouter(router, 'harvest', lookup='harvest')
 harvest_router.register('intention', HarvestIntentionViewSet, basename='harvest-intention')
 
-urlpatterns = [
-    *router.urls,
-    *harvest_router.urls,
-]
+urlpatterns = [*router.urls, *harvest_router.urls]

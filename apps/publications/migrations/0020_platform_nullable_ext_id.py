@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0019_more_pub_types'),
-    ]
+    dependencies = [('publications', '0019_more_pub_types')]
 
     operations = [
         migrations.AlterField(
             model_name='platform',
             name='ext_id',
             field=models.PositiveIntegerField(blank=True, null=True, unique=True),
-        ),
+        )
     ]

@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 ('last_updated', models.DateTimeField(auto_now=True)),
                 ('_exclusive', models.BooleanField()),
             ],
-            options={'abstract': False,},
+            options={'abstract': False},
         ),
         migrations.CreateModel(
             name='PlatformTag',
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 ('last_updated', models.DateTimeField(auto_now=True)),
                 ('_exclusive', models.BooleanField()),
             ],
-            options={'abstract': False,},
+            options={'abstract': False},
         ),
         migrations.CreateModel(
             name='Tag',
@@ -147,7 +147,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'ordering': ['name'],},
+            options={'ordering': ['name']},
         ),
         migrations.CreateModel(
             name='TagClass',
@@ -253,7 +253,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'verbose_name_plural': 'Tag classes', 'ordering': ['name'],},
+            options={'verbose_name_plural': 'Tag classes', 'ordering': ['name']},
         ),
         migrations.CreateModel(
             name='TitleTag',
@@ -292,7 +292,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'abstract': False,},
+            options={'abstract': False},
         ),
         migrations.AddField(
             model_name='tag',
@@ -368,7 +368,7 @@ class Migration(migrations.Migration):
                 name='titletag_unique_tag_class_for_exclusive',
             ),
         ),
-        migrations.AlterUniqueTogether(name='titletag', unique_together={('tag', 'target')},),
+        migrations.AlterUniqueTogether(name='titletag', unique_together={('tag', 'target')}),
         migrations.AddConstraint(
             model_name='tagclass',
             constraint=models.CheckConstraint(
@@ -465,7 +465,7 @@ class Migration(migrations.Migration):
                 name='platformtag_unique_tag_class_for_exclusive',
             ),
         ),
-        migrations.AlterUniqueTogether(name='platformtag', unique_together={('tag', 'target')},),
+        migrations.AlterUniqueTogether(name='platformtag', unique_together={('tag', 'target')}),
         migrations.AddConstraint(
             model_name='organizationtag',
             constraint=models.UniqueConstraint(
@@ -474,7 +474,5 @@ class Migration(migrations.Migration):
                 name='organizationtag_unique_tag_class_for_exclusive',
             ),
         ),
-        migrations.AlterUniqueTogether(
-            name='organizationtag', unique_together={('tag', 'target')},
-        ),
+        migrations.AlterUniqueTogether(name='organizationtag', unique_together={('tag', 'target')}),
     ]

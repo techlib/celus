@@ -6,9 +6,7 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0024_no_reportinterestmetric_name'),
-    ]
+    dependencies = [('logs', '0024_no_reportinterestmetric_name')]
 
     operations = [
         migrations.AddField(

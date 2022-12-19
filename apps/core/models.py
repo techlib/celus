@@ -139,7 +139,7 @@ class User(AbstractUser):
     )
 
     extra_data = models.JSONField(
-        default=dict, help_text='User state data that do not deserve a dedicated field', blank=True,
+        default=dict, help_text='User state data that do not deserve a dedicated field', blank=True
     )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)

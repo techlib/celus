@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0062_merge_20220325_1628'),
-    ]
+    dependencies = [('logs', '0062_merge_20220325_1628')]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE, to='logs.interestgroup'
             ),
-        ),
+        )
     ]

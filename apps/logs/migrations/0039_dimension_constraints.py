@@ -5,12 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0038_flexiblereport'),
-    ]
+    dependencies = [('logs', '0038_flexiblereport')]
 
     operations = [
-        migrations.AlterUniqueTogether(name='dimension', unique_together=set(),),
+        migrations.AlterUniqueTogether(name='dimension', unique_together=set()),
         migrations.AddConstraint(
             model_name='dimension',
             constraint=models.UniqueConstraint(

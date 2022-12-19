@@ -8,10 +8,7 @@ class UserOrganization(serializers.ModelSerializer):
     organization = OrganizationShortSerializer(read_only=True)
 
     class Meta:
-        fields = (
-            'is_admin',
-            'organization',
-        )
+        fields = ('is_admin', 'organization')
         model = UserOrganization
 
 

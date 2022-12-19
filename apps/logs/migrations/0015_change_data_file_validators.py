@@ -6,9 +6,7 @@ import logs.models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0014_default_dimension_type'),
-    ]
+    dependencies = [('logs', '0014_default_dimension_type')]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
             field=models.FileField(
                 upload_to=logs.models.where_to_store, validators=[logs.models.validate_mime_type]
             ),
-        ),
+        )
     ]

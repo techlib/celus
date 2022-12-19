@@ -8,9 +8,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('core', '0016_taskprogress'),
-    ]
+    dependencies = [('core', '0016_taskprogress')]
 
     operations = [
         migrations.CreateModel(

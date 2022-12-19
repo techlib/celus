@@ -41,10 +41,6 @@ def add_missing_checksums(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0067_mdu_sourcefile_mixin'),
-    ]
+    dependencies = [('logs', '0067_mdu_sourcefile_mixin')]
 
-    operations = [
-        migrations.RunPython(add_missing_checksums, migrations.RunPython.noop),
-    ]
+    operations = [migrations.RunPython(add_missing_checksums, migrations.RunPython.noop)]

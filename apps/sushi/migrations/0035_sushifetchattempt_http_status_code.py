@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0034_longer_data_file_field'),
-    ]
+    dependencies = [('sushi', '0034_longer_data_file_field')]
 
     operations = [
         migrations.AddField(
             model_name='sushifetchattempt',
             name='http_status_code',
             field=models.PositiveSmallIntegerField(null=True),
-        ),
+        )
     ]

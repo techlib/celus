@@ -8,9 +8,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('organizations', '0020_organization_unique_shortname'),
-    ]
+    dependencies = [('organizations', '0020_organization_unique_shortname')]
 
     operations = [
         migrations.CreateModel(
@@ -69,5 +67,5 @@ class Migration(migrations.Migration):
                 'ordering': ('-created',),
                 'abstract': False,
             },
-        ),
+        )
     ]

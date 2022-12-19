@@ -101,7 +101,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'verbose_name_plural': 'Tagging batches',},
+            options={'verbose_name_plural': 'Tagging batches'},
         ),
         migrations.AddField(
             model_name='organizationtag',

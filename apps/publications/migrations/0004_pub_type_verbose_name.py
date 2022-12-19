@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0003_nullable_title_attrs'),
-    ]
+    dependencies = [('publications', '0003_nullable_title_attrs')]
 
     operations = [
         migrations.AlterField(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                 max_length=1,
                 verbose_name='Publication type',
             ),
-        ),
+        )
     ]

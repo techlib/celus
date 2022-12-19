@@ -170,7 +170,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         serializer_class=SushiCredentialsDataSerializer,
     )
     def data(self, request, pk):
-        """ Display data for given set of credentials """
+        """Display data for given set of credentials"""
         credentials = get_object_or_404(SushiCredentials, pk=pk)
 
         current_time = timezone.now()
@@ -227,7 +227,7 @@ class SushiCredentialsViewSet(ModelViewSet):
 
         # update planned
         for intention in credentials.fetchintention_set.filter(
-            counter_report__in=report_types, when_processed__isnull=True, duplicate_of=None,
+            counter_report__in=report_types, when_processed__isnull=True, duplicate_of=None
         ).select_related('counter_report'):
             start = intention.start_date
             end = intention.end_date
@@ -255,19 +255,12 @@ class SushiCredentialsViewSet(ModelViewSet):
                     if status in AttemptStatus.errors() and before in ["untried"]:
                         # untried => failed
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "failed"
-                    elif attempt.partial_data and before in [
-                        "untried",
-                        "failed",
-                        "no_data",
-                    ]:
+                    elif attempt.partial_data and before in ["untried", "failed", "no_data"]:
                         # untried, failed, no_data => partial_data
                         result[start.year][f"{start.month:02d}"][report_type][
                             "status"
                         ] = "partial_data"
-                    elif status == AttemptStatus.NO_DATA and before in [
-                        "untried",
-                        "failed",
-                    ]:
+                    elif status == AttemptStatus.NO_DATA and before in ["untried", "failed"]:
                         # failed, untried => no_data
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "no_data"
                     elif status == AttemptStatus.SUCCESS and before in [

@@ -5,13 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0025_modification_dates'),
-    ]
+    dependencies = [('logs', '0025_modification_dates')]
 
     operations = [
         migrations.AlterModelOptions(
-            name='interestgroup', options={'ordering': ('position', 'important')},
+            name='interestgroup', options={'ordering': ('position', 'important')}
         ),
         migrations.AddField(
             model_name='interestgroup',

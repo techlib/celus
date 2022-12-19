@@ -57,9 +57,7 @@ class ImportAttemptAdminMixin:
 
     def get_urls(self):
         urls = super().get_urls()
-        extra_urls = [
-            path('run-sync/', self.run_sync),
-        ]
+        extra_urls = [path('run-sync/', self.run_sync)]
         return extra_urls + urls
 
     def get_status(self, obj: ImportAttempt):
@@ -142,15 +140,7 @@ class ReportTypeImportAttemptAdmin(ImportAttemptAdminMixin, admin.ModelAdmin):
 
 @admin.register(RouterSyncAttempt)
 class RouterSyncAttemptAdmin(admin.ModelAdmin):
-    list_display = (
-        'prefix',
-        'source',
-        'target',
-        'created',
-        'updated',
-        'done',
-        'retries',
-    )
+    list_display = ('prefix', 'source', 'target', 'created', 'updated', 'done', 'retries')
     readonly_fields = (
         'prefix',
         'source',

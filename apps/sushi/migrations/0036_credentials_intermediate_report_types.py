@@ -21,9 +21,7 @@ def couter_reports_to_active_counter_reports(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0035_sushifetchattempt_http_status_code'),
-    ]
+    dependencies = [('sushi', '0035_sushifetchattempt_http_status_code')]
 
     operations = [
         migrations.CreateModel(
@@ -62,5 +60,5 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             active_couter_reports_to_counter_reports, couter_reports_to_active_counter_reports
         ),
-        migrations.RemoveField(model_name='sushicredentials', name='active_counter_reports',),
+        migrations.RemoveField(model_name='sushicredentials', name='active_counter_reports'),
     ]

@@ -7,7 +7,7 @@ from django.utils.timezone import now
 
 
 def mark_older_3030_as_unqueued(apps, schema_editor):
-    """ Removes queued flag from some fetchattempts
+    """Removes queued flag from some fetchattempts
     The attempts are supposed to have 3030 code and have distant end_data
     """
     SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
@@ -18,8 +18,6 @@ def mark_older_3030_as_unqueued(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0031_sushifetchattempt_last_updated'),
-    ]
+    dependencies = [('sushi', '0031_sushifetchattempt_last_updated')]
 
     operations = [migrations.RunPython(mark_older_3030_as_unqueued)]

@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0010_counterreporttype_code_choices'),
-    ]
+    dependencies = [('sushi', '0010_counterreporttype_code_choices')]
 
     operations = [
         migrations.AddField(
             model_name='sushifetchattempt',
             name='error_code',
             field=models.CharField(blank=True, max_length=12),
-        ),
+        )
     ]

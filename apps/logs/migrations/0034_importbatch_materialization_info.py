@@ -7,9 +7,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0033_add_reportmaterializationspec'),
-    ]
+    dependencies = [('logs', '0033_add_reportmaterializationspec')]
 
     operations = [
         migrations.AddField(

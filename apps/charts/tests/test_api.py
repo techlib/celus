@@ -373,7 +373,7 @@ class TestChartDataAPIView:
         report_view = ReportDataView.objects.create(base_report_type=report_type)
         resp = authenticated_client.get(
             reverse('chart_data_metrics', args=(report_view.pk,)),
-            {'organization': organization.pk, 'platform': platform.pk, 'prim_dim': 'date',},
+            {'organization': organization.pk, 'platform': platform.pk, 'prim_dim': 'date'},
         )
         assert resp.status_code == 200
         data = resp.json()

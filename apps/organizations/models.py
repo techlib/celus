@@ -10,7 +10,7 @@ from mptt.models import MPTTModel
 class Organization(MPTTModel):
 
     ext_id = models.PositiveIntegerField(
-        unique=True, help_text='object ID taken from EMRS', null=True, default=None, blank=True,
+        unique=True, help_text='object ID taken from EMRS', null=True, default=None, blank=True
     )
     parent = TreeForeignKey(
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='children'

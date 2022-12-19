@@ -13,8 +13,6 @@ def add_queue_id(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0011_fetchintention_previous'),
-    ]
+    dependencies = [('scheduler', '0011_fetchintention_previous')]
 
     operations = [RunPython(add_queue_id, RunPython.noop)]

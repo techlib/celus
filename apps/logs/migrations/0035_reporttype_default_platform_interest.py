@@ -12,9 +12,7 @@ def set_default_platform_interest(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0034_importbatch_materialization_info'),
-    ]
+    dependencies = [('logs', '0034_importbatch_materialization_info')]
 
     operations = [
         migrations.AddField(

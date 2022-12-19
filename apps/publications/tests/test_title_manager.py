@@ -203,9 +203,7 @@ class TestTitleManager:
                 id="title only based match with one empty prop id",
             ),
             # title only based match with no proprietary ID
-            pytest.param(
-                {'name': 'Nature'}, {'name': 'Nature'}, True, id="title only based match",
-            ),
+            pytest.param({'name': 'Nature'}, {'name': 'Nature'}, True, id="title only based match"),
             # title + proprietary ID
             pytest.param(
                 {'name': 'Nature', 'proprietary_ids': ['bar']},
@@ -422,15 +420,15 @@ class TestTitleManager:
             ),
             # garbage in ISSN
             (
-                {'Print_ISSN': '1111- 2222 (print)', 'Proprietary': ' FOO ',},
+                {'Print_ISSN': '1111- 2222 (print)', 'Proprietary': ' FOO '},
                 {'issn': '1111-2222', 'proprietary_ids': {'FOO'}},
             ),
             (
-                {'Print_ISSN': 'garbage 1111-2222', 'Proprietary': ' FOO ',},
+                {'Print_ISSN': 'garbage 1111-2222', 'Proprietary': ' FOO '},
                 {'issn': '1111-2222', 'proprietary_ids': {'FOO'}},
             ),
             (
-                {'Print_ISSN': 'garbagegarbage', 'Proprietary': ' FOO ',},
+                {'Print_ISSN': 'garbagegarbage', 'Proprietary': ' FOO '},
                 {'issn': 'garbagega', 'proprietary_ids': {'FOO'}},
             ),
         ],

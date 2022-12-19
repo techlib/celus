@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(name='reportdataview', options={'ordering': ('short_name',)},),
+        migrations.AlterModelOptions(name='reportdataview', options={'ordering': ('short_name',)}),
         migrations.AlterField(
             model_name='reportdataview',
             name='source',

@@ -19,10 +19,7 @@ def noop(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0025_modification_dates'),
-        ('publications', '0012_platform_source'),
-    ]
+    dependencies = [('logs', '0025_modification_dates'), ('publications', '0012_platform_source')]
 
     operations = [
         migrations.AddField(
@@ -32,7 +29,7 @@ class Migration(migrations.Migration):
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='platform', name='last_modified', field=models.DateTimeField(auto_now=True),
+            model_name='platform', name='last_modified', field=models.DateTimeField(auto_now=True)
         ),
         migrations.CreateModel(
             name='PlatformInterestReport',

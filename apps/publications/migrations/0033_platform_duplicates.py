@@ -6,9 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0032_counter_registry_id'),
-    ]
+    dependencies = [('publications', '0032_counter_registry_id')]
 
     operations = [
         migrations.AddField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
                 help_text="Links to other platform's ext_id",
                 size=None,
             ),
-        ),
+        )
     ]

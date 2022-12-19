@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('charts', '0004_is_standard_view_and_position'),
-    ]
+    dependencies = [('charts', '0004_is_standard_view_and_position')]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=False,
                 help_text='When checked, the chart will contain data for all platforms. This is useful to compare platforms for one title.',
             ),
-        ),
+        )
     ]

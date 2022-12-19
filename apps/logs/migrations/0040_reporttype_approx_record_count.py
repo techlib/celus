@@ -18,9 +18,7 @@ def zero_approx_count(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0039_dimension_constraints'),
-    ]
+    dependencies = [('logs', '0039_dimension_constraints')]
 
     operations = [
         migrations.AddField(

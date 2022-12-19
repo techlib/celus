@@ -6,9 +6,7 @@ import sushi.models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0018_sushifetchattempt_in_progress'),
-    ]
+    dependencies = [('sushi', '0018_sushifetchattempt_in_progress')]
 
     operations = [
         migrations.AlterField(

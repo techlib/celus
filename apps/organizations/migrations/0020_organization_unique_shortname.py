@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('organizations', '0019_jsonfield'),
-    ]
+    dependencies = [('organizations', '0019_jsonfield')]
 
     operations = [
         migrations.AddConstraint(

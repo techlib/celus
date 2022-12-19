@@ -8,17 +8,14 @@ from django.utils.timezone import now
 
 from export.enums import FileFormat
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
-from logs.logic.reporting.export import (
-    FlexibleDataExcelExporter,
-    FlexibleDataZipCSVExporter,
-)
+from logs.logic.reporting.export import FlexibleDataExcelExporter, FlexibleDataZipCSVExporter
 
 
 class AnnotateObsoleteQueryset(models.QuerySet):
     def annotate_obsolete(self):
         return self.annotate(
             obsolete=ExpressionWrapper(
-                Q(created__lt=now() - settings.EXPORT_DELETING_PERIOD), output_field=BooleanField(),
+                Q(created__lt=now() - settings.EXPORT_DELETING_PERIOD), output_field=BooleanField()
             )
         )
 

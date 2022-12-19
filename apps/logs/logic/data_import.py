@@ -603,7 +603,7 @@ def create_import_batch_or_crash(
         ):
             raise DataStructureError(
                 f'Clashing import batch exists for report type "{report_type}"'
-                f', platform "{platform}", organization "{organization}" and date "{month}"',
+                f', platform "{platform}", organization "{organization}" and date "{month}"'
             )
         kwargs = ib_kwargs or {}
         return ImportBatch.objects.create(
@@ -659,10 +659,7 @@ def _preprocess_counter_records(
             metric_id = get_or_create_metric(metrics, record.metric, controlled_metrics)
         start = record.start if not isinstance(record.start, date) else record.start.isoformat()
         import_batch = month_to_import_batch[start]
-        id_attrs = {
-            'metric_id': metric_id,
-            'target_id': title_id,
-        }
+        id_attrs = {'metric_id': metric_id, 'target_id': title_id}
         for i, dim in enumerate(dimensions):
             dim_value = record.dimension_data.get(dim.short_name)
             if dim_value is not None:
@@ -671,7 +668,7 @@ def _preprocess_counter_records(
                     remap = {}
                     text_to_int_remaps[dim.pk] = remap
                 dim_value = get_or_create_with_map(
-                    DimensionText, remap, 'text', dim_value, other_attrs={'dimension_id': dim.pk},
+                    DimensionText, remap, 'text', dim_value, other_attrs={'dimension_id': dim.pk}
                 )
             id_attrs[f'dim{i+1}'] = dim_value
         # here we detect possible duplicated keys and merge matching records

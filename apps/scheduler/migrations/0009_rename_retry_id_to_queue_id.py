@@ -10,13 +10,11 @@ def fill_in_empty_queue_id(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0008_current_task'),
-    ]
+    dependencies = [('scheduler', '0008_current_task')]
 
     operations = [
         migrations.RenameField(
-            model_name='fetchintention', old_name='retry_id', new_name='queue_id',
+            model_name='fetchintention', old_name='retry_id', new_name='queue_id'
         ),
         migrations.AddConstraint(
             model_name='fetchintention',

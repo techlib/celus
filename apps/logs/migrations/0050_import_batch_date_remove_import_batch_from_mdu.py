@@ -5,13 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0049_mdu_many_importbatches'),
-    ]
+    dependencies = [('logs', '0049_mdu_many_importbatches')]
 
     operations = [
-        migrations.RemoveField(model_name='manualdataupload', name='import_batch',),
+        migrations.RemoveField(model_name='manualdataupload', name='import_batch'),
         migrations.AddField(
-            model_name='importbatch', name='date', field=models.DateField(null=True),
+            model_name='importbatch', name='date', field=models.DateField(null=True)
         ),
     ]

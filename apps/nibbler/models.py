@@ -72,7 +72,7 @@ class ParserDefinition(models.Model):
 
 
 def is_success(nibbler_output: NibblerOutput) -> bool:
-    """ Returns true if nibbler was able to parse at least one sheet """
+    """Returns true if nibbler was able to parse at least one sheet"""
     return any(isinstance(e, Poop) for e in nibbler_output)
 
 
@@ -94,7 +94,7 @@ def get_report_types_from_nibbler_output(nibbler_output: NibblerOutput) -> model
 
     # TODO this should be updated when multiple knowledgebases are used (hopefully never)
     report_types = ReportType.objects.filter(
-        source__type=DataSource.TYPE_KNOWLEDGEBASE, ext_id__in=report_types_ext_ids,
+        source__type=DataSource.TYPE_KNOWLEDGEBASE, ext_id__in=report_types_ext_ids
     )
     if not report_types.exists():
         # Try extract report type using only short_name from global report types

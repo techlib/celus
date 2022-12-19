@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='sushicredentials', options={'verbose_name_plural': 'Sushi credentials'},
+            name='sushicredentials', options={'verbose_name_plural': 'Sushi credentials'}
         ),
         migrations.AlterField(
             model_name='sushicredentials',
@@ -21,6 +21,6 @@ class Migration(migrations.Migration):
             field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict),
         ),
         migrations.AlterUniqueTogether(
-            name='sushicredentials', unique_together={('organization', 'platform', 'version')},
+            name='sushicredentials', unique_together={('organization', 'platform', 'version')}
         ),
     ]

@@ -103,8 +103,7 @@ class CanAccessOrganizationFromGETAttrs(BasePermission):
 
 
 class AdminAccessForOrganization(BasePermission):
-    """ Checks whether the user has admin access for organization obtained via GET or POST
-    """
+    """Checks whether the user has admin access for organization obtained via GET or POST"""
 
     def has_permission(self, request, view):
         organization = int(extract_field_from_request(request, 'organization') or 0)

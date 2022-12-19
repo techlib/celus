@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0006_fetchintention_retry_id'),
-    ]
+    dependencies = [('scheduler', '0006_fetchintention_retry_id')]
 
     operations = [
         migrations.AlterField(
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.SET_NULL,
                 to='sushi.SushiFetchAttempt',
             ),
-        ),
+        )
     ]

@@ -413,7 +413,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                 dimensions = []
                 for dimension_data in report_type_data["dimensions"]:
                     dimension, dimension_created = Dimension.objects.get_or_create(
-                        source=self.source, short_name=dimension_data['short_name'],
+                        source=self.source, short_name=dimension_data['short_name']
                     )
                     if dimension_created:
                         logger.info(
@@ -429,7 +429,7 @@ class ReportTypeImportAttempt(ImportAttempt):
             metrics = []
             for metric_data in report_type_data["metrics"]:
                 metric, metric_created = Metric.objects.get_or_create(
-                    source=self.source, short_name=metric_data['short_name'],
+                    source=self.source, short_name=metric_data['short_name']
                 )
                 if metric_created:
                     logger.info(
@@ -445,7 +445,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                 # create dimensions
                 for position, dimension in enumerate(dimensions):
                     ReportTypeToDimension.objects.create(
-                        position=position, report_type=report_type, dimension=dimension,
+                        position=position, report_type=report_type, dimension=dimension
                     )
                 counter["created"] += 1
             else:
@@ -489,7 +489,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                         # link dimensions
                         for position, dimension in enumerate(dimensions):
                             ReportTypeToDimension.objects.create(
-                                position=position, report_type=report_type, dimension=dimension,
+                                position=position, report_type=report_type, dimension=dimension
                             )
 
                         updated = True
@@ -539,7 +539,7 @@ class ParserDefinitionImportAttempt(ImportAttempt):
             seen_ids.add(pk)
 
             parser_definition, created = ParserDefinition.objects.get_or_create(
-                pk=pk, source=self.source, defaults={"definition": definition},
+                pk=pk, source=self.source, defaults={"definition": definition}
             )
 
             if created:

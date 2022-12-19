@@ -214,7 +214,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             setattr(org, f'short_name_{lang}', valid_data["name"][:100])
 
         data_source = DataSource.objects.create(
-            organization=org, type=DataSource.TYPE_ORGANIZATION, short_name=slugified_name,
+            organization=org, type=DataSource.TYPE_ORGANIZATION, short_name=slugified_name
         )
         # we add the just created data source as source for the organization itself
         # it looks strange, but it is a usable way how to say that this is a user-created
@@ -353,11 +353,7 @@ For more info see Django admin: {request.build_absolute_uri(
         pk_to_interest = {rec['platform']: rec['interest'] for rec in overlap_interests}
 
         # overall interest
-        accesslog_filter = {
-            'report_type': interest_rt,
-            **org_filter,
-            **date_filter_params1,
-        }
+        accesslog_filter = {'report_type': interest_rt, **org_filter, **date_filter_params1}
         replace_report_type_with_materialized(accesslog_filter)
         total_overlap_interests = (
             AccessLog.objects.filter(**accesslog_filter)
@@ -387,4 +383,4 @@ class StartERMSSyncOrganizationsTask(APIView):
 
     def post(self, request):
         task = erms_sync_organizations_task.delay()
-        return Response({'id': task.id,})
+        return Response({'id': task.id})

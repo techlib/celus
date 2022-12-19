@@ -95,7 +95,7 @@ def import_counter_records_mock(
 ):
     import_batches = [
         ImportBatchFullFactory.create(
-            date=month, organization=organization, platform=platform, report_type=report_type,
+            date=month, organization=organization, platform=platform, report_type=report_type
         )
         for month in months or []
     ]

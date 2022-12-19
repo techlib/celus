@@ -317,10 +317,7 @@ def prepare_preflight(mdu_id: int):
     except UnicodeDecodeError as e:
         mdu.log = str(e)
         mdu.error = "unicode-decode"
-        mdu.error_details = {
-            "exception": str(e),
-            "traceback": traceback.format_exc(),
-        }
+        mdu.error_details = {"exception": str(e), "traceback": traceback.format_exc()}
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
@@ -353,10 +350,7 @@ Traceback: {traceback.format_exc()}
             error = "multiple-report-type"
         mdu.log = body
         mdu.error = error
-        mdu.error_details = {
-            "exception": str(e),
-            "traceback": traceback.format_exc(),
-        }
+        mdu.error_details = {"exception": str(e), "traceback": traceback.format_exc()}
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
@@ -367,7 +361,7 @@ Traceback: {traceback.format_exc()}
 @email_if_fails
 @atomic
 def prepare_preflights():
-    """ This should unstuck MDUs without preflight """
+    """This should unstuck MDUs without preflight"""
     for mdu in ManualDataUpload.objects.select_for_update(skip_locked=True).filter(
         Q(state=MduState.INITIAL)
         & Q(created__lt=now() - timedelta(minutes=5))  # don't start right away
@@ -430,10 +424,7 @@ Traceback: {traceback.format_exc()}
             mdu.error = "import-not-possible"
         else:
             mdu.error = "import-error"
-        mdu.error_details = {
-            "exception": str(e),
-            "traceback": traceback.format_exc(),
-        }
+        mdu.error_details = {"exception": str(e), "traceback": traceback.format_exc()}
         mdu.when_processed = now()
         mdu.state = MduState.FAILED
         mdu.save()
@@ -443,7 +434,7 @@ Traceback: {traceback.format_exc()}
 @email_if_fails
 @atomic
 def unstuck_import_manual_upload_data():
-    """ This should unstuck unprocessed MDUs """
+    """This should unstuck unprocessed MDUs"""
     for mdu in ManualDataUpload.objects.select_for_update(skip_locked=True).filter(
         Q(state=MduState.IMPORTING)
         & Q(created__lt=now() - timedelta(minutes=5))  # don't start right away

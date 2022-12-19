@@ -21,7 +21,7 @@ CACHES["default"]["LOCATION"] = os.environ.get("REDIS_LOCATION", "redis://celus-
 
 AUTHENTICATION_BACKENDS = [
     # 'apps.core.auth.EDUIdAuthenticationBackend',
-    "django.contrib.auth.backends.ModelBackend",
+    "django.contrib.auth.backends.ModelBackend"
 ]
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://celus-redis:6379")

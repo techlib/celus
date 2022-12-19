@@ -16,7 +16,7 @@ class PlatformSerializer(serializers.Serializer):
     counter_registry_id = serializers.UUIDField(allow_null=True)
     url = serializers.URLField(allow_blank=True)
     duplicates = serializers.ListField(
-        child=serializers.IntegerField(required=True), allow_empty=True, required=False,
+        child=serializers.IntegerField(required=True), allow_empty=True, required=False
     )
 
 

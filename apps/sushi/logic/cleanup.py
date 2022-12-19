@@ -24,8 +24,7 @@ def cleanup_fetch_attempts_with_no_data(
     platform_id: typing.Optional[int] = None,
     counter_report_id: typing.Optional[int] = None,
 ) -> Counter:
-    """ Cleans unsuccessful FetchAttempts
-    """
+    """Cleans unsuccessful FetchAttempts"""
     fltr = {
         "import_batch__isnull": True,
         "status__in": list(AttemptStatus.errors()) + [AttemptStatus.NO_DATA],
@@ -56,10 +55,10 @@ def cleanup_fetch_attempts_with_no_data(
     logger.info("Collecting latest FetchAttempts")
     latest = (
         SushiFetchAttempt.objects.values(
-            "start_date", "end_date", "counter_report_id", "credentials_id",
+            "start_date", "end_date", "counter_report_id", "credentials_id"
         )
         .annotate(latest=Max('timestamp'))
-        .values_list('start_date', 'end_date', 'counter_report_id', 'credentials_id', 'latest',)
+        .values_list('start_date', 'end_date', 'counter_report_id', 'credentials_id', 'latest')
     )
     latest = {(e[0], e[1], e[2], e[3]): e[4] for e in latest}
 

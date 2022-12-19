@@ -5,13 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0043_flexireport_accesslevel_ownership'),
-    ]
+    dependencies = [('logs', '0043_flexireport_accesslevel_ownership')]
 
     operations = [
-        migrations.AlterUniqueTogether(name='metric', unique_together=set(),),
-        migrations.AlterUniqueTogether(name='reporttype', unique_together=set(),),
+        migrations.AlterUniqueTogether(name='metric', unique_together=set()),
+        migrations.AlterUniqueTogether(name='reporttype', unique_together=set()),
         migrations.AddConstraint(
             model_name='metric',
             constraint=models.UniqueConstraint(

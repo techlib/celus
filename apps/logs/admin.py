@@ -21,10 +21,7 @@ class IsMaterialized(admin.SimpleListFilter):
     parameter_name = 'materialized'
 
     def lookups(self, request, model_admin):
-        return (
-            ('yes', 'Yes'),
-            ('no', 'No'),
-        )
+        return (('yes', 'Yes'), ('no', 'No'))
 
     def queryset(self, request, queryset):
         if self.value() == 'yes':
@@ -223,10 +220,7 @@ class HasImportBatch(admin.SimpleListFilter):
     parameter_name = 'has'
 
     def lookups(self, request, model_admin):
-        return (
-            ('yes', 'Yes'),
-            ('no', 'No'),
-        )
+        return (('yes', 'Yes'), ('no', 'No'))
 
     def queryset(self, request, queryset):
         if self.value() == 'yes':
@@ -239,27 +233,11 @@ class HasImportBatch(admin.SimpleListFilter):
 @admin.register(models.ManualDataUpload)
 class ManualDataUploadAdmin(admin.ModelAdmin):
 
-    list_filter = [
-        'state',
-        'report_type',
-        'organization',
-        'platform',
-        HasImportBatch,
-        'method',
-    ]
+    list_filter = ['state', 'report_type', 'organization', 'platform', HasImportBatch, 'method']
     list_display = ['created', 'report_type', 'platform', 'organization', 'user', 'state']
     list_select_related = ['report_type', 'organization', 'platform', 'user']
-    readonly_fields = [
-        'data_file',
-        'created',
-    ]
-    search_fields = [
-        'organization__name',
-        'platform__name',
-        'pk',
-        'user__username',
-        'user__email',
-    ]
+    readonly_fields = ['data_file', 'created']
+    search_fields = ['organization__name', 'platform__name', 'pk', 'user__username', 'user__email']
     actions = ['regenerate_preflight', 'reimport']
 
     @admin.action(description="Regenerate preflight data")

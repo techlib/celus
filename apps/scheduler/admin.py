@@ -9,18 +9,8 @@ from . import models
 
 class FetchIntentionInline(admin.TabularInline):
     model = models.FetchIntention
-    readonly_fields = (
-        "intention_link",
-        "url",
-    )
-    fields = (
-        "intention_link",
-        "queue",
-        "url",
-        "when_processed",
-        "start_date",
-        "end_date",
-    )
+    readonly_fields = ("intention_link", "url")
+    fields = ("intention_link", "queue", "url", "when_processed", "start_date", "end_date")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).select_related('queue')
@@ -55,10 +45,7 @@ wipe_harvest.short_description = "Deletes harvest and also all related data"
 @admin.register(models.Harvest)
 class HarvestAdmin(admin.ModelAdmin):
     inlines = (FetchIntentionInline,)
-    search_fields = (
-        'last_updated_by__email',
-        'automatic__organization__name',
-    )
+    search_fields = ('last_updated_by__email', 'automatic__organization__name')
     readonly_fields = ('created',)
 
     list_display = (
@@ -173,7 +160,7 @@ class FetchIntentionAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.prefetch_related(
-            'credentials', 'credentials__platform', 'counter_report', 'attempt', 'harvest',
+            'credentials', 'credentials__platform', 'counter_report', 'attempt', 'harvest'
         )
 
     def attempt_link(self, obj: models.FetchIntention):

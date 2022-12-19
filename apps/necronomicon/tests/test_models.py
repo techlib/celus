@@ -33,9 +33,7 @@ class TestBatch:
         assert org_qs.count() == 1
         assert usr_org_qs.count() == 2
 
-        CandidateFactory(
-            batch=batch, content_object=organizations["standalone"],
-        )
+        CandidateFactory(batch=batch, content_object=organizations["standalone"])
 
         with mock.patch('necronomicon.models.tasks') as task_mock:
             batch.plan_prepare_batch()

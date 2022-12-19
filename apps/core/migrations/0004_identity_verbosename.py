@@ -5,12 +5,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0003_datasource'),
-    ]
+    dependencies = [('core', '0003_datasource')]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='identity', options={'verbose_name_plural': 'identities'},
-        ),
+        migrations.AlterModelOptions(name='identity', options={'verbose_name_plural': 'identities'})
     ]

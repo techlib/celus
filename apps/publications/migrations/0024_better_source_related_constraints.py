@@ -5,12 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0023_jsonfield'),
-    ]
+    dependencies = [('publications', '0023_jsonfield')]
 
     operations = [
-        migrations.AlterUniqueTogether(name='platform', unique_together=set(),),
+        migrations.AlterUniqueTogether(name='platform', unique_together=set()),
         migrations.AddConstraint(
             model_name='platform',
             constraint=models.UniqueConstraint(

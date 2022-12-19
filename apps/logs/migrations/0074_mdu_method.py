@@ -31,13 +31,11 @@ def derive_use_nibbler(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0073_alter_reportinterestmetric_unique_together'),
-    ]
+    dependencies = [('logs', '0073_alter_reportinterestmetric_unique_together')]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='manualdataupload', name='non-nibbler-needs-report-type',
+            model_name='manualdataupload', name='non-nibbler-needs-report-type'
         ),
         migrations.AddField(
             model_name='manualdataupload',
@@ -53,7 +51,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(derive_method, derive_use_nibbler),
-        migrations.RemoveField(model_name='manualdataupload', name='use_nibbler',),
+        migrations.RemoveField(model_name='manualdataupload', name='use_nibbler'),
         migrations.AddConstraint(
             model_name='manualdataupload',
             constraint=models.CheckConstraint(

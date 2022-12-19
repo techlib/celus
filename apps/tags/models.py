@@ -752,7 +752,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         self.state = TaggingBatchState.IMPORTED
         self.save()
 
-    def unassign_tag(self, progress_monitor: Optional[Callable[[int, int], None]] = None,) -> None:
+    def unassign_tag(self, progress_monitor: Optional[Callable[[int, int], None]] = None) -> None:
         """
         Remove all the TitleTags created by this batch
         :param progress_monitor: callback to report progress, should send (current, total) ints

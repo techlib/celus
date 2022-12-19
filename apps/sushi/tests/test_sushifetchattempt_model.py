@@ -31,8 +31,8 @@ from test_fixtures.scenarios.basic import (  # noqa - fixtures
 
 @pytest.mark.django_db
 class TestFileName:
-    """ Test class for checking whether setting the file name
-        work as expected
+    """Test class for checking whether setting the file name
+    work as expected
     """
 
     @pytest.mark.parametrize(
@@ -47,7 +47,7 @@ class TestFileName:
     def test_file_name(self, internal_id, platform_name, code, ext, counter_report_types):
         platform = PlatformFactory(short_name=platform_name, name=platform_name)
 
-        organization = OrganizationFactory(internal_id=internal_id,)
+        organization = OrganizationFactory(internal_id=internal_id)
         counter_report_type = counter_report_types[code]
 
         credentials = CredentialsFactory(
@@ -194,9 +194,7 @@ class TestSushiFetchAttemptModel:
                 when_processed=now - timedelta(days=91),
                 status=AttemptStatus.SUCCESS,
                 counter_report=counter_report_types["tr"],
-                import_batch=ImportBatchFactory(
-                    report_type=counter_report_types["tr"].report_type,
-                ),
+                import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type),
             )
             assert attempt.any_import_batch_lately() is False
 
@@ -207,9 +205,7 @@ class TestSushiFetchAttemptModel:
                 when_processed=now - timedelta(days=90),
                 status=AttemptStatus.SUCCESS,
                 counter_report=counter_report_types["tr"],
-                import_batch=ImportBatchFactory(
-                    report_type=counter_report_types["tr"].report_type,
-                ),
+                import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type),
             )
             assert attempt.any_import_batch_lately() is True
 
@@ -219,7 +215,7 @@ class TestSushiFetchAttemptModel:
             end_date="2020-01-31",
             status=AttemptStatus.SUCCESS,
             counter_report=counter_report_types["tr"],
-            import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type,),
+            import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type),
         )
         assert attempt.broken_credentials is False
         credentials["standalone_tr"].set_broken(FetchAttemptFactory(), 'http')
@@ -230,7 +226,7 @@ class TestSushiFetchAttemptModel:
             end_date="2020-01-31",
             status=AttemptStatus.SUCCESS,
             counter_report=counter_report_types["pr"],
-            import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type,),
+            import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type),
         )
         assert attempt.broken_credentials is False
         CounterReportsToCredentials.objects.get(
@@ -256,8 +252,8 @@ class TestSushiFetchAttemptModel:
             ("FAILURE", 400, ErrorCode.TOO_MANY_REQUESTS, True, None, None),
             ("FAILURE", 200, ErrorCode.NOT_AUTHORIZED, False, BC.BROKEN_SUSHI, None),
             ("FAILURE", 200, ErrorCode.INVALID_API_KEY, False, BC.BROKEN_SUSHI, None),
-            ("FAILURE", 200, ErrorCode.NOT_AUTHORIZED_INSTITUTION, False, BC.BROKEN_SUSHI, None,),
-            ("FAILURE", 200, ErrorCode.INSUFFICIENT_DATA, False, BC.BROKEN_SUSHI, None,),
+            ("FAILURE", 200, ErrorCode.NOT_AUTHORIZED_INSTITUTION, False, BC.BROKEN_SUSHI, None),
+            ("FAILURE", 200, ErrorCode.INSUFFICIENT_DATA, False, BC.BROKEN_SUSHI, None),
             # cred to report type testing
             ("FAILURE", 404, ErrorCode.TOO_MANY_REQUESTS, False, None, BC.BROKEN_HTTP),
             ("FAILURE", 200, ErrorCode.REPORT_NOT_SUPPORTED, False, None, BC.BROKEN_SUSHI),

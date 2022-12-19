@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0005_fetchintention_date_constraint'),
-    ]
+    dependencies = [('scheduler', '0005_fetchintention_date_constraint')]
 
     operations = [
         migrations.AddField(
             model_name='fetchintention',
             name='retry_id',
             field=models.IntegerField(blank=True, help_text='Identifier of retry queue', null=True),
-        ),
+        )
     ]

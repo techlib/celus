@@ -105,7 +105,7 @@ class TestFetchIntention:
             broken=None, credentials=creds1, counter_report=counter_report_types["tr"]
         )
         fi1 = FetchIntentionFactory(
-            credentials=creds1, scheduler=sch, counter_report=counter_report_types["tr"],
+            credentials=creds1, scheduler=sch, counter_report=counter_report_types["tr"]
         )
         assert fi1.process() == ProcessResponse.BROKEN
 
@@ -133,13 +133,11 @@ class TestFetchIntention:
         with pytest.raises(ValueError):
             fi.process()
 
-    def test_process_with_planned_duplicates(
-        self, counter_report_types, credentials, monkeypatch,
-    ):
+    def test_process_with_planned_duplicates(self, counter_report_types, credentials, monkeypatch):
         scheduler = SchedulerFactory()
 
         def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True,
+            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
         ):
             return FetchAttemptFactory(
                 error_code="",
@@ -175,11 +173,11 @@ class TestFetchIntention:
         "error_code,seconds_not_before,seconds_when_ready",
         (
             ("", 0, 0),
-            (ErrorCode.SERVICE_NOT_AVAILABLE.value, 20 * 2 ** 3, 20 * 2 ** 3),
-            (ErrorCode.SERVICE_BUSY.value, 30 * 2 ** 4, 30 * 2 ** 4),
-            (ErrorCode.PREPARING_DATA.value, 30 * 2 ** 4, 30 * 2 ** 4),
-            (ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value, 60 * 60 * 24 * 2 ** 2, 0),
-            (ErrorCode.NO_DATA_FOR_DATE_ARGS.value, 60 * 60 * 24 * 2 ** 2, 0),
+            (ErrorCode.SERVICE_NOT_AVAILABLE.value, 20 * 2**3, 20 * 2**3),
+            (ErrorCode.SERVICE_BUSY.value, 30 * 2**4, 30 * 2**4),
+            (ErrorCode.PREPARING_DATA.value, 30 * 2**4, 30 * 2**4),
+            (ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value, 60 * 60 * 24 * 2**2, 0),
+            (ErrorCode.NO_DATA_FOR_DATE_ARGS.value, 60 * 60 * 24 * 2**2, 0),
             (ErrorCode.TOO_MANY_REQUESTS.value, 10, 10),
         ),
         ids=(
@@ -211,7 +209,7 @@ class TestFetchIntention:
         )
 
         def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True,
+            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
         ):
             return FetchAttemptFactory(
                 error_code=error_code,
@@ -458,7 +456,7 @@ class TestFetchIntention:
                 ],
                 False,
             ),
-            ("", AttemptStatus.DOWNLOAD_FAILED, False, True, False, [None,], False,),
+            ("", AttemptStatus.DOWNLOAD_FAILED, False, True, False, [None], False),
             (
                 "",
                 AttemptStatus.DOWNLOAD_FAILED,
@@ -741,7 +739,7 @@ class TestScheduler:
 
     def test_run_next(self, monkeypatch, credentials, counter_report_types):
         def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True,
+            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
         ):
             return FetchAttemptFactory(
                 error_code="",
@@ -919,9 +917,7 @@ class TestHarvest:
     def test_plan_harvesting(self, counter_report_types, credentials, monkeypatch, users):
         urls = set()
 
-        def mocked_trigger_scheduler(
-            url, finish,
-        ):
+        def mocked_trigger_scheduler(url, finish):
             urls.add(url)
 
         monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
@@ -1074,7 +1070,7 @@ class TestHarvest:
             harvest=harvest3,
             duplicate_of=None,
             attempt=FetchAttemptFactory(
-                counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"],
+                counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"]
             ),
         )
         working_intention = FetchIntentionFactory(
@@ -1201,7 +1197,7 @@ class TestAutomatic:
         assert remained.counter_report == counter_report_types["br1"]
         # create mapping
         CounterReportsToCredentials.objects.create(
-            credentials=credentials["standalone_tr"], counter_report=counter_report_types["pr"],
+            credentials=credentials["standalone_tr"], counter_report=counter_report_types["pr"]
         )
 
         # create broken mapping
@@ -1297,9 +1293,9 @@ class TestAutomatic:
         verified_credentials,
         monkeypatch,
     ):
-        """ Test whether automatic harvests are update when
-            credentials or credentails to counter report mapping
-            changes
+        """Test whether automatic harvests are update when
+        credentials or credentails to counter report mapping
+        changes
         """
         # Clear all harvests
         Harvest.objects.all().delete()
@@ -1310,9 +1306,7 @@ class TestAutomatic:
         assert Automatic.objects.all().count() == 0
 
         # Mock successful report fetching
-        def mocked_fetch_report_v5(
-            self, client, counter_report, start_date, end_date, file_data,
-        ):
+        def mocked_fetch_report_v5(self, client, counter_report, start_date, end_date, file_data):
             return dict(
                 credentials=credentials["branch_pr"],
                 counter_report=counter_report,
@@ -1423,7 +1417,7 @@ class TestAutomatic:
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals_with_retry_chains(
-        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
+        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials
     ):
 
         # Clear all harvests
@@ -1543,7 +1537,7 @@ class TestAutomatic:
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_same_queue_reenabled_intentions(
-        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials,
+        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials
     ):
         # Clear all harvests
         Harvest.objects.all().delete()

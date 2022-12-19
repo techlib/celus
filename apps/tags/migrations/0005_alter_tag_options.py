@@ -5,12 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('tags', '0004_alter_taggingbatch_state'),
-    ]
+    dependencies = [('tags', '0004_alter_taggingbatch_state')]
 
     operations = [
         migrations.AlterModelOptions(
-            name='tag', options={'ordering': ['name'], 'verbose_name': 'Tag'},
-        ),
+            name='tag', options={'ordering': ['name'], 'verbose_name': 'Tag'}
+        )
     ]

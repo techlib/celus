@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0015_change_data_file_validators'),
-    ]
+    dependencies = [('logs', '0015_change_data_file_validators')]
 
     operations = [
         migrations.CreateModel(

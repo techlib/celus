@@ -9,10 +9,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('core', '0007_timestamps'),
-        ('logs', '0022_move_some_models_to_charts'),
-    ]
+    dependencies = [('core', '0007_timestamps'), ('logs', '0022_move_some_models_to_charts')]
 
     operations = [
         migrations.CreateModel(

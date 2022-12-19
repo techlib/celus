@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('tags', '0003_tagging_batch'),
-    ]
+    dependencies = [('tags', '0003_tagging_batch')]
 
     operations = [
         migrations.AlterField(
@@ -27,5 +25,5 @@ class Migration(migrations.Migration):
                 default='initial',
                 max_length=20,
             ),
-        ),
+        )
     ]

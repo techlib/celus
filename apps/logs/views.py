@@ -338,9 +338,9 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['post'])
     def lookup(self, request):
-        """ Based on provided list of records
-            [("organization", "platform", "report_type", "months")]
-            return corresponding import batches
+        """Based on provided list of records
+        [("organization", "platform", "report_type", "months")]
+        return corresponding import batches
         """
         serializer = self.LookupSerializer(many=True, data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -380,10 +380,10 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
     @atomic
     @action(detail=False, methods=['post'], serializer_class=PurgeSerializer)
     def purge(self, request):
-        """ Remove all data and related structures of given list of import batches
+        """Remove all data and related structures of given list of import batches
 
-            Note that if id of given ib doesn't exists it is not treated as an error
-            It might have been already deleted
+        Note that if id of given ib doesn't exists it is not treated as an error
+        It might have been already deleted
         """
         counter = Counter()
         serializer = self.PurgeSerializer(data=request.data)
@@ -517,9 +517,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
                 raise ValidationError('"report_type" and "report_view" must not be present at once')
             return data
 
-    @action(
-        detail=False, methods=['get'], url_name='data-coverage', url_path='data-coverage',
-    )
+    @action(detail=False, methods=['get'], url_name='data-coverage', url_path='data-coverage')
     def data_coverage(self, request):
         """
         For each month in the date range specified by `start_date` and `end_date` params,
@@ -592,7 +590,7 @@ class ManualDataUploadViewSet(ModelViewSet):
 
     @action(methods=['POST'], detail=True, url_path='preflight')
     def preflight(self, request, pk):
-        """ triggers preflight computation """
+        """triggers preflight computation"""
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
 
         if mdu.state == MduState.INITIAL:
@@ -616,9 +614,7 @@ class ManualDataUploadViewSet(ModelViewSet):
         )
 
     @atomic
-    @action(
-        methods=['POST'], detail=True, url_path='import-data',
-    )
+    @action(methods=['POST'], detail=True, url_path='import-data')
     def import_data(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
 
@@ -769,7 +765,7 @@ class FlexibleSlicerBaseView(APIView):
             return slicer
         except SlicerConfigError as e:
             raise BadRequestException(
-                {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
+                {'error': {'message': str(e), 'code': e.code, 'details': e.details}}
             )
 
 

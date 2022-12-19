@@ -232,7 +232,7 @@ def report_types(data_sources):
     mr1 = ReportTypeFactory(name="Counter 4 - Multimedia report 1", short_name="MR1")
 
     custom1 = ReportTypeFactory(
-        name="Custom1", short_name="custom1", source=data_sources['brain'], ext_id=999,
+        name="Custom1", short_name="custom1", source=data_sources['brain'], ext_id=999
     )
 
     return locals()
@@ -242,38 +242,38 @@ def report_types(data_sources):
 def counter_report_types(report_types):
     # counter 5
     tr = CounterReportTypeFactory(
-        counter_version=5, code=report_types["tr"].short_name, report_type=report_types["tr"],
+        counter_version=5, code=report_types["tr"].short_name, report_type=report_types["tr"]
     )
     dr = CounterReportTypeFactory(
-        counter_version=5, code=report_types["dr"].short_name, report_type=report_types["dr"],
+        counter_version=5, code=report_types["dr"].short_name, report_type=report_types["dr"]
     )
     pr = CounterReportTypeFactory(
-        counter_version=5, code=report_types["pr"].short_name, report_type=report_types["pr"],
+        counter_version=5, code=report_types["pr"].short_name, report_type=report_types["pr"]
     )
     ir = CounterReportTypeFactory(
-        counter_version=5, code=report_types["ir"].short_name, report_type=report_types["ir"],
+        counter_version=5, code=report_types["ir"].short_name, report_type=report_types["ir"]
     )
 
     # counter 4
     br1 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["br1"].short_name, report_type=report_types["br1"],
+        counter_version=4, code=report_types["br1"].short_name, report_type=report_types["br1"]
     )
     br2 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["br2"].short_name, report_type=report_types["br2"],
+        counter_version=4, code=report_types["br2"].short_name, report_type=report_types["br2"]
     )
     br3 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["br3"].short_name, report_type=report_types["br3"],
+        counter_version=4, code=report_types["br3"].short_name, report_type=report_types["br3"]
     )
 
     db1 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["db1"].short_name, report_type=report_types["db1"],
+        counter_version=4, code=report_types["db1"].short_name, report_type=report_types["db1"]
     )
     db2 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["db2"].short_name, report_type=report_types["db2"],
+        counter_version=4, code=report_types["db2"].short_name, report_type=report_types["db2"]
     )
 
     jr1 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["jr1"].short_name, report_type=report_types["jr1"],
+        counter_version=4, code=report_types["jr1"].short_name, report_type=report_types["jr1"]
     )
     jr1goa = CounterReportTypeFactory(
         counter_version=4,
@@ -281,21 +281,21 @@ def counter_report_types(report_types):
         report_type=report_types["jr1goa"],
     )
     jr1a = CounterReportTypeFactory(
-        counter_version=4, code=report_types["jr1a"].short_name, report_type=report_types["jr1a"],
+        counter_version=4, code=report_types["jr1a"].short_name, report_type=report_types["jr1a"]
     )
     jr2 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["jr2"].short_name, report_type=report_types["jr2"],
+        counter_version=4, code=report_types["jr2"].short_name, report_type=report_types["jr2"]
     )
     jr5 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["jr5"].short_name, report_type=report_types["jr5"],
+        counter_version=4, code=report_types["jr5"].short_name, report_type=report_types["jr5"]
     )
 
     pr1 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["pr1"].short_name, report_type=report_types["pr1"],
+        counter_version=4, code=report_types["pr1"].short_name, report_type=report_types["pr1"]
     )
 
     mr1 = CounterReportTypeFactory(
-        counter_version=4, code=report_types["mr1"].short_name, report_type=report_types["mr1"],
+        counter_version=4, code=report_types["mr1"].short_name, report_type=report_types["mr1"]
     )
     return locals()
 
@@ -475,7 +475,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
         ),
     )
     AutomaticFactory(
-        harvest=automatic, month="2020-01-01", organization=organizations["standalone"],
+        harvest=automatic, month="2020-01-01", organization=organizations["standalone"]
     )
 
     return locals()
@@ -509,9 +509,7 @@ def interests(report_types, platforms, metrics):
 
 
 @pytest.fixture
-def client_by_user_type(
-    clients, organizations, basic1,
-):
+def client_by_user_type(clients, organizations, basic1):
     def fn(user_type):
         if user_type == 'no_user':
             return clients["unauthenticated"], organizations["branch"]
@@ -545,7 +543,7 @@ def parser_definitions(data_sources, platforms, metrics, report_types):
             nibbler_definitions.DateBasedDefinition(
                 parser_name="parser1",
                 data_format=nibbler_data_headers.DataFormatDefinition(
-                    name=report_types["custom1"].short_name, id=report_types["custom1"].ext_id,
+                    name=report_types["custom1"].short_name, id=report_types["custom1"].ext_id
                 ),
                 platforms=[platforms["brain"].short_name],
                 heuristics=nibbler_conditions.AndCondition(
@@ -561,18 +559,17 @@ def parser_definitions(data_sources, platforms, metrics, report_types):
                                     source=nibbler_coordinates.CoordRange(
                                         nibbler_coordinates.Coord(0, 1),
                                         nibbler_coordinates.Direction.RIGHT,
-                                    ),
-                                ),
+                                    )
+                                )
                             ],
                             data_direction=nibbler_coordinates.Direction.DOWN,
                             data_cells=nibbler_coordinates.CoordRange(
-                                nibbler_coordinates.Coord(1, 1),
-                                nibbler_coordinates.Direction.RIGHT,
+                                nibbler_coordinates.Coord(1, 1), nibbler_coordinates.Direction.RIGHT
                             ),
                         ),
                         titles=nibbler_sources.TitleSource(
                             nibbler_coordinates.CoordRange(
-                                nibbler_coordinates.Coord(1, 0), nibbler_coordinates.Direction.DOWN,
+                                nibbler_coordinates.Coord(1, 0), nibbler_coordinates.Direction.DOWN
                             )
                         ),
                         title_ids=[],

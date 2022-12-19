@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0039_remove_http_auth_from_c5'),
-    ]
+    dependencies = [('sushi', '0039_remove_http_auth_from_c5')]
 
     operations = [
         migrations.AlterModelOptions(

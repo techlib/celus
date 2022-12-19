@@ -26,7 +26,7 @@ class TestURLComposition:
                 'URL': 'http://this.is/test/2',
                 'version': 5,
                 'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
-            },
+            }
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         stats = import_sushi_credentials(data)

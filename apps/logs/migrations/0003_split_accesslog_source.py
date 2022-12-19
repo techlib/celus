@@ -38,5 +38,5 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(split_access_log_source),
-        migrations.RemoveField(model_name='accesslog', name='source',),
+        migrations.RemoveField(model_name='accesslog', name='source'),
     ]

@@ -5,10 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('recache', '0004_unique_query_hash'),
-    ]
+    dependencies = [('recache', '0004_unique_query_hash')]
 
-    operations = [
-        migrations.RemoveField(model_name='cachedquery', name='query_pickle',),
-    ]
+    operations = [migrations.RemoveField(model_name='cachedquery', name='query_pickle')]

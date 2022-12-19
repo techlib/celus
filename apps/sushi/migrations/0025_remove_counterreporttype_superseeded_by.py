@@ -10,6 +10,4 @@ class Migration(migrations.Migration):
     # 0028_reporttype_superseeded_by which is incorrect
     dependencies = [('sushi', '0024_lock_level_change'), ('logs', '0028_reporttype_superseeded_by')]
 
-    operations = [
-        migrations.RemoveField(model_name='counterreporttype', name='superseeded_by',),
-    ]
+    operations = [migrations.RemoveField(model_name='counterreporttype', name='superseeded_by')]

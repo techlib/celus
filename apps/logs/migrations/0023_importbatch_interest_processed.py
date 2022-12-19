@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0022_move_some_models_to_charts'),
-    ]
+    dependencies = [('logs', '0022_move_some_models_to_charts')]
 
     operations = [
         migrations.AddField(
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False, help_text='Was interest already calculated for this import batch'
             ),
-        ),
+        )
     ]

@@ -19,7 +19,7 @@ class TestUserSync:
     user_data = [
         {'id': 1, 'vals': {'name@cs': ['Pepa Vonasek']}, 'refs': {'administrator of': [5]}},
         {'id': 22, 'vals': {'name@cs': ['Lojza Huml']}, 'refs': {'administrator of': []}},
-        {'id': 333, 'vals': {'name@en': ['Jack Sparrow']},},
+        {'id': 333, 'vals': {'name@en': ['Jack Sparrow']}},
     ]
 
     def test_sync_users(self, data_source):
@@ -74,7 +74,7 @@ class TestUserSync:
         Organization.objects.create(ext_id=10, name='Org 1', short_name='org_1')
         Organization.objects.create(ext_id=100, name='Org 2', short_name='org_2')
         input_data = [
-            {'id': 1, 'vals': {'name@cs': ['John Doe']}, 'refs': {'employee of': [10, 100]}},
+            {'id': 1, 'vals': {'name@cs': ['John Doe']}, 'refs': {'employee of': [10, 100]}}
         ]
         stats = sync_users(data_source, input_data)
         assert stats['removed'][0] == 0
@@ -99,9 +99,7 @@ class TestUserSync:
         assert User.objects.count() == 0
         Organization.objects.create(ext_id=5, name='Org 1', short_name='org_1')
         Organization.objects.create(ext_id=10, name='Org 2', short_name='org_2')
-        input_data = [
-            {'id': 4, 'vals': {'name@cs': ['John Doe']}, 'refs': {'employee of': [10]}},
-        ]
+        input_data = [{'id': 4, 'vals': {'name@cs': ['John Doe']}, 'refs': {'employee of': [10]}}]
         sync_users(data_source, self.user_data + input_data)
         assert User.objects.count() == 4
         assert UserOrganization.objects.count() == 2, "one from user #1 and one from #4"
@@ -123,9 +121,9 @@ class TestUserSync:
 class TestIdentitySync:
 
     identity_data = [
-        {'person': 1, 'identity': 'foo@bar.baz',},
-        {'person': 1, 'identity': 'foo@baz.bar',},
-        {'person': 22, 'identity': 'X',},
+        {'person': 1, 'identity': 'foo@bar.baz'},
+        {'person': 1, 'identity': 'foo@baz.bar'},
+        {'person': 22, 'identity': 'X'},
     ]
 
     def test_sync_identities(self, data_source):

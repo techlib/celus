@@ -10,9 +10,7 @@ from .permissions import ImpersonatedSuperuserOrAdminPermission, users_impersona
 from .serializers import ImpersonateListSerializer, ImpersonateSetSerializer
 
 
-class ImpersonateViewSet(
-    mixins.ListModelMixin, mixins.UpdateModelMixin, GenericViewSet,
-):
+class ImpersonateViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, GenericViewSet):
     queryset = User.objects.filter(is_superuser=False)
     permission_classes = (ImpersonatedSuperuserOrAdminPermission,)
 

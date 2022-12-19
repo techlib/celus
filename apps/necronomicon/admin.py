@@ -45,11 +45,7 @@ class BatchAdmin(admin.ModelAdmin):
     inlines = (CandidateInlineModelAdmin,)
     list_display = ('pk', 'created', 'object_type', 'candidates_count', 'status')
     actions = ['plan_delete']
-    readonly_fields = (
-        'created',
-        'task_result',
-        'status',
-    )
+    readonly_fields = ('created', 'task_result', 'status')
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -94,9 +90,7 @@ class BatchAdmin(admin.ModelAdmin):
 
 class NecronomiconAdminMixin:
     def get_actions(self, request):
-        self.actions = [e for e in self.actions] + [
-            'delete_in_necronomicon',
-        ]
+        self.actions = [e for e in self.actions] + ['delete_in_necronomicon']
         return super().get_actions(request)
 
     @admin.action(description=_("Plan to delete"))

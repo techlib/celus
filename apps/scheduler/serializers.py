@@ -30,13 +30,7 @@ class StatsSerializer(serializers.Serializer):
 class CreateFetchIntentionSerializer(serializers.ModelSerializer):
     class Meta:
         model = FetchIntention
-        fields = (
-            'not_before',
-            'credentials',
-            'counter_report',
-            'start_date',
-            'end_date',
-        )
+        fields = ('not_before', 'credentials', 'counter_report', 'start_date', 'end_date')
 
 
 class DuplicateFetchIntentionSerializer(serializers.ModelSerializer):
@@ -99,11 +93,7 @@ class AutomaticInHarvestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Automatic
-        fields = (
-            'pk',
-            'month',
-            'organization',
-        )
+        fields = ('pk', 'month', 'organization')
 
 
 class DetailHarvestSerializer(serializers.ModelSerializer):

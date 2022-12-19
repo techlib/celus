@@ -4,7 +4,7 @@ from django.db import migrations, models
 
 
 def fill_missing_start_queue(apps, schema_editor):
-    """ Fills missing queue_id """
+    """Fills missing queue_id"""
     SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
 
     # set queue_id for the first in the queues
@@ -17,7 +17,7 @@ def fill_missing_start_queue(apps, schema_editor):
     # iterate for seconds, third, ... attempts in the queues
     while True:
         count = SushiFetchAttempt.objects.filter(
-            queue_previous__queue_id__isnull=False, queue_id__isnull=True,
+            queue_previous__queue_id__isnull=False, queue_id__isnull=True
         ).update(
             # Can't use F('queue_previous__queue_id') here
             # this is a subquery workaround
@@ -33,16 +33,14 @@ def fill_missing_start_queue(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0032_unschedule_3030'),
-    ]
+    dependencies = [('sushi', '0032_unschedule_3030')]
 
     operations = [
         migrations.AddField(
             model_name='sushifetchattempt',
             name='queue_id',
             field=models.IntegerField(
-                blank=True, help_text='Identifier for attempt queue', null=True,
+                blank=True, help_text='Identifier for attempt queue', null=True
             ),
         ),
         migrations.RunPython(fill_missing_start_queue, migrations.RunPython.noop),

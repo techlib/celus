@@ -15,5 +15,5 @@ class Migration(migrations.Migration):
             model_name='platform',
             name='interest_reports',
             field=models.ManyToManyField(to='logs.ReportType'),
-        ),
+        )
     ]

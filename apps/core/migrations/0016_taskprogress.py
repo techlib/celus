@@ -16,5 +16,5 @@ class Migration(migrations.Migration):
             fields=[],
             options={'proxy': True, 'indexes': [], 'constraints': []},
             bases=('django_celery_results.taskresult',),
-        ),
+        )
     ]

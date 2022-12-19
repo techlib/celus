@@ -17,9 +17,7 @@ def fill_in_previous_intention(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0010_fetchintention_canceled'),
-    ]
+    dependencies = [('scheduler', '0010_fetchintention_canceled')]
 
     operations = [
         migrations.AddField(

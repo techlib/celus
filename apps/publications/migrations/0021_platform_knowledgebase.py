@@ -22,5 +22,5 @@ class Migration(migrations.Migration):
             name='ext_id',
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
-        migrations.AlterUniqueTogether(name='platform', unique_together={('ext_id', 'source')},),
+        migrations.AlterUniqueTogether(name='platform', unique_together={('ext_id', 'source')}),
     ]

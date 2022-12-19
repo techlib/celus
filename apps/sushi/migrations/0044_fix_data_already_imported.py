@@ -16,10 +16,6 @@ def noop(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0043_sushifetchattempt_partial_data'),
-    ]
+    dependencies = [('sushi', '0043_sushifetchattempt_partial_data')]
 
-    operations = [
-        migrations.RunPython(remove_import_crashed_from_already_imported_attempts, noop),
-    ]
+    operations = [migrations.RunPython(remove_import_crashed_from_already_imported_attempts, noop)]

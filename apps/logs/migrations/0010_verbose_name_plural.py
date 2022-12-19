@@ -5,12 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0009_accesslog_import_batch'),
-    ]
+    dependencies = [('logs', '0009_accesslog_import_batch')]
 
     operations = [
         migrations.AlterModelOptions(
-            name='importbatch', options={'verbose_name_plural': 'Import batches'},
-        ),
+            name='importbatch', options={'verbose_name_plural': 'Import batches'}
+        )
     ]

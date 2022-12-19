@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0018_platformtitle_unique_constraint'),
-    ]
+    dependencies = [('publications', '0018_platformtitle_unique_constraint')]
 
     operations = [
         migrations.AlterField(
@@ -33,5 +31,5 @@ class Migration(migrations.Migration):
                 max_length=1,
                 verbose_name='Publication type',
             ),
-        ),
+        )
     ]

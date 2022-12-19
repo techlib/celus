@@ -19,6 +19,4 @@ class Migration(migrations.Migration):
         ('sushi', '0046_fetchintentions_for_fetch_attempts'),
     ]
 
-    operations = [
-        migrations.RunPython(split_import_batches, migrations.RunPython.noop),
-    ]
+    operations = [migrations.RunPython(split_import_batches, migrations.RunPython.noop)]

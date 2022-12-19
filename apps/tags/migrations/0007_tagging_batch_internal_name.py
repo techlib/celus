@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('tags', '0006_tagging_batch_cascade'),
-    ]
+    dependencies = [('tags', '0006_tagging_batch_cascade')]
 
     operations = [
         migrations.AddField(

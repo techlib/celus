@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('core', '0004_identity_verbosename'),
-    ]
+    dependencies = [('core', '0004_identity_verbosename')]
 
     operations = [
         migrations.AddField(
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
                 help_text="User's preferred language",
                 max_length=2,
             ),
-        ),
+        )
     ]

@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0017_virtual_report_types'),
-    ]
+    dependencies = [('logs', '0017_virtual_report_types')]
 
     operations = [
         migrations.AddField(

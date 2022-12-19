@@ -148,7 +148,7 @@ class TestAttemptImport:
         ),
     )
     def test_import_precondition_error(
-        self, status, passed, counter_report_type, organizations, platforms,
+        self, status, passed, counter_report_type, organizations, platforms
     ):
 
         creds = SushiCredentials.objects.create(
@@ -285,9 +285,7 @@ class TestAttemptImport:
         assert fetch_attempt.status == status, 'check status'
         assert fetch_attempt.extracted_data == expected, 'check extracted_data matches'
 
-    @pytest.mark.parametrize(
-        "autocreate", (True, False),
-    )
+    @pytest.mark.parametrize("autocreate", (True, False))
     def test_auto_create_metrics(
         self, organizations, counter_report_types, platforms, autocreate, settings
     ):

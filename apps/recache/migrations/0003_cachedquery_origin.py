@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('recache', '0002_add_stats'),
-    ]
+    dependencies = [('recache', '0002_add_stats')]
 
     operations = [
         migrations.AddField(
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 blank=True, help_text="Optional identifier of the query's origin", max_length=32
             ),
-        ),
+        )
     ]

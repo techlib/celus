@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0005_auto_20190801_1615'),
-    ]
+    dependencies = [('publications', '0005_auto_20190801_1615')]
 
     operations = [
         migrations.AlterField(

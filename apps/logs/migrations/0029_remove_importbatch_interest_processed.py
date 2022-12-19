@@ -18,11 +18,9 @@ def noop(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0028_reporttype_superseeded_by'),
-    ]
+    dependencies = [('logs', '0028_reporttype_superseeded_by')]
 
     operations = [
         migrations.RunPython(add_interest_timestamp_where_interest_processed, noop),
-        migrations.RemoveField(model_name='importbatch', name='interest_processed',),
+        migrations.RemoveField(model_name='importbatch', name='interest_processed'),
     ]

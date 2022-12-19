@@ -6,9 +6,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0016_counterreporttype_superseeded_by'),
-    ]
+    dependencies = [('sushi', '0016_counterreporttype_superseeded_by')]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
             field=django.contrib.postgres.fields.jsonb.JSONField(
                 default=dict, help_text='Internal info'
             ),
-        ),
+        )
     ]

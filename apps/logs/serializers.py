@@ -305,15 +305,11 @@ class ImportBatchSerializer(ModelSerializer):
 class ManualDataUploadSimpleSerializer(ModelSerializer):
     class Meta:
         model = ManualDataUpload
-        fields = (
-            'pk',
-            'data_file',
-            'owner_level',
-        )
+        fields = ('pk', 'data_file', 'owner_level')
 
 
 class ManualDataUploadUpdateSerializer(ModelSerializer):
-    organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), allow_null=True,)
+    organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), allow_null=True)
     platform = PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=False)
 
     class Meta:

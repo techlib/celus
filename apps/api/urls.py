@@ -15,7 +15,7 @@ local_urls = [
         'platform/<int:platform_id>/report/<str:report_type>',
         views.PlatformReportView.as_view(),
         name='api_platform_report_data',
-    ),
+    )
 ]
 
 urlpatterns = [

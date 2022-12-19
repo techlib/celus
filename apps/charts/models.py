@@ -100,11 +100,7 @@ class ChartDefinition(models.Model):
     SCOPE_ALL = ''
     SCOPE_PLATFORM = 'platform'
     SCOPE_TITLE = 'title'
-    SCOPE_CHOICES = (
-        (SCOPE_ALL, 'any'),
-        (SCOPE_PLATFORM, 'platform'),
-        (SCOPE_TITLE, 'title'),
-    )
+    SCOPE_CHOICES = ((SCOPE_ALL, 'any'), (SCOPE_PLATFORM, 'platform'), (SCOPE_TITLE, 'title'))
 
     name = models.CharField(max_length=200)
     desc = models.TextField(blank=True)

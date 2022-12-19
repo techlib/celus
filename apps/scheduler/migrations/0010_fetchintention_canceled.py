@@ -5,12 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0009_rename_retry_id_to_queue_id'),
-    ]
+    dependencies = [('scheduler', '0009_rename_retry_id_to_queue_id')]
 
     operations = [
         migrations.AddField(
-            model_name='fetchintention', name='canceled', field=models.BooleanField(default=False),
-        ),
+            model_name='fetchintention', name='canceled', field=models.BooleanField(default=False)
+        )
     ]

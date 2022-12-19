@@ -5,13 +5,11 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('publications', '0013_platforminterestreport_m2m'),
-    ]
+    dependencies = [('publications', '0013_platforminterestreport_m2m')]
 
     operations = [
-        migrations.RemoveField(model_name='platform', name='interest_reports',),
+        migrations.RemoveField(model_name='platform', name='interest_reports'),
         migrations.RenameField(
-            model_name='platform', old_name='interest_reports_through', new_name='interest_reports',
+            model_name='platform', old_name='interest_reports_through', new_name='interest_reports'
         ),
     ]

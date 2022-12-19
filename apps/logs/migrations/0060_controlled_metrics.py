@@ -7,9 +7,7 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0059_manualdataupload_state'),
-    ]
+    dependencies = [('logs', '0059_manualdataupload_state')]
 
     operations = [
         migrations.CreateModel(

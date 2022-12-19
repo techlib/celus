@@ -10,9 +10,7 @@ def update_no_data(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0046_fetchintentions_for_fetch_attempts'),
-    ]
+    dependencies = [('sushi', '0046_fetchintentions_for_fetch_attempts')]
 
     operations = [
         migrations.AlterField(

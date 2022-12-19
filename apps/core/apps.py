@@ -23,7 +23,7 @@ def version_to_int(version: str):
     for i, part in enumerate(reversed(parts)):
         try:
             x = int(part)
-            result += x * 100 ** i
+            result += x * 100**i
         except ValueError:
             pass
     return result

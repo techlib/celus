@@ -151,7 +151,7 @@ class TestSushiFetching:
         checksum,
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
         assert credentials.is_broken() is False
         with requests_mock.Mocker() as m:
@@ -183,7 +183,7 @@ class TestSushiFetching:
     @pytest.mark.parametrize('time', ('2020-08-01', '2020-06-15'))
     def test_c4_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=4
         )
         credentials.counter_reports.add(counter_report_types["db1"])
         with requests_mock.Mocker() as m, freeze_time(time):
@@ -201,7 +201,7 @@ class TestSushiFetching:
 
     def test_c4_wrong_namespaces(self, counter_report_types, organizations, platforms):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=4
         )
         credentials.counter_reports.add(counter_report_types["db1"])
         with requests_mock.Mocker() as m, freeze_time("2021-01-01"):
@@ -221,7 +221,7 @@ class TestSushiFetching:
 
     def test_c4_non_sushi_exception(self, counter_report_types, organizations, platforms):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=4
         )
         credentials.counter_reports.add(counter_report_types["jr1"])
         with requests_mock.Mocker() as m, freeze_time("2021-01-01"):
@@ -237,20 +237,16 @@ class TestSushiFetching:
             assert "Traceback" not in attempt.log, "no raw exception traceback in the log"
             assert "report not found" in attempt.log
 
-    @pytest.mark.parametrize(
-        ('path', 'error_code', 'partial'), (('sushi_3040.xml', '3040', True,),),
-    )
+    @pytest.mark.parametrize(('path', 'error_code', 'partial'), (('sushi_3040.xml', '3040', True),))
     def test_c4_partial_data(
-        self, path, error_code, partial, counter_report_types, organizations, platforms,
+        self, path, error_code, partial, counter_report_types, organizations, platforms
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=4,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=4
         )
         with requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter4' / path) as datafile:
-                m.post(
-                    re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200,
-                )
+                m.post(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
                 counter_report_types["db1"], start_date='2020-05-01', end_date='2020-05-31'
             )
@@ -262,7 +258,7 @@ class TestSushiFetching:
     @pytest.mark.parametrize('time', ('2017-04-01', '2017-02-15'))
     def test_c5_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
         credentials.counter_reports.add(counter_report_types["tr"])
         with requests_mock.Mocker() as m, freeze_time(time):
@@ -279,17 +275,17 @@ class TestSushiFetching:
     @pytest.mark.parametrize(
         ('path', 'http_status', 'error_code', 'status'),
         (
-            ('naked_error_3000.json', 400, '3000', AttemptStatus.DOWNLOAD_FAILED,),
-            ('naked_error_3000.json', 200, '3000', AttemptStatus.DOWNLOAD_FAILED,),
-            ('severity-wrong.json', 200, '1011', AttemptStatus.DOWNLOAD_FAILED,),
+            ('naked_error_3000.json', 400, '3000', AttemptStatus.DOWNLOAD_FAILED),
+            ('naked_error_3000.json', 200, '3000', AttemptStatus.DOWNLOAD_FAILED),
+            ('severity-wrong.json', 200, '1011', AttemptStatus.DOWNLOAD_FAILED),
             ('no_json.txt', 400, 'non-sushi', AttemptStatus.DOWNLOAD_FAILED),
         ),
     )
     def test_c5_with_http_error_codes(
-        self, path, http_status, error_code, status, counter_report_types, organizations, platforms,
+        self, path, http_status, error_code, status, counter_report_types, organizations, platforms
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
         with requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
@@ -309,24 +305,22 @@ class TestSushiFetching:
     @pytest.mark.parametrize(
         ('path', 'error_code', 'partial'),
         (
-            ('partial_data1.json', '3210', True,),
-            ('partial_data2.json', '3210', True,),
-            ('partial_data3.json', '3040', True,),
-            ('5_TR_with_warning.json', '3032', True,),
-            ('data_simple.json', '', False,),
+            ('partial_data1.json', '3210', True),
+            ('partial_data2.json', '3210', True),
+            ('partial_data3.json', '3040', True),
+            ('5_TR_with_warning.json', '3032', True),
+            ('data_simple.json', '', False),
         ),
     )
     def test_c5_partial_data(
-        self, path, error_code, partial, counter_report_types, organizations, platforms,
+        self, path, error_code, partial, counter_report_types, organizations, platforms
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
         with requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
-                m.get(
-                    re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200,
-                )
+                m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
                 counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
             )
@@ -339,40 +333,38 @@ class TestSushiFetching:
     @pytest.mark.parametrize(
         ('path', 'counter_report', 'import_passes'),
         (
-            ('5_DR_ProQuestEbookCentral_exception.json', 'dr', False,),
-            ('5_TR_ProQuestEbookCentral.json', 'tr', True,),
-            ('5_TR_ProQuestEbookCentral_exception.json', 'tr', False,),
-            ('5_TR_with_warning.json', 'tr', False,),
-            ('C5_PR_test.json', 'pr', True,),
-            ('counter5_tr_test1.json', 'tr', True,),
-            ('data_incorrect.json', 'tr', False,),
-            ('data_simple.json', 'tr', True,),
-            ('error-in-root.json', 'tr', False,),
-            ('naked_error.json', 'tr', False,),
-            ('naked_error_3000.json', 'tr', False,),
-            ('naked_error_lowercase.json', 'tr', False,),
-            ('naked_errors.json', 'tr', False,),
-            ('no_data.json', 'tr', False,),
-            ('partial_data1.json', 'tr', False,),
-            ('partial_data2.json', 'tr', False,),
-            ('severity-missing.json', 'dr', False,),
-            ('severity-number.json', 'dr', False,),
-            ('stringified_error.json', 'tr', False,),
-            ('null-in-Item_ID.json', 'tr', True,),
+            ('5_DR_ProQuestEbookCentral_exception.json', 'dr', False),
+            ('5_TR_ProQuestEbookCentral.json', 'tr', True),
+            ('5_TR_ProQuestEbookCentral_exception.json', 'tr', False),
+            ('5_TR_with_warning.json', 'tr', False),
+            ('C5_PR_test.json', 'pr', True),
+            ('counter5_tr_test1.json', 'tr', True),
+            ('data_incorrect.json', 'tr', False),
+            ('data_simple.json', 'tr', True),
+            ('error-in-root.json', 'tr', False),
+            ('naked_error.json', 'tr', False),
+            ('naked_error_3000.json', 'tr', False),
+            ('naked_error_lowercase.json', 'tr', False),
+            ('naked_errors.json', 'tr', False),
+            ('no_data.json', 'tr', False),
+            ('partial_data1.json', 'tr', False),
+            ('partial_data2.json', 'tr', False),
+            ('severity-missing.json', 'dr', False),
+            ('severity-number.json', 'dr', False),
+            ('stringified_error.json', 'tr', False),
+            ('null-in-Item_ID.json', 'tr', True),
         ),
     )
     def test_c5_all_cases(
-        self, path, counter_report, import_passes, counter_report_types, organizations, platforms,
+        self, path, counter_report, import_passes, counter_report_types, organizations, platforms
     ):
-        """ Just test that processing of test data works as excpected """
+        """Just test that processing of test data works as excpected"""
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5,
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
         with requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
-                m.get(
-                    re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200,
-                )
+                m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
                 counter_report_types[counter_report], start_date='2019-04-01', end_date='2019-04-30'
             )

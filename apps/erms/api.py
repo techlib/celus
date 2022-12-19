@@ -44,8 +44,8 @@ class ERMS:
 
     @staticmethod
     def check_url(url):
-        """ Check whether the url is in a propper format
-            otherwise it raises ERMSError exception
+        """Check whether the url is in a propper format
+        otherwise it raises ERMSError exception
         """
         try:
             parsed = urllib.parse.urlparse(url)

@@ -46,11 +46,7 @@ class FlexibleDataSlicer:
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'report_type']
 
     def __init__(
-        self,
-        primary_dimension,
-        tag_roll_up=False,
-        include_all_zero_rows=False,
-        use_clickhouse=None,
+        self, primary_dimension, tag_roll_up=False, include_all_zero_rows=False, use_clickhouse=None
     ):
         self.use_clickhouse = (
             settings.CLICKHOUSE_QUERY_ACTIVE if use_clickhouse is None else use_clickhouse
@@ -372,7 +368,7 @@ class FlexibleDataSlicer:
         return extra_filter
 
     def get_possible_dimension_values_clickhouse(
-        self, dimension, max_values_count=100, ignore_self=False, text_filter=None, pks=None,
+        self, dimension, max_values_count=100, ignore_self=False, text_filter=None, pks=None
     ):
         # the following can throw a ClickhouseIncompatibleFilter exception
         # if some of the normal filters are not supported by clickhouse
@@ -402,14 +398,10 @@ class FlexibleDataSlicer:
             {(k if k != f'{dimension}_id' else dimension): v for k, v in rec._asdict().items()}
             for rec in result
         ]
-        return {
-            'count': count,
-            'values': data,
-            'cropped': cropped,
-        }
+        return {'count': count, 'values': data, 'cropped': cropped}
 
     def get_possible_dimension_values(
-        self, dimension, max_values_count=100, ignore_self=False, text_filter=None, pks=None,
+        self, dimension, max_values_count=100, ignore_self=False, text_filter=None, pks=None
     ):
         """
         For a given dimension it returns which values are present in the filtered data and can thus
@@ -615,7 +607,7 @@ class FlexibleDataSlicer:
                     qs.filter(**self._primary_dimension_filter())
                     .annotate(
                         relevant_accesslogs=FilteredRelation(
-                            'accesslog', condition=Q(**extend_query_filter(filters, 'accesslog__')),
+                            'accesslog', condition=Q(**extend_query_filter(filters, 'accesslog__'))
                         )
                     )
                     .values('pk')
@@ -683,9 +675,7 @@ class FlexibleDataSlicer:
                 dimensions |= set(extra_dimensions_to_preserve)
             materialized_report = find_best_materialized_view(rt, dimensions)
             if materialized_report:
-                logger.info(
-                    'Using materialized report: %s instead of %s', materialized_report, rt,
-                )
+                logger.info('Using materialized report: %s instead of %s', materialized_report, rt)
                 for fltr in self.dimension_filters:
                     if fltr.dimension == 'report_type':
                         fltr.values = [

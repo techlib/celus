@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('scheduler', '0007_fetchintention_one_to_one_attempt'),
-    ]
+    dependencies = [('scheduler', '0007_fetchintention_one_to_one_attempt')]
 
     operations = [
         migrations.AddField(

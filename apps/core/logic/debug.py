@@ -7,7 +7,7 @@ import psutil
 
 def memory_usage_psutil():
     process = psutil.Process(os.getpid())
-    mem = process.memory_full_info().rss / float(2 ** 20)
+    mem = process.memory_full_info().rss / float(2**20)
     return mem
 
 

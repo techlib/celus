@@ -9,9 +9,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('core', '0010_default_lang_change'),
-    ]
+    dependencies = [('core', '0010_default_lang_change')]
 
     operations = [
         migrations.CreateModel(
@@ -49,7 +47,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PlatformImportAttempt',
             fields=[],
-            options={'proxy': True, 'indexes': [], 'constraints': [],},
+            options={'proxy': True, 'indexes': [], 'constraints': []},
             bases=('knowledgebase.importattempt',),
         ),
     ]

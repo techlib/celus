@@ -5,12 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('knowledgebase', '0001_initial'),
-    ]
+    dependencies = [('knowledgebase', '0001_initial')]
 
     operations = [
         migrations.AlterField(
-            model_name='importattempt', name='stats', field=models.JSONField(blank=True, null=True),
-        ),
+            model_name='importattempt', name='stats', field=models.JSONField(blank=True, null=True)
+        )
     ]

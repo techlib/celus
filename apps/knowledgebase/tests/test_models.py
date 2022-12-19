@@ -107,7 +107,7 @@ PLATFORM_INPUT_DATA = [
             },
         ],
         "report_types": [
-            {"pk": 15, "short_name": "MY", "name": "MyReport", "definitions": [999, 888]},
+            {"pk": 15, "short_name": "MY", "name": "MyReport", "definitions": [999, 888]}
         ],
         "counter_registry_id": "11111111-1111-1111-1111-111111111111",
         "duplicates": [],
@@ -137,7 +137,7 @@ PLATFORM_INPUT_DATA2 = [
         "short_name": "ABC",
         "counter_registry_id": "11111111-1111-1111-1111-111111111111",
         "url": "https://www.journals.abc.org/",
-    },
+    }
 ]
 
 
@@ -148,7 +148,7 @@ REPORT_TYPE_INPUT_DATA = [
         "short_name": "two",
         "name": "second",
         "dimensions": [
-            {"pk": 1, "short_name": "dim1", "aliases": ["dimension1", "DIM1", "d1",]},
+            {"pk": 1, "short_name": "dim1", "aliases": ["dimension1", "DIM1", "d1"]},
             {"pk": 2, "short_name": "dim2", "aliases": ["dimension2", "d2"]},
         ],
         "metrics": [{"pk": 1, "short_name": "metric1", "aliases": ["m1", "met1"]}],
@@ -405,7 +405,7 @@ class TestPlatformImportAttempt:
             source=data_sources["brain"],
         )
         platform_no_wiped = PlatformFactory(
-            short_name="no_wiped_knowledgebase", knowledgebase={"some": "data2"}, source=None,
+            short_name="no_wiped_knowledgebase", knowledgebase={"some": "data2"}, source=None
         )
         platform_no_source = PlatformFactory(source=None, short_name="AAP")
         platform_erms = PlatformFactory(source=data_sources["api"], short_name="AACR")
@@ -448,7 +448,7 @@ class TestPlatformImportAttempt:
         erms_values = Platform.objects.values().get(pk=platform_erms.pk)
 
         PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
-            PLATFORM_INPUT_DATA, PlatformImportAttempt.MergeStrategy.ALL,
+            PLATFORM_INPUT_DATA, PlatformImportAttempt.MergeStrategy.ALL
         )
         platform_with_removed_id = Platform.objects.get(short_name="AACR")
         assert platform_with_removed_id.counter_registry_id == uuid.UUID(
@@ -461,7 +461,7 @@ class TestPlatformImportAttempt:
         # Create multiple for EMPTY_SOURCE strategy
         platform_no_source2 = PlatformFactory(source=None, short_name="ABC")
         PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
-            PLATFORM_INPUT_DATA2, PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE,
+            PLATFORM_INPUT_DATA2, PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE
         )
         assert Platform.objects.count() == 5
         assert Platform.objects.values().get(pk=platform_no_source1.pk) == no_source1_values
@@ -610,7 +610,7 @@ class TestReportTypeImportAttempt:
             report_type2.reporttypetodimension_set.order_by('position').values_list(
                 'position', 'dimension__short_name'
             )
-        ) == [(0, 'dim1'), (1, 'dim2'),]
+        ) == [(0, 'dim1'), (1, 'dim2')]
 
         # Create import batch for on of the report types
         ImportBatchFactory(report_type=report_type2)
@@ -646,7 +646,7 @@ class TestReportTypeImportAttempt:
             report_type2.reporttypetodimension_set.order_by('position').values_list(
                 'position', 'dimension__short_name'
             )
-        ) == [(0, 'dim1'), (1, 'dim2'),]
+        ) == [(0, 'dim1'), (1, 'dim2')]
 
         report_type3 = ReportType.objects.get(short_name="three")
         assert report_type3.name == "third"
@@ -661,7 +661,7 @@ class TestReportTypeImportAttempt:
             report_type3.reporttypetodimension_set.order_by('position').values_list(
                 'position', 'dimension__short_name'
             )
-        ) == [(0, 'dim4'), (1, 'dim3'),]
+        ) == [(0, 'dim4'), (1, 'dim3')]
 
 
 @pytest.mark.django_db

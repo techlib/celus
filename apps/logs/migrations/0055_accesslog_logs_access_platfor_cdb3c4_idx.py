@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0054_fill_importbatch_date'),
-    ]
+    dependencies = [('logs', '0054_fill_importbatch_date')]
 
     operations = [
         migrations.AddIndex(
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
                 fields=['platform', 'organization', 'report_type'],
                 name='logs_access_platfor_cdb3c4_idx',
             ),
-        ),
+        )
     ]

@@ -18,5 +18,5 @@ class Migration(migrations.Migration):
             field=models.ManyToManyField(
                 through='logs.OrganizationPlatform', to='publications.Platform'
             ),
-        ),
+        )
     ]

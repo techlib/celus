@@ -64,12 +64,7 @@ class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
         'enabled',
     ]
     list_filter = ['enabled', 'broken', 'counter_version', 'organization', 'platform']
-    search_fields = [
-        'organization__name',
-        'platform__name',
-        'pk',
-        'url',
-    ]
+    search_fields = ['organization__name', 'platform__name', 'pk', 'url']
     readonly_fields = ['first_broken_attempt']
     resource_class = SushiCredentialsResource  # for django-import-export
 
@@ -121,7 +116,7 @@ def delete_with_data(modeladmin, request, queryset):
     attempts_deleted = queryset.delete()
     batches_deleted = del_stats[1].get('logs.ImportBatch', 0)
     messages.info(
-        request, f'{attempts_deleted[0]} attempts deleted with ' f'{batches_deleted} data batches',
+        request, f'{attempts_deleted[0]} attempts deleted with ' f'{batches_deleted} data batches'
     )
 
 
@@ -133,10 +128,7 @@ class HasImportBatch(admin.SimpleListFilter):
     parameter_name = 'has'
 
     def lookups(self, request, model_admin):
-        return (
-            ('yes', 'Yes'),
-            ('no', 'No'),
-        )
+        return (('yes', 'Yes'), ('no', 'No'))
 
     def queryset(self, request, queryset):
         if self.value() == 'yes':

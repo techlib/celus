@@ -31,17 +31,10 @@ class OrganizationSimpleSerializer(ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = (
-            'name',
-            'url',
-        )
+        fields = ('name', 'url')
 
 
 class OrganizationShortSerializer(ModelSerializer):
     class Meta:
         model = Organization
-        fields = (
-            'pk',
-            'short_name',
-            'name',
-        )
+        fields = ('pk', 'short_name', 'name')

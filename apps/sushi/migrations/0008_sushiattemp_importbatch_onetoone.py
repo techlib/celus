@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('sushi', '0007_sushifetchattempt_import_batch'),
-    ]
+    dependencies = [('sushi', '0007_sushifetchattempt_import_batch')]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
             field=models.OneToOneField(
                 null=True, on_delete=django.db.models.deletion.SET_NULL, to='logs.ImportBatch'
             ),
-        ),
+        )
     ]

@@ -98,9 +98,7 @@ def delete_platform_data(
 
     # we also delete canceled FIs
     _, substats = FetchIntention.objects.filter(
-        credentials__platform=platform,
-        credentials__organization__in=organization_qs,
-        canceled=True,
+        credentials__platform=platform, credentials__organization__in=organization_qs, canceled=True
     ).delete()
     stats.update(substats)
     log_progress(90)

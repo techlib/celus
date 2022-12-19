@@ -180,7 +180,7 @@ class TestManualUploadForCounterData:
 @pytest.mark.django_db
 class TestManualUploadControlledMetrics:
     def test_can_import(
-        self, basic1, organizations, platforms, counter_report_types, clients, tmp_path, settings,
+        self, basic1, organizations, platforms, counter_report_types, clients, tmp_path, settings
     ):
         cr_type = counter_report_types["tr"]
         with (Path(__file__).parent / "data/counter5/counter5_tr_test1.json").open() as f:
@@ -436,7 +436,7 @@ class TestManualUploadNonCounter:
         }
         if organization_set:
             post_data["organization"] = organization.pk
-        response = clients["master_admin"].post(reverse('manual-data-upload-list'), data=post_data,)
+        response = clients["master_admin"].post(reverse('manual-data-upload-list'), data=post_data)
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
@@ -530,7 +530,7 @@ class TestManualUploadNonCounter:
 
         # Try to reimport the same data (to see whether it clashes)
         data_file.seek(0)
-        response = clients["master_admin"].post(reverse('manual-data-upload-list'), data=post_data,)
+        response = clients["master_admin"].post(reverse('manual-data-upload-list'), data=post_data)
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 

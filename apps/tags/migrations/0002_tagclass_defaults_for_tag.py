@@ -5,13 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('tags', '0001_initial'),
-    ]
+    dependencies = [('tags', '0001_initial')]
 
     operations = [
-        migrations.RemoveConstraint(model_name='tagclass', name='tag_class_owner_not_null',),
-        migrations.RemoveConstraint(model_name='tagclass', name='tag_class_owner_org_not_null',),
+        migrations.RemoveConstraint(model_name='tagclass', name='tag_class_owner_not_null'),
+        migrations.RemoveConstraint(model_name='tagclass', name='tag_class_owner_org_not_null'),
         migrations.AddField(
             model_name='tagclass',
             name='default_tag_can_assign',

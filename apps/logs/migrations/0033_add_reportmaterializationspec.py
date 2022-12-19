@@ -6,9 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('logs', '0032_optimize_accesslog_indexes'),
-    ]
+    dependencies = [('logs', '0032_optimize_accesslog_indexes')]
 
     operations = [
         migrations.AlterField(

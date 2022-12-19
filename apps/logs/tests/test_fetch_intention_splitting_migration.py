@@ -82,7 +82,7 @@ class TestFetchIntentionSplittingMigration:
         for metric in [metric_b, metric_a]:
             date = '2020-01-01'
             AccessLog.objects.create(
-                **basic_attrs, metric=metric, date=date, value=fake.pyint(), import_batch=ib3,
+                **basic_attrs, metric=metric, date=date, value=fake.pyint(), import_batch=ib3
             )
         h1 = Harvest.objects.create()
         fa1 = SushiFetchAttempt.objects.create(
@@ -230,7 +230,7 @@ class TestFetchIntentionSplittingMigration:
         ib3 = ImportBatch.objects.create(**basic_attrs)
         for i, metric in enumerate([metric_b, metric_a]):
             AccessLog.objects.create(
-                **basic_attrs, metric=metric, date='2020-01-01', value=i, import_batch=ib3,
+                **basic_attrs, metric=metric, date='2020-01-01', value=i, import_batch=ib3
             )
         h1 = Harvest.objects.create()
         fa1 = FetchAttemptFactory.create(
