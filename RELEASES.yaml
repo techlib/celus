@@ -1,3 +1,45 @@
+- version: 5.1.0
+  title:
+    en: Version 5.1.0 is out!
+    cs: Verze 5.1.0
+  text:
+    en: |
+      - all charts now show the whole selected data range (including months with no data)
+      - it is now possible to split the data coverage for one title by platform
+      - you can now find more information about the report in the exports list (rows, split-by)
+      - your view settings are now stored in the url so you can share your current view and save it
+      - when you create new report, the currently selected date range and organization are used as default filters
+      - several minor bugs were fixed
+
+    cs: |
+      - všechny grafy ukazují celé vybrané období (včetně měsíců, pro něž neexistují data)
+      - nově je možné rozdělit tabulku pokrytí daty pro jeden titul dle jednotlivých platforem
+      - seznam exportů nyní obsahuje více informací o reportech
+      - nastavení zobrazení se nyní ukládá do url adresy
+      - při vytváření nového reportu se nyní automaticky použije aktuálně vybrané období a organizace jako výchozí filtry
+      - bylo opraveno několik menších chyb
+
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
+
+- version: 5.0.1
+  title:
+    en: Version 5.0.1
+    cs: Verze 5.0.1
+  text:
+    en: |
+      - several minor bugs were fixed
+
+    cs: |
+      - bylo opraveno několik menších chyb
+
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+
+
 - version: 5.0.0
   title:
     en: Celus version 5.0.0 is up and running!
