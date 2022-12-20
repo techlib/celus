@@ -21,19 +21,20 @@ export default {
 
   methods: {
     async getTagsForObjectsById(objectType, objectIds) {
-      if (objectIds.length === 0) {
+      let cleanObjectIds = objectIds.filter((x) => !this.objIdToTags.has(x));
+      if (cleanObjectIds.length === 0) {
         return;
       }
       let linksPromise = this.http({
         url: "/api/tags/tag-item-links/",
-        params: { item_type: objectType, item_id: objectIds },
+        params: { item_type: objectType, item_id: cleanObjectIds },
         paramsSerializer: function (params) {
           return qs.stringify(params, { arrayFormat: "repeat" });
         },
       });
       let tagsPromise = this.http({
         url: "/api/tags/tag/",
-        params: { item_type: objectType, item_id: objectIds },
+        params: { item_type: objectType, item_id: cleanObjectIds },
         paramsSerializer: function (params) {
           return qs.stringify(params, { arrayFormat: "repeat" });
         },
@@ -45,12 +46,10 @@ export default {
       if (!linksResult.error && !tagsResult.error) {
         let tagIdToObj = new Map();
         tagsResult.response.data.forEach((tag) => tagIdToObj.set(tag.pk, tag));
-        let objIdToTags = new Map();
-        objectIds.forEach((id) => objIdToTags.set(id, []));
+        cleanObjectIds.forEach((id) => this.objIdToTags.set(id, []));
         linksResult.response.data.forEach((link) =>
-          objIdToTags.get(link.target_id).push(tagIdToObj.get(link.tag_id))
+          this.objIdToTags.get(link.target_id).push(tagIdToObj.get(link.tag_id))
         );
-        this.objIdToTags = objIdToTags;
       }
     },
   },

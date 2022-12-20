@@ -214,6 +214,7 @@ export default {
       search: "",
       showEditDialog: false,
       selectedPlatform: null,
+      resolvingTagsForIds: new Set(),
       // table options
       page: 1,
       itemsPerPage: -1,
@@ -347,12 +348,26 @@ export default {
         this.selectedPlatform = null;
       }
     },
-    platforms() {
+    async platforms() {
       if (this.platforms.length) {
-        this.getTagsForObjectsById(
-          "platform",
-          this.platforms.map((item) => item.pk)
-        );
+        let toTag = this.platforms
+          .map((pl) => pl.pk)
+          .filter((pk) => !this.objIdToTags.has(pk));
+        if (this.resolvingTagsForIds.size) {
+          // we only want to resolve those that are not already being resolved
+          toTag = toTag.filter((pk) => !this.resolvingTagsForIds.has(pk));
+        }
+        // we extend the set of what is being resolved
+        toTag.forEach((pk) => this.resolvingTagsForIds.add(pk));
+
+        if (toTag.length) {
+          try {
+            await this.getTagsForObjectsById("platform", toTag);
+          } finally {
+            // clean up the set of what was resolved
+            toTag.forEach((pk) => this.resolvingTagsForIds.delete(pk));
+          }
+        }
       }
     },
   },
