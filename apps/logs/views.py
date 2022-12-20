@@ -81,7 +81,7 @@ from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 from tags.models import Tag
 from . import filters
-from .filters import DimensionFilter
+from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from .tasks import export_raw_data_task
@@ -853,6 +853,7 @@ class FlexibleReportViewSet(ModelViewSet):
 
     queryset = FlexibleReport.objects.none()
     serializer_class = FlexibleReportSerializer
+    filter_backends = [PrimaryDimensionFlexiReportFilter]
 
     def get_queryset(self):
         return FlexibleReport.objects.filter(

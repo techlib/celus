@@ -41,3 +41,10 @@ class DimensionFilter(filters.BaseFilterBackend):
         if dimension_id := request.GET.get('dimension'):
             queryset = queryset.filter(dimension_id=dimension_id)
         return queryset
+
+
+class PrimaryDimensionFlexiReportFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        if primary_dimension := request.GET.get('primary_dimension'):
+            queryset = queryset.filter(report_config__primary_dimension=primary_dimension)
+        return queryset

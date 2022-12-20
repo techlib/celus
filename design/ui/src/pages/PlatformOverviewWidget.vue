@@ -133,6 +133,7 @@ export default {
           });
         }
         this.loading = false;
+        this.$emit("loaded");
       }
     },
     async loadPlatformInterest() {

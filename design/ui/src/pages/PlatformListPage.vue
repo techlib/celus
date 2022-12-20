@@ -60,7 +60,11 @@ cs:
     </v-row>
     <v-row>
       <v-col>
-        <PlatformOverviewWidget ref="overviewWidget" v-show="viewId === 0" />
+        <PlatformOverviewWidget
+          ref="overviewWidget"
+          v-show="viewId === 0"
+          @loaded="overviewLoaded"
+        />
         <v-card>
           <v-card-text>
             <FlexiTableOutput
@@ -137,7 +141,7 @@ export default {
     async loadStoredReports() {
       this.loading = true;
       let { response, error } = await this.http({
-        url: "/api/flexible-report/",
+        url: "/api/flexible-report/?primary_dimension=platform",
       });
       if (!error) {
         this.reports = [];
@@ -167,10 +171,9 @@ export default {
         this.$refs.overviewWidget.refreshAnnotations();
       }
     },
-  },
-
-  created() {
-    this.loadStoredReports();
+    overviewLoaded() {
+      this.loadStoredReports();
+    },
   },
 
   watch: {
