@@ -57,7 +57,8 @@ class Migration(migrations.Migration):
             model_name='sushifetchattempt',
             name='triggered_by',
             field=models.ForeignKey(
-                help_text='User who triggered the attempt or null if attempt was triggered by e.g. cron',
+                help_text='User who triggered the attempt or null if attempt was triggered by '
+                'e.g. cron',
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 to=settings.AUTH_USER_MODEL,

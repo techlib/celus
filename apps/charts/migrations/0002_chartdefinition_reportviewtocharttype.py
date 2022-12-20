@@ -72,7 +72,8 @@ class Migration(migrations.Migration):
                     'ordering',
                     models.CharField(
                         blank=True,
-                        help_text='How to order the values in the chart, blank for default - primary dimension based - ordering',
+                        help_text='How to order the values in the chart, blank for default - '
+                        'primary dimension based - ordering',
                         max_length=20,
                     ),
                 ),

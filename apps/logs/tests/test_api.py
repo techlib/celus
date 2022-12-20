@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 from core.logic.dates import month_end, month_start
 from core.tests.conftest import admin_identity  # noqa - fixtures
-from core.tests.conftest import (
+from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,
     authentication_headers,
     invalid_identity,
@@ -26,7 +26,7 @@ from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
 from test_fixtures.scenarios.basic import basic1  # noqa - fixtures
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     client_by_user_type,
     clients,
     counter_report_types,
@@ -240,8 +240,8 @@ class TestChartDataAPI:
         import_counter_records(report_type, organizations["standalone"], platform1, crs1)
         import_counter_records(report_type, organizations["standalone"], platform2, crs2)
         assert AccessLog.objects.count() == 12
-        metric1 = Metric.objects.get(short_name='Hits')
-        metric2 = Metric.objects.get(short_name='Big Hits')
+        Metric.objects.get(short_name='Hits')
+        Metric.objects.get(short_name='Big Hits')
 
         def get_data(params):
             resp = authenticated_client.get(

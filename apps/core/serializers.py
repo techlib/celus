@@ -2,13 +2,11 @@ import typing
 from datetime import datetime
 
 from core.models import TaskProgress, User
-from django_celery_results.models import TaskResult
 from rest_framework.serializers import (
     BooleanField,
     CharField,
     ChoiceField,
     DateTimeField,
-    IntegerField,
     ModelSerializer,
     PrimaryKeyRelatedField,
     Serializer,

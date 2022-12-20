@@ -1,4 +1,3 @@
-from collections import Counter
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,11 +6,11 @@ from celus_nigiri.counter4 import Counter4BR2Report
 from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
 from django.db.models import Count, Sum
 from django.urls import reverse
-from logs.models import AccessLog, DimensionText, ImportBatch, ReportType
+from logs.models import AccessLog, DimensionText, ImportBatch
 from organizations.tests.conftest import organization_random, organizations  # noqa - fixture
 from publications.models import PlatformTitle, Title
 
-from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
+from test_fixtures.entities.logs import ManualDataUploadFullFactory
 
 from ..exceptions import DataStructureError
 from ..logic.data_import import import_counter_records
@@ -309,12 +308,7 @@ class TestCounter5Import:
             ('counter5_table_pr.csv', 252),
         ],
     )
-    def test_c5_table_record_count(
-        self, organization_random, report_type_nd, platform, filename, count
-    ):
-        # we do not care much about the dimensions - just about titles
-        rt = report_type_nd(0)
-
+    def test_c5_table_record_count(self, filename, count):
         reader = Counter5TableReport()
         records = reader.file_to_records(str(Path(__file__).parent / 'data/counter5' / filename))
         assert count == len(list(records))

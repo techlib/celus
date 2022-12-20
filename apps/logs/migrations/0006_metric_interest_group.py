@@ -29,7 +29,8 @@ class Migration(migrations.Migration):
             name='interest_group',
             field=models.ForeignKey(
                 blank=True,
-                help_text='If given, it marks the metric as representing interest of the specified type',
+                help_text='If given, it marks the metric as representing interest of the '
+                'specified type',
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 to='logs.InterestGroup',

@@ -2,10 +2,8 @@ from core.models import DataSource
 from organizations.serializers import OrganizationSerializer
 from rest_framework.fields import (
     BooleanField,
-    CharField,
     DateTimeField,
     JSONField,
-    ListField,
     SerializerMethodField,
     URLField,
 )

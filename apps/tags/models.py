@@ -11,7 +11,6 @@ import magic
 from colorfield.fields import ColorField
 from core.models import REL_ORG_ADMIN, CreatedUpdatedMixin, User
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
 from django.core.files.base import File
 from django.db import models
 from django.db.models import Q, QuerySet

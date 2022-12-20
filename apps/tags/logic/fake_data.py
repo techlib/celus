@@ -110,6 +110,6 @@ class TaggingBatchFactory(factory.django.DjangoModelFactory):
 
         with open(extracted, 'rb') as f:
             data_file = ContentFile(f.read())
-            data_file.name = f"test.csv"
+            data_file.name = "test.csv"
         obj.source_file = data_file
         return data_file

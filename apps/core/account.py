@@ -1,4 +1,3 @@
-import re
 from urllib.parse import urlparse
 
 from allauth.account.adapter import DefaultAccountAdapter

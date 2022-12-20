@@ -1,7 +1,7 @@
 import json
 import logging
 from copy import deepcopy
-from datetime import date, timedelta
+from datetime import timedelta
 
 from celus_nigiri.client import Sushi5Client
 from django.core.management.base import BaseCommand

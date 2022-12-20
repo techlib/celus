@@ -1,4 +1,3 @@
-import io
 import typing
 import uuid
 from datetime import date, datetime, timedelta
@@ -19,12 +18,7 @@ from scheduler.models import (
     RunResponse,
     Scheduler,
 )
-from sushi.models import (
-    AttemptStatus,
-    CounterReportsToCredentials,
-    SushiCredentials,
-    SushiFetchAttempt,
-)
+from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
 
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
@@ -35,7 +29,7 @@ from test_fixtures.entities.scheduler import (
     HarvestFactory,
     SchedulerFactory,
 )
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     credentials,
     data_sources,
@@ -562,7 +556,8 @@ class TestFetchIntention:
                 error_code=error_code,
                 credentials=credentials["standalone_tr"],
                 counter_report=counter_report_types["tr"],
-                data_file__data=b'{"Report_Items": [],"Report_Header": {"Report_ID": "TR", "Customer_ID":"C1"}}',
+                data_file__data=b'{"Report_Items": [],"Report_Header": '
+                b'{"Report_ID": "TR", "Customer_ID":"C1"}}',
             )
 
         monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)

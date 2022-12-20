@@ -258,7 +258,7 @@ class TestClickhouseSync:
         assert AccessLog.objects.count() == 6
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 6
         # prepare interest
-        interest_rt = report_type_nd(1, short_name='interest')
+        report_type_nd(1, short_name='interest')
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         rim = ReportInterestMetric.objects.create(
             report_type=report_type,

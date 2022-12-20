@@ -1292,7 +1292,7 @@ class TestFlexibleDataSimpleCSVExporter:
                     '(No organization filter was applied, the data represent the following '
                     'organizations)',
                 ]
-                org_names = {row[1] for row in data[11 : len(data)]}
+                org_names = {row[1] for row in data[11 : len(data)]}  # noqa: E203
                 assert org_names == {org.name for org in Organization.objects.all()}
 
 
@@ -1305,7 +1305,7 @@ class TestFilters:
 
     def test_date_filter(self):
         fltr = DateDimensionFilter('date', '2020-10-01', '2021-03')
-        assert str(fltr) == f'date: 2020-10-01 - 2021-03'
+        assert str(fltr) == 'date: 2020-10-01 - 2021-03'
 
     def test_explicit_dim_filter(self, flexible_slicer_test_data):
         texts = flexible_slicer_test_data['dimension_values'][0][1:]
@@ -1336,7 +1336,7 @@ class TestFiltersInSlicerContext:
 
     def test_date_filter(self):
         fltr = DateDimensionFilter('date', '2020-10-01', '2021-03')
-        assert self._slicer_filter_to_str(fltr) == f'Date: 2020-10-01 - 2021-03'
+        assert self._slicer_filter_to_str(fltr) == 'Date: 2020-10-01 - 2021-03'
 
     def test_explicit_dim_filter(self, flexible_slicer_test_data):
         texts = flexible_slicer_test_data['dimension_values'][0][1:]

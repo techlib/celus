@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from sushi.models import CounterReportsToCredentials, SushiCredentials, SushiFetchAttempt
+from sushi.models import CounterReportsToCredentials, SushiCredentials
 
 from .logic.automatic import update_cr2c
 from .models import Automatic, FetchIntention, FetchIntentionQueue

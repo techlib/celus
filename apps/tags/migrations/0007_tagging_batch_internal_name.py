@@ -13,7 +13,8 @@ class Migration(migrations.Migration):
             name='internal_name',
             field=models.CharField(
                 blank=True,
-                help_text='When given, it marks the batch as internal. Such batches are not shown in the UI. It also serves as identification of such batches internally.',
+                help_text='When given, it marks the batch as internal. Such batches are not shown '
+                'in the UI. It also serves as identification of such batches internally.',
                 max_length=64,
             ),
         ),

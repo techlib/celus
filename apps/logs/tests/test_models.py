@@ -6,8 +6,7 @@ from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import Dimension, DimensionText, FlexibleReport, ReportType, ReportTypeToDimension
 from organizations.tests.conftest import organizations  # noqa
 
-from test_fixtures.entities.logs import MetricFactory
-from test_fixtures.scenarios.basic import data_sources, report_types
+from test_fixtures.scenarios.basic import data_sources, report_types  # noqa - fixtures
 
 
 @pytest.mark.django_db
@@ -176,8 +175,7 @@ class TestFlexibleReport:
         dt1 = DimensionText.objects.get(text='A', dimension__short_name='dim1name')
         slicer.add_filter(ExplicitDimensionFilter('dim1', dt1.pk))
         slicer.add_group_by('metric')
-        ob_metric = flexible_slicer_test_data['metrics'][0]
-        slicer.order_by = f'platform'
+        slicer.order_by = 'platform'
         fr = FlexibleReport.create_from_slicer(slicer)
         assert fr.report_config['filters'][0]['dimension'] == 'dim1'
         assert fr.report_config['filters'][0]['values'] == [dt1.text]

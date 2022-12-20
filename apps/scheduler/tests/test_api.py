@@ -1,6 +1,5 @@
 import json
 from datetime import date
-from itertools import product
 
 import pytest
 from core.logic.dates import last_month, month_end
@@ -13,7 +12,6 @@ from logs.models import AccessLog, ImportBatch
 from organizations.models import UserOrganization
 from scheduler import tasks
 from scheduler.models import Automatic, FetchIntention, Harvest
-from sushi.models import AttemptStatus
 from sushi.models import BrokenCredentialsMixin as BS
 from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 
@@ -21,7 +19,7 @@ from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     counter_report_types,

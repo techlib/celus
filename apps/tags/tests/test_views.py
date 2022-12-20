@@ -31,7 +31,7 @@ class TestTagViews:
     def test_tag_list_with_pk_filter(self, clients, users):
         user = users['user1']
         t1 = TagFactory.create(can_see=AccessibleBy.EVERYBODY)
-        t2 = TagFactory.create(can_see=AccessibleBy.OWNER, owner=user)
+        t2 = TagFactory.create(can_see=AccessibleBy.OWNER, owner=user)  # noqa F841
         t3 = TagFactory.create(can_see=AccessibleBy.OWNER, owner=users['user2'])
         resp = clients['user1'].get(reverse('tag-list'), {'pks': f'{t1.pk},{t3.pk}'})
         assert resp.status_code == 200

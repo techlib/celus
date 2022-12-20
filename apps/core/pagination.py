@@ -22,7 +22,7 @@ class SmartPageNumberPagination(PageNumberPagination):
         except ValueError:
             page_number = 1
         queryset = queryset.annotate(**{self.COUNT_ATTR: Window(Count('*'))})
-        result = queryset[(page_number - 1) * page_size : page_number * page_size]
+        result = queryset[(page_number - 1) * page_size : page_number * page_size]  # noqa E203
         if result:
             first = result[0]
             if type(first) is dict:

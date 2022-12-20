@@ -1,21 +1,17 @@
-from datetime import date
-from io import StringIO
 from pathlib import Path
 
 import pytest
-from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, Identity, SourceFileMixin
+from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, SourceFileMixin
 from core.tests.conftest import *  # noqa
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.urls import reverse
 from logs.exceptions import OrganizationNotAllowedToImportRawData
 from logs.logic.custom_import import import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
-from publications.models import Platform
 
 from test_fixtures.entities.logs import ManualDataUploadFactory, ManualDataUploadFullFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     data_sources,

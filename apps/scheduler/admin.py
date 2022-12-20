@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
-from logs.models import ImportBatch
 from sushi.models import SushiFetchAttempt
 
 from . import models
@@ -196,7 +195,8 @@ class FetchIntentionAdmin(admin.ModelAdmin):
     def harvest_link(self, obj: models.FetchIntention):
 
         return format_html(
-            f'<a href="{ reverse("admin:scheduler_harvest_change", args=(obj.harvest.id,)) }">{ obj.harvest.id }</a>'
+            f'<a href="{ reverse("admin:scheduler_harvest_change", args=(obj.harvest.id,)) }">'
+            f'{ obj.harvest.id }</a>'
         )
 
     harvest_link.short_description = "Harvest"

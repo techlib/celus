@@ -23,7 +23,7 @@ def tagging_batch_preflight_task(batch_id: int, domain_name: str = '/'):
                 progress_monitor=tp.store_progress,
             )
         else:
-            logger.error(f"Can't generate preflight for batch #%d (state=%s)", tb.pk, tb.state)
+            logger.error("Can't generate preflight for batch #%d (state=%s)", tb.pk, tb.state)
     except TaggingBatch.DoesNotExist:
         logger.warning("batch #%d was not found", batch_id)
     except DatabaseError as e:
@@ -43,7 +43,7 @@ def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = '/'):
                 progress_monitor=tp.store_progress,
             )
         else:
-            logger.error(f"Can't process batch #%d (state=%s)", tb.pk, tb.state)
+            logger.error("Can't process batch #%d (state=%s)", tb.pk, tb.state)
     except TaggingBatch.DoesNotExist:
         logger.warning("batch #%d was not found", batch_id)
     except DatabaseError as e:
@@ -64,7 +64,7 @@ def tagging_batch_unassign_task(batch_id: int):
             tb.save()
             tagging_batch_preflight_task.apply_async(args=[batch_id], countdown=2)
         else:
-            logger.error(f"Can't process batch #%d (state=%s)", tb.pk, tb.state)
+            logger.error("Can't process batch #%d (state=%s)", tb.pk, tb.state)
     except TaggingBatch.DoesNotExist:
         logger.warning("batch #%d was not found", batch_id)
     except DatabaseError as e:

@@ -1,8 +1,8 @@
 import pytest
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN
-from core.tests.conftest import *
+from core.tests.conftest import *  # noqa - fixtures
 from django.urls import reverse
-from organizations.tests.conftest import organizations
+from organizations.tests.conftest import organizations  # noqa - fixtures
 
 from test_fixtures.entities.annotations import AnnotationFactory
 
@@ -48,8 +48,8 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # now create two annotations - one related to org and one unrelated
-        annot1 = AnnotationFactory(subject='prase', organization=org)
-        annot2 = AnnotationFactory(subject='hroch', organization=organizations[1])
+        AnnotationFactory(subject='prase', organization=org)
+        AnnotationFactory(subject='hroch', organization=organizations[1])
         url = reverse('annotations-list')
         resp = client.get(url, **authentication_headers(identity))
         if has_access:

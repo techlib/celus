@@ -1,13 +1,11 @@
 from collections import Counter
 
-from core.logic.dates import month_end, parse_month
-from core.models import REL_ORG_ADMIN, REL_ORG_USER
+from core.logic.dates import month_end
+from core.models import REL_ORG_USER
 from core.permissions import SuperuserOrAdminPermission
-from django.core.exceptions import BadRequest
-from django.db.models import Count, Exists, F, Max, Min, Prefetch, Q
+from django.db.models import Count, F, Max, Min, Prefetch, Q
 from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from logs.models import ImportBatch
@@ -19,7 +17,6 @@ from rest_framework.fields import DateField
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
-from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 from sushi.models import (
     CounterReportsToCredentials,
@@ -97,10 +94,10 @@ class HarvestViewSet(
                             Q(intentions__credentials__broken__isnull=False)
                             | (
                                 Q(
-                                    intentions__credentials__counterreportstocredentials__broken__isnull=False
+                                    intentions__credentials__counterreportstocredentials__broken__isnull=False  # noqa E501
                                 )
                                 & Q(
-                                    intentions__credentials__counterreportstocredentials__counter_report_id=F(
+                                    intentions__credentials__counterreportstocredentials__counter_report_id=F(  # noqa E501
                                         'intentions__counter_report'
                                     )
                                 )
@@ -164,7 +161,7 @@ class HarvestViewSet(
         for intention in serializer.validated_data["intentions"]:
             credentials = intention["credentials"]
             if credentials.broken:
-                raise ValidationError({credentials.pk: f'Credentials are broken.'})
+                raise ValidationError({credentials.pk: 'Credentials are broken.'})
             try:
                 cr2c = credentials.counterreportstocredentials_set.get(
                     counter_report=intention["counter_report"]
@@ -172,15 +169,16 @@ class HarvestViewSet(
             except CounterReportsToCredentials.DoesNotExist:
                 raise ValidationError(
                     {
-                        credentials.pk: f'Counter report {intention["counter_report"].code} is not active for'
-                        f' credentials'
+                        credentials.pk: f'Counter report {intention["counter_report"].code} '
+                        f'is not active for credentials'
                     }
                 )
 
             if cr2c.broken:
                 raise ValidationError(
                     {
-                        credentials.pk: f'Counter report {intention["counter_report"].code} is broken for credentials'
+                        credentials.pk: f'Counter report {intention["counter_report"].code} '
+                        f'is broken for credentials'
                     }
                 )
 

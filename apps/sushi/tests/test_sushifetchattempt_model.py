@@ -375,7 +375,7 @@ class TestSushiFetchAttemptModel:
             'rb'
         ) as f:
             data_file = ContentFile(f.read())
-            data_file.name = f"something.json"
+            data_file.name = "something.json"
 
         fa = FetchAttemptFactory.create(data_file=data_file, status=status)
         assert fa.extracted_data == {}

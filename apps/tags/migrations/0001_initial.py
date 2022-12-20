@@ -123,7 +123,8 @@ class Migration(migrations.Migration):
                     'owner',
                     models.ForeignKey(
                         blank=True,
-                        help_text='When "can_see" or "can_assign" is set to "owner", this specifies the one',
+                        help_text='When "can_see" or "can_assign" is set to "owner", this '
+                        'specifies the one',
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name='owned_tags',
@@ -134,7 +135,8 @@ class Migration(migrations.Migration):
                     'owner_org',
                     models.ForeignKey(
                         blank=True,
-                        help_text='When "can_see" or "can_assign" is set to "organization users" or "organization admins", this is the organization',
+                        help_text='When "can_see" or "can_assign" is set to "organization users" '
+                        'or "organization admins", this is the organization',
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         to='organizations.organization',
@@ -177,7 +179,8 @@ class Migration(migrations.Migration):
                     'exclusive',
                     models.BooleanField(
                         default=False,
-                        help_text='An item may be only tagged by one tag from an exclusive tag class',
+                        help_text='An item may be only tagged by one tag from an exclusive tag '
+                        'class',
                     ),
                 ),
                 (
@@ -246,7 +249,8 @@ class Migration(migrations.Migration):
                     'owner_org',
                     models.ForeignKey(
                         blank=True,
-                        help_text='When an access level is set to "organization users" or "organization admin", this is the organization',
+                        help_text='When an access level is set to "organization users" or '
+                        '"organization admin", this is the organization',
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         to='organizations.organization',

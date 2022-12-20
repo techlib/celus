@@ -1,6 +1,5 @@
 import pytest
 from core.models import DataSource
-from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from organizations.models import OrganizationAltName
 

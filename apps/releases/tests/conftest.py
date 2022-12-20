@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import pytest
 
 
@@ -10,7 +8,9 @@ def releases_source():
             'version': '4.4.1',
             'title': {'en': 'new release', 'cs': 'nové vydání'},
             'text': {
-                'en': 'Itaque voluptas.\n### Soluta fuga\nNihil quod aliquam aut\n\n**provident quibusdam**:\n- Possimus blanditiis *repellat voluptatibus*.\n- Autem ullam [Link Text](https://example.com/) quibusdamquis et ut.',
+                'en': 'Itaque voluptas.\n### Soluta fuga\nNihil quod aliquam aut\n\n**provident '
+                'quibusdam**:\n- Possimus blanditiis *repellat voluptatibus*.\n- Autem '
+                'ullam [Link Text](https://example.com/) quibusdamquis et ut.',
                 'cs': 'toto je nějaký text',
             },
             'is_new_feature': False,

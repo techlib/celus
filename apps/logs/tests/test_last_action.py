@@ -63,7 +63,8 @@ class TestLastActionInterestChange:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()
-        # try again - now it should be skipped because interest definition did not change in the meantime
+        # try again - now it should be skipped because interest definition
+        # did not change in the meantime
         with patch('logs.logic.materialized_interest._find_platform_interest_changes') as mock:
             smart_interest_sync()
             mock.assert_not_called()
@@ -73,7 +74,8 @@ class TestLastActionInterestChange:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()
-        # try again - now it should be skipped because interest definition did not change in the meantime
+        # try again - now it should be skipped because interest definition
+        # did not change in the meantime
         with patch('logs.logic.materialized_interest._find_platform_interest_changes') as mock:
             smart_interest_sync()
             mock.assert_not_called()
@@ -97,7 +99,8 @@ class TestLastActionInterestChange:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()
-        # try again - now it should be skipped because interest definition did not change in the meantime
+        # try again - now it should be skipped because interest definition
+        # did not change in the meantime
         with patch('logs.logic.materialized_interest._find_metric_interest_changes') as mock:
             smart_interest_sync()
             mock.assert_not_called()
@@ -107,7 +110,8 @@ class TestLastActionInterestChange:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()
-        # try again - now it should be skipped because interest definition did not change in the meantime
+        # try again - now it should be skipped because interest definition
+        # did not change in the meantime
         with patch('logs.logic.materialized_interest._find_metric_interest_changes') as mock:
             smart_interest_sync()
             mock.assert_not_called()

@@ -8,7 +8,7 @@ from publications.models import Platform
 from sushi.models import SushiCredentials
 
 from test_fixtures.entities.necronomicon import BatchFactory, CandidateFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     counter_report_types,

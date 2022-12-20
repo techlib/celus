@@ -15,9 +15,9 @@ from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory
-from test_fixtures.scenarios.basic import clients  # noqa - fixtures
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
+    clients,
     counter_report_types,
     credentials,
     data_sources,

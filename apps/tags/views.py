@@ -3,7 +3,6 @@ from typing import Optional
 from allauth.utils import build_absolute_uri
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
-from core.logic.type_conversion import to_bool
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.http import Http404
@@ -235,7 +234,7 @@ class TaggingBatchViewSet(ModelViewSet):
                 raise BadRequestException(
                     {'error': f'Cannot use batch with state "{tb.state}" to do preflight'}
                 )
-        except DatabaseError as exc:
+        except DatabaseError:
             return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
             raise Http404({'error': 'Tagging batch not found'})
@@ -259,7 +258,7 @@ class TaggingBatchViewSet(ModelViewSet):
                 raise BadRequestException(
                     {'error': f'Cannot use batch with state "{tb.state}" to assign tags'}
                 )
-        except DatabaseError as exc:
+        except DatabaseError:
             return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
             raise Http404({'error': 'Tagging batch not found'})
@@ -294,7 +293,7 @@ class TaggingBatchViewSet(ModelViewSet):
                 raise BadRequestException(
                     {'error': f'Cannot use batch with state "{tb.state}" to unassign tags'}
                 )
-        except DatabaseError as exc:
+        except DatabaseError:
             return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
             raise Http404({'error': 'Tagging batch not found'})

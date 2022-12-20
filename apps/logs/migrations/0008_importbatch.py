@@ -36,7 +36,8 @@ class Migration(migrations.Migration):
                             (1000, 'Consortium admin'),
                         ],
                         default=200,
-                        help_text='Level of user who created this record - used to determine who can modify it',
+                        help_text='Level of user who created this record - used to determine who '
+                        'can modify it',
                     ),
                 ),
                 (

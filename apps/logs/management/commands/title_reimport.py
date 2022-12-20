@@ -93,7 +93,7 @@ class Command(BaseCommand):
         renamed_count = 0
         tt2s = []
         for title in Title.objects.filter(name__startswith=self.title_prefix):
-            name_clean = title.name[len(self.title_prefix) :]
+            name_clean = title.name[len(self.title_prefix) :]  # noqa: E203
             title_rec = TitleManager.title_to_titlerec(title)
             title_rec.name = name_clean
             tt2s.append((title, title_rec))

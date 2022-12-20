@@ -17,7 +17,6 @@ from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
-from releases.releases_parser import parse_source_of_releases
 
 logger = logging.getLogger(__name__)
 
@@ -216,8 +215,6 @@ class User(AbstractUser):
         :param request:
         :return:
         """
-        from organizations.models import Organization, UserOrganization
-
         if self.is_superuser:
             return REL_SUPERUSER
         elif self.is_admin_of_master_organization:

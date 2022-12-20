@@ -28,7 +28,7 @@ class TestDeletePlatformData:
         fi.attempt.import_batch = ib
         fi.attempt.save()
         # fetch intention without attempt - it will be kept for future
-        fi2 = FetchIntentionFactory(attempt=None, credentials=fi.credentials)
+        FetchIntentionFactory(attempt=None, credentials=fi.credentials)
         # check the data before delete
         fltr = dict(organization=ib.organization, platform=ib.platform)
         cr_fltr = dict(credentials=fi.credentials)

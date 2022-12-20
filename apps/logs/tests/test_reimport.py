@@ -145,7 +145,7 @@ class TestReimport:
         clashing_fis['fa2'].delete()
         ib1 = clashing_fis['ib1']
         # ib3 should not by accident clash with ib1 or ib2, we ensure it by using a different data
-        ib3 = ImportBatchFullFactory.create(date=month_start(ib1.date + timedelta(days=45)))
+        ImportBatchFullFactory.create(date=month_start(ib1.date + timedelta(days=45)))
         reimport = find_import_batches_to_reimport(ImportBatch.objects.all())
         assert reimport.reimportable.count() == 0
         assert reimport.obsolete.count() == 0
@@ -348,7 +348,7 @@ class TestReimport:
             report_type=ib1.report_type,
             date='2021-02-01',
         )
-        fa = FetchAttemptFactory.create(
+        FetchAttemptFactory.create(
             start_date=date(2021, 2, 1),
             import_batch=ib2c,
             credentials__organization=ib2c.organization,

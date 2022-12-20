@@ -915,17 +915,17 @@ class FlexibleReportViewSet(ModelViewSet):
         if obj.access_level == FlexibleReport.Level.PRIVATE:
             # only owner or superuser may edit
             if not (user == obj.owner or user.is_superuser or user.is_admin_of_master_organization):
-                raise PermissionDenied(f'Not allowed to change private report')
+                raise PermissionDenied('Not allowed to change private report')
         elif obj.access_level == FlexibleReport.Level.ORGANIZATION:
             # only admin of owner_organization or superuser may edit
             if not (user.is_superuser or user.is_admin_of_master_organization):
                 rel = request.user.organization_relationship(obj.owner_organization_id)
                 if rel < REL_ORG_ADMIN:
-                    raise PermissionDenied(f'Not allowed to change organization report')
+                    raise PermissionDenied('Not allowed to change organization report')
         else:
             # only superuser may edit consortium level reports
             if not (user.is_superuser or user.is_admin_of_master_organization):
-                raise PermissionDenied(f'Not allowed to change consortial report')
+                raise PermissionDenied('Not allowed to change consortial report')
 
         if not delete:
             # now more specific permissions about who can change access level

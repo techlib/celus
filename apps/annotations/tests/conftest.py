@@ -1,3 +1,3 @@
-from core.tests.conftest import *
-from organizations.tests.conftest import *
-from publications.tests.conftest import *
+from core.tests.conftest import *  # noqa - fixtures
+from organizations.tests.conftest import *  # noqa - fixtures
+from publications.tests.conftest import *  # noqa - fixtures

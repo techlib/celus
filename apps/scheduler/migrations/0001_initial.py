@@ -31,7 +31,8 @@ class Migration(migrations.Migration):
                     'cooldown',
                     models.PositiveSmallIntegerField(
                         default=5,
-                        help_text='Required number of seconds before between queries (to be sure that the queries are not run in parallel)',
+                        help_text='Required number of seconds before between queries (to be sure '
+                        'that the queries are not run in parallel)',
                     ),
                 ),
                 ('too_many_requests_delay', models.IntegerField(default=3600)),

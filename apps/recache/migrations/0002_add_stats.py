@@ -27,7 +27,8 @@ class Migration(migrations.Migration):
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.FloatField(),
                 default=list,
-                help_text='Each item is a duration of the query in seconds. It is updated for each renewal',
+                help_text='Each item is a duration of the query in seconds. It is updated for '
+                'each renewal',
                 size=None,
             ),
         ),
@@ -36,7 +37,8 @@ class Migration(migrations.Migration):
             name='lifetime',
             field=models.DurationField(
                 default=datetime.timedelta(30),
-                help_text='Number of seconds from last querying after which the cache will be removed',
+                help_text='Number of seconds from last querying after which the cache will be '
+                'removed',
             ),
         ),
         migrations.AlterField(

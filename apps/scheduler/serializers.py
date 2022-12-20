@@ -2,7 +2,6 @@ from organizations.serializers import OrganizationSerializer, OrganizationShortS
 from publications.serializers import PlatformSerializer, SimplePlatformSerializer
 from rest_framework import serializers
 from rest_framework.fields import DateField, DateTimeField
-from sushi.models import SushiFetchAttempt
 from sushi.serializers import (
     CounterReportTypeSerializer,
     SushiFetchAttemptFlatSerializer,

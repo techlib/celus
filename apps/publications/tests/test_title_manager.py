@@ -1,7 +1,6 @@
 from collections import Counter
 
 import pytest
-from celus_nigiri.counter5 import Counter5ReportBase
 from django.db.models import Count
 from logs.logic.data_import import TitleManager, TitleRec
 from logs.logic.validation import normalize_isbn, normalize_title
@@ -367,7 +366,7 @@ class TestTitleManager:
         data from the incoming data, it would start clashing with the other record, which we
         need to avoid.
         """
-        t1 = Title.objects.create(name='A', issn='1111-2222')
+        Title.objects.create(name='A', issn='1111-2222')
         t2 = Title.objects.create(name='A', issn='1111-2222', eissn='2222-1111')
 
         tm = TitleManager()
@@ -385,8 +384,8 @@ class TestTitleManager:
         data from the incoming data, it would start clashing with the other record, which we
         need to avoid.
         """
-        t1 = Title.objects.create(name='A', issn='1111-2222')
-        t2 = Title.objects.create(name='A', issn='1111-2222', eissn='2222-1111')
+        Title.objects.create(name='A', issn='1111-2222')
+        Title.objects.create(name='A', issn='1111-2222', eissn='2222-1111')
         t3 = Title.objects.create(name='A', issn='1111-2222', eissn='2222-1111', doi='https://x/')
 
         tm = TitleManager()

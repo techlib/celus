@@ -1,7 +1,6 @@
 import logging
 import string
 from collections import Counter
-from time import monotonic
 
 import xlsxwriter
 from django.contrib.postgres.aggregates import ArrayAgg

@@ -54,7 +54,8 @@ class Migration(migrations.Migration):
                     models.JSONField(
                         blank=True,
                         default=dict,
-                        help_text='Information gathered during the actual processing of the source and application of tags',
+                        help_text='Information gathered during the actual processing of the '
+                        'source and application of tags',
                     ),
                 ),
                 (

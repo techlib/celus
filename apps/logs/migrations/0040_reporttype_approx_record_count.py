@@ -26,7 +26,8 @@ class Migration(migrations.Migration):
             name='approx_record_count',
             field=models.PositiveBigIntegerField(
                 default=0,
-                help_text='Automatically filled in by periodic check to have some fast measure of the record count',
+                help_text='Automatically filled in by periodic check to have some fast measure of '
+                'the record count',
             ),
         ),
         migrations.RunPython(fill_in_approx_count, zero_approx_count),

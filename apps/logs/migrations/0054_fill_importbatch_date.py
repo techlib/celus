@@ -130,7 +130,7 @@ def add_date_to_importbatch_from_fetchattempts(apps, schema_editor):
         print(f'Updated import batches for {month}: {updated}')
     print(f'Updated import batches - total: {total}')
     print(
-        f'Left import batches without date:', ImportBatch.objects.filter(date__isnull=True).count()
+        'Left import batches without date:', ImportBatch.objects.filter(date__isnull=True).count()
     )
 
 
@@ -154,7 +154,7 @@ def add_date_to_importbatch_from_accesslogs(apps, schema_editor):
         sys.stdout.flush()
     print(f'Updated import batches - total: {total}')
     print(
-        f'Left import batches without date:', ImportBatch.objects.filter(date__isnull=True).count()
+        'Left import batches without date:', ImportBatch.objects.filter(date__isnull=True).count()
     )
 
 

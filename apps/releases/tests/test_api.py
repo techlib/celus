@@ -1,15 +1,11 @@
 import json
-import os
 import re
 
 import pytest
-import yaml
 from django.urls import reverse
-from typing_extensions import Required
 
 from apps.releases.releases_parser import parse_source_of_releases
-from apps.releases.tests.conftest import releases_source
-from test_fixtures.scenarios.basic import *
+from test_fixtures.scenarios.basic import *  # noqa - fixtures
 
 from ..serializers import ReleaseSerializer
 
@@ -71,6 +67,6 @@ class TestChangelogAPI:
             assert release.get("version")
             assert release.get("markdown")
             assert (
-                re.search("^[0-9]+\.[0-9]+\.[0-9]+", release["version"]) is not None
+                re.search(r"^[0-9]+\.[0-9]+\.[0-9]+", release["version"]) is not None
                 or release["version"] == "Unreleased"
             )

@@ -96,7 +96,8 @@ class ReportType(models.Model):
     )
     approx_record_count = models.PositiveBigIntegerField(
         default=0,
-        help_text='Automatically filled in by periodic check to have some fast measure of the record count',
+        help_text='Automatically filled in by periodic check to have some fast measure of the '
+        'record count',
     )
     controlled_metrics = models.ManyToManyField(
         'Metric', through='ControlledMetric', related_name='controlled'
@@ -1112,7 +1113,7 @@ class FlexibleReport(models.Model):
         return self.Level.CONSORTIUM
 
     @classmethod
-    def create_from_slicer(cls, slicer: 'FlexibleDataSlicer', **kwargs):
+    def create_from_slicer(cls, slicer: 'FlexibleDataSlicer', **kwargs):  # noqa: F821
         return FlexibleReport.objects.create(
             report_config=cls.serialize_slicer_config(slicer.config()), **kwargs
         )
@@ -1128,7 +1129,7 @@ class FlexibleReport(models.Model):
             **config,
             'filters': [cls.serialize_slicer_filter(fltr) for fltr in config['filters']],
             # TODO: turn on after demo
-            #'order_by': cls.resolve_order_by(config)
+            # 'order_by': cls.resolve_order_by(config)
         }
         return new_config
 

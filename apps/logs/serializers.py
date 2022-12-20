@@ -1,5 +1,5 @@
 from core.models import UL_CONS_STAFF, DataSource, SourceFileMixin
-from core.serializers import UserSerializer, UserSimpleSerializer
+from core.serializers import UserSimpleSerializer
 from django.utils.translation import gettext as _
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
@@ -11,10 +11,9 @@ from publications.serializers import (
 )
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import BooleanField, DateField, IntegerField
-from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
+from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import (
     BaseSerializer,
-    CharField,
     CurrentUserDefault,
     HiddenField,
     ListField,

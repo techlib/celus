@@ -66,7 +66,8 @@ class Migration(migrations.Migration):
                     'lifetime',
                     models.DurationField(
                         default=2592000,
-                        help_text='Number of seconds from last querying after which the cache will be removed',
+                        help_text='Number of seconds from last querying after which the cache '
+                        'will be removed',
                     ),
                 ),
                 (

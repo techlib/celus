@@ -62,7 +62,7 @@ def delete_platform_data(
         if progress_monitor:
             try:
                 progress_monitor(num, 100)
-            except:
+            except Exception:
                 # no error in progress monitor should influence this function
                 pass
 

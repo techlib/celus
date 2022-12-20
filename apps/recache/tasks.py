@@ -33,7 +33,8 @@ def renew_cached_query_task(pk: int):
 @email_if_fails
 def find_and_renew_first_due_cached_query_task():
     """
-    Finds the first `CachedQuery` that needs renewing, renews it and calls itself to process more caches
+    Finds the first `CachedQuery` that needs renewing, renews it and calls itself to process more
+    caches
     """
     cq = CachedQuery.objects.past_timeout().first()
     if not cq:

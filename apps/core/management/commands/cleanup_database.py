@@ -68,7 +68,7 @@ class Command(BaseCommand):
                 self.stderr.write(
                     self.style.WARNING(f'Deleted {count} DimensionTexts for dim "{dim_name}"')
                 )
-        self.stderr.write(self.style.WARNING(f'Delete stats: '))
+        self.stderr.write(self.style.WARNING('Delete stats: '))
         for key, value in sorted(stats.items()):
             self.stderr.write(self.style.WARNING(f'  {key}: {value}'))
         # fix other things

@@ -1,7 +1,6 @@
 from core.logic.dates import parse_month
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from rest_framework.exceptions import ValidationError
 
 MIN_YEAR = 1900
 MAX_YEAR = 3000

@@ -2,7 +2,7 @@ import logging
 import operator
 from functools import reduce
 from itertools import combinations
-from typing import Generator, List, Optional, Set, Union
+from typing import Generator, List, Set, Union
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg

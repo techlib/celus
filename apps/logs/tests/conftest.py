@@ -350,7 +350,7 @@ def flexible_slicer_test_data2(report_type_nd):
 
 
 @pytest.fixture
-def flexible_slicer_test_data_with_tags(flexible_slicer_test_data, users):
+def flexible_slicer_test_data_with_tags(flexible_slicer_test_data, users):  # noqa - fixture
     """
     The same data as `flexible_slicer_test_data`, but adds tags to the titles
     """

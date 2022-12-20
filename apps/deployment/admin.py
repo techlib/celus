@@ -11,7 +11,7 @@ class FooterImageAdmin(admin.ModelAdmin):
 
 
 @admin.register(SiteLogo)
-class FooterImageAdmin(admin.ModelAdmin):
+class SiteLogoAdmin(admin.ModelAdmin):
 
     list_display = ('alt_text', 'site', 'img', 'last_modified')
     list_display_links = ('alt_text',)

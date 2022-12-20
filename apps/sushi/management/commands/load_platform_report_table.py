@@ -100,12 +100,12 @@ class Command(BaseCommand):
             for rec in reader:
                 platform_code = rec.get(platform_col)
                 if not platform_code:
-                    self.stderr.write(self.style.WARNING(f'No platform code, skipping'))
+                    self.stderr.write(self.style.WARNING('No platform code, skipping'))
                     continue
                 platform = platform_short_name_to_obj.get(platform_code)  # type: Platform
                 if not platform:
                     self.stderr.write(
-                        self.style.ERROR(f'Unknown platform "{platform_code}", ' f'skipping')
+                        self.style.ERROR(f'Unknown platform "{platform_code}", skipping')
                     )
                     continue
                 if platform.sushicredentials_set.count() == 0:

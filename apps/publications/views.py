@@ -5,19 +5,13 @@ from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
-from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
-from core.permissions import (
-    AdminAccessForOrganization,
-    SuperuserOrAdminPermission,
-    ViewPlatformPermission,
-)
+from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import Count, Exists, FilteredRelation, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpResponseForbidden
 from hcube.api.models.aggregation import Count as CubeCount
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import replace_report_type_with_materialized
@@ -52,7 +46,6 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from tags.models import Tag
 
 from .filters import PlatformFilter
-from .logic.cleanup import delete_platform_data
 from .logic.use_cases import get_use_cases
 from .serializers import DetailedPlatformSerializer, PlatformSerializer, TitleSerializer
 from .tasks import delete_platform_data_task, erms_sync_platforms_task

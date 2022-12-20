@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from export.models import FlexibleDataExport
 
 from apps.export.tasks import delete_expired_flexible_data_exports_task
-from test_fixtures.scenarios.basic import clients, identities
+from test_fixtures.scenarios.basic import clients, identities  # noqa - fixtures
 
 
 @pytest.fixture

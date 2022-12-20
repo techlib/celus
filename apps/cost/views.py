@@ -1,7 +1,6 @@
 from core.permissions import (
     CanAccessOrganizationRelatedObjectPermission,
     CanPostOrganizationDataPermission,
-    OrganizationRequiredInDataForNonSuperusers,
     SuperuserOrAdminPermission,
 )
 from django.db.models import Sum

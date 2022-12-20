@@ -3,11 +3,9 @@ import pathlib
 from datetime import datetime, timedelta
 
 import pytest
-from core.models import UL_ORG_ADMIN
-from django.core.files import File
 from django.core.management import call_command
 from django.utils.timezone import now
-from sushi.models import SushiCredentials, SushiFetchAttempt
+from sushi.models import SushiFetchAttempt
 
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 

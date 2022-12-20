@@ -10,7 +10,7 @@ from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 from sushi.tests.conftest import counter_report_type, counter_report_type_named  # noqa
 
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.scenarios.basic import (  # noqa
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     data_sources,
     organizations,
@@ -46,7 +46,7 @@ class TestAttemptImport:
         with (Path(__file__).parent / "data/counter4/counter4_br2_one_month.tsv").open() as f:
 
             data_file = ContentFile(f.read())
-            data_file.name = f"something.tsv"
+            data_file.name = "something.tsv"
 
         fetch_attempt = SushiFetchAttempt.objects.create(
             credentials=creds,
@@ -117,7 +117,7 @@ class TestAttemptImport:
         with (Path(__file__).parent / "data/counter4/counter4_jr1_empty.tsv").open() as f:
 
             data_file = ContentFile(f.read())
-            data_file.name = f"something.tsv"
+            data_file.name = "something.tsv"
 
         fetch_attempt = FetchAttemptFactory.create(
             credentials=creds,
@@ -302,7 +302,7 @@ class TestAttemptImport:
         with (Path(__file__).parent / "data/counter5/C5_PR_test.json").open() as f:
 
             data_file = ContentFile(f.read())
-            data_file.name = f"C5_PR_test.json"
+            data_file.name = "C5_PR_test.json"
 
         fetch_attempt = FetchAttemptFactory.create(
             credentials=creds,

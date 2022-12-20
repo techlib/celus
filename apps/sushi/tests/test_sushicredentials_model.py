@@ -1,14 +1,13 @@
 import pytest
 from celus_nigiri.client import Sushi4Client, Sushi5Client
-from celus_nigiri.counter4 import Counter4ReportBase
 from celus_nigiri.counter5 import Counter5ReportBase
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN, Identity
-from core.tests.conftest import master_admin_identity, valid_identity
+from core.tests.conftest import master_admin_identity, valid_identity  # noqa - fixtures
 from django.utils import timezone
 from logs.models import AccessLog, ImportBatch, Metric
 from organizations.models import UserOrganization
 from publications.models import Platform
-from publications.tests.conftest import platforms
+from publications.tests.conftest import platforms  # noqa - fixture
 from pycounter.report import CounterReport
 from rest_framework.exceptions import PermissionDenied
 from sushi.logic.data_import import import_sushi_credentials
@@ -16,7 +15,7 @@ from sushi.models import AttemptStatus
 
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     data_sources,
     organizations,

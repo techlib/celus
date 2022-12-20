@@ -7,7 +7,7 @@ from modeltranslation.admin import TranslationAdmin
 
 from . import models
 from .models import MduState, ReportInterestMetric
-from .tasks import import_manual_upload_data, reprocess_mdu_task
+from .tasks import import_manual_upload_data
 
 
 @admin.register(models.OrganizationPlatform)

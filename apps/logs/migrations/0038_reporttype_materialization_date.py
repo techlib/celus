@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
             name='materialization_date',
             field=models.DateTimeField(
                 default=django.utils.timezone.now,
-                help_text='All data materialized before this data will be recomputed - can be used to force recomputation',
+                help_text='All data materialized before this data will be recomputed - can be '
+                'used to force recomputation',
             ),
         )
     ]

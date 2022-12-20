@@ -24,7 +24,8 @@ class Migration(migrations.Migration):
             name='is_generic',
             field=models.BooleanField(
                 default=False,
-                help_text='A generic chart will be used implicitly for reports which do not have a chart explicitly assigned',
+                help_text='A generic chart will be used implicitly for reports which do not have '
+                'a chart explicitly assigned',
             ),
         ),
         migrations.RunPython(set_some_charts_as_generic, migrations.RunPython.noop),

@@ -6,5 +6,4 @@ class LogsConfig(AppConfig):
 
     def ready(self):
         super().ready()
-        # noinspection PyUnresolvedReferences
-        from . import signals  # needed to register the signals
+        from . import signals  # noqa - needed to register the signals

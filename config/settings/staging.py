@@ -1,4 +1,4 @@
-from .base import *
+from .base import *  # noqa F403 F401
 
 ALLOWED_HOSTS = ['stats.test.czechelib.cz']
 LIVE_ERMS_AUTHENTICATION = True

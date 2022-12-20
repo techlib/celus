@@ -10,14 +10,10 @@ from logs.logic.materialized_interest import (
     _find_superseeded_import_batches,
     _find_unprocessed_batches,
     fast_compare_existing_and_new_records,
-    recompute_interest_by_batch,
     smart_interest_sync,
     sync_interest_for_import_batch,
 )
-from logs.logic.materialized_reports import (
-    create_materialized_accesslogs,
-    sync_materialized_reports,
-)
+from logs.logic.materialized_reports import create_materialized_accesslogs
 from logs.models import (
     AccessLog,
     ImportBatch,
@@ -27,7 +23,7 @@ from logs.models import (
     ReportMaterializationSpec,
     ReportType,
 )
-from organizations.tests.conftest import organizations
+from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Platform, PlatformInterestReport
 
 
@@ -224,7 +220,7 @@ class TestInterestRecomputationDetection:
         ib1 = ImportBatch.objects.create(
             organization=organization, platform=platform, report_type=report_type
         )
-        ib2 = ImportBatch.objects.create(
+        ImportBatch.objects.create(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -256,7 +252,7 @@ class TestInterestRecomputationDetection:
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         # now create the second one - this one is newer than PlatformInterestReport, so its ok
-        ib2 = ImportBatch.objects.create(
+        ImportBatch.objects.create(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -296,7 +292,7 @@ class TestInterestRecomputationDetection:
         pir.save()
         assert pir.last_modified > ib1.interest_timestamp
         # now create the second one - this one is newer than PlatformInterestReport, so its ok
-        ib2 = ImportBatch.objects.create(
+        ImportBatch.objects.create(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -348,7 +344,7 @@ class TestInterestRecomputationDetection:
         report_type2 = report_type_nd(1, short_name='rt2')  # type: ReportType
         assert report_type.pk != report_type2.pk
         # now define the interest
-        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ib1 = ImportBatch.objects.create(
             organization=organization,
             platform=platform,
@@ -360,7 +356,7 @@ class TestInterestRecomputationDetection:
         ReportInterestMetric.objects.create(
             report_type=report_type, metric=hit_metric, interest_group=ig
         )
-        ib2 = ImportBatch.objects.create(
+        ImportBatch.objects.create(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -415,7 +411,7 @@ class TestInterestRecomputationDetection:
         report_type = report_type_nd(1)  # type: ReportType
         interest_rt = report_type_nd(1, short_name='interest')
         # now define the interest
-        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ib1 = ImportBatch.objects.create(
             organization=organization,
             platform=platform,

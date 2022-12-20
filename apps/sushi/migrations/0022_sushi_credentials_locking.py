@@ -38,7 +38,8 @@ class Migration(migrations.Migration):
             name='outside_consortium',
             field=models.BooleanField(
                 default=False,
-                help_text='True if these credentials belong to access bought outside of the consortium - necessary for proper cost calculation',
+                help_text='True if these credentials belong to access bought outside of the '
+                'consortium - necessary for proper cost calculation',
             ),
         ),
     ]

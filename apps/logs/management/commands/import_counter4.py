@@ -1,4 +1,3 @@
-import json
 import logging
 
 from celus_nigiri.counter4 import Counter4JR1Report

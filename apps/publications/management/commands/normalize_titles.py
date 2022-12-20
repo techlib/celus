@@ -39,7 +39,7 @@ class Command(BaseCommand):
                     title.name = new_name
                     try:
                         title.save()
-                    except DatabaseError as e:
+                    except DatabaseError:
                         stats['errors'] += 1
         logger.info('Stats: %s', stats)
         if stats['errors']:

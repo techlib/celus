@@ -7,7 +7,7 @@ from logs.logic.clickhouse import (
     sync_accesslogs_with_clickhouse_superfast,
     sync_import_batch_with_clickhouse,
 )
-from logs.models import ImportBatch, ImportBatchSyncLog
+from logs.models import ImportBatch
 
 logger = logging.getLogger(__name__)
 

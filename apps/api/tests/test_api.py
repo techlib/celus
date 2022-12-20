@@ -29,7 +29,7 @@ class TestAPI:
                 'api_platform_report_data',
                 kwargs={'platform_id': root_platform.pk, 'report_type': tr_report.short_name},
             ),
-            HTTP_AUTHORIZATION=f'Api-Key RANDOM.value',
+            HTTP_AUTHORIZATION='Api-Key RANDOM.value',
         )
         assert resp.status_code == 401, 'invalid key'
 

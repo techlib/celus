@@ -13,7 +13,8 @@ class Migration(migrations.Migration):
             name='active',
             field=models.BooleanField(
                 default=True,
-                help_text='When turned off, this type of report will not be automatically downloaded',
+                help_text='When turned off, this type of report will not be automatically '
+                'downloaded',
             ),
         )
     ]

@@ -405,7 +405,7 @@ class TestTagClassConstraints:
     def test_owner_org_is_enforced(
         self, basic1, users, access_level_attr, access_level, is_owner_org_set, is_ok
     ):
-        tc = TagClassFactory.create()
+        TagClassFactory.create()
         other_access_level_attr = (
             'can_create_tags' if access_level_attr == 'can_modify' else 'can_modify'
         )

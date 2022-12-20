@@ -91,7 +91,7 @@ class TestFetchIntentionSplittingMigration:
             counter_report=counter_rt,
             credentials=credentials,
         )
-        fi1 = FetchIntention.objects.create(
+        fi1 = FetchIntention.objects.create(  # noqa: F841
             attempt=fa1,
             start_date=fa1.start_date,
             end_date=fa1.end_date,
@@ -106,7 +106,7 @@ class TestFetchIntentionSplittingMigration:
             counter_report=counter_rt,
             credentials=credentials,
         )
-        fi3 = FetchIntention.objects.create(
+        fi3 = FetchIntention.objects.create(  # noqa: F841
             attempt=fa3,
             start_date=fa3.start_date,
             end_date=fa3.end_date,
@@ -122,7 +122,7 @@ class TestFetchIntentionSplittingMigration:
             counter_report=counter_rt,
             credentials=credentials,
         )
-        fi4 = FetchIntention.objects.create(
+        fi4 = FetchIntention.objects.create(  # noqa: F841
             attempt=fa4,
             start_date=fa4.start_date,
             end_date=fa4.end_date,
@@ -131,7 +131,7 @@ class TestFetchIntentionSplittingMigration:
             harvest=h2,
         )
         # FetchIntention without FetchAttempt
-        fi5 = FetchIntention.objects.create(
+        fi5 = FetchIntention.objects.create(  # noqa: F841
             start_date='2020-01-01',
             end_date='2020-03-31',
             counter_report=counter_rt,
@@ -249,7 +249,7 @@ class TestFetchIntentionSplittingMigration:
             when_processed='2021-01-01',
             queue=queue,
         )
-        fi1_2 = FetchIntention.objects.create(
+        fi1_2 = FetchIntention.objects.create(  # noqa: F841
             attempt=fa1,
             start_date=fa1.start_date,
             end_date=fa1.end_date,
@@ -266,7 +266,7 @@ class TestFetchIntentionSplittingMigration:
             counter_report=counter_rt,
             credentials=credentials,
         )
-        fi3 = FetchIntention.objects.create(
+        fi3 = FetchIntention.objects.create(  # noqa: F841
             attempt=fa3,
             start_date=fa3.start_date,
             end_date=fa3.end_date,
@@ -283,7 +283,7 @@ class TestFetchIntentionSplittingMigration:
             counter_report=counter_rt,
             credentials=credentials,
         )
-        fi4 = FetchIntention.objects.create(
+        fi4 = FetchIntention.objects.create(  # noqa: F841
             attempt=fa4,
             start_date=fa4.start_date,
             end_date=fa4.end_date,
@@ -292,7 +292,7 @@ class TestFetchIntentionSplittingMigration:
             harvest=h2,
         )
         # FetchIntention without FetchAttempt
-        fi5 = FetchIntention.objects.create(
+        fi5 = FetchIntention.objects.create(  # noqa: F841
             start_date='2019-12-01',
             end_date='2020-02-28',
             counter_report=counter_rt,

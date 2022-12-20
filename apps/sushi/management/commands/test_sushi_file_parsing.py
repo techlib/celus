@@ -106,7 +106,8 @@ class Command(BaseCommand):
                     stats["wrong_sum"] += 1
                     if options["print"]:
                         print(
-                            f"WRONG SUM (SUM {log_sum}!={attempt['log_sum']}, COUNT {log_count}!={attempt['log_count']})"
+                            f"WRONG SUM (SUM {log_sum}!={attempt['log_sum']}, COUNT "
+                            f"{log_count}!={attempt['log_count']})"
                         )
 
         print(stats)

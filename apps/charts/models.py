@@ -2,7 +2,7 @@ from core.models import DataSource
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from logs.models import AccessLog, Dimension, DimensionText, Metric, ReportType
+from logs.models import AccessLog, Dimension, DimensionText, ReportType
 
 
 class ReportDataView(models.Model):

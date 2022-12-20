@@ -158,9 +158,9 @@ class CachedQuery(models.Model):
         """
         Re-evaluates the stored queryset and stores the new result
 
-        :arg catch_refresh_errors: when True, potential `get_fresh_queryset` exceptions will be caught and re-raised
-          as `RenewError`. This is useful when renewing querysets from old Django versions which raise errors due to
-          queryset interface changes.
+        :arg catch_refresh_errors: when True, potential `get_fresh_queryset` exceptions will be
+        caught and re-raised as `RenewError`. This is useful when renewing querysets from old
+        Django versions which raise errors due to queryset interface changes.
         """
         try:
             queryset = self.get_fresh_queryset()
@@ -197,7 +197,8 @@ class CachedQuery(models.Model):
         """
         Returns the cached queryset including all results
 
-        :arg record_hit: When true, the `hit_count` field will be increased and `last_queried` updated
+        :arg record_hit: When true, the `hit_count` field will be increased and `last_queried`
+                         updated
         """
         if record_hit:
             self.last_queried = now()

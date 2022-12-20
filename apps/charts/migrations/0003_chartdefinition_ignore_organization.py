@@ -13,7 +13,8 @@ class Migration(migrations.Migration):
             name='ignore_organization',
             field=models.BooleanField(
                 default=False,
-                help_text='When checked, this chart will ignore selected organization. Thus it allows creation of charts with organization comparison.',
+                help_text='When checked, this chart will ignore selected organization. Thus it '
+                'allows creation of charts with organization comparison.',
             ),
         )
     ]

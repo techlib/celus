@@ -719,7 +719,7 @@ class FlexibleDataSlicer:
                 value = {'start': start, 'end': end}
             return filter_class(field.name, *date_range_from_params(value))
         elif filter_class is TagDimensionFilter:
-            dimension = dimension[len('tag__') :]
+            dimension = dimension[len('tag__') :]  # noqa E203
             return filter_class(dimension, value)
         else:
             return filter_class(dimension, value)

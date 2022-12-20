@@ -5,7 +5,7 @@ import pytest
 from api.models import OrganizationAPIKey
 from core.models import DataSource, Identity
 from core.tests.conftest import authenticated_client  # noqa - fixtures
-from core.tests.conftest import (
+from core.tests.conftest import (  # noqa - fixtures
     authentication_headers,
     invalid_identity,
     master_user_client,
@@ -99,8 +99,8 @@ class TestPlatformAPI:
         self, authenticated_client, organizations, platforms, valid_identity
     ):
         """
-        Test that sushi credentials based link between organization and platform is enough to make the platform
-        accessible through the API
+        Test that sushi credentials based link between organization and platform is enough to make
+        the platform accessible through the API
         """
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         UserOrganization.objects.create(user=identity.user, organization=organizations["root"])
@@ -868,7 +868,8 @@ class TestPlatformTitleAPI:
         self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
     ):
         """
-        Create two identical sets of access logs but for different platforms and see what the overlap would be
+        Create two identical sets of access logs but for different platforms and see what the
+        overlap would be
         """
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
         organization = accesslogs_with_interest['organization']

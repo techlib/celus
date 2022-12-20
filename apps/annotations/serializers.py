@@ -1,10 +1,8 @@
 from core.models import UL_CONS_STAFF, User
-from django.utils.log import RequireDebugFalse
-from kombu.asynchronous.http.curl import DEFAULT_USER_AGENT
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
-from publications.serializers import PlatformSerializer, SimplePlatformSerializer
+from publications.serializers import SimplePlatformSerializer
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import BooleanField, CurrentUserDefault, HiddenField, ReadOnlyField
 from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField

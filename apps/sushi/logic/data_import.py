@@ -45,7 +45,7 @@ def import_sushi_credentials(
         for cr in SushiCredentials.objects.all()
     }
     platform_objects = Platform.objects.all()
-    source_id = lambda pl: pl.source.organization_id if pl.source else None
+    source_id = lambda pl: pl.source.organization_id if pl.source else None  # noqa: E731
     platforms = {(pl.short_name, source_id(pl)): pl for pl in platform_objects}
     platforms.update({(pl.name, source_id(pl)): pl for pl in platform_objects})
     organization_objects = Organization.objects.all()

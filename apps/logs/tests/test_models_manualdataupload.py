@@ -1,17 +1,15 @@
 import pytest
 from logs.logic.custom_import import custom_import_preflight_check
 from logs.models import ManualDataUpload
-from logs.tasks import prepare_preflight
 
 from test_fixtures.entities.logs import (
     AccessLogFactory,
     ImportBatchFactory,
     ManualDataUploadFactory,
     MduState,
-    MetricFactory,
 )
 from test_fixtures.entities.organizations import OrganizationAltNameFactory, OrganizationFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     data_sources,
     metrics,
     organizations,

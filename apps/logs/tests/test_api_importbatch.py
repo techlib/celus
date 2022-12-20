@@ -2,7 +2,7 @@ import pytest
 from charts.models import ReportDataView
 from django.urls import reverse
 from logs.logic.materialized_interest import sync_interest_by_import_batches
-from logs.models import ImportBatch, InterestGroup, Metric, ReportInterestMetric
+from logs.models import ImportBatch, InterestGroup, ReportInterestMetric
 from publications.logic.fake_data import TitleFactory
 from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixture

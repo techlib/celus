@@ -20,7 +20,7 @@ repos:
 
       - id: isort
         name: isort formatter
-        entry: poetry run isort -c .
+        entry: poetry run isort -c
         language: system
         types: [python]
 
@@ -36,6 +36,13 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+
+  - repo: https://github.com/pycqa/flake8
+    rev: '6.0.0'
+    hooks:
+      - id: flake8
+
+
 #  - repo: https://github.com/prettier/prettier
 #    rev: "2.1.2" # Use the sha or tag you want to point at
 #    hooks:

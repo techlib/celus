@@ -8,7 +8,6 @@ from charts.serializers import (
 )
 from core.permissions import SuperuserOrAdminPermission
 from core.prometheus import report_access_time_summary, report_access_total_counter
-from django.utils.translation import activate
 from logs.logic.queries import BadRequestError, StatsComputer, TooMuchDataError
 from logs.models import ReportType
 from logs.serializers import DimensionSerializer, MetricSerializer

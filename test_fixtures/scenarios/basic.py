@@ -529,7 +529,6 @@ def client_by_user_type(clients, organizations, basic1):
             return clients["su"], organizations["branch"]
         else:
             raise ValueError(f'Unsupported user_type: {user_type}')
-        return identity, org
 
     return fn
 
@@ -600,7 +599,9 @@ __all__ = [
     'metrics',
     'organizations',
     'platforms',
+    'parser_definitions',
     'report_types',
     'schedulers',
     'users',
+    'verified_credentials',
 ]

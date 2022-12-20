@@ -1,5 +1,5 @@
 import pytest
-from core.tests.conftest import site
+from core.tests.conftest import site  # noqa - fixture
 from django.urls import reverse
 
 

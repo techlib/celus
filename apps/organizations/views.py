@@ -13,7 +13,7 @@ from core.tasks import async_mail_admins
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection, transaction
-from django.db.models import Count, Exists, F, Max, Min, OuterRef, Q, Sum, Value
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
 from django.urls import reverse

@@ -44,7 +44,7 @@ class TestDataDeleting:
         assert AccessLog.objects.count() > 0
         orig_count = AccessLog.objects.count()
         with pytest.raises(ModelUsageError):
-            al = AccessLog.objects.all().delete()
+            AccessLog.objects.all().delete()
         assert AccessLog.objects.count() == orig_count, 'still the same number of accesslogs'
 
     def test_accesslog_cannot_be_deleted_from_related_query_set(

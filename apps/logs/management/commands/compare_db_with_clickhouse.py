@@ -3,7 +3,6 @@ import sys
 from time import time
 
 from django.core.management.base import BaseCommand
-from django.db.transaction import atomic
 from logs.logic.clickhouse import compare_db_with_clickhouse, deal_with_comparison_results
 
 logger = logging.getLogger(__name__)

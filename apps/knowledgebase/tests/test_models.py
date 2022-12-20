@@ -7,7 +7,6 @@ from unittest.mock import patch
 import pytest
 import requests_mock
 from core.models import DataSource
-from django.conf import settings
 from django.utils.timezone import now
 from knowledgebase.models import (
     ParserDefinitionImportAttempt,
@@ -16,14 +15,13 @@ from knowledgebase.models import (
     RouterSyncAttempt,
 )
 from logs.models import ReportType
-from nibbler.models import ParserDefinition
 from publications.models import Platform
 
 from test_fixtures.entities.api import OrganizationAPIKeyFactory
 from test_fixtures.entities.data_souces import DataSourceFactory
 from test_fixtures.entities.logs import ImportBatchFactory
 from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     data_sources,
     metrics,
     organizations,
@@ -520,13 +518,13 @@ class TestPlatformImportAttempt:
 @pytest.mark.django_db
 class TestRouterSyncAttempt:
     def test_present_absent(self, organizations):
-        ds1 = DataSourceFactory(
+        DataSourceFactory(
             short_name='first-data-source',
             type=DataSource.TYPE_KNOWLEDGEBASE,
             url='https://first.data.source',
             token="1" * 64,
         )
-        ds2 = DataSourceFactory(
+        DataSourceFactory(
             short_name='second-data-source',
             type=DataSource.TYPE_KNOWLEDGEBASE,
             url='https://second.data.source',
@@ -565,13 +563,13 @@ class TestRouterSyncAttempt:
         ), "Deletion of a token should add ABSENT attempt"
 
     def test_propagete_prefix(self, organizations):
-        ds1 = DataSourceFactory(
+        DataSourceFactory(
             short_name='first-data-source',
             type=DataSource.TYPE_KNOWLEDGEBASE,
             url='https://first.data.source',
             token="1" * 64,
         )
-        ds2 = DataSourceFactory(
+        DataSourceFactory(
             short_name='second-data-source',
             type=DataSource.TYPE_KNOWLEDGEBASE,
             url='https://second.data.source',

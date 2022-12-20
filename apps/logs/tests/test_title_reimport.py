@@ -48,9 +48,12 @@ class TestTitleReimport:
         ImportBatchFullFactory.create(create_accesslogs__titles=[title_rem])
         ImportBatchFullFactory.create(create_accesslogs__titles=[title_rem_no_match])
         assert title_rem.accesslog_set.count() > 0, 'foo title has usage'
-        count_logs = lambda pk: ch_backend.get_one_record(
-            AccessLogCube.query().filter(target_id=pk).aggregate(count=Count())
-        ).count
+
+        def count_logs(pk):
+            return ch_backend.get_one_record(
+                AccessLogCube.query().filter(target_id=pk).aggregate(count=Count())
+            ).count
+
         if settings.CLICKHOUSE_SYNC_ACTIVE:
             assert count_logs(title_rem.pk) > 0, 'CH - foo title has usage'
             assert not count_logs(title_new.pk), 'CH - new title has no usage'

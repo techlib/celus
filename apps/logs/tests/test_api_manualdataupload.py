@@ -11,7 +11,7 @@ from logs.tasks import import_manual_upload_data, prepare_preflight
 from test_fixtures.entities.logs import MetricFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.scenarios.basic import clients  # noqa
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
     counter_report_types,
     data_sources,

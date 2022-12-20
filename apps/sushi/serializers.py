@@ -1,17 +1,14 @@
-from core.logic.dates import month_end
 from core.models import UL_CONS_STAFF
-from django.utils import timezone
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
-from publications.serializers import PlatformSerializer, SimplePlatformSerializer
+from publications.serializers import PlatformSerializer
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import (
     BooleanField,
     CharField,
     ChoiceField,
     CurrentUserDefault,
-    DateField,
     DateTimeField,
     HiddenField,
     IntegerField,
@@ -19,12 +16,7 @@ from rest_framework.fields import (
     SerializerMethodField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import (
-    ModelSerializer,
-    Serializer,
-    SlugRelatedField,
-    ValidationError,
-)
+from rest_framework.serializers import ModelSerializer, Serializer, SlugRelatedField
 
 from .models import (
     COUNTER_REPORTS,

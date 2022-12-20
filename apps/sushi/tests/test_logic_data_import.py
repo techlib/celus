@@ -4,7 +4,6 @@ from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Platform
 from sushi.logic.data_import import import_sushi_credentials
 
-from test_fixtures.entities.data_souces import DataSourceFactory
 from test_fixtures.entities.platforms import PlatformFactory
 
 from ..models import SushiCredentials

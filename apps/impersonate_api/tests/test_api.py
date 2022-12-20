@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     counter_report_types,

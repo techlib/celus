@@ -1,10 +1,10 @@
 import os
 from dataclasses import dataclass
-from typing import Generator, List, Tuple
+from typing import Generator
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Case, Exists, F, OuterRef, Q, QuerySet, When
+from django.db.models import Exists, F, OuterRef, Q, QuerySet
 from django.db.models.expressions import CombinedExpression
 from django.db.transaction import atomic
 from logs.exceptions import DataStructureError, SourceFileMissingError

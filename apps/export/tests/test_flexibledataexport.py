@@ -88,7 +88,8 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Platform,Tags,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,B / Metric 2,B / Metric 3',
+            'Platform,Tags,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,B / Metric 2,B / '
+            'Metric 3',
             'Platform 1,,12294,13590,14886,12330,13626,14922',
             'Platform 2,,16182,17478,18774,16218,17514,18810',
             'Platform 3,,20070,21366,22662,20106,21402,22698',
@@ -98,7 +99,8 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer2, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Metric,A / Platform 1,A / Platform 2,A / Platform 3,B / Platform 1,B / Platform 2,B / Platform 3',
+            'Metric,A / Platform 1,A / Platform 2,A / Platform 3,B / Platform 1,B / Platform 2,B /'
+            ' Platform 3',
             'Metric 1,12294,16182,20070,12330,16218,20106',
             'Metric 2,13590,17478,21366,13626,17514,21402',
             'Metric 3,14886,18774,22662,14922,18810,22698',
