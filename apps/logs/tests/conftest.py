@@ -5,7 +5,6 @@ import faker
 import pytest
 from celus_nigiri.counter5 import CounterRecord
 from celus_nigiri.utils import parse_date_fuzzy
-
 from logs.logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
 from logs.models import (
     AccessLog,
@@ -20,6 +19,7 @@ from organizations.models import Organization, UserOrganization
 from publications.models import Platform, Title
 from tags.logic.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import AccessibleBy, TagScope
+
 from test_fixtures.scenarios.basic import users  # noqa - fixture
 
 

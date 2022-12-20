@@ -13,8 +13,6 @@ from django.db.models.base import ModelBase
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from mptt.models import MPTTModelBase
-
 from logs.logic.export_utils import (
     CSVListWriter,
     DictWriter,
@@ -25,6 +23,7 @@ from logs.logic.export_utils import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import AccessLog, DimensionText, ReportType
+from mptt.models import MPTTModelBase
 from organizations.models import Organization
 from tags.models import Tag, TagScope
 

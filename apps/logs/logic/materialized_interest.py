@@ -4,16 +4,15 @@ Stuff related to the artificial (materialized) report type 'interest' and its co
 import logging
 from collections import Counter
 from time import time
-from typing import List, Dict, Iterable, Set
-
-from django.conf import settings
-from django.db.models import Sum, Count, Max, F, Q, OuterRef, Subquery, Exists, Min
-from django.db.transaction import atomic, on_commit
-from django.utils.timezone import now
+from typing import Dict, Iterable, List, Set
 
 from core.task_support import cache_based_lock
-from logs.constants import ACTION_INTEREST_SMART_SYNC, ACTION_INTEREST_CHANGE
-from logs.models import ReportType, AccessLog, DimensionText, ImportBatch, Metric, LastAction
+from django.conf import settings
+from django.db.models import Count, Exists, F, Max, Min, OuterRef, Q, Subquery, Sum
+from django.db.transaction import atomic, on_commit
+from django.utils.timezone import now
+from logs.constants import ACTION_INTEREST_CHANGE, ACTION_INTEREST_SMART_SYNC
+from logs.models import AccessLog, DimensionText, ImportBatch, LastAction, Metric, ReportType
 from publications.models import Platform
 
 logger = logging.getLogger(__name__)

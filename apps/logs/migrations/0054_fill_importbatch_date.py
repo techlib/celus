@@ -2,7 +2,7 @@
 import sys
 
 from django.db import migrations
-from django.db.models import Count, Min, Max, F
+from django.db.models import Count, F, Max, Min
 
 
 def fix_extra_month_in_jr2_data(apps, schema_editor):
@@ -42,7 +42,7 @@ def fix_extra_month_in_jr2_data(apps, schema_editor):
         # delete access logs for which the date does not match the fetch attempt
         AccessLog.objects.filter(import_batch_id=ib_id).exclude(date=fa.start_date).delete()
         if settings.CLICKHOUSE_SYNC_ACTIVE:
-            from logs.cubes import ch_backend, AccessLogCube
+            from logs.cubes import AccessLogCube, ch_backend
 
             ch_backend.delete_records(
                 AccessLogCube.query().filter(import_batch_id=ib_id, date__not_in=[fa.start_date])
@@ -79,7 +79,7 @@ def fix_unrequested_data_in_import_batches(apps, schema_editor):
         # delete access logs for which the date does not match the fetch attempt
         AccessLog.objects.filter(import_batch_id=ib.pk).exclude(date=ib.date).delete()
         if settings.CLICKHOUSE_SYNC_ACTIVE:
-            from logs.cubes import ch_backend, AccessLogCube
+            from logs.cubes import AccessLogCube, ch_backend
 
             ch_backend.delete_records(
                 AccessLogCube.query().filter(import_batch_id=ib.pk, date__not_in=[ib.date])

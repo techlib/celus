@@ -4,7 +4,6 @@ from collections import Counter
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.db.transaction import atomic
-
 from sushi.models import CounterReportType, SushiCredentials
 
 logger = logging.getLogger(__name__)

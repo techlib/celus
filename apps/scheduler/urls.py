@@ -1,7 +1,7 @@
 from rest_framework.routers import SimpleRouter
 from rest_framework_nested.routers import NestedSimpleRouter
 
-from .views import HarvestViewSet, HarvestIntentionViewSet, IntentionViewSet
+from .views import HarvestIntentionViewSet, HarvestViewSet, IntentionViewSet
 
 router = SimpleRouter()
 router.register('harvest', HarvestViewSet, basename='harvest')

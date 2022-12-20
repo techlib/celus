@@ -1,10 +1,8 @@
 import factory
-
-from faker import Faker
 from core.models import Identity
+from faker import Faker
 
 from .users import UserFactory
-
 
 fake = Faker()
 

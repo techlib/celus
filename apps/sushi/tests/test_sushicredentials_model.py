@@ -13,6 +13,7 @@ from pycounter.report import CounterReport
 from rest_framework.exceptions import PermissionDenied
 from sushi.logic.data_import import import_sushi_credentials
 from sushi.models import AttemptStatus
+
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.scenarios.basic import (

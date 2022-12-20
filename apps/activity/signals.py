@@ -1,7 +1,6 @@
+from activity.models import UserActivity
 from django.contrib.auth import user_logged_in
 from django.dispatch import receiver
-
-from activity.models import UserActivity
 
 
 @receiver(user_logged_in)

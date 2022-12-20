@@ -1,10 +1,8 @@
 from pathlib import Path
 
 import pytest
-
 from publications.logic.fake_data import TitleFactory
 from tags.logic.scopus_title_list import ScopusTitleListTagger
-
 
 code_file = Path(__file__).parent / '../../../test-data/tagging_batch/scopus-codes-head.csv'
 title_list_file = Path(__file__).parent / '../../../test-data/tagging_batch/scopus-topics-test.csv'

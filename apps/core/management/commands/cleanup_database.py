@@ -1,17 +1,16 @@
 import logging
 from collections import Counter
 
+from activity.models import UserActivity
+from annotations.models import Annotation
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from django_celery_results.models import TaskResult
-
-from activity.models import UserActivity
-from annotations.models import Annotation
 from export.models import FlexibleDataExport
-from knowledgebase.models import RouterSyncAttempt, PlatformImportAttempt
-from logs.models import ImportBatch, DimensionText, Dimension
+from knowledgebase.models import PlatformImportAttempt, RouterSyncAttempt
+from logs.models import Dimension, DimensionText, ImportBatch
 from organizations.models import Organization
 from publications.models import Title
 from recache.models import CachedQuery

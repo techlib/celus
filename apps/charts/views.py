@@ -1,15 +1,6 @@
 from time import monotonic
 
-from django.utils.translation import activate
-from pandas import DataFrame
-from rest_framework import status, serializers
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-
-from charts.models import ChartDefinition, ReportViewToChartType
-from charts.models import ReportDataView
+from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from charts.serializers import (
     ChartDefinitionSerializer,
     ReportDataViewSerializer,
@@ -17,9 +8,16 @@ from charts.serializers import (
 )
 from core.permissions import SuperuserOrAdminPermission
 from core.prometheus import report_access_time_summary, report_access_total_counter
-from logs.logic.queries import StatsComputer, TooMuchDataError, BadRequestError
+from django.utils.translation import activate
+from logs.logic.queries import BadRequestError, StatsComputer, TooMuchDataError
 from logs.models import ReportType
 from logs.serializers import DimensionSerializer, MetricSerializer
+from pandas import DataFrame
+from rest_framework import serializers, status
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 
 class ChartDefinitionViewSet(ReadOnlyModelViewSet):

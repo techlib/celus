@@ -1,12 +1,12 @@
 from collections import Counter
 
 import pytest
+from celus_nigiri.counter5 import Counter5ReportBase
 from django.db.models import Count
-
 from logs.logic.data_import import TitleManager, TitleRec
 from logs.logic.validation import normalize_isbn, normalize_title
-from celus_nigiri.counter5 import Counter5ReportBase
 from publications.models import Title
+
 from test_fixtures.entities.counter_records import CounterRecordFactory
 
 

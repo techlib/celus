@@ -2,8 +2,7 @@ import logging
 from time import time
 
 from django.core.management.base import BaseCommand
-from django.db.models import Q, F
-
+from django.db.models import F, Q
 from logs.logic.clickhouse import (
     sync_accesslogs_with_clickhouse_superfast,
     sync_import_batch_with_clickhouse,

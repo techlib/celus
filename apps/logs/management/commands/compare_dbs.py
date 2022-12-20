@@ -7,11 +7,10 @@ import xlsxwriter
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import BaseCommand
 from django.db import models
-from django.db.models import Q, Sum, Count
+from django.db.models import Count, Q, Sum
 from django.utils.translation import activate
-
-from logs.models import ReportType, AccessLog, ManualDataUpload, ImportBatch
-from sushi.models import SushiFetchAttempt, CounterReportType
+from logs.models import AccessLog, ImportBatch, ManualDataUpload, ReportType
+from sushi.models import CounterReportType, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
 

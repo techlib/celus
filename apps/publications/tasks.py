@@ -4,7 +4,6 @@ Celery tasks
 import logging
 
 import celery
-
 from core.logic.error_reporting import email_if_fails
 from core.models import TaskProgress
 from organizations.models import Organization

@@ -7,6 +7,7 @@ from django.core.files.base import ContentFile
 from django.urls import reverse
 from logs.models import ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
+
 from test_fixtures.entities.logs import MetricFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.scenarios.basic import clients  # noqa

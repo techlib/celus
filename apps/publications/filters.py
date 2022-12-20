@@ -1,6 +1,6 @@
-from rest_framework import filters
-from django.db import models
 from core.models import DataSource
+from django.db import models
+from rest_framework import filters
 
 
 class PlatformFilter(filters.BaseFilterBackend):

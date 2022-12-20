@@ -1,12 +1,10 @@
 import factory
-
-from faker import Faker
 from annotations.models import Annotation
+from faker import Faker
 
 from .organizations import OrganizationFactory
 from .platforms import PlatformFactory
 from .users import UserFactory
-
 
 fake = Faker()
 

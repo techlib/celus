@@ -1,6 +1,6 @@
-from modeltranslation.translator import translator, TranslationOptions
-
 from charts.models import ChartDefinition
+from modeltranslation.translator import TranslationOptions, translator
+
 from .models import ReportDataView
 
 

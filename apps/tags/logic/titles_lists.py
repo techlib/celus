@@ -8,14 +8,14 @@ from dataclasses import dataclass, field
 from functools import reduce
 from gettext import ngettext
 from io import BytesIO
-from typing import Any, BinaryIO, Callable, Dict, Generator, IO, Iterable, Optional, Set, Tuple
+from typing import IO, Any, BinaryIO, Callable, Dict, Generator, Iterable, Optional, Set, Tuple
 
 from django.db.models import Q
-
-from config import settings
 from logs.logic.data_import import TitleRec
 from logs.logic.validation import normalize_isbn, normalize_issn
 from publications.models import Title
+
+from config import settings
 
 
 @dataclass

@@ -1,10 +1,9 @@
 import logging
 
+from core.models import DataSource
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.transaction import atomic
-
-from core.models import DataSource
 from logs.logic.reimport import reimport_import_batch_with_fa
 from logs.models import ImportBatch
 from publications.models import Platform, PlatformInterestReport

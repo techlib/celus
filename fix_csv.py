@@ -1,7 +1,7 @@
 import argparse
 import csv
-from io import StringIO
 import sys
+from io import StringIO
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

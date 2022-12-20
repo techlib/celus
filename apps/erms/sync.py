@@ -6,9 +6,8 @@ and an external source
 from collections import Counter
 from enum import Enum
 
-from django.db import models
-
 from core.models import DataSource
+from django.db import models
 
 
 class SyncerError(Exception):

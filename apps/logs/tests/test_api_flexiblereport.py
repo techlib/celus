@@ -5,6 +5,7 @@ from logs.models import FlexibleReport
 from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations  # noqa
 from tags.logic.fake_data import TagForTitleFactory
+
 from test_fixtures.scenarios.basic import users  # noqa
 
 

@@ -1,12 +1,10 @@
 import factory
-
 from factory.fuzzy import FuzzyChoice
 from faker import Faker
-from sushi.models import SushiCredentials, COUNTER_VERSIONS
+from sushi.models import COUNTER_VERSIONS, SushiCredentials
 
 from .organizations import OrganizationFactory
 from .platforms import PlatformFactory
-
 
 fake = Faker()
 

@@ -1,9 +1,9 @@
 import logging
 
+from core.models import DataSource
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 
-from core.models import DataSource
 from ...logic.sync import sync_identities_with_erms, sync_users_with_erms
 
 logger = logging.getLogger(__name__)

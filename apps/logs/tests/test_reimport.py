@@ -1,11 +1,10 @@
 from collections import Counter
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 import pytest
-from hcube.api.models.aggregation import Sum as HSum
-
 from core.logic.dates import month_start
-from logs.cubes import ch_backend, AccessLogCube
+from hcube.api.models.aggregation import Sum as HSum
+from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.reimport import (
     find_import_batches_to_reimport,
     reimport_import_batch_with_fa,
@@ -14,7 +13,8 @@ from logs.logic.reimport import (
 from logs.models import ImportBatch, ManualDataUpload, MduState
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from scheduler.models import FetchIntention
-from sushi.models import SushiFetchAttempt, AttemptStatus
+from sushi.models import AttemptStatus, SushiFetchAttempt
+
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory
@@ -185,9 +185,10 @@ class TestReimport:
             assert self._clickhouse_ib_sum(old_ib_id) > 0, "there is data in the original IB in CH"
 
         # we do not have the source file, etc. so we mock the `import_one_sushi_attempt` function
-        import logs.logic.reimport as reimport_module
         import os.path
+
         import django.db.models.fields.files
+        import logs.logic.reimport as reimport_module
 
         monkeypatch.setattr(reimport_module, 'import_one_sushi_attempt', import_one_attempt_mock)
         monkeypatch.setattr(os.path, 'isfile', lambda x: True)
@@ -223,9 +224,10 @@ class TestReimport:
 
         # we do not have the source file, etc. so we mock the `import_counter_records` fn
         # and the `data_to_records` method
-        import logs.logic.custom_import as module
         import os.path
+
         import django.db.models.fields.files
+        import logs.logic.custom_import as module
 
         monkeypatch.setattr(module, 'import_counter_records', import_counter_records_mock)
         monkeypatch.setattr(ManualDataUpload, 'data_to_records', lambda x: [])
@@ -262,9 +264,10 @@ class TestReimport:
         old_ib_id = reimport.reimportable[0].pk
 
         # we do not have the source file, etc. so we mock the `import_one_sushi_attempt` function
-        import logs.logic.reimport as reimport_module
         import os.path
+
         import django.db.models.fields.files
+        import logs.logic.reimport as reimport_module
 
         monkeypatch.setattr(reimport_module, 'import_one_sushi_attempt', import_one_attempt_mock)
         monkeypatch.setattr(os.path, 'isfile', lambda x: True)
@@ -375,9 +378,10 @@ class TestReimport:
         # now really try the reimport to see if it really works
         # we do not have the source file, etc. so we mock the `import_counter_records` fn
         # and the `data_to_records` method
-        import logs.logic.custom_import as module
         import os.path
+
         import django.db.models.fields.files
+        import logs.logic.custom_import as module
 
         monkeypatch.setattr(module, 'import_counter_records', import_counter_records_mock)
         monkeypatch.setattr(ManualDataUpload, 'data_to_records', lambda x: [])

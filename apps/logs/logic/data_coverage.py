@@ -1,9 +1,8 @@
 from datetime import date
 from typing import Dict, Iterable, Optional, Tuple
 
-from django.db.models import Count, Exists, Max, Min, OuterRef, Q, QuerySet, Subquery, Sum, Value
-
 from core.logic.dates import months_in_range
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q, QuerySet, Subquery, Sum, Value
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform, ReportType
 from organizations.models import Organization
 from publications.models import Platform, PlatformTitle, Title

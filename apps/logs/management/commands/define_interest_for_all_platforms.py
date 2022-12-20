@@ -3,7 +3,6 @@ from collections import Counter
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-
 from publications.models import Platform
 
 logger = logging.getLogger(__name__)

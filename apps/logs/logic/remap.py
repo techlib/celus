@@ -1,4 +1,4 @@
-from ..models import DimensionText, Dimension
+from ..models import Dimension, DimensionText
 
 
 def remap_dicts(dimension: Dimension, records: [dict], key):

@@ -1,7 +1,6 @@
 import pytest
 from django.conf import settings
 from hcube.api.models.aggregation import Count as HCount
-
 from logs.cubes import AccessLogCube, ch_backend
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform
 from organizations.models import Organization
@@ -9,6 +8,7 @@ from publications.logic.cleanup import delete_platform_data
 from publications.models import PlatformTitle
 from scheduler.models import FetchIntention
 from sushi.models import SushiFetchAttempt
+
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory

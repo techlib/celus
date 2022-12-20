@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from core.models import Identity, User
 from core.tests.conftest import authenticated_client  # noqa - fixtures
@@ -6,8 +8,8 @@ from django.urls import reverse
 from logs.models import AccessLog, ImportBatch, Metric
 from organizations.models import Organization, UserOrganization
 from publications.tests.conftest import interest_rt  # noqa - fixture
+
 from test_fixtures.scenarios.basic import clients, identities, users
-from unittest.mock import patch
 
 
 @pytest.mark.django_db

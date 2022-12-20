@@ -1,12 +1,11 @@
+from deployment.models import FooterImage, SiteLogo
+from deployment.serializers import FooterImageSerializer, SiteLogoSerializer, SiteSerializer
+from django.conf import settings
 from django.contrib.sites.models import Site
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
-
-from django.conf import settings
-from deployment.models import FooterImage, SiteLogo
-from deployment.serializers import FooterImageSerializer, SiteLogoSerializer, SiteSerializer
 
 
 class FooterImageViewSet(ReadOnlyModelViewSet):

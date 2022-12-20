@@ -3,8 +3,8 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.utils.timezone import now
+from recache.models import DEFAULT_LIFETIME, DEFAULT_TIMEOUT, CachedQuery, RenewalError
 
-from recache.models import CachedQuery, DEFAULT_TIMEOUT, RenewalError, DEFAULT_LIFETIME
 from test_fixtures.entities.users import UserFactory
 
 User = get_user_model()

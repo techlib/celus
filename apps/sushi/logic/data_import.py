@@ -1,14 +1,13 @@
 import csv
-from collections import Counter
 import logging
+from collections import Counter
 from typing import Optional
 
 import reversion
-
-from ..models import SushiCredentials
 from organizations.models import Organization
 from publications.models import Platform
 
+from ..models import SushiCredentials
 
 logger = logging.getLogger(__name__)
 

@@ -4,12 +4,12 @@ from dataclasses import dataclass, field
 from itertools import chain
 from typing import Dict, List, Set
 
+from core.context_managers import needs_clickhouse_sync
 from django.db.models import F, Q, Sum
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from hcube.api.models.aggregation import Sum as HSum
 
-from core.context_managers import needs_clickhouse_sync
 from ..cubes import AccessLogCube, ch_backend
 from ..models import AccessLog, ImportBatch, ImportBatchSyncLog
 

@@ -1,32 +1,31 @@
 import pytest
-from django.urls import reverse
-
 from charts.models import ReportDataView
+from django.urls import reverse
 from logs.logic.materialized_interest import sync_interest_by_import_batches
-from logs.models import ImportBatch, ReportInterestMetric, Metric, InterestGroup
+from logs.models import ImportBatch, InterestGroup, Metric, ReportInterestMetric
 from publications.logic.fake_data import TitleFactory
 from publications.models import PlatformInterestReport
+from publications.tests.conftest import interest_rt  # noqa - fixture
+
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import (
-    ManualDataUploadFactory,
     ImportBatchFullFactory,
+    ManualDataUploadFactory,
     MetricFactory,
 )
 from test_fixtures.entities.scheduler import FetchIntentionFactory
-
 from test_fixtures.scenarios.basic import (  # noqa
-    users,
-    report_types,
+    clients,
     counter_report_types,
+    credentials,
+    data_sources,
+    identities,
     organizations,
     platforms,
-    data_sources,
-    clients,
-    identities,
-    credentials,
+    report_types,
+    users,
 )
-from publications.tests.conftest import interest_rt  # noqa - fixture
 
 
 @pytest.mark.django_db

@@ -1,5 +1,4 @@
 import pytest
-
 from core.models import DataSource
 from erms.sync import ERMSObjectSyncer
 from publications.logic.sync import PlatformSyncer

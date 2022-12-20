@@ -1,14 +1,13 @@
-from typing import Tuple, Optional, Union
+from typing import Optional, Tuple, Union
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
-from django.db.models import ExpressionWrapper, BooleanField, Q
+from django.db.models import BooleanField, ExpressionWrapper, Q
 from django.utils.timezone import now
-
 from export.enums import FileFormat
-from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 from logs.logic.reporting.export import FlexibleDataExcelExporter, FlexibleDataZipCSVExporter
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 
 
 class AnnotateObsoleteQueryset(models.QuerySet):

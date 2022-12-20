@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-
 from publications.logic.sync import erms_sync_platforms
 
 

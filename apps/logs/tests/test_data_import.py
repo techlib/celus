@@ -3,15 +3,16 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from django.db.models import Count, Sum
-from django.urls import reverse
-
-from logs.models import ReportType, AccessLog, DimensionText, ImportBatch
 from celus_nigiri.counter4 import Counter4BR2Report
 from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
-from organizations.tests.conftest import organizations, organization_random  # noqa - fixture
-from publications.models import Title, PlatformTitle
-from test_fixtures.entities.logs import ManualDataUploadFullFactory, ImportBatchFullFactory
+from django.db.models import Count, Sum
+from django.urls import reverse
+from logs.models import AccessLog, DimensionText, ImportBatch, ReportType
+from organizations.tests.conftest import organization_random, organizations  # noqa - fixture
+from publications.models import PlatformTitle, Title
+
+from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
+
 from ..exceptions import DataStructureError
 from ..logic.data_import import import_counter_records
 

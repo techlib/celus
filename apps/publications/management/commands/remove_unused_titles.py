@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db.models import Exists, OuterRef
 from django.db.transaction import atomic
-
 from logs.models import AccessLog
 from publications.models import Title
 

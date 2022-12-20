@@ -1,9 +1,7 @@
 from datetime import date
 
 import pytest
-
-from core.logic.dates import month_end
-from core.logic.dates import parse_month
+from core.logic.dates import month_end, parse_month
 
 
 class TestParseMonth:

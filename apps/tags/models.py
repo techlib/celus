@@ -9,6 +9,7 @@ from typing import BinaryIO, Callable, Optional, Tuple, Type, Union
 
 import magic
 from colorfield.fields import ColorField
+from core.models import REL_ORG_ADMIN, CreatedUpdatedMixin, User
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.files.base import File
@@ -16,12 +17,10 @@ from django.db import models
 from django.db.models import Q, QuerySet
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from rest_framework.exceptions import PermissionDenied, ValidationError
-
-from core.models import CreatedUpdatedMixin, REL_ORG_ADMIN, User
 from logs.logic.data_import import TitleManager
 from organizations.models import Organization
 from publications.models import Platform, Title
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from tags.logic.titles_lists import CsvTitleListReader
 
 

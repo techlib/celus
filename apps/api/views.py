@@ -1,19 +1,18 @@
-from django.db.models import Sum
-from django.http import HttpResponseBadRequest
-from django.shortcuts import get_object_or_404
-from django.views.generic import TemplateView
-from rest_framework.fields import CharField, BooleanField, ListField
-from rest_framework.response import Response
-from rest_framework.serializers import Serializer
-from rest_framework.views import APIView
-
 from api.auth import extract_org_from_request_api_key
 from api.permissions import HasOrganizationAPIKey
 from core.logic.dates import parse_month
 from core.validators import month_validator
+from django.db.models import Sum
+from django.http import HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
+from django.views.generic import TemplateView
 from logs.logic.queries import find_best_materialized_view
-from logs.models import AccessLog, ReportType, DimensionText
+from logs.models import AccessLog, DimensionText, ReportType
 from publications.models import Title
+from rest_framework.fields import BooleanField, CharField, ListField
+from rest_framework.response import Response
+from rest_framework.serializers import Serializer
+from rest_framework.views import APIView
 from sushi.models import SushiCredentials, SushiFetchAttempt
 
 

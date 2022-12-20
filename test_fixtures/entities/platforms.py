@@ -1,8 +1,6 @@
 import factory
-
 from faker import Faker
 from publications.models import Platform
-
 
 fake = Faker()
 

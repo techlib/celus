@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from django.db.models import Window, Count
+from django.db.models import Count, Window
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 

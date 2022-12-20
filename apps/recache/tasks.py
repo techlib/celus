@@ -3,7 +3,6 @@ from time import monotonic
 
 import celery
 import django
-
 from core.logic.error_reporting import email_if_fails
 from recache.models import CachedQuery, RenewalError
 

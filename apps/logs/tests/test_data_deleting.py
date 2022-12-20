@@ -1,8 +1,7 @@
 import pytest
-
 from core.exceptions import ModelUsageError
 from logs.logic.data_import import import_counter_records
-from logs.models import ImportBatch, AccessLog
+from logs.models import AccessLog, ImportBatch
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from publications.models import Platform
 

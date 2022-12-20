@@ -5,10 +5,9 @@ from uuid import uuid4
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Q
 from django.db.transaction import atomic
-
 from organizations.models import Organization
 from publications.models import Platform
-from sushi.models import SushiCredentials, CounterReportType, CounterReportsToCredentials
+from sushi.models import CounterReportsToCredentials, CounterReportType, SushiCredentials
 
 logger = logging.getLogger(__name__)
 

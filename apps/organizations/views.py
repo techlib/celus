@@ -3,36 +3,35 @@ import logging
 from collections import Counter
 from time import monotonic
 
-from django.conf import settings
-from django.core.cache import cache
-from django.db import transaction, connection
-from django.db.models import Count, Q, Sum, Max, Min, F, Exists, OuterRef, Value
-from django.db.models.functions import Coalesce
-from django.http import HttpResponseBadRequest
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet
-
 from core.filters import PkMultiValueFilterBackend
 from core.logic.bins import bin_hits
 from core.logic.dates import date_filter_from_params, month_end
 from core.logic.util import text_hash
 from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
+from core.tasks import async_mail_admins
+from django.conf import settings
+from django.core.cache import cache
+from django.db import connection, transaction
+from django.db.models import Count, Exists, F, Max, Min, OuterRef, Q, Sum, Value
+from django.db.models.functions import Coalesce
+from django.http import HttpResponseBadRequest
+from django.urls import reverse
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import ReportType, AccessLog
+from logs.models import AccessLog, ReportType
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
 from publications.models import PlatformTitle
 from recache.util import recache_queryset
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ReadOnlyModelViewSet
 from sushi.models import SushiCredentials
-from .models import UserOrganization, Organization
-from .serializers import OrganizationSerializer, OrganizationSimpleSerializer
-from core.tasks import async_mail_admins
 
+from .models import Organization, UserOrganization
+from .serializers import OrganizationSerializer, OrganizationSimpleSerializer
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,4 @@
 import factory
-
 from api.models import OrganizationAPIKey
 
 

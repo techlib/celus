@@ -1,7 +1,6 @@
 import pytest
-from django.urls import reverse
-
 from api.models import OrganizationAPIKey
+from django.urls import reverse
 
 
 @pytest.mark.django_db

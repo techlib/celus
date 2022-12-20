@@ -3,7 +3,7 @@
 import sys
 
 from django.db import migrations
-from django.db.models import Max, Count
+from django.db.models import Count, Max
 
 
 def remove_duplicities(apps, schema_editor):

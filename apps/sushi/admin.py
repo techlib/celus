@@ -4,11 +4,11 @@ from django.db.transaction import atomic
 from import_export.admin import ExportActionMixin
 from import_export.fields import Field
 from import_export.resources import ModelResource
-from reversion.admin import VersionAdmin
-
 from logs.logic.attempt_import import reprocess_attempt
 from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
+from reversion.admin import VersionAdmin
+
 from . import models
 
 

@@ -3,17 +3,14 @@ from pathlib import Path
 
 import pytest
 from celus_nigiri.error_codes import ErrorCode
+from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from freezegun import freeze_time
+from sushi.models import AttemptStatus
+from sushi.models import BrokenCredentialsMixin as BC
+from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 
-from core.models import UL_ORG_ADMIN
-from sushi.models import (
-    AttemptStatus,
-    BrokenCredentialsMixin as BC,
-    CounterReportsToCredentials,
-    SushiFetchAttempt,
-)
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFactory

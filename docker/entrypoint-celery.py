@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import subprocess
 import os
 import re
 import signal
 import socket
+import subprocess
 import sys
 import typing
 

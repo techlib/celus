@@ -34,6 +34,12 @@ from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import extend_query_filter, organization_filter_from_org_id
 from organizations.models import Organization
 from pandas import DataFrame
+from publications.models import Platform, PlatformTitle, Title
+from publications.serializers import (
+    SimplePlatformSerializer,
+    TitleCountSerializer,
+    UseCaseSerializer,
+)
 from recache.util import recache_queryset
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -45,18 +51,11 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from tags.models import Tag
 
-from publications.models import Platform, PlatformTitle, Title
-from publications.serializers import (
-    SimplePlatformSerializer,
-    TitleCountSerializer,
-    UseCaseSerializer,
-)
-
+from .filters import PlatformFilter
 from .logic.cleanup import delete_platform_data
 from .logic.use_cases import get_use_cases
 from .serializers import DetailedPlatformSerializer, PlatformSerializer, TitleSerializer
-from .tasks import erms_sync_platforms_task, delete_platform_data_task
-from .filters import PlatformFilter
+from .tasks import delete_platform_data_task, erms_sync_platforms_task
 
 
 class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):

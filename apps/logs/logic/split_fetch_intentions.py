@@ -1,8 +1,7 @@
 from datetime import timedelta
 
+from core.logic.dates import month_end, month_start
 from django.db.models import F, Max
-
-from core.logic.dates import month_start, month_end
 from scheduler.models import FetchIntentionQueue
 
 

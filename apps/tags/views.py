@@ -1,9 +1,15 @@
 from typing import Optional
 
 from allauth.utils import build_absolute_uri
+from core.exceptions import BadRequestException
+from core.filters import PkMultiValueFilterBackend
+from core.logic.type_conversion import to_bool
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.http import Http404
+from logs.views import StandardResultsSetPagination
+from organizations.serializers import OrganizationSerializer
+from publications.serializers import PlatformSerializer, TitleSerializer
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import BooleanField, ChoiceField, IntegerField, ListField
@@ -19,22 +25,15 @@ from rest_framework.status import (
 )
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-
-from core.exceptions import BadRequestException
-from core.filters import PkMultiValueFilterBackend
-from core.logic.type_conversion import to_bool
-from logs.views import StandardResultsSetPagination
-from organizations.serializers import OrganizationSerializer
-from publications.serializers import PlatformSerializer, TitleSerializer
 from tags.filters import TagClassScopeFilter
-from tags.models import ItemTag, Tag, TagClass, TagScope, TaggingBatch, TaggingBatchState
+from tags.models import ItemTag, Tag, TagClass, TaggingBatch, TaggingBatchState, TagScope
 from tags.permissions import TagClassPermissions, TagPermissions
 from tags.serializers import (
     TagClassSerializer,
     TagCreateSerializer,
-    TagSerializer,
     TaggingBatchCreateSerializer,
     TaggingBatchSerializer,
+    TagSerializer,
 )
 from tags.tasks import (
     tagging_batch_assign_tag_task,

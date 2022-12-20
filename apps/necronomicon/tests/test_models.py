@@ -6,6 +6,7 @@ from necronomicon.tasks import delete_batch_targets, prepare_batch
 from organizations.models import Organization, UserOrganization
 from publications.models import Platform
 from sushi.models import SushiCredentials
+
 from test_fixtures.entities.necronomicon import BatchFactory, CandidateFactory
 from test_fixtures.scenarios.basic import (
     basic1,

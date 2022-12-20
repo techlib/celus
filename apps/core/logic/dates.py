@@ -1,7 +1,7 @@
 import calendar
 import datetime
 import re
-from typing import Optional, Generator
+from typing import Generator, Optional
 
 import dateparser
 from django.utils import timezone

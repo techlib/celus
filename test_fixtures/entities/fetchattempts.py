@@ -3,11 +3,10 @@ from random import randint
 
 import factory
 from dateutil.relativedelta import relativedelta
+from sushi.models import AttemptStatus, SushiFetchAttempt
 
-from sushi.models import SushiFetchAttempt, AttemptStatus
-
-from .credentials import CredentialsFactory
 from .counter_report_types import CounterReportTypeFactory
+from .credentials import CredentialsFactory
 
 
 class FetchAttemptFactory(factory.django.DjangoModelFactory):

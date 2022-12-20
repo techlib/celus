@@ -18,14 +18,6 @@ from django.db import DatabaseError
 from django.db.models import Q
 from django.db.transaction import atomic
 from django.utils.timezone import now
-from nibbler.models import (
-    ParserDefinition,
-    get_errors,
-    get_report_types_from_nibbler_output,
-    is_success,
-)
-from sushi.models import AttemptStatus, SushiFetchAttempt
-
 from logs.exceptions import (
     DataStructureError,
     ImportNotPossible,
@@ -47,6 +39,13 @@ from logs.logic.materialized_reports import (
     update_report_approx_record_count,
 )
 from logs.models import ImportBatchSyncLog, ManualDataUpload, MduMethod, MduState
+from nibbler.models import (
+    ParserDefinition,
+    get_errors,
+    get_report_types_from_nibbler_output,
+    is_success,
+)
+from sushi.models import AttemptStatus, SushiFetchAttempt
 
 logger = logging.getLogger(__file__)
 

@@ -1,6 +1,5 @@
-from rest_framework.serializers import ModelSerializer
-
 from export.models import FlexibleDataExport
+from rest_framework.serializers import ModelSerializer
 
 
 class FlexibleDataExportSerializer(ModelSerializer):

@@ -1,6 +1,7 @@
 import pytest
 from allauth.account.models import EmailAddress
 from core.models import User
+
 from test_fixtures.scenarios.basic import *  # noqa
 
 

@@ -2,7 +2,6 @@ from io import BytesIO
 from zipfile import ZipFile
 
 import pytest
-
 from export.enums import FileFormat
 from export.models import FlexibleDataExport
 from logs.logic.reporting.filters import (
@@ -15,6 +14,7 @@ from logs.models import DimensionText
 from publications.logic.fake_data import TitleFactory
 from tags.logic.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import TagScope
+
 from test_fixtures.entities.logs import MetricFactory
 
 

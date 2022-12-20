@@ -1,7 +1,6 @@
 from copy import deepcopy
 
 import pytest
-
 from core.tests.test_sync import data_source
 from organizations.logic.sync import OrganizationSyncer
 from organizations.models import Organization

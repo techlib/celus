@@ -1,16 +1,13 @@
-import diskcache
 import logging
 import sys
 import tempfile
 import time
-
 from collections import Counter
 from pathlib import Path
 
-
+import diskcache
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-
 from sushi.models import SushiFetchAttempt
 
 logger = logging.getLogger(__name__)

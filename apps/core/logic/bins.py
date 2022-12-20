@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import Tuple, Mapping, Sequence
+from typing import Mapping, Sequence, Tuple
 
 
 def bin_hits(

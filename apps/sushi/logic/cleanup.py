@@ -1,14 +1,11 @@
 import logging
 import typing
-
 from collections import Counter
-
 from datetime import timedelta
 
-from django.utils import timezone
 from django.db.models import Max
-
-from sushi.models import SushiFetchAttempt, AttemptStatus
+from django.utils import timezone
+from sushi.models import AttemptStatus, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
 

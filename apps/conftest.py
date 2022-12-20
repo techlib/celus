@@ -1,10 +1,9 @@
 import os
-import pytest
-
-from clickhouse_driver import Client
 from distutils.util import strtobool
-from filelock import FileLock
 
+import pytest
+from clickhouse_driver import Client
+from filelock import FileLock
 from logs.cubes import ch_backend
 
 

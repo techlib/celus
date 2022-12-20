@@ -1,15 +1,14 @@
 from django.conf import settings
 from django.db.models.signals import post_delete, post_save
-from django.db.transaction import on_commit, atomic
+from django.db.transaction import atomic, on_commit
 from django.dispatch import receiver
-
 from logs.constants import ACTION_INTEREST_CHANGE
 from logs.logic.clickhouse import delete_import_batch_from_clickhouse
 from logs.models import (
     ImportBatch,
     ImportBatchSyncLog,
-    ManualDataUpload,
     LastAction,
+    ManualDataUpload,
     ReportInterestMetric,
 )
 from publications.models import PlatformInterestReport

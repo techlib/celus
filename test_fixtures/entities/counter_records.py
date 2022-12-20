@@ -2,11 +2,9 @@ from datetime import date
 from random import randint
 
 import factory
-from dateutil.relativedelta import relativedelta
-
-from faker import Faker
-
 from celus_nigiri.counter5 import CounterRecord
+from dateutil.relativedelta import relativedelta
+from faker import Faker
 
 fake = Faker()
 

@@ -3,7 +3,7 @@ from collections import Counter
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import migrations
-from django.db.models import F, Count
+from django.db.models import Count, F
 
 
 def mark_duplicates_for_3030(apps, schema_editor):

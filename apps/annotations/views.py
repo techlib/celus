@@ -1,11 +1,6 @@
 import operator
 from functools import reduce
 
-from django.db.models import Q
-from rest_framework.filters import SearchFilter
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
-
 from annotations.models import Annotation, Validity
 from annotations.serializers import AnnotationSerializer
 from core.logic.dates import month_end, parse_month
@@ -17,7 +12,11 @@ from core.permissions import (
     OwnerLevelBasedPermissions,
     SuperuserOrAdminPermission,
 )
+from django.db.models import Q
 from logs.views import StandardResultsSetPagination
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
 
 
 class AnnotationsViewSet(ModelViewSet):

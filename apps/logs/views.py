@@ -3,34 +3,12 @@ from functools import reduce
 from pprint import pprint
 from time import monotonic
 
-from django.conf import settings
-from django.core.cache import cache
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
-from django.db.transaction import atomic
-from django.http import JsonResponse
-from django.urls import reverse
-from django.views import View
-from pandas import DataFrame
-from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.fields import BooleanField, CharField, ListField
-from rest_framework.generics import get_object_or_404
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelatedField, Serializer
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
-from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_pandas import PandasView
-
 from charts.models import ReportDataView
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params, parse_month
 from core.logic.serialization import parse_b64json
-from core.models import DataSource, REL_ORG_ADMIN
+from core.models import REL_ORG_ADMIN, DataSource
 from core.permissions import (
     CanAccessOrganizationFromGETAttrs,
     CanAccessOrganizationRelatedObjectPermission,
@@ -43,6 +21,13 @@ from core.permissions import (
 )
 from core.prometheus import report_access_time_summary, report_access_total_counter
 from core.validators import month_validator, pk_list_validator
+from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
+from django.db.transaction import atomic
+from django.http import JsonResponse
+from django.urls import reverse
+from django.views import View
 from logs.logic.export import CSVExport
 from logs.logic.queries import StatsComputer, extract_accesslog_attr_query_params
 from logs.models import (
@@ -76,10 +61,25 @@ from logs.serializers import (
 )
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.models import Organization
+from pandas import DataFrame
 from publications.models import Platform, Title
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.fields import BooleanField, CharField, ListField
+from rest_framework.generics import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelatedField, Serializer
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_pandas import PandasView
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 from tags.models import Tag
+
 from . import filters
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor

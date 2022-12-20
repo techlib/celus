@@ -1,5 +1,6 @@
 import os
-from decouple import config, Csv
+
+from decouple import Csv, config
 
 # we need to disable cachalot through environment because this changes caused by this setting
 # are applied in config.settings.base and it does not help overriding them later on

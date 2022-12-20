@@ -4,7 +4,6 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-
 from sushi.models import SushiFetchAttempt
 
 logger = logging.getLogger(__name__)

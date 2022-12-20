@@ -5,24 +5,24 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
 from io import StringIO
-from typing import Optional, Set, Iterable, Dict, Generator, List, Union
+from typing import Dict, Generator, Iterable, List, Optional, Set, Union
 
+from celus_nigiri.counter5 import CounterRecord
+from core.logic.debug import log_memory
+from core.models import UL_ROBOT
+from core.task_support import cache_based_lock
 from django.conf import settings
 from django.db.models.functions import Lower
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
-from postgres_copy import CopyMapping
-
-from core.logic.debug import log_memory
-from core.models import UL_ROBOT
-from core.task_support import cache_based_lock
-from logs.logic.validation import normalize_issn, normalize_isbn, normalize_title
+from logs.logic.validation import normalize_isbn, normalize_issn, normalize_title
 from logs.models import ImportBatch
-from celus_nigiri.counter5 import CounterRecord
 from organizations.models import Organization
-from publications.models import Title, Platform, PlatformTitle
+from postgres_copy import CopyMapping
+from publications.models import Platform, PlatformTitle, Title
+
 from ..exceptions import DataStructureError, UnknownMetric, UnsupportedMetric
-from ..models import ReportType, Metric, DimensionText, AccessLog
+from ..models import AccessLog, DimensionText, Metric, ReportType
 
 logger = logging.getLogger(__name__)
 

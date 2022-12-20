@@ -7,6 +7,7 @@ from django.urls import reverse
 from logs.models import ManualDataUpload, MduMethod, MduState
 from organizations.tests.conftest import *  # noqa  - test fixtures
 from publications.tests.conftest import *
+
 from test_fixtures.entities.logs import ManualDataUploadFullFactory
 
 

@@ -1,9 +1,8 @@
 from typing import Optional
 
-from rest_framework_api_key.permissions import KeyParser
-
 from api.models import OrganizationAPIKey
 from organizations.models import Organization
+from rest_framework_api_key.permissions import KeyParser
 
 
 def extract_org_from_request_api_key(request) -> Optional[Organization]:

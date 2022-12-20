@@ -6,7 +6,6 @@ from zipfile import ZipFile
 
 import pytest
 from django.db.models import Q
-
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,

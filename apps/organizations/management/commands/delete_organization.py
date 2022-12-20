@@ -5,7 +5,6 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Q
 from django.db.transaction import atomic
-
 from organizations.models import Organization
 
 logger = logging.getLogger(__name__)

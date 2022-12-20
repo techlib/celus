@@ -1,7 +1,7 @@
 import logging
 import re
 
-from isbnlib import is_isbn13, is_isbn10, to_isbn13, canonical
+from isbnlib import canonical, is_isbn10, is_isbn13, to_isbn13
 
 logger = logging.getLogger(__name__)
 issn_matcher = re.compile(r'(\d{4})-?(\d{3}[\dXx])')

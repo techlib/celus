@@ -1,8 +1,8 @@
+from logs.serializers import DimensionSerializer
 from rest_framework.fields import BooleanField
 from rest_framework.serializers import ModelSerializer
 
-from .models import ReportDataView, ChartDefinition, ReportViewToChartType
-from logs.serializers import DimensionSerializer
+from .models import ChartDefinition, ReportDataView, ReportViewToChartType
 
 
 class ReportDataViewSerializer(ModelSerializer):

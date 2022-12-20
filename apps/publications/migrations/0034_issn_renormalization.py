@@ -2,7 +2,6 @@
 
 from django.db import migrations
 from django.db.models import Q
-
 from logs.logic.validation import normalize_issn
 
 

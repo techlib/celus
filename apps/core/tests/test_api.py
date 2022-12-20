@@ -4,11 +4,10 @@ from unittest.mock import patch
 
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmation
+from core.models import Identity, User
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.urls import reverse
 from django.utils import timezone
-
-from core.models import Identity, User
 
 
 @pytest.mark.django_db

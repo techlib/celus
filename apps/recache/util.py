@@ -6,7 +6,7 @@ import django
 from django.db import IntegrityError
 from django.db.transaction import atomic
 
-from .models import DEFAULT_TIMEOUT, DEFAULT_LIFETIME, CachedQuery, EMPTY_RESULT_DURATION_THRESHOLD
+from .models import DEFAULT_LIFETIME, DEFAULT_TIMEOUT, EMPTY_RESULT_DURATION_THRESHOLD, CachedQuery
 from .tasks import find_and_renew_first_due_cached_query_task
 
 logger = logging.getLogger(__name__)

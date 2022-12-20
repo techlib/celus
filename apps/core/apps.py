@@ -35,13 +35,12 @@ class CoreConfig(AppConfig):
     def ready(self):
         super().ready()
         # noinspection PyUnresolvedReferences
-        from . import db  # needed to register the ilike lookup
+        from django.conf import settings
 
         # noinspection PyUnresolvedReferences
+        from . import db  # needed to register the ilike lookup
         from . import signals  # needed to register the signals
-
-        from .prometheus import celus_version_num, celus_sentry_release
-        from django.conf import settings
+        from .prometheus import celus_sentry_release, celus_version_num
 
         celus_version_num.set(version_to_int(settings.CELUS_VERSION))
         celus_sentry_release.labels(hash=settings.SENTRY_RELEASE).set(1.0)

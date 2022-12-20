@@ -3,13 +3,13 @@ from datetime import date
 import factory
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
-
 from scheduler.models import Automatic, FetchIntention, FetchIntentionQueue, Harvest, Scheduler
-from .credentials import CredentialsFactory
+
 from .counter_report_types import CounterReportTypeFactory
+from .credentials import CredentialsFactory
+from .fetchattempts import FetchAttemptFactory
 from .organizations import OrganizationFactory
 from .users import UserFactory
-from .fetchattempts import FetchAttemptFactory
 
 
 class HarvestFactory(factory.django.DjangoModelFactory):

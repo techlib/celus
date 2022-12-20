@@ -5,8 +5,8 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from sushi.models import CounterReportsToCredentials, SushiCredentials, SushiFetchAttempt
 
-from .models import Automatic, FetchIntention, FetchIntentionQueue
 from .logic.automatic import update_cr2c
+from .models import Automatic, FetchIntention, FetchIntentionQueue
 
 
 @receiver(post_save, sender=SushiCredentials)

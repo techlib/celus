@@ -1,19 +1,18 @@
 import os
 from dataclasses import dataclass
-from typing import Generator, Tuple, List
+from typing import Generator, List, Tuple
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import QuerySet, Exists, OuterRef, Q, F, Case, When
+from django.db.models import Case, Exists, F, OuterRef, Q, QuerySet, When
 from django.db.models.expressions import CombinedExpression
 from django.db.transaction import atomic
-
 from logs.exceptions import DataStructureError, SourceFileMissingError
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.logic.custom_import import import_custom_data
-from logs.models import ImportBatch, ManualDataUploadImportBatch, ManualDataUpload, AccessLog
+from logs.models import AccessLog, ImportBatch, ManualDataUpload, ManualDataUploadImportBatch
 from scheduler.models import FetchIntention
-from sushi.models import SushiFetchAttempt, AttemptStatus
+from sushi.models import AttemptStatus, SushiFetchAttempt
 
 
 @dataclass

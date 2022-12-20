@@ -1,35 +1,34 @@
 import pytest
 from django.db.models import Sum
 from django.utils.timezone import now
-
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import (
-    sync_interest_for_import_batch,
-    fast_compare_existing_and_new_records,
-    _find_unprocessed_batches,
-    _find_platform_interest_changes,
     _find_metric_interest_changes,
+    _find_platform_interest_changes,
     _find_platform_report_type_disconnect,
     _find_report_type_metric_disconnect,
     _find_superseeded_import_batches,
-    smart_interest_sync,
+    _find_unprocessed_batches,
+    fast_compare_existing_and_new_records,
     recompute_interest_by_batch,
+    smart_interest_sync,
+    sync_interest_for_import_batch,
 )
 from logs.logic.materialized_reports import (
-    sync_materialized_reports,
     create_materialized_accesslogs,
+    sync_materialized_reports,
 )
 from logs.models import (
-    ImportBatch,
     AccessLog,
-    ReportInterestMetric,
-    Metric,
+    ImportBatch,
     InterestGroup,
+    Metric,
+    ReportInterestMetric,
     ReportMaterializationSpec,
+    ReportType,
 )
-from logs.models import ReportType
-from publications.models import Platform, PlatformInterestReport
 from organizations.tests.conftest import organizations
+from publications.models import Platform, PlatformInterestReport
 
 
 @pytest.mark.django_db()

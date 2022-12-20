@@ -1,9 +1,8 @@
 import logging
-import urllib.parse
 import typing
+import urllib.parse
 
 import requests
-
 
 logger = logging.getLogger(__file__)
 

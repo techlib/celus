@@ -2,15 +2,16 @@
 Stuff related to synchronization of user and identity data between the local database
 and an external source
 """
-from django.conf import settings
-from django.contrib.auth import get_user_model
 import logging
 
 from core.models import DataSource
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from erms.api import ERMS
 from erms.sync import ERMSObjectSyncer, ERMSSyncer
-from organizations.models import UserOrganization, Organization
-from ..models import User, Identity
+from organizations.models import Organization, UserOrganization
+
+from ..models import Identity, User
 
 logger = logging.getLogger(__name__)
 

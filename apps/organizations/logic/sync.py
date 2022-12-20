@@ -4,13 +4,13 @@ and an external source
 """
 import logging
 
-from django.conf import settings
-from django.db.transaction import atomic
-
 from core.models import DataSource
 from core.task_support import cache_based_lock
+from django.conf import settings
+from django.db.transaction import atomic
 from erms.api import ERMS
 from erms.sync import ERMSObjectSyncer
+
 from ..models import Organization
 
 logger = logging.getLogger(__name__)

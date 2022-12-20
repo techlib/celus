@@ -5,7 +5,6 @@ from time import time
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Exists, OuterRef
-
 from logs.logic.materialized_interest import remove_interest
 from logs.models import AccessLog, ImportBatch, ManualDataUploadImportBatch, ReportType
 from organizations.models import Organization

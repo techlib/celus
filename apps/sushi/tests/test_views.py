@@ -10,13 +10,14 @@ from scheduler.models import Automatic
 from sushi.models import AttemptStatus
 from sushi.models import BrokenCredentialsMixin as BS
 from sushi.models import CounterReportsToCredentials, SushiCredentials
+
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.scheduler import FetchIntentionFactory
+from test_fixtures.scenarios.basic import clients  # noqa - fixtures
 from test_fixtures.scenarios.basic import (
     basic1,
-    clients,  # noqa - fixtures
     counter_report_types,
     credentials,
     data_sources,

@@ -1,4 +1,4 @@
-from prometheus_client import Counter, Summary, Gauge
+from prometheus_client import Counter, Gauge, Summary
 
 report_access_total_counter = Counter(
     'celus_report_access_total',

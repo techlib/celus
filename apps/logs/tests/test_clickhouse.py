@@ -5,25 +5,24 @@ import pytest
 from django.db import connection
 from django.db.models import Sum
 from hcube.api.models.aggregation import Sum as HSum
-
-from logs.cubes import ch_backend, AccessLogCube
+from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.clickhouse import (
     ComparisonResult,
     compare_db_with_clickhouse,
+    process_one_import_batch_sync_log,
     resync_import_batch_with_clickhouse,
     sync_accesslogs_with_clickhouse_superfast,
     sync_import_batch_with_clickhouse,
-    process_one_import_batch_sync_log,
 )
 from logs.logic.data_import import import_counter_records
-from logs.logic.materialized_interest import sync_interest_by_import_batches, smart_interest_sync
+from logs.logic.materialized_interest import smart_interest_sync, sync_interest_by_import_batches
 from logs.models import (
-    ImportBatch,
     AccessLog,
-    ReportInterestMetric,
-    Metric,
-    InterestGroup,
+    ImportBatch,
     ImportBatchSyncLog,
+    InterestGroup,
+    Metric,
+    ReportInterestMetric,
 )
 from logs.tasks import (
     compare_db_with_clickhouse_task,
@@ -31,6 +30,7 @@ from logs.tasks import (
 )
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from publications.models import Platform, PlatformInterestReport
+
 from test_fixtures.entities.logs import ImportBatchFullFactory
 
 
@@ -43,7 +43,7 @@ class TestClickhouse:
         ch_backend.create_table(AccessLogCube)
 
     def test_clickhouse_add_data(self):
-        from ..cubes import AccessLogCube, ch_backend, AccessLogCubeRecord
+        from ..cubes import AccessLogCube, AccessLogCubeRecord, ch_backend
 
         ch_backend.create_table(AccessLogCube)
         ch_backend.store_records(

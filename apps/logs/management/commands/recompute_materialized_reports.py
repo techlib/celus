@@ -2,7 +2,6 @@ import logging
 from time import time
 
 from django.core.management.base import BaseCommand
-
 from logs.logic.materialized_reports import recompute_materialized_reports
 
 logger = logging.getLogger(__name__)

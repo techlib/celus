@@ -2,25 +2,25 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from core.logic.dates import month_end, parse_date
 from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
 from django.db.models import Sum
-from sushi.models import SushiCredentials, SushiFetchAttempt, AttemptStatus
+from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 from sushi.tests.conftest import counter_report_type, counter_report_type_named  # noqa
+
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.scenarios.basic import (
+from test_fixtures.scenarios.basic import (  # noqa
+    counter_report_types,
     data_sources,
     organizations,
     platforms,
-    counter_report_types,
     report_types,
-)  # noqa
+)
 
-from ..models import Metric
-from ..logic.attempt_import import import_one_sushi_attempt, check_importable_attempt
 from ..exceptions import UnknownMetric
+from ..logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
+from ..models import Metric
 
 
 @pytest.mark.django_db

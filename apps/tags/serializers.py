@@ -3,13 +3,12 @@ from functools import cached_property
 from django.core.exceptions import BadRequest
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import (
-    HiddenField,
     CurrentUserDefault,
-    SerializerMethodField,
+    HiddenField,
     ReadOnlyField,
+    SerializerMethodField,
 )
 from rest_framework.serializers import ModelSerializer
-
 from tags.models import Tag, TagClass, TaggingBatch
 
 

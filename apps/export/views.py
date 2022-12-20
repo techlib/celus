@@ -1,10 +1,10 @@
 from pprint import pprint
 
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ModelViewSet
 
-from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 from .models import FlexibleDataExport
 from .serializers import FlexibleDataExportSerializer
 from .tasks import process_flexible_export_task

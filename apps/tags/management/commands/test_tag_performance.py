@@ -4,11 +4,10 @@ from statistics import mean
 from time import monotonic
 
 from django.core.management.base import BaseCommand
-from django.db.models import Count, Sum, Q, FilteredRelation
-
+from django.db.models import Count, FilteredRelation, Q, Sum
 from logs.models import AccessLog, ReportType
 from publications.models import Title
-from tags.models import Tag, TagScope, TitleTag, TagClass
+from tags.models import Tag, TagClass, TagScope, TitleTag
 
 logger = logging.getLogger(__name__)
 

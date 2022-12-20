@@ -1,10 +1,10 @@
 import pytest
 from django.conf import settings
-from django.core.management import call_command, CommandError
+from django.core.management import CommandError, call_command
 from hcube.api.models.aggregation import Count
-
-from logs.cubes import ch_backend, AccessLogCube
+from logs.cubes import AccessLogCube, ch_backend
 from publications.models import Title
+
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.titles import TitleFactory
 

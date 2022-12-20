@@ -2,7 +2,6 @@ from random import random
 
 import factory.fuzzy
 import faker
-
 from publications.models import Title
 
 fake = faker.Faker(locale="cs")

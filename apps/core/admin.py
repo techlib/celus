@@ -1,16 +1,15 @@
 from allauth.account.adapter import get_adapter
-
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import TabularInline
 from django.contrib.auth.admin import UserAdmin
-from django.utils.translation import gettext_lazy as _
 from django.db.models import Exists, OuterRef
+from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportActionMixin
 from import_export.resources import ModelResource
-
 from organizations.models import UserOrganization
-from .models import User, Identity, DataSource
+
+from .models import DataSource, Identity, User
 
 
 class MyUserResource(ModelResource):

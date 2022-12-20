@@ -1,9 +1,8 @@
 import csv
 from abc import ABC, abstractmethod
-from typing import Tuple, List, Union
+from typing import List, Tuple, Union
 
 from xlsxwriter.worksheet import Worksheet
-
 
 XSLX_COL_WIDTH_ADJ_RATIO = 0.75  # how to scale column width compared to the computed value
 XSLX_COL_WIDTH_ADJ_CONST = 2  # what to add to the scaled column width

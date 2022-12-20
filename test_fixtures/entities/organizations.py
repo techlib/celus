@@ -1,8 +1,6 @@
 import factory
-
 from faker import Faker
 from organizations.models import Organization, OrganizationAltName
-
 
 fake = Faker()
 

@@ -3,8 +3,7 @@ from collections import Counter
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-
-from logs.models import ReportType, ReportTypeToDimension, Dimension
+from logs.models import Dimension, ReportType, ReportTypeToDimension
 from sushi.models import COUNTER_REPORTS, CounterReportType
 
 logger = logging.getLogger(__name__)

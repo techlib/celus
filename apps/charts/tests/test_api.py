@@ -1,7 +1,5 @@
 import pytest
-from django.urls import reverse
-
-from charts.logic.fake_data import ReportDataViewFactory, ChartDefinitionFactory
+from charts.logic.fake_data import ChartDefinitionFactory, ReportDataViewFactory
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,
@@ -9,6 +7,7 @@ from core.tests.conftest import (  # noqa - fixtures
     master_admin_identity,
     valid_identity,
 )
+from django.urls import reverse
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import import_counter_records
 from logs.models import AccessLog, ImportBatch, Metric, OrganizationPlatform

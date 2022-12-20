@@ -1,5 +1,6 @@
 import pytest
 from django.urls import reverse
+
 from test_fixtures.scenarios.basic import (
     basic1,
     clients,

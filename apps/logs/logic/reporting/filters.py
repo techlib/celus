@@ -1,13 +1,11 @@
 from abc import ABC, abstractmethod
 from datetime import date, datetime
 
+from core.logic.type_conversion import to_list
 from django.conf import settings
 from django.db import models
-
-from core.logic.type_conversion import to_list
 from logs.models import AccessLog, DimensionText
 from tags.models import Tag
-
 
 # 10 chars per id should be OK
 CLICKHOUSE_ID_COUNT_LIMIT = settings.CLICKHOUSE_QUERY_SIZE_LIMIT // 10

@@ -1,9 +1,11 @@
 import typing
 from datetime import datetime
 
+from core.models import TaskProgress, User
 from django_celery_results.models import TaskResult
 from rest_framework.serializers import (
     BooleanField,
+    CharField,
     ChoiceField,
     DateTimeField,
     IntegerField,
@@ -11,10 +13,7 @@ from rest_framework.serializers import (
     PrimaryKeyRelatedField,
     Serializer,
     SerializerMethodField,
-    CharField,
 )
-
-from core.models import TaskProgress, User
 
 
 class EmailVerificationSerializer(Serializer):

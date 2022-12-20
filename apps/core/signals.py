@@ -1,6 +1,6 @@
 from allauth.account.models import EmailAddress
 from allauth.account.signals import user_signed_up
-from django.dispatch import receiver, Signal
+from django.dispatch import Signal, receiver
 
 from .tasks import async_mail_admins
 

@@ -3,12 +3,11 @@ import logging
 from collections import Counter
 from distutils.util import strtobool
 
+from core.models import User
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.db.transaction import atomic
-
-from core.models import User
-from organizations.models import UserOrganization, Organization
+from organizations.models import Organization, UserOrganization
 
 logger = logging.getLogger(__name__)
 

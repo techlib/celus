@@ -13,6 +13,7 @@ from logs.logic.custom_import import import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
 from publications.models import Platform
+
 from test_fixtures.entities.logs import ManualDataUploadFactory, ManualDataUploadFullFactory
 from test_fixtures.scenarios.basic import (
     basic1,

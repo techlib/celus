@@ -4,7 +4,6 @@ from collections import Counter
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-
 from organizations.models import Organization
 
 logger = logging.getLogger(__name__)

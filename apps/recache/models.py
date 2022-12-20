@@ -7,8 +7,8 @@ from time import monotonic
 import django
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
-from django.db import models, IntegrityError
-from django.db.models import F, ExpressionWrapper, DateTimeField
+from django.db import IntegrityError, models
+from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.db.transaction import atomic
 from django.utils.functional import cached_property
 from django.utils.timezone import now

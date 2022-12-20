@@ -2,7 +2,6 @@ import logging
 from time import time
 
 from django.core.management.base import BaseCommand
-
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import ImportBatch
 

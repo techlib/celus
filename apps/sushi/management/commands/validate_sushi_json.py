@@ -1,9 +1,8 @@
 import json
 import logging
 
-from django.core.management.base import BaseCommand
-
 from celus_nigiri.counter5 import Counter5TRReport
+from django.core.management.base import BaseCommand
 
 logger = logging.getLogger(__name__)
 

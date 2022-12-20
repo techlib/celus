@@ -1,13 +1,13 @@
 import logging
-from time import time, monotonic
-from typing import Iterable, Callable
+from time import monotonic, time
+from typing import Callable, Iterable
 
-from django.db.models import Sum, Q, QuerySet, FloatField, Count
+from django.db.models import Count, FloatField, Q, QuerySet, Sum
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Cast
 from django.db.transaction import atomic
 
-from ..models import ImportBatch, AccessLog, ReportType
+from ..models import AccessLog, ImportBatch, ReportType
 
 logger = logging.getLogger(__name__)
 

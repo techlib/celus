@@ -1,14 +1,13 @@
-from rest_framework import serializers
-from rest_framework.fields import DateField, DateTimeField
-
 from organizations.serializers import OrganizationSerializer, OrganizationShortSerializer
 from publications.serializers import PlatformSerializer, SimplePlatformSerializer
+from rest_framework import serializers
+from rest_framework.fields import DateField, DateTimeField
+from sushi.models import SushiFetchAttempt
 from sushi.serializers import (
     CounterReportTypeSerializer,
     SushiFetchAttemptFlatSerializer,
     SushiFetchAttemptSimpleSerializer,
 )
-from sushi.models import SushiFetchAttempt
 
 from .models import Automatic, FetchIntention, Harvest
 

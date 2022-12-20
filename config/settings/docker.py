@@ -1,9 +1,7 @@
 import os
 
-from .production import DATABASES
-from .production import CACHES
 from .production import *  # noqa
-
+from .production import CACHES, DATABASES
 
 ALLOWED_HOSTS = os.environ.get("EXTERNAL_HOSTNAMES", "*").split(",")
 USE_X_FORWARDED_HOST = True

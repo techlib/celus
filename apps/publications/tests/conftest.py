@@ -1,6 +1,6 @@
 import pytest
+from logs.models import Dimension, ReportType, ReportTypeToDimension
 
-from logs.models import ReportType, Dimension, ReportTypeToDimension
 from ..models import Platform, Title
 
 

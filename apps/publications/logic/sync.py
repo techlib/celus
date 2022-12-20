@@ -2,15 +2,14 @@
 Stuff related to synchronization of organization data between the local database
 and an external source
 """
-from core.task_support import cache_based_lock
-from erms.sync import ERMSObjectSyncer
-from ..models import Platform
-
-from django.db.transaction import atomic
-from django.conf import settings
-
 from core.models import DataSource
+from core.task_support import cache_based_lock
+from django.conf import settings
+from django.db.transaction import atomic
 from erms.api import ERMS
+from erms.sync import ERMSObjectSyncer
+
+from ..models import Platform
 
 
 class PlatformSyncer(ERMSObjectSyncer):

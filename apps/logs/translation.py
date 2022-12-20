@@ -1,11 +1,12 @@
-from modeltranslation.translator import translator, TranslationOptions
+from modeltranslation.translator import TranslationOptions, translator
+
 from .models import (
-    DimensionText,
-    Metric,
-    ReportType,
     Dimension,
+    DimensionText,
     InterestGroup,
+    Metric,
     ReportInterestMetric,
+    ReportType,
 )
 
 

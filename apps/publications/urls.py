@@ -1,13 +1,13 @@
 from django.urls import path
+from logs.views import (
+    CustomDimensionsViewSet,
+    OrganizationManualDataUploadViewSet,
+    OrganizationReportTypesViewSet,
+)
+from organizations.urls import router as organization_router
 from rest_framework.routers import SimpleRouter
 from rest_framework_nested.routers import NestedSimpleRouter
 
-from logs.views import (
-    CustomDimensionsViewSet,
-    OrganizationReportTypesViewSet,
-    OrganizationManualDataUploadViewSet,
-)
-from organizations.urls import router as organization_router
 from . import views
 
 root_router = SimpleRouter()

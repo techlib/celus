@@ -1,7 +1,6 @@
+from deployment.models import FooterImage, SiteLogo
 from django.contrib.sites.models import Site
 from rest_framework.serializers import ModelSerializer
-
-from deployment.models import FooterImage, SiteLogo
 
 
 class FooterImageSerializer(ModelSerializer):

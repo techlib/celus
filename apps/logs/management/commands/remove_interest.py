@@ -2,7 +2,6 @@ import logging
 from time import time
 
 from django.core.management.base import BaseCommand
-
 from logs.logic.materialized_interest import remove_interest
 from logs.models import ImportBatch
 

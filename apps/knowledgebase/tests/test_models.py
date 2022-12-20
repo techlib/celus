@@ -18,6 +18,7 @@ from knowledgebase.models import (
 from logs.models import ReportType
 from nibbler.models import ParserDefinition
 from publications.models import Platform
+
 from test_fixtures.entities.api import OrganizationAPIKeyFactory
 from test_fixtures.entities.data_souces import DataSourceFactory
 from test_fixtures.entities.logs import ImportBatchFactory

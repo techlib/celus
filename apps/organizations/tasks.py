@@ -1,5 +1,4 @@
 import celery
-
 from core.logic.error_reporting import email_if_fails
 from organizations.logic.sync import erms_sync_organizations
 

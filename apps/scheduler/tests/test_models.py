@@ -25,6 +25,7 @@ from sushi.models import (
     SushiCredentials,
     SushiFetchAttempt,
 )
+
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFactory

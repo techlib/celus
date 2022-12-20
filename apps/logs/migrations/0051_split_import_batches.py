@@ -4,7 +4,7 @@ from collections import Counter
 
 from django.conf import settings
 from django.db import migrations
-from django.db.models import Min, Max, F
+from django.db.models import F, Max, Min
 
 logger = logging.getLogger(__name__)
 

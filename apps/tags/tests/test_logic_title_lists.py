@@ -1,6 +1,6 @@
 import pytest
-
 from tags.logic.titles_lists import CsvTitleListReader
+
 from test_fixtures.entities.titles import TitleFactory
 
 

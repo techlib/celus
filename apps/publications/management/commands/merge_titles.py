@@ -2,7 +2,6 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-
 from publications.logic.title_management import find_mergeable_titles, merge_titles
 
 logger = logging.getLogger(__name__)

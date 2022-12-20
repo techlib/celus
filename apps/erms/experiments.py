@@ -2,7 +2,6 @@ from pprint import pprint
 
 from api import ERMS
 
-
 if __name__ == '__main__':
     import json
 

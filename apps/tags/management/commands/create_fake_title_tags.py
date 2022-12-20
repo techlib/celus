@@ -5,7 +5,6 @@ from itertools import cycle
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-
 from publications.models import Title
 from tags.logic.fake_data import TagForTitleFactory, TitleTagFactoryExistingTitles
 from tags.models import TagClass, TitleTag

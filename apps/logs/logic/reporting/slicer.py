@@ -5,6 +5,9 @@ from enum import Enum
 from functools import reduce
 from typing import Iterable, List, Optional, Type
 
+from core.logic.dates import date_range_from_params, month_end, parse_month
+from core.logic.serialization import parse_b64json
+from core.logic.type_conversion import to_bool
 from django.conf import settings
 from django.core.exceptions import EmptyResultSet
 from django.db.models import (
@@ -21,10 +24,6 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce, Concat
 from hcube.api.models.aggregation import Sum as HSum
-
-from core.logic.dates import date_range_from_params, month_end, parse_month
-from core.logic.serialization import parse_b64json
-from core.logic.type_conversion import to_bool
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import find_best_materialized_view, logger
 from logs.logic.reporting.filters import (

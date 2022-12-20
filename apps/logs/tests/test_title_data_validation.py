@@ -1,5 +1,4 @@
 import pytest
-
 from logs.logic.validation import normalize_isbn, normalize_issn
 
 

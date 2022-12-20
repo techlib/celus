@@ -1,4 +1,12 @@
 from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
+from core.models import TaskProgress, User
+from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
+from core.serializers import (
+    EmailVerificationSerializer,
+    TaskProgressSerializer,
+    UserExtraDataSerializer,
+    UserSerializer,
+)
 from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
 from django.core.cache import cache
@@ -7,21 +15,13 @@ from django.core.mail import mail_admins
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils import translation
 from django_celery_results.models import TaskResult
-from rest_framework import status, mixins
+from rest_framework import mixins, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
-from core.models import User, TaskProgress
-from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
-from core.serializers import (
-    EmailVerificationSerializer,
-    UserExtraDataSerializer,
-    UserSerializer,
-    TaskProgressSerializer,
-)
 from .signals import password_reset_signal
 from .tasks import erms_sync_users_and_identities_task
 

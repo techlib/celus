@@ -1,5 +1,4 @@
 import pytest
-
 from erms.api import ERMS, ERMSError
 
 

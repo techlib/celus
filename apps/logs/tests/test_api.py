@@ -21,6 +21,7 @@ from organizations.models import UserOrganization
 from publications.models import Platform
 from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.models import AttemptStatus, CounterReportsToCredentials
+
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory

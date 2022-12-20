@@ -2,17 +2,16 @@ import logging
 import operator
 from functools import reduce
 from itertools import combinations
-from typing import List, Generator, Optional, Set, Union
+from typing import Generator, List, Optional, Set, Union
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Count
 from django.db.models.functions import Lower
-
 from logs.logic.clickhouse import resync_import_batch_with_clickhouse
 from logs.logic.data_import import TitleManager
 from logs.models import AccessLog, ImportBatch
-from publications.models import Title, PlatformTitle
+from publications.models import PlatformTitle, Title
 
 logger = logging.getLogger(__name__)
 

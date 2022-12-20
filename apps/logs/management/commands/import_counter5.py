@@ -1,15 +1,15 @@
 import logging
 from time import time
 
+from celus_nigiri.counter5 import Counter5TRReport
+from core.logic.debug import log_memory
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-
-from core.logic.debug import log_memory
-from celus_nigiri.counter5 import Counter5TRReport
 from organizations.models import Organization
 from publications.models import Platform
+
 from ...logic.data_import import import_counter_records
-from ...models import ReportType, OrganizationPlatform
+from ...models import OrganizationPlatform, ReportType
 
 logger = logging.getLogger(__name__)
 

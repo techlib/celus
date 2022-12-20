@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
-
 from logs.models import ImportBatch
 from sushi.models import SushiFetchAttempt
+
 from . import models
 
 

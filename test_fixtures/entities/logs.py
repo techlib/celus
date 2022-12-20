@@ -3,7 +3,6 @@ from random import randint
 import factory
 import faker
 from django.conf import settings
-
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import (
     AccessLog,
@@ -14,6 +13,7 @@ from logs.models import (
     OrganizationPlatform,
 )
 from publications.models import PlatformTitle
+
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.report_types import ReportTypeFactory

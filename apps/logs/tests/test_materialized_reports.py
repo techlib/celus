@@ -2,7 +2,6 @@ import pytest
 from celus_nigiri.counter5 import CounterRecord
 from django.core.management import call_command
 from django.utils.timezone import now
-
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch
 from logs.logic.materialized_reports import (

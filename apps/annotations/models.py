@@ -1,11 +1,10 @@
 from enum import Enum
 
+from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, USER_LEVEL_CHOICES, User
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils.timezone import now
-
-from core.models import UL_CONS_STAFF, UL_ORG_ADMIN, USER_LEVEL_CHOICES, User
 
 
 class Validity(Enum):

@@ -1,12 +1,11 @@
 import json
 import logging
 from copy import deepcopy
-
 from datetime import date, timedelta
-from django.core.management.base import BaseCommand
-from django.utils.timezone import now
 
 from celus_nigiri.client import Sushi5Client
+from django.core.management.base import BaseCommand
+from django.utils.timezone import now
 
 logger = logging.getLogger(__name__)
 

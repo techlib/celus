@@ -1,11 +1,10 @@
 from django.conf import settings
 from hcube.api.backend import CubeBackend
 from hcube.api.models.cube import Cube
-from hcube.api.models.dimensions import IntDimension, DateDimension
+from hcube.api.models.dimensions import DateDimension, IntDimension
 from hcube.api.models.materialized_views import AggregatingMaterializedView
 from hcube.api.models.metrics import IntMetric
 from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
-
 from logs.models import AccessLog, ImportBatch, ReportType
 
 ch_backend = ClickhouseCubeBackend(

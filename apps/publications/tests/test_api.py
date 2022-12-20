@@ -28,6 +28,7 @@ from logs.tests.conftest import report_type_nd  # noqa - fixture
 from organizations.models import UserOrganization
 from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
 from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
+
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.platforms import PlatformFactory

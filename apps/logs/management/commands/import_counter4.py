@@ -1,16 +1,15 @@
 import json
 import logging
 
+from celus_nigiri.counter4 import Counter4JR1Report
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-
+from organizations.models import Organization
+from publications.models import Platform
 from pycounter import report
 
-from publications.models import Platform
-from celus_nigiri.counter4 import Counter4JR1Report
 from ...logic.data_import import import_counter_records
-from ...models import ReportType, OrganizationPlatform
-from organizations.models import Organization
+from ...models import OrganizationPlatform, ReportType
 
 logger = logging.getLogger(__name__)
 

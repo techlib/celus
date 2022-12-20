@@ -4,16 +4,15 @@ import logging
 import os
 from time import monotonic
 from typing import IO
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from cachalot.api import cachalot_disabled
 from django.conf import settings
-from django.db.models import QuerySet
 from django.core.cache import cache
+from django.db.models import QuerySet
 from django.utils.timezone import now
 
 from ..models import AccessLog, DimensionText, ReportType
-
 
 logger = logging.getLogger(__name__)
 

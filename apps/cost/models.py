@@ -1,8 +1,7 @@
-from django.db import models
-from django.utils.timezone import now
-
 from core.models import User
 from core.validators import validate_year
+from django.db import models
+from django.utils.timezone import now
 
 
 class Payment(models.Model):

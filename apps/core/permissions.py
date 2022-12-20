@@ -1,8 +1,7 @@
+from core.logic.url import extract_field_from_request, extract_organization_id_from_request_data
 from django.conf import settings
 from organizations.models import UserOrganization
 from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
-
-from core.logic.url import extract_field_from_request, extract_organization_id_from_request_data
 
 
 class OwnerLevelBasedPermissions(BasePermission):

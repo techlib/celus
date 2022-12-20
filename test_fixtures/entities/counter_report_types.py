@@ -1,5 +1,4 @@
 import factory
-
 from sushi.models import CounterReportType
 
 from .report_types import ReportTypeFactory

@@ -1,13 +1,13 @@
 import logging
 
 import celery
+from core.logic.error_reporting import email_if_fails
 from django.core.mail import mail_admins
 from django.utils.timezone import now
 
-from core.logic.error_reporting import email_if_fails
+from .logic.sync import sync_identities_with_erms, sync_users_with_erms
 from .models import DataSource
 from .task_support import cache_based_lock
-from .logic.sync import sync_identities_with_erms, sync_users_with_erms
 
 logger = logging.getLogger(__name__)
 

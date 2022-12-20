@@ -1,7 +1,8 @@
 import pytest
 
-from ..models import Organization
 from test_fixtures.entities.organizations import OrganizationFactory
+
+from ..models import Organization
 
 
 @pytest.mark.django_db

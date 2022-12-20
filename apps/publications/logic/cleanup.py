@@ -1,13 +1,12 @@
-from collections import Counter
 import logging
-from typing import Optional, Callable
+from collections import Counter
+from typing import Callable, Optional
 
 from django.db.models import Exists, OuterRef, QuerySet
 from django.db.transaction import atomic
-
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform
 from organizations.models import Organization
-from publications.models import PlatformTitle, Platform
+from publications.models import Platform, PlatformTitle
 from scheduler.models import FetchIntention
 from sushi.models import SushiFetchAttempt
 

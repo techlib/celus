@@ -1,6 +1,6 @@
 import factory
-
 from charts.models import ChartDefinition, ReportDataView
+
 from test_fixtures.entities.report_types import ReportTypeFactory
 
 

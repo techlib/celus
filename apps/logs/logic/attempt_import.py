@@ -4,17 +4,16 @@ import typing
 from datetime import date
 from time import time
 
-from django.conf import settings
-from django.db.transaction import atomic
-
-from core.exceptions import FileConsistencyError
-from logs.exceptions import DataStructureError
-from logs.logic.data_import import import_counter_records, create_import_batch_or_crash
-from logs.models import OrganizationPlatform
-from celus_nigiri.client import Sushi5Client, SushiException, SushiError
+from celus_nigiri.client import Sushi5Client, SushiError, SushiException
 from celus_nigiri.counter4 import Counter4ReportBase
 from celus_nigiri.counter5 import Counter5ReportBase, TransportError
-from sushi.models import SushiFetchAttempt, AttemptStatus
+from core.exceptions import FileConsistencyError
+from django.conf import settings
+from django.db.transaction import atomic
+from logs.exceptions import DataStructureError
+from logs.logic.data_import import create_import_batch_or_crash, import_counter_records
+from logs.models import OrganizationPlatform
+from sushi.models import AttemptStatus, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
 

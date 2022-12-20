@@ -1,16 +1,14 @@
 import logging
 
-from django.utils.translation import activate
-from rest_framework import status
-
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth import load_backend
 from django.contrib.auth.middleware import RemoteUserMiddleware
 from django.http import JsonResponse
+from django.utils.translation import activate
+from rest_framework import status
 
 from apps.core.auth import EDUIdAuthenticationBackend
-
 
 logger = logging.getLogger(__name__)
 

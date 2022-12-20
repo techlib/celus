@@ -1,10 +1,10 @@
 import pytest
-from django.contrib.auth import get_user_model
-
 from core.logic.sync import sync_identities
-from core.models import Identity, DataSource
+from core.models import DataSource, Identity
+from django.contrib.auth import get_user_model
 from erms.sync import ERMSObjectSyncer
 from organizations.models import Organization, UserOrganization
+
 from ..logic.sync import sync_users
 
 

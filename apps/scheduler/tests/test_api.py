@@ -16,6 +16,7 @@ from scheduler.models import Automatic, FetchIntention, Harvest
 from sushi.models import AttemptStatus
 from sushi.models import BrokenCredentialsMixin as BS
 from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
+
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory

@@ -1,5 +1,5 @@
-from contextlib import contextmanager
 import logging
+from contextlib import contextmanager
 from time import sleep, time
 
 from django.core.cache import cache

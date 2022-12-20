@@ -6,10 +6,8 @@ from time import time
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 from django.db.transaction import atomic
-
-from logs.models import ReportType, AccessLog, DimensionText
+from logs.models import AccessLog, DimensionText, ReportType
 from publications.models import Title
-
 
 logger = logging.getLogger(__name__)
 

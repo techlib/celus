@@ -1,6 +1,5 @@
-from rest_framework_nested.routers import NestedSimpleRouter
-
 from organizations.urls import router as organization_router
+from rest_framework_nested.routers import NestedSimpleRouter
 
 from . import views
 

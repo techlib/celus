@@ -1,7 +1,6 @@
 import pytest
 from django.core.management import call_command
-
-from logs.models import ImportBatch, AccessLog, Metric
+from logs.models import AccessLog, ImportBatch, Metric
 from organizations.tests.conftest import organization_random  # noqa - fixture
 from publications.models import Title
 

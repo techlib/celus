@@ -3,7 +3,6 @@ import sys
 
 from django.conf import settings
 from django.db import migrations
-
 from logs.cubes import AccessLogCube, ch_backend
 
 

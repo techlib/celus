@@ -1,9 +1,9 @@
 import pytest
-from django.urls import reverse
-
 from core.models import DataSource
+from django.urls import reverse
 from tags.logic.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
 from tags.models import AccessibleBy, Tag, TagClass, TagScope
+
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.titles import TitleFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures

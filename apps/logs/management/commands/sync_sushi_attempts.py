@@ -2,9 +2,8 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.models.transaction import atomic
-
 from logs.logic.attempt_import import import_one_sushi_attempt
-from sushi.models import SushiFetchAttempt, AttemptStatus
+from sushi.models import AttemptStatus, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
 
