@@ -1,7 +1,6 @@
-from django.utils.log import RequireDebugFalse
-from kombu.asynchronous.http.curl import DEFAULT_USER_AGENT
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import ReadOnlyField, BooleanField, HiddenField, CurrentUserDefault
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.fields import BooleanField, CurrentUserDefault, HiddenField, ReadOnlyField
 from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 from rest_framework.serializers import ModelSerializer
 
@@ -9,14 +8,14 @@ from core.models import UL_CONS_STAFF, User
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
-from publications.serializers import PlatformSerializer
+from publications.serializers import SimplePlatformSerializer
 from .models import Annotation
 
 
 class AnnotationSerializer(ModelSerializer):
 
     organization = OrganizationSerializer(read_only=True)
-    platform = PlatformSerializer(read_only=True)
+    platform = SimplePlatformSerializer(read_only=True)
     subject = ReadOnlyField()
     organization_id = PrimaryKeyRelatedField(
         source='organization', write_only=True, allow_null=True, queryset=Organization.objects.all()

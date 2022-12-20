@@ -89,7 +89,7 @@ class AnnotationsViewSet(ModelViewSet):
             Annotation.objects.filter(org_perm_args)
             .filter(*query_args)
             .exclude(*exclude_args)
-            .select_related('organization', 'platform')
+            .select_related('organization', 'platform', 'author')
             .order_by(*ordering)
         )
         # add access level stuff
