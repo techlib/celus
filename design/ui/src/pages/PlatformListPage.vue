@@ -144,14 +144,7 @@ export default {
         url: "/api/flexible-report/?primary_dimension=platform",
       });
       if (!error) {
-        this.reports = [];
-        for (let rt of response.data.filter(
-          (r) => r.report_config?.primary_dimension === "platform"
-        )) {
-          FlexiReport.fromAPIObject(rt, this.reportTypeMap).then((obj) =>
-            this.reports.push(obj)
-          );
-        }
+        this.reports = response.data;
       } else {
         this.showSnackbar({
           content: "Could not load the list of stored reports",
@@ -180,7 +173,11 @@ export default {
     async viewId() {
       if (this.viewId > 0 && this.selectedReport) {
         console.log("Loading report", this.selectedReport);
-        await this.$refs.flexiTableWidget.updateOutput(this.selectedReport);
+        let report = await FlexiReport.fromAPIObject(
+          this.selectedReport,
+          this.reportTypeMap
+        );
+        await this.$refs.flexiTableWidget.updateOutput(report);
       }
     },
   },
