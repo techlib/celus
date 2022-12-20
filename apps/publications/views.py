@@ -211,7 +211,7 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
             ).distinct()
         else:
             qs = Platform.objects.all()
-        return qs.select_related('source')
+        return qs.select_related('source', 'source__organization')
 
     @action(methods=['GET'], url_path='no-interest-defined', detail=False)
     def without_interest_definition(self, request, organization_pk):
