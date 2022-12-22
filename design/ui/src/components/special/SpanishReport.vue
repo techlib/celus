@@ -203,26 +203,4 @@ export default {
 };
 </script>
 
-<style lang="scss">
-.spanish-report-line {
-  border: solid 3px darkblue;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-
-  * {
-    margin: 1rem;
-  }
-
-  .report-type {
-  }
-  .name {
-    font-weight: 300;
-  }
-  .description {
-    font-weight: normal;
-  }
-  .total-value {
-  }
-}
-</style>
+<style lang="scss"></style>

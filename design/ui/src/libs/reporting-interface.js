@@ -35,6 +35,9 @@ class Report {
     );
   }
   get slicerUrl() {
+    if (!this.dateRangeStart || !this.dateRangeEnd) {
+      return null;
+    }
     let groups = ["date"];
     // some implicit filters
     let filters = {
@@ -91,6 +94,10 @@ class Report {
   async loadMainData() {
     if (!this.allReady) {
       console.warn("not ready to load data");
+      return;
+    }
+    if (!this.slicerUrl) {
+      console.warn("no slicer url - configuration error?");
       return;
     }
     let result = await this.http({ url: this.slicerUrl });

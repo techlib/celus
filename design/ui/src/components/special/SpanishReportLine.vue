@@ -3,13 +3,26 @@
     <v-expansion-panel-header class="justify-space-between">
       <h3 class="name flex-grow-0">{{ name }}</h3>
       <h4 class="description">{{ description }}</h4>
-      <h2 class="total-value flex-grow-0 me-4">
+      <h2 v-if="dateRangeStart" class="total-value flex-grow-0 me-4">
         <span v-if="allReady">{{ formatInteger(total) }}</span>
         <v-progress-circular v-else indeterminate />
       </h2>
+      <h2 v-else class="total-value flex-grow-0 me-4 trouble">
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <span v-on="on">
+              <v-icon small color="warning" class="me-2"
+                >fa-exclamation-triangle</v-icon
+              >
+              Date range start missing
+            </span>
+          </template>
+          Select a date range with an explicit start date.
+        </v-tooltip>
+      </h2>
     </v-expansion-panel-header>
     <v-expansion-panel-content>
-      <v-sheet>
+      <v-sheet v-if="dateRangeStart">
         <table class="overview">
           <tr>
             <th>Source Report</th>
@@ -24,6 +37,7 @@
                 v-for="(value, name, index) in mainReportDefinition.filters"
                 class="me-2"
                 :style="{ color: palette[index % palette.length] }"
+                :key="name"
               >
                 {{ name }}={{ value.toString() }}
               </span>
@@ -51,6 +65,7 @@
                 v-for="(value, name, index) in fallbackReportDefinition.filters"
                 class="me-2"
                 :style="{ color: palette[index % palette.length] }"
+                :key="name"
               >
                 {{ name }}={{ value }}
               </span>
@@ -147,6 +162,9 @@ export default {
       dateRangeEnd: "dateRangeExplicitEndText",
       organizationObj: "selectedOrganization",
     }),
+    canCompute() {
+      return !!this.dateRangeStart && !!this.dateRangeEnd;
+    },
     organization() {
       return this.organizationObj.pk !== -1 ? this.organizationObj.pk : null;
     },
@@ -155,6 +173,9 @@ export default {
       return `${this.dateRangeStart} - ${this.dateRangeEnd}`;
     },
     dateRange() {
+      if (!this.canCompute) {
+        return [];
+      }
       // returns the months between the first and last date as set in the app preferences
       return monthsBetween(this.dateRangeStart, this.dateRangeEnd).map(
         ymDateFormat
@@ -202,6 +223,9 @@ export default {
       // if the platform does not have any data in the main report
       // if subtractFallbackReportDefinition is given, subtract the data from
       // the fallback report
+      if (!this.canCompute) {
+        return [];
+      }
       let output = [];
       if (this.fallbackReport) {
         this.mainReport.data.forEach((row) => {
@@ -375,5 +399,12 @@ export default {
 .name {
   min-width: 16rem;
   margin-right: 1.5rem;
+}
+.total-value {
+  &.trouble {
+    font-size: 1rem;
+    font-weight: normal;
+    font-style: italic;
+  }
 }
 </style>
