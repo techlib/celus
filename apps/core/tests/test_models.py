@@ -89,16 +89,25 @@ def test_accessible_platforms(basic1):  # noqa
 
 @pytest.mark.django_db
 class TestUserModel:
-    def test_email_verification_case_mismatch(self):
+    @pytest.mark.parametrize(
+        ['allow_eduid_login', 'verified', 'user_email_verified'],
+        [[True, True, True], [True, False, True], [False, True, True], [False, False, False]],
+    )
+    def test_email_verification_case_mismatch(
+        self, settings, allow_eduid_login, verified, user_email_verified
+    ):
         """
         Test that email is considered verified even if the case is changed
         """
+        settings.ALLOW_EDUID_LOGIN = allow_eduid_login
         user = User.objects.create(username='foo', email='foo@bar.baz')
-        EmailAddress.objects.create(user=user, email=user.email, verified=True)
-        assert user.email_verified
+        EmailAddress.objects.create(user=user, email=user.email, verified=verified)
+        assert user.email_verified == user_email_verified
         # now change the case of the email in one place
         user.email = user.email.capitalize()
         user.save()
         # .email_verified is a cached property, we need new User instance
         user = User.objects.get(pk=user.pk)
-        assert user.email_verified, 'the email should be verified even if case does not match'
+        assert (
+            user.email_verified == user_email_verified
+        ), 'the email should be verified even if case does not match'
