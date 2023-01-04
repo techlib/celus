@@ -15,12 +15,11 @@ tests:run_tests:
     POSTGRES_HOST: postgres
     REDIS_URL: "redis://redis:6379/1"
     CELERY_BROKER_URL: "redis://redis:6379/"
-    CLICKHOUSE_DB: celus
+    CLICKHOUSE_DB: celus_test
     CLICKHOUSE_USER: celus
     CLICKHOUSE_PASSWORD: celus
     CLICKHOUSE_HOST: clickhouse
     CLICKHOUSE_PORT: 9000
-    CLICKHOUSE_PURGE_TEST_DB: "true"
   before_script:
     - poetry install
   script:

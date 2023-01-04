@@ -40,12 +40,12 @@ class TestClickhouse:
     def test_clickhouse_cube_definition(self):
         from ..cubes import AccessLogCube, ch_backend
 
-        ch_backend.create_table(AccessLogCube)
+        ch_backend.initialize_storage(AccessLogCube)
 
     def test_clickhouse_add_data(self):
         from ..cubes import AccessLogCube, AccessLogCubeRecord, ch_backend
 
-        ch_backend.create_table(AccessLogCube)
+        ch_backend.initialize_storage(AccessLogCube)
         ch_backend.store_records(
             AccessLogCube,
             [

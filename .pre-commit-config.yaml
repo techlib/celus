@@ -20,7 +20,7 @@ repos:
 
       - id: isort
         name: isort formatter
-        entry: poetry run isort -c
+        entry: poetry run isort
         language: system
         types: [python]
 

@@ -1,10 +1,7 @@
-import os
-from distutils.util import strtobool
-
 import pytest
 from clickhouse_driver import Client
 from filelock import FileLock
-from logs.cubes import ch_backend
+from logs.cubes import AccessLogCube, ch_backend
 
 
 def clickhouse_connection(request, settings):
@@ -22,31 +19,14 @@ def clickhouse_connection(request, settings):
             host = settings.CLICKHOUSE_HOST
             port = settings.CLICKHOUSE_PORT
             secure = settings.CLICKHOUSE_SECURE
-            client = Client(host=host, port=port, user=user, password=password, secure=secure)
+            client = Client(
+                database=database, host=host, port=port, user=user, password=password, secure=secure
+            )
 
-            if strtobool(os.environ.get("CLICKHOUSE_PURGE_TEST_DB", "False")):
-                client.execute(f"DROP DATABASE IF EXISTS {database}")
-                # update the backend to know that all tables were removed
-                ch_backend._table_exists = {}
-            elif (
-                len(
-                    client.execute(
-                        "SELECT * FROM system.databases WHERE name=%(database)s;", locals()
-                    )
-                )
-                > 0
-            ):
-                raise ValueError(
-                    f'The database {database} already exists, to prevent loss of data due to '
-                    'accidentally using production database for testing, we raise this error. '
-                    'If the database name is correct, just drop the database and the tests will '
-                    'recreate it.'
-                )
-            client.execute(f"CREATE DATABASE IF NOT EXISTS {database}")
+            ch_backend.drop_storage(AccessLogCube)
+            ch_backend.initialize_storage(AccessLogCube)
             yield client
-            client.execute(f"DROP DATABASE IF EXISTS {database}")
-            # update the backend to know that all tables were removed
-            ch_backend._table_exists = {}
+            ch_backend.drop_storage(AccessLogCube)
     else:
         settings.CLICKHOUSE_SYNC_ACTIVE = False
         settings.CLICKHOUSE_QUERY_ACTIVE = False

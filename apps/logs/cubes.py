@@ -5,6 +5,11 @@ from hcube.api.models.dimensions import DateDimension, IntDimension
 from hcube.api.models.materialized_views import AggregatingMaterializedView
 from hcube.api.models.metrics import IntMetric
 from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
+from hcube.backends.clickhouse.dictionaries import (
+    DictionaryAttr,
+    DictionaryDefinition,
+    PostgresqlSource,
+)
 from logs.models import AccessLog, ImportBatch, ReportType
 
 ch_backend = ClickhouseCubeBackend(
@@ -15,6 +20,8 @@ ch_backend = ClickhouseCubeBackend(
     port=settings.CLICKHOUSE_PORT,
     secure=settings.CLICKHOUSE_SECURE,
 )
+
+django_db = settings.DATABASES['default']
 
 
 class AccessLogCube(Cube):
@@ -67,6 +74,30 @@ class AccessLogCube(Cube):
                 expression='import_batch_id',
                 type='set(0)',
                 granularity=1,
+            )
+        ]
+        dictionaries = [
+            DictionaryDefinition(
+                name="title",
+                source=PostgresqlSource(
+                    host=django_db['HOST'],
+                    database=django_db['NAME'],
+                    port=django_db['PORT'],
+                    user=django_db['USER'],
+                    password=django_db['PASSWORD'],
+                    table="publications_title",
+                    invalidate_query="SELECT MAX(last_updated) FROM publications_title",
+                ),
+                key="id",
+                layout="hashed_array",
+                attrs=[
+                    DictionaryAttr(name="pub_type", type="String"),
+                    DictionaryAttr(name="name", type="String"),
+                    DictionaryAttr(name="issn", type="String"),
+                    DictionaryAttr(name="eissn", type="String"),
+                    DictionaryAttr(name="isbn", type="String"),
+                    DictionaryAttr(name="doi", type="String"),
+                ],
             )
         ]
 
