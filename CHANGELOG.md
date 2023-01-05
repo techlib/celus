@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1]
+
+### Fixed
+
+#### Frontend
+
+- SUSHI credentials edit dialog only showed one platform if more of them shared the same name
+- warn users when the date range is not limited for the "Spanish report"
+- optimization: make sure the platform list only loads tags once
+- optimize the loading time of platform page by using smarter approach to stored reports
+
+
+#### Backend
+
+- optimization: reduce the memory footprint of the CLI script for removing unused titles
+- optimization: reduce the number of queries in PlatformViewSet to improve performance
+- optimization: optimize speed of the annotations endpoint
+- fix bug in the `delete_batches_targets` celery task
+
 
 ## [5.1.0]
 

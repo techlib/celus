@@ -1,3 +1,20 @@
+- version: 5.1.1
+  title:
+    en: Version 5.1.1
+    cs: Verze 5.1.1
+  text:
+    en: |
+      - several minor bugs were fixed
+      - speed of several pages was improved (most notably platforms and annotations)
+
+    cs: |
+      - bylo opraveno několik menších chyb
+      - rychlost několika stránek byla optimalizována (především platformy a poznámky)
+
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
 - version: 5.1.0
   title:
     en: Version 5.1.0 is out!
