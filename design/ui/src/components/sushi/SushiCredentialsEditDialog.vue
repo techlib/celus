@@ -183,6 +183,7 @@ cs:
                 v-model="platform"
                 :items="allowedPlatforms"
                 item-text="name"
+                item-value="pk"
                 :label="$t('platform')"
                 return-object
                 :loading="loadingPlatforms"
