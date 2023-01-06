@@ -334,7 +334,7 @@ class SushiCredentialsViewSet(ModelViewSet):
                 F("attempt__timestamp").desc(nulls_last=True),  # no attempt => last
             )
             .distinct("credentials_id", "counter_report_id")
-            .select_related('credentials', 'counter_report', 'attempt')
+            .select_related('credentials', 'counter_report', 'attempt', 'attempt__counter_report')
         )
         records = MonthOverviewSerializer(query, many=True).data
         return Response(records)
