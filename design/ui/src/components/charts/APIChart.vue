@@ -790,10 +790,15 @@ export default {
     dateRange() {
       // returns the months between the first and last date as set in the app preferences
       if (this.shownPrimaryDimension !== "date") return null;
-      if (!this.dateRangeStart) return null;
-      return monthsBetween(this.dateRangeStart, this.dateRangeEnd).map(
-        ymDateFormat
-      );
+      let start = this.dateRangeStart;
+      if (!start) {
+        if (this.coverageData.length) {
+          start = this.coverageData[0].date;
+        } else {
+          return null;
+        }
+      }
+      return monthsBetween(start, this.dateRangeEnd).map(ymDateFormat);
     },
     coverageRows() {
       if (this.title && this.organizationSelected) {
