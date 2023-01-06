@@ -624,6 +624,8 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
       loadSushiCredentialsCount: "loadSushiCredentialsCount",
+      getPageSetting: "getPageSetting",
+      setPageSetting: "setPageSetting",
     }),
     showSelectCredentials() {
       if (this.checkedCredentials.length === 0) {
@@ -807,9 +809,23 @@ export default {
     dataUrl() {
       this.loadSushiCredentialsList();
     },
+    itemsPerPage() {
+      this.setPageSetting({
+        page: this.$route.name,
+        key: "itemsPerPage",
+        value: this.itemsPerPage,
+      });
+    },
   },
-  mounted() {
-    this.loadSushiCredentialsList();
+  async mounted() {
+    const ippSetting = await this.getPageSetting({
+      page: this.$route.name,
+      key: "itemsPerPage",
+    });
+    if (ippSetting) {
+      this.itemsPerPage = ippSetting;
+    }
+    await this.loadSushiCredentialsList();
   },
 };
 </script>

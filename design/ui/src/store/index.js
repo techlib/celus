@@ -15,6 +15,7 @@ import interest from "./modules/interest";
 import maintenance from "./modules/maintenance";
 import tour from "./modules/tour";
 import login from "./modules/login";
+import pageSettings from "./modules/page-settings";
 import siteConfig from "./modules/site-config";
 import isEqual from "lodash/isEqual";
 import sleep from "@/libs/sleep";
@@ -56,6 +57,7 @@ export default new Vuex.Store({
     maintenance,
     siteConfig,
     tour,
+    pageSettings,
   },
   state: {
     latestPublishedRelease: null,
