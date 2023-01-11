@@ -550,6 +550,60 @@ class TestManualUploadNonCounter:
         )
         assert response.status_code == 409, "failed due to clashing data"
 
+    @pytest.mark.parametrize(['organization_set'], [(True,), (False,)])
+    def test_single_org_in_multiple_org_file(
+        self,
+        platforms,
+        organizations,
+        settings,
+        tmp_path,
+        clients,
+        report_types,
+        basic1,
+        organization_set,
+    ):
+
+        with (
+            Path(__file__).parent / "data/custom/custom_data-2d-3x2x3-org-isodate-single.csv"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "something.csv"
+
+        organization = organizations['standalone'] if organization_set else None
+        platform = platforms['standalone']
+        settings.MEDIA_ROOT = tmp_path
+
+        post_data = {
+            'platform': platform.id,
+            'report_type_id': report_types['custom1'].pk,
+            'data_file': data_file,
+            'method': MduMethod.CELUS,
+        }
+        if organization_set:
+            post_data["organization"] = organization.pk
+        response = clients["admin2"].post(reverse('manual-data-upload-list'), data=post_data)
+        if organization_set:
+            assert response.status_code == 201
+        else:
+            assert response.status_code == 403
+            return
+
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+        mdu.refresh_from_db()
+
+        assert mdu.preflight["organizations"] is None
+
+        response = clients["admin2"].post(reverse('manual-data-upload-import-data', args=(mdu.pk,)))
+
+        assert response.status_code == 200, "Import should pass"
+
+        import_manual_upload_data(mdu.pk, mdu.user.pk)
+        mdu.refresh_from_db()
+        assert mdu.organization == organizations["standalone"], "organization is set"
+
 
 @pytest.mark.django_db
 class TestManualUploadNibbler:

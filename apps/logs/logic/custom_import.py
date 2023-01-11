@@ -43,11 +43,10 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
         k: {"new": v, "this_month": None, "prev_year_avg": None, "prev_year_month": 0}
         for k, v in histograms["start"].items()
     }
-    if len(histograms["organization"]) == 1 and (
-        None in histograms["organization"] or "" in histograms["organization"]
-    ):
-        # Only root organization is present
+    if len(histograms["organization"]) == 1:
+        # Only a single organization is present
         # don't export organizations to preflight
+        # organization is picked by the user
         organizations = None
     else:
         organizations = histograms["organization"]
