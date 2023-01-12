@@ -1,7 +1,9 @@
 import copy
 import json
 import re
+import typing
 import uuid
+from importlib.metadata import version
 from unittest.mock import patch
 
 import pytest
@@ -666,23 +668,40 @@ class TestReportTypeImportAttempt:
 @pytest.mark.django_db
 class TestParserDefinitionImportAttempt:
     def test_process(self, data_sources, parser_definitions):
+        def fill_in_nibbler_versions(
+            data: dict, lowest: typing.Optional[str] = None, highest: typing.Optional[str] = None
+        ):
+            data["lowest_nibbler_version"] = lowest or version("celus_nibbler")
+            data["highest_nibbler_version"] = highest or version("celus_nibbler")
+            return data
+
         definition = copy.deepcopy(parser_definitions["parser1"].definition)
         definition["pk"] = parser_definitions["parser1"].pk
 
         attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
         attempt.save()
-        attempt.process([copy.deepcopy(definition)])
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition))])
         assert attempt.stats == {"same": 1, "total": 1}, "All same"
 
         definition["parser_name"] = "parserX"
         attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
         attempt.save()
-        attempt.process([copy.deepcopy(definition)])
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition))])
         assert attempt.stats == {"updated": 1, "total": 1}, "One updated"
 
         definition["pk"] += 1
         definition["parser_name"] = "parserY"
         attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
         attempt.save()
-        attempt.process([copy.deepcopy(definition)])
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition))])
         assert attempt.stats == {"created": 1, "total": 1, "wiped": 1}, "One deleted one created"
+
+        attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1")])
+        assert attempt.stats == {"total": 1, "same": 1}, "lower nibbler version in range"
+
+        attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1", "2.2.2")])
+        assert attempt.stats == {"total": 1, "wiped": 1}, "nibbler version out of range"

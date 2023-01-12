@@ -5,6 +5,7 @@ import traceback
 import typing
 from collections import Counter
 from enum import Enum, auto
+from importlib.metadata import version
 from urllib.parse import urljoin
 
 import requests
@@ -17,6 +18,7 @@ from django.utils import timezone
 from logs.models import Dimension, Metric, ReportType, ReportTypeToDimension
 from nibbler.models import ParserDefinition
 from publications.models import Platform
+from semantic_version import Version
 
 from .serializers import ParserDefinitionSerializer, PlatformSerializer, ReportTypeSerializer
 
@@ -531,11 +533,27 @@ class ParserDefinitionImportAttempt(ImportAttempt):
         # Check whether the data are valid
         ParserDefinitionSerializer(data=data, many=True).is_valid(raise_exception=True)
 
+        nibbler_version = version("celus_nibbler")
+
         counter = Counter()
         seen_ids = set()
         for definition in data:
             counter["total"] += 1
+
             pk = definition.pop("pk")
+            # Check version
+            if not (
+                Version(definition.pop('lowest_nibbler_version'))
+                <= Version(nibbler_version)
+                <= Version(definition.pop('highest_nibbler_version'))
+            ):
+                logger.warn(
+                    "Parser definition %s is incompatible current nibbler version %s",
+                    pk,
+                    nibbler_version,
+                )
+                continue
+
             seen_ids.add(pk)
 
             parser_definition, created = ParserDefinition.objects.get_or_create(

@@ -52,3 +52,5 @@ class ParserDefinitionSerializer(serializers.Serializer):
     metric_aliases = serializers.JSONField(required=True)
     dimension_aliases = serializers.JSONField(required=True)
     heuristics = serializers.JSONField(required=True)
+    lowest_nibbler_version = serializers.CharField(required=True)
+    highest_nibbler_version = serializers.CharField(required=True)
