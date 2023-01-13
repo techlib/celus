@@ -1,3 +1,27 @@
+- version: 5.2.0
+  title:
+    en: Version 5.2.0 brings integration with the COUNTER registry
+    cs: Verze 5.2.0 přináší integraci s COUNTER registrem
+  text:
+    en: |
+      - the [COUNTER registry](https://registry.projectcounter.org/) was integrated into our SUSHI management interface. You can thus easily identify the COUNTER-compliant platforms and get help with filling in the SUSHI credentials
+      - the IP addresses of the Celus server are now available on the `Troubleshooting` page, so that you can easily send them to providers who use IP-based authentication
+      - a list of non-COUNTER platforms for which raw data import is available was added
+      - a bug in display of coverage data for the whole available time range was fixed
+      - several minor bugs were fixed
+
+    cs: |
+      - Do správy SUSHI byla integrována podpora pro [COUNTER registry](https://registry.projectcounter.org/). Nově tak můžete snadno identifikovat COUNTER-kompatibilní platformy a zobrazit specifickou nápovědu při vyplňování jejich SUSHI credentials
+      - IP adresy Celus serveru jsou nyní dostupné na stránce `Řešení problémů`, takže je můžete snadno poslat poskytovatelům, kteří používají autentizaci na základě IP adresy
+      - byl přidán seznam non-COUNTER platforem, pro které Celus umožňuje import z původních souborů od vydavatele
+      - byla opravena chyba v zobrazení pokrytí daty při zobrazení celé dostupné doby
+      - bylo opraveno několik drobných chyb
+
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
+
 - version: 5.1.1
   title:
     en: Version 5.1.1

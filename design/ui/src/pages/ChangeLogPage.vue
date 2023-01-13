@@ -85,9 +85,14 @@ export default {
       }
     },
     markdownToHtml(content) {
+      const renderer = new marked.Renderer();
+      renderer.link = (href, title, text) =>
+        `<a target="_blank" href="${href}" title="${title}">${text}</a>`;
+
       let html = marked.parse(content, {
         breaks: false,
         gfm: true,
+        renderer: renderer,
       });
       return html;
     },

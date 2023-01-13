@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0]
+
+### Added
+
+#### Frontend
+
+- the [COUNTER registry](https://registry.projectcounter.org/) was integrated into the SUSHI
+  credentials edit dialog giving extra information about the credentials for platforms in the registry
+- a basic "Troubleshooting" page for SUSHI was added containing the IP addresses of the
+  Celus server to be used when IP authentication is required
+- a list of non-COUNTER platform for which raw data import is supported was added as a separate
+  page
+- remember the page size of the SUSHI credentials table between visits
+
+#### Backend
+
+- a periodic task was added to sync report types and parser definitions with the knowledgebase
+
+
+### Changes
+
+#### Frontend
+
+- the so-called "Spanish report" was renamed to Rebiun report and added to the list of
+  available views on platform list page
+
+#### Backend
+
+- only store the parser definitions for raw non-COUNTER data which are compatible with the
+  current version of the `nibbler` library
+- use a nicer format for displaying the `nibbler` parser definitions in admin
+- ensure that all related report types are visible in charts - regardless if they have an explicit
+  report view associated or not.
+
+### Fixed
+
+#### Frontend
+
+- display of coverage when the 'All available' date range was selected was fixed
+
+#### Backend
+
+- the number of queries in the `month-overview` API endpoint was reduced
+
+
 ## [5.1.1]
 
 ### Fixed
