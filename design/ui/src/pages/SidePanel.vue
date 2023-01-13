@@ -247,6 +247,12 @@ export default {
                   linkTo: "harvests",
                   show: this.showAdminStuff,
                 },
+                {
+                  title: this.$t("pages.sushi_troubleshooting"),
+                  icon: "fa-exclamation-triangle",
+                  linkTo: "sushi-troubleshooting",
+                  show: this.showAdminStuff,
+                },
               ],
             },
             {

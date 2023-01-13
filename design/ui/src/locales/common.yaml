@@ -30,6 +30,7 @@ en:
     tag_management: Tag management
     title_lists: Title lists
     organizations: Organizations
+    sushi_troubleshooting: Troubleshooting
   menu: Menu
   organization: Organization
   platform: Platform
@@ -305,6 +306,7 @@ cs:
     tag_management: Správa štítků
     title_lists: Titulové seznamy
     organizations: Organizace
+    sushi_troubleshooting: Řešení problémů
   menu: Menu
   organization: Organizace
   platform: Platforma

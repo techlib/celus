@@ -237,6 +237,15 @@ export default new Router({
       },
     },
     {
+      path: "/admin/sushi-troubleshooting/",
+      name: "sushi-troubleshooting",
+      component: () => import("../pages/SushiTroubleshootingPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+        hideOrganizationSelector: true,
+      },
+    },
+    {
       path: "/admin/mdu/",
       name: "manual-data-upload-list",
       component: () => import("../pages/ManualUploadListPage.vue"),

@@ -522,20 +522,7 @@ cs:
               <v-alert type="warning" outlined>
                 {{ $t("ip_authorization_required") }}
 
-                <ul class="mt-2">
-                  <li
-                    v-for="IPv4Address in this.harvesterIPv4Addresses"
-                    :key="IPv4Address"
-                  >
-                    {{ IPv4Address }} (IPv4)
-                  </li>
-                  <li
-                    v-for="IPv6Address in this.harvesterIPv6Addresses"
-                    :key="IPv6Address"
-                  >
-                    {{ IPv6Address }} (IPv6)
-                  </li>
-                </ul>
+                <HarvesterIPAddressList />
               </v-alert>
             </v-col>
           </v-row>
@@ -664,10 +651,12 @@ import validate from "validate.js";
 import { testSushiUrlReport } from "@/libs/sushi-validation";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import RegistryIcon from "@/components/sushi/RegistryIcon";
+import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
 
 export default {
   name: "SushiCredentialsEditDialog",
   components: {
+    HarvesterIPAddressList,
     RegistryIcon,
     HarvestSelectedWidget,
     SushiReportIndicator,
@@ -734,8 +723,6 @@ export default {
       userIsManager: "showManagementStuff",
       consortialInstall: "consortialInstall",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
-      harvesterIPv4Addresses: "harvesterIPv4Addresses",
-      harvesterIPv6Addresses: "harvesterIPv6Addresses",
     }),
     credentials() {
       if (this.credentialsObject) {

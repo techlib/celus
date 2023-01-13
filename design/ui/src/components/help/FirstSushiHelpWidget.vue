@@ -149,20 +149,8 @@ cs:
       <v-stepper-content :step="3">
         <p v-html="$t('step3_text')"></p>
         <p v-html="$t('step3_text_2')"></p>
-        <ul>
-          <li
-            v-for="IPv4Address in this.harvesterIPv4Addresses"
-            :key="IPv4Address"
-          >
-            {{ IPv4Address }} (IPv4)
-          </li>
-          <li
-            v-for="IPv6Address in this.harvesterIPv6Addresses"
-            :key="IPv6Address"
-          >
-            {{ IPv6Address }} (IPv6)
-          </li>
-        </ul>
+        <HarvesterIPAddressList />
+
         <p class="text-right">
           <v-btn @click="step++">{{ $t("continue") }}</v-btn>
         </p>
@@ -220,23 +208,18 @@ cs:
 
 <script>
 import SushiCredentialsEditDialog from "../sushi/SushiCredentialsEditDialog";
-import { mapActions, mapGetters } from "vuex";
+import { mapActions } from "vuex";
+import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
+
 export default {
   name: "FirstSushiHelpWidget",
-  components: { SushiCredentialsEditDialog },
+  components: { HarvesterIPAddressList, SushiCredentialsEditDialog },
   data() {
     return {
       step: 1,
       showCredentialsDialog: false,
       steps: [1, 2, 3, 4, 5, 6],
     };
-  },
-
-  computed: {
-    ...mapGetters({
-      harvesterIPv4Addresses: "harvesterIPv4Addresses",
-      harvesterIPv6Addresses: "harvesterIPv6Addresses",
-    }),
   },
 
   methods: {
