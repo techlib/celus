@@ -10,7 +10,15 @@ from core.tests.conftest import (  # noqa - fixtures
 from django.urls import reverse
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import import_counter_records
-from logs.models import AccessLog, ImportBatch, Metric, OrganizationPlatform
+from logs.logic.materialized_reports import sync_materialized_reports
+from logs.models import (
+    AccessLog,
+    ImportBatch,
+    Metric,
+    OrganizationPlatform,
+    ReportMaterializationSpec,
+    ReportType,
+)
 from logs.tests.conftest import counter_records_0d, report_type_nd  # noqa - fixture
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Title
@@ -135,7 +143,7 @@ class TestReportViewAPI:
         self, report_type_nd, master_admin_client
     ):
         """
-        Tests that a on-the-fly created view will be returned if no explicit view is created
+        Tests that an on-the-fly created view will be returned if no explicit view is created
         """
         rt = report_type_nd(0)
         resp = master_admin_client.get(reverse('report-type-to-report-data-view', args=(rt.pk,)))
@@ -147,6 +155,55 @@ class TestReportViewAPI:
         assert view['short_name'] == rt.short_name
         assert view['name'] == rt.name
         assert view['position'] == 1
+        assert view['is_proxy'] is True
+        assert view['is_standard_view'] is True
+
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.django_db(transaction=True)
+    def test_api_list_for_platform_with_proxy_views(
+        self, report_type_nd, master_admin_client, platform, organizations
+    ):
+        """
+        Check that if report_type does not have a report data view defined, a proxy view is created
+        on the fly and returned in the list of report data views.
+
+        We also need to make sure that proxy views are not created for materialized report types.
+        """
+        rt = report_type_nd(0)
+        mat_spec = ReportMaterializationSpec.objects.create(base_report_type=rt)
+        ReportType.objects.create(materialization_spec=mat_spec, name='mat_rt', short_name='mat_rt')
+        organization = organizations[0]
+        OrganizationPlatform.objects.create(organization=organization, platform=platform)
+        # we need to add accesslog in order to connect platform and report-type
+        ib = ImportBatch.objects.create(
+            report_type=rt, organization=organization, platform=platform
+        )
+        AccessLog.objects.create(
+            report_type=rt,
+            organization=organization,
+            platform=platform,
+            value=1,
+            date='2020-01-01',
+            metric=Metric.objects.create(short_name='metric'),
+            import_batch=ib,
+        )
+        # make sure materialized report types are populated as well
+        sync_materialized_reports()
+        # sync with clickhouse as we have circumvented the normal creation of accesslogs
+        sync_import_batch_with_clickhouse(ib)
+
+        resp = master_admin_client.get(
+            reverse(
+                'platform-report-data-views-list',
+                kwargs={'organization_pk': organization.pk, 'platform_pk': platform.pk},
+            )
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        view = data[0]
+        assert view['pk'] == rt.pk
         assert view['is_proxy'] is True
         assert view['is_standard_view'] is True
 

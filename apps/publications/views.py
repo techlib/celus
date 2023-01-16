@@ -724,23 +724,35 @@ class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
                 self.kwargs.get('organization_pk'), self.request.user, clickhouse=True
             )
             extra_filters = {k + "_id": v.pk for k, v in extra_filters.items()}
-            distinct_rts = (
+            distinct_rts = {
                 rec.report_type_id
                 for rec in ch_backend.get_records(
                     AccessLogCube.query()
                     .filter(**org_filter, **extra_filters)
                     .group_by('report_type_id')
                 )
-            )
+            }
         else:
             access_log_filter = Q(**org_filter, **extra_filters)
-            distinct_rts = (
-                AccessLog.objects.filter(access_log_filter).values('report_type_id').distinct()
+            distinct_rts = set(
+                AccessLog.objects.filter(access_log_filter)
+                .exclude(report_type__materialization_spec__isnull=False)
+                .values_list('report_type_id', flat=True)
+                .distinct()
             )
-        report_types = ReportDataView.objects.filter(base_report_type_id__in=distinct_rts).order_by(
-            'position'
+        report_views = list(
+            ReportDataView.objects.filter(base_report_type_id__in=distinct_rts).order_by('position')
         )
-        return report_types
+        # create proxy report view for each RT that has no report view
+        rts_with_view = {rv.base_report_type_id for rv in report_views}
+        to_fake = distinct_rts - rts_with_view
+        for i, rt in enumerate(ReportType.objects.filter(id__in=to_fake)):
+            # we use the fact that most attrs are the same in report type and report view
+            rt.position = len(report_views) + i
+            rt.is_proxy = True
+            rt.is_standard_view = True
+            report_views.append(rt)
+        return report_views
 
 
 class TitleReportDataViewViewSet(BaseReportDataViewViewSet):

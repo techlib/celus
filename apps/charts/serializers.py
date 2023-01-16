@@ -9,6 +9,7 @@ class ReportDataViewSerializer(ModelSerializer):
 
     public = BooleanField(default=False)
     primary_dimension = DimensionSerializer(read_only=True)
+    is_proxy = BooleanField(read_only=True, default=False)
 
     class Meta:
         model = ReportDataView
@@ -23,6 +24,7 @@ class ReportDataViewSerializer(ModelSerializer):
             'primary_dimension',
             'is_standard_view',
             'position',
+            'is_proxy',
         )
 
 
