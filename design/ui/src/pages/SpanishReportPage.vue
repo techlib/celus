@@ -1,6 +1,6 @@
 <template>
   <div class="pa-4">
-    <h2>Spanish Library Reports</h2>
+    <h2>Rebiun Report</h2>
     <SpanishReport />
   </div>
 </template>

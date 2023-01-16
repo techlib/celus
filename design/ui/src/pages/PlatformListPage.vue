@@ -3,10 +3,12 @@
 en:
   default: Platform overview - default view
   view: View
+  rebiun_report: Rebiun report
 
 cs:
   default: Přehled platforem - výchozí pohled
   view: Pohled
+  rebiun_report: Rebiun report
 </i18n>
 
 <template>
@@ -22,7 +24,15 @@ cs:
           :label="$t('view')"
           outlined
           dense
-        ></v-select>
+        >
+          <template #item="{ item }">
+            <v-list-item-content>
+              <v-list-item-title :class="item.value < 0 ? 'font-italic' : ''">{{
+                item.text
+              }}</v-list-item-title>
+            </v-list-item-content>
+          </template>
+        </v-select>
       </v-col>
       <v-spacer></v-spacer>
       <v-col
@@ -65,13 +75,19 @@ cs:
           v-show="viewId === 0"
           @loaded="overviewLoaded"
         />
-        <v-card>
+        <v-card v-show="viewId > 0">
           <v-card-text>
-            <FlexiTableOutput
-              ref="flexiTableWidget"
-              v-show="viewId > 0"
-              context-override
-            />
+            <FlexiTableOutput ref="flexiTableWidget" context-override />
+          </v-card-text>
+        </v-card>
+        <v-card v-if="viewId === -1">
+          <v-card-title>Rebiun report</v-card-title>
+          <v-card-text>
+            <p>
+              This is a specialized report used in Spain to report aggregated
+              usage of different types of electronic resources.
+            </p>
+            <SpanishReport />
           </v-card-text>
         </v-card>
       </v-col>
@@ -89,6 +105,7 @@ import cancellation from "@/mixins/cancellation";
 import PlatformOverviewWidget from "@/pages/PlatformOverviewWidget";
 import { FlexiReport } from "@/libs/flexi-reports";
 import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
+import SpanishReport from "@/components/special/SpanishReport.vue";
 
 export default {
   name: "PlatformListPage",
@@ -96,6 +113,7 @@ export default {
   mixins: [cancellation],
 
   components: {
+    SpanishReport,
     FlexiTableOutput,
     PlatformOverviewWidget,
     ManualUploadButton,
@@ -103,6 +121,7 @@ export default {
     AddAnnotationButton,
     AddPlatformButton,
   },
+
   data() {
     return {
       loading: false,
@@ -110,6 +129,7 @@ export default {
       viewId: 0,
     };
   },
+
   computed: {
     ...mapState({
       selectedOrganizationId: "selectedOrganizationId",
@@ -125,7 +145,7 @@ export default {
     views() {
       return [
         { text: this.$t("default"), value: 0 },
-        ...this.reports.map((report) => {
+        ...this.allReports.map((report) => {
           return { text: report.name, value: report.pk };
         }),
       ];
@@ -136,7 +156,11 @@ export default {
       }
       return this.reports.find((report) => report.pk === this.viewId);
     },
+    allReports() {
+      return [...this.reports, { pk: -1, name: this.$t("rebiun_report") }];
+    },
   },
+
   methods: {
     async loadStoredReports() {
       this.loading = true;
@@ -145,6 +169,7 @@ export default {
       });
       if (!error) {
         this.reports = response.data;
+        this.reports.sort((a, b) => a.name.localeCompare(b.name));
       } else {
         this.showSnackbar({
           content: "Could not load the list of stored reports",

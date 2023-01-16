@@ -294,7 +294,7 @@ export default new Router({
       },
     },
     {
-      path: "/spanish-report",
+      path: "/rebiun-report",
       component: () => import("../pages/SpanishReportPage.vue"),
     },
     {
