@@ -26,7 +26,4 @@ class ParserDefintionAdmin(admin.ModelAdmin):
             json.dumps(obj.definition, indent=2),
         )
 
-    def platforms(self, obj):
-        return ", ".join(obj.definition.get("platforms"))
-
     pretty_definition.allow_tags = True

@@ -25,6 +25,7 @@ from logs.models import (
 )
 from logs.serializers import PlatformInterestReportSerializer, ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
+from nibbler.models import ParserDefinition
 from organizations.logic.queries import extend_query_filter, organization_filter_from_org_id
 from organizations.models import Organization
 from pandas import DataFrame
@@ -47,7 +48,12 @@ from tags.models import Tag
 
 from .filters import PlatformFilter
 from .logic.use_cases import get_use_cases
-from .serializers import DetailedPlatformSerializer, PlatformSerializer, TitleSerializer
+from .serializers import (
+    AllPlatformSerializer,
+    DetailedPlatformSerializer,
+    PlatformSerializer,
+    TitleSerializer,
+)
 from .tasks import delete_platform_data_task, erms_sync_platforms_task
 
 
@@ -58,7 +64,7 @@ class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPag
 class AllPlatformsViewSet(ReadOnlyModelViewSet):
     permission_classes = [ViewPlatformPermission]
 
-    serializer_class = PlatformSerializer
+    serializer_class = AllPlatformSerializer
     filter_backends = [PlatformFilter]
 
     @classmethod
@@ -76,10 +82,19 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         """Returns Platforms which can be displayed to the user"""
         organization = self._organization_pk_to_obj(self.kwargs.get('organization_pk'))
+
         return (
             self.request.user.accessible_platforms(organization=organization)
-            .select_related('source')
+            .select_related('source', 'source__organization')
             .order_by('name')
+            .annotate(
+                has_raw_parser=Exists(
+                    ParserDefinition.objects.filter(
+                        source_id=OuterRef('source_id'),
+                        platforms__contains=[OuterRef('short_name')],
+                    )
+                )
+            )
         )
 
     @action(detail=False, url_path='use-cases', serializer_class=UseCaseSerializer)

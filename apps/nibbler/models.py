@@ -7,6 +7,7 @@ from celus_nibbler.definitions import Definition
 from celus_nibbler.parsers.dynamic import gen_parser
 from celus_nigiri import CounterRecord
 from core.models import DataSource
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -40,6 +41,12 @@ class ParserDefinition(models.Model):
     report_type_short_name = models.CharField(max_length=100)
     report_type_ext_id = models.IntegerField(null=True, blank=True)
     short_name = models.CharField(max_length=100)
+    platforms = ArrayField(
+        models.CharField(max_length=100),
+        default=list,
+        help_text="Platform's short names from knowledgebase",
+        blank=True,
+    )
 
     objects = ParserDefinitionQuerySet.as_manager()
 
@@ -55,6 +62,12 @@ class ParserDefinition(models.Model):
         self.short_name = nibbler_definition.__root__.parser_name
         self.report_type_short_name = nibbler_definition.__root__.data_format.name
         self.report_type_ext_id = nibbler_definition.__root__.data_format.id
+
+        # Read platform short_name
+        # should accept `"AAA"` and `{"name": "AAA", ...}` formats
+        self.platforms = sorted(
+            [e["name"] if isinstance(e, dict) else e for e in nibbler_definition.__root__.platforms]
+        )
 
         return super().save(*args, **kwargs)
 

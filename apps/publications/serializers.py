@@ -45,6 +45,26 @@ class PlatformSerializer(ModelSerializer):
         )
 
 
+class AllPlatformSerializer(ModelSerializer):
+    ext_id = IntegerField(read_only=True)
+    source = DataSourceSerializer(read_only=True)
+    has_raw_parser = BooleanField(read_only=True)
+
+    class Meta:
+        model = Platform
+        fields = (
+            'pk',
+            'ext_id',
+            'short_name',
+            'name',
+            'provider',
+            'url',
+            'knowledgebase',
+            'source',
+            'has_raw_parser',
+        )
+
+
 class DetailedPlatformSerializer(ModelSerializer):
 
     title_count = IntegerField(read_only=True)

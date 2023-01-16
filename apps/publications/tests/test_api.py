@@ -1142,7 +1142,15 @@ class TestAllPlatformsAPI:
         ],
     )
     def test_all_platform_list(
-        self, client, status, organization, available, clients, platforms, organizations
+        self,
+        client,
+        status,
+        organization,
+        available,
+        clients,
+        platforms,
+        organizations,
+        parser_definitions,
     ):
 
         resp = clients[client].get(
@@ -1150,8 +1158,14 @@ class TestAllPlatformsAPI:
         )
         assert resp.status_code in status
         if available is not None:
-            assert [e["pk"] for e in resp.json()] == [platforms[e].pk for e in sorted(available)]
-        assert True
+            resp_data = resp.json()
+            assert len(resp_data) == len(available)
+            for data, platform in zip(resp_data, [platforms[e] for e in sorted(available)]):
+                assert data["pk"] == platform.pk
+                if platform.name == "brain":
+                    assert data["has_raw_parser"] is True
+                else:
+                    assert data["has_raw_parser"] is False
 
     @pytest.mark.parametrize(
         ["client", "organization", "available"],
