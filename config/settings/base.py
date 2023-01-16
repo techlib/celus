@@ -9,10 +9,12 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
+import socket
 import sys
 import warnings
 from datetime import timedelta
 from pathlib import Path
+from random import randint, seed
 
 import sentry_sdk
 from celery.schedules import crontab, schedule
@@ -24,6 +26,9 @@ from sentry_sdk.integrations.logging import ignore_logger
 from sentry_sdk.integrations.redis import RedisIntegration
 
 from . import get_version
+
+# make random always the same based on celus instance (hostname)
+seed(socket.gethostname())
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / 'apps'))
@@ -336,6 +341,8 @@ CELERY_TASK_ROUTES = {
     'knowledgebase.tasks.sync_route': {'queue': 'celery'},
     'knowledgebase.tasks.sync_platforms_with_knowledgebase_task': {'queue': 'celery'},
     'knowledgebase.tasks.sync_report_types_with_knowledgebase_task': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_parser_definitions_with_knowledgebase_task': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_all_with_knowledgebase_task': {'queue': 'celery'},
     'logs.tasks.sync_interest_task': {'queue': 'interest'},
     'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
     'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
@@ -439,16 +446,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=17, hour=2),  # every day at 2:17
         'options': {'expires': 24 * 60 * 60},
     },
-    'sync_platforms_with_knowledgebase_task': {
+    'sync_all_with_knowledgebase_task': {
         'task': 'knowledgebase.tasks.sync_platforms_with_knowledgebase_task',
-        'schedule': crontab(minute=33, hour=2),  # every day at 2:33
+        'schedule': crontab(minute=randint(0, 59), hour=2),  # every day between 2:00 and 2:59
         'options': {'expires': 24 * 60 * 60},
     },
-    # 'sync_report_types_with_knowledgebase_task': {
-    #    'task': 'knowledgebase.tasks.sync_report_types_with_knowledgebase_task',
-    #    'schedule': crontab(minute=44, hour=3),  # every day at 2:33
-    #    'options': {'expires': 24 * 60 * 60},
-    # },
     'delete_expired_flexible_data_exports_task': {
         'task': 'export.tasks.delete_expired_flexible_data_exports_task',
         'schedule': crontab(hour=3, minute=0),  # every day at 3:00

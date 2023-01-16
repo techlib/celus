@@ -82,6 +82,15 @@ def sync_parser_definitions_with_knowledgebase_task():
 
 @celery.shared_task
 @email_if_fails
+def sync_all_with_knowledgebase_task():
+    with transaction.atomic():
+        sync_platforms_with_knowledgebase_task()
+        sync_report_types_with_knowledgebase_task()
+        sync_parser_definitions_with_knowledgebase_task()
+
+
+@celery.shared_task
+@email_if_fails
 def sync_route(attempt_id: int):
     with transaction.atomic():
         try:
