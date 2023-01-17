@@ -116,6 +116,7 @@ export default {
       tourByName: "tourByName",
       celusVersion: "celusVersion",
       enableTags: "enableTags",
+      isRawImportEnabled: "isRawImportEnabled",
     }),
     tourToShow() {
       return this.tourByName(this.tourName);
@@ -265,7 +266,10 @@ export default {
               title: this.$t("pages.supported_non_counter_platforms"),
               icon: "fa-file-excel",
               linkTo: "supported-non-counter-platforms",
-              show: this.showAdminStuff && this.allowManualDataUpload,
+              show:
+                this.showAdminStuff &&
+                this.allowManualDataUpload &&
+                this.isRawImportEnabled,
             },
           ],
           show: this.showAdminStuff,

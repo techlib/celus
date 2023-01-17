@@ -170,7 +170,7 @@ cs:
             <v-radio
               value="raw"
               :readonly="!canImportRawData"
-              v-if="isRawEnabled"
+              v-if="isRawImportEnabled"
             >
               <template #label>
                 <span>
@@ -648,20 +648,8 @@ export default {
       automaticallyCreateMetrics: "automaticallyCreateMetrics",
       showManagementStuff: "showManagementStuff",
       enableRawDataImport: "enableRawDataImport",
+      isRawImportEnabled: "isRawImportEnabled",
     }),
-    isRawEnabled() {
-      let org_id = parseInt(this.organizationId);
-      if (org_id < 0) {
-        // No organization selectect -> check global flag
-        return this.canUseRaw;
-      } else {
-        // Check selected organization
-        return this.isRawEnabledPerOrg(org_id);
-      }
-    },
-    canUseRaw() {
-      return ["All", "PerOrg"].includes(this.enableRawDataImport);
-    },
     breadcrumbs() {
       return [
         {
@@ -1154,14 +1142,6 @@ export default {
       return preflight
         ? "errors.unknown_preflight_error"
         : "errors.unknown_import_error";
-    },
-    isRawEnabledPerOrg(org_id) {
-      for (const org of this.organizations) {
-        if (org.pk == org_id) {
-          return !!org.is_raw_data_import_enabled;
-        }
-      }
-      return false;
     },
   },
   async mounted() {

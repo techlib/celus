@@ -313,10 +313,20 @@ export default new Vuex.Store({
       }
       return options;
     },
+    isRawImportEnabled(state, getters) {
+      let org_id = parseInt(state.selectedOrganizationId);
+      if (org_id < 0) {
+        // No organization selected -> check global flag
+        return ["All", "PerOrg"].includes(getters.enableRawDataImport);
+      } else {
+        // Check selected organization
+        return !!getters.selectedOrganization?.is_raw_data_import_enabled;
+      }
+    },
   },
 
   actions: {
-    async start({ getters, dispatch }) {
+    async start({ dispatch }) {
       await dispatch("loadBasicInfo"); // load basic info - this can be done without logging in
       await dispatch("loadSiteConfig"); // site config - name, images, etc.
       await dispatch("fetchLatestPublishedRelease");
