@@ -113,17 +113,17 @@ def import_custom_data(
     for org_name, org_data in organizations.items():
 
         records = mdu.data_to_records()
-        if not org_name:
-            organization = mdu.organization
-            records = (e for e in records if not e.organization)
-        else:
+        if org_name:
             # Try to get organization
             try:
                 organization = Organization.objects.get(pk=org_data.get("pk", 0))
             except Organization.DoesNotExist:
                 raise OrganizationNotFound(org_name)
 
+            # Filter records
             records = (e for e in records if e.organization == org_name)
+        else:
+            organization = mdu.organization
 
         if not mdu.check_organization_permissions(organization):
             raise OrganizationNotAllowedToImportRawData(organization)

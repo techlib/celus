@@ -5,7 +5,7 @@ import pytest
 from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
-from logs.models import ManualDataUpload, MduMethod, MduState
+from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
 
 from test_fixtures.entities.logs import MetricFactory
@@ -600,9 +600,13 @@ class TestManualUploadNonCounter:
 
         assert response.status_code == 200, "Import should pass"
 
+        ib_count = ImportBatch.objects.count()
+        access_log_count = AccessLog.objects.count()
         import_manual_upload_data(mdu.pk, mdu.user.pk)
         mdu.refresh_from_db()
         assert mdu.organization == organizations["standalone"], "organization is set"
+        assert ImportBatch.objects.count() == ib_count + 3, "3 ibs created"
+        assert AccessLog.objects.count() == access_log_count + 18, "18 logs created"
 
 
 @pytest.mark.django_db
