@@ -876,7 +876,7 @@ export default {
       return !!this.reportTypes.find((e) => !e.counter_report_type);
     },
     canImportRawData() {
-      return this.platform?.knowledgebase?.report_types?.length > 0;
+      return this.platform?.has_raw_parser;
     },
     currentOrganization() {
       if ((this.organizationId || -1) > 0) {

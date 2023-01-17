@@ -254,6 +254,14 @@ export default new Router({
       },
     },
     {
+      path: "/admin/non-counter-platforms/",
+      name: "supported-non-counter-platforms",
+      component: () => import("../pages/SupportedNonCounterPlatformsPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+      },
+    },
+    {
       path: "/admin/harvests/",
       name: "harvests",
       component: () => import("../pages/HarvestsPage.vue"),

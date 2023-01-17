@@ -31,6 +31,7 @@ en:
     title_lists: Title lists
     organizations: Organizations
     sushi_troubleshooting: Troubleshooting
+    supported_non_counter_platforms: non-COUNTER platforms
   menu: Menu
   organization: Organization
   platform: Platform
@@ -307,6 +308,7 @@ cs:
     title_lists: Titulové seznamy
     organizations: Organizace
     sushi_troubleshooting: Řešení problémů
+    supported_non_counter_platforms: non-COUNTER platformy
   menu: Menu
   organization: Organizace
   platform: Platforma

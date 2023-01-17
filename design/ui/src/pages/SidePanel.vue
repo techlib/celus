@@ -261,6 +261,12 @@ export default {
               linkTo: "manual-data-upload-list",
               show: this.showAdminStuff && this.allowManualDataUpload,
             },
+            {
+              title: this.$t("pages.supported_non_counter_platforms"),
+              icon: "fa-file-excel",
+              linkTo: "supported-non-counter-platforms",
+              show: this.showAdminStuff && this.allowManualDataUpload,
+            },
           ],
           show: this.showAdminStuff,
         },
