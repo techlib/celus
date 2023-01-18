@@ -1,6 +1,7 @@
 import logging
 from collections import Counter
 
+from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from logs.models import Dimension, ReportType, ReportTypeToDimension
@@ -17,11 +18,6 @@ class Command(BaseCommand):
         'Platform': {'en': 'Platform in COUNTER data', 'cs': 'Platforma v COUNTER datech'}
     }
 
-    code_to_name_remap = {
-        'IR_M1': 'Counter 5 - Multimedia item report',
-        'MR1': 'Counter 4 - Multimedia report 1',
-    }
-
     def add_arguments(self, parser):
         parser.add_argument('--fix-it', dest='fix_it', action='store_true')
 
@@ -29,7 +25,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stats = Counter()
         fix_it = options['fix_it']
-        for code, version, json, reader, sushi in COUNTER_REPORTS:
+        seen_codes = set()
+        for code, our_name, version, json, reader, sushi in COUNTER_REPORTS:
+            # COUNTER_REPORTS contains more than one record for some reports,
+            # we only want the first one
+            if code in seen_codes:
+                continue
+            seen_codes.add(code)
             if not sushi:
                 continue
             try:
@@ -39,9 +41,34 @@ class Command(BaseCommand):
                 stats['missing_rt'] += 1
                 rt = None
                 if fix_it:
-                    rt = ReportType.objects.create(
-                        short_name=code, name=self.code_to_name_remap.get(code, code), source=None
+                    rt = ReportType.objects.create(short_name=code, name=our_name, source=None)
+            else:
+                if our_name and rt.name != our_name:
+                    print(f'RT name mismatch ({code}): "{rt.name}" != "{our_name}"')
+                    stats['rt_name_mismatch'] += 1
+                    if fix_it:
+                        rt.name = our_name
+                        rt.save()
+                        stats['fixed_rt_name'] += 1
+            # check the report-data-view
+            if rt and not rt.reportdataview_set.exists():
+                # there are no data views, we will create a default one
+                print('Missing data view for:', code)
+                stats['missing_data_view'] += 1
+                if fix_it:
+                    rv = ReportDataView.objects.create(
+                        base_report_type=rt,
+                        name=rt.name,
+                        short_name=rt.short_name,
+                        is_standard_view=True,
                     )
+                    # connect the generic charts to the new data view
+                    for i, cd in enumerate(ChartDefinition.objects.filter(is_generic=True)):
+                        ReportViewToChartType.objects.create(
+                            chart_definition=cd, report_data_view=rv, position=10 * (i + 1)
+                        )
+                    stats['created_data_view'] += 1
+            # check the dimensions
             if rt:
                 reader_dims = set(reader.dimensions)
                 rt_dims = set(rt.dimension_short_names)
@@ -77,9 +104,7 @@ class Command(BaseCommand):
                     stats['missing_crt'] += 1
                     if fix_it:
                         CounterReportType.objects.create(
-                            code=code,
-                            name=self.code_to_name_remap.get(code, rt.name),
-                            report_type=rt,
-                            counter_version=version,
+                            code=code, name=our_name, report_type=rt, counter_version=version
                         )
+
         print('Stats:', stats)

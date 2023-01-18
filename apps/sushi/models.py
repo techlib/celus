@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import traceback
+from collections import namedtuple
 from copy import deepcopy
 from datetime import date, timedelta
 from functools import reduce
@@ -62,31 +63,41 @@ logger = logging.getLogger(__name__)
 
 COUNTER_VERSIONS = ((4, 'COUNTER 4'), (5, 'COUNTER 5'))
 
+CounterReport = namedtuple(
+    'CounterReport', ['code', 'name', 'version', 'json_format', 'reader', 'sushi_compatible']
+)
+
 COUNTER_REPORTS = (
-    # (code, version, json, reader, sushi_compatible)
+    # (code, name, version, json_format, reader, sushi_compatible)
     # version 4
-    ('JR1', 4, False, Counter4JR1Report, True),
-    ('JR1a', 4, False, Counter4JR1Report, True),
-    ('JR1GOA', 4, False, Counter4JR1Report, True),
-    ('JR2', 4, False, Counter4JR2Report, True),
-    # ('JR5', 4, False, , None, True),
-    ('BR1', 4, False, Counter4BR1Report, True),
-    ('BR2', 4, False, Counter4BR2Report, True),
-    ('BR3', 4, False, Counter4BR3Report, True),
-    ('DB1', 4, False, Counter4DB1Report, True),
-    ('DB2', 4, False, Counter4DB2Report, True),
-    ('PR1', 4, False, Counter4PR1Report, True),
-    ('MR1', 4, False, Counter4MR1Report, True),
+    CounterReport('JR1', 'Counter 4 - Journal Report 1', 4, False, Counter4JR1Report, True),
+    CounterReport('JR1a', 'Counter 4 - Journal Report 1a', 4, False, Counter4JR1Report, True),
+    CounterReport(
+        'JR1GOA', 'Counter 4 - Journal Report 1 Gold Open Access', 4, False, Counter4JR1Report, True
+    ),
+    CounterReport('JR2', 'Counter 4 - Journal Report 2', 4, False, Counter4JR2Report, True),
+    # CounterReport# ('JR5',  'Counter X - Report4,, False, , None, True),
+    CounterReport('BR1', 'Counter 4 - Book Report 1', 4, False, Counter4BR1Report, True),
+    CounterReport('BR2', 'Counter 4 - Book Report 2', 4, False, Counter4BR2Report, True),
+    CounterReport('BR3', 'Counter 4 - Book Report 3', 4, False, Counter4BR3Report, True),
+    CounterReport('DB1', 'Counter 4 - Database Report 1', 4, False, Counter4DB1Report, True),
+    CounterReport('DB2', 'Counter 4 - Database Report 2', 4, False, Counter4DB2Report, True),
+    CounterReport('PR1', 'Counter 4 - Platform Report 1', 4, False, Counter4PR1Report, True),
+    CounterReport('MR1', 'Counter 4 - Multimedia Report 1', 4, False, Counter4MR1Report, True),
     # version 5
-    ('TR', 5, True, Counter5TRReport, True),
-    ('PR', 5, True, Counter5PRReport, True),
-    ('DR', 5, True, Counter5DRReport, True),
-    ('IR_M1', 5, True, Counter5IRM1Report, True),
-    ('TR', 5, False, Counter5TableReport, False),
-    ('PR', 5, False, Counter5TableReport, False),
-    ('DR', 5, False, Counter5TableReport, False),
-    ('IR', 5, False, Counter5TableReport, False),
-    ('IR_M1', 5, False, Counter5TableReport, False),
+    CounterReport('TR', 'Counter 5 - Title Report', 5, True, Counter5TRReport, True),
+    CounterReport('PR', 'Counter 5 - Platform Report', 5, True, Counter5PRReport, True),
+    CounterReport('DR', 'Counter 5 - Database Report', 5, True, Counter5DRReport, True),
+    CounterReport(
+        'IR_M1', 'Counter 5 - Multimedia Item Report 1', 5, True, Counter5IRM1Report, True
+    ),
+    CounterReport('TR', 'Counter 5 - Title Report', 5, False, Counter5TableReport, False),
+    CounterReport('PR', 'Counter 5 - Platform Report', 5, False, Counter5TableReport, False),
+    CounterReport('DR', 'Counter 5 - Database Report', 5, False, Counter5TableReport, False),
+    CounterReport('IR', 'Counter 5 - Item Report', 5, False, Counter5TableReport, False),
+    CounterReport(
+        'IR_M1', 'Counter 5 - Multimedia Item Report 1', 5, False, Counter5TableReport, False
+    ),
 )
 
 
@@ -131,7 +142,7 @@ class BrokenCredentialsMixin(models.Model):
 
 class CounterReportType(models.Model):
 
-    CODE_CHOICES = [(cr[0], cr[0]) for cr in COUNTER_REPORTS if cr[4]]
+    CODE_CHOICES = [(cr.code, cr.code) for cr in COUNTER_REPORTS if cr.sushi_compatible]
 
     code = models.CharField(max_length=10, choices=CODE_CHOICES)
     name = models.CharField(max_length=128, blank=True)
@@ -151,9 +162,13 @@ class CounterReportType(models.Model):
         return f'{self.code} ({self.counter_version}) - {self.name}'
 
     def get_reader_class(self, json_format: bool = False):
-        for code, version, reads_json, reader, sushi_compatible in COUNTER_REPORTS:
-            if code == self.code and version == self.counter_version and reads_json is json_format:
-                return reader
+        for cr in COUNTER_REPORTS:
+            if (
+                cr.code == self.code
+                and cr.version == self.counter_version
+                and cr.json_format is json_format
+            ):
+                return cr.reader
         return None
 
 
