@@ -22,7 +22,7 @@ General information
 Supported browsers
 ==================
 
-The following modern browsers are fully supported (minimum version is in backets):
+The following modern browsers are fully supported (minimum version is in brackets):
 
 * Chrome and Chromium (75+)
 * Firefox (70+)

@@ -20,6 +20,7 @@ sources which do not offer this API.
    :maxdepth: 3
    :caption: Contents:
 
+   trying-celus.rst
    admin.rst
    user.rst
    topics.rst
