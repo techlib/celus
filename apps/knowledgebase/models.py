@@ -203,6 +203,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
                     kind=self.required_kind,
                     downloaded_timestamp__isnull=False,
                     data_hash__isnull=False,
+                    error__isnull=True,
                 )
                 .exclude(data_hash__exact="")
                 .order_by('-downloaded_timestamp')
@@ -293,7 +294,10 @@ class PlatformImportAttempt(ImportAttempt):
                 duplicates=record.get("duplicates", []),
             )
 
-            if merge == ImportAttempt.MergeStrategy.NONE:
+            if (
+                merge == ImportAttempt.MergeStrategy.NONE
+                or Platform.objects.filter(ext_id=record["pk"], source=self.source).exists()
+            ):
                 # Only new or existing with the same source
                 platform, created = Platform.objects.get_or_create(
                     defaults=updatable, ext_id=record["pk"], source=self.source
@@ -363,6 +367,25 @@ class PlatformImportAttempt(ImportAttempt):
             counter["wiped"] += 1
 
         self.stats = dict(counter)
+
+        # Send notification if there are two platforms with the same name
+        duplicates = [
+            e
+            for e in Platform.objects.filter(
+                models.Q(source=None) | models.Q(source__type=DataSource.TYPE_KNOWLEDGEBASE)
+            )
+            .values('short_name')
+            .annotate(count=models.Count('pk'))
+            .values('short_name', 'count')
+            .filter(count__gt=1)
+        ]
+        if duplicates:
+            async_mail_admins.delay(
+                "Duplicated platforms were detected",
+                "\n".join(
+                    [f"Short_name: '{e['short_name']}' Count: {e['count']}" for e in duplicates]
+                ),
+            )
 
         self.save()
 

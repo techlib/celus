@@ -516,6 +516,24 @@ class TestPlatformImportAttempt:
             assert attempt2.data_hash == attempt1.data_hash
             assert not attempt2.error
 
+    def test_duplicated_platforms(self, data_sources, report_types):
+        PlatformFactory(source=None, short_name="AAP")
+        # platform without source, but whith same short name
+        platform_with_source = PlatformFactory(
+            source=data_sources['brain'], short_name="AAP", ext_id=328, name="XXX"
+        )
+
+        with patch('knowledgebase.models.async_mail_admins') as email_task:
+            PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
+                PLATFORM_INPUT_DATA, PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE
+            )
+            assert email_task.delay.called, 'email about duplicated platforms sent'
+
+        platform_with_source.refresh_from_db()
+        assert (
+            platform_with_source.name == "AAP - American Academy of Pediatrics"
+        ), "linked platform updated"
+
 
 @pytest.mark.django_db
 class TestRouterSyncAttempt:
