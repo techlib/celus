@@ -62,6 +62,7 @@ class AllPlatformSerializer(ModelSerializer):
             'knowledgebase',
             'source',
             'has_raw_parser',
+            'counter_registry_id',
         )
 
 
