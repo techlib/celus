@@ -74,8 +74,8 @@ def update_parser_definitions(attempt_id: int):
 def sync_parser_definitions_with_knowledgebase_task():
     sources = list(DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE))
     for source in sources:
-        attempt = ReportTypeImportAttempt.objects.create(
-            kind=ReportTypeImportAttempt.KIND_PARSER_DEFINITION, source=source
+        attempt = ParserDefinitionImportAttempt.objects.create(
+            kind=ParserDefinitionImportAttempt.KIND_PARSER_DEFINITION, source=source
         )
         attempt.perform()
 

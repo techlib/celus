@@ -513,6 +513,7 @@ def interests(report_types, platforms, metrics):
 
     platforms["standalone"].interest_reports.set([report_types["tr"], report_types["dr"]])
     platforms["branch"].interest_reports.set([report_types["jr1"]])
+    return {"ig": ig}
 
 
 @pytest.fixture
