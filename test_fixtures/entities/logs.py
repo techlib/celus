@@ -7,6 +7,7 @@ from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import (
     AccessLog,
     ImportBatch,
+    InterestGroup,
     ManualDataUpload,
     MduState,
     Metric,
@@ -153,3 +154,11 @@ class ManualDataUploadFullFactory(ManualDataUploadFactory):
                 organization=obj.organization, platform=obj.platform, report_type=obj.report_type
             )
             obj.import_batches.set([ib])
+
+
+class InterestGroupFactory(factory.django.DjangoModelFactory):
+    short_name = factory.Faker('slug')
+    position = 1
+
+    class Meta:
+        model = InterestGroup

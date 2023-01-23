@@ -9,7 +9,7 @@ from celus_nibbler import definitions as nibbler_definitions
 from celus_nibbler import sources as nibbler_sources
 from django.conf import settings
 from django.utils import timezone
-from logs.models import InterestGroup, ReportInterestMetric
+from logs.models import ReportInterestMetric
 from organizations.models import Organization
 from rest_framework.test import APIClient
 from sushi.models import AttemptStatus
@@ -19,7 +19,7 @@ from ..entities.credentials import CredentialsFactory
 from ..entities.data_souces import DataSource, DataSourceFactory
 from ..entities.fetchattempts import FetchAttemptFactory
 from ..entities.identities import Identity, IdentityFactory
-from ..entities.logs import ImportBatchFactory, MetricFactory
+from ..entities.logs import ImportBatchFactory, InterestGroupFactory, MetricFactory
 from ..entities.nibbler import ParserDefinitionFactory
 from ..entities.organizations import OrganizationFactory
 from ..entities.platforms import PlatformFactory
@@ -493,7 +493,14 @@ def metrics(report_types, platforms):
 
 @pytest.fixture
 def interests(report_types, platforms, metrics):
-    ig = InterestGroup.objects.create(short_name='foo', name='bar', position=1)
+    # Create interest groups
+    ig = InterestGroupFactory(short_name='full_text', name='Full Text', position=1)
+    InterestGroupFactory(short_name='search', name='Search', position=2)
+    InterestGroupFactory(short_name='full_text_denial', name='Denial - full text', position=4)
+    InterestGroupFactory(short_name='search_denial', name='Denial - search', position=7)
+    InterestGroupFactory(short_name='other', name='Other', position=10)
+    InterestGroupFactory(short_name='multimedia', name='Multimedia', position=11)
+
     for rt_name, metric_names in {
         "jr1": ["metric1", "metric3"],
         "tr": ["metric2", "metric1"],

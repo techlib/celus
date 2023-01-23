@@ -15,7 +15,14 @@ from django.core.validators import MinLengthValidator
 from django.db import models, transaction
 from django.db.transaction import on_commit
 from django.utils import timezone
-from logs.models import Dimension, Metric, ReportType, ReportTypeToDimension
+from logs.models import (
+    Dimension,
+    InterestGroup,
+    Metric,
+    ReportInterestMetric,
+    ReportType,
+    ReportTypeToDimension,
+)
 from nibbler.models import ParserDefinition
 from publications.models import Platform
 from semantic_version import Version
@@ -464,6 +471,12 @@ class ReportTypeImportAttempt(ImportAttempt):
                     )
 
                 metrics.append(metric)
+                if ig := InterestGroup.objects.filter(
+                    short_name=metric_data.get("interest_group")
+                ).first():
+                    ReportInterestMetric.objects.get_or_create(
+                        report_type=report_type, metric=metric, interest_group=ig
+                    )
 
             if created:
                 report_type.controlled_metrics.set(metrics)

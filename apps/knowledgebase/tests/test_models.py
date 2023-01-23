@@ -16,7 +16,7 @@ from knowledgebase.models import (
     ReportTypeImportAttempt,
     RouterSyncAttempt,
 )
-from logs.models import ReportType
+from logs.models import ReportInterestMetric, ReportType
 from publications.models import Platform
 
 from test_fixtures.entities.api import OrganizationAPIKeyFactory
@@ -25,6 +25,7 @@ from test_fixtures.entities.logs import ImportBatchFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
     data_sources,
+    interests,
     metrics,
     organizations,
     parser_definitions,
@@ -184,7 +185,12 @@ REPORT_TYPE_INPUT_DATA2 = [
             {"pk": 3, "short_name": "dim3", "aliases": ["dimension3"]},
         ],
         "metrics": [
-            {"pk": 2, "short_name": "metric2", "aliases": ["m2", "met2"]},
+            {
+                "pk": 2,
+                "short_name": "metric2",
+                "aliases": ["m2", "met2"],
+                "interest_group": "search",
+            },
             {"pk": 3, "short_name": "metric3", "aliases": ["m3"]},
         ],
     },
@@ -599,7 +605,7 @@ class TestRouterSyncAttempt:
 
 @pytest.mark.django_db
 class TestReportTypeImportAttempt:
-    def test_process(self, data_sources, report_types):
+    def test_process(self, data_sources, report_types, interests):
 
         # Create
         attempt = ReportTypeImportAttempt(source=data_sources["brain"])
@@ -634,6 +640,7 @@ class TestReportTypeImportAttempt:
         # Create import batch for on of the report types
         ImportBatchFactory(report_type=report_type2)
 
+        rim_count = ReportInterestMetric.objects.count()
         # Update report types agian
         with patch('knowledgebase.models.async_mail_admins') as email_task:
             attempt.process(REPORT_TYPE_INPUT_DATA2)
@@ -641,6 +648,9 @@ class TestReportTypeImportAttempt:
 
         assert attempt.stats == {"created": 1, "updated": 2, "total": 3}
         assert rt_count + 3 == ReportType.objects.count()
+        assert (
+            ReportInterestMetric.objects.count() == rim_count + 1
+        ), 'report type metric was created'
 
         report_type1 = ReportType.objects.get(short_name="one")
         assert report_type1.name == "first"
@@ -681,6 +691,11 @@ class TestReportTypeImportAttempt:
                 'position', 'dimension__short_name'
             )
         ) == [(0, 'dim4'), (1, 'dim3')]
+        assert report_type3.interest_metrics.all().count() == 1
+        assert report_type3.interest_metrics.last().short_name == "metric2"
+        assert report_type3.reportinterestmetric_set.all().count() == 1
+        assert report_type3.reportinterestmetric_set.last().target_metric is None
+        assert report_type3.reportinterestmetric_set.last().interest_group.short_name == "search"
 
 
 @pytest.mark.django_db
