@@ -312,7 +312,11 @@ export default {
           });
         }
         if (this.enableTags) {
-          base.push({ text: this.$t("labels.tags"), value: "tags" });
+          base.push({
+            text: this.$t("labels.tags"),
+            value: "tags",
+            sortable: false,
+          });
         }
       }
       return base;

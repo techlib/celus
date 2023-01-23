@@ -704,6 +704,8 @@ class TitleInterestMixin:
 
     def _postprocess(self, result):
         order_by = self.request.query_params.get('order_by')
+        if order_by == 'tags':
+            raise BadRequestException('Ordering by tags is not supported')
         desc = self.request.query_params.get('desc', 'true')
         if order_by:
             prefix = '-' if desc == 'true' else ''
