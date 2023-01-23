@@ -428,6 +428,11 @@ class FetchIntention(models.Model):
     def get_handler(self) -> typing.Optional[typing.Callable[['FetchIntention'], None]]:
         attempt = self.attempt
 
+        if not attempt:
+            # Can't call handler for intentions which were e.g. canceled
+            # they are finished but without an attempt
+            return None
+
         try:
             if attempt.error_code:
                 error_code = int(attempt.error_code)
