@@ -64,7 +64,7 @@ django-test-migrations = "^1.1.0"
 djangorestframework = "~3.14.0"
 djangorestframework-api-key = "^2.0.0"
 drf-nested-routers = "~0.93.4"
-hcube = "0.8.1"
+hcube = "0.11.3"
 isbnlib = "^3.10.3"
 lz4 = "~4.0.2"
 openpyxl = "~3.0.9"
@@ -85,6 +85,8 @@ sentry-sdk = "^1.12.1"
 toml = "^0.10.2"
 urllib3 = "~1.26.13"
 XlsxWriter = "^3.0.3"
+django-requestlogs = "^0.7.1"
+django-ipware = "^4.0.2"
 
 
 [tool.poetry.dev-dependencies]

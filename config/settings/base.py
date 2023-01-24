@@ -109,6 +109,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'core.middleware.UserLanguageMiddleware',
+    'core.middleware.QueryLoggingMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
@@ -231,7 +232,8 @@ REST_FRAMEWORK = {
         'rest_pandas.renderers.PandasCSVRenderer',
         'rest_pandas.renderers.PandasExcelRenderer',
     ),
-    'DEFAULT_AUTHENTICATION_CLASSES': ['core.authentication.SessionAuthentication401']
+    'DEFAULT_AUTHENTICATION_CLASSES': ['core.authentication.SessionAuthentication401'],
+    'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
 }
@@ -336,6 +338,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'celery'  # just making the default explicit
 CELERY_TASK_ROUTES = {
     'core.tasks.empty_task_export': {'queue': 'export'},
     'core.tasks.test': {'queue': 'celery'},
+    'core.tasks.flush_request_logs_to_clickhouse': {'queue': 'celery'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
     'knowledgebase.tasks.sync_route': {'queue': 'celery'},
@@ -543,6 +546,45 @@ LOGGING = {
     },
     'root': {'level': 'DEBUG', 'handlers': ['console']},
 }
+
+# requestlogs
+CLICKHOUSE_REQUEST_LOGGING = config('CLICKHOUSE_REQUEST_LOGGING', default=False, cast=bool)
+CLICKHOUSE_LOGGING_DB = config('CLICKHOUSE_LOGGING_DB', default=CLICKHOUSE_DB)
+CLICKHOUSE_LOGGING_USER = config('CLICKHOUSE_LOGGING_USER', default=CLICKHOUSE_USER)
+CLICKHOUSE_LOGGING_PASSWORD = config('CLICKHOUSE_LOGGING_PASSWORD', default=CLICKHOUSE_PASSWORD)
+CLICKHOUSE_LOGGING_HOST = config('CLICKHOUSE_LOGGING_HOST', default=CLICKHOUSE_HOST)
+CLICKHOUSE_LOGGING_PORT = config('CLICKHOUSE_LOGGING_PORT', default=CLICKHOUSE_PORT, cast=int)
+CLICKHOUSE_LOGGING_SECURE = config(
+    'CLICKHOUSE_LOGGING_SECURE', default=CLICKHOUSE_SECURE, cast=bool
+)
+# we buffer logging messages in redis, so we can send them to clickhouse in batches
+# the following defines the redis instance to use
+REQUEST_LOGGING_REDIS_HOST = config('REQUEST_LOGGING_REDIS_HOST', default='localhost')
+REQUEST_LOGGING_REDIS_PORT = config('REQUEST_LOGGING_REDIS_PORT', default=6379, cast=int)
+REQUEST_LOGGING_REDIS_DB = config('REQUEST_LOGGING_REDIS_DB', default=0, cast=int)
+REQUEST_LOGGING_REDIS_KEY = config('REQUEST_LOGGING_REDIS_KEY', default='request_logs')
+# how often should the celery task flushing request logs into external database be run (in seconds)
+REQUEST_LOGGING_FLUSH_INTERVAL = config('REQUEST_LOGGING_FLUSH_INTERVAL', default=120, cast=int)
+# when synchronizing request logs, do not submit more than REQUEST_LOGGING_BUFFER_SIZE
+# records at once
+REQUEST_LOGGING_BUFFER_SIZE = config('REQUEST_LOGGING_BUFFER_SIZE', default=10_000, cast=int)
+
+if CLICKHOUSE_REQUEST_LOGGING:
+    REQUESTLOGS = {
+        'STORAGE_CLASS': 'core.request_logging.capture.RedisBufferStorage',
+        'ENTRY_CLASS': 'requestlogs.entries.RequestLogEntry',
+        'SERIALIZER_CLASS': 'requestlogs.storages.BaseEntrySerializer',
+        'SECRETS': ['password', 'token', 'password1', 'password2'],
+        'METHODS': ('GET', 'PUT', 'PATCH', 'POST', 'DELETE'),
+        'IGNORE_PATHS': ['/metrics'],
+        'JSON_ENSURE_ASCII': False,
+    }
+    MIDDLEWARE.insert(2, 'requestlogs.middleware.RequestLogsMiddleware')
+    CELERY_BEAT_SCHEDULE['flush_request_logs_to_clickhouse'] = {
+        'task': 'core.tasks.flush_request_logs_to_clickhouse',
+        'schedule': schedule(run_every=timedelta(seconds=REQUEST_LOGGING_FLUSH_INTERVAL)),
+        'options': {'expires': REQUEST_LOGGING_FLUSH_INTERVAL},
+    }
 
 # hopefully temporary hacks
 SILENCED_SYSTEM_CHECKS = []

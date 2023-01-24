@@ -1018,6 +1018,18 @@ Django = ">=3.2"
 tablib = {version = ">=3.2.1", extras = ["html", "ods", "xls", "xlsx", "yaml"]}
 
 [[package]]
+name = "django-ipware"
+version = "4.0.2"
+description = "A Django application to retrieve user's IP address"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+files = [
+    {file = "django-ipware-4.0.2.tar.gz", hash = "sha256:602a58325a4808bd19197fef2676a0b2da2df40d0ecf21be414b2ff48c72ad05"},
+    {file = "django_ipware-4.0.2-py2.py3-none-any.whl", hash = "sha256:878dbb06a87e25550798e9ef3204ed70a200dd8b15e47dcef848cf08244f04c9"},
+]
+
+[[package]]
 name = "django-js-asset"
 version = "2.0.0"
 description = "script tag with additional attributes for django.forms.Media"
@@ -1125,6 +1137,26 @@ redis = ">=3,<4.0.0 || >4.0.0,<4.0.1 || >4.0.1"
 
 [package.extras]
 hiredis = ["redis[hiredis] (>=3,!=4.0.0,!=4.0.1)"]
+
+[[package]]
+name = "django-requestlogs"
+version = "0.7.1"
+description = "Audit logging for Django and Django Rest Framework"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-requestlogs-0.7.1.tar.gz", hash = "sha256:0b595a8a5a7a77a2db008b8a56625a8aca02abb1c3aed6c55a5a78ea04dabd09"},
+    {file = "django_requestlogs-0.7.1-py3-none-any.whl", hash = "sha256:c5d3594581bfc32a2add4f18685f70096997109bbfffaa962b6c008aa33d14e8"},
+]
+
+[package.dependencies]
+Django = ">=1.11,<5.0"
+djangorestframework = ">=3.0,<4.0"
+setuptools = "*"
+
+[package.extras]
+dev = ["pytest"]
 
 [[package]]
 name = "django-reversion"
@@ -1353,18 +1385,18 @@ python-dateutil = ">=2.7"
 
 [[package]]
 name = "hcube"
-version = "0.8.1"
+version = "0.11.3"
 description = "HCube is a simple ORM for working with hyper-cube OLAP data stored in various backends."
 category = "main"
 optional = false
 python-versions = ">=3.8.8,<4.0.0"
 files = [
-    {file = "hcube-0.8.1-py3-none-any.whl", hash = "sha256:2b9e250db2437942279589c323796706aa2822146eea8c90e9888fd3c07fea43"},
-    {file = "hcube-0.8.1.tar.gz", hash = "sha256:4b9e9e23996aee455bf055e8140145226dced57f981dfff6c3b90ec1010122e9"},
+    {file = "hcube-0.11.3-py3-none-any.whl", hash = "sha256:34394970338a69879c3fbad9889848dc5915c0297935c4669491a402abd0a7a6"},
+    {file = "hcube-0.11.3.tar.gz", hash = "sha256:3f1ef935d4b75e55f23fb760ac7042dcdf25f08ce6d278ace978547cbd5b11e1"},
 ]
 
 [package.dependencies]
-clickhouse-driver = ">=0.2.4,<0.3.0"
+clickhouse-driver = ">=0.2.5,<0.3.0"
 clickhouse-pool = ">=0.5.3,<0.6.0"
 psycopg2-binary = ">=2.9.5,<3.0.0"
 python-decouple = ">=3.5,<4.0"
@@ -2051,6 +2083,13 @@ files = [
     {file = "Pillow-9.4.0-1-cp39-cp39-macosx_10_10_x86_64.whl", hash = "sha256:b8c2f6eb0df979ee99433d8b3f6d193d9590f735cf12274c108bd954e30ca858"},
     {file = "Pillow-9.4.0-1-pp38-pypy38_pp73-macosx_10_10_x86_64.whl", hash = "sha256:b70756ec9417c34e097f987b4d8c510975216ad26ba6e57ccb53bc758f490dab"},
     {file = "Pillow-9.4.0-1-pp39-pypy39_pp73-macosx_10_10_x86_64.whl", hash = "sha256:43521ce2c4b865d385e78579a082b6ad1166ebed2b1a2293c3be1d68dd7ca3b9"},
+    {file = "Pillow-9.4.0-2-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:9d9a62576b68cd90f7075876f4e8444487db5eeea0e4df3ba298ee38a8d067b0"},
+    {file = "Pillow-9.4.0-2-cp311-cp311-macosx_10_10_x86_64.whl", hash = "sha256:87708d78a14d56a990fbf4f9cb350b7d89ee8988705e58e39bdf4d82c149210f"},
+    {file = "Pillow-9.4.0-2-cp37-cp37m-macosx_10_10_x86_64.whl", hash = "sha256:8a2b5874d17e72dfb80d917213abd55d7e1ed2479f38f001f264f7ce7bae757c"},
+    {file = "Pillow-9.4.0-2-cp38-cp38-macosx_10_10_x86_64.whl", hash = "sha256:83125753a60cfc8c412de5896d10a0a405e0bd88d0470ad82e0869ddf0cb3848"},
+    {file = "Pillow-9.4.0-2-cp39-cp39-macosx_10_10_x86_64.whl", hash = "sha256:9e5f94742033898bfe84c93c831a6f552bb629448d4072dd312306bab3bd96f1"},
+    {file = "Pillow-9.4.0-2-pp38-pypy38_pp73-macosx_10_10_x86_64.whl", hash = "sha256:013016af6b3a12a2f40b704677f8b51f72cb007dac785a9933d5c86a72a7fe33"},
+    {file = "Pillow-9.4.0-2-pp39-pypy39_pp73-macosx_10_10_x86_64.whl", hash = "sha256:99d92d148dd03fd19d16175b6d355cc1b01faf80dae93c6c3eb4163709edc0a9"},
     {file = "Pillow-9.4.0-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:2968c58feca624bb6c8502f9564dd187d0e1389964898f5e9e1fbc8533169157"},
     {file = "Pillow-9.4.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c5c1362c14aee73f50143d74389b2c158707b4abce2cb055b7ad37ce60738d47"},
     {file = "Pillow-9.4.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bd752c5ff1b4a870b7661234694f24b1d2b9076b8bf337321a814c612665f343"},
@@ -3047,7 +3086,7 @@ tornado = ["tornado (>=5)"]
 name = "setuptools"
 version = "65.7.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3581,4 +3620,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.8"
-content-hash = "df69b73e4c281f0fb377be2e22f4170255c02faf59e6680bb09699c9f261a0f1"
+content-hash = "de65c4c1cc0ae66e103a1c40155526efc3778be51059aa692810984ae33acb04"

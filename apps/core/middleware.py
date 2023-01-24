@@ -1,11 +1,15 @@
 import logging
+import threading
+from collections import Counter
 
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth import load_backend
 from django.contrib.auth.middleware import RemoteUserMiddleware
+from django.db import connection
 from django.http import JsonResponse
 from django.utils.translation import activate
+from logs.cubes import ch_backend
 from rest_framework import status
 
 from apps.core.auth import EDUIdAuthenticationBackend
@@ -84,7 +88,11 @@ class ClickhouseIntegrationMiddleware:
         request.USE_CLICKHOUSE = settings.CLICKHOUSE_QUERY_ACTIVE and request.headers.get(
             'DISABLE-CLICKHOUSE'
         ) not in ('1', 'true')
+        tid = threading.get_ident()
+        start_query_count = ch_backend._query_counts.get(tid, {}).get('AccessLogCube', 0)
         response = self.get_response(request)
+        end_query_count = ch_backend._query_counts.get(tid, {}).get('AccessLogCube', 0)
+        response['X-Clickhouse-Query-Count'] = end_query_count - start_query_count
         return response
 
 
@@ -96,3 +104,30 @@ class UserLanguageMiddleware:
         if request.user and hasattr(request.user, 'language'):
             activate(request.user.language)
         return self.get_response(request)
+
+
+class QueryCounter:
+    def __init__(self):
+        self.counter = Counter()
+
+    def __call__(self, execute, sql, params, many, context):
+        self.counter[threading.get_ident()] += 1
+        return execute(sql, params, many, context)
+
+
+class QueryLoggingMiddleware:
+    """
+    Uses `QueryCounter` to wrap all database call and count the number of queries
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.qc = QueryCounter()
+
+    def __call__(self, request):
+        tid = threading.get_ident()
+        start = self.qc.counter[tid]
+        with connection.execute_wrapper(self.qc):
+            response = self.get_response(request)
+            response['X-Django-Query-Count'] = self.qc.counter[tid] - start
+            return response

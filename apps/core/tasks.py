@@ -1,6 +1,9 @@
+import itertools
 import logging
+import pickle
 
 import celery
+import redis
 from core.logic.error_reporting import email_if_fails
 from django.core.mail import mail_admins
 from django.utils.timezone import now
@@ -43,3 +46,47 @@ def empty_task_export():
     to detect stuck Celery workers by
     """
     logger.info(f"Still alive at {now()}")
+
+
+@celery.shared_task
+@email_if_fails
+def flush_request_logs_to_clickhouse():
+    from django.conf import settings
+
+    from .request_logging.clickhouse import RequestLogCube, RequestLogRecord, get_logging_backend
+
+    r = redis.Redis(
+        host=settings.REQUEST_LOGGING_REDIS_HOST,
+        port=settings.REQUEST_LOGGING_REDIS_PORT,
+        db=settings.REQUEST_LOGGING_REDIS_DB,
+    )
+    # newer versions of Redis support `lpop` with `count` argument
+    # but the version we have in deployment now does not,
+    # so we pop the records one by one - it is pretty fast anyway
+
+    def popper():
+        while rec := r.lpop(settings.REQUEST_LOGGING_REDIS_KEY):
+            yield rec
+
+    source = popper()
+    errors = []
+
+    while batch := list(itertools.islice(source, settings.REQUEST_LOGGING_BUFFER_SIZE)):
+        logger.debug(f"Syncing {len(batch)} request logs to Clickhouse")
+        backend = get_logging_backend()
+        to_store = []
+        for rec in batch:
+            # we process the records one by one to make sure that an error in one record
+            # does not prevent processing of the rest
+            try:
+                to_store.append(RequestLogRecord(**pickle.loads(rec)))
+            except Exception as exc:
+                errors.append(exc)
+                logger.exception("Failed to parse request log record")
+        if to_store:
+            backend.store_records(RequestLogCube, to_store)
+    if errors:
+        async_mail_admins(
+            'Errors syncing request logs to Clickhouse',
+            'Errors:\n\n' + '\n'.join(str(e) for e in errors),
+        )
