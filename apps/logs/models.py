@@ -43,7 +43,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
-from nibbler.logic.celus_format import celus_format_to_records
+from nibbler.logic.celus_format import celus_format_to_records, counter_format_to_records
 from nibbler.models import ParserDefinition, get_records_from_nibbler_output
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
@@ -768,7 +768,12 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
         else:
             if settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT:
-                raise NotImplementedError()
+                nibbler_parser = crt.get_nibbler_parser(json_format=self.file_is_json())
+                yield from counter_format_to_records(
+                    os.path.join(settings.MEDIA_ROOT, self.data_file.name),
+                    nibbler_parser,
+                    self.platform,
+                )
             else:
                 reader = crt.get_reader_class(json_format=self.file_is_json())()
                 yield from reader.file_to_records(

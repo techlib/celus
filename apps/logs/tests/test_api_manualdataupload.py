@@ -28,6 +28,7 @@ from test_fixtures.scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestManualUploadForCounterData:
     @pytest.mark.parametrize(['hash_matches'], [(True,), (False,)])
+    @pytest.mark.parametrize('use_nibbler', [(True,), (False,)])
     @pytest.mark.parametrize(
         ['filename', 'report_code'],
         (
@@ -50,7 +51,10 @@ class TestManualUploadForCounterData:
         filename,
         report_code,
         hash_matches,
+        use_nibbler,
     ):
+        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
+
         cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
@@ -101,6 +105,7 @@ class TestManualUploadForCounterData:
             assert mail_mock.called, 'email to admin was sent'
 
     @pytest.mark.parametrize(['hash_matches'], [(True,), (False,)])
+    @pytest.mark.parametrize('use_nibbler', [(True,), (False,)])
     @pytest.mark.parametrize(
         ['filename', 'report_code'],
         (
@@ -123,7 +128,10 @@ class TestManualUploadForCounterData:
         filename,
         report_code,
         hash_matches,
+        use_nibbler,
     ):
+        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
+
         cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
@@ -272,6 +280,7 @@ class TestManualUploadControlledMetrics:
 
 @pytest.mark.django_db
 class TestManualUploadConflicts:
+    @pytest.mark.parametrize('use_nibbler', [(True,), (False,)])
     def test_import_same_file_twice(
         self,
         organizations,
@@ -282,7 +291,10 @@ class TestManualUploadConflicts:
         report_types,
         clients,
         basic1,
+        use_nibbler,
     ):
+        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
+
         with (Path(__file__).parent / "data/counter4/counter4_br2.tsv").open() as f:
             data_file = ContentFile(f.read())
             data_file.name = "something.tsv"

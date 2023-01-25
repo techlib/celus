@@ -43,3 +43,15 @@ def celus_format_to_records(
 
     for poop in (p for p in poops if isinstance(p, Poop)):
         yield from poop.records()
+
+
+def counter_format_to_records(path: Path, parser_name: str, platform: Platform):
+    poops = eat(
+        path, platform.short_name, parsers=[parser_name], check_platform=False, use_heuristics=False
+    )
+
+    if not any(isinstance(poop, Poop) for poop in poops):
+        raise poops[0]
+
+    for poop in (p for p in poops if isinstance(p, Poop)):
+        yield from poop.records()
