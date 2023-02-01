@@ -154,18 +154,33 @@ class HarvestViewSet(
         # skip for superusers or masters
         if not SuperuserOrAdminPermission().has_permission(self.request, self):
             # Check organization permissions
+            # we do not want to check the same organization more than once when many
+            # intentions are created for the same organization
+            seen_orgs = set()
             for intention in serializer.validated_data["intentions"]:
-                organization = intention["credentials"].organization
-                # Check whether user is within organization
-                if self.request.user.organization_relationship(organization.pk) < REL_ORG_USER:
+                org_id = intention["credentials"].organization_id
+                # Check whether user is within organization - it is an ID now
+                if (
+                    org_id not in seen_orgs
+                    and self.request.user.organization_relationship(org_id) < REL_ORG_USER
+                ):
                     raise PermissionDenied(
                         f"No permission to use credentails (pk={intention['credentials'].pk})"
                     )
+                seen_orgs.add(org_id)
 
-        # Test whether credentials are not broken
         serializer.save(last_updated_by=self.request.user)
+        # Test whether credentials are not broken
+        # Because usually we harvest many months for a few credentials, we want to skip
+        # validation for credentials that have already been validated
+        # `seen_combinations` stores tuples of (credentials_id, counter_report_id)
+        # that have been validated
+        seen_combinations = set()
         for intention in serializer.validated_data["intentions"]:
             credentials = intention["credentials"]
+            key = (intention['credentials'].pk, intention['counter_report'].pk)
+            if key in seen_combinations:
+                continue
             if credentials.broken:
                 raise ValidationError({credentials.pk: 'Credentials are broken.'})
             try:
@@ -187,6 +202,7 @@ class HarvestViewSet(
                         f'is broken for credentials'
                     }
                 )
+            seen_combinations.add(key)
 
     def create(self, request, *args, **kwargs):
         data = dict(request.data)

@@ -297,6 +297,60 @@ class TestHarvestAPI:
             credentials["standalone_br1_jr1"].url,
         }
 
+    @pytest.mark.parametrize('user_type', ['master_admin', 'admin2'])
+    @pytest.mark.django_db(transaction=True)
+    def test_create_query_count(
+        self,
+        basic1,
+        clients,
+        credentials,
+        counter_report_types,
+        django_assert_max_num_queries,
+        user_type,
+    ):
+        """
+        Test that the number of queries when creating a harvest with many intentions is reasonable.
+        We need to test both with master_admin and admin2 because the latter needs privileges to
+        be checked and that can lead to more queries.
+        """
+        dates = [
+            ('2020-01-01', '2020-01-31'),
+            ('2020-02-01', '2020-02-28'),
+            ('2020-03-01', '2020-03-31'),
+            ('2020-04-01', '2020-04-30'),
+            ('2020-05-01', '2020-05-31'),
+            ('2020-06-01', '2020-06-30'),
+            ('2020-07-01', '2020-07-31'),
+            ('2020-08-01', '2020-08-31'),
+            ('2020-09-01', '2020-09-30'),
+            ('2020-10-01', '2020-10-31'),
+            ('2020-11-01', '2020-11-30'),
+            ('2020-12-01', '2020-12-31'),
+        ]
+        intentions = []
+        cr_to_rt = [('standalone_tr', ['tr']), ('standalone_br1_jr1', ['br1', 'jr1'])]
+        for start, end in dates:
+            for cred, reports in cr_to_rt:
+                for rt in reports:
+                    cr = credentials[cred]
+                    intentions.append(
+                        {
+                            'credentials': cr.pk,
+                            'counter_report': counter_report_types[rt].pk,
+                            'start_date': start,
+                            'end_date': end,
+                        }
+                    )
+        assert len(intentions) == 36
+
+        with django_assert_max_num_queries(30):
+            resp = clients[user_type].post(
+                reverse('harvest-list'),
+                json.dumps({"intentions": intentions}),
+                content_type='application/json',
+            )
+        assert resp.status_code == 201
+
     @pytest.mark.parametrize(
         "user,length",
         (

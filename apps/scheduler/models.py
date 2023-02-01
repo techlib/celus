@@ -889,9 +889,15 @@ class Harvest(CreatedUpdatedMixin):
         FetchIntention.objects.bulk_create(intentions)
         # There is no signal if bulk_create is used
         # We need to set a proper queue here
+        # There may be potentially tens or hundreds of intentions, so we want to
+        # minimize number of queries
+        fi_to_queue = []
         for fi in harvest.intentions.filter(queue__isnull=True):
-            fi.queue = FetchIntentionQueue.objects.create(id=fi.pk, start=fi, end=fi)
-            fi.save()
+            fi_to_queue.append((fi, FetchIntentionQueue(id=fi.pk, start=fi, end=fi)))
+        FetchIntentionQueue.objects.bulk_create(rec[1] for rec in fi_to_queue)
+        for fi, queue in fi_to_queue:
+            fi.queue = queue
+        FetchIntention.objects.bulk_update([rec[0] for rec in fi_to_queue], ['queue'])
 
         if priority >= FetchIntention.PRIORITY_NOW:
             from .tasks import trigger_scheduler

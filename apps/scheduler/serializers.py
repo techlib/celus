@@ -2,6 +2,7 @@ from organizations.serializers import OrganizationSerializer, OrganizationShortS
 from publications.serializers import PlatformSerializer, SimplePlatformSerializer
 from rest_framework import serializers
 from rest_framework.fields import DateField, DateTimeField
+from sushi.models import CounterReportType, SushiCredentials
 from sushi.serializers import (
     CounterReportTypeSerializer,
     SushiFetchAttemptFlatSerializer,
@@ -25,10 +26,13 @@ class StatsSerializer(serializers.Serializer):
         }
 
 
-class CreateFetchIntentionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FetchIntention
-        fields = ('not_before', 'credentials', 'counter_report', 'start_date', 'end_date')
+class CreateFetchIntentionSerializer(serializers.Serializer):
+
+    not_before = DateTimeField(required=False)
+    credentials = serializers.IntegerField()
+    counter_report = serializers.IntegerField()
+    start_date = DateField()
+    end_date = DateField()
 
 
 class DuplicateFetchIntentionSerializer(serializers.ModelSerializer):
@@ -169,6 +173,27 @@ class CreateHarvestSerializer(serializers.ModelSerializer):
     def validate_intentions(self, items):
         if len(items) == 0:
             raise serializers.ValidationError("At least one intention has to be used")
+        # we are translating `credentials` and `counter_report` to their respective objects
+        # here because doing it in the `CreateFetchIntentionSerializer` would require
+        # two queries per intention, which can lead to a lot of queries (hundreds in some cases)
+        cr_ids = {i['credentials'] for i in items}
+        id_to_cred = {c.pk: c for c in SushiCredentials.objects.filter(pk__in=cr_ids)}
+        crt_ids = {i['counter_report'] for i in items}
+        id_to_crt = {c.pk: c for c in CounterReportType.objects.filter(pk__in=crt_ids)}
+
+        for intention in items:
+            credentials = id_to_cred.get(intention['credentials'])
+            counter_report = id_to_crt.get(intention['counter_report'])
+            if not credentials:
+                raise serializers.ValidationError(
+                    f'Invalid credentials ID: {intention["credentials"]}'
+                )
+            if not counter_report:
+                raise serializers.ValidationError(
+                    f'Invalid counter report ID: {intention["counter_report"]}'
+                )
+            intention['credentials'] = credentials
+            intention['counter_report'] = counter_report
         return items
 
 
