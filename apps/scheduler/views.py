@@ -46,7 +46,6 @@ class HarvestViewSet(
     filter_backends = [
         harvests_filters.FinishedFilter,
         harvests_filters.BrokenFilter,
-        harvests_filters.PlatformsFilter,
         harvests_filters.AutomaticFilter,
         harvests_filters.MonthFilter,
         harvests_filters.OrderingFilter,
@@ -60,6 +59,13 @@ class HarvestViewSet(
                 Q(last_updated_by=self.request.user)
                 | Q(automatic__organization__in=self.request.user.admin_organizations())
             )
+
+        # we need to add platform filter before we start annotating, because Django would then
+        # create extra joins which make the query more than 10x slower
+        if platforms := self.request.query_params.get('platforms', None):
+            platforms = platforms.strip()
+            if platforms:
+                qs = qs.filter(intentions__credentials__platform_id__in=platforms.split(","))
 
         qs = (
             qs.annotate_stats()

@@ -35,17 +35,6 @@ class BrokenFilter(filters.BaseFilterBackend):
         return queryset
 
 
-class PlatformsFilter(filters.BaseFilterBackend):
-    def filter_queryset(self, request, queryset, view):
-        if platforms := request.query_params.get('platforms', None):
-            platforms = platforms.strip()
-            if platforms:
-                queryset = queryset.filter(
-                    intentions__credentials__platform__pk__in=platforms.split(",")
-                )
-        return queryset
-
-
 class AutomaticFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         if automatic := request.query_params.get('automatic', None):
