@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.2.0]
+
+## [5.2.0] - 2023-01-18
 
 ### Added
 
@@ -50,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the number of queries in the `month-overview` API endpoint was reduced
 
 
-## [5.1.1]
+## [5.1.1] - 2023-01-05
 
 ### Fixed
 
@@ -70,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix bug in the `delete_batches_targets` celery task
 
 
-## [5.1.0]
+## [5.1.0] - 2022-12-19
 
 ### Added
 
@@ -136,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   not the source used for the organization itself.
 
 
-## [5.0.1]
+## [5.0.1] - 2022-11-29
 
 ### Fixed
 
@@ -153,7 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-## [5.0.0]
+## [5.0.0] - 2022-11-22
 
 ### Added
 
@@ -268,7 +269,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - detection of differences between the database and clickhouse was fixed to cover all cases
 
 
-## [4.7.1]
+## [4.7.1] - 2022-11-21
 
 ### Added
 
@@ -291,7 +292,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fixed
 
 
-## [4.7.0]
+## [4.7.0] - 2022-10-24
 
 ### Added
 
@@ -331,7 +332,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - skip custom platforms from other organizations when importing SUSHI credentials using CLI
 
 
-## [4.6.2]
+## [4.6.2] - 2022-07-28
 
 ### Fixed
 
@@ -349,7 +350,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the code for merging titles was sped up to avoid "timeouts" in celery jobs
 
 
-## [4.6.1]
+## [4.6.1] - 2022-07-21
 
 ### Fixed
 
@@ -360,7 +361,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-## [4.6.0]
+## [4.6.0] - 2022-07-18
 
 ### Added
 
@@ -419,7 +420,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the django admin list interface for import batches now shows `date` instead of `user`
 
 
-## [4.5.0]
+## [4.5.0] - 2022-06-20
 
 ### Added
 
@@ -456,7 +457,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - an error in title merging caused by incorrect order of update and delete was fixed
 
-## [4.4.5]
+## [4.4.5] - 2022-06-07
 
 ### Changes
 
@@ -472,7 +473,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - synchronization with knowledgebase unassignes `counter_registry_id` from platforms which no longer
   use it
 
-## [4.4.4]
+## [4.4.4] - 2022-06-03
 
 ### Added
 
@@ -488,7 +489,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - merging of titles was fixed not to merge titles with the same name but without any common ID
 - a cli script for merging title out-of-band was added
 
-## [4.4.3]
+## [4.4.3] - 2022-05-27
 
 ### Fixed
 
@@ -501,7 +502,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - data import was sped up by factor of about 5 with about 2x memory reduction
 
-## [4.4.2]
+## [4.4.2] - 2022-05-19
 
 ### Added
 
@@ -543,7 +544,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Gitlab CI config for coverage was fixed
 
-## [4.4.1]
+## [4.4.1] - 2022-05-04
 
 ### Added
 
@@ -567,7 +568,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - superfluous import batches created for attempts with 3030 error code when migrating from very
   old Celus versions were removed
 
-## [4.4.0]
+## [4.4.0] - 2022-04-29
 
 ### Added
 
@@ -604,7 +605,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pycounter was updated to fix error in date handling in specific situations
   (when the date range in header differs from the actual data)
 
-## [4.3.3]
+## [4.3.3] - 2022-04-06
 
 ### Added
 
@@ -612,7 +613,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - export function was added to the SUSHI management page
 
-## [4.3.2]
+## [4.3.2] - 2022-04-05
 
 ### Fixed
 
@@ -621,7 +622,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - merging of titles between incoming data and database was fixed for cases where
   only name and proprietary IDs are available. Lowercasing of İ was tweaked.
 
-## [4.3.1]
+## [4.3.1] - 2022-04-05
 
 ### Added
 
@@ -664,7 +665,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ignoring `Severity` (see above) fixes errors when importing data with exception 1011 which had
   incorrect severity
 
-## [4.3.0]
+## [4.3.0] - 2022-04-01
 
 ### Added
 
@@ -697,7 +698,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - race condition in locking of manual uploads was fixed - fixes manual data sometimes not being
   imported and getting stuck as `importing`.
 
-## [4.2.0]
+## [4.2.0] - 2022-03-28
 
 ### Added
 
@@ -753,7 +754,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - flush file to disk after it was downloaded - may fix situation when a large file is downloaded
   by the sushi celery worker and it appears as incomplete in the import worker
 
-## [4.1.1]
+## [4.1.1] - 2022-03-01
 
 ### Added
 
@@ -774,7 +775,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - It is now possible to reharvest data for months where the data was empty
 - Very slow parsing of some manual data uploads caused by slow date parser was fixed
 
-## [4.1.0]
+## [4.1.0] - 2022-02-25
 
 ### Added
 
@@ -844,7 +845,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix cases where celery did not properly close open sushi-attempt related files
 - gracefully handle situations when `Item_ID` is null in SUSHI C5 reports
 
-## [4.0.1]
+## [4.0.1] - 2022-01-17
 
 ### Added
 
@@ -871,7 +872,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed - manual upload of incorrect data always ended up displaying message about UTF-8 encoding
   (regression introduced in 4.0.0)
 
-## [4.0.0]
+## [4.0.0] - 2022-01-07
 
 ### Added
 
@@ -932,7 +933,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ensure than only enabled languages are available for user selection in Django admin
 - export of empty data no longer crashes with "KeyError"
 
-## [3.2.5]
+## [3.2.5] - 2021-10-26
 
 ### Fixed
 
@@ -954,7 +955,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - support for using HTTP proxy for SUSHI requests was added to nigiri for C5
 
-## [3.2.4]
+## [3.2.4] - 2021-10-20
 
 ### Fixed
 
@@ -973,7 +974,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to the above fix of tooltips)
 - server log messages about user identity were changed from `error` to `debug` importance
 
-## [3.2.3]
+## [3.2.3] - 2021-09-30
 
 ### Fixed
 
@@ -991,7 +992,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   queue if celery does not handle them quickly enough
 - harvest API endpoint was optimized for speed
 
-## [3.2.2]
+## [3.2.2] - 2021-09-22
 
 ### Fixed
 
@@ -1000,7 +1001,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - clicking on individual downloads on the monthly overview page displayed details for incorrect
   download
 
-## [3.2.1]
+## [3.2.1] - 2021-09-17
 
 ### Added
 
@@ -1014,7 +1015,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Django was upgraded from the 3.1 to the 3.2 branch
 
-## [3.2.0]
+## [3.2.0] - 2021-09-08
 
 ### Added
 
@@ -1057,7 +1058,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - parsing of exceptions from COUNTER 5 table format was made more robust
 - code to derive SUSHI exception severity from a response was made more robust
 
-## [3.1.1]
+## [3.1.1] - 2021-06-16
 
 ### Changes
 
@@ -1082,7 +1083,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - state of SUSHI fetch attempts marked as crashed because they were already imported was fixed
   (it no longer shows as crashed)
 
-## [3.1.0]
+## [3.1.0] - 2021-06-08
 
 ### Added
 
@@ -1135,7 +1136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - harvests planning for the current month was fixed
 
-## [3.0.3]
+## [3.0.3] - 2021-05-14
 
 ### Fixed
 
@@ -1159,7 +1160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - uniform report type ordering is used in the SUSHI data view
 
 
-## [3.0.2]
+## [3.0.2] - 2021-04-26
 
 ### Fixed
 
@@ -1170,7 +1171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new materialized reports will not be immediately used until they are populated with data. This
   prevents intermittent loss of data in charts when new materialized reports are introduced
 
-## [3.0.1]
+## [3.0.1] - 2021-04-23
 
 ### Added
 
@@ -1195,7 +1196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - adding filter for organization did not work properly when specific organization was selected
   globally
 
-## [3.0.0]
+## [3.0.0] - 2021-04-21
 
 ### Added
 
@@ -1258,7 +1259,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to harvest data for that month
 - reevaluation of queries by recache was fixed - it did not occur because of wrong celery config
 
-## [2.8.3]
+## [2.8.3] - 2021-02-01
 
 ### Fixed
 
@@ -1273,7 +1274,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - manual data CSV files containing BOM (Byte Order Mark) are properly parsed
 
-## [2.8.2]
+## [2.8.2] - 2021-01-26
 
 ### Fixed
 
@@ -1282,7 +1283,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - computation of interest in presence of materialized reports has been fixed (it resulted in
   erroneous 3x increase in interest in some cases)
 
-## [2.8.1]
+## [2.8.1] - 2020-12-04
 
 ### Fixed
 
@@ -1292,7 +1293,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - count of finished downloads in a harvest was inconsistent between the harvest table and the detail
   view.
 
-## [2.8.0]
+## [2.8.0] - 2020-12-02
 
 ### Added
 
@@ -1324,7 +1325,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - it is now possible to add annotations from platform list and platform detail pages even when
   no existing annotations are present
 
-## [2.7.2]
+## [2.7.2] - 2020-11-26
 
 ### Changes
 
@@ -1351,7 +1352,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add more robust detection of Exception codes from COUNTER 5 SUSHI data - ignores even more common mistakes providers make.
 - broken credentials are properly skipped when processing scheduled harvests
 
-## [2.7.1]
+## [2.7.1] - 2020-11-20
 
 ### Fixes
 
@@ -1360,7 +1361,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add more robust detection of Exception codes from COUNTER 4 SUSHI data (ignore namespaces which many providers mess up, etc.)
 - fix detection of broken credentials based on error codes extracted from SUSHI headers
 
-## [2.7.0]
+## [2.7.0] - 2020-11-19
 
 ### Added
 
@@ -1392,7 +1393,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - reading of PR reports was fixed to use fields specific to the PR report
 
-## [2.6.1]
+## [2.6.1] - 2020-11-03
 
 ### Fixes
 
@@ -1400,7 +1401,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix wrong sorting of platforms in some browsers on platform overlap page
 
-## [2.6.0]
+## [2.6.0] - 2020-11-03
 
 ### Added
 
@@ -1431,7 +1432,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - logarithmic scale for platform interest chart was fixed
 
-## [2.5.4]
+## [2.5.4] - 2020-11-02
 
 ### Changes
 
@@ -1441,7 +1442,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   its renewal separately. This should get rid of multiplication of celery tasks as observed
   in some installations.
 
-## [2.5.3]
+## [2.5.3] - 2020-10-26
 
 ### Fixed
 
@@ -1449,7 +1450,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - error causing data sometimes not being downloaded from platforms with rate limiting was fixed
 
-## [2.5.2]
+## [2.5.2] - 2020-10-22
 
 ### Fixed
 
@@ -1457,7 +1458,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - error introduced in **2.5.0** leading to charts not respecting selected date range was fixed
 
-## [2.5.1]
+## [2.5.1] - 2020-10-21
 
 ### Changes
 
@@ -1466,7 +1467,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - scheduling of recache renewals was changed to get around multiplication of renewal tasks observed
   in production
 
-## [2.5.0]
+## [2.5.0] - 2020-10-15
 
 ### Added
 
@@ -1501,7 +1502,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - harvesting of COUNTER 4 JR1GOA reports was fixed
 
-## [2.4.1]
+## [2.4.1] - 2020-10-09
 
 ### Changes
 
@@ -1511,7 +1512,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   readable
 - title names are shortened in cards on dashboard page
 
-## [2.4.0]
+## [2.4.0] - 2020-10-06
 
 ### Added
 
@@ -1543,7 +1544,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - processing of COUNTER 4 BR3, JR1a and JR1GOA reports was fixed
 
-## [2.3.1]
+## [2.3.1] - 2020-09-24
 
 ### Added
 
@@ -1562,7 +1563,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - properly report attempts to fetch SUSHI data that span more than one month in the monthly overview (SUSHI status)
 
-## [2.3.0]
+## [2.3.0] - 2020-09-18
 
 ### Added
 
@@ -1601,7 +1602,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   associated with them
 - recache did not properly check for Django version when looking for cached data
 
-## [2.2.1]
+## [2.2.1] - 2020-09-07
 
 ### Fixes
 
@@ -1609,7 +1610,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Error in SUSHI download retrial was fixed
 
-## [2.2.0]
+## [2.2.0] - 2020-09-03
 
 ### Added
 
@@ -1663,21 +1664,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - StopIteration error occurring for empty Counter 4 files was fixed
 - error ingesting JR1 GOA report was fixed
 
-## [2.1.2]
+## [2.1.2] - 2020-08-20
 
 ### Fixes
 
 - fix metric display in charts - remapping should not be shown the same way as in the admin
 - fix storing of TSV files instead of raw XML for successful C4 attempts
 
-## [2.1.1]
+## [2.1.1] - 2020-08-19
 
 ### Fixes
 
 - fix mismatch of version hash between credentials and attempts causing
   incorrect display of attempt status on SUSHI downloads page
 
-## [2.1.0]
+## [2.1.0] - 2020-08-18
 
 ### Added
 

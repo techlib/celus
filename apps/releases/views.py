@@ -3,9 +3,10 @@ import logging
 from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
-from .releases_parser import parse_source_of_releases
+from .parsers import parse_changelog, parse_source_of_releases
 from .serializers import ReleaseSerializer
 
 logger = logging.getLogger(__name__)
@@ -33,15 +34,8 @@ class Releases(ViewSet):
             return Response({})
 
 
-class Changelog(ViewSet):
-    def list(self, request):
+class ChangelogAPIView(APIView):
+    def get(self, request):
         with open(settings.BASE_DIR / "CHANGELOG.md", 'rt', encoding='utf-8') as f:
-            content = f.read()
-            list_of_releases = content.split("## [")
-            list_of_releases.pop(0)
-            parsed_changelog = []
-            for release in list_of_releases:
-                rel_parts = release.split("\n\n", 1)
-                rel_dict = {"version": rel_parts[0].rstrip("]"), "markdown": rel_parts[1]}
-                parsed_changelog.append(rel_dict)
+            parsed_changelog = parse_changelog(f.read())
             return Response(parsed_changelog)

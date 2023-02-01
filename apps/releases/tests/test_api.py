@@ -4,7 +4,7 @@ import re
 import pytest
 from django.urls import reverse
 
-from apps.releases.releases_parser import parse_source_of_releases
+from apps.releases.parsers import parse_source_of_releases
 from test_fixtures.scenarios.basic import *  # noqa - fixtures
 
 from ..serializers import ReleaseSerializer
@@ -60,12 +60,13 @@ class TestReleasesAPI:
 @pytest.mark.django_db
 class TestChangelogAPI:
     def test_changelog(self, clients, settings):
-        url = reverse('changelog-list')
+        url = reverse('changelog')
         response = clients['user1'].get(url)
         assert response.status_code == 200
         for release in response.data:
             assert release.get("version")
             assert release.get("markdown")
+            assert 'date' in release, 'date must be present, even if it is "None"'
             assert (
                 re.search(r"^[0-9]+\.[0-9]+\.[0-9]+", release["version"]) is not None
                 or release["version"] == "Unreleased"
