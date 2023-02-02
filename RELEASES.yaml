@@ -1,3 +1,14 @@
+- version: 5.2.1
+  title:
+    en: Version 5.2.1 brings several bug fixes and optimizations
+    cs: Verze 5.2.1 přináší několik oprav a optimalizací
+  text:
+    en: This release brings several bug fixes and optimizations.
+    cs: Tato verze přináší několik oprav a optimalizací.
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
 - version: 5.2.0
   title:
     en: Version 5.2.0 brings integration with the COUNTER registry
@@ -16,7 +27,6 @@
       - byl přidán seznam non-COUNTER platforem, pro které Celus umožňuje import z původních souborů od vydavatele
       - byla opravena chyba v zobrazení pokrytí daty při zobrazení celé dostupné doby
       - bylo opraveno několik drobných chyb
-
   is_new_feature: TRUE
   is_update: TRUE
   is_bug_fix: TRUE
