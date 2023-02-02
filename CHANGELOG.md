@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [5.2.1] - 2023-02-02
+
+### Added
+
+#### Frontend
+
+- release dates were added to the changelog
+
+#### Backend
+
+- platform interest definition is now configured from the knowledgebase for platforms with support
+  for raw non-COUNTER data import
+- a simple CLI command was added to assign COUNTER registry IDs to platforms from a CSV file
+- optional logging of diagnostic information from web API requests to a clickhouse database was added
+
+### Changes
+
+#### Frontend
+
+- sorting of titles by tags was disabled - it was not useful and caused performance issues
+
+#### Backend
+
+- optimization: the number of database queries used when creating a harvest with many months was
+  significantly reduced
+- the speed of the harvest API endpoint was improved dramatically for cases where platform filter
+  was used
+
+### Fixed
+
+#### Backend
+
+- scheduler crashes when processing canceled fetch intentions were fixed
+- missing `counter_registry_id` field was added to the platforms API endpoint
+- synchronization with the knowledge base was made more robust
+
+
 ## [5.2.0] - 2023-01-18
 
 ### Added
