@@ -149,7 +149,7 @@ class ReportTypeViewSet(ReadOnlyModelViewSet):
                 Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk'))))
                 | Q(short_name='interest')
             ).prefetch_related('controlled_metrics')
-        return self.queryset
+        return self.queryset.prefetch_related('controlled_metrics')
 
 
 class MetricViewSet(ReadOnlyModelViewSet):
