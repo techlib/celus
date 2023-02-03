@@ -7,15 +7,19 @@ from hcube.api.models.metrics import IntMetric
 from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
 from logs.models import AccessLog, ImportBatch, ReportType
 
-ch_backend = ClickhouseCubeBackend(
-    database=settings.CLICKHOUSE_DB,
-    user=settings.CLICKHOUSE_USER,
-    password=settings.CLICKHOUSE_PASSWORD,
-    host=settings.CLICKHOUSE_HOST,
-    port=settings.CLICKHOUSE_PORT,
-    secure=settings.CLICKHOUSE_SECURE,
-)
 
+def create_ch_backend():
+    return ClickhouseCubeBackend(
+        database=settings.CLICKHOUSE_DB,
+        user=settings.CLICKHOUSE_USER,
+        password=settings.CLICKHOUSE_PASSWORD,
+        host=settings.CLICKHOUSE_HOST,
+        port=settings.CLICKHOUSE_PORT,
+        secure=settings.CLICKHOUSE_SECURE,
+    )
+
+
+ch_backend = create_ch_backend()
 django_db = settings.DATABASES['default']
 
 

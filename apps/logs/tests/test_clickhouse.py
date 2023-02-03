@@ -2,6 +2,7 @@ from typing import Union
 from unittest.mock import patch
 
 import pytest
+from django.core.management import call_command
 from django.db import connection
 from django.db.models import Sum
 from hcube.api.models.aggregation import Sum as HSum
@@ -461,3 +462,27 @@ class TestClickhouseCompare:
             compare_db_with_clickhouse_task()
             mock.assert_called_once()
             assert mailmock.delay.call_count == (1 if not is_ok else 0)
+
+
+class TestManagementCommands:
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db()
+    def test_sync_clickhouse_db(self, clickhouse_raw_on_off, settings):
+        client = clickhouse_raw_on_off
+        if client is None:
+            # just test that there is no crash or something
+            call_command('sync_clickhouse_db')
+        else:
+            client.execute(f"DROP TABLE IF EXISTS {settings.CLICKHOUSE_DB}.AccessLogCube;")
+
+            def access_log_cubes_tables_count():
+                return len(
+                    client.execute(
+                        "SELECT * FROM system.tables WHERE name='AccessLogCube' AND database=%(db)s",
+                        {"db": settings.CLICKHOUSE_DB},
+                    )
+                )
+
+            assert access_log_cubes_tables_count() == 0
+            call_command('sync_clickhouse_db')
+            assert access_log_cubes_tables_count() == 1

@@ -17,11 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 @needs_clickhouse_sync
-def initialize_clickhouse():
-    ch_backend.initialize_storage(AccessLogCube)
-
-
-@needs_clickhouse_sync
 @atomic()
 def sync_import_batch_with_clickhouse(import_batch: ImportBatch, batch_size=10_000) -> int:
     try:
