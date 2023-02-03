@@ -26,3 +26,4 @@ sources which do not offer this API.
    topics.rst
    install.rst
    server-maintenance.rst
+   advanced-topics.rst
