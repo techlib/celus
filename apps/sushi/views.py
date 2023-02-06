@@ -38,6 +38,24 @@ class SushiCredentialsViewSet(ModelViewSet):
     serializer_class = SushiCredentialsSerializer
     queryset = SushiCredentials.objects.none()
 
+    def _post_process_queryset(self, qs):
+        org_to_level = {}
+        for sc in qs:  # type: SushiCredentials
+            if sc.organization_id not in org_to_level:
+                org_to_level[sc.organization_id] = self.request.user.organization_relationship(
+                    sc.organization_id
+                )
+            user_org_level = org_to_level[sc.organization_id]
+            if user_org_level >= sc.lock_level:
+                sc.locked_for_me = False
+            else:
+                sc.locked_for_me = True
+            if user_org_level >= UL_CONS_STAFF:
+                sc.can_lock = True
+            else:
+                sc.can_lock = False
+        return qs
+
     def get_queryset(self):
         user_organizations = self.request.user.admin_organizations()
         qs = SushiCredentials.objects.filter(organization__in=user_organizations)
@@ -57,23 +75,16 @@ class SushiCredentialsViewSet(ModelViewSet):
             .prefetch_related('counterreportstocredentials_set__counter_report')
             .select_related('organization', 'platform', 'platform__source')
         )
-        # we add info about locked status for current user
-        org_to_level = {}
-        for sc in qs:  # type: SushiCredentials
-            if sc.organization_id not in org_to_level:
-                org_to_level[sc.organization_id] = self.request.user.organization_relationship(
-                    sc.organization_id
-                )
-            user_org_level = org_to_level[sc.organization_id]
-            if user_org_level >= sc.lock_level:
-                sc.locked_for_me = False
-            else:
-                sc.locked_for_me = True
-            if user_org_level >= UL_CONS_STAFF:
-                sc.can_lock = True
-            else:
-                sc.can_lock = False
         return qs
+
+    def list(self, request, *args, **kwargs):
+        """
+        We need to post-process queryset to add info about locked status for current user
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self._post_process_queryset(queryset)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @method_decorator(create_revision())
     def update(self, request, *args, **kwargs):
@@ -83,8 +94,8 @@ class SushiCredentialsViewSet(ModelViewSet):
 
         # Need to update verified status so it is up-to-date
         instance.verified = instance.is_verified
+        self._post_process_queryset([instance])
         serializer = self.get_serializer(instance)
-
         return Response(serializer.data)
 
     @method_decorator(create_revision())
@@ -144,6 +155,7 @@ class SushiCredentialsViewSet(ModelViewSet):
             for cr2c in CounterReportsToCredentials.objects.filter(credentials=credentials):
                 cr2c.unset_broken()
         credentials.refresh_from_db()
+        self._post_process_queryset([credentials])
         return Response(SushiCredentialsSerializer(credentials).data)
 
     @action(detail=False, methods=['post'], url_path="export-credentials")
@@ -171,7 +183,7 @@ class SushiCredentialsViewSet(ModelViewSet):
     )
     def data(self, request, pk):
         """Display data for given set of credentials"""
-        credentials = get_object_or_404(SushiCredentials, pk=pk)
+        credentials = get_object_or_404(self.get_queryset(), pk=pk)
 
         current_time = timezone.now()
         start_year = (
