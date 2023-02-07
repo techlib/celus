@@ -173,6 +173,7 @@ class TestPlatformImportAttempt:
         assert platform1.counter_registry_id is None
         assert platform1.knowledgebase["providers"] == PLATFORM_INPUT_DATA[0]["providers"]
         assert platform1.knowledgebase["report_types"] == PLATFORM_INPUT_DATA[0]["report_types"]
+        assert platform1.knowledgebase["platform_filter"] is None
         assert (
             set(
                 platform1.platforminterestreport_set.values_list(
@@ -191,6 +192,10 @@ class TestPlatformImportAttempt:
         assert platform2.knowledgebase["providers"] == PLATFORM_INPUT_DATA[1]["providers"]
         assert platform2.knowledgebase["report_types"] == PLATFORM_INPUT_DATA[1]["report_types"]
         assert (
+            platform2.knowledgebase["platform_filter"] == PLATFORM_INPUT_DATA[1]["platform_filter"]
+        )
+
+        assert (
             set(
                 platform2.platforminterestreport_set.values_list(
                     'report_type__short_name', flat=True
@@ -208,6 +213,7 @@ class TestPlatformImportAttempt:
         assert platform3.counter_registry_id == uuid.UUID("00000000-0000-0000-0000-000000000000")
         assert platform3.knowledgebase["providers"] == []
         assert platform3.knowledgebase["report_types"] == []
+        assert platform3.knowledgebase["platform_filter"] is None
         assert (
             set(
                 platform3.platforminterestreport_set.values_list(

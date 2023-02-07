@@ -18,6 +18,7 @@ class PlatformSerializer(serializers.Serializer):
     duplicates = serializers.ListField(
         child=serializers.IntegerField(required=True), allow_empty=True, required=False
     )
+    platform_filter = serializers.CharField(allow_null=True, required=False)
 
 
 class DimensionSerializer(serializers.Serializer):

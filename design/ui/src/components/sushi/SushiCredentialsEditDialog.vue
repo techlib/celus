@@ -398,6 +398,7 @@ cs:
                       :rules="[rulePlatform]"
                       persistent-hint
                       class="mb-3 pb-3"
+                      @change="platformFilterManuallyEdited = true"
                       :hint="
                         platformAttrRequired
                           ? $t('registry_platform_required')
@@ -690,6 +691,7 @@ export default {
       counterVersion: credentials ? credentials.counter_version : 5,
       url: credentials ? credentials.url : "",
       urlManuallyEdited: false,
+      platformFilterManuallyEdited: false,
       httpUsername: credentials ? credentials.http_username : "",
       httpPassword: credentials ? credentials.http_password : "",
       apiKey: credentials ? credentials.api_key : "",
@@ -1243,6 +1245,22 @@ export default {
         this.url = this.pickedCaseUrl;
       }
     },
+    guessPlatformFilter() {
+      if (!this.platformFilter) {
+        // reset edited state
+        this.platformFilterManuallyEdited = false;
+      }
+
+      if (this.platformFilterManuallyEdited) {
+        // don't guess platfrom_filter for manually edited values
+        return;
+      }
+
+      this.platformFilter = "";
+      if (this.currentKnowledgebase) {
+        this.platformFilter = this.currentKnowledgebase?.platform_filter || "";
+      }
+    },
     addExtraParam() {
       this.extraParams.push({ key: "", value: "" });
     },
@@ -1381,6 +1399,7 @@ export default {
       handler() {
         if (!this.credentials) {
           this.guessUrl();
+          this.guessPlatformFilter();
         }
         this.loadRegistryData();
       },
@@ -1394,6 +1413,7 @@ export default {
       );
       if (!this.credentials) {
         this.guessUrl();
+        this.guessPlatformFilter();
       }
     },
     url() {
