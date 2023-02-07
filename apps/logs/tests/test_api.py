@@ -1,4 +1,5 @@
 import json
+import locale
 from datetime import timedelta
 from io import StringIO
 from unittest.mock import patch
@@ -24,9 +25,13 @@ from sushi.models import AttemptStatus, CounterReportsToCredentials
 
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
-from test_fixtures.scenarios.basic import basic1  # noqa - fixtures
+from test_fixtures.entities.logs import (
+    ImportBatchFullFactory,
+    ManualDataUploadFactory,
+    ManualDataUploadFullFactory,
+)
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
+    basic1,
     client_by_user_type,
     clients,
     counter_report_types,
@@ -720,3 +725,297 @@ class TestRawDataAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert log_count == len(data), 'interest data is not in the output'
+
+    def test_raw_data_mdu(
+        self, authenticated_client, report_types, interests, interest_rt, platforms
+    ):
+        """
+        Test that the raw-data endpoint returns the correct data for a manual data upload.
+        """
+        ib = ImportBatchFullFactory.create(
+            report_type=report_types['jr1'],
+            platform=platforms['branch'],
+            create_accesslogs__metrics=[Metric.objects.get(short_name='metric1')],
+        )
+        mdu = ManualDataUploadFactory.create(
+            import_batches=[ib],
+            report_type=report_types['jr1'],
+            platform=platforms['branch'],
+            organization=ib.organization,
+        )
+        assert mdu.import_batches.count() == 1
+        resp = authenticated_client.get(reverse('raw_data'), {'mdu': mdu.pk, 'format': 'json'})
+        assert resp.status_code == 200
+        data = resp.json()
+        log_count = mdu.accesslogs.count()
+        assert len(data) == log_count
+        sync_interest_for_import_batch(ib, interest_rt)
+        assert mdu.accesslogs.count() > log_count, 'ib should have extra interest records'
+        # recheck that there is no interest in the data
+        resp = authenticated_client.get(reverse('raw_data'), {'mdu': mdu.pk, 'format': 'json'})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert log_count == len(data), 'interest data is not in the output'
+        # check the format of the data
+        rec = data[0]
+        assert 'date' in rec
+        assert rec['report_type'] == 'JR1'
+        assert {'platform', 'organization', 'metric', 'value'}.issubset(rec.keys())
+
+
+@pytest.mark.django_db
+class TestAccessLogListView:
+    @pytest.mark.parametrize('page_size', (10, 100))
+    @pytest.mark.parametrize(
+        ['order_by', 'desc'],
+        [
+            ('date', False),
+            ('date', True),
+            ('value', False),
+            ('value', True),
+            ('platform', False),
+            ('platform', True),
+            ('organization', False),
+            ('organization', True),
+            ('metric', False),
+            ('metric', True),
+            ('target', False),
+            ('target', True),
+        ],
+    )
+    def test_raw_data_mdu(
+        self,
+        master_admin_client,
+        report_types,
+        interests,
+        interest_rt,
+        platforms,
+        order_by,
+        desc,
+        page_size,
+    ):
+        """
+        Test that the access-log-list endpoint for mdu returns the correct data
+        """
+        jr1 = report_types['jr1']
+        branch_pl = platforms['branch']
+        ib = ImportBatchFullFactory.create(date='2021-01-01', report_type=jr1, platform=branch_pl)
+        ib2 = ImportBatchFullFactory.create(
+            date='2021-02-01', report_type=jr1, platform=branch_pl, organization=ib.organization
+        )
+        mdu = ManualDataUploadFactory.create(
+            import_batches=[ib, ib2],
+            report_type=jr1,
+            platform=branch_pl,
+            organization=ib.organization,
+        )
+        assert mdu.import_batches.count() == 2
+        resp = master_admin_client.get(
+            reverse('mdu-access-logs', args=[mdu.pk]),
+            {'order_by': order_by, 'desc': desc, 'page_size': page_size},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == mdu.accesslogs.count()
+        # check pagination
+        assert len(data['results']) == min(page_size, data['count'])
+        # check the format of the data
+        rec = data['results'][0]
+        assert 'date' in rec
+        assert rec['report_type'] == 'JR1'
+        assert {'platform', 'organization', 'metric', 'value', 'target'}.issubset(rec.keys())
+        # check ordering
+        last_value = None
+        for rec in data['results']:
+            value = rec[order_by]
+            if type(value) == str:
+                # database uses unicode collation, which sorts differently than python
+                # in presence of spaces. So we need to use unicode sort order as well
+                value = locale.strxfrm(value)
+            if last_value is not None:
+                if desc:
+                    assert value <= last_value
+                else:
+                    assert value >= last_value
+            last_value = value
+
+    @pytest.mark.parametrize('page_size', (5, 20))
+    @pytest.mark.parametrize(
+        ['order_by', 'desc'],
+        [
+            ('date', False),
+            ('date', True),
+            ('value', False),
+            ('value', True),
+            ('platform', False),
+            ('platform', True),
+            ('organization', False),
+            ('organization', True),
+            ('metric', False),
+            ('metric', True),
+            ('target', False),
+            ('target', True),
+        ],
+    )
+    def test_raw_data_ib(
+        self,
+        master_admin_client,
+        report_types,
+        interests,
+        interest_rt,
+        platforms,
+        order_by,
+        desc,
+        page_size,
+    ):
+        """
+        Test that the access-log-list endpoint for import batch returns the correct data
+        """
+        ib = ImportBatchFullFactory.create(
+            report_type=report_types['jr1'], platform=platforms['branch']
+        )
+        resp = master_admin_client.get(
+            reverse('ib-access-logs', args=[ib.pk]),
+            {'order_by': order_by, 'desc': desc, 'page_size': page_size},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == ib.accesslog_set.count()
+        # check pagination
+        assert len(data['results']) == min(page_size, data['count'])
+        # check the format of the data
+        rec = data['results'][0]
+        assert 'date' in rec
+        assert rec['report_type'] == 'JR1'
+        assert {'platform', 'organization', 'metric', 'value', 'target'}.issubset(rec.keys())
+        # check ordering
+        last_value = None
+        for rec in data['results']:
+            value = rec[order_by]
+            if type(value) == str:
+                # database uses unicode collation, which sorts differently than python
+                # in presence of spaces. So we need to use unicode sort order as well
+                value = locale.strxfrm(value)
+            if last_value is not None:
+                if desc:
+                    assert value <= last_value
+                else:
+                    assert value >= last_value
+            last_value = value
+
+    @pytest.mark.parametrize(
+        "client,code",
+        (
+            ("su", 200),
+            ("master_admin", 200),
+            ("master_user", 200),
+            ("admin2", 200),  # admin of the org
+            ("admin1", 404),
+            ("user2", 200),  # user of the org
+            ("user1", 404),
+        ),
+    )
+    def test_raw_data_ib_permissions(
+        self,
+        basic1,
+        report_types,
+        organizations,
+        interests,
+        interest_rt,
+        platforms,
+        client,
+        code,
+        clients,
+    ):
+        """
+        Test that only the right users can access the access-log-list endpoint for an import batch
+        """
+        ib = ImportBatchFullFactory.create(
+            report_type=report_types['jr1'],
+            platform=platforms['branch'],
+            organization=organizations['standalone'],
+        )
+        resp = clients[client].get(reverse('ib-access-logs', args=[ib.pk]))
+        assert resp.status_code == code
+
+    @pytest.mark.parametrize(
+        "client,code",
+        (
+            ("su", 200),
+            ("master_admin", 200),
+            ("master_user", 200),
+            ("admin2", 200),  # admin of the org
+            ("admin1", 404),
+            ("user2", 200),  # user of the org
+            ("user1", 404),
+        ),
+    )
+    def test_raw_data_mdu_permissions(
+        self,
+        basic1,
+        report_types,
+        organizations,
+        interests,
+        interest_rt,
+        platforms,
+        client,
+        code,
+        clients,
+    ):
+        """
+        Test that only the right users can access the access-log-list endpoint for an MDU
+        """
+        ib = ImportBatchFullFactory.create(
+            report_type=report_types['jr1'],
+            platform=platforms['branch'],
+            organization=organizations['standalone'],
+        )
+        mdu = ManualDataUploadFactory.create(
+            import_batches=[ib],
+            report_type=report_types['jr1'],
+            platform=platforms['branch'],
+            organization=organizations['standalone'],
+        )
+        resp = clients[client].get(reverse('mdu-access-logs', args=[mdu.pk]))
+        assert resp.status_code == code
+
+    @pytest.mark.parametrize(
+        "client,code",
+        (
+            ("su", 200),
+            ("master_admin", 200),
+            ("master_user", 200),
+            ("admin2", 404),
+            ("admin1", 404),
+            ("user2", 404),
+            ("user1", 404),
+        ),
+    )
+    def test_raw_data_mdu_without_org_permissions(
+        self,
+        basic1,
+        report_types,
+        organizations,
+        interests,
+        interest_rt,
+        platforms,
+        client,
+        code,
+        clients,
+    ):
+        """
+        If the MDU does not have organization assigned, it should only be accessible to superusers
+        """
+        ib = ImportBatchFullFactory.create(
+            report_type=report_types['jr1'],
+            platform=platforms['branch'],
+            organization=organizations['standalone'],
+        )
+        mdu = ManualDataUploadFactory.create(
+            import_batches=[ib],
+            report_type=report_types['jr1'],
+            platform=platforms['branch'],
+            organization=None,
+        )
+        resp = clients[client].get(reverse('mdu-access-logs', args=[mdu.pk]))
+        assert resp.status_code == code

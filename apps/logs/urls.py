@@ -17,6 +17,16 @@ urlpatterns = [
     path(
         'chart-data-raw/<report_type_id>/', views.Counter5DataView.as_view(), name='chart_data_raw'
     ),
+    path(
+        'mdu-access-logs/<int:mdu_id>/',
+        views.MduAccessLogListView.as_view(),
+        name="mdu-access-logs",
+    ),
+    path(
+        'ib-access-logs/<int:ib_id>/',
+        views.ImportBatchAccessLogListView.as_view(),
+        name="ib-access-logs",
+    ),
     path('raw-data/', views.RawDataExportView.as_view(), name="raw_data"),
     path('raw-data-export/', views.RawDataDelayedExportView.as_view(), name='raw_data_export'),
     path(

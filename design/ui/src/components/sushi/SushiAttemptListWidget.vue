@@ -169,7 +169,7 @@ cs:
       <v-btn @click="$emit('close')" class="mb-3 mr-4">{{ $t("close") }}</v-btn>
     </v-card-actions>
 
-    <v-dialog v-model="showBatchDialog">
+    <v-dialog v-model="showBatchDialog" v-if="showBatchDialog">
       <v-card>
         <v-card-text class="pb-0">
           <div class="pt-5">

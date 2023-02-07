@@ -269,7 +269,7 @@ class AccessLogSerializer(BaseSerializer):
             'report_type': str(obj.report_type),
             'platform': str(obj.platform),
             'organization': str(obj.organization),
-            'target': str(obj.target),
+            'target': str(obj.target) if obj.target else None,
             'metric': str(obj.metric),
             'value': obj.value,
         }

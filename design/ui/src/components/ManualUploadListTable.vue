@@ -203,8 +203,8 @@ cs:
         </template>
       </v-data-table>
 
-      <v-dialog v-model="showBatchDialog">
-        <v-card>
+      <v-dialog v-model="showBatchDialog" v-if="showBatchDialog">
+        <v-card class="pt-6">
           <v-card-text>
             <v-container v-if="dialogType === 'data'" fluid class="pb-0">
               <v-row class="pb-0">
@@ -230,7 +230,11 @@ cs:
         </v-card>
       </v-dialog>
 
-      <v-dialog v-model="showDeleteDialog" max-width="720px">
+      <v-dialog
+        v-model="showDeleteDialog"
+        v-if="showDeleteDialog"
+        max-width="720px"
+      >
         <v-card>
           <v-card-title v-text="$t('confirm_delete')"></v-card-title>
           <v-card-text>

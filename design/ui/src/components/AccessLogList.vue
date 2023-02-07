@@ -5,32 +5,45 @@
     :items="accessLogs"
     :headers="headers"
     :sort-by.sync="orderBy"
+    :sort-desc.sync="orderDesc"
     :loading="loading"
+    :server-items-length="total"
+    :page.sync="page"
+    :items-per-page.sync="ipp"
+    :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
     dense
   >
   </v-data-table>
 </template>
 
 <script>
-import axios from "axios";
 import { mapActions } from "vuex";
+import cancellation from "@/mixins/cancellation";
+
 export default {
   name: "AccessLogList",
+
+  mixins: [cancellation],
+
   props: {
+    // one of the following two has to be set
     importBatch: { required: false, type: Number },
-    organization: { required: false },
-    platform: { required: false },
-    title: { required: false },
     mduId: { required: false, type: Number },
     showOrganization: { required: false, type: Boolean, default: false },
   },
+
   data() {
     return {
       accessLogs: [],
-      orderBy: ["date", "target"],
+      orderBy: "target",
+      orderDesc: false,
       loading: false,
+      ipp: 10,
+      page: 1,
+      total: 0,
     };
   },
+
   computed: {
     headers() {
       return [
@@ -38,11 +51,14 @@ export default {
           text: this.$i18n.t("labels.date"),
           value: "date",
         },
-        ...(
-          this.showOrganization
-          ? [ { text: this.$i18n.t("labels.organization"), value: "organization"} ]
-          : []
-        ),
+        ...(this.showOrganization
+          ? [
+              {
+                text: this.$i18n.t("labels.organization"),
+                value: "organization",
+              },
+            ]
+          : []),
         {
           text: this.$i18n.t("labels.title"),
           value: "target",
@@ -72,55 +88,65 @@ export default {
             key !== "target" &&
             key !== "row"
           ) {
-            headers.push({ text: key.replace(/_/g, " "), value: key });
+            headers.push({
+              text: key.replace(/_/g, " "),
+              value: key,
+              sortable: false,
+            });
           }
         }
       }
       return headers;
     },
+    queryUrl() {
+      let url = "";
+      if (this.importBatch) {
+        url = "/api/ib-access-logs/" + this.importBatch + "/";
+      } else if (this.mduId) {
+        url = "/api/mdu-access-logs/" + this.mduId + "/";
+      } else {
+        console.error('Either "importBatch" or "mduId" must be set');
+        return;
+      }
+      return this.$router.resolve({
+        path: url,
+        query: {
+          page: this.page,
+          page_size: this.ipp,
+          order_by: this.orderBy,
+          desc: this.orderDesc,
+        },
+      }).href;
+    },
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
     async loadLogs() {
+      if (!this.queryUrl) {
+        return;
+      }
       this.loading = true;
-      let params = { format: "json" };
-      if (this.importBatch) {
-        params["import_batch"] = this.importBatch;
+      let resp = await this.http({ url: this.queryUrl });
+      if (!resp.error) {
+        this.accessLogs = resp.response.data.results;
+        this.total = resp.response.data.count;
+      } else {
+        this.accessLogs = [];
+        this.total = 0;
       }
-      if (this.mduId) {
-        params["mdu"] = this.mduId;
-      }
-      if (this.organization) {
-        params["organization"] = this.organization;
-      }
-      if (this.platform) {
-        params["platform"] = this.platform;
-      }
-      if (this.title) {
-        params["target"] = this.title;
-      }
-      try {
-        let response = await axios.get("/api/raw-data/", { params: params });
-        this.accessLogs = response.data;
-      } catch (error) {
-        this.showSnackbar({ content: "Error loading data: " + error });
-      } finally {
-        this.loading = false;
-      }
+      this.loading = false;
     },
   },
+
   watch: {
-    importBatch() {
-      this.accessLogs = [];
-      this.loadLogs();
-    },
-    mduId() {
-      this.accessLogs = [];
+    queryUrl() {
       this.loadLogs();
     },
   },
+
   mounted() {
     this.loadLogs();
   },

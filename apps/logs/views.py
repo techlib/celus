@@ -8,6 +8,7 @@ from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params, parse_month
 from core.logic.serialization import parse_b64json
+from core.logic.type_conversion import to_bool
 from core.models import REL_ORG_ADMIN, DataSource
 from core.permissions import (
     CanAccessOrganizationFromGETAttrs,
@@ -23,7 +24,7 @@ from core.prometheus import report_access_time_summary, report_access_total_coun
 from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, prefetch_related_objects
 from django.db.transaction import atomic
 from django.http import JsonResponse
 from django.urls import reverse
@@ -65,9 +66,9 @@ from pandas import DataFrame
 from publications.models import Platform, Title
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.fields import BooleanField, CharField, ListField
-from rest_framework.generics import get_object_or_404
+from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -75,7 +76,7 @@ from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelate
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_pandas import PandasView
+from rest_pandas.views import PandasViewBase
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 from tags.models import Tag
@@ -204,20 +205,35 @@ class DimensionTextViewSet(ReadOnlyModelViewSet):
         return Response(self.get_serializer(dts, many=True).data)
 
 
-class RawDataExportView(PandasView):
+class AccessLogListViewBase(ListAPIView):
 
     serializer_class = AccessLogSerializer
     implicit_dims = ['platform', 'metric', 'organization', 'target', 'report_type', 'import_batch']
-    export_size_limit = 100_000  # limit the number of records in output to this number
+    pagination_class = StandardResultsSetPagination
+
+    def get_base_queryset(self):
+        query_params = self.extract_query_filter_params(self.request)
+        return AccessLog.objects.filter(**query_params)
 
     def get_queryset(self):
-        query_params = self.extract_query_filter_params(self.request)
-        data = AccessLog.objects.filter(**query_params).select_related(*self.implicit_dims)[
-            : self.export_size_limit
-        ]
+        qs = self.get_base_queryset()
+        order_args = self.extract_order_args(self.request)
+        return qs.order_by(*order_args)
+
+    def paginate_queryset(self, queryset):
+        if res := super().paginate_queryset(queryset):
+            return self.post_process_data(res)
+        return None
+
+    def post_process_data(self, data) -> [AccessLog]:
         text_id_to_text = {}
         tr_to_dimensions = {}
         seen_dims = set()
+        # testing showed that prefetching the implicit dimensions here is faster than
+        # using `select_related` on the whole queryset before. (roughly 2x faster for 3M rows)
+        # It is also slightly faster than using `select_related` here together with `pk__in` filter
+        # on the page, even though it does slightly more queries.
+        prefetch_related_objects(data, *self.implicit_dims)
         for al in data:
             al.mapped_dim_values_ = {}
             if (dimensions := tr_to_dimensions.get(al.report_type_id)) is None:
@@ -257,6 +273,95 @@ class RawDataExportView(PandasView):
             # rt matching the import batches rt are shown - no interest, no materialized
             query_params['report_type_id'] = F('import_batch__report_type_id')
         return query_params
+
+    @classmethod
+    def extract_order_args(cls, request) -> dict:
+        order_by = request.query_params.get('order_by', 'pk')
+        desc = to_bool(request.query_params.get('desc', 'false').lower())
+        spec = ('-' if desc else '') + order_by
+        out = [spec]
+        # we need to mix in the pk to make sure the order is deterministic
+        # otherwise pagination might not work as expected
+        if order_by != 'pk':
+            out.append('pk')
+        return out
+
+
+class MduAccessLogListView(AccessLogListViewBase):
+    def get_base_queryset(self):
+        mdu_id = self.kwargs['mdu_id']
+        mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=mdu_id)
+        user = self.request.user
+        # if the MDU has organization, the user must have access to that organization,
+        # if the MDU does not have organization, the user must have access to all organizations
+        # because we do not permit access to such MDUs without it (the number of orgs is unclear)
+        if mdu.organization_id:
+            if not user.accessible_organizations().filter(pk=mdu.organization_id).exists():
+                raise NotFound()
+        else:
+            if not user.is_superuser and not user.is_user_of_master_organization:
+                raise NotFound()
+        # short-circuit if the mdu is not yet processed
+        if not mdu.state == MduState.IMPORTED:
+            return AccessLog.objects.none()
+        # we help the query planner by adding filters for the platform and report type
+        # together with the mdu filter - it makes the query much faster
+        # also, by filtering the report type, we remove logs for interest and materialized reports
+        # Using the `import_batch_id__in` instead of 'import_batch__mdu = mdu' is a little faster
+        # because it skips some table joins
+        query_params = {
+            'import_batch_id__in': ImportBatch.objects.filter(mdu=mdu)
+            .values_list('pk', flat=True)
+            .distinct(),
+            'platform_id': mdu.platform_id,
+            'report_type_id': mdu.report_type_id,
+        }
+        # if organization is present, we add it to the filter as well
+        if mdu.organization_id:
+            query_params['organization_id'] = mdu.organization_id
+        else:
+            query_params['organization_id__in'] = set(
+                mdu.import_batches.values_list('organization_id', flat=True)
+            )
+        return AccessLog.objects.filter(**query_params)
+
+
+class ImportBatchAccessLogListView(AccessLogListViewBase):
+    def get_base_queryset(self):
+        ib_id = self.kwargs['ib_id']
+        ib = get_object_or_404(
+            ImportBatch.objects.filter(
+                organization__in=self.request.user.accessible_organizations()
+            ),
+            pk=ib_id,
+        )
+        # we help the query planner by adding filters for the platform, report type and org
+        # together with the ib filter - it makes the query much faster
+        # also, by filtering the report type, we remove logs for interest and materialized reports
+        query_params = {
+            'import_batch_id': ib_id,
+            'platform_id': ib.platform_id,
+            'report_type_id': ib.report_type_id,
+            'organization': ib.organization,
+        }
+        return AccessLog.objects.filter(**query_params)
+
+
+class RawDataExportView(PandasViewBase, AccessLogListViewBase):
+    """
+    Specialized view for exporting raw data from the access log using pandas.
+    It supports several output formats, including CSV, Excel, etc.
+    It does not use pagination, but instead returns all data capped at 100k records.
+    """
+
+    export_size_limit = 100_000  # limit the number of records in output to this number
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())[: self.export_size_limit]
+        queryset = self.post_process_data(queryset)
+        serializer = self.get_serializer(queryset, many=True)
+        response = Response(serializer.data)
+        return self.update_pandas_headers(response)
 
 
 class RawDataDelayedExportView(APIView):
