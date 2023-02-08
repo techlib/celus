@@ -450,7 +450,7 @@ CELERY_BEAT_SCHEDULE = {
         'options': {'expires': 24 * 60 * 60},
     },
     'sync_all_with_knowledgebase_task': {
-        'task': 'knowledgebase.tasks.sync_platforms_with_knowledgebase_task',
+        'task': 'knowledgebase.tasks.sync_all_with_knowledgebase_task',
         'schedule': crontab(minute=randint(0, 59), hour=2),  # every day between 2:00 and 2:59
         'options': {'expires': 24 * 60 * 60},
     },
