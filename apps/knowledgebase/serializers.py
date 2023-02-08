@@ -30,7 +30,7 @@ class MetricSerializer(serializers.Serializer):
     pk = serializers.IntegerField(required=True)
     short_name = serializers.CharField(allow_blank=False)
     aliases = serializers.ListField(child=serializers.CharField(allow_blank=False))
-    interest_group = serializers.CharField(required=False, allow_blank=True)
+    interest_group = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class ReportTypeSerializer(serializers.Serializer):

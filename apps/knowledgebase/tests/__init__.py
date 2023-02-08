@@ -139,7 +139,9 @@ REPORT_TYPE_INPUT_DATA2 = [
             {"pk": 1, "short_name": "dim1", "aliases": ["dimension1", "DIM1", "d1"]},
             {"pk": 3, "short_name": "dim3", "aliases": ["dimension3"]},
         ],
-        "metrics": [{"pk": 2, "short_name": "metric2", "aliases": ["m2", "met2"]}],
+        "metrics": [
+            {"pk": 2, "short_name": "metric2", "aliases": ["m2", "met2"], "interest_group": None}
+        ],
     },
     {
         "pk": 333,
