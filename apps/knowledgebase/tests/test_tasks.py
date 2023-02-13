@@ -6,7 +6,7 @@ from importlib.metadata import version
 import pytest
 import requests_mock
 from knowledgebase.models import ImportAttempt
-from logs.models import Metric, ReportInterestMetric, ReportType
+from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from nibbler.models import ParserDefinition
 from publications.models import Platform, PlatformInterestReport
 
@@ -65,6 +65,12 @@ class TestCeleryTasks:
             pir_count = PlatformInterestReport.objects.count()
             metric_count = Metric.objects.count()
 
+            # Create some dimensions
+            Dimension.objects.create(short_name="dim1", source=None)
+            Dimension.objects.create(short_name="dim2", source=data_sources['brain'])
+
+            dimension_count = Dimension.objects.count()
+
             tasks.sync_all_with_knowledgebase_task()
 
             assert ImportAttempt.objects.count() == import_attempts + 3
@@ -76,3 +82,13 @@ class TestCeleryTasks:
             # 5 report_types with default_platform_interest * 3 new platforms
             # + 1 from parser_definition
             assert PlatformInterestReport.objects.count() == (pir_count + 5 * 3 + 1)
+
+            # The REPORT_TYPE_INPUT_DATA2 contains 3 dimensions
+            # 1 was created before the sync and 2 were created during the sync
+            assert dimension_count + 2 == Dimension.objects.count(), "two dimensions were created"
+            assert (
+                Dimension.objects.filter(
+                    short_name__in=["dim1", "dim3", "dim4"], source=data_sources['brain']
+                ).count()
+                == 3
+            ), "Brain is set as source for all dimensions"

@@ -446,7 +446,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                 dimensions = []
                 for dimension_data in report_type_data["dimensions"]:
                     dimension, dimension_created = Dimension.objects.get_or_create(
-                        source=self.source, short_name=dimension_data['short_name']
+                        short_name=dimension_data['short_name'], defaults={"source": self.source}
                     )
                     if dimension_created:
                         logger.info(
@@ -454,6 +454,9 @@ class ReportTypeImportAttempt(ImportAttempt):
                             dimension.short_name,
                             report_type_data['short_name'],
                         )
+                    elif not dimension.source:
+                        dimension.source = self.source
+                        dimension.save()
                     dimensions.append(dimension)
             else:
                 dimensions = []
