@@ -734,6 +734,18 @@ SENTRY_ENVIRONMENT = config('SENTRY_ENVIRONMENT', default='unknown')
 SENTRY_RELEASE = config('SENTRY_RELEASE', default='')
 SENTRY_URL = config('SENTRY_URL', default='')
 if SENTRY_URL:
+
+    def filter_events(event, hint):
+        """
+        The /metrics endpoint is called very often and it is not necessary to send all of them
+        to Sentry. This function filters out the /metrics endpoint calls.
+        """
+        if event.get('type') == 'transaction' and event.get('transaction') == '/metrics':
+            # I am not sure if the type=transaction is necessary, but I want to make sure
+            # that other events related to metrics are not filtered out
+            return None
+        return event
+
     sentry_sdk.init(
         dsn=SENTRY_URL,
         integrations=[DjangoIntegration(), CeleryIntegration(), RedisIntegration()],
@@ -741,6 +753,7 @@ if SENTRY_URL:
         environment=SENTRY_ENVIRONMENT,
         release=f"celus-{SENTRY_RELEASE}" if SENTRY_RELEASE else None,
         traces_sample_rate=config('SENTRY_TRACE_SAMPLE_RATE', cast=float, default=1.0),
+        before_send_transaction=filter_events,
     )
     # ignore pycounter errors
     ignore_logger("pycounter.sushi")
