@@ -21,9 +21,6 @@ class ReportDataView(models.Model):
     desc = models.TextField(blank=True)
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     metric_allowed_values = models.JSONField(default=list, blank=True)
-    primary_dimension = models.ForeignKey(
-        Dimension, null=True, on_delete=models.SET_NULL, blank=True
-    )
     is_standard_view = models.BooleanField(
         default=True, help_text='Standard view are shown separately from other views'
     )

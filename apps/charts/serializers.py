@@ -8,7 +8,6 @@ from .models import ChartDefinition, ReportDataView, ReportViewToChartType
 class ReportDataViewSerializer(ModelSerializer):
 
     public = BooleanField(default=False)
-    primary_dimension = DimensionSerializer(read_only=True)
     is_proxy = BooleanField(read_only=True, default=False)
 
     class Meta:
@@ -21,7 +20,6 @@ class ReportDataViewSerializer(ModelSerializer):
             'name_en',
             'desc',
             'public',
-            'primary_dimension',
             'is_standard_view',
             'position',
             'is_proxy',

@@ -13,7 +13,6 @@ class ReportDataViewAdmin(TranslationAdmin):
         'position',
         'is_standard_view',
         'source',
-        'primary_dimension',
         'filters',
         'metric_allowed_values',
     ]
