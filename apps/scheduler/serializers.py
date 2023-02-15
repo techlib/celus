@@ -90,6 +90,42 @@ class FetchIntentionSerializer(serializers.ModelSerializer):
         )
 
 
+class FetchIntentionShortSerializer(serializers.ModelSerializer):
+    attempt = SushiFetchAttemptFlatSerializer(required=False)
+    fetching_data = serializers.BooleanField()
+    duplicate_of = DuplicateFetchIntentionSerializer(required=False)
+    previous_intention = DuplicateFetchIntentionSerializer(required=False)
+    platform_name = serializers.CharField(read_only=True, source='credentials.platform.name')
+    organization_name = serializers.CharField(
+        read_only=True, source='credentials.organization.name'
+    )
+
+    class Meta:
+        model = FetchIntention
+        fields = (
+            'pk',
+            'not_before',
+            'broken_credentials',
+            'credentials',
+            'counter_report',
+            'platform_name',
+            'organization_name',
+            'counter_report_code',
+            'fetching_data',
+            'attempt',
+            'start_date',
+            'end_date',
+            'when_processed',
+            'data_not_ready_retry',
+            'service_not_available_retry',
+            'service_busy_retry',
+            'duplicate_of',
+            'previous_intention',
+            'canceled',
+            'last_updated',
+        )
+
+
 class AutomaticInHarvestSerializer(serializers.ModelSerializer):
     organization = OrganizationSerializer()
 

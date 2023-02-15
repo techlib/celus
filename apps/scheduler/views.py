@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from logs.models import ImportBatch
 from logs.views import StandardResultsSetPagination
-from rest_framework import mixins, status
+from rest_framework import filters, mixins, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.fields import DateField
@@ -32,6 +32,7 @@ from .serializers import (
     CreateHarvestSerializer,
     DetailHarvestSerializer,
     FetchIntentionSerializer,
+    FetchIntentionShortSerializer,
     ListHarvestSerializer,
 )
 from .tasks import trigger_scheduler
@@ -217,9 +218,27 @@ class HarvestViewSet(
         return Response(response_serialzer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+class LastUpdatedIntentionFilterBackend(filters.BaseFilterBackend):
+    """
+    Filter that allows selection of intentions that have been updated since a given timestamp.
+    Because the attempt may have changed without the intention being updated, we also check
+    the attempt's last_updated field.
+    """
+
+    query_param = 'last_updated_after'
+
+    def filter_queryset(self, request, queryset, view):
+        if last_updated := request.query_params.get(self.query_param):
+            queryset = queryset.filter(
+                Q(last_updated__gt=last_updated) | Q(attempt__last_updated__gt=last_updated)
+            )
+        return queryset
+
+
 class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 
-    serializer_class = FetchIntentionSerializer
+    serializer_class = FetchIntentionShortSerializer
+    filter_backends = [LastUpdatedIntentionFilterBackend]
 
     def get_queryset(self):
         kwargs = {"pk": self.kwargs["harvest_pk"]}
@@ -234,13 +253,17 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
             qs = harvest.intentions
 
         return qs.select_related(
+            'counter_report',
+            'credentials',
+            'credentials__platform',
+            'credentials__organization',
+            'duplicate_of',
             'current_scheduler',
             'previous_intention',
             'previous_intention__counter_report',
             'previous_intention__credentials__organization',
             'previous_intention__credentials__platform',
             'attempt',
-            'previous_intention__attempt',
             'previous_intention__attempt',
         ).order_by('pk')
 

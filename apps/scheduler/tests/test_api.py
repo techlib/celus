@@ -6,10 +6,13 @@ from core.logic.dates import last_month, month_end
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.timezone import now
 from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
 from logs.models import AccessLog, ImportBatch
 from organizations.models import UserOrganization
+from rest_framework.fields import DateTimeField
+from rest_framework.serializers import Serializer
 from scheduler import tasks
 from scheduler.models import Automatic, FetchIntention, Harvest
 from sushi.models import BrokenCredentialsMixin as BS
@@ -649,6 +652,53 @@ class TestHarvestFetchIntentionAPI:
         duplicate = data[1]["duplicate_of"]
         assert duplicate["attempt"] is not None
         assert all("canceled" in record for record in data)
+
+    def test_list_with_date_filter(self, basic1, clients, harvests):
+        """
+        Test that it is possible to filter harvest intentions by last_updated date.
+        """
+        url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
+
+        def get_data(date):
+            resp = clients["master_admin"].get(url, {'last_updated_after': date} if date else {})
+            assert resp.status_code == 200
+            return resp.json()
+
+        assert len(get_data(None)) == 3
+        just_now = now()
+        assert len(get_data(just_now)) == 0
+        intention = harvests["anonymous"].intentions.all()[0]
+        intention.last_updated = just_now
+        intention.save()
+        assert len(get_data(just_now)) == 1
+
+    def test_list_with_date_filter_json(self, basic1, clients, harvests):
+        """
+        Similar to `test_list_with_date_filter`, but ensuring that the date serialized to JSON
+        format works as input data for the filter.
+        """
+        url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
+
+        def json_date(date):
+            class S(Serializer):
+                d = DateTimeField()
+
+            return S().to_representation({'d': date})['d']
+
+        def get_data(date):
+            resp = clients["master_admin"].get(
+                url, {'last_updated_after': json_date(date)} if date else {}
+            )
+            assert resp.status_code == 200
+            return resp.json()
+
+        assert len(get_data(None)) == 3
+        just_now = now()
+        assert len(get_data(just_now)) == 0
+        intention = harvests["anonymous"].intentions.all()[0]
+        intention.last_updated = just_now
+        intention.save()
+        assert len(get_data(just_now)) == 1
 
     @pytest.mark.parametrize(
         "user,anonymous_status,user1_status",

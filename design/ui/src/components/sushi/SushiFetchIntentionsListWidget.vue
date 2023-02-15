@@ -305,9 +305,11 @@ import formatRelative from "date-fns/formatRelative";
 import intervalToDuration from "date-fns/intervalToDuration";
 import formatDuration from "date-fns/formatDuration";
 import FetchIntentionStatusIcon from "@/components/sushi/FetchIntentionStatusIcon";
-import { annotateIntention } from "@/libs/intention-state";
+import {
+  annotateIntention,
+  intentionStateToIcon,
+} from "@/libs/intention-state";
 import CheckMark from "@/components/util/CheckMark";
-import { intentionStateToIcon } from "@/libs/intention-state";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 
@@ -363,6 +365,14 @@ export default {
     ...mapGetters({
       dateFnOptions: "dateFnOptions",
     }),
+    lastUpdate() {
+      if (this.intentionData.length === 0) {
+        return null;
+      }
+      return this.intentionData
+        .map((item) => item.last_updated)
+        .reduce((a, b) => (a > b ? a : b));
+    },
     intentionsUrl() {
       if (this.harvestId) {
         return `/api/scheduler/harvest/${this.harvestId}/intention/`;
@@ -373,11 +383,11 @@ export default {
       return [
         {
           text: this.$t("labels.platform"),
-          value: "platform.name",
+          value: "platform_name",
         },
         {
           text: this.$t("organization"),
-          value: "organization.name",
+          value: "organization_name",
         },
         {
           text: this.$t("labels.report_type"),
@@ -547,9 +557,29 @@ export default {
         this.loading = true;
       }
       try {
-        let response = await axios.get(this.intentionsUrl);
-        this.intentionData = response.data;
-        this.intentionData.forEach(annotateIntention);
+        let params = {};
+        if (this.intentionData.length > 0) {
+          params.last_updated_after = this.lastUpdate;
+        }
+        let response = await axios.get(this.intentionsUrl, {
+          params: params,
+        });
+        let newData = response.data;
+        newData.forEach(annotateIntention);
+        if (this.intentionData.length > 0) {
+          // we already have intentions, we just want to update the changed ones
+          let newpkToRecord = new Map();
+          newData.forEach((record) => {
+            newpkToRecord.set(record.pk, record);
+          });
+          for (let [i, intention] of this.intentionData.entries()) {
+            if (newpkToRecord.has(intention.pk)) {
+              this.intentionData.splice(i, 1, newpkToRecord.get(intention.pk));
+            }
+          }
+        } else {
+          this.intentionData = newData;
+        }
       } catch (error) {
         this.showSnackbar({
           content: "Error fetching harvest data: " + error,
@@ -608,6 +638,7 @@ export default {
 
   watch: {
     intentionsUrl() {
+      this.intentionData = [];
       this.scheduleRecheck();
     },
   },

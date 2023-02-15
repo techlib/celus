@@ -919,23 +919,7 @@ class Harvest(CreatedUpdatedMixin):
         if hasattr(self, 'prefetched_latest_intentions'):
             return self.prefetched_latest_intentions
 
-        return (
-            self.intentions.latest_intentions()
-            .annotate_credentials_state()
-            .select_related(
-                'attempt',
-                'attempt__counter_report',
-                'attempt__credentials',
-                'attempt__credentials__organization',
-                'attempt__credentials__platform',
-                'attempt__import_batch',
-                'counter_report',
-                'credentials',
-                'credentials__platform',
-                'credentials__organization',
-                'duplicate_of',
-            )
-        )
+        return self.intentions.latest_intentions().annotate_credentials_state()
 
     @property
     def is_automatic(self):
