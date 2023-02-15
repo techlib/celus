@@ -45,7 +45,14 @@ class BatchAdmin(admin.ModelAdmin):
     inlines = (CandidateInlineModelAdmin,)
     list_display = ('pk', 'created', 'object_type', 'candidates_count', 'status')
     actions = ['plan_delete']
-    readonly_fields = ('created', 'task_result', 'status')
+    readonly_fields = ('created', 'task_result_url', 'status')
+
+    def task_result_url(self, obj):
+        url = reverse('admin:django_celery_results_taskresult_change', args=[obj.task_result_id])
+        if obj.task_result:
+            return format_html('<a href="{}">{}</a>', url, obj.task_result)
+        else:
+            return "-"
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

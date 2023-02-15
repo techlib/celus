@@ -27,10 +27,17 @@ class Batch(models.Model):
     status = models.CharField(
         max_length=20, choices=BatchStatus.choices, default=BatchStatus.INITIAL
     )
-    task_result = models.ForeignKey(TaskResult, on_delete=models.SET_NULL, null=True, blank=True)
+    task_result_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         verbose_name_plural = _("Batches")
+
+    @property
+    def task_result(self) -> typing.Optional[TaskResult]:
+        try:
+            return TaskResult.objects.get(pk=self.task_result_id)
+        except TaskResult.DoesNotExist:
+            return None
 
     @property
     def can_delete(self):
@@ -58,7 +65,7 @@ class Batch(models.Model):
                 return False
 
             self.status = BatchStatus.DELETE
-            self.task_result = None
+            self.task_result_id = None
             self.save()
             transaction.on_commit(lambda: tasks.delete_batch_targets.delay(self.pk))
 
@@ -86,7 +93,7 @@ class Batch(models.Model):
                     candidate.delete_object()
                     count += 1
             self.status = BatchStatus.DELETED
-            self.task_result = task_result
+            self.task_result_id = task_result and task_result.pk
             self.save()
 
         return count
@@ -112,7 +119,7 @@ class Batch(models.Model):
                     count += 1
 
             self.status = BatchStatus.PREPARED
-            self.task_result = task_result
+            self.task_result_id = task_result and task_result.pk
             self.save()
 
             return count
@@ -131,7 +138,7 @@ class Batch(models.Model):
                 return False
 
             self.status = BatchStatus.PREPARING
-            self.task_result = None
+            self.task_result_id = None
             self.save()
             transaction.on_commit(lambda: tasks.prepare_batch.delay(self.pk))
 
