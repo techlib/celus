@@ -6,6 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [5.2.2] - 2023-02-16
+
+### Added
+
+#### Frontend
+
+- Celus can autofill the appropriate value when a platform requires the `platform` SUSHI parameter
+
+#### Backend
+
+- COUNTER 4 table reports may now optionally be parsed by the `nibbler` package rather than the
+  `pycounter` library (can be influenced by `ENABLE_NIBBLER_FOR_COUNTER_FORMAT`)
+
+#### Documentation
+
+- new section about external access to Celus was added
+
+
+### Changes
+
+#### Frontend
+
+- optimization: periodic retreival of progress of a harvest newly only transports info about the
+  changes, thus saving a lot of bandwidth and computation resources for large harvests
+
+#### Backend
+
+- SUSHI exceptions are properly extracted from SUSHI responses even if they arrive with an HTTP
+  status code >= 500
+- optimization: saving SUSHI credentials was sped up significantly
+- optimization: the SUSHI monthly overview was sped up significantly
+- optimization: accesslog list API for manual data uploads and import batches now uses pagination
+  and has optimized performance
+- the way Clickhouse tables are created was changed to use a separate CLI script
+- unused `primary_dimension` attribute was removed from the `ReportDataView` model
+
+
+### Fixes
+
+#### Backend
+
+- periodic synchronization with the knowledgebase was fixed to include all synchronized models
+- allow `null` in `interest_group` when downloading report types from knowledgebase API
+- deleting of past celery task results was blocked by a foreign_key which was removed
+
+
 ## [5.2.1] - 2023-02-02
 
 ### Added
