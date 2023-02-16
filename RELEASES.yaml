@@ -1,3 +1,26 @@
+- version: 5.2.2
+  title:
+    en: Version 5.2.2 + our new User forum & knowledgebase
+    cs: Verze 5.2.2 + naše nové uživatelské fórum & znalostní báze
+  text:
+    en: |
+      - Celus is able to automatically fill in the SUSHI `platform` attribute for platforms which require it.
+      - There are several bug fixes and optimizations.
+      - We opened a new [User forum & knowledgebase](https://support.celus.net/support/discussions).
+    cs: |
+      - Celus umí automaticky doplnit SUSHI parametr `platform` pro platformy, které ho vyžadují.
+      - Přidali jsme několik oprav a optimalizací.
+      - Otevřeli jsme nové [uživatelské fórum & znalostní bázi](https://support.celus.net/support/discussions)
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
+  links:
+    - title:
+        en: Visit the User forum & knowledgebase
+        cs: Na uživatelské fórum & znalostní bázi
+      link: https://support.celus.net/support/discussions
+
 - version: 5.2.1
   title:
     en: Version 5.2.1 brings several bug fixes and optimizations
