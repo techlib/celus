@@ -221,10 +221,16 @@ export default {
       return this.valid;
     },
     platformsBaseUrl() {
-      return `/api/organization/${this.organization.pk}/platform/`;
+      if (this.organization) {
+        return `/api/organization/${this.organization.pk}/platform/`;
+      }
+      return null;
     },
     platformsAllUrl() {
-      return `/api/organization/${this.organization.pk}/all-platform/?public_only=True`;
+      if (this.organization) {
+        return `/api/organization/${this.organization.pk}/all-platform/?public_only=True`;
+      }
+      return null;
     },
     similarPlatforms() {
       const SIMILAR_CONST = 0.5;
@@ -299,7 +305,7 @@ export default {
       }
     },
     async loadPlatform() {
-      if (this.isEdit) {
+      if (this.isEdit && this.platformsBaseUrl) {
         try {
           let result = await axios.get(
             this.platformsBaseUrl + this.platformId + "/"
@@ -308,6 +314,7 @@ export default {
         } catch (error) {
           this.showSnackbar({
             content: `Error loading platform id:${this.platformId}: ` + error,
+            color: "error",
           });
         }
       } else {
@@ -372,9 +379,15 @@ export default {
       }
     },
     async init() {
+      // on load the organization is not set yet and `loadPlatform` depends
+      // on the organization.pk
+      // we use the selected organization as default
+      if (!this.organization && this.selectedOrganization) {
+        this.organization = this.selectedOrganization;
+      }
       await this.loadPlatform();
 
-      if (this.selectedOrganization.pk == -1) {
+      if (this.selectedOrganization.pk === -1) {
         await this.loadOrganizations();
       } else {
         this.organizations = [this.selectedOrganization];
