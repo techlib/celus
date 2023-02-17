@@ -19,6 +19,7 @@ from django.db.models import Max, Min
 from django.urls import reverse
 from logs.models import AccessLog, Dimension, DimensionText, MduMethod, Metric, ReportType
 from organizations.models import UserOrganization
+from publications.logic.fake_data import TitleFactory
 from publications.models import Platform
 from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.models import AttemptStatus, CounterReportsToCredentials
@@ -826,6 +827,8 @@ class TestAccessLogListView:
         assert {'platform', 'organization', 'metric', 'value', 'target'}.issubset(rec.keys())
         # check ordering
         last_value = None
+        # we need to set some UTF-8 locale to get correct sorting
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF8')
         for rec in data['results']:
             value = rec[order_by]
             if type(value) == str:
@@ -837,6 +840,53 @@ class TestAccessLogListView:
                     assert value <= last_value
                 else:
                     assert value >= last_value
+            last_value = value
+
+    @pytest.mark.parametrize('desc', (True, False))
+    def test_raw_data_mdu_locale_sorting(
+        self, master_admin_client, report_types, interests, interest_rt, platforms, desc
+    ):
+        """
+        Similar to `test_raw_data_mdu` but with hardcoded title names which sort differently
+        in unicode (db) and ascii (python)
+        """
+        jr1 = report_types['jr1']
+        branch_pl = platforms['branch']
+        t1 = TitleFactory.create(name='Evening black section big then thank per.')
+        t2 = TitleFactory.create(name='Even owner else daughter series.')
+        ib = ImportBatchFullFactory.create(
+            date='2021-01-01', report_type=jr1, platform=branch_pl, create_accesslogs__titles=[t1]
+        )
+        ib2 = ImportBatchFullFactory.create(
+            date='2021-02-01',
+            report_type=jr1,
+            platform=branch_pl,
+            organization=ib.organization,
+            create_accesslogs__titles=[t2],
+        )
+        mdu = ManualDataUploadFactory.create(
+            import_batches=[ib, ib2],
+            report_type=jr1,
+            platform=branch_pl,
+            organization=ib.organization,
+        )
+        assert mdu.import_batches.count() == 2
+        resp = master_admin_client.get(
+            reverse('mdu-access-logs', args=[mdu.pk]),
+            {'order_by': 'target', 'desc': desc, 'page_size': 10},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        last_value = None
+        # we need to set some UTF-8 locale to get correct sorting
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF8')
+        for rec in data['results']:
+            value = rec['target']
+            if last_value is not None:
+                if desc:
+                    assert locale.strcoll(value, last_value) <= 0
+                else:
+                    assert locale.strcoll(value, last_value) >= 0
             last_value = value
 
     @pytest.mark.parametrize('page_size', (5, 20))
@@ -889,6 +939,8 @@ class TestAccessLogListView:
         assert rec['report_type'] == 'JR1'
         assert {'platform', 'organization', 'metric', 'value', 'target'}.issubset(rec.keys())
         # check ordering
+        # we need to set some UTF-8 locale to get correct sorting
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF8')
         last_value = None
         for rec in data['results']:
             value = rec[order_by]
