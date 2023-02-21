@@ -79,20 +79,26 @@ class ImportBatchFullFactory(ImportBatchFactory):
         if not create:
             return
 
-        if not (metrics := kwargs.get('metrics')):
+        if not (metrics := kwargs.pop('metrics', None)):
             metrics = MetricFactory.create_batch(2)
-        if not (titles := kwargs.get('titles')):
+        if not (titles := kwargs.pop('titles', None)):
             titles = TitleFactory.create_batch(10)
+        value = kwargs.pop('value', None)  # all access logs will have the same value if provided
+
         attrs = {
             'import_batch': obj,
             'organization': obj.organization,
             'platform': obj.platform,
             'report_type': obj.report_type,
             'date': obj.date,
+            **kwargs,
         }
         als = []
         for m in metrics:
-            als += [AccessLog(value=fake.random_int(), metric=m, target=t, **attrs) for t in titles]
+            als += [
+                AccessLog(value=value or fake.random_int(), metric=m, target=t, **attrs)
+                for t in titles
+            ]
         AccessLog.objects.bulk_create(als)
 
         # create OrganizationPlatform link which would be expected if the data were loaded

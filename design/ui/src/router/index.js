@@ -303,7 +303,13 @@ export default new Router({
     },
     {
       path: "/rebiun-report",
+      name: "rebiun-report",
       component: () => import("../pages/SpanishReportPage.vue"),
+    },
+    {
+      path: "/specialized-reports",
+      name: "specialized-reports",
+      component: () => import("../pages/SpecializedReportsPage.vue"),
     },
     {
       path: "/secure",

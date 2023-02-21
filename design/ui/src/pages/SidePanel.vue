@@ -201,6 +201,10 @@ export default {
                   title: this.$t("pages.exports"),
                   linkTo: "exports",
                 },
+                {
+                  title: this.$t("pages.specialized_reports"),
+                  linkTo: "specialized-reports",
+                },
               ],
             },
             {

@@ -32,6 +32,7 @@ en:
     organizations: Organizations
     sushi_troubleshooting: Troubleshooting
     supported_non_counter_platforms: non-COUNTER platforms
+    specialized_reports: Specialized reports
   menu: Menu
   organization: Organization
   platform: Platform
@@ -180,6 +181,10 @@ en:
     show_class: Show class
     empty_value: "- empty -"
     new_menu_item: new
+    select_report: Select report
+    run_report: Run report
+    export: Export
+    source: Source
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -309,6 +314,7 @@ cs:
     organizations: Organizace
     sushi_troubleshooting: Řešení problémů
     supported_non_counter_platforms: non-COUNTER platformy
+    specialized_reports: Speciální reporty
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -457,6 +463,10 @@ cs:
     show_class: Zobrazit typ
     empty_value: "- prázdné -"
     new_menu_item: novinka
+    select_report: Vyberte report
+    run_report: Spustit report
+    export: Exportovat
+    source: Zdroj
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

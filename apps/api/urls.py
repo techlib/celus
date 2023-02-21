@@ -31,6 +31,7 @@ urlpatterns = [
     path('', include('cost.urls')),
     path('', include('impersonate_api.urls')),
     path('', include('releases.urls')),
+    path('', include('reporting.urls')),
     *local_urls,
     path('export/', include('export.urls')),
     path('scheduler/', include('scheduler.urls')),
