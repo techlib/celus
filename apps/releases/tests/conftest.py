@@ -6,6 +6,7 @@ def releases_source():
     return [
         {
             'version': '4.4.1',
+            'date': '2022-05-04',
             'title': {'en': 'new release', 'cs': 'nové vydání'},
             'text': {
                 'en': 'Itaque voluptas.\n### Soluta fuga\nNihil quod aliquam aut\n\n**provident '
@@ -22,6 +23,7 @@ def releases_source():
         },
         {
             'version': '4.4.0',
+            'date': '2022-04-29',
             'title': {'en': 'even better features'},
             'text': {'en': 'Itaque quo. Nihil quod aliquam aut.'},
             'is_new_feature': True,
@@ -30,6 +32,7 @@ def releases_source():
         },
         {
             'version': '4.3.3',
+            'date': '2022-04-06',
             'title': {'en': 'new feature is here!', 'cs': 'nové vydání je zde!'},
             'text': {'en': 'Atque v dolore ea soluta.', 'cs': 'toto je nějaký text'},
             'is_new_feature': True,

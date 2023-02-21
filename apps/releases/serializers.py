@@ -13,6 +13,7 @@ class LinkSerializer(serializers.Serializer):
 
 class ReleaseSerializer(serializers.Serializer):
     version = serializers.CharField(required=True)
+    date = serializers.DateField(required=False, allow_null=True)
     title = LocalizedText(required=True)
     text = LocalizedText(required=False, allow_null=True)
     is_new_feature = serializers.BooleanField(default=False)

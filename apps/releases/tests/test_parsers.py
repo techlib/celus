@@ -1,5 +1,5 @@
 import pytest
-from releases.parsers import parse_changelog
+from releases.logic.changelog import parse_changelog
 
 changelog_temp = """
         # Changelog

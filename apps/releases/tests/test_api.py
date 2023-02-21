@@ -3,8 +3,8 @@ import re
 
 import pytest
 from django.urls import reverse
+from releases.logic.releases import get_releases_entries
 
-from apps.releases.parsers import parse_source_of_releases
 from test_fixtures.scenarios.basic import *  # noqa - fixtures
 
 from ..serializers import ReleaseSerializer
@@ -25,8 +25,8 @@ class TestReleasesAPI:
         assert response.status_code == 200
 
     def test_current_releases_file(self, clients, settings):
-        if parse_source_of_releases():
-            serialized_source_data = ReleaseSerializer(data=parse_source_of_releases(), many=True)
+        if data := get_releases_entries():
+            serialized_source_data = ReleaseSerializer(data=data, many=True)
             assert serialized_source_data.is_valid(raise_exception=True)
         url = reverse('releases-list')
         response = clients['user1'].get(url)
@@ -44,7 +44,9 @@ class TestReleasesAPI:
         url = reverse('releases-list')
         response = clients["user1"].get(url)
         assert response.status_code == 200
-        response_data = json.loads(json.dumps(response.data))
+        # response.data automagically deserializes date ISO strings to datetime objects
+        # which we don't want, so we need to deserialize the response content manually
+        response_data = json.loads(response.content.decode(response.charset))
         assert [list(e.items()) for e in response_data] == [
             list(e.items()) for e in releases_source
         ]
@@ -54,7 +56,10 @@ class TestReleasesAPI:
         settings.RELEASES_SOURCEFILE = 'test-data/releases/test_filled_releases.yaml'
         response = clients["user1"].get(url)
         assert response.status_code == 200
-        assert list(response.data.items()) == list(releases_source[0].items())
+        # response.data automagically deserializes date ISO strings to datetime objects
+        # which we don't want, so we need to deserialize the response content manually
+        response_data = json.loads(response.content.decode(response.charset))
+        assert list(response_data.items()) == list(releases_source[0].items())
 
 
 @pytest.mark.django_db

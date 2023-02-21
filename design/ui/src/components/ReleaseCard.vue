@@ -4,6 +4,9 @@
   <v-card class="mb-6 pa-4" elevation="5" max-width="900">
     <v-card-title>
       {{ $t("release.version", { number: release.version }) }}
+      <span v-if="release.date" class="align-self-end">
+        <DateWithTooltip :date="release.date" />
+      </span>
       <v-spacer />
       <span class="ps-6">
         <template v-for="attr in releaseAttrs">
@@ -52,10 +55,11 @@
 <script>
 import { marked } from "marked";
 import { mapState } from "vuex";
+import DateWithTooltip from "@/components/util/DateWithTooltip";
 
 export default {
   name: "ReleaseCard",
-
+  components: { DateWithTooltip },
   props: ["release"],
 
   data() {
@@ -88,4 +92,10 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+.date-entry {
+  font-size: 75%;
+  color: #888888;
+  margin-left: 0.4rem;
+}
+</style>

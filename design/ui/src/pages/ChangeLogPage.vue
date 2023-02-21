@@ -35,14 +35,7 @@ cs:
                       ? entry.version
                       : $t("version") + " " + entry.version
                   }}
-                  <v-tooltip bottom>
-                    <template #activator="{ on }">
-                      <span v-if="entry.date" class="date" v-on="on">{{
-                        entry.date
-                      }}</span>
-                    </template>
-                    <span>{{ dateToLocal(entry.date) }}</span>
-                  </v-tooltip>
+                  <DateWithTooltip v-if="entry.date" :date="entry.date" />
                 </h2>
                 <div
                   v-html="markdownToHtml(entry.markdown)"
@@ -62,11 +55,12 @@ import axios from "axios";
 import { marked } from "marked";
 import LargeSpinner from "@/components/util/LargeSpinner";
 import { mapActions } from "vuex";
-import format from "date-fns/format";
+import DateWithTooltip from "@/components/util/DateWithTooltip";
 
 export default {
   name: "ChangeLogPage",
   components: {
+    DateWithTooltip,
     LargeSpinner,
   },
   data() {
@@ -105,13 +99,6 @@ export default {
       });
       return html;
     },
-    dateToLocal(date) {
-      if (!date) {
-        return "";
-      }
-      const dateObj = new Date(date);
-      return format(dateObj, "PP");
-    },
   },
   mounted() {
     this.fetchChangelog();
@@ -143,12 +130,6 @@ export default {
     padding: 1rem 0 0.25rem 0.75rem;
     color: #444;
     font-size: 1.35rem;
-
-    .date {
-      font-size: 75%;
-      color: #888888;
-      margin-left: 0.4rem;
-    }
   }
   h3 {
     padding: 0.75rem 0 0.25rem 1.5rem;
