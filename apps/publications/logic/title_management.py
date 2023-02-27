@@ -2,6 +2,7 @@ import logging
 import operator
 from functools import reduce
 from itertools import combinations
+from time import time
 from typing import Generator, List, Set, Union
 
 from django.conf import settings
@@ -22,6 +23,7 @@ def find_mergeable_titles(batch_size: int = 100) -> Generator[List[Title], None,
     :return: List of lists of titles - first title in a list is the one that should be preserved
     """
     # the order_by('lname') replaces the default ordering which would mess up the grouping
+    start = time()
     qs = (
         Title.objects.all()
         .annotate(lname=Lower('name'))
@@ -31,6 +33,8 @@ def find_mergeable_titles(batch_size: int = 100) -> Generator[List[Title], None,
         .filter(title_count__gt=1)
     )
     logger.info('Found %d potentially mergeable title groups', qs.count())
+    logger.info('Query took %f seconds', time() - start)
+    start = time()
 
     # because there may be a large number of candidates (tens of thousands), we do not want
     # to make a db query for each group. Therefor we use a buffer to group several groups
@@ -51,6 +55,8 @@ def find_mergeable_titles(batch_size: int = 100) -> Generator[List[Title], None,
             for grp in process_buffer():
                 yield grp
             buffer = []
+        if i % 1000 == 0:
+            logger.info('Processed %d groups in %f seconds', i, time() - start)
     if buffer:
         for grp in process_buffer():
             yield grp
