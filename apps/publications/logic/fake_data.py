@@ -2,7 +2,12 @@ from random import random
 
 import factory.fuzzy
 import faker
-from publications.models import Title
+from django.core.files.base import ContentFile
+from publications.models import PlatformTitle, Title, TitleOverlapBatch, TitleOverlapBatchState
+
+from test_fixtures.entities.organizations import OrganizationFactory
+from test_fixtures.entities.platforms import PlatformFactory
+from test_fixtures.entities.users import UserFactory
 
 fake = faker.Faker(locale="cs")
 
@@ -32,3 +37,37 @@ class TitleFactory(factory.django.DjangoModelFactory):
     issn = maybe_blank(fake.bothify, fn_kwargs={"text": "####-####"})
     eissn = maybe_blank(fake.bothify, fn_kwargs={"text": "####-####"})
     pub_type = factory.fuzzy.FuzzyChoice(Title.PUB_TYPE_MAP.keys())
+
+
+class PlatformTitleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = PlatformTitle
+
+    platform = factory.SubFactory(PlatformFactory)
+    organization = factory.SubFactory(OrganizationFactory)
+    title = factory.SubFactory(TitleFactory)
+    date = factory.Faker('date_this_century')
+
+
+class TitleOverlapBatchFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TitleOverlapBatch
+
+    state = TitleOverlapBatchState.INITIAL
+    processing_info = factory.LazyFunction(dict)
+    last_updated_by = factory.SubFactory(UserFactory)
+    organization = None
+
+    @factory.post_generation
+    def source_file(obj, create, extracted, **kwargs):  # noqa - name obj is ok here
+        """
+        We accept a normal file here and preprocess it into ContentFile for convenience
+        """
+        if not extracted:
+            return ''
+
+        with open(extracted, 'rb') as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "test.csv"
+        obj.source_file = data_file
+        return data_file

@@ -173,6 +173,14 @@ export default new Router({
       component: () => import("../pages/PlatformOverlapAnalysisPage"),
     },
     {
+      path: "/analytics/title-list-overlap",
+      name: "title-list-overlap",
+      component: () => import("../pages/TitleListOverlapPage"),
+      meta: {
+        hideDateRangeSelector: true,
+      },
+    },
+    {
       path: "/analytics/flexitable",
       name: "flexitable",
       component: () => import("../pages/FlexiTablePage.vue"),

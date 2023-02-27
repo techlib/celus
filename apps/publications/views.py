@@ -1,3 +1,4 @@
+from allauth.utils import build_absolute_uri
 from api.auth import extract_org_from_request_api_key
 from api.permissions import HasOrganizationAPIKey
 from charts.models import ReportDataView
@@ -29,10 +30,18 @@ from nibbler.models import ParserDefinition
 from organizations.logic.queries import extend_query_filter, organization_filter_from_org_id
 from organizations.models import Organization
 from pandas import DataFrame
-from publications.models import Platform, PlatformTitle, Title
+from publications.models import (
+    Platform,
+    PlatformTitle,
+    Title,
+    TitleOverlapBatch,
+    TitleOverlapBatchState,
+)
 from publications.serializers import (
     SimplePlatformSerializer,
     TitleCountSerializer,
+    TitleOverlapBatchCreateSerializer,
+    TitleOverlapBatchSerializer,
     UseCaseSerializer,
 )
 from recache.util import recache_queryset
@@ -42,8 +51,9 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.status import HTTP_202_ACCEPTED
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from tags.models import Tag
 
 from .filters import PlatformFilter
@@ -54,7 +64,11 @@ from .serializers import (
     PlatformSerializer,
     TitleSerializer,
 )
-from .tasks import delete_platform_data_task, erms_sync_platforms_task
+from .tasks import (
+    delete_platform_data_task,
+    erms_sync_platforms_task,
+    process_title_overlap_batch_task,
+)
 
 
 class SmartResultsSetPagination(StandardResultsSetPagination, SmartPageNumberPagination):
@@ -994,3 +1008,36 @@ class StartERMSSyncPlatformsTask(APIView):
     def post(self, request):
         task = erms_sync_platforms_task.delay()
         return Response({'id': task.id})
+
+
+class TitleOverlapBatchViewSet(ModelViewSet):
+
+    serializer_class = TitleOverlapBatchSerializer
+    # do not allow put or patch
+    http_method_names = ['get', 'post', 'delete']
+
+    def get_queryset(self):
+        return TitleOverlapBatch.objects.filter(last_updated_by=self.request.user).select_related(
+            'organization'
+        )
+
+    @action(detail=True, methods=['post'])
+    def process(self, request, pk=None):
+        batch = self.get_object()
+        batch.state = TitleOverlapBatchState.PROCESSING
+        batch.save()
+        url_base = build_absolute_uri(self.request, '/')
+        task = process_title_overlap_batch_task.delay(batch.pk, url_base)
+
+        return Response(
+            {
+                'task_id': task.id,
+                'batch': self.serializer_class(batch, context={"request": request}).data,
+            },
+            status=HTTP_202_ACCEPTED,
+        )
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return TitleOverlapBatchCreateSerializer
+        return super().get_serializer_class()

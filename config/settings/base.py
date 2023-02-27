@@ -363,6 +363,7 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.compare_db_with_clickhouse_delayed_task': {'queue': 'celery'},
     'publications.tasks.clean_obsolete_platform_title_links_task': {'queue': 'interest'},
     'publications.tasks.merge_titles_task': {'queue': 'interest'},
+    'publications.tasks.process_title_overlap_batch_task': {'queue': 'celery'},
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},

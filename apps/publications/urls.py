@@ -73,6 +73,10 @@ root_router.register(
     basename='platform-interest-report',
 )
 
+root_router.register(
+    'title-overlap-batch', views.TitleOverlapBatchViewSet, basename='title-overlap-batch'
+)
+
 urlpatterns = [path('run-task/erms-sync-platforms', views.StartERMSSyncPlatformsTask.as_view())]
 
 urlpatterns += root_router.urls

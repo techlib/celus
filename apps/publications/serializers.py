@@ -1,15 +1,20 @@
 from core.models import DataSource
+from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import (
     BooleanField,
+    CurrentUserDefault,
     DateTimeField,
+    HiddenField,
     JSONField,
     SerializerMethodField,
     URLField,
 )
+from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import IntegerField, ModelSerializer, Serializer
 
-from .models import Platform, Title
+from .models import Platform, Title, TitleOverlapBatch
 
 
 class SimplePlatformSerializer(ModelSerializer):
@@ -149,3 +154,45 @@ class UseCaseSerializer(Serializer):
     counter_report = IntegerField(required=True)
     latest = DateTimeField(required=True)
     count = IntegerField(required=True)
+
+
+class TitleOverlapBatchSerializer(ModelSerializer):
+
+    organization = OrganizationSerializer(read_only=True, required=False)
+
+    class Meta:
+        model = TitleOverlapBatch
+        fields = (
+            'pk',
+            'organization',
+            'created',
+            'last_updated',
+            'state',
+            'source_file',
+            'annotated_file',
+            'processing_info',
+        )
+
+
+class TitleOverlapBatchCreateSerializer(TitleOverlapBatchSerializer):
+
+    last_updated_by = HiddenField(default=CurrentUserDefault())
+    organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
+
+    class Meta(TitleOverlapBatchSerializer.Meta):
+        fields = TitleOverlapBatchSerializer.Meta.fields + ('last_updated_by',)
+
+    def validate(self, attrs):
+        result = super().validate(attrs)
+        user = attrs['last_updated_by']
+        if attrs.get('organization'):
+            if not user.accessible_organizations().filter(pk=attrs['organization'].pk).exists():
+                raise PermissionDenied('User does not have access to this organization')
+        else:
+            if (
+                not user.is_superuser
+                and not user.is_admin_of_master_organization
+                and not user.is_user_of_master_organization
+            ):
+                raise PermissionDenied('User cannot set empty organization')
+        return result

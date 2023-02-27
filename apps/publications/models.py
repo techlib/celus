@@ -1,10 +1,20 @@
+import codecs
+import csv
+import os
+import tempfile
 from collections import Counter
+from typing import BinaryIO, Callable, Optional
 
-from core.models import DataSource
+import magic
+from core.models import CreatedUpdatedMixin, DataSource
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.db import models
 from django.db.models import Q, UniqueConstraint
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from organizations.models import Organization
 
 
 class PlatformInterestReport(models.Model):
@@ -189,3 +199,157 @@ class PlatformTitle(models.Model):
 
     def __str__(self):
         return f'{self.platform} - {self.title}: {self.date}'
+
+
+def where_to_store(instance: 'TitleOverlapBatch', filename):
+    root, ext = os.path.splitext(filename)
+    ts = now().strftime('%Y%m%d-%H%M%S.%f')
+    return f'overlap_batch/{root}-{ts}{ext}'
+
+
+class TitleOverlapBatchState(models.TextChoices):
+
+    INITIAL = 'initial', _("Initial")
+    PROCESSING = 'processing', _("Processing")
+    FAILED = 'failed', _("Import failed")
+    DONE = 'done', _('Done')
+
+
+def validate_mime_type(fileobj):
+    pos = fileobj.tell()
+    fileobj.seek(0)
+    try:
+        detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
+    finally:
+        fileobj.seek(pos)
+    # there is not one type to rule them all - magic is not perfect and we need to consider
+    # other possibilities that could be detected - for example the text/x-Algol68 seems
+    # to be returned for some CSV files with some version of libmagic
+    # (the library magic uses internally)
+    if detected_type not in ('text/csv', 'text/plain', 'application/csv', 'text/x-Algol68'):
+        raise ValidationError(
+            _(
+                "The uploaded file does not seem to be a CSV file. "
+                "The file type seems to be '{detected_type}'. "
+                "Please upload a CSV file."
+            ).format(detected_type=detected_type)
+        )
+
+
+class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
+
+    source_file = models.FileField(
+        upload_to=where_to_store,
+        blank=True,
+        null=True,
+        max_length=256,
+        validators=[validate_mime_type],
+    )
+    organization = models.ForeignKey(
+        Organization,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text='Titles will only be looked up for this organization',
+    )
+    annotated_file = models.FileField(
+        upload_to='overlap_batch/',
+        blank=True,
+        null=True,
+        max_length=256,
+        help_text='File with additional data added during processing',
+    )
+    processing_info = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Information gathered during processing of the source file',
+    )
+    state = models.CharField(
+        max_length=20,
+        choices=TitleOverlapBatchState.choices,
+        default=TitleOverlapBatchState.INITIAL,
+    )
+
+    class Meta:
+        verbose_name_plural = 'Title overlap batches'
+
+    def file_row_count(self):
+        orig_pos = self.source_file.tell()
+        self.source_file.seek(0)
+        check_reader = csv.reader(codecs.getreader('utf-8')(self.source_file))
+        total = sum(1 for _ in check_reader) - 1  # -1 because of header
+        self.source_file.seek(orig_pos)
+        return total
+
+    def process_source_file(
+        self,
+        dump_file: Optional[BinaryIO] = None,
+        title_id_formatter: Callable[[int], str] = str,
+        progress_monitor: Optional[Callable[[int, int], None]] = None,
+    ) -> dict:
+        """
+        :param dump_file: opened file where a copy of input will be written with extra data from
+                          the processing
+        :param title_id_formatter: converter of title id into string
+        :param progress_monitor: callback to report progress, should send (current, total) ints
+        :return:
+        """
+        from publications.logic.title_list_overlap import CsvTitleListOverlapReader
+
+        reader = CsvTitleListOverlapReader(
+            organization=self.organization, dump_id_formatter=title_id_formatter
+        )
+        stats = Counter()
+        unique_title_ids = set()
+        total = self.file_row_count()
+        for rec in reader.process_source(
+            codecs.getreader('utf-8')(self.source_file), dump_file=dump_file
+        ):
+            stats['row_count'] += 1
+            unique_title_ids |= rec.title_ids
+            if not rec.title_ids:
+                stats['no_match'] += 1
+            if progress_monitor:
+                progress_monitor(stats['row_count'], total)
+        stats['unique_matched_titles'] = len(unique_title_ids)
+        return {
+            'stats': stats,
+            'recognized_columns': list(
+                sorted(reader.column_names.values(), key=lambda x: x.lower())
+            ),
+        }
+
+    def process(
+        self,
+        title_id_formatter: Callable[[int], str] = str,
+        progress_monitor: Optional[Callable[[int, int], None]] = None,
+    ):
+        """
+        :param title_id_formatter: converts title ids to string in the annotated file
+        :param progress_monitor: callback to report progress, should send (current, total) ints
+        :return:
+        """
+        self.state = TitleOverlapBatchState.PROCESSING
+        self.save()
+        try:
+            with tempfile.NamedTemporaryFile('r+b') as dump_file:
+                self.processing_info = self.process_source_file(
+                    dump_file=dump_file,
+                    title_id_formatter=title_id_formatter,
+                    progress_monitor=progress_monitor,
+                )
+                dump_file.seek(0)
+                self.annotated_file = File(dump_file, name=self.create_annotated_file_name())
+                self.state = TitleOverlapBatchState.DONE
+                self.save()
+        except Exception as e:
+            self.processing_info['error'] = str(e)
+            self.state = TitleOverlapBatchState.FAILED
+            self.save()
+
+    def create_annotated_file_name(self) -> str:
+        if not self.source_file:
+            raise ValueError('source_file must be filled in')
+        _folder, fname = os.path.split(self.source_file.name)
+        base, ext = os.path.splitext(fname)
+        return base + '-annotated' + ext

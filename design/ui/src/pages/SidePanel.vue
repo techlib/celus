@@ -150,7 +150,6 @@ export default {
             {
               title: this.$i18n.t("pages.tags"),
               icon: "fa fa-tags",
-              chip: { text: this.$t("labels.new_menu_item"), color: "error" },
               show: this.enableTags,
               items: [
                 {
@@ -220,6 +219,15 @@ export default {
                   title: this.$i18n.t("pages.overlap_analysis_platforms"),
                   icon: "fa fa-th",
                   linkTo: "platform-overlap-analysis",
+                },
+                {
+                  title: this.$i18n.t("pages.title_list_overlap"),
+                  icon: "fa fa-list",
+                  linkTo: "title-list-overlap",
+                  chip: {
+                    text: this.$t("labels.new_menu_item"),
+                    color: "error",
+                  },
                 },
               ],
             },

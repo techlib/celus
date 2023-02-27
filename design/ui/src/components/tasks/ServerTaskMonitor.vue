@@ -2,12 +2,14 @@
   <v-progress-linear
     :indeterminate="task.progressPercentage === null"
     :value="task.progressPercentage"
-    height="32px"
+    :height="dense ? '24px' : '32px'"
   >
     <slot></slot>
     <span v-if="task.progressPercentage !== null" class="ps-4">
       {{ progressText }}
-      ({{ task.progressCurrent }}/{{ task.progressTotal }})
+      <span v-if="!dense"
+        >({{ task.progressCurrent }}/{{ task.progressTotal }})</span
+      >
     </span>
   </v-progress-linear>
 </template>
@@ -20,6 +22,7 @@ export default {
 
   props: {
     value: { required: true, type: Object },
+    dense: { type: Boolean, default: false },
   },
 
   data() {

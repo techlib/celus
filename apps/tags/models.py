@@ -498,7 +498,7 @@ def validate_mime_type(fileobj):
         detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
     finally:
         fileobj.seek(pos)
-    # there is not one type to rule them all - magic is not perfect and we need to consider
+    # there is no one type to rule them all - magic is not perfect and we need to consider
     # other possibilities that could be detected - for example the text/x-Algol68 seems
     # to be returned for some CSV files with some version of libmagic
     # (the library magic uses internally)
@@ -601,14 +601,12 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         :param progress_monitor: callback to report progress, should send (current, total) ints
         :return:
         """
-        reader = CsvTitleListReader()
+        reader = CsvTitleListReader(dump_id_formatter=title_id_formatter)
         stats = Counter()
         unique_title_ids = set()
         total = self.file_row_count()
         for rec in reader.process_source(
-            codecs.getreader('utf-8')(self.source_file),
-            dump_file=dump_file,
-            dump_id_formatter=title_id_formatter,
+            codecs.getreader('utf-8')(self.source_file), dump_file=dump_file
         ):
             stats['row_count'] += 1
             unique_title_ids |= rec.title_ids
@@ -667,16 +665,14 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             raise ValueError(f'Cannot assign tag for batch in state "{self.state}"')
         if not self.tag.can_user_assign(self.last_updated_by):
             raise PermissionDenied(f'User cannot assing tag #{self.tag_id}')
-        reader = CsvTitleListReader()
+        reader = CsvTitleListReader(dump_id_formatter=title_id_formatter)
         stats = Counter()
         unique_title_ids = set()
         unmatched_title_recs = []
         rows_total = self.file_row_count()
         with tempfile.NamedTemporaryFile('wb') as dump_file:
             for rec in reader.process_source(
-                codecs.iterdecode(self.source_file, 'utf-8'),
-                dump_file=dump_file,
-                dump_id_formatter=title_id_formatter,
+                codecs.iterdecode(self.source_file, 'utf-8'), dump_file=dump_file
             ):
                 stats['row_count'] += 1
                 unique_title_ids |= rec.title_ids

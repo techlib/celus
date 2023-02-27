@@ -82,3 +82,9 @@ class PlatformTitleAdmin(admin.ModelAdmin):
     list_filter = ['platform', 'organization']
     readonly_fields = ['platform', 'organization', 'title', 'date']
     search_fields = ['platform__name', 'title__name']
+
+
+@admin.register(models.TitleOverlapBatch)
+class TitleOverlapBatchAdmin(admin.ModelAdmin):
+
+    list_display = ['last_updated', 'last_updated_by', 'state', 'organization']

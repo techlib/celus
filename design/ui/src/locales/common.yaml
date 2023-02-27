@@ -32,6 +32,7 @@ en:
     organizations: Organizations
     sushi_troubleshooting: Troubleshooting
     supported_non_counter_platforms: non-COUNTER platforms
+    title_list_overlap: Title list overlap
     specialized_reports: Specialized reports
   menu: Menu
   organization: Organization
@@ -181,6 +182,7 @@ en:
     show_class: Show class
     empty_value: "- empty -"
     new_menu_item: new
+    annotated_file: Annotated file
     select_report: Select report
     run_report: Run report
     export: Export
@@ -198,6 +200,8 @@ en:
     edit: Edit
     close: Close
     upload_data: Upload data
+    upload_file: Upload file
+    upload_file_for_annotation: Upload file for annotation
     cancel: Cancel
     show_attempts: Downloads
     show_overview: Overview
@@ -314,6 +318,7 @@ cs:
     organizations: Organizace
     sushi_troubleshooting: Řešení problémů
     supported_non_counter_platforms: non-COUNTER platformy
+    title_list_overlap: Překryv titulového seznamu
     specialized_reports: Speciální reporty
   menu: Menu
   organization: Organizace
@@ -463,6 +468,7 @@ cs:
     show_class: Zobrazit typ
     empty_value: "- prázdné -"
     new_menu_item: novinka
+    annotated_file: Anotovaný soubor
     select_report: Vyberte report
     run_report: Spustit report
     export: Exportovat
@@ -480,6 +486,8 @@ cs:
     edit: Editovat
     close: Zavřít
     upload_data: Nahrát data
+    upload_file: Nahrát soubor
+    upload_file_for_annotation: Nahrát soubor pro anotaci
     cancel: Zrušit
     show_attempts: Stažení
     show_overview: Přehled

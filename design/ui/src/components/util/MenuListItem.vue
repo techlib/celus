@@ -16,6 +16,7 @@
             x-small
             class="float-right"
           >
+            <v-icon v-if="item.chip.icon" x-small>{{ item.chip.icon }}</v-icon>
             {{ item.chip.text }}
           </v-chip>
         </v-list-item-title>
@@ -30,6 +31,7 @@
       :item="subitem"
       :notifications="notifications"
       :level="level + 1"
+      :chip="subitem.chip"
       @expand="expand()"
     />
   </v-list-group>
@@ -49,6 +51,15 @@
     <v-list-item-content>
       <v-list-item-title>
         {{ item.title }}
+        <v-chip
+          v-if="item.chip"
+          :color="item.chip.color"
+          x-small
+          class="float-right"
+        >
+          <v-icon v-if="item.chip.icon" small>{{ item.chip.icon }}</v-icon>
+          {{ item.chip.text }}
+        </v-chip>
         <v-tooltip bottom v-if="item.linkTo in notifications" max-width="400">
           <template v-slot:activator="{ on }">
             <v-icon

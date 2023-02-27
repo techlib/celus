@@ -21,19 +21,16 @@ class TitleTaggingRecord:
     tag_names: [str] = field(default_factory=list)
     title_ids: Set[int] = field(default_factory=set)
     source_data: Dict = None  # the original data from input
+    extra_data: Dict = None  # extra data to be added to the dump file
 
 
 class TitleListReader(abc.ABC):
-
-    annotation_column = '_Celus info_'
-
     def process_source(
         self,
         source: Any,
         merge_issns: bool = True,
         batch_size: int = 100,
         dump_file: Optional[BinaryIO] = None,
-        dump_id_formatter: Callable[[int], str] = str,
     ) -> Generator[TitleTaggingRecord, None, None]:
         dump_writer = None
         for rec in self.add_title_ids_to_records(
@@ -44,17 +41,26 @@ class TitleListReader(abc.ABC):
                     dump_stream = codecs.getwriter('utf-8')(dump_file)
                     dump_writer = csv.DictWriter(
                         dump_stream,
-                        fieldnames=list(rec.source_data.keys()) + [self.annotation_column],
+                        fieldnames=list(rec.source_data.keys()) + self.extra_column_names(),
                     )
                     dump_writer.writeheader()
-                count = len(rec.title_ids)
-                annotation = ngettext('{} match', '{} matches', count).format(count)
-                if count:
-                    title_ids = ', '.join(map(dump_id_formatter, sorted(rec.title_ids)))
-                    annotation += f' ({title_ids})'
-                dump_writer.writerow({self.annotation_column: annotation, **rec.source_data})
-
+                annotations = self.annotate_dump_record(rec)
+                dump_writer.writerow({**rec.source_data, **annotations})
             yield rec
+
+    def extra_column_names(self) -> [str]:
+        return []
+
+    def annotate_dump_record(self, record: TitleTaggingRecord) -> dict:
+        return {}
+
+    def add_extra_data_to_rec_batch(self, records: [TitleTaggingRecord]):
+        """
+        Override this method to add extra data to the records. This method is called
+        after the titles have been matched to the records, so `title_ids` is guaranteed
+        to be populated.
+        The size of the batch matches the `batch_size` param of `process_source`.
+        """
 
     @abc.abstractmethod
     def parse_data(self, source: Any) -> Generator[TitleTaggingRecord, None, None]:
@@ -62,9 +68,11 @@ class TitleListReader(abc.ABC):
         Reads from the source and yields individual TitleTaggingRecords.
         """
 
-    @classmethod
+    def title_qs(self):
+        return Title.objects.all()
+
     def add_title_ids_to_records(
-        cls, records: Iterable[TitleTaggingRecord], merge_issns=True, batch_size=100
+        self, records: Iterable[TitleTaggingRecord], merge_issns=True, batch_size=100
     ) -> Generator[TitleTaggingRecord, None, None]:
         """
         Takes a stream of TitleTaggingRecords (usually from `parse_data`) and fills in the
@@ -80,11 +88,10 @@ class TitleListReader(abc.ABC):
 
         irecords = iter(records)
         while batch := list(itertools.islice(irecords, batch_size)):
-            yield from cls._add_title_ids_to_records_one_chunk(batch, merge_issns=merge_issns)
+            yield from self._add_title_ids_to_records_one_chunk(batch, merge_issns=merge_issns)
 
-    @classmethod
     def _add_title_ids_to_records_one_chunk(
-        cls, records: [TitleTaggingRecord], merge_issns=True
+        self, records: [TitleTaggingRecord], merge_issns=True
     ) -> Generator[TitleTaggingRecord, None, None]:
         if merge_issns:
             issn_set = eissn_set = set()
@@ -111,8 +118,10 @@ class TitleListReader(abc.ABC):
         }
         q_filters = [Q(**{f'{attr}__in': array}) for attr, array in filters.items() if array]
         if q_filters:
-            for title_rec in Title.objects.filter(reduce(operator.or_, q_filters)).values(
-                'pk', *id_to_titles.keys()
+            for title_rec in (
+                self.title_qs()
+                .filter(reduce(operator.or_, q_filters))
+                .values('pk', *id_to_titles.keys())
             ):
                 for attr, storage in id_to_titles.items():
                     if value := title_rec.get(attr):
@@ -124,13 +133,12 @@ class TitleListReader(abc.ABC):
                 if value := getattr(record.title_rec, attr):
                     title_ids |= storage.get(value, set())
             record.title_ids = title_ids
+        self.add_extra_data_to_rec_batch(records)
+        for record in records:
             yield record
 
-    def title_link(self, title_id: int):
-        return
 
-
-class CsvTitleListReader(TitleListReader):
+class CsvReaderMixin:
 
     attrs = {
         'isbn': {'normalize': normalize_isbn},
@@ -139,7 +147,6 @@ class CsvTitleListReader(TitleListReader):
         'doi': {'normalize': None},
         'name': {'normalize': None},
     }
-    tag_attr = 'tag'
 
     def __init__(self):
         super().__init__()
@@ -161,9 +168,25 @@ class CsvTitleListReader(TitleListReader):
                     if normalizer := self.attrs[attr_name].get('normalize'):
                         value = normalizer(value)
                 data[attr_name] = value
-            tags = data.pop(self.tag_attr, []) if self.has_explicit_tags else []
-            yield TitleTaggingRecord(title_rec=TitleRec(**data), tag_names=tags, source_data=rec)
+            yield TitleTaggingRecord(title_rec=TitleRec(**data), tag_names=[], source_data=rec)
 
-    @property
-    def has_explicit_tags(self):
-        return self.tag_attr in self.column_names
+
+class CsvTitleListReader(CsvReaderMixin, TitleListReader):
+
+    has_explicit_tags = False
+    annotation_column = '_Celus info_'
+
+    def __init__(self, dump_id_formatter: Callable[[int], str] = str):
+        super().__init__()
+        self.dump_id_formatter = dump_id_formatter
+
+    def extra_column_names(self) -> [str]:
+        return [self.annotation_column]
+
+    def annotate_dump_record(self, record: TitleTaggingRecord) -> dict:
+        count = len(record.title_ids)
+        annotation = ngettext('{} match', '{} matches', count).format(count)
+        if count:
+            title_ids = ', '.join(map(self.dump_id_formatter, sorted(record.title_ids)))
+            annotation += f' ({title_ids})'
+        return {self.annotation_column: annotation}
