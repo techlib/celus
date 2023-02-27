@@ -223,7 +223,7 @@ class AccessLogListViewBase(ListAPIView):
     def paginate_queryset(self, queryset):
         if res := super().paginate_queryset(queryset):
             return self.post_process_data(res)
-        return None
+        return []
 
     def post_process_data(self, data) -> [AccessLog]:
         text_id_to_text = {}

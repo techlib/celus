@@ -27,6 +27,7 @@ from sushi.models import AttemptStatus, CounterReportsToCredentials
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import (
+    ImportBatchFactory,
     ImportBatchFullFactory,
     ManualDataUploadFactory,
     ManualDataUploadFullFactory,
@@ -889,6 +890,7 @@ class TestAccessLogListView:
                     assert locale.strcoll(value, last_value) >= 0
             last_value = value
 
+    @pytest.mark.parametrize('has_data', (True, False))
     @pytest.mark.parametrize('page_size', (5, 20))
     @pytest.mark.parametrize(
         ['order_by', 'desc'],
@@ -917,13 +919,15 @@ class TestAccessLogListView:
         order_by,
         desc,
         page_size,
+        has_data,
     ):
         """
-        Test that the access-log-list endpoint for import batch returns the correct data
+        Test that the access-log-list endpoint for import batch returns the correct data.
+        We are running it with and without data to make sure that the endpoint returns the
+        same data structure in both cases.
         """
-        ib = ImportBatchFullFactory.create(
-            report_type=report_types['jr1'], platform=platforms['branch']
-        )
+        factory = ImportBatchFullFactory if has_data else ImportBatchFactory
+        ib = factory.create(report_type=report_types['jr1'], platform=platforms['branch'])
         resp = master_admin_client.get(
             reverse('ib-access-logs', args=[ib.pk]),
             {'order_by': order_by, 'desc': desc, 'page_size': page_size},
@@ -933,27 +937,28 @@ class TestAccessLogListView:
         assert data['count'] == ib.accesslog_set.count()
         # check pagination
         assert len(data['results']) == min(page_size, data['count'])
-        # check the format of the data
-        rec = data['results'][0]
-        assert 'date' in rec
-        assert rec['report_type'] == 'JR1'
-        assert {'platform', 'organization', 'metric', 'value', 'target'}.issubset(rec.keys())
-        # check ordering
-        # we need to set some UTF-8 locale to get correct sorting
-        locale.setlocale(locale.LC_ALL, 'en_US.UTF8')
-        last_value = None
-        for rec in data['results']:
-            value = rec[order_by]
-            if type(value) == str:
-                # database uses unicode collation, which sorts differently than python
-                # in presence of spaces. So we need to use unicode sort order as well
-                value = locale.strxfrm(value)
-            if last_value is not None:
-                if desc:
-                    assert value <= last_value
-                else:
-                    assert value >= last_value
-            last_value = value
+        if has_data:
+            # check the format of the data
+            rec = data['results'][0]
+            assert 'date' in rec
+            assert rec['report_type'] == 'JR1'
+            assert {'platform', 'organization', 'metric', 'value', 'target'}.issubset(rec.keys())
+            # check ordering
+            # we need to set some UTF-8 locale to get correct sorting
+            locale.setlocale(locale.LC_ALL, 'en_US.UTF8')
+            last_value = None
+            for rec in data['results']:
+                value = rec[order_by]
+                if type(value) == str:
+                    # database uses unicode collation, which sorts differently than python
+                    # in presence of spaces. So we need to use unicode sort order as well
+                    value = locale.strxfrm(value)
+                if last_value is not None:
+                    if desc:
+                        assert value <= last_value
+                    else:
+                        assert value >= last_value
+                last_value = value
 
     @pytest.mark.parametrize(
         "client,code",
@@ -990,6 +995,7 @@ class TestAccessLogListView:
         resp = clients[client].get(reverse('ib-access-logs', args=[ib.pk]))
         assert resp.status_code == code
 
+    @pytest.mark.parametrize('has_data', (True, False))
     @pytest.mark.parametrize(
         "client,code",
         (
@@ -1013,11 +1019,13 @@ class TestAccessLogListView:
         client,
         code,
         clients,
+        has_data,
     ):
         """
         Test that only the right users can access the access-log-list endpoint for an MDU
         """
-        ib = ImportBatchFullFactory.create(
+        factory = ImportBatchFullFactory if has_data else ImportBatchFactory
+        ib = factory.create(
             report_type=report_types['jr1'],
             platform=platforms['branch'],
             organization=organizations['standalone'],
@@ -1030,6 +1038,9 @@ class TestAccessLogListView:
         )
         resp = clients[client].get(reverse('mdu-access-logs', args=[mdu.pk]))
         assert resp.status_code == code
+        if code == 200:
+            assert 'count' in resp.json()
+            assert 'results' in resp.json()
 
     @pytest.mark.parametrize(
         "client,code",

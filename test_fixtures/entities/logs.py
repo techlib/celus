@@ -41,8 +41,18 @@ class MetricFactory(factory.django.DjangoModelFactory):
 
 
 class ImportBatchFactory(factory.django.DjangoModelFactory):
+    """
+    Factory to create import batch with the report type, organization, platform, metrics,
+    but without data
+    """
+
     class Meta:
         model = ImportBatch
+
+    organization = factory.SubFactory(OrganizationFactory)
+    platform = factory.SubFactory(PlatformFactory)
+    report_type = factory.SubFactory(ReportTypeFactory)
+    date = factory.Faker('date_this_century')
 
 
 class AccessLogFactory(factory.django.DjangoModelFactory):
@@ -58,19 +68,11 @@ class AccessLogFactory(factory.django.DjangoModelFactory):
         model = AccessLog
 
 
-class ImportBatchFullFactory(factory.django.DjangoModelFactory):
+class ImportBatchFullFactory(ImportBatchFactory):
     """
     Factory to create import batch with the report type, organization, platform, metrics and
     data.
     """
-
-    class Meta:
-        model = ImportBatch
-
-    organization = factory.SubFactory(OrganizationFactory)
-    platform = factory.SubFactory(PlatformFactory)
-    report_type = factory.SubFactory(ReportTypeFactory)
-    date = factory.Faker('date_this_century')
 
     @factory.post_generation
     def create_accesslogs(obj, create, extracted, **kwargs):  # noqa - obj name is ok here
