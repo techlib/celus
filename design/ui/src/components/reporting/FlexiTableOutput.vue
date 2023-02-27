@@ -437,6 +437,7 @@ export default {
       this.cancelTokenSource.cancel("request canceled by user");
     },
     async fetchData() {
+      if (!this.report) return;
       this.remainder = null;
       // prepare the request params
       let filterOverride = null;
