@@ -152,7 +152,10 @@ cs:
 
     <!-- we need some empty space at the bottom of each page for the
          floating info button to fit in -->
-    <v-main v-if="selectedOrganizationId" class="mb-8">
+    <v-main
+      v-if="selectedOrganizationId || !showOrganizationSelector"
+      class="mb-8"
+    >
       <v-alert
         class="ma-4 mt-6"
         v-if="displayNewReleaseAlert"
