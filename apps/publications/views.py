@@ -38,6 +38,7 @@ from publications.models import (
     TitleOverlapBatchState,
 )
 from publications.serializers import (
+    DeleteAllDataPlatformSerializer,
     SimplePlatformSerializer,
     TitleCountSerializer,
     TitleOverlapBatchCreateSerializer,
@@ -314,9 +315,20 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
         org_filter = organization_filter_from_org_id(
             organization_pk, request.user, prefix=None, admin_required=True
         )
-        task = delete_platform_data_task.delay(
-            pk, [org.pk for org in Organization.objects.filter(**org_filter)]
-        )
+        serializer = DeleteAllDataPlatformSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        org_ids = [org.pk for org in Organization.objects.filter(**org_filter)]
+        delete_platform = serializer.validated_data.get("delete_platform", False)
+        platform = get_object_or_404(Platform.objects.all(), pk=pk)
+        if delete_platform:
+            # to perform delete, platform should belong to the organization
+            if not platform.source or int(organization_pk) != platform.source.organization.pk:
+                raise ValidationError(
+                    detail=f'Platform "{platform}" does not belong to organization'
+                    f' #{organization_pk}'
+                )
+
+        task = delete_platform_data_task.delay(pk, org_ids, delete_platform)
         return Response({'success': True, 'task_id': task.id})
 
 

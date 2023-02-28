@@ -535,9 +535,13 @@ export default {
         }
       }
     },
-    deleteFinished({ platformId }) {
+    async deleteFinished({ platformId, platformDeleted }) {
       if (platformId === this.platformId) {
-        this.loadPlatform();
+        if (platformDeleted) {
+          await this.$router.push({ name: "platform-list", replace: true });
+        } else {
+          this.loadPlatform();
+        }
       }
     },
   },

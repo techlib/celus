@@ -6,12 +6,15 @@ en:
     All the harvested and/or manually uploaded usage data will be removed. If you have
     SUSHI credentials present, they will be preserved to allow you subsequent reharvesting of the data.
     Also any harvests planned for the future will be preserved and run at their assigned time.
-  dialog_text2: |
+  delete_text: |
     This action cannot be undone. Data will be irreversibly lost.
+  delete_platform_text: |
+    This action cannot be undone. Data will be irreversibly lost and platform deleted.
   dialog_text3: |
     If you wish to proceed, please confirm the action by checking the checkbox bellow and pressing
     the 'Delete' button.
   confirmation: I confirm that I want to delete all usage data from platform "<strong>{platform}</strong>".
+  delete_confirmation: I confirm that I also want to delete entire platform "<strong>{platform}</strong>".
   in_progress: The delete process is in progress. It can take quite some time, please be patient.
   task_pending: Waiting for start of the delete process
   task_running: Delete in progress
@@ -25,12 +28,15 @@ cs:
     Všechna stažená a/nebo ručně nahraná data budou smazána. Pokud máte pro platformu
     uloženy přihlašovací údaje pro SUSHI, budou zachována pro případné následné stažení nových dat.
     Také sklízení dat naplánované do budoucnosti bude zachováno a spouštěno ve stanoveném čase.
-  dialog_text2: |
+  delete_text: |
     Tuto akci není možné vzít zpět. Data budou nenávratně ztracena.
+  delete_platform_text: |
+    Tuto akci není možné vzít zpět. Data budou nenávratně ztracena a platforma smazána.
   dialog_text3: |
     Pokud si přejete pokračovat, potvrďte prosím tuto akci zaškrtnutím následujícího políčka a stisknutím
     tlačítka 'Smazat'.
   confirmation: Potvrzuji smazání všech dat o využívanosti pro platformu "<strong>{platform}</strong>".
+  delete_confirmation: Potvrzuji, že chci také smazat celou platformu "<strong>{platform}</strong>".
   in_progress: Proces mazání je v běhu. Může to trvat déle, prosím o trpělivost.
   task_pending: Čekáme na spuštění procesu mazání
   task_running: Probíhá mazání
@@ -64,8 +70,28 @@ cs:
               </template>
             </v-checkbox>
           </div>
+          <div>
+            <v-checkbox
+              v-model="deletePlatform"
+              v-if="isCustomPlatform && organizationSelected"
+              :disabled="!confirmed"
+              class="mt-0"
+            >
+              <template #label="">
+                <span
+                  v-html="
+                    $t('delete_confirmation', { platform: platform.name })
+                  "
+                ></span>
+              </template>
+            </v-checkbox>
+          </div>
           <v-alert :type="confirmed ? 'error' : 'warning'" outlined>
-            {{ $t("dialog_text2") }}
+            <span
+              v-html="$t('delete_platform_text')"
+              v-if="deletePlatform"
+            ></span>
+            <span v-else v-html="$t('delete_text')"></span>
           </v-alert>
           <v-alert
             v-if="!organizationSelected"
@@ -125,6 +151,7 @@ export default {
       confirmed: false,
       retryInterval: 2000,
       deletingId: null,
+      deletePlatform: false,
     };
   },
 
@@ -145,6 +172,12 @@ export default {
       }
       return this.$t("task_pending");
     },
+    isCustomPlatform() {
+      if (this.platform?.source?.organization) {
+        return true;
+      }
+      return false;
+    },
   },
 
   methods: {
@@ -155,7 +188,10 @@ export default {
       try {
         this.deletingId = this.platform.pk;
         let resp = await axios.post(
-          `/api/organization/${this.selectedOrganizationId}/platform/${this.platform.pk}/delete-all-data/`
+          `/api/organization/${this.selectedOrganizationId}/platform/${this.platform.pk}/delete-all-data/`,
+          {
+            delete_platform: this.deletePlatform,
+          }
         );
         this.task = new ServerTask(resp.data.task_id);
         this.checkProgress();
@@ -170,7 +206,10 @@ export default {
       if (this.task) {
         await this.task.getStatus();
         if (this.task.isFinished) {
-          this.$emit("finished", { platformId: this.platform.pk });
+          this.$emit("finished", {
+            platformId: this.platform.pk,
+            platformDeleted: this.deletePlatform,
+          });
         } else {
           setTimeout(this.checkProgress, this.retryInterval);
         }
@@ -179,9 +218,15 @@ export default {
   },
 
   watch: {
+    confirmed() {
+      if (!this.confirmed) {
+        this.deletePlatform = false;
+      }
+    },
     showDialog() {
       // do not remember the confirmation after cancel
       this.confirmed = false;
+      this.deletePlatform = false;
       // we are deleting, but the platform has changed
       if (this.deletingId && this.deletingId !== this.platform.pk) {
         this.task = null;

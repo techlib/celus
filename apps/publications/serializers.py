@@ -196,3 +196,7 @@ class TitleOverlapBatchCreateSerializer(TitleOverlapBatchSerializer):
             ):
                 raise PermissionDenied('User cannot set empty organization')
         return result
+
+
+class DeleteAllDataPlatformSerializer(Serializer):
+    delete_platform = BooleanField(required=False, default=False)

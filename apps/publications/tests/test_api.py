@@ -384,21 +384,31 @@ class TestPlatformAPI:
         assert resp.status_code == 403
 
     @pytest.mark.parametrize(
-        ['user', 'can_delete'],
+        ['user', 'delete_platform', 'org_platform', 'can_delete'],
         [
-            ['user1', False],
-            ['user2', False],
-            ['admin1', False],
-            ['admin2', True],
-            ['master_admin', True],
-            ['master_user', False],
-            ['su', True],
+            ['user1', False, False, False],
+            ['user2', False, False, False],
+            ['admin1', False, False, False],
+            ['admin2', False, False, True],
+            ['master_admin', False, False, True],
+            ['master_user', False, False, False],
+            ['su', False, False, True],
+            ['su', True, False, False],
+            ['su', True, True, True],
         ],
     )
     def test_platform_delete_all_data(
-        self, basic1, clients, platforms, organizations, user, can_delete
+        self,
+        basic1,
+        clients,
+        platforms,
+        organizations,
+        user,
+        delete_platform,
+        org_platform,
+        can_delete,
     ):
-        platform = platforms['standalone']
+        platform = platforms['standalone'] if org_platform else platforms["shared"]
         organization = organizations['standalone']
         ImportBatchFullFactory.create(platform=platform, organization=organization)
         assert AccessLog.objects.filter(organization=organization, platform=platform).count() > 0
@@ -406,13 +416,14 @@ class TestPlatformAPI:
         with mock.patch('publications.views.delete_platform_data_task') as task_mock:
             task_mock.delay.return_value = MockTask()
             resp = clients[user].post(
-                reverse('platform-delete-all-data', args=[organization.pk, platform.pk])
+                reverse('platform-delete-all-data', args=[organization.pk, platform.pk]),
+                {"delete_platform": delete_platform},
             )
             if can_delete:
                 assert resp.status_code == 200
                 task_mock.delay.assert_called()
             else:
-                assert resp.status_code in (403, 404)
+                assert resp.status_code in (403, 404, 400)
                 task_mock.delay.assert_not_called()
 
     @pytest.mark.parametrize(

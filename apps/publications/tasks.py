@@ -40,11 +40,15 @@ def merge_titles_task():
 
 @celery.shared_task
 @email_if_fails
-def delete_platform_data_task(platform_id: int, organization_ids: [int]):
+def delete_platform_data_task(
+    platform_id: int, organization_ids: [int], delete_platform: bool = False
+):
     tp = TaskProgress(task_id=celery.current_task.request.id)
     platform = Platform.objects.get(pk=platform_id)
     organizations = Organization.objects.filter(pk__in=organization_ids)
-    delete_platform_data(platform, organizations, progress_monitor=tp.store_progress)
+    delete_platform_data(
+        platform, organizations, delete_platform, progress_monitor=tp.store_progress
+    )
 
 
 @celery.shared_task

@@ -9,5 +9,5 @@ class DataSourceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = DataSource
 
-    short_name = factory.Faker('ds')
+    short_name = factory.Faker('hostname')
     url = factory.Faker('url')

@@ -48,6 +48,7 @@ def clean_obsolete_platform_title_links(pretend=False):
 def delete_platform_data(
     platform: Platform,
     organization_qs: QuerySet[Organization],
+    delete_platform: bool = False,
     progress_monitor: Optional[Callable[[int, int], None]] = None,
 ) -> Counter:
     """
@@ -72,19 +73,19 @@ def delete_platform_data(
         platform=platform, organization__in=organization_qs
     ).delete()
     stats.update(substats)
-    log_progress(50)
+    log_progress(30)
 
     _, substats = PlatformTitle.objects.filter(
         platform=platform, organization__in=organization_qs
     ).delete()
     stats.update(substats)
-    log_progress(60)
+    log_progress(40)
 
     _, substats = OrganizationPlatform.objects.filter(
         platform=platform, organization__in=organization_qs
     ).delete()
     stats.update(substats)
-    log_progress(70)
+    log_progress(50)
 
     fas = SushiFetchAttempt.objects.filter(
         credentials__platform=platform, credentials__organization__in=organization_qs
@@ -93,18 +94,24 @@ def delete_platform_data(
     # planned for later, etc.
     _, substats = FetchIntention.objects.filter(attempt__in=fas).delete()
     stats.update(substats)
-    log_progress(80)
+    log_progress(60)
 
     # we also delete canceled FIs
     _, substats = FetchIntention.objects.filter(
         credentials__platform=platform, credentials__organization__in=organization_qs, canceled=True
     ).delete()
     stats.update(substats)
-    log_progress(90)
+    log_progress(70)
 
     # delete the attempts
     _, substats = fas.delete()
     stats.update(substats)
-    log_progress(99)
+    log_progress(80)
+
+    if delete_platform and platform.source and platform.source.organization in organization_qs:
+        _, substats = platform.delete()
+        stats.update(substats)
+
+    log_progress(90)
 
     return stats
