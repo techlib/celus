@@ -73,6 +73,9 @@ class TestImpersonateAPI:
 
             response = clients[from_client].get(reverse("impersonate-list"))
             assert response.status_code == 200
+            assert (
+                clients[from_client].get(reverse("user_api_view")).data["impersonator"] is not None
+            )
             for user in response.data:
                 if user["username"] == from_client:
                     assert user["real_user"] is True
@@ -97,11 +100,14 @@ class TestImpersonateAPI:
                     assert user["real_user"] is False
                     assert user["current"] is False
 
+            assert clients[from_client].get(reverse("user_api_view")).data["impersonator"] is None
+
         else:
 
             assert response.status_code in [404, 403]
             # try to list to see whether something has changed
             response = clients[from_client].get(reverse("impersonate-list"))
+            assert clients[from_client].get(reverse("user_api_view")).data["impersonator"] is None
             if response.status_code == 200:
                 # Should remain untouched
                 for user in response.data:

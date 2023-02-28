@@ -41,6 +41,7 @@ class ImpersonateViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, Generic
 
             # this function may raise an exception when user is not found,
             # but that can't happen here
-            impersonate(self.request, user.pk)
+            if self.request.user.pk != user.pk:
+                impersonate(self.request, user.pk)
 
         return Response(status=status.HTTP_200_OK)
