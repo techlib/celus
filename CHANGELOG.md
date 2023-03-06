@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [5.3.0] - 2023-03-08
+
+### Added
+
+#### Frontend
+
+- a new function was added to overlap analysis section - `Title list overlap`. It allows users
+  to compare titles present in Celus against an uploaded title list.
+- the reporting section was expanded with `Specialized reports` page. It contains synthetic reports
+  for specific use cases which go beyond the normal reporting capabilities. At present, it contains
+  the `Rebiun report` used in Spain and the `ARL report` used in the USA.
+- it is now possible to delete a user-created platform together with all its data
+- release dates were added to the changelog and releases pages
+
+
+### Changes
+
+#### Frontend
+
+- pages not requiring an organization to be selected are now visible even when no organization
+  is selected
+- the old version of the `Rebiun report` was removed from platforms list page
+
+#### Backend
+
+- when the `nibbler` library is used to parse COUNTER data, Celus now does more check on the report
+  header to prevent user errors in selecting the correct report
+
+
+### Fixed
+
+#### Frontend
+
+- infinite loading of content of an empty harvest was fixed
+- error in reporting causing occasional errors when reloading data after report change was fixed
+- error which prevented some users from leaving impersonification mode was fixed
+
+
+
 ## [5.2.2] - 2023-02-17
 
 ### Added

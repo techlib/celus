@@ -1,3 +1,22 @@
+- version: 5.3.0
+  title:
+    en: Version 5.3.0 with title list overlap analysis and specialized reports
+    cs: Verze 5.3.0 s analýzou překryvu titulů a speciálními reporty
+  text:
+    en: |
+      - Overlap analysis – you can now **compare titles** present in your Celus **with an uploaded list** of titles. [Read more](https://support.celus.net/a/solutions/articles/103000064763).
+      - Celus is now able to generate specialized reports. So far, the **ARL report** used in the USA and the **Rebiun report** required by Spanish libraries are implemented. We are currently preparing the **ACRL/IPEDS** report. [Read more about how to use the specialized reports](https://support.celus.net/support/solutions/articles/103000064738-specialized-reports).
+      - It is now possible to **delete a user-created platform** together with all its data.
+      - Release dates were added to the changelog and releases pages.
+    cs: |
+      - Analýza překryvu titulů – nyní můžete **porovnat tituly** v Celus **s nahraným seznamem titulů**. [Více informací](https://support.celus.net/a/solutions/articles/103000064763).
+      - Celus nyní umí generovat speciální reporty. Zatím jsou k dispozici **ARL report** používaný v USA a **Rebiun report** požadovaný španělskými knihovnami. Aktuálně připravujeme **ACRL/IPEDS**. [Více informací o použití speciálních reportů](https://support.celus.net/support/solutions/articles/103000064738-specialized-reports).
+      - Nově je možné **smazat uživatelsky vytvořenou platformu** spolu s jejími daty.
+      - Datum vydání bylo přidáno do changelogu a stránky s vydáními.
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
 - version: 5.2.2
   title:
     en: Version 5.2.2 + our new User forum & knowledgebase
