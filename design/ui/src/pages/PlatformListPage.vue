@@ -3,12 +3,10 @@
 en:
   default: Platform overview - default view
   view: View
-  rebiun_report: Rebiun report
 
 cs:
   default: Přehled platforem - výchozí pohled
   view: Pohled
-  rebiun_report: Rebiun report
 </i18n>
 
 <template>
@@ -80,16 +78,6 @@ cs:
             <FlexiTableOutput ref="flexiTableWidget" context-override />
           </v-card-text>
         </v-card>
-        <v-card v-if="viewId === -1">
-          <v-card-title>Rebiun report</v-card-title>
-          <v-card-text>
-            <p>
-              This is a specialized report used in Spain to report aggregated
-              usage of different types of electronic resources.
-            </p>
-            <SpanishReport />
-          </v-card-text>
-        </v-card>
       </v-col>
     </v-row>
   </v-container>
@@ -105,7 +93,6 @@ import cancellation from "@/mixins/cancellation";
 import PlatformOverviewWidget from "@/pages/PlatformOverviewWidget";
 import { FlexiReport } from "@/libs/flexi-reports";
 import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
-import SpanishReport from "@/components/special/SpanishReport.vue";
 
 export default {
   name: "PlatformListPage",
@@ -113,7 +100,6 @@ export default {
   mixins: [cancellation],
 
   components: {
-    SpanishReport,
     FlexiTableOutput,
     PlatformOverviewWidget,
     ManualUploadButton,
@@ -157,7 +143,7 @@ export default {
       return this.reports.find((report) => report.pk === this.viewId);
     },
     allReports() {
-      return [...this.reports, { pk: -1, name: this.$t("rebiun_report") }];
+      return this.reports;
     },
   },
 
