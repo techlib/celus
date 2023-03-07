@@ -2,19 +2,32 @@ import logging
 from collections import Counter
 
 from activity.models import UserActivity
+from allauth.account.models import EmailAddress, EmailConfirmation
 from annotations.models import Annotation
+from deployment.models import FooterImage, SiteLogo
 from django.conf import settings
+from django.contrib.admin.models import LogEntry
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from django_celery_results.models import TaskResult
 from export.models import FlexibleDataExport
+from impersonate.models import ImpersonationLog
 from knowledgebase.models import PlatformImportAttempt, RouterSyncAttempt
-from logs.models import Dimension, DimensionText, ImportBatch
+from logs.models import (
+    Dimension,
+    DimensionText,
+    FlexibleReport,
+    ImportBatch,
+    ImportBatchSyncLog,
+    ManualDataUpload,
+)
 from organizations.models import Organization
 from publications.models import Title
 from recache.models import CachedQuery
-from scheduler.models import Harvest, Scheduler
+from rest_framework.authtoken.models import Token
+from reversion.models import Revision, Version
+from scheduler.models import FetchIntentionQueue, Harvest, Scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +64,26 @@ class Command(BaseCommand):
             RouterSyncAttempt,
             TaskResult,
             PlatformImportAttempt,
+            EmailAddress,
+            EmailConfirmation,
+            Token,
+            FooterImage,
+            SiteLogo,
+            ImpersonationLog,
+            FlexibleReport,
+            ManualDataUpload,
+            LogEntry,
+            ImportBatchSyncLog,
+            Version,
+            FetchIntentionQueue,
+            Revision,
         ):
             self.stderr.write(self.style.WARNING(f'Deleting {model.__name__}'))
             count, details = model.objects.all().delete()
             self.update_stats(stats, details)
             self.stderr.write(self.style.WARNING(f'  - deleted: {count} objects'))
         # remove some dimension texts
-        for dim_name in ('Publisher', 'Success'):
+        for dim_name in ('Publisher', 'Success', 'Platform', 'YOP'):
             try:
                 dim = Dimension.objects.get(short_name=dim_name)
             except Dimension.DoesNotExist:
