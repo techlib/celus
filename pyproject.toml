@@ -41,7 +41,7 @@ license = "MIT"
 python = "^3.8.8"
 
 celery = "~5.2.3"
-celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v7.8.1" }
+celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v7.9.0" }
 celus-nigiri = { git = "https://github.com/Big-Dig-Data/celus-nigiri.git", tag="v1.3.0" }
 colorlog = "^6.7.0"
 diskcache = "5.4"
