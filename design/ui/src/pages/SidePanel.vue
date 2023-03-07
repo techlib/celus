@@ -203,6 +203,10 @@ export default {
                 {
                   title: this.$t("pages.specialized_reports"),
                   linkTo: "specialized-reports",
+                  chip: {
+                    text: this.$t("labels.new_menu_item"),
+                    color: "error",
+                  },
                 },
               ],
             },
