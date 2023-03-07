@@ -11,7 +11,10 @@ from celus_nibbler.definitions.celus_format import (
 from celus_nibbler.parsers.base import IDS
 from celus_nibbler.sources import ExtractParams
 from celus_nigiri import CounterRecord
+from logs.exceptions import NibblerErrors
 from publications.models import Platform
+
+from ..models import get_errors
 
 
 def celus_format_to_records(
@@ -39,7 +42,7 @@ def celus_format_to_records(
 
     poops = eat(path, platform.short_name, [f"^{parser.name}$"], dynamic_parsers=[parser])
     if not any(isinstance(poop, Poop) for poop in poops):
-        raise poops[0]
+        raise NibblerErrors(get_errors(poops))
 
     for poop in (p for p in poops if isinstance(p, Poop)):
         yield from poop.records()
@@ -47,11 +50,11 @@ def celus_format_to_records(
 
 def counter_format_to_records(path: Path, parser_name: str, platform: Platform):
     poops = eat(
-        path, platform.short_name, parsers=[parser_name], check_platform=False, use_heuristics=False
+        path, platform.short_name, parsers=[parser_name], check_platform=False, use_heuristics=True
     )
 
     if not any(isinstance(poop, Poop) for poop in poops):
-        raise poops[0]
+        raise NibblerErrors(get_errors(poops))
 
     for poop in (p for p in poops if isinstance(p, Poop)):
         yield from poop.records()

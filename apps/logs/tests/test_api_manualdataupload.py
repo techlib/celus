@@ -185,6 +185,83 @@ class TestManualUploadForCounterData:
             assert 'checksum' in data['error_details']['exception']
             assert mail_mock.called, 'email to admin was sent'
 
+    @pytest.mark.parametrize(
+        ['filename', 'report_code', 'use_nibbler', 'fails'],
+        (
+            pytest.param(
+                'counter5/counter5_tr_test1_wrong_id.json',
+                'tr',
+                True,
+                True,
+                id="Nibbler fails on wrong report ID",
+            ),
+            pytest.param(
+                'counter5/counter5_tr_test1_wrong_id.json',
+                'tr',
+                False,
+                False,
+                id="File with wrong report ID passes when nibbler is not used",
+            ),
+        ),
+    )
+    def test_failed_preflights(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        counter_report_types,
+        clients,
+        tmp_path,
+        settings,
+        filename,
+        report_code,
+        use_nibbler,
+        fails,
+    ):
+        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
+
+        cr_type = counter_report_types[report_code]
+        with (Path(__file__).parent / "data" / filename).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = f"something.{filename.split('.')[-1]}"
+
+        organization = organizations['master']
+        platform = platforms['master']
+        settings.MEDIA_ROOT = tmp_path
+
+        # upload the data
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organization.pk,
+                'report_type_id': cr_type.report_type_id,
+                'data_file': data_file,
+                'method': MduMethod.COUNTER,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        mdu.refresh_from_db()
+        if fails:
+            assert mdu.state == MduState.PREFAILED
+        else:
+            assert mdu.state == MduState.PREFLIGHT
+
+        # try the import
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
+
+        if fails:
+            assert response.status_code == 400
+        else:
+            assert response.status_code == 200
+
 
 @pytest.mark.django_db
 class TestManualUploadControlledMetrics:

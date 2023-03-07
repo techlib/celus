@@ -3,9 +3,9 @@
     "Created": "2020-01-01T00:00:00Z",
     "Created_By": "My Provider",
     "Customer_ID": "hidden",
-    "Report_ID": "TR",
+    "Report_ID": "TR_J1",
     "Release": "5",
-    "Report_Name": "Title Master Report",
+    "Report_Name": "Journal Requests (Excluding OA_Gold)",
     "Institution_Name": "Hidden",
     "Institution_ID": [
       {
