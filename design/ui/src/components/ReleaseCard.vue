@@ -29,7 +29,7 @@
       </span>
     </v-card-title>
     <v-card-text class="pb-0">
-      <p v-html="textMarkdownToHtml" class="markdown"></p>
+      <p v-html="textHtml" class="markdown"></p>
     </v-card-text>
     <v-card-actions>
       <v-spacer />
@@ -85,8 +85,16 @@ export default {
     ...mapState({
       appLanguage: "appLanguage",
     }),
-    textMarkdownToHtml() {
-      return marked.parse(this.getTheRightContent(this.release.text));
+    textHtml() {
+      const renderer = new marked.Renderer();
+      renderer.link = (href, title, text) =>
+        `<a target="_blank" href="${href}" title="${title}">${text}</a>`;
+
+      return marked.parse(this.getTheRightContent(this.release.text), {
+        breaks: false,
+        gfm: true,
+        renderer: renderer,
+      });
     },
   },
 };
