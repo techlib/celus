@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import Any, Generator, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Union
 
+import pandas as pd
 from core.logic.dates import months_in_range
 from logs.logic.reporting.filters import (
     DateDimensionFilter,
@@ -10,171 +11,350 @@ from logs.logic.reporting.filters import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import DimensionText, Metric, ReportType
+from organizations.models import Organization
 from publications.models import Platform
+from reporting.logic.parsing import (
+    ReportDataSourceSerializer,
+    ReportPartSerializer,
+    ReportPartStageSerializer,
+    ReportSerializer,
+    parse_formula,
+)
+from rest_framework.exceptions import ValidationError
+
+
+class ReportingContext:
+    """
+    Stores information about the currently generated report, such as the organization,
+    the start and end dates, and other params. It also holds links to the sources and stages
+    that are used in the report.
+    """
+
+    def __init__(
+        self, report: 'Report', organization: Organization, start_date: date, end_date: date
+    ):
+        self.report = report
+        self.organization = organization
+        self.start_date = start_date
+        self.end_date = end_date
+        self.covered_months = list(months_in_range(start_date, end_date))
+        self._current_part_id = None
+        # retrieve data
+        self.primary_id_to_obj = {obj.pk: obj for obj in self.get_primary_model_qs()}
+        self.primary_ids = set(self.primary_id_to_obj.keys())
+
+    @property
+    def sorted_primary_ids(self):
+        return [
+            r[0] for r in sorted(self.primary_id_to_obj.items(), key=lambda x: (x[1].name, x[0]))
+        ]
+
+    def get_primary_model_qs(self):
+        if self.report.primary_dimension == 'platform':
+            return Platform.objects.filter(organizationplatform__organization=self.organization)
+        raise ValueError(f"Unsupported primary dimension: {self.report.primary_dimension}")
+
+    def get_stage_for_current_part(self, stage_id: str) -> 'ReportPartStage':
+        if self._current_part_id is None:
+            raise ValueError("Current part not set, call `set_current_part()` first")
+        return self.report.stages_by_part_and_id[self._current_part_id].get(stage_id)
+
+    def set_current_part(self, part_id: str):
+        """
+        Should be set before any computation is performed on a part of the report. It sets
+        the right context for the computation as stage IDs are evaluated separately for each part.
+        """
+        self._current_part_id = part_id
+
+    def perform_computation(
+        self, parsed_formula: List[Union[str, List]], source_name: Optional[str] = None
+    ) -> pd.DataFrame:
+        """
+        :param parsed_formula: a list of strings and lists, representing a formula
+        :param source_name: if given, it will be stored in the source_name column of the output,
+               otherwise the source_name will be computed from the formula
+        :return:
+        """
+        if len(parsed_formula) == 1:
+            variable = parsed_formula[0]
+            if type(variable) is list:
+                return self.perform_computation(variable, source_name=source_name)
+            if stage := self.get_stage_for_current_part(variable):
+                out = stage.report_data_.copy()
+                out['source_name'] = stage.name
+                return out
+            if source := self.report.get_source(variable):
+                out = source.report_data_.copy()
+                out['source_name'] = source.report_type
+                return out
+            raise ValueError(f"Unknown variable: {variable}")
+        if len(parsed_formula) == 3:
+            left, op, right = parsed_formula
+            left_data = self.perform_computation([left])
+            right_data = self.perform_computation([right])
+            if op == "|":
+                # use the left value if the total is different from 0, otherwise use the right one
+                # we copy the source name from the source data in order to preserve the original
+                # source name after merging
+                return left_data.where(left_data[self.report.total_col] != 0, right_data)
+            if op == "-":
+                out = left_data.copy()
+                # the following uses dataframe operations, so the references to the `source_name`
+                # column cannot be used in an f-string (it would be evaluated on the whole dataframe
+                # level instead of on each row, resulting in a Series instead of a string)
+                out['source_name'] = source_name or (
+                    left_data['source_name'] + ' - ' + right_data['source_name']
+                )
+                out[self.covered_months] = (
+                    left_data[self.covered_months] - right_data[self.covered_months]
+                )
+                # make sure we don't have negative values
+                out[self.covered_months] = out[self.covered_months].where(
+                    out[self.covered_months] > 0, 0
+                )
+                # recompute total, because non-negative subtraction does not allow simple
+                # subtraction of the total column
+                out[self.report.total_col] = out[self.covered_months].sum(axis=1)
+                return out
+            if op == "+":
+                out = left_data + right_data
+                # the following uses dataframe operations, so the references to the `source_name`
+                # column cannot be used in an f-string (it would be evaluated on the whole dataframe
+                # level instead of on each row, resulting in a Series instead of a string)
+                out['source_name'] = source_name or (
+                    left_data['source_name'] + ' + ' + right_data['source_name']
+                )
+                return out
+            raise ValueError(f"Unsupported operator: {op}")
+        raise ValueError(f"Unsupported formula: {parsed_formula}")
+
+    def df_as_result_rows(self, df: pd.DataFrame) -> List['ResultRow']:
+        """
+        Converts a dataframe to a format suitable for the frontend.
+        """
+        return [
+            ResultRow(
+                source_name=row['source_name'],
+                primary_pk=idx,
+                primary_obj=self.primary_id_to_obj[idx],
+                monthly_data={month: row[month] for month in self.covered_months},
+                total=row[self.report.total_col],
+            )
+            for idx, row in df.iterrows()
+        ]
 
 
 class Report:
 
     primary_dimension = "platform"
+    total_col = "_total_"
 
-    def __init__(self, name: str, description: str, parts: Optional[List[dict]] = None):
+    def __init__(self, name: str, description: str, info_url: str = None):
         self.name = name
         self.description = description
+        self.info_url = info_url
         self.parts = []
-        parts = parts or []
-        for part in parts:
-            name = part["name"]
-            description = part["description"]
-            primary_source = self.create_source(part["mainReportDefinition"])
-            fallback_source = self.create_source(part.get("fallbackReportDefinition"))
-            subtracted_fallback_source = self.create_source(
-                part.get("subtractedFallbackReportDefinition")
-            )
-            implementation_note = part.get("implementationNote")
-            self.parts.append(
-                ReportPart(
-                    name,
-                    description,
-                    primary_source,
-                    fallback_source,
-                    subtracted_fallback_source,
-                    implementation_note=implementation_note,
-                )
-            )
         # computed data
-        self._prim_dim_remap = {}
-        self._covered_months = []
-        self.organization = None
-        self.start_date = None
-        self.end_date = None
+        self.sources_by_id = {}
+        self.stages_by_part_and_id = {}
+        self.context = None
+        self._results: Dict[str, pd.DataFrame] = {}
 
     @classmethod
-    def from_definition(cls, definition: dict) -> "Report":
-        return cls(definition["name"], definition["description"], definition.get("parts", []))
+    def from_dict(cls, definition: dict) -> "Report":
+        s = ReportSerializer(data=definition)
+        s.is_valid(raise_exception=True)
+        out = cls(
+            s.validated_data["name"],
+            s.validated_data["description"],
+            info_url=s.validated_data.get("infoUrl"),
+        )
+        for value in s.validated_data['dataSources']:
+            data_source = ReportDataSource.from_dict(value, out)
+            out.register_source(data_source)
+            if data_source.fallback_for:
+                try:
+                    data_source.fallback_for_report = out.get_source(data_source.fallback_for)
+                except ValueError:
+                    raise ValidationError(
+                        f"Could not resolve fallbackFor: {data_source.fallback_for}"
+                    )
+        for part_def in s.validated_data['parts']:
+            part = ReportPart.from_dict(part_def, out)
+            out.parts.append(part)
+            for stage in part.stages:
+                out.register_stage(part.name, stage)
+                # the following validates the formulas in the stages
+                stage.get_used_data_sources()
+        return out
 
-    @classmethod
-    def create_source(cls, definition: dict) -> Optional["ReportDataSource"]:
-        if not definition:
-            return None
-        report_type = ReportType.objects.get(short_name=definition["reportType"])
+    def register_source(self, source: 'ReportDataSource'):
+        if source.id in self.sources_by_id:
+            raise ValidationError(f"Duplicate source ID: {source.id}")
+        self.sources_by_id[source.id] = source
+
+    def get_source(self, source_id: str) -> 'ReportDataSource':
         try:
-            metric = (
-                Metric.objects.get(short_name=definition["metric"])
-                if definition["metric"]
-                else None
+            return self.sources_by_id[source_id]
+        except KeyError:
+            raise ValueError(f"Unknown source ID: {source_id}")
+
+    def register_stage(self, part_id: str, stage: 'ReportPartStage'):
+        if stage.id in self.stages_by_part_and_id.get(part_id, {}):
+            raise ValidationError(f"Duplicate stage ID: '{stage.id}' for part '{part_id}'")
+        if stage.id in self.sources_by_id:
+            raise ValidationError(
+                f"Stage must not have the same ID as a source: '{stage.id}' for part '{part_id}'"
             )
-        except Metric.DoesNotExist:
-            raise ValueError(f"Metric {definition['metric']} does not exist")
-        return ReportDataSource(report_type, metric, definition.get("filters", {}))
+        self.stages_by_part_and_id.setdefault(part_id, {})[stage.id] = stage
+
+    def get_used_data_sources(
+        self, part_id: str, parsed_formula: List[Union[str, list]]
+    ) -> List[str]:
+        """
+        Returns a list of data source IDs that are used in the given formula. Also serves
+        as a formula validator.
+        """
+        if len(parsed_formula) == 1:
+            variable = parsed_formula[0]
+            if type(variable) is list:
+                return self.get_used_data_sources(part_id, variable)
+            if stage := self.stages_by_part_and_id[part_id].get(variable):
+                return self.get_used_data_sources(part_id, stage.parsed_formula)
+            if source := self.sources_by_id.get(variable):
+                return [source.id]
+            raise ValidationError(f"Unknown variable: '{variable}'")
+        if len(parsed_formula) == 3:
+            left, op, right = parsed_formula
+            return self.get_used_data_sources(part_id, [left]) + self.get_used_data_sources(
+                part_id, [right]
+            )
+        raise ValidationError(f"Unsupported formula: {parsed_formula}")
+
+    def create_context(self, organization, start_date: date, end_date: date):
+        return ReportingContext(self, organization, start_date, end_date)
 
     @property
-    def covered_months(self) -> List[date]:
-        return self._covered_months
-
-    def get_primary_model_qs(self):
-        if self.primary_dimension == 'platform':
-            return Platform.objects.filter(organizationplatform__organization=self.organization)
-        raise ValueError(f"Unsupported primary dimension: {self.primary_dimension}")
+    def sorted_sources(self) -> ['ReportDataSource']:
+        # sort data sources by dependency
+        source_ids = [id_ for id_, ds in self.sources_by_id.items() if ds.fallback_for is None]
+        while len(source_ids) < len(self.sources_by_id):
+            last_len = len(source_ids)
+            for id_, ds in self.sources_by_id.items():
+                if ds.fallback_for and ds.fallback_for not in source_ids:
+                    continue
+                if id_ not in source_ids:
+                    source_ids.append(id_)
+            if len(source_ids) == last_len:
+                raise ValueError("Could not resolve data source dependencies")
+        return [self.sources_by_id[sid] for sid in source_ids]
 
     def retrieve_data(self, organization, start_date: date, end_date: date):
-        # store the parameters for later use
-        self.organization = organization
-        self.start_date = start_date
-        self.end_date = end_date
-        self._covered_months = list(months_in_range(start_date, end_date))
-        # retrieve data
-        model_qs = self.get_primary_model_qs()
-        self._prim_dim_remap = {obj.pk: obj for obj in model_qs}
-        primary_ids = set(self._prim_dim_remap.keys())
+        self.context = self.create_context(organization, start_date, end_date)
+        # retrieve data - sources are ordered so that the fallbacks follow the main sources
+        for source in self.sorted_sources:
+            source.retrieve_data()
+        # compute data
         for part in self.parts:
-            part.retrieve_data(organization, start_date, end_date, primary_ids=primary_ids)
+            self.context.set_current_part(part.name)
+            for stage in part.stages:
+                stage.compute_data()
 
-    def gen_output(self) -> Generator[Tuple["ReportPart", List["ResultRow"]], None, None]:
-        for part in self.parts:
-            rows = []
-            for pk, obj in self._prim_dim_remap.items():
-                total = 0
-                rt = None
-                prim_data = part.primary_results_.get(pk, None)
-                if prim_data and (total := prim_data.get('_total', 0)) > 0:
-                    monthly_data = self.extract_monthly_data(prim_data)
-                    rt = part.primary_source.report_type
-                elif part.fallback_source:
-                    fallback_data = part.fallback_results_.get(pk, None)
-                    if fallback_data and (total := fallback_data.get('_total', 0)) > 0:
-                        monthly_data = self.extract_monthly_data(fallback_data)
-                        # subtract the subtracted fallback data if defined
-                        if part.subtracted_fallback_source:
-                            subtracted_data = part.subtracted_fallback_results_.get(pk, None)
-                            if subtracted_data:
-                                for month in self._covered_months:
-                                    monthly_data[month] -= subtracted_data.get(f'grp-{month}', 0)
-                        rt = part.fallback_source.report_type
-                if not total:
-                    monthly_data = self.extract_monthly_data({})
-                rows.append(
-                    ResultRow(
-                        primary_pk=pk,
-                        primary_obj=obj,
-                        monthly_data=monthly_data,
-                        total=total,
-                        used_report_type=rt,
-                    )
-                )
-            yield part, rows
-
-    def extract_monthly_data(self, rec: dict) -> dict:
+    def get_output(self, as_dicts=False) -> dict:
+        """
+        Returns the report data in a format suitable for the frontend.
+        """
         out = {}
-        for month in self._covered_months:
-            out[month] = rec.get(f'grp-{month}', 0)
+        for part in self.parts:
+            out[part.name] = {"stages": []}
+            self.context.set_current_part(part.name)
+            for stage in part.stages:
+                stage_data = self.context.df_as_result_rows(stage.report_data_)
+                if as_dicts:
+                    stage_data = [row.as_dict() for row in stage_data]
+                out[part.name]["stages"].append(
+                    {
+                        "name": stage.name,
+                        "used_data_sources": stage.get_used_data_sources(),
+                        "data": stage_data,
+                    }
+                )
         return out
 
 
 class ReportPart:
     def __init__(
         self,
+        report: Report,
         name: str,
         description: str,
-        primary_source: "ReportDataSource",
-        fallback_source: Optional["ReportDataSource"] = None,
-        subtracted_fallback_source: Optional["ReportDataSource"] = None,
         implementation_note: Optional[str] = None,
+        explanation: Optional[str] = None,
     ):
+        self.report = report
         self.name = name
         self.description = description
-        self.primary_source = primary_source
-        self.fallback_source = fallback_source
-        self.subtracted_fallback_source = subtracted_fallback_source
+        self.explanation = explanation
         self.implementation_note = implementation_note
-        # the following are computed data filled in later
-        # the structure is {primary_id: {date: value}}
-        self.primary_results_ = {}
-        self.fallback_results_ = {}
-        self.subtracted_fallback_results_ = {}
+        self.stages: List["ReportPartStage"] = []
 
-    def retrieve_data(
-        self, organization, start_date, end_date, primary_ids: Optional[set] = None
-    ) -> None:
-        for rec in self.primary_source.get_data(
-            organization, start_date, end_date, primary_ids=primary_ids
-        ):
-            pk = rec.pop('pk')
-            self.primary_results_[pk] = rec
-        # only get fallbacks if we did not resolve all primary keys
-        if primary_ids:
-            remaining_ids = primary_ids - set(self.primary_results_.keys())
-            if remaining_ids and self.fallback_source:
-                for rec in self.fallback_source.get_data(
-                    organization, start_date, end_date, primary_ids=remaining_ids
-                ):
-                    pk = rec.pop('pk')
-                    self.fallback_results_[pk] = rec
-                if self.subtracted_fallback_source:
-                    for rec in self.subtracted_fallback_source.get_data(
-                        organization, start_date, end_date, primary_ids=remaining_ids
-                    ):
-                        pk = rec.pop('pk')
-                        self.subtracted_fallback_results_[pk] = rec
+    @classmethod
+    def from_dict(cls, definition: dict, report: 'Report') -> 'ReportPart':
+        s = ReportPartSerializer(data=definition)
+        s.is_valid(raise_exception=True)
+        out = cls(
+            report,
+            s.validated_data["name"],
+            s.validated_data["description"],
+            implementation_note=s.validated_data.get("implementationNote"),
+            explanation=s.validated_data.get("explanation"),
+        )
+        if not (stages := s.validated_data["stages"]):
+            raise ValidationError("Report part must have at least one stage")
+        for stage_def in stages:
+            out.stages.append(ReportPartStage.from_dict(stage_def, report, out))
+        return out
+
+
+class ReportPartStage:
+    def __init__(
+        self,
+        report: Report,
+        part: ReportPart,
+        id_: str,
+        name: str,
+        formula: str,
+        description: Optional[str] = None,
+    ):
+        self.report = report
+        self.part = part
+        self.id = id_
+        self.name = name
+        self.description = description
+        self.formula = formula
+        self.parsed_formula = parse_formula(self.formula)
+        self.report_data_: Optional[pd.DataFrame] = None
+
+    @classmethod
+    def from_dict(cls, definition: dict, report: Report, part: ReportPart) -> 'ReportPartStage':
+        s = ReportPartStageSerializer(data=definition)
+        s.is_valid(raise_exception=True)
+        return cls(
+            report,
+            part,
+            s.validated_data["id"],
+            s.validated_data["name"],
+            s.validated_data["formula"],
+            description=s.validated_data.get("description"),
+        )
+
+    def compute_data(self) -> pd.DataFrame:
+        data = self.report.context.perform_computation(self.parsed_formula, source_name=self.name)
+        self.report_data_ = data
+        return data
+
+    def get_used_data_sources(self) -> List[str]:
+        return self.report.get_used_data_sources(self.part.name, self.parsed_formula)
 
 
 class ReportDataSource:
@@ -184,39 +364,130 @@ class ReportDataSource:
     """
 
     def __init__(
-        self, report_type: ReportType, metric: Optional[Metric], filters: Optional[dict] = None
+        self,
+        report: Report,
+        id_: str,
+        name: str,
+        report_type: str,
+        metric: Optional[str],
+        filters: Optional[dict] = None,
+        fallback_for: Optional[str] = None,
     ):
+        self.report = report
+        self.id = id_
+        self.name = name
         self.report_type = report_type
         self.metric = metric
         self.filters = filters or {}
+        self.fallback_for: str = fallback_for
+        # the following are computed data filled in later
+        self.fallback_for_report: ReportDataSource = None
+        # will contain the ids of the primary dimension that returned non-zero data
+        # in this data source - this is used to create input `primary_ids` in the fallback source
+        self.used_ids_: set = set()
+        self.report_data_: Optional[pd.DataFrame] = None
 
-    def get_data(
-        self, organization, start_date, end_date, primary_ids: Optional[set] = None
-    ) -> List[dict]:
+    @classmethod
+    def from_dict(cls, data: Dict, report: Report) -> "ReportDataSource":
+        s = ReportDataSourceSerializer(data=data)
+        s.is_valid(raise_exception=True)
+        return cls(
+            report,
+            id_=s.validated_data['id'],
+            name=s.validated_data['name'],
+            report_type=s.validated_data['reportType'],
+            metric=s.validated_data.get('metric'),
+            filters=s.validated_data.get('filters'),
+            fallback_for=s.validated_data.get('fallbackFor'),
+        )
+
+    @property
+    def resolved_primary_ids(self) -> set:
+        if self.fallback_for_report:
+            return self.used_ids_ | self.fallback_for_report.resolved_primary_ids
+        return self.used_ids_
+
+    def resolve_report_type(self) -> Optional[ReportType]:
+        try:
+            return ReportType.objects.get(short_name=self.report_type)
+        except ReportType.DoesNotExist:
+            return None
+
+    def resolve_metric(self) -> Optional[Metric]:
+        try:
+            return Metric.objects.get(short_name=self.metric)
+        except Metric.DoesNotExist:
+            return None
+
+    def slicer_result_to_df(self, result: [dict]) -> pd.DataFrame:
+        pk_to_row = {row['pk']: row for row in result}
+        data = []
+        for i, pk in enumerate(self.report.context.sorted_primary_ids):
+            row = pk_to_row.get(pk, {})
+            data.append(
+                [
+                    self.report_type,
+                    *[row.get(f'grp-{month}', 0) for month in self.report.context.covered_months],
+                ]
+            )
+        out = pd.DataFrame(
+            data,
+            columns=['source_name', *self.report.context.covered_months],
+            index=self.report.context.sorted_primary_ids,
+        )
+        out[self.report.total_col] = out[self.report.context.covered_months].sum(axis=1)
+        return out
+
+    def retrieve_data(self):
+        """
+        if `primary_ids` is provided, the returned data will be filtered to only include
+        rows for the given primary ids. Otherwise, all rows will be returned.
+        """
+        if self.report_data_ is not None:
+            return
         slicer = FlexibleDataSlicer(
-            primary_dimension=Report.primary_dimension,
+            primary_dimension=self.report.primary_dimension,
             include_all_zero_rows=False,
             use_clickhouse=True,
         )
-        if primary_ids:
-            slicer.add_filter(ExplicitDimensionFilter(Report.primary_dimension, primary_ids))
-        slicer.add_filter(DateDimensionFilter('date', start_date, end_date), add_group=True)
-        slicer.add_filter(ForeignKeyDimensionFilter('organization', [organization]))
-        slicer.add_filter(ForeignKeyDimensionFilter('report_type', [self.report_type.pk]))
+
+        context = self.report.context
+        primary_ids = context.primary_ids - self.resolved_primary_ids
+        rt_obj = self.resolve_report_type()
+        metric_obj = self.resolve_metric() if self.metric else None
+        if not primary_ids or not rt_obj or (self.metric and not metric_obj):
+            # no data to return - we either do not have the data for the remaining primary ids
+            # or the report type or metric does not exist
+            self.report_data_ = self.slicer_result_to_df([])
+            return
+        slicer.add_filter(ExplicitDimensionFilter(self.report.primary_dimension, primary_ids))
+        slicer.add_filter(
+            DateDimensionFilter('date', context.start_date, context.end_date), add_group=True
+        )
+        slicer.add_filter(ForeignKeyDimensionFilter('organization', [context.organization]))
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', [rt_obj.pk]))
         if self.metric:
-            slicer.add_filter(ForeignKeyDimensionFilter('metric', [self.metric.pk]))
+            slicer.add_filter(ForeignKeyDimensionFilter('metric', [metric_obj.pk]))
         for dim_name, values in self.filters.items():
             if type(values) not in (list, tuple, set):
                 values = [values]
-            if dim_attr := self.report_type.dim_name_to_dim_attr(dim_name):
-                dim_obj = self.report_type.dimension_by_attr_name(dim_attr)
+            if dim_attr := rt_obj.dim_name_to_dim_attr(dim_name):
+                dim_obj = rt_obj.dimension_by_attr_name(dim_attr)
                 dim_values = DimensionText.objects.filter(
                     dimension=dim_obj, text__in=values
                 ).values_list('pk', flat=True)
                 slicer.add_filter(ExplicitDimensionFilter(dim_attr, dim_values))
             else:
                 raise ValueError(f'Unknown dimension "{dim_name}" for rt "{self.report_type}"')
-        return list(slicer.get_data())
+        # store the resulting data into a pandas DataFrame and remember the primary ids for
+        # which we have data
+        out = []
+        self.used_ids_ = set()
+        for row in slicer.get_data():
+            if row['_total'] > 0:
+                self.used_ids_.add(row['pk'])
+            out.append(row)
+        self.report_data_ = self.slicer_result_to_df(out)
 
 
 @dataclass
@@ -226,7 +497,7 @@ class ResultRow:
     primary_obj: Any
     monthly_data: dict
     total: int
-    used_report_type: Optional[ReportType] = None  # None means no data
+    source_name: Optional[str] = None  # None means no data
 
     def as_dict(self) -> dict:
         return {
@@ -236,5 +507,5 @@ class ResultRow:
                 key.strftime('%Y-%m'): value for key, value in self.monthly_data.items()
             },
             'total': self.total,
-            'used_report_type': self.used_report_type.short_name if self.used_report_type else None,
+            'source_name': self.source_name,
         }

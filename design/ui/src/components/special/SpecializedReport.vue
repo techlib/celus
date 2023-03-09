@@ -21,18 +21,16 @@
       </v-card-text>
     </v-card>
     <v-expansion-panels>
-      <SpecializedReportLine
-        v-for="(definition, index) in reportDefinitions"
+      <SpecializedReportPart
+        v-for="definition in parts"
         :name="definition.name"
         :description="definition.description"
-        :mainReportDefinition="definition.mainReportDefinition"
-        :fallbackReportDefinition="definition.fallbackReportDefinition"
-        :subtractedFallbackReportDefinition="
-          definition.subtractedFallbackReportDefinition
-        "
+        :explanation="definition.explanation"
+        :report-data-sources="sourceReportsObj"
+        :stages="definition.stages"
         :implementationNote="definition.implementationNote"
         :key="definition.name"
-        :data="resultData[index] ? resultData[index].data : []"
+        :data="resultData[definition.name] ? resultData[definition.name] : {}"
         :loading="loading"
       />
     </v-expansion-panels>
@@ -41,7 +39,7 @@
 
 <script>
 import cancellation from "@/mixins/cancellation";
-import SpecializedReportLine from "@/components/special/SpecializedReportLine";
+import SpecializedReportPart from "@/components/special/SpecializedReportPart";
 import { mapGetters } from "vuex";
 
 export default {
@@ -49,7 +47,7 @@ export default {
 
   mixins: [cancellation],
 
-  components: { SpecializedReportLine },
+  components: { SpecializedReportPart },
 
   props: {
     definition: { required: true, type: Object },
@@ -71,7 +69,7 @@ export default {
       dateRangeEnd: "dateRangeExplicitEndText",
       organizationObj: "selectedOrganization",
     }),
-    reportDefinitions() {
+    parts() {
       return this.definition.parts;
     },
     dataUrl() {
@@ -83,6 +81,13 @@ export default {
           organization: this.organizationObj ? this.organizationObj.pk : null,
         },
       }).href;
+    },
+    sourceReportsObj() {
+      let result = {};
+      this.definition.dataSources.forEach((source) => {
+        result[source.id ?? source.name ?? source.reportType] = source;
+      });
+      return result;
     },
   },
 

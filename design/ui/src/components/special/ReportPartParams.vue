@@ -32,6 +32,7 @@ export default {
         "#000099",
         "#8000FF",
       ],
+      tab_palette: ["#9fb4a0", "#999db4", "#b5a0b9", "#eeccd7", "#abb9be"],
     };
   },
 };

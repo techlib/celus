@@ -3,10 +3,12 @@
 en:
   main_report: Main Report
   fallback_report: Fallback Report
+  no_data: This is just a report structure preview. To load the actual data, use the button at the top.
 
 cs:
   main_report: Hlavní report
   fallback_report: Záložní report
+  no_data: Data ještě nebyla načtena. Použijte tlačítko nahoře pro jejich načtení.
 </i18n>
 
 <template>
@@ -30,34 +32,48 @@ cs:
     </v-expansion-panel-header>
     <v-expansion-panel-content>
       <v-sheet>
-        <table class="overview">
-          <tr>
-            <th>{{ $t("main_report") }}</th>
-            <td>{{ mainReportDefinition.reportType }}</td>
-            <td>
-              <ReportPartParams :definition="mainReportDefinition" />
-            </td>
-          </tr>
-
-          <tr>
-            <th>{{ $t("fallback_report") }}</th>
-            <td v-if="fallbackReportDefinition">
-              {{ fallbackReportDefinition.reportType }}
+        <p v-if="explanation" class="explanation font-weight-light">
+          {{ explanation }}
+        </p>
+        <table class="overview" v-if="lastStage">
+          <tr v-for="sourceId in lastStage.usedDataSources" :key="sourceId">
+            <th>
               {{
-                subtractedFallbackReportDefinition
-                  ? "&minus;" + subtractedFallbackReportDefinition.reportType
-                  : ""
+                reportDataSources[sourceId].fallbackFor
+                  ? $t("fallback_report")
+                  : $t("report")
               }}
+            </th>
+            <td class="pe-2">
+              {{ reportDataSources[sourceId].name }}
             </td>
-            <td v-if="fallbackReportDefinition">
-              <ReportPartParams :definition="fallbackReportDefinition" />
+            <td>
+              <ReportPartParams :definition="reportDataSources[sourceId]" />
             </td>
           </tr>
         </table>
-        <v-checkbox v-model="nonZeroOnly" label="Non-zero rows only" />
+        <v-checkbox
+          v-model="nonZeroOnly"
+          label="Non-zero rows only"
+          v-if="allReady"
+        />
       </v-sheet>
+      <v-tabs v-model="selectedStage" v-if="stages.length > 1 && allReady">
+        <v-tab
+          v-for="(stage, index) in stages"
+          :key="stage.name"
+          :value="index"
+        >
+          {{ stage.name }}
+        </v-tab>
+      </v-tabs>
+      <p class="note pt-6" v-if="!allReady">
+        {{ $t("no_data") }}
+      </p>
       <v-data-table
-        v-if="showDetail && data.length > 0"
+        v-else-if="
+          showDetail && selectedStageData && selectedStageData.length > 0
+        "
         :items="formattedData"
         item-key="pk"
         :headers="tableColumns"
@@ -66,18 +82,6 @@ cs:
       >
         <template #item.total="{ item }">
           {{ formatInteger(item.total) }}
-        </template>
-        <template #item.used_report_type="{ item }">
-          <span
-            :class="
-              fallbackReportDefinition &&
-              item.used_report_type === fallbackReportDefinition.reportType
-                ? 'orange--text'
-                : 'green--text'
-            "
-          >
-            {{ item.used_report_type }}
-          </span>
         </template>
       </v-data-table>
     </v-expansion-panel-content>
@@ -91,7 +95,7 @@ import cloneDeep from "lodash/cloneDeep";
 import ReportPartParams from "@/components/special/ReportPartParams";
 
 export default {
-  name: "SpecializedReportLine",
+  name: "SpecializedReportPart",
   components: { ReportPartParams },
   mixins: [cancellation],
 
@@ -104,25 +108,24 @@ export default {
       type: String,
       required: false,
     },
-    mainReportDefinition: {
-      type: Object,
+    explanation: {
+      type: String,
+      required: false,
+    },
+    stages: {
+      type: Array,
       required: true,
-    },
-    fallbackReportDefinition: {
-      type: Object,
-      required: false,
-    },
-    subtractedFallbackReportDefinition: {
-      // if given, data from this report will be subtracted from the fallback report
-      type: Object,
-      required: false,
     },
     implementationNote: {
       type: String,
       required: false,
     },
     data: {
-      type: Array,
+      type: Object,
+      required: false,
+    },
+    reportDataSources: {
+      type: Object,
       required: false,
     },
     loading: {
@@ -135,6 +138,7 @@ export default {
     return {
       showDetail: true,
       nonZeroOnly: true,
+      selectedStage: this.stages.length - 1,
     };
   },
 
@@ -145,14 +149,14 @@ export default {
       organizationObj: "selectedOrganization",
     }),
     allReady() {
-      return this.data.length > 0;
+      return this.data.stages?.length > 0;
     },
     organization() {
       return this.organizationObj.pk !== -1 ? this.organizationObj.pk : null;
     },
     dateRange() {
-      if (this.data.length > 0) {
-        return Object.keys(this.data[0].monthly_data);
+      if (this.selectedStageData && this.selectedStageData.length > 0) {
+        return Object.keys(this.selectedStageData[0].monthly_data);
       }
       return [];
     },
@@ -166,7 +170,7 @@ export default {
         },
         {
           text: this.$t("labels.source"),
-          value: "used_report_type",
+          value: "source_name",
           sortable: true,
         },
         {
@@ -186,11 +190,23 @@ export default {
         }),
       ];
     },
+    selectedStageData() {
+      if (this.allReady) return this.data.stages[this.selectedStage].data;
+      return [];
+    },
+    lastStageData() {
+      if (this.allReady) return this.data.stages[this.stages.length - 1].data;
+      return [];
+    },
+    lastStage() {
+      if (this.stages) return this.stages[this.stages.length - 1];
+      return null;
+    },
     finalData() {
       if (this.nonZeroOnly) {
-        return this.data.filter((r) => r.total > 0);
+        return this.selectedStageData.filter((r) => r.total > 0);
       }
-      return this.data;
+      return this.selectedStageData;
     },
     formattedData() {
       let data = cloneDeep(this.finalData);
@@ -202,7 +218,7 @@ export default {
       return data;
     },
     total() {
-      return this.finalData.reduce((ac, rec) => ac + rec.total, 0);
+      return this.lastStageData.reduce((ac, rec) => ac + rec.total, 0);
     },
   },
 
@@ -226,5 +242,16 @@ export default {
     font-weight: normal;
     font-style: italic;
   }
+}
+.note {
+  padding-left: 2px;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: #666;
+}
+.explanation {
+  font-size: 0.875rem;
+  border-left: solid 4px #75ccff; //#4db6ac;
+  padding: 1rem 0 1rem 1rem;
 }
 </style>

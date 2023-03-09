@@ -10,11 +10,16 @@ from rest_framework.views import APIView
 from .logic.computation import Report
 from .logic.export import XlsxExporter
 from .logic.report_definitions import REPORTS, get_report_def_by_name
+from .serializers import ReportSerializer
 
 
 class ReportListView(APIView):
     def get(self, request):
-        return Response(REPORTS)
+        # we deserialize the reports to make sure they are valid and then serialize them again
+        # it also fills in the default values, like names and ids when they are not explicitly set
+        reports = [Report.from_dict(rep) for rep in REPORTS]
+        serializer = ReportSerializer(reports, many=True)
+        return Response(serializer.data)
 
 
 class ReportDataView(APIView):
@@ -27,7 +32,7 @@ class ReportDataView(APIView):
         report_def = get_report_def_by_name(report_name)
         if report_def is None:
             raise NotFound(f'Report with name "{report_name}" not found')
-        return Report.from_definition(report_def)
+        return Report.from_dict(report_def)
 
     def get_params(self, request) -> dict:
         param_ser = self.ParamSerializer(data=request.query_params)
@@ -49,11 +54,7 @@ class ReportDataView(APIView):
         report = self.create_report(report_name)
         params = self.get_params(request)
         report.retrieve_data(**params)
-        out = []
-        for i, (part, data) in enumerate(report.gen_output()):
-            out.append(
-                {"part_idx": i, "part_name": part.name, "data": [row.as_dict() for row in data]}
-            )
+        out = report.get_output(as_dicts=True)
         return Response(out)
 
 
