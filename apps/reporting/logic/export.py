@@ -70,7 +70,7 @@ class XlsxExporter:
             sheet.write_formula(
                 current_row,
                 2,
-                f"=SUM($'{part.name}'!C{first_row}:C{last_row})",
+                f"=SUM('{part.name}'!C{first_row}:C{last_row})",
                 self.base_fmt,
                 total,
             )
