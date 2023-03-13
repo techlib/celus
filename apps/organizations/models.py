@@ -1,5 +1,6 @@
 from core.models import DataSource
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 from django.utils.translation import ugettext as _
@@ -82,6 +83,18 @@ class Organization(MPTTModel):
         return DataSource.objects.get_or_create(
             organization=self, type=DataSource.TYPE_ORGANIZATION, defaults={'short_name': def_name}
         )[0]
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude)
+        qs = Organization.objects.filter(source=self.source, short_name=self.short_name)
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+
+        if qs.exists():
+            raise ValidationError(
+                _("Organization with short name '%(short_name)s' already exists.")
+                % dict(short_name=self.short_name)
+            )
 
 
 class OrganizationAltName(models.Model):
