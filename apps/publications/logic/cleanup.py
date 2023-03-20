@@ -16,21 +16,19 @@ logger = logging.getLogger(__name__)
 def clean_obsolete_platform_title_links(pretend=False):
     """
     Doing it in one query is possible, but takes a very long time. Therefor
-    we go by platform-organization tuples.
+    we go by organization.
     :return:
     """
     stats = Counter()
-    for platform_id, organization_id in PlatformTitle.objects.values_list(
-        'platform_id', 'organization_id'
-    ).distinct():
+    for organization in Organization.objects.all():
         accesslog_query = AccessLog.objects.filter(
-            organization=organization_id,
-            platform=platform_id,
+            organization=organization.pk,
+            platform=OuterRef('platform_id'),
             target=OuterRef('title'),
             date=OuterRef('date'),
         )
         qs = (
-            PlatformTitle.objects.filter(organization_id=organization_id, platform_id=platform_id)
+            PlatformTitle.objects.filter(organization_id=organization.pk)
             .annotate(valid=Exists(accesslog_query))
             .exclude(valid=True)
         )
@@ -40,7 +38,7 @@ def clean_obsolete_platform_title_links(pretend=False):
         else:
             count, details = qs.delete()
             stats['removed'] += count
-        logger.debug('%5d %5d %6d', platform_id, organization_id, count)
+        logger.info('%s, %d', organization.name, count)
     return stats
 
 
