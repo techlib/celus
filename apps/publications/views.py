@@ -159,10 +159,14 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
         permission_classes = list(self.permission_classes)
 
         def generate_permission(organization_id: int):
+            action = self.action
+
             # Create admin permission for given organization
             class Permission(IsAuthenticated):
                 def has_permission(self, request, *args, **kwargs):
-                    if not settings.ALLOW_USER_CREATED_PLATFORMS:
+                    # Deleting all data should be enabled regardless
+                    # of ALLOW_NONCOUNTER_DATA flag
+                    if action != 'delete_all_data' and not settings.ALLOW_USER_CREATED_PLATFORMS:
                         return False
                     return request.user.has_organization_admin_permission(int(organization_id))
 

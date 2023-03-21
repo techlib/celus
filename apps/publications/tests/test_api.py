@@ -383,6 +383,7 @@ class TestPlatformAPI:
         )
         assert resp.status_code == 403
 
+    @pytest.mark.parametrize('allow_user_created_platforms', ((True,), (False)))
     @pytest.mark.parametrize(
         ['user', 'delete_platform', 'org_platform', 'can_delete'],
         [
@@ -407,7 +408,11 @@ class TestPlatformAPI:
         delete_platform,
         org_platform,
         can_delete,
+        settings,
+        allow_user_created_platforms,
     ):
+        settings.ALLOW_USER_CREATED_PLATFORMS = allow_user_created_platforms
+
         platform = platforms['standalone'] if org_platform else platforms["shared"]
         organization = organizations['standalone']
         ImportBatchFullFactory.create(platform=platform, organization=organization)
