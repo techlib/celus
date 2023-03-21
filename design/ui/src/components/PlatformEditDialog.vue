@@ -228,7 +228,7 @@ export default {
     },
     platformsAllUrl() {
       if (this.organization) {
-        return `/api/organization/${this.organization.pk}/all-platform/?public_only=True`;
+        return `/api/organization/${this.organization.pk}/all-platform/?public_only=False`;
       }
       return null;
     },
