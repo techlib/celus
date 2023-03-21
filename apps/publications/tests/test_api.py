@@ -1125,16 +1125,20 @@ class TestPlatformInterestAPI:
 @pytest.mark.django_db
 @pytest.mark.usefixtures("basic1")
 class TestAllPlatformsAPI:
-    def test_all_platform_public_only_param(self, clients, data_sources):
+    @pytest.mark.parametrize('public_only', [True, False])
+    def test_all_platform_public_only_param(self, clients, data_sources, public_only):
         plat_source_type_not_org = PlatformFactory.create(source=data_sources['api'])
         plat_source_type_org = PlatformFactory.create(source=data_sources['branch'])
         resp = clients['admin1'].get(
-            reverse("all-platforms-list", args=[-1]), {'public_only': 'True'}
+            reverse("all-platforms-list", args=[-1]), {'public_only': str(public_only)}
         )
         assert resp.status_code == 200
         resp_pks = {plat["pk"] for plat in resp.data}
         assert plat_source_type_not_org.pk in resp_pks
-        assert plat_source_type_org.pk not in resp_pks
+        if public_only:
+            assert plat_source_type_org.pk not in resp_pks
+        else:
+            assert plat_source_type_org.pk in resp_pks
 
     @pytest.mark.parametrize(
         ["client", "status", "organization", "available"],
