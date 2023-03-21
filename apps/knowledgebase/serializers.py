@@ -19,6 +19,7 @@ class PlatformSerializer(serializers.Serializer):
         child=serializers.IntegerField(required=True), allow_empty=True, required=False
     )
     platform_filter = serializers.CharField(allow_null=True, required=False)
+    notes_url = serializers.URLField(allow_blank=True, allow_null=True, required=False)
 
 
 class DimensionSerializer(serializers.Serializer):

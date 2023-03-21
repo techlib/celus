@@ -165,7 +165,7 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
             class Permission(IsAuthenticated):
                 def has_permission(self, request, *args, **kwargs):
                     # Deleting all data should be enabled regardless
-                    # of ALLOW_NONCOUNTER_DATA flag
+                    # of ALLOW_USER_CREATED_PLATFORMS flag
                     if action != 'delete_all_data' and not settings.ALLOW_USER_CREATED_PLATFORMS:
                         return False
                     return request.user.has_organization_admin_permission(int(organization_id))

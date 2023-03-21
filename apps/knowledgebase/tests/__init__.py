@@ -81,6 +81,7 @@ PLATFORM_INPUT_DATA = [
         "short_name": "AACR",
         "url": "https://www.aacr.org/",
         "platform_filter": "aacr_filter",
+        "notes_url": "https://www.example.org",
     },
     {
         "name": "APS",
@@ -93,6 +94,7 @@ PLATFORM_INPUT_DATA = [
         "counter_registry_id": "00000000-0000-0000-0000-000000000000",
         "url": "https://www.journals.aps.org/",
         "platform_filter": None,
+        "notes_url": None,
     },
 ]
 

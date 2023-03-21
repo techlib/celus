@@ -297,6 +297,7 @@ class PlatformImportAttempt(ImportAttempt):
                     "providers": record["providers"],
                     "report_types": record.get("report_types", []),
                     "platform_filter": record.get("platform_filter"),
+                    "notes_url": record.get("notes_url"),
                 },
                 counter_registry_id=record["counter_registry_id"],
                 duplicates=record.get("duplicates", []),

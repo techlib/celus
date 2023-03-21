@@ -174,6 +174,7 @@ class TestPlatformImportAttempt:
         assert platform1.knowledgebase["providers"] == PLATFORM_INPUT_DATA[0]["providers"]
         assert platform1.knowledgebase["report_types"] == PLATFORM_INPUT_DATA[0]["report_types"]
         assert platform1.knowledgebase["platform_filter"] is None
+        assert platform1.knowledgebase["notes_url"] is None
         assert (
             set(
                 platform1.platforminterestreport_set.values_list(
@@ -194,6 +195,7 @@ class TestPlatformImportAttempt:
         assert (
             platform2.knowledgebase["platform_filter"] == PLATFORM_INPUT_DATA[1]["platform_filter"]
         )
+        assert platform2.knowledgebase["notes_url"] == PLATFORM_INPUT_DATA[1]["notes_url"]
 
         assert (
             set(
@@ -214,6 +216,7 @@ class TestPlatformImportAttempt:
         assert platform3.knowledgebase["providers"] == []
         assert platform3.knowledgebase["report_types"] == []
         assert platform3.knowledgebase["platform_filter"] is None
+        assert platform3.knowledgebase["notes_url"] is None
         assert (
             set(
                 platform3.platforminterestreport_set.values_list(

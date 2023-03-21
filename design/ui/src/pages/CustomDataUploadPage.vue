@@ -51,6 +51,8 @@ en:
   method_celus_label_text: Upload data prepared in the custom Celus format for non-COUNTER data.
   method_celus_disabled_tt: There are no non-COUNTER reports defined for this platform.
   method_raw_disabled_tt: There are no raw reports supported for this platform.
+  notes_url_description: Check our {link} for more information about the input file format.
+  notes_url_href: support web
 
 cs:
   description: |
@@ -101,6 +103,8 @@ cs:
   method_celus_label_text: Nahraná data jsou připravena ve vlastním formátu, který Celus používá pro ne-COUNTER data.
   method_celus_disabled_tt: Pro tuto platformu nejsou definovány žádné non-COUNTER reporty.
   method_raw_disabled_tt: Pro tuto platformu nejsou surové reporty podporované.
+  notes_url_description: Pokud se chcete dozvědět více o formátu nahrávaného souboru, navštivte naše {link}.
+  notes_url_href: stránky podpory
 </i18n>
 
 <template>
@@ -236,6 +240,17 @@ cs:
               <v-col>
                 <CustomUploadInfoWidget :method="method" />
               </v-col>
+            </v-row>
+            <v-row v-if="notesUrl">
+              <p>
+                <v-alert type="info" text>
+                  <i18n path="notes_url_description">
+                    <template #link>
+                      <a :href="notesUrl" target="_blank">{{ $t("notes_url_href") }}</a>
+                    </template>
+                  </i18n>
+                </v-alert>
+              </p>
             </v-row>
             <v-row>
               <v-col cols="12" md="6" v-if="canSelectReportType">
@@ -849,6 +864,12 @@ export default {
     },
     canSelectReportType() {
       return this.method === "counter" || this.method === "celus";
+    },
+    notesUrl() {
+      if (this.method === "raw") {
+        return this.platform?.knowledgebase?.notes_url;
+      }
+      return null;
     },
     reportTypesToSelect() {
       switch (this.method) {
