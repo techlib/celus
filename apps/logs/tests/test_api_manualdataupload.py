@@ -262,6 +262,142 @@ class TestManualUploadForCounterData:
         else:
             assert response.status_code == 200
 
+    @pytest.mark.parametrize(
+        ['filename', 'report_code', 'use_nibbler', 'months'],
+        (
+            pytest.param(
+                'counter5/counter5_table_tr_empty.csv',
+                'tr',
+                True,
+                {
+                    "2017-01-01",
+                    "2017-02-01",
+                    "2017-03-01",
+                    "2017-04-01",
+                    "2017-05-01",
+                    "2017-06-01",
+                },
+                id="Months are show from header of TR report (nibbler)",
+            ),
+            pytest.param(
+                'counter5/counter5_table_tr_empty.csv',
+                'tr',
+                False,
+                set(),
+                id="No months are not shown from empty TR report (no nibbler)",
+            ),
+            pytest.param(
+                'counter5/counter5_table_dr_empty.csv',
+                'dr',
+                True,
+                {
+                    "2017-01-01",
+                    "2017-02-01",
+                    "2017-03-01",
+                    "2017-04-01",
+                    "2017-05-01",
+                    "2017-06-01",
+                },
+                id="Months are show from header of DR report (nibbler)",
+            ),
+            pytest.param(
+                'counter5/counter5_table_dr_empty.csv',
+                'dr',
+                False,
+                set(),
+                id="No months are not shown from empty DR report (no nibbler)",
+            ),
+            pytest.param(
+                'counter5/counter5_table_pr_empty.csv',
+                'pr',
+                True,
+                {
+                    "2017-01-01",
+                    "2017-02-01",
+                    "2017-03-01",
+                    "2017-04-01",
+                    "2017-05-01",
+                    "2017-06-01",
+                },
+                id="Months are show from header of TR report (nibbler)",
+            ),
+            pytest.param(
+                'counter5/counter5_table_pr_empty.csv',
+                'pr',
+                False,
+                set(),
+                id="No months are not shown from empty PR report (no nibbler)",
+            ),
+        ),
+    )
+    def test_empty_data(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        counter_report_types,
+        clients,
+        tmp_path,
+        settings,
+        filename,
+        report_code,
+        use_nibbler,
+        months,
+    ):
+        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
+
+        cr_type = counter_report_types[report_code]
+        with (Path(__file__).parent / "data" / filename).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = f"something.{filename.split('.')[-1]}"
+
+        organization = organizations['master']
+        platform = platforms['master']
+        settings.MEDIA_ROOT = tmp_path
+
+        # upload the data
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organization.pk,
+                'report_type_id': cr_type.report_type_id,
+                'data_file': data_file,
+                'method': MduMethod.COUNTER,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        mdu.refresh_from_db()
+        assert mdu.state == MduState.PREFLIGHT
+        assert set(mdu.preflight["months"].keys()) == months
+        for month_data in mdu.preflight["months"].values():
+            assert month_data["new"] == {"sum": 0, "count": 0}
+
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
+        assert response.status_code == 200
+
+        # process data
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        )
+        assert response.status_code == 200
+
+        import_manual_upload_data(mdu.pk, mdu.user.pk)
+
+        mdu.refresh_from_db()
+        assert mdu.state == MduState.IMPORTED
+
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert months == set(e['date'] for e in response.data["import_batches"])
+
 
 @pytest.mark.django_db
 class TestManualUploadControlledMetrics:

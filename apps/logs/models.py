@@ -3,11 +3,13 @@ import csv
 import os
 import re
 import typing
+from collections import Counter
 from copy import deepcopy
 from datetime import date
 from enum import Enum
 from pathlib import Path
 
+import logs
 import magic
 from celus_nigiri import CounterRecord
 from celus_nigiri.celus import custom_data_to_records
@@ -43,8 +45,13 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
-from nibbler.logic.celus_format import celus_format_to_records, counter_format_to_records
-from nibbler.models import ParserDefinition, get_records_from_nibbler_output
+from nibbler.logic.processing import (
+    celus_format_poops,
+    counter_format_poops,
+    get_months_from_nibbler_output,
+    get_records_from_nibbler_output,
+)
+from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
 
@@ -732,58 +739,109 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         data = list(reader)
         return data
 
-    def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
-        self.check_self_checksum()  # check the checksum before using the file
+    def prepare_default_metric(self) -> Metric:
+        return Metric.objects.get_or_create(
+            short_name='visits',
+            name_en='Visits',
+            name_cs='Návštěvy',
+            source=self.report_type.source,
+        )[0]
 
+    @cached_property
+    def crt(self) -> typing.Optional['logs.models.CounterReportType']:
+        try:
+            return self.report_type.counterreporttype
+        except ObjectDoesNotExist:
+            return None
+
+    @property
+    def using_nibbler(self) -> bool:
         if self.method == MduMethod.RAW:
+            return True
+        elif self.method == MduMethod.COUNTER:
+            return settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT
+        elif self.method == MduMethod.CELUS:
+            return settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT
+        else:
+            raise NotImplementedError()
 
-            nibbler_output = ParserDefinition.objects.parse_file(
+    def histograms_with_stats(
+        self,
+    ) -> typing.Tuple[typing.Dict[str, Counter], Counter, typing.List[str]]:
+        attrs = ['start', 'metric', 'title', 'organization']
+        histograms = {e: {} for e in attrs}
+        dimensions = set()
+        cnt = Counter()
+        for x in self.data_to_records():
+            dimensions |= set(x.dimension_data.keys())
+            for attr in attrs:
+                value = str(getattr(x, attr) or "")
+                rec = histograms[attr].get(value, {"sum": 0, "count": 0})
+                rec["sum"] += x.value
+                rec["count"] += 1
+                histograms[attr][value] = rec
+            cnt["sum"] += x.value
+            cnt["count"] += 1
+
+        if cnt["count"] == 0 and self.using_nibbler:
+            # Fill in months if no records are present
+            nibbler_output = self.get_nibbler_output()
+            histograms["start"] = {
+                m.strftime("%Y-%m-01"): {"sum": 0, "count": 0}
+                for m in get_months_from_nibbler_output(nibbler_output)
+            }
+
+        return histograms, cnt, list(dimensions)
+
+    def get_nibbler_output(self) -> NibblerOutput:
+        if self.method == MduMethod.RAW:
+            # Parsing raw data using nibbler (user can't pick report type)
+
+            return ParserDefinition.objects.parse_file(
                 self.data_file.path, self.platform.short_name
             )
 
-            # Extract data
+        elif crt := self.crt:
+            # Parsing counter reports using nibbler (user can pick report type)
+            nibbler_parser = crt.get_nibbler_parser(json_format=self.file_is_json())
+            return counter_format_poops(
+                os.path.join(settings.MEDIA_ROOT, self.data_file.name),
+                nibbler_parser,
+                self.platform,
+            )
+
+        else:
+            # Parsing data in "celus format" using nibbler (user can pick report type)
+            default_metric = self.prepare_default_metric()
+            return celus_format_poops(
+                os.path.join(settings.MEDIA_ROOT, self.data_file.name),
+                default_metric,
+                self.report_type,
+                self.platform,
+            )
+
+    def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
+        self.check_self_checksum()  # check the checksum before using the file
+
+        if self.using_nibbler:
+            nibbler_output = self.get_nibbler_output()
             yield from get_records_from_nibbler_output(nibbler_output)
 
-            return
-
-        try:
-            crt = self.report_type.counterreporttype
-        except ObjectDoesNotExist:
-            crt = None
-        if not crt:
-            # this is really custom data - there is no special counter report type associated
-            default_metric, _created = Metric.objects.get_or_create(
-                short_name='visits',
-                name_en='Visits',
-                name_cs='Návštěvy',
-                source=self.report_type.source,
-            )
-            if settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT:
-                yield from celus_format_to_records(
-                    os.path.join(settings.MEDIA_ROOT, self.data_file.name),
-                    default_metric,
-                    self.report_type,
-                    self.platform,
+        else:
+            if crt := self.crt:
+                # Parsing counter reports using pycounter/nigiri (user can pick report type)
+                reader = crt.get_reader_class(json_format=self.file_is_json())()
+                yield from reader.file_to_records(
+                    os.path.join(settings.MEDIA_ROOT, self.data_file.name)
                 )
+
             else:
+                # Parsing data in "celus format" using nibbler (user can pick report type)
+                default_metric = self.prepare_default_metric()
                 yield from custom_data_to_records(
                     self.to_record_dicts(),
                     extra_dims=self.report_type.dimension_short_names,
                     initial_data={'metric': default_metric.pk},
-                )
-
-        else:
-            if settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT:
-                nibbler_parser = crt.get_nibbler_parser(json_format=self.file_is_json())
-                yield from counter_format_to_records(
-                    os.path.join(settings.MEDIA_ROOT, self.data_file.name),
-                    nibbler_parser,
-                    self.platform,
-                )
-            else:
-                reader = crt.get_reader_class(json_format=self.file_is_json())()
-                yield from reader.file_to_records(
-                    os.path.join(settings.MEDIA_ROOT, self.data_file.name)
                 )
 
     def file_is_json(self) -> bool:

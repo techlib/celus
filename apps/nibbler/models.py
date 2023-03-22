@@ -5,7 +5,6 @@ import typing
 from celus_nibbler import NibblerError, Poop, eat
 from celus_nibbler.definitions import Definition
 from celus_nibbler.parsers.dynamic import gen_parser
-from celus_nigiri import CounterRecord
 from core.models import DataSource
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -118,11 +117,3 @@ def get_report_types_from_nibbler_output(nibbler_output: NibblerOutput) -> model
     # Note that for now we assume that there is only one knowledgebase
     # DataSource (unique constraint for ReportType short_name)
     return report_types, report_types_short_names
-
-
-def get_records_from_nibbler_output(
-    nibbler_output: NibblerOutput,
-) -> typing.Generator[CounterRecord, None, None]:
-    for poop in [e for e in nibbler_output if isinstance(e, Poop)]:
-        for record in poop.records():
-            yield record

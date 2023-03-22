@@ -58,6 +58,8 @@ class TestCustomImport:
           - reimport the same data
           - test that the import does not create new AccessLogs
         """
+        access_log_orig_count = AccessLog.objects.count()
+
         settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
         report_type = report_types['custom1']
         organization = organizations['standalone']
@@ -92,7 +94,7 @@ class TestCustomImport:
         assert data['preflight']['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
 
         # let's process the mdu
-        assert AccessLog.objects.count() == 0
+        assert AccessLog.objects.count() == access_log_orig_count + 0
         response = clients['master_admin'].post(
             reverse('manual-data-upload-import-data', args=(mdu.pk,))
         )
@@ -103,7 +105,7 @@ class TestCustomImport:
         mdu.refresh_from_db()
         assert mdu.is_processed
         assert mdu.user == users['master_admin']
-        assert AccessLog.objects.count() == 6
+        assert AccessLog.objects.count() == access_log_orig_count + 6
         assert mdu.import_batches.count() == 3, '3 months of data'
 
         # reprocess
@@ -111,7 +113,7 @@ class TestCustomImport:
             reverse('manual-data-upload-import-data', args=(mdu.pk,))
         )
         assert response.status_code == 200, "already imported, nothing needs to be done"
-        assert AccessLog.objects.count() == 6, 'no new AccessLogs'
+        assert AccessLog.objects.count() == access_log_orig_count + 6, 'no new AccessLogs'
 
         # the whole thing once again
         file.seek(0)
@@ -142,7 +144,7 @@ class TestCustomImport:
             reverse('manual-data-upload-import-data', args=(mdu.pk,))
         )
         assert response.status_code == 409
-        assert AccessLog.objects.count() == 6, 'no new AccessLogs'
+        assert AccessLog.objects.count() == access_log_orig_count + 6, 'no new AccessLogs'
         mdu.refresh_from_db()
         assert not mdu.is_processed, 'crash - should not mark mdu as processed'
 
@@ -152,6 +154,10 @@ class TestCustomImport:
         """
         When deleting manual data upload, we need to delete the import_batch as well.
         """
+
+        access_log_orig_count = AccessLog.objects.count()
+        ib_orig_count = ImportBatch.objects.count()
+
         report_type = report_types['custom1']
         organization = organizations['standalone']
         platform = platforms['standalone']
@@ -175,7 +181,7 @@ class TestCustomImport:
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
         assert mdu.import_batches.count() == 0
         # let's process the mdu
-        assert AccessLog.objects.count() == 0
+        assert AccessLog.objects.count() == 0 + access_log_orig_count
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -190,18 +196,18 @@ class TestCustomImport:
         mdu.refresh_from_db()
         assert mdu.is_processed
         assert mdu.user == users['master_admin']
-        assert AccessLog.objects.count() == 6
+        assert AccessLog.objects.count() == 6 + access_log_orig_count
         assert mdu.import_batches.count() == 3, '3 months of data = 3 import batches'
         assert mdu.accesslogs.count() == 6
-        assert ImportBatch.objects.count() == 3
+        assert ImportBatch.objects.count() == 3 + ib_orig_count
         # let's delete the object
         response = clients['master_admin'].delete(
             reverse('manual-data-upload-detail', args=(mdu.pk,))
         )
         assert response.status_code == 204
         assert ManualDataUpload.objects.filter(pk=mdu.pk).count() == 0
-        assert ImportBatch.objects.count() == 0
-        assert AccessLog.objects.count() == 0
+        assert ImportBatch.objects.count() == 0 + ib_orig_count
+        assert AccessLog.objects.count() == 0 + access_log_orig_count
 
     @pytest.mark.parametrize(
         ['client', 'allowed'],
@@ -288,7 +294,7 @@ class TestCustomImport:
         platform = platforms['standalone']
         report_type = report_types['custom1']
 
-        csv_content = "Source,2019-01\naaaa,9\n'"
+        csv_content = "Source,2019-01\naaaa,9\n"
         file = ContentFile(csv_content)
         file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path

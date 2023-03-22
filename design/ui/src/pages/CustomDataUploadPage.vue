@@ -787,7 +787,8 @@ export default {
         return (
           this.uploadObject.can_import &&
           !this.missingOrgInData &&
-          this.checkRawPerOrgPermission
+          this.checkRawPerOrgPermission &&
+          Object.keys(this.preflightData?.months || {}).length > 0
         );
       }
       return false; // not uploaded yet

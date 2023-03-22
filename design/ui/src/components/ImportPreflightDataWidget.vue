@@ -39,6 +39,9 @@ en:
   organizations_not_found_fix: Please make sure that the provided name(s) matches the names from
   organizations_not_found_fix_list: the organization list
   organizations_with_raw_import_disabled: Raw data import is disabled for the following organizations, thus data can't be imported
+  no_data_title: Empty report
+  empty_months_text: The uploaded report seems to have the correct format and covers the months listed above, but does not contain any usage data. If you proceed with the import, empty records will be created for the mentioned months. Empty records are useful to distinguish between zero usage and missing data.
+  no_data_text: The File seems to be in a valid format, but it doesn't contain any useful data.
 
 cs:
   output_logs: Vygenerované záznamy
@@ -80,6 +83,9 @@ cs:
   organizations_not_found_fix: Prosím ujistěte se, poskytnutá jména odpovídají jménům u
   organizations_not_found_fix_list: seznamu organizací
   organizations_with_raw_import_disabled: Pro následující organizace není dovoleno nahrávat surová data a není tedy možné data naimportovat
+  no_data_title: Soubor neobsahuje žádná data
+  empty_months_text: Ale pořád lze ze souboru přečíst měsíce a naimportovat je. Takto lze vyjádřit, že tyto měsíce jsou už zpracované, ale neobsahují žádná data.
+  no_data_text: Soubor se zdá být ve správném formát, ale neobsahuje žádná použitelná data.
 </i18n>
 
 <template>
@@ -216,7 +222,10 @@ cs:
         </v-card>
       </v-col>
 
-      <v-col cols="auto" v-if="!wrongOrganizationPresent">
+      <v-col
+        cols="auto"
+        v-if="!wrongOrganizationPresent && metricsSorted.length > 0"
+      >
         <v-card hover>
           <v-card-text>
             <h4>{{ $t("imported_metrics") }}</h4>
@@ -384,6 +393,17 @@ cs:
         </v-alert>
       </v-col>
     </v-row>
+    <v-row v-else-if="emptyPreflight">
+      <v-alert type="warning" outlined>
+        <h4 class="mb-2 text-h6">{{ $t("no_data_title") }}</h4>
+        <p class="mt-2" v-if="hasMonths">
+          {{ $t("empty_months_text") }}
+        </p>
+        <p class="mt-2" v-else>
+          {{ $t("no_data_text") }}
+        </p>
+      </v-alert>
+    </v-row>
   </v-container>
 </template>
 <script>
@@ -453,6 +473,12 @@ export default {
     },
     clashingMonths() {
       return this.preflightData.clashing_months;
+    },
+    emptyPreflight() {
+      return this.preflightData.log_count === 0;
+    },
+    hasMonths() {
+      return this.monthsSorted.length > 0;
     },
     rawDisabledOrg() {
       if (this.organizationsSorted && this.method == "raw") {

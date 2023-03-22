@@ -2,13 +2,12 @@ import logging
 import typing
 from collections import Counter
 
-from celus_nigiri import CounterRecord
 from core.models import User
 from django.conf import settings
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from logs.exceptions import OrganizationNotAllowedToImportRawData, OrganizationNotFound
-from logs.logic.data_import import import_counter_records
+from logs.logic.data_import import import_counter_records, import_empty_batches
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import ManualDataUpload, OrganizationPlatform
 from organizations.models import Organization
@@ -16,34 +15,13 @@ from organizations.models import Organization
 logger = logging.getLogger(__name__)
 
 
-def histograms_with_stats(
-    attrs: typing.List[str], iterable: typing.Iterable[CounterRecord]
-) -> typing.Tuple[typing.Dict[str, Counter], Counter]:
-    histograms = {e: {} for e in attrs}
-    dimensions = set()
-    cnt = Counter()
-    for x in iterable:
-        dimensions |= set(x.dimension_data.keys())
-        for attr in attrs:
-            value = str(getattr(x, attr) or "")
-            rec = histograms[attr].get(value, {"sum": 0, "count": 0})
-            rec["sum"] += x.value
-            rec["count"] += 1
-            histograms[attr][value] = rec
-        cnt["sum"] += x.value
-        cnt["count"] += 1
-    return histograms, cnt, list(dimensions)
-
-
 def custom_import_preflight_check(mdu: ManualDataUpload):
-    histograms, counts, dimensions = histograms_with_stats(
-        ['start', 'metric', 'title', 'organization'], mdu.data_to_records()
-    )
+    histograms, counts, dimensions = mdu.histograms_with_stats()
     months = {
         k: {"new": v, "this_month": None, "prev_year_avg": None, "prev_year_month": 0}
         for k, v in histograms["start"].items()
     }
-    if len(histograms["organization"]) == 1:
+    if len(histograms["organization"]) <= 1:
         # Only a single organization is present
         # don't export organizations to preflight
         # organization is picked by the user
@@ -97,13 +75,17 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
 
 @atomic
 def import_custom_data(
-    mdu: ManualDataUpload, user: User, months: typing.Optional[typing.Iterable[str]] = None
+    mdu: ManualDataUpload,
+    user: User,
+    months: typing.Optional[typing.Iterable[str]] = None,
+    empty=False,
 ) -> dict:
     """
     :param mdu:
     :param user:
     :param months: Can be used to limit which months of data will be loaded from the file -
                    see `import_counter_records` for more details how this works
+    :param empty: If true import only empty import batches based od preflight["months"]
     :return: import statistics
     """
     stats = Counter()
@@ -129,16 +111,28 @@ def import_custom_data(
             raise OrganizationNotAllowedToImportRawData(organization)
 
         # TODO: the owner level should be derived from the user and the organization at hand
-        new_ibs, new_stats = import_counter_records(
-            mdu.report_type,
-            organization,
-            mdu.platform,
-            records,
-            months=months,
-            import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
-        )
+        if empty:
+            new_ibs = import_empty_batches(
+                mdu.report_type,
+                organization,
+                mdu.platform,
+                months=list(mdu.preflight["months"].keys()),
+                import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
+            )
+            new_stats = {}
+        else:
+            new_ibs, new_stats = import_counter_records(
+                mdu.report_type,
+                organization,
+                mdu.platform,
+                records,
+                months=months,
+                import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
+            )
+
         # explicitly connect the organization and the platform
         OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=organization)
+
         import_batches.extend(new_ibs)
         stats.update(new_stats)
 

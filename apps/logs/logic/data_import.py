@@ -457,6 +457,22 @@ class TitleManager:
 
 
 @atomic
+def import_empty_batches(
+    report_type: ReportType,
+    organization: Organization,
+    platform: Platform,
+    months: Iterable[str],
+    import_batch_kwargs: dict,
+) -> [ImportBatch]:
+    return [
+        create_import_batch_or_crash(
+            report_type, organization, platform, month, ib_kwargs=import_batch_kwargs
+        )
+        for month in months
+    ]
+
+
+@atomic
 def import_counter_records(
     report_type: ReportType,
     organization: Organization,

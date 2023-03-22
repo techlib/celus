@@ -388,8 +388,13 @@ def import_manual_upload_data(mdu_id: int, user_id: int):
         )
         mdu.check_self_checksum()  # check file integrity using a stored checksum
         user = User.objects.get(pk=user_id)
-        res = import_custom_data(mdu, user)
-        logger.info("Manual upload processed: %s", res)
+        if mdu.preflight["log_count"] == 0:
+            # Try to fill in empty import batches based on provided months
+            res = import_custom_data(mdu, user, empty=True)
+            logger.info("Filling in empty import batches: %s", res)
+        else:
+            res = import_custom_data(mdu, user)
+            logger.info("Manual upload processed: %s", res)
 
     except ManualDataUpload.DoesNotExist:
         # probably mdu was deleted in the meantime
