@@ -46,8 +46,8 @@ def import_sushi_credentials(
     }
     platform_objects = Platform.objects.all()
     source_id = lambda pl: pl.source.organization_id if pl.source else None  # noqa: E731
-    platforms = {(pl.short_name, source_id(pl)): pl for pl in platform_objects}
-    platforms.update({(pl.name, source_id(pl)): pl for pl in platform_objects})
+    platforms = {(pl.short_name.lower(), source_id(pl)): pl for pl in platform_objects}
+    platforms.update({(pl.name.lower(), source_id(pl)): pl for pl in platform_objects})
     organization_objects = Organization.objects.all()
     organizations = {org.internal_id: org for org in organization_objects}
     organizations.update({org.short_name: org for org in organization_objects})
@@ -67,10 +67,10 @@ def import_sushi_credentials(
             stats['error'] += 1
             continue
         # at first try global platforms
-        platform = platforms.get((record.get('platform').strip(), None))  # type: Platform
+        platform = platforms.get((record.get('platform').strip().lower(), None))  # type: Platform
         if not platform:
             # then platforms specific for the organization
-            platform = platforms.get((record.get('platform').strip(), organization.id))
+            platform = platforms.get((record.get('platform').strip().lower(), organization.id))
             if not platform:
                 logger.error(
                     'Unknown platform: "%s" for organization "%s"',
