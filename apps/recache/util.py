@@ -3,13 +3,36 @@ from datetime import timedelta
 from time import monotonic
 
 import django
+from django.conf import settings
 from django.db import IntegrityError
 from django.db.transaction import atomic
 
-from .models import DEFAULT_LIFETIME, DEFAULT_TIMEOUT, EMPTY_RESULT_DURATION_THRESHOLD, CachedQuery
+from .models import (
+    DEFAULT_EMPTY_RESULT_DURATION_THRESHOLD,
+    DEFAULT_LIFETIME,
+    DEFAULT_NON_EMPTY_RESULT_DURATION_THRESHOLD,
+    DEFAULT_TIMEOUT,
+    CachedQuery,
+)
 from .tasks import find_and_renew_first_due_cached_query_task
 
 logger = logging.getLogger(__name__)
+
+
+def get_empty_result_duration_threshold():
+    return (
+        settings.RECACHE_EMPTY_RESULT_DURATION_THRESHOLD
+        if hasattr(settings, 'RECACHE_EMPTY_RESULT_DURATION_THRESHOLD')
+        else DEFAULT_EMPTY_RESULT_DURATION_THRESHOLD
+    )
+
+
+def get_nonempty_result_duration_threshold():
+    return (
+        settings.RECACHE_NONEMPTY_RESULT_DURATION_THRESHOLD
+        if hasattr(settings, 'RECACHE_NONEMPTY_RESULT_DURATION_THRESHOLD')
+        else DEFAULT_NON_EMPTY_RESULT_DURATION_THRESHOLD
+    )
 
 
 @atomic
@@ -60,21 +83,24 @@ def recache_queryset(
         start = monotonic()
         result_count = len(queryset)  # evaluate the queryset to get the duration
         duration = monotonic() - start
-        if result_count == 0 and duration < EMPTY_RESULT_DURATION_THRESHOLD:
+        if result_count == 0 and duration < get_empty_result_duration_threshold():
             logger.debug('Not caching empty result for a fast (%.2f s) query', duration)
             return queryset
+        elif result_count > 0 and duration < get_nonempty_result_duration_threshold():
+            logger.debug('Not caching non-empty result for a fast (%.2f s) query', duration)
+            return queryset
         logger.debug('Creating new cache')
-        safe_create_cached_query(queryset, timeout, lifetime, origin)
+        safe_create_cached_query(queryset, timeout, lifetime, origin, duration=duration)
         return queryset
 
 
-def safe_create_cached_query(queryset, timeout, lifetime, origin):
+def safe_create_cached_query(queryset, timeout, lifetime, origin, duration=None):
     try:
         # we need to do this atomic otherwise the exception would roll back an open transaction
         # outside this function
         with atomic():
             return CachedQuery.objects.create_from_queryset(
-                queryset, timeout=timeout, lifetime=lifetime, origin=origin
+                queryset, timeout=timeout, lifetime=lifetime, origin=origin, duration=duration
             )
     except IntegrityError as exc:
         # the object might have been already created in a parallel thread,

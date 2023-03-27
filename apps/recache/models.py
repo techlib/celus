@@ -15,10 +15,22 @@ from django.utils.timezone import now
 
 BLAKE_HASH_SIZE = 16
 DEFAULT_TIMEOUT = timedelta(seconds=60 * 60)  # 1 hour
-# queries with empty results which take less than EMPTY_RESULT_DURATION_THRESHOLD seconds
+
+# queries with empty results which take less than the following threshold (in seconds)
 # won't be cached
-EMPTY_RESULT_DURATION_THRESHOLD = 0.4
-DEFAULT_LIFETIME = timedelta(days=30)  # 30 days
+DEFAULT_EMPTY_RESULT_DURATION_THRESHOLD = 0.4
+
+# queries with non-empty results which take less than the following threshold (in seconds)
+# won't be cached
+# The default of 20 ms is low enough so that the replies will still be fast enough without cache.
+# And based on our data from K1, 85 % of queries with non-empty results take less than 20 ms,
+# so we will get rid of most of the recaching overhead.
+DEFAULT_NON_EMPTY_RESULT_DURATION_THRESHOLD = 0.02
+
+# based on our experience with K1, about 50 % of cached queries are never reused
+# and about 50 % of the rest are reused within 10 days.
+# So 10 days seems like a reasonable default value for the lifetime of a cached query
+DEFAULT_LIFETIME = timedelta(days=10)  # 10 days
 
 
 class RenewalError(Exception):
@@ -39,9 +51,15 @@ class CachedQueryQuerySet(models.QuerySet):
         timeout: timedelta = DEFAULT_TIMEOUT,
         lifetime: timedelta = DEFAULT_LIFETIME,
         origin='',
+        duration=None,
     ):
         qs_hash = CachedQuery.compute_queryset_hash(queryset)
+        start = monotonic()
         queryset_pickle = pickle.dumps(queryset)
+        pickle_duration = duration or monotonic() - start
+        # if the queryset was evaluated before, the duration should be passed as an argument
+        # otherwise we use the duration of pickling the queryset, which is a good approximation
+        durations = [duration] if duration else [pickle_duration]
 
         return self.create(
             model=ContentType.objects.get_for_model(queryset.model),
@@ -52,6 +70,7 @@ class CachedQueryQuerySet(models.QuerySet):
             timeout=timeout,
             lifetime=lifetime,
             origin=origin,
+            query_durations=durations,
         )
 
     def past_timeout(self):

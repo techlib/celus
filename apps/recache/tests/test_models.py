@@ -81,10 +81,10 @@ class TestCachedQuery:
         UserFactory.create_batch(3)  # add three more users
         assert cq.get_fresh_queryset().count() == 4, '4 users, newly evaluated queryset'
         assert cq.get_cached_queryset().count() == 1, '1 user, still old cached queryset'
-        assert len(cq.query_durations) == 0, 'query was not yet renewed'
+        assert len(cq.query_durations) == 1, 'query was not yet renewed'
         cq.force_renew()
         assert cq.get_cached_queryset().count() == 4, '4 users, updated queryset'
-        assert len(cq.query_durations) == 1, 'query was renewed once'
+        assert len(cq.query_durations) == 2, 'query was renewed once + 1 original query'
 
     def test_renew(self):
         UserFactory.create_batch(1)
@@ -96,7 +96,7 @@ class TestCachedQuery:
         cq.last_updated -= 2 * DEFAULT_TIMEOUT
         cq.renew()
         assert cq.last_updated > last_updated, "should be renewed"
-        assert len(cq.query_durations) == 1, 'query was renewed once'
+        assert len(cq.query_durations) == 2, 'query was renewed once + 1 original query'
 
     def test_annotations_work(self):
         UserFactory.create_batch(3)
