@@ -267,6 +267,8 @@ def prepare_preflight(mdu_id: int):
             logger.warning(
                 f"Preflight data (for mdu={mdu.pk}) are already generated: {mdu.preflight}"
             )
+            return
+
         elif mdu.state == MduState.INITIAL:
 
             if mdu.method == MduMethod.RAW:
@@ -301,17 +303,19 @@ def prepare_preflight(mdu_id: int):
             mdu.error = None
             mdu.error_details = None
             mdu.state = MduState.PREFLIGHT
-
             mdu.save()
         else:
             logger.error(f"Can't generate preflight data for mdu={mdu.pk} (state={mdu.state})")
+            return
 
     except ManualDataUpload.DoesNotExist:
         # mdu was deleted in the meantime
         logger.warning("mdu '%s' was not found.", mdu_id)
+        return
 
     except DatabaseError as e:
         logger.warning("mdu '%s' is already being processed. (%s)", mdu_id, e)
+        return
 
     except UnicodeDecodeError as e:
         mdu.log = str(e)
@@ -355,6 +359,12 @@ Traceback: {traceback.format_exc()}
         mdu.save()
         async_mail_admins.delay('MDU preflight check error', body)
 
+    # Try to close the file (celery might keep the file opened)
+    try:
+        mdu.data_file.close()
+    except Exception:
+        pass
+
 
 @celery.shared_task
 @email_if_fails
@@ -384,14 +394,17 @@ def import_manual_upload_data(mdu_id: int, user_id: int):
     except ManualDataUpload.DoesNotExist:
         # probably mdu was deleted in the meantime
         logger.warning("mdu '%s' was not found.", mdu_id)
+        return
 
     except User.DoesNotExist:
         # user was deleted in the meantime
         # this should almost never happen
         logger.warning("user '%s' was not found.", user_id)
+        return
 
     except DatabaseError as e:
         logger.warning("mdu '%s' is already being processed. (%s)", mdu_id, e)
+        return
 
     except NibblerErrors as e:
         mdu.log = "\n\n".join(repr(i) for i in e.errors)
@@ -427,6 +440,12 @@ Traceback: {traceback.format_exc()}
         mdu.when_processed = now()
         mdu.state = MduState.FAILED
         mdu.save()
+
+    # Try to close the file (celery might keep the file opened)
+    try:
+        mdu.data_file.close()
+    except Exception:
+        pass
 
 
 @celery.shared_task
