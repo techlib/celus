@@ -98,6 +98,8 @@ def import_sushi_credentials(
             optional['api_key'] = record['api_key']
         else:
             optional['api_key'] = ''
+        if 'title' in record:
+            optional['title'] = record['title'].strip()
         url = record.get('URL') or record.get('url')
         if prefer_knowledgebase_urls:
             if platform.knowledgebase:
