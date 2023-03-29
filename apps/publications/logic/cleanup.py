@@ -47,6 +47,7 @@ def delete_platform_data(
     platform: Platform,
     organization_qs: QuerySet[Organization],
     delete_platform: bool = False,
+    delete_credentials: bool = False,
     progress_monitor: Optional[Callable[[int, int], None]] = None,
 ) -> Counter:
     """
@@ -106,10 +107,17 @@ def delete_platform_data(
     stats.update(substats)
     log_progress(80)
 
+    # delete credentials
+    if delete_credentials:
+        _, substats = platform.sushicredentials_set.filter(
+            organization__in=organization_qs
+        ).delete()
+        stats.update(substats)
+        log_progress(85)
+
     if delete_platform and platform.source and platform.source.organization in organization_qs:
         _, substats = platform.delete()
         stats.update(substats)
 
     log_progress(90)
-
     return stats

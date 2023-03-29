@@ -331,8 +331,9 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
                     detail=f'Platform "{platform}" does not belong to organization'
                     f' #{organization_pk}'
                 )
+        delete_credentials = serializer.validated_data.get("delete_credentials", False)
 
-        task = delete_platform_data_task.delay(pk, org_ids, delete_platform)
+        task = delete_platform_data_task.delay(pk, org_ids, delete_platform, delete_credentials)
         return Response({'success': True, 'task_id': task.id})
 
 

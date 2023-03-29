@@ -200,3 +200,4 @@ class TitleOverlapBatchCreateSerializer(TitleOverlapBatchSerializer):
 
 class DeleteAllDataPlatformSerializer(Serializer):
     delete_platform = BooleanField(required=False, default=False)
+    delete_credentials = BooleanField(required=False, default=False)

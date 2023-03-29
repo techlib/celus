@@ -383,7 +383,8 @@ class TestPlatformAPI:
         )
         assert resp.status_code == 403
 
-    @pytest.mark.parametrize('allow_user_created_platforms', ((True,), (False)))
+    @pytest.mark.parametrize('allow_user_created_platforms', (True, False))
+    @pytest.mark.parametrize('delete_credentials', (True, False))
     @pytest.mark.parametrize(
         ['user', 'delete_platform', 'org_platform', 'can_delete'],
         [
@@ -410,7 +411,11 @@ class TestPlatformAPI:
         can_delete,
         settings,
         allow_user_created_platforms,
+        delete_credentials,
     ):
+        """
+        :param org_platform: platform is custom platform for organization
+        """
         settings.ALLOW_USER_CREATED_PLATFORMS = allow_user_created_platforms
 
         platform = platforms['standalone'] if org_platform else platforms["shared"]
@@ -422,11 +427,13 @@ class TestPlatformAPI:
             task_mock.delay.return_value = MockTask()
             resp = clients[user].post(
                 reverse('platform-delete-all-data', args=[organization.pk, platform.pk]),
-                {"delete_platform": delete_platform},
+                {"delete_platform": delete_platform, "delete_credentials": delete_credentials},
             )
             if can_delete:
                 assert resp.status_code == 200
-                task_mock.delay.assert_called()
+                task_mock.delay.assert_called_once_with(
+                    str(platform.pk), [organization.pk], delete_platform, delete_credentials
+                )
             else:
                 assert resp.status_code in (403, 404, 400)
                 task_mock.delay.assert_not_called()
