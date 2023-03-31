@@ -3,7 +3,7 @@ from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
 from publications.serializers import PlatformSerializer
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.fields import (
     BooleanField,
     CharField,
@@ -113,6 +113,20 @@ class SushiCredentialsSerializer(ModelSerializer):
         return obj.lock_level >= UL_CONS_STAFF
 
     def update(self, instance: SushiCredentials, validated_data):
+        # check existing credentials for this organization, platform and counter version
+        if (
+            SushiCredentials.objects.filter(
+                organization=validated_data.get('organization') or instance.organization,
+                platform=validated_data.get('platform') or instance.platform,
+                counter_version=validated_data.get('counter_version') or instance.counter_version,
+            )
+            .exclude(pk=instance.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                'Only one set of SUSHI credentials for an organization, platform and counter '
+                'version is allowed.'
+            )
         submitter = validated_data.pop('submitter', None) or self.context['request'].user
         if not instance.can_edit(submitter):
             raise PermissionDenied('User is not allowed to edit this object - it is locked.')
@@ -125,6 +139,16 @@ class SushiCredentialsSerializer(ModelSerializer):
         return result
 
     def create(self, validated_data):
+        # check existing credentials for this organization, platform and counter version
+        if SushiCredentials.objects.filter(
+            organization=validated_data['organization'],
+            platform=validated_data['platform'],
+            counter_version=validated_data['counter_version'],
+        ).exists():
+            raise ValidationError(
+                'Only one set of SUSHI credentials for an organization, platform and counter '
+                'version is allowed.'
+            )
         submitter = validated_data.pop('submitter')
         result = super().create(validated_data)
         result.last_updated_by = submitter

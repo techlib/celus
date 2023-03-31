@@ -142,6 +142,31 @@ class TestSushiCredentialsViewSet:
         assert sc.counter_reports.count() == 1
         assert sc.title == title
 
+    def test_create_action_with_duplicated_credentials(
+        self, basic1, organizations, platforms, clients, users, counter_report_types
+    ):
+        url = reverse('sushi-credentials-list')
+        data = {
+            'title': 'Foo bar credentials',
+            'platform_id': platforms["root"].pk,
+            'organization_id': organizations["root"].pk,
+            'url': 'http://foo.bar.baz',
+            'requestor_id': 'xxxxxxx',
+            'customer_id': 'yyyyy',
+            'counter_version': '5',
+            'counter_reports': [counter_report_types["tr"].pk],
+        }
+        assert SushiCredentials.objects.count() == 0
+        resp = clients["admin1"].post(url, data)
+        assert resp.status_code == 201
+        assert SushiCredentials.objects.count() == 1
+        # now try to create the same credentials again with slightly different data
+        data['title'] = 'New title'
+        data['requestor_id'] = 'zzzzzz'
+        resp = clients["admin1"].post(url, data)
+        assert resp.status_code == 400
+        assert SushiCredentials.objects.count() == 1, 'No new credentials should be created'
+
     def test_edit_action(self, basic1, organizations, platforms, clients):
         credentials = CredentialsFactory(
             title='',
@@ -160,6 +185,22 @@ class TestSushiCredentialsViewSet:
         credentials.refresh_from_db()
         assert credentials.url == new_url
         assert credentials.title == new_title
+
+    def test_edit_action_cannot_create_duplicated_credentials(
+        self, basic1, organizations, platforms, clients
+    ):
+        CredentialsFactory(
+            organization=organizations["root"], platform=platforms["root"], counter_version=5
+        )
+        cr4 = CredentialsFactory(
+            organization=organizations["root"], platform=platforms["root"], counter_version=4
+        )
+        url = reverse('sushi-credentials-detail', args=(cr4.pk,))
+        # try to change the counter version to 5, which is already used by another credentials
+        resp = clients["admin1"].patch(url, {'counter_version': 5})
+        assert resp.status_code == 400
+        cr4.refresh_from_db()
+        assert cr4.counter_version == 4, 'The counter version should not be changed'
 
     def test_edit_action_locked(self, basic1, organizations, platforms, clients):
         """
@@ -656,7 +697,7 @@ class TestSushiCredentialsViewSet:
         assert data[0]["year"] == timezone.now().year - 1
         for i in range(1, 13):
             month = f"{i:02d}"
-            data[0][month][0]["status"] == "untried"
+            assert data[0][month][0]["status"] == "untried"
             assert data[0][month][0]["can_harvest"] is True
 
         assert data[1]["year"] == timezone.now().year

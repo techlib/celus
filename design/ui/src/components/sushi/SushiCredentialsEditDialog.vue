@@ -18,8 +18,7 @@ en:
   delete_success: Sushi credentials were successfully removed
   title_label: Title
   title_tooltip: You can give the credentials a descriptive title for easier identification. A title is required when you have more than one set of credentials for the same SUSHI server.
-  title_in_conflict: <strong>Use a different title</strong>. When creating more than one set of credentials for the same organization, platform and COUNTER version, you need to use distinct titles in order to distinguish between the sets.
-  title_in_conflict_hint: Unique title is required
+  credentials_conflict_hint: Credentials for this organization, platform and COUNTER version already exist.
   extra_attributes: Extra attributes - fill only if instructed by provider
   extra_attributes_tooltip: The following section is used for attributes which are only used by some providers. If the credentials given to you by the provider contain fields that do not correspond to any of the fields above, you can fill them in here.
   platform_filter_tooltip: This field is used only by some providers. If the credentials given to you by the provider contain filter "platform", you can fill it in here.
@@ -46,6 +45,11 @@ en:
   ip_authorization_required: According to the COUNTER registry, this platform requires IP authorization. In case you have problems with harvesting, please contact the platform provider with a request to add the following to the list of authorized IPs
   registry_platform_required: According to the COUNTER registry, this platform requires this attribute to be set
   registry_link: Link to the COUNTER registry record for the selected platform
+  check_input: Please check the input, some fields do not have valid values
+  cannot_edit_duplicated: These credentials conflict with another set of credentials (they have the same organization, platform and COUNTER version). Unless you delete one of the sets, you cannot edit any of them.
+  cannot_create_duplicated: Celus does not support multiple sets of credentials for the same organization, platform and COUNTER version.
+  multiple_credentials_info_link: To get more information about duplicated credentials, please see {link}.
+  this_article: this article
 cs:
   add_custom_param: Přidat vlastní parametr
   add_custom_param_tooltip: Použijte toto tlačítko pro data, pro která nenajdete odpovídající políčko jinde.
@@ -63,8 +67,7 @@ cs:
   delete_success: Přihlašovací údaje byly úspěšně odstraněny
   title_label: Název
   title_tooltip: Přihlašovacím údajům můžete přiřadit název pro lepší identifikaci. Název je také vyžadován v případě, že máte více než jednu sadu přihlašovacích údajů pro stejný SUSHI server.
-  title_in_conflict: <strong>Použijte jiný název</strong>. Pokud vytváříte více přihlašovacích údajů pro stejnout organizaci, platformu a verzi COUNTER, musíte použít různé názvy, aby bylo možné přihlašovací údaje rozlišit.
-  title_in_conflict_hint: Je vyžadován unikátní název
+  credentials_conflict_hint: Přihlašovací údaje pro tuto organizaci, platformu a verzi COUNTER již existují.
   extra_attributes: Extra atributy - vyplňte pouze pokud to poskytovatel vyžaduje
   extra_attributes_tooltip: Tato sekce je určena pro parametry, které jsou používány pouze některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi od poskytovatele obsahují údaje, pro které není ve formuláři výše položka, můžete je vyplnit zde.
   platform_filter_tooltip: Toto pole je používáno jen některými poskytovateli. Pokud přihlašovací údaje, které jste obdrželi, obsahují filtr "platform", můžete jej vyplnit zde.
@@ -91,6 +94,11 @@ cs:
   ip_authorization_required: Podle informací z COUNTER registru je pro tuto platformu vyžadována autorizace IP adresy. Pokud narazíte na problémy se sklízením dat, kontaktujte prosím poskytovatele a požádejte o povolení přístupu z následujících adres
   registry_platform_required: Podle informací z COUNTER registru je tato hodnota vyžadována
   registry_link: Odkaz do COUNTER registru pro vybranou platformu
+  check_input: Zkontrolujte prosím zadané hodnoty, některá pole nemají platnou hodnotu.
+  cannot_edit_duplicated: Tyto přihlašovací údaje kolidují s jinými (stejná organizace, platforma a verze COUNTER). Dokud nebude konflikt vyřešen smazáním konfliktních údajů, nepůjde tyto údaje upravit.
+  cannot_create_duplicated: Celus nepodporuje více přihlašovacích údajů pro stejnou organizaci, platformu a verzi COUNTER.
+  multiple_credentials_info_link: Více informací o zdvojených přihlašovacích údajích najdete v {link}.
+  this_article: tomto článku
 </i18n>
 
 <template>
@@ -100,7 +108,27 @@ cs:
         $t("title.edit_sushi_credentials")
       }}</v-card-title>
       <v-card-text>
-        <v-alert v-if="credentials && credentials.broken" type="error" outlined>
+        <v-alert v-if="conflictingCredentials" type="error" outlined>
+          <p v-if="credentials">{{ $t("cannot_edit_duplicated") }}</p>
+          <p v-else>{{ $t("cannot_create_duplicated") }}</p>
+
+          <p>
+            <i18n path="multiple_credentials_info_link">
+              <template v-slot:link>
+                <a
+                  href="https://support.celus.net/support/solutions/articles/103000063863"
+                  target="_blank"
+                  >{{ $t("this_article") }}</a
+                >
+              </template>
+            </i18n>
+          </p>
+        </v-alert>
+        <v-alert
+          v-else-if="credentials && credentials.broken"
+          type="error"
+          outlined
+        >
           <p class="bold">{{ $t("broken") }}</p>
           <p>{{ $t("broken_unbreak_manually") }}</p>
           <div>
@@ -133,21 +161,9 @@ cs:
                     v-model="title"
                     :label="$t('title_label')"
                     v-on="on"
-                    :rules="[ruleNoConflictingCredentials]"
                     dense
                     height="2.75rem"
-                  >
-                    <template v-slot:append v-if="titleHint">
-                      <v-tooltip bottom v-if="titleHint">
-                        <template #activator="{ on }">
-                          <v-icon v-on="on" small color="warning"
-                            >fa-exclamation-triangle</v-icon
-                          >
-                        </template>
-                        <div v-html="titleHint" style="max-width: 400px"></div>
-                      </v-tooltip>
-                    </template>
-                  </v-text-field>
+                  ></v-text-field>
                 </template>
                 {{ $t("title_tooltip") }}
               </v-tooltip>
@@ -197,10 +213,11 @@ cs:
                   :label="$t('platform')"
                   return-object
                   :loading="loadingPlatforms"
-                  :rules="[ruleRequired]"
+                  :rules="[ruleRequired, ruleNoConflictingCredentials]"
                   dense
                   height="2.75rem"
                   :menu-props="{ maxHeight: 480 }"
+                  ref="platformField"
                 >
                   <template v-slot:prepend-item>
                     <AddPlatformButton
@@ -309,6 +326,8 @@ cs:
                 :items="allowedCounterVersions"
                 :disabled="!!credentials || !activePlatform"
                 :no-data-text="$t('all_versions_used')"
+                :rules="[ruleNoConflictingCredentials]"
+                ref="counterVersionField"
               >
               </v-select>
             </v-col>
@@ -594,7 +613,7 @@ cs:
                     @click="saveAndTest()"
                     class="mr-2"
                     v-on="on"
-                    :disabled="saving"
+                    :disabled="saving || disableSave"
                     :loading="saving"
                   >
                     <v-icon small class="mr-1">fa fa-play</v-icon>
@@ -607,7 +626,7 @@ cs:
                 color="primary"
                 @click="saveAndClose()"
                 class="mr-2"
-                :disabled="saving"
+                :disabled="saving || disableSave"
                 :loading="saving"
               >
                 <v-icon small class="mr-1">fa fa-save</v-icon>
@@ -653,10 +672,12 @@ import { testSushiUrlReport } from "@/libs/sushi-validation";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import RegistryIcon from "@/components/sushi/RegistryIcon";
 import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
+import InterestGroupSelector from "@/components/selectors/InterestGroupSelector.vue";
 
 export default {
   name: "SushiCredentialsEditDialog",
   components: {
+    InterestGroupSelector,
     HarvesterIPAddressList,
     RegistryIcon,
     HarvestSelectedWidget,
@@ -866,12 +887,9 @@ export default {
     conflictingCredentials() {
       /*
        * return true if there are credentials with the same organization, platform and counter
-       * version and also the same name - this is not allowed and should be reflected in the
-       * UI
+       * version - this is not allowed and should be reflected in the UI
        * */
-      return !!this.similarCredentials.filter(
-        (cred) => cred.title === this.title
-      ).length;
+      return this.similarCredentials.length > 0;
     },
     similarCredentials() {
       /*
@@ -888,12 +906,6 @@ export default {
         );
       }
       return [];
-    },
-    titleHint() {
-      if (this.conflictingCredentials) {
-        return this.$t("title_in_conflict");
-      }
-      return false;
     },
     platformsBaseUrl() {
       if (this.organization?.pk) {
@@ -964,6 +976,12 @@ export default {
     },
     platformAttrInfo() {
       return this.registrySushiService?.platform_specific_info ?? "";
+    },
+    disableSave() {
+      // normally we do not disable the save button, but rather show a warning
+      // after the user clicks it. But in some cases we can disable it
+      // completely because the warning is already shown
+      return this.conflictingCredentials;
     },
   },
 
@@ -1176,6 +1194,11 @@ export default {
             }
           }
         }
+      } else {
+        this.showSnackbar({
+          content: this.$t("check_input"),
+          color: "warning",
+        });
       }
     },
     async saveAndTest() {
@@ -1307,7 +1330,7 @@ export default {
     },
     ruleNoConflictingCredentials() {
       if (this.conflictingCredentials) {
-        return this.$t("title_in_conflict_hint");
+        return this.$t("credentials_conflict_hint");
       }
       return true;
     },
@@ -1411,10 +1434,14 @@ export default {
       this.selectedReportTypes = this.selectedReportTypes.filter((item) =>
         currentReportTypes.includes(item)
       );
+      this.$refs.platformField.validate();
       if (!this.credentials) {
         this.guessUrl();
         this.guessPlatformFilter();
       }
+    },
+    platform() {
+      this.$refs.counterVersionField.validate();
     },
     url() {
       this.$nextTick(() => {
