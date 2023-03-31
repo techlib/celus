@@ -538,6 +538,8 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             sheet.write(0, 1, f'Chart was limited to first {max_rows_to_show} rows!', style)
             row_count = max_rows_to_show
         skip_cols = len(self.remapped_keys())  # for titles skip ISSN and other cols
+        if self.include_tags:
+            skip_cols += 1
         for i in range(skip_cols, len(self._fields)):
             chart.add_series(
                 {
