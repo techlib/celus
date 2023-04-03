@@ -502,8 +502,8 @@ class TestReportTypeImportAttempt:
         assert attempt.stats == {"created": 1, "updated": 2, "total": 3}
         assert rt_count + 3 == ReportType.objects.count()
         assert (
-            ReportInterestMetric.objects.count() == rim_count + 1
-        ), 'report type metric was created'
+            ReportInterestMetric.objects.count() == rim_count + 2
+        ), 'report type metric were created'
 
         report_type1 = ReportType.objects.get(short_name="one")
         assert report_type1.name == "first"
@@ -544,11 +544,20 @@ class TestReportTypeImportAttempt:
                 'position', 'dimension__short_name'
             )
         ) == [(0, 'dim4'), (1, 'dim3')]
-        assert report_type3.interest_metrics.all().count() == 1
-        assert report_type3.interest_metrics.last().short_name == "metric2"
-        assert report_type3.reportinterestmetric_set.all().count() == 1
-        assert report_type3.reportinterestmetric_set.last().target_metric is None
-        assert report_type3.reportinterestmetric_set.last().interest_group.short_name == "search"
+        assert report_type3.interest_metrics.all().count() == 2
+        assert report_type3.interest_metrics.order_by('id').first().short_name == "metric2"
+        assert report_type3.interest_metrics.order_by('id').last().short_name == "metric3"
+        assert report_type3.reportinterestmetric_set.all().count() == 2
+        assert report_type3.reportinterestmetric_set.order_by('id').first().target_metric is None
+        assert (
+            report_type3.reportinterestmetric_set.order_by('id').first().interest_group.short_name
+            == "search"
+        )
+        assert report_type3.reportinterestmetric_set.order_by('id').last().target_metric is None
+        assert (
+            report_type3.reportinterestmetric_set.order_by('id').last().interest_group.short_name
+            == "other"
+        )
 
 
 @pytest.mark.django_db

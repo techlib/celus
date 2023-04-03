@@ -570,7 +570,7 @@ class ParserDefinitionImportAttempt(ImportAttempt):
 
     def make_interests(self, parser_definition: ParserDefinition):
         try:
-            report_type = ReportType.objects.get(
+            report_type = ReportType.objects.distinct().get(
                 source=parser_definition.source,
                 ext_id=parser_definition.report_type_ext_id,
                 # Don't create Platform interest when there is no Report <-> Metric interest

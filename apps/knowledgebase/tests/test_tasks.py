@@ -78,7 +78,7 @@ class TestCeleryTasks:
             assert ReportType.objects.count() == report_type_count + 3
             assert ParserDefinition.objects.count() == parser_definition_count + 1
             assert Metric.objects.count() == metric_count + 2
-            assert ReportInterestMetric.objects.count() == rim_count + 1
+            assert ReportInterestMetric.objects.count() == rim_count + 2
             # 5 report_types with default_platform_interest * 3 new platforms
             # + 1 from parser_definition
             assert PlatformInterestReport.objects.count() == (pir_count + 5 * 3 + 1)

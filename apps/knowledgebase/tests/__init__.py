@@ -162,7 +162,7 @@ REPORT_TYPE_INPUT_DATA2 = [
                 "aliases": ["m2", "met2"],
                 "interest_group": "search",
             },
-            {"pk": 3, "short_name": "metric3", "aliases": ["m3"]},
+            {"pk": 3, "short_name": "metric3", "aliases": ["m3"], "interest_group": "other"},
         ],
     },
 ]
