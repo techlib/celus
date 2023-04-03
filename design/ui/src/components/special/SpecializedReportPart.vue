@@ -83,6 +83,11 @@ cs:
         <template #item.total="{ item }">
           {{ formatInteger(item.total) }}
         </template>
+        <template #item.source_name="{ item }">
+          <span :style="{ color: sourceColor(item.source_name) }">{{
+            item.source_name
+          }}</span>
+        </template>
       </v-data-table>
     </v-expansion-panel-content>
   </v-expansion-panel>
@@ -139,6 +144,7 @@ export default {
       showDetail: true,
       nonZeroOnly: true,
       selectedStage: this.stages.length - 1,
+      palette: ["#000000", "#9C27B0", "#4CAF50", "#3F51B5", "#E91E63"],
     };
   },
 
@@ -220,10 +226,30 @@ export default {
     total() {
       return this.lastStageData.reduce((ac, rec) => ac + rec.total, 0);
     },
+    sourcesInLastStage() {
+      let counter = new Map();
+      this.lastStageData.forEach((r) => {
+        const value = r.total > 0 ? 1 : 0; // only count sources with non-zero total
+        if (counter.has(r.source_name))
+          counter.set(r.source_name, counter.get(r.source_name) + value);
+        else counter.set(r.source_name, value);
+      });
+      let countSource = [];
+      counter.forEach((v, k) => {
+        countSource.push({ source: k, count: v });
+      });
+      countSource.sort((a, b) => b.count >= a.count);
+      return countSource.map((r) => r.source);
+    },
   },
 
   methods: {
     formatInteger,
+    sourceColor(source) {
+      return this.palette[
+        this.sourcesInLastStage.indexOf(source) % this.palette.length
+      ];
+    },
   },
 };
 </script>
