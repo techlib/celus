@@ -658,7 +658,7 @@ class FlexibleDataSlicer:
                 break
         if query_params:
             return list(ReportType.objects.filter(**query_params))
-        return list(ReportType.objects.filter(materialization_spec__isnull=True))
+        return list(ReportType.objects.exclude_materialized())
 
     def _replace_report_type_with_materialized(
         self, extra_dimensions_to_preserve=None, ignore_primary=False

@@ -1,6 +1,6 @@
 import logging
 from time import monotonic, time
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 from django.db.models import Count, FloatField, Q, QuerySet, Sum
 from django.db.models.expressions import RawSQL
@@ -12,13 +12,14 @@ from ..models import AccessLog, ImportBatch, ReportType
 logger = logging.getLogger(__name__)
 
 
-def sync_materialized_reports():
+def sync_materialized_reports(report_type_qs: Optional[QuerySet[ReportType]] = None):
     """
     Create AccessLogs for all materialized report types. Uses `create_materialized_accesslogs`
     for smart synchronization of only unprocessed ImportBatches.
     :return:
     """
-    for mat_rt in ReportType.objects.filter(materialization_spec__isnull=False):
+    qs = report_type_qs if report_type_qs is not None else ReportType.objects.all()
+    for mat_rt in qs.only_materialized():
         create_materialized_accesslogs(mat_rt)
 
 
@@ -26,8 +27,8 @@ def sync_materialized_reports_for_import_batch(ib: ImportBatch):
     """
     Create AccessLogs for all materialized report types for one import batch
     """
-    for mat_rt in ReportType.objects.filter(
-        materialization_spec__isnull=False, materialization_spec__base_report_type=ib.report_type
+    for mat_rt in ReportType.objects.only_materialized().filter(
+        materialization_spec__base_report_type=ib.report_type
     ):
         create_materialized_accesslogs_for_importbatches(mat_rt, [ib])
 
@@ -161,25 +162,30 @@ def materialized_import_batch_queryset(rt: ReportType) -> QuerySet:
 
 
 @atomic
-def remove_materialized_accesslogs(progress_callback: Callable[[int], None] = None):
+def remove_materialized_accesslogs(
+    report_type_qs: Optional[QuerySet[ReportType]] = None,
+    progress_callback: Callable[[int], None] = None,
+):
     """
     Deletes all the AccessLogs for materialized views and associated data from ImportBatches
+    :param report_type_qs: if provided, only the report types in the queryset will be processed
     :param progress_callback:
     :return:
     """
     rt_keys = set()
     # materialized reports are not synced with clickhouse, so the following delete has no
     # influence on clickhouse sync
-    for rt in ReportType.objects.filter(materialization_spec__isnull=False):
+    qs = report_type_qs if report_type_qs is not None else ReportType.objects.all()
+    for rt in qs.only_materialized():
         rt.accesslog_set.all().delete(i_know_what_i_am_doing=True)
         rt_keys.add(rt.pk)
     # we iterate stupidly over all import batches, but that's life for you - I did not find
     # a way to batch update json field, so I at least go over each import batch only once for
     # all report types
-    for i, ib in enumerate(ImportBatch.objects.all()):
+    db_rt_keys = [f'r{rt_pk}' for rt_pk in rt_keys]
+    for i, ib in enumerate(ImportBatch.objects.filter(materialization_data__has_keys=db_rt_keys)):
         save = False
-        for rt_pk in rt_keys:
-            key = f'r{rt_pk}'
+        for key in db_rt_keys:
             if key in ib.materialization_data:
                 ib.materialization_data.pop(key)
                 save = True
@@ -189,14 +195,22 @@ def remove_materialized_accesslogs(progress_callback: Callable[[int], None] = No
             progress_callback(i)
 
 
-def recompute_materialized_reports(progress_callback: Callable[[int], None] = None):
+def recompute_materialized_reports(
+    report_type_qs: Optional[QuerySet[ReportType]] = None,
+    progress_callback: Callable[[int], None] = None,
+):
     """
     Deletes all the AccessLogs for materialized views and associated data from ImportBatches
     and then restarts recomputation of materialized reports
+    :param report_type_qs: if provided, only the report types in the queryset will be processed
+    :param progress_callback: if provided, it will be called with the number of processed import
+    batches
     :return:
     """
-    remove_materialized_accesslogs(progress_callback=progress_callback)
-    sync_materialized_reports()
+    remove_materialized_accesslogs(
+        report_type_qs=report_type_qs, progress_callback=progress_callback
+    )
+    sync_materialized_reports(report_type_qs=report_type_qs)
 
 
 def update_report_approx_record_count():

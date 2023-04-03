@@ -156,7 +156,7 @@ def extract_interest_from_import_batch(
         metric_to_dim1[metric_id] = dim_text.pk
     # get source data for the new logs
     new_logs = []
-    # for the following dates, there are data for a superseeding report type, so we do not
+    # for the following dates, there are data for a superseding report type, so we do not
     # want to created interest records for them
     clashing_dates = {}
     if import_batch.report_type.superseeded_by:
@@ -232,8 +232,6 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
         # same data
         if queryset is None:
             queryset = ImportBatch.objects.filter(interest_timestamp__isnull=False)
-        # report_type.superseeded_by is needed later on, so we select it here to reduce the
-        # query count
         # WARNING: the following messes up the queries when they are more complex and can
         #          lead to memory exhaustion - I leave it here as a memento against future attempts
         # queryset = queryset.select_related('report_type__superseeded_by', 'platform').\

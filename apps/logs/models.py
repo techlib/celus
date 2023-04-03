@@ -65,6 +65,12 @@ class ReportTypeQuerySet(models.QuerySet):
     def get_interest_rt(self):
         return self.get(short_name='interest', source__isnull=True)
 
+    def only_materialized(self):
+        return self.filter(materialization_spec__isnull=False)
+
+    def exclude_materialized(self):
+        return self.filter(materialization_spec__isnull=True)
+
 
 class ReportType(models.Model):
 

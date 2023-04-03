@@ -211,11 +211,7 @@ export default {
         (item) => item.short_name !== "other"
       );
       if (igs) {
-        return igs.sort((a, b) =>
-          a.important === b.important
-            ? a.name > b.name
-            : a.important < b.important
-        );
+        return igs.sort((a, b) => a.position > b.position);
       }
       return igs;
     },

@@ -25,9 +25,9 @@ class IsMaterialized(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'yes':
-            return queryset.filter(materialization_spec__isnull=False)
+            return queryset.only_materialized()
         if self.value() == 'no':
-            return queryset.filter(materialization_spec__isnull=True)
+            return queryset.exclude_materialized()
         return queryset
 
 

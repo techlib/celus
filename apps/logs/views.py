@@ -141,7 +141,7 @@ class Counter5DataView(APIView):
 class ReportTypeViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ReportTypeSerializer
-    queryset = ReportType.objects.filter(materialization_spec__isnull=True)
+    queryset = ReportType.objects.exclude_materialized()
     filter_backends = [PkMultiValueFilterBackend]
 
     def get_queryset(self):
@@ -163,8 +163,8 @@ class MetricViewSet(ReadOnlyModelViewSet):
 class ReportInterestMetricViewSet(ReadOnlyModelViewSet):
     serializer_class = ReportTypeInterestSerializer
     queryset = (
-        ReportType.objects.filter(materialization_spec__isnull=True)
-        .exclude(short_name='interest')
+        ReportType.objects.exclude_materialized()
+        .exclude(short_name='interest', source__isnull=True)
         .annotate(used_by_platforms=Count('platforminterestreport__platform', distinct=True))
         .prefetch_related(
             "interest_metrics",
