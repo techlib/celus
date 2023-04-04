@@ -631,6 +631,9 @@ class TestManualUploadNonCounter:
 
         assert response.status_code == 403
 
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.django_db(transaction=True)
     @pytest.mark.parametrize(['organization_set'], [(True,), (False,)])
     def test_multiple_organizations_authorized(
         self,

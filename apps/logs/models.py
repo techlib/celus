@@ -1,5 +1,6 @@
 import codecs
 import csv
+import logging
 import os
 import re
 import typing
@@ -45,6 +46,8 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
+from hcube.api.models.aggregation import Count as HCount
+from hcube.api.models.aggregation import Sum as HSum
 from nibbler.logic.processing import (
     celus_format_poops,
     counter_format_poops,
@@ -56,6 +59,8 @@ from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
 
 from .exceptions import WrongOrganizations, WrongState
+
+logger = logging.getLogger(__name__)
 
 
 class OrganizationPlatform(models.Model):
@@ -1060,49 +1065,52 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         """Returns the number of access logs per month of all existing data which matches this MDU
         and a list of all metrics
         """
-
         # Get all counts for same (org, platform, report_type)
-        ibs = ImportBatch.objects.filter(
-            platform_id=self.platform_id,
-            organization_id=self.organization_id,
-            report_type_id=self.report_type_id,
-        )
+        filters = {'platform_id': self.platform_id, 'report_type_id': self.report_type_id}
+        if self.organization_id:
+            filters['organization_id'] = self.organization_id
+        else:
+            if orgs_recs := self.organizations_from_data():
+                org_ids = [org.pk for _, org in orgs_recs]
+                filters['organization_id__in'] = org_ids
+            else:
+                # when the .organization is None, we need to extract the organizations
+                # from the data in preflight. In this case, preflight data is missing
+                # and we can't continue
+                raise ValueError("No organizations in data, preflight data is probably missing")
 
-        counts = (
-            ibs.values('date')
-            .annotate(
-                # if no access logs are present it means the ib is empty
-                count=Coalesce(
-                    Count('accesslog__pk', filter=Q(accesslog__report_type_id=self.report_type_id)),
-                    0,
-                ),
-                sum=Coalesce(
-                    Sum(
-                        'accesslog__value', filter=Q(accesslog__report_type_id=self.report_type_id)
-                    ),
-                    0,
-                ),
+        if settings.CLICKHOUSE_QUERY_ACTIVE:
+            from .cubes import AccessLogCube, ch_backend
+
+            query = (
+                AccessLogCube.query()
+                .filter(**filters)
+                .group_by('date')
+                .aggregate(count=HCount(), sum=HSum('value'))
+                .order_by('date')
             )
-            .values('date', 'count', 'sum')
-        )
-
-        counts = {
-            e['date'].strftime("%Y-%m-%d"): {'count': e['count'], 'sum': e['sum']} for e in counts
-        }
-
-        # Get metrics
-        metric_ids = (
-            AccessLog.objects.filter(
-                platform_id=self.platform_id,
-                organization_id=self.organization_id,
-                report_type_id=self.report_type_id,
+            counts = {
+                e.date.strftime("%Y-%m-%d"): {'count': e.count, 'sum': e.sum}
+                for e in ch_backend.get_records(query)
+            }
+            # Get metrics
+            metric_query = AccessLogCube.query().filter(**filters).group_by('metric_id')
+            metric_ids = [e.metric_id for e in ch_backend.get_records(metric_query)]
+        else:
+            count_qs = (
+                AccessLog.objects.filter(**filters)
+                .values('date')
+                .annotate(count=Coalesce(Count('pk'), 0), sum=Coalesce(Sum('value'), 0))
+                .values('date', 'count', 'sum')
             )
-            .values_list('metric_id')
-            .distinct()
-        )
+            counts = {
+                e['date'].strftime("%Y-%m-%d"): {'count': e['count'], 'sum': e['sum']}
+                for e in count_qs
+            }
+            # Get metrics
+            metric_ids = AccessLog.objects.filter(**filters).values_list('metric_id').distinct()
 
         metrics = [e.short_name for e in Metric.objects.filter(pk__in=metric_ids).order_by('pk')]
-
         return counts, metrics
 
     @property

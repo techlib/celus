@@ -35,6 +35,10 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
         for name, org_data in organizations.items():
             organization = resolved_organizations[name]
             org_data['pk'] = organization and organization.pk
+        # the following is not very nice, but we need the organizations data to be present
+        # when doing related_months_data() below;
+        # it is not stored to the database, just assigned to the object instance
+        mdu.preflight['organizations'] = organizations
 
     # prepare month statistics
     related_months, used_metrics = mdu.related_months_data()
