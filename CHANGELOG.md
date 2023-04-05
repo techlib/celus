@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0]  - 2023-04-12
+
+### Added
+
+#### Frontend
+
+- support for the ACRL IPEDS report was added to the `Specialized reports` section
+- interest type `Multimedia` was added
+- it is now possible to import empty table reports (reports with no data) into Celus and thus
+  create correct coverage records for the platform and dates at hand (only when nibbler library
+  is used for parsing)
+- when deleting platform data, it is now possible to delete the related SUSHI credentials as well
+- when manually uploading non-COUNTER data, a link to the knowledgebase may be now shown to get
+  users to more information about the format
+
+#### Backend
+
+- logging of celery tasks into an external database was added
+
+
+### Changes
+
+#### Frontend
+
+- only one set of SUSHI credentials is now allowed per organization, platform and COUNTER version
+- existing conflicting SUSHI credentials can no longer be edited unless the conflict is resolved
+- the `Specialized reports` section was reworked to allow for more reports to be added in the
+  future and to improve the export functionality
+- link to the tags documentation was changed to point to the knowledgebase
+
+#### Backend
+
+- comparison of imported data with past data during manual data upload was optimized for better
+  performance
+- the recache module was optimized to skip caching of fast queries and to remove unused cache
+  entries earlier
+- CLI scripts for interest recomputation and materialized report recalculations were improved to
+  support report type filters
+- CLI script for loading SUSHI credentials from a file was improved to include the title column
+  and use case-insensitive matching of platform names
+- scheduling of new harvests was improved to reduce the number of database queries and run faster
+
+
+### Fixed
+
+#### Frontend
+
+- when checking a newly created custom platform name against existing platform names, other custom
+  platforms were not taken into account
+
+#### Backend
+
+- comparison of imported data with past data during manual data upload was fixed to work correctly
+  when working with multi-organization imports
+- synchronization of ParserDefinitions with report types was fixed to work correctly when several
+  interest groups are present
+- the `nibbler` library was updated to be more lenient toward common misspellings when parsing
+  COUNTER 5 reports
+- reporting export into Excel format no longer creates a `tags` series for the chart
+- data files of manual data uploads are explicitly closed to prevent errors related to too many
+  open files
+- don't crash in admin when short_name of a new organization already exists
+- deleting of all platform data is now allowed independent of the `ALLOW_USER_CREATED_PLATFORMS`
+  setting
+- the `clean_obsolete_platform_title_links` task was optimized for speed and prints progress
+  information to prevent the task from seeming to hang
+- incorrect sheet reference format in formulas in Excel exports of specialized export was fixed
+
 
 ## [5.3.0] - 2023-03-08
 
