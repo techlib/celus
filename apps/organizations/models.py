@@ -123,10 +123,33 @@ class OrganizationAltName(models.Model):
         ]
 
     def validate_unique(self, exclude=None):
-        return super().validate_unique(exclude)
+        res = super().validate_unique(exclude)
+
+        if (
+            OrganizationAltName.objects.exclude(pk=self.pk)
+            .filter(source=self.source, name=self.name)
+            .exists()
+        ):
+            raise ValidationError({"name": f"name {self.name} is already used"})
+        if (
+            org := Organization.objects.filter(source=self.source)
+            .filter(
+                Q(short_name__iexact=self.name)
+                | Q(name_en__iexact=self.name)
+                | Q(name_cs__iexact=self.name)
+            )
+            .first()
+        ):
+            raise ValidationError({"name": f"name clashes with organization {org}"})
+
+        return res
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 class UserOrganization(models.Model):
