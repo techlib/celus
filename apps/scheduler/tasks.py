@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 
 import celery
+from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from django.conf import settings
 from django.utils import timezone
@@ -15,6 +16,7 @@ BUSY_TIMEOUT = 5.0  # in seconds
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def plan_schedulers_triggering():
     """This job should be run in cron mode with high frequency."""
@@ -27,6 +29,7 @@ def plan_schedulers_triggering():
 
 
 @celery.shared_task(bind=True, time_limit=Scheduler.JOB_TIME_LIMIT)
+@logged_task
 @email_if_fails
 def trigger_scheduler(self, url: str, finish: bool = False):
     """finish - tries to process entire scheduler queue"""
@@ -58,6 +61,7 @@ def trigger_scheduler(self, url: str, finish: bool = False):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def update_automatic_harvesting():
     if settings.AUTOMATIC_HARVESTING_ENABLED:

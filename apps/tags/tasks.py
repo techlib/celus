@@ -1,6 +1,7 @@
 import logging
 
 import celery
+from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from core.models import TaskProgress
 from django.db import DatabaseError
@@ -11,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def tagging_batch_preflight_task(batch_id: int, domain_name: str = '/'):
@@ -31,6 +33,7 @@ def tagging_batch_preflight_task(batch_id: int, domain_name: str = '/'):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = '/'):
@@ -51,6 +54,7 @@ def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = '/'):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def tagging_batch_unassign_task(batch_id: int):

@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 import celery
+from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from django.db import transaction
 from django.utils.timezone import now
@@ -14,6 +15,7 @@ DELAY_OFFSET = timedelta(hours=1)
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def delete_batch_targets(batch_id):
     from .models import Batch
@@ -36,6 +38,7 @@ def delete_batch_targets(batch_id):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def delete_batches_targets():
     from .models import Batch, BatchStatus
@@ -51,6 +54,7 @@ def delete_batches_targets():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def prepare_batch(batch_id):
     from .models import Batch
@@ -73,6 +77,7 @@ def prepare_batch(batch_id):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def prepare_batches():
     from .models import Batch, BatchStatus

@@ -1,4 +1,5 @@
 import celery
+from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from core.models import DataSource
 from django.db import DatabaseError, transaction
@@ -13,6 +14,7 @@ from .models import (
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def sync_platforms_with_knowledgebase_task():
     sources = list(DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE))
@@ -24,6 +26,7 @@ def sync_platforms_with_knowledgebase_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def update_platforms(attempt_id: int):
     attempt = PlatformImportAttempt.objects.get(pk=attempt_id)
@@ -35,6 +38,7 @@ def update_platforms(attempt_id: int):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def sync_report_types_with_knowledgebase_task():
     sources = list(DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE))
@@ -46,6 +50,7 @@ def sync_report_types_with_knowledgebase_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def update_report_types(attempt_id: int):
     attempt = ReportTypeImportAttempt.objects.get(pk=attempt_id)
@@ -57,6 +62,7 @@ def update_report_types(attempt_id: int):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def update_parser_definitions(attempt_id: int):
     attempt = ParserDefinitionImportAttempt.objects.get(pk=attempt_id)
@@ -70,6 +76,7 @@ def update_parser_definitions(attempt_id: int):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def sync_parser_definitions_with_knowledgebase_task():
     sources = list(DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE))
@@ -81,6 +88,7 @@ def sync_parser_definitions_with_knowledgebase_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def sync_all_with_knowledgebase_task():
     with transaction.atomic():
@@ -90,6 +98,7 @@ def sync_all_with_knowledgebase_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def sync_route(attempt_id: int):
     with transaction.atomic():
@@ -102,6 +111,7 @@ def sync_route(attempt_id: int):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def sync_routes():
     for attempt in RouterSyncAttempt.objects.filter(done__isnull=True):

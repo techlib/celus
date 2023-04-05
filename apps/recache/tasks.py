@@ -3,6 +3,7 @@ from time import monotonic
 
 import celery
 import django
+from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from recache.models import CachedQuery, RenewalError
 
@@ -10,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def renew_cached_query_task(pk: int):
     """
@@ -30,6 +32,7 @@ def renew_cached_query_task(pk: int):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def find_and_renew_first_due_cached_query_task():
     """
@@ -54,6 +57,7 @@ def find_and_renew_first_due_cached_query_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def remove_old_cached_queries_task():
     """

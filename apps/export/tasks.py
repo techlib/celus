@@ -1,4 +1,5 @@
 import celery
+from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from django.core.cache import cache
 from django.utils import translation
@@ -6,6 +7,7 @@ from export.models import FlexibleDataExport
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def process_flexible_export_task(export_id: int):
     export = FlexibleDataExport.objects.get(pk=export_id)
@@ -22,6 +24,7 @@ def process_flexible_export_task(export_id: int):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def delete_expired_flexible_data_exports_task():
     FlexibleDataExport.objects.annotate_obsolete().filter(obsolete=True).delete()

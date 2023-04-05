@@ -337,7 +337,6 @@ CELERY_TASK_DEFAULT_QUEUE = 'celery'  # just making the default explicit
 # or explicitly set to 'celery'
 CELERY_TASK_ROUTES = {
     'core.tasks.empty_task_export': {'queue': 'export'},
-    'core.tasks.test': {'queue': 'celery'},
     'core.tasks.flush_request_logs_to_clickhouse': {'queue': 'celery'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
@@ -550,6 +549,7 @@ LOGGING = {
 
 # requestlogs
 CLICKHOUSE_REQUEST_LOGGING = config('CLICKHOUSE_REQUEST_LOGGING', default=False, cast=bool)
+CLICKHOUSE_CELERY_TASK_LOGGING = config('CLICKHOUSE_CELERY_TASK_LOGGING', default=False, cast=bool)
 CLICKHOUSE_LOGGING_DB = config('CLICKHOUSE_LOGGING_DB', default=CLICKHOUSE_DB)
 CLICKHOUSE_LOGGING_USER = config('CLICKHOUSE_LOGGING_USER', default=CLICKHOUSE_USER)
 CLICKHOUSE_LOGGING_PASSWORD = config('CLICKHOUSE_LOGGING_PASSWORD', default=CLICKHOUSE_PASSWORD)
@@ -564,6 +564,9 @@ REQUEST_LOGGING_REDIS_HOST = config('REQUEST_LOGGING_REDIS_HOST', default='local
 REQUEST_LOGGING_REDIS_PORT = config('REQUEST_LOGGING_REDIS_PORT', default=6379, cast=int)
 REQUEST_LOGGING_REDIS_DB = config('REQUEST_LOGGING_REDIS_DB', default=0, cast=int)
 REQUEST_LOGGING_REDIS_KEY = config('REQUEST_LOGGING_REDIS_KEY', default='request_logs')
+CELERY_LOGGING_REDIS_KEY = config('CELERY_LOGGING_REDIS_KEY', default='celery_logs')
+# names of tasks that should not be logged
+CELERY_LOGGING_IGNORED_TASKS = config('CELERY_LOGGING_IGNORED_TASKS', default='', cast=Csv())
 # how often should the celery task flushing request logs into external database be run (in seconds)
 REQUEST_LOGGING_FLUSH_INTERVAL = config('REQUEST_LOGGING_FLUSH_INTERVAL', default=120, cast=int)
 # when synchronizing request logs, do not submit more than REQUEST_LOGGING_BUFFER_SIZE

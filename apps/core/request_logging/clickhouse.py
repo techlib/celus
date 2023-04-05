@@ -58,7 +58,7 @@ class RequestLogCube(Cube):
     ref_query_params = MapDimension(
         key_dimension=StringDimension(clickhouse={'low_cardinality': True}),
         value_dimension=StringDimension(clickhouse={'low_cardinality': True}),
-        help_test='Referrer query params',
+        help_text='Referrer query params',
     )
     response_status_code = IntDimension()
     user_id = IntDimension()
@@ -103,6 +103,46 @@ class RequestLogCube(Cube):
 
 
 RequestLogRecord = RequestLogCube.record_type()
+
+
+class CeleryTaskLogCube(Cube):
+
+    # model attributes
+    hostname = StringDimension(clickhouse={'low_cardinality': True})
+    db_server = StringDimension(clickhouse={'low_cardinality': True})
+    clickhouse_db_server = StringDimension(clickhouse={'low_cardinality': True})
+    debug = BooleanDimension()
+    timestamp = DateTimeDimension(clickhouse={"compression_codec": "Delta"})
+    task_name = StringDimension(
+        clickhouse={'low_cardinality': True}, help_text='Name of the task function'
+    )
+    task_args = ArrayDimension(
+        dimension=StringDimension(clickhouse={'low_cardinality': True}),
+        help_text='Task positional arguments',
+    )
+    task_kwargs = MapDimension(
+        key_dimension=StringDimension(clickhouse={'low_cardinality': True}),
+        value_dimension=StringDimension(clickhouse={'low_cardinality': True}),
+        help_text='Task keyword arguments',
+    )
+    status = StringDimension(clickhouse={'low_cardinality': True})
+    # celus specific dimensions
+    celus_version = StringDimension(clickhouse={'low_cardinality': True})
+    celus_git_hash = StringDimension(clickhouse={'low_cardinality': True})
+    clickhouse_query_active = BooleanDimension()
+    # metrics
+    query_count_django = IntMetric()
+    query_count_clickhouse = IntMetric()
+    execution_time = FloatMetric(help_text="Execution time in milliseconds")
+
+    class Clickhouse:
+        engine = "MergeTree"
+        primary_key = ["hostname", "task_name", "celus_version", "timestamp"]
+        sorting_key = ["hostname", "task_name", "celus_version", "timestamp", "status"]
+        partition_key = ["toYYYYMM(timestamp)"]
+
+
+CeleryTaskLogRecord = CeleryTaskLogCube.record_type()
 
 
 def get_logging_backend():

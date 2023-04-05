@@ -9,7 +9,7 @@ from random import randint
 from time import monotonic
 
 import celery
-from core.context_managers import needs_clickhouse_sync
+from core.context_managers import logged_task, needs_clickhouse_sync
 from core.logic.error_reporting import email_if_fails
 from core.models import User
 from core.task_support import cache_based_lock
@@ -51,6 +51,7 @@ logger = logging.getLogger(__file__)
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def sync_interest_task():
     """
@@ -61,6 +62,7 @@ def sync_interest_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def import_new_sushi_attempts_task():
@@ -95,6 +97,7 @@ def import_new_sushi_attempts_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
@@ -136,6 +139,7 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def recompute_interest_by_batch_task(queryset=None):
     """
@@ -146,6 +150,7 @@ def recompute_interest_by_batch_task(queryset=None):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def smart_interest_sync_task():
     """
@@ -156,6 +161,7 @@ def smart_interest_sync_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def export_raw_data_task(query_params, filename_base, zip_compress=False):
     """
@@ -170,6 +176,7 @@ def export_raw_data_task(query_params, filename_base, zip_compress=False):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def sync_materialized_reports_task():
     """
@@ -180,6 +187,7 @@ def sync_materialized_reports_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def update_report_approx_record_count_task():
     """
@@ -190,6 +198,7 @@ def update_report_approx_record_count_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @needs_clickhouse_sync
 @atomic
@@ -215,6 +224,7 @@ def process_outstanding_import_batch_sync_logs_task(age_threshold: int = 600):
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @needs_clickhouse_sync
 @atomic
@@ -237,6 +247,7 @@ def compare_db_with_clickhouse_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def compare_db_with_clickhouse_delayed_task():
     """
@@ -249,12 +260,14 @@ def compare_db_with_clickhouse_delayed_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def process_one_import_batch_sync_log_task(import_batch_id):
     process_one_import_batch_sync_log(import_batch_id)
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def prepare_preflight(mdu_id: int):
@@ -367,6 +380,7 @@ Traceback: {traceback.format_exc()}
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def prepare_preflights():
@@ -379,6 +393,7 @@ def prepare_preflights():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def import_manual_upload_data(mdu_id: int, user_id: int):
@@ -454,6 +469,7 @@ Traceback: {traceback.format_exc()}
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def unstuck_import_manual_upload_data():
@@ -466,6 +482,7 @@ def unstuck_import_manual_upload_data():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def reprocess_mdu_task(mdu_id):
     try:

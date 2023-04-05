@@ -4,6 +4,7 @@ Celery tasks
 import logging
 
 import celery
+from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from core.models import TaskProgress
 from django.db.transaction import atomic
@@ -17,18 +18,21 @@ logger = logging.getLogger(__name__)
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def erms_sync_platforms_task():
     erms_sync_platforms()
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def clean_obsolete_platform_title_links_task():
     clean_obsolete_platform_title_links()
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def merge_titles_task():
     count = 0
@@ -39,6 +43,7 @@ def merge_titles_task():
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 def delete_platform_data_task(
     platform_id: int,
@@ -59,6 +64,7 @@ def delete_platform_data_task(
 
 
 @celery.shared_task
+@logged_task
 @email_if_fails
 @atomic
 def process_title_overlap_batch_task(batch_id: int, domain_name: str = '/'):

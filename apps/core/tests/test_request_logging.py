@@ -42,8 +42,11 @@ class TestRequestLogging:
             assert instance_mock.lpop.call_count == 3
             assert instance_mock.lpop.call_args_list[0][0][0] == settings.REQUEST_LOGGING_REDIS_KEY
 
+    @pytest.mark.parametrize('has_data', [True, False])
     @pytest.mark.parametrize('anonymous', [True, False])
-    def test_the_whole_logging_process(self, settings, admin_client, admin_user, client, anonymous):
+    def test_the_whole_logging_process(
+        self, settings, admin_client, admin_user, client, anonymous, has_data
+    ):
         """
         Make a request, store the data that would be sent to redis, then call the task
         and present it with the data and check that it gets sent to clickhouse
@@ -52,6 +55,7 @@ class TestRequestLogging:
         # partially imported module
         # The following seems to force the settings to be completely loaded and I can
         # then mock it without trouble
+        settings.CLICKHOUSE_CELERY_TASK_LOGGING = False  # need to disable this for the test
         client_obj = admin_client if not anonymous else client
         client_obj.get(reverse('user_api_view'))
         with patch('core.request_logging.capture.redis.Redis') as redis_mock:
@@ -68,17 +72,23 @@ class TestRequestLogging:
             backend_mock = Mock()
             get_backend_mock.return_value = backend_mock
             instance_mock = Mock()
-            instance_mock.lpop = MagicMock(side_effect=[redis_stored_record, None])
+            instance_mock.lpop = MagicMock(
+                side_effect=[redis_stored_record, None] if has_data else [None]
+            )
             redis_mock.return_value = instance_mock
 
             from core.tasks import flush_request_logs_to_clickhouse
 
             flush_request_logs_to_clickhouse()
-            assert get_backend_mock.called
-            assert backend_mock.store_records.called
-            stored_records = backend_mock.store_records.call_args[0][1]
-            assert len(stored_records) == 1
-            rec = stored_records[0]
-            assert rec.request_url_name == 'user_api_view'
-            assert rec.request_method == 'GET'
-            assert rec.user_id == (admin_user.pk if not anonymous else 0)
+            if has_data:
+                assert get_backend_mock.called
+                assert backend_mock.store_records.called
+                stored_records = backend_mock.store_records.call_args[0][1]
+                assert len(stored_records) == 1
+                rec = stored_records[0]
+                assert rec.request_url_name == 'user_api_view'
+                assert rec.request_method == 'GET'
+                assert rec.user_id == (admin_user.pk if not anonymous else 0)
+            else:
+                assert not get_backend_mock.called
+                assert not backend_mock.store_records.called
