@@ -6,25 +6,6 @@ build-backend = "poetry.masonry.api"
 line-length = 100
 skip-string-normalization = true
 target-version = ["py38"]
-# old versions of black used to put a comma at the end of
-#
-# fn(
-#     arg1, arg2,
-# )
-#
-# and new versions interpret this as a "magic comma" and use it to split it to one item per line
-# (https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#the-magic-trailing-comma):
-#
-# fn(
-#     arg1,
-#     arg2,
-# )
-#
-# which we do not like. So we preserve the old behavior with the following
-#
-# We could also keep the new magic comma behavior, but do one-off reformatting using the following
-# setting just to remove the magic commas in the first place
-skip-magic-trailing-comma = true
 
 [tool.isort]
 line_length = 100
