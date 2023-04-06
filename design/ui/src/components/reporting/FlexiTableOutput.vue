@@ -10,6 +10,7 @@ en:
   loading_parts: Loading list of parts
   remainder: Remainder without any tags
   no_data: No data matching the current setup was found.
+  row_total: Row total
 
 cs:
   detail: Detail
@@ -20,6 +21,7 @@ cs:
   loading_parts: Nahrávám seznam částí
   remainder: Zbytek bez přiřazeného štítku
   no_data: Nebyla nalezena žádná data odpovídající aktuálnímu nastavení.
+  row_total: Celkem
 </i18n>
 
 <template>
@@ -187,6 +189,7 @@ export default {
 
   props: {
     readonly: { default: false, type: Boolean },
+    showTotals: { default: true, type: Boolean },
     // if the organization and selected dates should be used from the UI,
     // and not from the report, set this to true
     contextOverride: { default: false, type: Boolean },
@@ -253,8 +256,21 @@ export default {
     tableHeaders() {
       if (this.report) {
         let headers = [];
+        if (this.showTotals) {
+          headers.push({
+            text: this.$t("row_total"),
+            value: "_total",
+            sortable: false,
+            align: "end",
+          });
+        }
         this.headersFromData.forEach((item) =>
-          headers.push({ ...item, sortable: !this.readonly })
+          headers.push({
+            ...item,
+            sortable: !this.readonly,
+            class: "data-col",
+            cellClass: "data-col",
+          })
         );
         let titleHeaders = this.activeTitleColumns.map((key) => ({
           text: this.$t("title_fields." + key),
@@ -315,7 +331,7 @@ export default {
       return this.dataToShow.map((item) => {
         let newItem = { ...item };
         for (let key of Object.keys(newItem)) {
-          if (key.startsWith("grp-")) {
+          if (key.startsWith("grp-") || key === "_total") {
             newItem[key] = formatInteger(newItem[key]);
           }
         }
@@ -676,3 +692,13 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.data-col {
+  background-color: #f5f5f5;
+}
+
+tr:hover td.data-col {
+  background-color: #e0e0e0;
+}
+</style>

@@ -89,23 +89,23 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Platform,Tags,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,B / Metric 2,B / '
-            'Metric 3',
-            'Platform 1,,12294,13590,14886,12330,13626,14922',
-            'Platform 2,,16182,17478,18774,16218,17514,18810',
-            'Platform 3,,20070,21366,22662,20106,21402,22698',
+            'Platform,Tags,Row total,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,'
+            'B / Metric 2,B / Metric 3',
+            'Platform 1,,81648,12294,13590,14886,12330,13626,14922',
+            'Platform 2,,104976,16182,17478,18774,16218,17514,18810',
+            'Platform 3,,128304,20070,21366,22662,20106,21402,22698',
         ]
 
     def test_create_output_file_for_slicer2(self, slicer2, admin_user, export_output):
         export = FlexibleDataExport.create_from_slicer(slicer2, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Metric,A / Platform 1,A / Platform 2,A / Platform 3,B / Platform 1,B / Platform 2,B /'
-            ' Platform 3',
-            'Metric 1,12294,16182,20070,12330,16218,20106',
-            'Metric 2,13590,17478,21366,13626,17514,21402',
-            'Metric 3,14886,18774,22662,14922,18810,22698',
-            'MS,0,0,0,0,0,0',
+            'Metric,Row total,A / Platform 1,A / Platform 2,A / Platform 3,B / Platform 1,'
+            'B / Platform 2,B / Platform 3',
+            'Metric 1,97200,12294,16182,20070,12330,16218,20106',
+            'Metric 2,104976,13590,17478,21366,13626,17514,21402',
+            'Metric 3,112752,14886,18774,22662,14922,18810,22698',
+            'MS,0,0,0,0,0,0,0',
         ]
 
     @pytest.mark.parametrize('show_remainder', [True, False])
@@ -123,12 +123,12 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         expected = [
-            'Tag,Metric 1,Metric 2,Metric 3',
-            'Tag 1,96012,103788,111564',
-            'Tag 2,49950,53838,57726',
+            'Tag,Row total,Metric 1,Metric 2,Metric 3',
+            'Tag 1,311364,96012,103788,111564',
+            'Tag 2,161514,49950,53838,57726',
         ]
         if show_remainder:
-            expected += ['-- untagged remainder --,0,0,0']
+            expected += ['-- untagged remainder --,0,0,0,0']
         assert data.splitlines() == expected
         if show_remainder:
             # try untagging and recomputing
@@ -136,9 +136,9 @@ class TestFlexibleDataExport:
             export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
             data = export_output(export)
             assert data.splitlines() == [
-                'Tag,Metric 1,Metric 2,Metric 3',
-                'Tag 1,96012,103788,111564',
-                '-- untagged remainder --,49950,53838,57726',
+                'Tag,Row total,Metric 1,Metric 2,Metric 3',
+                'Tag 1,311364,96012,103788,111564',
+                '-- untagged remainder --,161514,49950,53838,57726',
             ]
 
     def test_create_output_file_with_tag_filter(
@@ -156,9 +156,9 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Title/Database,ISSN,EISSN,ISBN,Tags,Metric 1,Metric 2,Metric 3',
-            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag1.full_name},47358,51246,55134',
-            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag1.full_name},48654,52542,56430',
+            'Title/Database,ISSN,EISSN,ISBN,Tags,Row total,Metric 1,Metric 2,Metric 3',
+            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag1.full_name},153738,47358,51246,55134',
+            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag1.full_name},157626,48654,52542,56430',
         ]
 
     def test_tagged_output_query_count(

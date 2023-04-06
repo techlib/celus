@@ -871,7 +871,8 @@ class TestFlexibleDataSlicerOther:
 
 @pytest.mark.django_db
 class TestFlexibleDataSimpleCSVExporter:
-    def test_org_sum_by_platform(self, flexible_slicer_test_data):
+    @pytest.mark.parametrize('include_row_totals', [True, False])
+    def test_org_sum_by_platform(self, flexible_slicer_test_data, include_row_totals):
         """
         Primary dimension: organization
         Group by: platform
@@ -879,17 +880,27 @@ class TestFlexibleDataSimpleCSVExporter:
         """
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
-        exporter = FlexibleDataSimpleCSVExporter(slicer, include_tags=False)
+        exporter = FlexibleDataSimpleCSVExporter(
+            slicer, include_tags=False, include_row_totals=include_row_totals
+        )
         out = StringIO()
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
         assert len(output.splitlines()) == Organization.objects.count() + 1
-        assert output.splitlines() == [
-            'Organization,Platform 1,Platform 2,Platform 3',
-            'Organization 1,519318,717606,915894',
-            'Organization 2,1114182,1312470,1510758',
-            'Organization 3,1709046,1907334,2105622',
-        ]
+        if include_row_totals:
+            assert output.splitlines() == [
+                'Organization,Row total,Platform 1,Platform 2,Platform 3',
+                'Organization 1,2152818,519318,717606,915894',
+                'Organization 2,3937410,1114182,1312470,1510758',
+                'Organization 3,5722002,1709046,1907334,2105622',
+            ]
+        else:
+            assert output.splitlines() == [
+                'Organization,Platform 1,Platform 2,Platform 3',
+                'Organization 1,519318,717606,915894',
+                'Organization 2,1114182,1312470,1510758',
+                'Organization 3,1709046,1907334,2105622',
+            ]
 
     @pytest.mark.parametrize('include_tags', [True, False])
     def test_org_sum_by_platform_with_tags(self, flexible_slicer_test_data, include_tags, users):
@@ -1403,4 +1414,5 @@ class TestFlexibleDataExcelExporter:
             ['Organization 1', 519318, 717606, 915894],
             ['Organization 2', 1114182, 1312470, 1510758],
             ['Organization 3', 1709046, 1907334, 2105622],
+            ['Total', '=SUM(B2:B4)', '=SUM(C2:C4)', '=SUM(D2:D4)'],
         ]

@@ -24,7 +24,6 @@ class AnnotateObsoleteQueryset(models.QuerySet):
 
 
 class ExportBase(models.Model):
-
     NOT_STARTED = 0
     IN_PROGRESS = 1
     FINISHED = 2
@@ -85,7 +84,6 @@ class ExportBase(models.Model):
 
 
 class FlexibleDataExport(ExportBase):
-
     objects = AnnotateObsoleteQueryset.as_manager()
     format_to_exporter = {
         FileFormat.XLSX: FlexibleDataExcelExporter,
@@ -136,7 +134,11 @@ class FlexibleDataExport(ExportBase):
         slicer.add_extra_organization_filter(self.owner.accessible_organizations())
         export_cls = self.format_to_exporter[self.file_format]
         exporter = export_cls(
-            slicer, report_name=self.name, report_owner=self.owner, include_tags=True
+            slicer,
+            report_name=self.name,
+            report_owner=self.owner,
+            include_tags=True,
+            include_row_totals=True,
         )
         return exporter.stream_data_to_sink(stream, progress_monitor=progress_monitor)
 

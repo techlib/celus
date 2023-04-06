@@ -29,6 +29,7 @@ en:
   organization_count_tt: |
     The number of organizations you have access to. Without an organization filter, the report will be run for all
     these organizations.
+  show_totals: Show row totals
 
 cs:
   run_report: Spustit report
@@ -57,6 +58,7 @@ cs:
   no_tags_present: Pro zvolené řádky nejsou k dispozici žádné štítky.
   organization_count_tt: |
     Počet organizací, ke kterým máte přístup. Bez filtru organizací bude report spuštěn pro všechny tyto organizace.
+  show_totals: Zobrazit součty řádku
 </i18n>
 
 <template>
@@ -558,6 +560,13 @@ cs:
               class="mt-0"
             />
           </v-col>
+          <v-col cols="auto">
+            <v-switch
+              v-model="showTotals"
+              :label="$t('show_totals')"
+              class="mt-0"
+            />
+          </v-col>
           <v-spacer></v-spacer>
           <v-col cols="auto" v-if="!readOnly">
             <v-btn
@@ -579,7 +588,11 @@ cs:
 
     <v-row>
       <v-col>
-        <FlexiTableOutput v-show="displayReport" ref="outputTable" />
+        <FlexiTableOutput
+          v-show="displayReport"
+          :show-totals="showTotals"
+          ref="outputTable"
+        />
       </v-col>
     </v-row>
   </v-container>
@@ -671,6 +684,7 @@ export default {
       accessLevelParams: {},
       wantsSave: !!this.reportId || "wantsSave" in this.$route.query,
       showZeroRows: false,
+      showTotals: true,
       reportRunning: false,
       displayReport: false,
       accessibleTags: [],

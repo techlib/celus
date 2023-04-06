@@ -3,7 +3,7 @@ import logging
 import tempfile
 from abc import ABC, abstractmethod
 from itertools import chain, islice
-from typing import Any, Callable, Optional, TextIO, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, TextIO, Tuple, Type, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import xlsxwriter
@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 
 
 class FlexibleDataExporter(ABC):
-
     object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
     taggable_rows = {
         'target': {'scope': TagScope.TITLE, 'related_attr': 'title'},
@@ -47,11 +46,13 @@ class FlexibleDataExporter(ABC):
         report_name: str = '',
         report_owner=None,
         include_tags: bool = False,  # tag column will be added to the report
+        include_row_totals: bool = False,  # row totals will be added to the report
     ):
         self.slicer = slicer
         self.report_name = report_name
         self.report_owner = report_owner
         self._include_tags = include_tags
+        self.include_row_totals = include_row_totals
         if self.include_tags and not self.report_owner:
             raise ValueError(
                 'report_owner must be set if include_tags is True because tags are user-specific'
@@ -169,6 +170,9 @@ class FlexibleDataExporter(ABC):
         # add tag column if needed
         if self.include_tags:
             fields.append(('tags', _('Tags')))
+        # add total column if needed
+        if self.include_row_totals:
+            fields.append(('_total', _('Row total')))
         # fields from groups
         other_fields = []
         for key in row:
@@ -435,7 +439,6 @@ class FlexibleDataZipCSVExporter(FlexibleDataExporter):
 
 
 class FlexibleDataExcelExporter(FlexibleDataExporter):
-
     object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
 
     def __init__(self, slicer: FlexibleDataSlicer, include_charts: bool = True, **kwargs):
@@ -519,9 +522,23 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             with open(tmp_file.name, 'rb') as outfile:
                 sink.write(outfile.read())
 
-    def create_writer(self, output, fields: list) -> DictWriter:
+    def create_writer(self, output, fields: List[Tuple[str, str]]) -> DictWriter:
+        formulas = []
+        if self.include_row_totals:
+            formulas.append(
+                MappingXlsxDictWriter.Formula(
+                    key='_total',
+                    operation='sum',
+                    refs=[key for key, _field in fields if key.startswith('grp-')],
+                )
+            )
         return MappingXlsxDictWriter(
-            output, fields=fields, cell_format=self.base_fmt, header_format=self.header_fmt
+            output,
+            fields=fields,
+            cell_format=self.base_fmt,
+            header_format=self.header_fmt,
+            row_formulas=formulas,
+            sum_row_skip_cols=len(self.remapped_keys()) + (1 if self.include_tags else 0),
         )
 
     def add_chart_sheet(
@@ -540,6 +557,8 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             row_count = max_rows_to_show
         skip_cols = len(self.remapped_keys())  # for titles skip ISSN and other cols
         if self.include_tags:
+            skip_cols += 1
+        if self.include_row_totals:
             skip_cols += 1
         for i in range(skip_cols, len(self._fields)):
             chart.add_series(
