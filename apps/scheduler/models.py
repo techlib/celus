@@ -297,22 +297,41 @@ class FetchIntentionQuerySet(models.QuerySet):
         return res
 
     def schedulers_to_trigger(self) -> typing.List[Scheduler]:
-        res: typing.Set[Scheduler] = set()
-        for fi in self.filter(
-            not_before__lt=timezone.now(),
-            scheduler__isnull=True,
-            duplicate_of__isnull=True,
-            when_processed__isnull=True,
-        ):
-            (scheduler, _) = Scheduler.objects.get_or_create(url=fi.credentials.url)
-            if (
-                scheduler.current_celery_task_id is None
-                and scheduler.current_intention is None
-                and (scheduler.when_ready < timezone.now() or fi.priority_now)
-            ):
-                res.add(scheduler)
-
-        return list(res)
+        ret: typing.List[Scheduler] = []
+        # get unique URLs from unprocessed intentions + extract their highest priority
+        url_to_priority = {
+            rec['credentials__url']: rec['max_p']
+            for rec in FetchIntention.objects.filter(
+                not_before__lt=timezone.now(),
+                scheduler__isnull=True,
+                duplicate_of__isnull=True,
+                when_processed__isnull=True,
+            )
+            .values('credentials__url')
+            .annotate(max_p=Max('priority'))
+        }
+        # get schedulers for the URLs
+        url_to_scheduler = {
+            sch.url: sch for sch in Scheduler.objects.filter(url__in=url_to_priority.keys())
+        }
+        to_add = []
+        for url, priority in url_to_priority.items():
+            if scheduler := url_to_scheduler.get(url):
+                # the scheduler is already in the database
+                if (
+                    scheduler.current_celery_task_id is None
+                    and scheduler.current_intention is None
+                    and (
+                        scheduler.when_ready < timezone.now()
+                        or priority >= FetchIntention.PRIORITY_NOW
+                    )
+                ):
+                    ret.append(scheduler)
+            else:
+                to_add.append(Scheduler(url=url))
+        if to_add:
+            ret += Scheduler.objects.bulk_create(to_add)
+        return ret
 
     def latest_intentions(self) -> models.QuerySet:
         """Only latest intentions, retried intentions are skipped"""
