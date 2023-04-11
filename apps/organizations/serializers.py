@@ -2,7 +2,7 @@ from django.conf import settings
 from rest_framework.fields import BooleanField, CharField
 from rest_framework.serializers import ModelSerializer
 
-from .models import Organization
+from .models import Organization, OrganizationAltName
 
 
 class OrganizationSerializer(ModelSerializer):
@@ -38,3 +38,34 @@ class OrganizationShortSerializer(ModelSerializer):
     class Meta:
         model = Organization
         fields = ('pk', 'short_name', 'name')
+
+
+class OrganizationAltNameSerializer(ModelSerializer):
+    class Meta:
+        model = OrganizationAltName
+        fields = ('pk', 'name')
+
+
+class OrganizationListSerializer(ModelSerializer):
+
+    is_admin = BooleanField(read_only=True)
+    is_member = BooleanField(read_only=True)
+    alt_names = OrganizationAltNameSerializer(
+        source='organizationaltname_set', many=True, read_only=True
+    )
+
+    class Meta:
+        model = Organization
+        fields = (
+            'pk',
+            'ext_id',
+            'short_name',
+            'name',
+            'alt_names',
+            'internal_id',
+            'ico',
+            'parent',
+            'is_admin',
+            'is_member',
+            'is_raw_data_import_enabled',
+        ) + tuple('name_' + lang[0] for lang in settings.LANGUAGES)

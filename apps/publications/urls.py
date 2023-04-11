@@ -41,6 +41,7 @@ org_sub_router.register(
     OrganizationManualDataUploadViewSet,
     basename='organization-manual-data-upload',
 )
+org_sub_router.register(r'alt-names', views.OrganizationAltNameViewSet, basename='alt-name')
 
 
 title_sub_router = NestedSimpleRouter(org_sub_router, r'title', lookup='title')

@@ -31,14 +31,18 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from sushi.models import SushiCredentials
 
 from .models import Organization, UserOrganization
-from .serializers import OrganizationSerializer, OrganizationSimpleSerializer
+from .serializers import (
+    OrganizationListSerializer,
+    OrganizationSerializer,
+    OrganizationSimpleSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class OrganizationViewSet(ReadOnlyModelViewSet):
 
-    serializer_class = OrganizationSerializer
+    serializer_class = OrganizationListSerializer
     histogram_bins = [
         (0, 0),
         (1, 1),
@@ -61,13 +65,22 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         """
         qs = super().get_queryset()
         qs = qs.filter(pk__in=self.request.user.accessible_organizations())
-        return qs.annotate(
-            is_admin=Count(
-                'userorganization',
-                filter=Q(userorganization__is_admin=True, userorganization__user=self.request.user),
-            ),
-            is_member=Count('userorganization', filter=Q(userorganization__user=self.request.user)),
-        ).order_by('name')
+        return (
+            qs.annotate(
+                is_admin=Exists(
+                    UserOrganization.objects.filter(
+                        organization=OuterRef('pk'), user=self.request.user, is_admin=True
+                    )
+                ),
+                is_member=Exists(
+                    UserOrganization.objects.filter(
+                        organization=OuterRef('pk'), user=self.request.user
+                    )
+                ),
+            )
+            .order_by('name')
+            .prefetch_related('organizationaltname_set')
+        )
 
     @action(detail=True, url_path='sushi-credentials-versions')
     def sushi_credentials_versions(self, request, pk):

@@ -13,7 +13,16 @@ from logs.models import AccessLog, ImportBatch, Metric
 from organizations.models import Organization, UserOrganization
 from publications.tests.conftest import interest_rt  # noqa - fixture
 
-from test_fixtures.scenarios.basic import clients, identities, users  # noqa - fixtures
+from test_fixtures.entities.organizations import OrganizationAltNameFactory
+from test_fixtures.scenarios.basic import (  # noqa - fixtures
+    basic1,
+    clients,
+    data_sources,
+    identities,
+    organizations,
+    platforms,
+    users,
+)
 
 
 @pytest.mark.django_db
@@ -42,21 +51,23 @@ class TestOrganizationAPI:
         self, authenticated_client, organizations, valid_identity
     ):
         """
-        User is authenticated but does not belong to any org - the list should be empty
+        User is authenticated and belongs to a single organization
         """
         identity = Identity.objects.select_related('user').get(identity=valid_identity)
-        UserOrganization.objects.create(user=identity.user, organization=organizations[1])
+        UserOrganization.objects.create(
+            user=identity.user, organization=organizations["standalone"]
+        )
         resp = authenticated_client.get(reverse('organization-list'))
         assert resp.status_code == 200
         assert len(resp.json()) == 1
-        assert resp.json()[0]['pk'] == organizations[1].pk
+        assert resp.json()[0]['pk'] == organizations["standalone"].pk
 
     @pytest.mark.parametrize(
         ['settings_nibbler', 'result'],
         (
-            ('All', [True, True, True]),
-            ('None', [False, False, False]),
-            ('PerOrg', [False, True, False]),
+            ('All', [True, True, True, True, True]),
+            ('None', [False, False, False, False, False]),
+            ('PerOrg', [False, False, False, False, True]),
         ),
     )
     def test_list_nibbler(self, clients, organizations, settings, settings_nibbler, result):
@@ -64,11 +75,19 @@ class TestOrganizationAPI:
         Check whether organization is allowed to use nibbler
         """
         settings.ENABLE_RAW_DATA_IMPORT = settings_nibbler
+        organizations["standalone"].raw_data_import_enabled = True
+        organizations["standalone"].save()
+        a1 = OrganizationAltNameFactory(organization=organizations["standalone"], name="Alt1")
+        a2 = OrganizationAltNameFactory(organization=organizations["standalone"], name="Alt2")
         resp = clients["su"].get(reverse('organization-list'))
         assert resp.status_code == 200
         data = sorted(resp.json(), key=lambda x: x['pk'])
-        assert len(data) == 3
+        assert len(data) == 5
         assert [e["is_raw_data_import_enabled"] for e in data] == result
+        assert data[4]["alt_names"] == [
+            {"pk": a1.pk, "name": "Alt1"},
+            {"pk": a2.pk, "name": "Alt2"},
+        ]
 
     def test_authorized_user_no_authorization_detail(self, authenticated_client, organizations):
         """
@@ -77,7 +96,9 @@ class TestOrganizationAPI:
         :param organizations:
         :return:
         """
-        resp = authenticated_client.get(reverse('organization-detail', args=[organizations[0].pk]))
+        resp = authenticated_client.get(
+            reverse('organization-detail', args=[organizations["standalone"].pk])
+        )
         assert resp.status_code == 404
 
     def test_user_default_organization_creation(self, authenticated_client, settings):
@@ -197,7 +218,7 @@ class TestOrganizationAPI:
             date='2020-01-01',
             metric=metric,
             import_batch=ib,
-            organization=organizations[0],
+            organization=organizations["standalone"],
         )
         AccessLog.objects.create(
             report_type=interest_rt,
@@ -205,21 +226,113 @@ class TestOrganizationAPI:
             date='2020-02-01',
             metric=metric,
             import_batch=ib,
-            organization=organizations[1],
+            organization=organizations["standalone"],
         )
-        resp = master_user_client.get(reverse('organization-interest', args=(organizations[0].pk,)))
+        resp = master_user_client.get(
+            reverse('organization-interest', args=(organizations["standalone"].pk,))
+        )
         assert resp.status_code == 200
         assert resp.json() == {
-            'days': 31,
-            'interest_sum': 5,
-            'max_date': '2020-01-31',
+            'days': 60,
+            'interest_sum': 12,
+            'max_date': '2020-02-29',
             'min_date': '2020-01-01',
         }
-        resp = master_user_client.get(reverse('organization-interest', args=(organizations[1].pk,)))
+        resp = master_user_client.get(
+            reverse('organization-interest', args=(organizations["branch"].pk,))
+        )
         assert resp.status_code == 200
-        assert resp.json() == {
-            'days': 29,
-            'interest_sum': 7,
-            'max_date': '2020-02-29',
-            'min_date': '2020-02-01',
-        }
+        assert resp.json() == {'days': 0, 'interest_sum': None, 'max_date': None, 'min_date': None}
+
+
+@pytest.mark.django_db
+class TestOrganizationAltNameAPI:
+    @pytest.mark.parametrize(
+        ['client', 'passes'],
+        (
+            ('su', True),
+            ('master_admin', True),
+            ('admin1', False),
+            ('admin2', False),
+            ("master_user", False),
+        ),
+    )
+    def test_create(self, clients, organizations, basic1, client, passes):
+        org_id = organizations["standalone"].pk
+
+        OrganizationAltNameFactory(organization=organizations["standalone"], name="alt1")
+
+        # Success
+        resp = clients[client].post(reverse('alt-name-list', args=(org_id,)), {"name": "alt2"})
+        if passes:
+            assert resp.status_code == 201
+        else:
+            assert resp.status_code == 403
+
+        # Organization not found
+        resp = clients[client].post(reverse('alt-name-list', args=(0,)), {"name": "alt2"})
+        if passes:
+            assert resp.status_code == 404
+        else:
+            assert resp.status_code == 403
+
+        # Name conflict with existing alt name
+        resp = clients[client].post(reverse('alt-name-list', args=(org_id,)), {"name": "alt1"})
+        if passes:
+            assert resp.status_code == 400
+        else:
+            assert resp.status_code == 403
+
+        # Name conflict with existing organization name
+        resp = clients[client].post(
+            reverse('alt-name-list', args=(org_id,)), {"name": "standalone"}
+        )
+        if passes:
+            assert resp.status_code == 400
+        else:
+            assert resp.status_code == 403
+
+    @pytest.mark.parametrize(
+        ['client', 'passes'],
+        (
+            ('su', True),
+            ('master_admin', True),
+            ('admin1', False),
+            ('admin2', False),
+            ("master_user", False),
+        ),
+    )
+    def test_delete(self, clients, organizations, basic1, client, passes):
+        org_id = organizations["standalone"].pk
+
+        alt_id = OrganizationAltNameFactory(
+            organization=organizations["standalone"], name="alt1"
+        ).id
+
+        # Organization not found
+        resp = clients[client].delete(reverse('alt-name-detail', args=(0, alt_id)))
+        if passes:
+            assert resp.status_code == 404
+        else:
+            assert resp.status_code == 403
+
+        # Alt name not found
+        resp = clients[client].delete(reverse('alt-name-detail', args=(org_id, 0)))
+        if passes:
+            assert resp.status_code == 404
+        else:
+            assert resp.status_code == 403
+
+        # Success
+        resp = clients[client].delete(reverse('alt-name-detail', args=(org_id, alt_id)))
+        if passes:
+            assert resp.status_code == 204
+        else:
+            assert resp.status_code == 403
+
+        # Already deleted
+        resp = clients[client].delete(reverse('alt-name-detail', args=(org_id, alt_id)))
+        if passes:
+            assert resp.status_code == 404
+        else:
+            assert resp.status_code == 403

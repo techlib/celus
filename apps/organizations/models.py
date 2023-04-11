@@ -96,6 +96,16 @@ class Organization(MPTTModel):
                 % dict(short_name=self.short_name)
             )
 
+        if altname := OrganizationAltName.objects.filter(
+            Q(name__iexact=self.short_name)
+            | Q(name__iexact=self.name_en)
+            | Q(name__iexact=self.name_cs)
+        ).last():
+            raise ValidationError(
+                _("An alias for organization {org} clashes with one of organization names.")
+                % dict(org=altname.organization)
+            )
+
 
 class OrganizationAltName(models.Model):
 
@@ -116,11 +126,13 @@ class OrganizationAltName(models.Model):
         # The idea here is that you can only have one name mapped to one Organization,
         # on the other hand, if different organizations create their own alt-names using
         # their organization source, it should be allowed because we will take this into account
-        # then importing data.
+        # when importing data.
         constraints = [
             UniqueConstraint(fields=['name', 'source'], name='name_source_not_null'),
             UniqueConstraint(fields=['name'], condition=Q(source=None), name='name_source_null'),
         ]
+
+        ordering = ["name"]
 
     def validate_unique(self, exclude=None):
         res = super().validate_unique(exclude)

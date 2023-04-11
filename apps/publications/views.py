@@ -10,6 +10,7 @@ from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Count, Exists, FilteredRelation, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
@@ -28,7 +29,8 @@ from logs.serializers import PlatformInterestReportSerializer, ReportTypeExtende
 from logs.views import StandardResultsSetPagination
 from nibbler.models import ParserDefinition
 from organizations.logic.queries import extend_query_filter, organization_filter_from_org_id
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationAltName
+from organizations.serializers import OrganizationAltNameSerializer
 from pandas import DataFrame
 from publications.models import (
     Platform,
@@ -49,12 +51,12 @@ from recache.util import recache_queryset
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_202_ACCEPTED
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from tags.models import Tag
 
 from .filters import PlatformFilter
@@ -1058,3 +1060,24 @@ class TitleOverlapBatchViewSet(ModelViewSet):
         if self.action == 'create':
             return TitleOverlapBatchCreateSerializer
         return super().get_serializer_class()
+
+
+class OrganizationAltNameViewSet(CreateModelMixin, DestroyModelMixin, GenericViewSet):
+    permission_classes = [SuperuserOrAdminPermission]
+
+    serializer_class = OrganizationAltNameSerializer
+
+    def get_queryset(self):
+        organization = get_object_or_404(Organization, pk=self.kwargs['organization_pk'])
+        return organization.organizationaltname_set
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        organization = get_object_or_404(Organization, pk=self.kwargs['organization_pk'])
+        try:
+            OrganizationAltName.objects.create(
+                name=serializer.validated_data["name"], organization=organization
+            )
+        except DjangoValidationError as e:
+            # Rewrap django exception (used in django admin) to drf exception (API)
+            raise ValidationError(e.message_dict)
