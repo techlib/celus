@@ -17,7 +17,7 @@ def create_multimedia_interest_group(apps, schema_editor):
         ir_m1 = ReportType.objects.get(short_name='IR_M1')
         ir_m1.default_platform_interest = True
         ir_m1.save()
-        tir = Metric.objects.get(short_name='Total_Item_Requests')
+        tir = Metric.objects.get(short_name='Total_Item_Requests', source__isnull=True)
         ReportInterestMetric.objects.get_or_create(
             report_type=ir_m1, metric=tir, interest_group=igm
         )
@@ -35,7 +35,6 @@ def create_multimedia_interest_group(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('logs', '0074_mdu_method'),
         ('publications', '0037_add_ir_m1_interest_to_all_platforms'),

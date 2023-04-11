@@ -145,7 +145,6 @@ class ReportingContext:
 
 
 class Report:
-
     primary_dimension = "platform"
     total_col = "_total_"
 
@@ -415,7 +414,7 @@ class ReportDataSource:
 
     def resolve_metric(self) -> Optional[Metric]:
         try:
-            return Metric.objects.get(short_name=self.metric)
+            return Metric.objects.get(short_name=self.metric, source__isnull=True)
         except Metric.DoesNotExist:
             return None
 
@@ -492,7 +491,6 @@ class ReportDataSource:
 
 @dataclass
 class ResultRow:
-
     primary_pk: int
     primary_obj: Any
     monthly_data: dict

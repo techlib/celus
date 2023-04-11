@@ -12,7 +12,6 @@ from .tasks import import_manual_upload_data
 
 @admin.register(models.OrganizationPlatform)
 class OrganizationPlatformAdmin(admin.ModelAdmin):
-
     list_display = ['organization', 'platform']
 
 
@@ -114,10 +113,10 @@ class ReportTypeAdmin(TranslationAdmin):
 
 @admin.register(models.Metric)
 class MetricAdmin(TranslationAdmin):
-
-    list_display = ['short_name', 'active', 'name', 'controlled_report_types']
+    list_display = ['short_name', 'active', 'name', 'source', 'controlled_report_types']
     list_editable = ['active']
-    list_filter = ['active']
+    list_filter = ['active', 'source']
+    search_fields = ['short_name', 'name']
 
     @classmethod
     def controlled_report_types(cls, obj: models.Metric):
@@ -130,7 +129,6 @@ class MetricAdmin(TranslationAdmin):
 
 @admin.register(models.ReportInterestMetric)
 class ReportInterestMetricAdmin(TranslationAdmin):
-
     list_display = ['report_type', 'metric', 'interest_group', 'target_metric']
     list_filter = ['report_type', 'metric', 'interest_group']
     search_fields = ['report_type__short_name', 'report_type__name', 'metric__name']
@@ -139,7 +137,6 @@ class ReportInterestMetricAdmin(TranslationAdmin):
 
 @admin.register(models.Dimension)
 class DimensionAdmin(TranslationAdmin):
-
     list_display = ['short_name', 'name', 'desc', 'source']
     ordering = ['short_name']
     list_filter = ['source']
@@ -147,14 +144,12 @@ class DimensionAdmin(TranslationAdmin):
 
 @admin.register(models.DimensionText)
 class DimensionTextAdmin(TranslationAdmin):
-
     list_display = ['id', 'dimension', 'text', 'text_local']
     list_filter = ['dimension']
 
 
 @admin.register(models.ReportTypeToDimension)
 class ReportTypeToDimensionAdmin(admin.ModelAdmin):
-
     list_display = ['report_type', 'dimension', 'position']
     ordering = ['report_type__short_name', 'position']
     list_filter = ['report_type', 'dimension']
@@ -162,7 +157,6 @@ class ReportTypeToDimensionAdmin(admin.ModelAdmin):
 
 @admin.register(models.AccessLog)
 class AccessLogAdmin(admin.ModelAdmin):
-
     list_display = [
         'metric',
         'report_type',
@@ -181,14 +175,12 @@ class AccessLogAdmin(admin.ModelAdmin):
 
 @admin.register(models.InterestGroup)
 class InterestGroupAdmin(TranslationAdmin):
-
     list_display = ['short_name', 'important', 'position', 'name']
     list_editable = ['important', 'position']
 
 
 @admin.register(models.ImportBatch)
 class ImportBatchAdmin(admin.ModelAdmin):
-
     list_display = ['created', 'report_type', 'organization', 'platform', 'date', 'log_count']
     list_filter = ['report_type', 'organization', 'platform']
     list_select_related = ['report_type', 'organization', 'platform']
@@ -205,13 +197,11 @@ class ImportBatchAdmin(admin.ModelAdmin):
 
 @admin.register(models.ReportMaterializationSpec)
 class ReportMaterializationSpecAdmin(admin.ModelAdmin):
-
     list_display = ['name', 'base_report_type', 'description']
 
 
 @admin.register(models.FlexibleReport)
 class FlexibleReportAdmin(admin.ModelAdmin):
-
     list_display = ['name', 'access_level', 'owner', 'owner_organization']
 
 
@@ -232,7 +222,6 @@ class HasImportBatch(admin.SimpleListFilter):
 
 @admin.register(models.ManualDataUpload)
 class ManualDataUploadAdmin(admin.ModelAdmin):
-
     list_filter = ['state', 'report_type', 'organization', 'platform', HasImportBatch, 'method']
     list_display = ['created', 'report_type', 'platform', 'organization', 'user', 'state']
     list_select_related = ['report_type', 'organization', 'platform', 'user']
@@ -283,5 +272,4 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
 
 @admin.register(models.LastAction)
 class LastActionAdmin(admin.ModelAdmin):
-
     list_display = ['action', 'last_updated']
