@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - when deleting platform data, it is now possible to delete the related SUSHI credentials as well
 - when manually uploading non-COUNTER data, a link to the knowledgebase may be now shown to get
   users to more information about the format
+- the title overlap function newly adds info about first and last month of available data for
+  each title
 
 #### Backend
 
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the `Specialized reports` section was reworked to allow for more reports to be added in the
   future and to improve the export functionality
 - link to the tags documentation was changed to point to the knowledgebase
+
 
 #### Backend
 
@@ -54,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - when checking a newly created custom platform name against existing platform names, other custom
   platforms were not taken into account
+- when creating tag class with permissions depending on the organization, the organization was not
+  properly sent to the backend resulting in a permission error
+
 
 #### Backend
 
@@ -72,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the `clean_obsolete_platform_title_links` task was optimized for speed and prints progress
   information to prevent the task from seeming to hang
 - incorrect sheet reference format in formulas in Excel exports of specialized export was fixed
+- error in specialized reports caused by multiple metrics with the same name was fixed (fixes
+  problems with the Rebiun report on run.celus.one)
 
 
 ## [5.3.0] - 2023-03-08

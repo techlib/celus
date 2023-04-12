@@ -7,12 +7,14 @@
       - Celus is now able to calculate your **ACRL IPEDS report** - [read more about it here](https://support.celus.net/support/solutions/articles/103000092778-acrl-ipeds-report)
       - interest type **"Multimedia"** was added
       - **only one set of SUSHI credentials per platform**, organization and COUNTER version is allowed - [more info](https://support.celus.net/support/solutions/articles/103000063863)
+      - the title overlap function newly adds info about first and last month of available data for each title
       - an option to delete platform data together with its SUSHI credentials was added
       - as usual some bugs were squashed and things tweaked for better performance
     cs: |
       - Celus nyní umí vypočítat **ACRL IPEDS report** - [více informací zde](https://support.celus.net/support/solutions/articles/103000092778-acrl-ipeds-report)
       - byl přidán typ zájmu **"Multimédia"**
       - pro platformu, organizaci a verzi COUNTER je nyní povolena **pouze jedna sada SUSHI přihlašovacích údajů** - [více informací](https://support.celus.net/support/solutions/articles/103000063863)
+      - funkce pro analýzu překryvu titulů nyní přidává informace o prvním a posledním měsíci dostupných dat pro každý titul
       - při mazání všech dat platformy je nyní možné smazat i její SUSHI přihlašovací údaje
       - jako obvykle byly odstraněny některé chyby a vylepšena výkonnost
   is_new_feature: TRUE
