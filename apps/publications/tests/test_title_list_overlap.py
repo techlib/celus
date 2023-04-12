@@ -45,16 +45,16 @@ class TestTitleListOverlap:
         p_bar = PlatformFactory.create(name='Bar')
         # t1 is on platform Foo only
         t1 = TitleFactory.create(isbn='9780787960186')
-        PlatformTitleFactory.create(title=t1, platform=p_foo)
+        PlatformTitleFactory.create(title=t1, platform=p_foo, date='2020-01-01')
         # t2 is on both platforms
         t2 = TitleFactory.create(issn='1234-5678')
-        PlatformTitleFactory.create(title=t2, platform=p_foo)
-        PlatformTitleFactory.create(title=t2, platform=p_bar)
+        PlatformTitleFactory.create(title=t2, platform=p_foo, date='2019-01-01')
+        PlatformTitleFactory.create(title=t2, platform=p_bar, date='2019-03-01')
 
         reader = CsvTitleListOverlapReader()
         dump = BytesIO()
         with open('test-data/tagging_batch/plain-title-list.csv', 'r') as infile:
-            with django_assert_max_num_queries(num_queries * 2):  # 2 queries per batch
+            with django_assert_max_num_queries(num_queries * 3):  # 3 queries per batch
                 data = list(
                     reader.process_source(
                         infile, merge_issns=merge_issns, batch_size=batch_size, dump_file=dump
@@ -74,17 +74,25 @@ class TestTitleListOverlap:
             'note',
             '_Found on platforms_',
             '_Matched titles_',
+            '_First usage data_',
+            '_Last usage data_',
         ]
         for i, rec in enumerate(reader_recs):
             if expected_counts[i] == 0:
                 assert rec['_Matched titles_'] == ''
                 assert rec['_Found on platforms_'] == ''
+                assert rec['_First usage data_'] == ''
+                assert rec['_Last usage data_'] == ''
             else:
                 assert rec['_Matched titles_'] != ''
                 if int(rec['_Matched titles_']) == t1.pk:
                     assert rec['_Found on platforms_'] == 'Foo'
+                    assert rec['_First usage data_'] == '2020-01-01'
+                    assert rec['_Last usage data_'] == '2020-01-01'
                 else:
                     assert rec['_Found on platforms_'] == 'Bar, Foo'
+                    assert rec['_First usage data_'] == '2019-01-01'
+                    assert rec['_Last usage data_'] == '2019-03-01'
 
     @pytest.mark.parametrize(
         [
