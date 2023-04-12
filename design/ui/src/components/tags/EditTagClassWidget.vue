@@ -4,10 +4,12 @@
 en:
   tag_class_created: Tag class was successfully created.
   tag_class_saved: Tag class was successfully saved.
+  missing_organization: You must select an organization in the upper left corner to create a tag class with permissions depending on an organization.
 
 cs:
   tag_class_created: Typ štítku byl úspěšně vytvořen.
   tag_class_saved: Typ štítku byl úspěšně uložen.
+  missing_organization: Pro vytvoření typu štítku s oprávněními závislými na organizaci musíte vybrat organizaci v levém horním rohu obrazovky.
 </i18n>
 
 <template>
@@ -84,14 +86,27 @@ cs:
               <TagChip :tag="tagClassPreview" />
             </v-col>
           </v-row>
+          <v-row v-if="missingOrganization">
+            <v-col>
+              <v-alert type="error">
+                {{ $t("missing_organization") }}
+              </v-alert>
+            </v-col>
+          </v-row>
         </v-container>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn @click="$emit('close')">{{ $t("actions.close") }}</v-btn>
-        <v-btn color="primary" :disabled="!valid" @click="save" class="ma-3">{{
-          tagClass === null ? $t("actions.create") : $t("actions.save")
-        }}</v-btn>
+        <v-btn
+          color="primary"
+          :disabled="!valid || missingOrganization"
+          @click="save"
+          class="ma-3"
+          >{{
+            tagClass === null ? $t("actions.create") : $t("actions.save")
+          }}</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-form>
@@ -134,9 +149,25 @@ export default {
     ...mapGetters({
       consortialInstall: "consortialInstall",
       showConsortialStuff: "showConsortialStuff",
+      selectedOrganization: "selectedOrganization",
     }),
+    needsOrganization() {
+      return (
+        this.canModify === accessLevels.ORG_USERS ||
+        this.canModify === accessLevels.ORG_ADMINS ||
+        this.canCreateTags === accessLevels.ORG_USERS ||
+        this.canCreateTags === accessLevels.ORG_ADMINS ||
+        this.defaultTagCanSee === accessLevels.ORG_USERS ||
+        this.defaultTagCanSee === accessLevels.ORG_ADMINS ||
+        this.defaultTagCanAssign === accessLevels.ORG_USERS ||
+        this.defaultTagCanAssign === accessLevels.ORG_ADMINS
+      );
+    },
+    missingOrganization() {
+      return this.needsOrganization && !this.selectedOrganization;
+    },
     tagClassPreview() {
-      return {
+      let ret = {
         name: this.name,
         text_color: this.textColor,
         bg_color: this.bgColor,
@@ -148,6 +179,10 @@ export default {
         default_tag_can_see: this.defaultTagCanSee,
         default_tag_can_assign: this.defaultTagCanAssign,
       };
+      if (this.needsOrganization) {
+        ret.owner_org = this.selectedOrganization.pk;
+      }
+      return ret;
     },
     scopes() {
       return [
