@@ -9,10 +9,21 @@ def create_multimedia_interest_group(apps, schema_editor):
     ReportType = apps.get_model('logs', 'ReportType')
     ReportInterestMetric = apps.get_model('logs', 'ReportInterestMetric')
     Metric = apps.get_model('logs', 'Metric')
+    Dimension = apps.get_model('logs', 'Dimension')
+    DimensionText = apps.get_model('logs', 'DimensionText')
     defaults = {'name_en': 'Multimedia', 'position': 3, 'important': True}
     if 'cs' in settings.LANGUAGES:
         defaults['name_cs'] = 'Multimedia'
     igm, _ = InterestGroup.objects.get_or_create(short_name='multimedia', defaults=defaults)
+    # the DimensionText would normally be created when some interest is
+    # computed, but if there is none, we need to create it here for the UI
+    # to work correctly
+    dim1, _ = Dimension.objects.get_or_create(short_name='Interest_Type')
+    dim_text, _ = DimensionText.objects.get_or_create(
+        dimension=dim1,
+        text=igm.short_name,
+        defaults={'text_local_en': igm.name_en, 'text_local_cs': igm.name_cs},
+    )
     try:
         ir_m1 = ReportType.objects.get(short_name='IR_M1')
         ir_m1.default_platform_interest = True

@@ -37,6 +37,6 @@ def titles():
 @pytest.fixture
 def interest_rt():
     irt = ReportType.objects.create(short_name='interest')
-    interest_type_dim = Dimension.objects.create(short_name='Interest_Type')
+    interest_type_dim, _ = Dimension.objects.get_or_create(short_name='Interest_Type')
     ReportTypeToDimension.objects.create(report_type=irt, dimension=interest_type_dim, position=0)
     return irt
