@@ -6,6 +6,7 @@ import celery
 import redis
 from celery.signals import task_postrun
 from core.logic.error_reporting import email_if_fails
+from django.core.cache import cache
 from django.core.mail import mail_admins
 from django.utils.timezone import now
 
@@ -123,3 +124,14 @@ def flush_request_logs_to_clickhouse():
                 f'Errors syncing {name} logs to Clickhouse',
                 'Errors:\n\n' + '\n'.join(str(e) for e in errors),
             )
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+def update_prometheus_db_stats():
+    from .prometheus import CACHE_STORED_GAUAGES
+
+    for name, params in CACHE_STORED_GAUAGES.items():
+        if fn := params.get('func'):
+            cache.set(name, fn())

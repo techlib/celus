@@ -1181,9 +1181,9 @@ class FlexibleReport(models.Model):
 
     @property
     def access_level(self):
-        if self.owner_organization:
+        if self.owner_organization_id:
             return self.Level.ORGANIZATION
-        elif self.owner:
+        elif self.owner_id:
             return self.Level.PRIVATE
         return self.Level.CONSORTIUM
 

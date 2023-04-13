@@ -95,7 +95,7 @@ else:
     print('cachalot disabled', file=sys.stderr)
 
 MIDDLEWARE = [
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    'core.prometheus.CelusPrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -110,7 +110,7 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'core.middleware.UserLanguageMiddleware',
     'core.middleware.QueryLoggingMiddleware',
-    'django_prometheus.middleware.PrometheusAfterMiddleware',
+    'core.prometheus.CelusPrometheusAfterMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
@@ -338,6 +338,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'celery'  # just making the default explicit
 CELERY_TASK_ROUTES = {
     'core.tasks.empty_task_export': {'queue': 'export'},
     'core.tasks.flush_request_logs_to_clickhouse': {'queue': 'celery'},
+    'core.tasks.update_prometheus_db_stats': {'queue': 'celery'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
     'knowledgebase.tasks.sync_route': {'queue': 'celery'},
@@ -468,6 +469,11 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'necronomicon.tasks.delete_batches_targets',
         'schedule': schedule(run_every=timedelta(hours=1)),
         'options': {'expires': 60 * 60},
+    },
+    'update_prometheus_db_stats': {
+        'task': 'core.tasks.update_prometheus_db_stats',
+        'schedule': schedule(run_every=timedelta(minutes=5)),
+        'options': {'expires': 5 * 60},
     },
 }
 

@@ -57,7 +57,7 @@ class DataSource(models.Model):
     from and not to mix user created and ERMS provided data.
     """
 
-    # Keep the source types here as well to keep compatiblity with older versions
+    # Keep the source types here as well to keep compatibility with older versions
     TYPE_API = DATA_SOURCE_TYPE_API
     TYPE_ORGANIZATION = DATA_SOURCE_TYPE_ORGANIZATION
     TYPE_KNOWLEDGEBASE = DATA_SOURCE_TYPE_KNOWLEDGEBASE
