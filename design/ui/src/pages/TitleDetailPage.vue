@@ -8,12 +8,16 @@ en:
   this_title_no_platform: Link to all data for this title without platform filter
   current_platform: Current platform
   no_platform: Regardless of platform
+  not_available_from_any_platform: This title did not appear on any platform in the selected time period.
+  try_larger_window: Try selecting a broader date range.
 cs:
   available_from_platforms: Dostupné na platformách
   this_title_on_platform: Odkaz na tento titul na uvedené platformě
   this_title_no_platform: Odkaz na souhrná data pro tento titul bez ohledu na platformu
   current_platform: Právě zobrazovaná platforma
   no_platform: Bez ohledu na platformu
+  not_available_from_any_platform: Tento titul se v zvoleném časovém období neobjevil na žádné platformě.
+  try_larger_window: Zkuste vybrat širší časové období.
 </i18n>
 
 <template>
@@ -72,21 +76,17 @@ cs:
               v-text="ig.name"
               :class="{
                 'subdued-th':
-                  title.interests.loading ||
-                  title.interests[ig.short_name] === 0,
+                  interestsLoading || interests[ig.short_name] === 0,
               }"
             ></th>
             <td class="text-right">
               <span
-                v-if="title.interests.loading"
+                v-if="interestsLoading"
                 class="fas fa-spinner fa-spin subdued"
               >
               </span>
-              <span
-                v-else
-                :class="{ subdued: title.interests[ig.short_name] === 0 }"
-              >
-                {{ formatInteger(title.interests[ig.short_name]) }}
+              <span v-else :class="{ subdued: interests[ig.short_name] === 0 }">
+                {{ formatInteger(interests[ig.short_name]) }}
               </span>
             </td>
           </tr>
@@ -96,6 +96,23 @@ cs:
         <table class="overview-card elevation-2">
           <tr class="header">
             <th colspan="2" v-text="$t('available_from_platforms')"></th>
+          </tr>
+          <tr v-if="availableFromPlatforms.length === 0">
+            <td
+              class="text-caption pt-3"
+              @mouseenter="changeDateSelectorHighlight({ highlight: true })"
+              @mouseleave="changeDateSelectorHighlight({ highlight: false })"
+            >
+              <div>
+                <v-icon x-small color="warning" class="mb-1"
+                  >fa-exclamation-triangle</v-icon
+                >
+                {{ $t("not_available_from_any_platform") }}
+              </div>
+              <div v-if="hasInterestOutsideOfTimeRange">
+                {{ $t("try_larger_window") }}
+              </div>
+            </td>
           </tr>
           <tr v-for="platform in availableFromPlatforms" :key="platform.pk">
             <td>
@@ -233,9 +250,12 @@ export default {
   data() {
     return {
       title: null,
+      interests: {},
+      interestsLoading: false,
       platformData: null,
       annotationsCount: 0,
       availableFromPlatforms: null,
+      hasInterestOutsideOfTimeRange: false,
     };
   },
   computed: {
@@ -295,14 +315,26 @@ export default {
         },
       ];
     },
-    titleUrl() {
+    titleInterestUrl() {
+      if (this.titleInterestUrlNoDates) {
+        return `${this.titleInterestUrlNoDates}?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
+      }
+      return null;
+    },
+    titleInterestUrlNoDates() {
       if (this.selectedOrganization && this.titleId) {
         if (this.platformId) {
-          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title-interest/${this.titleId}/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
+          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title-interest/${this.titleId}/`;
         } else {
           // this is the case when no platform is specified
-          return `/api/organization/${this.selectedOrganization.pk}/title-interest/${this.titleId}/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
+          return `/api/organization/${this.selectedOrganization.pk}/title-interest/${this.titleId}/`;
         }
+      }
+      return null;
+    },
+    titleUrl() {
+      if (this.titleId) {
+        return `/api/title/${this.titleId}/`;
       }
       return null;
     },
@@ -317,19 +349,55 @@ export default {
       }
       return null;
     },
+    isMaxDateRange() {
+      return !this.dateRangeStart && !this.dateRangeEnd;
+    },
+    selectedOrganizationId() {
+      return this.selectedOrganization.pk;
+    },
   },
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
+      changeDateSelectorHighlight: "changeDateSelectorHighlight",
     }),
     goTo: goTo,
     formatInteger: formatInteger,
     async loadTitle() {
-      let url = this.titleUrl;
-      if (url) {
-        const result = await this.http({ url: url });
+      if (this.titleUrl) {
+        const result = await this.http({ url: this.titleUrl });
         if (!result.error) {
           this.title = result.response.data;
+          await this.loadInterest();
+        }
+      }
+    },
+    async loadInterest() {
+      if (this.titleInterestUrl) {
+        this.interestsLoading = true;
+        try {
+          const result = await this.http({
+            url: this.titleInterestUrl,
+            dontShowError: true,
+          });
+          if (!result.error) {
+            this.interests = result.response.data.interests;
+          } else if (
+            result.error.response.status === 404 &&
+            !this.isMaxDateRange
+          ) {
+            // there is no interest for the selected time range
+            // we try it without the time range
+            const result = await this.http({
+              url: this.titleInterestUrlNoDates,
+              dontShowError: true,
+            });
+            if (!result.error) {
+              this.hasInterestOutsideOfTimeRange = true;
+            }
+          }
+        } finally {
+          this.interestsLoading = false;
         }
       }
     },
@@ -357,7 +425,7 @@ export default {
       this.annotationsCount = count;
     },
   },
-  mounted() {
+  created() {
     if (this.platformId) {
       this.loadPlatform();
     }
@@ -365,15 +433,15 @@ export default {
     this.loadAllPlatforms();
   },
   watch: {
-    selectedOrganization() {
+    selectedOrganizationId() {
       if (this.platformId) {
         this.loadPlatform();
       }
       this.loadTitle();
       this.loadAllPlatforms();
     },
-    titleUrl() {
-      this.loadTitle();
+    titleInterestUrl() {
+      this.loadInterest();
       this.loadAllPlatforms();
     },
   },

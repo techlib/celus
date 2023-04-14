@@ -17,7 +17,20 @@ cs:
           {{ $t("labels.date_range") }} </span
         ><span v-if="!inputLikeLabel">:</span>
       </v-col>
-      <v-col cols="auto" class="py-0" data-tour="date-range">
+      <v-col
+        cols="auto"
+        class="py-0"
+        id="date-range-selector"
+        data-tour="date-range"
+        :style="
+          highlight
+            ? {
+                'background-color': 'rgba(255, 255, 0, .15)',
+                border: 'solid 4px orange',
+              }
+            : { border: 'solid 4px transparent' }
+        "
+      >
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <div
@@ -79,6 +92,7 @@ export default {
     ...mapState({
       start: "dateRangeStart",
       end: "dateRangeEnd",
+      highlight: "highlightDateRangeSelector",
     }),
     ...mapGetters({
       rangeObject: "selectedDateRange",

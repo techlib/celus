@@ -117,6 +117,7 @@ export default new Vuex.Store({
     backendReady: false,
     bootUpMessage: "loading_basic_data",
     et: false,
+    highlightDateRangeSelector: false,
   },
 
   getters: {
@@ -560,6 +561,9 @@ export default new Vuex.Store({
         // ignore this error - it is not crucial
       }
     },
+    async changeDateSelectorHighlight(context, { highlight }) {
+      context.commit("setDateSelectorHighlight", { highlight });
+    },
   },
 
   mutations: {
@@ -631,6 +635,9 @@ export default new Vuex.Store({
       } else {
         state.bootUpMessage = "waiting_for_backend";
       }
+    },
+    setDateSelectorHighlight(state, { highlight }) {
+      state.highlightDateRangeSelector = highlight;
     },
   },
 });

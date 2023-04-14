@@ -190,4 +190,10 @@ ul.no-bullets {
 .chart-missing-data {
   color: #ff6633;
 }
+
+#date-range-selector {
+  transition: background-color 0.2s, border 0.2s;
+  border: solid 4px transparent;
+  border-radius: 6px;
+}
 </style>

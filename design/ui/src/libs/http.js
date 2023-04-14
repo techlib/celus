@@ -101,7 +101,7 @@ axios.interceptors.request.use(async (config) => {
  * @returns {Object} - { response, error }
  */
 const http = async (args) => {
-  const { label, raise, component, group, ...config } = args;
+  const { label, raise, component, group, dontShowError, ...config } = args;
 
   if (!config["signal"] && component) {
     let grp = group || "";
@@ -139,7 +139,9 @@ const http = async (args) => {
         error = data.error;
       }
     }
-    store.dispatch("showError", { label, error: error || e });
+    if (!dontShowError) {
+      store.dispatch("showError", { label, error: error || e });
+    }
 
     return { response: null, error: error || e };
   }
