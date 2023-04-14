@@ -8,6 +8,8 @@ en:
   batch_deleted: File was successfully deleted.
   annotated_file_tt: Download annotated file
   source_file_tt: Download copy of the source file
+  unicode_error: There was an error with the file encoding. Please make sure that the file is encoded in UTF-8. See the linked support article for more information.
+  support_link: How to prepare the input file
 
 cs:
   matched_rows: Nalezené řádky
@@ -17,6 +19,8 @@ cs:
   batch_deleted: Soubor byl úspěšně odstraněn.
   annotated_file_tt: Stáhnout anotovaný soubor
   source_file_tt: Stáhnout kopii zdrojového souboru
+  unicode_error: Došlo k chybě s kódováním souboru. Ujistěte se, že je soubor kódován v UTF-8. Více informací naleznete v odkazovaném článku.
+  support_link: Jak připravit vstupní soubor
 </i18n>
 
 <template>
@@ -54,17 +58,30 @@ cs:
           @finished="refetchBatch(item.pk)"
         />
         <!-- failed -->
-        <v-tooltip bottom v-else-if="item.state === 'failed'">
+        <v-tooltip bottom v-else-if="item.state === 'failed'" max-width="600">
           <template #activator="{ on }">
             <span v-on="on">
               <v-icon color="error" small>fa-exclamation-circle</v-icon>
+              <a
+                v-if="isUnicodeError(item.processing_info.error)"
+                class="ms-1 text-caption font-weight-bold"
+                target="_blank"
+                href="https://support.celus.net/support/solutions/articles/103000062844"
+              >
+                {{ $t("support_link") }}
+              </a>
             </span>
           </template>
           <span>
             <span class="font-weight-bold">{{ $t("labels.error") }}:</span>
-            {{ item.processing_info.error }}
+            {{
+              isUnicodeError(item.processing_info.error)
+                ? $t("unicode_error")
+                : item.processing_info.error
+            }}
           </span>
         </v-tooltip>
+
         <!-- other states -->
         <v-tooltip bottom v-else>
           <template #activator="{ on }">
@@ -154,7 +171,10 @@ import TitleOverlapUploadFileDialog from "@/components/overlap/TitleOverlapUploa
 
 export default {
   name: "TitleOverlapBatchList",
-  components: { TitleOverlapUploadFileDialog, ServerTaskMonitor },
+  components: {
+    TitleOverlapUploadFileDialog,
+    ServerTaskMonitor,
+  },
 
   mixins: [cancellation],
 
@@ -336,6 +356,9 @@ export default {
     },
     updateNow() {
       this.now = new Date();
+    },
+    isUnicodeError(error) {
+      return error?.includes("utf-8") && error?.includes("codec");
     },
   },
 
