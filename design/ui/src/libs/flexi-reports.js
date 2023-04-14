@@ -290,8 +290,9 @@ class FlexiExport {
   };
 
   static formatToText = {
-    XLSX: "Excel",
-    ZIP_CSV: "CSV",
+    XLSX: "format.excel",
+    XLSX_NO_CHARTS: "format.excel_no_charts",
+    ZIP_CSV: "format.csv",
   };
 
   constructor() {

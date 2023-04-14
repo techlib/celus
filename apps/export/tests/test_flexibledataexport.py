@@ -1,6 +1,7 @@
 from io import BytesIO
 from zipfile import ZipFile
 
+import openpyxl
 import pytest
 from export.enums import FileFormat
 from export.models import FlexibleDataExport
@@ -206,6 +207,8 @@ class TestFlexibleDataExport:
             (FileFormat.ZIP_CSV, False),
             (FileFormat.XLSX, True),
             (FileFormat.XLSX, False),
+            (FileFormat.XLSX_NO_CHARTS, True),
+            (FileFormat.XLSX_NO_CHARTS, False),
         ],
     )
     def test_create_output_file_format(
@@ -226,7 +229,10 @@ class TestFlexibleDataExport:
             if fmt == FileFormat.ZIP_CSV:
                 for archname in zipfile.namelist():
                     assert archname.endswith('.csv')
+                assert '_metadata.csv' in zipfile.namelist()
             else:
                 assert (
                     '[Content_Types].xml' in zipfile.namelist()
                 ), 'XLSX should contain [Content_Types].xml'
+                workbook = openpyxl.load_workbook(export.output_file.file)
+                assert 'metadata' in workbook.sheetnames

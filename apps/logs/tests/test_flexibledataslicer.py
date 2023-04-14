@@ -4,6 +4,7 @@ from io import BytesIO, StringIO
 from unittest.mock import MagicMock
 from zipfile import ZipFile
 
+import openpyxl
 import pytest
 from django.db.models import Q
 from logs.cubes import AccessLogCube, ch_backend
@@ -1375,3 +1376,31 @@ class TestFlexibleDataExcelExporter:
     )
     def test_xslx_cleanup_sheetname(self, name_in, name_out):
         assert FlexibleDataExcelExporter.cleanup_sheetname(name_in) == name_out
+
+    @pytest.mark.parametrize('include_charts', [True, False])
+    def test_org_sum_by_platform(self, flexible_slicer_test_data, include_charts):
+        """
+        Primary dimension: organization
+        Group by: platform
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        slicer.add_group_by('platform')
+        exporter = FlexibleDataExcelExporter(
+            slicer, include_tags=False, include_charts=include_charts
+        )
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        if include_charts:
+            assert workbook.sheetnames == ['metadata', 'report', 'Chart - report']
+        else:
+            assert workbook.sheetnames == ['metadata', 'report']
+        sheet = workbook['report']
+        assert [[cell.value for cell in row] for row in sheet.rows] == [
+            ['Organization', 'Platform 1', 'Platform 2', 'Platform 3'],
+            ['Organization 1', 519318, 717606, 915894],
+            ['Organization 2', 1114182, 1312470, 1510758],
+            ['Organization 3', 1709046, 1907334, 2105622],
+        ]

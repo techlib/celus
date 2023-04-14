@@ -438,9 +438,10 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
 
     object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
 
-    def __init__(self, slicer: FlexibleDataSlicer, **kwargs):
+    def __init__(self, slicer: FlexibleDataSlicer, include_charts: bool = True, **kwargs):
         super().__init__(slicer, **kwargs)
         self._seen_sheetnames = set()
+        self.include_charts = include_charts
         self.base_fmt = None
         self.header_fmt = None
 
@@ -485,7 +486,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 row_count = self.write_qs_to_output(
                     sheet, qs, extra_row_fn=self._remainder_fn(), progress_monitor=progress_monitor
                 )
-                if row_count > 0:
+                if self.include_charts and row_count > 0:
                     self.add_chart_sheet(workbook, sheetname, row_count=row_count)
             else:
                 total = parts.count()
@@ -509,7 +510,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                     row_count = self.write_qs_to_output(
                         sheet, qs, extra_row_fn=self._remainder_fn(part=key)
                     )
-                    if row_count > 0:
+                    if self.include_charts and row_count > 0:
                         self.add_chart_sheet(workbook, sheetname, row_count=row_count)
                     if progress_monitor:
                         progress_monitor(i + 1, total)
@@ -597,3 +598,9 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             i += 1
         self._seen_sheetnames.add(new_sheetname.lower())
         return new_sheetname
+
+
+class FlexibleDataExcelExporterNoCharts(FlexibleDataExcelExporter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.include_charts = False

@@ -68,6 +68,10 @@
       {{ $t("export_status." + item.statusText) }}
     </template>
 
+    <template #item.fileFormat="{ item }">
+      {{ $t(item.fileFormat) }}
+    </template>
+
     <template #top>
       <v-btn @click="fetchData">
         <v-icon small class="mr-2">fa fa-sync-alt</v-icon>

@@ -61,12 +61,17 @@
                 </v-tooltip>
               </template>
               <v-list>
-                <v-list-item @click="runExport(item, 'xlsx')">
+                <v-list-item @click="runExport(item, 'XLSX')">
                   <v-list-item-title>{{
                     $t("format.excel")
                   }}</v-list-item-title>
                 </v-list-item>
-                <v-list-item @click="runExport(item, 'csv')">
+                <v-list-item @click="runExport(item, 'XLSX_NO_CHARTS')">
+                  <v-list-item-title>{{
+                    $t("format.excel_no_charts")
+                  }}</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="runExport(item, 'ZIP_CSV')">
                   <v-list-item-title>{{ $t("format.csv") }}</v-list-item-title>
                 </v-list-item>
               </v-list>

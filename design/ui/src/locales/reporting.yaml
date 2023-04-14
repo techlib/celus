@@ -40,6 +40,7 @@ en:
     error: Error
   format:
     excel: Excel
+    excel_no_charts: Excel without charts
     csv: CSV
   expires_in: Expires in
   expires_in_tt_1: We delete exports periodically just to keep order here.

@@ -512,12 +512,17 @@ cs:
                 </v-btn>
               </template>
               <v-list>
-                <v-list-item @click="runExport('xlsx')">
+                <v-list-item @click="runExport('XLSX')">
                   <v-list-item-title>{{
                     $t("format.excel")
                   }}</v-list-item-title>
                 </v-list-item>
-                <v-list-item @click="runExport('csv')">
+                <v-list-item @click="runExport('XLSX_NO_CHARTS')">
+                  <v-list-item-title>{{
+                    $t("format.excel_no_charts")
+                  }}</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="runExport('ZIP_CSV')">
                   <v-list-item-title>{{ $t("format.csv") }}</v-list-item-title>
                 </v-list-item>
               </v-list>

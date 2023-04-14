@@ -6,7 +6,11 @@ from django.db import models
 from django.db.models import BooleanField, ExpressionWrapper, Q
 from django.utils.timezone import now
 from export.enums import FileFormat
-from logs.logic.reporting.export import FlexibleDataExcelExporter, FlexibleDataZipCSVExporter
+from logs.logic.reporting.export import (
+    FlexibleDataExcelExporter,
+    FlexibleDataExcelExporterNoCharts,
+    FlexibleDataZipCSVExporter,
+)
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 
 
@@ -85,6 +89,7 @@ class FlexibleDataExport(ExportBase):
     objects = AnnotateObsoleteQueryset.as_manager()
     format_to_exporter = {
         FileFormat.XLSX: FlexibleDataExcelExporter,
+        FileFormat.XLSX_NO_CHARTS: FlexibleDataExcelExporterNoCharts,
         FileFormat.ZIP_CSV: FlexibleDataZipCSVExporter,
     }
 
@@ -92,7 +97,7 @@ class FlexibleDataExport(ExportBase):
         default=dict, help_text='Serialized parameters of the export', blank=True
     )
     file_format = models.CharField(
-        max_length=10, choices=FileFormat.choices, default=FileFormat.XLSX
+        max_length=16, choices=FileFormat.choices, default=FileFormat.XLSX
     )
     name = models.CharField(max_length=120, default='', blank=True)
 
@@ -119,7 +124,7 @@ class FlexibleDataExport(ExportBase):
     @classmethod
     def cleanup_format(cls, fmt: Optional[Union[str, FileFormat]]) -> FileFormat:
         if fmt in FileFormat.values:
-            return FileFormat[fmt]
+            return FileFormat(fmt)
         if not fmt:
             return cls._meta.get_field('file_format').default
         if fmt.lstrip('.').lower() in ('zip', 'csv'):
