@@ -60,7 +60,6 @@
 </template>
 <script>
 import { mapGetters, mapState } from "vuex";
-import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import { FlexiReport } from "@/libs/flexi-reports";
 import formRulesMixin from "@/mixins/formRulesMixin";
 
@@ -68,8 +67,6 @@ export default {
   name: "AccessLevelSelector",
 
   mixins: [formRulesMixin],
-
-  components: { OrganizationSelector },
 
   props: {
     value: { required: true, type: String },
@@ -172,6 +169,12 @@ export default {
       this.selectedOrganization = this.ownerOrganization;
     },
     ownershipType() {
+      if (this.ownershipType === "org") {
+        // find and select the first organization that the user is admin of
+        this.selectedOrganization = this.organizationItems.find(
+          (item) => item.is_admin
+        ).pk;
+      }
       this.$emit("change", this.valueFromData);
     },
     selectedOrganization() {
