@@ -11,6 +11,8 @@ en:
   test_date: Month to test on
   start_harvesting: "Nothing to harvest | Start {count} download | Start {count} downloads"
   nothing_to_harvest: Nothing to harvest
+  no_problem_closing_dialog: Feel free to close this dialog. The harvesting will continue in the background and you can review the progress on the {harvest_link}
+  harvest_page: SUSHI harvests page
 
 cs:
   select_dates_text: "Vyberte rozsah měsíců pro stažení:"
@@ -23,6 +25,8 @@ cs:
   test_date: Testovaný měsíc
   start_harvesting: "Začít {count} stahování | Začít {count} stahování | Začít {count} stahování"
   nothing_to_harvest: Není co stahovat
+  no_problem_closing_dialog: Tento dialog můžete bezpečně zavřít. Stahování bude pokračovat na pozadí. Vrátit se k němu můžete na {harvest_link}
+  harvest_page: stránce Stahování SUSHI
 </i18n>
 
 <template>
@@ -146,12 +150,27 @@ cs:
       </v-col>
     </v-row>
 
-    <v-row v-else>
-      <SushiFetchIntentionsListWidget
-        :harvest-id="harvestId"
-        ref="intentionsList"
-      />
-    </v-row>
+    <template v-else>
+      <v-row>
+        <SushiFetchIntentionsListWidget
+          :harvest-id="harvestId"
+          ref="intentionsList"
+        />
+      </v-row>
+      <v-row>
+        <v-col>
+          <v-alert type="info" text dense class="me-3">
+            <i18n path="no_problem_closing_dialog">
+              <template #harvest_link>
+                <router-link :to="{ name: 'harvests' }">
+                  {{ $t("harvest_page") }}
+                </router-link>
+              </template>
+            </i18n>
+          </v-alert>
+        </v-col>
+      </v-row>
+    </template>
   </v-container>
 </template>
 
