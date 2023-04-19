@@ -1,3 +1,11 @@
+<i18n lang="yaml">
+en:
+  only_good_below: 100 % coverage below this line
+
+cs:
+  only_good_below: Pouze 100 % pokrytí pod touto čárou
+</i18n>
+
 <template>
   <v-container fluid>
     <v-row no-gutters>
@@ -7,7 +15,7 @@
           v-else-if="coverageData.length > 0"
           :style="{ height: height + 'px' }"
         >
-          <v-chart :option="option" autoresize />
+          <v-chart :option="option" @click="onClick" autoresize />
         </div>
       </v-col>
     </v-row>
@@ -24,18 +32,21 @@ import { CanvasRenderer } from "echarts/renderers";
 import { HeatmapChart } from "echarts/charts";
 import {
   GridComponent,
+  MarkLineComponent,
   TooltipComponent,
   VisualMapComponent,
 } from "echarts/components";
 import VChart from "vue-echarts";
 import { mapState } from "vuex";
 import IdTranslation from "@/libs/id-translation";
+import uniqueMapping from "@/libs/unique-mapping";
 
 use([
   CanvasRenderer,
   TooltipComponent,
   HeatmapChart,
   GridComponent,
+  MarkLineComponent,
   VisualMapComponent,
 ]);
 /* ~vue-echarts */
@@ -83,12 +94,18 @@ export default {
       type: String,
       default: "date",
     },
+    sortByCoverage: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data() {
     return {
       coverageData: [],
+      sumsByRow: new Map(),
       loading: false,
+      platformIdMap: {},
     };
   },
 
@@ -98,6 +115,20 @@ export default {
       return this.yValues.length * 20 + 200;
     },
     yValues() {
+      if (this.sortByCoverage) {
+        let out = [...this.sumsByRow.entries()];
+        out.sort((a, b) => {
+          const diff =
+            b[1].ib_count / b[1].ib_max - a[1].ib_count / a[1].ib_max;
+          if (diff === 0) {
+            // if score is the same, sort by name
+            return b[0].localeCompare(a[0]);
+          }
+          return diff;
+        });
+        return out.map((item) => item[0].toString());
+      }
+      // sort by name
       return [
         ...new Set(this.coverageData.map((item) => item[this.rows])),
       ].sort((a, b) => b.localeCompare(a));
@@ -108,7 +139,9 @@ export default {
       ].sort();
     },
     yValuesWidth() {
-      const maxLen = Math.max(...this.yValues.map((item) => item.length));
+      const maxLen = Math.max(
+        ...this.yValues.map((item) => item.toString().length)
+      );
       return maxLen * 5 + 20;
     },
     xAxis() {
@@ -136,7 +169,50 @@ export default {
         data: this.yValues,
       };
     },
+    firstCompleteYValue() {
+      // index of the first row which has 100% coverage
+      return (
+        this.yValues.findIndex(
+          (item) =>
+            this.sumsByRow.get(item).ib_count < this.sumsByRow.get(item).ib_max
+        ) - 1
+      );
+    },
     option() {
+      let markline = {};
+      if (this.sortByCoverage && this.firstCompleteYValue > 0) {
+        markline = {
+          silent: true,
+          data: [
+            [
+              {
+                yAxis: this.yValues[this.firstCompleteYValue],
+                xAxis: this.xValues[Math.round(this.xValues.length / 2)],
+                symbol: "rect",
+                symbolSize: [50, 2],
+                label: {
+                  formatter: this.$t("only_good_below"),
+                  position: "start",
+                },
+              },
+              {
+                yAxis:
+                  this.yValues[
+                    this.firstCompleteYValue > 3
+                      ? this.firstCompleteYValue - 3
+                      : 0
+                  ],
+                xAxis: this.xValues[Math.round(this.xValues.length / 2)],
+              },
+            ],
+          ],
+          lineStyle: {
+            color: "#252525",
+            width: 2,
+            type: "solid",
+          },
+        };
+      }
       return {
         xAxis: [{ ...this.xAxis }, { ...this.xAxis, position: "top" }],
         yAxis: this.yAxis,
@@ -151,9 +227,10 @@ export default {
             type: "heatmap",
             data: this.coverageData.map((item) => [
               item[this.cols],
-              item[this.rows],
+              item[this.rows].toString(),
               item.ratio * 100,
             ]),
+            markLine: markline,
           },
         ],
         visualMap: {
@@ -204,6 +281,9 @@ export default {
       if (this.splitByPlatform) {
         params["split_by_platform"] = true;
       }
+      if (this.splitByOrg && this.splitByPlatform) {
+        params["split_by_date"] = false;
+      }
       return this.$router.resolve({
         path: "/api/import-batch/data-coverage/",
         query: params,
@@ -232,14 +312,42 @@ export default {
           ];
           let trans = new IdTranslation("/api/platform/");
           await trans.prepareTranslation(platformIds);
+          // because platforms are not guaranteed to have unique names, we need to
+          // make sure that we have unique names
+          let mapping = {};
           this.coverageData.forEach((item) => {
-            item.platform = trans.translateKeyToString(item.platform_id);
+            mapping[item.platform_id] = trans.translateKeyToString(
+              item.platform_id
+            );
+          });
+          this.platformIdMap = uniqueMapping(mapping);
+          this.coverageData.forEach((item) => {
+            item.platform = this.platformIdMap[item.platform_id];
           });
         }
+        // prepare sums by rows
+        let keyToSum = new Map();
+        this.coverageData.forEach((item) => {
+          const itemName = item[this.rows];
+          let rec = keyToSum.get(itemName) || { ib_count: 0, ib_max: 0 };
+          rec.ib_count += item.ib_count;
+          rec.ib_max += item.ib_max;
+          keyToSum.set(itemName, rec);
+        });
+        this.sumsByRow = keyToSum;
       } else {
         this.coverageData = [];
       }
       this.loading = false;
+    },
+    onClick(event) {
+      let out = { [this.rows]: event.value[1], [this.cols]: event.value[0] };
+      if (out.platform) {
+        out.platformId = Object.keys(this.platformIdMap).find(
+          (key) => this.platformIdMap[key] === out.platform
+        );
+      }
+      this.$emit("click", out);
     },
   },
 

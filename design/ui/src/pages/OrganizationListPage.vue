@@ -21,8 +21,10 @@
 
 <script>
 import OrganizationList from "@/components/OrganizationList";
+
 export default {
   name: "OrganizationListPage",
+
   components: { OrganizationList },
 };
 </script>

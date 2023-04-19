@@ -10,7 +10,7 @@ from publications.serializers import (
     SimplePlatformSerializer,
 )
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import BooleanField, DateField, IntegerField
+from rest_framework.fields import BooleanField, DateField, IntegerField, SerializerMethodField
 from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import (
     BaseSerializer,
@@ -121,6 +121,8 @@ class ReportTypeSerializer(ModelSerializer):
     dimensions = PrimaryKeyRelatedField(
         read_only=False, queryset=Dimension.objects.all(), many=True, write_only=True
     )
+    counter_version = SerializerMethodField()
+    counter_report_type_id = SerializerMethodField()
 
     class Meta:
         model = ReportType
@@ -135,7 +137,21 @@ class ReportTypeSerializer(ModelSerializer):
             'public',
             'dimensions',
             'controlled_metrics',
+            'counter_version',
+            'counter_report_type_id',
         )
+
+    def get_counter_version(self, obj: ReportType):
+        try:
+            return obj.counterreporttype.counter_version
+        except AttributeError:
+            return None
+
+    def get_counter_report_type_id(self, obj: ReportType):
+        try:
+            return obj.counterreporttype.pk
+        except AttributeError:
+            return None
 
     def create(self, validated_data):
         if not validated_data['public']:

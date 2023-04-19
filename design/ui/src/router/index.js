@@ -287,6 +287,11 @@ export default new Router({
       },
     },
     {
+      path: "/admin/data-coverage/",
+      name: "data-coverage-overview",
+      component: () => import("../pages/DataCoverageOverviewPage.vue"),
+    },
+    {
       path: "/platforms/:platformId/upload-data/",
       name: "platform-upload-data",
       component: () => import("../pages/CustomDataUploadPage.vue"),

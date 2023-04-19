@@ -1,7 +1,9 @@
+import operator
 from collections import Counter
 from functools import reduce
 from pprint import pprint
 from time import monotonic
+from typing import Any, Dict, Tuple
 
 from charts.models import ReportDataView
 from core.exceptions import BadRequestException
@@ -85,7 +87,7 @@ from . import filters
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
-from .tasks import export_raw_data_task
+from .tasks import export_raw_data_task, sync_organizationplatform_records_task
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -141,13 +143,20 @@ class Counter5DataView(APIView):
 class ReportTypeViewSet(ReadOnlyModelViewSet):
 
     serializer_class = ReportTypeSerializer
-    queryset = ReportType.objects.exclude_materialized()
+    queryset = ReportType.objects.exclude_materialized().select_related(
+        'source', 'counterreporttype'
+    )
     filter_backends = [PkMultiValueFilterBackend]
 
     def get_queryset(self):
         if 'nonzero-only' in self.request.query_params:
+            extra_attrs = {}
+            if self.request.GET.get('start_date'):
+                extra_attrs['date__gte'] = self.request.GET['start_date']
+            if self.request.GET.get('end_date'):
+                extra_attrs['date__lte'] = self.request.GET['end_date']
             return self.queryset.filter(
-                Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk'))))
+                Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk'), **extra_attrs)))
                 | Q(short_name='interest')
             ).prefetch_related('controlled_metrics')
         return self.queryset.prefetch_related('controlled_metrics')
@@ -602,7 +611,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             for e in batches
         )
 
-    class DataCoverageParamSerializer(Serializer):
+    class DataCoverageBasicParamSerializer(Serializer):
 
         report_type = PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False)
         report_view = PrimaryKeyRelatedField(queryset=ReportDataView.objects.all(), required=False)
@@ -610,17 +619,31 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         end_date = CharField(validators=[month_validator], required=False)
         organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
         platform = PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=False)
-        title = PrimaryKeyRelatedField(queryset=Title.objects.all(), required=False)
-        split_by_org = BooleanField(default=False)
-        split_by_platform = BooleanField(default=False)
 
         def validate(self, data):
             data = super().validate(data)
             if not data.get('report_type') and not data.get('report_view'):
                 raise ValidationError('One of "report_type", "report_view" must be present')
-            if not data.get('report_type') and not data.get('report_view'):
+            if data.get('report_type') and data.get('report_view'):
                 raise ValidationError('"report_type" and "report_view" must not be present at once')
             return data
+
+    class DataCoverageFullParamSerializer(DataCoverageBasicParamSerializer):
+
+        title = PrimaryKeyRelatedField(queryset=Title.objects.all(), required=False)
+        split_by_org = BooleanField(default=False)
+        split_by_platform = BooleanField(default=False)
+        split_by_date = BooleanField(default=True)
+
+    @classmethod
+    def get_params_and_rt(cls, serializer_cls, request) -> Tuple[Dict[str, Any], ReportType]:
+        param_serializer = serializer_cls(data=request.GET)
+        param_serializer.is_valid(raise_exception=True)
+        params = param_serializer.validated_data
+        if not (rt := params.get('report_type')):
+            rv = params.get('report_view')
+            rt = rv.base_report_type
+        return params, rt
 
     @action(detail=False, methods=['get'], url_name='data-coverage', url_path='data-coverage')
     def data_coverage(self, request):
@@ -629,13 +652,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         return how many potential import batches there could be and how many really are,
         thus creating some kind of score of data coverage for each month.
         """
-        param_serializer = self.DataCoverageParamSerializer(data=request.GET)
-        param_serializer.is_valid(raise_exception=True)
-        params = param_serializer.validated_data
-        if not (rt := params.get('report_type')):
-            rv = params.get('report_view')
-            rt = rv.base_report_type
-
+        params, rt = self.get_params_and_rt(self.DataCoverageFullParamSerializer, request)
         # disable coverage for selected report types
         if rt.short_name in settings.REPORT_TYPES_WITHOUT_COVERAGE:
             return Response([])
@@ -650,11 +667,99 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             title=params.get('title'),
             split_by_org=bool(params.get('split_by_org')),
             split_by_platform=bool(params.get('split_by_platform')),
+            split_by_date=bool(params.get('split_by_date')),
             start_month=start_month,
             end_month=end_month,
         )
         data = extractor.get_coverage_data()
         return Response(v for k, v in sorted(data.items()))
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_name='data-coverage-harvestable',
+        url_path='data-coverage-harvestable',
+    )
+    def data_coverage_harvestable(self, request):
+        """
+        Returns a list of credentials which are verified and do not have 100 % coverage
+        in the date range specified by `start_date` and `end_date` params.
+        For each credentials ID, it returns a list of months which are not covered.
+        """
+        params, rt = self.get_params_and_rt(self.DataCoverageBasicParamSerializer, request)
+        # disable coverage for selected report types
+        if rt.short_name in settings.REPORT_TYPES_WITHOUT_COVERAGE:
+            return Response([])
+
+        start_month = parse_month(params.get('start_date'))
+        end_month = parse_month(params.get('end_date'))
+
+        # we use the maximum splitting because this would enable us to analyze the data
+        # and assign it to individual credentials
+        extractor = DataCoverageExtractor(
+            rt,
+            platform=params.get('platform'),
+            organization=params.get('organization'),
+            start_month=start_month,
+            end_month=end_month,
+            split_by_org=True,
+            split_by_platform=True,
+            split_by_date=True,
+        )
+        data = extractor.get_coverage_data()
+        org_platform_to_month = {}
+        for rec in data.values():
+            if 'ib_max' not in rec:
+                # this can only happen if there is a discrepancy between OrganizationPlatform
+                # records and actual import batches. This should not happen, but it does sometimes.
+                # The only thing we can do is to schedule the cleanup job and skip this record for
+                # now. An email will be sent to the admins from the task if anything is fixed.
+                sync_organizationplatform_records_task.delay(
+                    reason='detected in `data_coverage_harvestable`'
+                )
+                continue
+            if rec['ib_count'] < rec['ib_max'] and rec['verified_credentials'] > 0:
+                # data are not complete, but there are some verified credentials
+                key = (rec['organization_id'], rec['platform_id'])
+                org_platform_to_month.setdefault(key, []).append(rec['date'])
+        # we need to get all found combinations of organization and platform into the query
+        # for SushiCredentials. In order to make the query slightly simpler then listing all the
+        # combinations one by one, we group keys by organization and use __in lookup for each org.
+        org_to_platforms = {}
+        for org_id, platform_id in org_platform_to_month.keys():
+            org_to_platforms.setdefault(org_id, []).append(platform_id)
+        out = []
+        query_chunks = [
+            Q(organization_id=org_id, platform_id__in=platform_ids)
+            for org_id, platform_ids in org_to_platforms.items()
+        ]
+        if query_chunks:
+            for cr in (
+                SushiCredentials.objects.annotate_verified()
+                .filter(
+                    reduce(operator.or_, query_chunks),
+                    counterreportstocredentials__counter_report__report_type=rt,
+                    verified=True,
+                )
+                .order_by('organization_id', 'platform_id', '-enabled')
+                .select_related('organization', 'platform')
+                .distinct('organization_id', 'platform_id')
+            ):
+                # the combination of .order_by() and .distinct() above makes sure that
+                # for duplicated credentials, the one with enabled=True is first
+                # (we only want to use one set of credentials per org/platform otherwise the counts
+                #  would be off)
+                months = org_platform_to_month.get((cr.organization_id, cr.platform_id), [])
+                out.append(
+                    {
+                        'credentials_id': cr.pk,
+                        'org': cr.organization.name,
+                        'platform': cr.platform.name,
+                        'months': months,
+                    }
+                )
+
+        return Response(out)
 
 
 class ManualDataUploadViewSet(ModelViewSet):
@@ -846,8 +951,26 @@ class OrganizationReportTypesViewSet(ModelViewSet):
         try:
             source = organization.private_data_source
         except DataSource.DoesNotExist:
-            return ReportType.objects.filter(source__isnull=True)
-        return source.reporttype_set.all() | ReportType.objects.filter(source__isnull=True)
+            out = ReportType.objects.filter(source__isnull=True)
+        else:
+            out = source.reporttype_set.all() | ReportType.objects.filter(source__isnull=True)
+        return out.select_related('source', 'counterreporttype')
+
+    @action(methods=['GET'], detail=False, url_path='used')
+    def used(self, request, organization_pk):
+        extra_attrs = {}
+        if request.GET.get('start_date'):
+            extra_attrs['date__gte'] = request.GET['start_date']
+        if request.GET.get('end_date'):
+            extra_attrs['date__lte'] = request.GET['end_date']
+        qs = self.get_queryset().filter(
+            Exists(
+                ImportBatch.objects.filter(
+                    report_type=OuterRef('pk'), organization_id=organization_pk, **extra_attrs
+                )
+            )
+        )
+        return Response(self.get_serializer(qs, many=True).data)
 
 
 class InterestGroupViewSet(ReadOnlyModelViewSet):

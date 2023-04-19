@@ -386,6 +386,7 @@ CELERY_TASK_ROUTES = {
     'logs.tasks.reprocess_mdu_task': {'queue': 'import'},
     'logs.tasks.compare_db_with_clickhouse_task': {'queue': 'import'},
     'logs.tasks.compare_db_with_clickhouse_delayed_task': {'queue': 'celery'},
+    'logs.tasks.sync_organizationplatform_records_task': {'queue': 'celery'},
     'publications.tasks.clean_obsolete_platform_title_links_task': {'queue': 'interest'},
     'publications.tasks.merge_titles_task': {'queue': 'interest'},
     'publications.tasks.process_title_overlap_batch_task': {'queue': 'celery'},
@@ -450,7 +451,27 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': schedule(run_every=timedelta(minutes=8)),
         'options': {'expires': 8 * 60},
     },
+    'necronomicon_prepare': {
+        'task': 'necronomicon.tasks.prepare_batches',
+        'schedule': schedule(run_every=timedelta(hours=1)),
+        'options': {'expires': 60 * 60},
+    },
+    'necronomicon_delete': {
+        'task': 'necronomicon.tasks.delete_batches_targets',
+        'schedule': schedule(run_every=timedelta(hours=1)),
+        'options': {'expires': 60 * 60},
+    },
+    'update_prometheus_db_stats': {
+        'task': 'core.tasks.update_prometheus_db_stats',
+        'schedule': schedule(run_every=timedelta(minutes=5)),
+        'options': {'expires': 5 * 60},
+    },
     # crontab schedules - daily stuff
+    'sync_organizationplatform_records_task': {
+        'task': 'logs.tasks.sync_organizationplatform_records_task',
+        'schedule': crontab(hour=23, minute=17),  # every day at 23:17
+        'options': {'expires': 24 * 60 * 60},
+    },
     'scheduler_update_automatic_harvesting': {
         'task': 'scheduler.tasks.update_automatic_harvesting',
         'schedule': crontab(minute=50, hour=23),  # every day at 23:50
@@ -485,21 +506,6 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'export.tasks.delete_expired_flexible_data_exports_task',
         'schedule': crontab(hour=3, minute=0),  # every day at 3:00
         'options': {'expires': 24 * 60 * 60},
-    },
-    'necronomicon_prepare': {
-        'task': 'necronomicon.tasks.prepare_batches',
-        'schedule': schedule(run_every=timedelta(hours=1)),
-        'options': {'expires': 60 * 60},
-    },
-    'necronomicon_delete': {
-        'task': 'necronomicon.tasks.delete_batches_targets',
-        'schedule': schedule(run_every=timedelta(hours=1)),
-        'options': {'expires': 60 * 60},
-    },
-    'update_prometheus_db_stats': {
-        'task': 'core.tasks.update_prometheus_db_stats',
-        'schedule': schedule(run_every=timedelta(minutes=5)),
-        'options': {'expires': 5 * 60},
     },
 }
 

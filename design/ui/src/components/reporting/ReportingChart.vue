@@ -25,7 +25,6 @@ import {
   DataZoomComponent,
   GridComponent,
   LegendComponent,
-  MarkLineComponent,
   ToolboxComponent,
   TooltipComponent,
 } from "echarts/components";
@@ -41,7 +40,6 @@ use([
   GridComponent,
   ToolboxComponent,
   DataZoomComponent,
-  MarkLineComponent,
   DatasetComponent,
 ]);
 /* ~vue-echarts */

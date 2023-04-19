@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import date
 from typing import Dict, Iterable, Optional, Tuple
 
@@ -9,6 +10,18 @@ from publications.models import Platform, PlatformTitle, Title
 from sushi.models import SushiCredentials
 
 
+@dataclass
+class MaxDataRec:
+    """
+    Describes the data that should be present in ideal case.
+    """
+
+    op_count: int  # number of organization-platforms
+    vc_count: int  # number of verified credentials
+    org_count: int  # number of organizations
+    platform_count: int  # number of platforms
+
+
 class DataCoverageExtractor:
     def __init__(
         self,
@@ -18,6 +31,7 @@ class DataCoverageExtractor:
         title: Optional[Title] = None,
         split_by_org: bool = False,
         split_by_platform: bool = False,
+        split_by_date: bool = True,
         start_month: date = None,
         end_month: date = None,
         accessible_organizations: Optional[Iterable[Organization]] = None,
@@ -29,6 +43,7 @@ class DataCoverageExtractor:
         :param title: limit the data to this title by only considering platforms having that title
         :param split_by_org: split resulting data by organization
         :param split_by_platform: split resulting data by platform
+        :param split_by_date: split resulting data by date - this is the default
         :param start_month: if not given, it will be obtained from the database
         :param end_month: if not given, it will be obtained from the database
         :param accessible_organizations: organization accessible by the user at hand (if any)
@@ -39,6 +54,7 @@ class DataCoverageExtractor:
         self.title = title
         self.split_by_org = split_by_org
         self.split_by_platform = split_by_platform
+        self.split_by_date = split_by_date
         self.start_month = start_month
         self.end_month = end_month
         self.accessible_organizations = (
@@ -69,6 +85,18 @@ class DataCoverageExtractor:
 
     @property
     def split_by(self) -> list:
+        return (
+            ['date', *self.split_by_without_date]
+            if self.split_by_date
+            else self.split_by_without_date
+        )
+
+    @property
+    def split_by_without_date(self) -> list:
+        """
+        When getting totals, we are not interested in the date, so we do not include it in
+        `split_by` in such queries.
+        """
         split_by = []  # this is how the data will be split
         if self.split_by_org:
             split_by.append('organization_id')
@@ -111,7 +139,7 @@ class DataCoverageExtractor:
                 return False
         return True
 
-    def get_maximum_ib_counts(self) -> Dict[Tuple, Dict]:
+    def get_maximum_ib_counts(self) -> Dict[Tuple, MaxDataRec]:
         """
         For each possible group (by month and maybe organization or platform) returns the
         maximum number of import batches that could exist to give full data presence
@@ -142,7 +170,17 @@ class DataCoverageExtractor:
                 )
             ),
             organization__in=self.accessible_organizations,
+        ).annotate(
+            has_verified_credentials=Exists(
+                SushiCredentials.objects.annotate_verified().filter(
+                    organization=OuterRef('organization'),
+                    platform=OuterRef('platform'),
+                    counterreportstocredentials__counter_report__report_type__in=rt_qs,
+                    verified=True,
+                )
+            )
         )
+
         if self.report_type.is_interest_rt:
             # in case that self.report_type is interest, we need to take into account all
             # associated report types which define interest, but only count those that are not
@@ -171,18 +209,36 @@ class DataCoverageExtractor:
                         .values('c')
                     ),
                 )
-                .values('foo', *self.split_by)
-                .annotate(op_count=Sum('rt_count'))
+                .values('foo', *self.split_by_without_date)
+                .annotate(
+                    op_count=Sum('rt_count'),
+                    vc_count=Count('id', filter=Q(has_verified_credentials=True)),
+                    org_count=Count('organization', distinct=True),
+                    platform_count=Count('platform', distinct=True),
+                )
             )
         else:
             qs = (
                 basic_qs.annotate(
                     foo=Value(42)  # dummy value to have something if split_by is empty
                 )
-                .values('foo', *self.split_by)
-                .annotate(op_count=Count('id'))
+                .values('foo', *self.split_by_without_date)
+                .annotate(
+                    op_count=Count('id'),
+                    vc_count=Count('id', filter=Q(has_verified_credentials=True)),
+                    org_count=Count('organization', distinct=True),
+                    platform_count=Count('platform', distinct=True),
+                )
             )
-        op_counts = {tuple(rec[key] for key in self.split_by): rec['op_count'] for rec in qs}
+        op_counts = {
+            tuple(rec[key] for key in self.split_by_without_date): MaxDataRec(
+                op_count=rec['op_count'],
+                vc_count=rec['vc_count'],
+                org_count=rec['org_count'],
+                platform_count=rec['platform_count'],
+            )
+            for rec in qs
+        }
         return op_counts
 
     def get_coverage_data(self) -> Dict[Tuple, Dict]:
@@ -194,9 +250,12 @@ class DataCoverageExtractor:
         qs = (
             self.get_basic_ib_qs()
             .filter(date__gte=self.start_month, date__lte=self.end_month)
-            .values('date', *split_by)
-            .annotate(ib_count=Count('pk', distinct=True))
-            .order_by('date', *split_by)
+            .annotate(foo=Value(42))  # dummy value to have something if split_by is empty
+            .values('foo', *split_by)
+            .annotate(
+                ib_count=Count('pk', distinct=True),
+            )
+            .order_by(*split_by)
         )
         if self.report_type.is_interest_rt:
             # only count import batches which really have interest data
@@ -211,23 +270,60 @@ class DataCoverageExtractor:
             )
 
         # join the data from max_ib_counts with the actual counts of IBs
-        data = {(rec['date'], *(rec[k] for k in split_by)): rec for rec in qs}
-        for month in months_in_range(self.start_month, self.end_month):
-            for key, op_count in max_ib_counts.items():
-                super_key = (month, *key)
-                if super_key not in data:
-                    data[super_key] = {
-                        'date': month,
-                        **dict(zip(split_by, key)),  # the key as dict
-                        'ib_count': 0,
-                        'ib_max': op_count,
-                        'ratio': 0,
+        data = {
+            tuple(rec[k] for k in split_by): {k: v for k, v in rec.items() if k != 'foo'}
+            for rec in qs
+        }
+        if self.split_by_date:
+            for month in months_in_range(self.start_month, self.end_month):
+                for key, max_rec in max_ib_counts.items():
+                    max_stats = {
+                        'ib_max': max_rec.op_count,
+                        'verified_credentials': max_rec.vc_count,
+                        'org_count': max_rec.org_count,
+                        'platform_count': max_rec.platform_count,
                     }
-                else:
-                    data[super_key].update(
+                    # key in max_ib_counts does not contain the month
+                    super_key = (month, *key)
+                    if super_key not in data:
+                        data[super_key] = {
+                            **dict(zip(split_by, super_key)),  # the key as dict
+                            'ib_count': 0,
+                            'ratio': 0,
+                            **max_stats,
+                        }
+                    else:
+                        data[super_key].update(
+                            {
+                                'ratio': data[super_key]['ib_count'] / max_rec.op_count
+                                if max_rec.op_count
+                                else None,
+                                **max_stats,
+                            }
+                        )
+        else:
+            month_num = len(list(months_in_range(self.start_month, self.end_month)))
+            for key, max_rec in max_ib_counts.items():
+                max_stats = {
+                    'ib_max': max_rec.op_count * month_num,
+                    'verified_credentials': max_rec.vc_count,
+                    'org_count': max_rec.org_count,
+                    'platform_count': max_rec.platform_count,
+                }
+                if key in data:
+                    data[key].update(
                         {
-                            'ib_max': op_count,
-                            'ratio': data[super_key]['ib_count'] / op_count if op_count else None,
+                            'ratio': data[key]['ib_count'] / (max_rec.op_count * month_num)
+                            if max_rec.op_count
+                            else None,
+                            **max_stats,
                         }
                     )
+                else:
+                    data[key] = {
+                        **dict(zip(split_by, key)),  # the key as dict
+                        'ib_count': 0,
+                        'ratio': 0,
+                        **max_stats,
+                    }
         return data

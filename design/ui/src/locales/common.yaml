@@ -34,6 +34,7 @@ en:
     supported_non_counter_platforms: non-COUNTER platforms
     title_list_overlap: Title list overlap
     specialized_reports: Specialized reports
+    data_coverage_overview: Data coverage overview
   menu: Menu
   organization: Organization
   platform: Platform
@@ -80,6 +81,7 @@ en:
     access_level: Visibility
     not_before: Cannot start until
     split_by: Split by
+    non_counter: Non-COUNTER
     select_platform: Select platform
   titles: Titles
   overview: Overview
@@ -188,6 +190,10 @@ en:
     run_report: Run report
     export: Export
     source: Source
+    coverage: Coverage
+    total_coverage: Total coverage
+    loading: Loading
+    months: Months
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -321,6 +327,7 @@ cs:
     supported_non_counter_platforms: non-COUNTER platformy
     title_list_overlap: Překryv titulového seznamu
     specialized_reports: Speciální reporty
+    data_coverage_overview: Přehled pokrytí daty
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -367,6 +374,7 @@ cs:
     access_level: Viditelnost
     not_before: Stažení nejdříve
     split_by: Rozdělit podle
+    non_counter: Non-COUNTER
     select_platform: Vyberte platformu
   titles: Tituly
   overview: Přehled
@@ -475,6 +483,10 @@ cs:
     run_report: Spustit report
     export: Exportovat
     source: Zdroj
+    coverage: Pokrytí
+    total_coverage: Celkové pokrytí
+    loading: Načítání
+    months: Měsíce
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

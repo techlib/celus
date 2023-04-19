@@ -7,6 +7,7 @@ from collections import Counter
 from datetime import timedelta
 from random import randint
 from time import monotonic
+from typing import Optional
 
 import celery
 from core.context_managers import logged_task, needs_clickhouse_sync
@@ -26,6 +27,10 @@ from logs.exceptions import (
     UnknownReportTypeInPreflight,
 )
 from logs.logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
+from logs.logic.cleanup import (
+    find_organizationplatform_differences,
+    fix_organizationplatform_differences,
+)
 from logs.logic.clickhouse import compare_db_with_clickhouse, process_one_import_batch_sync_log
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
@@ -492,3 +497,19 @@ def reprocess_mdu_task(mdu_id):
     else:
         mdu.unprocess()
         import_manual_upload_data.delay(mdu.pk, mdu.user.pk)
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+@atomic
+def sync_organizationplatform_records_task(reason: Optional[str] = None):
+    missing, extra = find_organizationplatform_differences()
+    if missing or extra:
+        fix_organizationplatform_differences(missing, extra)
+        reason_str = f'Reason: {reason}\n' if reason else ''
+        async_mail_admins.delay(
+            'OrganizationPlatform records were out of sync',
+            reason_str
+            + f'Missing: {len(missing)}\nExtra: {len(extra)}\n\nProblems have already been fixed.',
+        )

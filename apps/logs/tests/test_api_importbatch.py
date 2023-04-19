@@ -383,13 +383,15 @@ class TestImportBatchesAPI:
         assert ib_counts == [rec['ib_count'] for rec in resp.json()]
 
     @pytest.mark.parametrize(
-        ['split_by_org', 'split_by_platform', 'record_count', 'ib_counts'],
+        ['split_by_org', 'split_by_platform', 'split_by_date', 'record_count', 'ib_counts'],
         # sorting in ib_counts should be month, organization_id, platform_id
         [
-            (False, False, 3, [1, 2, 1]),
-            (False, True, 3 * 2, [0, 1, 1, 1, 0, 1]),  # two platforms
-            (True, False, 3, [1, 2, 1]),  # only one org anyway
-            (True, True, 3 * 2, [0, 1, 1, 1, 0, 1]),  # two platforms, one org
+            (False, False, True, 3, [1, 2, 1]),
+            (False, True, True, 3 * 2, [0, 1, 1, 1, 0, 1]),  # two platforms
+            (True, False, True, 3, [1, 2, 1]),  # only one org anyway
+            (True, True, True, 3 * 2, [0, 1, 1, 1, 0, 1]),  # two platforms, one org
+            (True, False, False, 1, [4]),  # two platforms, one org
+            (False, False, False, 1, [4]),  # no splitting at all
         ],
     )
     def test_data_coverage_splitting(
@@ -402,6 +404,7 @@ class TestImportBatchesAPI:
         counter_report_types,
         split_by_org,
         split_by_platform,
+        split_by_date,
         record_count,
         ib_counts,
     ):
@@ -413,6 +416,7 @@ class TestImportBatchesAPI:
         2020-01 | TR  | standalone | standalone   | fa
         2020-02 | TR  | standalone | standalone   | fa
         2020-03 | TR  | standalone | standalone   | mdu
+        2020-02 | TR  | branch     | standalone   | ??
         """
         # create extra IB with different platform
         ImportBatchFullFactory.create(
@@ -433,6 +437,9 @@ class TestImportBatchesAPI:
             extra_params['split_by_org'] = 1
         if split_by_platform:
             extra_params['split_by_platform'] = 1
+        if not split_by_date:
+            # split by date is the default
+            extra_params['split_by_date'] = 0
         resp = clients['su'].get(
             reverse('import-batch-list') + "data-coverage/",
             {
@@ -449,7 +456,10 @@ class TestImportBatchesAPI:
         assert ib_counts == [rec['ib_count'] for rec in data]
         rec1 = data[0]
         # check record structure
-        assert 'date' in rec1
+        if split_by_date:
+            assert 'date' in rec1
+        else:
+            assert 'date' not in rec1
         if split_by_org:
             assert 'organization_id' in rec1
         else:
@@ -611,3 +621,45 @@ class TestImportBatchesAPI:
         assert 'organization_id' not in resp.json()[0]
         assert [rec['date'] for rec in resp.json()] == ['2020-01-01', '2020-02-01', '2020-03-01']
         assert [rec['ib_count'] for rec in resp.json()] == ib_counts
+
+    @pytest.mark.parametrize(
+        ['rt', 'credentials_count', 'months'],
+        [
+            ('TR', 0, []),  # no data missing
+            ('BR1', 1, ['2020-01', '2020-02']),  # one set of credentials missing data for 2 months
+            ('PR', 0, []),  # no data missing
+            ('DR', 0, []),  # no credentials present - cannot harvest
+        ],
+    )
+    def test_data_coverage_harvestable(
+        self, data, clients, organizations, platforms, report_types, rt, credentials_count, months
+    ):
+        """
+        Test that the `data-coverage-harvestable` endpoint returns the correct data.
+        For TR with some sushi credentials and missing data, it should return the credentials
+        ids and the months for which the data is missing.
+
+        The data present in the database are:
+
+        date    | RT  | platform   | organization | source
+        --------+-----+------------+--------------+-------
+        2020-01 | TR  | standalone | standalone   | fa
+        2020-02 | TR  | standalone | standalone   | fa
+        2020-03 | TR  | standalone | standalone   | mdu
+        2020-02 | BR1 | standalone | standalone   | fa
+        2020-01 | PR  | branch     | branch       | fa
+        2020-02 | PR  | branch     | branch       | mdu
+        2020-03 | PR  | branch     | branch       | mdu
+        """
+
+        resp = clients['su'].get(
+            reverse('import-batch-list') + "data-coverage-harvestable/",
+            {
+                'start_date': '2020-01',
+                'end_date': '2020-03',
+                'report_type': report_types[rt.lower()].pk,
+            },
+        )
+        assert resp.status_code == 200
+        assert type(resp.json()) is list
+        assert len(resp.json()) == credentials_count

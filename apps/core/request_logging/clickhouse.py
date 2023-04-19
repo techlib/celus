@@ -72,7 +72,7 @@ class RequestLogCube(Cube):
     celus_version = StringDimension(clickhouse={'low_cardinality': True})
     celus_git_hash = StringDimension(clickhouse={'low_cardinality': True})
     clickhouse_query_active = BooleanDimension()
-    # impersonification
+    # impersonation
     real_user_id = IntDimension(help_text='When impersonating, this is the real user')
     real_user_email = StringDimension(
         clickhouse={'low_cardinality': True}, help_text='When impersonating, this is the real user'

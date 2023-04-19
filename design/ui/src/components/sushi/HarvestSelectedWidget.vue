@@ -226,14 +226,6 @@ export default {
         )
         .reduce((a, b) => a + b);
     },
-    brokenReportCount() {
-      return this.credentials
-        .map(
-          (cred) =>
-            cred.counter_reports_long.filter((item) => item.broken).length
-        )
-        .reduce((a, b) => a + b);
-    },
     errors() {
       if (this.error !== null) {
         let brokenCredentialIds = new Set();
@@ -265,9 +257,6 @@ export default {
     },
     monthsToCoverCount() {
       return this.monthsToCover.length;
-    },
-    totalAttemptCount() {
-      return this.totalReportCount * this.monthsToCoverCount;
     },
     slotsFree() {
       if (this.slotsReady && this.$refs.slotWidget) {

@@ -1,0 +1,788 @@
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml">
+en:
+  click_to_see_details: Click on cards of individual reports to see more details.
+  number_of_platforms: Number of platforms using this report in the selected period.
+  number_of_organizations: Number of organizations using this report in the selected period.
+  date_change_hint: (use the date range selector on top of the page to change it)
+  detail_by_platform_and_month: Data coverage by platform and month
+  harvest_missing: Harvest missing {count} month | Harvest missing {count} months
+  months_present: "{count} month present | {count} months present"
+  months_harvestable: "{count} month harvestable | {count} months harvestable"
+  months_no_sushi: "{count} month without SUSHI | {count} months without SUSHI"
+  all_harvested: Perfect, no data is missing
+  nothing_to_harvest: Unfortunately no missing data can be obtained automatically via SUSHI
+  detail_by_organization: Detail by organization
+  click_chart_for_organizations: Click on specific chart cell to get detail by organization
+  harvest_missing_data: Harvest missing data
+  credentials_count: "{count} set of credential | {count} sets of credentials"
+  month_count: "{count} month | {count} months"
+  platforms_count: "{count} platform | {count} platforms"
+  selected: Selected
+  harvest_selected: Harvest selected
+
+cs:
+  click_to_see_details: Klikněte na karty jednotlivých reportů pro více detailů.
+  number_of_platforms: Počet platforem používajících tento report ve zvoleném období.
+  number_of_organizations: Počet organizací používajících tento report ve zvoleném období.
+  date_change_hint: (použijte výběr data na horním okraji stránky pro změnu)
+  detail_by_platform_and_month: Detail pokrytí podle platformy a měsíce
+  harvest_missing: Získat chybějící {count} měsíc | Získat chybějící {count} měsíce | Získat chybějících {count} měsíců
+  months_present: "{count} měsíc stažen | {count} měsíce staženy | {count} měsíců staženo"
+  months_harvestable: "{count} měsíc stažitelný | {count} měsíce stažitelné | {count} měsíců stažitelných"
+  months_no_sushi: "{count} měsíc bez SUSHI | {count} měsíce bez SUSHI | {count} měsíců bez SUSHI"
+  all_harvested: Skvěle, nechybí žádná data
+  nothing_to_harvest: Bohužel žádná chybějící data nelze získat automaticky pomocí SUSHI
+  detail_by_organization: Detail podle organizace
+  click_chart_for_organizations: Klikněte na konkrétní buňku grafu pro detail podle organizace
+  harvest_missing_data: Získat chybějící data
+  credentials_count: "{count} sada přihlašovacích údajů | {count} sady přihlašovacích údajů | {count} sad přihlašovacích údajů"
+  month_count: "{count} měsíc | {count} měsíce | {count} měsíců"
+  platforms_count: "{count} platforma | {count} platformy | {count} platforem"
+  selected: Vybráno
+  harvest_selected: Získat vybrané
+</i18n>
+
+<template>
+  <v-container fluid>
+    <v-row>
+      <v-col>
+        <h2>{{ $t("pages.data_coverage_overview") }}</h2>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
+        <span class="font-weight-bold text--secondary">{{
+          $t("labels.date_range")
+        }}</span
+        >: {{ dateRangeStart }} -
+        {{ dateRangeExplicitEnd }}
+        <span class="text-caption text--disabled ms-3">{{
+          $t("date_change_hint")
+        }}</span>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-expansion-panels
+        accordion
+        v-model="openedPanel"
+        flat
+        class="bordered-panel"
+      >
+        <v-expansion-panel v-for="cv in counterVersions" :value="cv" :key="cv">
+          <v-expansion-panel-header class="justify-space-between">
+            <div class="flex-grow-0 me-4">
+              {{ cv ? "COUNTER " + cv : $t("title_fields.non_counter") }}
+            </div>
+            <v-spacer />
+            <div class="mx-4" style="max-width: 200px">
+              <v-progress-linear
+                v-if="progressByCounterVersion(cv) < 1"
+                :value="100 * progressByCounterVersion(cv)"
+                color="grey lighten-2"
+                height="20"
+                class="text-caption"
+              >
+                {{ $t("labels.loading") }}
+              </v-progress-linear>
+              <v-progress-linear
+                v-else
+                :value="roundValue(ratioByCounterVersion(cv))"
+                :color="colorSuccess(ratioByCounterVersion(cv), true)"
+                height="20"
+                class="text-caption"
+              >
+                {{ $t("labels.total_coverage") }}:
+                {{ roundValue(ratioByCounterVersion(cv)) }}
+                %
+              </v-progress-linear>
+            </div>
+          </v-expansion-panel-header>
+
+          <v-expansion-panel-content>
+            <v-row class="my-3">
+              <v-col
+                v-for="reportType in visibleReportTypes.filter(
+                  (rt) => rt.counter_version === cv
+                )"
+                :key="reportType.pk"
+                cols="6"
+                md="3"
+                lg="2"
+                xl="1"
+              >
+                <v-card
+                  class="pt-4 fill-height d-flex flex-column justify-space-between"
+                  :class="
+                    selectedReportType &&
+                    reportType.pk === selectedReportType.pk
+                      ? 'selected'
+                      : ''
+                  "
+                  @click="
+                    selectedReportType &&
+                    selectedReportType.pk === reportType.pk
+                      ? refreshSelectedReportType()
+                      : (selectedReportType = reportType)
+                  "
+                  :elevation="
+                    selectedReportType &&
+                    reportType.pk === selectedReportType.pk
+                      ? 8
+                      : 2
+                  "
+                >
+                  <div
+                    v-if="
+                      selectedReportType &&
+                      selectedReportType.pk === reportType.pk
+                    "
+                    style="position: absolute; top: 4px; right: 4px; z-index: 1"
+                  >
+                    <v-icon color="grey lighten-1"
+                      >fa fa-sync-alt
+                      {{ refreshingSelected ? "fa-spin" : "" }}</v-icon
+                    >
+                  </div>
+                  <div style="height: 80px; width: 80px" class="mx-auto">
+                    <v-progress-circular
+                      v-if="coverageData[reportType.pk]"
+                      :value="100 * coverageData[reportType.pk].ratio"
+                      size="80"
+                      width="12"
+                      rotate="90"
+                      :color="colorSuccess(coverageData[reportType.pk].ratio)"
+                    >
+                      <span class="font-weight-bold"
+                        >{{
+                          roundValue(coverageData[reportType.pk].ratio)
+                        }}
+                        %</span
+                      >
+                    </v-progress-circular>
+                    <v-progress-circular
+                      v-else
+                      indeterminate
+                      size="80"
+                      width="12"
+                      rotate="90"
+                      color="grey lighten-2"
+                    />
+                  </div>
+                  <v-card-text class="text-captiona text-center">
+                    <v-tooltip bottom>
+                      <template #activator="{ on }">
+                        <div class="font-weight-bold" v-on="on">
+                          <span class="font-weight-light"
+                            >{{
+                              reportType.counter_version
+                                ? "C" + reportType.counter_version
+                                : "non-COUNTER"
+                            }}
+                            /</span
+                          >
+                          {{ reportType.short_name }}
+                        </div>
+                      </template>
+                      <span>{{ reportType.name }}</span>
+                    </v-tooltip>
+                  </v-card-text>
+                  <div
+                    class="font-weight-light text-caption d-flex justify-space-between"
+                    v-if="coverageData[reportType.pk]"
+                  >
+                    <v-tooltip bottom>
+                      <template #activator="{ on }">
+                        <div class="mx-1" v-on="on">
+                          <v-icon x-small class="pb-1">fa fa-list-alt</v-icon>
+                          {{ coverageData[reportType.pk].platform_count }}
+                        </div>
+                      </template>
+                      <span>{{ $t("number_of_platforms") }}</span>
+                    </v-tooltip>
+                    <v-tooltip bottom v-if="showingAllOrganizations">
+                      <template #activator="{ on }">
+                        <div class="mx-1" v-on="on">
+                          <v-icon x-small class="pb-1">fa fa-university</v-icon>
+                          {{ coverageData[reportType.pk].organization_count }}
+                        </div>
+                      </template>
+                      <span>{{ $t("number_of_organizations") }}</span>
+                    </v-tooltip>
+                  </div>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </v-row>
+    <v-row class="pt-6">
+      <v-col v-if="selectedReportType">
+        <h3>{{ selectedReportType.name }}</h3>
+      </v-col>
+    </v-row>
+    <v-row v-if="selectedReportType">
+      <v-col align-self="center" cols="12" md="6" lg="8" xl="9">
+        <CompositionBar :data="compositionBarData" height="36" />
+      </v-col>
+      <v-col cols="12" md="6" lg="4" xl="3">
+        <v-btn
+          v-if="harvestInfo && selectedHarvestableCount"
+          color="primary"
+          class="ms-2"
+          @click="showHarvestDialog = true"
+        >
+          {{ $tc("harvest_missing", selectedHarvestableCount) }}
+        </v-btn>
+        <span v-else-if="harvestInfo && selectedMissingCount">{{
+          $t("nothing_to_harvest")
+        }}</span>
+        <span v-else-if="!selectedMissingCount">
+          <v-icon color="success">fa fa-thumbs-up</v-icon>
+          {{ $t("all_harvested") }}
+        </span>
+      </v-col>
+    </v-row>
+    <v-row v-if="selectedReportType" class="pt-6">
+      <v-col cols="auto" class="align-self-center">
+        <h4 class="font-weight-ight">
+          {{ $t("detail_by_platform_and_month") }}
+        </h4>
+      </v-col>
+      <v-col
+        v-if="showingAllOrganizations"
+        class="text-caption font-weight-ight align-self-center"
+      >
+        (<v-icon small>far fa-hand-pointer</v-icon>
+        {{ $t("click_chart_for_organizations") }})
+      </v-col>
+    </v-row>
+    <v-row v-else-if="!loading" class="pt-6">
+      <v-col>
+        <v-alert type="info" text class="mb-0">
+          {{ $t("click_to_see_details") }}
+        </v-alert>
+      </v-col>
+    </v-row>
+    <v-row v-if="selectedReportType">
+      <v-col class="pa-0">
+        <CoverageMap
+          :report-type-id="selectedReportType.pk"
+          :start-month="dateRangeStart"
+          :end-month="dateRangeEnd"
+          :organization-id="organizationId > 0 ? organizationId : undefined"
+          rows="platform"
+          cols="date"
+          raw-report-type
+          sort-by-coverage
+          @click="onClick"
+        />
+      </v-col>
+    </v-row>
+    <v-dialog
+      v-model="showDetailByOrganization"
+      v-if="showDetailByOrganization"
+    >
+      <v-card>
+        <v-card-title class="text-h5">
+          {{ $t("detail_by_organization") }}
+        </v-card-title>
+        <v-card-subtitle class="pt-2">
+          {{ $t("labels.platform") }}:
+          {{ selectedPoint.platform }}
+        </v-card-subtitle>
+        <v-card-text>
+          <CoverageMap
+            :report-type-id="selectedReportType.pk"
+            :start-month="dateRangeStart"
+            :end-month="dateRangeEnd"
+            :platform-id="selectedPoint.platformId"
+            :organization-id="organizationId > 0 ? organizationId : undefined"
+            rows="organization"
+            cols="date"
+            raw-report-type
+            sort-by-coverage
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="secondary"
+            @click="showDetailByOrganization = false"
+            class="mb-3 me-3"
+          >
+            {{ $t("actions.close") }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog
+      v-model="showHarvestDialog"
+      v-if="showHarvestDialog"
+      :max-width="harvestId ? '1200px' : '800px'"
+    >
+      <v-card v-if="harvestId">
+        <v-card-title>{{ $t("harvest_missing_data") }}</v-card-title>
+        <v-card-text>
+          <SushiFetchIntentionsListWidget
+            :harvest-id="harvestId"
+            ref="intentionsList"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="secondary"
+            @click="showHarvestDialog = false"
+            class="mb-3 me-3"
+          >
+            {{ $t("actions.close") }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+
+      <v-card v-else>
+        <v-card-title>{{ $t("harvest_missing_data") }}</v-card-title>
+        <v-card-text>
+          <v-data-table
+            :items="selectedHarvestablePlatforms"
+            :headers="harvestablePlatformsHeaders"
+            show-select
+            item-key="platform"
+            v-model="platformsToHarvest"
+            dense
+          >
+            <template #item.records="{ item }">
+              {{ item.records.length }}
+            </template>
+            <template #top>
+              <div class="d-flex align-center pb-3">
+                <span>
+                  <span class="font-weight-bold">{{ $t("selected") }}:</span>
+                  <span>
+                    {{ $tc("platforms_count", platformsToHarvest.length) }} /
+                    {{ $tc("credentials_count", selectedCredentialsCount) }} /
+                    {{ $tc("month_count", selectedMonthCount) }}
+                  </span>
+                </span>
+                <v-spacer></v-spacer>
+                <v-btn @click="selectAllPlatforms" small class="mx-2">
+                  {{ $t("actions.select_all") }}
+                </v-btn>
+                <v-btn @click="unselectAllPlatforms" small class="mx-2">
+                  {{ $t("actions.clear_selection") }}
+                </v-btn>
+              </div>
+            </template>
+          </v-data-table>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="primary"
+            @click="harvestSelected()"
+            :disabled="selectedMonthCount === 0"
+            class="mb-3 me-3"
+          >
+            {{ $t("harvest_selected") }}
+          </v-btn>
+          <v-btn
+            color="secondary"
+            @click="showHarvestDialog = false"
+            class="mb-3 me-3"
+          >
+            {{ $t("actions.close") }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
+</template>
+
+<script>
+import cancellation from "@/mixins/cancellation";
+import { mapGetters, mapState } from "vuex";
+import CoverageMap from "@/components/charts/CoverageMap.vue";
+import CompositionBar from "@/components/util/CompositionBar.vue";
+import { monthLastDay } from "@/libs/dates";
+import parseISO from "date-fns/parseISO";
+import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget.vue";
+
+export default {
+  name: "DataCoverageOverviewPage",
+
+  mixins: [cancellation],
+
+  components: { SushiFetchIntentionsListWidget, CompositionBar, CoverageMap },
+
+  data() {
+    return {
+      reportTypes: [],
+      coverageData: {},
+      loading: false,
+      selectedReportType: null,
+      openedPanel: null,
+      harvestInfo: null,
+      showDetailByOrganization: false,
+      selectedPoint: {},
+      showHarvestDialog: false,
+      platformsToHarvest: [],
+      harvestId: null,
+      refreshingSelected: false,
+    };
+  },
+
+  computed: {
+    ...mapState({
+      organizationId: "selectedOrganizationId",
+    }),
+    ...mapGetters({
+      dateRangeStart: "dateRangeStartText",
+      dateRangeEnd: "dateRangeEndText",
+      dateRangeExplicitEnd: "dateRangeExplicitEndText",
+    }),
+    showingAllOrganizations() {
+      return this.organizationId <= 0;
+    },
+    selectedReportTypeId() {
+      return this.selectedReportType?.pk;
+    },
+    visibleReportTypes() {
+      return this.reportTypes
+        .filter((reportType) => reportType.short_name !== "interest")
+        .sort((a, b) =>
+          a.counter_version === b.counter_version
+            ? a.name.localeCompare(b.name)
+            : b.counter_version - a.counter_version
+        );
+    },
+    counterVersions() {
+      return [
+        ...new Set(this.visibleReportTypes.map((rt) => rt.counter_version)),
+      ].sort((a, b) => (a === null ? 1 : (b === null ? -1 : b - a))); // prettier-ignore
+    },
+    selectedIbCount() {
+      if (!this.selectedReportType) {
+        return 0;
+      }
+      return this.coverageData[this.selectedReportType.pk].ib_count;
+    },
+    selectedIbMax() {
+      if (!this.selectedReportType) {
+        return 0;
+      }
+      return this.coverageData[this.selectedReportType.pk].ib_max;
+    },
+    selectedMissingCount() {
+      return this.selectedIbMax - this.selectedIbCount;
+    },
+    selectedHarvestableCount() {
+      if (!this.harvestInfo) {
+        return 0;
+      }
+      return this.harvestInfo.reduce(
+        (sum, record) => sum + record.months.length,
+        0
+      );
+    },
+    selectedHarvestablePlatforms() {
+      if (!this.harvestInfo) {
+        return [];
+      }
+      let platformMap = new Map();
+      this.harvestInfo.forEach((rec) => {
+        let arr = platformMap.get(rec.platform) || [];
+        arr.push(rec);
+        platformMap.set(rec.platform, arr);
+      });
+      let out = [];
+      for (let [platform, records] of platformMap) {
+        out.push({
+          platform,
+          records,
+          monthCount: records.reduce((sum, rec) => sum + rec.months.length, 0),
+        });
+      }
+      return out.sort((a, b) => a.platform.localeCompare(b.platform));
+    },
+    selectedCredentialsCount() {
+      return this.platformsToHarvest.reduce(
+        (out, platform) => out + platform.records.length,
+        0
+      );
+    },
+    selectedMonthCount() {
+      return this.platformsToHarvest.reduce(
+        (out, platform) => out + platform.monthCount,
+        0
+      );
+    },
+    compositionBarData() {
+      return [
+        {
+          value: this.selectedIbCount / this.selectedIbMax,
+          text: this.$tc("months_present", this.selectedIbCount),
+          color: "#cef5ce",
+        },
+        {
+          value: this.selectedHarvestableCount / this.selectedIbMax,
+          text: this.$tc("months_harvestable", this.selectedHarvestableCount),
+          color: "#f8e6ac",
+        },
+        {
+          value:
+            (this.selectedIbMax -
+              this.selectedIbCount -
+              this.selectedHarvestableCount) /
+            this.selectedIbMax,
+          text: this.harvestInfo
+            ? this.$tc(
+                "months_no_sushi",
+                this.selectedIbMax -
+                  this.selectedIbCount -
+                  this.selectedHarvestableCount
+              )
+            : this.$t("labels.loading") + "...",
+          color: "#d2d2d2",
+        },
+      ];
+    },
+    harvestablePlatformsHeaders() {
+      return [
+        { text: this.$t("labels.platform"), value: "platform" },
+        {
+          text: this.$t("labels.credentials"),
+          value: "records",
+          align: "right",
+        },
+        {
+          text: this.$t("labels.months"),
+          value: "monthCount",
+          align: "right",
+        },
+      ];
+    },
+  },
+
+  methods: {
+    async fetchReportTypes() {
+      let url = "/api/report-type/";
+      if (!this.showingAllOrganizations) {
+        url = `/api/organization/${this.organizationId}/report-types/used/`;
+      }
+      let reply = await this.http({
+        url: url,
+        // undefined values are not sent
+        params: {
+          "nonzero-only": true,
+          start_date: this.dateRangeStart
+            ? this.dateRangeStart + "-01"
+            : undefined,
+          end_date: this.dateRangeEnd ? this.dateRangeEnd + "-01" : undefined,
+        },
+        method: "GET",
+      });
+      if (!reply.error) {
+        this.reportTypes = reply.response.data;
+      }
+    },
+    async fetchTopLevelCoverage(reportType) {
+      let extraParams = {};
+      if (!this.showingAllOrganizations) {
+        extraParams = { organization: this.organizationId };
+      }
+      return await this.http({
+        url: "/api/import-batch/data-coverage/",
+        params: {
+          report_type: reportType.pk,
+          start_date: this.dateRangeStart,
+          end_date: this.dateRangeEnd,
+          split_by_date: false,
+          ...extraParams,
+        },
+        method: "GET",
+      });
+    },
+    async fetchHarvestableInfo() {
+      // fetches the data for the currently selected report type
+      if (!this.selectedReportTypeId) {
+        return;
+      }
+      let extraParams = {};
+      if (!this.showingAllOrganizations) {
+        extraParams = { organization: this.organizationId };
+      }
+      const reply = await this.http({
+        url: "/api/import-batch/data-coverage-harvestable/",
+        params: {
+          report_type: this.selectedReportTypeId,
+          start_date: this.dateRangeStart,
+          end_date: this.dateRangeEnd,
+          ...extraParams,
+        },
+      });
+      if (!reply.error) {
+        this.harvestInfo = reply.response.data;
+      }
+    },
+    colorSuccess(value, lighter = false) {
+      // using value^3 pushes the color to the red end of the spectrum
+      // which is what we need as we want to highlight the low coverage
+      const hue = value * value * value * 120;
+      if (lighter) {
+        return `hsl(${hue}, 50%, 80%)`;
+      }
+      return `hsl(${hue}, 100%, 40%)`;
+    },
+    roundValue(value) {
+      return Math.round(value * 100);
+    },
+    progressByCounterVersion(version) {
+      let rts = this.visibleReportTypes.filter(
+        (rt) => rt.counter_version === version
+      );
+      return rts.filter((rt) => !!this.coverageData[rt.pk]).length / rts.length;
+    },
+    ratioByCounterVersion(version) {
+      return this.visibleReportTypes
+        .filter((rt) => rt.counter_version === version)
+        .reduce(
+          (acc, rt) => [
+            acc[0] + this.coverageData[rt.pk].ib_max,
+            acc[1] + this.coverageData[rt.pk].ib_count,
+          ],
+          [0, 0]
+        )
+        .reduce((acc, num) => num / acc, 1);
+    },
+    async prepare() {
+      this.loading = true;
+      this.coverageData = {};
+      this.selectedReportType = null;
+      await this.fetchReportTypes();
+      for (let reportType of this.visibleReportTypes) {
+        // we do this iteratively to avoid overloading the server
+        let reply = await this.fetchTopLevelCoverage(reportType);
+        if (!reply.error) {
+          this.$set(this.coverageData, reportType.pk, reply.response.data[0]);
+        }
+      }
+      if (this.counterVersions.length > 0) {
+        this.openedPanel = 0;
+      }
+      this.loading = false;
+    },
+    async refreshSelectedReportType() {
+      this.refreshingSelected = true;
+      let reply = await this.fetchTopLevelCoverage(this.selectedReportType);
+      if (!reply.error) {
+        this.$set(
+          this.coverageData,
+          this.selectedReportType.pk,
+          reply.response.data[0]
+        );
+        this.harvestInfo = null;
+        await this.fetchHarvestableInfo();
+      }
+      this.refreshingSelected = false;
+    },
+    onClick(event) {
+      this.selectedPoint = event;
+      if (this.showingAllOrganizations) this.showDetailByOrganization = true;
+    },
+    selectAllPlatforms() {
+      this.platformsToHarvest = [...this.selectedHarvestablePlatforms];
+    },
+    unselectAllPlatforms() {
+      this.platformsToHarvest = [];
+    },
+    async harvestSelected() {
+      let intentions = [];
+      for (let platformRec of this.platformsToHarvest) {
+        for (let credRec of platformRec.records) {
+          for (let month of credRec.months) {
+            intentions.push({
+              start_date: month,
+              end_date: monthLastDay(parseISO(month)),
+              credentials: credRec.credentials_id,
+              counter_report: this.selectedReportType.counter_report_type_id,
+            });
+          }
+        }
+      }
+      this.started = true;
+
+      let reply = await this.http({
+        url: "/api/scheduler/harvest/",
+        data: {
+          intentions: intentions,
+        },
+        method: "POST",
+      });
+      if (!reply.error) {
+        this.harvestId = reply.response.data.pk;
+      }
+    },
+  },
+
+  async created() {
+    await this.prepare();
+  },
+
+  watch: {
+    organizationId() {
+      this.prepare();
+    },
+    dateRangeStart() {
+      this.prepare();
+    },
+    dateRangeEnd() {
+      this.prepare();
+    },
+    selectedReportTypeId() {
+      this.harvestInfo = null;
+      if (this.selectedMissingCount) this.fetchHarvestableInfo();
+    },
+    showHarvestDialog() {
+      if (!this.showHarvestDialog) {
+        // clear the selection upon closing the dialog
+        this.platformsToHarvest = [];
+        this.harvestId = null;
+        // and also re-fetch info about currently selected report type
+        // as it may have been updated
+      }
+    },
+  },
+};
+</script>
+
+<style scoped lang="scss">
+.bordered-panel {
+  .v-expansion-panel-header {
+    border: 1px solid #ddd;
+    border-bottom: none;
+  }
+
+  .v-expansion-panel-content {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+  }
+
+  .v-expansion-panel:last-of-type {
+    .v-expansion-panel-header {
+      border-bottom: 1px solid #ddd;
+    }
+    .v-expansion-panel-content {
+      border-bottom: 1px solid #ddd;
+    }
+  }
+}
+
+.v-card {
+  &.selected {
+    background-color: #f0f0f0;
+  }
+}
+</style>

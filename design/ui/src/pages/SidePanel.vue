@@ -287,6 +287,12 @@ export default {
                 this.allowManualDataUpload &&
                 this.isRawImportEnabled,
             },
+            {
+              title: this.$t("pages.data_coverage_overview"),
+              icon: "fa fa-sitemap",
+              linkTo: "data-coverage-overview",
+              show: this.showAdminStuff,
+            },
           ],
           show: this.showAdminStuff,
         },

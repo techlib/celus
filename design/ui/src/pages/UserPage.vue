@@ -16,15 +16,15 @@ en:
   verification_resent: Verification email was resent
   logout: Log out
   change_password: Change password
-  impersonification:
-    title: Impersonification
+  impersonation:
+    title: impersonation
     email: Email
     text: You are a consortial manager, so you can switch to other user accounts.
     first_name: First name
     last_name: Last name
     real_user: you
     search: Search
-    stop: Stop impersonification
+    stop: Stop impersonation
     organizations: Organizations
     member: Member of organization
     admin: Admin of organization
@@ -48,7 +48,7 @@ cs:
   verification_resent: Ověřovací email byl znovu zaslán
   logout: Odhlásit se
   change_password: Změnit heslo
-  impersonification:
+  impersonation:
     title: Zosobnění
     text: Jako správce konzorcia se můžete přepnout do účtů dalších uživatelů.
     email: E-mail
@@ -126,7 +126,7 @@ cs:
           <v-btn
             color="purple"
             v-if="impersonated"
-            v-text="$t('impersonification.stop')"
+            v-text="$t('impersonation.stop')"
             @click="stopImpersonate"
             dark
           ></v-btn>
@@ -164,9 +164,9 @@ cs:
 
     <v-row v-if="showImpersonate" class="mb-2" align="center" justify="center">
       <v-col cols="12" md="10">
-        <h2 v-text="$t('impersonification.title')"></h2>
+        <h2 v-text="$t('impersonation.title')"></h2>
         <div class="font-weight-light mt-2 mb-4">
-          {{ $t("impersonification.text") }}
+          {{ $t("impersonation.text") }}
         </div>
         <v-data-table
           :headers="impersonateHeaders"
@@ -189,7 +189,7 @@ cs:
                 <v-col cols="12" md="6">
                   <v-text-field
                     v-model="impersonateSearch"
-                    :label="$t('impersonification.search')"
+                    :label="$t('impersonation.search')"
                     class=""
                   ></v-text-field>
                 </v-col>
@@ -219,20 +219,25 @@ cs:
                   fas fa-crown
                 </v-icon>
               </template>
-              {{ $t("impersonification.manager") }}
+              {{ $t("impersonation.manager") }}
             </v-tooltip>
             <v-tooltip bottom v-else-if="item.is_user_of_master_organization">
               <template #activator="{ on }">
-                <v-icon v-on="on" small color="blue-grey lighten-2" class="mr-1">
+                <v-icon
+                  v-on="on"
+                  small
+                  color="blue-grey lighten-2"
+                  class="mr-1"
+                >
                   fas fa-crown
                 </v-icon>
               </template>
-              {{ $t("impersonification.consortial_user") }}
+              {{ $t("impersonation.consortial_user") }}
             </v-tooltip>
             <v-badge
               v-if="item.real_user"
               color="error"
-              :content="$t('impersonification.real_user')"
+              :content="$t('impersonation.real_user')"
             >
               <span>{{ item.email }}</span>
             </v-badge>
@@ -259,9 +264,9 @@ cs:
                 </template>
                 <span
                   v-if="organization.is_admin"
-                  v-html="$t('impersonification.admin')"
+                  v-html="$t('impersonation.admin')"
                 />
-                <span v-else v-html="$t('impersonification.member')" />
+                <span v-else v-html="$t('impersonation.member')" />
                 <strong class="ml-1">{{ organization.name }}</strong>
               </v-tooltip>
             </span>
@@ -336,22 +341,22 @@ export default {
           align: "right",
         },
         {
-          text: this.$t("impersonification.email"),
+          text: this.$t("impersonation.email"),
           value: "email",
           sortable: true,
         },
         {
-          text: this.$t("impersonification.first_name"),
+          text: this.$t("impersonation.first_name"),
           value: "first_name",
           sortable: true,
         },
         {
-          text: this.$t("impersonification.last_name"),
+          text: this.$t("impersonation.last_name"),
           value: "last_name",
           sortable: true,
         },
         {
-          text: this.$t("impersonification.organizations"),
+          text: this.$t("impersonation.organizations"),
           value: "organizations",
           sortable: false,
         },
@@ -430,9 +435,10 @@ export default {
       }
       // Match organization
       if (Array.isArray(value)) {
-        return value.some((rec) =>
-          match(rec.organization.short_name, search)
-          || match(rec.organization.name, search)
+        return value.some(
+          (rec) =>
+            match(rec.organization.short_name, search) ||
+            match(rec.organization.name, search)
         );
       }
 
