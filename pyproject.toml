@@ -22,7 +22,7 @@ license = "MIT"
 python = "^3.8.8"
 
 celery = "~5.2.3"
-celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v7.13.0" }
+celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v7.14.2" }
 celus-nigiri = { git = "https://github.com/Big-Dig-Data/celus-nigiri.git", tag="v1.3.0" }
 colorlog = "^6.7.0"
 diskcache = "5.4"
@@ -48,7 +48,7 @@ drf-nested-routers = "~0.93.4"
 hcube = "0.11.3"
 isbnlib = "^3.10.3"
 lz4 = "~4.3.2"
-openpyxl = "~3.0.10"
+openpyxl = "~3.1.2"
 Pillow = "^9.3.0"
 psutil = "~5.9.4"
 psycopg2-binary = "~2.9.1"

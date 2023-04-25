@@ -241,7 +241,7 @@ zstd = ["zstandard"]
 
 [[package]]
 name = "celus-nibbler"
-version = "7.13.0"
+version = "7.14.2"
 description = "Counter-like data reader and processor."
 category = "main"
 optional = false
@@ -253,7 +253,7 @@ develop = false
 celus-nigiri = {git = "https://github.com/Big-Dig-Data/celus-nigiri.git", tag = "v1.3.0"}
 diskcache = "~5.4.0"
 jellyfish = "~0.9.0"
-openpyxl = "~3.0.10"
+openpyxl = "~3.1.2"
 pydantic = "~1.10.2"
 python-dateutil = "~2.8.2"
 typing-extensions = "~4.3.0"
@@ -262,8 +262,8 @@ unidecode = "~1.3.4"
 [package.source]
 type = "git"
 url = "https://github.com/Big-Dig-Data/celus-nibbler.git"
-reference = "v7.13.0"
-resolved_reference = "54d89b565474fcd7b501a98b23f81c53b25490e2"
+reference = "v7.14.2"
+resolved_reference = "2327d352be3ee38df58add409e28d99842307721"
 
 [[package]]
 name = "celus-nigiri"
@@ -2047,14 +2047,14 @@ defusedxml = "*"
 
 [[package]]
 name = "openpyxl"
-version = "3.0.10"
+version = "3.1.2"
 description = "A Python library to read/write Excel 2010 xlsx/xlsm files"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "openpyxl-3.0.10-py2.py3-none-any.whl", hash = "sha256:0ab6d25d01799f97a9464630abacbb34aafecdcaa0ef3cba6d6b3499867d0355"},
-    {file = "openpyxl-3.0.10.tar.gz", hash = "sha256:e47805627aebcf860edb4edf7987b1309c1b3632f3750538ed962bbcc3bd7449"},
+    {file = "openpyxl-3.1.2-py2.py3-none-any.whl", hash = "sha256:f91456ead12ab3c6c2e9491cf33ba6d08357d802192379bb482f1033ade496f5"},
+    {file = "openpyxl-3.1.2.tar.gz", hash = "sha256:a6f5977418eff3b2d5500d54d9db50c8277a368436f4e4f8ddb1be3422870184"},
 ]
 
 [package.dependencies]
@@ -3697,4 +3697,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.8"
-content-hash = "d5fb0804939181fde65358cb970caad28a595ba4d1a8010c8d84e3cef6ae2374"
+content-hash = "c3993fb6da04234dfaec00825395752af64d79c2497748a00fe25084656857d3"
