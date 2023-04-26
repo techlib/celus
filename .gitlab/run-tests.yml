@@ -1,3 +1,18 @@
+.on_python_changes:
+  rules: &on_python_changes_rules
+    - if: '$CI_COMMIT_BRANCH == "plus"'
+      when: on_success
+    - changes:
+      - apps/**/*
+      - config/**/*
+      - test_fixtures/**/*
+      - poetry.lock
+      - CHANGELOG.md
+      - RELEASES.yaml
+      when: on_success
+    - when: never
+
+
 tests:run_tests:
   stage: tests
   needs: []
@@ -32,6 +47,7 @@ tests:run_tests:
         coverage_format: cobertura
         path: coverage.xml
   coverage: /^TOTAL.*\s+([^\s]+)%$/
+  rules: *on_python_changes_rules
   tags:
     - bdd
 
@@ -56,5 +72,6 @@ tests:load_initial_data:
     - cp .env.example .env
     - poetry run python manage.py migrate
     - poetry run python manage.py loaddata data/initial-data.json
+  rules: *on_python_changes_rules
   tags:
     - bdd
