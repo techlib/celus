@@ -1003,12 +1003,6 @@ export default {
       if (config.primary_dimension) {
         this.row = config.primary_dimension;
       }
-      const configToAttr = new Map([
-        ["report_type", "selectedReportTypes"],
-        ["metric", "selectedMetrics"],
-        ["organization", "selectedOrganizations"],
-        ["platform", "selectedPlatforms"],
-      ]);
       if (config.filters) {
         // deal with report_type first as it influences much more later
         let rt_filter = config.filters.find(
@@ -1029,11 +1023,29 @@ export default {
             }
           }
         }
+
         // let's do the other filters
+        const configToAttr = new Map([
+          ["metric", "selectedMetrics"],
+          ["organization", "selectedOrganizations"],
+          ["platform", "selectedPlatforms"],
+        ]);
         for (let filter of config.filters.filter(
           (item) => item.dimension !== "report_type"
         )) {
-          if (configToAttr.has(filter.dimension)) {
+          if (filter.tag_ids) {
+            // deal with tag based filtering
+            // tags can be used on dimensions both in `configToAttr` and
+            // outside of it (titles) so we check it first
+            if (filter.dimension === "target") {
+              this.selectedTitleTags = filter.tag_ids;
+            } else if (filter.dimension === "platform") {
+              this.selectedPlatformTags = filter.tag_ids;
+            } else if (filter.dimension === "organization") {
+              this.selectedOrganizationTags = filter.tag_ids;
+            }
+            this.filters.push(filter.dimension);
+          } else if (configToAttr.has(filter.dimension)) {
             this.$set(this, configToAttr.get(filter.dimension), filter.values);
             this.filters.push(filter.dimension);
           } else if (filter.dimension.substring(0, 3) === "dim") {
@@ -1048,16 +1060,6 @@ export default {
               start: start ? ymDateFormat(start) : null,
               end: end ? ymDateFormat(end) : null,
             };
-            this.filters.push(filter.dimension);
-          } else if (filter.tag_ids) {
-            // deal with tag based filtering
-            if (filter.dimension === "target") {
-              this.selectedTitleTags = filter.tag_ids;
-            } else if (filter.dimension === "platform") {
-              this.selectedPlatformTags = filter.tag_ids;
-            } else if (filter.dimension === "organization") {
-              this.selectedOrganizationTags = filter.tag_ids;
-            }
             this.filters.push(filter.dimension);
           } else {
             console.warn(`Unrecognized filter "${filter.dimension}"`);
