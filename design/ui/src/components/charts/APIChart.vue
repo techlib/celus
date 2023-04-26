@@ -683,7 +683,10 @@ export default {
       // type "bar" means horizontal bars - taken from the v-charts library
       return {
         // more space for names when bars are horizontal
-        grid: this.type === "bar" ? { left: "25%" } : {},
+        grid:
+          this.type === "bar"
+            ? { left: "25%" }
+            : { left: this.maxValue.toString().length * 10 },
         xAxis: this.xAxis,
         yAxis: this.yAxis,
         dataset: {
@@ -808,6 +811,14 @@ export default {
       }
       // otherwise split by organization
       return "organization";
+    },
+    maxValue() {
+      return Math.max(
+        0,
+        ...this.displayData.map((item) =>
+          this.seriesNames.reduce((acc, series) => acc + item[series], 0)
+        )
+      );
     },
   },
 
