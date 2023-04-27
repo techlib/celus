@@ -593,15 +593,13 @@ cs:
             </v-col>
             <v-spacer></v-spacer>
             <v-col cols="auto">
-              <v-btn
+              <DeleteSushiCredentialsDataWidget
                 v-if="credentials"
-                color="error"
-                @click="deleteObject()"
                 class="mr-8"
-              >
-                <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
-                {{ $t("delete") }}
-              </v-btn>
+                :credentials="credentials"
+                :platform="activePlatform"
+                @deleted="$emit('deleted', { id: credentials.pk }) ; $emit('input', false)"
+              />
               <v-btn color="secondary" @click="closeDialog()" class="mr-2">
                 <v-icon small class="mr-1">fa fa-times</v-icon>
                 {{ $t("close") }}
@@ -673,6 +671,7 @@ import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import RegistryIcon from "@/components/sushi/RegistryIcon";
 import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
 import InterestGroupSelector from "@/components/selectors/InterestGroupSelector.vue";
+import DeleteSushiCredentialsDataWidget from "@/components/sushi/DeleteSushiCredentialsDataWidget";
 
 export default {
   name: "SushiCredentialsEditDialog",
@@ -683,6 +682,7 @@ export default {
     HarvestSelectedWidget,
     SushiReportIndicator,
     AddPlatformButton,
+    DeleteSushiCredentialsDataWidget,
   },
   props: {
     credentialsObject: {},

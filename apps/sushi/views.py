@@ -22,6 +22,8 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from reversion.views import create_revision
 from scheduler.models import FetchIntention
 from scheduler.serializers import MonthOverviewSerializer
+from sushi.models import SushiFetchAttempt
+from sushi.tasks import delete_fetchattempts_and_related_importbatches_task
 
 from .admin import SushiCredentialsResource
 from .models import AttemptStatus, CounterReportsToCredentials, CounterReportType, SushiCredentials
@@ -105,9 +107,20 @@ class SushiCredentialsViewSet(ModelViewSet):
 
     @method_decorator(create_revision())
     def destroy(self, request, *args, **kwargs):
+        delete_data = self.request.query_params.get('delete_data', 'false').lower() == 'true'
         credentials = self.get_object()  # type: SushiCredentials
         if credentials.can_edit(request.user):
             reversion.set_comment('Deleted through API')
+            if delete_data:
+                fetch_attempts_pks = list(
+                    SushiFetchAttempt.objects.filter(credentials=credentials).values_list(
+                        'pk', flat=True
+                    )
+                )
+                delete_fetchattempts_and_related_importbatches_task.delay(fetch_attempts_pks)
+                reversion.set_comment(
+                    'Deleted through API with all related FetchAttempts and ImportBatches.'
+                )
             return super().destroy(request, *args, **kwargs)
         else:
             raise PermissionDenied('User is not allowed to delete this object')

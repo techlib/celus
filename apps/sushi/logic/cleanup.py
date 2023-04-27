@@ -4,14 +4,23 @@ from collections import Counter
 from datetime import timedelta
 
 from django.db.models import Max
+from django.db.transaction import atomic
 from django.utils import timezone
-from sushi.models import AttemptStatus, SushiFetchAttempt
+from sushi.models import AttemptStatus, ImportBatch, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
 
 
 UNSUCCESFUL_CLEANUP_PERIOD = timedelta(days=45)  # in days
 CHUNK_SIZE = 2000
+
+
+@atomic
+def delete_fetchattempts_and_related_importbatches(
+    fetch_attempts_pks: list,
+):
+    ImportBatch.objects.filter(sushifetchattempt__pk__in=fetch_attempts_pks).delete()
+    SushiFetchAttempt.objects.filter(pk__in=fetch_attempts_pks).delete()
 
 
 def cleanup_fetch_attempts_with_no_data(

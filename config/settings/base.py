@@ -368,6 +368,7 @@ CELERY_TASK_ROUTES = {
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
     'export.tasks.delete_expired_flexible_data_exports_task': {'queue': 'celery'},
+    'sushi.tasks.delete_fetchattempts_and_related_importbatches_task': {'queue': 'import'},
 }
 
 # FlexibleDataExport settings

@@ -778,7 +778,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         max_length=20, choices=AttemptStatus.choices, default=AttemptStatus.INITIAL
     )
 
-    credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
+    credentials = models.ForeignKey(SushiCredentials, null=True, on_delete=models.SET_NULL)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
