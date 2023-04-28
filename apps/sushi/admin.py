@@ -175,6 +175,7 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         'counter_report',
         'import_batch',
     ]
+    readonly_fields = ['last_updated']
 
     class Media:
         css = {"all": ("admin/admin.css",)}

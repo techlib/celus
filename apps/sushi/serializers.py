@@ -201,6 +201,7 @@ class SushiFetchAttemptSerializer(ModelSerializer):
             'when_processed',
             'partial_data',
             'status',
+            'last_updated',
         )
 
 
@@ -223,6 +224,7 @@ class SushiFetchAttemptSimpleSerializer(ModelSerializer):
             'timestamp',
             'when_processed',
             'status',
+            'last_updated',
         )
 
 
@@ -244,6 +246,7 @@ class SushiFetchAttemptFlatSerializer(ModelSerializer):
             'partial_data',
             'status',
             'extracted_data',
+            'last_updated',
         )
 
 

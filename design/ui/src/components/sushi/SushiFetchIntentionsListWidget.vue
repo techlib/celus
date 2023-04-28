@@ -369,8 +369,13 @@ export default {
       if (this.intentionData.length === 0) {
         return null;
       }
+      // we take the last time an intention or an attempt was updated
       return this.intentionData
-        .map((item) => item.last_updated)
+        .map((item) => [
+          item.attempt?.last_updated || item.last_updated,
+          item.last_updated,
+        ])
+        .flat()
         .reduce((a, b) => (a > b ? a : b));
     },
     intentionsUrl() {
@@ -566,7 +571,9 @@ export default {
         });
         let newData = response.data;
         newData.forEach(annotateIntention);
-        if (this.intentionData.length > 0) {
+        if (newData.length == 0) {
+          // do nothing when there are no new data
+        } else if (this.intentionData.length > 0) {
           // we already have intentions, we just want to update the changed ones
           let newpkToRecord = new Map();
           newData.forEach((record) => {
@@ -591,16 +598,6 @@ export default {
     },
     stop() {
       this.inactive = true;
-    },
-    elapsedTime(intention) {
-      const duration = intervalToDuration({
-        start: intention.notBefore,
-        end: this.now,
-      });
-      return formatDuration(duration, this.dateFnOptions);
-    },
-    tilStart(intention) {
-      return formatDistanceToNowStrict(intention.notBefore, this.dateFnOptions);
     },
     futureStart(intention) {
       return isFuture(intention.notBefore) && !intention.isDuplicate;
