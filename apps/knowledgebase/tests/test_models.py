@@ -16,12 +16,12 @@ from knowledgebase.models import (
     ReportTypeImportAttempt,
     RouterSyncAttempt,
 )
-from logs.models import ReportInterestMetric, ReportType
+from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from publications.models import Platform, PlatformInterestReport
 
 from test_fixtures.entities.api import OrganizationAPIKeyFactory
 from test_fixtures.entities.data_souces import DataSourceFactory
-from test_fixtures.entities.logs import ImportBatchFactory
+from test_fixtures.entities.logs import ImportBatchFactory, MetricFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
     data_sources,
@@ -558,6 +558,31 @@ class TestReportTypeImportAttempt:
             report_type3.reportinterestmetric_set.order_by('id').last().interest_group.short_name
             == "other"
         )
+
+    def test_metrics_are_not_duplicated(self, data_sources):
+        MetricFactory(short_name="metric1", source=None)
+        assert Metric.objects.count() == 1
+        attempt = ReportTypeImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process(REPORT_TYPE_INPUT_DATA)  # contains the `metric1` metric
+        assert Metric.objects.count() == 1, 'metric was not duplicated'
+        assert Metric.objects.filter(short_name="metric1").first().source is None
+
+    def test_metrics_do_not_use_brain_source(self, data_sources):
+        assert Metric.objects.count() == 0
+        attempt = ReportTypeImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process(REPORT_TYPE_INPUT_DATA)  # contains the `metric1` metric
+        assert Metric.objects.count() == 1, 'metric was created'
+        assert Metric.objects.filter(short_name="metric1").first().source is None
+
+    def test_dimensions_do_not_use_brain_source(self, data_sources):
+        assert Dimension.objects.count() == 0
+        attempt = ReportTypeImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process(REPORT_TYPE_INPUT_DATA)  # contains 2 dimensions
+        assert Dimension.objects.count() == 2, '2 dimensions were created'
+        assert {dim.source_id for dim in Dimension.objects.all()} == {None}
 
 
 @pytest.mark.django_db
