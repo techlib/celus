@@ -77,7 +77,7 @@ class TestCeleryTasks:
             assert Platform.objects.count() == platform_count + 3
             assert ReportType.objects.count() == report_type_count + 3
             assert ParserDefinition.objects.count() == parser_definition_count + 1
-            assert Metric.objects.count() == metric_count + 2
+            assert Metric.objects.count() == metric_count, 'no new metrics should be created'
             assert ReportInterestMetric.objects.count() == rim_count + 2
             # 5 report_types with default_platform_interest * 3 new platforms
             # + 1 from parser_definition
@@ -90,5 +90,5 @@ class TestCeleryTasks:
                 Dimension.objects.filter(
                     short_name__in=["dim1", "dim3", "dim4"], source=data_sources['brain']
                 ).count()
-                == 3
-            ), "Brain is set as source for all dimensions"
+                == 0
+            ), "Brain is set as source for no dimensions created by sync"

@@ -66,7 +66,7 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
         # Deleting prefix should not be performed before Insert
         #
         # So if there is a Target.PRESENT attempt which is not
-        # not propagaged yet, don't perform Target.ABSENT
+        # propagated yet, don't perform Target.ABSENT
         if self.target == self.Target.ABSENT:
             if RouterSyncAttempt.objects.filter(
                 prefix=self.prefix, target=self.Target.PRESENT, done__isnull=True
@@ -455,9 +455,6 @@ class ReportTypeImportAttempt(ImportAttempt):
                             dimension.short_name,
                             report_type_data['short_name'],
                         )
-                    elif not dimension.source:
-                        dimension.source = self.source
-                        dimension.save()
                     dimensions.append(dimension)
             else:
                 dimensions = []
