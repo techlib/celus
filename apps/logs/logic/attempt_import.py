@@ -11,7 +11,11 @@ from core.exceptions import FileConsistencyError
 from django.conf import settings
 from django.db.transaction import atomic
 from logs.exceptions import DataStructureError
-from logs.logic.data_import import create_import_batch_or_crash, import_counter_records
+from logs.logic.data_import import (
+    create_import_batch_or_crash,
+    import_counter_records,
+    wipe_empty_import_batches,
+)
 from logs.models import OrganizationPlatform
 from sushi.models import AttemptStatus, SushiFetchAttempt
 
@@ -117,16 +121,28 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.save()
     # now read the data and import it
     elif reader.record_found:
+
+        month = (
+            attempt.start_date.isoformat()
+            if isinstance(attempt.start_date, date)
+            else attempt.start_date
+        )
+
+        # remove empty import batches to avoid the clash during import
+        if count := wipe_empty_import_batches(
+            attempt.counter_report.report_type,
+            attempt.credentials.organization,
+            attempt.credentials.platform,
+            month,
+        ):
+            logger.info('%d empty conflicting ImportBatch(es) were deleted', count)
+
         import_batches, stats = import_counter_records(
             attempt.counter_report.report_type,
             attempt.credentials.organization,
             attempt.credentials.platform,
             records,
-            months=[
-                attempt.start_date.isoformat()
-                if isinstance(attempt.start_date, date)
-                else attempt.start_date
-            ],
+            months=[month],
         )
         if len(import_batches) > 1:
             raise DataStructureError('Cannot import data for more than one month from SUSHI')

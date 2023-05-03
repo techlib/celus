@@ -300,12 +300,12 @@ class TestFetchIntention:
     @pytest.mark.parametrize(
         "error_code,status,recent_success,automatic,empty_ib,delays,last_canceled",
         (
-            (
-                ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,
-                AttemptStatus.NO_DATA,
-                False,
-                True,
-                False,
+            pytest.param(
+                ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,  # error_code
+                AttemptStatus.NO_DATA,  # status
+                False,  # recent_success
+                True,  # automatic
+                False,  # empty_ib
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -315,15 +315,16 @@ class TestFetchIntention:
                     timedelta(days=8),
                     timedelta(days=8),
                     None,
-                ],
-                False,
+                ],  # delays
+                False,  # last_canceled
+                id="not_ready",
             ),
-            (
-                ErrorCode.NO_DATA_FOR_DATE_ARGS.value,
-                AttemptStatus.NO_DATA,
-                False,
-                True,
-                True,
+            pytest.param(
+                ErrorCode.NO_DATA_FOR_DATE_ARGS.value,  # error_code
+                AttemptStatus.NO_DATA,  # status
+                False,  # recent_success
+                True,  # automatic
+                True,  # empty_ib
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -333,15 +334,16 @@ class TestFetchIntention:
                     timedelta(days=8),
                     timedelta(days=8),
                     None,
-                ],
-                False,
+                ],  # delays
+                False,  # last_canceled
+                id="no_data",
             ),
-            (
-                ErrorCode.PARTIAL_DATA_RETURNED.value,
-                AttemptStatus.NO_DATA,
-                False,
-                True,
-                True,
+            pytest.param(
+                ErrorCode.PARTIAL_DATA_RETURNED.value,  # error_code
+                AttemptStatus.NO_DATA,  # status
+                False,  # recent_success
+                True,  # automatic
+                True,  # empty_ib
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -351,15 +353,16 @@ class TestFetchIntention:
                     timedelta(days=8),
                     timedelta(days=8),
                     None,
-                ],
-                False,
+                ],  # delays
+                False,  # last_canceled
+                id="partial_data",
             ),
-            (
-                ErrorCode.PREPARING_DATA.value,
-                AttemptStatus.DOWNLOAD_FAILED,
-                False,
-                True,
-                False,
+            pytest.param(
+                ErrorCode.PREPARING_DATA.value,  # error_code
+                AttemptStatus.DOWNLOAD_FAILED,  # status
+                False,  # recent_success
+                True,  # automatic
+                False,  # empty_ib
                 [
                     timedelta(minutes=1),
                     timedelta(minutes=2),
@@ -373,15 +376,16 @@ class TestFetchIntention:
                     timedelta(minutes=512),
                     timedelta(minutes=1024),
                     None,
-                ],
-                True,
+                ],  # delays
+                True,  # last_canceled
+                id="preparing_data",
             ),
-            (
-                ErrorCode.SERVICE_BUSY.value,
-                AttemptStatus.DOWNLOAD_FAILED,
-                False,
-                True,
-                False,
+            pytest.param(
+                ErrorCode.SERVICE_BUSY.value,  # error_code
+                AttemptStatus.DOWNLOAD_FAILED,  # status
+                False,  # recent_success
+                True,  # automatic
+                False,  # empty_ib
                 [
                     timedelta(minutes=1),
                     timedelta(minutes=2),
@@ -395,15 +399,16 @@ class TestFetchIntention:
                     timedelta(minutes=512),
                     timedelta(minutes=1024),
                     None,
-                ],
-                True,
+                ],  # delays
+                True,  # last_canceled
+                id="service_busy",
             ),
-            (
-                ErrorCode.TOO_MANY_REQUESTS.value,
-                AttemptStatus.DOWNLOAD_FAILED,
-                False,
-                True,
-                False,
+            pytest.param(
+                ErrorCode.TOO_MANY_REQUESTS.value,  # error_code
+                AttemptStatus.DOWNLOAD_FAILED,  # status
+                False,  # recent_success
+                True,  # automatic
+                False,  # empty_ib
                 [
                     timedelta(hours=1),
                     timedelta(hours=1),
@@ -414,15 +419,16 @@ class TestFetchIntention:
                     timedelta(hours=1),
                     timedelta(hours=1),
                     timedelta(hours=1),
-                ],
-                True,
+                ],  # delays
+                True,  # last_canceled
+                id="too_many_requests",
             ),
-            (
-                ErrorCode.SERVICE_NOT_AVAILABLE.value,
-                AttemptStatus.DOWNLOAD_FAILED,
-                False,
-                True,
-                False,
+            pytest.param(
+                ErrorCode.SERVICE_NOT_AVAILABLE.value,  # error_code
+                AttemptStatus.DOWNLOAD_FAILED,  # status
+                False,  # recent_success
+                True,  # automatic
+                False,  # empty_ib
                 [
                     timedelta(minutes=60),
                     timedelta(minutes=120),
@@ -430,15 +436,16 @@ class TestFetchIntention:
                     timedelta(minutes=480),
                     timedelta(minutes=960),
                     None,
-                ],
-                True,
+                ],  # delays
+                True,  # last_canceled
+                id="service_not_available",
             ),
-            (
-                "",
-                AttemptStatus.NO_DATA,
-                False,
-                True,
-                True,
+            pytest.param(
+                "",  # error_code
+                AttemptStatus.NO_DATA,  # status
+                False,  # recent_success
+                True,  # automatic
+                True,  # empty_ib
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -448,16 +455,26 @@ class TestFetchIntention:
                     timedelta(days=8),
                     timedelta(days=8),
                     None,
-                ],
-                False,
+                ],  # delays
+                False,  # last_canceled
+                id="empty",
             ),
-            ("", AttemptStatus.DOWNLOAD_FAILED, False, True, False, [None], False),
-            (
-                "",
-                AttemptStatus.DOWNLOAD_FAILED,
-                True,
-                True,
-                False,
+            pytest.param(
+                "",  # error_code
+                AttemptStatus.DOWNLOAD_FAILED,  # status
+                False,  # recent_success
+                True,  # automatic
+                False,  # empty_ib
+                [None],  # delays
+                False,  # last_canceled
+                id="error",
+            ),
+            pytest.param(
+                "",  # error_code
+                AttemptStatus.DOWNLOAD_FAILED,  # status
+                True,  # recent_success
+                True,  # automatic
+                False,  # empty_ib
                 [
                     timedelta(days=1),
                     timedelta(days=2),
@@ -467,24 +484,16 @@ class TestFetchIntention:
                     timedelta(days=8),
                     timedelta(days=8),
                     None,
-                ],
-                False,
+                ],  # delays
+                False,  # last_canceled
+                id="success_then_error",
             ),
-            (
-                ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,
-                AttemptStatus.NO_DATA,
-                False,
-                False,
-                False,
-                [None],
-                False,
-            ),
-            (
-                ErrorCode.PREPARING_DATA.value,
-                AttemptStatus.DOWNLOAD_FAILED,
-                False,
-                False,
-                False,
+            pytest.param(
+                ErrorCode.PREPARING_DATA.value,  # error_code
+                AttemptStatus.DOWNLOAD_FAILED,  # status
+                False,  # recent_success
+                False,  # automatic
+                False,  # empty_ib
                 [
                     timedelta(minutes=1),
                     timedelta(minutes=2),
@@ -498,23 +507,40 @@ class TestFetchIntention:
                     timedelta(minutes=512),
                     timedelta(minutes=1024),
                     None,
-                ],
-                True,
+                ],  # delays
+                True,  # last_canceled
+                id="preparing_data_no_automatic",
             ),
-        ),
-        ids=(
-            "not_ready",
-            "no_data",
-            "partial_data",
-            "preparing_data",
-            "service_busy",
-            "too_many_requests",
-            "service_not_available",
-            "empty",
-            "error",
-            "success_then_error",
-            "not_ready_no_automatic",
-            "preparing_data_no_automatic",
+            pytest.param(
+                ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value,  # error_code
+                AttemptStatus.NO_DATA,  # status
+                False,  # recent_success
+                False,  # automatic
+                False,  # empty_ib
+                [None],  # delays
+                False,  # last_canceled
+                id="not_ready_manual",
+            ),
+            pytest.param(
+                ErrorCode.NO_DATA_FOR_DATE_ARGS.value,  # error_code
+                AttemptStatus.NO_DATA,  # status
+                False,  # recent_success
+                False,  # automatic
+                True,  # empty_ib
+                [None],  # delays
+                False,  # last_canceled
+                id="no_data_manual",
+            ),
+            pytest.param(
+                "",  # error_code
+                AttemptStatus.NO_DATA,  # status
+                False,  # recent_success
+                False,  # automatic
+                True,  # empty_ib
+                [None],  # delays
+                False,  # last_canceled
+                id="no_data_no_error_manual",
+            ),
         ),
     )
     def test_process_retry_chain(

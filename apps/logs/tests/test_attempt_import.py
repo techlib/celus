@@ -10,17 +10,19 @@ from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 from sushi.tests.conftest import counter_report_type, counter_report_type_named  # noqa
 
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
+from test_fixtures.entities.logs import ImportBatchFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
     counter_report_types,
+    credentials,
     data_sources,
     organizations,
     platforms,
     report_types,
 )
 
-from ..exceptions import UnknownMetric
+from ..exceptions import DataStructureError, UnknownMetric
 from ..logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
-from ..models import Metric
+from ..models import ImportBatch, Metric
 
 
 @pytest.mark.django_db
@@ -72,8 +74,8 @@ class TestAttemptImport:
             assert fetch_attempt.import_batch is None
             assert mail_mock.called, 'email to admin was sent'
 
-    def test_counter4_jr2_import(self, organizations, counter_report_type_named, platforms):
-        cr_type = counter_report_type_named('JR2', version=4)
+    def test_counter4_jr2_import(self, organizations, counter_report_types, platforms):
+        cr_type = counter_report_types['jr2']
 
         creds = SushiCredentials.objects.create(
             organization=organizations["empty"],
@@ -322,3 +324,50 @@ class TestAttemptImport:
             with pytest.raises(UnknownMetric):
                 import_one_sushi_attempt(fetch_attempt)
             assert metric_count == Metric.objects.count(), "no new metric created"
+
+    def test_wiping_empty_ibs(
+        self, organizations, counter_report_types, platforms, credentials, report_types
+    ):
+
+        # existing empty ib
+        ib = ImportBatchFactory(
+            date="2019-02-01",
+            platform=platforms["standalone"],
+            report_type=report_types["tr"],
+            organization=organizations["standalone"],
+        )
+        assert ib.pk is not None
+        assert ib.accesslog_set.all().count() == 0, "new ib is empty"
+
+        with (Path(__file__).parent / "data/counter5/counter5_tr_test1.json").open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "something.json"
+
+        fetch_attempt = FetchAttemptFactory.create(
+            credentials=credentials['standalone_tr'],
+            counter_report=counter_report_types["tr"],
+            start_date="2019-02-01",
+            end_date="2019-02-28",
+            data_file=data_file,
+            status=AttemptStatus.IMPORTING,
+        )
+
+        import_one_sushi_attempt(fetch_attempt)
+
+        assert fetch_attempt.status == AttemptStatus.SUCCESS
+        assert ImportBatch.objects.filter(pk=ib.pk).exists() is False, "empty ib was deleted"
+
+        # existing ib with data
+        ib = ImportBatch.objects.order_by('pk').last()
+        fetch_attempt = FetchAttemptFactory.create(
+            credentials=credentials['standalone_tr'],
+            counter_report=counter_report_types["tr"],
+            start_date="2019-02-01",
+            end_date="2019-02-28",
+            data_file=data_file,
+            status=AttemptStatus.IMPORTING,
+        )
+        with pytest.raises(DataStructureError):
+            import_one_sushi_attempt(fetch_attempt)
+
+        assert ImportBatch.objects.filter(pk=ib.pk).exists() is True, "non-empty ib exists"

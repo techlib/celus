@@ -658,17 +658,14 @@ class FetchIntention(models.Model):
 
     def handle_data_not_ready(self, final_import_batch=False):
 
-        # Only automatic downloads with verified credentials can produce retries
-        if not self.harvest.is_automatic or not self.credentials.is_verified:
+        if not self.credentials.is_verified:
+            # credentials not verified -> terminate
             return
 
-        next_time, _ = FetchIntention.next_exponential(
-            self.data_not_ready_retry,
-            DATA_NOT_READY_RETRY_PERIOD.total_seconds(),
-            MAX_RETRY_GAP.total_seconds(),
-        )
+        is_automatic = self.harvest.is_automatic
 
-        if self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
+        # Check whether not to terminate
+        if not is_automatic or self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
             if final_import_batch:
                 # giving up - last retry will be we showing empty data
                 # represented by empty import batch
@@ -688,7 +685,12 @@ class FetchIntention(models.Model):
                 self.attempt.save()
             return
 
-        # prepare retry
+        # Prepare retry
+        next_time, _ = FetchIntention.next_exponential(
+            self.data_not_ready_retry,
+            DATA_NOT_READY_RETRY_PERIOD.total_seconds(),
+            MAX_RETRY_GAP.total_seconds(),
+        )
         self._create_retry(next_time, inc_data_not_ready_retry=True)
 
     def handle_no_data(self):

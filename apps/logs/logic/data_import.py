@@ -631,6 +631,35 @@ def create_import_batch_or_crash(
         )
 
 
+def wipe_empty_import_batches(
+    report_type: ReportType,
+    organization: Organization,
+    platform: Platform,
+    month: Union[str, date],
+) -> int:
+    """
+    Whipes all empty import batches which are conlicting with function arguments
+    """
+    count = 0
+
+    # Note that there should be only one ib,
+    # but DB constraint haven't been introduced yet.
+    #
+    # Still iterating over ib will be quite efficient here,
+    # because the number of conflicting ib's should be really low.
+    for ib in ImportBatch.objects.filter(
+        report_type=report_type,
+        platform=platform,
+        organization=organization,
+        date=month,
+    ):
+        if not ib.accesslog_set.all().exists():
+            ib.delete()
+            count += 1
+
+    return count
+
+
 def _preprocess_counter_records(
     report_type: ReportType,
     records: Iterable[CounterRecord],
