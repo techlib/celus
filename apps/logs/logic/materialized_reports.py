@@ -73,6 +73,9 @@ def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=2
     keep, _remove = rt.materialization_spec.split_attributes(add_id_postfix=True)
     import_batch_qs = materialized_import_batch_queryset(rt)
     source_batch_count = import_batch_qs.count()
+    if not source_batch_count:
+        # shortcut for empty queryset
+        return 1000
     # the annotation bellow causes group by to be run and Import batches counted
     # it is also faster than using distinct for some reason
     result_log_count = (
