@@ -720,6 +720,26 @@ class TestHarvestFetchIntentionAPI:
         resp = clients[user].get(url, {})
         assert resp.status_code == user1_status
 
+    @pytest.mark.parametrize(
+        ["user", "status_code"],
+        [
+            ("master_admin", 200),
+            ("master_user", 404),
+            ("user1", 404),
+            ("user2", 404),
+            ('admin1', 404),  # admin of root organization
+            ('admin2', 200),  # admin of standalone organization
+        ],
+    )
+    def test_list_permissions_with_organization(self, basic1, clients, harvests, user, status_code):
+        """
+        Test that superuser and admin of the `standalone` organization can see harvest intentions
+        for harvest belonging to the `standalone` organization.
+        """
+        harvest = harvests['automatic']
+        resp = clients[user].get(reverse('harvest-intention-list', args=(harvest.pk,)))
+        assert resp.status_code == status_code
+
     def test_get(self, basic1, clients, harvests):
         url = reverse(
             'harvest-intention-detail',

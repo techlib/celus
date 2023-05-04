@@ -242,10 +242,14 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         kwargs = {"pk": self.kwargs["harvest_pk"]}
+        args = []
         if not SuperuserOrAdminPermission().has_permission(self.request, self):
-            kwargs["last_updated_by"] = self.request.user
+            args.append(
+                Q(last_updated_by=self.request.user)
+                | Q(automatic__organization__in=self.request.user.admin_organizations())
+            )
 
-        harvest = get_object_or_404(Harvest, **kwargs)
+        harvest = get_object_or_404(Harvest, *args, **kwargs)
 
         if self.action == 'list' and not bool(self.request.query_params.get('list_all', False)):
             qs = harvest.latest_intentions
