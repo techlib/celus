@@ -546,12 +546,16 @@ LOGGING = {
         'logs.logic.materialized_interest': {'level': 'INFO'},
         'postgres_copy': {'level': 'ERROR'},
         'django_cachalot': {'level': 'DEBUG'},
+        'core.middleware': {'level': 'DEBUG'},
     },
     'formatters': {
         'colored': {'()': 'colorlog.ColoredFormatter', 'format': "%(log_color)s%(message)s"}
     },
     'root': {'level': 'DEBUG', 'handlers': ['console']},
 }
+
+# the following is used by the QueryLoggingMiddleware to log all queries to the console if True
+LOG_ALL_QUERIES = config('LOG_ALL_QUERIES', default=False, cast=bool)
 
 # requestlogs
 CLICKHOUSE_REQUEST_LOGGING = config('CLICKHOUSE_REQUEST_LOGGING', default=False, cast=bool)

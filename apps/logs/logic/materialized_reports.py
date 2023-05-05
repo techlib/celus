@@ -78,13 +78,14 @@ def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=2
         return 1000
     # the annotation bellow causes group by to be run and Import batches counted
     # it is also faster than using distinct for some reason
+    ibs = set(import_batch_qs.values_list('id', flat=True))
     result_log_count = (
         AccessLog.objects.filter(
             report_type=rt.materialization_spec.base_report_type,
-            import_batch_id__in=import_batch_qs,
+            import_batch_id__in=ibs,
         )
         .values('import_batch_id', *keep)
-        .annotate(value=Sum('value'))
+        .annotate(foo=Count('id'))
     )
     result_log_count = result_log_count.count()
     if source_batch_count and result_log_count:
@@ -107,14 +108,15 @@ def create_materialized_accesslogs_for_importbatches(
     # remove existing materialized stuff from the ImportBatches
     # as we do not sync materialized report data to clickhouse, the code here does not
     # change anything from the clickhouse point of view
-    AccessLog.objects.filter(report_type=rt, import_batch__in=ibs).delete(
+    ib_ids = {ib.id for ib in ibs}
+    AccessLog.objects.filter(report_type=rt, import_batch__in=ib_ids).delete(
         i_know_what_i_am_doing=True
     )
     # construct query
     keep, _remove = rt.materialization_spec.split_attributes(add_id_postfix=True)
     query = (
         AccessLog.objects.filter(
-            report_type=rt.materialization_spec.base_report_type, import_batch__in=ibs
+            report_type=rt.materialization_spec.base_report_type, import_batch__in=ib_ids
         )
         .values('import_batch_id', *keep)
         .annotate(value=Sum('value'))

@@ -1,6 +1,7 @@
 import logging
 import threading
 from collections import Counter
+from time import monotonic
 
 from django.conf import settings
 from django.contrib import auth
@@ -107,12 +108,21 @@ class UserLanguageMiddleware:
 
 
 class QueryCounter:
-    def __init__(self):
+    def __init__(self, log_all=None):
         self.counter = Counter()
+        self.log_all = (
+            log_all if log_all is not None else getattr(settings, 'LOG_ALL_QUERIES', False)
+        )
 
     def __call__(self, execute, sql, params, many, context):
         self.counter[threading.get_ident()] += 1
-        return execute(sql, params, many, context)
+        start = monotonic()
+        out = execute(sql, params, many, context)
+        duration = monotonic() - start
+        if self.log_all:
+            logger.debug('Query: %s, params: %s', sql, params)
+            logger.debug('Query took: %.2f s', duration)
+        return out
 
 
 class QueryLoggingMiddleware:
