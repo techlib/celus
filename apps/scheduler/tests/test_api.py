@@ -667,9 +667,9 @@ class TestHarvestFetchIntentionAPI:
         assert len(get_data(None)) == 3
         just_now = now()
         assert len(get_data(just_now)) == 0
-        intention = harvests["anonymous"].intentions.all()[0]
-        intention.last_updated = just_now
-        intention.save()
+        # only latest_intentions are returned by the API, so we pick one and update it
+        intention = harvests["anonymous"].intentions.latest_intentions()[0]
+        intention.save()  # updates the last_updated field
         assert len(get_data(just_now)) == 1
 
     def test_list_with_date_filter_json(self, basic1, clients, harvests):
