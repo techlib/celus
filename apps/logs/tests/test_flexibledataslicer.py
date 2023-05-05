@@ -923,6 +923,7 @@ class TestFlexibleDataSimpleCSVExporter:
 
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
+        slicer.order_by = ['organization']
         exporter = FlexibleDataSimpleCSVExporter(
             slicer, include_tags=include_tags, report_owner=admin_user
         )
