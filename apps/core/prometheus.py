@@ -60,10 +60,10 @@ def db_credentials_num():
     from sushi.models import SushiCredentials
 
     return {
-        (rec['counter_version'], rec['enabled']): rec['count']
-        for rec in SushiCredentials.objects.values('counter_version', 'enabled').annotate(
-            count=Count('id')
-        )
+        (rec['counter_version'], rec['enabled'], rec['broken'] or '', rec['verified']): rec['count']
+        for rec in SushiCredentials.objects.annotate_verified()
+        .values('counter_version', 'enabled', 'broken', 'verified')
+        .annotate(count=Count('id'))
     }
 
 
@@ -197,7 +197,7 @@ CACHE_STORED_GAUAGES = {
     },
     'celus_db_credentials_num': {
         'desc': 'Number of credentials in the database',
-        'dims': ['counter_version', 'is_active'],
+        'dims': ['counter_version', 'is_active', 'broken', 'verified'],
         'func': db_credentials_num,
     },
     'celus_db_organization_num': {
