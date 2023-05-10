@@ -72,7 +72,8 @@ class TestOrganization:
         )
         with pytest.raises(IntegrityError):
             # cannot create name with the same short_name and empty
-            OrganizationFactory(
+            # we cannot use OrganizationFactory because it uses get_or_create on short_name
+            Organization.objects.create(
                 ext_id=999,
                 name_cs='DDD',
                 name_en='DDD',
@@ -90,7 +91,7 @@ class TestOrganization:
         )
         with pytest.raises(IntegrityError):
             # cannot create name with the same short_name and same source
-            OrganizationFactory(
+            Organization.objects.create(
                 ext_id=None,
                 name_cs='DDD',
                 name_en='DDD',
