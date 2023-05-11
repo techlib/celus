@@ -30,6 +30,9 @@ en:
     The number of organizations you have access to. Without an organization filter, the report will be run for all
     these organizations.
   show_totals: Show row totals
+  zero_rows_tooltip: Rows for which the total usage is zero will be included. Please note that this functionality is only available for some rows as Celus very often does not know the correct list of possible values for a row (for example, it does not know all possible titles for a given platform).
+  supported_rows: Supported rows are
+  when_titles: when titles are filtered by tag or "merge by tag" is active
 
 cs:
   run_report: Spustit report
@@ -59,6 +62,9 @@ cs:
   organization_count_tt: |
     Počet organizací, ke kterým máte přístup. Bez filtru organizací bude report spuštěn pro všechny tyto organizace.
   show_totals: Zobrazit součty řádku
+  zero_rows_tooltip: Budou zobrazeny i řádky, pro které je celkové využití nulové. Tato funkce je dostupná pouze pro některé řádky, protože Celus často nezná správný seznam možných hodnot pro daný řádek (například nezná všechny možné tituly pro danou platformu).
+  supported_rows: Podporované řádky jsou
+  when_titles: pokud jsou tituly filtrovány štítkem nebo je aktivní "sloučit podle štítku"
 </i18n>
 
 <template>
@@ -554,11 +560,27 @@ cs:
             >
           </v-col>
           <v-col cols="auto">
-            <v-switch
-              :label="$t('show_zero_rows')"
-              v-model="showZeroRows"
-              class="mt-0"
-            />
+            <v-tooltip top max-width="600px">
+              <template #activator="{ on }">
+                <span v-on="on">
+                  <v-switch
+                    :label="$t('show_zero_rows')"
+                    v-model="showZeroRows"
+                    class="mt-0"
+                    :disabled="cannotShowZeroRows"
+                  ></v-switch>
+                </span>
+              </template>
+              <span>
+                {{ zeroRowsTooltip }}
+                <div></div>
+                <ul>
+                  <li>{{ $t("labels.platform") }}</li>
+                  <li>{{ $t("labels.organization") }}</li>
+                  <li>{{ $t("labels.title") }} ({{ $t("when_titles") }})</li>
+                </ul>
+              </span>
+            </v-tooltip>
           </v-col>
           <v-col cols="auto">
             <v-switch
@@ -892,6 +914,23 @@ export default {
     organizationCount() {
       return Object.keys(this.organizations).filter((key) => key > 0).length;
     },
+    cannotShowZeroRows() {
+      // if we sum by tag, we need to allow zero rows
+      if (this.tagRollUp) return false;
+      // if rows are organization or platform, we can show zero rows
+      if (["organization", "platform"].includes(this.row)) return false;
+      // for titles, we can only show zero rows if we have the titles
+      // limited by a tag
+      if (this.row === "target" && this.selectedTitleTags.length > 0)
+        return false;
+      // otherwise, we cannot show zero rows
+      return true;
+    },
+    zeroRowsTooltip() {
+      return this.$t("zero_rows_tooltip", {
+        row: this.$t(this.row),
+      });
+    },
   },
 
   methods: {
@@ -1180,6 +1219,9 @@ export default {
         // empty the tag class on row change to prevent unrelated class
         // from being used in filter
         this.selectedTagClass = null;
+        if (!this.tagRollUpPossible) {
+          this.tagRollUp = false;
+        }
       }
       this.fetchAccessibleTags();
     },
@@ -1191,7 +1233,7 @@ export default {
         ).id;
       }
     },
-    selectedReportTypes(newValue, oldValue) {
+    selectedReportTypes() {
       if (this.reportTypeSetOnLoad) {
         // first update after load should not do updates, but a new one should
         this.reportTypeSetOnLoad = false;
@@ -1254,6 +1296,9 @@ export default {
         }
         this.exportHandle = null;
       },
+    },
+    cannotShowZeroRows() {
+      if (this.cannotShowZeroRows) this.showZeroRows = false;
     },
   },
 };
