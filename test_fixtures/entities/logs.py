@@ -3,6 +3,7 @@ from random import randint
 import factory
 import faker
 from django.conf import settings
+from django.utils import timezone
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import (
     AccessLog,
@@ -130,7 +131,9 @@ class ManualDataUploadFactory(factory.django.DjangoModelFactory):
 
     state = MduState.IMPORTED
     when_processed = factory.LazyAttribute(
-        lambda o: fake.date_time_this_year() if o.state == MduState.IMPORTED else None
+        lambda o: fake.date_time_this_year(tzinfo=timezone.get_default_timezone())
+        if o.state == MduState.IMPORTED
+        else None
     )
     data_file = factory.django.FileField(data=DATA_FILE)
     file_size = factory.LazyAttribute(
