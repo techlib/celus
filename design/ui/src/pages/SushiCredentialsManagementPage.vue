@@ -2,6 +2,7 @@
   <SushiCredentialsManagementWidget
     :organization-id="organizationId"
     :show-problematic-only="brokenOnly"
+    show-platform-filter
   />
 </template>
 

@@ -1,11 +1,9 @@
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  select_platform: Select platform
   continue: Continue
 
 cs:
-  select_platform: Vyberte platformu
   continue: Dále
 </i18n>
 
@@ -14,36 +12,11 @@ cs:
     <!-- Submit on enter can't be used here because it is not compatible with v-autocomplete. -->
     <v-card-title>{{ $t("select_platform") }}</v-card-title>
     <v-card-text>
-      <v-autocomplete
-        autofocus
-        :items="availablePlatforms"
-        item-value="pk"
-        item-text="name"
-        :label="$t('select_platform')"
+      <PlatformSelector
+        :platforms="availablePlatforms"
         v-model="platformId"
         :loading="loading"
-      >
-        <template v-slot:item="{ item }">
-          <v-tooltip bottom max-width="600px" v-if="badge(item)">
-            <template #activator="{ on }">
-              <span>{{ item.name }}</span>
-              <v-badge
-                inline
-                :content="$t(badge(item).content)"
-                :color="badge(item).color"
-              >
-                <template v-slot:badge>
-                  <span v-on="on">{{ $t(badge(item).content) }}</span>
-                </template>
-              </v-badge>
-            </template>
-            <span>{{ $t(badge(item).tooltip) }}</span>
-          </v-tooltip>
-          <span v-else>
-            {{ item.name }}
-          </span>
-        </template>
-      </v-autocomplete>
+      />
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
@@ -68,9 +41,11 @@ cs:
 import axios from "axios";
 import { mapActions, mapState } from "vuex";
 import { badge } from "@/libs/sources.js";
+import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 
 export default {
   name: "PlatformSelectionWidget",
+  components: { PlatformSelector },
   data() {
     return {
       platformId: null,

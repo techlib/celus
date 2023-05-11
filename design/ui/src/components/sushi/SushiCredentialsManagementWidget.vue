@@ -284,7 +284,6 @@ cs:
                 {{ $t("export_tooltip") }}
               </v-tooltip>
             </v-col>
-
             <v-col cols="auto" align-self="center">
               <v-tooltip top>
                 <template #activator="tooltip">
@@ -300,6 +299,9 @@ cs:
                 {{ $t("import_tooltip") }}
               </v-tooltip>
             </v-col>
+          </v-row>
+          <v-row>
+            <v-spacer></v-spacer>
 
             <v-col cols="auto">
               <v-switch
@@ -317,6 +319,13 @@ cs:
                 v-model="counterVersion"
                 :label="$t('labels.counter_version')"
               ></v-select>
+            </v-col>
+            <v-col v-if="showPlatformFilter" cols="auto">
+              <PlatformSelector
+                :platforms="platforms"
+                v-model="platformFilter"
+                :label="$t('labels.platform_filter')"
+              />
             </v-col>
             <v-col cols="auto" class="ml-auto">
               <v-text-field
@@ -567,11 +576,13 @@ import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import stateTracking from "@/mixins/stateTracking";
+import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 
 export default {
   name: "SushiCredentialsManagementWidget",
 
   components: {
+    PlatformSelector,
     HarvestSelectedWidget,
     SushiReportIndicator,
     SushiCredentialsEditDialog,
@@ -600,6 +611,10 @@ export default {
       default: false,
       type: Boolean,
     },
+    showPlatformFilter: {
+      default: false,
+      type: Boolean,
+    },
   },
 
   data() {
@@ -618,6 +633,7 @@ export default {
       problematicOnly: this.showProblematicOnly,
       exportAllCredentialsUrl:
         "/api/sushi-credentials/export-all-credentials/?export_all=true",
+      platformFilter: null,
       // table options
       page: 1,
       itemsPerPage: 25,
@@ -654,6 +670,10 @@ export default {
         {
           name: "orderDesc",
           type: Array,
+        },
+        {
+          name: "platformFilter",
+          type: Number,
         },
       ],
     };
@@ -747,7 +767,10 @@ export default {
             this.counterVersion === null ||
             this.counterVersion === item.counter_version
         )
-        .filter(this.createSearchFilter());
+        .filter(this.createSearchFilter())
+        .filter((item) =>
+          this.platformFilter ? item.platform.pk === this.platformFilter : true
+        );
     },
     checkedCredentials() {
       let filteredIds = new Set(
@@ -768,6 +791,17 @@ export default {
         base += `&platform=${this.platformId}`;
       }
       return base;
+    },
+    platforms() {
+      let platforms = new Set();
+      let ret = [];
+      this.sushiCredentialsList.forEach((item) => {
+        if (!platforms.has(item.platform.pk)) {
+          platforms.add(item.platform.pk);
+          ret.push(item.platform);
+        }
+      });
+      return ret.sort((a, b) => a.name.localeCompare(b.name));
     },
   },
 
