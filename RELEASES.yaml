@@ -1,3 +1,32 @@
+- version: 5.5.0
+  title:
+    en: Celus 5.5.0 brings a dedicated page with coverage overview, 20 new non-COUNTER platform reports and much more
+    cs: Celus 5.5.0 přináší stránku s přehledem pokrytí, 20 nových reportů non-COUNTER platforem a mnoho dalšího
+  text:
+    en: |
+      - Celus is now able to process 20 non-COUNTER platform reports – Choice Reviews, DBpia, eHRAF, Encyclopaedia Britannica, Factiva, Harpweek, ITER, Langenscheidt, Mergent, Naxos, New York Times, OCLC, O’Reilly, SciFinder, SciFinder_n, Statista, Swank, Ulrichsweb, UpToDate and Women Writers Online. You can find all the information about this in the [non-COUNTER platforms section of our Support portal](https://support.celus.net/support/solutions/folders/103000394714).
+      - We added a [dedicated page for overview of data coverage](https://support.celus.net/support/solutions/articles/103000115033) throughout the whole system, so you can harvest missing data easily
+      - You can now download a [template for importing SUSHI credentials](https://support.celus.net/support/solutions/articles/103000115060)
+      - Exports from reporting now include row and column totals
+      - You can now export data in Excel format without charts
+      - For consortia it is now possible to add alternative names to organizations to be used when importing data for multiple organizations from one report
+      - We added a platform filter to the SUSHI management page
+      - the `Title overlap` feature newly adds information about the first and last month of available data for each title
+      - when deleting SUSHI credentials, it is now possible to delete the related usage data as well
+    cs: |
+      - Celus nově umožňuje zpracování 20 reportů non-COUNTER platforem - Choice Reviews, DBpia, eHRAF, Encyclopaedia Britannica, Factiva, Harpweek, ITER, Langenscheidt, Mergent, Naxos, New York Times, OCLC, O’Reilly, SciFinder, SciFinder_n, Statista, Swank, Ulrichsweb, UpToDate a Women Writers Online. Více informací naleznete v [sekci non-COUNTER platforem našeho Support portálu](https://support.celus.net/support/solutions/folders/103000394714).
+      - Přidali jsme [stránku pro přehled pokrytí daty](https://support.celus.net/support/solutions/articles/103000115033) v celém systému, takže můžete snadno zjistit, která data chybí
+      - Nyní si můžete stáhnout [šablonu pro import SUSHI přihlašovacích údajů](https://support.celus.net/support/solutions/articles/103000115060)
+      - Exporty z reportů nyní obsahují řádkové a sloupcové součty
+      - Nově je možné exportovat data v Excelu bez grafů
+      - Pro konzorcia je nyní možné přidávat alternativní názvy organizací, které se použijí při importu dat pro více organizací z jednoho reportu
+      - Na stránce pro správu SUSHI přihlašovacích údajů byl přidán filtr podle platformy
+      - Funkce pro analýzu překryvu titulů nyní přidává informace o prvním a posledním měsíci dostupných dat pro každý titul
+      - Při mazání SUSHI přihlašovacích údajů je nyní možné smazat i související data o využití
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
 - version: 5.4.0
   title:
     en: Celus 5.4.0 brings IPEDS reporting and "Multimedia" interest type

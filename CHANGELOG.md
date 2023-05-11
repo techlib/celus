@@ -5,6 +5,84 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0]  - 2023-05-16
+
+### Added
+
+#### Frontend
+
+- dedicated page for overview of data coverage throughout the whole system was added + it allows
+  automatic harvesting of missing data
+- a dashboard widget with overall data coverage was added
+- download of a template for importing of SUSHI credentials was added to the SUSHI management page
+- row and column totals were added to Excel exports from reporting + row totals are now
+  displayed in the frontend
+- in reporting it is now possible to export data in Excel format without charts
+- interface for adding alternative names (alt-names) to organizations was added
+- platform filter was added to the SUSHI management page
+- the `Title overlap` feature newly adds information about the first and last month of available
+  data for each title
+- when deleting SUSHI credentials, it is now possible to delete the related usage data as well
+
+#### Backend
+
+- prometheus metrics were extended to include database object counts for common models
+
+
+### Changes
+
+#### Frontend
+
+- export of SUSHI credentials was improved and now uses .xlsx format
+- 'Include rows with zero usage' option is newly only enabled for some types of rows. It is disabled
+  where Celus does not have a correct source of list of possible values (e.g. for all titles
+  available on a platform)
+- explicit information was added to the harvest dialog that it is safe to close it without
+  interrupting the harvest
+- unicode errors are now handled more gracefully when parsing uploaded title lists
+
+#### Backend
+
+- manual harvests resulting in no data with the 3030 exception are now marked as finished instead
+  of failed
+- automatic harvesting scheduled for the future will overwrite empty data if the harvest is
+  successful (previously the harvesting would be canceled as duplicated)
+- performance of the `sync_materialized_reports_task` celery task was improved significantly
+  thus reducing the delay before data is harvested and visible in the frontend
+
+### Fixed
+
+#### Frontend
+
+- error preventing change of access level for stored reports from 'consortium' to 'organization'
+  was fixed
+- fix issue with creating tag classes with visibility set to 'organization'
+- it is not possible to create an organization alt-name with the same value as the organization
+  short name or full name anymore
+- display of Y-axis values with a high number of digits in charts was fixed by dynamically
+  calculating the space required for the values
+- fix error which prevented stored reports using tags for organization filtering from being edited
+- fix error preventing title details from being displayed when the title has no usage data
+- prevent frontend from (under specific conditions) re-requesting data for harvests which are
+  already finished
+- organization admins are now able to see details of automatic harvests related to their
+  organization
+- missing last month in the coverage chart was fixed
+- file format validation for XLSX files was fixed for cases where the mime-type was detected as
+  application/octet-stream
+
+#### Backend
+
+- metrics synced from the knowledgebase no longer create duplicate entries when their equivalent
+  already exists in the database
+- several random false test failures were fixed in the test suite
+- email verification for installations where user registration is not permitted no longer returns
+  a 404 response
+- database constraint was added to prevent creation of duplicate connections between user and
+  organization
+- production deployment no longer uses the browseable API view
+
+
 ## [5.4.0]  - 2023-04-12
 
 ### Added
