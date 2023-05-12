@@ -41,6 +41,16 @@ urlpatterns = [
 
 if settings.ALLOW_USER_REGISTRATION:
     urlpatterns.append(path('rest-auth/registration/', include('dj_rest_auth.registration.urls')))
+else:
+    # even if users cannot register, we still want to be able to verify their email addresses
+    from dj_rest_auth.registration.urls import urlpatterns as registration_urlpatterns
+
+    verification_paths = [
+        path
+        for path in registration_urlpatterns
+        if path.name in ('rest_verify_email', 'rest_resend_email')
+    ]
+    urlpatterns.append(path('rest-auth/registration/', include(verification_paths)))
 
 
 if settings.DEBUG:
