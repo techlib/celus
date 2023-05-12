@@ -11,5 +11,5 @@ class CounterReportTypeFactory(factory.django.DjangoModelFactory):
 
     code = 'TR'
     counter_version = 5
-    report_type = factory.SubFactory(ReportTypeFactory)
+    report_type = factory.SubFactory(ReportTypeFactory, short_name=factory.SelfAttribute('..code'))
     active = True

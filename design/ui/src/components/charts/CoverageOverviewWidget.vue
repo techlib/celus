@@ -51,7 +51,7 @@ export default {
     }),
     ...mapGetters({
       dateRangeStart: "dateRangeStartText",
-      dateRangeEnd: "dateRangeEndText",
+      dateRangeEnd: "dateRangeExplicitEndText",
       organizationSelected: "organizationSelected",
     }),
     reportViewsUrl() {

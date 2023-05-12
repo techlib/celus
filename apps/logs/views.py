@@ -611,13 +611,16 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             for e in batches
         )
 
-    class DataCoverageBasicParamSerializer(Serializer):
+    class DataCoverageCoreParamSerializer(Serializer):
 
-        report_type = PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False)
-        report_view = PrimaryKeyRelatedField(queryset=ReportDataView.objects.all(), required=False)
         start_date = CharField(validators=[month_validator], required=False)
         end_date = CharField(validators=[month_validator], required=False)
         organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
+
+    class DataCoverageBasicParamSerializer(DataCoverageCoreParamSerializer):
+
+        report_type = PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False)
+        report_view = PrimaryKeyRelatedField(queryset=ReportDataView.objects.all(), required=False)
         platform = PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=False)
 
         def validate(self, data):
@@ -740,6 +743,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
                     reduce(operator.or_, query_chunks),
                     counterreportstocredentials__counter_report__report_type=rt,
                     verified=True,
+                    broken__isnull=True,
                 )
                 .order_by('organization_id', 'platform_id', '-enabled')
                 .select_related('organization', 'platform')
@@ -760,6 +764,51 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
                 )
 
         return Response(out)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_name='total-data-coverage',
+        url_path='total-data-coverage',
+    )
+    def total_data_coverage(self, request):
+        """
+        Returns an overall data coverage for all report types and all platforms.
+        """
+        param_serializer = self.DataCoverageCoreParamSerializer(data=request.GET)
+        param_serializer.is_valid(raise_exception=True)
+        start_month = parse_month(param_serializer.validated_data.get('start_date'))
+        end_month = parse_month(param_serializer.validated_data.get('end_date'))
+        organization = param_serializer.validated_data.get('organization')
+
+        extra_attrs = {}
+        if start_month:
+            extra_attrs['date__gte'] = start_month
+        if end_month:
+            extra_attrs['date__lte'] = end_month
+        rt_qs = ReportType.objects.exclude_materialized().filter(
+            Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk'), **extra_attrs)))
+        )
+
+        totals = Counter()
+        for rt in rt_qs:
+            extractor = DataCoverageExtractor(
+                rt,
+                organization=organization,
+                start_month=start_month,
+                end_month=end_month,
+                split_by_org=False,
+                split_by_platform=False,
+                split_by_date=False,
+            )
+            cov_data = extractor.get_coverage_data()
+            if cov_data:
+                data = cov_data[()]  # empty tuple key because we don't split
+                totals['ib_count'] += data['ib_count']
+                totals['ib_max'] += data['ib_max']
+
+        totals['ratio'] = (totals['ib_count'] / totals['ib_max']) if totals['ib_max'] else None
+        return Response(totals)
 
 
 class ManualDataUploadViewSet(ModelViewSet):

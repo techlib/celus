@@ -2,10 +2,11 @@ import pytest
 from charts.models import ReportDataView
 from django.urls import reverse
 from logs.logic.materialized_interest import sync_interest_by_import_batches
-from logs.models import ImportBatch, InterestGroup, ReportInterestMetric
+from logs.models import ImportBatch, InterestGroup, OrganizationPlatform, ReportInterestMetric
 from publications.logic.fake_data import TitleFactory
 from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixture
+from sushi.models import AttemptStatus, CounterReportType, SushiFetchAttempt
 
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
@@ -651,7 +652,36 @@ class TestImportBatchesAPI:
         2020-02 | PR  | branch     | branch       | mdu
         2020-03 | PR  | branch     | branch       | mdu
         """
+        # create extra broken credentials - these should not appear in the counts
+        # we need to make them broken but verified in order to correctly test that broken
+        # credentials are not returned
+        broken_cr = CredentialsFactory.create(
+            organization=organizations['root'],
+            platform=platforms['root'],
+            report_types=['TR', 'PR', 'BR1'],
+        )
+        # we connect the platform and the organization to make them appear in coverage at all
+        OrganizationPlatform.objects.create(
+            organization=organizations['root'], platform=platforms['root']
+        )
+        # the following verifies the credentials using an unrelated report type
+        SushiFetchAttempt.objects.create(
+            credentials=broken_cr,
+            status=AttemptStatus.NO_DATA,
+            credentials_version_hash=broken_cr.version_hash,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            counter_report=CounterReportType.objects.get(code='JR1'),
+            file_size=0,
+        )
+        # we need to make the credentials broken in order to test that they are not returned
+        # but only after verifying them, otherwise the status will be overwritten
+        broken_cr.refresh_from_db()
+        broken_cr.broken = 'sushi'
+        broken_cr.save()
+        assert broken_cr.broken == 'sushi'
 
+        # the test itself
         resp = clients['su'].get(
             reverse('import-batch-list') + "data-coverage-harvestable/",
             {
@@ -663,3 +693,38 @@ class TestImportBatchesAPI:
         assert resp.status_code == 200
         assert type(resp.json()) is list
         assert len(resp.json()) == credentials_count
+
+    @pytest.mark.parametrize(
+        ('organization', 'ib_count', 'ib_max'),
+        [('standalone', 4, 6), ('branch', 3, 3), (None, 7, 9), ('root', 0, 0)],
+    )
+    def test_total_data_coverage(
+        self, data, clients, organizations, platforms, report_types, organization, ib_max, ib_count
+    ):
+        """
+        The created data from IB perspective are
+
+        date    | RT  | platform   | organization | source
+        --------+-----+------------+--------------+-------
+        2020-01 | TR  | standalone | standalone   | fa
+        2020-02 | TR  | standalone | standalone   | fa
+        2020-03 | TR  | standalone | standalone   | mdu
+        2020-02 | BR1 | standalone | standalone   | fa
+        2020-01 | PR  | branch     | branch       | fa
+        2020-02 | PR  | branch     | branch       | mdu
+        2020-03 | PR  | branch     | branch       | mdu
+        """
+
+        org_params = {'organization': organizations[organization].pk} if organization else {}
+        resp = clients['su'].get(
+            reverse('import-batch-list') + "total-data-coverage/",
+            {
+                'start_date': '2020-01',
+                'end_date': '2020-03',
+                **org_params,
+            },
+        )
+        assert resp.status_code == 200
+        assert type(resp.json()) is dict
+        assert resp.json()['ib_count'] == ib_count
+        assert resp.json()['ib_max'] == ib_max

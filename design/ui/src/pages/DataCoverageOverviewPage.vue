@@ -9,7 +9,7 @@ en:
   harvest_missing: Harvest missing {count} month | Harvest missing {count} months
   months_present: "{count} month present | {count} months present"
   months_harvestable: "{count} month harvestable | {count} months harvestable"
-  months_no_sushi: "{count} month without SUSHI | {count} months without SUSHI"
+  months_no_sushi: "{count} month without working SUSHI | {count} months without working SUSHI"
   all_harvested: Perfect, no data is missing
   nothing_to_harvest: Unfortunately no missing data can be obtained automatically via SUSHI
   detail_by_organization: Detail by organization
@@ -20,6 +20,20 @@ en:
   platforms_count: "{count} platform | {count} platforms"
   selected: Selected
   harvest_selected: Harvest selected
+  no_data: |
+    Unfortunately there are no data yet for calculation of data coverage. Either upload some data manually
+    or harvest it via SUSHI.
+  implicit_end_date: |
+    When the end date is the current date, we use the month before the last finished month as the end date
+    (for example in May we use March). This is because data for the previous month may not be completely
+    available over SUSHI yet.
+  intro: |
+    This page shows data coverage for all reports and all active platforms in the selected time period.
+    Data coverage is calculated
+    as the number of months for which data is available divided by the number of months for which data
+    is expected. By clicking on cards of individual reports you can identify for which platforms
+    and which months data is missing. In case functional SUSHI is present, it is possible to harvest
+    missing data automatically directly from this page.
 
 cs:
   click_to_see_details: Klikněte na karty jednotlivých reportů pro více detailů.
@@ -30,7 +44,7 @@ cs:
   harvest_missing: Získat chybějící {count} měsíc | Získat chybějící {count} měsíce | Získat chybějících {count} měsíců
   months_present: "{count} měsíc stažen | {count} měsíce staženy | {count} měsíců staženo"
   months_harvestable: "{count} měsíc stažitelný | {count} měsíce stažitelné | {count} měsíců stažitelných"
-  months_no_sushi: "{count} měsíc bez SUSHI | {count} měsíce bez SUSHI | {count} měsíců bez SUSHI"
+  months_no_sushi: "{count} měsíc bez funkčního SUSHI | {count} měsíce bez funkčního SUSHI | {count} měsíců bez funkčního SUSHI"
   all_harvested: Skvěle, nechybí žádná data
   nothing_to_harvest: Bohužel žádná chybějící data nelze získat automaticky pomocí SUSHI
   detail_by_organization: Detail podle organizace
@@ -41,6 +55,19 @@ cs:
   platforms_count: "{count} platforma | {count} platformy | {count} platforem"
   selected: Vybráno
   harvest_selected: Získat vybrané
+  no_data: |
+    Bohužel zatím nejsou k dispozici žádná data pro vypočet pokrytí. Buď nahrajte
+    nějaká data ručně, nebo je stáhněte pomocí SUSHI.
+  implicit_end_date: |
+    Pokud je konečné datum nastavené na aktuální datum, používáme zde předposlední dokončený měsíc
+    (např. v květnu je to březen). Je to proto, že data pro poslední dokončený měsíc nemusí být přes SUSHI ještě úplně k
+    dispozici.
+  intro: |
+    Tato stránka zobrazuje pokrytí dat pro všechny reporty a aktivní platformy ve zvoleném časovém období.
+    Pokrytí dat je vypočítáno
+    jako počet měsíců, pro které jsou data k dispozici, děleno počtem měsíců, pro které jsou data očekávána.
+    Kliknutím na karty jednotlivých reportů můžete zjistit, pro které platformy a které měsíce chybí data.
+    V případě funkčního SUSHI je možné chybějící data stáhnout přímo z této stránky.
 </i18n>
 
 <template>
@@ -52,11 +79,22 @@ cs:
     </v-row>
     <v-row>
       <v-col>
+        {{ $t("intro") }}
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
         <span class="font-weight-bold text--secondary">{{
           $t("labels.date_range")
         }}</span
         >: {{ dateRangeStart }} -
-        {{ dateRangeExplicitEnd }}
+        {{ dateRangeCoverageEndText }}
+        <v-tooltip bottom max-width="600px">
+          <template #activator="{ on }">
+            <v-icon color="info" v-on="on">fa fa-info-circle</v-icon>
+          </template>
+          <span>{{ $t("implicit_end_date") }}</span>
+        </v-tooltip>
         <span class="text-caption text--disabled ms-3">{{
           $t("date_change_hint")
         }}</span>
@@ -144,32 +182,11 @@ cs:
                       {{ refreshingSelected ? "fa-spin" : "" }}</v-icon
                     >
                   </div>
-                  <div style="height: 80px; width: 80px" class="mx-auto">
-                    <v-progress-circular
-                      v-if="coverageData[reportType.pk]"
-                      :value="100 * coverageData[reportType.pk].ratio"
-                      size="80"
-                      width="12"
-                      rotate="90"
-                      :color="colorSuccess(coverageData[reportType.pk].ratio)"
-                    >
-                      <span class="font-weight-bold"
-                        >{{
-                          roundValue(coverageData[reportType.pk].ratio)
-                        }}
-                        %</span
-                      >
-                    </v-progress-circular>
-                    <v-progress-circular
-                      v-else
-                      indeterminate
-                      size="80"
-                      width="12"
-                      rotate="90"
-                      color="grey lighten-2"
-                    />
-                  </div>
-                  <v-card-text class="text-captiona text-center">
+                  <CoverageScoreGauge
+                    :value="coverageData[reportType.pk]?.ratio"
+                    :loading="!coverageData[reportType.pk]"
+                  />
+                  <v-card-text class="text-center">
                     <v-tooltip bottom>
                       <template #activator="{ on }">
                         <div class="font-weight-bold" v-on="on">
@@ -204,7 +221,7 @@ cs:
                       <template #activator="{ on }">
                         <div class="mx-1" v-on="on">
                           <v-icon x-small class="pb-1">fa fa-university</v-icon>
-                          {{ coverageData[reportType.pk].organization_count }}
+                          {{ coverageData[reportType.pk].org_count }}
                         </div>
                       </template>
                       <span>{{ $t("number_of_organizations") }}</span>
@@ -224,7 +241,11 @@ cs:
     </v-row>
     <v-row v-if="selectedReportType">
       <v-col align-self="center" cols="12" md="6" lg="8" xl="9">
-        <CompositionBar :data="compositionBarData" height="36" />
+        <CompositionBar
+          :data="compositionBarData"
+          height="36"
+          show-all-tooltips-as-one
+        />
       </v-col>
       <v-col cols="12" md="6" lg="4" xl="3">
         <v-btn
@@ -261,22 +282,28 @@ cs:
     <v-row v-else-if="!loading" class="pt-6">
       <v-col>
         <v-alert type="info" text class="mb-0">
-          {{ $t("click_to_see_details") }}
+          {{
+            reportTypes.length === 0
+              ? $t("no_data")
+              : $t("click_to_see_details")
+          }}
         </v-alert>
       </v-col>
     </v-row>
+
     <v-row v-if="selectedReportType">
       <v-col class="pa-0">
         <CoverageMap
           :report-type-id="selectedReportType.pk"
           :start-month="dateRangeStart"
-          :end-month="dateRangeEnd"
+          :end-month="dateRangeCoverageEndText"
           :organization-id="organizationId > 0 ? organizationId : undefined"
           rows="platform"
           cols="date"
           raw-report-type
           sort-by-coverage
           @click="onClick"
+          ref="rtCoverageMap"
         />
       </v-col>
     </v-row>
@@ -296,7 +323,7 @@ cs:
           <CoverageMap
             :report-type-id="selectedReportType.pk"
             :start-month="dateRangeStart"
-            :end-month="dateRangeEnd"
+            :end-month="dateRangeCoverageEndText"
             :platform-id="selectedPoint.platformId"
             :organization-id="organizationId > 0 ? organizationId : undefined"
             rows="organization"
@@ -409,13 +436,19 @@ import CompositionBar from "@/components/util/CompositionBar.vue";
 import { monthLastDay } from "@/libs/dates";
 import parseISO from "date-fns/parseISO";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget.vue";
+import CoverageScoreGauge from "@/components/charts/CoverageScoreGauge.vue";
 
 export default {
   name: "DataCoverageOverviewPage",
 
   mixins: [cancellation],
 
-  components: { SushiFetchIntentionsListWidget, CompositionBar, CoverageMap },
+  components: {
+    CoverageScoreGauge,
+    SushiFetchIntentionsListWidget,
+    CompositionBar,
+    CoverageMap,
+  },
 
   data() {
     return {
@@ -437,11 +470,11 @@ export default {
   computed: {
     ...mapState({
       organizationId: "selectedOrganizationId",
+      dateRangeEnd: "dateRangeEnd",
     }),
     ...mapGetters({
       dateRangeStart: "dateRangeStartText",
-      dateRangeEnd: "dateRangeEndText",
-      dateRangeExplicitEnd: "dateRangeExplicitEndText",
+      dateRangeCoverageEndText: "dateRangeCoverageEndText",
     }),
     showingAllOrganizations() {
       return this.organizationId <= 0;
@@ -467,13 +500,13 @@ export default {
       if (!this.selectedReportType) {
         return 0;
       }
-      return this.coverageData[this.selectedReportType.pk].ib_count;
+      return this.coverageData[this.selectedReportType.pk]?.ib_count;
     },
     selectedIbMax() {
       if (!this.selectedReportType) {
         return 0;
       }
-      return this.coverageData[this.selectedReportType.pk].ib_max;
+      return this.coverageData[this.selectedReportType.pk]?.ib_max;
     },
     selectedMissingCount() {
       return this.selectedIbMax - this.selectedIbCount;
@@ -580,7 +613,7 @@ export default {
           start_date: this.dateRangeStart
             ? this.dateRangeStart + "-01"
             : undefined,
-          end_date: this.dateRangeEnd ? this.dateRangeEnd + "-01" : undefined,
+          end_date: this.dateRangeCoverageEndText + "-01",
         },
         method: "GET",
       });
@@ -598,7 +631,7 @@ export default {
         params: {
           report_type: reportType.pk,
           start_date: this.dateRangeStart,
-          end_date: this.dateRangeEnd,
+          end_date: this.dateRangeCoverageEndText,
           split_by_date: false,
           ...extraParams,
         },
@@ -619,7 +652,7 @@ export default {
         params: {
           report_type: this.selectedReportTypeId,
           start_date: this.dateRangeStart,
-          end_date: this.dateRangeEnd,
+          end_date: this.dateRangeCoverageEndText,
           ...extraParams,
         },
       });
@@ -685,6 +718,9 @@ export default {
         );
         this.harvestInfo = null;
         await this.fetchHarvestableInfo();
+        if (this.$refs.rtCoverageMap) {
+          this.$refs.rtCoverageMap.refresh();
+        }
       }
       this.refreshingSelected = false;
     },
@@ -738,7 +774,7 @@ export default {
     dateRangeStart() {
       this.prepare();
     },
-    dateRangeEnd() {
+    dateRangeCoverageEndText() {
       this.prepare();
     },
     selectedReportTypeId() {
@@ -752,6 +788,7 @@ export default {
         this.harvestId = null;
         // and also re-fetch info about currently selected report type
         // as it may have been updated
+        this.refreshSelectedReportType();
       }
     },
   },

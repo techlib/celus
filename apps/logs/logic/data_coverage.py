@@ -177,6 +177,7 @@ class DataCoverageExtractor:
                     platform=OuterRef('platform'),
                     counterreportstocredentials__counter_report__report_type__in=rt_qs,
                     verified=True,
+                    broken__isnull=True,
                 )
             )
         )

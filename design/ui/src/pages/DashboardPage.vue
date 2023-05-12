@@ -10,6 +10,7 @@ en:
   details_here: Details here
   interest_totals: Interest summary
   sushi_overview: SUSHI overview
+  coverage_overview: Data coverage overview
 
 cs:
   total_interest: Celkový zájem
@@ -20,6 +21,7 @@ cs:
   details_here: Podrobnosti zde
   interest_totals: Celkový zájem
   sushi_overview: Přehled SUSHI
+  coverage_overview: Přehled pokrytí daty
 </i18n>
 
 <template>
@@ -133,6 +135,15 @@ cs:
         </v-card>
       </v-col>
 
+      <v-col cols="auto">
+        <v-card height="100%" min-height="320" min-width="200">
+          <v-card-title v-text="$t('coverage_overview')"></v-card-title>
+          <v-card-text>
+            <OverallCoverageDashboardWidget />
+          </v-card-text>
+        </v-card>
+      </v-col>
+
       <v-col
         cols="auto"
         v-for="interestGroup in this.interestGroupTitlesSorted"
@@ -166,6 +177,7 @@ import addDays from "date-fns/addDays";
 import { ymDateFormat } from "@/libs/dates";
 import SushiStatsDashboardWidget from "@/components/sushi/SushiStatsDashboardWidget";
 import cancellation from "@/mixins/cancellation";
+import OverallCoverageDashboardWidget from "@/pages/OverallCoverageDashboardWidget.vue";
 
 export default {
   name: "DashboardPage",
@@ -173,6 +185,7 @@ export default {
   mixins: [cancellation],
 
   components: {
+    OverallCoverageDashboardWidget,
     SushiStatsDashboardWidget,
     SushiStatusChart,
     IntroPage,

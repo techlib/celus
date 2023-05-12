@@ -19,7 +19,7 @@
           <span class="px-4" :class="textClass">{{ chunk.text }}</span>
         </div>
       </template>
-      {{ chunk.tooltip || chunk.text }}
+      {{ showAllTooltipsAsOne ? overallTooltip : chunk.tooltip || chunk.text }}
     </v-tooltip>
   </div>
 </template>
@@ -41,11 +41,18 @@ export default {
       type: String,
       default: "",
     },
+    showAllTooltipsAsOne: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   computed: {
     total() {
       return this.data.reduce((acc, cur) => acc + cur.value, 0);
+    },
+    overallTooltip() {
+      return this.data.map((chunk) => chunk.tooltip || chunk.text).join("; ");
     },
   },
 };

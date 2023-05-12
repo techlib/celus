@@ -349,6 +349,9 @@ export default {
       }
       this.$emit("click", out);
     },
+    refresh() {
+      this.loadCoverageData();
+    },
   },
 
   mounted() {

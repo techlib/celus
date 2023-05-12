@@ -176,6 +176,14 @@ export default new Vuex.Store({
         ymDateFormat(addMonths(startOfMonth(new Date()), -1))
       );
     },
+    dateRangeCoverageEndText(state, getters) {
+      // if the end date is not set, it is the one before last finished month
+      // during June its April because May data may still not be available
+      return (
+        getters.dateRangeEndText ||
+        ymDateFormat(addMonths(startOfMonth(new Date()), -2))
+      );
+    },
     formatNumber(state) {
       return (number) =>
         number === null ? "-" : formatNumber(number, state.numberFormat);

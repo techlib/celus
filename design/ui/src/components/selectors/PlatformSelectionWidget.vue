@@ -1,16 +1,11 @@
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
-<i18n lang="yaml">
-en:
-  continue: Continue
-
-cs:
-  continue: Dále
-</i18n>
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <template>
   <v-card>
     <!-- Submit on enter can't be used here because it is not compatible with v-autocomplete. -->
-    <v-card-title>{{ $t("select_platform") }}</v-card-title>
+    <v-card-title>{{ $t("title_fields.select_platform") }}</v-card-title>
     <v-card-text>
       <PlatformSelector
         :platforms="availablePlatforms"
