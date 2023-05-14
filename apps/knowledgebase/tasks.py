@@ -2,6 +2,7 @@ import celery
 from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from core.models import DataSource
+from core.tasks import async_mail_admins
 from django.db import DatabaseError, transaction
 
 from .models import (
@@ -24,6 +25,12 @@ def sync_platforms_with_knowledgebase_task():
         )
         attempt.perform()
 
+        if attempt.error:
+            async_mail_admins.delay(
+                f"Failed to sync platforms with {attempt.source}",
+                f"{attempt.error}",
+            )
+
 
 @celery.shared_task
 @logged_task
@@ -35,6 +42,12 @@ def update_platforms(attempt_id: int):
         raise ValueError(f"Wrong kind {attempt.kind} expected {ImportAttempt.KIND_PLATFORM}")
 
     attempt.perform()
+
+    if attempt.error:
+        async_mail_admins.delay(
+            f"Failed to sync platforms with {attempt.source}",
+            f"{attempt.error}",
+        )
 
 
 @celery.shared_task
@@ -48,6 +61,12 @@ def sync_report_types_with_knowledgebase_task():
         )
         attempt.perform()
 
+        if attempt.error:
+            async_mail_admins.delay(
+                f"Failed to sync report types with {attempt.source}",
+                f"{attempt.error}",
+            )
+
 
 @celery.shared_task
 @logged_task
@@ -59,6 +78,12 @@ def update_report_types(attempt_id: int):
         raise ValueError(f"Wrong kind {attempt.kind} expected {ImportAttempt.KIND_REPORT_TYPE}")
 
     attempt.perform()
+
+    if attempt.error:
+        async_mail_admins.delay(
+            f"Failed to sync report types with {attempt.source}",
+            f"{attempt.error}",
+        )
 
 
 @celery.shared_task
@@ -74,6 +99,12 @@ def update_parser_definitions(attempt_id: int):
 
     attempt.perform()
 
+    if attempt.error:
+        async_mail_admins.delay(
+            f"Failed to sync parser definitions with {attempt.source}",
+            f"{attempt.error}",
+        )
+
 
 @celery.shared_task
 @logged_task
@@ -85,6 +116,12 @@ def sync_parser_definitions_with_knowledgebase_task():
             kind=ParserDefinitionImportAttempt.KIND_PARSER_DEFINITION, source=source
         )
         attempt.perform()
+
+        if attempt.error:
+            async_mail_admins.delay(
+                f"Failed to sync parser definitions with {attempt.source}",
+                f"{attempt.error}",
+            )
 
 
 @celery.shared_task

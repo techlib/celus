@@ -2,6 +2,7 @@ import copy
 import json
 import re
 from importlib.metadata import version
+from unittest.mock import patch
 
 import pytest
 import requests_mock
@@ -92,3 +93,36 @@ class TestCeleryTasks:
                 ).count()
                 == 0
             ), "Brain is set as source for no dimensions created by sync"
+
+    def test_sync_knowledgebase_fail_task(self, data_sources):
+
+        with requests_mock.Mocker() as m:
+            m.get(
+                re.compile(f'^{data_sources["brain"].url}/knowledgebase/platforms/'),
+                text=json.dumps({"wrong": "format"}),
+            )
+
+            m.get(
+                re.compile(f'^{data_sources["brain"].url}/knowledgebase/report_types/'),
+                text=json.dumps({"wrong": "format"}),
+            )
+            m.get(
+                re.compile(f'^{data_sources["brain"].url}/knowledgebase/parsers/'),
+                text=json.dumps({"wrong": "format"}),
+            )
+
+            with patch('knowledgebase.tasks.async_mail_admins') as email_task:
+                tasks.sync_all_with_knowledgebase_task()
+                assert email_task.delay.called
+
+            with patch('knowledgebase.tasks.async_mail_admins') as email_task:
+                tasks.sync_report_types_with_knowledgebase_task()
+                assert email_task.delay.called
+
+            with patch('knowledgebase.tasks.async_mail_admins') as email_task:
+                tasks.sync_parser_definitions_with_knowledgebase_task()
+                assert email_task.delay.called
+
+            with patch('knowledgebase.tasks.async_mail_admins') as email_task:
+                tasks.sync_platforms_with_knowledgebase_task()
+                assert email_task.delay.called
