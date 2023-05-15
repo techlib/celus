@@ -1,7 +1,7 @@
 tests:test_js:
   stage: tests
   needs: []
-  image: node:12.18
+  image: node:16.20
   script:
     - cd design/ui
     - yarn install
