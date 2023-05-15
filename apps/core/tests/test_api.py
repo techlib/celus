@@ -192,7 +192,7 @@ class TestAccountCreationAPI:
         assert len(mailoutbox) == 0
         with patch('core.signals.async_mail_admins'):  # fake celery task
             resp = client.post('/api/rest-auth/registration/', self.test_user_data)
-        assert resp.status_code == 201
+        assert resp.status_code == 204
         assert User.objects.count() == 1
         assert len(mailoutbox) == 1
         user = User.objects.get()
@@ -209,13 +209,13 @@ class TestAccountCreationAPI:
         assert User.objects.count() == 0
         with patch('core.signals.async_mail_admins'):  # fake celery task
             resp = client.post('/api/rest-auth/registration/', self.test_user_data)
-        assert resp.status_code == 201
+        assert resp.status_code == 204
         assert User.objects.count() == 1
         second_user_data = dict(self.test_user_data)
         second_user_data['email'] = 'foo@baz.bar'
         with patch('core.signals.async_mail_admins'):  # fake celery task
             resp = client.post('/api/rest-auth/registration/', second_user_data)
-        assert resp.status_code == 201
+        assert resp.status_code == 204
         assert User.objects.count() == 2
 
     def test_create_account_bad_data(self, mailoutbox, client):
@@ -254,7 +254,7 @@ class TestAccountCreationAPI:
                     'password2': 'verysecret666',
                 },
             )
-        assert resp.status_code == 201
+        assert resp.status_code == 204
         assert len(mailoutbox) == 1
         mail = mailoutbox[0]
         assert 'Celus' in mail.subject, "Celus must be mentioned in the email body"
@@ -290,7 +290,7 @@ class TestAccountCreationAPI:
         assert len(mailoutbox) == 0
         with patch('core.signals.async_mail_admins') as email_task:
             resp = client.post('/api/rest-auth/registration/', self.test_user_data)
-            assert resp.status_code == 201
+            assert resp.status_code == 204
             assert User.objects.count() == 1
             assert email_task.delay.called, 'email to admins should be sent'
 
