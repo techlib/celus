@@ -610,18 +610,24 @@ def where_to_store(instance: 'ManualDataUpload', filename):
 def validate_mime_type(fileobj):
     detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
     fileobj.seek(0)
+
     # there is not one type to rule them all - magic is not perfect and we need to consider
     # other possibilities that could be detected - for example the text/x-Algol68 seems
     # to be returned for some CSV files with some version of libmagic
     # (the library magic uses internally)
-    if detected_type not in (
+    allowed_types = [
         'text/csv',
         'text/plain',
         'application/csv',
         'text/x-Algol68',
         'application/json',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ):
+    ]
+
+    if fileobj.name and fileobj.name.endswith(".xlsx"):
+        allowed_types.append("application/octet-stream")
+
+    if detected_type not in allowed_types:
         raise ValidationError(
             _(
                 "The uploaded file is not in required file type or is corrupted. "
