@@ -227,12 +227,11 @@ STATIC_ROOT = config('STATIC_ROOT', default=BASE_DIR / "static_compiled")
 REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False,
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
-    'DEFAULT_RENDERER_CLASSES': (
+    'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
         'rest_pandas.renderers.PandasCSVRenderer',
         'rest_pandas.renderers.PandasExcelRenderer',
-    ),
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': ['core.authentication.SessionAuthentication401'],
     'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',

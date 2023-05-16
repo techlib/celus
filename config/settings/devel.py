@@ -1,4 +1,5 @@
 from .base import *  # noqa F403
+from .base import REST_FRAMEWORK
 
 ALLOWED_HOSTS = ['*']
 
@@ -64,3 +65,5 @@ CELERY_BEAT_SCHEDULE = {
 
 
 QUERYCOUNT = {'DISPLAY_DUPLICATES': 5}
+
+REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
