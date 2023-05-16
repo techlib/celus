@@ -6,6 +6,9 @@
     item-key="pk"
     :headers="headers"
     sort-by="name"
+    :items-per-page="-1"
+    :search="search"
+    :loading="loading"
   >
     <template #item.actions="{ item }">
       <v-tooltip bottom>
@@ -25,6 +28,20 @@
         {{ $t("actions.upload_data") }}
       </v-tooltip>
     </template>
+    <template #top>
+      <v-row>
+        <v-spacer></v-spacer>
+        <v-col>
+          <v-text-field
+            v-model="search"
+            :label="$t('labels.search')"
+            clearable
+            clear-icon="fa-times"
+            append-icon="fa-search"
+          ></v-text-field>
+        </v-col>
+      </v-row>
+    </template>
   </v-data-table>
 </template>
 
@@ -42,6 +59,14 @@ export default {
     return {
       platforms: [],
       loading: false,
+      search: "",
+      // state tracking support
+      watchedAttrs: [
+        {
+          name: "search",
+          type: String,
+        },
+      ],
     };
   },
 
@@ -68,6 +93,7 @@ export default {
       if (!resp.error) {
         this.platforms = resp.response.data.filter((p) => p.has_raw_parser);
       }
+      this.loading = false;
     },
   },
 
