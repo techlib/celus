@@ -43,6 +43,7 @@ class CommandInfo:
             'help': arg.help,
             'required': arg.required,
             'default': arg.default,
+            'metavar': arg.metavar,
             'type': cls.arg_type_str(arg),
         }
 

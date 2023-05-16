@@ -26,6 +26,7 @@ class Command(BaseCommand):
             '-f',
             dest='file',
             type=FileType('r', encoding='utf-8'),
+            metavar='foobar',
             help='When given, the contents of the file will be echoed instead of the string',
         )
         parser.add_argument('--do-it', dest='doit', action='store_true')

@@ -154,7 +154,7 @@ class OrganizationsDataFrame:
         return pd.DataFrame(
             {
                 Col.ORGANIZATION.value: [
-                    organization.name for organization in self.admin_organizations
+                    organization.name_en for organization in self.admin_organizations
                 ]
             }
         )

@@ -6,7 +6,7 @@ from celus_nigiri.counter5 import Counter5ReportBase
 from logs.tests.conftest import report_type_nd  # noqa - fixture
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Platform
-from sushi.logic.data_import import import_sushi_credentials
+from sushi.logic.data_import import import_sushi_credentials_new
 from sushi.models import CounterReportType, SushiCredentials
 
 
@@ -18,17 +18,20 @@ class TestURLComposition:
         assert SushiCredentials.objects.count() == 0
         data = [
             {
-                'platform': 'XXX',
                 'organization': organizations[1].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+                'publisher/vendor/platform': 'XXXX',
+                'requestor id': 'RRRX',
+                'customer id': 'BBB',
+                'api key': 'kekekeyyy',
             }
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
-        stats = import_sushi_credentials(data)
+        knowledgebase = {
+            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+        }
+        Platform.objects.create(
+            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+        )
+        stats = import_sushi_credentials_new(data)
         assert stats['added'] == 1
         assert SushiCredentials.objects.count() == 1
         credentials = SushiCredentials.objects.all()

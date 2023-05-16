@@ -498,6 +498,7 @@ class TestManagementCommandAPI:
                         'type': 'file',
                         'required': False,
                         'default': None,
+                        'metavar': None,
                         'help': 'CSV file to import',
                     },
                     {
@@ -505,6 +506,7 @@ class TestManagementCommandAPI:
                         'type': 'bool',
                         'required': False,
                         'default': False,
+                        'metavar': None,
                         'help': 'If available, use knowledgebase urls instead of the ones stored '
                         'in the file',
                     },
@@ -550,6 +552,7 @@ class TestManagementCommandAPI:
                         'type': 'str',
                         'required': True,
                         'default': None,
+                        'metavar': None,
                         'help': 'String to be returned back',
                     },
                     {
@@ -557,6 +560,7 @@ class TestManagementCommandAPI:
                         'type': 'bool',
                         'required': False,
                         'default': False,
+                        'metavar': None,
                         'help': 'When given, echo will be printed to stderr instead of stdout',
                     },
                     {
@@ -564,6 +568,7 @@ class TestManagementCommandAPI:
                         'type': 'file',
                         'required': False,
                         'default': None,
+                        'metavar': 'foobar',
                         'help': 'When given, the contents of the file will be echoed instead '
                         'of the string',
                     },
@@ -588,7 +593,7 @@ class TestManagementCommandAPI:
         )
         assert resp.status_code == 200
         common = {
-            'log': 'Starting echo command\n',
+            'log': 'INFO:: Starting echo command\n',
             'exception': None if doit else 'not doing it',
         }
         if stderr:
@@ -613,7 +618,7 @@ class TestManagementCommandAPI:
         assert resp.json() == {
             'stdout': '',
             'stderr': 'foobar\n',
-            'log': 'Starting echo command\n',
+            'log': 'INFO:: Starting echo command\n',
             'exception': None if doit else 'not doing it',
         }
 

@@ -1,5 +1,5 @@
 import pytest
-from celus_nigiri.client import Sushi4Client, Sushi5Client
+from celus_nigiri.client import Sushi5Client
 from celus_nigiri.counter5 import Counter5ReportBase
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN, Identity
 from core.tests.conftest import master_admin_identity, valid_identity  # noqa - fixtures
@@ -8,10 +8,9 @@ from logs.models import AccessLog, ImportBatch, Metric
 from organizations.models import UserOrganization
 from publications.models import Platform
 from publications.tests.conftest import platforms  # noqa - fixture
-from pycounter.report import CounterReport
 from rest_framework.exceptions import PermissionDenied
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.logic.data_import import import_sushi_credentials
+from sushi.logic.data_import import import_sushi_credentials_new
 from sushi.models import AttemptStatus
 
 from test_scenarios.basic import (  # noqa - fixtures
@@ -129,17 +128,20 @@ class TestCredentialsVersioning:
         """
         data = [
             {
-                'platform': 'XXX',
-                'organization': organizations["branch"].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+                'organization': organizations['empty'].internal_id,
+                'publisher/vendor/platform': 'XXXX',
+                'requestor id': 'RRRX',
+                'customer id': 'BBB',
+                'api key': 'kekekeyyy',
             }
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
-        import_sushi_credentials(data)
+        knowledgebase = {
+            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+        }
+        Platform.objects.create(
+            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+        )
+        import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         assert cr1.version_hash != ''
@@ -158,17 +160,20 @@ class TestCredentialsVersioning:
         """
         data = [
             {
-                'platform': 'XXX',
-                'organization': organizations["branch"].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+                'organization': organizations['empty'].internal_id,
+                'publisher/vendor/platform': 'XXXX',
+                'requestor id': 'RRRX',
+                'customer id': 'BBB',
+                'api key': 'kekekeyyy',
             }
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
-        import_sushi_credentials(data)
+        knowledgebase = {
+            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+        }
+        Platform.objects.create(
+            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+        )
+        import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         hash1 = cr1.compute_version_hash()
@@ -186,17 +191,20 @@ class TestCredentialsVersioning:
         """
         data = [
             {
-                'platform': 'XXX',
-                'organization': organizations["branch"].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+                'organization': organizations['empty'].internal_id,
+                'publisher/vendor/platform': 'XXXX',
+                'requestor id': 'RRRX',
+                'customer id': 'BBB',
+                'api key': 'kekekeyyy',
             }
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
-        import_sushi_credentials(data)
+        knowledgebase = {
+            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+        }
+        Platform.objects.create(
+            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+        )
+        import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         hash1 = cr1.compute_version_hash()
@@ -216,17 +224,20 @@ class TestCredentialsVersioning:
         """
         data = [
             {
-                'platform': 'XXX',
-                'organization': organizations["branch"].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+                'organization': organizations['empty'].internal_id,
+                'publisher/vendor/platform': 'XXXX',
+                'requestor id': 'RRRX',
+                'customer id': 'BBB',
+                'api key': 'kekekeyyy',
             }
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
-        import_sushi_credentials(data)
+        knowledgebase = {
+            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+        }
+        Platform.objects.create(
+            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+        )
+        import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         cr1.create_sushi_client()
@@ -238,46 +249,6 @@ class TestCredentialsVersioning:
             return Counter5ReportBase()
 
         monkeypatch.setattr(Sushi5Client, 'get_report_data', mock_get_report_data)
-        attempt: SushiFetchAttempt = cr1.fetch_report(
-            report, start_date='2020-01-01', end_date='2020-01-31'
-        )
-        assert 'credentials_version' in attempt.processing_info
-        assert attempt.credentials_version_hash != ''
-        assert attempt.credentials_version_hash == cr1.version_hash
-
-    def test_version_info_is_stored_in_fetch_attempt_c4(
-        self, organizations, report_type_nd, monkeypatch
-    ):
-        """
-        Tests that when we fetch data using `SushiCredentials`, the `SushiFetchAttempt` that is
-        created contains information about the credentials version - both in `processing_info`
-        and in `credentials_version_hash`.
-        This version tests Counter 4
-        """
-        data = [
-            {
-                'platform': 'XXX',
-                'organization': organizations["branch"].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 4,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
-            }
-        ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
-        import_sushi_credentials(data)
-        assert SushiCredentials.objects.count() == 1
-        cr1 = SushiCredentials.objects.get()
-        cr1.create_sushi_client()
-        report = CounterReportType.objects.create(
-            code='tr', name='tr', counter_version=4, report_type=report_type_nd(0)
-        )
-
-        def mock_get_report_data(*args, **kwargs):
-            return CounterReport(report_type="JR1", perios=("2020-01-01", "2020-01-01"))
-
-        monkeypatch.setattr(Sushi4Client, 'get_report_data', mock_get_report_data)
         attempt: SushiFetchAttempt = cr1.fetch_report(
             report, start_date='2020-01-01', end_date='2020-01-31'
         )

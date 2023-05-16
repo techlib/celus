@@ -245,8 +245,13 @@ class ManagementCommandViewSet(ViewSet):
                 typ = ci.arg_type_str(arg)
                 if typ == 'bool':
                     value = to_bool(value)
+                elif typ == 'int':
+                    value = int(value)
                 elif typ == 'file':
-                    value = codecs.getreader('utf-8')(value)
+                    # value is a file-like object in binary mode
+                    # we need to convert it to a text stream if the argument expects it
+                    if arg.type._encoding:
+                        value = codecs.getreader(arg.type._encoding)(value)
 
                 if arg.required:
                     args.append(value)
@@ -260,9 +265,12 @@ class ManagementCommandViewSet(ViewSet):
         err = StringIO()
         log = StringIO()
         root_logger = logging.getLogger()
+        formatter = logging.Formatter('%(levelname)s:: %(message)s')
         handler = logging.StreamHandler(log)
         handler.setLevel(logging.INFO)  # do not let DEBUG messages through
+        handler.setFormatter(formatter)
         root_logger.addHandler(handler)
+
         exception = None
         try:
             with redirect_stdout(out), redirect_stderr(err):

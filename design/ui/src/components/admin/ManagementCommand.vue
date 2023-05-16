@@ -31,6 +31,7 @@ cs:
                 :hint="arg.help"
                 persistent-hint
                 v-model="formData[arg.name]"
+                v-bind="extraAttrs(arg)"
               />
               <div class="pt-8 d-flex align-center">
                 <div style="width: 240px">
@@ -87,7 +88,13 @@ cs:
     <v-row v-if="result">
       <v-col cols="1" class="text-caption">log:</v-col>
       <v-col>
-        <pre>{{ result.log }}</pre>
+        <pre>
+          <div
+            v-for="(line, index) in textToLines(result.log)"
+            :key="index"
+            :class="typeToColor(line.type) + '--text'"
+          >{{ line.text }}</div>
+        </pre>
       </v-col>
     </v-row>
   </v-container>
@@ -98,13 +105,19 @@ import { defineComponent } from "vue";
 import cancellation from "@/mixins/cancellation";
 import { VCheckbox, VTextField, VFileInput } from "vuetify/lib";
 import capitalize from "lodash/capitalize";
+import OrganizationSelectionWidget from "@/components/selectors/OrganizationSelectionWidget.vue";
 
 export default defineComponent({
-  name: "ManagementCommandList",
+  name: "ManagementCommand",
 
   mixins: [cancellation],
 
-  components: { VCheckbox, VTextField, VFileInput },
+  components: {
+    VCheckbox,
+    VTextField,
+    VFileInput,
+    OrganizationSelectionWidget,
+  },
 
   props: {
     command: {
@@ -157,6 +170,17 @@ export default defineComponent({
       this.uploading = false;
     },
     chooseComponent(arg) {
+      // first check if the metavar is a special value that indicates a
+      // list of choices from a model (e.g. _ORG_ID_ means list of organizations)
+      if (
+        arg.metavar &&
+        arg.metavar.startsWith("_") &&
+        arg.metavar.endsWith("_")
+      ) {
+        if (arg.metavar.startsWith("_ORG_ID")) {
+          return "OrganizationSelectionWidget";
+        }
+      }
       switch (arg.type) {
         case "bool":
           return "v-checkbox";
@@ -169,6 +193,31 @@ export default defineComponent({
     prettifyName(name) {
       return capitalize(name.replace(/_/g, " "));
     },
+    extraAttrs(arg) {
+      if (arg.type === "int") {
+        return {
+          type: "number",
+        };
+      }
+    },
+    textToLines(text) {
+      let out = [];
+      text.split("\n").forEach((line) => {
+        let parts = line.split("::");
+        if (parts.length === 2) {
+          out.push({ type: parts[0].toLowerCase(), text: parts[1] });
+        } else {
+          out.push({ type: "text", text: line });
+        }
+      });
+      return out;
+    },
+    typeToColor(type) {
+      if (!["error", "warning", "info", "success"].includes(type)) {
+        return "grey";
+      }
+      return type;
+    },
   },
 
   watch: {
@@ -177,6 +226,9 @@ export default defineComponent({
       handler() {
         this.result = null;
         this.formData = {};
+        for (let arg of this.command.args) {
+          this.formData[arg.name] = arg.default;
+        }
       },
     },
   },
