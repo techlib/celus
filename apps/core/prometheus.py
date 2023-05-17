@@ -180,6 +180,86 @@ def db_tags_num():
     return Tag.objects.count()
 
 
+def _db_last_two_years_coverage_data():
+    """
+    This is a helper function used by several metrics.
+    :return:
+    """
+    from datetime import timedelta
+
+    from core.logic.dates import last_month, month_start
+    from logs.logic.data_coverage import DataCoverageExtractor
+    from logs.models import ImportBatch, ReportType
+
+    # the end date should be the one month before the last finished month
+    # the start date should cover the year of the end date + previous two full years
+    end_month = month_start(last_month() - timedelta(days=1))
+    start_month = end_month.replace(year=end_month.year - 2, month=1, day=1)
+
+    rt_qs = ReportType.objects.exclude_materialized().filter(
+        Q(
+            Exists(
+                ImportBatch.objects.filter(
+                    report_type_id=OuterRef('pk'), date__gte=start_month, date__lte=end_month
+                )
+            )
+        )
+    )
+
+    totals = CounterDict()
+    for rt in rt_qs:
+        extractor = DataCoverageExtractor(
+            rt,
+            start_month=start_month,
+            end_month=end_month,
+            split_by_org=False,
+            split_by_platform=False,
+            split_by_date=False,
+        )
+        cov_data = extractor.get_coverage_data()
+        if cov_data:
+            data = cov_data[()]  # empty tuple key because we don't split
+            totals['ib_count'] += data['ib_count']
+            totals['ib_max'] += data['ib_max']
+
+    totals['ratio'] = (totals['ib_count'] / totals['ib_max']) if totals['ib_max'] else 0
+    return totals
+
+
+def db_last_two_years_coverage():
+    """
+    Because `_db_last_two_years_coverage_data` is a slow function, we store the results in the
+    cache to be available for other metrics. These should be evaluated just after each other,
+    so the cache should be valid. Using a short timeout switches the cache to a temporary
+    storage rather than a real cache.
+    :return:
+    """
+    cached = cache.get('_db_last_two_years_coverage_data')
+    if cached:
+        return cached['ratio']
+    totals = _db_last_two_years_coverage_data()
+    cache.set('_db_last_two_years_coverage_data', totals, 10)
+    return totals['ratio']
+
+
+def db_last_two_years_coverage_present_ib_count():
+    cached = cache.get('_db_last_two_years_coverage_data')
+    if cached:
+        return cached['ib_count']
+    totals = _db_last_two_years_coverage_data()
+    cache.set('_db_last_two_years_coverage_data', totals, 10)
+    return totals['ib_count']
+
+
+def db_last_two_years_coverage_expected_ib_count():
+    cached = cache.get('_db_last_two_years_coverage_data')
+    if cached:
+        return cached['ib_max']
+    totals = _db_last_two_years_coverage_data()
+    cache.set('_db_last_two_years_coverage_data', totals, 10)
+    return totals['ib_max']
+
+
 # The following metrics will not be updated by any request, but by a celery based task.
 # This makes it possible to decide on any interval how often we want to update the metrics.
 # To get the data into Django, we store it in the cache and then pick it up in the
@@ -245,6 +325,18 @@ CACHE_STORED_GAUAGES = {
         'func': db_tag_classes_num,
     },
     'celus_db_tags_num': {'desc': 'Number of tags in the database', 'func': db_tags_num},
+    'celus_db_last_two_years_coverage': {
+        'desc': 'Overall coverage of the last two years for the whole consortium',
+        'func': db_last_two_years_coverage,
+    },
+    'celus_db_last_two_years_coverage_present_ib_count': {
+        'desc': 'Number of present IBs in the last two years for the whole consortium',
+        'func': db_last_two_years_coverage_present_ib_count,
+    },
+    'celus_db_last_two_years_coverage_expected_ib_count': {
+        'desc': 'Number of expected IBs in the last two years for the whole consortium',
+        'func': db_last_two_years_coverage_expected_ib_count,
+    },
 }
 
 
