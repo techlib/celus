@@ -997,13 +997,12 @@ class OrganizationReportTypesViewSet(ModelViewSet):
         organization = get_object_or_404(
             self.request.user.accessible_organizations(), pk=self.kwargs.get('organization_pk')
         )
-        try:
-            source = organization.private_data_source
-        except DataSource.DoesNotExist:
-            out = ReportType.objects.filter(source__isnull=True)
-        else:
-            out = source.reporttype_set.all() | ReportType.objects.filter(source__isnull=True)
-        return out.select_related('source', 'counterreporttype')
+        allowed_sources = DataSource.objects.filter(
+            Q(organization__isnull=True) | Q(organization=organization)
+        )
+        return ReportType.objects.filter(
+            Q(source__in=allowed_sources) | Q(source__isnull=True)
+        ).select_related('source', 'counterreporttype')
 
     @action(methods=['GET'], detail=False, url_path='used')
     def used(self, request, organization_pk):

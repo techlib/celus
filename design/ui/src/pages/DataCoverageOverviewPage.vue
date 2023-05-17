@@ -183,7 +183,11 @@ cs:
                     >
                   </div>
                   <CoverageScoreGauge
-                    :value="coverageData[reportType.pk]?.ratio"
+                    :value="
+                      coverageData[reportType.pk]
+                        ? coverageData[reportType.pk].ratio
+                        : null
+                    "
                     :loading="!coverageData[reportType.pk]"
                   />
                   <v-card-text class="text-center">

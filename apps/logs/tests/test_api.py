@@ -421,6 +421,33 @@ class TestManualDataUpload:
 
 @pytest.mark.django_db
 class TestReportTypeAPI:
+    def test_list_organization_report_types(self, organizations, clients, basic1, report_types):
+        organization = organizations["root"]
+        response = clients['admin1'].get(
+            reverse('organization-report-types-list', kwargs={'organization_pk': organization.pk})
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == ReportType.objects.count()
+
+    def test_list_organization_report_types_used(
+        self, organizations, clients, basic1, report_types
+    ):
+        organization = organizations["root"]
+        assert ReportType.objects.count() > 0
+        # test with many report types but none connected to organization
+        response = clients['admin1'].get(
+            reverse('organization-report-types-used', kwargs={'organization_pk': organization.pk})
+        )
+        assert response.status_code == 200
+        assert response.json() == []
+        # connect one report type to organization
+        ImportBatchFullFactory(report_type=ReportType.objects.first(), organization=organization)
+        response = clients['admin1'].get(
+            reverse('organization-report-types-used', kwargs={'organization_pk': organization.pk})
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
     def test_create_report_type_400(self, organizations, authenticated_client):
         organization = organizations["branch"]
         assert ReportType.objects.count() == 0
