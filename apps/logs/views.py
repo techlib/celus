@@ -55,7 +55,6 @@ from logs.serializers import (
     ImportBatchVerboseSerializer,
     InterestGroupSerializer,
     ManualDataUploadSerializer,
-    ManualDataUploadUpdateSerializer,
     ManualDataUploadVerboseSerializer,
     MetricSerializer,
     ReportTypeInterestSerializer,
@@ -65,7 +64,7 @@ from organizations.logic.queries import organization_filter_from_org_id
 from organizations.models import Organization
 from pandas import DataFrame
 from publications.models import Platform, Title
-from rest_framework import status
+from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.fields import BooleanField, CharField, ListField
@@ -76,7 +75,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelatedField, Serializer
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 from rest_pandas.views import PandasViewBase
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
@@ -811,7 +810,12 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         return Response(totals)
 
 
-class ManualDataUploadViewSet(ModelViewSet):
+class ManualDataUploadViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.RetrieveModelMixin,
+    GenericViewSet,
+):
 
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
@@ -841,16 +845,29 @@ class ManualDataUploadViewSet(ModelViewSet):
         )
     ]
 
-    def get_serializer_class(self):
-        if self.action in ["update", "partial_update"]:
-            return ManualDataUploadUpdateSerializer
-        else:
-            return ManualDataUploadSerializer
+    serializer_class = ManualDataUploadSerializer
 
     @action(methods=['POST'], detail=True, url_path='preflight')
     def preflight(self, request, pk):
         """triggers preflight computation"""
+        # Permissions to get this MDU should be checked in
+        # extra_actions_permission_classes, so we don't need to limit query here
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
+
+        # check permission for object MDU
+        permissions = self.get_permissions()
+        if not all(p.has_object_permission(request, self, mdu) for p in permissions):
+            raise PermissionDenied(f'Not allowed change mdu {pk}')
+
+        # Update org
+        if org_id := request.data.get("organization_id"):
+            if organization := request.user.admin_organizations().filter(pk=org_id).last():
+                mdu.organization = organization
+            else:
+                raise PermissionDenied(f'Not allowed to set organization to {org_id}')
+        else:
+            mdu.organization = None
+        mdu.save()
 
         if mdu.state == MduState.INITIAL:
             # already should be already planned
@@ -876,6 +893,11 @@ class ManualDataUploadViewSet(ModelViewSet):
     @action(methods=['POST'], detail=True, url_path='import-data')
     def import_data(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
+
+        # check permission for object MDU
+        permissions = self.get_permissions()
+        if not all(p.has_object_permission(request, self, mdu) for p in permissions):
+            raise PermissionDenied(f'Not allowed change mdu {pk}')
 
         if mdu.state == MduState.IMPORTED:
             stats = {

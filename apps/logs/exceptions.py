@@ -83,6 +83,12 @@ class WrongOrganizations(Exception):
         super().__init__(organizations)
 
 
+class OrganizationHasToBeSelected(Exception):
+    """
+    Organization has to be selected for raw imports
+    """
+
+
 class PreflightFailed(Exception):
     """
     Exception which occurs during the preflight phase

@@ -58,7 +58,7 @@ from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
 
-from .exceptions import WrongOrganizations, WrongState
+from .exceptions import OrganizationHasToBeSelected, WrongOrganizations, WrongState
 
 logger = logging.getLogger(__name__)
 
@@ -1071,7 +1071,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
                 # when the .organization is None, we need to extract the organizations
                 # from the data in preflight. In this case, preflight data is missing
                 # and we can't continue
-                raise ValueError("No organizations in data, preflight data is probably missing")
+                raise OrganizationHasToBeSelected("Organization is missing in preflight data")
 
         if settings.CLICKHOUSE_QUERY_ACTIVE:
             from .cubes import AccessLogCube, ch_backend

@@ -449,16 +449,6 @@ class TestCustomImport:
         )
         assert mdu.file_is_json() == is_json
 
-    def test_mdu_list_view(self, clients):
-        """
-        Test the manual data upload global api endpoint
-        """
-        mdus = ManualDataUploadFullFactory.create_batch(5, state=MduState.INITIAL)
-        mdus += ManualDataUploadFullFactory.create_batch(5, state=MduState.IMPORTED)
-        resp = clients['su'].get(reverse('manual-data-upload-list'))
-        assert resp.status_code == 200
-        assert len(resp.json()) == 10
-
     def test_organization_mdu_list_view(self, clients):
         """
         Test the manual data upload api endpoint for an organization

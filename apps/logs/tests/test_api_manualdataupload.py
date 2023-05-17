@@ -438,8 +438,10 @@ class TestManualUploadControlledMetrics:
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
         response = clients["master_admin"].post(
-            reverse('manual-data-upload-preflight', args=(mdu.pk,))
+            reverse('manual-data-upload-preflight', args=(mdu.pk,)),
+            {"organization_id": organizations["master"].pk},
         )
+        assert mdu.organization.pk == organizations["master"].pk
         assert response.status_code == 200
         prepare_preflight(mdu.pk)
 
@@ -453,11 +455,14 @@ class TestManualUploadControlledMetrics:
         # mark report type as controlled
         cr_type.report_type.controlled_metrics.set(metrics_objs[:2])
 
-        # regenerate preflight
+        # regenerate preflight with different organization
         response = clients["master_admin"].post(
-            reverse('manual-data-upload-preflight', args=(mdu.pk,))
+            reverse('manual-data-upload-preflight', args=(mdu.pk,)),
+            {"organization_id": organizations["branch"].pk},
         )
         assert response.status_code == 200
+        mdu.refresh_from_db()
+        assert mdu.organization.pk == organizations["branch"].pk
         prepare_preflight(mdu.pk)
 
         response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
@@ -669,13 +674,6 @@ class TestManualUploadNonCounter:
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
-        update_data = {"organization": organization.pk} if organization else {"organization": ""}
-        # Try to update organization
-        response = clients["master_admin"].patch(
-            reverse('manual-data-upload-detail', args=(mdu.pk,)), data=update_data
-        )
-        assert response.status_code == 200, "Organization can be updated in initial state"
-
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
@@ -705,16 +703,12 @@ class TestManualUploadNonCounter:
         )
         assert response.status_code == 400, "failed again need to regenrate preflight"
 
+        preflight_data = {"organization_id": organization.pk} if organization else {}
         response = clients["master_admin"].post(
-            reverse('manual-data-upload-preflight', args=(mdu.pk,))
+            reverse('manual-data-upload-preflight', args=(mdu.pk,)),
+            preflight_data,
         )
         assert response.status_code == 200
-
-        # Try to set organization during before preflight is ready
-        response = clients["master_admin"].patch(
-            reverse('manual-data-upload-detail', args=(mdu.pk,)), data=update_data
-        )
-        assert response.status_code == 200, "Organization can be updated in initial state"
 
         prepare_preflight(mdu.pk)
 
@@ -726,12 +720,6 @@ class TestManualUploadNonCounter:
             'Org1': {'sum': 315, 'count': 18, 'pk': org1.pk},
             'Org2': {'sum': 347, 'count': 18, 'pk': org2.pk},
         }
-
-        # Try to update organization
-        response = clients["master_admin"].patch(
-            reverse('manual-data-upload-detail', args=(mdu.pk,)), data=update_data
-        )
-        assert response.status_code == 200, "Organization can be updated in preflight state"
 
         response = clients["master_admin"].post(
             reverse('manual-data-upload-import-data', args=(mdu.pk,))
@@ -835,6 +823,146 @@ class TestManualUploadNonCounter:
         assert mdu.organization == organizations["standalone"], "organization is set"
         assert ImportBatch.objects.count() == ib_count + 3, "3 ibs created"
         assert AccessLog.objects.count() == access_log_count + 18, "18 logs created"
+
+    @pytest.mark.parametrize(
+        [
+            'from_organization',
+            'to_organization',
+            'owner',
+            'preflight_user',
+            'status',
+        ],
+        [
+            ['standalone', 'branch', 'su', 'su', 200],  # super user
+            ['standalone', 'branch', 'master_admin', 'master_admin', 200],  # master admin
+            ['root', 'branch', 'admin1', 'admin1', 200],  # admin of two organization
+            ['branch', 'root', 'admin1', 'admin1', 200],  # admin of two organization
+            ['standalone', 'standalone', 'admin2', 'admin2', 200],  # regenerate with same org
+            ['standalone', 'branch', 'admin2', 'admin2', 403],  # assign to restrited org
+            ['branch', 'standalone', 'admin1', 'admin2', 403],  # steal from organization
+        ],
+    )
+    def test_preflight_organization_changes(
+        self,
+        platforms,
+        organizations,
+        settings,
+        tmp_path,
+        clients,
+        users,
+        report_types,
+        basic1,
+        from_organization,
+        to_organization,
+        owner,
+        preflight_user,
+        status,
+    ):
+        # add admin1 as admin for branch organization in this scenario
+        users["admin1"].organizations.add(
+            organizations["branch"], through_defaults=dict(is_admin=True)
+        )
+
+        with (Path(__file__).parent / "data/custom/custom_data-nibbler-simple.csv").open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "nibbler.csv"
+
+        platform = platforms['standalone']  # doesn't matter which platform is used
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients[owner].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.pk,
+                'organization': organizations[from_organization].pk,
+                'data_file': data_file,
+                'method': MduMethod.RAW,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        # try to regenerate preflight
+        response = clients[preflight_user].post(
+            reverse('manual-data-upload-preflight', args=(mdu.pk,)),
+            {"organization_id": organizations[to_organization].pk},
+        )
+        assert response.status_code == status
+
+    @pytest.mark.parametrize(
+        [
+            'organization',
+            'owner',
+            'import_user',
+            'status',
+        ],
+        [
+            ['branch', 'su', 'su', 200],  # super user
+            ['branch', 'master_admin', 'master_admin', 200],  # master admin
+            ['root', 'admin1', 'admin1', 200],  # org admin
+            ['standalone', 'admin2', 'su', 200],  # imported by su
+            ['standalone', 'admin2', 'master_admin', 200],  # imported by master
+            ['standalone', 'admin2', 'admin1', 403],  # imported by other admin
+        ],
+    )
+    def test_import_permissions(
+        self,
+        platforms,
+        organizations,
+        settings,
+        tmp_path,
+        clients,
+        users,
+        report_types,
+        counter_report_types,
+        basic1,
+        organization,
+        owner,
+        import_user,
+        status,
+    ):
+
+        with (Path(__file__).parent / "data/counter5/counter5_table_dr.csv").open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "counter.csv"
+
+        cr_type = counter_report_types["dr"]
+        organization = organizations[organization]
+        platform = platforms['standalone']  # doesn't matter which platform is used
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients[owner].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.pk,
+                'organization': organization.pk,
+                'data_file': data_file,
+                'report_type_id': cr_type.report_type_id,
+                'method': MduMethod.COUNTER,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # generate preflight
+        response = clients[owner].post(
+            reverse('manual-data-upload-preflight', args=(mdu.pk,)),
+            {"organization_id": organization.pk},
+        )
+        assert response.status_code == 200
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        # try to import
+        response = clients[import_user].post(
+            reverse('manual-data-upload-import-data', args=(mdu.pk,)),
+        )
+
+        assert response.status_code == status
 
 
 @pytest.mark.django_db

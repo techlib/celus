@@ -40,6 +40,7 @@ en:
     unknown_import_error: An unknown error has occured during data import.
     no_parser_found: Sorry, but we cannot detect the format of the uploaded file.
     unknown_report_type: We were able to process the file, but we could not determine the report type for storage. Please contact the administrator to fix the problem.
+    no_organization_selected: No organization found in data. You need to select organization manually.
   unauthorized_multiple_org_title: Unauthorized to import
   unauthorized_multiple_org_text: This file contains data for multiple organizations and only consortial admin is allowed to import it.
   no_non_counter_for_platform: This platform does not support non-counter data.
@@ -92,6 +93,7 @@ cs:
     unknown_import_error: Během importu dat se vyskytla neznámá chyba.
     no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru.
     unknown_report_type: Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Kontaktujte prosím administrátora, aby nesrovnalosti vyřešil.
+    no_organization_selected: Organizace nelze vyčíst z dat. Vyberte prosím organizaci manuálně.
   unauthorized_multiple_org_title: Neautorizovaný import
   unauthorized_multiple_org_text: Tento soubor obsahuje data pro více organizací a pouze konzorciální admin může nahrávat data pro více organizací z jednoho souboru.
   no_non_counter_for_platform: Tato platforma nepodporuje formáty mimo counter.
@@ -391,6 +393,9 @@ cs:
                       "
                     >
                       {{ $t("errors.unknown_report_type") }}
+                    </strong>
+                    <strong v-else-if="error === 'no-organization-selected'">
+                      {{ $t("errors.no_organization_selected") }}
                     </strong>
                     <strong v-else>
                       {{ $t("errors.unknown_preflight_error") }}
@@ -1024,22 +1029,6 @@ export default {
         this.showSnackbar({ content: "Error loading metrics: " + error });
       }
     },
-    async updateMDU() {
-      if (this.uploadObject && this.state === "preflight") {
-        let url = `/api/manual-data-upload/${this.uploadObject.pk}/`;
-        try {
-          let data = {
-            organization:
-              parseInt(this.organizationId) > 0 ? this.organizationId : null,
-          };
-          await axios.patch(url, data);
-        } catch (error) {
-          this.showSnackbar({ content: "Error processing data: " + error });
-        }
-        // regenerate preflight
-        await this.regeneratePreflight();
-      }
-    },
     async triggerImportData() {
       if (this.uploadObject && !this.importing && this.canImport) {
         this.importing = true;
@@ -1063,8 +1052,11 @@ export default {
       ) {
         this.preflighting = true;
         let url = `/api/manual-data-upload/${this.uploadObject.pk}/preflight/`;
+        let data = this.currentOrganization
+          ? { organization_id: this.currentOrganization.pk }
+          : {};
         try {
-          await axios.post(url, {});
+          await axios.post(url, data);
         } catch (error) {
           this.showSnackbar({
             content: "Error triggering preflight generation: " + error,
@@ -1197,7 +1189,7 @@ export default {
   },
   watch: {
     organizationId() {
-      this.updateMDU();
+      this.regeneratePreflight();
       // Choose method again if selected organization can't import raw data
       if (
         this.step == this.steps.upload &&

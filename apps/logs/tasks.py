@@ -24,6 +24,7 @@ from logs.exceptions import (
     ImportNotPossible,
     MultipleReportTypeInPreflight,
     NibblerErrors,
+    OrganizationHasToBeSelected,
     UnknownReportTypeInPreflight,
 )
 from logs.logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
@@ -351,6 +352,14 @@ def prepare_preflight(mdu_id: int):
             "traceback": traceback.format_exc(),
             "nibbler": [i.dict() for i in e.errors],
         }
+        mdu.when_processed = now()
+        mdu.state = MduState.PREFAILED
+        mdu.save()
+
+    except OrganizationHasToBeSelected as e:
+        mdu.log = str(e)
+        mdu.error = "no-organization-selected"
+        mdu.error_details = {"exception": str(e), "traceback": traceback.format_exc()}
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
