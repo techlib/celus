@@ -92,9 +92,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
+        data = [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'org1', 'pl1': 519318, 'pl2': 717606, 'pl3': 915894},
             {'pk': 'org2', 'pl1': 1114182, 'pl2': 1312470, 'pl3': 1510758},
             {'pk': 'org3', 'pl1': 1709046, 'pl2': 1907334, 'pl3': 2105622},
@@ -113,9 +114,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.add_filter(ForeignKeyDimensionFilter('metric', [metric.pk]))
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
+        data = [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'org1', 'pl1': 151074, 'pl2': 217170, 'pl3': 283266},
             {'pk': 'org2', 'pl1': 349362, 'pl2': 415458, 'pl3': 481554},
             {'pk': 'org3', 'pl1': 547650, 'pl2': 613746, 'pl3': 679842},
@@ -133,9 +135,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
+        data = [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'org1', 'pl2': 717606, 'pl3': 915894},
             {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758},
             {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
@@ -155,9 +158,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
+        data = [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'org1', 'pl2': 500436, 'pl3': 632628},
             {'pk': 'org2', 'pl2': 897012, 'pl3': 1029204},
             {'pk': 'org3', 'pl2': 1293588, 'pl3': 1425780},
@@ -179,9 +183,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == len(organizations)
+        data = [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'org2', 'pl1': 1114182, 'pl2': 1312470, 'pl3': 1510758},
             {'pk': 'org3', 'pl1': 1709046, 'pl2': 1907334, 'pl3': 2105622},
         ]
@@ -207,9 +212,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == len(organizations)
+        data = [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758},
             {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
         ]
@@ -234,11 +240,12 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
+        data = [
+            remap_row_keys_to_short_names(row, Organization, [Platform, Metric]) for row in data
+        ]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [
-            remap_row_keys_to_short_names(row, Organization, [Platform, Metric]) for row in data
-        ] == [
+        assert data == [
             {'pk': 'org1', 'pl2-m2': 239202, 'pl3-m2': 305298, 'pl2-m3': 261234, 'pl3-m3': 327330},
             {'pk': 'org2', 'pl2-m2': 437490, 'pl3-m2': 503586, 'pl2-m3': 459522, 'pl3-m3': 525618},
             {'pk': 'org3', 'pl2-m2': 635778, 'pl3-m2': 701874, 'pl2-m3': 657810, 'pl3-m3': 723906},
@@ -258,9 +265,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Platform.objects.count()
+        data = [remap_row_keys_to_short_names(row, Platform, [Metric]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Platform, [Metric]) for row in data] == [
+        assert data == [
             {'pk': 'pl1', 'm1': 698112, 'm2': 742176, 'm3': 786240},
             {'pk': 'pl2', 'm1': 830304, 'm2': 874368, 'm3': 918432},
             {'pk': 'pl3', 'm1': 962496, 'm2': 1006560, 'm3': 1050624},
@@ -378,9 +386,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Platform.objects.count()
+        data = [remap_row_keys_to_short_names(row, Platform, [Metric]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Platform, [Metric]) for row in data] == [
+        assert data == [
             {'pk': 'pl1', 'm1': 24624, 'm2': 27216, 'm3': 29808},
             {'pk': 'pl2', 'm1': 32400, 'm2': 34992, 'm3': 37584},
             {'pk': 'pl3', 'm1': 40176, 'm2': 42768, 'm3': 45360},
@@ -402,11 +411,12 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Platform.objects.count()
+        data = [
+            remap_row_keys_to_short_names(row, Platform, [DimensionText, Metric]) for row in data
+        ]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [
-            remap_row_keys_to_short_names(row, Platform, [DimensionText, Metric]) for row in data
-        ] == [
+        assert data == [
             {
                 'pk': 'pl1',
                 'A-m1': 12294,
@@ -453,9 +463,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()
+        data = [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'org1', 'pl2': 717606, 'pl3': 915894},
             {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758},
             {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
@@ -483,9 +494,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == len(titles)
+        data = [remap_row_keys_to_short_names(row, Title, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Title, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'Title 1', 'pl1': 342018, 'pl2': 408114},
             {'pk': 'Title 3', 'pl1': 356706, 'pl2': 422802},
         ]
@@ -515,9 +527,10 @@ class TestFlexibleDataSlicerComputations:
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == len(titles)
+        data = [remap_row_keys_to_short_names(row, Title, [Platform]) for row in data]
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
-        assert [remap_row_keys_to_short_names(row, Title, [Platform]) for row in data] == [
+        assert data == [
             {'pk': 'Title 1', 'pl1': 342018, 'pl2': 408114},
             {'pk': 'Title 3', 'pl1': 356706, 'pl2': 422802},
         ]
