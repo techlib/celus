@@ -6,8 +6,14 @@ from logs.models import ImportBatch, InterestGroup, OrganizationPlatform, Report
 from publications.logic.fake_data import TitleFactory
 from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixture
-from sushi.models import AttemptStatus, CounterReportType, SushiFetchAttempt
+from sushi.models import (
+    AttemptStatus,
+    CounterReportsToCredentials,
+    CounterReportType,
+    SushiFetchAttempt,
+)
 
+from test_fixtures.entities.counter_report_types import CounterReportTypeFactory
 from test_fixtures.entities.credentials import CredentialsFactory
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
 from test_fixtures.entities.logs import (
@@ -693,6 +699,52 @@ class TestImportBatchesAPI:
         assert resp.status_code == 200
         assert type(resp.json()) is list
         assert len(resp.json()) == credentials_count
+
+    @pytest.mark.parametrize('broken', [True, False])
+    def test_data_coverage_harvestable_with_broken_report(
+        self, clients, organizations, platforms, report_types, broken
+    ):
+        """
+        Test that the `data-coverage-harvestable` endpoint does not return credentials as
+        harvestable if they are broken for that report.
+        """
+        cr = CredentialsFactory.create(
+            organization=organizations['root'],
+            platform=platforms['root'],
+        )
+        # we connect the platform and the organization to make them appear in coverage at all
+        OrganizationPlatform.objects.create(
+            organization=organizations['root'], platform=platforms['root']
+        )
+        crt = CounterReportTypeFactory.create(code='TR')
+        # the following verifies the credentials
+        SushiFetchAttempt.objects.create(
+            credentials=cr,
+            status=AttemptStatus.NO_DATA,
+            credentials_version_hash=cr.version_hash,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            counter_report=crt,
+            file_size=0,
+        )
+        # connect the report to credentials in a broken state
+        CounterReportsToCredentials.objects.create(
+            counter_report=crt,
+            credentials=cr,
+            broken=broken and 'sushi' or None,
+        )
+        # the test itself
+        resp = clients['su'].get(
+            reverse('import-batch-list') + "data-coverage-harvestable/",
+            {
+                'start_date': '2020-01',
+                'end_date': '2020-03',
+                'report_type': report_types[crt.report_type.short_name.lower()].pk,
+            },
+        )
+        assert resp.status_code == 200
+        assert type(resp.json()) is list
+        assert len(resp.json()) == 0 if broken else 1
 
     @pytest.mark.parametrize(
         ('organization', 'ib_count', 'ib_max'),

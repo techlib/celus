@@ -744,6 +744,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
                     counterreportstocredentials__counter_report__report_type=rt,
                     verified=True,
                     broken__isnull=True,
+                    counterreportstocredentials__broken__isnull=True,
                 )
                 .order_by('organization_id', 'platform_id', '-enabled')
                 .select_related('organization', 'platform')
