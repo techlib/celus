@@ -338,6 +338,9 @@ MAILCHIMP_PREFERRED_CELUS_NAME = config('MAILCHIMP_PREFERRED_CELUS_NAME', defaul
 MAILCHIMP_REASON_CONSORTIAL_MANAGER = "consortial manager"
 MAILCHIMP_REASON_NORMAL_USER = "normal user"
 
+# Celus-Maximus integration
+MAXIMUS_URL = config('MAXIMUS_URL', default='')
+MAXIMUS_TOKEN = config('MAXIMUS_TOKEN', default='')
 
 # Celery
 CELERY_RESULT_BACKEND = 'django-db'
@@ -363,6 +366,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.update_prometheus_db_stats': {'queue': 'celery'},
     'core.tasks.sync_mailchimp_contacts_with_celus_delayed_task': {'queue': 'celery'},
     'core.tasks.sync_mailchimp_contacts_with_celus_task': {'queue': 'celery'},
+    'core.tasks.sync_with_maximus_task': {'queue': 'celery'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
     'knowledgebase.tasks.sync_route': {'queue': 'celery'},
@@ -551,6 +555,17 @@ MAILCHIMP_CELERY_SCHEDULE = {
 }
 if SYNC_USERS_TO_MAILCHIMP:
     CELERY_BEAT_SCHEDULE.update(MAILCHIMP_CELERY_SCHEDULE)
+
+MAXIMUS_CELERY_SCHEDULE = {
+    'sync_with_maximus_task': {
+        'task': 'core.tasks.sync_with_maximus_task',
+        'schedule': crontab(hour=21, minute=30),  # every day at 21:30
+        'options': {'expires': 24 * 60 * 60},
+    }
+}
+
+if MAXIMUS_URL and MAXIMUS_TOKEN:
+    CELERY_BEAT_SCHEDULE.update(MAXIMUS_CELERY_SCHEDULE)
 
 # allauth config
 ACCOUNT_EMAIL_REQUIRED = True

@@ -13,6 +13,7 @@ from django.utils.timezone import now
 
 from .context_managers import logged_task
 from .logic.mailchimp import SyncTask
+from .logic.maximus_sync import sync as maximus_sync
 from .logic.sync import sync_identities_with_erms, sync_users_with_erms
 from .models import DataSource
 from .request_logging.celery_capture import celery_task_log
@@ -178,3 +179,13 @@ def sync_mailchimp_contacts_with_celus_delayed_task():
     delay = randint(0, 60 * 60)
     logger.info('Scheduling `sync_mailchimp_contacts_with_celus_task` in %d seconds', delay)
     sync_mailchimp_contacts_with_celus_task.apply_async(countdown=delay)
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+def sync_with_maximus_task():
+    """
+    Synchronize data with Celus-Maximus.
+    """
+    maximus_sync()
