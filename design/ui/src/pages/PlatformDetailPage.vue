@@ -24,6 +24,15 @@ en:
     upload some data for it.
   counter_data_export_text: Here you can download generated COUNTER reports directly from Celus. The data are filtered based on selected organization and date range in the page header.
   counter_data_export_no_org: No organization is selected, please select an organization from the top bar in order to download data in COUNTER format.
+  curve_info: |
+    The following curve describes on which day of month SUSHI data
+    typically become available on this platform (a generic curve is
+    used when not enough data is present for a platform). Celus uses
+    this information to plan automatic harvesting in order to minimize
+    delay, but maximize chance of success.
+  curve_title: SUSHI data availability curve
+  stats_for_geeks: Stats for geeks
+  curve_attempts_info: The arrows shown on the curve show the typical points when Celus will attempt to (re)harvest data for this platform. The actual dates may vary slightly to accommodate internal rules and potential manual harvests.
 
 cs:
   no_info: Pro tuto platformu bohužel nejsou dostupná žádná data o titulech.
@@ -47,6 +56,14 @@ cs:
     je třeba pro ni nejprve přidat přihlašovací údaje SUSHI a nebo manuálně nahrát data.
   counter_data_export_text: Zde si stáhnout vygenerované COUNTER reporty přímo z Celusu.  Data jsou filtrováná podle zvolené organizace a rozmezí dat v hlavičce stránky.
   counter_data_export_no_org: Není vybraná oranizace, prosím vyberte organizaci v horním panelu, aby bylo možné stáhnout data v COUNTER formátu.
+  curve_info: |
+    Následující křivka popisuje, ve kolikátý den v měsíci jsou obvykle dostupná SUSHI data
+    pro tuto platformu (pokud není dostatek dat pro konkrétní platformu, použije se obecná křivka).
+    Celus tuto informaci využívá pro plánování automatického sklízení dat tak, aby minimalizoval
+    zpoždění, ale zároveň maximalizoval šanci na úspěch.
+  curve_title: Křivka dostupnosti dat pro SUSHI
+  stats_for_geeks: Statistiky pro nadšence
+  curve_attempts_info: Šipky na křivce ukazují typické body, kdy se Celus bude pokoušet (znovu)stáhnout data pro tuto platformu. Skutečné časy se mohou mírně lišit kvůli interním pravidlů a jsou ovlivněny případnými manuálními staženími.
 </i18n>
 
 <template>
@@ -264,6 +281,41 @@ cs:
             :platform-id="this.platformId"
           >
           </SushiCredentialsManagementWidget>
+
+          <div class="ma-3">
+            <v-expansion-panels>
+              <v-expansion-panel>
+                <v-expansion-panel-header>
+                  <span>
+                    <v-icon small class="pr-2">fa-chart-bar</v-icon>
+                    <span class="font-weight-medium small-caps">{{
+                      $t("stats_for_geeks")
+                    }}</span>
+                  </span>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <h3 class="text-h5 pb-3">{{ $t("curve_title") }}</h3>
+                  <p>{{ $t("curve_info") }}</p>
+                  <div>
+                    <v-switch
+                      v-model="showAttemptsOnCurve"
+                      label="Show attempts"
+                    />
+                  </div>
+                  <SushiArrivalCurve
+                    v-if="platform"
+                    :stats="platform.sushi_arrival_stats"
+                    :show-title="false"
+                    :highlight-probas="havestingProbabilities"
+                  />
+
+                  <p v-if="showAttemptsOnCurve">
+                    {{ $t("curve_attempts_info") }}
+                  </p>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+            </v-expansion-panels>
+          </div>
         </v-tab-item>
 
         <v-tab-item value="admin">
@@ -389,10 +441,16 @@ import ErrorPlaceholder from "@/components/util/ErrorPlaceholder";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import TagCard from "@/components/tags/TagCard";
 import CoverageOverviewWidget from "@/components/charts/CoverageOverviewWidget";
+import SushiArrivalCurve from "@/components/charts/SushiArrivalCurve.vue";
+import stateTracking from "@/mixins/stateTracking";
 
 export default {
   name: "PlatformDetailPage",
+
+  mixins: [stateTracking],
+
   components: {
+    SushiArrivalCurve,
     CounterDataExportWidget,
     CoverageOverviewWidget,
     TagCard,
@@ -407,13 +465,15 @@ export default {
     InterestGroupSelector,
     RawDataExportWidget,
   },
+
   props: {
     platformId: { required: true },
   },
+
   data() {
     return {
       platform: null,
-      activeTab: this.$route.query.tab || "chart",
+      activeTab: "chart",
       platformNotConnected: false,
       unconnectedPlatform: null, // here we store the platform data if it is not connected
       platformDoesNotExist: false,
@@ -421,6 +481,8 @@ export default {
       loading: false,
       counterReportTypes: [],
       loadingCounterReportTypes: false,
+      watchedAttrs: [{ name: "activeTab", type: String, var: "tab" }],
+      showAttemptsOnCurve: false,
     };
   },
   computed: {
@@ -436,8 +498,14 @@ export default {
     }),
     ...mapState({
       selectedOrganizationId: "selectedOrganizationId",
+      basicInfo: "basicInfo",
       interestGroups: (state) => state.interest.interestGroups,
     }),
+    havestingProbabilities() {
+      return this.showAttemptsOnCurve
+        ? this.basicInfo.AUTO_HARVESTING_PROBABILITIES
+        : [];
+    },
     titleListURL() {
       if (this.platform !== null) {
         return `/api/organization/${this.selectedOrganizationId}/platform/${this.platform.pk}/title-interest/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;

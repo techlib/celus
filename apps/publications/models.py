@@ -28,6 +28,22 @@ class PlatformInterestReport(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
 
+# the following curve was obtained as a generic curve from the production data on K1
+# and slightly modified to make it more generic.
+# It will be used in case there are not enough attempts in a Celus installation to create a
+# generic curve
+DEFAULT_ARRIVAL_STATS = {
+    "count": 0,
+    "curve": [1.90, 1.95, 2.00, 2.05, 2.90, 3.00, 5.00, 9.00, 17.00, 18.00, 25.00, 30.00, 44.00],
+    "probabs": [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99, 1.0],
+    "source": "generic",
+}
+
+
+def default_stats():
+    return DEFAULT_ARRIVAL_STATS.copy()
+
+
 class Platform(models.Model):
     ext_id = models.PositiveIntegerField(blank=True, null=True)
     short_name = models.CharField(max_length=100)
@@ -47,6 +63,11 @@ class Platform(models.Model):
         default=list,
         help_text="Links to other platform's ext_id",
         blank=True,
+    )
+    sushi_arrival_stats = models.JSONField(
+        default=default_stats,
+        blank=True,
+        help_text="Stats about when a specific percentage of reports are typically available",
     )
 
     class Meta:

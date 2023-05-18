@@ -255,4 +255,8 @@ th.auto-width {
 .v-tab {
   text-transform: uppercase;
 }
+
+.small-caps {
+  font-variant: small-caps;
+}
 </style>

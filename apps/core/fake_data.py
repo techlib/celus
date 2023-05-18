@@ -3,7 +3,7 @@ from allauth.account.models import EmailAddress
 from django_otp.plugins.otp_email.models import EmailDevice
 from faker import Faker
 
-from core.models import DataSource, Identity, User
+from core.models import DATA_SOURCE_TYPE_KNOWLEDGEBASE, DataSource, Identity, User
 
 fake = Faker()
 
@@ -14,6 +14,8 @@ class DataSourceFactory(factory.django.DjangoModelFactory):
 
     short_name = factory.Faker("hostname")
     url = factory.Faker("url")
+    type = DATA_SOURCE_TYPE_KNOWLEDGEBASE
+    token = "abcd"
 
 
 class UserFactory(factory.django.DjangoModelFactory):

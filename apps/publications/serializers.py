@@ -47,6 +47,7 @@ class PlatformSerializer(ModelSerializer):
             "knowledgebase",
             "source",
             "counter_registry_id",
+            "sushi_arrival_stats",
         )
 
 

@@ -11,6 +11,7 @@ from core.models import TaskProgress
 from django.db.transaction import atomic
 from organizations.models import Organization
 
+from publications.logic.arrival_probabilities import update_all_arrival_curves
 from publications.logic.cleanup import delete_platform_data, sync_platform_title_links
 from publications.logic.sync import erms_sync_platforms
 from publications.logic.title_management import find_mergeable_titles, merge_titles
@@ -81,3 +82,11 @@ def process_title_overlap_batch_task(batch_id: int, domain_name: str = "/"):
         )
     else:
         logger.warning("Batch %d is not in processing state (%s)", batch_id, batch.state)
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+@atomic
+def update_all_arrival_curves_task():
+    update_all_arrival_curves()

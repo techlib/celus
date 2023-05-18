@@ -396,6 +396,7 @@ CELERY_TASK_ROUTES = {
     "publications.tasks.delete_platform_data_task": {"queue": "import"},
     "publications.tasks.merge_titles_task": {"queue": "interest"},
     "publications.tasks.process_title_overlap_batch_task": {"queue": "celery"},
+    "publications.tasks.update_all_arrival_curves_task": {"queue": "celery"},
     "scheduler.tasks.plan_schedulers_triggering": {"queue": "sushi"},
     "scheduler.tasks.trigger_scheduler": {"queue": "sushi"},
     "scheduler.tasks.update_automatic_harvesting": {"queue": "sushi"},
@@ -535,6 +536,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "tags.tasks.reprocess_due_tagging_batches_task",
         "schedule": crontab(hour="3", minute=randmin()),  # between 3:00 and 3:59
         "options": {"expires": 24 * 60 * 60},
+    },
+    "update_all_arrival_curves_task": {
+        "task": "publications.tasks.update_all_arrival_curves_task",
+        "schedule": crontab(day_of_month="1", hour="0", minute="1"),  # on each month start
+        "options": {"expires": 60 * 60},
     },
 }
 
@@ -747,6 +753,12 @@ LIVE_ERMS_AUTHENTICATION = config("LIVE_ERMS_AUTHENTICATION", cast=bool, default
 QUEUED_SUSHI_MAX_RETRY_COUNT = config("QUEUED_SUSHI_MAX_RETRY_COUNT", cast=int, default=5)
 # this is the currency used for price calculation
 REFERENCE_CURRENCY = config("REFERENCE_CURRENCY", default="CZK")
+# quantiles to use when computing the curve of SUSHI data arrival times
+SUSHI_ARRIVAL_STATS_QUANTILES = config(
+    "SUSHI_ARRIVAL_STATS_QUANTILES",
+    cast=Csv(float),
+    default="0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99, 1",
+)
 
 # Celus features configuration
 # is this installation intended for one consortium
@@ -774,6 +786,12 @@ FAKE_SUSHI_URLS = ["https://sashimi.celus.net/"]
 # as of now, the computation of coverage for interest is not perfect, so we disable it by default
 REPORT_TYPES_WITHOUT_COVERAGE = config(
     "REPORT_TYPES_WITHOUT_COVERAGE", cast=Csv(), default="interest"
+)
+
+# at which probability levels should automatic harvesting be planned
+# see arrival_probabilities for more details
+AUTO_HARVESTING_PROBABILITIES = config(
+    "AUTO_HARVESTING_PROBABILITIES", cast=Csv(float), default="0.5, 0.75, 0.875, 0.95, 1.0"
 )
 
 # social authentication providers
@@ -922,6 +940,7 @@ EXPORTED_SETTINGS = [
     "ALLOW_USER_CREATED_PLATFORMS",
     "ALLOW_USER_MANAGEMENT",
     "ALLOW_USER_REGISTRATION",
+    "AUTO_HARVESTING_PROBABILITIES",
     "AUTOMATICALLY_CREATE_METRICS",
     "CELUS_ADMIN_SITE_PATH",
     "CLICKHOUSE_QUERY_ACTIVE",
