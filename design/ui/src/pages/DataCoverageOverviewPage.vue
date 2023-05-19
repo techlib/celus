@@ -8,8 +8,9 @@ en:
   detail_by_platform_and_month: Data coverage by platform and month
   harvest_missing: Harvest missing {count} month | Harvest missing {count} months
   months_present: "{count} month present | {count} months present"
-  months_harvestable: "{count} month harvestable | {count} months harvestable"
+  months_harvestable: "{count} month with SUSHI but old | {count} months with SUSHI but old"
   months_no_sushi: "{count} month without working SUSHI | {count} months without working SUSHI"
+  months_auto_harvestable: "{count} month harvestable and recent enough | {count} months harvestable and recent enough"
   all_harvested: Perfect, no data is missing
   nothing_to_harvest: Unfortunately no missing data can be obtained automatically via SUSHI
   detail_by_organization: Detail by organization
@@ -34,6 +35,11 @@ en:
     is expected. By clicking on cards of individual reports you can identify for which platforms
     and which months data is missing. In case functional SUSHI is present, it is possible to harvest
     missing data automatically directly from this page.
+  date_limit_info: |
+    In order to limit traffic to SUSHI servers and avoid long waiting times, automatic harvesting
+    of missing data will only be performed for months within the COUNTER Code of Practice 5 data
+    retention period (this year + previous two whole years). For older months you can still harvest
+    data manually via the SUSHI management page.
 
 cs:
   click_to_see_details: Klikněte na karty jednotlivých reportů pro více detailů.
@@ -68,6 +74,11 @@ cs:
     jako počet měsíců, pro které jsou data k dispozici, děleno počtem měsíců, pro které jsou data očekávána.
     Kliknutím na karty jednotlivých reportů můžete zjistit, pro které platformy a které měsíce chybí data.
     V případě funkčního SUSHI je možné chybějící data stáhnout přímo z této stránky.
+  date_limit_info: |
+    Abychom omezili provoz na SUSHI serverech a zabránili dlouhým čekacím dobám, automatické stahování
+    chybějících dat bude prováděno pouze pro měsíce v rámci období uchovávání dat podle COUNTER Code of Practice 5
+    (tento rok + předchozí dva celé roky). Pro starší měsíce můžete stále data stáhnout
+    ručně pomocí stránky pro správu SUSHI.
 </i18n>
 
 <template>
@@ -253,12 +264,12 @@ cs:
       </v-col>
       <v-col cols="12" md="6" lg="4" xl="3">
         <v-btn
-          v-if="harvestInfo && selectedHarvestableCount"
+          v-if="harvestInfo && selectedWillingToHarvestCount"
           color="primary"
           class="ms-2"
           @click="showHarvestDialog = true"
         >
-          {{ $tc("harvest_missing", selectedHarvestableCount) }}
+          {{ $tc("harvest_missing", selectedWillingToHarvestCount) }}
         </v-btn>
         <span v-else-if="harvestInfo && selectedMissingCount">{{
           $t("nothing_to_harvest")
@@ -269,6 +280,12 @@ cs:
         </span>
       </v-col>
     </v-row>
+    <v-row v-if="selectedHarvestableCount > selectedWillingToHarvestCount">
+      <v-col>
+        <v-alert type="info" text>{{ $t("date_limit_info") }}</v-alert>
+      </v-col>
+    </v-row>
+
     <v-row v-if="selectedReportType" class="pt-6">
       <v-col cols="auto" class="align-self-center">
         <h4 class="font-weight-ight">
@@ -524,6 +541,17 @@ export default {
         0
       );
     },
+    selectedWillingToHarvestCount() {
+      if (!this.harvestInfo) {
+        return 0;
+      }
+      return this.harvestInfo.reduce(
+        (sum, record) =>
+          sum +
+          record.months.filter((m) => m >= this.oldestHarvestedMonth).length,
+        0
+      );
+    },
     selectedHarvestablePlatforms() {
       if (!this.harvestInfo) {
         return [];
@@ -539,7 +567,12 @@ export default {
         out.push({
           platform,
           records,
-          monthCount: records.reduce((sum, rec) => sum + rec.months.length, 0),
+          monthCount: records.reduce(
+            (sum, rec) =>
+              sum +
+              rec.months.filter((m) => m >= this.oldestHarvestedMonth).length,
+            0
+          ),
         });
       }
       return out.sort((a, b) => a.platform.localeCompare(b.platform));
@@ -557,15 +590,18 @@ export default {
       );
     },
     compositionBarData() {
-      return [
+      let out = [
         {
           value: this.selectedIbCount / this.selectedIbMax,
           text: this.$tc("months_present", this.selectedIbCount),
           color: "#cef5ce",
         },
         {
-          value: this.selectedHarvestableCount / this.selectedIbMax,
-          text: this.$tc("months_harvestable", this.selectedHarvestableCount),
+          value: this.selectedWillingToHarvestCount / this.selectedIbMax,
+          text: this.$tc(
+            "months_auto_harvestable",
+            this.selectedWillingToHarvestCount
+          ),
           color: "#f8e6ac",
         },
         {
@@ -585,6 +621,19 @@ export default {
           color: "#d2d2d2",
         },
       ];
+      if (this.selectedHarvestableCount > this.selectedWillingToHarvestCount)
+        out.splice(2, 0, {
+          value:
+            (this.selectedHarvestableCount -
+              this.selectedWillingToHarvestCount) /
+            this.selectedIbMax,
+          text: this.$tc(
+            "months_harvestable",
+            this.selectedHarvestableCount - this.selectedWillingToHarvestCount
+          ),
+          color: "#fdbfc6",
+        });
+      return out;
     },
     harvestablePlatformsHeaders() {
       return [
@@ -600,6 +649,9 @@ export default {
           align: "right",
         },
       ];
+    },
+    oldestHarvestedMonth() {
+      return "2021-01";
     },
   },
 
@@ -742,7 +794,9 @@ export default {
       let intentions = [];
       for (let platformRec of this.platformsToHarvest) {
         for (let credRec of platformRec.records) {
-          for (let month of credRec.months) {
+          for (let month of credRec.months.filter(
+            (m) => m >= this.oldestHarvestedMonth
+          )) {
             intentions.push({
               start_date: month,
               end_date: monthLastDay(parseISO(month)),
