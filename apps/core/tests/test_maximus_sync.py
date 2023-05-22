@@ -1,11 +1,22 @@
 import json
+from datetime import date
 
 import pytest
-from core.logic.maximus_sync import get_organizations, get_relations, get_users
-from core.models import User
+from core.logic.maximus_sync import (
+    get_organizations,
+    get_platforms,
+    get_relations,
+    get_sushi_credentials,
+    get_users,
+)
+from core.models import UL_ORG_ADMIN, User
 from organizations.models import Organization
+from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
+from test_fixtures.entities.counter_report_types import CounterReportTypeFactory
+from test_fixtures.entities.data_souces import DataSourceFactory
 from test_fixtures.entities.organizations import OrganizationFactory
+from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.entities.users import UserFactory
 
 
@@ -102,4 +113,78 @@ class TestMaximusSync:
             {"user": usr[2].id, "organization": org[0].id, "is_admin": False},
         )
         for d in json.loads(json.dumps(get_relations())):
+            assert d in check
+
+    @pytest.mark.django_db
+    def test_get_platforms(self):
+        ds = DataSourceFactory.create(type=2)
+        platforms = PlatformFactory.create_batch(2, source=ds)
+        check = [
+            {
+                "ext_id": p.id,
+                "short_name": p.short_name,
+                "name": p.name,
+                "source": str(ds),
+                "source_type": ds.get_type_display(),
+                "counter_registry_id": None,
+            }
+            for p in platforms
+        ]
+        for d in json.loads(json.dumps(get_platforms())):
+            assert d in check
+
+    @pytest.mark.django_db
+    def test_get_sushi_credentials(self):
+        o1 = OrganizationFactory.create()
+        platforms = PlatformFactory.create_batch(2)
+        ct = (
+            CounterReportTypeFactory.create(),
+            CounterReportTypeFactory.create(code='X1'),
+            CounterReportTypeFactory.create(code='Y2'),
+        )
+        s = [
+            SushiCredentials.objects.create(
+                organization=o1,
+                platform=platforms[i],
+                url="http://example.com/",
+                counter_version=5,
+                customer_id="1234",
+                lock_level=UL_ORG_ADMIN,
+            )
+            for i in range(2)
+        ]
+        s[0].counter_reports.add(ct[0], ct[1])
+        s[1].counter_reports.add(ct[1], ct[2])
+        SushiFetchAttempt.objects.create(
+            status=AttemptStatus.SUCCESS,
+            credentials=s[0],
+            counter_report=ct[0],
+            start_date=date.today(),
+            end_date=date.today(),
+            checksum="abc",
+            file_size=123,
+        )
+        check = [
+            {
+                "ext_id": s[i].id,
+                "organization": o1.id,
+                "platform": platforms[i].id,
+                "url": "http://example.com/",
+                "counter_version": 5,
+                "customer_id": "1234",
+                "counter_reports": [ct[i].code, ct[i + 1].code],
+                "api_key": "",
+                "enabled": True,
+                "extra_params": {},
+                "http_username": "",
+                "http_password": "",
+                "lock_level": 300,
+                "outside_consortium": False,
+                "requestor_id": "",
+                "broken": None,
+                "verified": not bool(i),
+            }
+            for i in range(2)
+        ]
+        for d in json.loads(json.dumps(get_sushi_credentials())):
             assert d in check
