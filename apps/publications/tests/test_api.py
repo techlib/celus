@@ -17,6 +17,7 @@ from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import (
     AccessLog,
+    DimensionText,
     ImportBatch,
     InterestGroup,
     Metric,
@@ -26,12 +27,20 @@ from logs.models import (
 )
 from logs.tests.conftest import report_type_nd  # noqa - fixture
 from organizations.models import UserOrganization
+from publications.logic.fake_data import TitleFactory
 from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
 from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
 
 from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ImportBatchFullFactory
+from test_fixtures.entities.logs import (
+    AccessLogFactory,
+    ImportBatchFactory,
+    ImportBatchFullFactory,
+    MetricFactory,
+)
+from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
+from test_fixtures.entities.report_types import ReportTypeFactory
 from test_fixtures.scenarios.basic import *  # noqa - fixtures
 
 
@@ -764,7 +773,7 @@ class TestPlatformTitleAPI:
         assert 'results' in resp.json()
         data = resp.json()['results']
         assert len(data) == 2
-        assert platform.short_name in data[0]['interests']
+        assert str(platform.pk) in data[0]['interests']
 
     def test_authorized_user_accessible_platforms_interest_by_platform_more_platforms(
         self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
@@ -786,8 +795,64 @@ class TestPlatformTitleAPI:
         data = resp.json()['results']
         assert len(data) == 2
         assert len(data[0]['interests']) == 2, 'there should be interest for two platforms'
-        assert platform.short_name in data[0]['interests']
-        assert platform2.short_name in data[0]['interests']
+        assert str(platform.pk) in data[0]['interests']
+        assert str(platform2.pk) in data[0]['interests']
+
+    def test_title_interest_by_platform_with_yops(self, admin_client, interest_rt):
+        """
+        Tests the view that returns interest summed up by platform for each title
+        """
+        org = OrganizationFactory()
+        tr = ReportTypeFactory(short_name='TR', dimensions=['YOP'])  # type: ReportType
+        yop_attr = tr.dim_name_to_dim_attr('YOP')
+        yop_dim = tr.dimension_by_attr_name(yop_attr)
+        t1, t2, t3, t4 = TitleFactory.create_batch(4)
+        ib = ImportBatchFactory(report_type=tr, organization=org)
+        metric = MetricFactory(short_name='Total_Item_Investigations')
+        yop_2010 = DimensionText.objects.create(text='2010', dimension=yop_dim)
+        yop_2011 = DimensionText.objects.create(text='2011', dimension=yop_dim)
+        # t1 will have yop 2010 and 2011
+        AccessLogFactory(
+            import_batch=ib, target=t1, value=1, metric=metric, **{yop_attr: yop_2010.pk}
+        )
+        AccessLogFactory(
+            import_batch=ib, target=t1, value=2, metric=metric, **{yop_attr: yop_2011.pk}
+        )
+        # t2 will have yop 2011
+        AccessLogFactory(
+            import_batch=ib, target=t2, value=3, metric=metric, **{yop_attr: yop_2011.pk}
+        )
+        # t3 will have no yop
+        AccessLogFactory(import_batch=ib, target=t3, value=5, metric=metric)
+        # t4 will have yop 2010 and 2011 but with No_License metric, so it should not be included
+        AccessLogFactory(
+            import_batch=ib, target=t4, value=7, metric=metric, **{yop_attr: yop_2010.pk}
+        )
+        AccessLogFactory(
+            import_batch=ib,
+            target=t4,
+            value=7,
+            metric=MetricFactory(short_name='No_License'),
+            **{yop_attr: yop_2011.pk},
+        )
+        create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
+
+        resp = admin_client.get(reverse('title-interest-by-platform-list', args=[org.pk]))
+        assert resp.status_code == 200
+        assert 'results' in resp.json()
+        data = resp.json()['results']
+        assert len(data) == 4
+        for rec in data:
+            if rec['pk'] == t1.pk:
+                assert rec['yops'] == {f'{ib.platform_id}': {'min': 2010, 'max': 2011}}
+            elif rec['pk'] == t2.pk:
+                assert rec['yops'] == {f'{ib.platform_id}': {'min': 2011, 'max': 2011}}
+            elif rec['pk'] == t3.pk:
+                assert f'{ib.platform_id}' not in rec['yops']
+            elif rec['pk'] == t4.pk:
+                assert rec['yops'] == {
+                    f'{ib.platform_id}': {'min': 2010, 'max': 2010}
+                }, '2011 should be ignored because of No_License metric'
 
     def test_organization_platforms_overlap(
         self, authenticated_client, accesslogs_with_interest, valid_identity, platforms

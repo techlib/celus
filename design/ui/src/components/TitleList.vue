@@ -7,12 +7,18 @@ en:
   show_doi: Show DOI
   pub_type_filter: Publication type filter
   no_records: No matching titles were found
+  platforms_tt: Title interest for platform "{platform}" is {interest}.
+  yops_tt: Years of publication extracted from the TR report span from {min} to {max}.
+  no_yops_tt: No years of publication were extracted from the TR report.
 cs:
   columns:
     interest: Zájem
   show_doi: Zobrazit DOI
   pub_type_filter: Filtr typu publikace
   no_records: Nebyly nalezeny žádné odpovídající tituly
+  platforms_tt: Zájem o platformu "{platform}" je {interest}.
+  yops_tt: Roky publikace extrahované z TR reportu jsou od {min} do {max}.
+  no_yops_tt: Nebyly nalezeny žádné roky publikace.
 </i18n>
 
 <template>
@@ -128,16 +134,41 @@ cs:
         />
       </template>
       <template v-slot:item.platforms="{ item }">
-        <span
-          v-for="([platform, interest], index) of Object.entries(
+        <v-tooltip
+          v-for="([platform_id, interest], index) of Object.entries(
             item.interests
           )"
           :key="index"
+          bottom
+          max-width="600px"
         >
-          <span class="coma" v-if="index > 0">, </span>
-          <span :style="{ color: color(index) }">{{ platform }}</span>
-          <span class="interest ml-1">{{ interest }}</span>
-        </span>
+          <template #activator="{ on }">
+            <div v-on="on">
+              <span :style="{ color: color(index) }">{{
+                translatePlatformId(platform_id)
+              }}</span>
+              <span class="interest ml-1">{{ interest }}</span>
+              <span v-if="item.yops && item.yops[platform_id]" class="yops">
+                ({{ item.yops[platform_id].min }} -
+                {{ item.yops[platform_id].max }})
+              </span>
+            </div>
+          </template>
+          <div>
+            {{
+              $t("platforms_tt", {
+                platform: translatePlatformId(platform_id),
+                interest: interest,
+              })
+            }}
+          </div>
+          <div v-if="item.yops && item.yops[platform_id]">
+            {{ $t("yops_tt", { ...item.yops[platform_id] }) }}
+          </div>
+          <div v-else>
+            {{ $t("no_yops_tt") }}
+          </div>
+        </v-tooltip>
       </template>
 
       <template #item.tags="{ item }">
@@ -194,6 +225,7 @@ export default {
       searchString: "",
       pubTypes: [],
       cancelTokenSource: null,
+      platforms: {},
       // table state
       orderBy: this.orderInterest ? this.orderInterest : "name",
       orderDesc: !!this.orderInterest,
@@ -424,13 +456,34 @@ export default {
         }),
       ];
     },
+    async loadPlatforms() {
+      const reply = await this.http({
+        method: "GET",
+        url: "/api/platform/",
+      });
+      if (!reply.error) {
+        this.platforms = {};
+        for (let platform of reply.response.data) {
+          this.platforms[platform.pk.toString()] = platform;
+        }
+      }
+    },
     postprocessData() {},
     slotName: (ig) => "item.interests." + ig.short_name,
     color: (index) => echartPalette[index % echartPalette.length],
+    translatePlatformId(id) {
+      if (this.platforms && this.platforms[id]) {
+        return this.platforms[id].short_name;
+      }
+      return id;
+    },
   },
 
   mounted() {
     this.loadData();
+    if (this.interestByPlatform) {
+      this.loadPlatforms();
+    }
   },
 
   watch: {
@@ -445,6 +498,11 @@ export default {
 span.interest {
   font-weight: bold;
   color: #555555;
+  font-size: 85%;
+}
+span.yops {
+  font-weight: 300;
+  color: #777777;
   font-size: 75%;
 }
 span.coma {

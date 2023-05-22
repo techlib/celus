@@ -122,6 +122,7 @@ class TitleCountSerializer(ModelSerializer):
     platform_ids = JSONField(read_only=True)
     pub_type_name = SerializerMethodField()
     total_interest = IntegerField(read_only=True)
+    yops = JSONField(read_only=True)
 
     class Meta:
         model = Title
@@ -139,6 +140,7 @@ class TitleCountSerializer(ModelSerializer):
             'nonzero_platform_count',
             'platform_ids',
             'total_interest',
+            'yops',
         )
 
     def get_pub_type_name(self, obj: Title):

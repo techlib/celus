@@ -22,6 +22,7 @@ from logs.models import (
     DimensionText,
     ImportBatch,
     InterestGroup,
+    Metric,
     ReportInterestMetric,
     ReportType,
 )
@@ -489,6 +490,7 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         # the queryset used to select relevant titles - stored for usage elsewhere,
         # e.g. in postprocessing
         self.title_selection_query = None
+        self.multiplatform = False
 
     def _extra_filters(self):
         return {}
@@ -505,15 +507,16 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
     def _postprocess_paginated(self, result):
         if not result:
             return result
-        # the stored .title_selection_query contains annotation with platform_count and
-        # platform_ids
-        # here we use it to add this information to the title objects after pagination
+        # the stored .title_selection_query contains the basic filters for titles
         result_title_ids = [title.pk for title in result]
         title_info = {
             record['pk']: record
-            for record in self.title_selection_query.filter(pk__in=result_title_ids).values(
-                'pk', 'platform_count', 'platform_ids'
+            for record in self.title_selection_query.annotate(
+                platform_count=Count('platformtitle__platform_id', distinct=True),
+                platform_ids=ArrayAgg('platformtitle__platform_id', distinct=True),
             )
+            .filter(pk__in=result_title_ids)
+            .values('pk', 'platform_count', 'platform_ids')
         }
         for record in result:
             record.platform_count = title_info[record.pk]['platform_count']
@@ -584,12 +587,12 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
             **extend_query_filter(self.date_filter, 'platformtitle__'),
             **extend_query_filter(self.org_filter, 'platformtitle__'),
             **extra_filters,
-        ).annotate(
-            platform_count=Count('platformtitle__platform_id', distinct=True),
-            platform_ids=ArrayAgg('platformtitle__platform_id', distinct=True),
         )
-        if 'multiplatform' in self.request.query_params:
-            base_title_query = base_title_query.filter(platform_count__gt=1)
+        self.multiplatform = 'multiplatform' in self.request.query_params
+        if self.multiplatform:
+            base_title_query = base_title_query.annotate(
+                platform_count=Count('platformtitle__platform_id', distinct=True),
+            ).filter(platform_count__gt=1)
 
         base_title_query = base_title_query.distinct().order_by()
         self.title_selection_query = base_title_query
@@ -960,10 +963,19 @@ class InterestByPlatformMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.interest_rt = None
-        self.all_platforms = Platform.objects.all()
+        # only use those platforms that have at least one title
+        # when filtering by organization, organization filter will be applied later in
+        # _before_queryset
+        self.all_platforms = Platform.objects.filter(
+            Exists(PlatformTitle.objects.filter(platform_id=OuterRef('pk')))
+        )
 
     def _before_queryset(self):
         self.interest_rt = ReportType.objects.get_interest_rt()
+        if self.org_filter:
+            self.all_platforms = Platform.objects.filter(
+                Exists(PlatformTitle.objects.filter(platform_id=OuterRef('pk'), **self.org_filter))
+            )
 
     def _extra_accesslog_filters(self):
         filters = super()._extra_accesslog_filters()
@@ -995,7 +1007,7 @@ class InterestByPlatformMixin:
         result = super()._postprocess_paginated(result)
         for record in result:
             record.interests = {
-                pl.short_name: getattr(record, f'pl_{pl.pk}')
+                pl.pk: getattr(record, f'pl_{pl.pk}')
                 for pl in self.all_platforms
                 if pl.pk in record.platform_ids
             }
@@ -1013,11 +1025,73 @@ class InterestByPlatformMixin:
 
 class TitleInterestByPlatformViewSet(InterestByPlatformMixin, BaseTitleViewSet):
     """
-    View for all titles with interest summed up by platform
+    View for all titles with interest summed up by platform.
+
+    This is used only in the "Titles on multiple platforms" view.
     """
 
     serializer_class = TitleCountSerializer
     pagination_class = SmartResultsSetPagination
+    YOP_EXCLUDED_METRICS = ['No_License']
+
+    def _postprocess_paginated(self, result):
+        """
+        We want to add min and max YOP per platform for each returned title.
+        """
+        result = super()._postprocess_paginated(result)
+        try:
+            tr = ReportType.objects.get(short_name='TR')
+        except ReportType.DoesNotExist:
+            # if TR report is not present, we can't add YOPs
+            return result
+        dim_ref = tr.dim_name_to_dim_attr('YOP')
+        title_ids = {r.pk for r in result}
+        excluded_metrics = Metric.objects.filter(short_name__in=self.YOP_EXCLUDED_METRICS)
+        # add list of non-null YOPs for each title
+        qs = (
+            AccessLog.objects.filter(
+                target_id__in=title_ids,
+                report_type_id=tr.pk,
+                **{f'{dim_ref}__isnull': False},
+                **self.date_filter,
+                **self.org_filter,
+            )
+            .exclude(metric_id__in=excluded_metrics)
+            .values('target_id', 'platform_id')
+            .annotate(
+                yop_ids=ArrayAgg(dim_ref, distinct=True),
+            )
+        )
+        # the YOPs are just ids in DimensionText, we need to map them to actual values
+        all_yop_ids = set()
+        title_platform_ids_to_yop_ids = {}
+        for rec in qs:
+            all_yop_ids.update(rec['yop_ids'])
+            title_platform_ids_to_yop_ids[(rec['target_id'], rec['platform_id'])] = rec['yop_ids']
+        remap = {
+            rec['pk']: rec['text']
+            for rec in DimensionText.objects.filter(pk__in=all_yop_ids).values('pk', 'text')
+        }
+        for record in result:
+            yops = set()
+            yops_rec = {}
+            for platform_id in record.platform_ids:
+                for yop_id in title_platform_ids_to_yop_ids.get((record.pk, platform_id), []):
+                    yop = remap[yop_id]
+                    try:
+                        yop = int(yop)
+                    except ValueError:
+                        # we are only interested in integer values which represent years
+                        continue
+                    if 1000 < yop < 3000:
+                        # 0001 and 9999 are used as placeholders for unknown years or ahead of print
+                        # to guard against other strange values, we only accept years between
+                        # 1000 and 3000
+                        yops.add(yop)
+                if yops:
+                    yops_rec[platform_id] = {'min': min(yops), 'max': max(yops)}
+            record.yops = yops_rec
+        return result
 
 
 class StartERMSSyncPlatformsTask(APIView):
