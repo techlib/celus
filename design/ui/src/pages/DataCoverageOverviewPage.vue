@@ -138,7 +138,9 @@ cs:
                 height="20"
                 class="text-caption"
               >
-                {{ $t("labels.total_coverage") }}:
+                <span class="hidden-sm-and-down">
+                  {{ $t("labels.total_coverage") }}:
+                </span>
                 {{ roundValue(ratioByCounterVersion(cv)) }}
                 %
               </v-progress-linear>
@@ -164,10 +166,14 @@ cs:
                     selectedReportType &&
                     selectedReportType.pk === reportType.pk
                   "
-                  :refreshing="refreshingSelected"
+                  :refreshing="
+                    refreshingSelected &&
+                    selectedReportType &&
+                    selectedReportType.pk === reportType.pk
+                  "
                   show-platform-count
                   :show-organization-count="showingAllOrganizations"
-                  @click="rtClick"
+                  @click="rtClick({ reportType: reportType })"
                 />
               </v-col>
             </v-row>
@@ -175,17 +181,18 @@ cs:
         </v-expansion-panel>
       </v-expansion-panels>
     </v-row>
-    <v-row class="pt-6">
+    <v-row class="pt-6" id="detailTop">
       <v-col v-if="selectedReportType">
         <h3>{{ selectedReportType.name }}</h3>
       </v-col>
     </v-row>
-    <v-row v-if="selectedReportType">
+    <v-row v-if="selectedReportType" v-intersect="onDetailIntersect">
       <v-col align-self="center" cols="12" md="6" lg="8" xl="9">
         <CompositionBar
           :data="compositionBarData"
           height="36"
           show-all-tooltips-as-one
+          ref="compositionBar"
         />
       </v-col>
       <v-col cols="12" md="6" lg="4" xl="3">
@@ -372,6 +379,21 @@ cs:
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <div
+      style="
+        z-index: 50;
+        text-align: center;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      "
+      v-if="!isDetailVisible && selectedReportType"
+    >
+      <span @click="$vuetify.goTo('#detailTop')" id="scrollBtn">
+        <v-icon color="white">fa-angle-down</v-icon>
+      </span>
+    </div>
   </v-container>
 </template>
 
@@ -417,6 +439,7 @@ export default {
       platformsToHarvest: [],
       harvestId: null,
       refreshingSelected: false,
+      isDetailVisible: false,
     };
   },
 
@@ -761,6 +784,9 @@ export default {
         this.selectedReportType = reportType;
       }
     },
+    onDetailIntersect(entries, observer) {
+      this.isDetailVisible = entries[0].isIntersecting;
+    },
   },
 
   async created() {
@@ -780,6 +806,19 @@ export default {
     selectedReportTypeId() {
       this.harvestInfo = null;
       if (this.selectedMissingCount) this.fetchHarvestableInfo();
+      // display pulsing button to scroll to the details
+      this.$nextTick(() => {
+        // we want to give vue time to show the scroll btn
+        const btn = document.getElementById("scrollBtn");
+        if (btn) btn.classList.add("pulse");
+      });
+      // deactivate the pulsing after 5 seconds
+      setTimeout(() => {
+        // we look for the element again as it may have been removed
+        // or added in the meantime
+        const btn = document.getElementById("scrollBtn");
+        if (btn) btn.classList.remove("pulse");
+      }, 5000);
     },
     showHarvestDialog() {
       if (!this.showHarvestDialog) {
@@ -820,6 +859,33 @@ export default {
 .v-card {
   &.selected {
     background-color: #f0f0f0;
+  }
+}
+
+#scrollBtn {
+  display: inline-block;
+  background-color: darkorange;
+  color: white;
+  width: 4rem;
+  border-radius: 7px 7px 0 0;
+}
+
+.pulse {
+  animation: pulse-animation 750ms 5;
+}
+
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255, 196, 0, 0);
+    background-color: #ffc400;
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgb(255, 196, 0, 0.5);
+    background-color: darkorange;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 12, 8, 0);
+    background-color: #ffc400;
   }
 }
 </style>
