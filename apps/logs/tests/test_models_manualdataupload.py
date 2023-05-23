@@ -162,6 +162,7 @@ B,Metric3,{org.short_name},2,6,10,16
 C,Metric3,{org.short_name},3,7,11,17
 C,Metric2,{org.short_name},4,8,12,18
 A,Metric1,{org2.short_name},0,0,0,19
+A,Metric1,unresolved,0,0,0,20
 """.encode(
             "utf-8"
         )
@@ -271,30 +272,30 @@ A,Metric1,{org2.short_name},0,0,0,19
 
         # Generate preflight
         preflight = custom_import_preflight_check(mdu)
-        assert len(preflight['organizations']) == 2
+        assert len(preflight['organizations']) == 3
 
         # Compare month data
         assert preflight["months"] == {
             '2021-06-01': {
-                'new': {'count': 7, 'sum': 10},
+                'new': {'count': 8, 'sum': 10},
                 'this_month': {'count': 17 + 10, 'sum': 414 + 10 * 6},
                 'prev_year_avg': {'sum': 176, 'count': 14},
                 'prev_year_month': {'count': 13, 'sum': 120},
             },
             '2021-07-01': {
-                'new': {'count': 7, 'sum': 26},
+                'new': {'count': 8, 'sum': 26},
                 'this_month': None,
                 'prev_year_avg': {'sum': 176, 'count': 14},
                 'prev_year_month': {'count': 15, 'sum': 161},
             },
             '2021-08-01': {
-                'new': {'count': 7, 'sum': 42},
+                'new': {'count': 8, 'sum': 42},
                 'this_month': None,
                 'prev_year_avg': {'sum': 176, 'count': 14},
                 'prev_year_month': {'count': 17, 'sum': 208},
             },
             '2022-01-01': {
-                'new': {'count': 7, 'sum': 93 + 19},
+                'new': {'count': 8, 'sum': 93 + 19 + 20},
                 'this_month': None,
                 'prev_year_avg': None,
                 'prev_year_month': {'count': 7 + 10, 'sum': 29 + 10},
@@ -302,6 +303,12 @@ A,Metric1,{org2.short_name},0,0,0,19
         }
 
         assert preflight["used_metrics"] == ["metric1", "metric2"]
+
+        assert preflight["organizations"]["unresolved"] == {
+            "pk": None,
+            "count": 4,
+            "sum": 20,
+        }, "check that preflight is properly generated even when some organization is not resolved"
 
     def test_organization_from_data(self):
         org1 = OrganizationFactory(

@@ -1065,7 +1065,9 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             filters['organization_id'] = self.organization_id
         else:
             if orgs_recs := self.organizations_from_data():
-                org_ids = [org.pk for _, org in orgs_recs]
+                # If no organization name is resolved return empty
+                # list which should cause that no data are returned
+                org_ids = [org.pk for _, org in orgs_recs if org]
                 filters['organization_id__in'] = org_ids
             else:
                 # when the .organization is None, we need to extract the organizations
