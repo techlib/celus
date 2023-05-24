@@ -490,6 +490,24 @@ export default {
     fullUrl() {
       this.loadData();
     },
+    itemsPerPage() {
+      this.page = 1;
+    },
+    orderBy() {
+      this.page = 1;
+    },
+    orderDesc() {
+      this.page = 1;
+    },
+    selectedTags() {
+      this.page = 1;
+    },
+    selectedPubType() {
+      this.page = 1;
+    },
+    searchDebounced() {
+      this.page = 1;
+    },
   },
 };
 </script>
