@@ -35,6 +35,7 @@ class MyUserResource(ModelResource):
 class UserOrganizationInline(TabularInline):
     model = UserOrganization
     fields = ['organization', 'is_admin']
+    autocomplete_fields = ['organization']
     extra = 1
 
 

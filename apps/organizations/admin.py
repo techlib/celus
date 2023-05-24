@@ -17,6 +17,7 @@ class OrganizationAdmin(NecronomiconAdminMixin, TranslationAdmin):
         ['raw_data_import_enabled'] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
     )
     list_select_related = ['source']
+    ordering = ['name']
 
 
 @admin.register(models.UserOrganization)
