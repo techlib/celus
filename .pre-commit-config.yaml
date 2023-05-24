@@ -14,7 +14,7 @@ repos:
     hooks:
       - id: black
         name: Black formatter
-        entry: poetry run black --check
+        entry: poetry run black
         language: system
         types: [python]
 
