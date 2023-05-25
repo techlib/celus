@@ -282,6 +282,10 @@ export default {
               title: this.$t("pages.supported_non_counter_platforms"),
               icon: "fa-file-excel",
               linkTo: "supported-non-counter-platforms",
+              chip: {
+                text: this.$t("labels.new_menu_item"),
+                color: "error",
+              },
               show:
                 this.showAdminStuff &&
                 this.allowManualDataUpload &&
@@ -291,6 +295,10 @@ export default {
               title: this.$t("pages.data_coverage_overview"),
               icon: "fa fa-sitemap",
               linkTo: "data-coverage-overview",
+              chip: {
+                text: this.$t("labels.new_menu_item"),
+                color: "error",
+              },
               show: this.showAdminStuff,
             },
           ],
