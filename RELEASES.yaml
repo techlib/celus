@@ -1,3 +1,18 @@
+- version: 5.5.1
+  title:
+    en: Celus 5.5.1 adds improved 'Titles on multiple platforms' view to the dedicated coverage overview page and 20 new non-COUNTER platforms from 5.5.0
+    cs: Celus 5.5.1 přídává vylepšený pohled 'Tituly na více platformách' ke stránce s přehledem pokrytí a 20 novými non-COUNTER platformám z 5.5.0
+  text:
+    en: |
+      - The "Titles on multiple platforms" view now shows the span of years of publication from the TR report for each platform and title
+      - a bug in title list pagination was fixed - change of filters no longer leads to getting stuck on an empty page
+    cs: |
+      - Pohled "Tituly na více platformách" nyní zobrazuje rozsah let vydání z TR reportu pro každou platformu a titul
+      - byla opravena chyba ve stránkování seznamu titulů - změna filtrů již nevede k uvíznutí na prázdné stránce
+  is_new_feature: TRUE
+  is_update: FALSE
+  is_bug_fix: TRUE
+
 - version: 5.5.0
   title:
     en: Celus 5.5.0 brings a dedicated page with coverage overview, 20 new non-COUNTER platform reports and much more

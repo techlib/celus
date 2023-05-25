@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.1]  - 2023-05-25
+
+### Added
+
+#### Frontend
+
+- the `Titles on multiple platforms` page newly adds span of YOP from the TR report to each
+  platform for a title.
+
+#### Backend
+
+- a command line script for looking up a title in all related JSON report files was added
+
+### Fixed
+
+#### Frontend
+
+- when viewing a list of titles, the page newly resets to the first page when the user changes
+  the filters - this prevents the user from being stuck on a page with no results
+
+
 ## [5.5.0]  - 2023-05-16
 
 ### Added
