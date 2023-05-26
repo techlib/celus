@@ -1073,9 +1073,9 @@ class TitleInterestByPlatformViewSet(InterestByPlatformMixin, BaseTitleViewSet):
             for rec in DimensionText.objects.filter(pk__in=all_yop_ids).values('pk', 'text')
         }
         for record in result:
-            yops = set()
             yops_rec = {}
             for platform_id in record.platform_ids:
+                yops = set()
                 for yop_id in title_platform_ids_to_yop_ids.get((record.pk, platform_id), []):
                     yop = remap[yop_id]
                     try:
