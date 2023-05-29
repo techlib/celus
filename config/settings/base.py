@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
-import json
 import socket
 import sys
 import warnings
@@ -319,22 +318,28 @@ print(
 
 # MailChimp
 SYNC_USERS_TO_MAILCHIMP = config('SYNC_USERS_TO_MAILCHIMP', cast=bool, default=False)
-MAILCHIMP_ADMINS = config('MAILCHIMP_ADMINS', cast=list, default=[])
+MAILCHIMP_ADMINS = config('MAILCHIMP_ADMINS', cast=Csv(), default='')
 MAILCHIMP_API_KEY = config('MAILCHIMP_API_KEY', default='')
 MAILCHIMP_SERVER_PREFIX = config('MAILCHIMP_SERVER_PREFIX', default='')
 MAILCHIMP_AUDIENCE_ID = config('MAILCHIMP_AUDIENCE_ID', default='')
 MAILCHIMP_STAFF_TAG = config('MAILCHIMP_STAFF_TAG', default=-1, cast=int)
 MAILCHIMP_DO_NOT_DELETE_TAG = config('MAILCHIMP_DO_NOT_DELETE_TAG', default=-1, cast=int)
-CELUS_CUSTOM_NAME_PAIRS = json.loads(config('CELUS_CUSTOM_NAME_PAIRS', default='{}'))
 # the puropse of CELUS_CUSTOM_NAME_PAIRS is to be able to create a custom names for celuses.
 # If not specified in this variable in format: '{"custom_celus_name": "celus_domain"}'
 # then the celus name will be created automatically as
 # anything what precedes ".celus.net" in the domain of celus
 # (e.g. for "example.celus.net" the celus name would be "example")
-MAILCHIMP_PREFERRED_CELUS_NAME = config('MAILCHIMP_PREFERRED_CELUS_NAME', default='')
+CELUS_CUSTOM_NAME_PAIRS = dict(
+    config(
+        'CELUS_CUSTOM_NAME_PAIRS',
+        cast=Csv(cast=lambda s: s.split(':'), delimiter=','),
+        default='',
+    )
+)
 # purpose of MAILCHIMP_PREFERRED_CELUS_NAME is
 # to choose which celus should be sorted as a first celus in
 # "celus installations" and "celus address" columns in Mailchimp audience table.
+MAILCHIMP_PREFERRED_CELUS_NAME = config('MAILCHIMP_PREFERRED_CELUS_NAME', default='')
 MAILCHIMP_REASON_CONSORTIAL_MANAGER = "consortial manager"
 MAILCHIMP_REASON_NORMAL_USER = "normal user"
 
