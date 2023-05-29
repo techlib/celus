@@ -13,7 +13,8 @@
     "desc_cs": "Po\u017eadavky na \u010dasopisy (bez Open Access Gold)",
     "source": null,
     "metric_allowed_values": [
-      "Total_Item_Requests"
+      "Total_Item_Requests",
+      "Unique_Item_Requests"
     ],
     "is_standard_view": true,
     "position": 10
