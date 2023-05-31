@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
 from django.db.models import Q, UniqueConstraint
+from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
@@ -88,6 +89,20 @@ class Platform(models.Model):
                 stats['existing'] += 1
 
         return stats
+
+    @property
+    def slugified_name(self):
+        # make short name slugified => this makes sure that it e.g.
+        # doesn't contain `/` which would be a problem for file names
+
+        platform_slug = slugify(self, allow_unicode=True)
+        if source := self.source:
+            if org := source.organization:
+                return f"{slugify(org.short_name, allow_unicode=True)}.{platform_slug}"
+            else:
+                return platform_slug
+        else:
+            return platform_slug
 
 
 class Title(models.Model):

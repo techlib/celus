@@ -17,6 +17,7 @@ from test_fixtures.entities.logs import ImportBatchFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
+    basic1,
     counter_report_types,
     credentials,
     data_sources,
@@ -385,3 +386,22 @@ class TestSushiFetchAttemptModel:
             'Institution_ID': [{"Type": "Proprietary", "Value": "EBC:hidden"}],
             'Created_By': 'ProQuest Ebook Central',
         }
+
+    def test_data_file_names(self, platforms, credentials):
+        with (Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral.json').open(
+            'rb'
+        ) as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "something.json"
+
+        fa = FetchAttemptFactory.create(
+            data_file=data_file,
+            credentials=credentials["standalone_tr"],
+        )
+        assert "/standalone.standalone/" in fa.data_file.name
+
+        fa = FetchAttemptFactory.create(
+            data_file=data_file,
+            credentials__platform=platforms["shared"],
+        )
+        assert "/shared/" in fa.data_file.name

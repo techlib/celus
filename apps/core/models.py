@@ -337,23 +337,31 @@ class CreatedUpdatedMixin(models.Model):
 def where_to_store(instance: models.Model, filename):
     root, ext = os.path.splitext(filename)
     ts = now().strftime('%Y%m%d-%H%M%S.%f')
+
     # we do not use `isinstance` as it would require importing the models modules which
     # would create circular imports unless we did it locally, which still seems strange.
     if instance.__class__.__name__ == 'SushiFetchAttempt':
         organization = instance.credentials.organization
+        platform = instance.credentials.platform
+
         return (
             f'counter/{organization.internal_id or organization.pk}/'
-            f'{instance.credentials.platform.short_name}/'
+            f'{platform.slugified_name}/'
             f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
         )
+
     elif instance.__class__.__name__ == 'ManualDataUpload':
+        platform = instance.platform
+
         if instance.report_type:
+            # make sure that rt short name doens't contain `/`
+            report_type_short_name = slugify(instance.report_type.short_name, allow_unicode=True)
             return (
-                f'custom/{instance.user_id}/{instance.report_type.short_name}-'
-                f'{instance.platform.short_name}_{ts}{ext}'
+                f'custom/{instance.user_id}/{report_type_short_name}-'
+                f'{platform.slugified_name}_{ts}{ext}'
             )
         else:
-            return f'custom/{instance.user_id}/NIBBLER-{instance.platform.short_name}_{ts}{ext}'
+            return f'custom/{instance.user_id}/RAW-{platform.slugified_name}_{ts}{ext}'
     else:
         return f'other/{ts}{ext}'
 

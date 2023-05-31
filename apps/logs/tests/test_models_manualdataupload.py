@@ -16,11 +16,15 @@ from test_fixtures.entities.logs import (
 )
 from test_fixtures.entities.organizations import OrganizationAltNameFactory, OrganizationFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
+    basic1,
+    clients,
     data_sources,
+    identities,
     metrics,
     organizations,
     platforms,
     report_types,
+    users,
 )
 
 
@@ -323,3 +327,38 @@ A,Metric1,{org2.short_name},0,0,0,19
             ("x", org1),
             ("Y", org2),
         ]
+
+    def test_data_file_names(self, platforms, basic1, report_types, users):
+        DATA = """\
+Title,Metric,Jun 2021, Jul 2021, Aug 2021, Jan 2022
+A,Metric1,0,5,9,13
+A,Metric2,1,0,0,14
+B,Metric1,0,0,0,15
+B,Metric3,2,6,10,16
+C,Metric3,3,7,11,17
+C,Metric2,4,8,12,18
+""".encode(
+            "utf-8"
+        )
+
+        mdu = ManualDataUploadFactory(
+            user=users["admin1"],
+            organization=None,
+            report_type=report_types["tr"],
+            platform=platforms["shared"],
+            data_file__data=DATA,
+            data_file__filename="something.csv",
+            state=MduState.INITIAL,
+        )
+        assert "/tr-shared_" in mdu.data_file.name
+
+        mdu = ManualDataUploadFactory(
+            user=users["admin1"],
+            organization=None,
+            report_type=report_types["tr"],
+            platform=platforms["standalone"],
+            data_file__data=DATA,
+            data_file__filename="something.csv",
+            state=MduState.INITIAL,
+        )
+        assert "/tr-standalone.standalone" in mdu.data_file.name
