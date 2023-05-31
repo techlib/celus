@@ -35,7 +35,6 @@ from logs.logic.export import CSVExport
 from logs.logic.queries import StatsComputer, extract_accesslog_attr_query_params
 from logs.models import (
     AccessLog,
-    Dimension,
     DimensionText,
     FlexibleReport,
     ImportBatch,
@@ -969,24 +968,6 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
             user_org_level = org_to_level[mdu.organization_id]
             mdu.can_edit = user_org_level >= mdu.owner_level
         return qs
-
-
-class CustomDimensionsViewSet(ModelViewSet):
-
-    queryset = Dimension.objects.all().order_by('pk')
-    serializer_class = DimensionSerializer
-
-    def get_queryset(self):
-        organization = get_object_or_404(
-            self.request.user.accessible_organizations(), pk=self.kwargs.get('organization_pk')
-        )
-        try:
-            source = organization.private_data_source
-        except DataSource.DoesNotExist:
-            return Dimension.objects.filter(source__isnull=True)
-        return source.dimension_set.all().order_by('pk') | Dimension.objects.filter(
-            source__isnull=True
-        )
 
 
 class OrganizationReportTypesViewSet(ModelViewSet):

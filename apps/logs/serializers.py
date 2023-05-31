@@ -69,42 +69,21 @@ class MetricSerializer(ModelSerializer):
 
 
 class DimensionSerializer(OrganizationSourceExtractingMixin, ModelSerializer):
-
-    public = BooleanField(default=False)
-
     class Meta:
         model = Dimension
-        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en', 'source', 'public')
+        fields = ('pk', 'short_name', 'name', 'name_cs', 'name_en')
         validators = []  # this removes the implicit required validation on source
 
     def validate(self, attrs):
         result = super().validate(attrs)
+
         # extra validation for short_name in combination with source=NULL
         exclude = {'pk': attrs['pk']} if 'pk' in attrs else {}
         short_name = attrs.get('short_name')
-        if attrs.get('public'):
-            if (
-                Dimension.objects.exclude(**exclude)
-                .filter(source__isnull=True, short_name=short_name)
-                .exists()
-            ):
-                raise ValidationError(_('Public dimension with this code name already exists'))
-        else:
-            source = self._get_organization_data_source()
-            if (
-                Dimension.objects.exclude(**exclude)
-                .filter(source=source, short_name=short_name)
-                .exists()
-            ):
-                raise ValidationError(_('Dimension with this code name already exists'))
-        return result
+        if Dimension.objects.exclude(**exclude).filter(short_name=short_name).exists():
+            raise ValidationError(_('Dimension with this code name already exists'))
 
-    def create(self, validated_data):
-        # we need to make sure source is properly assigned for non-public dimensions
-        if not validated_data.get('source') and not validated_data['public']:
-            validated_data['source'] = self._get_organization_data_source()
-        validated_data.pop('public')
-        return super().create(validated_data)
+        return result
 
 
 class ReportTypeSimpleSerializer(ModelSerializer):

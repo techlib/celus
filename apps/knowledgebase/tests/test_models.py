@@ -577,12 +577,11 @@ class TestReportTypeImportAttempt:
         assert Metric.objects.filter(short_name="metric1").first().source is None
 
     def test_dimensions_do_not_use_brain_source(self, data_sources):
-        assert Dimension.objects.count() == 0
+        orig_count = Dimension.objects.count()
         attempt = ReportTypeImportAttempt(source=data_sources["brain"])
         attempt.save()
-        attempt.process(REPORT_TYPE_INPUT_DATA)  # contains 2 dimensions
-        assert Dimension.objects.count() == 2, '2 dimensions were created'
-        assert {dim.source_id for dim in Dimension.objects.all()} == {None}
+        attempt.process(REPORT_TYPE_INPUT_DATA)  # contains 2 new dimensions
+        assert Dimension.objects.count() == 2 + orig_count, '2 dimensions were created'
 
 
 @pytest.mark.django_db

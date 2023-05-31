@@ -151,11 +151,7 @@ class ReportType(models.Model):
     def dimensions_sorted(self) -> typing.List['Dimension']:
         if self.materialization_spec:
             return self.materialization_spec.base_report_type.dimensions_sorted
-        return list(
-            self.dimensions.all()
-            .select_related('source')
-            .order_by('reporttypetodimension__position')
-        )
+        return list(self.dimensions.all().order_by('reporttypetodimension__position'))
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -382,25 +378,15 @@ class Dimension(models.Model):
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
-    source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         ordering = ('reporttypetodimension',)
-        # the following make name and source unique together even if source is NULL which is not
-        # the case when simply using unique_together
         constraints = [
-            UniqueConstraint(fields=['short_name', 'source'], name='short_name_source_not_null'),
-            UniqueConstraint(
-                fields=['short_name'], condition=Q(source=None), name='short_name_source_null'
-            ),
+            UniqueConstraint(fields=['short_name'], name='short_name_unique'),
         ]
 
     def __str__(self):
         return self.short_name
-
-    @property
-    def public(self):
-        return self.source is None
 
 
 class ReportTypeToDimension(models.Model):

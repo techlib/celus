@@ -67,8 +67,8 @@ class TestCeleryTasks:
             metric_count = Metric.objects.count()
 
             # Create some dimensions
-            Dimension.objects.create(short_name="dim1", source=None)
-            Dimension.objects.create(short_name="dim2", source=data_sources['brain'])
+            Dimension.objects.create(short_name="dim1")
+            Dimension.objects.create(short_name="dim2")
 
             dimension_count = Dimension.objects.count()
 
@@ -87,12 +87,6 @@ class TestCeleryTasks:
             # The REPORT_TYPE_INPUT_DATA2 contains 3 dimensions
             # 1 was created before the sync and 2 were created during the sync
             assert dimension_count + 2 == Dimension.objects.count(), "two dimensions were created"
-            assert (
-                Dimension.objects.filter(
-                    short_name__in=["dim1", "dim3", "dim4"], source=data_sources['brain']
-                ).count()
-                == 0
-            ), "Brain is set as source for no dimensions created by sync"
 
     def test_sync_knowledgebase_fail_task(self, data_sources):
 

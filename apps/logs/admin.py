@@ -137,9 +137,8 @@ class ReportInterestMetricAdmin(TranslationAdmin):
 
 @admin.register(models.Dimension)
 class DimensionAdmin(TranslationAdmin):
-    list_display = ['short_name', 'name', 'desc', 'source']
+    list_display = ['short_name', 'name', 'desc']
     ordering = ['short_name']
-    list_filter = ['source']
 
 
 @admin.register(models.DimensionText)
