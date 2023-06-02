@@ -5,7 +5,7 @@ from django.db.models import Count
 from django.utils.timezone import now
 from recache.models import DEFAULT_LIFETIME, DEFAULT_TIMEOUT, CachedQuery, RenewalError
 
-from test_fixtures.entities.users import UserFactory
+from test_fixtures.entities.core import UserFactory
 
 User = get_user_model()
 

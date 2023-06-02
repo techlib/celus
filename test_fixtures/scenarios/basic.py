@@ -7,6 +7,7 @@ from celus_nibbler import coordinates as nibbler_coordinates
 from celus_nibbler import data_headers as nibbler_data_headers
 from celus_nibbler import definitions as nibbler_definitions
 from celus_nibbler import sources as nibbler_sources
+from core.models import DataSource, Identity
 from django.conf import settings
 from django.utils import timezone
 from logs.models import ReportInterestMetric
@@ -14,11 +15,10 @@ from organizations.models import Organization
 from rest_framework.test import APIClient
 from sushi.models import AttemptStatus
 
+from ..entities.core import DataSourceFactory, IdentityFactory, UserFactory
 from ..entities.counter_report_types import CounterReportTypeFactory
 from ..entities.credentials import CredentialsFactory
-from ..entities.data_souces import DataSource, DataSourceFactory
 from ..entities.fetchattempts import FetchAttemptFactory
-from ..entities.identities import Identity, IdentityFactory
 from ..entities.logs import ImportBatchFactory, InterestGroupFactory, MetricFactory
 from ..entities.nibbler import ParserDefinitionFactory
 from ..entities.organizations import OrganizationFactory
@@ -30,7 +30,6 @@ from ..entities.scheduler import (
     HarvestFactory,
     SchedulerFactory,
 )
-from ..entities.users import UserFactory
 
 
 @pytest.fixture

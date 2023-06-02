@@ -10,8 +10,8 @@ from publications.models import Platform, PlatformTitle
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 
+from test_fixtures.entities.core import DataSourceFactory
 from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.entities.data_souces import DataSourceFactory
 from test_fixtures.entities.logs import ImportBatchFullFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory

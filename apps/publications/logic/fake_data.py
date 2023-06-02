@@ -5,9 +5,9 @@ import faker
 from django.core.files.base import ContentFile
 from publications.models import PlatformTitle, Title, TitleOverlapBatch, TitleOverlapBatchState
 
+from test_fixtures.entities.core import UserFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.users import UserFactory
 
 fake = faker.Faker(locale="cs")
 

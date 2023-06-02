@@ -8,8 +8,8 @@ from django.contrib.sites.models import Site
 from faker import Faker
 from organizations.models import Organization
 
+from test_fixtures.entities.core import UserFactory
 from test_fixtures.entities.mailchimp_members import MemberFactory
-from test_fixtures.entities.users import UserFactory
 from test_fixtures.scenarios.basic import *  # noqa
 
 fake = Faker()

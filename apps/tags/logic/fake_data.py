@@ -12,7 +12,7 @@ from tags.models import (
     TitleTag,
 )
 
-from test_fixtures.entities.users import UserFactory
+from test_fixtures.entities.core import UserFactory
 
 
 class TagClassFactory(factory.django.DjangoModelFactory):

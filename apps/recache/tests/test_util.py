@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from recache.models import CachedQuery
 from recache.util import recache_queryset
 
-from test_fixtures.entities.users import UserFactory
+from test_fixtures.entities.core import UserFactory
 
 User = get_user_model()
 

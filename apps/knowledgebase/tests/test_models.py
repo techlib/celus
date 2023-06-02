@@ -20,7 +20,7 @@ from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from publications.models import Platform, PlatformInterestReport
 
 from test_fixtures.entities.api import OrganizationAPIKeyFactory
-from test_fixtures.entities.data_souces import DataSourceFactory
+from test_fixtures.entities.core import DataSourceFactory
 from test_fixtures.entities.logs import ImportBatchFactory, MetricFactory
 from test_fixtures.entities.platforms import PlatformFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures

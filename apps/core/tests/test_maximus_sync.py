@@ -13,11 +13,10 @@ from core.models import UL_ORG_ADMIN, User
 from organizations.models import Organization
 from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
+from test_fixtures.entities.core import DataSourceFactory, UserFactory
 from test_fixtures.entities.counter_report_types import CounterReportTypeFactory
-from test_fixtures.entities.data_souces import DataSourceFactory
 from test_fixtures.entities.organizations import OrganizationFactory
 from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.users import UserFactory
 
 
 @pytest.mark.django_db

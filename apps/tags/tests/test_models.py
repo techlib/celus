@@ -3,8 +3,8 @@ from django.db import DatabaseError, IntegrityError
 from tags.logic.fake_data import TagClassFactory, TagFactory
 from tags.models import AccessibleBy, Tag, TagClass, TaggingBatch, TaggingBatchState, TagScope
 
+from test_fixtures.entities.core import UserFactory
 from test_fixtures.entities.titles import TitleFactory
-from test_fixtures.entities.users import UserFactory
 from test_fixtures.scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,

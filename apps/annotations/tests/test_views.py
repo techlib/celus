@@ -6,7 +6,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 from test_fixtures.entities.annotations import AnnotationFactory
-from test_fixtures.entities.users import UserFactory
+from test_fixtures.entities.core import UserFactory
 
 User = get_user_model()
 
