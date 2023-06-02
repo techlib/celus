@@ -45,7 +45,7 @@ from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from hcube.api.models.aggregation import Count as HCount
 from hcube.api.models.aggregation import Sum as HSum
 from nibbler.logic.processing import (
