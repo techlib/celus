@@ -24,7 +24,7 @@ from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 from logs.models import AccessLog, DimensionText, Metric, ReportMaterializationSpec, ReportType
 from organizations.models import Organization
 from publications.models import Platform, Title
-from tags.logic.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
+from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
 from tags.models import AccessibleBy, Tag, TagScope
 
 

@@ -2,6 +2,7 @@ import json
 from datetime import date
 
 import pytest
+from core.fake_data import DataSourceFactory, UserFactory
 from core.logic.maximus_sync import (
     get_organizations,
     get_platforms,
@@ -10,13 +11,11 @@ from core.logic.maximus_sync import (
     get_users,
 )
 from core.models import UL_ORG_ADMIN, User
+from organizations.fake_data import OrganizationFactory
 from organizations.models import Organization
+from publications.fake_data import PlatformFactory
+from sushi.fake_data import CounterReportTypeFactory
 from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
-
-from test_fixtures.entities.core import DataSourceFactory, UserFactory
-from test_fixtures.entities.counter_report_types import CounterReportTypeFactory
-from test_fixtures.entities.organizations import OrganizationFactory
-from test_fixtures.entities.platforms import PlatformFactory
 
 
 @pytest.mark.django_db

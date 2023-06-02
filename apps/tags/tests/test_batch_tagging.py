@@ -5,9 +5,10 @@ from unittest.mock import patch
 
 import pytest
 from django.core.files.base import ContentFile
+from publications.fake_data import TitleFactory
 from publications.tests.test_api import MockTask
 from rest_framework.reverse import reverse
-from tags.logic.fake_data import TagClassFactory, TagForTitleFactory, TaggingBatchFactory
+from tags.fake_data import TagClassFactory, TagForTitleFactory, TaggingBatchFactory
 from tags.models import TaggingBatch, TaggingBatchState, TagScope
 from tags.tasks import (
     tagging_batch_assign_tag_task,
@@ -15,8 +16,7 @@ from tags.tasks import (
     tagging_batch_unassign_task,
 )
 
-from test_fixtures.entities.titles import TitleFactory
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     data_sources,

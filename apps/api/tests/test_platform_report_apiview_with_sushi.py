@@ -7,10 +7,9 @@ import pytest
 from api.models import OrganizationAPIKey
 from django.urls import reverse
 from django.utils.timezone import now
+from scheduler.fake_data import FetchIntentionFactory
 from sushi.models import CounterReportsToCredentials
 from sushi.tests.conftest import counter_report_type, credentials, organizations, platforms  # noqa
-
-from test_fixtures.entities.scheduler import FetchIntentionFactory
 
 
 @pytest.mark.django_db

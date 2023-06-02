@@ -1,6 +1,5 @@
 import pytest
-
-from test_fixtures.entities.organizations import OrganizationFactory
+from organizations.fake_data import OrganizationFactory
 
 from ..models import Organization
 

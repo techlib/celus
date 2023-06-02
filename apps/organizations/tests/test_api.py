@@ -10,11 +10,11 @@ from core.tests.conftest import (  # noqa - fixtures
 )
 from django.urls import reverse
 from logs.models import AccessLog, ImportBatch, Metric
+from organizations.fake_data import OrganizationAltNameFactory
 from organizations.models import Organization, UserOrganization
 from publications.tests.conftest import interest_rt  # noqa - fixture
 
-from test_fixtures.entities.organizations import OrganizationAltNameFactory
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     data_sources,

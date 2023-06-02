@@ -1,21 +1,20 @@
 import pytest
+from core.fake_data import DataSourceFactory
 from core.models import DATA_SOURCE_TYPE_ORGANIZATION
 from django.conf import settings
 from hcube.api.models.aggregation import Count as HCount
 from logs.cubes import AccessLogCube, ch_backend
+from logs.fake_data import ImportBatchFullFactory
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform
+from organizations.fake_data import OrganizationFactory
 from organizations.models import Organization
+from publications.fake_data import PlatformFactory
 from publications.logic.cleanup import delete_platform_data
 from publications.models import Platform, PlatformTitle
+from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import FetchIntention
+from sushi.fake_data import CredentialsFactory
 from sushi.models import SushiCredentials, SushiFetchAttempt
-
-from test_fixtures.entities.core import DataSourceFactory
-from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.entities.logs import ImportBatchFullFactory
-from test_fixtures.entities.organizations import OrganizationFactory
-from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory
 
 
 @pytest.mark.django_db

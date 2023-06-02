@@ -2,6 +2,7 @@ import json
 from unittest import mock
 
 import pytest  # noqa
+from core.fake_data import MemberFactory, UserFactory
 from core.logic.mailchimp import (
     Celus,
     Error,
@@ -15,9 +16,7 @@ from core.logic.mailchimp import (
 from core.models import User
 from core.tasks import sync_mailchimp_contacts_with_celus_task
 
-from test_fixtures.entities.core import UserFactory
-from test_fixtures.entities.mailchimp_members import MemberFactory
-from test_fixtures.scenarios.basic import basic1  # noqa
+from test_scenarios.basic import basic1  # noqa
 
 
 def merge_fields(member_case):

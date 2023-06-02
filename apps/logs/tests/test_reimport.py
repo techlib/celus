@@ -5,6 +5,7 @@ import pytest
 from core.logic.dates import month_start
 from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
+from logs.fake_data import ImportBatchFullFactory, ManualDataUploadFullFactory
 from logs.logic.reimport import (
     find_import_batches_to_reimport,
     reimport_import_batch_with_fa,
@@ -12,12 +13,10 @@ from logs.logic.reimport import (
 )
 from logs.models import ImportBatch, ManualDataUpload, MduState
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
+from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import FetchIntention
+from sushi.fake_data import FetchAttemptFactory
 from sushi.models import AttemptStatus, SushiFetchAttempt
-
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ImportBatchFullFactory, ManualDataUploadFullFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory
 
 
 def fi_for_fa(fa: SushiFetchAttempt) -> FetchIntention:

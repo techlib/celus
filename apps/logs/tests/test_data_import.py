@@ -6,11 +6,10 @@ from celus_nigiri.counter4 import Counter4BR2Report
 from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
 from django.db.models import Count, Sum
 from django.urls import reverse
+from logs.fake_data import ManualDataUploadFullFactory
 from logs.models import AccessLog, DimensionText, ImportBatch
 from organizations.tests.conftest import organization_random, organizations  # noqa - fixture
 from publications.models import PlatformTitle, Title
-
-from test_fixtures.entities.logs import ManualDataUploadFullFactory
 
 from ..exceptions import DataStructureError
 from ..logic.data_import import import_counter_records

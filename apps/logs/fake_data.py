@@ -1,25 +1,28 @@
+from datetime import date
 from random import randint
 
 import factory
 import faker
+from celus_nigiri.counter5 import CounterRecord
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.utils import timezone
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import (
     AccessLog,
+    Dimension,
     ImportBatch,
     InterestGroup,
     ManualDataUpload,
     MduState,
     Metric,
     OrganizationPlatform,
+    ReportType,
+    ReportTypeToDimension,
 )
+from organizations.fake_data import OrganizationFactory
+from publications.fake_data import PlatformFactory, TitleFactory
 from publications.models import PlatformTitle
-
-from test_fixtures.entities.organizations import OrganizationFactory
-from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.report_types import ReportTypeFactory
-from test_fixtures.entities.titles import TitleFactory
 
 fake = faker.Faker()
 
@@ -39,6 +42,25 @@ class MetricFactory(factory.django.DjangoModelFactory):
 
     short_name = factory.Faker('name')
     name = factory.Faker('name')
+
+
+class ReportTypeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ReportType
+        django_get_or_create = ('short_name',)
+
+    name = 'Counter 5 - Title report'
+    short_name = 'TR'
+
+    @factory.post_generation
+    def dimensions(obj, create, extracted: [str], **kwargs):  # noqa - obj name is ok here
+        if not create:
+            return
+
+        if extracted:
+            for i, d in enumerate(extracted):
+                dim, _created = Dimension.objects.get_or_create(short_name=d, defaults={"name": d})
+                ReportTypeToDimension.objects.create(report_type=obj, dimension=dim, position=i)
 
 
 class ImportBatchFactory(factory.django.DjangoModelFactory):
@@ -173,3 +195,25 @@ class InterestGroupFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = InterestGroup
+
+
+# Fake counter records from nigiri
+def create_title_ids():
+    return {'Print_ISSN': '1234-5678', 'ISBN': '9780471397120'}
+
+
+def create_dim_data(obj):
+    return []
+
+
+class CounterRecordFactory(factory.Factory):
+    class Meta:
+        model = CounterRecord
+
+    start = factory.LazyFunction(lambda: date(randint(2010, 2021), randint(1, 12), 1))
+    end = factory.LazyAttribute(lambda x: x.start + relativedelta(months=1) - relativedelta(days=1))
+    metric = factory.LazyFunction(lambda: f'Metric {fake.pyint()}')
+    value = factory.Faker('random_int')
+    dimension_data = factory.LazyAttribute(create_dim_data)
+    title = factory.Faker('sentence')
+    title_ids = factory.LazyFunction(create_title_ids)

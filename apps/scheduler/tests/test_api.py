@@ -9,20 +9,19 @@ from django.utils import timezone
 from django.utils.timezone import now
 from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
+from logs.fake_data import ImportBatchFullFactory
 from logs.models import AccessLog, ImportBatch
 from organizations.models import UserOrganization
 from rest_framework.fields import DateTimeField
 from rest_framework.serializers import Serializer
 from scheduler import tasks
+from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import Automatic, FetchIntention, Harvest
+from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import BrokenCredentialsMixin as BS
 from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 
-from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ImportBatchFullFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     counter_report_types,

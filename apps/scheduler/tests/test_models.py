@@ -6,9 +6,16 @@ import pytest
 from celus_nigiri.error_codes import ErrorCode
 from django.utils import timezone
 from freezegun import freeze_time
+from logs.fake_data import ImportBatchFactory
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.tasks import import_one_sushi_attempt_task
 from scheduler import tasks
+from scheduler.fake_data import (
+    AutomaticFactory,
+    FetchIntentionFactory,
+    HarvestFactory,
+    SchedulerFactory,
+)
 from scheduler.models import (
     Automatic,
     FetchIntention,
@@ -18,18 +25,10 @@ from scheduler.models import (
     RunResponse,
     Scheduler,
 )
+from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
 
-from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ImportBatchFactory
-from test_fixtures.entities.scheduler import (
-    AutomaticFactory,
-    FetchIntentionFactory,
-    HarvestFactory,
-    SchedulerFactory,
-)
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     credentials,
     data_sources,

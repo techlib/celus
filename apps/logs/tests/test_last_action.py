@@ -1,11 +1,10 @@
 from unittest.mock import patch
 
 import pytest
+from logs.fake_data import MetricFactory
 from logs.logic.materialized_interest import smart_interest_sync
 from logs.models import ImportBatch, InterestGroup, LastAction, ReportInterestMetric
 from publications.models import PlatformInterestReport
-
-from test_fixtures.entities.logs import MetricFactory
 
 
 @pytest.mark.django_db()

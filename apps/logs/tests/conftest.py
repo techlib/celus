@@ -17,10 +17,10 @@ from logs.models import (
 )
 from organizations.models import Organization, UserOrganization
 from publications.models import Platform, Title
-from tags.logic.fake_data import TagClassFactory, TagForTitleFactory
+from tags.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import AccessibleBy, TagScope
 
-from test_fixtures.scenarios.basic import users  # noqa - fixture
+from test_scenarios.basic import users  # noqa - fixture
 
 
 @pytest.fixture

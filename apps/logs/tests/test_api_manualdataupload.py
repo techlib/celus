@@ -5,14 +5,14 @@ import pytest
 from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
+from logs.fake_data import MetricFactory
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
+from organizations.fake_data import OrganizationFactory
 
-from test_fixtures.entities.logs import MetricFactory
-from test_fixtures.entities.organizations import OrganizationFactory
-from test_fixtures.scenarios.basic import clients  # noqa
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
+    clients,
     counter_report_types,
     data_sources,
     identities,

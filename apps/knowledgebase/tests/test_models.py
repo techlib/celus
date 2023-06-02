@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 import pytest
 import requests_mock
+from api.fake_data import OrganizationAPIKeyFactory
+from core.fake_data import DataSourceFactory
 from core.models import DataSource
 from django.utils.timezone import now
 from knowledgebase.models import (
@@ -16,14 +18,12 @@ from knowledgebase.models import (
     ReportTypeImportAttempt,
     RouterSyncAttempt,
 )
+from logs.fake_data import ImportBatchFactory, MetricFactory
 from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
+from publications.fake_data import PlatformFactory
 from publications.models import Platform, PlatformInterestReport
 
-from test_fixtures.entities.api import OrganizationAPIKeyFactory
-from test_fixtures.entities.core import DataSourceFactory
-from test_fixtures.entities.logs import ImportBatchFactory, MetricFactory
-from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     data_sources,
     interests,
     metrics,

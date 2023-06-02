@@ -11,7 +11,7 @@ from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from nibbler.models import ParserDefinition
 from publications.models import Platform, PlatformInterestReport
 
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     data_sources,

@@ -1,6 +1,7 @@
 import factory.fuzzy
+from core.fake_data import UserFactory
 from django.core.files.base import ContentFile
-from publications.logic.fake_data import TitleFactory
+from publications.fake_data import TitleFactory
 from publications.models import Title
 from tags.models import (
     AccessibleBy,
@@ -11,8 +12,6 @@ from tags.models import (
     TagScope,
     TitleTag,
 )
-
-from test_fixtures.entities.core import UserFactory
 
 
 class TagClassFactory(factory.django.DjangoModelFactory):

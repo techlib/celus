@@ -3,10 +3,9 @@ from django.conf import settings
 from django.core.management import CommandError, call_command
 from hcube.api.models.aggregation import Count
 from logs.cubes import AccessLogCube, ch_backend
+from logs.fake_data import ImportBatchFullFactory
+from publications.fake_data import TitleFactory
 from publications.models import Title
-
-from test_fixtures.entities.logs import ImportBatchFullFactory
-from test_fixtures.entities.titles import TitleFactory
 
 
 @pytest.mark.django_db

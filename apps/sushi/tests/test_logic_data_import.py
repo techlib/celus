@@ -1,10 +1,9 @@
 import pytest
 from core.models import DataSource
 from organizations.tests.conftest import organizations  # noqa - fixture
+from publications.fake_data import PlatformFactory
 from publications.models import Platform
 from sushi.logic.data_import import import_sushi_credentials
-
-from test_fixtures.entities.platforms import PlatformFactory
 
 from ..models import SushiCredentials
 

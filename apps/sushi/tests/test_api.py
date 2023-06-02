@@ -5,12 +5,12 @@ import pandas as pd
 import pytest
 from django.urls import reverse
 from openpyxl import load_workbook
+from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import FetchIntention
+from sushi.fake_data import FetchAttemptFactory
 from sushi.models import SushiCredentials
 
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.scheduler import FetchIntentionFactory
-from test_fixtures.scenarios.basic import *  # noqa
+from test_scenarios.basic import *  # noqa
 
 
 @pytest.mark.django_db

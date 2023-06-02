@@ -5,9 +5,8 @@ from datetime import date
 
 import pytest
 from logs.models import ImportBatch
+from publications.fake_data import PlatformFactory
 from reporting.logic.computation import Report
-
-from test_fixtures.entities.platforms import PlatformFactory
 
 
 @pytest.mark.django_db

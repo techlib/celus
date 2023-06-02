@@ -6,6 +6,7 @@ import openpyxl
 import pytest
 from export.enums import FileFormat
 from export.models import FlexibleDataExport
+from logs.fake_data import MetricFactory
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,
     FlexibleDataSimpleCSVExporter,
@@ -19,11 +20,9 @@ from logs.logic.reporting.filters import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import DimensionText
-from publications.logic.fake_data import TitleFactory
-from tags.logic.fake_data import TagClassFactory, TagForTitleFactory
+from publications.fake_data import TitleFactory
+from tags.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import TagScope
-
-from test_fixtures.entities.logs import MetricFactory
 
 
 @pytest.fixture

@@ -2,8 +2,7 @@ from unittest import mock
 
 import pytest
 from django.urls import reverse
-
-from test_fixtures.entities.organizations import OrganizationFactory
+from organizations.fake_data import OrganizationFactory
 
 
 @pytest.mark.django_db

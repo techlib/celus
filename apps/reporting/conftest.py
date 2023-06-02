@@ -1,13 +1,10 @@
 import pytest
 from celus_nigiri.counter4 import Counter4JR1Report
 from celus_nigiri.counter5 import Counter5TRReport
+from logs.fake_data import ImportBatchFullFactory, MetricFactory, ReportTypeFactory
 from logs.models import DimensionText
-from publications.logic.fake_data import TitleFactory
-
-from test_fixtures.entities.logs import ImportBatchFullFactory, MetricFactory
-from test_fixtures.entities.organizations import OrganizationFactory
-from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.report_types import ReportTypeFactory
+from organizations.fake_data import OrganizationFactory
+from publications.fake_data import PlatformFactory, TitleFactory
 
 TEST_REPORT = {
     "name": "Test report",

@@ -1,15 +1,12 @@
 from datetime import date
 
 import factory
+from core.fake_data import UserFactory
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from organizations.fake_data import OrganizationFactory
 from scheduler.models import Automatic, FetchIntention, FetchIntentionQueue, Harvest, Scheduler
-
-from .core import UserFactory
-from .counter_report_types import CounterReportTypeFactory
-from .credentials import CredentialsFactory
-from .fetchattempts import FetchAttemptFactory
-from .organizations import OrganizationFactory
+from sushi.fake_data import CounterReportTypeFactory, CredentialsFactory, FetchAttemptFactory
 
 
 class HarvestFactory(factory.django.DjangoModelFactory):

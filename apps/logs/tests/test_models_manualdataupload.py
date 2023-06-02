@@ -1,4 +1,11 @@
 import pytest
+from logs.fake_data import (
+    AccessLogFactory,
+    ImportBatchFactory,
+    ImportBatchFullFactory,
+    ManualDataUploadFactory,
+    MduState,
+)
 from logs.logic.clickhouse import (
     sync_accesslogs_with_clickhouse_superfast,
     sync_import_batch_with_clickhouse,
@@ -6,16 +13,9 @@ from logs.logic.clickhouse import (
 from logs.logic.custom_import import custom_import_preflight_check
 from logs.models import AccessLog, ManualDataUpload
 from logs.tasks import prepare_preflight
+from organizations.fake_data import OrganizationAltNameFactory, OrganizationFactory
 
-from test_fixtures.entities.logs import (
-    AccessLogFactory,
-    ImportBatchFactory,
-    ImportBatchFullFactory,
-    ManualDataUploadFactory,
-    MduState,
-)
-from test_fixtures.entities.organizations import OrganizationAltNameFactory, OrganizationFactory
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     data_sources,

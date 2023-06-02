@@ -2,9 +2,8 @@ import pytest
 from core.models import DataSource
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from organizations.fake_data import OrganizationAltNameFactory, OrganizationFactory
 from organizations.models import Organization, OrganizationAltName
-
-from test_fixtures.entities.organizations import OrganizationAltNameFactory, OrganizationFactory
 
 
 @pytest.mark.django_db

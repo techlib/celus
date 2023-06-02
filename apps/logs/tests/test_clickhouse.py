@@ -7,6 +7,7 @@ from django.db import connection
 from django.db.models import Sum
 from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
+from logs.fake_data import ImportBatchFullFactory
 from logs.logic.clickhouse import (
     ComparisonResult,
     compare_db_with_clickhouse,
@@ -31,8 +32,6 @@ from logs.tasks import (
 )
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from publications.models import Platform, PlatformInterestReport
-
-from test_fixtures.entities.logs import ImportBatchFullFactory
 
 
 @pytest.mark.clickhouse

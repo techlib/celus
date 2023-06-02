@@ -1,6 +1,7 @@
 import copy
 
 import pytest
+from core.fake_data import MemberFactory, UserFactory
 from core.models import Identity
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -8,9 +9,7 @@ from django.contrib.sites.models import Site
 from faker import Faker
 from organizations.models import Organization
 
-from test_fixtures.entities.core import UserFactory
-from test_fixtures.entities.mailchimp_members import MemberFactory
-from test_fixtures.scenarios.basic import *  # noqa
+from test_scenarios.basic import *  # noqa
 
 fake = Faker()
 fake_first_name = fake.first_name()

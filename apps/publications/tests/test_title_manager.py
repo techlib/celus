@@ -2,11 +2,10 @@ from collections import Counter
 
 import pytest
 from django.db.models import Count
+from logs.fake_data import CounterRecordFactory
 from logs.logic.data_import import TitleManager, TitleRec
 from logs.logic.validation import normalize_isbn, normalize_title
 from publications.models import Title
-
-from test_fixtures.entities.counter_records import CounterRecordFactory
 
 
 @pytest.mark.django_db

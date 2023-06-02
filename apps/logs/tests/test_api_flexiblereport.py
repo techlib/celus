@@ -4,9 +4,9 @@ from django.urls import reverse
 from logs.models import FlexibleReport
 from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations  # noqa
-from tags.logic.fake_data import TagForTitleFactory
+from tags.fake_data import TagForTitleFactory
 
-from test_fixtures.scenarios.basic import users  # noqa
+from test_scenarios.basic import users  # noqa
 
 
 @pytest.mark.django_db

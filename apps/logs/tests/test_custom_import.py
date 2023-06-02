@@ -6,12 +6,12 @@ from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
 from logs.exceptions import OrganizationNotAllowedToImportRawData
+from logs.fake_data import ManualDataUploadFactory, ManualDataUploadFullFactory
 from logs.logic.custom_import import import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
 
-from test_fixtures.entities.logs import ManualDataUploadFactory, ManualDataUploadFullFactory
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     data_sources,

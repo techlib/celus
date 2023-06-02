@@ -1,14 +1,14 @@
 from unittest import mock
 
 import pytest
+from necronomicon.fake_data import BatchFactory, CandidateFactory
 from necronomicon.models import Batch, BatchStatus
 from necronomicon.tasks import delete_batch_targets, prepare_batch
 from organizations.models import Organization, UserOrganization
 from publications.models import Platform
 from sushi.models import SushiCredentials
 
-from test_fixtures.entities.necronomicon import BatchFactory, CandidateFactory
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
     counter_report_types,

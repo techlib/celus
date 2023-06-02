@@ -2,9 +2,8 @@ import faker
 import pytest
 from django.db.models import Count, F, Sum
 from logs.logic.split_fetch_intentions import split_fetch_intentions
-
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.scheduler import FetchIntentionQueueFactory
+from scheduler.fake_data import FetchIntentionQueueFactory
+from sushi.fake_data import FetchAttemptFactory
 
 
 @pytest.mark.django_db

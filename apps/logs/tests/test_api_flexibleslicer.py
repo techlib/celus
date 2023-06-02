@@ -2,10 +2,10 @@ import pytest
 from core.logic.serialization import b64json
 from django.urls import reverse
 from organizations.models import UserOrganization
-from tags.logic.fake_data import TagFactory
+from tags.fake_data import TagFactory
 from tags.models import TagScope
 
-from test_fixtures.scenarios.basic import clients, identities, users  # noqa
+from test_scenarios.basic import clients, identities, users  # noqa
 
 
 @pytest.mark.django_db

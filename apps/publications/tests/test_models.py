@@ -1,9 +1,8 @@
 import pytest
+from core.fake_data import DataSourceFactory
 from core.models import DataSource
-
-from test_fixtures.entities.data_souces import DataSourceFactory
-from test_fixtures.entities.organizations import OrganizationFactory
-from test_fixtures.entities.platforms import PlatformFactory
+from organizations.fake_data import OrganizationFactory
+from publications.fake_data import PlatformFactory
 
 
 @pytest.mark.django_db

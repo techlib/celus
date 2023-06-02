@@ -1,5 +1,5 @@
 import pytest
-from charts.logic.fake_data import ChartDefinitionFactory, ReportDataViewFactory
+from charts.fake_data import ChartDefinitionFactory, ReportDataViewFactory
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,

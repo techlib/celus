@@ -6,7 +6,7 @@ from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import Dimension, DimensionText, FlexibleReport, ReportType, ReportTypeToDimension
 from organizations.tests.conftest import organizations  # noqa
 
-from test_fixtures.scenarios.basic import data_sources, report_types  # noqa - fixtures
+from test_scenarios.basic import data_sources, report_types  # noqa - fixtures
 
 
 @pytest.mark.django_db

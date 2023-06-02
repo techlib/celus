@@ -1,12 +1,11 @@
 from datetime import date
 
 import pytest
+from annotations.fake_data import AnnotationFactory
+from core.fake_data import UserFactory
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from freezegun import freeze_time
-
-from test_fixtures.entities.annotations import AnnotationFactory
-from test_fixtures.entities.core import UserFactory
 
 User = get_user_model()
 

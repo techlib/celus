@@ -13,6 +13,13 @@ from core.tests.conftest import (  # noqa - fixtures
     valid_identity,
 )
 from django.urls import reverse
+from logs.fake_data import (
+    AccessLogFactory,
+    ImportBatchFactory,
+    ImportBatchFullFactory,
+    MetricFactory,
+    ReportTypeFactory,
+)
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import (
@@ -26,22 +33,14 @@ from logs.models import (
     ReportType,
 )
 from logs.tests.conftest import report_type_nd  # noqa - fixture
+from organizations.fake_data import OrganizationFactory
 from organizations.models import UserOrganization
-from publications.logic.fake_data import TitleFactory
+from publications.fake_data import PlatformFactory, TitleFactory
 from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
+from sushi.fake_data import FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
 
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import (
-    AccessLogFactory,
-    ImportBatchFactory,
-    ImportBatchFullFactory,
-    MetricFactory,
-)
-from test_fixtures.entities.organizations import OrganizationFactory
-from test_fixtures.entities.platforms import PlatformFactory
-from test_fixtures.entities.report_types import ReportTypeFactory
-from test_fixtures.scenarios.basic import *  # noqa - fixtures
+from test_scenarios.basic import *  # noqa - fixtures
 
 
 class MockTask:

@@ -17,22 +17,21 @@ from core.tests.conftest import (  # noqa - fixtures
 )
 from django.db.models import Max, Min
 from django.urls import reverse
-from logs.models import AccessLog, Dimension, DimensionText, MduMethod, Metric, ReportType
-from organizations.models import UserOrganization
-from publications.logic.fake_data import TitleFactory
-from publications.models import Platform
-from publications.tests.conftest import interest_rt  # noqa - fixtures
-from sushi.models import AttemptStatus, CounterReportsToCredentials
-
-from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import (
+from logs.fake_data import (
     ImportBatchFactory,
     ImportBatchFullFactory,
     ManualDataUploadFactory,
     ManualDataUploadFullFactory,
 )
-from test_fixtures.scenarios.basic import (  # noqa - fixtures
+from logs.models import AccessLog, Dimension, DimensionText, MduMethod, Metric, ReportType
+from organizations.models import UserOrganization
+from publications.fake_data import TitleFactory
+from publications.models import Platform
+from publications.tests.conftest import interest_rt  # noqa - fixtures
+from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
+from sushi.models import AttemptStatus, CounterReportsToCredentials
+
+from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     client_by_user_type,
     clients,

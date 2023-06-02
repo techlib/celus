@@ -1,10 +1,10 @@
 import pytest
+from logs.fake_data import ImportBatchFactory
+from sushi.fake_data import FetchAttemptFactory
 from sushi.models import ImportBatch, SushiFetchAttempt
 from sushi.tasks import delete_fetchattempts_and_related_importbatches_task
 
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import ImportBatchFactory
-from test_fixtures.scenarios.basic import *  # noqa
+from test_scenarios.basic import *  # noqa
 
 
 @pytest.mark.django_db

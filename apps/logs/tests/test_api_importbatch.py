@@ -1,11 +1,14 @@
 import pytest
 from charts.models import ReportDataView
 from django.urls import reverse
+from logs.fake_data import ImportBatchFullFactory, ManualDataUploadFactory, MetricFactory
 from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import ImportBatch, InterestGroup, OrganizationPlatform, ReportInterestMetric
-from publications.logic.fake_data import TitleFactory
+from publications.fake_data import TitleFactory
 from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixture
+from scheduler.fake_data import FetchIntentionFactory
+from sushi.fake_data import CounterReportTypeFactory, CredentialsFactory, FetchAttemptFactory
 from sushi.models import (
     AttemptStatus,
     CounterReportsToCredentials,
@@ -13,16 +16,7 @@ from sushi.models import (
     SushiFetchAttempt,
 )
 
-from test_fixtures.entities.counter_report_types import CounterReportTypeFactory
-from test_fixtures.entities.credentials import CredentialsFactory
-from test_fixtures.entities.fetchattempts import FetchAttemptFactory
-from test_fixtures.entities.logs import (
-    ImportBatchFullFactory,
-    ManualDataUploadFactory,
-    MetricFactory,
-)
-from test_fixtures.entities.scheduler import FetchIntentionFactory
-from test_fixtures.scenarios.basic import (  # noqa
+from test_scenarios.basic import (  # noqa
     clients,
     counter_report_types,
     credentials,
