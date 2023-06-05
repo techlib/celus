@@ -9,9 +9,10 @@ from core.exceptions import FileConsistencyError
 from core.logic.url import extract_organization_id_from_request_query
 from django.apps import apps
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.cache import cache
 from django.db import models
+from django.db.models import BooleanField, Exists, OuterRef, Value
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
@@ -114,6 +115,27 @@ class DataSource(models.Model):
         return f"{user_part}#{ slugify(organization_name) }"[:50]
 
 
+class UserQuerySet(models.QuerySet):
+    def annotate_email_verified(self):
+        if settings.ALLOW_EDUID_LOGIN:
+            # we consider EduID users as validated if EduID login is turned on,
+            # we consider all users as using EduID.
+            return self.annotate(_email_verified=Value(True, output_field=BooleanField()))
+        else:
+            verified_email_addresses = EmailAddress.objects.filter(
+                user=OuterRef('pk'), verified=True
+            )
+            return self.annotate(_email_verified=Exists(verified_email_addresses))
+
+
+class CelusUserManager(UserManager):
+    def get_queryset(self):
+        return UserQuerySet(self.model, using=self._db)
+
+    def annotate_email_verified(self):
+        return self.get_queryset().annotate_email_verified()
+
+
 class User(AbstractUser):
 
     EMAIL_VERIFICATION_STATUS_UNKNOWN = "unknown"
@@ -141,6 +163,7 @@ class User(AbstractUser):
     )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+    objects = CelusUserManager()
 
     def __str__(self) -> str:
         return self.get_usable_name()
@@ -273,7 +296,7 @@ class User(AbstractUser):
     def email_verification(self) -> dict:
         res = {"status": self.EMAIL_VERIFICATION_STATUS_UNKNOWN, "email_sent": None}
         if settings.ALLOW_EDUID_LOGIN:
-            # we consider EduID users as validated and if EduID login is turned on,
+            # we consider EduID users as validated if EduID login is turned on,
             # we consider all users as using EduID.
             res['status'] = self.EMAIL_VERIFICATION_STATUS_VERIFIED
         else:
@@ -295,7 +318,10 @@ class User(AbstractUser):
 
     @cached_property
     def email_verified(self):
-        return self.EMAIL_VERIFICATION_STATUS_VERIFIED == self.email_verification['status']
+        if hasattr(self, '_email_verified'):
+            return self._email_verified
+        else:
+            return self.EMAIL_VERIFICATION_STATUS_VERIFIED == self.email_verification['status']
 
     def mailchimp_user_reason(self):
         return (

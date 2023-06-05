@@ -5,6 +5,7 @@ from django.contrib.admin import TabularInline
 from django.contrib.auth.admin import UserAdmin
 from django.db.models import Exists, OuterRef
 from django.utils.translation import gettext_lazy as _
+from import_export import fields
 from import_export.admin import ExportActionMixin
 from import_export.resources import ModelResource
 from organizations.models import UserOrganization
@@ -16,6 +17,8 @@ class MyUserResource(ModelResource):
     """
     This is used by django-import-export to facilitate CSV export in Django admin
     """
+
+    email_verified = fields.Field()
 
     class Meta:
         model = User
@@ -31,12 +34,29 @@ class MyUserResource(ModelResource):
         )
         export_order = fields
 
+    def dehydrate_email_verified(self, user):
+        return user._email_verified
+
 
 class UserOrganizationInline(TabularInline):
     model = UserOrganization
     fields = ['organization', 'is_admin']
     autocomplete_fields = ['organization']
     extra = 1
+
+
+class HasEmailVerified(admin.SimpleListFilter):
+    title = _('has verified email')
+    parameter_name = 'email_verified'
+
+    def lookups(self, request, model_admin):
+        return (('Yes', _('Yes')), ('No', _('No')))
+
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(_email_verified=True)
+        if self.value() == 'No':
+            return queryset.filter(_email_verified=False)
 
 
 class IsAdminInAtLeastOneOrganization(admin.SimpleListFilter):
@@ -89,6 +109,7 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
         'is_active',
         'is_staff',
         'source',
+        'email_verified',
     )
 
     custom_fields = ('ext_id', 'source', 'language', 'extra_data')
@@ -100,6 +121,7 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
 
     list_filter = (
         'source',
+        HasEmailVerified,
         IsAdminInAtLeastOneOrganization,
         IsAdminOfMasterOrganization,
     ) + UserAdmin.list_filter
@@ -107,6 +129,15 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
     actions = ['send_invitation_emails']
     inlines = [UserOrganizationInline]
     resource_class = MyUserResource  # for django-import-export
+
+    def get_queryset(self, request):
+        return User.objects.annotate_email_verified()
+
+    def email_verified(self, user):
+        return user.email_verified
+
+    email_verified.boolean = True
+    email_verified.admin_order_field = '_email_verified'
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
         res = super().formfield_for_choice_field(db_field, request, **kwargs)

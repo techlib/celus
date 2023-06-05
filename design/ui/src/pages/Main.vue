@@ -7,6 +7,7 @@
 
   <InvalidUserPage v-else-if="invalidUser" />
 
+  <EmailNotVerified v-else-if="user && !user.impersonator && !emailVerified" />
   <StandardLayout v-else-if="bootUpFinished" />
 
   <div v-else>
@@ -20,6 +21,7 @@
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import InvalidUserPage from "./InvalidUserPage";
+import EmailNotVerified from "./EmailNotVerified";
 import StandardLayout from "./StandardLayout";
 import BootUpWidget from "@/components/BootUpWidget";
 import LoginDialog from "@/components/account/LoginDialog";
@@ -33,6 +35,7 @@ export default {
     InvalidUserPage,
     NewCelusVersionDialog,
     StandardLayout,
+    EmailNotVerified,
   },
   data() {
     return {};
@@ -47,6 +50,7 @@ export default {
     ...mapGetters({
       loggedIn: "loggedIn",
       bootUpFinished: "bootUpFinished",
+      emailVerified: "emailVerified",
     }),
     appLanguage: {
       get() {
