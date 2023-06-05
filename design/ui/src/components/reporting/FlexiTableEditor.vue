@@ -33,6 +33,7 @@ en:
   zero_rows_tooltip: Rows for which the total usage is zero will be included. Please note that this functionality is only available for some rows as Celus very often does not know the correct list of possible values for a row (for example, it does not know all possible titles for a given platform).
   supported_rows: Supported rows are
   when_titles: when titles are filtered by tag or "merge by tag" is active
+  tags: tags
 
 cs:
   run_report: Spustit report
@@ -65,6 +66,7 @@ cs:
   zero_rows_tooltip: Budou zobrazeny i řádky, pro které je celkové využití nulové. Tato funkce je dostupná pouze pro některé řádky, protože Celus často nezná správný seznam možných hodnot pro daný řádek (například nezná všechny možné tituly pro danou platformu).
   supported_rows: Podporované řádky jsou
   when_titles: pokud jsou tituly filtrovány štítkem nebo je aktivní "sloučit podle štítku"
+  tags: štítky
 </i18n>
 
 <template>
@@ -242,7 +244,7 @@ cs:
                   >
                     <template #label>
                       {{ row.name }}
-
+                      {{ row.id === "target" ? "(" + $t("tags") + ")" : null }}
                       <v-tooltip
                         bottom
                         v-if="
