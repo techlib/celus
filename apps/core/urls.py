@@ -14,6 +14,7 @@ urlpatterns = [
     ),
     path('user/extra-data', views.UserExtraDataView.as_view(), name='user_extra_data_view'),
     path('user/password-reset', views.UserPasswordResetView.as_view(), name='user_password_reset'),
+    path('user/exists', views.UserExistsView.as_view(), name='user_exists_api_view'),
     path('info/', views.SystemInfoView.as_view(), name='system_info_api_view'),
     path(
         'run-task/erms-sync-users-and-identities',

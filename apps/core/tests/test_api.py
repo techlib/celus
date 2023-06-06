@@ -1,3 +1,4 @@
+import hmac
 import re
 from datetime import datetime
 from unittest.mock import patch
@@ -8,6 +9,8 @@ from core.models import Identity, User
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.urls import reverse
 from django.utils import timezone
+
+from test_fixtures.entities.users import UserFactory
 
 
 @pytest.mark.django_db
@@ -443,3 +446,37 @@ class TestMiddleware:
         ), "Version follows semantic versioning"
 
         assert resp["CELUS-VERSION"] == settings.CELUS_VERSION
+
+
+@pytest.mark.django_db
+class TestUserExistsView:
+    @pytest.mark.parametrize('exists', [True, False])
+    def test_user_exists(self, client, exists, settings):
+        settings.OCTOPUS_HMAC_KEY = 'testtesttesttest'
+        email = 'foo@bar.baz'
+        check = hmac.digest(
+            settings.OCTOPUS_HMAC_KEY.encode('utf-8'),
+            email.encode('utf-8'),
+            settings.OCTOPUS_HMAC_ALGO,
+        ).hex()
+        if exists:
+            UserFactory.create(email=email)
+        resp = client.get(reverse('user_exists_api_view'), {'hmac': check})
+        assert resp.status_code == 200
+        assert resp.json() == {'exists': exists}
+
+    @pytest.mark.parametrize(
+        'check',
+        [
+            'foo',
+            'alfkjasdlkfjsdl',
+            '83db689eb6947d8becd6364b523f1aef87a889a1',
+            '83db689eb6947d8becd6364b523f/aef87a889a1',
+            '3b4bb87b4b06f185bd3fba4203e5e44b52279adab79c3f6dc33f4c44dd11b5a8',
+            '3b4bb87b4b06f185bd3fba4203e5e44b52279adab79c3f6dc33f%c44dd11b5a8',
+        ],
+    )
+    def test_user_exists_fuzzy(self, client, settings, check):
+        settings.OCTOPUS_HMAC_KEY = 'testtesttesttest'
+        resp = client.get(reverse('user_exists_api_view'), {'hmac': check})
+        assert resp.status_code == 200
