@@ -1,11 +1,3 @@
-<!--
-
-TODO:
-
-- without being logged in, the locale is set to default and thus I get czech error messages :(
-
--->
-
 <i18n lang="yaml" src="@/locales/dialog.yaml" />
 
 <i18n lang="yaml">
@@ -24,6 +16,7 @@ en:
   register: Register here!
   just_registering: Register
   just_registering_text: "Registration is quick and completely free - just fill in your email address and pick a (strong) password."
+  just_registering_given_email_text: "Registration is quick and completely free - just pick a (strong) password."
   password_reset:
     title: Reset password
     text: Enter a valid email address which was used during registration. We will send you a link for password recovery to this address.
@@ -55,6 +48,7 @@ cs:
   register: Zaregistrujte se!
   just_registering: Registrace
   just_registering_text: "Registrace je rychlá a zcela zdarma - stačí vyplnit email a vybrat si (silné) heslo."
+  just_registering_given_email_text: "Registrace je rychlá a zcela zdarma - stačí vybrat si (silné) heslo."
   password_reset:
     title: Obnova hesla
     text: Zadejte platnou emailovou adresu, kterou jste použili při registraci. Pošleme vám na ni odkaz, pomocí kterého můžete provést změnu hesla.
@@ -82,7 +76,8 @@ cs:
     <v-form
       v-if="usesPasswordLogin && currentTab == 'login'"
       v-model="valid"
-      @submit.prevent="doLogin">
+      @submit.prevent="doLogin"
+    >
       <v-card>
         <v-card-title class="headline">{{ $t("not_logged_in") }}</v-card-title>
         <v-card-text>
@@ -102,6 +97,7 @@ cs:
             v-model="email"
             :label="$t('email')"
             :rules="[emailError, rules.required, rules.email]"
+            :disabled="emailGiven"
           ></v-text-field>
           <v-text-field
             v-model="password"
@@ -165,11 +161,20 @@ cs:
     <v-form
       v-else-if="usesPasswordLogin && currentTab == 'register'"
       v-model="valid"
-      @submit.prevent="doSignUp">
-      <v-card >
-        <v-card-title class="headline">{{ $t("just_registering") }}</v-card-title>
+      @submit.prevent="doSignUp"
+    >
+      <v-card>
+        <v-card-title class="headline">{{
+          $t("just_registering")
+        }}</v-card-title>
         <v-card-text>
-          <div v-text="$t('just_registering_text')"></div>
+          <div
+            v-text="
+              emailGiven
+                ? $t('just_registering_given_email_text')
+                : $t('just_registering_text')
+            "
+          ></div>
 
           <v-alert v-if="allowSignUp" color="primary" outlined class="mt-3">
             <v-icon class="pr-3">far fa-hand-point-right</v-icon>
@@ -185,6 +190,7 @@ cs:
             v-model="email"
             :label="$t('email')"
             :rules="[emailError, rules.required, rules.email]"
+            :disabled="emailGiven"
           ></v-text-field>
           <v-text-field
             v-model="password"
@@ -228,8 +234,9 @@ cs:
     <v-form
       v-else-if="usesPasswordLogin && currentTab == 'reset-password'"
       v-model="valid"
-      @submit.prevent="doReset">
-      <v-card >
+      @submit.prevent="doReset"
+    >
+      <v-card>
         <v-card-title class="headline">{{
           $t("password_reset.title")
         }}</v-card-title>
@@ -335,7 +342,8 @@ export default {
   data() {
     const urlParams = new URLSearchParams(window.location.search);
     return {
-      email: "",
+      email: urlParams.get("email") || "",
+      emailGiven: urlParams.has("email"),
       password: "",
       password2: "",
       currentTab: urlParams.has("register")
