@@ -11,9 +11,11 @@ from core.logic.maximus_sync import (
     get_users,
 )
 from core.models import UL_ORG_ADMIN, User
+from django.utils import timezone
 from organizations.fake_data import OrganizationFactory
 from organizations.models import Organization
 from publications.fake_data import PlatformFactory
+from rest_framework.fields import DateTimeField
 from sushi.fake_data import CounterReportTypeFactory
 from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
@@ -59,9 +61,18 @@ class TestMaximusSync:
     def test_get_users(self):
         assert get_users() == []
 
-        u1 = User.objects.create(username="a")
+        date_joined = DateTimeField().to_representation(timezone.now())
+        u1 = User.objects.create(username="a", date_joined=date_joined)
         check = (
-            {"ext_id": u1.id, "username": "a", "first_name": "", "last_name": "", "email": ""},
+            {
+                "ext_id": u1.id,
+                "username": "a",
+                "first_name": "",
+                "last_name": "",
+                "email": "",
+                "date_joined": date_joined,
+                "last_login": None,
+            },
         )
         out = json.loads(json.dumps(get_users()))
         assert len(out) == len(check)
@@ -69,16 +80,30 @@ class TestMaximusSync:
             assert d in check
 
         u2 = User.objects.create(
-            username="b", first_name="Bob", last_name="Bobster", email="bob@bobster.com"
+            username="b",
+            first_name="Bob",
+            last_name="Bobster",
+            email="bob@bobster.com",
+            date_joined=date_joined,
         )
         check = (
-            {"ext_id": u1.id, "username": "a", "first_name": "", "last_name": "", "email": ""},
+            {
+                "ext_id": u1.id,
+                "username": "a",
+                "first_name": "",
+                "last_name": "",
+                "email": "",
+                "date_joined": date_joined,
+                "last_login": None,
+            },
             {
                 "ext_id": u2.id,
                 "username": "b",
                 "first_name": "Bob",
                 "last_name": "Bobster",
                 "email": "bob@bobster.com",
+                "date_joined": date_joined,
+                "last_login": None,
             },
         )
         out = json.loads(json.dumps(get_users()))

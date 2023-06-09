@@ -23,6 +23,8 @@ class CelusUserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'email',
+            'date_joined',
+            'last_login',
         )
 
 
