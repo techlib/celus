@@ -139,7 +139,8 @@ class FlexibleDataExport(ExportBase):
             report_name=self.name,
             report_owner=self.owner,
             include_tags=True,
-            include_row_totals=True,
+            include_row_totals=self.export_params['row_totals'],
+            include_col_totals=self.export_params['col_totals'],
         )
         return exporter.stream_data_to_sink(stream, progress_monitor=progress_monitor)
 

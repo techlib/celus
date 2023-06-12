@@ -211,7 +211,13 @@
                 </tr>
                 <tr>
                   <th>{{ $t("labels.columns") }}:</th>
-                  <td>
+                  <td v-if="item.trendMode">
+                    {{ $t("trend_mode.trend_mode") }}:
+                    <em>{{ smartMonthRange(item.baseSubsetDateRange) }}</em>
+                    vs
+                    <em>{{ smartMonthRange(item.comparedSubsetDateRange) }}</em>
+                  </td>
+                  <td v-else>
                     {{
                       item.groupBy.map((fltr) => fltr.getName($i18n)).join(", ")
                     }}
@@ -228,14 +234,21 @@
                   </td>
                 </tr>
                 <tr>
-                  <th>{{ $t("labels.settings") }}:</th>
+                  <th class="align-top">{{ $t("labels.settings") }}:</th>
                   <td>
-                    <ul class="no-bullets">
+                    <ul class="unobtrusive-bullets">
                       <li>
                         {{
                           item.includeZeroRows
                             ? $t("show_zero_rows_yes")
                             : $t("show_zero_rows_no")
+                        }}
+                      </li>
+                      <li>
+                        {{
+                          item.includeTotals
+                            ? $t("show_totals_yes")
+                            : $t("show_totals_no")
                         }}
                       </li>
                       <li v-if="item.tagRollUp">{{ $t("tag_roll_up_tt") }}</li>
@@ -309,7 +322,11 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import axios from "axios";
-import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
+import {
+  isoDateTimeFormatSpans,
+  parseDateTime,
+  smartMonthRange,
+} from "@/libs/dates";
 import { dimensionMixin } from "@/mixins/dimensions";
 import reportTypes from "@/mixins/reportTypes";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
@@ -364,6 +381,7 @@ export default {
   },
 
   methods: {
+    smartMonthRange,
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),

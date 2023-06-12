@@ -51,6 +51,7 @@ cs:
   months_present: "{count} měsíc stažen | {count} měsíce staženy | {count} měsíců staženo"
   months_harvestable: "{count} měsíc stažitelný | {count} měsíce stažitelné | {count} měsíců stažitelných"
   months_no_sushi: "{count} měsíc bez funkčního SUSHI | {count} měsíce bez funkčního SUSHI | {count} měsíců bez funkčního SUSHI"
+  months_auto_harvestable: "{count} měsíc stažitelný a dostatečně aktuální | {count} měsíce stažitelné a dostatečně aktuální | {count} měsíců stažitelných a dostatečně aktuálních"
   all_harvested: Skvěle, nechybí žádná data
   nothing_to_harvest: Bohužel žádná chybějící data nelze získat automaticky pomocí SUSHI
   detail_by_organization: Detail podle organizace
@@ -454,7 +455,11 @@ import cancellation from "@/mixins/cancellation";
 import { mapGetters, mapState } from "vuex";
 import CoverageMap from "@/components/charts/CoverageMap.vue";
 import CompositionBar from "@/components/util/CompositionBar.vue";
-import { monthLastDay } from "@/libs/dates";
+import {
+  counterGuaranteedPeriodStartDate,
+  monthLastDay,
+  ymDateFormat,
+} from "@/libs/dates";
 import parseISO from "date-fns/parseISO";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget.vue";
 import CoverageScoreGauge from "@/components/charts/CoverageScoreGauge.vue";
@@ -651,7 +656,7 @@ export default {
       ];
     },
     oldestHarvestedMonth() {
-      return "2021-01";
+      return ymDateFormat(counterGuaranteedPeriodStartDate());
     },
   },
 

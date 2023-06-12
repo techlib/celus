@@ -6,7 +6,12 @@ import addMonths from "date-fns/addMonths";
 import addYears from "date-fns/addYears";
 import endOfYear from "date-fns/endOfYear";
 import startOfYear from "date-fns/startOfYear";
-import { ymDateFormat, parseDateTime } from "@/libs/dates";
+import {
+  ymDateFormat,
+  parseDateTime,
+  lastFinishedMonth,
+  lastCoveredMonth,
+} from "@/libs/dates";
 import { format as formatNumber } from "mathjs/lib/function/string/format";
 import VuexPersistence from "vuex-persist";
 import { sortOrganizations } from "@/libs/organizations";
@@ -171,18 +176,12 @@ export default new Vuex.Store({
     },
     dateRangeExplicitEndText(state, getters) {
       // if the end date is not set, it is the last finished month
-      return (
-        getters.dateRangeEndText ||
-        ymDateFormat(addMonths(startOfMonth(new Date()), -1))
-      );
+      return getters.dateRangeEndText || lastFinishedMonth();
     },
     dateRangeCoverageEndText(state, getters) {
       // if the end date is not set, it is the one before last finished month
       // during June its April because May data may still not be available
-      return (
-        getters.dateRangeEndText ||
-        ymDateFormat(addMonths(startOfMonth(new Date()), -2))
-      );
+      return getters.dateRangeEndText || lastCoveredMonth();
     },
     formatNumber(state) {
       return (number) =>

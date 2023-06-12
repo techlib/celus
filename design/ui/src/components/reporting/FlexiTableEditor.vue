@@ -29,8 +29,8 @@ en:
   organization_count_tt: |
     The number of organizations you have access to. Without an organization filter, the report will be run for all
     these organizations.
-  show_totals: Show row totals
   zero_rows_tooltip: Rows for which the total usage is zero will be included. Please note that this functionality is only available for some rows as Celus very often does not know the correct list of possible values for a row (for example, it does not know all possible titles for a given platform).
+  zero_rows_tooltip_trend_mode: If turned off, rows for which the usage in the base period is zero will not be be included. This allows for example filtering off of new titles for which the relative change would be infinite.
   supported_rows: Supported rows are
   when_titles: when titles are filtered by tag or "merge by tag" is active
   tags: tags
@@ -63,8 +63,8 @@ cs:
   no_tags_present: Pro zvolené řádky nejsou k dispozici žádné štítky.
   organization_count_tt: |
     Počet organizací, ke kterým máte přístup. Bez filtru organizací bude report spuštěn pro všechny tyto organizace.
-  show_totals: Zobrazit součty řádku
   zero_rows_tooltip: Budou zobrazeny i řádky, pro které je celkové využití nulové. Tato funkce je dostupná pouze pro některé řádky, protože Celus často nezná správný seznam možných hodnot pro daný řádek (například nezná všechny možné tituly pro danou platformu).
+  zero_rows_tooltip_trend_mode: Pokud je vypnuto, řádky, pro které je využití v základním období nulové, nebudou zahrnuty. To umožňuje například odfiltrování nových titulů, pro které by byla relativní změna nekonečná.
   supported_rows: Podporované řádky jsou
   when_titles: pokud jsou tituly filtrovány štítkem nebo je aktivní "sloučit podle štítku"
   tags: štítky
@@ -177,7 +177,10 @@ cs:
                     :label="row.name"
                     :value="row.id"
                     :key="row.id"
-                    :disabled="row.id === splitBy"
+                    :disabled="
+                      row.id === splitBy ||
+                      (row.id.startsWith('date') && trendMode)
+                    "
                   ></v-radio>
                 </v-radio-group>
               </v-card-text>
@@ -185,40 +188,73 @@ cs:
           </v-col>
 
           <v-col>
-            <v-card class="pa-2">
-              <v-card-title class="pt-2">{{
-                $t("labels.columns")
-              }}</v-card-title>
-              <v-card-text>
-                <v-checkbox
-                  v-for="item in possibleRows"
-                  v-model="columns"
-                  :label="item.name"
-                  :value="item.id"
+            <v-card class="pa-2 fill-height">
+              <v-card-title class="pt-2"
+                >{{ $t("labels.columns") }}
+                <v-switch
+                  v-model="trendMode"
+                  :label="$t('trend_mode.trend_mode')"
+                  class="text-caption float-right ms-auto pb-1 pt-0 mt-1"
                   dense
                   hide-details
-                  class="mt-1"
-                  :disabled="
-                    item.id === row ||
-                    item.id === splitBy ||
-                    !reportTypeSelected ||
-                    readOnly ||
-                    (item.id === 'date' && columns.includes('date__year')) ||
-                    (item.id === 'date__year' && columns.includes('date'))
-                  "
-                  :key="item.id"
-                >
-                  <template #append v-if="columns.includes(item.id)">
-                    <v-tooltip bottom max-width="320px">
-                      <template #activator="{ on }">
-                        <v-chip small outlined color="secondary" v-on="on"
-                          >{{ columns.indexOf(item.id) + 1 }}
-                        </v-chip>
-                      </template>
-                      {{ $t("column_order_tt") }}
-                    </v-tooltip>
-                  </template>
-                </v-checkbox>
+                />
+              </v-card-title>
+              <v-card-text>
+                <div v-if="trendMode">
+                  <div class="pt-4">
+                    <h4>{{ $t("trend_mode.base_period") }}</h4>
+                    <FromToMonthEntry
+                      v-model="tmBaseDateRange"
+                      :clearable="false"
+                    />
+                  </div>
+                  <div class="pt-6">
+                    <h4>{{ $t("trend_mode.compared_period") }}</h4>
+                    <FromToMonthEntry
+                      v-model="tmComparedDateRange"
+                      :clearable="false"
+                    />
+                  </div>
+                  <v-alert
+                    v-if="baseSubsetPeriodLength !== comparedSubsetPeriodLength"
+                    type="warning"
+                    class="mt-4"
+                    outlined
+                  >
+                    {{ $t("trend_mode.period_length_warning") }}
+                  </v-alert>
+                </div>
+                <div v-else>
+                  <v-checkbox
+                    v-for="item in possibleRows"
+                    v-model="columns"
+                    :label="item.name"
+                    :value="item.id"
+                    dense
+                    hide-details
+                    class="mt-1"
+                    :disabled="
+                      item.id === row ||
+                      item.id === splitBy ||
+                      !reportTypeSelected ||
+                      readOnly ||
+                      (item.id === 'date' && columns.includes('date__year')) ||
+                      (item.id === 'date__year' && columns.includes('date'))
+                    "
+                    :key="item.id"
+                  >
+                    <template #append v-if="columns.includes(item.id)">
+                      <v-tooltip bottom max-width="320px">
+                        <template #activator="{ on }">
+                          <v-chip small outlined color="secondary" v-on="on"
+                            >{{ columns.indexOf(item.id) + 1 }}
+                          </v-chip>
+                        </template>
+                        {{ $t("column_order_tt") }}
+                      </v-tooltip>
+                    </template>
+                  </v-checkbox>
+                </div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -240,6 +276,7 @@ cs:
                     :disabled="
                       (row.id === 'date' && filters.includes('date__year')) ||
                       (row.id === 'date__year' && filters.includes('date')) ||
+                      (row.id.startsWith('date') && trendMode) ||
                       !reportTypeSelected ||
                       readOnly
                     "
@@ -568,7 +605,11 @@ cs:
               <template #activator="{ on }">
                 <span v-on="on">
                   <v-switch
-                    :label="$t('show_zero_rows')"
+                    :label="
+                      trendMode
+                        ? $t('show_zero_rows_trend_mode')
+                        : $t('show_zero_rows')
+                    "
                     v-model="showZeroRows"
                     class="mt-0"
                     :disabled="cannotShowZeroRows"
@@ -577,8 +618,8 @@ cs:
               </template>
               <span>
                 {{ zeroRowsTooltip }}
-                <div></div>
-                <ul>
+                <div v-if="!trendMode"></div>
+                <ul v-if="!trendMode">
                   <li>{{ $t("labels.platform") }}</li>
                   <li>{{ $t("labels.organization") }}</li>
                   <li>{{ $t("labels.title") }} ({{ $t("when_titles") }})</li>
@@ -591,6 +632,7 @@ cs:
               v-model="showTotals"
               :label="$t('show_totals')"
               class="mt-0"
+              :disabled="trendMode"
             />
           </v-col>
           <v-spacer></v-spacer>
@@ -624,7 +666,7 @@ cs:
       <v-col>
         <FlexiTableOutput
           v-show="displayReport"
-          :show-totals="showTotals"
+          :show-row-totals="showTotals"
           ref="outputTable"
         />
       </v-col>
@@ -649,12 +691,23 @@ import isEqual from "lodash/isEqual";
 import { dataTableToDjangoOrderBy } from "@/libs/sorting";
 import AccessLevelSelector from "@/components/reporting/AccessLevelSelector";
 import formRulesMixin from "@/mixins/formRulesMixin";
-import { parseDateTime, ymDateFormat } from "@/libs/dates";
+import {
+  anyDateToYm,
+  lastCoveredMonthDate,
+  lastCoveredYearDate,
+  parseDateTime,
+  ymDateFormat,
+  ymDateParse,
+} from "@/libs/dates";
 import cancellation from "@/mixins/cancellation";
 import { toBase64JSON } from "@/libs/serialization";
 import TagSelector from "@/components/tags/TagSelector";
 import TagClassSelector from "@/components/tags/TagClassSelector";
 import ReportNamingWidget from "@/components/reporting/ReportNamingWidget.vue";
+import differenceInCalendarMonths from "date-fns/differenceInCalendarMonths";
+import lastDayOfYear from "date-fns/lastDayOfYear";
+import startOfYear from "date-fns/startOfYear";
+import addYears from "date-fns/addYears";
 
 export default {
   name: "FlexiTableEditor",
@@ -685,6 +738,12 @@ export default {
   },
 
   data() {
+    const lastCoveredDate = lastCoveredYearDate();
+    console.debug("lastCoveredDate", lastCoveredDate);
+    const baseStart = startOfYear(lastCoveredDate);
+    const baseEnd = lastDayOfYear(lastCoveredDate);
+    const comparedStart = addYears(baseStart, -1);
+    const comparedEnd = addYears(baseEnd, -1);
     return {
       selectedItems: [],
       row: "organization",
@@ -702,6 +761,15 @@ export default {
       selectedPlatformTags: [],
       selectedOrganizationTags: [],
       selectedTagClass: null,
+      trendMode: false,
+      tmBaseDateRange: {
+        start: ymDateFormat(baseStart),
+        end: ymDateFormat(baseEnd),
+      },
+      tmComparedDateRange: {
+        start: ymDateFormat(comparedStart),
+        end: ymDateFormat(comparedEnd),
+      },
       tagRollUp: false,
       formValid: false,
       headerFormValid: false,
@@ -762,6 +830,9 @@ export default {
     },
     possibleRows() {
       let base = [...this.dimensions, ...this.explicitDims];
+      if (this.trendMode) {
+        base = base.filter((d) => !d.id.startsWith("date"));
+      }
       return base;
     },
     appliedFilters() {
@@ -848,7 +919,7 @@ export default {
       return null;
     },
     hasGroupBy() {
-      return this.columns.length > 0;
+      return this.columns.length > 0 || this.trendMode;
     },
     reportTypeSelected() {
       return this.selectedReportTypes.length > 0;
@@ -894,9 +965,13 @@ export default {
       rt.owner = this.owner;
       rt.ownerOrganization = this.ownerOrganization;
       rt.includeZeroRows = this.showZeroRows;
+      rt.includeTotals = this.showTotals;
       rt.tagRollUp = this.tagRollUp;
       rt.tagClass = this.selectedTagClass?.pk;
       rt.showUntaggedRemainder = this.showRemainder;
+      rt.trendMode = this.trendMode;
+      rt.baseSubsetDateRange = this.tmBaseDateRange;
+      rt.comparedSubsetDateRange = this.tmComparedDateRange;
       return rt;
     },
     canEdit() {
@@ -930,6 +1005,8 @@ export default {
     cannotShowZeroRows() {
       // if we sum by tag, we need to allow zero rows
       if (this.tagRollUp) return false;
+      // in trend mode, we can show zero rows, because the meaning is different
+      if (this.trendMode) return false;
       // if rows are organization or platform, we can show zero rows
       if (["organization", "platform"].includes(this.row)) return false;
       // for titles, we can only show zero rows if we have the titles
@@ -940,9 +1017,24 @@ export default {
       return true;
     },
     zeroRowsTooltip() {
+      if (this.trendMode) {
+        return this.$t("zero_rows_tooltip_trend_mode");
+      }
       return this.$t("zero_rows_tooltip", {
         row: this.$t(this.row),
       });
+    },
+    baseSubsetPeriodLength() {
+      if (this.trendMode) {
+        return this.dateRangeLength(this.tmBaseDateRange);
+      }
+      return 0;
+    },
+    comparedSubsetPeriodLength() {
+      if (this.trendMode) {
+        return this.dateRangeLength(this.tmComparedDateRange);
+      }
+      return 0;
     },
   },
 
@@ -959,6 +1051,14 @@ export default {
     cancelReport() {
       this.displayReport = false;
       this.$refs.outputTable.cancelReport();
+    },
+    dateRangeLength(range) {
+      if (range.start && range.end) {
+        const end = ymDateParse(range.end);
+        const start = ymDateParse(range.start);
+        return differenceInCalendarMonths(end, start);
+      }
+      return 0;
     },
     async runReport() {
       this.displayReport = true;
@@ -986,6 +1086,7 @@ export default {
       }
       if (this.canGetData) {
         try {
+          this.updateOrderByFromOutputTable();
           this.exportHandle = await this.reportObject.startExport(format);
         } catch (error) {
           this.showSnackbar({
@@ -993,6 +1094,17 @@ export default {
             color: "error",
           });
         }
+      }
+    },
+    updateOrderByFromOutputTable() {
+      // update order by based on the current state of output table
+      if (
+        this.$refs.outputTable &&
+        this.$refs.outputTable.$data.options.sortBy
+      ) {
+        this.orderBy = dataTableToDjangoOrderBy(
+          this.$refs.outputTable.$data.options
+        );
       }
     },
     async firstSave(name, access) {
@@ -1013,14 +1125,7 @@ export default {
       if (this.canGetData) {
         try {
           // update order by based on the current state of output table
-          if (
-            this.$refs.outputTable &&
-            this.$refs.outputTable.$data.options.sortBy
-          ) {
-            this.orderBy = dataTableToDjangoOrderBy(
-              this.$refs.outputTable.$data.options
-            );
-          }
+          this.updateOrderByFromOutputTable();
           await this.reportObject.save();
           this.reportPk = this.reportObject.pk;
           // rewrite window history so that we return to this page rather than an empty one
@@ -1143,6 +1248,7 @@ export default {
         this.splitBy = null;
       }
       this.showZeroRows = config.zero_rows ?? false;
+      this.showTotals = config.row_totals ?? true;
       this.tagRollUp = config.tag_roll_up ?? false;
       this.selectedTagClass = config.tag_class ?? null;
       this.showRemainder = config.show_untagged_remainder ?? false;
@@ -1150,6 +1256,30 @@ export default {
       this.reportPk = settings.pk;
       this.owner = settings.owner;
       this.ownerOrganization = settings.owner_organization;
+      // trend mode
+      this.trendMode = config.trend_mode ?? false;
+      if (config.base_subset_filters) {
+        const fltr = config.base_subset_filters.find(
+          (fltr) => fltr.start && fltr.end
+        );
+        if (fltr) {
+          this.tmBaseDateRange = {
+            start: anyDateToYm(fltr.start),
+            end: anyDateToYm(fltr.end),
+          };
+        }
+      }
+      if (config.compared_subset_filters) {
+        const fltr = config.compared_subset_filters.find(
+          (fltr) => fltr.start && fltr.end
+        );
+        if (fltr) {
+          this.tmComparedDateRange = {
+            start: anyDateToYm(fltr.start),
+            end: anyDateToYm(fltr.end),
+          };
+        }
+      }
     },
     updateAccessLevel({ owner, owner_organization }) {
       this.owner = owner;
@@ -1308,6 +1438,21 @@ export default {
     },
     cannotShowZeroRows() {
       if (this.cannotShowZeroRows) this.showZeroRows = false;
+    },
+    trendMode() {
+      if (this.trendMode) {
+        // totals do not make sense with year over year
+        this.showTotals = false;
+        // turn on zero rows so that by default we show everything
+        this.showZeroRows = true;
+        // filtering by date with year over year does not make sense
+        this.filters = this.filters.filter((f) => !f.startsWith("date"));
+        // dates in rows also do not make sense
+        this.row = this.row.startsWith("date") ? "platform" : this.row;
+      } else {
+        // turn zero rows off as they are not very useful outside of trend mode
+        this.showZeroRows = false;
+      }
     },
   },
 };

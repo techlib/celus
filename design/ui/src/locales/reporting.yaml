@@ -27,8 +27,12 @@ en:
   add_report: Add report
   error_details: Error details
   show_zero_rows: Include rows with zero usage
+  show_zero_rows_trend_mode: Include rows with zero base usage
   show_zero_rows_no: Only rows with non-zero usage
   show_zero_rows_yes: Includes rows with zero usage
+  show_totals: Show totals
+  show_totals_no: Doesn't include totals
+  show_totals_yes: Includes totals
   tag_roll_up_tt: Rows are merged by tag
   tags_show_remainder: Show remainder without any tags
   tags_show_remainder_tt: Adds an extra line to the output which represents a summary for untagged items.
@@ -45,6 +49,11 @@ en:
   expires_in: Expires in
   expires_in_tt_1: We delete exports periodically just to keep order here.
   expires_in_tt_2: But don't worry - you can create new exports again from any report at any time.
+  trend_mode:
+    trend_mode: Trend analysis
+    base_period: Base period
+    compared_period: Compared period
+    period_length_warning: The base period has different length from the compared period. This may lead to unexpected results.
 
 cs:
   access_level_tt:
@@ -75,8 +84,12 @@ cs:
   add_report: Přidat report
   error_details: Detaily chyby
   show_zero_rows: Zahrnout i řádky s nulovým využitím
+  show_zero_rows_trend_mode: Zahrnout i řádky s nulovým využitím v základním období
   show_zero_rows_no: Jen řádky s nenulovým využitím
   show_zero_rows_yes: Zahrnuje řádky s nulovým využitím
+  show_totals: Zobrazit součty
+  show_totals_no: Nezahrnuje součty
+  show_totals_yes: Zahrnuje součty
   tag_roll_up_tt: Řádky jsou sloučeny podle štítku
   tags_show_remainder: Zobrazit zbytek bez štítku
   tags_show_remainder_tt: Přidá do výstupu další řádek, který obsahuje souhrn pro tituly bez štítku.
@@ -88,7 +101,13 @@ cs:
     error: Chyba
   format:
     excel: Excel
+    excel_no_charts: Excel bez grafů
     csv: CSV
   expires_in: Expiruje za
   expires_in_tt_1: Pravidelně mažeme exporty pro udržení přehlednosti.
   expires_in_tt_2: Nemusíte se ale bát - kdykoliv si můžete vytvořit export z jakéhokoliv reportu znova.
+  trend_mode:
+    trend_mode: Analýza trendu
+    base_period: Základní období
+    compared_period: Porovnávané období
+    period_length_warning: Základní období má jinou délku než porovnávané období. To může vést k neočekávaným výsledkům.

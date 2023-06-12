@@ -126,3 +126,7 @@ def months_in_range(
         # duplicate the FetchIntention
         current_month = month_start(current_month + datetime.timedelta(days=40))
         yield current_month
+
+
+def format_month(date: datetime.date) -> str:
+    return date.strftime("%Y-%m")

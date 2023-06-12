@@ -77,6 +77,16 @@ class Dimension {
   }
 }
 
+function dateRangeFromFilters(filters) {
+  if (filters) {
+    const fltr = filters.find((fltr) => fltr.start && fltr.end);
+    if (fltr) {
+      return { start: fltr.start, end: fltr.end };
+    }
+  }
+  return null;
+}
+
 class FlexiReport {
   static accessLeveLToIcon = {
     sys: "fa-globe",
@@ -96,12 +106,16 @@ class FlexiReport {
     this.owner = null;
     this.ownerOrganization = null;
     this.includeZeroRows = false;
+    this.includeTotals = false;
     this.tagRollUp = false;
     this._tagDimension = new Dimension("tag");
     this._tagDimension.shortName = "tag";
     this._tagDimension.name = "labels.tag";
     this.tagClass = null;
     this.showUntaggedRemainder = false;
+    this.trendMode = false;
+    this.baseSubsetDateRange = null;
+    this.comparedSubsetDateRange = null;
   }
 
   get accessLevel() {
@@ -185,9 +199,16 @@ class FlexiReport {
         : null;
     // extra params
     this.includeZeroRows = config.zero_rows ?? false;
+    this.includeTotals = config.row_totals ?? false;
     this.tagRollUp = config.tag_roll_up ?? false;
     this.tagClass = config.tag_class ?? null;
     this.showUntaggedRemainder = config.show_untagged_remainder ?? false;
+    // trend mode
+    this.trendMode = config.trend_mode ?? false;
+    this.baseSubsetDateRange = dateRangeFromFilters(config.base_subset_filters);
+    this.comparedSubsetDateRange = dateRangeFromFilters(
+      config.compared_subset_filters
+    );
   }
 
   async resolveReportType(id, allReportTypes = null) {
@@ -234,13 +255,24 @@ class FlexiReport {
     return {
       primary_dimension: this.primaryDimension.ref,
       filters: toBase64JSON(filters),
-      groups: toBase64JSON(this.groupBy.map((item) => item.ref)),
+      groups: this.trendMode
+        ? undefined
+        : toBase64JSON(this.groupBy.map((item) => item.ref)),
       split_by: this.splitBy ? toBase64JSON([this.splitBy.ref]) : null,
       order_by: this.orderBy.join(";"),
       zero_rows: this.includeZeroRows,
+      row_totals: this.includeTotals,
+      col_totals: this.includeTotals,
       tag_roll_up: this.tagRollUp,
       tag_class: this.tagClass,
       show_untagged_remainder: this.showUntaggedRemainder,
+      trend_mode: this.trendMode,
+      base_subset_filters: this.trendMode
+        ? toBase64JSON({ date: this.baseSubsetDateRange })
+        : undefined, // undefined means "do not send this parameter"
+      compared_subset_filters: this.trendMode
+        ? toBase64JSON({ date: this.comparedSubsetDateRange })
+        : undefined, // undefined means "do not send this parameter"
     };
   }
 
@@ -303,6 +335,9 @@ class FlexiExport {
     this.filters = [];
     this.groupBy = [];
     this.orderBy = [];
+    this.trendMode = false;
+    this.baseSubsetDateRange = null;
+    this.comparedSubsetDateRange = null;
     this.outputFile = null;
     this.fileFormat = null;
     this.fileSize = 0;
@@ -356,6 +391,12 @@ class FlexiExport {
     this.groupBy = config.group_by.map((item) => this.resolveDim(item));
     // order by
     this.orderBy = config.order_by;
+    // trend mode
+    this.trendMode = config.trend_mode;
+    this.baseSubsetDateRange = dateRangeFromFilters(config.base_subset_filters);
+    this.comparedSubsetDateRange = dateRangeFromFilters(
+      config.compared_subset_filters
+    );
   }
 
   async resolveReportType(id, allReportTypes = null) {

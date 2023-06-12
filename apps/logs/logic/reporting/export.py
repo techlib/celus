@@ -15,9 +15,11 @@ from django.db.models.base import ModelBase
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
+from django.utils.translation import pgettext
 from logs.logic.export_utils import (
     CSVListWriter,
     DictWriter,
+    Formula,
     ListWriter,
     MappingCSVDictWriter,
     MappingXlsxDictWriter,
@@ -49,12 +51,17 @@ class FlexibleDataExporter(ABC):
         report_owner=None,
         include_tags: bool = False,  # tag column will be added to the report
         include_row_totals: bool = False,  # row totals will be added to the report
+        include_col_totals: bool = False,  # column totals will be added to the report
     ):
         self.slicer = slicer
         self.report_name = report_name
         self.report_owner = report_owner
         self._include_tags = include_tags
         self.include_row_totals = include_row_totals
+        if self.include_row_totals and self.slicer.trend_mode:
+            logger.warning('Row totals are not supported in trend mode')
+            self.include_row_totals = False
+        self.include_col_totals = include_col_totals
         if self.include_tags and not self.report_owner:
             raise ValueError(
                 'report_owner must be set if include_tags is True because tags are user-specific'
@@ -184,6 +191,14 @@ class FlexibleDataExporter(ABC):
         # add total column if needed
         if self.include_row_totals:
             fields.append(('_total', _('Row total')))
+        # trend mode has implicit columns
+        if self.slicer.trend_mode:
+            fields.append((self.slicer.COL_BASE, self.slicer.base_subset_filters[0].smart_str()))
+            fields.append(
+                (self.slicer.COL_COMPARED, self.slicer.compared_subset_filters[0].smart_str())
+            )
+            fields.append((self.slicer.COL_DIFF, pgettext('column name', 'Change')))
+            fields.append((self.slicer.COL_REL_DIFF, _('Change %')))
         # fields from groups
         other_fields = []
         for key in row:
@@ -324,12 +339,14 @@ class FlexibleDataExporter(ABC):
             ]
         )
         writer.writerow([_('Rows'), self.primary_column_name()])
-        writer.writerow(
-            [
-                _('Columns'),
-                str('; '.join(self.dimension_output_name(dim) for dim in self.slicer.group_by)),
-            ]
-        )
+        # columns depend on the trend_mode
+        if self.slicer.trend_mode:
+            start = self.slicer.base_subset_filters[0].smart_str()
+            end = self.slicer.compared_subset_filters[0].smart_str()
+            columns = _('Trend analysis: %(start)s vs %(end)s') % {'start': start, 'end': end}
+        else:
+            columns = '; '.join(self.dimension_output_name(dim) for dim in self.slicer.group_by)
+        writer.writerow([_('Columns'), columns])
         for i, fltr in enumerate(self.slicer.dimension_filters):
             writer.writerow(
                 [_('Applied filters') if i == 0 else '', self.slicer.filter_to_str(fltr)]
@@ -358,7 +375,7 @@ class FlexibleDataExporter(ABC):
                 orgs = self.slicer.organization_filter
             elif self.report_owner:
                 # otherwise, use what user has access to
-                orgs = self.report_owner.accessible_organizations
+                orgs = self.report_owner.accessible_organizations()
             else:
                 # if nothing is available, ask the slicer itself
                 orgs = Organization.objects.filter(
@@ -380,17 +397,48 @@ class FlexibleDataExporter(ABC):
             }
         return None
 
+    def create_formulas(self, fields):
+        formulas = []
+        if self.slicer.trend_mode:
+            # in trend mode, we have column with difference and relative difference.
+            # the relative difference should be formatted as percent and also needs the total to be
+            # calculated differently then just summing up the individual values
+            formulas.append(
+                Formula(
+                    key=self.slicer.COL_DIFF,
+                    operation='{1}-{0}',
+                    refs=[self.slicer.COL_BASE, self.slicer.COL_COMPARED],
+                )
+            )
+            formulas.append(
+                Formula(
+                    key=self.slicer.COL_REL_DIFF,
+                    operation='({1}-{0})/{0}',
+                    fn=lambda a, b: ((b - a) / a) if a else None,
+                    refs=[self.slicer.COL_BASE, self.slicer.COL_COMPARED],
+                )
+            )
+
+        elif self.include_row_totals:
+            # include row totals is incompatible with trend mode
+            formulas.append(
+                Formula(
+                    key='_total',
+                    operation='sum',
+                    refs=[key for key, _field in fields if key.startswith('grp-')],
+                )
+            )
+        return formulas
+
+    def sum_row_skip_cols(self) -> int:
+        return len(self.remapped_keys()) + (1 if self.include_tags else 0)
+
 
 class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
 
     """
     Simple CSV output exporter which does not support multipart output and/or metadata output
     """
-
-    def remapped_keys(self):
-        return self.object_remapped_dims.get(self.slicer.primary_dimension, {}).get(
-            'columns', ['name']
-        )
 
     def stream_data_to_sink(
         self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
@@ -401,10 +449,16 @@ class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
         )
 
     def create_writer(self, output, fields: list) -> DictWriter:
-        return MappingCSVDictWriter(output, fields=fields)
+        return MappingCSVDictWriter(
+            output,
+            fields=fields,
+            row_formulas=self.create_formulas(fields),
+            include_col_totals=self.include_col_totals,
+            sum_row_skip_cols=self.sum_row_skip_cols(),
+        )
 
 
-class FlexibleDataZipCSVExporter(FlexibleDataExporter):
+class FlexibleDataZipCSVExporter(FlexibleDataSimpleCSVExporter):
 
     """
     Exporter creating zipped CSV files with support for metadata and multipart output
@@ -447,9 +501,6 @@ class FlexibleDataZipCSVExporter(FlexibleDataExporter):
                     if progress_monitor:
                         progress_monitor(i + 1, total)
 
-    def create_writer(self, output, fields: list) -> DictWriter:
-        return MappingCSVDictWriter(output, fields=fields)
-
 
 class FlexibleDataExcelExporter(FlexibleDataExporter):
     object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
@@ -458,8 +509,10 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         super().__init__(slicer, **kwargs)
         self._seen_sheetnames = set()
         self.include_charts = include_charts
+        self.base_fmt_dict = {'font_name': 'Arial', 'font_size': 9}
         self.base_fmt = None
         self.header_fmt = None
+        self.workbook = None
 
     def stream_data_to_sink(
         self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
@@ -470,9 +523,10 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         #  - we will generate data for the output part by part
         with tempfile.NamedTemporaryFile('wb') as tmp_file:
             workbook = xlsxwriter.Workbook(tmp_file.name, {'constant_memory': True})
-            base_fmt_dict = {'font_name': 'Arial', 'font_size': 9}  # , 'num_format': '#,##0'}
-            self.base_fmt = workbook.add_format(base_fmt_dict)
-            self.header_fmt = workbook.add_format({'bold': True, **base_fmt_dict})
+            # store reference to workbook - we may need it in the methods called later
+            self.workbook = workbook
+            self.base_fmt = workbook.add_format(self.base_fmt_dict)
+            self.header_fmt = workbook.add_format({'bold': True, **self.base_fmt_dict})
 
             # add metadata sheet
             sheet = workbook.add_worksheet("metadata")
@@ -531,25 +585,27 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                         progress_monitor(i + 1, total)
 
             workbook.close()
+            self.workbook = None
             with open(tmp_file.name, 'rb') as outfile:
                 sink.write(outfile.read())
 
     def create_writer(self, output, fields: List[Tuple[str, str]]) -> DictWriter:
-        formulas = []
-        if self.include_row_totals:
-            formulas.append(
-                MappingXlsxDictWriter.Formula(
-                    key='_total',
-                    operation='sum',
-                    refs=[key for key, _field in fields if key.startswith('grp-')],
-                )
+
+        col_formats = {}
+        if self.slicer.trend_mode:
+            col_formats[self.slicer.COL_REL_DIFF] = self.workbook.add_format(
+                {'num_format': '0.00%', **self.base_fmt_dict}
             )
+
+        formulas = self.create_formulas(fields)
         return MappingXlsxDictWriter(
             output,
             fields=fields,
             cell_format=self.base_fmt,
             header_format=self.header_fmt,
             row_formulas=formulas,
+            include_col_totals=self.include_col_totals,
+            col_formats=col_formats,
             sum_row_skip_cols=len(self.remapped_keys()) + (1 if self.include_tags else 0),
         )
 
@@ -568,11 +624,14 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             sheet.write(0, 1, f'Chart was limited to first {max_rows_to_show} rows!', style)
             row_count = max_rows_to_show
         skip_cols = len(self.remapped_keys())  # for titles skip ISSN and other cols
+        omit_cols = 0  # cols to omit from the chart at the end of the row
         if self.include_tags:
             skip_cols += 1
         if self.include_row_totals:
             skip_cols += 1
-        for i in range(skip_cols, len(self._fields)):
+        if self.slicer.trend_mode:
+            omit_cols += 2
+        for i in range(skip_cols, len(self._fields) - omit_cols):
             chart.add_series(
                 {
                     'categories': [sheetname, 1, 0, row_count, 0],

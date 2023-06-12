@@ -10,13 +10,16 @@
       <v-text-field
         v-model="month"
         :label="label"
-        prepend-icon="fa-calendar-alt"
         readonly
         v-on="on"
-        clearable
+        :clearable="clearable"
         clear-icon="fa fa-times"
         :disabled="disabled"
-      ></v-text-field>
+      >
+        <template #prepend>
+          <v-icon color="#aaaaaa">fa-calendar-alt</v-icon>
+        </template>
+      </v-text-field>
     </template>
     <v-date-picker
       v-model="month"
@@ -39,6 +42,7 @@ export default {
     label: { required: false, default: "", type: String },
     allowedMonths: { required: false, type: Function },
     disabled: { required: false, type: Boolean, default: false },
+    clearable: { required: false, type: Boolean, default: true },
   },
 
   data() {

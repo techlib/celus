@@ -1,9 +1,13 @@
+import re
 from abc import ABC, abstractmethod
 from datetime import date, datetime
+from typing import Union
 
+from core.logic.dates import format_month, month_end, parse_month
 from core.logic.type_conversion import to_list
 from django.conf import settings
 from django.db import models
+from django.utils.dateparse import parse_date
 from logs.models import AccessLog, DimensionText
 from tags.models import Tag
 
@@ -48,10 +52,27 @@ class DimensionFilter(ABC):
 
 
 class DateDimensionFilter(DimensionFilter):
+
+    month_format_matcher = re.compile(r'^\d{4}-\d{2}$')
+
     def __init__(self, dimension: str, start, end):
         super().__init__(dimension)
-        self.start = start
-        self.end = end
+        self.start: date = self.parse_date(start)
+        self.end: date = self.parse_date(end, end_of_month=True)
+
+    @classmethod
+    def parse_date(cls, value: Union[str, date], end_of_month=False) -> date:
+        """
+        If `end_of_month` is True, the date will be parsed as the last day of the month for input
+        values lacking a day component.
+        """
+        if isinstance(value, str):
+            if cls.month_format_matcher.match(value):
+                out = parse_month(value)
+                return month_end(out) if end_of_month else out
+            else:
+                return parse_date(value)
+        return value
 
     @property
     def value_str(self) -> str:
@@ -71,6 +92,28 @@ class DateDimensionFilter(DimensionFilter):
             'start': self.serialize_date(self.start),
             'end': self.serialize_date(self.end),
         }
+
+    def smart_str(self) -> str:
+        """
+        Smart formats the date range for display.
+        """
+        # check for full years span
+        if (self.start.month, self.start.day) == (1, 1) and (self.end.month, self.end.day) == (
+            12,
+            31,
+        ):
+            if self.start.year == self.end.year:
+                # this is one full year
+                return str(self.start.year)
+            # this is a range of years
+            return f'{self.start.year} - {self.end.year}'
+        # if start is the same as end, just return the start
+        start_month = format_month(self.start)
+        end_month = format_month(self.end)
+        if start_month == end_month:
+            return start_month
+        # return the whole range
+        return f'{start_month} - {end_month}'
 
     @classmethod
     def serialize_date(cls, value):

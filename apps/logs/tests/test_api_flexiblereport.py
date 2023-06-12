@@ -113,6 +113,38 @@ class TestFlexibleReportAPI:
         assert report.report_config['filters'][0]['dimension'] == 'target'
         assert report.report_config['filters'][0]['tag_ids'] == [tag.pk]
 
+    def test_create_in_trend_mode(self, admin_client, admin_user):
+        resp = admin_client.post(
+            reverse('flexible-report-list'),
+            {
+                'name': 'test report',
+                'config': {
+                    'primary_dimension': 'platform',
+                    'trend_mode': True,
+                    'base_subset_filters': b64json(
+                        {'date': {'start': '2019-01', 'end': '2019-02'}}
+                    ),
+                    'compared_subset_filters': b64json(
+                        {'date': {'start': '2019-03', 'end': '2019-04'}}
+                    ),
+                },
+            },
+            content_type='application/json',
+        )
+        assert resp.status_code == 201
+        report = FlexibleReport.objects.get(pk=resp.json()['pk'])
+        assert report.owner == admin_user
+        assert report.owner_organization is None
+        assert report.last_updated_by == admin_user
+        assert report.report_config['primary_dimension'] == 'platform'
+        assert report.report_config['trend_mode'] is True
+        assert report.report_config['base_subset_filters'][0]['dimension'] == 'date'
+        assert report.report_config['base_subset_filters'][0]['start'] == '2019-01-01'
+        assert report.report_config['base_subset_filters'][0]['end'] == '2019-02-28'
+        assert report.report_config['compared_subset_filters'][0]['dimension'] == 'date'
+        assert report.report_config['compared_subset_filters'][0]['start'] == '2019-03-01'
+        assert report.report_config['compared_subset_filters'][0]['end'] == '2019-04-30'
+
     @pytest.fixture()
     def user_organizations(self, users, organizations):
         org1 = organizations[0]

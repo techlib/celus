@@ -22,7 +22,7 @@ from django.db.models import (
     Subquery,
     Sum,
 )
-from django.db.models.functions import Coalesce, Concat
+from django.db.models.functions import Coalesce, Concat, NullIf
 from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import find_best_materialized_view, logger
@@ -43,14 +43,63 @@ from tags.models import Tag, TagClass
 
 class FlexibleDataSlicer:
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'report_type']
+    COL_BASE = 'base'
+    COL_COMPARED = 'compared'
+    COL_DIFF = 'diff'
+    COL_REL_DIFF = 'reldiff'
+    COL_TOTAL = '_total'
+
+    TREND_MODE_COLS = (COL_BASE, COL_COMPARED, COL_DIFF, COL_REL_DIFF)
 
     def __init__(
-        self, primary_dimension, tag_roll_up=False, include_all_zero_rows=False, use_clickhouse=None
+        self,
+        primary_dimension,
+        *,
+        tag_roll_up=False,
+        include_all_zero_rows=False,
+        include_row_totals=False,
+        include_col_totals=False,
+        trend_mode=False,
+        base_subset_filters: Optional[List[DimensionFilter]] = None,
+        compared_subset_filters: Optional[List[DimensionFilter]] = None,
+        use_clickhouse=None,
     ):
+        """
+        :param primary_dimension: The dimension that will be used to group the results into rows.
+        :param tag_roll_up: When active, the results for individual primary objects will be summed
+            up for individual tags assigned to the primary objects. `tag_filter` and `tag_class`
+            help narrow down the tags that will be included in the results.
+        :param include_all_zero_rows: Changes the way the query is constructed to include all
+            objects from the primary dimension, even if they have no data. In some cases,
+            this does not work with ClickHouse, so it should be avoided as much as possible.
+        :param trend_mode: Instead of grouping by a dimension, values for two explicitly specified
+            subsets of data will be compared - `base_subset` and `compared_subset`
+        :param base_subset_filters: list of filters applied to the base subset in trend mode
+        :param compared_subset_filters: list of filters applied to the compared subset in trend
+        :param use_clickhouse: whether to use ClickHouse for queries where it is supported
+        """
         self.use_clickhouse = (
             settings.CLICKHOUSE_QUERY_ACTIVE if use_clickhouse is None else use_clickhouse
         )
         self.primary_dimension = primary_dimension
+        # trend_mode
+        self.trend_mode = trend_mode
+        self.base_subset_filters = base_subset_filters or []
+        self.compared_subset_filters = compared_subset_filters or []
+        if self.trend_mode:
+            if not (self.base_subset_filters and self.compared_subset_filters):
+                raise ValueError(
+                    '`base_subset_filters` and `compared_subset_filters` must be specified when '
+                    '`trend_mode` is True'
+                )
+            if not all(
+                isinstance(f, DateDimensionFilter)
+                for f in self.base_subset_filters + self.compared_subset_filters
+            ):
+                raise ValueError(
+                    'Only date filters are implemented for subsets in trend mode for now',
+                )
+
         self.dimension_filters: List[DimensionFilter] = []
         self.group_by = []
         self.order_by = []
@@ -58,6 +107,8 @@ class FlexibleDataSlicer:
         self._annotations = []
         self.organization_filter = None
         self.include_all_zero_rows = include_all_zero_rows
+        self.include_row_totals = include_row_totals
+        self.include_col_totals = include_col_totals
         self.tag_roll_up = tag_roll_up
         self.tag_filter: Optional[Q] = None
         self.tag_class: Optional[int] = None
@@ -77,10 +128,15 @@ class FlexibleDataSlicer:
             "group_by": self.group_by,
             "order_by": self.order_by,
             "zero_rows": self.include_all_zero_rows,
+            "row_totals": self.include_row_totals,
+            "col_totals": self.include_col_totals,
             "split_by": self.split_by,
             "tag_roll_up": self.tag_roll_up,
             "tag_class": self.tag_class,
             "show_untagged_remainder": self.show_untagged_remainder,
+            "trend_mode": self.trend_mode,
+            "base_subset_filters": [fltr.config() for fltr in self.base_subset_filters],
+            "compared_subset_filters": [fltr.config() for fltr in self.compared_subset_filters],
         }
 
     @property
@@ -122,9 +178,13 @@ class FlexibleDataSlicer:
     def add_filter(self, dimension_filter: DimensionFilter, add_group=False):
         self.dimension_filters.append(dimension_filter)
         if add_group:
+            if self.trend_mode:
+                raise ValueError('Cannot group by dimension when trend_mode is True')
             self.group_by.append(dimension_filter.dimension)
 
     def add_group_by(self, dimension):
+        if self.trend_mode:
+            raise ValueError('Cannot group by dimension when trend_mode is True')
         self.group_by.append(dimension)
 
     def add_split_by(self, dimension):
@@ -146,13 +206,20 @@ class FlexibleDataSlicer:
                 'type is selected by a filter',
                 SlicerConfigErrorCode.E100,
             )
+        if self.trend_mode:
+            if not self.base_subset_filters or not self.compared_subset_filters:
+                raise SlicerConfigError(
+                    'Both base and compared subset filters must be specified when trend_mode is '
+                    'True',
+                    SlicerConfigErrorCode.E111,
+                )
 
     def check_params_for_data_query(self):
         """
         Extra checks to be performed before data query is run. These do not apply to other functions,
         such as getting possible dimension values.
         """
-        if not self.group_by:
+        if not self.group_by and not self.trend_mode:
             raise SlicerConfigError(
                 'At least one "group" dimension must be given to define the output columns',
                 SlicerConfigErrorCode.E106,
@@ -260,6 +327,10 @@ class FlexibleDataSlicer:
         if not self.include_all_zero_rows:
             # total is added in _prepare_annotations and is a sum of all the value columns
             qs = qs.filter(_total__gt=0)
+        elif self.trend_mode:
+            # in trend mode, we need to filter out rows where both base and compared are zero
+            # even if include_all_zero_rows is True
+            qs = qs.exclude(base=0, compared=0)
         return qs
 
     def _primary_dimension_filter(self) -> dict:
@@ -272,28 +343,55 @@ class FlexibleDataSlicer:
     def _prepare_annotations(
         self, max_number=100, accesslog_prefix='relevant_accesslogs__'
     ) -> dict:
-        gb_query = self.get_possible_groups_queryset()
-        if not gb_query:
-            return {
-                'total': Coalesce(Sum(f'{accesslog_prefix}value'), 0),
-                '_total': Coalesce(Sum(f'{accesslog_prefix}value'), 0),
+        if self.trend_mode:
+
+            def getQ(subset_filters: List[DimensionFilter]):
+                return reduce(
+                    operator.and_,
+                    (
+                        Q(**extend_query_filter(f.query_params(), accesslog_prefix))
+                        for f in subset_filters
+                    ),
+                )
+
+            def coal_sum(sum_filter):
+                return Coalesce(Sum(f'{accesslog_prefix}value', filter=sum_filter), 0)
+
+            annotations = {
+                self.COL_BASE: coal_sum(getQ(self.base_subset_filters)),
+                self.COL_COMPARED: coal_sum(getQ(self.compared_subset_filters)),
+                # For trend mode, we use the base as the total because total is used to determine
+                # if the row will be included in when `include_all_zero_rows` is True.
+                # We want to influence if rows with starting zero usage are included or not
+                # because these rows generate infinite relative difference which may be
+                # undesired in some cases
+                self.COL_TOTAL: coal_sum(getQ(self.base_subset_filters)),
+                self.COL_DIFF: F('compared') - F('base'),
+                self.COL_REL_DIFF: (1.0 * F('compared') - F('base')) / NullIf(F('base'), 0),
             }
-        if gb_query.count() > max_number:
-            raise SlicerConfigError(
-                f'There are too many ({gb_query.count()}) possible groups, please refine '
-                f'you configuration',
-                SlicerConfigErrorCode.E101,
-                details={'group_count': gb_query.count()},
-            )
-        if gb_query.count() == 0:
-            return {}
-        # we have some group_by values, but not too many
-        annotations = {}
-        for group in gb_query:
-            key = self._group_dict_to_group_key(group)
-            filters = {f'{accesslog_prefix}{dim}': group[dim] for dim in self.group_by}
-            annotations[key] = Coalesce(Sum(f'{accesslog_prefix}value', filter=Q(**filters)), 0)
-            annotations['_total'] = Coalesce(Sum(f'{accesslog_prefix}value'), 0)
+        else:
+            gb_query = self.get_possible_groups_queryset()
+            if not gb_query:
+                return {
+                    'total': Coalesce(Sum(f'{accesslog_prefix}value'), 0),
+                    self.COL_TOTAL: Coalesce(Sum(f'{accesslog_prefix}value'), 0),
+                }
+            if gb_query.count() > max_number:
+                raise SlicerConfigError(
+                    f'There are too many ({gb_query.count()}) possible groups, please refine '
+                    f'you configuration',
+                    SlicerConfigErrorCode.E101,
+                    details={'group_count': gb_query.count()},
+                )
+            if gb_query.count() == 0:
+                return {}
+            # we have some group_by values, but not too many
+            annotations = {}
+            for group in gb_query:
+                key = self._group_dict_to_group_key(group)
+                filters = {f'{accesslog_prefix}{dim}': group[dim] for dim in self.group_by}
+                annotations[key] = Coalesce(Sum(f'{accesslog_prefix}value', filter=Q(**filters)), 0)
+                annotations[self.COL_TOTAL] = Coalesce(Sum(f'{accesslog_prefix}value'), 0)
         self._annotations = annotations
         return annotations
 
@@ -536,6 +634,10 @@ class FlexibleDataSlicer:
                 else:
                     obs.append(prefix + ob)
                     dealt_with = True
+            elif self.trend_mode and ob in self.TREND_MODE_COLS:
+                # implicit columns created for period-over-period
+                obs.append(prefix + ob)
+                dealt_with = True
             elif ob == self.primary_dimension and not ob.startswith('date'):
                 if ob == 'target':
                     # title does not have `short_name`, just `name`
@@ -604,7 +706,14 @@ class FlexibleDataSlicer:
                     for dim, value in zip(self.split_by, part):
                         fltr = self.filter_instance(dim, value)
                         filters.update(fltr.query_params())
-                return (
+                final_annotations = self._prepare_annotations()
+                if self.trend_mode:
+                    # in trend mode, we add two columns which are based on other computed columns,
+                    # it seems that .aggregate() cannot deal with that, so we need to remove them
+                    # and compute the values in python later
+                    del final_annotations[self.COL_DIFF]
+                    del final_annotations[self.COL_REL_DIFF]
+                result = (
                     qs.filter(**self._primary_dimension_filter())
                     .annotate(
                         relevant_accesslogs=FilteredRelation(
@@ -612,8 +721,17 @@ class FlexibleDataSlicer:
                         )
                     )
                     .values('pk')
-                    .aggregate(**self._prepare_annotations())
+                    .aggregate(**final_annotations)
                 )
+                if self.trend_mode:
+                    # compute the two columns that were removed above
+                    result[self.COL_DIFF] = result[self.COL_COMPARED] - result[self.COL_BASE]
+                    result[self.COL_REL_DIFF] = (
+                        (result[self.COL_DIFF] / result[self.COL_BASE])
+                        if result[self.COL_BASE]
+                        else None
+                    )
+                return result
             raise ValueError('Remainder can only be computed when `tag_roll_up` is active')
         # the following will happen if the primary dimension is not a foreign key
         # and thus cannot be one of the taggable models (Organization, Platform, Title)
@@ -712,7 +830,7 @@ class FlexibleDataSlicer:
             field, _modifier = AccessLog.get_dimension_field(dimension)
             if isinstance(value, datetime.date):
                 # specific date means we should only allow the one month
-                return filter_class(field.name, value, value)
+                return filter_class(field.name, start=value, end=value)
             if type(value) is int:
                 # we treat int in a special way as the whole year with that number
                 value = {'start': f'{value}-01-01', 'end': f'{value}-12-31'}
@@ -748,6 +866,22 @@ class FlexibleDataSlicer:
         groups = parse_b64json(groups) if groups else []
         for group in groups:
             slicer.add_group_by(group)
+        # trend mode
+        if trend_mode := to_bool(params.get('trend_mode')):
+            slicer.trend_mode = trend_mode
+
+            def make_filters(params_name):
+                if filters := params.get(params_name):
+                    filters = parse_b64json(filters)
+                    if 'date' in filters:
+                        return [cls.filter_instance('date', filters['date'])]
+
+            slicer.base_subset_filters = (
+                make_filters('base_subset_filters') or slicer.base_subset_filters
+            )
+            slicer.compared_subset_filters = (
+                make_filters('compared_subset_filters') or slicer.compared_subset_filters
+            )
         # split by
         splits = params.get('split_by')
         splits = parse_b64json(splits) if splits else []
@@ -759,6 +893,8 @@ class FlexibleDataSlicer:
         # extra stuff
         # the zero_rows value should be recoded to python bool, but we want to make sure
         slicer.include_all_zero_rows = to_bool(params.get('zero_rows', ''))
+        slicer.include_row_totals = to_bool(params.get('row_totals', ''))
+        slicer.include_col_totals = to_bool(params.get('col_totals', ''))
         slicer.tag_roll_up = to_bool(params.get('tag_roll_up', ''))
         slicer.tag_class = params.get('tag_class')
         slicer.show_untagged_remainder = to_bool(params.get('show_untagged_remainder', ''))
@@ -778,16 +914,7 @@ class FlexibleDataSlicer:
         # filters
         filters = params.get('filters', [])
         for fltr in filters:
-            dim = fltr['dimension']
-            if 'tag_ids' in fltr:
-                dim_filter = TagDimensionFilter(dim, fltr['tag_ids'])
-            else:
-                filter_class = cls.filter_class(dim)
-                if filter_class is DateDimensionFilter:
-                    dim_filter = filter_class(dim, fltr['start'], fltr['end'])
-                else:
-                    dim_filter = filter_class(dim, fltr['values'])
-            slicer.add_filter(dim_filter)
+            slicer.add_filter(cls._config_dict_to_filter(fltr))
         # groups
         slicer.group_by = params.get('group_by', [])
         # split by
@@ -796,10 +923,35 @@ class FlexibleDataSlicer:
         slicer.order_by = params.get('order_by', [])
         # extra stuff
         slicer.include_all_zero_rows = params.get('zero_rows', False)
+        slicer.include_row_totals = params.get('row_totals', False)
+        slicer.include_col_totals = params.get('col_totals', False)
         slicer.tag_roll_up = params.get('tag_roll_up', False)
         slicer.tag_class = params.get('tag_class')
         slicer.show_untagged_remainder = params.get('show_untagged_remainder', False)
+        # trend mode
+        slicer.trend_mode = params.get('trend_mode', False)
+        if slicer.trend_mode:
+            slicer.base_subset_filters = [
+                cls._config_dict_to_filter(fltr) for fltr in params.get('base_subset_filters', [])
+            ]
+            slicer.compared_subset_filters = [
+                cls._config_dict_to_filter(fltr)
+                for fltr in params.get('compared_subset_filters', [])
+            ]
         return slicer
+
+    @classmethod
+    def _config_dict_to_filter(cls, fltr: dict) -> DimensionFilter:
+        dim = fltr['dimension']
+        if 'tag_ids' in fltr:
+            dim_filter = TagDimensionFilter(dim, fltr['tag_ids'])
+        else:
+            filter_class = cls.filter_class(dim)
+            if filter_class is DateDimensionFilter:
+                dim_filter = filter_class(dim, fltr['start'], fltr['end'])
+            else:
+                dim_filter = filter_class(dim, fltr['values'])
+        return dim_filter
 
     def filter_to_str(self, fltr):
         """
@@ -833,6 +985,7 @@ class SlicerConfigErrorCode(Enum):
     E108 = "E108"
     E109 = "E109"
     E110 = "E110"
+    E111 = "E111"
 
     def __str__(self):
         return self.value
@@ -853,6 +1006,7 @@ class SlicerConfigError(Exception):
     E108: Part is not specified and `split_by` is used.
     E109: Part specification is incompatible with `split_by`.
     E110: Part was specified without `split_by` being active.
+    E111: Only date filters are supported for subsets in trend mode.
     """
 
     def __init__(self, message, code: SlicerConfigErrorCode, *args, details=None, **kwargs):

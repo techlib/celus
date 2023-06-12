@@ -4,6 +4,13 @@ import getMonth from "date-fns/getMonth";
 import parseISO from "date-fns/parseISO";
 import isValid from "date-fns/isValid";
 import addMonths from "date-fns/addMonths";
+import lastDayOfYear from "date-fns/lastDayOfYear";
+import isEqual from "lodash/isEqual";
+import startOfMonth from "date-fns/startOfMonth";
+import endOfMonth from "date-fns/endOfMonth";
+import endOfDay from "date-fns/endOfDay";
+import startOfYear from "date-fns/startOfYear";
+import addYears from "date-fns/addYears";
 
 function isoDateFormat(date) {
   return format(date, "yyyy-MM-dd");
@@ -13,8 +20,9 @@ function ymDateFormat(date) {
   return format(date, "yyyy-MM");
 }
 
-function ymDateParse(ymdate) {
-  return parseISO(ymdate, "yyyy-MM", Date());
+function ymDateParse(ymdate, isEndOfMonth = false) {
+  let out = parseISO(ymdate, "yyyy-MM", Date());
+  return isEndOfMonth ? endOfMonth(out) : out;
 }
 
 function ymFirstDay(ymdate) {
@@ -75,6 +83,66 @@ function monthsBetween(start, end) {
   return months;
 }
 
+function smartDateParse(date, isEndOfMonth = false) {
+  if (typeof date === "string") {
+    return date.length === 7 ? ymDateParse(date, isEndOfMonth) : parseISO(date);
+  }
+  return date;
+}
+
+function anyDateToYm(date) {
+  return ymDateFormat(smartDateParse(date));
+}
+
+function smartMonthRange({ start, end }) {
+  start = startOfMonth(smartDateParse(start));
+  end = smartDateParse(end, true);
+  if (
+    start.getMonth() === 0 &&
+    isEqual(endOfDay(lastDayOfYear(end)), endOfDay(end))
+  ) {
+    if (getYear(start) === getYear(end)) {
+      return `${getYear(start)}`;
+    } else {
+      return `${getYear(start)} - ${getYear(end)}`;
+    }
+  }
+  let ymStart = ymDateFormat(start);
+  let ymEnd = ymDateFormat(end);
+  if (ymStart === ymEnd) {
+    return ymStart;
+  }
+  return `${ymStart} - ${ymEnd}`;
+}
+
+function lastFinishedMonth() {
+  // the last month which is already over and therefore SUSHI data can be
+  // harvested for it
+  return ymDateFormat(addMonths(new Date(), -1));
+}
+
+function lastCoveredMonth() {
+  return ymDateFormat(lastCoveredMonthDate());
+}
+
+function lastCoveredMonthDate() {
+  // the month before the last one - for that month SUSHI data can be
+  // expected to already be available and thus it makes sense to use it
+  // in computations and coverage reports
+  return startOfMonth(addMonths(new Date(), -2));
+}
+
+function lastCoveredYearDate() {
+  // the last whole year for which we can expect to have SUSHI data
+  return startOfYear(addYears(lastCoveredMonthDate(), -1));
+}
+
+function counterGuaranteedPeriodStartDate() {
+  // the start date for the COUNTER guaranteed period where data should
+  // be available for all months
+  return startOfYear(addYears(new Date(), -2));
+}
+
 export {
   isoDateFormat,
   monthFirstDay,
@@ -87,4 +155,12 @@ export {
   isoDateTimeFormat,
   isoDateTimeFormatSpans,
   monthsBetween,
+  smartDateParse,
+  smartMonthRange,
+  anyDateToYm,
+  lastFinishedMonth,
+  lastCoveredMonth,
+  lastCoveredMonthDate,
+  lastCoveredYearDate,
+  counterGuaranteedPeriodStartDate,
 };

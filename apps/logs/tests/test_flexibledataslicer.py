@@ -672,6 +672,65 @@ class TestFlexibleDataSlicerComputations:
         data = remap_row_keys_to_short_names(remainder, Tag, [Metric])
         assert data == {'m1': expected}
 
+    def test_trend_mode_month_over_month(self, flexible_slicer_test_data, show_zero):
+        """
+        Tests that the year-over-year calculation works correctly
+
+        Primary dimension: platform
+        DimensionFilter: metric, report_type
+        """
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', '2019-12-01', '2019-12-31')],
+            compared_subset_filters=[DateDimensionFilter('date', '2020-01-01', '2020-03-31')],
+            include_all_zero_rows=show_zero,
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('metric', flexible_slicer_test_data['metrics'][0])
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('report_type', flexible_slicer_test_data['report_types'][0])
+        )
+        slicer.order_by = ['platform__pk']
+        data = list(slicer.get_data())
+        assert [
+            {'base': 9126, 'compared': 27864, 'diff': 18738, 'reldiff': 18738 / 9126},
+            {'base': 12042, 'compared': 36612, 'diff': 24570, 'reldiff': 24570 / 12042},
+            {'base': 14958, 'compared': 45360, 'diff': 30402, 'reldiff': 30402 / 14958},
+        ] == [
+            {
+                'base': rec['base'],
+                'compared': rec['compared'],
+                'diff': rec['diff'],
+                'reldiff': rec['reldiff'],
+            }
+            for rec in data
+        ]
+
+    @pytest.mark.parametrize('order_by', ('diff', 'reldiff', 'base', 'compared'))
+    @pytest.mark.parametrize('desc', (True, False), ids=('desc', 'asc'))
+    def test_trend_mode_order_by(self, flexible_slicer_test_data, order_by, desc):
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', '2019-12-01', '2019-12-31')],
+            compared_subset_filters=[DateDimensionFilter('date', '2020-01-01', '2020-03-31')],
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('metric', flexible_slicer_test_data['metrics'][0])
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('report_type', flexible_slicer_test_data['report_types'][0])
+        )
+        slicer.order_by = [('-' if desc else '') + order_by]
+        data = list(slicer.get_data())
+        assert len(data) == 3
+        if desc:
+            assert data[0][order_by] > data[1][order_by] > data[2][order_by]
+        else:
+            assert data[0][order_by] < data[1][order_by] < data[2][order_by]
+
 
 @pytest.mark.clickhouse
 @pytest.mark.usefixtures('clickhouse_on_off')
@@ -1346,6 +1405,36 @@ class TestFlexibleDataSimpleCSVExporter:
                 org_names = {row[1] for row in data[11 : len(data)]}  # noqa: E203
                 assert org_names == {org.name for org in Organization.objects.all()}
 
+    def test_metadata_trend_mode(self, flexible_slicer_test_data):
+        """
+        Primary dimension: platform
+        Group by: trend-mode
+        """
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', start='2020-01-01', end='2020-01-31')],
+            compared_subset_filters=[
+                DateDimensionFilter('date', start='2020-02-01', end='2020-02-29')
+            ],
+        )
+        report_type = flexible_slicer_test_data['report_types'][0]
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', report_type))
+
+        exporter = FlexibleDataZipCSVExporter(slicer)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        with ZipFile(out, 'r') as zipfile:
+            with zipfile.open('_metadata.csv', 'r') as metafile:
+                decoder = codecs.getreader('utf-8')(metafile)
+                reader = csv.reader(decoder)
+                data = list(reader)
+                assert data[5] == ['Split by', '-']
+                assert data[6] == ['Rows', 'Platform']
+                assert data[7] == ['Columns', 'Trend analysis: 2020-01 vs 2020-02']
+                assert data[8] == ['Applied filters', f'Report type: {report_type.name}']
+
 
 @pytest.mark.django_db
 class TestFilters:
@@ -1354,9 +1443,40 @@ class TestFilters:
         fltr = ForeignKeyDimensionFilter('report_type', report_type)
         assert str(fltr) == f'report_type: {report_type.name}'
 
-    def test_date_filter(self):
-        fltr = DateDimensionFilter('date', '2020-10-01', '2021-03')
-        assert str(fltr) == 'date: 2020-10-01 - 2021-03'
+    @pytest.mark.parametrize(
+        ['start', 'end', 'expected'],
+        [
+            ('2020-10-01', '2021-03', '2020-10-01 - 2021-03-31'),
+            ('2020-10-01', '2020-10-01', '2020-10-01 - 2020-10-01'),
+            ('2020-10', '2020-10', '2020-10-01 - 2020-10-31'),
+            ('2020-01-01', '2020-01-01', '2020-01-01 - 2020-01-01'),
+            ('2020-01-01', '2020-12-31', '2020-01-01 - 2020-12-31'),
+            ('2020-01', '2020-12', '2020-01-01 - 2020-12-31'),
+            ('2020-01-01', '2020-12-01', '2020-01-01 - 2020-12-01'),
+            ('2020-01-01', '2021-12-31', '2020-01-01 - 2021-12-31'),
+        ],
+    )
+    def test_date_filter(self, start, end, expected):
+        fltr = DateDimensionFilter('date', start, end)
+        assert str(fltr) == f'date: {expected}'
+
+    @pytest.mark.parametrize(
+        ['start', 'end', 'expected'],
+        [
+            ('2020-10-01', '2021-03', '2020-10 - 2021-03'),
+            ('2020-10-01', '2020-10-01', '2020-10'),
+            ('2020-10', '2020-10', '2020-10'),
+            ('2020-01-01', '2020-01-01', '2020-01'),
+            ('2020-01-01', '2020-12-31', '2020'),
+            ('2020-01', '2020-12', '2020'),
+            ('2020-01-01', '2020-12-01', '2020-01 - 2020-12'),
+            ('2020-01-01', '2021-12-31', '2020 - 2021'),
+            ('2020-01', '2021-12', '2020 - 2021'),
+        ],
+    )
+    def test_date_filter_smart_str(self, start, end, expected):
+        fltr = DateDimensionFilter('date', start, end)
+        assert fltr.smart_str() == expected
 
     def test_explicit_dim_filter(self, flexible_slicer_test_data):
         texts = flexible_slicer_test_data['dimension_values'][0][1:]
@@ -1387,7 +1507,7 @@ class TestFiltersInSlicerContext:
 
     def test_date_filter(self):
         fltr = DateDimensionFilter('date', '2020-10-01', '2021-03')
-        assert self._slicer_filter_to_str(fltr) == 'Date: 2020-10-01 - 2021-03'
+        assert self._slicer_filter_to_str(fltr) == 'Date: 2020-10-01 - 2021-03-31'
 
     def test_explicit_dim_filter(self, flexible_slicer_test_data):
         texts = flexible_slicer_test_data['dimension_values'][0][1:]
@@ -1428,11 +1548,9 @@ class TestFlexibleDataExcelExporter:
         assert FlexibleDataExcelExporter.cleanup_sheetname(name_in) == name_out
 
     @pytest.mark.parametrize('include_charts', [True, False])
-    def test_org_sum_by_platform(self, flexible_slicer_test_data, include_charts):
+    def test_include_charts(self, flexible_slicer_test_data, include_charts):
         """
-        Primary dimension: organization
-        Group by: platform
-        DimensionFilter:
+        Test that the `include_charts` parameter works as expected
         """
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
@@ -1447,11 +1565,3 @@ class TestFlexibleDataExcelExporter:
             assert workbook.sheetnames == ['metadata', 'report', 'Chart - report']
         else:
             assert workbook.sheetnames == ['metadata', 'report']
-        sheet = workbook['report']
-        assert [[cell.value for cell in row] for row in sheet.rows] == [
-            ['Organization', 'Platform 1', 'Platform 2', 'Platform 3'],
-            ['Organization 1', 519318, 717606, 915894],
-            ['Organization 2', 1114182, 1312470, 1510758],
-            ['Organization 3', 1709046, 1907334, 2105622],
-            ['Total', '=SUM(B2:B4)', '=SUM(C2:C4)', '=SUM(D2:D4)'],
-        ]

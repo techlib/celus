@@ -16,6 +16,7 @@ cs:
         :label="textStart"
         :allowed-months="allowedStartMonths"
         :disabled="disabled"
+        :clearable="clearable"
       ></MonthEntry>
     </span>
     <MonthEntry
@@ -23,6 +24,7 @@ cs:
       :label="textEnd"
       :allowed-months="allowedEndMonths"
       :disabled="disabled"
+      :clearable="clearable"
     ></MonthEntry>
   </div>
 </template>
@@ -39,6 +41,7 @@ export default {
     startLabel: { required: false, type: String, default: null },
     endLabel: { required: false, type: String, default: null },
     disabled: { required: false, type: Boolean, default: false },
+    clearable: { required: false, type: Boolean, default: true },
   },
 
   data() {

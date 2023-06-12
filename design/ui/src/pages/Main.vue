@@ -196,4 +196,14 @@ ul.no-bullets {
   border: solid 4px transparent;
   border-radius: 6px;
 }
+
+ul.unobtrusive-bullets {
+  list-style-type: square;
+  padding: 0 0 0 1rem;
+  margin: 0;
+}
+
+th.align-top {
+  vertical-align: top;
+}
 </style>

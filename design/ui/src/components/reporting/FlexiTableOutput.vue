@@ -11,6 +11,8 @@ en:
   remainder: Remainder without any tags
   no_data: No data matching the current setup was found.
   row_total: Row total
+  change: Change
+  change_percent: Change %
 
 cs:
   detail: Detail
@@ -22,6 +24,8 @@ cs:
   remainder: Zbytek bez přiřazeného štítku
   no_data: Nebyla nalezena žádná data odpovídající aktuálnímu nastavení.
   row_total: Celkem
+  change: Změna
+  change_percent: Změna %
 </i18n>
 
 <template>
@@ -49,9 +53,9 @@ cs:
               v-slot="{ active, toggle }"
               :value="item.id"
             >
-              <v-btn @click="toggle" :input-value="active" text outlined tile>{{
-                item.text
-              }}</v-btn>
+              <v-btn @click="toggle" :input-value="active" text outlined tile
+                >{{ item.text }}
+              </v-btn>
             </v-slide-item>
           </v-slide-group>
           <!-- if there are too many parts, use a select -->
@@ -69,8 +73,12 @@ cs:
 
         <div class="ps-4">
           <v-btn-toggle v-model="view" dense>
-            <v-btn value="table"><v-icon small>fa-table</v-icon></v-btn>
-            <v-btn value="chart"><v-icon small>fa-chart-bar</v-icon></v-btn>
+            <v-btn value="table">
+              <v-icon small>fa-table</v-icon>
+            </v-btn>
+            <v-btn value="chart">
+              <v-icon small>fa-chart-bar</v-icon>
+            </v-btn>
           </v-btn-toggle>
         </div>
       </div>
@@ -105,6 +113,13 @@ cs:
           />
         </template>
 
+        <template #item.reldiff="{ item }">
+          <span>
+            {{ formatPercentage(item.reldiff) }}
+            <TrendArrow :diff="item.reldiff" />
+          </span>
+        </template>
+
         <template
           #body.append="{ headers }"
           v-if="remainderVisible && (remainder || loadingRemainder)"
@@ -123,7 +138,15 @@ cs:
                 <v-icon small>fas fa-spinner fa-spin</v-icon>
               </span>
               <span v-else-if="remainder">
-                {{ formatInteger(remainder[header.value]) }}
+                {{
+                  header.type === "float"
+                    ? formatPercentage(remainder[header.value])
+                    : formatInteger(remainder[header.value])
+                }}
+                <TrendArrow
+                  v-if="header.value === 'reldiff'"
+                  :diff="remainder.reldiff"
+                />
               </span>
             </td>
           </tr>
@@ -181,15 +204,17 @@ import cancellation from "@/mixins/cancellation";
 import TagChip from "@/components/tags/TagChip";
 import ReportingChart from "@/components/reporting/ReportingChart";
 import tags from "@/mixins/tags";
+import TrendArrow from "@/components/reporting/TrendArrow.vue";
+import { smartMonthRange } from "@/libs/dates";
 
 export default {
   name: "FlexiTableOutput",
-  components: { TagChip, ReportingChart },
+  components: { TrendArrow, TagChip, ReportingChart },
   mixins: [translators, cancellation, tags],
 
   props: {
     readonly: { default: false, type: Boolean },
-    showTotals: { default: true, type: Boolean },
+    showRowTotals: { default: false, type: Boolean },
     // if the organization and selected dates should be used from the UI,
     // and not from the report, set this to true
     contextOverride: { default: false, type: Boolean },
@@ -206,7 +231,7 @@ export default {
       loadingRemainder: false,
       dataComputing: false,
       translatorsUpdating: false,
-      headersFromData: [],
+      extractedHeaders: [],
       options: { itemsPerPage: this.contextOverride ? -1 : 20, page: 1 },
       titleColumns: {
         issn: true,
@@ -253,15 +278,42 @@ export default {
       }
       return titleHeaders;
     },
+    headersFromData() {
+      if (this.report.trendMode) {
+        const baseHeader = smartMonthRange(this.report.baseSubsetDateRange);
+        const comparedHeader = smartMonthRange(
+          this.report.comparedSubsetDateRange
+        );
+        return [
+          { text: baseHeader, value: "base", align: "right" },
+          {
+            text: comparedHeader,
+            value: "compared",
+            align: "right",
+          },
+          { text: this.$t("change"), value: "diff", align: "right" },
+          {
+            text: this.$t("change_percent"),
+            value: "reldiff",
+            align: "right",
+            type: "float",
+          },
+        ];
+      }
+      return this.extractedHeaders;
+    },
     tableHeaders() {
       if (this.report) {
         let headers = [];
-        if (this.showTotals) {
+        if (
+          (this.showRowTotals || this.report?.includeTotals) &&
+          !this.report.trendMode
+        ) {
           headers.push({
             text: this.$t("row_total"),
             value: "_total",
             sortable: false,
-            align: "end",
+            align: "right",
           });
         }
         this.headersFromData.forEach((item) =>
@@ -323,15 +375,20 @@ export default {
       return "";
     },
     chartSeries() {
-      return Object.fromEntries(
-        this.headersFromData.map((item) => [item.value, item.text])
-      );
+      let headers = this.headersFromData;
+      if (this.report.trendMode) {
+        headers = headers.filter(
+          (item) => item.value !== "diff" && item.value !== "reldiff"
+        );
+      }
+      return Object.fromEntries(headers.map((item) => [item.value, item.text]));
     },
     formattedData() {
       return this.dataToShow.map((item) => {
         let newItem = { ...item };
         for (let key of Object.keys(newItem)) {
-          if (key.startsWith("grp-") || key === "_total") {
+          const header = this.tableHeaders.find((item) => item.value === key);
+          if (header?.align === "right" && header?.type !== "float") {
             newItem[key] = formatInteger(newItem[key]);
           }
         }
@@ -371,6 +428,7 @@ export default {
   methods: {
     ...mapActions(["showSnackbar"]),
     formatInteger,
+    smartMonthRange,
     async updateOutput(report, clean = true) {
       this.report = report;
 
@@ -619,7 +677,7 @@ export default {
         return newItem;
       });
       // extract the header row data
-      let headersFromData = [];
+      let extractedHeaders = [];
       if (this.data.length > 0) {
         for (let key of Object.keys(this.data[0]).filter(
           (item) => item.substr(0, 4) === "grp-"
@@ -641,10 +699,10 @@ export default {
             i++;
           }
           let text = texts.join(" / ");
-          headersFromData.push({ text: text, value: key, align: "right" });
+          extractedHeaders.push({ text: text, value: key, align: "right" });
         }
       }
-      this.headersFromData = headersFromData.sort((a, b) =>
+      this.extractedHeaders = extractedHeaders.sort((a, b) =>
         a.text.localeCompare(b.text)
       );
     },
@@ -659,6 +717,16 @@ export default {
     },
     updateSize() {
       this.baseWidth = this.$refs.base.clientWidth;
+    },
+    formatPercentage(number) {
+      if (number === null) {
+        return "∞%";
+      }
+      return number.toLocaleString(this.$i18n.locale, {
+        style: "percent",
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      });
     },
   },
 

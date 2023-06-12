@@ -1,7 +1,9 @@
 from datetime import timedelta
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 
+import openpyxl
 import pytest
 from core.logic.serialization import b64json
 from django.urls import reverse
@@ -67,6 +69,48 @@ class TestFlexibleExportApi:
         assert resp.status_code == 201
         export = FlexibleDataExport.objects.get(pk=resp.json()['pk'])
         assert export.owner == admin_user
+
+    def test_create_trend_mode(self, flexible_slicer_test_data, admin_client):
+        with patch('export.views.process_flexible_export_task') as export_task:
+            resp = admin_client.post(
+                reverse('flexible-export-list'),
+                {
+                    'primary_dimension': 'platform',
+                    'trend_mode': True,
+                    'base_subset_filters': b64json(
+                        {'date': {'start': '2020-01', 'end': '2020-01'}}
+                    ),
+                    'compared_subset_filters': b64json(
+                        {'date': {'start': '2020-02', 'end': '2020-02'}}
+                    ),
+                    'format': 'xlsx',
+                    'include_tags': False,
+                },
+                content_type='application/json',
+            )
+            export_task.apply_async.assert_called_once()
+        assert resp.status_code == 201
+        export = FlexibleDataExport.objects.get(pk=resp.json()['pk'])
+        assert export.export_params['trend_mode'] is True
+        assert type(export.export_params['base_subset_filters']) is list
+        assert type(export.export_params['compared_subset_filters']) is list
+        assert len(export.export_params['base_subset_filters']) == 1
+        assert len(export.export_params['compared_subset_filters']) == 1
+        # test the structure of the content of the export
+        out = BytesIO()
+        export.write_data(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        sheet = workbook['report']
+        rows = list(sheet.rows)
+        assert [cell.value for cell in rows[0]] == [
+            'Platform',
+            'Tags',
+            '2020-01',
+            '2020-02',
+            'Change',
+            'Change %',
+        ]
 
     def test_create_with_date_filter(self, admin_client, admin_user):
         with patch('export.views.process_flexible_export_task') as export_task:

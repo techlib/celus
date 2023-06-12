@@ -178,6 +178,7 @@ cs:
 import { mapActions } from "vuex";
 import axios from "axios";
 import {
+  lastFinishedMonth,
   monthFirstDay,
   monthLastDay,
   ymDateFormat,
@@ -329,7 +330,7 @@ export default {
 
   mounted() {
     if (this.startDate === null) {
-      this.startDate = ymDateFormat(addMonths(new Date(), -1));
+      this.startDate = lastFinishedMonth();
     }
     if (this.endDate === null) {
       this.endDate = this.startDate;

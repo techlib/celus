@@ -1,11 +1,18 @@
-from io import BytesIO
+import csv
+from io import BytesIO, StringIO, TextIOWrapper
 from zipfile import ZipFile
 
 import openpyxl
 import pytest
 from export.enums import FileFormat
 from export.models import FlexibleDataExport
+from logs.logic.reporting.export import (
+    FlexibleDataExcelExporter,
+    FlexibleDataSimpleCSVExporter,
+    FlexibleDataZipCSVExporter,
+)
 from logs.logic.reporting.filters import (
+    DateDimensionFilter,
     ExplicitDimensionFilter,
     ForeignKeyDimensionFilter,
     TagDimensionFilter,
@@ -24,7 +31,7 @@ def slicer(flexible_slicer_test_data):
     """
     creates moderately complex `FlexibleDataSlicer` instance
     """
-    slicer = FlexibleDataSlicer(primary_dimension='platform')
+    slicer = FlexibleDataSlicer(primary_dimension='platform', include_row_totals=True)
     texts = flexible_slicer_test_data['dimension_values'][0][:2]
     report_type = flexible_slicer_test_data['report_types'][0]
     dim1_ids = DimensionText.objects.filter(text__in=texts).values_list('pk', flat=True)
@@ -100,12 +107,12 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer2, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Metric,Row total,A / Platform 1,A / Platform 2,A / Platform 3,B / Platform 1,'
+            'Metric,A / Platform 1,A / Platform 2,A / Platform 3,B / Platform 1,'
             'B / Platform 2,B / Platform 3',
-            'Metric 1,97200,12294,16182,20070,12330,16218,20106',
-            'Metric 2,104976,13590,17478,21366,13626,17514,21402',
-            'Metric 3,112752,14886,18774,22662,14922,18810,22698',
-            'MS,0,0,0,0,0,0,0',
+            'Metric 1,12294,16182,20070,12330,16218,20106',
+            'Metric 2,13590,17478,21366,13626,17514,21402',
+            'Metric 3,14886,18774,22662,14922,18810,22698',
+            'MS,0,0,0,0,0,0',
         ]
 
     @pytest.mark.parametrize('show_remainder', [True, False])
@@ -123,12 +130,12 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         expected = [
-            'Tag,Row total,Metric 1,Metric 2,Metric 3',
-            'Tag 1,311364,96012,103788,111564',
-            'Tag 2,161514,49950,53838,57726',
+            'Tag,Metric 1,Metric 2,Metric 3',
+            'Tag 1,96012,103788,111564',
+            'Tag 2,49950,53838,57726',
         ]
         if show_remainder:
-            expected += ['-- untagged remainder --,0,0,0,0']
+            expected += ['-- untagged remainder --,0,0,0']
         assert data.splitlines() == expected
         if show_remainder:
             # try untagging and recomputing
@@ -136,9 +143,9 @@ class TestFlexibleDataExport:
             export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
             data = export_output(export)
             assert data.splitlines() == [
-                'Tag,Row total,Metric 1,Metric 2,Metric 3',
-                'Tag 1,311364,96012,103788,111564',
-                '-- untagged remainder --,161514,49950,53838,57726',
+                'Tag,Metric 1,Metric 2,Metric 3',
+                'Tag 1,96012,103788,111564',
+                '-- untagged remainder --,49950,53838,57726',
             ]
 
     def test_create_output_file_with_tag_filter(
@@ -156,9 +163,9 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         assert data.splitlines() == [
-            'Title/Database,ISSN,EISSN,ISBN,Tags,Row total,Metric 1,Metric 2,Metric 3',
-            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag1.full_name},153738,47358,51246,55134',
-            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag1.full_name},157626,48654,52542,56430',
+            'Title/Database,ISSN,EISSN,ISBN,Tags,Metric 1,Metric 2,Metric 3',
+            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag1.full_name},47358,51246,55134',
+            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag1.full_name},48654,52542,56430',
         ]
 
     def test_tagged_output_query_count(
@@ -236,3 +243,216 @@ class TestFlexibleDataExport:
                 ), 'XLSX should contain [Content_Types].xml'
                 workbook = openpyxl.load_workbook(export.output_file.file)
                 assert 'metadata' in workbook.sheetnames
+
+
+@pytest.mark.django_db
+class TestFlexibleDataExportCSV:
+    @pytest.mark.parametrize('zip_csv', [True, False])
+    @pytest.mark.parametrize('row_totals', [True, False])
+    @pytest.mark.parametrize('col_totals', [True, False])
+    def test_totals(self, flexible_slicer_test_data, row_totals, col_totals, zip_csv):
+        """
+        Tests that totals are calculated correctly
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        slicer.add_group_by('platform')
+        slicer.order_by = ['organization__name']
+        exporter_cls = FlexibleDataZipCSVExporter if zip_csv else FlexibleDataSimpleCSVExporter
+        exporter = exporter_cls(
+            slicer, include_tags=False, include_row_totals=row_totals, include_col_totals=col_totals
+        )
+        out = BytesIO() if zip_csv else StringIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        if zip_csv:
+            with ZipFile(out, 'r') as zipfile:
+                with zipfile.open('report.csv', 'r') as csvfile:
+                    rows = list(csv.reader(TextIOWrapper(csvfile)))
+        else:
+            rows = list(csv.reader(out))
+        exp = [
+            ['Organization', 'Platform 1', 'Platform 2', 'Platform 3'],
+            ['Organization 1', '519318', '717606', '915894'],
+            ['Organization 2', '1114182', '1312470', '1510758'],
+            ['Organization 3', '1709046', '1907334', '2105622'],
+        ]
+        if col_totals:
+            exp.append(['Total', '3342546', '3937410', '4532274'])
+        if row_totals:
+            exp[0].insert(1, 'Row total')
+            for i, row in enumerate(exp[1:]):
+                exp[i + 1].insert(1, str(sum(int(x) for x in row[1:])))
+        assert rows == exp
+
+    @pytest.mark.parametrize('zip_csv', [True, False])
+    @pytest.mark.parametrize('row_totals', [True, False])
+    @pytest.mark.parametrize('col_totals', [True, False])
+    def test_trend_mode(self, flexible_slicer_test_data, row_totals, col_totals, zip_csv):
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', '2019-12-01', '2019-12-31')],
+            compared_subset_filters=[DateDimensionFilter('date', '2020-01-01', '2020-03-31')],
+        )
+        slicer.order_by = ['platform__name']
+        # include_row_totals is ignored in trend mode, but we add it to test to really check
+        # that it is ignored
+        exporter_cls = FlexibleDataZipCSVExporter if zip_csv else FlexibleDataSimpleCSVExporter
+        exporter = exporter_cls(
+            slicer, include_tags=False, include_row_totals=row_totals, include_col_totals=col_totals
+        )
+        out = BytesIO() if zip_csv else StringIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        if zip_csv:
+            with ZipFile(out, 'r') as zipfile:
+                with zipfile.open('report.csv', 'r') as csvfile:
+                    rows = list(csv.reader(TextIOWrapper(csvfile)))
+        else:
+            rows = list(csv.reader(out))
+        exp = [
+            ['Platform', '2019-12', '2020-01 - 2020-03', 'Change', 'Change %'],
+            [
+                'Platform 1',
+                str(829440),
+                str(2513106),
+                str(2513106 - 829440),
+                str((2513106 - 829440) / 829440),
+            ],
+            [
+                'Platform 2',
+                str(978156),
+                str(2959254),
+                str(2959254 - 978156),
+                str((2959254 - 978156) / 978156),
+            ],
+            [
+                'Platform 3',
+                str(1126872),
+                str(3405402),
+                str(3405402 - 1126872),
+                str((3405402 - 1126872) / 1126872),
+            ],
+        ]
+        if col_totals:
+            exp.append(['Total', str(2934468), str(8877762), str(5943294), str(5943294 / 2934468)])
+        assert rows == exp
+
+
+@pytest.mark.django_db
+class TestFlexibleDataExportExcel:
+    def test_totals_as_formulas(self, flexible_slicer_test_data):
+        """
+        Primary dimension: organization
+        Group by: platform
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        slicer.add_group_by('platform')
+        slicer.order_by = ['organization__name']
+        exporter = FlexibleDataExcelExporter(
+            slicer, include_tags=False, include_charts=False, include_col_totals=True
+        )
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        assert workbook.sheetnames == ['metadata', 'report']
+        sheet = workbook['report']
+        assert [[cell.value for cell in row] for row in sheet.rows] == [
+            ['Organization', 'Platform 1', 'Platform 2', 'Platform 3'],
+            ['Organization 1', 519318, 717606, 915894],
+            ['Organization 2', 1114182, 1312470, 1510758],
+            ['Organization 3', 1709046, 1907334, 2105622],
+            ['Total', '=SUM(B2:B4)', '=SUM(C2:C4)', '=SUM(D2:D4)'],
+        ]
+
+    @pytest.mark.parametrize('include_tags', [True, False])
+    @pytest.mark.parametrize('row_totals', [True, False])
+    def test_trend_mode(self, flexible_slicer_test_data, include_tags, row_totals, admin_user):
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', '2019-12-01', '2019-12-31')],
+            compared_subset_filters=[DateDimensionFilter('date', '2020-01-01', '2020-03-31')],
+        )
+        slicer.order_by = ['platform__name']
+        # include_row_totals is ignored when trend_mode is True, but we want to check it anyway
+        exporter = FlexibleDataExcelExporter(
+            slicer,
+            report_owner=admin_user,
+            include_tags=include_tags,
+            include_charts=False,
+            include_row_totals=row_totals,
+            include_col_totals=True,
+        )
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        sheet = workbook['report']
+        exp_data = [
+            ['Platform', '2019-12', '2020-01 - 2020-03', 'Change', 'Change %'],
+            ['Platform 1', 829440, 2513106, '=C2-B2', '=(C2-B2)/B2'],
+            ['Platform 2', 978156, 2959254, '=C3-B3', '=(C3-B3)/B3'],
+            ['Platform 3', 1126872, 3405402, '=C4-B4', '=(C4-B4)/B4'],
+            ['Total', '=SUM(B2:B4)', '=SUM(C2:C4)', '=C5-B5', '=(C5-B5)/B5'],
+        ]
+        if include_tags:
+
+            def shift(text):
+                """Shifts the letters in the formula by one to the right."""
+                for letter in 'EDCBA':
+                    text = text.replace(letter, chr(ord(letter) + 1))
+                return text
+
+            exp_data[0].insert(1, 'Tags')
+            for i in range(1, 5):
+                # add None for tags
+                exp_data[i].insert(1, None)
+                # shift the rest of the columns to the right
+                exp_data[i][4] = shift(exp_data[i][4])
+                exp_data[i][5] = shift(exp_data[i][5])
+                if i == 4:
+                    exp_data[i][2] = shift(exp_data[i][2])
+                    exp_data[i][3] = shift(exp_data[i][3])
+
+        assert [[cell.value for cell in row] for row in sheet.rows] == exp_data
+
+    @pytest.mark.parametrize('include_row_totals', [True, False])
+    @pytest.mark.parametrize('include_col_totals', [True, False])
+    def test_show_totals(self, flexible_slicer_test_data, include_row_totals, include_col_totals):
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        slicer.add_group_by('platform')
+        exporter = FlexibleDataExcelExporter(
+            slicer,
+            include_charts=False,
+            include_row_totals=include_row_totals,
+            include_col_totals=include_col_totals,
+        )
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        ws = workbook['report']
+        if include_row_totals:
+            expected_output = [
+                ['Organization', 'Row total', 'Platform 1', 'Platform 2', 'Platform 3'],
+                ['Organization 1', '=SUM(C2,D2,E2)', 519318, 717606, 915894],
+                ['Organization 2', '=SUM(C3,D3,E3)', 1114182, 1312470, 1510758],
+                ['Organization 3', '=SUM(C4,D4,E4)', 1709046, 1907334, 2105622],
+            ]
+            if include_col_totals:
+                expected_output.append(
+                    ['Total', '=SUM(C5,D5,E5)', '=SUM(C2:C4)', '=SUM(D2:D4)', '=SUM(E2:E4)']
+                )
+        else:
+            expected_output = [
+                ['Organization', 'Platform 1', 'Platform 2', 'Platform 3'],
+                ['Organization 1', 519318, 717606, 915894],
+                ['Organization 2', 1114182, 1312470, 1510758],
+                ['Organization 3', 1709046, 1907334, 2105622],
+            ]
+            if include_col_totals:
+                expected_output.append(['Total', '=SUM(B2:B4)', '=SUM(C2:C4)', '=SUM(D2:D4)'])
+        assert [[cell.value for cell in row] for row in ws.rows] == expected_output
