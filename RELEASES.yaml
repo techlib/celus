@@ -1,3 +1,20 @@
+- version: 5.5.2
+  title:
+    en: Bugfix release 5.5.2
+    cs: Opravná verze 5.5.2
+  text:
+    en: |
+      - rare bug in reporting which caused some columns to be missing was fixed
+      - parsing of COUNTER 4 reports was fixed for specific edge cases
+      - the missing `Unique_Item_Requests` metric was added to the COUNTER 5 TR_J1 report view
+    cs: |
+      - byla opravena vzácná chyba v reportech, která způsobovala, že některé sloupce chyběly
+      - byl opraven parsing COUNTER 4 reportů pro specifické okrajové případy
+      - do pohledu na COUNTER 5 TR_J1 report byla přidána chybějící metrika `Unique_Item_Requests`
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+
 - version: 5.5.1
   title:
     en: Celus 5.5.1 adds improved 'Titles on multiple platforms' view to the dedicated coverage overview page and 20 new non-COUNTER platforms from 5.5.0

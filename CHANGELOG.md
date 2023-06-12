@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.2]  - 2023-06-12
+
+### Added
+
+#### Frontend
+
+- a hint that titles are filtered by tags was added to the reporting page
+- the login dialog newly accepts the email address passed as a query parameter
+
+#### Backend
+
+- a CLI script was added to export credentials for which the SUSHI URL does not match the
+  knowledgebase URL
+- simple API for secure testing of user account existence was added
+
+### Changes
+
+#### Backend
+
+- the `source` field was removed from the Dimension model
+- organization and platform names are now sanitized before being used as part of file names
+
+
+### Fixed
+
+#### Backend
+
+- parsing of COUNTER 4 reports with incomplete headers was fixed
+- the missing `Unique_Item_Requests` metric was added to the COUNTER 5 TR_J1 report
+- reporting sometimes incorrectly used materialized report which was missing the queried dimension
+  when generating list of possible dimension values
+
+
 ## [5.5.1]  - 2023-05-25
 
 ### Added
