@@ -21,6 +21,8 @@ def sync_materialized_reports(report_type_qs: Optional[QuerySet[ReportType]] = N
     qs = report_type_qs if report_type_qs is not None else ReportType.objects.all()
     for mat_rt in qs.only_materialized():
         create_materialized_accesslogs(mat_rt)
+        mat_rt.approx_record_count = AccessLog.objects.filter(report_type=mat_rt).count()
+        mat_rt.save()
 
 
 def sync_materialized_reports_for_import_batch(ib: ImportBatch):

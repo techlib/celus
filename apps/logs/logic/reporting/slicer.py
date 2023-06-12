@@ -68,6 +68,7 @@ class FlexibleDataSlicer:
         # for example Title and annotated with access log data
         # if False, the query is done against the access log model
         self._primary_dimension_query = False
+        self._used_materialized_report = None
 
     def config(self):
         return {
@@ -482,6 +483,7 @@ class FlexibleDataSlicer:
                 used_dimensions = {
                     dim.split('__')[0] for dim in query_params.keys() if dim != 'report_type_id__in'
                 }
+                used_dimensions |= set(dimensions)
                 used_dimensions = [
                     dim[:-3] if dim.endswith('_id') else dim for dim in used_dimensions
                 ]
@@ -675,6 +677,7 @@ class FlexibleDataSlicer:
             materialized_report = find_best_materialized_view(rt, dimensions)
             if materialized_report:
                 logger.info('Using materialized report: %s instead of %s', materialized_report, rt)
+                self._used_materialized_report = materialized_report
                 for fltr in self.dimension_filters:
                     if fltr.dimension == 'report_type':
                         fltr.values = [

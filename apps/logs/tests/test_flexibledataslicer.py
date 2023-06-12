@@ -8,6 +8,7 @@ import openpyxl
 import pytest
 from django.db.models import Q
 from logs.cubes import AccessLogCube, ch_backend
+from logs.logic.materialized_reports import recompute_materialized_reports
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,
     FlexibleDataSimpleCSVExporter,
@@ -20,7 +21,7 @@ from logs.logic.reporting.filters import (
     TagDimensionFilter,
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
-from logs.models import AccessLog, DimensionText, Metric
+from logs.models import AccessLog, DimensionText, Metric, ReportMaterializationSpec, ReportType
 from organizations.models import Organization
 from publications.models import Platform, Title
 from tags.logic.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
@@ -687,6 +688,30 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         slicer.add_filter(ForeignKeyDimensionFilter('metric', metrics))
         metric_data = slicer.get_possible_dimension_values('metric')
         assert metric_data['count'] == len(metrics)
+
+    @pytest.mark.parametrize(['dim', 'count'], [('dim1', 3), ('dim2', 1)])
+    def test_get_possible_dimension_values_with_materialized_report(
+        self, flexible_slicer_test_data, dim, count
+    ):
+        """
+        Test that materialized report type which does not keep the dimension for which we want
+        to get possible values is not used in the computation of possible values.
+        """
+        rt = flexible_slicer_test_data['report_types'][0]
+        ReportType.objects.create(
+            short_name='materialized',
+            materialization_spec=ReportMaterializationSpec.objects.create(
+                base_report_type=rt, keep_dim1=False, keep_dim2=False
+            ),
+        )
+        recompute_materialized_reports()
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        metrics = flexible_slicer_test_data['metrics'][1:]
+        slicer.add_filter(ForeignKeyDimensionFilter('metric', metrics))
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt))
+        metric_data = slicer.get_possible_dimension_values(dim)
+        assert slicer._used_materialized_report is None
+        assert metric_data['count'] == count
 
     @pytest.mark.parametrize('ignore_self', [True, False])
     @pytest.mark.parametrize('primary_dimension', ['platform', 'target', 'organization'])
