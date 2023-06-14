@@ -157,8 +157,11 @@ class FlexibleDataExport(ExportBase):
             if raise_exception:
                 raise e
         except Exception as e:
-            self.extra_info['error_detail'] = "We are just investigating the reason"
-            async_mail_admins('Export error', str(e))
+            error_detail = str(e)
+            if len(error_detail) > 1000:
+                error_detail = error_detail[:1000] + '...'
+            self.extra_info['error_detail'] = error_detail
+            async_mail_admins.delay('Export error', error_detail)
             self.status = self.ERROR
             if raise_exception:
                 raise e
