@@ -297,7 +297,7 @@
     </v-row>
 
     <CopyReportDialog
-      v-if="copiedReport"
+      v-if="showCopyDialog && copiedReport"
       :report="copiedReport"
       v-model="showCopyDialog"
       @copySuccess="afterCopy"

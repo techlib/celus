@@ -34,6 +34,7 @@ en:
   supported_rows: Supported rows are
   when_titles: when titles are filtered by tag or "merge by tag" is active
   tags: tags
+  name_the_report: Name the report
 
 cs:
   run_report: Spustit report
@@ -67,6 +68,7 @@ cs:
   supported_rows: Podporované řádky jsou
   when_titles: pokud jsou tituly filtrovány štítkem nebo je aktivní "sloučit podle štítku"
   tags: štítky
+  name_the_report: Zvolte název reportu
 </i18n>
 
 <template>
@@ -594,7 +596,7 @@ cs:
           <v-spacer></v-spacer>
           <v-col cols="auto" v-if="!readOnly">
             <v-btn
-              @click="saveReport"
+              @click="wantsSave ? saveReport() : (showNameEditDialog = true)"
               color="primary"
               :disabled="!(formValid && headerFormValid && hasGroupBy)"
             >
@@ -608,6 +610,14 @@ cs:
           </v-col>
         </v-row>
       </v-form>
+      <v-dialog v-model="showNameEditDialog" max-width="640px">
+        <ReportNamingWidget
+          :title="$t('name_the_report')"
+          :input-label="$t('labels.report_name')"
+          @cancel="showNameEditDialog = false"
+          @update="firstSave"
+        />
+      </v-dialog>
     </div>
 
     <v-row>
@@ -644,6 +654,7 @@ import cancellation from "@/mixins/cancellation";
 import { toBase64JSON } from "@/libs/serialization";
 import TagSelector from "@/components/tags/TagSelector";
 import TagClassSelector from "@/components/tags/TagClassSelector";
+import ReportNamingWidget from "@/components/reporting/ReportNamingWidget.vue";
 
 export default {
   name: "FlexiTableEditor",
@@ -657,6 +668,7 @@ export default {
   ],
 
   components: {
+    ReportNamingWidget,
     TagClassSelector,
     TagSelector,
     AccessLevelSelector,
@@ -705,7 +717,6 @@ export default {
       owner: null,
       ownerOrganization: null,
       edit: !this.reportId || "edit" in this.$route.query,
-      accessLevelParams: {},
       wantsSave: !!this.reportId || "wantsSave" in this.$route.query,
       showZeroRows: false,
       showTotals: true,
@@ -715,6 +726,7 @@ export default {
       loadingTags: false,
       showRemainder: false,
       setupInProgress: false, // when true, some watchers are disabled to prevent many updates
+      showNameEditDialog: false,
     };
   },
 
@@ -879,9 +891,8 @@ export default {
       rt.groupBy = this.appliedGroups.map((item) => rt.resolveDim(item));
       rt.orderBy = this.orderBy;
       rt.splitBy = this.splitBy ? rt.resolveDim(this.splitBy) : this.splitBy;
-      let access = this.accessLevelParams;
-      rt.owner = access.owner ?? null;
-      rt.ownerOrganization = access.owner_organization ?? null;
+      rt.owner = this.owner;
+      rt.ownerOrganization = this.ownerOrganization;
       rt.includeZeroRows = this.showZeroRows;
       rt.tagRollUp = this.tagRollUp;
       rt.tagClass = this.selectedTagClass?.pk;
@@ -984,18 +995,17 @@ export default {
         }
       }
     },
-    async saveReport() {
+    async firstSave(name, access) {
+      this.reportName = name;
+      this.owner = access.owner;
+      this.ownerOrganization = access.owner_organization;
       if (!this.wantsSave) {
         this.wantsSave = true;
-        this.showSnackbar({
-          content: this.$t("please_fill_in_title"),
-          color: "info",
-        });
-        this.$nextTick(() => {
-          this.$refs.titleField.focus();
-        });
-        return;
       }
+      this.showNameEditDialog = false;
+      await this.saveReport();
+    },
+    async saveReport() {
       if (!this.formValid) {
         console.debug("form is not valid");
         return;
@@ -1140,13 +1150,10 @@ export default {
       this.reportPk = settings.pk;
       this.owner = settings.owner;
       this.ownerOrganization = settings.owner_organization;
-      this.accessLevelParams = {
-        owner: this.owner,
-        owner_organization: this.ownerOrganization,
-      };
     },
-    updateAccessLevel(data) {
-      this.accessLevelParams = data;
+    updateAccessLevel({ owner, owner_organization }) {
+      this.owner = owner;
+      this.ownerOrganization = owner_organization;
     },
     async fetchAccessibleTags() {
       if (this.tagRollUpPossible) {
