@@ -1,5 +1,6 @@
 from typing import Optional, Tuple, Union
 
+from core.tasks import async_mail_admins
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
@@ -156,7 +157,8 @@ class FlexibleDataExport(ExportBase):
             if raise_exception:
                 raise e
         except Exception as e:
-            self.extra_info['error_detail'] = str(e)
+            self.extra_info['error_detail'] = "We are just investigating the reason"
+            async_mail_admins('Export error', str(e))
             self.status = self.ERROR
             if raise_exception:
                 raise e

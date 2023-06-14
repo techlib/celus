@@ -7,6 +7,7 @@ from typing import Any, Callable, List, Optional, TextIO, Tuple, Type, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import xlsxwriter
+from core.logic.debug import log_memory
 from django.conf import settings
 from django.db.models import Field, ForeignKey, Model, QuerySet
 from django.db.models.base import ModelBase
@@ -67,13 +68,17 @@ class FlexibleDataExporter(ABC):
         self.prim_dim_key = self.slicer.primary_dimension
         if self.remapped_prim_dim:
             if self.explicit_prim_dim:
+                log_memory('FlexibleDataExporter - before creating remap for explicit')
                 self.prim_dim_remap = {
                     obj['pk']: obj['text']
                     for obj in DimensionText.objects.filter(dimension=prim_dim).values('pk', 'text')
                 }
+                log_memory('FlexibleDataExporter - after creating remap for explicit')
             else:
+                log_memory('FlexibleDataExporter - before creating remap for implicit')
                 self.prim_dim_remap = self.prepare_implicit_remap(prim_dim.objects.all())
                 self.prim_dim_key = 'pk'
+                log_memory('FlexibleDataExporter - after creating remap for implicit')
         else:
             self.prim_dim_remap = {}
         self._fields = []
@@ -101,15 +106,19 @@ class FlexibleDataExporter(ABC):
 
     def prepare_implicit_remap(self, qs: QuerySet) -> dict:
         # Fallback to name->short_name (e.g. for Metric)
-        if 'name' in self.remapped_keys() and hasattr(qs.model, 'short_name'):
-            remaps = list(qs.values('pk', 'short_name', *self.remapped_keys()))
+        remapped_keys = self.remapped_keys()
+        if 'name' in remapped_keys and hasattr(qs.model, 'short_name'):
+            remaps = list(qs.values('pk', 'short_name', *remapped_keys))
             for item in remaps:
                 if not item["name"].strip():
                     item["name"] = item["short_name"] or ""
                 del item["short_name"]
-            return {obj["pk"]: obj for obj in remaps}
+            return {obj["pk"]: tuple(obj[k] for k in remapped_keys) for obj in remaps}
 
-        return {obj["pk"]: obj for obj in qs.values('pk', *self.remapped_keys())}
+        return {
+            obj["pk"]: tuple(obj[k] for k in remapped_keys)
+            for obj in qs.values('pk', *remapped_keys)
+        }
 
     @abstractmethod
     def stream_data_to_sink(
@@ -224,13 +233,15 @@ class FlexibleDataExporter(ABC):
                 )
             else:
                 # mapper converts to dict
-                remap_data = self.prim_dim_remap.get(row[self.prim_dim_key], {})
-                # remap the first column
-                remap_keys = self.remapped_keys()
-                row[self.prim_dim_key] = remap_data.get(remap_keys[0], row[self.prim_dim_key])
-                for key in remap_keys[1:]:
+                if remap_data := self.prim_dim_remap.get(row[self.prim_dim_key]):
+                    # remap the first column
+                    remap_keys = self.remapped_keys()
+                    _prim_key, *remap_keys = remap_keys
+                    prim_text, *remap_data = remap_data
+                    row[self.prim_dim_key] = prim_text
                     # remap all other keys
-                    row[key] = remap_data.get(key, '')
+                    for key, text in zip(remap_keys, remap_data):
+                        row[key] = text
         writer.writerow(row)
 
     def translate_part_key(self, part_key: [Tuple[str, Any]]):
@@ -480,7 +491,6 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                     'decorative': True,
                 },
             )
-
             # add the data itself
             if parts is None:
                 qs = self.slicer.get_data()
