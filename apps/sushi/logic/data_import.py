@@ -29,6 +29,7 @@ def import_sushi_credentials(
     records: [dict],
     prefer_knowledgebase_urls: bool = False,
     reversion_comment: Optional[str] = None,
+    default_version=5,
 ) -> dict:
     """
     Imports SUSHI credentials from a list of dicts describing the data
@@ -50,14 +51,15 @@ def import_sushi_credentials(
     platforms.update({(pl.name.lower(), source_id(pl)): pl for pl in platform_objects})
     organization_objects = Organization.objects.all()
     organizations = {org.internal_id: org for org in organization_objects}
-    organizations.update({org.short_name: org for org in organization_objects})
+    organizations.update({org.short_name.lower(): org for org in organization_objects})
+    organizations.update({org.name.lower(): org for org in organization_objects})
     for record in records:
         organization_name = record.get('organization')
         if not organization_name:
             logger.error('Organization name is missing')
             stats['error'] += 1
             continue
-        organization = organizations.get(organization_name.strip())
+        organization = organizations.get(organization_name.strip().lower())
         if not organization:
             logger.error(
                 'Unknown organization: "%s" in "%s"',
@@ -79,7 +81,7 @@ def import_sushi_credentials(
                 )
                 stats['error'] += 1
                 continue
-        version = int(record.get('version'))
+        version = int(record.get('version')) if 'version' in record else default_version
         key = (organization.pk, platform.pk, version)
         extra_attrs = record.get('extra_attrs', {})
         if extra_attrs:
