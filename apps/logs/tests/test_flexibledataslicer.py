@@ -21,7 +21,14 @@ from logs.logic.reporting.filters import (
     TagDimensionFilter,
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
-from logs.models import AccessLog, DimensionText, Metric, ReportMaterializationSpec, ReportType
+from logs.models import (
+    AccessLog,
+    DimensionText,
+    ImportBatch,
+    Metric,
+    ReportMaterializationSpec,
+    ReportType,
+)
 from organizations.models import Organization
 from publications.models import Platform, Title
 from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
@@ -119,9 +126,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert data == [
-            {'pk': 'org1', 'pl1': 151074, 'pl2': 217170, 'pl3': 283266},
-            {'pk': 'org2', 'pl1': 349362, 'pl2': 415458, 'pl3': 481554},
-            {'pk': 'org3', 'pl1': 547650, 'pl2': 613746, 'pl3': 679842},
+            {'pk': 'org1', 'pl1': 167598, 'pl2': 233694, 'pl3': 299790},
+            {'pk': 'org2', 'pl1': 365886, 'pl2': 431982, 'pl3': 498078},
+            {'pk': 'org3', 'pl1': 564174, 'pl2': 630270, 'pl3': 696366},
         ]
 
     def test_org_sum_by_platform_filter_platform(self, flexible_slicer_test_data, show_zero):
@@ -163,9 +170,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert data == [
-            {'pk': 'org1', 'pl2': 500436, 'pl3': 632628},
-            {'pk': 'org2', 'pl2': 897012, 'pl3': 1029204},
-            {'pk': 'org3', 'pl2': 1293588, 'pl3': 1425780},
+            {'pk': 'org1', 'pl2': 483912, 'pl3': 616104},
+            {'pk': 'org2', 'pl2': 880488, 'pl3': 1012680},
+            {'pk': 'org3', 'pl2': 1277064, 'pl3': 1409256},
         ]
 
     def test_org_sum_by_platform_filter_organization(self, flexible_slicer_test_data, show_zero):
@@ -247,9 +254,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert data == [
-            {'pk': 'org1', 'pl2-m2': 239202, 'pl3-m2': 305298, 'pl2-m3': 261234, 'pl3-m3': 327330},
-            {'pk': 'org2', 'pl2-m2': 437490, 'pl3-m2': 503586, 'pl2-m3': 459522, 'pl3-m3': 525618},
-            {'pk': 'org3', 'pl2-m2': 635778, 'pl3-m2': 701874, 'pl2-m3': 657810, 'pl3-m3': 723906},
+            {'pk': 'org1', 'pl2-m2': 239202, 'pl3-m2': 305298, 'pl2-m3': 244710, 'pl3-m3': 310806},
+            {'pk': 'org2', 'pl2-m2': 437490, 'pl3-m2': 503586, 'pl2-m3': 442998, 'pl3-m3': 509094},
+            {'pk': 'org3', 'pl2-m2': 635778, 'pl3-m2': 701874, 'pl2-m3': 641286, 'pl3-m3': 707382},
         ]
 
     def test_platform_sum_by_metric_filter_dim1(self, flexible_slicer_test_data, show_zero):
@@ -270,9 +277,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert data == [
-            {'pk': 'pl1', 'm1': 698112, 'm2': 742176, 'm3': 786240},
-            {'pk': 'pl2', 'm1': 830304, 'm2': 874368, 'm3': 918432},
-            {'pk': 'pl3', 'm1': 962496, 'm2': 1006560, 'm3': 1050624},
+            {'pk': 'pl1', 'm1': 731160, 'm2': 742176, 'm3': 753192},
+            {'pk': 'pl2', 'm1': 863352, 'm2': 874368, 'm3': 885384},
+            {'pk': 'pl3', 'm1': 995544, 'm2': 1006560, 'm3': 1017576},
         ]
 
     @pytest.mark.parametrize(['order_by'], (('platform',), ('-platform',)))
@@ -391,9 +398,9 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert data == [
-            {'pk': 'pl1', 'm1': 24624, 'm2': 27216, 'm3': 29808},
-            {'pk': 'pl2', 'm1': 32400, 'm2': 34992, 'm3': 37584},
-            {'pk': 'pl3', 'm1': 40176, 'm2': 42768, 'm3': 45360},
+            {'pk': 'pl1', 'm1': 26568, 'm2': 27216, 'm3': 27864},
+            {'pk': 'pl2', 'm1': 34344, 'm2': 34992, 'm3': 35640},
+            {'pk': 'pl3', 'm1': 42120, 'm2': 42768, 'm3': 43416},
         ]
 
     def test_platform_sum_by_metric_dim1_filter_dim1_rt(self, flexible_slicer_test_data, show_zero):
@@ -420,30 +427,30 @@ class TestFlexibleDataSlicerComputations:
         assert data == [
             {
                 'pk': 'pl1',
-                'A-m1': 12294,
+                'A-m1': 13266,
                 'A-m2': 13590,
-                'A-m3': 14886,
-                'B-m1': 12330,
+                'A-m3': 13914,
+                'B-m1': 13302,
                 'B-m2': 13626,
-                'B-m3': 14922,
+                'B-m3': 13950,
             },
             {
                 'pk': 'pl2',
-                'A-m1': 16182,
+                'A-m1': 17154,
                 'A-m2': 17478,
-                'A-m3': 18774,
-                'B-m1': 16218,
+                'A-m3': 17802,
+                'B-m1': 17190,
                 'B-m2': 17514,
-                'B-m3': 18810,
+                'B-m3': 17838,
             },
             {
                 'pk': 'pl3',
-                'A-m1': 20070,
+                'A-m1': 21042,
                 'A-m2': 21366,
-                'A-m3': 22662,
-                'B-m1': 20106,
+                'A-m3': 21690,
+                'B-m1': 21078,
                 'B-m2': 21402,
-                'B-m3': 22698,
+                'B-m3': 21726,
             },
         ]
 
@@ -499,8 +506,8 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert data == [
-            {'pk': 'Title 1', 'pl1': 342018, 'pl2': 408114},
-            {'pk': 'Title 3', 'pl1': 356706, 'pl2': 422802},
+            {'pk': 'Title 1', 'pl1': 364050, 'pl2': 430146},
+            {'pk': 'Title 3', 'pl1': 367722, 'pl2': 433818},
         ]
 
     def test_title_sum_by_platform_filter_metric_platform_by_tag_title_by_tag(
@@ -532,8 +539,8 @@ class TestFlexibleDataSlicerComputations:
         data.sort(key=lambda rec: rec['pk'])
         # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
         assert data == [
-            {'pk': 'Title 1', 'pl1': 342018, 'pl2': 408114},
-            {'pk': 'Title 3', 'pl1': 356706, 'pl2': 422802},
+            {'pk': 'Title 1', 'pl1': 364050, 'pl2': 430146},
+            {'pk': 'Title 3', 'pl1': 367722, 'pl2': 433818},
         ]
 
     def test_org_sum_by_metric_with_target_ordering(self, flexible_slicer_test_data):
@@ -569,8 +576,8 @@ class TestFlexibleDataSlicerComputations:
         assert len(data) == (3 if show_zero else 2)
         data.sort(key=lambda rec: rec['pk'])
         exp_data = [
-            {'pk': 'tag1', 'm1': 2470716},
-            {'pk': 'tag2', 'm1': 1268406},
+            {'pk': 'tag1', 'm1': 2586384},
+            {'pk': 'tag2', 'm1': 1301454},
             {'pk': 'tag3', 'm1': 0},
         ]
         assert [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in data] == (
@@ -598,7 +605,7 @@ class TestFlexibleDataSlicerComputations:
         data = list(slicer.get_data())
         assert len(data) == (2 if show_zero else 1)
         data.sort(key=lambda rec: rec['pk'])
-        exp_data = [{'pk': 'tag1', 'm1': 2470716}, {'pk': 'tag3', 'm1': 0}]
+        exp_data = [{'pk': 'tag1', 'm1': 2586384}, {'pk': 'tag3', 'm1': 0}]
         assert [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in data] == (
             exp_data if show_zero else exp_data[:-1]
         )
@@ -606,13 +613,13 @@ class TestFlexibleDataSlicerComputations:
     @pytest.mark.parametrize(
         ['included_tags', 'expected'],
         [
-            ([], 3739122),
-            (['tag1'], 1268406),
-            (['tag2'], 2470716),
-            (['tag3'], 3739122),
+            ([], 3887838),
+            (['tag1'], 1301454),
+            (['tag2'], 2586384),
+            (['tag3'], 3887838),
             (['tag1', 'tag2'], 0),
-            (['tag1', 'tag3'], 1268406),
-            (['tag2', 'tag3'], 2470716),
+            (['tag1', 'tag3'], 1301454),
+            (['tag2', 'tag3'], 2586384),
             (['tag1', 'tag2', 'tag3'], 0),
         ],
     )
@@ -639,10 +646,10 @@ class TestFlexibleDataSlicerComputations:
     @pytest.mark.parametrize(
         ['included_tags', 'expected'],
         [
-            ([], 651510),
-            (['tag1'], 224514),
-            (['tag2'], 426996),
-            (['tag3'], 651510),
+            ([], 701082),
+            (['tag1'], 235530),
+            (['tag2'], 465552),
+            (['tag3'], 701082),
             (['tag1', 'tag2'], 0),
         ],
     )
@@ -694,10 +701,11 @@ class TestFlexibleDataSlicerComputations:
         )
         slicer.order_by = ['platform__pk']
         data = list(slicer.get_data())
+
         assert [
-            {'base': 9126, 'compared': 27864, 'diff': 18738, 'reldiff': 18738 / 9126},
-            {'base': 12042, 'compared': 36612, 'diff': 24570, 'reldiff': 24570 / 12042},
-            {'base': 14958, 'compared': 45360, 'diff': 30402, 'reldiff': 30402 / 14958},
+            {'base': 8883, 'compared': 31023, 'diff': 22140, 'reldiff': 22140 / 8883},
+            {'base': 11799, 'compared': 39771, 'diff': 27972, 'reldiff': 27972 / 11799},
+            {'base': 14715, 'compared': 48519, 'diff': 33804, 'reldiff': 33804 / 14715},
         ] == [
             {
                 'base': rec['base'],
@@ -1062,9 +1070,9 @@ class TestFlexibleDataSimpleCSVExporter:
         output = out.getvalue()
         assert output.splitlines() == [
             'Platform,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,B / Metric 2,B / Metric 3',
-            'Platform 1,12294,13590,14886,12330,13626,14922',
-            'Platform 2,16182,17478,18774,16218,17514,18810',
-            'Platform 3,20070,21366,22662,20106,21402,22698',
+            'Platform 1,13266,13590,13914,13302,13626,13950',
+            'Platform 2,17154,17478,17802,17190,17514,17838',
+            'Platform 3,21042,21366,21690,21078,21402,21726',
         ]
 
     def test_platform_sum_by_date_filter_rt(self, flexible_slicer_test_data):
@@ -1083,9 +1091,9 @@ class TestFlexibleDataSimpleCSVExporter:
         output = out.getvalue()
         assert output.splitlines() == [
             'Platform,2019-12-01,2020-01-01,2020-02-01,2020-03-01',
-            'Platform 1,30294,30537,30780,31023',
-            'Platform 2,39042,39285,39528,39771',
-            'Platform 3,47790,48033,48276,48519',
+            'Platform 1,27378,29565,31752,33939',
+            'Platform 2,36126,38313,40500,42687',
+            'Platform 3,44874,47061,49248,51435',
         ]
 
     @pytest.mark.parametrize('include_tags', [True, False])
@@ -1117,16 +1125,16 @@ class TestFlexibleDataSimpleCSVExporter:
         if include_tags:
             assert output.splitlines() == [
                 'Platform,Tags,2019-12-01,2020-01-01,2020-02-01,2020-03-01',
-                'Platform 1,foo / bar | foo / baz,30294,30537,30780,31023',
-                'Platform 2,foo / baz,39042,39285,39528,39771',
-                'Platform 3,,47790,48033,48276,48519',
+                'Platform 1,foo / bar | foo / baz,27378,29565,31752,33939',
+                'Platform 2,foo / baz,36126,38313,40500,42687',
+                'Platform 3,,44874,47061,49248,51435',
             ]
         else:
             assert output.splitlines() == [
                 'Platform,2019-12-01,2020-01-01,2020-02-01,2020-03-01',
-                'Platform 1,30294,30537,30780,31023',
-                'Platform 2,39042,39285,39528,39771',
-                'Platform 3,47790,48033,48276,48519',
+                'Platform 1,27378,29565,31752,33939',
+                'Platform 2,36126,38313,40500,42687',
+                'Platform 3,44874,47061,49248,51435',
             ]
 
     def test_platform_sum_by_date__year_filter_rt(self, flexible_slicer_test_data):
@@ -1145,9 +1153,9 @@ class TestFlexibleDataSimpleCSVExporter:
         output = out.getvalue()
         assert output.splitlines() == [
             'Platform,2019,2020',
-            'Platform 1,30294,92340',
-            'Platform 2,39042,118584',
-            'Platform 3,47790,144828',
+            'Platform 1,27378,95256',
+            'Platform 2,36126,121500',
+            'Platform 3,44874,147744',
         ]
 
     def test_platform_sum_by_date__year_filter_rt_with_monitor(self, flexible_slicer_test_data):
@@ -1315,7 +1323,7 @@ class TestFlexibleDataSimpleCSVExporter:
         slicer.add_split_by('date')
         slicer.add_group_by('metric')
         data = slicer.get_data(part=['2020-01'])
-        expected = {'Platform 1': 833571, 'Platform 2': 982287, 'Platform 3': 1131003}
+        expected = {'Platform 1': 817047, 'Platform 2': 965763, 'Platform 3': 1114479}
         found = {Platform.objects.get(pk=rec['pk']).name: rec['_total'] for rec in data}
         assert found == expected
 
@@ -1434,6 +1442,153 @@ class TestFlexibleDataSimpleCSVExporter:
                 assert data[6] == ['Rows', 'Platform']
                 assert data[7] == ['Columns', 'Trend analysis: 2020-01 vs 2020-02']
                 assert data[8] == ['Applied filters', f'Report type: {report_type.name}']
+
+    @pytest.mark.parametrize(
+        [
+            'organization_idx',
+            'platform_idx',
+            'report_type_idx',
+            'start_month',
+            'end_month',
+            'exp_ib_count',
+            'exp_ib_max',
+        ],
+        [
+            (None, None, 0, '2019-12-01', '2020-03-31', 35, 36),
+            (None, None, 1, '2019-12-01', '2020-03-31', 36, 36),
+            (0, 0, 0, '2019-12-01', '2020-03-31', 3, 4),
+            (0, 0, 0, '2019-12-01', '2020-01-31', 1, 2),
+            (0, 0, 1, '2019-12-01', '2020-03-31', 4, 4),
+            (0, 0, 0, None, None, 3, 4),
+            (None, None, 0, None, None, 35, 36),
+            (None, None, 1, None, None, 36, 36),
+            (0, 1, 0, '2019-12-01', '2020-03-31', 4, 4),
+        ],
+    )
+    def test_report_coverage(
+        self,
+        flexible_slicer_test_data,
+        organization_idx,
+        platform_idx,
+        report_type_idx,
+        start_month,
+        end_month,
+        exp_ib_count,
+        exp_ib_max,
+    ):
+        """
+        Test the `get_coverage` method of the slicer in different scenarios.
+        """
+        # we need to remove some data to create some holes
+        assert ImportBatch.objects.count() == 72
+        orgs = flexible_slicer_test_data['organizations']
+        platforms = flexible_slicer_test_data['platforms']
+        rts = flexible_slicer_test_data['report_types']
+        ImportBatch.objects.filter(
+            organization=orgs[0], platform=platforms[0], report_type=rts[0], date='2020-01-01'
+        ).delete()
+        # create the slicer
+        rt = rts[report_type_idx]
+        pl = platforms[platform_idx] if platform_idx is not None else None
+        org = orgs[organization_idx] if organization_idx is not None else None
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_group_by('metric')
+        slicer.add_filter(DateDimensionFilter('date', start_month, end_month))
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt))
+        if pl:
+            slicer.add_filter(ForeignKeyDimensionFilter('platform', pl))
+        if org:
+            slicer.add_filter(ForeignKeyDimensionFilter('organization', org))
+        coverage = slicer.get_coverage()['overall']
+        assert coverage['ib_count'] == exp_ib_count
+        assert coverage['ib_max'] == exp_ib_max
+
+    def test_report_coverage_with_multiple_report_types(self, flexible_slicer_test_data):
+        # delete 3 import batches
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data['organizations'][0],
+            report_type=flexible_slicer_test_data['report_types'][0],
+            date='2020-01-01',
+        ).delete()
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_group_by('metric')
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('report_type', flexible_slicer_test_data['report_types'])
+        )
+        coverage = slicer.get_coverage()['overall']
+        assert coverage['ib_count'] == 69
+        assert coverage['ib_max'] == 72
+
+    @pytest.mark.parametrize(
+        ('org_idx', 'exp_ib_count', 'exp_ib_max'),
+        [(None, 14, 16), (0, 14, 16), (1, 14, 16), (2, 22, 24)],
+    )
+    def test_report_coverage_with_tag_based_filter(
+        self, flexible_slicer_test_data, admin_user, org_idx, exp_ib_count, exp_ib_max
+    ):
+        """
+        Test that the coverage computation can deal with tag-based filters instead of FK-based
+        filters. And also that it works together with FK-based filters.
+
+        The filters should be "ored" together.
+        """
+        # delete 3 import batches
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data['organizations'][0],
+            report_type=flexible_slicer_test_data['report_types'][0],
+            date='2020-01-01',
+        ).delete()
+        # add tags to platforms and organizations
+        platforms = flexible_slicer_test_data['platforms']
+        tag1 = TagFactory(tag_class__scope=TagScope.PLATFORM, tag_class__name='cls1', name='tag1')
+        tag1.tag(platforms[0], admin_user)
+        tag1.tag(platforms[1], admin_user)
+        orgs = flexible_slicer_test_data['organizations']
+        tag2 = TagFactory(
+            tag_class__scope=TagScope.ORGANIZATION, tag_class__name='cls2', name='tag2'
+        )
+        tag3 = TagFactory(
+            tag_class__scope=TagScope.ORGANIZATION, tag_class__name='cls2', name='tag3'
+        )
+        tag2.tag(orgs[0], admin_user)
+        tag2.tag(orgs[1], admin_user)
+        tag3.tag(orgs[1], admin_user)  # double tag org[1] to make sure it does not mess things up
+        # create the slicer
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_group_by('metric')
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('report_type', flexible_slicer_test_data['report_types'][0])
+        )
+        slicer.add_filter(TagDimensionFilter('platform', tag1))
+        slicer.add_filter(TagDimensionFilter('organization', [tag2, tag3]))
+        if org_idx:
+            slicer.add_filter(ForeignKeyDimensionFilter('organization', orgs[org_idx].pk))
+        coverage = slicer.get_coverage()['overall']
+        assert coverage['ib_count'] == exp_ib_count
+        assert coverage['ib_max'] == exp_ib_max
+
+    def test_report_coverage_in_trend_mode(self, flexible_slicer_test_data):
+        # delete 3 import batches
+        rt1 = flexible_slicer_test_data['report_types'][0]
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data['organizations'][0],
+            report_type=rt1,
+            date='2020-01-01',
+        ).delete()
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', '2020-01', '2020-01')],
+            compared_subset_filters=[DateDimensionFilter('date', '2020-02', '2020-02')],
+        )
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt1))
+        coverage = slicer.get_coverage()
+        assert 'base' in coverage
+        assert 'compared' in coverage
+        assert coverage['base']['ib_count'] == 6
+        assert coverage['base']['ib_max'] == 9
+        assert coverage['compared']['ib_count'] == 9
+        assert coverage['compared']['ib_max'] == 9
 
 
 @pytest.mark.django_db

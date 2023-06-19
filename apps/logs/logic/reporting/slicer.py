@@ -3,7 +3,7 @@ import operator
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
-from typing import Iterable, List, Optional, Type
+from typing import Iterable, List, Optional, Set, Type
 
 from core.logic.dates import date_range_from_params, month_end, parse_month
 from core.logic.serialization import parse_b64json
@@ -25,6 +25,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, Concat, NullIf
 from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
+from logs.logic.data_coverage import DataCoverageExtractor
 from logs.logic.queries import find_best_materialized_view, logger
 from logs.logic.reporting.filters import (
     CLICKHOUSE_ID_COUNT_LIMIT,
@@ -160,10 +161,7 @@ class FlexibleDataSlicer:
         if self.organization_filter is not None:
             # convert organization filter to a list of ids for easier compatibility with
             # clickhouse and for simpler query (even though that is not a big deal)
-            if type(self.organization_filter) in (list, tuple, set):
-                org_filter_pks = self.organization_filter
-            else:
-                org_filter_pks = set(self.organization_filter.values_list('pk', flat=True))
+            org_filter_pks = self._resolve_extra_organization_filter_to_pks()
             if 'organization_id__in' in ret:
                 orig_orgs = set(ret['organization_id__in'])
                 ret['organization_id__in'] = list(orig_orgs & org_filter_pks)
@@ -171,6 +169,13 @@ class FlexibleDataSlicer:
                 ret['organization_id__in'] = list(org_filter_pks)
         logger.info('filters with org: %s', ret)
         return ret
+
+    def _resolve_extra_organization_filter_to_pks(self) -> Set[int]:
+        if self.organization_filter is None:
+            return set()
+        if type(self.organization_filter) in (list, tuple, set):
+            return set(self.organization_filter)
+        return set(self.organization_filter.values_list('pk', flat=True))
 
     def add_extra_organization_filter(self, org_filter: Iterable):
         self.organization_filter = org_filter
@@ -971,6 +976,75 @@ class FlexibleDataSlicer:
         elif isinstance(fltr, TagDimensionFilter):
             return f'{fltr.dimension}: {fltr.value_str}'
         raise NotImplementedError(f'Unsupported filter class: {fltr.__class__.__name__}')
+
+    def _get_coverage_for_filters(self, **fltrs):
+        """
+        Applies the filters to `DataCoverageExtractor` and returns the total coverage over
+        all report types involved in the slicer
+        """
+        coverage = {}
+        for rt in self.involved_report_types():
+            comp = DataCoverageExtractor(report_type=rt, split_by_date=False, **fltrs)
+            rt_cov = comp.get_coverage_data()[()]  # empty tuple for no split-by
+            coverage['ib_count'] = coverage.get('ib_count', 0) + rt_cov['ib_count']
+            coverage['ib_max'] = coverage.get('ib_max', 0) + rt_cov['ib_max']
+        coverage['ratio'] = (
+            coverage['ib_count'] / coverage['ib_max'] if coverage['ib_max'] else None
+        )
+        return coverage
+
+    def get_coverage(self) -> dict:
+        """
+        Returns the result of data coverage computation based on the filters applied to the slicer
+        """
+        # resolve the filters
+        platform_ids = None
+        organization_ids = None
+        coverage_filters = {}
+        for fltr in self.dimension_filters:
+            if isinstance(fltr, ForeignKeyDimensionFilter) or isinstance(fltr, TagDimensionFilter):
+                pks = (
+                    set(fltr.values)
+                    if isinstance(fltr, ForeignKeyDimensionFilter)
+                    else set(fltr.get_tagged_obj_pks_qs())
+                )
+                if fltr.dimension == 'platform':
+                    platform_ids = pks if platform_ids is None else (platform_ids | pks)
+                elif fltr.dimension == 'organization':
+                    organization_ids = pks if organization_ids is None else (organization_ids | pks)
+            elif isinstance(fltr, DateDimensionFilter):
+                coverage_filters.update({'start_month': fltr.start, 'end_month': fltr.end})
+
+        if self.organization_filter:
+            # apply the extra organization filter to the pks
+            # in contrast to the other filters, this one is "anded" with the rest, not "ored"
+            extra_ids = self._resolve_extra_organization_filter_to_pks()
+            organization_ids = (
+                extra_ids if organization_ids is None else organization_ids & extra_ids
+            )
+
+        if platform_ids is not None:
+            coverage_filters.update({'platform': platform_ids})
+        if organization_ids is not None:
+            coverage_filters.update({'organization': organization_ids})
+
+        if self.trend_mode:
+            # in trend mode, we need to calculate coverage for both base and compared periods
+            # separately
+            def subset_filters(fltrs):
+                for fltr in fltrs:
+                    if isinstance(fltr, DateDimensionFilter):
+                        return {'start_month': fltr.start, 'end_month': fltr.end}
+                return {}
+
+            base_range = subset_filters(self.base_subset_filters)
+            base_cov = self._get_coverage_for_filters(**base_range, **coverage_filters)
+            compared_range = subset_filters(self.compared_subset_filters)
+            compared_cov = self._get_coverage_for_filters(**compared_range, **coverage_filters)
+            return {'base': base_cov, 'compared': compared_cov}
+        else:
+            cov = self._get_coverage_for_filters(**coverage_filters)
+            return {'overall': cov}
 
 
 class SlicerConfigErrorCode(Enum):

@@ -83,6 +83,7 @@ en:
     split_by: Split by
     non_counter: Non-COUNTER
     select_platform: Select platform
+    data_coverage: Data coverage
   titles: Titles
   overview: Overview
   chart:
@@ -376,6 +377,7 @@ cs:
     split_by: Rozdělit podle
     non_counter: Non-COUNTER
     select_platform: Vyberte platformu
+    data_coverage: Pokrytí daty
   titles: Tituly
   overview: Přehled
   chart:

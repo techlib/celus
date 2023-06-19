@@ -306,6 +306,13 @@ class FlexiReport {
     });
     return resp.data;
   }
+
+  async getCoverage() {
+    let resp = await axios.get("/api/flexible-slicer/coverage/", {
+      params: this.urlParams(),
+    });
+    return resp.data;
+  }
 }
 
 const EXPORT_ERROR = 3;

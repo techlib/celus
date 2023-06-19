@@ -67,9 +67,15 @@ class DataCoverageExtractor:
     def extra_filters(self) -> list:
         extra_filters = []
         if self.platform:
-            extra_filters.append(Q(platform=self.platform))
+            if type(self.platform) in (list, tuple, set):
+                extra_filters.append(Q(platform__in=self.platform))
+            else:
+                extra_filters.append(Q(platform=self.platform))
         if self.organization:
-            extra_filters.append(Q(organization=self.organization))
+            if type(self.organization) in (list, tuple, set):
+                extra_filters.append(Q(organization__in=self.organization))
+            else:
+                extra_filters.append(Q(organization=self.organization))
         if self.title:
             # we need to filter the platforms having this title
             extra_filters.append(

@@ -2,8 +2,6 @@
 <i18n lang="yaml">
 en:
   click_to_see_details: Click on cards of individual reports to see more details.
-  number_of_platforms: Number of platforms using this report in the selected period.
-  number_of_organizations: Number of organizations using this report in the selected period.
   date_change_hint: (use the date range selector on top of the page to change it)
   detail_by_platform_and_month: Data coverage by platform and month
   harvest_missing: Harvest missing {count} month | Harvest missing {count} months
@@ -43,8 +41,6 @@ en:
 
 cs:
   click_to_see_details: Klikněte na karty jednotlivých reportů pro více detailů.
-  number_of_platforms: Počet platforem používajících tento report ve zvoleném období.
-  number_of_organizations: Počet organizací používajících tento report ve zvoleném období.
   date_change_hint: (použijte výběr data na horním okraji stránky pro změnu)
   detail_by_platform_and_month: Detail pokrytí podle platformy a měsíce
   harvest_missing: Získat chybějící {count} měsíc | Získat chybějící {count} měsíce | Získat chybějících {count} měsíců
@@ -161,89 +157,18 @@ cs:
                 lg="2"
                 xl="1"
               >
-                <v-card
-                  class="pt-4 fill-height d-flex flex-column justify-space-between"
-                  :class="
-                    selectedReportType &&
-                    reportType.pk === selectedReportType.pk
-                      ? 'selected'
-                      : ''
-                  "
-                  @click="
+                <CoverageCard
+                  :report-type="reportType"
+                  :coverage-data="coverageData[reportType.pk]"
+                  :selected="
                     selectedReportType &&
                     selectedReportType.pk === reportType.pk
-                      ? refreshSelectedReportType()
-                      : (selectedReportType = reportType)
                   "
-                  :elevation="
-                    selectedReportType &&
-                    reportType.pk === selectedReportType.pk
-                      ? 8
-                      : 2
-                  "
-                >
-                  <div
-                    v-if="
-                      selectedReportType &&
-                      selectedReportType.pk === reportType.pk
-                    "
-                    style="position: absolute; top: 4px; right: 4px; z-index: 1"
-                  >
-                    <v-icon color="grey lighten-1"
-                      >fa fa-sync-alt
-                      {{ refreshingSelected ? "fa-spin" : "" }}</v-icon
-                    >
-                  </div>
-                  <CoverageScoreGauge
-                    :value="
-                      coverageData[reportType.pk]
-                        ? coverageData[reportType.pk].ratio
-                        : null
-                    "
-                    :loading="!coverageData[reportType.pk]"
-                  />
-                  <v-card-text class="text-center">
-                    <v-tooltip bottom>
-                      <template #activator="{ on }">
-                        <div class="font-weight-bold" v-on="on">
-                          <span class="font-weight-light"
-                            >{{
-                              reportType.counter_version
-                                ? "C" + reportType.counter_version
-                                : "non-COUNTER"
-                            }}
-                            /</span
-                          >
-                          {{ reportType.short_name }}
-                        </div>
-                      </template>
-                      <span>{{ reportType.name }}</span>
-                    </v-tooltip>
-                  </v-card-text>
-                  <div
-                    class="font-weight-light text-caption d-flex justify-space-between"
-                    v-if="coverageData[reportType.pk]"
-                  >
-                    <v-tooltip bottom>
-                      <template #activator="{ on }">
-                        <div class="mx-1" v-on="on">
-                          <v-icon x-small class="pb-1">fa fa-list-alt</v-icon>
-                          {{ coverageData[reportType.pk].platform_count }}
-                        </div>
-                      </template>
-                      <span>{{ $t("number_of_platforms") }}</span>
-                    </v-tooltip>
-                    <v-tooltip bottom v-if="showingAllOrganizations">
-                      <template #activator="{ on }">
-                        <div class="mx-1" v-on="on">
-                          <v-icon x-small class="pb-1">fa fa-university</v-icon>
-                          {{ coverageData[reportType.pk].org_count }}
-                        </div>
-                      </template>
-                      <span>{{ $t("number_of_organizations") }}</span>
-                    </v-tooltip>
-                  </div>
-                </v-card>
+                  :refreshing="refreshingSelected"
+                  show-platform-count
+                  :show-organization-count="showingAllOrganizations"
+                  @click="rtClick"
+                />
               </v-col>
             </v-row>
           </v-expansion-panel-content>
@@ -463,6 +388,7 @@ import {
 import parseISO from "date-fns/parseISO";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget.vue";
 import CoverageScoreGauge from "@/components/charts/CoverageScoreGauge.vue";
+import CoverageCard from "@/components/coverage/CoverageCard.vue";
 
 export default {
   name: "DataCoverageOverviewPage",
@@ -470,6 +396,7 @@ export default {
   mixins: [cancellation],
 
   components: {
+    CoverageCard,
     CoverageScoreGauge,
     SushiFetchIntentionsListWidget,
     CompositionBar,
@@ -822,6 +749,16 @@ export default {
       });
       if (!reply.error) {
         this.harvestId = reply.response.data.pk;
+      }
+    },
+    rtClick({ reportType }) {
+      if (
+        this.selectedReportType &&
+        this.selectedReportType.pk === reportType.pk
+      ) {
+        this.refreshSelectedReportType();
+      } else {
+        this.selectedReportType = reportType;
       }
     },
   },

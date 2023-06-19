@@ -50,6 +50,11 @@ urlpatterns = [
         views.FlexibleSlicerRemainderView.as_view(),
         name='flexible-slicer-remainder',
     ),
+    path(
+        'flexible-slicer/coverage/',
+        views.FlexibleSlicerCoverageView.as_view(),
+        name='flexible-slicer-coverage',
+    ),
 ]
 
 urlpatterns += router.urls

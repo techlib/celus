@@ -1,14 +1,17 @@
 import re
 from abc import ABC, abstractmethod
 from datetime import date, datetime
-from typing import Union
+from typing import Type, Union
 
 from core.logic.dates import format_month, month_end, parse_month
 from core.logic.type_conversion import to_list
 from django.conf import settings
 from django.db import models
+from django.db.models import QuerySet
 from django.utils.dateparse import parse_date
 from logs.models import AccessLog, DimensionText
+from organizations.models import Organization
+from publications.models import Platform, Title
 from tags.models import Tag
 
 # 10 chars per id should be OK
@@ -175,18 +178,28 @@ class TagDimensionFilter(DimensionFilter):
     def value_str(self):
         return '; '.join(val.name for val in Tag.objects.filter(pk__in=self.tag_ids))
 
+    @property
+    def related_model(self) -> Union[Type[Title], Type[Platform], Type[Organization]]:
+        field, _modifier = AccessLog.get_dimension_field(self.dimension)
+        return field.remote_field.model
+
+    def get_tagged_obj_pks_qs(self) -> QuerySet:
+        """
+        Returns a queryset for getting all the tagged objects' PKs.
+        """
+        return (
+            self.related_model.objects.filter(tags__in=self.tag_ids)
+            .values_list('pk', flat=True)
+            .distinct()
+        )
+
     def query_params(self, primary_filter=False, clickhouse_compatible=False) -> dict:
         if primary_filter:
             return {'tags__in': self.tag_ids}
         # here we translate the tag ids to related object ids and use it for query,
         # querying tags directly in the query (like `platform__tags__in`) hits a nesting limit
         # inside Django
-        field, _modifier = AccessLog.get_dimension_field(self.dimension)
-        rel_model = field.remote_field.model
-
-        obj_ids_qs = (
-            rel_model.objects.filter(tags__in=self.tag_ids).values_list('pk', flat=True).distinct()
-        )
+        obj_ids_qs = self.get_tagged_obj_pks_qs()
         # By default, we try to convert the queryset to a list of ids.
         #
         # This is necessary when using clickhouse, but I found that it speeds up the query even
@@ -194,7 +207,7 @@ class TagDimensionFilter(DimensionFilter):
         #  - for tag with 1000 titles it is 12 s => 2.2 s (5.5x faster)
         #  - for tag with 10000 titles it is 26 s => 2.7 s (9.5x faster)
         #
-        # (CH is 2-3x faster than even than the faster Postgres query)
+        # (CH is 2-3x faster than even the faster Postgres query)
         #
         # On the other hand, if the list is really long, then postgres will get slower
         # and clickhouse will fail with a query string length limit.

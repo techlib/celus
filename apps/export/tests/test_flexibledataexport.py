@@ -97,9 +97,9 @@ class TestFlexibleDataExport:
         assert data.splitlines() == [
             'Platform,Tags,Row total,A / Metric 1,A / Metric 2,A / Metric 3,B / Metric 1,'
             'B / Metric 2,B / Metric 3',
-            'Platform 1,,81648,12294,13590,14886,12330,13626,14922',
-            'Platform 2,,104976,16182,17478,18774,16218,17514,18810',
-            'Platform 3,,128304,20070,21366,22662,20106,21402,22698',
+            'Platform 1,,81648,13266,13590,13914,13302,13626,13950',
+            'Platform 2,,104976,17154,17478,17802,17190,17514,17838',
+            'Platform 3,,128304,21042,21366,21690,21078,21402,21726',
         ]
 
     def test_create_output_file_for_slicer2(self, slicer2, admin_user, export_output):
@@ -108,9 +108,9 @@ class TestFlexibleDataExport:
         assert data.splitlines() == [
             'Metric,A / Platform 1,A / Platform 2,A / Platform 3,B / Platform 1,'
             'B / Platform 2,B / Platform 3',
-            'Metric 1,12294,16182,20070,12330,16218,20106',
+            'Metric 1,13266,17154,21042,13302,17190,21078',
             'Metric 2,13590,17478,21366,13626,17514,21402',
-            'Metric 3,14886,18774,22662,14922,18810,22698',
+            'Metric 3,13914,17802,21690,13950,17838,21726',
             'MS,0,0,0,0,0,0',
         ]
 
@@ -130,8 +130,8 @@ class TestFlexibleDataExport:
         data = export_output(export)
         expected = [
             'Tag,Metric 1,Metric 2,Metric 3',
-            'Tag 1,96012,103788,111564',
-            'Tag 2,49950,53838,57726',
+            'Tag 1,102816,104760,106704',
+            'Tag 2,51894,52866,53838',
         ]
         if show_remainder:
             expected += ['-- untagged remainder --,0,0,0']
@@ -143,8 +143,8 @@ class TestFlexibleDataExport:
             data = export_output(export)
             assert data.splitlines() == [
                 'Tag,Metric 1,Metric 2,Metric 3',
-                'Tag 1,96012,103788,111564',
-                '-- untagged remainder --,49950,53838,57726',
+                'Tag 1,102816,104760,106704',
+                '-- untagged remainder --,51894,52866,53838',
             ]
 
     def test_create_output_file_with_tag_filter(
@@ -163,8 +163,8 @@ class TestFlexibleDataExport:
         data = export_output(export)
         assert data.splitlines() == [
             'Title/Database,ISSN,EISSN,ISBN,Tags,Metric 1,Metric 2,Metric 3',
-            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag1.full_name},47358,51246,55134',
-            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag1.full_name},48654,52542,56430',
+            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag1.full_name},51246,52218,53190',
+            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag1.full_name},51570,52542,53514',
         ]
 
     def test_tagged_output_query_count(
@@ -309,32 +309,45 @@ class TestFlexibleDataExportCSV:
                     rows = list(csv.reader(TextIOWrapper(csvfile)))
         else:
             rows = list(csv.reader(out))
+        p1_base, p1_compared = 779868, 2562678
+        p2_base, p2_compared = 928584, 3008826
+        p3_base, p3_compared = 1077300, 3454974
         exp = [
             ['Platform', '2019-12', '2020-01 - 2020-03', 'Change', 'Change %'],
             [
                 'Platform 1',
-                str(829440),
-                str(2513106),
-                str(2513106 - 829440),
-                str((2513106 - 829440) / 829440),
+                str(p1_base),
+                str(p1_compared),
+                str(p1_compared - p1_base),
+                str((p1_compared - p1_base) / p1_base),
             ],
             [
                 'Platform 2',
-                str(978156),
-                str(2959254),
-                str(2959254 - 978156),
-                str((2959254 - 978156) / 978156),
+                str(p2_base),
+                str(p2_compared),
+                str(p2_compared - p2_base),
+                str((p2_compared - p2_base) / p2_base),
             ],
             [
                 'Platform 3',
-                str(1126872),
-                str(3405402),
-                str(3405402 - 1126872),
-                str((3405402 - 1126872) / 1126872),
+                str(p3_base),
+                str(p3_compared),
+                str(p3_compared - p3_base),
+                str((p3_compared - p3_base) / p3_base),
             ],
         ]
         if col_totals:
-            exp.append(['Total', str(2934468), str(8877762), str(5943294), str(5943294 / 2934468)])
+            base = p1_base + p2_base + p3_base
+            compared = p1_compared + p2_compared + p3_compared
+            exp.append(
+                [
+                    'Total',
+                    str(base),
+                    str(compared),
+                    str(compared - base),
+                    str((compared - base) / base),
+                ]
+            )
         assert rows == exp
 
 
@@ -392,9 +405,9 @@ class TestFlexibleDataExportExcel:
         sheet = workbook['report']
         exp_data = [
             ['Platform', '2019-12', '2020-01 - 2020-03', 'Change', 'Change %'],
-            ['Platform 1', 829440, 2513106, '=C2-B2', '=(C2-B2)/B2'],
-            ['Platform 2', 978156, 2959254, '=C3-B3', '=(C3-B3)/B3'],
-            ['Platform 3', 1126872, 3405402, '=C4-B4', '=(C4-B4)/B4'],
+            ['Platform 1', 779868, 2562678, '=C2-B2', '=(C2-B2)/B2'],
+            ['Platform 2', 928584, 3008826, '=C3-B3', '=(C3-B3)/B3'],
+            ['Platform 3', 1077300, 3454974, '=C4-B4', '=(C4-B4)/B4'],
             ['Total', '=SUM(B2:B4)', '=SUM(C2:C4)', '=C5-B5', '=(C5-B5)/B5'],
         ]
         if include_tags:

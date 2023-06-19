@@ -35,6 +35,9 @@ en:
   when_titles: when titles are filtered by tag or "merge by tag" is active
   tags: tags
   name_the_report: Name the report
+  coverage_tt: Data coverage for the selected report(s) and applied filters.
+  coverage_base_tt: Data coverage in the base period.
+  coverage_compared_tt: Data coverage in the compared period.
 
 cs:
   run_report: Spustit report
@@ -69,6 +72,9 @@ cs:
   when_titles: pokud jsou tituly filtrovány štítkem nebo je aktivní "sloučit podle štítku"
   tags: štítky
   name_the_report: Zvolte název reportu
+  coverage_tt: Pokrytí daty pro zvolené reporty a aplikované filtry.
+  coverage_base_tt: Pokrytí daty v základním období.
+  coverage_compared_tt: Pokrytí daty v porovnávaném období.
 </i18n>
 
 <template>
@@ -364,9 +370,9 @@ cs:
           </v-col>
         </v-row>
 
-        <v-row v-if="filters.length">
-          <v-col>
-            <v-card>
+        <v-row v-if="filters.length || coverageData">
+          <v-col v-if="filters.length">
+            <v-card class="fill-height">
               <v-card-title>{{ $t("labels.filter_settings") }}</v-card-title>
               <v-card-text>
                 <v-container fluid>
@@ -511,6 +517,52 @@ cs:
               </v-card-text>
             </v-card>
           </v-col>
+          <v-col
+            :cols="coverageGaugeCount * 6"
+            :sm="coverageGaugeCount * 4"
+            :md="3 * coverageGaugeCount"
+            :lg="2 * coverageGaugeCount"
+            :xl="coverageGaugeCount"
+          >
+            <v-card v-if="coverageData" class="fill-height">
+              <v-card-title>{{
+                $t("title_fields.data_coverage")
+              }}</v-card-title>
+              <v-card-text>
+                <v-row v-if="trendMode">
+                  <v-col>
+                    <CoverageCard
+                      :label="$t('trend_mode.base_period')"
+                      :tooltip="$t('coverage_base_tt')"
+                      :coverage-data="coverageData.base"
+                      :elevation="0"
+                      :clickable="false"
+                    />
+                  </v-col>
+                  <v-col>
+                    <CoverageCard
+                      :label="$t('trend_mode.compared_period')"
+                      :tooltip="$t('coverage_compared_tt')"
+                      :coverage-data="coverageData.compared"
+                      :elevation="0"
+                      :clickable="false"
+                    />
+                  </v-col>
+                </v-row>
+                <v-row v-else>
+                  <v-col>
+                    <CoverageCard
+                      :label="$t('labels.total_coverage')"
+                      :tooltip="$t('coverage_tt')"
+                      :coverage-data="coverageData.overall"
+                      :elevation="0"
+                      :clickable="false"
+                    />
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-col>
         </v-row>
 
         <v-row>
@@ -627,12 +679,12 @@ cs:
               </span>
             </v-tooltip>
           </v-col>
-          <v-col cols="auto">
+          <v-col cols="auto" v-if="!trendMode">
+            <!-- row totals do not make sense in trend mode -->
             <v-switch
               v-model="showTotals"
               :label="$t('show_totals')"
               class="mt-0"
-              :disabled="trendMode"
             />
           </v-col>
           <v-spacer></v-spacer>
@@ -693,7 +745,6 @@ import AccessLevelSelector from "@/components/reporting/AccessLevelSelector";
 import formRulesMixin from "@/mixins/formRulesMixin";
 import {
   anyDateToYm,
-  lastCoveredMonthDate,
   lastCoveredYearDate,
   parseDateTime,
   ymDateFormat,
@@ -703,6 +754,7 @@ import cancellation from "@/mixins/cancellation";
 import { toBase64JSON } from "@/libs/serialization";
 import TagSelector from "@/components/tags/TagSelector";
 import TagClassSelector from "@/components/tags/TagClassSelector";
+import CoverageCard from "@/components/coverage/CoverageCard.vue";
 import ReportNamingWidget from "@/components/reporting/ReportNamingWidget.vue";
 import differenceInCalendarMonths from "date-fns/differenceInCalendarMonths";
 import lastDayOfYear from "date-fns/lastDayOfYear";
@@ -722,6 +774,7 @@ export default {
 
   components: {
     ReportNamingWidget,
+    CoverageCard,
     TagClassSelector,
     TagSelector,
     AccessLevelSelector,
@@ -739,11 +792,10 @@ export default {
 
   data() {
     const lastCoveredDate = lastCoveredYearDate();
-    console.debug("lastCoveredDate", lastCoveredDate);
-    const baseStart = startOfYear(lastCoveredDate);
-    const baseEnd = lastDayOfYear(lastCoveredDate);
-    const comparedStart = addYears(baseStart, -1);
-    const comparedEnd = addYears(baseEnd, -1);
+    const comparedStart = startOfYear(lastCoveredDate);
+    const comparedEnd = lastDayOfYear(lastCoveredDate);
+    const baseStart = addYears(comparedStart, -1);
+    const baseEnd = addYears(comparedEnd, -1);
     return {
       selectedItems: [],
       row: "organization",
@@ -795,6 +847,7 @@ export default {
       showRemainder: false,
       setupInProgress: false, // when true, some watchers are disabled to prevent many updates
       showNameEditDialog: false,
+      coverageData: null,
     };
   },
 
@@ -903,11 +956,16 @@ export default {
       return this.row && this.hasGroupBy && this.selectedReportTypes.length > 0;
     },
     dataUrlParams() {
+      // this is here just to watch for changes, it is not used directly
+      // to make requests
       return {
         primary_dimension: this.row,
         filters: toBase64JSON(this.appliedFilters),
         groups: toBase64JSON(this.appliedGroups),
         zero_rows: this.showZeroRows,
+        trend_mode: this.trendMode,
+        base_period_filters: toBase64JSON(this.tmBaseDateRange),
+        compared_period_filters: toBase64JSON(this.tmComparedDateRange),
       };
     },
     selectorBaseUrl() {
@@ -1035,6 +1093,9 @@ export default {
         return this.dateRangeLength(this.tmComparedDateRange);
       }
       return 0;
+    },
+    coverageGaugeCount() {
+      return this.trendMode ? 2 : 1;
     },
   },
 
@@ -1308,6 +1369,10 @@ export default {
         }
       }
     },
+    async fetchCoverageData() {
+      if (this.selectedReportTypes.length)
+        this.coverageData = await this.reportObject.getCoverage();
+    },
   },
 
   async mounted() {
@@ -1392,6 +1457,7 @@ export default {
           this.columns = this.columns.filter((item) => item !== `dim${i}`);
         }
       }
+      this.fetchCoverageData();
     },
     dataUrlFilteringParams: {
       deep: true,
@@ -1434,6 +1500,7 @@ export default {
           this.exportHint = true;
         }
         this.exportHandle = null;
+        this.fetchCoverageData();
       },
     },
     cannotShowZeroRows() {

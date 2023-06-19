@@ -1,6 +1,7 @@
 import pytest
 from core.logic.serialization import b64json
 from django.urls import reverse
+from logs.models import ImportBatch
 from organizations.models import UserOrganization
 from tags.fake_data import TagFactory
 from tags.models import TagScope
@@ -260,8 +261,8 @@ class TestSlicerAPI:
     @pytest.mark.parametrize(
         ['user_type', 'expected'],
         [
-            ('su', 1268406),  # cannot see tag2
-            ('admin1', 224514),  # cannot see tag2, can only see org1
+            ('su', 1301454),  # cannot see tag2
+            ('admin1', 235530),  # cannot see tag2, can only see org1
             ('admin2', 0),  # can see all tags, remainder should be zero
         ],
     )
@@ -351,3 +352,82 @@ class TestSlicerAPI:
             assert resp.status_code == 200
         else:
             assert resp.status_code == 400
+
+    @pytest.mark.parametrize(
+        ['rt_idx', 'org_idx', 'exp_ib_count', 'exp_ib_max'],
+        (
+            (0, 0, 9, 12),
+            (0, 1, 12, 12),
+            (1, 0, 12, 12),
+            (1, 1, 12, 12),
+            (0, None, 33, 36),
+        ),
+    )
+    def test_report_coverage(
+        self, flexible_slicer_test_data, clients, rt_idx, org_idx, exp_ib_count, exp_ib_max
+    ):
+        """
+        Tests that the report coverage endpoint works.
+        """
+        # make some hole in the data to test that the coverage is computed correctly
+        # deletes data for rt1, org1, 2020-01-01 and all platforms
+        ImportBatch.objects.filter(
+            report_type=flexible_slicer_test_data['report_types'][0],
+            organization=flexible_slicer_test_data['organizations'][0],
+            date='2020-01-01',
+        ).delete()
+        fltrs = {}
+        if org_idx is not None:
+            fltrs['organization'] = [flexible_slicer_test_data['organizations'][org_idx].pk]
+        resp = clients['su'].get(
+            reverse('flexible-slicer-coverage'),
+            {
+                'primary_dimension': 'platform',
+                'groups': b64json(['metric']),
+                'filters': b64json(
+                    {
+                        'metric': [flexible_slicer_test_data['metrics'][0].pk],
+                        'report_type': [flexible_slicer_test_data['report_types'][rt_idx].pk],
+                        **fltrs,
+                    }
+                ),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()['overall']
+        assert data['ib_count'] == exp_ib_count
+        assert data['ib_max'] == exp_ib_max
+
+    def test_report_coverage_trend_mode(self, flexible_slicer_test_data, clients):
+        # make some hole in the data to test that the coverage is computed correctly
+        # deletes data for rt1, org1, 2020-01-01 and all platforms
+        ImportBatch.objects.filter(
+            report_type=flexible_slicer_test_data['report_types'][0],
+            organization=flexible_slicer_test_data['organizations'][0],
+            date='2020-01-01',
+        ).delete()
+        resp = clients['su'].get(
+            reverse('flexible-slicer-coverage'),
+            {
+                'primary_dimension': 'platform',
+                'filters': b64json(
+                    {
+                        'metric': [flexible_slicer_test_data['metrics'][0].pk],
+                        'report_type': [flexible_slicer_test_data['report_types'][0].pk],
+                    }
+                ),
+                'trend_mode': True,
+                'base_subset_filters': b64json(
+                    {'date': {'start': '2019-01-01', 'end': '2019-12-31'}}
+                ),
+                'compared_subset_filters': b64json(
+                    {'date': {'start': '2020-01-01', 'end': '2020-12-31'}}
+                ),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['base']['ib_count'] == 9
+        assert data['base']['ib_max'] == 12 * 9
+        assert data['compared']['ib_count'] == 6 + 9 + 9
+        assert data['compared']['ib_max'] == 12 * 9

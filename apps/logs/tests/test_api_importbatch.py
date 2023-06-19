@@ -384,6 +384,45 @@ class TestImportBatchesAPI:
         assert ib_counts == [rec['ib_count'] for rec in resp.json()]
 
     @pytest.mark.parametrize(
+        ['q_platforms', 'q_organizations', 'rt', 'ib_counts'],
+        [
+            (['standalone', 'branch'], ['standalone', 'branch'], 'TR', [1, 1, 1]),
+            (['standalone', 'branch'], ['standalone'], 'TR', [1, 1, 1]),
+            (['standalone'], ['standalone'], 'TR', [1, 1, 1]),
+        ],
+    )
+    def test_data_coverage_with_filters(
+        self,
+        data,
+        clients,
+        organizations,
+        platforms,
+        report_types,
+        q_platforms,
+        q_organizations,
+        rt,
+        ib_counts,
+    ):
+        """
+        Test that the filters for organization and platform also work with comma-separated values
+        """
+
+        resp = clients['su'].get(
+            reverse('import-batch-list') + "data-coverage/",
+            {
+                'start_date': '2020-01',
+                'end_date': '2020-03',
+                'report_type': report_types[rt.lower()].pk,
+                'platform': ','.join(str(platforms[name].pk) for name in q_platforms),
+                'organization': ','.join(str(organizations[name].pk) for name in q_organizations),
+            },
+        )
+        assert resp.status_code == 200
+        assert 'date' in resp.json()[0]
+        assert 'organization_id' not in resp.json()[0]
+        assert ib_counts == [rec['ib_count'] for rec in resp.json()]
+
+    @pytest.mark.parametrize(
         ['split_by_org', 'split_by_platform', 'split_by_date', 'record_count', 'ib_counts'],
         # sorting in ib_counts should be month, organization_id, platform_id
         [

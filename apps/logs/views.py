@@ -82,6 +82,7 @@ from sushi.models import SushiCredentials, SushiFetchAttempt
 from tags.models import Tag
 
 from . import filters
+from .fields import CommaSeparatedPrimaryKeyRelatedField
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
@@ -613,13 +614,17 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
         start_date = CharField(validators=[month_validator], required=False)
         end_date = CharField(validators=[month_validator], required=False)
-        organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
+        organization = CommaSeparatedPrimaryKeyRelatedField(
+            queryset=Organization.objects.all(), required=False, many=True
+        )
 
     class DataCoverageBasicParamSerializer(DataCoverageCoreParamSerializer):
 
         report_type = PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False)
         report_view = PrimaryKeyRelatedField(queryset=ReportDataView.objects.all(), required=False)
-        platform = PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=False)
+        platform = CommaSeparatedPrimaryKeyRelatedField(
+            queryset=Platform.objects.all(), required=False, many=True
+        )
 
         def validate(self, data):
             data = super().validate(data)
@@ -1127,6 +1132,12 @@ class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
                 qs = qs[: self.MAX_COUNT]
                 cropped = True
         return Response({'count': count, "values": qs or [], "cropped": cropped})
+
+
+class FlexibleSlicerCoverageView(FlexibleSlicerBaseView):
+    def get(self, request):
+        slicer = self.create_slicer(request)
+        return Response(slicer.get_coverage())
 
 
 class FlexibleReportViewSet(ModelViewSet):

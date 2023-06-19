@@ -12,6 +12,7 @@ from logs.models import (
     DimensionText,
     ImportBatch,
     Metric,
+    OrganizationPlatform,
     ReportType,
     ReportTypeToDimension,
 )
@@ -180,8 +181,8 @@ def flexible_slicer_test_data(report_type_nd):
     values = value_generator()
     accesslogs = []
     dimension_texts = {}
+    ops = {}
     for rt in report_types:
-        ib = ImportBatch.objects.create(report_type=rt)
         dim_count = rt.dimensions.count()
         dim_options = dimension_values[:dim_count]
         for i, dim in enumerate(rt.dimensions_sorted):
@@ -189,30 +190,39 @@ def flexible_slicer_test_data(report_type_nd):
                 dimension_texts[(dim.pk, value)], _ = DimensionText.objects.get_or_create(
                     dimension=dim, text=value
                 )
-        for rec in product(organizations, platforms, metrics, targets, dates, *dim_options):
-            organization, platform, metric, target, date = rec[:5]
-            dim_data = {}
-            for i in range(dim_count):
-                attr = f'dim{i+1}'
-                value_str = rec[5 + i]
-                value_key = dimension_texts[(rt.dimensions_sorted[i].pk, value_str)]
-                dim_data[attr] = value_key.pk
-            value = next(values)
-            accesslogs.append(
-                AccessLog(
-                    report_type=rt,
-                    organization=organization,
-                    platform=platform,
-                    metric=metric,
-                    target=target,
-                    date=date,
-                    value=value,
-                    import_batch=ib,
-                    **dim_data,
-                )
+        for organization, platform, date in product(organizations, platforms, dates):
+            # create one import batch per report type, organization, platform, date
+            ib = ImportBatch.objects.create(
+                report_type=rt, organization=organization, platform=platform, date=date
             )
+            for metric, target, *dim_values in product(metrics, targets, *dim_options):
+                dim_data = {}
+                for i, value_str in enumerate(dim_values):
+                    attr = f'dim{i+1}'
+                    value_key = dimension_texts[(rt.dimensions_sorted[i].pk, value_str)]
+                    dim_data[attr] = value_key.pk
+                value = next(values)
+                accesslogs.append(
+                    AccessLog(
+                        report_type=rt,
+                        organization=organization,
+                        platform=platform,
+                        metric=metric,
+                        target=target,
+                        date=date,
+                        value=value,
+                        import_batch=ib,
+                        **dim_data,
+                    )
+                )
+            # create OrganizationPlatform if necessary
+            if (organization.pk, platform.pk) not in ops:
+                ops[(organization.pk, platform.pk)] = OrganizationPlatform(
+                    organization=organization, platform=platform
+                )
 
     AccessLog.objects.bulk_create(accesslogs)
+    OrganizationPlatform.objects.bulk_create(ops.values())
     # uncomment the following to get the test data in a CSV file
     # it is useful when you want to use pivot table in a spreadsheet to check the calculations
     # it will produce a table with names/human friendly values for all dimensions
