@@ -7,6 +7,7 @@ from typing import Any, Callable, List, Optional, TextIO, Tuple, Type, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import xlsxwriter
+from cachalot.api import cachalot_disabled
 from core.logic.debug import log_memory
 from django.conf import settings
 from django.db.models import Field, ForeignKey, Model, QuerySet
@@ -106,19 +107,20 @@ class FlexibleDataExporter(ABC):
 
     def prepare_implicit_remap(self, qs: QuerySet) -> dict:
         # Fallback to name->short_name (e.g. for Metric)
-        remapped_keys = self.remapped_keys()
-        if 'name' in remapped_keys and hasattr(qs.model, 'short_name'):
-            remaps = list(qs.values('pk', 'short_name', *remapped_keys))
-            for item in remaps:
-                if not item["name"].strip():
-                    item["name"] = item["short_name"] or ""
-                del item["short_name"]
-            return {obj["pk"]: tuple(obj[k] for k in remapped_keys) for obj in remaps}
+        with cachalot_disabled():
+            remapped_keys = self.remapped_keys()
+            if 'name' in remapped_keys and hasattr(qs.model, 'short_name'):
+                remaps = list(qs.values('pk', 'short_name', *remapped_keys))
+                for item in remaps:
+                    if not item["name"].strip():
+                        item["name"] = item["short_name"] or ""
+                    del item["short_name"]
+                return {obj["pk"]: tuple(obj[k] for k in remapped_keys) for obj in remaps}
 
-        return {
-            obj["pk"]: tuple(obj[k] for k in remapped_keys)
-            for obj in qs.values('pk', *remapped_keys)
-        }
+            return {
+                obj["pk"]: tuple(obj[k] for k in remapped_keys)
+                for obj in qs.values('pk', *remapped_keys)
+            }
 
     @abstractmethod
     def stream_data_to_sink(

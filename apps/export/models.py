@@ -161,7 +161,10 @@ class FlexibleDataExport(ExportBase):
             if len(error_detail) > 1000:
                 error_detail = error_detail[:1000] + '...'
             self.extra_info['error_detail'] = error_detail
-            async_mail_admins.delay('Export error', error_detail)
+            mail = "Export id: {}\nOwner: {}\nException class: {}\nException details: {}\n".format(
+                self.pk, self.owner, e.__class__.__name__, error_detail
+            )
+            async_mail_admins.delay('Export error', mail)
             self.status = self.ERROR
             if raise_exception:
                 raise e
