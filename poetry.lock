@@ -1443,14 +1443,14 @@ python-dateutil = ">=2.7"
 
 [[package]]
 name = "hcube"
-version = "0.11.3"
+version = "0.12.0"
 description = "HCube is a simple ORM for working with hyper-cube OLAP data stored in various backends."
 category = "main"
 optional = false
 python-versions = ">=3.8.8,<4.0.0"
 files = [
-    {file = "hcube-0.11.3-py3-none-any.whl", hash = "sha256:34394970338a69879c3fbad9889848dc5915c0297935c4669491a402abd0a7a6"},
-    {file = "hcube-0.11.3.tar.gz", hash = "sha256:3f1ef935d4b75e55f23fb760ac7042dcdf25f08ce6d278ace978547cbd5b11e1"},
+    {file = "hcube-0.12.0-py3-none-any.whl", hash = "sha256:05cc18087d09305ca51a5cb54e9c356e066eda7d30f510beaebf718e1c91fd81"},
+    {file = "hcube-0.12.0.tar.gz", hash = "sha256:09a09e86e0ab3a55f089ba7d2d35691155bc5748105cf5dfb5b260de448f89fc"},
 ]
 
 [package.dependencies]
@@ -3685,4 +3685,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.8"
-content-hash = "1e38e34c32bc09c9e1d8803b1cfdbf36909a288ab50f73843218b1e01f2535ba"
+content-hash = "3bbaa779dedaa7ba748a4d204e4134f629dc82e373898372c52d79a4367d9055"

@@ -1,4 +1,5 @@
 import pytest
+from logs.logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
 from logs.logic.data_import import import_counter_records
 from logs.models import AccessLog
 from organizations.tests.conftest import organizations  # noqa
@@ -6,9 +7,12 @@ from publications.logic.cleanup import clean_obsolete_platform_title_links
 from publications.models import PlatformTitle
 
 
-@pytest.mark.django_db
+@pytest.mark.clickhouse
+@pytest.mark.django_db(transaction=True)
 class TestPlatformTitleCleanup:
-    def test_cleanup_simple(self, counter_records_0d, report_type_nd, organizations, platform):
+    def test_cleanup_simple(
+        self, counter_records_0d, report_type_nd, organizations, platform, clickhouse_on_off
+    ):
         # prepare data
         report_type = report_type_nd(0)
         organization = organizations[0]
@@ -25,7 +29,9 @@ class TestPlatformTitleCleanup:
         clean_obsolete_platform_title_links()
         assert PlatformTitle.objects.count() == 0, 'the platform-title link was removed'
 
-    def test_cleanup(self, counter_records, report_type_nd, organizations, platform):
+    def test_cleanup(
+        self, counter_records, report_type_nd, organizations, platform, clickhouse_on_off
+    ):
         # prepare data
         report_type = report_type_nd(0)
         organization = organizations[0]
@@ -36,11 +42,17 @@ class TestPlatformTitleCleanup:
                 metric='Hits',
             )
         )
-        import_counter_records(report_type, organization, platform, records)
+        ibs, _stats = import_counter_records(report_type, organization, platform, records)
+        assert len(ibs) == 2  # one for 2020-01-01 and one for 2020-02-01
+        if clickhouse_on_off:
+            sync_accesslogs_with_clickhouse_superfast()
         assert AccessLog.objects.count() == 3
         assert PlatformTitle.objects.count() == 3
         # remove accesslogs
-        AccessLog.objects.filter(date='2020-01-01').delete(i_know_what_i_am_doing=True)
+        ib1, ib2 = ibs
+        if str(ib1.date) == '2020-02-01':
+            ib1, ib2 = ib2, ib1
+        ib1.delete()  # delete data for 2020-01-01
         assert AccessLog.objects.count() == 1
         assert PlatformTitle.objects.count() == 3, 'the platform-title links are all still there'
         clean_obsolete_platform_title_links()

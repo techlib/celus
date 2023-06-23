@@ -1,9 +1,13 @@
 import logging
 from collections import Counter
+from datetime import date
 from typing import Callable, Optional
 
-from django.db.models import Exists, OuterRef, QuerySet
+from core.logic.debug import log_memory
+from django.conf import settings
+from django.db.models import QuerySet
 from django.db.transaction import atomic
+from logs.cubes import AccessLogCube, ch_backend
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform
 from organizations.models import Organization
 from publications.models import Platform, PlatformTitle
@@ -13,32 +17,74 @@ from sushi.models import SushiFetchAttempt
 logger = logging.getLogger(__name__)
 
 
-def clean_obsolete_platform_title_links(pretend=False):
+def clean_obsolete_platform_title_links(pretend=False, batch_size=500_000):
     """
     Doing it in one query is possible, but takes a very long time. Therefor
-    we go by organization.
+    we go by organization. We also split the data into batches by month, so
+    that we don't have to keep all the data in memory.
+
+    The `batch_size` was experimentally determined to give reasonable speed and still
+    not to consume much memory (in testing it was around 290 MB for the whole process).
     :return:
     """
     stats = Counter()
-    for organization in Organization.objects.all():
-        accesslog_query = AccessLog.objects.filter(
-            organization=organization.pk,
-            platform=OuterRef('platform_id'),
-            target=OuterRef('title'),
-            date=OuterRef('date'),
-        )
-        qs = (
-            PlatformTitle.objects.filter(organization_id=organization.pk)
-            .annotate(valid=Exists(accesslog_query))
-            .exclude(valid=True)
-        )
-        if pretend:
-            count = qs.count()
-            stats['removed'] += count
+    memories = []
+
+    def sync_batch(pts_from_logs: set, from_month: Optional[date], to_month: Optional[date]):
+        fltrs = {'date__gte': from_month} if from_month else {}
+        fltrs.update({'date__lt': to_month} if to_month else {})
+        extra_pts = {
+            pt_rec[0]
+            for pt_rec in PlatformTitle.objects.filter(organization_id=org.pk, **fltrs)
+            .values_list('pk', 'platform_id', 'title_id', 'date')
+            .iterator()
+            if (pt_rec[1], pt_rec[2], pt_rec[3]) not in pts_from_logs
+        }
+        count = len(extra_pts)
+        stats['removed'] += count
+        if not pretend and count > 0:
+            PlatformTitle.objects.filter(pk__in=extra_pts).delete()
+        logger.info('%s - %s, %d from %d', from_month, to_month, count, len(pts_from_logs))
+        memories.append(log_memory('clean_obsolete_platform_title_links'))
+
+    for org in Organization.objects.all():
+        pts_in_logs = set()
+        first_month = None
+        last_month = None
+        rec_date = None
+
+        if settings.CLICKHOUSE_QUERY_ACTIVE:
+            rec_gen = (
+                (r.platform_id, r.target_id, r.date)
+                for r in ch_backend.get_records(
+                    AccessLogCube.query()
+                    .filter(organization_id=org.pk)
+                    .group_by('platform_id', 'target_id', 'date')
+                    .order_by('date'),
+                    streaming=True,
+                )
+            )
         else:
-            count, details = qs.delete()
-            stats['removed'] += count
-        logger.info('%s, %d', organization.name, count)
+            rec_gen = (
+                AccessLog.objects.filter(organization_id=org.pk)
+                .values_list('platform_id', 'target_id', 'date')
+                .order_by('date')
+                .iterator()
+            )
+
+        for (rec_platform_id, rec_target_id, rec_date) in rec_gen:
+            if last_month != rec_date:
+                if len(pts_in_logs) > batch_size:
+                    sync_batch(pts_in_logs, first_month, rec_date)
+                    pts_in_logs = set()
+                    first_month = rec_date
+
+                last_month = rec_date
+            pts_in_logs.add((rec_platform_id, rec_target_id, rec_date))
+        sync_batch(pts_in_logs, first_month, rec_date)
+
+    if memories:
+        logger.info('max memory used: %.2f', max(memories))
     return stats
 
 
