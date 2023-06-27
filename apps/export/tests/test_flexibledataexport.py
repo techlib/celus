@@ -436,6 +436,7 @@ class TestFlexibleDataExportExcel:
     def test_show_totals(self, flexible_slicer_test_data, include_row_totals, include_col_totals):
         slicer = FlexibleDataSlicer(primary_dimension='organization')
         slicer.add_group_by('platform')
+        slicer.order_by = ['organization__name']
         exporter = FlexibleDataExcelExporter(
             slicer,
             include_charts=False,
