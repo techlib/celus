@@ -31,24 +31,6 @@ def validate_data_v4(report: Counter4ReportBase):
     return None
 
 
-def check_importable_attempt(attempt: SushiFetchAttempt):
-
-    if attempt.status == AttemptStatus.SUCCESS:
-        raise ValueError(f'Data already imported (attempt={attempt.pk})')
-
-    elif attempt.status == AttemptStatus.DOWNLOAD_FAILED:
-        raise ValueError(f'Trying to import data when download failed (attempt={attempt.pk})')
-
-    elif attempt.status == AttemptStatus.NO_DATA:
-        raise ValueError(f'Attempt contains no data (attempt={attempt.pk})')
-
-    if attempt.status == AttemptStatus.IMPORT_FAILED:
-        raise ValueError(f'Import of data already crashed (attempt={attempt.pk})')
-
-    if attempt.status not in [AttemptStatus.IMPORTING, AttemptStatus.UNPROCESSED]:
-        raise ValueError(f'Could not import data (attempt={attempt.pk})')
-
-
 @atomic
 def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     # check file consistency first
@@ -64,7 +46,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         logger.warning('Unsupported report type %s', attempt.counter_report.code)
         return
 
-    check_importable_attempt(attempt)
+    attempt.check_importable()
 
     logger.debug('Processing file: %s; time: %.3f', attempt.data_file.name, time())
 
@@ -144,6 +126,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             records,
             months=[month],
         )
+
         if len(import_batches) > 1:
             raise DataStructureError('Cannot import data for more than one month from SUSHI')
         # it is possible that because of month filter there will be no data imported anyway
@@ -184,7 +167,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
 
 
 def reprocess_attempt(attempt: SushiFetchAttempt) -> typing.Optional[SushiFetchAttempt]:
-    if attempt.unprocess() is None:  # note: empty dict is valid output of `unprocess`
+    if attempt.reimport() is None:  # note: empty dict is valid output of `reimport`
         return None
     try:
         import_one_sushi_attempt(attempt)

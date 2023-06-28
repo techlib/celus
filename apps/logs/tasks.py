@@ -27,7 +27,7 @@ from logs.exceptions import (
     OrganizationHasToBeSelected,
     UnknownReportTypeInPreflight,
 )
-from logs.logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
+from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.logic.cleanup import (
     find_organizationplatform_differences,
     fix_organizationplatform_differences,
@@ -86,6 +86,7 @@ def import_new_sushi_attempts_task():
         for i, attempt in enumerate(attempts):
             logger.info('----- Importing attempt #%d -----', i)
             try:
+                attempt.check_importable()
                 import_one_sushi_attempt(attempt)
             except Exception as e:
                 # we catch any kind of error to make sure that the loop does not die
@@ -94,9 +95,8 @@ def import_new_sushi_attempts_task():
 
             finally:
                 # Close the file (celery might keep the file opened)
-                # Note that data_file should not be None otherwise FetchAttempt
-                # wouldn't be in IMPORTING state
-                attempt.data_file.close()
+                if attempt.data_file:
+                    attempt.data_file.close()
 
     except DatabaseError:
         logger.warning("Sushi import attempts are currently being processed.")
@@ -117,7 +117,7 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
         # select_for_update lock only a single fetch attempts
         attempt = SushiFetchAttempt.objects.select_for_update(nowait=True).get(pk=attempt_id)
         if reimport:
-            attempt.unprocess()
+            attempt.reimport()
 
     except SushiFetchAttempt.DoesNotExist:
         # sushi attempt was deleted in the meantime
@@ -128,7 +128,7 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
         logger.warning("Sushi attempt '%s' is being processed somewhere else.", attempt_id)
         return
     try:
-        check_importable_attempt(attempt)
+        attempt.check_importable()
     except ValueError as e:
         logger.warning("Sushi attempt '%d' can't be imported: %s", attempt_id, str(e))
         if attempt.data_file:
@@ -141,7 +141,8 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
         logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
         attempt.mark_crashed(e)
     finally:
-        attempt.data_file.close()
+        if attempt.data_file:
+            attempt.data_file.close()
 
 
 @celery.shared_task

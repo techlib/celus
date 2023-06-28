@@ -191,7 +191,7 @@ def reimport_import_batch_with_fa(ib: ImportBatch) -> ImportBatch:
         # simply trust our previous decision about assigning `NO_DATA` and go with it.
         # If we someday find that our `NO_DATA` decision process is flawed and need to reimport
         # we would need to remove this condition.
-        source_fa.unprocess()
+        source_fa.reimport()
         import_one_sushi_attempt(source_fa)
     else:
         ib.save()  # update last_updated

@@ -33,10 +33,7 @@ function attemptState(attempt) {
     return ATTEMPT_AWAITING_IMPORT;
   } else if (attempt.status === "no_data") {
     return ATTEMPT_EMPTY_DATA;
-  } else if (
-    attempt.status === "canceled" ||
-    attempt.status === "unprocessed"
-  ) {
+  } else if (attempt.status === "canceled") {
     return ATTEMPT_CANCELED;
   }
   return ATTEMPT_UNKNOWN;

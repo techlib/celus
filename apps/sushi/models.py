@@ -731,8 +731,6 @@ class AttemptStatus(models.TextChoices):
     # -> IMPORTING
     SUCCESS = 'success', _("Success")
     # -> IMPORTING
-    UNPROCESSED = 'unprocessed', _("Unprocessed")
-    # -> IMPORTING
     NO_DATA = 'no_data', _("No data")
     # -> IMPORTING
     IMPORT_FAILED = 'import_failed', _("Import failed")
@@ -744,7 +742,6 @@ class AttemptStatus(models.TextChoices):
     def terminated(cls):
         return {
             cls.SUCCESS,
-            cls.UNPROCESSED,
             cls.NO_DATA,
             cls.IMPORT_FAILED,
             cls.PARSING_FAILED,
@@ -768,8 +765,8 @@ class AttemptStatus(models.TextChoices):
         return {cls.SUCCESS}
 
     @classmethod
-    def unprocessable(cls):
-        return {cls.SUCCESS, cls.NO_DATA, cls.IMPORT_FAILED, cls.PARSING_FAILED, cls.UNPROCESSED}
+    def reimportable(cls):
+        return {cls.SUCCESS, cls.NO_DATA, cls.IMPORT_FAILED, cls.PARSING_FAILED}
 
 
 class SushiFetchAttempt(SourceFileMixin, models.Model):
@@ -817,7 +814,35 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
     @property
     def can_import_data(self):
-        return self.status in [AttemptStatus.IMPORTING]
+        return self.check_importable(False)
+
+    def check_importable(self, raise_error=True) -> bool:
+        if self.status == AttemptStatus.SUCCESS:
+            if raise_error:
+                raise ValueError(f'Data already imported (attempt={self.pk})')
+            return False
+
+        elif self.status == AttemptStatus.DOWNLOAD_FAILED:
+            if raise_error:
+                raise ValueError(f'Trying to import data when download failed (attempt={self.pk})')
+            return False
+
+        elif self.status == AttemptStatus.NO_DATA:
+            if raise_error:
+                raise ValueError(f'Attempt contains no data (attempt={self.pk})')
+            return False
+
+        elif self.status == AttemptStatus.IMPORT_FAILED:
+            if raise_error:
+                raise ValueError(f'Import of data already crashed (attempt={self.pk})')
+            return False
+
+        elif self.status != AttemptStatus.IMPORTING:
+            if raise_error:
+                raise ValueError(f'Could not import data (attempt={self.pk})')
+            return False
+
+        return True
 
     def mark_processed(self):
         if self.status in AttemptStatus.terminated() and not self.when_processed:
@@ -876,14 +901,15 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         self.save()
 
     @atomic
-    def unprocess(self) -> Optional[dict]:
+    def reimport(self) -> Optional[dict]:
         """
         Changes the sushi attempt to undo changes of it being processed. This includes:
         * deleting any data related to the import_batch
         * deleting the import_batch itself
         * and mark attempt as if it didn't crashed
+        * update attempt state so it can be imported
         """
-        if self.status not in AttemptStatus.unprocessable():
+        if self.status not in AttemptStatus.reimportable():
             return None
 
         stats = {}
@@ -891,7 +917,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         if self.import_batch:
             stats = self.import_batch.delete()  # deletes the access logs as well
             self.import_batch = None
-        self.status = AttemptStatus.UNPROCESSED
+        self.status = AttemptStatus.IMPORTING
         self.log = ''
         self.extracted_data = {}
         if 'import_crash_traceback' in self.processing_info:

@@ -21,7 +21,7 @@ from test_scenarios.basic import (  # noqa - fixtures
 )
 
 from ..exceptions import DataStructureError, UnknownMetric
-from ..logic.attempt_import import check_importable_attempt, import_one_sushi_attempt
+from ..logic.attempt_import import import_one_sushi_attempt
 from ..models import ImportBatch, Metric
 
 
@@ -141,7 +141,6 @@ class TestAttemptImport:
             (AttemptStatus.DOWNLOADING, False),
             (AttemptStatus.IMPORTING, True),
             (AttemptStatus.SUCCESS, False),
-            (AttemptStatus.UNPROCESSED, True),
             (AttemptStatus.NO_DATA, False),
             (AttemptStatus.IMPORT_FAILED, False),
             (AttemptStatus.PARSING_FAILED, False),
@@ -174,10 +173,10 @@ class TestAttemptImport:
         )
 
         if passed:
-            check_importable_attempt(fetch_attempt)
+            fetch_attempt.check_importable()
         else:
             with pytest.raises(ValueError):
-                check_importable_attempt(fetch_attempt)
+                fetch_attempt.check_importable()
 
     def test_counter5_tr_warning(self, organizations, counter_report_type_named, platforms):
         cr_type = counter_report_type_named('TR', version=5)
