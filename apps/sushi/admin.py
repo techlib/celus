@@ -1,3 +1,5 @@
+import typing
+
 from django.conf import settings
 from django.contrib import admin, messages
 from django.db.transaction import atomic
@@ -7,6 +9,8 @@ from import_export.resources import ModelResource
 from logs.logic.attempt_import import reprocess_attempt
 from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
+from organizations.models import Organization
+from publications.models import Platform
 from reversion.admin import VersionAdmin
 
 from . import models
@@ -183,14 +187,14 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
     def report(self, obj: models.SushiFetchAttempt):
         return obj.counter_report.code
 
-    def organization(self, obj: models.SushiFetchAttempt):
-        return obj.credentials.organization
+    def organization(self, obj: models.SushiFetchAttempt) -> typing.Optional[Organization]:
+        return obj.credentials and obj.credentials.organization
 
-    def platform(self, obj: models.SushiFetchAttempt):
-        return obj.credentials.platform
+    def platform(self, obj: models.SushiFetchAttempt) -> typing.Optional[Platform]:
+        return obj.credentials and obj.credentials.platform
 
-    def counter_version(self, obj: models.SushiFetchAttempt):
-        return obj.credentials.counter_version
+    def counter_version(self, obj: models.SushiFetchAttempt) -> typing.Optional[int]:
+        return obj.credentials and obj.credentials.counter_version
 
     def has_import_batch(self, obj: models.SushiFetchAttempt):
         return obj.import_batch is not None
