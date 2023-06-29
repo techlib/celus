@@ -32,6 +32,7 @@ cs:
     :items-per-page="50"
     :footer-props="{ itemsPerPageOptions: [50, 100, -1] }"
     :custom-filter="searchFilter"
+    class="auto-table"
   >
     <template #top>
       <v-row>

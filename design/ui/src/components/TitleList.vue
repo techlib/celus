@@ -80,6 +80,7 @@ cs:
       :page.sync="page"
       :sort-desc.sync="orderDesc"
       :no-data-text="emptyDataText"
+      class="auto-table"
     >
       <template v-slot:item.name="{ item }">
         <router-link
@@ -290,28 +291,40 @@ export default {
         {
           text: this.$i18n.t("title_fields.name"),
           value: "name",
+          // class: "auto-width",
+          // cellClass: "auto-width",
         },
         {
           text: this.$i18n.t("title_fields.type"),
           value: "pub_type",
+          // class: "auto-width",
+          // cellClass: "auto-width",
         },
         {
           text: this.$i18n.t("title_fields.isbn"),
           value: "isbn",
+          // class: "auto-width",
+          // cellClass: "auto-width",
         },
         {
           text: this.$i18n.t("title_fields.issn"),
           value: "issn",
+          // class: "auto-width",
+          // cellClass: "auto-width",
         },
         {
           text: this.$i18n.t("title_fields.eissn"),
           value: "eissn",
+          // class: "auto-width",
+          // cellClass: "auto-width",
         },
       ];
       if (this.showDOI) {
         base.push({
           text: this.$i18n.t("title_fields.doi"),
           value: "doi",
+          // class: "auto-width",
+          // cellClass: "auto-width",
         });
       }
       if (this.interestByPlatform) {
@@ -319,6 +332,8 @@ export default {
           text: this.$i18n.t("title_fields.ratios"),
           value: "ratios",
           sortable: false,
+          // class: "auto-width",
+          // cellClass: "auto-width",
         });
         base.push({
           text: this.$i18n.t("title_fields.platforms"),
@@ -529,5 +544,14 @@ span.coma {
 div.ddd {
   vertical-align: top;
   //height: 100%;
+}
+
+div.ttt {
+  div {
+    table {
+      table-layout: fixed !important;
+      color: red !important;
+    }
+  }
 }
 </style>

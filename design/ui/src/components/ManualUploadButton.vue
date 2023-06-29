@@ -18,6 +18,7 @@ cs:
           :small="small"
           :color="color"
           :disabled="disabled"
+          v-on="on"
         >
           <v-icon class="mr-2" small>fa-upload</v-icon>
           {{ $t("actions.upload_data") }}

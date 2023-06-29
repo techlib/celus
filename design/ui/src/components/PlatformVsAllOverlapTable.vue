@@ -30,7 +30,6 @@ cs:
       v-if="loading || titleCountLoading || platformsLoading"
       height="300"
       :text="$t('loading_data')"
-      icon-name="fa-cog"
     />
     <table v-else class="overlap">
       <thead>

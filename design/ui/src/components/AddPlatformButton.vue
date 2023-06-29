@@ -1,9 +1,11 @@
 <i18n lang="yaml">
 en:
   add: Add platform
+  add_tt: If you do not find a platform in our extensive list, you can add one here
 
 cs:
   add: Přidat platformu
+  add_tt: Pokud nenajdete platformu v našem rozsáhlém seznamu, můžete ji přidat zde
 </i18n>
 
 <template>
@@ -23,7 +25,7 @@ cs:
           </slot>
         </v-btn>
       </template>
-      {{ $t("add") }}
+      {{ $t("add_tt") }}
     </v-tooltip>
     <v-dialog v-model="showDialog" :max-width="dialogMaxWidth">
       <PlatformEditDialog

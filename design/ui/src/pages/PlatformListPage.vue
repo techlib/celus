@@ -38,19 +38,15 @@ cs:
         cols="auto"
         class="d-none d-sm-block pb-0 pt-4"
       >
-        <v-container fluid class="py-0">
+        <v-container fluid class="py-0 pr-0">
           <v-row>
-            <v-col
-              v-if="allowUserCreatePlatforms"
-              cols="auto"
-              class="pa-1 pr-0"
-            >
+            <v-col v-if="allowUserCreatePlatforms" cols="auto">
               <AddPlatformButton @update-platforms="loadPlatforms()" />
             </v-col>
-            <v-col cols="auto" class="pa-1" v-if="allowManualDataUpload">
+            <v-col cols="auto" v-if="allowManualDataUpload">
               <ManualUploadButton />
             </v-col>
-            <v-col cols="auto" class="pa-1 pr-0">
+            <v-col cols="auto">
               <AddAnnotationButton @update="refreshAnnotations()" />
             </v-col>
           </v-row>

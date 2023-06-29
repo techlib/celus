@@ -3,33 +3,7 @@
 <i18n lang="yaml" src="@/locales/tours.yaml"></i18n>
 
 <template>
-  <v-navigation-drawer
-    v-model="show"
-    :mini-variant.sync="mini"
-    clipped
-    app
-    mobile-breakpoint="900"
-  >
-    <v-toolbar flat class="transparent">
-      <v-list class="pa-0">
-        <v-list-item>
-          <v-list-item-action>
-            <v-icon>fa-th</v-icon>
-          </v-list-item-action>
-
-          <v-list-item-content>
-            {{ $t("menu") }}
-          </v-list-item-content>
-
-          <v-list-item-action>
-            <v-btn icon @click.stop="mini = !mini">
-              <v-icon>fa-chevron-left</v-icon>
-            </v-btn>
-          </v-list-item-action>
-        </v-list-item>
-      </v-list>
-    </v-toolbar>
-
+  <v-navigation-drawer v-model="show" :mini-variant.sync="mini" clipped app>
     <!-- stuff that should be here on xs displays because it is hidden from the app-bar -->
     <OrganizationSelector
       :lang="appLanguage"

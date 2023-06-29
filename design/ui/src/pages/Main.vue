@@ -210,4 +210,32 @@ ul.unobtrusive-bullets {
 th.align-top {
   vertical-align: top;
 }
+
+td.auto-width,
+th.auto-width {
+  width: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auto-table .v-data-table__wrapper table {
+  th:last-child,
+  td:last-child {
+    width: 100%;
+  }
+
+  th:not(:last-child),
+  td:not(:last-child) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 6rem;
+  }
+
+  th.text-right {
+    // only tds in right aligned columns should be right aligned, not the ths
+    text-align: left !important;
+  }
+}
 </style>

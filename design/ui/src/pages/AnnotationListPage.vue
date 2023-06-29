@@ -19,17 +19,20 @@ cs:
       <v-col class="pb-0">
         <h2>{{ $t("labels.annotations") }}</h2>
       </v-col>
-      <v-spacer></v-spacer>
-      <v-col class="pb-0" cols="auto" v-if="showAdminStuff">
-        <AddAnnotationButton @update="fetchAnnotations" />
-      </v-col>
     </v-row>
     <v-row>
       <v-col>
         <v-card>
           <v-card-text>
             <v-container fluid class="pt-0 px-0 px-sm-2">
-              <v-row>
+              <v-row class="align-end">
+                <v-col cols="auto" v-if="showAdminStuff">
+                  <AddAnnotationButton
+                    @update="fetchAnnotations"
+                    color="primary"
+                  />
+                </v-col>
+
                 <v-spacer></v-spacer>
                 <v-col cols="4">
                   <v-text-field

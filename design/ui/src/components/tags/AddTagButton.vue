@@ -1,7 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
-  <v-btn color="primary" outlined :small="small" @click="showDialog = true">
+  <v-btn :color="color" :small="small" @click="showDialog = true">
     <v-icon small class="pr-2">fa fa-plus</v-icon>
     {{ $t("labels.new_tag") }}
     <v-dialog v-model="showDialog" max-width="720px">
@@ -24,6 +24,7 @@ export default {
 
   props: {
     small: { type: Boolean, default: false },
+    color: { type: String, default: "" },
   },
 
   data() {

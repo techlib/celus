@@ -4,8 +4,8 @@
   <!-- groups -->
   <v-list-group v-if="item.items" v-model="expanded" eager>
     <template v-slot:activator>
-      <v-list-item-icon>
-        <v-icon class="fa-fw">{{ item.icon }}</v-icon>
+      <v-list-item-icon class="mr-3">
+        <v-icon class="fa-fw" small>{{ item.icon }}</v-icon>
       </v-list-item-icon>
       <v-list-item-content>
         <v-list-item-title>
@@ -44,8 +44,8 @@
     @change="change()"
     ref="item"
   >
-    <v-list-item-icon v-if="level === 0">
-      <v-icon class="fa-fw">{{ item.icon }}</v-icon>
+    <v-list-item-icon v-if="level === 0" class="mr-3">
+      <v-icon class="fa-fw" small>{{ item.icon }}</v-icon>
     </v-list-item-icon>
 
     <v-list-item-content>

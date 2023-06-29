@@ -10,19 +10,15 @@
     >
       <span class="font-weight-bold">{{ shownValue }}</span>
     </v-progress-circular>
-    <v-progress-circular
-      v-else
-      indeterminate
-      size="80"
-      width="12"
-      rotate="90"
-      color="grey lighten-2"
-    />
+    <LargeSpinner v-else />
   </div>
 </template>
 <script>
+import LargeSpinner from "@/components/util/LargeSpinner.vue";
+
 export default {
   name: "CoverageScoreGauge",
+  components: { LargeSpinner },
   props: {
     value: {
       type: Number,

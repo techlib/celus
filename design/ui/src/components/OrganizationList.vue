@@ -30,6 +30,7 @@ cs:
     :show-expand="enableTags"
     expand-icon="fa fa-caret-down"
     :search="search"
+    class="auto-table"
   >
     <template #top>
       <v-row>
@@ -361,5 +362,3 @@ export default {
   },
 };
 </script>
-
-<style scoped></style>

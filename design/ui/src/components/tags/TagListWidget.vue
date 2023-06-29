@@ -48,10 +48,10 @@ cs:
         </v-row>
         <v-row class="d-flex">
           <v-col class="align-self-center" cols="auto">
-            <AddTagClassButton @saved="fetchTagClasses()" small />
+            <AddTagClassButton @saved="fetchTagClasses()" />
           </v-col>
           <v-col class="align-self-center" cols="auto">
-            <AddTagButton @saved="fetchTags()" small />
+            <AddTagButton @saved="fetchTags()" color="primary" />
           </v-col>
           <v-spacer></v-spacer>
           <v-col cols="auto">

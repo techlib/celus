@@ -43,9 +43,16 @@ cs:
     <v-row>
       <v-col>
         <v-card>
-          <v-tabs v-model="tab" grow>
-            <v-tab to="#reports">{{ $t("platform_to_report") }}</v-tab>
-            <v-tab to="#metrics">{{ $t("report_to_metrics") }}</v-tab>
+          <v-tabs
+            v-model="tab"
+            dark
+            background-color="info"
+            centered
+            slider-color="#ffffff33"
+            slider-size="48"
+          >
+            <v-tab href="#reports">{{ $t("platform_to_report") }}</v-tab>
+            <v-tab href="#metrics">{{ $t("report_to_metrics") }}</v-tab>
             <v-tab-item value="reports">
               <v-card flat>
                 <v-card-text class="pa-8">

@@ -15,9 +15,19 @@
           sort-by="name"
           :loading="loading"
           :search="search"
+          class="auto-table"
         >
           <template #top>
-            <v-row>
+            <v-row class="align-baseline">
+              <v-col cols="auto">
+                <v-btn
+                  color="primary"
+                  :to="{ name: 'flexitable', query: { wantsSave: true } }"
+                >
+                  <v-icon small class="mr-2">fa fa-plus</v-icon>
+                  {{ $t("add_report") }}
+                </v-btn>
+              </v-col>
               <v-spacer></v-spacer>
               <v-col cols="auto">
                 <v-text-field
@@ -275,21 +285,6 @@
                 isExpanded ? "fa-angle-down" : "fa-angle-right"
               }}</v-icon>
             </v-btn>
-          </template>
-
-          <template #body.append="{ headers }">
-            <tr>
-              <td colspan="1"></td>
-              <td :colspan="headers.length - 1">
-                <v-btn
-                  color="primary"
-                  :to="{ name: 'flexitable', query: { wantsSave: true } }"
-                >
-                  <v-icon small class="mr-2">fa fa-plus</v-icon>
-                  {{ $t("add_report") }}
-                </v-btn>
-              </td>
-            </tr>
           </template>
         </v-data-table>
       </v-col>

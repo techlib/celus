@@ -25,13 +25,11 @@ cs:
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import TitleList from "@/components/TitleList";
-import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
 
 export default {
   name: "OverlapAnalysisPage",
   components: {
     TitleList,
-    InterestGroupSelector,
   },
   props: {},
   data() {

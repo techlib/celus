@@ -1,13 +1,13 @@
 <template>
   <div
-    :style="{ height: height, color: color, paddingTop: paddingTop }"
-    class="loader"
+    :style="{ height: height, paddingTop: paddingTop }"
+    class="loader primary--text"
   >
     <i class="fas fa-spin" :class="iconName"></i>
     <v-progress-linear
       v-if="showProgress"
       :value="progress"
-      :color="color"
+      color="primary"
       class="my-6"
     />
     <p class="text">{{ text }}</p>
@@ -19,7 +19,6 @@ export default {
   props: {
     loading: {},
     height: { default: "600px" },
-    color: { default: "#1db79a88" },
     text: { default: "", required: false },
     iconName: { default: "fa-cog" },
     paddingTop: { default: "160px" },

@@ -23,7 +23,6 @@ cs:
     v-if="loading || platformsLoading"
     height="300"
     :text="$t('loading_data')"
-    icon-name="fa-cog"
   />
   <ErrorPlaceholder
     v-else-if="usedPlatforms.length === 0"

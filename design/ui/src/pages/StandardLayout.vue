@@ -2,20 +2,20 @@
 
 <i18n lang="yaml">
 en:
-    releases: Celus releases
-    email_not_verified: Your email is not verified
-    impersonated: You are currently impersonating another user.
-    no_help: No help available for this page
-    help_panel_tt: Context specific help
-    click_for_more_info: Click for more information about the release
+  releases: Celus releases
+  email_not_verified: Your email is not verified
+  impersonated: You are currently impersonating another user.
+  no_help: No help available for this page
+  help_panel_tt: Context specific help
+  click_for_more_info: Click for more information about the release
 
 cs:
-    releases: Vydání Celusu
-    email_not_verified: Vaše emailová adresa není ověřená
-    no_help: Pro tuto stránku není dostupná žádná nápověda
-    help_panel_tt: Nápověda pro aktuální stránku
-    impersonated: Právě zosobňujete jiného uživatele.
-    click_for_more_info: Klikněte pro více informací o vydání
+  releases: Vydání Celusu
+  email_not_verified: Vaše emailová adresa není ověřená
+  no_help: Pro tuto stránku není dostupná žádná nápověda
+  help_panel_tt: Nápověda pro aktuální stránku
+  impersonated: Právě zosobňujete jiného uživatele.
+  click_for_more_info: Klikněte pro více informací o vydání
 </i18n>
 
 <template>
@@ -69,14 +69,16 @@ cs:
         v-if="showLanguageSelector"
         v-model="appLanguage"
         :items="activeLanguageCodes"
-        prepend-icon="fa-globe"
         class="short"
         shrink
       >
+        <template #prepend>
+          <v-icon class="fs-20">fa-globe</v-icon>
+        </template>
       </v-select>
 
       <!-- user icon -->
-      <v-toolbar-items>
+      <v-toolbar-items class="align-baseline">
         <v-divider class="mx-3" inset vertical></v-divider>
 
         <v-tooltip bottom>
@@ -85,13 +87,13 @@ cs:
               <router-link :to="{ name: 'releases' }">
                 <v-badge
                   :value="displayNewReleaseBadge"
-                  color="success"
+                  color="warning"
                   right
                   dot
                   offset-x="16"
                   offset-y="31"
                 >
-                  <v-icon class="mx-2 mt-5" color="secondary"
+                  <v-icon class="mx-2 fs-20" color="disabled"
                     >fa fa-bullhorn</v-icon
                   >
                 </v-badge>
@@ -145,6 +147,7 @@ cs:
         @click.stop="showSidePanel = !showSidePanel"
         icon
         data-tour="menu-show-button"
+        v-if="$vuetify.breakpoint.mobile"
       >
         <v-icon>fa fa-bars</v-icon>
       </v-btn>
@@ -437,5 +440,10 @@ img.logow {
   &.v-tour__target--relative {
     position: fixed;
   }
+}
+
+.fs-20 {
+  font-size: 20px;
+  line-height: 28px;
 }
 </style>

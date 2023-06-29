@@ -87,7 +87,7 @@ cs:
         <v-container fluid>
           <v-row>
             <v-col cols="auto" align-self="center">
-              <v-btn @click="activateCreateDialog()" color="warning">
+              <v-btn @click="activateCreateDialog()" color="primary">
                 <v-icon small class="mr-2">fa-plus</v-icon>
                 {{ $t("add_new") }}
               </v-btn>
@@ -95,7 +95,7 @@ cs:
             <v-col cols="auto" align-self="center">
               <v-tooltip bottom>
                 <template #activator="{ on }">
-                  <v-btn @click="testChecked()" color="success" v-on="on">
+                  <v-btn @click="testChecked()" color="secondary" v-on="on">
                     <v-icon small class="mr-2">fa fa-download</v-icon>
                     {{ $t("test_checked") }}
                     <v-badge color="white" inline>
@@ -116,10 +116,7 @@ cs:
                 <template #activator="tooltip">
                   <v-menu offset-y>
                     <template #activator="menu">
-                      <v-btn
-                        v-on="{ ...menu.on, ...tooltip.on }"
-                        color="secondary"
-                      >
+                      <v-btn v-on="{ ...menu.on, ...tooltip.on }" color="">
                         <v-icon small class="mr-2">fas fa-file-export</v-icon>
                         {{ $t("export") }}
                       </v-btn>
@@ -289,7 +286,7 @@ cs:
                 <template #activator="tooltip">
                   <v-btn
                     v-on="{ ...tooltip.on }"
-                    color="secondary"
+                    color=""
                     @click="showImportCredentialsModal"
                   >
                     <v-icon small class="mr-2">fas fa-file-import</v-icon>

@@ -73,7 +73,7 @@
     </template>
 
     <template #top>
-      <v-btn @click="fetchData">
+      <v-btn @click="fetchData" color="primary">
         <v-icon small class="mr-2">fa fa-sync-alt</v-icon>
         <span v-text="$t('actions.refresh')"></span>
       </v-btn>

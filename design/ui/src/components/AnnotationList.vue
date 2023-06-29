@@ -29,6 +29,7 @@ cs:
         :server-items-length="serverItemsLength"
         show-expand
         :expanded.sync="expandedRows"
+        class="auto-table"
       >
         <template v-slot:top>
           <v-dialog
@@ -205,6 +206,7 @@ export default {
         {
           text: this.$i18n.t("annotations.labels.level"),
           value: "level",
+          align: "center",
         },
         {
           text: this.$i18n.t("annotations.labels.author"),

@@ -6,7 +6,6 @@
     v-if="loading || crunchingData"
     :height="height"
     :text="crunchingData ? crunchingText : $t('chart.loading_data')"
-    icon-name="fa-cog"
   />
   <div v-else-if="tooMuchData" :style="{ height: height }" id="loading">
     <div>

@@ -1,7 +1,7 @@
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 
 <template>
-  <LoaderWidget v-if="loading" icon-name="fa-cog" height="370px" />
+  <LoaderWidget v-if="loading" height="370px" />
   <div v-else :style="{ height: height }">
     <v-chart :option="option" />
   </div>
