@@ -2,6 +2,7 @@ import logging
 
 import requests
 from django.conf import settings
+from logs.models import OrganizationPlatform
 from organizations.models import Organization, UserOrganization
 from publications.models import Platform
 from rest_framework import serializers
@@ -48,6 +49,16 @@ class CelusUserOrganizationSerializer(serializers.ModelSerializer):
             'user',
             'organization',
             'is_admin',
+        )
+
+
+class CelusOrganizationPlatformSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganizationPlatform
+        fields = (
+            'organization',
+            'platform',
+            'sushi_credentials',
         )
 
 
@@ -117,8 +128,12 @@ def get_users():
     return CelusUserSerializer(User.objects.all(), many=True).data
 
 
-def get_relations():
+def get_users_organizations():
     return CelusUserOrganizationSerializer(UserOrganization.objects.all(), many=True).data
+
+
+def get_organizations_platforms():
+    return CelusOrganizationPlatformSerializer(OrganizationPlatform.objects.all(), many=True).data
 
 
 def get_platforms():
@@ -144,8 +159,9 @@ def sync():
     d = {
         '/organizations/': get_organizations(),
         '/users/': get_users(),
-        '/users-organizations/': get_relations(),
+        '/users-organizations/': get_users_organizations(),
         '/platforms/': get_platforms(),
+        '/organizations-platforms/': get_organizations_platforms(),
         '/sushi-credentials/': get_sushi_credentials(),
     }
     for k, v in d.items():

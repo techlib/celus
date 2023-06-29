@@ -5,10 +5,11 @@ import pytest
 from core.fake_data import DataSourceFactory, UserFactory
 from core.logic.maximus_sync import (
     get_organizations,
+    get_organizations_platforms,
     get_platforms,
-    get_relations,
     get_sushi_credentials,
     get_users,
+    get_users_organizations,
 )
 from core.models import UL_ORG_ADMIN, User
 from django.utils import timezone
@@ -111,11 +112,11 @@ class TestMaximusSync:
         for d in out:
             assert d in check
 
-    def test_get_relations(self):
+    def test_get_users_organizations(self):
         usr = UserFactory.create_batch(3)
         org = OrganizationFactory.create_batch(2)
 
-        assert get_relations() == []
+        assert get_users_organizations() == []
 
         org[0].users.add(usr[1], through_defaults={'is_admin': True})
         org[1].users.add(usr[1], through_defaults={'is_admin': True})
@@ -125,7 +126,7 @@ class TestMaximusSync:
             {"user": usr[1].id, "organization": org[1].id, "is_admin": True},
             {"user": usr[2].id, "organization": org[0].id, "is_admin": False},
         )
-        for d in json.loads(json.dumps(get_relations())):
+        for d in json.loads(json.dumps(get_users_organizations())):
             assert d in check
 
         org[0].users.add(usr[0], through_defaults={'is_admin': True})
@@ -135,7 +136,34 @@ class TestMaximusSync:
             {"user": usr[0].id, "organization": org[0].id, "is_admin": True},
             {"user": usr[2].id, "organization": org[0].id, "is_admin": False},
         )
-        for d in json.loads(json.dumps(get_relations())):
+        for d in json.loads(json.dumps(get_users_organizations())):
+            assert d in check
+
+    def test_get_organizations_platforms(self):
+        plt = PlatformFactory.create_batch(3)
+        org = OrganizationFactory.create_batch(2)
+
+        assert get_users_organizations() == []
+
+        org[0].platforms.add(plt[1], through_defaults={'sushi_credentials': [1]})
+        org[1].platforms.add(plt[1], through_defaults={'sushi_credentials': [2]})
+        org[0].platforms.add(plt[2])
+        check = (
+            {"platform": plt[1].id, "organization": org[0].id, "sushi_credentials": [1]},
+            {"platform": plt[1].id, "organization": org[1].id, "sushi_credentials": [2]},
+            {"platform": plt[2].id, "organization": org[0].id, "sushi_credentials": []},
+        )
+        for d in json.loads(json.dumps(get_organizations_platforms())):
+            assert d in check
+
+        org[0].platforms.add(plt[0], through_defaults={'sushi_credentials': [3]})
+        org[0].platforms.remove(plt[1])
+        org[1].platforms.remove(plt[1])
+        check = (
+            {"platform": plt[0].id, "organization": org[0].id, "sushi_credentials": [3]},
+            {"platform": plt[2].id, "organization": org[0].id, "sushi_credentials": []},
+        )
+        for d in json.loads(json.dumps(get_organizations_platforms())):
             assert d in check
 
     @pytest.mark.django_db
