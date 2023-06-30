@@ -842,6 +842,20 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
                 raise ValueError(f'Could not import data (attempt={self.pk})')
             return False
 
+        if self.import_batch:
+            # Can't import when there is and existing import batch
+            logger.warning(
+                "Attempt #%d is in IMPORTING state and it already contains an ImportBatch #%d",
+                self.pk,
+                self.import_batch.pk,
+            )
+
+            if raise_error:
+                raise ValueError(
+                    f'Attempt already contains data (attempt={self.pk},ib={self.import_batch.pk})'
+                )
+            return False
+
         return True
 
     def mark_processed(self):
