@@ -4,7 +4,6 @@ from collections import Counter
 from activity.models import UserActivity
 from allauth.account.models import EmailAddress, EmailConfirmation
 from annotations.models import Annotation
-from core.models import User
 from deployment.models import FooterImage, SiteLogo
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
@@ -91,7 +90,6 @@ class Command(BaseCommand):
             Batch,
             LastAction,
             Session,
-            User,
             Token,
         ):
             self.stderr.write(self.style.WARNING(f'Deleting {model.__name__}'))
