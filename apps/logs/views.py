@@ -519,6 +519,12 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         )
         to_delete = [Q(**e) for e in to_delete]
         to_delete = reduce(lambda x, y: x | y, to_delete, Q())
+
+        # remove import batches first
+        # otherwise there might be a race condition when deleting
+        # credentials or entire platform
+        counter.update(batches.delete()[1])
+
         if to_delete:
             fis_to_delete = FetchIntention.objects.filter(to_delete)
             counter.update(
@@ -526,9 +532,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             )
 
             counter.update(fis_to_delete.delete()[1])
-
-        # remove import batches
-        counter.update(batches.delete()[1])
 
         # remove empty manual data uploads
         counter.update(
