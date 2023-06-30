@@ -4,9 +4,11 @@ from collections import Counter
 from activity.models import UserActivity
 from allauth.account.models import EmailAddress, EmailConfirmation
 from annotations.models import Annotation
+from core.models import User
 from deployment.models import FooterImage, SiteLogo
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
+from django.contrib.sessions.models import Session
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
@@ -20,14 +22,18 @@ from logs.models import (
     FlexibleReport,
     ImportBatch,
     ImportBatchSyncLog,
+    LastAction,
     ManualDataUpload,
 )
+from necronomicon.models import Batch, Candidate
 from organizations.models import Organization
 from publications.models import Title
 from recache.models import CachedQuery
 from rest_framework.authtoken.models import Token
 from reversion.models import Revision, Version
 from scheduler.models import FetchIntentionQueue, Harvest, Scheduler
+from sushi.models import SushiFetchAttempt
+from tags.models import Tag, TagClass, TaggingBatch
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +83,16 @@ class Command(BaseCommand):
             Version,
             FetchIntentionQueue,
             Revision,
+            Tag,
+            TagClass,
+            TaggingBatch,
+            SushiFetchAttempt,
+            Candidate,
+            Batch,
+            LastAction,
+            Session,
+            User,
+            Token,
         ):
             self.stderr.write(self.style.WARNING(f'Deleting {model.__name__}'))
             count, details = model.objects.all().delete()
