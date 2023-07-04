@@ -14,7 +14,7 @@ from logs.exceptions import DataStructureError
 from logs.logic.data_import import (
     create_import_batch_or_crash,
     import_counter_records,
-    wipe_empty_import_batches,
+    wipe_empty_or_partial_import_batches,
 )
 from logs.models import OrganizationPlatform
 from sushi.models import AttemptStatus, SushiFetchAttempt
@@ -111,7 +111,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         )
 
         # remove empty import batches to avoid the clash during import
-        if count := wipe_empty_import_batches(
+        if count := wipe_empty_or_partial_import_batches(
             attempt.counter_report.report_type,
             attempt.credentials.organization,
             attempt.credentials.platform,

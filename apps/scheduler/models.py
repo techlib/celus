@@ -11,7 +11,7 @@ from core.models import CreatedUpdatedMixin, User
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import DatabaseError, models, transaction
-from django.db.models import F, Max, Q
+from django.db.models import Exists, F, Max, OuterRef, Q
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -19,7 +19,7 @@ from django.utils.functional import cached_property
 from django_celery_results.models import TaskResult
 from logs.exceptions import DataStructureError
 from logs.logic.data_import import create_import_batch_or_crash
-from logs.models import ImportBatch
+from logs.models import AccessLog, ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
 from organizations.models import Organization
 from publications.models import Platform
@@ -41,6 +41,13 @@ DATA_NOT_READY_RETRY_PERIOD = timedelta(days=1)
 PARTIAL_DATA_RETRY_PERIOD = timedelta(days=1)
 MAX_RETRY_GAP = timedelta(days=8)
 
+# If the time between end of the harvested month and the current date is less than this
+# and the status is something that may be fixed by later attempts (e.g. no data, partial data)
+# we will not accept the data as definitive (and retry if this is automatic harvest)
+# If the time gap is longer than this, we will accept the data as definitive
+# Note: currently only used for 3040, more will come later
+FIXABLE_STATUS_GRACE_PERIOD = timedelta(days=45)
+
 
 class RunResponse(Enum):
     IDLE = auto()  # no FetchIntention to be processed
@@ -57,7 +64,7 @@ class ProcessResponse(Enum):
     DUPLICATE = auto()  # FetchIntention was marked as duplicate
 
 
-# TODO scheduler cleanup (to many invalid urls)
+# TODO scheduler cleanup (too many invalid urls)
 class Scheduler(models.Model):
     """Represents attempt scheduling based on remote URL"""
 
@@ -177,7 +184,7 @@ class Scheduler(models.Model):
         # processing fetch intention
         with transaction.atomic(savepoint=True):
 
-            # It may take so time to process the intetion
+            # It may take so time to process the intention
             # (download the data)
             process_response = intention.process()
 
@@ -680,7 +687,7 @@ class FetchIntention(models.Model):
                     # skip if there is already existing import batch
                     # Note that this function should not raise an exception
                     # The transaction needs to be committed otherwise
-                    # the same function is going to be retriggered in celery
+                    # the same function is going to be re-triggered in celery
                     pass
                 self.attempt.save()
             return
@@ -717,28 +724,71 @@ class FetchIntention(models.Model):
         self._create_retry(self.scheduler.when_ready)
 
     def handle_partial_data(self):
+        """
+        Handle partial data status.
 
-        # Only automatic downloads with verified credentials can produce retries
-        if not self.harvest.is_automatic or not self.credentials.is_verified:
+        We want to ingest the data even if they are partial, but we want to schedule a retry
+        for automatic harvests which would potentially replace the partial data with complete data.
+        """
+        # check if there is already a successful import batch
+        try:
+            clashing_ib = (
+                ImportBatch.objects.filter(
+                    date=self.start_date,
+                    report_type=self.counter_report.report_type,
+                    platform_id=self.credentials.platform_id,
+                    organization_id=self.credentials.organization_id,
+                )
+                .filter(Exists(AccessLog.objects.filter(import_batch_id=OuterRef('id'))))
+                .get()
+            )
+        except ImportBatch.DoesNotExist:
+            clashing_ib = None
+
+        if clashing_ib:
+            # we already have a successful import batch, we do not want to import
+            self.attempt.status = AttemptStatus.NOT_USED
+            if not SushiFetchAttempt.objects.filter(
+                import_batch_id=clashing_ib.pk, partial_data=True
+            ).exists():
+                # the existing data are not partial, so we do not want to schedule another attempt
+                self.attempt.save()
+                return
+            else:
+                self.attempt.log += (
+                    "Partial data returned:\n"
+                    "Celus did not overwrite the previously imported partial data "
+                    "and will retry downloading the data later to see if full data appears."
+                )
+
+        else:
+            self.attempt.log += (
+                "Partial data returned:\n"
+                "Data will be imported, but may be overwritten in the future by full data. "
+                "Download will be retried later to see if full data appears."
+            )
+            self.attempt.status = AttemptStatus.IMPORTING
+        self.attempt.save()
+
+        # Only automatic downloads can produce retries
+        # we do not care about the credentials verification status because they obviously work
+        # otherwise we would not be able to get here
+        if not self.harvest.is_automatic:
             return
 
+        # After too many retries or for data that is too old to retry - we do not want to retry
+        if (
+            self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT
+            or self.attempt.time_gap > FIXABLE_STATUS_GRACE_PERIOD
+        ):
+            return
+
+        # prepare retry
         next_time, _ = FetchIntention.next_exponential(
             self.data_not_ready_retry,
             PARTIAL_DATA_RETRY_PERIOD.total_seconds(),
             MAX_RETRY_GAP.total_seconds(),
         )
-
-        if self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
-            # giving up
-            # consider last partial data as final and let data to be imported
-            # Note that if attempt doesn't contain any data it is marked as
-            # NO_DATA when the data are imported
-            self.attempt.status = AttemptStatus.IMPORTING
-            self.attempt.log = "Last retry with partial data - we consider these data importable"
-            self.attempt.save()
-            return
-
-        # prepare retry
         self._create_retry(next_time, inc_data_not_ready_retry=True)
 
     @property

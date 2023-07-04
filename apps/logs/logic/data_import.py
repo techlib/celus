@@ -20,6 +20,7 @@ from logs.models import ImportBatch
 from organizations.models import Organization
 from postgres_copy import CopyMapping
 from publications.models import Platform, PlatformTitle, Title
+from sushi.models import SushiFetchAttempt
 
 from ..exceptions import DataStructureError, UnknownMetric, UnsupportedMetric
 from ..models import AccessLog, DimensionText, Metric, ReportType
@@ -631,14 +632,14 @@ def create_import_batch_or_crash(
         )
 
 
-def wipe_empty_import_batches(
+def wipe_empty_or_partial_import_batches(
     report_type: ReportType,
     organization: Organization,
     platform: Platform,
     month: Union[str, date],
 ) -> int:
     """
-    Whipes all empty import batches which are conlicting with function arguments
+    Whipes all empty or partial_data import batches which are conlicting with function arguments
     """
     count = 0
 
@@ -653,7 +654,9 @@ def wipe_empty_import_batches(
         organization=organization,
         date=month,
     ):
-        if not ib.accesslog_set.all().exists():
+        if (
+            SushiFetchAttempt.objects.filter(import_batch_id=ib.pk, partial_data=True).exists()
+        ) or not ib.accesslog_set.all().exists():
             ib.delete()
             count += 1
 

@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -30,6 +31,15 @@ class TestSushiFetching:
                 '',
                 False,
                 '9f8a4abbfdc601d9a35e0904c896d843ffd488ee2f7ac0f4cd46e2ab61e2549a',
+            ),
+            (
+                'C5_PR_with_3040.json',
+                'pr',
+                AttemptStatus.IMPORTING,
+                AttemptStatus.SUCCESS,
+                ("Warnings: Warning #3040: Partial Data Returned.\n\n"),
+                False,
+                '634630dea45bde1bd341ffb49ae1baf9ea07088e5ab3d37ebf711712db1171ea',
             ),
             (
                 'naked_errors.json',
@@ -155,7 +165,9 @@ class TestSushiFetching:
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
         assert credentials.is_broken() is False
-        with requests_mock.Mocker() as m:
+        # in some cases the behavior depends on the time gap between the request and the
+        # requested dates, so we freeze the time to a fixed value
+        with freeze_time('2019-05-10'), requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
                 content = datafile.read()
                 m.get(re.compile(f'^{credentials.url}.*'), text=content)
@@ -311,6 +323,7 @@ class TestSushiFetching:
             ('partial_data3.json', '3040', True),
             ('5_TR_with_warning.json', '3032', True),
             ('data_simple.json', '', False),
+            ('C5_PR_with_3040.json', '3040', True),
         ),
     )
     def test_c5_partial_data(
@@ -319,7 +332,9 @@ class TestSushiFetching:
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
-        with requests_mock.Mocker() as m:
+        # in some cases the behavior depends on the time gap between the request and the
+        # requested dates, so we freeze the time to a fixed value
+        with freeze_time('2019-05-10'), requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
                 m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
@@ -328,8 +343,35 @@ class TestSushiFetching:
             assert m.called
             assert attempt.error_code == error_code
             assert attempt.partial_data == partial
-            if error_code == "3040":
-                assert attempt.status == AttemptStatus.NO_DATA
+            if attempt.error_code == "3040":
+                assert attempt.status == AttemptStatus.IMPORTING
+
+    @pytest.mark.parametrize('delay_days', [1, 20, 50])
+    def test_c5_3040_delay(
+        self,
+        counter_report_types,
+        organizations,
+        platforms,
+        delay_days,
+    ):
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
+        )
+        path = 'C5_PR_with_3040.json'
+        with freeze_time(
+            datetime(2019, 5, 1) + timedelta(days=delay_days)
+        ), requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
+                m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+            )
+            assert m.called
+            assert attempt.error_code == '3040'
+            assert attempt.partial_data is True
+            assert attempt.status == AttemptStatus.IMPORTING
+            import_one_sushi_attempt(attempt)
+            assert attempt.status == AttemptStatus.SUCCESS
 
     @pytest.mark.parametrize(
         ('path', 'counter_report', 'import_passes'),
@@ -337,7 +379,7 @@ class TestSushiFetching:
             ('5_DR_ProQuestEbookCentral_exception.json', 'dr', False),
             ('5_TR_ProQuestEbookCentral.json', 'tr', True),
             ('5_TR_ProQuestEbookCentral_exception.json', 'tr', False),
-            ('5_TR_with_warning.json', 'tr', False),
+            ('5_TR_with_warning.json', 'tr', True),
             ('C5_PR_test.json', 'pr', True),
             ('counter5_tr_test1.json', 'tr', True),
             ('data_incorrect.json', 'tr', False),
@@ -363,7 +405,9 @@ class TestSushiFetching:
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
-        with requests_mock.Mocker() as m:
+        # in some cases the behavior depends on the time gap between the request and the
+        # requested dates, so we freeze the time to a fixed value
+        with freeze_time('2019-05-10'), requests_mock.Mocker() as m:
             with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
                 m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(

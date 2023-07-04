@@ -1,13 +1,16 @@
+import re
 import typing
 import uuid
 from datetime import date, datetime, timedelta
 
 import pytest
+import requests_mock
 from celus_nigiri.error_codes import ErrorCode
 from django.utils import timezone
 from freezegun import freeze_time
 from logs.fake_data import ImportBatchFactory
 from logs.logic.attempt_import import import_one_sushi_attempt
+from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
 from scheduler import tasks
 from scheduler.fake_data import (
@@ -338,25 +341,6 @@ class TestFetchIntention:
                 id="no_data",
             ),
             pytest.param(
-                ErrorCode.PARTIAL_DATA_RETURNED.value,  # error_code
-                AttemptStatus.NO_DATA,  # status
-                False,  # recent_success
-                True,  # automatic
-                True,  # empty_ib
-                [
-                    timedelta(days=1),
-                    timedelta(days=2),
-                    timedelta(days=4),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    None,
-                ],  # delays
-                False,  # last_canceled
-                id="partial_data",
-            ),
-            pytest.param(
                 ErrorCode.PREPARING_DATA.value,  # error_code
                 AttemptStatus.DOWNLOAD_FAILED,  # status
                 False,  # recent_success
@@ -567,6 +551,8 @@ class TestFetchIntention:
                 FetchAttemptFactory(
                     when_processed=timezone.now() + timedelta(minutes=5),
                     status=AttemptStatus.SUCCESS,
+                    start_date=date(2020, 1, 1),
+                    end_date=date(2020, 1, 31),
                     credentials=credentials["standalone_tr"],
                     counter_report=counter_report_types["tr"],
                     error_code="",
@@ -578,6 +564,8 @@ class TestFetchIntention:
         def mocked_fetch_report(*args, **kwargs):
             return FetchAttemptFactory(
                 status=status,
+                start_date=date(2020, 1, 1),
+                end_date=date(2020, 1, 31),
                 error_code=error_code,
                 credentials=credentials["standalone_tr"],
                 counter_report=counter_report_types["tr"],
@@ -664,6 +652,253 @@ class TestFetchIntention:
             queue_to_check = queue_to_check if queue_to_check else fi.queue
             if delay:
                 start += delay
+
+    @pytest.mark.parametrize(
+        ['automatic', 'retry_exception', 'data_replaced'],
+        [
+            (True, None, True),  # data without 3040 replaces the old one
+            (True, '3040', False),  # data with 3040 does not replace the old one
+            (False, None, True),  # data without 3040 replaces the old one
+            (False, '3040', False),  # data with 3040 does not replace the old one
+        ],
+    )
+    def test_3040_retry_chain(
+        self,
+        credentials,
+        counter_report_types,
+        monkeypatch,
+        settings,
+        automatic,
+        retry_exception,
+        data_replaced,
+    ):
+        """
+        Test that when a fetch attempt fails with 3040, the data will be accepted and imported
+        but a new fetch intention will be created with a delay of 1 day for automatic harvests.
+        If the new intention is processed without 3040, the data will replace the old one.
+        """
+
+        settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
+        settings.AUTOMATIC_HARVESTING_ENABLED = False  # to disable auto creation of FI
+        # prepare the content of the responses
+        with open('test-data/counter5/C5_PR_with_3040.json', 'r') as f:
+            data_with_3040 = f.read()
+        with open('test-data/counter5/C5_PR_test.json', 'r') as f:
+            data_wo_3040 = f.read()
+
+        scheduler = SchedulerFactory(url=credentials["branch_pr"].url)
+        start = datetime(2019, 5, 2, 0, 0, 0, 0, tzinfo=current_tz)
+
+        def create_fetch_intention(when) -> FetchIntention:
+            with freeze_time(when):
+                if automatic:
+                    harvest = AutomaticFactory().harvest
+                else:
+                    harvest = HarvestFactory(automatic=None)
+                return FetchIntentionFactory(
+                    attempt=None,
+                    start_date='2019-04-01',
+                    end_date='2019-04-30',
+                    harvest=harvest,
+                    not_before=timezone.now(),
+                    scheduler=scheduler,
+                    credentials=credentials["branch_pr"],
+                    counter_report=counter_report_types["pr"],
+                    data_not_ready_retry=0,
+                    when_processed=None,
+                )
+
+        # first attempt
+        fi = create_fetch_intention(start)
+        with freeze_time(start + timedelta(minutes=5)), requests_mock.Mocker() as m:
+            m.get(re.compile(f'^{fi.credentials.url}.*'), text=data_with_3040)
+            assert fi.process() == ProcessResponse.SUCCESS
+            assert fi.attempt.status == AttemptStatus.IMPORTING
+            import_one_sushi_attempt(fi.attempt)
+            assert fi.attempt.import_batch is not None
+            assert fi.attempt.import_batch.accesslog_set.count() > 0
+            assert fi.attempt.status == AttemptStatus.SUCCESS
+            assert fi.attempt.partial_data is True
+            if automatic:
+                assert fi.queue.end != fi, 'new intention is planned'
+                assert fi.queue.end.duplicate_of is None, 'new intention is not a duplicate'
+
+        # second attempt
+        start2 = start + timedelta(days=1)
+        # we use the planned fi if it was created automatically or create a new one
+        fi2 = fi.queue.end if automatic else create_fetch_intention(start2)
+        fi2.scheduler = scheduler
+        with freeze_time(start2 + timedelta(minutes=5)), requests_mock.Mocker() as m:
+            m.get(
+                re.compile(f'^{fi2.credentials.url}.*'),
+                text=data_with_3040 if retry_exception == '3040' else data_wo_3040,
+            )
+            if data_replaced:
+                # a new import batch with the complete data should be created replacing the old one
+                assert fi2.process() == ProcessResponse.SUCCESS
+                assert fi2.attempt.status == AttemptStatus.IMPORTING
+                import_one_sushi_attempt(fi2.attempt)
+                assert fi2.attempt.import_batch is not None
+                assert fi2.attempt.import_batch.accesslog_set.count() > 0
+                assert fi2.attempt.status == AttemptStatus.SUCCESS
+                assert fi2.attempt.partial_data is False
+                assert fi2.attempt.import_batch_id != fi.attempt.import_batch_id
+                assert ImportBatch.objects.filter(pk=fi.attempt.import_batch_id).exists() is False
+                if automatic:
+                    assert fi2.queue.end == fi2, 'new intention is not planned'
+            else:
+                # data should not be replaced because there is still the same exception
+                # but we reschedule the intention when automatic
+                assert fi2.process() == ProcessResponse.SUCCESS
+                assert fi2.attempt.status == AttemptStatus.NOT_USED
+                assert fi2.attempt.import_batch is None
+                assert ImportBatch.objects.filter(pk=fi.attempt.import_batch_id).exists() is True
+                if automatic:
+                    assert fi2.queue.end != fi2, 'new intention is planned'
+
+    @pytest.mark.parametrize(
+        [
+            'first_exception',
+            'first_status',
+            'first_partial',
+            'second_exception',
+            'second_has_data',
+            'second_status',
+            'second_partial',
+        ],
+        [
+            pytest.param(
+                '3040',
+                AttemptStatus.IMPORTING,
+                True,
+                '3040',
+                False,
+                AttemptStatus.NOT_USED,
+                True,
+                id='3040 not replaced by 3040',
+            ),
+            pytest.param(
+                '3030',
+                AttemptStatus.NO_DATA,
+                False,
+                '3040',
+                True,
+                AttemptStatus.IMPORTING,
+                True,
+                id='3030 replaced with 3040',
+            ),
+            pytest.param(
+                '3040',
+                AttemptStatus.IMPORTING,
+                True,
+                '3030',
+                False,
+                AttemptStatus.NO_DATA,
+                False,
+                id='3040 replaced with 3030',
+            ),
+            pytest.param(
+                '3030',
+                AttemptStatus.NO_DATA,
+                False,
+                None,
+                True,
+                AttemptStatus.IMPORTING,
+                False,
+                id='3030 replaced with no exception',
+            ),
+            pytest.param(
+                '3040',
+                AttemptStatus.IMPORTING,
+                True,
+                None,
+                True,
+                AttemptStatus.IMPORTING,
+                False,
+                id='3040 replaced with no exception',
+            ),
+        ],
+    )
+    def test_data_replacement(
+        self,
+        credentials,
+        counter_report_types,
+        monkeypatch,
+        settings,
+        first_exception,
+        first_status,
+        first_partial,
+        second_exception,
+        second_has_data,
+        second_status,
+        second_partial,
+    ):
+        """
+        Test how subsequent harvests with already existing attempt behaves depending on exceptions
+        present in individual harvests.
+        """
+
+        settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
+        settings.AUTOMATIC_HARVESTING_ENABLED = False  # to disable auto creation of FI
+
+        scheduler = SchedulerFactory(url=credentials["branch_pr"].url)
+        # start should ensure that the first attempt is final and empty ib is created for 3030
+        start = datetime(2019, 7, 2, 0, 0, 0, 0, tzinfo=current_tz)
+
+        def create_fetch_intention(when) -> FetchIntention:
+            with freeze_time(when):
+                harvest = HarvestFactory(automatic=None)
+                return FetchIntentionFactory(
+                    attempt=None,
+                    start_date='2019-04-01',
+                    end_date='2019-04-30',
+                    harvest=harvest,
+                    not_before=timezone.now(),
+                    scheduler=scheduler,
+                    credentials=credentials["branch_pr"],
+                    counter_report=counter_report_types["pr"],
+                    data_not_ready_retry=0,
+                    when_processed=None,
+                )
+
+        def exception_to_fname(exc):
+            return 'C5_PR_' + (f'with_{exc}' if exc else 'test') + '.json'
+
+        # first attempt
+        fi = create_fetch_intention(start)
+        fname = exception_to_fname(first_exception)
+        with freeze_time(start + timedelta(minutes=5)), requests_mock.Mocker() as m:
+            with open(f'test-data/counter5/{fname}', 'r') as f:
+                m.get(re.compile(f'^{fi.credentials.url}.*'), text=f.read())
+            assert fi.process() == ProcessResponse.SUCCESS
+            assert fi.attempt.status == first_status
+            if fi.attempt.status == AttemptStatus.IMPORTING:
+                import_one_sushi_attempt(fi.attempt)
+            assert fi.attempt.import_batch is not None, 'import batch created'
+            assert (
+                fi.attempt.status == AttemptStatus.SUCCESS
+                if first_status == AttemptStatus.IMPORTING
+                else first_status
+            ), 'importing status should be replaced with success'
+            assert fi.attempt.partial_data is first_partial
+
+        # second attempt
+        fi2 = create_fetch_intention(start + timedelta(minutes=10))
+        fname = exception_to_fname(second_exception)
+        with freeze_time(start + timedelta(minutes=15)), requests_mock.Mocker() as m:
+            with open(f'test-data/counter5/{fname}', 'r') as f:
+                m.get(re.compile(f'^{fi2.credentials.url}.*'), text=f.read())
+            assert fi2.process() == ProcessResponse.SUCCESS
+            assert fi2.attempt.status == second_status
+            if fi2.attempt.status == AttemptStatus.IMPORTING:
+                import_one_sushi_attempt(fi2.attempt)
+            assert bool(fi2.attempt.import_batch) is second_has_data
+            assert (
+                fi2.attempt.status == AttemptStatus.SUCCESS
+                if second_status == AttemptStatus.IMPORTING
+                else second_status
+            )
+            assert fi2.attempt.partial_data is second_partial
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_cancel(self, harvests):

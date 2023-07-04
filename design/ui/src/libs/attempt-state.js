@@ -6,7 +6,7 @@ const ATTEMPT_EMPTY_DATA = "empty_data";
 const ATTEMPT_PARTIAL_DATA = "partial_data";
 const ATTEMPT_IMPORT_FAILED = "import_failed";
 const ATTEMPT_AWAITING_IMPORT = "awaiting_import";
-const ATTEMPT_CANCELED = "canceled";
+const ATTEMPT_NOT_USED = "not_used";
 const BROKEN_CREDENTIALS = "broken";
 const BROKEN_REPORT = "broken_report";
 
@@ -33,8 +33,12 @@ function attemptState(attempt) {
     return ATTEMPT_AWAITING_IMPORT;
   } else if (attempt.status === "no_data") {
     return ATTEMPT_EMPTY_DATA;
-  } else if (attempt.status === "canceled") {
-    return ATTEMPT_CANCELED;
+  } else if (
+    attempt.status === "canceled" || // historical
+    attempt.status === "unprocessed" || // historical
+    attempt.status === "not_used"
+  ) {
+    return ATTEMPT_NOT_USED;
   }
   return ATTEMPT_UNKNOWN;
 }
@@ -55,6 +59,8 @@ function attemptStateToIcon(state) {
       return { color: "error", icon: "fa-cog" };
     case ATTEMPT_PARTIAL_DATA:
       return { color: "warning", icon: "fas fa-exclamation-triangle" };
+    case ATTEMPT_NOT_USED:
+      return { color: "secondary", icon: "far fa-times-circle" };
     default:
       return { color: "warning", icon: "far fa-question-circle" };
   }
@@ -71,7 +77,7 @@ export {
   ATTEMPT_NOT_MADE,
   ATTEMPT_EMPTY_DATA,
   ATTEMPT_PARTIAL_DATA,
-  ATTEMPT_CANCELED,
+  ATTEMPT_NOT_USED,
   BROKEN_CREDENTIALS,
   BROKEN_REPORT,
 };

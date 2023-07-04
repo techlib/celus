@@ -145,7 +145,7 @@ class TestAttemptImport:
             (AttemptStatus.IMPORT_FAILED, False),
             (AttemptStatus.PARSING_FAILED, False),
             (AttemptStatus.DOWNLOAD_FAILED, False),
-            (AttemptStatus.CANCELED, False),
+            (AttemptStatus.NOT_USED, False),
         ),
     )
     def test_import_precondition_error(

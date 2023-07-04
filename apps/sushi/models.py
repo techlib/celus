@@ -655,20 +655,10 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
                     when_processed = now()
             else:
-                if partial_data:
-                    # Treat partial data as if there were no data
-                    # we want to proceed only with complete data
-                    log = (
-                        "Partial data returned:\n"
-                        "Celus did not import the partial data from this harvest "
-                        "and will retry downloading the data later"
-                    )
-                    status = AttemptStatus.NO_DATA
+                if report.record_found:
+                    status = AttemptStatus.IMPORTING
                 else:
-                    if report.record_found:
-                        status = AttemptStatus.IMPORTING
-                    else:
-                        status = AttemptStatus.NO_DATA
+                    status = AttemptStatus.NO_DATA
 
         # now create the attempt instance
         file_data.seek(0)  # make sure that file is rewound to the start
@@ -720,11 +710,11 @@ def where_to_store(instance: 'SushiFetchAttempt', filename):
 
 
 class AttemptStatus(models.TextChoices):
-    # -> DOWNLOADING, CANCELED
+    # -> DOWNLOADING
     INITIAL = 'initial', _("Initial")
-    # -> PARSING_FAILED, DOWNLOAD_FAILED, NO_DATA, CANCELED, IMPORTING
+    # -> PARSING_FAILED, DOWNLOAD_FAILED, NO_DATA, NOT_USED, IMPORTING
     DOWNLOADING = 'downloading', _("Downloading")
-    # -> SUCCESS, IMPORT_FAILED, CANCELED, NO_DATA
+    # -> SUCCESS, IMPORT_FAILED, NO_DATA
     IMPORTING = 'importing', _("Importing")
 
     # Terminators
@@ -736,13 +726,14 @@ class AttemptStatus(models.TextChoices):
     IMPORT_FAILED = 'import_failed', _("Import failed")
     PARSING_FAILED = 'parsing_failed', _("Parsing failed")
     DOWNLOAD_FAILED = 'download_failed', _("Download failed")
-    CANCELED = 'canceled', _("Canceled")
+    NOT_USED = 'not_used', _("Not used")
 
     @classmethod
     def terminated(cls):
         return {
             cls.SUCCESS,
             cls.NO_DATA,
+            cls.NOT_USED,
             cls.IMPORT_FAILED,
             cls.PARSING_FAILED,
             cls.DOWNLOAD_FAILED,
@@ -758,7 +749,7 @@ class AttemptStatus(models.TextChoices):
 
     @classmethod
     def warnings(cls):
-        return {cls.NO_DATA, cls.CANCELED}
+        return {cls.NO_DATA, cls.NOT_USED}
 
     @classmethod
     def successes(cls):
@@ -857,6 +848,15 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             return False
 
         return True
+
+    @property
+    def time_gap(self):
+        """
+        The amount of time between the end of the harvested month and the time of the attempt.
+        """
+        if self.end_date and self.timestamp:
+            return self.timestamp.date() - self.end_date
+        return None
 
     def mark_processed(self):
         if self.status in AttemptStatus.terminated() and not self.when_processed:
