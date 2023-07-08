@@ -58,7 +58,6 @@ class CelusOrganizationPlatformSerializer(serializers.ModelSerializer):
         fields = (
             'organization',
             'platform',
-            'sushi_credentials',
         )
 
 

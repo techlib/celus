@@ -67,7 +67,6 @@ class OrganizationPlatform(models.Model):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
-    sushi_credentials = models.JSONField(default=list)
 
     def __str__(self):
         return f'{self.organization} | {self.platform}'

@@ -145,23 +145,23 @@ class TestMaximusSync:
 
         assert get_users_organizations() == []
 
-        org[0].platforms.add(plt[1], through_defaults={'sushi_credentials': [1]})
-        org[1].platforms.add(plt[1], through_defaults={'sushi_credentials': [2]})
+        org[0].platforms.add(plt[1])
+        org[1].platforms.add(plt[1])
         org[0].platforms.add(plt[2])
         check = (
-            {"platform": plt[1].id, "organization": org[0].id, "sushi_credentials": [1]},
-            {"platform": plt[1].id, "organization": org[1].id, "sushi_credentials": [2]},
-            {"platform": plt[2].id, "organization": org[0].id, "sushi_credentials": []},
+            {"platform": plt[1].id, "organization": org[0].id},
+            {"platform": plt[1].id, "organization": org[1].id},
+            {"platform": plt[2].id, "organization": org[0].id},
         )
         for d in json.loads(json.dumps(get_organizations_platforms())):
             assert d in check
 
-        org[0].platforms.add(plt[0], through_defaults={'sushi_credentials': [3]})
+        org[0].platforms.add(plt[0])
         org[0].platforms.remove(plt[1])
         org[1].platforms.remove(plt[1])
         check = (
-            {"platform": plt[0].id, "organization": org[0].id, "sushi_credentials": [3]},
-            {"platform": plt[2].id, "organization": org[0].id, "sushi_credentials": []},
+            {"platform": plt[0].id, "organization": org[0].id},
+            {"platform": plt[2].id, "organization": org[0].id},
         )
         for d in json.loads(json.dumps(get_organizations_platforms())):
             assert d in check
