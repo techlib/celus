@@ -1013,7 +1013,10 @@ class FlexibleDataSlicer:
                 elif fltr.dimension == 'organization':
                     organization_ids = pks if organization_ids is None else (organization_ids | pks)
             elif isinstance(fltr, DateDimensionFilter):
-                coverage_filters.update({'start_month': fltr.start, 'end_month': fltr.end})
+                if not self.trend_mode:
+                    coverage_filters.update({'start_month': fltr.start, 'end_month': fltr.end})
+                else:
+                    logger.warning('Ignoring overall date filter in trend mode')
 
         if self.organization_filter:
             # apply the extra organization filter to the pks

@@ -1494,13 +1494,18 @@ export default {
     },
     dataUrlParams: {
       deep: true,
-      handler() {
-        // forget about export if the config has changed
-        if (this.exportHandle) {
-          this.exportHint = true;
+      handler(newValue, oldValue) {
+        // because `deep` is true, we need to compare the values of newVal and
+        // oldVal as the references might change without the actual value
+        if (!isEqual(newValue, oldValue)) {
+          // forget about export if the config has changed
+          if (this.exportHandle) {
+            this.exportHint = true;
+          }
+          this.exportHandle = null;
+          // fetch new coverage data
+          this.fetchCoverageData();
         }
-        this.exportHandle = null;
-        this.fetchCoverageData();
       },
     },
     cannotShowZeroRows() {

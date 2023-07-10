@@ -1590,6 +1590,28 @@ class TestFlexibleDataSimpleCSVExporter:
         assert coverage['compared']['ib_count'] == 9
         assert coverage['compared']['ib_max'] == 9
 
+    def test_report_coverage_in_trend_mode_with_global_date_filter(self, flexible_slicer_test_data):
+        """
+        Test that when date filter is applied globally, it is ignored in the trend mode
+        and does not cause an error
+        """
+        rt1 = flexible_slicer_test_data['report_types'][0]
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', '2020-01', '2020-01')],
+            compared_subset_filters=[DateDimensionFilter('date', '2020-02', '2020-02')],
+        )
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt1))
+        slicer.add_filter(DateDimensionFilter('date', '2018-01', '2018-02'))
+        coverage = slicer.get_coverage()
+        # test that there is complete coverage, if global date filter was not ignored
+        # the coverage data would be just zeros
+        assert coverage['base']['ib_count'] == 9
+        assert coverage['base']['ib_max'] == 9
+        assert coverage['compared']['ib_count'] == 9
+        assert coverage['compared']['ib_max'] == 9
+
 
 @pytest.mark.django_db
 class TestFilters:
