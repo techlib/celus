@@ -52,6 +52,7 @@ en:
   method_celus_label_text: Upload data prepared in the custom Celus format for non-COUNTER data.
   method_celus_disabled_tt: There are no non-COUNTER reports defined for this platform.
   method_raw_disabled_tt: There are no raw reports supported for this platform.
+  method_changed_to_counter: The processing method was updated, because the provided file is in standard COUNTER format.
   notes_url_description: Check our {link} for more information about the input file format.
   notes_url_href: support web
 
@@ -105,6 +106,7 @@ cs:
   method_celus_label_text: Nahraná data jsou připravena ve vlastním formátu, který Celus používá pro ne-COUNTER data.
   method_celus_disabled_tt: Pro tuto platformu nejsou definovány žádné non-COUNTER reporty.
   method_raw_disabled_tt: Pro tuto platformu nejsou surové reporty podporované.
+  method_changed_to_counter: Metoda nahrávání byla pozměněna, protože nahraný soubor je ve standardním COUNTER formátu.
   notes_url_description: Pokud se chcete dozvědět více o formátu nahrávaného souboru, navštivte naše {link}.
   notes_url_href: stránky podpory
 </i18n>
@@ -155,9 +157,10 @@ cs:
       >
         {{ $t("step_method") }}
         <span v-if="method && step > steps.method"
-          >(<span class="font-weight-light">{{
-            $t("method_" + method + "_label_name")
-          }}</span
+          >(<span
+            class="font-weight-light"
+            :style="highlightStyle(methodChanged)"
+            >{{ $t("method_" + method + "_label_name") }}</span
           >)</span
         >
       </v-stepper-step>
@@ -658,6 +661,7 @@ export default {
         done: 4,
       },
       method: "counter",
+      methodChanged: false,
     };
   },
   computed: {
@@ -908,6 +912,11 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    highlightStyle(highlighted) {
+      return highlighted
+        ? { "background-color": "rgba(255, 255, 0, .15)" }
+        : {};
+    },
     badge(item) {
       return badge(item);
     },
@@ -1083,6 +1092,23 @@ export default {
             `/api/manual-data-upload/${this.uploadObjectId}/`
           );
           this.uploadObject = response.data;
+
+          // Method could be updated during preflight processing
+          if (this.method != this.uploadObject.method) {
+            if (this.step > this.steps.upload) {
+              this.methodChanged = true;
+              this.showSnackbar({
+                content: this.$t(
+                  `method_changed_to_${this.uploadObject.method}`
+                ),
+                color: "warning",
+              });
+            }
+            this.method = this.uploadObject.method;
+          } else {
+            this.methodChanged = false;
+          }
+
           switch (this.uploadObject.state) {
             case "initial":
             case "prefailed":

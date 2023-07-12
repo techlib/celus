@@ -53,6 +53,7 @@ from nibbler.logic.processing import (
     counter_format_poops,
     get_months_from_nibbler_output,
     get_records_from_nibbler_output,
+    is_success,
 )
 from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
@@ -745,7 +746,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             source=self.report_type.source,
         )[0]
 
-    @cached_property
+    @property
     def crt(self) -> typing.Optional['logs.models.CounterReportType']:
         try:
             return self.report_type.counterreporttype
@@ -783,7 +784,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
         if cnt["count"] == 0 and self.using_nibbler:
             # Fill in months if no records are present
-            nibbler_output = self.get_nibbler_output()
+            nibbler_output, _ = self.get_nibbler_output()
             histograms["start"] = {
                 m.strftime("%Y-%m-01"): {"sum": 0, "count": 0}
                 for m in get_months_from_nibbler_output(nibbler_output)
@@ -791,38 +792,56 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
         return histograms, cnt, list(dimensions)
 
-    def get_nibbler_output(self) -> NibblerOutput:
+    def get_nibbler_output(self) -> (NibblerOutput, MduMethod):
         if self.method == MduMethod.RAW:
             # Parsing raw data using nibbler (user can't pick report type)
 
-            return ParserDefinition.objects.parse_file(
+            nibbler_output = ParserDefinition.objects.parse_file(
                 self.data_file.path, self.platform.short_name
             )
+            if not is_success(nibbler_output):
+                # Try to parse the input using standard counter parsers
+                nibbler_counter_output = counter_format_poops(
+                    os.path.join(settings.MEDIA_ROOT, self.data_file.name),
+                    r"^static.counter.*$",
+                    self.platform,
+                )
+                if is_success(nibbler_counter_output):
+                    # Method changed RAW -> COUNTER
+                    return nibbler_counter_output, MduMethod.COUNTER
+
+            return nibbler_output, self.method
 
         elif crt := self.crt:
             # Parsing counter reports using nibbler (user can pick report type)
             nibbler_parser = crt.get_nibbler_parser(json_format=self.file_is_json())
-            return counter_format_poops(
-                os.path.join(settings.MEDIA_ROOT, self.data_file.name),
-                nibbler_parser,
-                self.platform,
+            return (
+                counter_format_poops(
+                    os.path.join(settings.MEDIA_ROOT, self.data_file.name),
+                    nibbler_parser,
+                    self.platform,
+                ),
+                self.method,
             )
 
         else:
             # Parsing data in "celus format" using nibbler (user can pick report type)
             default_metric = self.prepare_default_metric()
-            return celus_format_poops(
-                os.path.join(settings.MEDIA_ROOT, self.data_file.name),
-                default_metric,
-                self.report_type,
-                self.platform,
+            return (
+                celus_format_poops(
+                    os.path.join(settings.MEDIA_ROOT, self.data_file.name),
+                    default_metric,
+                    self.report_type,
+                    self.platform,
+                ),
+                self.method,
             )
 
     def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
         self.check_self_checksum()  # check the checksum before using the file
 
         if self.using_nibbler:
-            nibbler_output = self.get_nibbler_output()
+            nibbler_output, _ = self.get_nibbler_output()
             yield from get_records_from_nibbler_output(nibbler_output)
 
         else:

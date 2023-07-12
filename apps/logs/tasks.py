@@ -45,12 +45,8 @@ from logs.logic.materialized_reports import (
     update_report_approx_record_count,
 )
 from logs.models import ImportBatchSyncLog, ManualDataUpload, MduMethod, MduState
-from nibbler.models import (
-    ParserDefinition,
-    get_errors,
-    get_report_types_from_nibbler_output,
-    is_success,
-)
+from nibbler.logic.processing import get_errors, is_success
+from nibbler.models import get_report_types_from_nibbler_output
 from sushi.models import AttemptStatus, SushiFetchAttempt
 
 logger = logging.getLogger(__file__)
@@ -292,11 +288,10 @@ def prepare_preflight(mdu_id: int):
         elif mdu.state == MduState.INITIAL:
 
             if mdu.method == MduMethod.RAW:
-                # detect report type from existing data
-                nibbler_output = ParserDefinition.objects.parse_file(
-                    mdu.data_file.path, mdu.platform.short_name
-                )
+                # update method if it was updated
+                nibbler_output, mdu.method = mdu.get_nibbler_output()
 
+                # detect report type from existing data
                 if not is_success(nibbler_output):
                     raise NibblerErrors(get_errors(nibbler_output))
 

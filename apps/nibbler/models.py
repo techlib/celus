@@ -83,15 +83,6 @@ class ParserDefinition(models.Model):
         return Definition.parse(self.definition)
 
 
-def is_success(nibbler_output: NibblerOutput) -> bool:
-    """Returns true if nibbler was able to parse at least one sheet"""
-    return any(isinstance(e, Poop) for e in nibbler_output)
-
-
-def get_errors(nibbler_output: NibblerOutput) -> typing.List[NibblerError]:
-    return [e for e in nibbler_output if isinstance(e, NibblerError)]
-
-
 def get_report_types_from_nibbler_output(nibbler_output: NibblerOutput) -> models.QuerySet:
     from logs.models import ReportType
 

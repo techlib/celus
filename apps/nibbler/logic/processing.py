@@ -4,7 +4,7 @@ from functools import reduce
 from pathlib import Path
 
 import logs
-from celus_nibbler import Poop, eat
+from celus_nibbler import NibblerError, Poop, eat
 from celus_nibbler.definitions.celus_format import (
     CelusFormatAreaDefinition,
     CelusFormatParserDefinition,
@@ -16,7 +16,16 @@ from celus_nigiri import CounterRecord
 from logs.exceptions import NibblerErrors
 from publications.models import Platform
 
-from ..models import NibblerOutput, get_errors
+from ..models import NibblerOutput
+
+
+def is_success(nibbler_output: NibblerOutput) -> bool:
+    """Returns true if nibbler was able to parse at least one sheet"""
+    return any(isinstance(e, Poop) for e in nibbler_output)
+
+
+def get_errors(nibbler_output: NibblerOutput) -> typing.List[NibblerError]:
+    return [e for e in nibbler_output if isinstance(e, NibblerError)]
 
 
 def output_to_poops(poops_or_errors: NibblerOutput) -> typing.List[Poop]:

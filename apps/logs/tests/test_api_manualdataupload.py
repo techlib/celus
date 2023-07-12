@@ -591,7 +591,7 @@ class TestManualUploadConflicts:
 
 
 @pytest.mark.django_db
-class TestManualUploadNonCounter:
+class TestManualUploadForRaw:
     def test_multiple_organizations_unauthorized(
         self, platforms, organizations, settings, tmp_path, clients, report_types, basic1
     ):
@@ -964,21 +964,31 @@ class TestManualUploadNonCounter:
 
         assert response.status_code == status
 
-
-@pytest.mark.django_db
-class TestManualUploadNibbler:
-    def test_nibbler_workflow(
+    @pytest.mark.parametrize(
+        'file_path,report_type,batch_count,new_method',
+        [
+            ("data/counter5/counter5_table_dr.csv", "dr", 11, MduMethod.COUNTER),
+            ("data/custom/custom_data-nibbler-simple.csv", "custom1", 1, MduMethod.RAW),
+        ],
+        ids=("counter", "non-counter"),
+    )
+    def test_raw_workflow(
         self,
         basic1,
         organizations,
         platforms,
         report_types,
+        counter_report_types,
         clients,
         parser_definitions,
         tmp_path,
         settings,
+        file_path,
+        report_type,
+        batch_count,
+        new_method,
     ):
-        with (Path(__file__).parent / "data/custom/custom_data-nibbler-simple.csv").open() as f:
+        with (Path(__file__).parent / file_path).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = "nibbler.csv"
 
@@ -1004,7 +1014,7 @@ class TestManualUploadNibbler:
 
         response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert (
-            response.data['report_type']['pk'] == report_types['custom1'].pk
+            response.data['report_type']['pk'] == report_types[report_type].pk
         ), "report type was selected"
         assert response.data["clashing_months"] == []
         assert response.data["can_import"] is True
@@ -1021,6 +1031,6 @@ class TestManualUploadNibbler:
 
         response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
-        assert response.data["method"] == MduMethod.RAW
+        assert response.data["method"] == new_method
         assert response.data["can_import"] is False
-        assert mdu.import_batches.count() == 1
+        assert mdu.import_batches.count() == batch_count
