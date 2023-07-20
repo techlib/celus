@@ -15,9 +15,13 @@ logger = logging.getLogger(__name__)
 def import_sushi_credentials_from_csv(
     filename, prefer_knowledgebase_urls: bool = False, reversion_comment: Optional[str] = None
 ) -> dict:
-    with open(filename, 'r') as infile:
-        reader = csv.DictReader(infile)
+    if hasattr(filename, 'read'):
+        reader = csv.DictReader(filename)
         records = list(reader)  # read all records from the reader
+    else:
+        with open(filename, 'r') as infile:
+            reader = csv.DictReader(infile)
+            records = list(reader)  # read all records from the reader
     return import_sushi_credentials(
         records,
         prefer_knowledgebase_urls=prefer_knowledgebase_urls,

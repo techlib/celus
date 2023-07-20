@@ -287,6 +287,15 @@ export default new Router({
       },
     },
     {
+      path: "/admin/commands/",
+      name: "management-commands",
+      component: () => import("../pages/ManagementCommandsPage.vue"),
+      meta: {
+        hideOrganizationSelector: true,
+        hideDateRangeSelector: true,
+      },
+    },
+    {
       path: "/admin/data-coverage/",
       name: "data-coverage-overview",
       component: () => import("../pages/DataCoverageOverviewPage.vue"),

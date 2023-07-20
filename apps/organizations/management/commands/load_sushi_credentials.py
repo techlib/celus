@@ -1,4 +1,5 @@
 import logging
+from argparse import FileType
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
@@ -12,7 +13,18 @@ class Command(BaseCommand):
     help = 'Load SUSHI credentials from a CSV file'
 
     def add_arguments(self, parser):
-        parser.add_argument('file', help='CSV file to import')
+        # we use a named argument because it is then possible to pass an open file from python
+        # code instead of a file path - this makes it easier to use this command from the API
+        # (call_command runs *args through argparse, while **kwargs are passed directly:
+        # https://docs.djangoproject.com/en/3.2/ref/django-admin/#django.core.management.call_command
+        # )
+        # for the same reason, the argument is not required - otherwise argparse would complain
+        parser.add_argument(
+            '-f',
+            dest='file',
+            help='CSV file to import',
+            type=FileType('r', encoding='utf-8'),
+        )
         parser.add_argument('--do-it', dest='doit', action='store_true')
         parser.add_argument(
             '-k',

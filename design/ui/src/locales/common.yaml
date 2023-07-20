@@ -35,6 +35,7 @@ en:
     title_list_overlap: Title list overlap
     specialized_reports: Specialized reports
     data_coverage_overview: Data coverage overview
+    management_commands: Management commands
   menu: Menu
   organization: Organization
   platform: Platform
@@ -100,6 +101,7 @@ en:
     current_plus_2y_back: Matches the COUNTER data retention period
     custom: Manually select the data range
   labels:
+    select_command: Select command
     date_range: Date range
     search: Search
     requestor_id: Requestor ID
@@ -329,6 +331,7 @@ cs:
     title_list_overlap: Překryv titulového seznamu
     specialized_reports: Speciální reporty
     data_coverage_overview: Přehled pokrytí daty
+    management_commands: Management příkazy
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -394,6 +397,7 @@ cs:
     current_plus_2y_back: Odpovídá retenční periodě pro COUNTER data
     custom: Manuální volba zobrazeného období
   labels:
+    select_command: Vyberte příkaz
     date_range: Rozmezí dat
     search: Vyhledávání
     requestor_id: Requestor ID

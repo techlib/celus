@@ -121,6 +121,9 @@ export default {
     tourToShow() {
       return this.tourByName(this.tourName);
     },
+    isSuperuser() {
+      return this.user && this.user.is_superuser;
+    },
     groups() {
       return [
         {
@@ -325,6 +328,12 @@ export default {
                   icon: "fa fa-toolbox",
                   linkTo: "maintenance",
                   show: this.showManagementStuff,
+                },
+                {
+                  title: this.$t("pages.management_commands"),
+                  icon: "fa fa-terminal",
+                  linkTo: "management-commands",
+                  show: this.isSuperuser,
                 },
               ],
             },

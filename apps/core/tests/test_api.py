@@ -8,6 +8,7 @@ from allauth.account.models import EmailAddress, EmailConfirmation
 from core.fake_data import UserFactory
 from core.models import Identity, User
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.core.files.base import ContentFile
 from django.urls import reverse
 from django.utils import timezone
 
@@ -479,3 +480,162 @@ class TestUserExistsView:
         settings.OCTOPUS_HMAC_KEY = 'testtesttesttest'
         resp = client.get(reverse('user_exists_api_view'), {'hmac': check})
         assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+class TestManagementCommandAPI:
+    def test_list_commands(self, admin_client, settings):
+        settings.EXPOSED_MANAGEMENT_COMMANDS = [('organizations', 'load_sushi_credentials')]
+        resp = admin_client.get(reverse('management-command-list'))
+        assert resp.status_code == 200
+        assert resp.json() == [
+            {
+                'name': 'load_sushi_credentials',
+                'help': 'Load SUSHI credentials from a CSV file',
+                'args': [
+                    {
+                        'name': 'file',
+                        'type': 'file',
+                        'required': False,
+                        'default': None,
+                        'help': 'CSV file to import',
+                    },
+                    {
+                        'name': 'knowledgebase_urls',
+                        'type': 'bool',
+                        'required': False,
+                        'default': False,
+                        'help': 'If available, use knowledgebase urls instead of the ones stored '
+                        'in the file',
+                    },
+                ],
+                'uses_doit': True,
+            }
+        ]
+
+    @pytest.mark.parametrize(
+        ['user_type', 'has_access'],
+        [
+            ['no_user', False],
+            ['invalid', False],
+            ['unrelated', False],
+            ['related_user', False],
+            ['related_admin', False],
+            ['master_user', False],
+            ['superuser', True],
+        ],
+    )
+    def test_list_commands_access(
+        self, clients, settings, user_type, has_access, client_by_user_type
+    ):
+        settings.EXPOSED_MANAGEMENT_COMMANDS = [('core', 'echo')]
+        client, _ = client_by_user_type(user_type)
+        resp = client.get(reverse('management-command-list'))
+        if has_access:
+            assert resp.status_code == 200
+        else:
+            assert resp.status_code in (403, 401)
+
+    def test_list_commands_echo(self, admin_client, settings):
+        settings.EXPOSED_MANAGEMENT_COMMANDS = [('core', 'echo')]
+        resp = admin_client.get(reverse('management-command-list'))
+        assert resp.status_code == 200
+        assert resp.json() == [
+            {
+                'name': 'echo',
+                'help': 'Echo the given string to stdout or stderr',
+                'args': [
+                    {
+                        'name': 'echo',
+                        'type': 'str',
+                        'required': True,
+                        'default': None,
+                        'help': 'String to be returned back',
+                    },
+                    {
+                        'name': 'error',
+                        'type': 'bool',
+                        'required': False,
+                        'default': False,
+                        'help': 'When given, echo will be printed to stderr instead of stdout',
+                    },
+                    {
+                        'name': 'file',
+                        'type': 'file',
+                        'required': False,
+                        'default': None,
+                        'help': 'When given, the contents of the file will be echoed instead '
+                        'of the string',
+                    },
+                ],
+                'uses_doit': True,
+            }
+        ]
+
+    def test_list_commands_incorrect_config(self, admin_client, settings):
+        settings.EXPOSED_MANAGEMENT_COMMANDS = [('core', 'foo')]
+        resp = admin_client.get(reverse('management-command-list'))
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    @pytest.mark.parametrize('stderr', [True, False])
+    @pytest.mark.parametrize('doit', [True, False])
+    def test_run_command_echo(self, admin_client, settings, stderr, doit):
+        settings.EXPOSED_MANAGEMENT_COMMANDS = [('core', 'echo')]
+        resp = admin_client.post(
+            reverse('management-command-run', args=['echo']),
+            {'echo': 'foo', 'error': stderr, 'doit': doit},
+        )
+        assert resp.status_code == 200
+        common = {
+            'log': 'Starting echo command\n',
+            'exception': None if doit else 'not doing it',
+        }
+        if stderr:
+            assert resp.json() == {'stdout': '', 'stderr': 'foo\n', **common}
+        else:
+            assert resp.json() == {'stdout': 'foo\n', 'stderr': '', **common}
+
+    @pytest.mark.parametrize('doit', [True, False])
+    def test_run_command_echo_with_file(self, admin_client, settings, doit):
+        settings.EXPOSED_MANAGEMENT_COMMANDS = [('core', 'echo')]
+        cf = ContentFile(b'foobar')
+        resp = admin_client.post(
+            reverse('management-command-run', args=['echo']),
+            {
+                'echo': 'baz',
+                'error': True,
+                'file': cf,
+                'doit': doit,
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {
+            'stdout': '',
+            'stderr': 'foobar\n',
+            'log': 'Starting echo command\n',
+            'exception': None if doit else 'not doing it',
+        }
+
+    @pytest.mark.parametrize(
+        ['user_type', 'has_access'],
+        [
+            ['no_user', False],
+            ['invalid', False],
+            ['unrelated', False],
+            ['related_user', False],
+            ['related_admin', False],
+            ['master_user', False],
+            ['superuser', True],
+        ],
+    )
+    def test_run_command_access(
+        self, clients, settings, user_type, has_access, client_by_user_type
+    ):
+        settings.EXPOSED_MANAGEMENT_COMMANDS = [('core', 'echo')]
+        client, _ = client_by_user_type(user_type)
+        resp = client.post(reverse('management-command-run', args=['echo']))
+        if has_access:
+            assert resp.status_code == 200
+        else:
+            assert resp.status_code in (403, 401)

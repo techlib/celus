@@ -5,6 +5,9 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'task-status', views.CeleryTaskStatusViewSet, basename='task-status')
+router.register(
+    r'management/command', views.ManagementCommandViewSet, basename='management-command'
+)
 
 urlpatterns = [
     path('user/', views.UserView.as_view(), name='user_api_view'),

@@ -1,3 +1,8 @@
+import codecs
+import logging
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
+
 from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
 from core.models import TaskProgress, User
 from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
@@ -11,15 +16,19 @@ from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
+from django.core.management import call_command
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils import translation
 from rest_framework import mixins, status
+from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ViewSet
 
+from .logic.management_commands import CommandManager
+from .logic.type_conversion import to_bool
 from .signals import password_reset_signal
 from .tasks import erms_sync_users_and_identities_task
 
@@ -200,3 +209,80 @@ class CeleryTaskStatusViewSet(mixins.RetrieveModelMixin, GenericViewSet):
     serializer_class = TaskProgressSerializer
     queryset = TaskProgress.objects.all()
     lookup_field = 'task_id'
+
+
+class ManagementCommandViewSet(ViewSet):
+    permission_classes = (IsAuthenticated, SuperuserPermission)
+    lookup_field = 'name'
+
+    def list(self, request):
+        out = []
+        cm = CommandManager()
+        for ci in cm.commands:
+            args = [ci.serialize_arg(arg) for arg in ci.args]
+            out.append(
+                {'name': ci.name, 'help': ci.instance.help, 'uses_doit': ci.uses_doit, 'args': args}
+            )
+        return Response(out)
+
+    @action(detail=True, methods=['post'])
+    def run(self, request, name=None):
+        """
+        This is where one command is executed. The command name is passed in the `name` field
+        and the arguments are passed in the `args` field as a dictionary.
+        """
+        cm = CommandManager()
+        if not (ci := cm.get_command_by_name(name)):
+            return Response({'error': 'command not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        args = []
+        options = {}
+        # unfortunately it is not possible to pass all the args as options (kwargs) to
+        # `call_command` - we need to split them into args and options to be given separately
+        for arg in ci.args:
+            if arg.dest in request.data:
+                value = request.data[arg.dest]
+                typ = ci.arg_type_str(arg)
+                if typ == 'bool':
+                    value = to_bool(value)
+                elif typ == 'file':
+                    value = codecs.getreader('utf-8')(value)
+
+                if arg.required:
+                    args.append(value)
+                else:
+                    options[arg.dest] = value
+        if ci.uses_doit:
+            options['doit'] = to_bool(request.data.get('doit', False))
+
+        # capture the output of the command
+        out = StringIO()
+        err = StringIO()
+        log = StringIO()
+        root_logger = logging.getLogger()
+        handler = logging.StreamHandler(log)
+        handler.setLevel(logging.INFO)  # do not let DEBUG messages through
+        root_logger.addHandler(handler)
+        exception = None
+        try:
+            with redirect_stdout(out), redirect_stderr(err):
+                # redirect_stdout and redirect_stderr seem to do the same job as passing
+                # stdout and stderr to call_command, but they would also call print()
+                # which is what we want because we cannot ensure all the commands use
+                # .stdout and .stderr
+                # On the other hand, redirect_stdout and redirect_stderr do not work
+                # with call_command when the instance was created outside the context
+                # so using both together ensures that the output is captured in all cases
+                call_command(ci.instance, *args, stdout=out, stderr=err, **options)
+        except Exception as e:
+            exception = str(e)
+        finally:
+            root_logger.removeHandler(handler)
+        return Response(
+            {
+                'stdout': out.getvalue(),
+                'stderr': err.getvalue(),
+                'exception': exception,
+                'log': log.getvalue(),
+            },
+        )

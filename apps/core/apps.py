@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.core.checks import Warning, register
 
 
 def version_to_int(version: str):
@@ -44,3 +45,17 @@ class CoreConfig(AppConfig):
 
         celus_version_num.set(version_to_int(settings.CELUS_VERSION))
         celus_sentry_release.labels(hash=settings.SENTRY_RELEASE).set(1.0)
+
+        @register()
+        def check_exposed_commands(app_configs, **kwargs):
+            from .logic.management_commands import CommandManager
+
+            errors = []
+            for app, command in CommandManager.get_invalid_exposed_commands():
+                errors.append(
+                    Warning(
+                        f'Exposed command {app}.{command} is not available',
+                        id='core.W001',
+                    )
+                )
+            return errors

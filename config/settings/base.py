@@ -845,6 +845,14 @@ TEMPLATE_FOR_SUSHI_CRED_IMPORT_SINGLE_ORG = (
 OCTOPUS_HMAC_KEY = config('OCTOPUS_HMAC_KEY', default='')
 OCTOPUS_HMAC_ALGO = config('OCTOPUS_HMAC_ALGO', default='sha256')
 
+# Management commands runnable from the UI
+# the format is a semicolon-separated list of tuples (app_name, command_name)
+EXPOSED_MANAGEMENT_COMMANDS = config(
+    'EXPOSED_MANAGEMENT_COMMANDS',
+    cast=Csv(cast=Csv(post_process=tuple), delimiter=';'),
+    default='organizations,load_sushi_credentials',
+)
+
 # the following settings will be made available to the frontend via the API
 EXPORTED_SETTINGS = [
     'ALLOW_EDUID_LOGIN',
