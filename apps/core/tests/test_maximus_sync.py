@@ -23,7 +23,9 @@ from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
 @pytest.mark.django_db
 class TestMaximusSync:
-    def test_get_organizations(self):
+    def test_get_organizations(self, settings):
+        settings.MASTER_ORGANIZATIONS = ["MASTER1"]
+
         assert get_organizations() == []
 
         o1 = Organization.objects.create(
@@ -35,6 +37,7 @@ class TestMaximusSync:
                 "name": "Alphabet",
                 "short_name": "Abc",
                 "raw_data_import_enabled": True,
+                "master_organization": False,
             },
         )
         out = json.loads(json.dumps(get_organizations()))
@@ -43,7 +46,10 @@ class TestMaximusSync:
             assert d in check
 
         o2 = Organization.objects.create(
-            name="Spring Library", short_name="Spring Library", raw_data_import_enabled=False
+            name="Spring Library",
+            short_name="Spring Library",
+            raw_data_import_enabled=False,
+            internal_id="MASTER1",
         )
         check = (
             check[0],
@@ -52,6 +58,7 @@ class TestMaximusSync:
                 "name": "Spring Library",
                 "short_name": "Spring Library",
                 "raw_data_import_enabled": False,
+                "master_organization": True,
             },
         )
         out = json.loads(json.dumps(get_organizations()))

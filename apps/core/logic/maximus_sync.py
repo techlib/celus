@@ -31,6 +31,9 @@ class CelusUserSerializer(serializers.ModelSerializer):
 
 class CelusOrganizationSerializer(serializers.ModelSerializer):
     ext_id = serializers.IntegerField(source='id')
+    master_organization = serializers.ReadOnlyField(
+        source='is_master_organization',
+    )
 
     class Meta:
         model = Organization
@@ -39,6 +42,7 @@ class CelusOrganizationSerializer(serializers.ModelSerializer):
             'name',
             'short_name',
             'raw_data_import_enabled',
+            'master_organization',
         )
 
 

@@ -78,6 +78,10 @@ class Organization(MPTTModel):
             return self.raw_data_import_enabled
         return False
 
+    @property
+    def is_master_organization(self) -> bool:
+        return self.internal_id in settings.MASTER_ORGANIZATIONS
+
     def get_or_create_private_source(self):
         def_name = DataSource.create_default_short_name(None, self.name)
         return DataSource.objects.get_or_create(
