@@ -13,6 +13,7 @@ from rest_framework.fields import BooleanField, CharField, ListField
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
+from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 
 
@@ -131,8 +132,14 @@ class PlatformReportView(APIView):
             if not fetch_attempts:
                 return self._get_response({'status': 'Data not yet harvested'})
             last: SushiFetchAttempt = fetch_attempts[0]
-            if last.fetchintention != last.fetchintention.queue.end:  # not last in queue
-                return self._get_response({'status': 'Harvesting ongoing'})
+            # before checking the intention, make sure it exists
+            try:
+                fi = last.fetchintention
+            except FetchIntention.DoesNotExist:
+                pass
+            else:
+                if fi != fi.queue.end:  # not last in queue
+                    return self._get_response({'status': 'Harvesting ongoing'})
             if last.error_code == '3030':
                 return self._get_response(
                     {'records': out, 'complete_data': True, 'status': 'Empty data'}

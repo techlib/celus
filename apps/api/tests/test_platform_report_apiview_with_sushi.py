@@ -8,7 +8,8 @@ from api.models import OrganizationAPIKey
 from django.urls import reverse
 from django.utils.timezone import now
 from scheduler.fake_data import FetchIntentionFactory
-from sushi.models import CounterReportsToCredentials
+from scheduler.models import FetchIntention
+from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 from sushi.tests.conftest import counter_report_type, credentials, organizations, platforms  # noqa
 
 
@@ -241,3 +242,40 @@ class TestPlatformReportApiView:
         data = resp.json()
         assert data['complete_data'] is False
         assert data['status'] == 'Report marked as broken for existing credentials'
+
+    def test_platform_report_view_no_data_with_attempt_without_intention(
+        self, client, counter_report_type, organizations, credentials
+    ):
+        """
+        An attempt may not have an intention if the credetials were deleted.
+        Make sure the view does not crash in this case.
+        """
+        api_key, key_val = OrganizationAPIKey.objects.create_key(
+            organization=credentials.organization, name='test'
+        )
+        credentials.counter_reports.add(counter_report_type)
+        fi = FetchIntentionFactory(
+            credentials=credentials,
+            counter_report=counter_report_type,
+            start_date='2020-01-01',
+            end_date='2020-01-31',
+            attempt__error_code='3030',
+        )
+        fi.delete()
+        assert FetchIntention.objects.count() == 0
+        assert SushiFetchAttempt.objects.count() == 1, "The attempt should not be deleted"
+        resp = client.get(
+            reverse(
+                'api_platform_report_data',
+                kwargs={
+                    'platform_id': credentials.platform.pk,
+                    'report_type': counter_report_type.report_type.short_name,
+                },
+            ),
+            {'month': '2020-01', 'dims': ''},
+            HTTP_AUTHORIZATION=f'Api-Key {key_val}',
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['complete_data'] is True
+        assert data['status'] == 'Empty data'
