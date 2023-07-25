@@ -6,8 +6,10 @@ from django.db.models import Sum
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
+from hcube.api.models.aggregation import Sum as HSum
+from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import find_best_materialized_view
-from logs.models import AccessLog, DimensionText, ReportType
+from logs.models import AccessLog, DimensionText, Metric, ReportType
 from publications.models import Title
 from rest_framework.fields import BooleanField, CharField, ListField
 from rest_framework.response import Response
@@ -62,20 +64,64 @@ class PlatformReportView(APIView):
         reported_dims = [
             f'dim{i+1}' for i, dim in enumerate(rt.dimensions_sorted) if dim.short_name in req_dims
         ]
-        # possibly replace the report type with a materialized version
-        used_rt = find_best_materialized_view(rt, ['target', 'metric', *reported_dims]) or rt
-        qs = AccessLog.objects.filter(
-            report_type=used_rt, platform_id=platform_id, date=month_date, organization=organization
-        )
-        data = qs.values('target', 'metric__short_name', *reported_dims).annotate(hits=Sum('value'))
+
+        if request.USE_CLICKHOUSE:
+            # clickhouse does not contain metric names, so we must remap them later on
+            metrics = {
+                m['pk']: m['short_name'] for m in Metric.objects.all().values('pk', 'short_name')
+            }
+            query = AccessLogCube.query().filter(
+                report_type_id=rt.pk,
+                platform_id=platform_id,
+                date=month_date,
+                organization_id=organization.pk,
+            )
+            data = (
+                {
+                    # make the data look the same as the non-clickhouse version
+                    'metric__short_name': metrics[rec.metric_id],
+                    'target': rec.target_id,
+                    **rec._asdict(),
+                }
+                for rec in ch_backend.get_records(
+                    query.group_by('target_id', 'metric_id', *reported_dims).aggregate(
+                        hits=HSum('value')
+                    )
+                )
+            )
+            title_ids = set(
+                rec.target_id for rec in ch_backend.get_records(query.group_by('target_id'))
+            )
+
+        else:
+            # possibly replace the report type with a materialized version
+            used_rt = find_best_materialized_view(rt, ['target', 'metric', *reported_dims]) or rt
+            qs = AccessLog.objects.filter(
+                report_type=used_rt,
+                platform_id=platform_id,
+                date=month_date,
+                organization=organization,
+            )
+            data = qs.values('target', 'metric__short_name', *reported_dims).annotate(
+                hits=Sum('value')
+            )
+            title_ids = qs.values_list('target_id', flat=True).distinct()
+
         text_id_to_text = {
             dt['id']: dt['text']
             for dt in DimensionText.objects.filter(dimension__report_types=rt).values('id', 'text')
         }
         out = []
+        title_fields = {
+            'name': 'title',
+            'isbn': 'isbn',
+            'issn': 'issn',
+            'eissn': 'eissn',
+            'doi': 'doi',
+        }
         titles = {
-            t.pk: t
-            for t in Title.objects.filter(pk__in=qs.values_list('target_id', flat=True).distinct())
+            t['pk']: t
+            for t in Title.objects.filter(pk__in=title_ids).values('pk', *title_fields.keys())
         }
         for al in data:
             rec = {'hits': al['hits'], 'metric': al['metric__short_name']}
@@ -87,11 +133,8 @@ class PlatformReportView(APIView):
             title_id = al['target']
             if title_id:
                 title = titles[title_id]
-                rec['title'] = title.name
-                rec['isbn'] = title.isbn
-                rec['issn'] = title.issn
-                rec['eissn'] = title.eissn
-                rec['doi'] = title.doi
+                for src, target in title_fields.items():
+                    rec[target] = title[src]
             out.append(rec)
 
         if len(out) == 0:

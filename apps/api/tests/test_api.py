@@ -131,6 +131,9 @@ class TestAPI:
             (rec['title'], rec['metric'], rec['dim1name'], rec['hits']) for rec in records
         } == expected
 
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.django_db(transaction=True)
     def test_platform_report_view_excluded_dim(self, client, flexible_slicer_test_data):
         org = flexible_slicer_test_data['organizations'][0]
         platform = flexible_slicer_test_data['platforms'][0]
