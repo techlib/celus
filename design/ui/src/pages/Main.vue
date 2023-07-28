@@ -7,7 +7,11 @@
 
   <InvalidUserPage v-else-if="invalidUser" />
 
-  <EmailNotVerified v-else-if="user && !user.impersonator && !emailVerified" />
+  <EmailNotVerified
+    v-else-if="
+      user && !user.impersonator && !emailVerified && !user.is_superuser
+    "
+  />
   <StandardLayout v-else-if="bootUpFinished" />
 
   <div v-else>

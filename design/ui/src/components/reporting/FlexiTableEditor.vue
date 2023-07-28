@@ -371,7 +371,7 @@ cs:
         </v-row>
 
         <v-row v-if="filters.length || coverageData">
-          <v-col v-if="filters.length">
+          <v-col v-if="filters.length" cols="12" :md="''">
             <v-card class="fill-height">
               <v-card-title>{{ $t("labels.filter_settings") }}</v-card-title>
               <v-card-text>
@@ -518,11 +518,10 @@ cs:
             </v-card>
           </v-col>
           <v-col
-            :cols="coverageGaugeCount * 6"
-            :sm="coverageGaugeCount * 4"
+            :cols="6 * coverageGaugeCount"
+            :sm="4 * coverageGaugeCount"
             :md="3 * coverageGaugeCount"
-            :lg="2 * coverageGaugeCount"
-            :xl="coverageGaugeCount"
+            :xl="2 * coverageGaugeCount"
           >
             <v-card v-if="coverageData" class="fill-height">
               <v-card-title>{{
